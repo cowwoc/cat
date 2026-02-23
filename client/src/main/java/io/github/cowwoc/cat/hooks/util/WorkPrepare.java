@@ -17,10 +17,12 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -116,9 +118,16 @@ public final class WorkPrepare
    */
   private static final int TOKEN_LIMIT = 160_000;
   /**
-   * Maximum number of files to walk when scanning for diagnostic information.
+   * Default safety threshold for the diagnostic scan: returns an error if the file-system walk
+   * exceeds this number of entries. This prevents unbounded scans on pathological repositories
+   * while allowing realistic projects (thousands of issues) to complete without silent truncation.
    */
-  private static final int DIAGNOSTIC_SCAN_LIMIT = 1000;
+  private static final int DEFAULT_DIAGNOSTIC_SCAN_SAFETY_THRESHOLD = 100_000;
+  /**
+   * Default maximum recursion depth for cycle detection. Prevents {@code StackOverflowError} on
+   * deeply nested dependency chains or unusually large graphs.
+   */
+  private static final int DEFAULT_MAX_CYCLE_DETECTION_DEPTH = 1000;
   /**
    * Type reference for deserializing JSON lock files into {@code Map<String, Object>}.
    */
@@ -127,17 +136,43 @@ public final class WorkPrepare
   };
 
   private final JvmScope scope;
+  private final int diagnosticScanSafetyThreshold;
+  private final int maxCycleDetectionDepth;
 
   /**
-   * Creates a new WorkPrepare instance.
+   * Creates a new WorkPrepare instance with default thresholds.
    *
    * @param scope the JVM scope providing project directory and shared services
    * @throws NullPointerException if {@code scope} is null
    */
   public WorkPrepare(JvmScope scope)
   {
+    this(scope, DEFAULT_DIAGNOSTIC_SCAN_SAFETY_THRESHOLD, DEFAULT_MAX_CYCLE_DETECTION_DEPTH);
+  }
+
+  /**
+   * Creates a new WorkPrepare instance with configurable safety thresholds.
+   * <p>
+   * This constructor is intended for testing: pass small values to exercise error paths without
+   * creating large numbers of real files or deeply nested dependency chains.
+   *
+   * @param scope the JVM scope providing project directory and shared services
+   * @param diagnosticScanSafetyThreshold the maximum number of filesystem entries allowed during
+   *                                      the diagnostic scan before throwing an error
+   * @param maxCycleDetectionDepth the maximum DFS recursion depth allowed during cycle detection;
+   *                               0 means only direct dependencies are traversed
+   * @throws NullPointerException     if {@code scope} is null
+   * @throws IllegalArgumentException if {@code diagnosticScanSafetyThreshold} is not positive or
+   *                                  {@code maxCycleDetectionDepth} is negative
+   */
+  public WorkPrepare(JvmScope scope, int diagnosticScanSafetyThreshold, int maxCycleDetectionDepth)
+  {
     requireThat(scope, "scope").isNotNull();
+    requireThat(diagnosticScanSafetyThreshold, "diagnosticScanSafetyThreshold").isPositive();
+    requireThat(maxCycleDetectionDepth, "maxCycleDetectionDepth").isGreaterThanOrEqualTo(0);
     this.scope = scope;
+    this.diagnosticScanSafetyThreshold = diagnosticScanSafetyThreshold;
+    this.maxCycleDetectionDepth = maxCycleDetectionDepth;
   }
 
   /**
@@ -231,9 +266,9 @@ public final class WorkPrepare
     IssueDiscovery.DiscoveryResult discoveryResult = discovery.findNextIssue(searchOptions);
 
     // Handle non-found statuses
-    Optional<String> nonFoundResult = handleNonFoundResult(discoveryResult, projectDir, mapper);
-    if (nonFoundResult.isPresent())
-      return nonFoundResult.get();
+    String nonFoundResult = handleNonFoundResult(discoveryResult, projectDir, mapper);
+    if (!nonFoundResult.isEmpty())
+      return nonFoundResult;
 
     IssueDiscovery.DiscoveryResult.Found found =
       (IssueDiscovery.DiscoveryResult.Found) discoveryResult;
@@ -272,16 +307,16 @@ public final class WorkPrepare
   /**
    * Handles discovery results that are not {@code Found}, returning a JSON response for each.
    * <p>
-   * Returns an empty optional if the result is {@code Found}, indicating the caller should
+   * Returns an empty string if the result is {@code Found}, indicating the caller should
    * continue with worktree creation.
    *
    * @param discoveryResult the discovery result to handle
    * @param projectDir the project root directory
    * @param mapper the JSON mapper for serialization
-   * @return a JSON response string if the result is not Found, or empty if Found
+   * @return a JSON response string if the result is not Found, or an empty string if Found
    * @throws IOException if file operations or JSON serialization fail
    */
-  private Optional<String> handleNonFoundResult(IssueDiscovery.DiscoveryResult discoveryResult,
+  private String handleNonFoundResult(IssueDiscovery.DiscoveryResult discoveryResult,
     Path projectDir, JsonMapper mapper) throws IOException
   {
     if (discoveryResult instanceof IssueDiscovery.DiscoveryResult.NotFound)
@@ -297,11 +332,13 @@ public final class WorkPrepare
         result.put("blocked_issues", diagnostics.blockedIssues());
       if (!diagnostics.lockedIssues().isEmpty())
         result.put("locked_issues", diagnostics.lockedIssues());
+      if (!diagnostics.circularDependencies().isEmpty())
+        result.put("circular_dependencies", diagnostics.circularDependencies());
 
       result.put("closed_count", diagnostics.closedCount());
       result.put("total_count", diagnostics.totalCount());
 
-      return Optional.of(mapper.writeValueAsString(result));
+      return mapper.writeValueAsString(result);
     }
 
     if (discoveryResult instanceof IssueDiscovery.DiscoveryResult.NotExecutable notExec)
@@ -309,65 +346,65 @@ public final class WorkPrepare
       String msg = notExec.reason();
       if (msg.contains("locked"))
       {
-        return Optional.of(mapper.writeValueAsString(Map.of(
+        return mapper.writeValueAsString(Map.of(
           "status", "LOCKED",
           "message", msg,
           "issue_id", notExec.issueId(),
-          "locked_by", "")));
+          "locked_by", ""));
       }
-      return Optional.of(mapper.writeValueAsString(Map.of(
+      return mapper.writeValueAsString(Map.of(
         "status", "ERROR",
-        "message", msg)));
+        "message", msg));
     }
 
     if (discoveryResult instanceof IssueDiscovery.DiscoveryResult.AlreadyComplete alreadyComplete)
     {
-      return Optional.of(mapper.writeValueAsString(Map.of(
+      return mapper.writeValueAsString(Map.of(
         "status", "ERROR",
-        "message", "Issue " + alreadyComplete.issueId() + " is already closed")));
+        "message", "Issue " + alreadyComplete.issueId() + " is already closed"));
     }
 
     if (discoveryResult instanceof IssueDiscovery.DiscoveryResult.Decomposed decomposed)
     {
-      return Optional.of(mapper.writeValueAsString(Map.of(
+      return mapper.writeValueAsString(Map.of(
         "status", "NO_ISSUES",
         "message", "Issue " + decomposed.issueId() + " is a decomposed parent issue with open " +
           "sub-issues - work on its sub-issues first, then the parent will become available " +
           "automatically when all sub-issues are closed",
-        "suggestion", "Use /cat:status to see available sub-issues")));
+        "suggestion", "Use /cat:status to see available sub-issues"));
     }
 
     if (discoveryResult instanceof IssueDiscovery.DiscoveryResult.Blocked blocked)
     {
-      return Optional.of(mapper.writeValueAsString(Map.of(
+      return mapper.writeValueAsString(Map.of(
         "status", "ERROR",
         "message", "Issue " + blocked.issueId() + " is blocked by: " +
-          String.join(", ", blocked.blockingIssues()))));
+          String.join(", ", blocked.blockingIssues())));
     }
 
     if (discoveryResult instanceof IssueDiscovery.DiscoveryResult.ExistingWorktree existingWorktree)
     {
-      return Optional.of(mapper.writeValueAsString(Map.of(
+      return mapper.writeValueAsString(Map.of(
         "status", "ERROR",
         "message", "Issue " + existingWorktree.issueId() + " has an existing worktree at: " +
-          existingWorktree.worktreePath())));
+          existingWorktree.worktreePath()));
     }
 
     if (discoveryResult instanceof IssueDiscovery.DiscoveryResult.DiscoveryError error)
     {
-      return Optional.of(mapper.writeValueAsString(Map.of(
+      return mapper.writeValueAsString(Map.of(
         "status", "ERROR",
-        "message", error.message())));
+        "message", error.message()));
     }
 
     if (!(discoveryResult instanceof IssueDiscovery.DiscoveryResult.Found))
     {
-      return Optional.of(mapper.writeValueAsString(Map.of(
+      return mapper.writeValueAsString(Map.of(
         "status", "ERROR",
-        "message", "Unexpected discovery result: " + discoveryResult.getClass().getSimpleName())));
+        "message", "Unexpected discovery result: " + discoveryResult.getClass().getSimpleName()));
     }
 
-    return Optional.empty();
+    return "";
   }
 
   /**
@@ -526,7 +563,8 @@ public final class WorkPrepare
   /**
    * Gathers diagnostic information when no issues are available.
    * <p>
-   * Scans issue directories to find blocked issues, locked issues, and closed/total counts.
+   * Scans issue directories to find blocked tasks, locked tasks, closed/total counts,
+   * and circular dependencies.
    *
    * @param projectDir the project root directory
    * @return the diagnostic info
@@ -541,6 +579,7 @@ public final class WorkPrepare
     buildIssueIndex(issuesDir, issueIndex, bareNameIndex);
 
     List<Map<String, Object>> blockedIssues = findBlockedIssues(issueIndex, bareNameIndex);
+    List<String> circularDependencies = findCircularDependencies(issueIndex, bareNameIndex);
     int closedCount = 0;
     int totalCount = 0;
 
@@ -554,7 +593,7 @@ public final class WorkPrepare
 
     List<Map<String, Object>> lockedIssues = findLockedIssues(projectDir);
 
-    return new DiagnosticInfo(blockedIssues, lockedIssues, closedCount, totalCount);
+    return new DiagnosticInfo(blockedIssues, lockedIssues, closedCount, totalCount, circularDependencies);
   }
 
   /**
@@ -562,11 +601,14 @@ public final class WorkPrepare
    * <p>
    * Populates the provided maps with qualified issue names mapped to their state content,
    * and bare issue names mapped to lists of qualified names for ambiguous lookups.
+   * <p>
+   * Returns an error via IOException if the scan reaches {@link #diagnosticScanSafetyThreshold}
+   * filesystem entries, preventing unbounded scans on pathological repositories.
    *
    * @param issuesDir the issues directory to scan
    * @param issueIndex the map to populate with qualified name to issue entry mappings
    * @param bareNameIndex the map to populate with bare name to qualified name list mappings
-   * @throws IOException if file operations fail
+   * @throws IOException if file operations fail or the scan exceeds the safety threshold
    */
   private void buildIssueIndex(Path issuesDir, Map<String, IssueIndexEntry> issueIndex,
     Map<String, List<String>> bareNameIndex) throws IOException
@@ -574,9 +616,18 @@ public final class WorkPrepare
     if (!Files.isDirectory(issuesDir))
       return;
 
-    try (Stream<Path> stream = Files.walk(issuesDir, 4).limit(DIAGNOSTIC_SCAN_LIMIT))
+    try (Stream<Path> stream = Files.walk(issuesDir, 4))
     {
-      List<Path> stateFiles = stream.
+      List<Path> allEntries = stream.limit(diagnosticScanSafetyThreshold).toList();
+      if (allEntries.size() == diagnosticScanSafetyThreshold)
+      {
+        throw new IOException(
+          "Diagnostic scan exceeded safety threshold: " + issuesDir + " contains at least " +
+            diagnosticScanSafetyThreshold +
+            " filesystem entries. Consider archiving old issues.");
+      }
+
+      List<Path> stateFiles = allEntries.stream().
         filter(p -> p.getFileName().toString().equals("STATE.md")).
         toList();
 
@@ -603,6 +654,84 @@ public final class WorkPrepare
   }
 
   /**
+   * Returns the resolved dependency IDs for an open or in-progress issue.
+   * <p>
+   * Bare dependency names (without a version prefix) are resolved to qualified names via
+   * {@code bareNameIndex} when the resolution is unambiguous (exactly one candidate).
+   *
+   * @param content the content of the issue's STATE.md file
+   * @param issueIndex the qualified name to issue entry index
+   * @param bareNameIndex the bare name to qualified name list index
+   * @return the list of resolved dependency IDs, or an empty list if the issue is not active
+   *         or has no dependencies
+   */
+  private List<String> resolveActiveDependencies(String content,
+    Map<String, IssueIndexEntry> issueIndex, Map<String, List<String>> bareNameIndex)
+  {
+    Matcher statusMatcher = STATUS_PATTERN.matcher(content);
+    if (!statusMatcher.find())
+      return List.of();
+
+    String status = statusMatcher.group(1);
+    if (!status.equals("open") && !status.equals("in-progress"))
+      return List.of();
+
+    Matcher depsMatcher = DEPS_PATTERN.matcher(content);
+    if (!depsMatcher.find())
+      return List.of();
+
+    String depsStr = depsMatcher.group(1).strip();
+    if (depsStr.isEmpty())
+      return List.of();
+
+    String[] depsArr = depsStr.split(",");
+    List<String> resolvedDeps = new ArrayList<>();
+    for (String dep : depsArr)
+    {
+      String depId = dep.strip();
+      if (depId.isEmpty())
+        continue;
+
+      if (issueIndex.containsKey(depId))
+      {
+        resolvedDeps.add(depId);
+      }
+      else
+      {
+        List<String> candidates = bareNameIndex.getOrDefault(depId, List.of());
+        if (candidates.size() == 1)
+          resolvedDeps.add(candidates.get(0));
+        else
+          resolvedDeps.add(depId);
+      }
+    }
+
+    return resolvedDeps;
+  }
+
+  /**
+   * Returns a map describing the status of a dependency.
+   * <p>
+   * Returns {@code {"id": depId, "status": "closed"|"open"|"in-progress"|"unknown"|"not_found"}}.
+   *
+   * @param depId the qualified dependency issue ID
+   * @param issueIndex the qualified name to issue entry index
+   * @return a map with "id" and "status" keys
+   */
+  private Map<String, String> getDependencyStatus(String depId,
+    Map<String, IssueIndexEntry> issueIndex)
+  {
+    IssueIndexEntry depData = issueIndex.get(depId);
+    if (depData == null)
+      return Map.of("id", depId, "status", "not_found");
+
+    Matcher depStatusMatcher = STATUS_PATTERN.matcher(depData.content());
+    if (depStatusMatcher.find())
+      return Map.of("id", depId, "status", depStatusMatcher.group(1));
+    return Map.of("id", depId, "status", "unknown");
+  }
+
+  /**
    * Finds blocked issues from the issue index by checking unresolved dependencies.
    *
    * @param issueIndex the qualified name to issue entry index
@@ -619,57 +748,17 @@ public final class WorkPrepare
       String qualifiedIssueName = entry.getKey();
       String content = entry.getValue().content();
 
-      Matcher statusMatcher = STATUS_PATTERN.matcher(content);
-      if (!statusMatcher.find())
+      List<String> activeDeps = resolveActiveDependencies(
+        content, issueIndex, bareNameIndex);
+      if (activeDeps.isEmpty())
         continue;
 
-      String status = statusMatcher.group(1);
-      if (!status.equals("open") && !status.equals("in-progress"))
-        continue;
-
-      Matcher depsMatcher = DEPS_PATTERN.matcher(content);
-      if (!depsMatcher.find())
-        continue;
-
-      String depsStr = depsMatcher.group(1).strip();
-      if (depsStr.isEmpty())
-        continue;
-
-      String[] depsArr = depsStr.split(",");
       List<Map<String, String>> unresolvedDeps = new ArrayList<>();
-
-      for (String dep : depsArr)
+      for (String depId : activeDeps)
       {
-        String depId = dep.strip();
-        if (depId.isEmpty())
-          continue;
-
-        IssueIndexEntry depData = issueIndex.get(depId);
-        if (depData == null)
-        {
-          List<String> candidates = bareNameIndex.getOrDefault(depId, List.of());
-          if (candidates.size() == 1)
-            depData = issueIndex.get(candidates.get(0));
-        }
-
-        if (depData != null)
-        {
-          Matcher depStatusMatcher = STATUS_PATTERN.matcher(depData.content());
-          if (depStatusMatcher.find())
-          {
-            String depStatus = depStatusMatcher.group(1);
-            if (!depStatus.equals("closed"))
-              unresolvedDeps.add(Map.of("id", depId, "status", depStatus));
-          }
-          else
-          {
-            unresolvedDeps.add(Map.of("id", depId, "status", "unknown"));
-          }
-        }
-        else
-        {
-          unresolvedDeps.add(Map.of("id", depId, "status", "not_found"));
-        }
+        Map<String, String> depStatus = getDependencyStatus(depId, issueIndex);
+        if (!depStatus.get("status").equals("closed"))
+          unresolvedDeps.add(depStatus);
       }
 
       if (!unresolvedDeps.isEmpty())
@@ -691,6 +780,157 @@ public final class WorkPrepare
     }
 
     return blockedIssues;
+  }
+
+  /**
+   * Mutable state maintained during a cycle detection DFS traversal.
+   */
+  private static final class CycleDetectionContext
+  {
+    /**
+     * Fully-processed nodes (all descendants visited, no cycles originating here).
+     */
+    final Set<String> visited = new HashSet<>();
+    /**
+     * Nodes on the current DFS path (for cycle detection).
+     */
+    final Set<String> onPath = new LinkedHashSet<>();
+    /**
+     * The current DFS path as an ordered list.
+     */
+    final List<String> path = new ArrayList<>();
+    /**
+     * Detected cycle path strings.
+     */
+    final List<String> cycles = new ArrayList<>();
+    /**
+     * Cycle canonical forms already reported (to avoid duplicates).
+     */
+    final Set<String> reportedCycles = new HashSet<>();
+    /**
+     * The maximum recursion depth allowed.
+     */
+    final int maxDepth;
+
+    /**
+     * Creates a new context.
+     *
+     * @param maxDepth the maximum DFS recursion depth allowed
+     * @throws IllegalArgumentException if {@code maxDepth} is negative
+     */
+    CycleDetectionContext(int maxDepth)
+    {
+      requireThat(maxDepth, "maxDepth").isGreaterThanOrEqualTo(0);
+      this.maxDepth = maxDepth;
+    }
+  }
+
+  /**
+   * Detects circular dependency chains in the issue index using depth-first search.
+   * <p>
+   * For each open or in-progress issue, traverses its dependency graph looking for cycles.
+   * Each detected cycle is represented as a path string in the format
+   * {@code A -> B -> C -> A}.
+   * <p>
+   * Only open or in-progress issues are included in cycle detection, since closed issues
+   * cannot participate in a live blocking cycle.
+   *
+   * @param issueIndex the qualified name to issue entry index
+   * @param bareNameIndex the bare name to qualified name list index
+   * @return a list of cycle path strings, empty if no cycles are detected
+   * @throws IOException if the dependency graph is too deep for cycle detection
+   */
+  private List<String> findCircularDependencies(Map<String, IssueIndexEntry> issueIndex,
+    Map<String, List<String>> bareNameIndex) throws IOException
+  {
+    // Build a dependency graph restricted to open/in-progress issues
+    Map<String, List<String>> dependencyGraph = new LinkedHashMap<>();
+    for (Map.Entry<String, IssueIndexEntry> entry : issueIndex.entrySet())
+    {
+      String qualifiedName = entry.getKey();
+      String content = entry.getValue().content();
+
+      List<String> activeDeps = resolveActiveDependencies(
+        content, issueIndex, bareNameIndex);
+      if (activeDeps.isEmpty())
+        continue;
+
+      dependencyGraph.put(qualifiedName, activeDeps);
+    }
+
+    // DFS-based cycle detection: track visited nodes and current path
+    CycleDetectionContext context = new CycleDetectionContext(maxCycleDetectionDepth);
+
+    for (String startNode : dependencyGraph.keySet())
+    {
+      if (context.visited.contains(startNode))
+        continue;
+
+      context.onPath.clear();
+      context.path.clear();
+      detectCycles(startNode, dependencyGraph, context, 0);
+    }
+
+    return context.cycles;
+  }
+
+  /**
+   * Recursive DFS helper for cycle detection.
+   * <p>
+   * Traverses the dependency graph from {@code current} tracking the current path. When a node is
+   * found that is already on the current path, a cycle is recorded.
+   * <p>
+   * Recursion is bounded by {@link CycleDetectionContext#maxDepth} to prevent
+   * {@code StackOverflowError} on deeply nested dependency chains.
+   *
+   * @param current the current node being visited
+   * @param graph the dependency graph (node to list of dependencies)
+   * @param context the mutable traversal state
+   * @param depth the current recursion depth
+   * @throws IOException if the recursion depth exceeds {@link CycleDetectionContext#maxDepth}
+   */
+  private void detectCycles(String current, Map<String, List<String>> graph,
+    CycleDetectionContext context, int depth) throws IOException
+  {
+    if (depth > context.maxDepth)
+    {
+      throw new IOException(
+        "Cycle detection exceeded maximum recursion depth of " + context.maxDepth +
+          " while processing node: " + current +
+          ". The dependency graph may contain an unusually deep chain. Consider simplifying dependencies.");
+    }
+
+    if (context.visited.contains(current))
+      return;
+
+    if (context.onPath.contains(current))
+    {
+      // Found a cycle: extract the cycle path from where current appears in path
+      int cycleStart = context.path.indexOf(current);
+      List<String> cyclePath = context.path.subList(cycleStart, context.path.size());
+      cyclePath = new ArrayList<>(cyclePath);
+      cyclePath.add(current);
+
+      // Create a canonical form to avoid duplicate reports
+      String cycleKey = String.join(" -> ", cyclePath);
+      if (!context.reportedCycles.contains(cycleKey))
+      {
+        context.reportedCycles.add(cycleKey);
+        context.cycles.add(cycleKey);
+      }
+      return;
+    }
+
+    context.onPath.add(current);
+    context.path.add(current);
+
+    List<String> deps = graph.getOrDefault(current, List.of());
+    for (String dep : deps)
+      detectCycles(dep, graph, context, depth + 1);
+
+    context.onPath.remove(current);
+    context.path.remove(context.path.size() - 1);
+    context.visited.add(current);
   }
 
   /**
@@ -1253,12 +1493,14 @@ public final class WorkPrepare
    * @param lockedIssues issues that are locked by another session
    * @param closedCount the number of closed issues
    * @param totalCount the total number of issues
+   * @param circularDependencies detected dependency cycles as path strings (e.g., {@code A -> B -> A})
    */
   private record DiagnosticInfo(
     List<Map<String, Object>> blockedIssues,
     List<Map<String, Object>> lockedIssues,
     int closedCount,
-    int totalCount)
+    int totalCount,
+    List<String> circularDependencies)
   {
     /**
      * Creates new diagnostic info.
@@ -1267,7 +1509,9 @@ public final class WorkPrepare
      * @param lockedIssues issues that are locked by another session
      * @param closedCount the number of closed issues
      * @param totalCount the total number of issues
-     * @throws NullPointerException if {@code blockedIssues} or {@code lockedIssues} are null
+     * @param circularDependencies detected dependency cycles as path strings
+     * @throws NullPointerException if {@code blockedIssues}, {@code lockedIssues}, or
+     *   {@code circularDependencies} are null
      * @throws IllegalArgumentException if {@code closedCount} or {@code totalCount} are negative
      */
     DiagnosticInfo
@@ -1276,6 +1520,7 @@ public final class WorkPrepare
       assert that(lockedIssues, "lockedIssues").isNotNull().elseThrow();
       assert that(closedCount, "closedCount").isGreaterThanOrEqualTo(0).elseThrow();
       assert that(totalCount, "totalCount").isGreaterThanOrEqualTo(0).elseThrow();
+      assert that(circularDependencies, "circularDependencies").isNotNull().elseThrow();
     }
   }
 }

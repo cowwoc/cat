@@ -1514,4 +1514,106 @@ public class IssueDiscoveryTest
 
     Files.writeString(issueDir.resolve("STATE.md"), stateContent);
   }
+
+  /**
+   * Verifies that an issue involved in a simple circular dependency (A depends on B, B depends on A)
+   * is treated as blocked (not returned as a found issue).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void issueInSimpleCircularDependencyIsBlocked() throws IOException
+  {
+    Path projectDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      try
+      {
+        String sessionId = UUID.randomUUID().toString();
+        createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "[2.1-issue-b]");
+        createIssueWithDependencies(projectDir, "2", "1", "issue-b", "open", "[2.1-issue-a]");
+
+        IssueDiscovery discovery = new IssueDiscovery(scope);
+        SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
+        DiscoveryResult result = discovery.findNextIssue(options);
+
+        // Both issues are mutually blocked - neither should be found
+        requireThat(result, "result").isInstanceOf(DiscoveryResult.NotFound.class);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that an issue involved in a complex 3-node circular dependency
+   * (A depends on B, B depends on C, C depends on A) is treated as blocked.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void issueInComplexCircularDependencyIsBlocked() throws IOException
+  {
+    Path projectDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      try
+      {
+        String sessionId = UUID.randomUUID().toString();
+        createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "[2.1-issue-b]");
+        createIssueWithDependencies(projectDir, "2", "1", "issue-b", "open", "[2.1-issue-c]");
+        createIssueWithDependencies(projectDir, "2", "1", "issue-c", "open", "[2.1-issue-a]");
+
+        IssueDiscovery discovery = new IssueDiscovery(scope);
+        SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
+        DiscoveryResult result = discovery.findNextIssue(options);
+
+        // All three issues are involved in a cycle - none should be found
+        requireThat(result, "result").isInstanceOf(DiscoveryResult.NotFound.class);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that issues NOT involved in a circular dependency remain unaffected.
+   * When a separate open issue exists alongside a cycle, it should still be found.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void issueNotInCycleIsFoundDespiteExistingCycle() throws IOException
+  {
+    Path projectDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      try
+      {
+        String sessionId = UUID.randomUUID().toString();
+        // Create a cycle
+        createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "[2.1-issue-b]");
+        createIssueWithDependencies(projectDir, "2", "1", "issue-b", "open", "[2.1-issue-a]");
+        // Create an unrelated open issue
+        createIssue(projectDir, "2", "1", "unrelated-feature", "open");
+
+        IssueDiscovery discovery = new IssueDiscovery(scope);
+        SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
+        DiscoveryResult result = discovery.findNextIssue(options);
+
+        // The unrelated issue should be found
+        requireThat(result, "result").isInstanceOf(DiscoveryResult.Found.class);
+        DiscoveryResult.Found found = (DiscoveryResult.Found) result;
+        requireThat(found.issueId(), "issueId").isEqualTo("2.1-unrelated-feature");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+      }
+    }
+  }
 }
