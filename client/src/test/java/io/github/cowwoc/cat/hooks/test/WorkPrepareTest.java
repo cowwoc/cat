@@ -1329,6 +1329,355 @@ public class WorkPrepareTest
   }
 
   /**
+   * Verifies that diagnostic output correctly resolves issue dependencies even when the project has
+   * more than 333 issues (each with ~3 files = ~1000 filesystem entries). With the old scan limit of
+   * 1000 entries, issues beyond that limit would appear as not_found in blocked_issues diagnostic
+   * output, causing false positives. With the fixed unlimited scan, a closed dependency is correctly
+   * resolved, so an issue depending only on closed issues does not appear in blocked_issues at all.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void diagnosticAccurateWithMoreThan333Issues() throws IOException
+  {
+    Path projectDir = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // Create 350 issues to exceed the old 1000-entry limit (each issue has ~3 files)
+      // Issues are distributed across multiple minor versions for realism
+      for (int i = 0; i < 350; ++i)
+      {
+        String minor = String.valueOf(i / 50 + 1);
+        createIssue(projectDir, "2", minor, "issue-" + i, "closed");
+      }
+
+      // Create a dependency issue that would be pushed past entry 999 in the old limit
+      createIssue(projectDir, "2", "8", "dependency-far", "closed");
+      createIssueWithDependencies(projectDir, "2", "8", "blocked-by-far", "open",
+        "2.8-dependency-far");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("NO_ISSUES");
+
+      // With the fixed unlimited scan, dependency-far is correctly resolved as "closed".
+      // Since its only dependency is closed, blocked-by-far must NOT appear in blocked_issues.
+      // (The old broken behavior was: dependency-far not found → blocked-by-far falsely blocked.)
+      JsonNode blockedIssues = node.path("blocked_issues");
+      boolean foundBlockedByFar = false;
+      for (JsonNode issue : blockedIssues)
+      {
+        if (issue.path("issue_id").asString().equals("2.8-blocked-by-far"))
+          foundBlockedByFar = true;
+      }
+      requireThat(foundBlockedByFar, "foundBlockedByFar").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that when there are enough filesystem entries that would cause the old 1000-entry limit
+   * to truncate results, the diagnostic scan completes without error (no silent truncation).
+   * The threshold for an actual error should be much higher than realistic usage.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void diagnosticScanCompletesWithoutErrorFor400Issues() throws IOException
+  {
+    Path projectDir = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // Create 400 issues — enough to have exceeded the old 1000 file limit
+      for (int i = 0; i < 400; ++i)
+      {
+        String minor = String.valueOf(i / 50 + 1);
+        createIssue(projectDir, "2", minor, "issue-" + i, "closed");
+      }
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      // Should complete normally (not ERROR), just report NO_ISSUES with full diagnostics
+      requireThat(node.path("status").asString(), "status").isEqualTo("NO_ISSUES");
+      requireThat(node.path("total_count").asInt(), "totalCount").isGreaterThanOrEqualTo(400);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that circular dependencies (A depends on B, B depends on A) are detected and reported
+   * in the diagnostic output under a "circular_dependencies" field.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void diagnosticReportsSimpleCircularDependency() throws IOException
+  {
+    Path projectDir = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // A depends on B, B depends on A — simple cycle
+      createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "2.1-issue-b");
+      createIssueWithDependencies(projectDir, "2", "1", "issue-b", "open", "2.1-issue-a");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("NO_ISSUES");
+
+      // Circular dependencies must be reported
+      requireThat(node.has("circular_dependencies"), "hasCircularDependencies").isTrue();
+      JsonNode cycles = node.path("circular_dependencies");
+      requireThat(cycles.size(), "cycleCount").isGreaterThan(0);
+
+      // Verify cycle contains the expected issue IDs
+      boolean foundCycle = false;
+      for (JsonNode cycle : cycles)
+      {
+        String cycleStr = cycle.asString();
+        if (cycleStr.contains("2.1-issue-a") && cycleStr.contains("2.1-issue-b"))
+        {
+          foundCycle = true;
+          break;
+        }
+      }
+      requireThat(foundCycle, "foundCycle").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that complex circular dependencies (A depends on B, B depends on C, C depends on A)
+   * are detected and reported with the full cycle path.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void diagnosticReportsComplexCircularDependency() throws IOException
+  {
+    Path projectDir = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // A -> B -> C -> A (3-node cycle)
+      createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "2.1-issue-b");
+      createIssueWithDependencies(projectDir, "2", "1", "issue-b", "open", "2.1-issue-c");
+      createIssueWithDependencies(projectDir, "2", "1", "issue-c", "open", "2.1-issue-a");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("NO_ISSUES");
+
+      // Circular dependencies must be reported
+      requireThat(node.has("circular_dependencies"), "hasCircularDependencies").isTrue();
+      JsonNode cycles = node.path("circular_dependencies");
+      requireThat(cycles.size(), "cycleCount").isGreaterThan(0);
+
+      // The cycle path should contain all three nodes
+      boolean foundAllNodes = false;
+      for (JsonNode cycle : cycles)
+      {
+        String cycleStr = cycle.asString();
+        if (cycleStr.contains("issue-a") && cycleStr.contains("issue-b") && cycleStr.contains("issue-c"))
+        {
+          foundAllNodes = true;
+          break;
+        }
+      }
+      requireThat(foundAllNodes, "foundAllNodes").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that non-circular dependency chains do not produce circular dependency entries
+   * in the diagnostic output.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void diagnosticDoesNotReportNonCircularDependencies() throws IOException
+  {
+    Path projectDir = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // Linear chain: A depends on B, B depends on C (no cycle)
+      createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "2.1-issue-b");
+      createIssueWithDependencies(projectDir, "2", "1", "issue-b", "open", "2.1-issue-c");
+      createIssue(projectDir, "2", "1", "issue-c", "open");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("NO_ISSUES");
+
+      // No circular dependencies should be reported for a linear chain
+      boolean hasCircularDependencies = node.has("circular_dependencies") &&
+        node.path("circular_dependencies").size() > 0;
+      requireThat(hasCircularDependencies, "hasCircularDependencies").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that {@code buildIssueIndex} throws {@code IOException} when the filesystem walk
+   * exceeds the configured diagnostic scan safety threshold.
+   * <p>
+   * Uses a small threshold (5 entries) so that only a few real files are needed to trigger the
+   * error path, avoiding the need to create 100,000 files.
+   *
+   * @throws IOException if an I/O error occurs other than the expected threshold exception
+   */
+  @Test
+  public void buildIssueIndexThrowsWhenScanLimitExceeded() throws IOException
+  {
+    Path projectDir = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // Create 2 issues sharing the same version dirs: issuesDir + v2 + v2.1 + 2*(dir+STATE.md) = 7 entries
+      createIssue(projectDir, "2", "1", "issue-alpha", "closed");
+      createIssue(projectDir, "2", "1", "issue-beta", "closed");
+
+      // Use threshold=5 so that 7 entries > 5 triggers the error
+      WorkPrepare prepare = new WorkPrepare(scope, 5, 1000);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+
+      boolean exceptionThrown = false;
+      try
+      {
+        prepare.execute(input);
+      }
+      catch (IOException e)
+      {
+        exceptionThrown = true;
+        requireThat(e.getMessage(), "message").contains("safety threshold");
+        requireThat(e.getMessage(), "message").contains("at least 5");
+      }
+      requireThat(exceptionThrown, "exceptionThrown").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that cycle detection throws {@code IOException} when the dependency chain exceeds
+   * the configured maximum DFS recursion depth.
+   * <p>
+   * Uses depth limit 0 and two linked issues so the limit is exceeded on the very first
+   * recursive call (depth 1 > 0), guaranteeing the exception regardless of traversal order.
+   *
+   * @throws IOException if an I/O error occurs other than the expected depth exception
+   */
+  @Test
+  public void detectCyclesThrowsWhenDepthLimitExceeded() throws IOException
+  {
+    Path projectDir = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // issue-a depends on issue-b; with maxDepth=0 the first recursive call (depth=1) triggers
+      createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "2.1-issue-b");
+      createIssue(projectDir, "2", "1", "issue-b", "open");
+
+      // Use maxCycleDetectionDepth=0 so any recursive call (depth=1 > 0) triggers the error
+      WorkPrepare prepare = new WorkPrepare(scope, 100_000, 0);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+
+      boolean exceptionThrown = false;
+      try
+      {
+        prepare.execute(input);
+      }
+      catch (IOException e)
+      {
+        exceptionThrown = true;
+        requireThat(e.getMessage(), "message").contains("maximum recursion depth");
+        requireThat(e.getMessage(), "message").contains("0");
+      }
+      requireThat(exceptionThrown, "exceptionThrown").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that cycle detection completes successfully for a dependency chain exactly at the
+   * maximum DFS recursion depth limit (not exceeding it).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void detectCyclesSucceedsAtDepthLimit() throws IOException
+  {
+    Path projectDir = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // Build a linear chain: issue-0 -> ... -> issue-5 (6 nodes, max depth = 5 == limit, no throw)
+      createIssueWithDependencies(projectDir, "2", "1", "issue-0", "open", "2.1-issue-1");
+      createIssueWithDependencies(projectDir, "2", "1", "issue-1", "open", "2.1-issue-2");
+      createIssueWithDependencies(projectDir, "2", "1", "issue-2", "open", "2.1-issue-3");
+      createIssueWithDependencies(projectDir, "2", "1", "issue-3", "open", "2.1-issue-4");
+      createIssueWithDependencies(projectDir, "2", "1", "issue-4", "open", "2.1-issue-5");
+      createIssue(projectDir, "2", "1", "issue-5", "open");
+
+      // Use maxCycleDetectionDepth=5 so depth 5 == limit, should NOT throw
+      WorkPrepare prepare = new WorkPrepare(scope, 100_000, 5);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      // Should complete normally — no cycle in a linear chain
+      requireThat(node.path("status").asString(), "status").isEqualTo("NO_ISSUES");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
    * Cleans up a worktree if it exists (best-effort, errors are swallowed).
    *
    * @param projectDir the project root directory
