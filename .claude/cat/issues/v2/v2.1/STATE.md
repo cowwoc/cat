@@ -75,6 +75,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-config-skill-output
 - prevent-rca-cascade-bias
 - update-empirical-test-trial-counts
+- replace-update-ref-with-merge
 
 
 ## Issues Completed
