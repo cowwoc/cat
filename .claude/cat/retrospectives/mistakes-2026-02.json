@@ -1603,6 +1603,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When a worktree exists but no lock file is present (orphaned worktree), check merge status first. If already merged into base: clean up worktree and branch. If not merged: acquire lock and resume work in the existing worktree. Never force-remove without checking merge status."
+    },
+    {
+      "id": "M400",
+      "timestamp": "2026-02-24T14:16:38Z",
+      "category": "protocol_violation",
+      "description": "Agent suggested working on a blocking dependency after NO_TASKS, but the dependency may itself be non-executable; also used task instead of issue terminology",
+      "root_cause": "PLANNING module failure: The NO_TASKS guidance in work/first-use.md said to list each blocked task and what it is blocked by, but did not clarify that the blocker itself may be non-executable. The agent inferred that the blocker was actionable and suggested it directly. Additionally, the guidance used task terminology which the agent echoed instead of using the correct issue terminology.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work/first-use.md",
+      "pattern_keywords": [
+        "no-tasks",
+        "blocked-issues",
+        "misleading-guidance",
+        "terminology",
+        "issue-vs-task"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When NO_TASKS is returned with blocked_tasks, list each blocked issue and what it is blocked by, then direct the user to /cat:status to determine what to resolve. Never suggest working on a blocking dependency by name. Use issue terminology (not task) for CAT project work items."
     }
   ]
 }

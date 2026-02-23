@@ -22,7 +22,7 @@ The main agent provides:
 {
   "session_id": "uuid",
   "project_dir": "/workspace",
-  "arguments": "optional task filter",
+  "arguments": "optional issue filter",
   "trust_level": "low|medium|high"
 }
 ```
@@ -76,23 +76,23 @@ Return JSON on failure:
 ```
 
 **Extended failure info:** When returning NO_TASKS, include `blocked_tasks` and `locked_tasks`
-arrays so the parent agent can report WHY no tasks are available. Also include `closed_count` and
+arrays so the parent agent can report WHY no issues are available. Also include `closed_count` and
 `total_count` for context. Omit empty arrays.
 
 ## Critical Constraints
 
 ### Use Existing Scripts
 
-**MANDATORY: Use `get-available-issues.sh` for task discovery. NEVER reimplement its logic.**
+**MANDATORY: Use `get-available-issues.sh` for issue discovery. NEVER reimplement its logic.**
 
 The discovery script handles:
-- Version traversal and task ordering
+- Version traversal and issue ordering
 - Dependency checking
 - Lock acquisition
 - Decomposed parent detection
 
 If the script doesn't support a needed feature (like filtering by name):
-1. Call the script to get the available task
+1. Call the script to get the available issue
 2. Check if result matches filter criteria in memory
 3. If not, return appropriate status (e.g., NO_TASKS with message about filter)
 
@@ -109,7 +109,7 @@ Temporary mutations that rely on cleanup code are unsafe because:
 - Cleanup code may never execute
 
 **FORBIDDEN patterns:**
-- Marking tasks "closed" temporarily to hide them from discovery
+- Marking issues "closed" temporarily to hide them from discovery
 - Creating backup files that must be restored
 - Any mutation that requires rollback
 
@@ -127,14 +127,14 @@ Temporary mutations that rely on cleanup code are unsafe because:
 [ ! -f .claude/cat/cat-config.json ] && echo '{"status":"ERROR","message":"No cat-config.json"}' && exit 1
 ```
 
-### Step 2: Find Available Task
+### Step 2: Find Available Issue
 
 Use the discovery script with `--exclude-pattern` when arguments contain a filter:
 
 ```bash
 # Convert natural language filter to glob pattern:
 #   "skip compression" → "compress*"
-#   "skip batch tasks" → "*-batch-*"
+#   "skip batch issues" → "*-batch-*"
 #   "only migration"   → exclude everything NOT matching: use no --exclude-pattern, filter result in memory
 
 # When filter maps to an exclusion pattern:
@@ -183,7 +183,7 @@ When a worktree exists for the target issue but no lock file is present:
 in-progress work permanently.
 
 **Extended failure info:** When discovery returns `not_found`, gather diagnostic context
-before returning NO_TASKS. Scan issue directories to report why no tasks are available:
+before returning NO_TASKS. Scan issue directories to report why no issues are available:
 
 ```bash
 # Gather diagnostic info for NO_TASKS response
@@ -232,14 +232,14 @@ done
 ```
 
 Include these fields in the NO_TASKS JSON response. This allows the parent agent to explain
-to the user exactly why no tasks are executable.
+to the user exactly why no issues are executable.
 
 **Filtering:** Use `--exclude-pattern` for exclusion filters. The script handles
 glob matching natively and continues searching for the next eligible issue after excluding matches.
 Only use in-memory filtering for inclusion filters (e.g., "only migration") where the script
 has no native support.
 
-### Step 3: Analyze Task Size
+### Step 3: Analyze Issue Size
 
 Read PLAN.md and estimate context requirements:
 
@@ -316,13 +316,13 @@ returns JSON. Using a script instead of inline LLM instructions ensures:
 
 ### Step 6b: Check for Work Merged to Base
 
-**MANDATORY: Check if task was already implemented on base branch.**
+**MANDATORY: Check if issue was already implemented on base branch.**
 
-The check-existing-work.sh script only detects commits on the task branch. If work was
-implemented directly on base (bypassing the task workflow), STATE.md won't reflect completion.
+The check-existing-work.sh script only detects commits on the issue branch. If work was
+implemented directly on base (bypassing the issue workflow), STATE.md won't reflect completion.
 
 ```bash
-# Search for commits on base that mention this task name
+# Search for commits on base that mention this issue name
 TASK_COMMITS=$(git -C "${CLAUDE_PROJECT_DIR}" log --oneline --grep="${ISSUE_NAME}" "${BASE_BRANCH}" -5 2>/dev/null)
 
 if [[ -n "$TASK_COMMITS" ]]; then
@@ -334,7 +334,7 @@ fi
 ```
 
 **Why this matters:** Work may be implemented directly on the base branch without using
-the task workflow (e.g., previous session implemented work but didn't update STATE.md, or
+the issue workflow (e.g., previous session implemented work but didn't update STATE.md, or
 manual work outside `/cat:work`). When suspicious commits are found:
 
 1. Include `"potentially_complete": true` in output JSON
@@ -358,7 +358,7 @@ STATE_FILE="${WORKTREE_PATH}/.claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${I
 # STATE_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/issues/..."
 ```
 
-Set task status to `in-progress`:
+Set issue status to `in-progress`:
 
 ```yaml
 - **Status:** in-progress
@@ -367,7 +367,7 @@ Set task status to `in-progress`:
 ```
 
 **Do NOT modify any files in `${CLAUDE_PROJECT_DIR}` directly.** All file modifications
-must be in `${WORKTREE_PATH}` so they are isolated to the task branch.
+must be in `${WORKTREE_PATH}` so they are isolated to the issue branch.
 
 ### Step 8: Return Result
 
@@ -381,7 +381,7 @@ Output the JSON result with all required fields.
 - Existing worktree with lock file (`existing_worktree` status, lock present): Return LOCKED, do NOT investigate or
   remove the worktree
 - Existing worktree without lock file (orphaned): Apply Orphaned Worktree Recovery Protocol (Step 2)
-- Task exceeds hard limit: Return OVERSIZED
+- Issue exceeds hard limit: Return OVERSIZED
 - **Worktree on wrong branch:** Clean up and return ERROR
 
 ## Context Loaded

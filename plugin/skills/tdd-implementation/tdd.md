@@ -316,7 +316,7 @@ git log --oneline
 - **Flexibility:** Supports both debug workflows (need revert) and release workflows (need clean history)
 
 **Comparison with standard changes:**
-- Standard changes: 1 commit per task, 2-4 commits per change
+- Standard changes: 1 commit per issue, 2-4 commits per change
 - TDD changes (granular): 2-3 commits per behavior cycle
 - TDD changes (final): 1 focused commit per feature topic
 
@@ -330,7 +330,7 @@ git log --oneline
 <context_budget>
 ## Context Budget
 
-TDD changes target **~40% context usage per cycle** (lower than standard changes' ~50% per task).
+TDD changes target **~40% context usage per cycle** (lower than standard changes' ~50% per issue).
 
 ### Why Lower Per Cycle
 
