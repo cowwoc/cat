@@ -32,6 +32,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - preprocessor-error-bug-reporting
 - preprocessor-skill-output-tags
 - rename-render-diff-to-get-diff
+- document-subagent-skill-invocation
 - ci-build-jlink-bundle
 - cleanup-orphaned-hook-scripts
 - cleanup-ported-scripts
