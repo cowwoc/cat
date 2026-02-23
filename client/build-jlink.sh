@@ -58,7 +58,7 @@ readonly -a HANDLERS=(
   "get-status-output:skills.GetStatusOutput"
   "get-statusline-output:skills.GetStatuslineOutput"
   "get-retrospective-output:skills.GetRetrospectiveOutput"
-  "get-render-diff-output:skills.GetRenderDiffOutput"
+  "get-diff-output:skills.GetDiffOutput"
   "get-token-report-output:skills.GetTokenReportOutput"
   "get-cleanup-output:skills.GetCleanupOutput"
   "create-issue:util.IssueCreator"
