@@ -544,57 +544,28 @@ The stakeholder-review skill will spawn its own reviewer subagents and return ag
 
 Parse review result and filter false positives (concerns from reviewers that read base branch instead of worktree).
 
-**Read auto-fix level and proceed limits from config:**
+**Read auto-fix level from config:**
 
 ```bash
-# Read reviewThresholds from .claude/cat/cat-config.json
-# Defaults match current hardcoded behavior if config is missing or field is absent
-AUTOFIX_LEVEL="high_and_above"
-PROCEED_CRITICAL=0
-PROCEED_HIGH=0
-PROCEED_MEDIUM=0
-PROCEED_LOW=0
+# Read reviewThreshold from .claude/cat/cat-config.json
+# Default is "low" (fix all concerns automatically) if config is missing or field is absent
+AUTOFIX_LEVEL="low"
 
 CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json"
 if [[ -f "$CONFIG_FILE" ]]; then
-    # Extract reviewThresholds.autofix using grep/sed (no jq available)
-    AUTOFIX_RAW=$(grep -o '"autofix"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" | head -1 | \
-        sed 's/.*"autofix"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+    # Extract reviewThreshold simple string value using grep/sed (no jq available)
+    AUTOFIX_RAW=$(grep -o '"reviewThreshold"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" | head -1 | \
+        sed 's/.*"reviewThreshold"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
     if [[ -n "$AUTOFIX_RAW" ]]; then
         AUTOFIX_LEVEL="$AUTOFIX_RAW"
     fi
-
-    # Extract reviewThresholds.proceed values
-    # The proceed block looks like: "proceed": { "critical": 0, "high": 3, ... }
-    PROCEED_SECTION=$(awk '/"proceed"/{found=1} found{print; if(/\}/) {count++; if(count>=2) exit}}' "$CONFIG_FILE" 2>/dev/null || echo "")
-
-    extract_proceed_value() {
-        local key="$1"
-        local default_val="$2"
-        local val
-        val=$(echo "$PROCEED_SECTION" | grep -o "\"${key}\"[[:space:]]*:[[:space:]]*-\?[0-9]*" | head -1 | grep -o '-\?[0-9]*$')
-        if [[ -n "$val" ]]; then
-            echo "$val"
-        else
-            echo "$default_val"
-        fi
-    }
-
-    PROCEED_CRITICAL=$(extract_proceed_value "critical" 0)
-    PROCEED_HIGH=$(extract_proceed_value "high" 0)
-    PROCEED_MEDIUM=$(extract_proceed_value "medium" 0)
-    PROCEED_LOW=$(extract_proceed_value "low" 0)
 fi
 
 # Determine minimum severity to auto-fix based on AUTOFIX_LEVEL:
-# "all"            -> auto-fix CRITICAL, HIGH, and MEDIUM
-# "high_and_above" -> auto-fix CRITICAL and HIGH (default)
-# "critical"       -> auto-fix CRITICAL only
-# "none"           -> never auto-fix
-#
-# Use PROCEED_* to decide when to block (stop auto-fix loop) vs proceed to user approval.
-# A value of 0 means reject if any concerns remain at that severity.
-# A value of 0 means none are allowed (must block if any remain).
+# "low"      -> auto-fix CRITICAL, HIGH, MEDIUM, and LOW (default)
+# "medium"   -> auto-fix CRITICAL, HIGH, and MEDIUM
+# "high"     -> auto-fix CRITICAL and HIGH
+# "critical" -> auto-fix CRITICAL only
 ```
 
 **Auto-fix loop for concerns (based on configured autofix level):**
@@ -604,10 +575,10 @@ Initialize loop counter: `AUTOFIX_ITERATION=0`
 **While concerns exist at or above the configured auto-fix threshold and AUTOFIX_ITERATION < 3:**
 
 The auto-fix threshold is determined by `AUTOFIX_LEVEL`:
-- `"all"`: loop while CRITICAL, HIGH, or MEDIUM concerns exist
-- `"high_and_above"`: loop while CRITICAL or HIGH concerns exist (default)
+- `"low"`: loop while CRITICAL, HIGH, MEDIUM, or LOW concerns exist (default)
+- `"medium"`: loop while CRITICAL, HIGH, or MEDIUM concerns exist
+- `"high"`: loop while CRITICAL or HIGH concerns exist
 - `"critical"`: loop while CRITICAL concerns exist
-- `"none"`: skip auto-fix loop entirely (proceed directly to approval gate)
 
 1. Increment iteration counter: `AUTOFIX_ITERATION++`
 2. Extract concerns at or above the auto-fix threshold (severity, description, location, recommendation)
@@ -661,14 +632,14 @@ The auto-fix threshold is determined by `AUTOFIX_LEVEL`:
        }
    ```
 5. Parse new review result
-6. If HIGH+ concerns remain, continue loop (if under iteration limit)
+6. If concerns at or above the configured auto-fix threshold remain, continue loop (if under iteration limit)
 
-**If HIGH+ concerns persist after 3 iterations:**
+**If concerns at or above the threshold persist after 3 iterations:**
 - Note that auto-fix reached iteration limit
 - Store all remaining concerns for display at approval gate
 - Continue to Step 5
 
-**If all concerns are MEDIUM or lower (or no concerns):**
+**If no concerns remain at or above the threshold (or no concerns at all):**
 - Store concerns for display at approval gate
 - Continue to Step 5
 
