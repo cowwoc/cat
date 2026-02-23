@@ -2,6 +2,6 @@
 
 - **Status:** open
 - **Progress:** 0%
-- **Dependencies:** [migrate-python-to-java]
+- **Dependencies:** []
 - **Blocks:** []
 - **Last Updated:** 2026-02-20
