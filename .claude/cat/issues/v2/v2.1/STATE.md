@@ -74,6 +74,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - port-skill-preprocessor-failure
 - fix-config-skill-output
 - prevent-rca-cascade-bias
+- update-empirical-test-trial-counts
 
 
 ## Issues Completed
