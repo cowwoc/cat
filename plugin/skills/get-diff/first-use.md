@@ -8,5 +8,5 @@ See LICENSE.md in the project root for license terms.
 Echo the content inside the LATEST `<output skill="get-diff">` tag below. Do not summarize, interpret, or add commentary.
 
 <output skill="get-diff">
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-render-diff-output"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-diff-output"`
 </output>

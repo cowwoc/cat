@@ -814,11 +814,11 @@ like an HTTP request outliving its database connection.
 
 ```java
 // Good - pouch scope passed through constructor
-public final class GetRenderDiffOutput
+public final class GetDiffOutput
 {
   private final JvmScope scope;
 
-  public GetRenderDiffOutput(JvmScope scope)
+  public GetDiffOutput(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -833,12 +833,12 @@ public final class GetRenderDiffOutput
 }
 
 // Avoid - passing individual scope components
-public final class GetRenderDiffOutput
+public final class GetDiffOutput
 {
   private final JsonMapper jsonMapper;
   private final DisplayUtils display;
 
-  public GetRenderDiffOutput(JsonMapper jsonMapper, DisplayUtils display)
+  public GetDiffOutput(JsonMapper jsonMapper, DisplayUtils display)
   {
     this.jsonMapper = jsonMapper;
     this.display = display;
@@ -869,9 +869,9 @@ separate command class - this adds a file with no value. The pattern of construc
 
 ```java
 // Good - business logic class with CLI entry point
-public final class GetRenderDiffOutput
+public final class GetDiffOutput
 {
-  public GetRenderDiffOutput(JvmScope scope) { ... }
+  public GetDiffOutput(JvmScope scope) { ... }
 
   public String getOutput() { ... }  // Testable business logic
 
@@ -879,7 +879,7 @@ public final class GetRenderDiffOutput
   {
     try (JvmScope scope = new MainJvmScope())
     {
-      String output = new GetRenderDiffOutput(scope).getOutput();
+      String output = new GetDiffOutput(scope).getOutput();
       if (output != null)
         System.out.print(output);
     }
@@ -892,7 +892,7 @@ public final class RenderDiffCommand  // Don't create this
   public static void main(String[] args)
   {
     // Trivial delegation adds no value
-    new GetRenderDiffOutput(new MainJvmScope()).getOutput();
+    new GetDiffOutput(new MainJvmScope()).getOutput();
   }
 }
 ```

@@ -8,7 +8,10 @@ package io.github.cowwoc.cat.hooks.skills;
 
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,7 +24,7 @@ import org.slf4j.LoggerFactory;
  *
  * Generates issue complete and scope complete boxes for completion notifications.
  */
-public final class GetIssueCompleteOutput
+public final class GetIssueCompleteOutput implements SkillOutput
 {
   private static final int DEFAULT_PREFIX_LENGTH = 4;
 
@@ -40,6 +43,40 @@ public final class GetIssueCompleteOutput
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
+  }
+
+  /**
+   * Generates the output for this skill.
+   * <p>
+   * Parses {@code --project-dir PATH} from {@code args} if present; otherwise falls back to
+   * {@code scope.getClaudeProjectDir()}.
+   *
+   * @param args the arguments from the preprocessor directive
+   * @return the generated output
+   * @throws NullPointerException     if {@code args} is null
+   * @throws IllegalArgumentException if an unknown argument is provided or {@code --project-dir} lacks a value
+   * @throws IOException              if an I/O error occurs
+   */
+  @Override
+  public String getOutput(String[] args) throws IOException
+  {
+    requireThat(args, "args").isNotNull();
+    Path projectDir = null;
+    for (int i = 0; i < args.length; ++i)
+    {
+      if (args[i].equals("--project-dir"))
+      {
+        if (i + 1 >= args.length)
+          throw new IllegalArgumentException("Missing PATH argument for --project-dir");
+        projectDir = Path.of(args[i + 1]);
+        ++i;
+      }
+      else
+        throw new IllegalArgumentException("Unknown argument: " + args[i]);
+    }
+    if (projectDir == null)
+      projectDir = scope.getClaudeProjectDir();
+    return "GetIssueCompleteOutput: project-dir=" + projectDir;
   }
 
   /**

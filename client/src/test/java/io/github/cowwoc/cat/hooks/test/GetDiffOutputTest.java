@@ -7,7 +7,7 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.skills.GetRenderDiffOutput;
+import io.github.cowwoc.cat.hooks.skills.GetDiffOutput;
 import org.testng.annotations.Test;
 
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
@@ -18,7 +18,7 @@ import java.nio.file.Path;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Tests for GetRenderDiffOutput functionality.
+ * Tests for GetDiffOutput functionality.
  * <p>
  * Tests verify the render-diff output generator. The handler relies on git commands
  * to compute diffs, so tests focus on integration with real git repositories
@@ -27,7 +27,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * Tests are designed for parallel execution - each test is self-contained
  * with no shared state.
  */
-public class GetRenderDiffOutputTest
+public class GetDiffOutputTest
 {
   /**
    * Verifies that getOutput throws NullPointerException for null projectRoot.
@@ -37,10 +37,10 @@ public class GetRenderDiffOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+      GetDiffOutput handler = new GetDiffOutput(scope);
       try
       {
-        handler.getOutput(null);
+        handler.getOutput((Path) null);
       }
       catch (NullPointerException e)
       {
@@ -57,7 +57,7 @@ public class GetRenderDiffOutputTest
   {
     try
     {
-      new GetRenderDiffOutput(null);
+      new GetDiffOutput(null);
     }
     catch (NullPointerException e)
     {
@@ -83,7 +83,7 @@ public class GetRenderDiffOutputTest
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 80}");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // Non-git directory should return error message (git commands fail)
@@ -123,7 +123,7 @@ public class GetRenderDiffOutputTest
         runGit(tempDir, "add", ".");
         runGit(tempDir, "commit", "-m", "initial commit");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // HEAD matches main, so no changes
@@ -152,7 +152,7 @@ public class GetRenderDiffOutputTest
         setupTestRepo(tempDir, "main", "2.0-my-feature", "file.txt",
           "initial content\n", "modified content\n");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         requireThat(result, "result").contains("Diff Summary").
@@ -181,7 +181,7 @@ public class GetRenderDiffOutputTest
         setupTestRepo(tempDir, "main", "2.0-add-method", "code.java",
           "class Foo {\n}\n", "class Foo {\n  void bar() {}\n}\n");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         requireThat(result, "result").contains("Rendered Diff (2-column format)").
@@ -213,7 +213,7 @@ public class GetRenderDiffOutputTest
         setupTestRepo(tempDir, "main", "2.0-edit-data", "data.txt",
           "line1\nline2\nline3\n", "line1\nmodified\nline3\nnew line\n");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         requireThat(result, "result").contains("Insertions:").contains("Deletions:");
@@ -264,7 +264,7 @@ public class GetRenderDiffOutputTest
         runGit(tempDir, "add", ".");
         runGit(tempDir, "commit", "-m", "update both files");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         requireThat(result, "result").contains("Changed Files").
@@ -315,7 +315,7 @@ public class GetRenderDiffOutputTest
         runGit(tempDir, "add", ".");
         runGit(tempDir, "commit", "-m", "edit large file");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // Should contain 4-digit line numbers (1499)
@@ -365,7 +365,7 @@ public class GetRenderDiffOutputTest
         runGit(tempDir, "add", ".");
         runGit(tempDir, "commit", "-m", "modify long line");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // Should contain wrap indicator
@@ -414,7 +414,7 @@ public class GetRenderDiffOutputTest
         runGit(tempDir, "add", ".");
         runGit(tempDir, "commit", "-m", "change to tabs");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // Should visualize space and tab
@@ -464,7 +464,7 @@ public class GetRenderDiffOutputTest
         runGit(tempDir, "add", ".");
         runGit(tempDir, "commit", "-m", "modify binary");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // Should contain binary file indicator
@@ -510,7 +510,7 @@ public class GetRenderDiffOutputTest
         runGit(tempDir, "mv", "old-name.txt", "new-name.txt");
         runGit(tempDir, "commit", "-m", "rename file");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // Should show rename
@@ -570,7 +570,7 @@ public class GetRenderDiffOutputTest
         runGit(tempDir, "add", ".");
         runGit(tempDir, "commit", "-m", "modify both sections");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // Should contain both modifications (word diff marks changed words with **)
@@ -619,7 +619,7 @@ public class GetRenderDiffOutputTest
         runGit(tempDir, "add", ".");
         runGit(tempDir, "commit", "-m", "modify long filename");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // Should contain the long filename (possibly truncated with ...)
@@ -663,7 +663,7 @@ public class GetRenderDiffOutputTest
         runGit(tempDir, "checkout", "-b", "v2.0");
         runGit(tempDir, "checkout", "-b", "2.0-no-changes");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // Should report no changes
@@ -711,7 +711,7 @@ public class GetRenderDiffOutputTest
         runGit(tempDir, "add", ".");
         runGit(tempDir, "commit", "-m", "modify file1");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // Should show changes to file1
@@ -755,7 +755,7 @@ public class GetRenderDiffOutputTest
         runGit(tempDir, "checkout", "-b", "v2.0");
         runGit(tempDir, "checkout", "-b", "2.0-empty");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // Should handle empty stats without error
@@ -784,7 +784,7 @@ public class GetRenderDiffOutputTest
         setupTestRepo(tempDir, "main", "v2.0", "file.txt",
           "initial\n", "modified\n");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // Should detect base branch from branch name pattern
@@ -861,7 +861,7 @@ public class GetRenderDiffOutputTest
         setupTestRepo(tempDir, "v2.0", "2.0-feature", "file.txt",
           "initial\n", "modified\n");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // Should detect v2.0 from branch name "2.0-feature"
@@ -908,7 +908,7 @@ public class GetRenderDiffOutputTest
         runGit(tempDir, "add", ".");
         runGit(tempDir, "commit", "-m", "modify");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // Should detect main as base for v2.0 branch
@@ -932,11 +932,11 @@ public class GetRenderDiffOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
-      String result = handler.getOutput();
+      GetDiffOutput handler = new GetDiffOutput(scope);
+      String result = handler.getOutput(new String[0]);
 
       // TestJvmScope provides a temp dir that is not a git repo,
-      // so getOutput() returns an error about base branch not found
+      // so getOutput(new String[0]) returns an error about base branch not found
       requireThat(result, "result").contains("Base branch not found");
     }
   }
@@ -976,7 +976,7 @@ public class GetRenderDiffOutputTest
         runGit(tempDir, "add", ".");
         runGit(tempDir, "commit", "-m", "rename and modify");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // Should show both rename indicator and diff content
@@ -1024,7 +1024,7 @@ public class GetRenderDiffOutputTest
         runGit(tempDir, "add", ".");
         runGit(tempDir, "commit", "-m", "modify all lines");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // Should contain all changes (pairing happens sequentially)
@@ -1073,7 +1073,7 @@ public class GetRenderDiffOutputTest
         runGit(tempDir, "add", ".");
         runGit(tempDir, "commit", "-m", "orphan commit");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // Should handle malformed diff stats gracefully (no common ancestor means diff may fail)
@@ -1102,7 +1102,7 @@ public class GetRenderDiffOutputTest
         setupTestRepo(tempDir, "main", "2.0-small-file", "tiny.txt",
           "1\n2\n3\n4\n5\n", "1\nmodified\n3\n4\n5\n");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // Should use 2-digit column width even for files with < 10 lines
@@ -1158,7 +1158,7 @@ public class GetRenderDiffOutputTest
         runGit(tempDir, "add", ".");
         runGit(tempDir, "commit", "-m", "second change");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // git diff shows cumulative changes from both commits
@@ -1191,7 +1191,7 @@ public class GetRenderDiffOutputTest
         setupTestRepo(tempDir, "main", "2.0-word-diff", "code.txt",
           "hello world foo\n", "hello earth foo\n");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // "world" changed to "earth" - both should be bold-marked
@@ -1226,7 +1226,7 @@ public class GetRenderDiffOutputTest
         setupTestRepo(tempDir, "main", "2.0-unchanged-words", "text.txt",
           "alpha beta gamma\n", "alpha BETA gamma\n");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // "beta" changed to "BETA" - only these should be bold-marked
@@ -1278,7 +1278,7 @@ public class GetRenderDiffOutputTest
         runGit(tempDir, "add", ".");
         runGit(tempDir, "commit", "-m", "add third line");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // Pure addition "line three" should appear without ** markers
@@ -1309,7 +1309,7 @@ public class GetRenderDiffOutputTest
         setupTestRepo(tempDir, "main", "2.0-markdown-escape", "code.py",
           "def func(**kwargs):\n", "def func(**args):\n");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // The literal ** in kwargs/args should be escaped (\\*\\*), not rendered as bold.
@@ -1342,7 +1342,7 @@ public class GetRenderDiffOutputTest
         setupTestRepo(tempDir, "main", "2.0-underscore-escape", "code.py",
           "my_variable = 1\n", "my_variable = 2\n");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // Underscores should be escaped
@@ -1389,7 +1389,7 @@ public class GetRenderDiffOutputTest
         runGit(tempDir, "add", ".");
         runGit(tempDir, "commit", "-m", "space to tab");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // Whitespace-only path uses visualization markers (· and →), not bold word markers
@@ -1422,7 +1422,7 @@ public class GetRenderDiffOutputTest
         setupTestRepo(tempDir, "main", "2.0-align-test", "align.txt",
           "alpha beta gamma\n", "alpha BETA gamma\n");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // Verify word diff bold markers are present (changes are marked)
@@ -1498,7 +1498,7 @@ public class GetRenderDiffOutputTest
         runGit(tempDir, "add", ".");
         runGit(tempDir, "commit", "-m", "modify last word");
 
-        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
         // Word diff must NOT be applied (line has > 500 tokens)
