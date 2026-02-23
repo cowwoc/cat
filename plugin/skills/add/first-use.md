@@ -1,8 +1,8 @@
----
-description: "Internal skill for subagent preloading. Do not invoke directly."
-user-invocable: false
----
-
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 @templates/issue-state.md
 @templates/issue-plan.md
 @templates/major-state.md
@@ -1341,7 +1341,7 @@ grep -q "$MAJOR.$MINOR" "$ROADMAP" || echo "WARNING: Minor not added to ROADMAP.
 ```bash
 if grep -q "^- \*\*$MAJOR.$MINOR:\*\*" "$ROADMAP"; then
   LINE_NUM=$(grep -n "^- \*\*$MAJOR.$MINOR:\*\*" "$ROADMAP" | cut -d: -f1)
-  sed -i "$((LINE_NUM))a\\  - **$MAJOR.$MINOR.$PATCH:** $VERSION_DESCRIPTION (PENDING)" "$ROADMAP"
+  sed -i "$((LINE_NUM))a\  - **$MAJOR.$MINOR.$PATCH:** $VERSION_DESCRIPTION (PENDING)" "$ROADMAP"
 else
   echo "WARNING: Minor version $MAJOR.$MINOR entry not found in ROADMAP.md"
 fi && \
@@ -1364,7 +1364,9 @@ PARENT_STATE="$PARENT_PATH/STATE.md" && \
 if grep -q "^## Minor Versions" "$PARENT_STATE"; then
   sed -i "/^## Minor Versions/a - v$MAJOR.$MINOR" "$PARENT_STATE"
 else
-  echo -e "\n## Minor Versions\n- v$MAJOR.$MINOR" >> "$PARENT_STATE"
+  echo -e "
+## Minor Versions
+- v$MAJOR.$MINOR" >> "$PARENT_STATE"
 fi && \
 grep -q "v$MAJOR.$MINOR" "$PARENT_STATE" || echo "ERROR: Minor version not added to major STATE.md"
 ```
@@ -1376,7 +1378,9 @@ PARENT_STATE="$PARENT_PATH/STATE.md" && \
 if grep -q "^## Patch Versions" "$PARENT_STATE"; then
   sed -i "/^## Patch Versions/a - v$MAJOR.$MINOR.$PATCH" "$PARENT_STATE"
 else
-  echo -e "\n## Patch Versions\n- v$MAJOR.$MINOR.$PATCH" >> "$PARENT_STATE"
+  echo -e "
+## Patch Versions
+- v$MAJOR.$MINOR.$PATCH" >> "$PARENT_STATE"
 fi && \
 grep -q "v$MAJOR.$MINOR.$PATCH" "$PARENT_STATE" || echo "ERROR: Patch version not added to minor STATE.md"
 ```

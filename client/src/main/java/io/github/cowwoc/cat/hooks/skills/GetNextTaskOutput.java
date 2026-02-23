@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks.skills;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.ProcessRunner;
+import io.github.cowwoc.cat.hooks.util.SkillOutput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.core.type.TypeReference;
@@ -28,7 +29,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  *
  * Combines lock release, next task discovery, and box rendering into a single operation.
  */
-public final class GetNextTaskOutput
+public final class GetNextTaskOutput implements SkillOutput
 {
   private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>()
   {
@@ -52,6 +53,96 @@ public final class GetNextTaskOutput
   }
 
   /**
+   * Parses CLI-style arguments into a named argument map.
+   * <p>
+   * Iterates {@code args} as alternating key/value pairs. Recognized keys are
+   * {@code --completed-issue}, {@code --base-branch}, {@code --session-id},
+   * {@code --project-dir}, and {@code --exclude-pattern}. Unrecognized keys are silently ignored.
+   *
+   * @param args the arguments to parse (alternating key/value pairs)
+   * @return a record holding the parsed argument values; unrecognized or absent keys leave the
+   *   corresponding field empty
+   * @throws NullPointerException if {@code args} is null
+   */
+  private static ParsedArgs parseArgs(String[] args)
+  {
+    requireThat(args, "args").isNotNull();
+    String completedIssue = "";
+    String baseBranch = "";
+    String sessionId = "";
+    String projectDir = "";
+    String excludePattern = "";
+
+    for (int i = 0; i + 1 < args.length; i += 2)
+    {
+      switch (args[i])
+      {
+        case "--completed-issue" -> completedIssue = args[i + 1];
+        case "--base-branch" -> baseBranch = args[i + 1];
+        case "--session-id" -> sessionId = args[i + 1];
+        case "--project-dir" -> projectDir = args[i + 1];
+        case "--exclude-pattern" -> excludePattern = args[i + 1];
+        default ->
+        {
+        }
+      }
+    }
+    return new ParsedArgs(completedIssue, baseBranch, sessionId, projectDir, excludePattern);
+  }
+
+  /**
+   * Holds the parsed CLI argument values for a work-complete invocation.
+   *
+   * @param completedIssue the value of {@code --completed-issue}, or empty if absent
+   * @param baseBranch the value of {@code --base-branch}, or empty if absent
+   * @param sessionId the value of {@code --session-id}, or empty if absent
+   * @param projectDir the value of {@code --project-dir}, or empty if absent
+   * @param excludePattern the value of {@code --exclude-pattern}, or empty if absent
+   */
+  private record ParsedArgs(String completedIssue, String baseBranch, String sessionId, String projectDir,
+    String excludePattern)
+  {
+  }
+
+  /**
+   * Generates the output for the work-complete skill by parsing CLI-style arguments.
+   * <p>
+   * Accepts {@code --completed-issue}, {@code --base-branch}, {@code --session-id}, and
+   * {@code --project-dir} arguments. Falls back to the scope's session ID and the
+   * {@code CLAUDE_PROJECT_DIR} environment variable when the corresponding arguments are absent.
+   *
+   * @param args the arguments from the preprocessor directive (alternating key/value pairs)
+   * @return the formatted Issue Complete or Scope Complete box
+   * @throws NullPointerException if {@code args} is null
+   * @throws IOException if required arguments are missing or an I/O error occurs
+   */
+  @Override
+  public String getOutput(String[] args) throws IOException
+  {
+    requireThat(args, "args").isNotNull();
+
+    ParsedArgs parsed = parseArgs(args);
+    String completedIssue = parsed.completedIssue();
+    String baseBranch = parsed.baseBranch();
+    String sessionId = parsed.sessionId();
+    String projectDir = parsed.projectDir();
+    String excludePattern = parsed.excludePattern();
+
+    if (sessionId.isEmpty())
+      sessionId = scope.getClaudeSessionId();
+    if (projectDir.isEmpty())
+      projectDir = scope.getClaudeProjectDir().toString();
+
+    if (completedIssue.isEmpty() || baseBranch.isEmpty() || sessionId.isEmpty() || projectDir.isEmpty())
+    {
+      throw new IOException("GetNextTaskOutput.getOutput() requires --completed-issue, --base-branch, " +
+        "--session-id, and --project-dir arguments. Got: " + String.join(" ", args));
+    }
+
+    return getNextTaskBox(completedIssue, baseBranch, sessionId, projectDir, excludePattern);
+  }
+
+  /**
    * CLI entry point for generating next task boxes with discovery.
    *
    * @param args command line arguments
@@ -60,26 +151,12 @@ public final class GetNextTaskOutput
   {
     try
     {
-      String completedIssue = "";
-      String baseBranch = "";
-      String sessionId = "";
-      String projectDir = "";
-      String excludePattern = "";
-
-      for (int i = 0; i + 1 < args.length; i += 2)
-      {
-        switch (args[i])
-        {
-          case "--completed-issue" -> completedIssue = args[i + 1];
-          case "--base-branch" -> baseBranch = args[i + 1];
-          case "--session-id" -> sessionId = args[i + 1];
-          case "--project-dir" -> projectDir = args[i + 1];
-          case "--exclude-pattern" -> excludePattern = args[i + 1];
-          default ->
-          {
-          }
-        }
-      }
+      ParsedArgs parsed = parseArgs(args);
+      String completedIssue = parsed.completedIssue();
+      String baseBranch = parsed.baseBranch();
+      String sessionId = parsed.sessionId();
+      String projectDir = parsed.projectDir();
+      String excludePattern = parsed.excludePattern();
 
       if (completedIssue.isEmpty() || baseBranch.isEmpty() || sessionId.isEmpty() || projectDir.isEmpty())
       {

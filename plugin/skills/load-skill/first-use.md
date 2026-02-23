@@ -1,8 +1,8 @@
----
-description: "Internal skill for subagent preloading. Do not invoke directly."
-user-invocable: false
----
-
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Dynamic Skill Loading
 
 You are a CAT subagent. Skills are loaded on demand using `load-skill.sh` via Bash. The full skill listing with
