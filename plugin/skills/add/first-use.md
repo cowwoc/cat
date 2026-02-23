@@ -484,7 +484,7 @@ If no requirements defined in parent version: Satisfies = None
 
 **Validate acceptance criteria against requirements:**
 
-This step ensures acceptance criteria comprehensively cover the task requirements before PLAN.md creation.
+This step ensures acceptance criteria comprehensively cover the issue requirements before PLAN.md creation.
 Addresses the known gap where incorrect acceptance criteria primed incorrect implementations.
 
 **Prepare validation context:**
@@ -502,10 +502,10 @@ Use Task tool to spawn a cat:stakeholder-requirements subagent with the followin
 ```
 You are validating post-conditions for a CAT issue before PLAN.md creation.
 
-**Task Description:**
+**Issue Description:**
 {TASK_DESCRIPTION}
 
-**Task Type:**
+**Issue Type:**
 {TASK_TYPE}
 
 **Proposed Post-conditions:**
@@ -520,7 +520,7 @@ You are validating post-conditions for a CAT issue before PLAN.md creation.
 
 2. **Version Requirements Cross-Check:** If this issue satisfies REQ-XXX requirements, verify the post-conditions address the intent of those requirements. Check requirements from ALL ancestor versions recursively (e.g., for an issue in v2.1, check both v2.1 PLAN.md and v2 PLAN.md requirements). Flag any satisfied requirement from any ancestor that has no corresponding post-condition.
 
-3. **Contradiction Check:** Verify no post-condition contradicts the task goal or established principles (e.g., M462 pattern: fail-fast post-conditions must not require recovery instructions).
+3. **Contradiction Check:** Verify no post-condition contradicts the issue goal or established principles (e.g., M462 pattern: fail-fast post-conditions must not require recovery instructions).
 
 **Output format:**
 
@@ -681,7 +681,7 @@ Check the JSON output for success status.
 
 <step name="task_check_parent_decomposition">
 
-**Check if parent task is decomposed:**
+**Check if parent issue is decomposed:**
 
 After creating a sub-issue, verify if it's being added to a decomposed parent issue.
 
@@ -697,7 +697,7 @@ if [[ -f "${PARENT_ISSUE_DIR}/STATE.md" ]] && grep -q "^## Decomposed Into" "${P
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo "This sub-issue was added to decomposed parent: ${PARENT_NAME}"
   echo ""
-  echo "IMPORTANT: The parent task ${PARENT_NAME} cannot be closed or merged"
+  echo "IMPORTANT: The parent issue ${PARENT_NAME} cannot be closed or merged"
   echo "until ALL sub-issues (including this new one) are completed and closed."
   echo ""
   echo "Completion requirements:"

@@ -84,7 +84,7 @@ cd /workspace && git worktree remove /workspace/.claude/cat/worktrees/issue-name
 git worktree remove /workspace/.claude/cat/worktrees/issue-name --force  # Shell breaks!
 ```
 
-**When merging task work:**
+**When merging issue work:**
 1. Complete all git operations (merge, commit)
 2. `cd /workspace` (or main workspace path)
 3. THEN run `git worktree remove`

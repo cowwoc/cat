@@ -43,12 +43,12 @@ Main Agent (work-with-issue skill)
 
 | Phase | Handler | Purpose |
 |-------|---------|---------|
-| Prepare | work-prepare subagent | Find task, create worktree |
-| Execute | Inline implementation subagent | Implement task per PLAN.md |
+| Prepare | work-prepare subagent | Find issue, create worktree |
+| Execute | Inline implementation subagent | Implement issue per PLAN.md |
 | Review | stakeholder-review skill | Run stakeholder reviews |
 | Merge | work-merge subagent | Squash, merge, cleanup |
 
-Model selection follows `delegate/SKILL.md` criteria based on task complexity.
+Model selection follows `delegate/SKILL.md` criteria based on issue complexity.
 
 ## Main Agent Responsibilities
 
@@ -128,7 +128,7 @@ Main agent tracks lock status but doesn't manage locks directly.
 |-------|---------|
 | Subagent returns ERROR | Main agent displays error, offers retry/abort |
 | Merge conflict | work-merge returns CONFLICT, main agent asks user |
-| Lock unavailable | work-prepare returns LOCKED, main agent tries next task |
+| Lock unavailable | work-prepare returns LOCKED, main agent tries next issue |
 | Token limit exceeded | Implementation subagent returns warning, main agent offers decomposition |
 
 ## Parallel Execution

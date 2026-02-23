@@ -168,7 +168,7 @@ feature: add login form with validation and error handling
 - Loading states and error display
 ```
 
-### Enhanced Format for Task Commits
+### Enhanced Format for Issue Commits
 
 The final squashed commit message MUST include changelog content. The commit diff already shows Files Modified, Files
 Created, and Test Coverage - omit these from the message.
@@ -177,7 +177,7 @@ Created, and Test Coverage - omit these from the message.
 {type}: {concise description}
 
 ## Problem Solved
-[WHY this task was needed - what wasn't working or was missing]
+[WHY this issue was needed - what wasn't working or was missing]
 - {Problem 1}
 - {Problem 2 if applicable}
 

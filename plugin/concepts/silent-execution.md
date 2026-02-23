@@ -87,7 +87,7 @@ Skill B's preprocessor runs the command invisibly using the passed arguments.
 **Before (visible Bash call):**
 
 ```markdown
-## Next Task
+## Next Issue
 Run `get-next-task-box --completed-issue "${issue_id}" ...` to generate the box.
 ```
 

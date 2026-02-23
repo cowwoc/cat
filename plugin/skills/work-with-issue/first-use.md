@@ -8,7 +8,7 @@ See LICENSE.md in the project root for license terms.
 Execute all work phases (implement, confirm, review, merge) with the main agent directly orchestrating each phase.
 Shows progress banners at phase transitions while maintaining clean user output.
 
-**Architecture:** This skill is invoked by `/cat:work` after task discovery (Phase 1). The main agent
+**Architecture:** This skill is invoked by `/cat:work` after issue discovery (Phase 1). The main agent
 directly orchestrates all phases:
 - Implement: Spawn implementation subagent
 - Confirm: Invoke verify-implementation skill
@@ -108,13 +108,13 @@ try:
         print(f'ERROR: Lock for ${ISSUE_ID} belongs to session {session}, not {expected}')
         sys.exit(1)
 except FileNotFoundError:
-    print(f'ERROR: No lock file found for ${ISSUE_ID}. Task was not properly prepared.')
+    print(f'ERROR: No lock file found for ${ISSUE_ID}. Issue was not properly prepared.')
     sys.exit(1)
 "
 ```
 
 If lock ownership verification fails, STOP immediately and return FAILED status. Do NOT proceed
-to execution — another session owns this task.
+to execution — another session owns this issue.
 
 ## Step 3: Implement Phase
 
@@ -134,7 +134,7 @@ Do NOT skip the banner or continue without it.
 ### Skip if Resuming
 
 If `HAS_EXISTING_WORK == true`:
-- Output: "Resuming task with existing work - skipping to verification"
+- Output: "Resuming issue with existing work - skipping to verification"
 - Skip to Step 4
 
 ### Read PLAN.md and Identify Skills
@@ -190,7 +190,7 @@ the subagent to treat distinct steps as a single operation, causing incomplete e
 
 ### Spawn Implementation Subagent
 
-Spawn a subagent to implement the task:
+Spawn a subagent to implement the issue:
 
 ```
 Task tool:
@@ -198,9 +198,9 @@ Task tool:
   subagent_type: "cat:work-execute"
   model: "sonnet"
   prompt: |
-    Execute the implementation for task ${ISSUE_ID}.
+    Execute the implementation for issue ${ISSUE_ID}.
 
-    ## Task Configuration
+    ## Issue Configuration
     ISSUE_ID: ${ISSUE_ID}
     ISSUE_PATH: ${ISSUE_PATH}
     WORKTREE_PATH: ${WORKTREE_PATH}
@@ -209,7 +209,7 @@ Task tool:
     ESTIMATED_TOKENS: ${ESTIMATED_TOKENS}
     TRUST_LEVEL: ${TRUST}
 
-    ## Task Goal (from PLAN.md)
+    ## Issue Goal (from PLAN.md)
     ${TASK_GOAL}
 
     ## Execution Steps (from PLAN.md)
@@ -391,9 +391,9 @@ Parse verification result to determine if all post-conditions were satisfied.
     subagent_type: "cat:work-execute"
     model: "sonnet"
     prompt: |
-      Fix the following missing post-conditions for task ${ISSUE_ID}.
+      Fix the following missing post-conditions for issue ${ISSUE_ID}.
 
-      ## Task Configuration
+      ## Issue Configuration
       ISSUE_ID: ${ISSUE_ID}
       WORKTREE_PATH: ${WORKTREE_PATH}
       BRANCH: ${BRANCH}
@@ -589,9 +589,9 @@ The auto-fix threshold is determined by `AUTOFIX_LEVEL`:
      subagent_type: "cat:work-execute"
      model: "sonnet"
      prompt: |
-       Fix the following stakeholder review concerns for task ${ISSUE_ID}.
+       Fix the following stakeholder review concerns for issue ${ISSUE_ID}.
 
-       ## Task Configuration
+       ## Issue Configuration
        ISSUE_ID: ${ISSUE_ID}
        WORKTREE_PATH: ${WORKTREE_PATH}
        BRANCH: ${BRANCH}
@@ -650,7 +650,7 @@ User approval is a SEPARATE gate in Step 6.
 
 **MANDATORY: Rebase the issue branch onto the base branch before presenting work for user review.** The base branch may
 have advanced since the worktree was created (e.g., learning commits, other merges). Rebasing ensures the user reviews
-changes against the current base, not a stale snapshot, and that squashing only captures task changes:
+changes against the current base, not a stale snapshot, and that squashing only captures issue changes:
 
 ```bash
 git -C ${WORKTREE_PATH} rebase ${BASE_BRANCH}
@@ -797,7 +797,7 @@ about what they are approving.
    git -C ${WORKTREE_PATH} log --oneline ${BASE_BRANCH}..HEAD
    ```
 
-3. **Display task goal** (from PLAN.md)
+3. **Display issue goal** (from PLAN.md)
 
 4. **Display execution summary** (commits count, files changed)
 
@@ -867,9 +867,9 @@ Fail-fast principle: Unknown consent = No consent = STOP.
      subagent_type: "cat:work-execute"
      model: "sonnet"
      prompt: |
-       Fix the following stakeholder review concerns for task ${ISSUE_ID}.
+       Fix the following stakeholder review concerns for issue ${ISSUE_ID}.
 
-       ## Task Configuration
+       ## Issue Configuration
        ISSUE_ID: ${ISSUE_ID}
        WORKTREE_PATH: ${WORKTREE_PATH}
        BRANCH: ${BRANCH}
@@ -964,7 +964,7 @@ Task tool:
   subagent_type: "cat:work-merge"
   model: "haiku"
   prompt: |
-    Execute the merge phase for task ${ISSUE_ID}.
+    Execute the merge phase for issue ${ISSUE_ID}.
 
     ## Configuration
     SESSION_ID: $CLAUDE_SESSION_ID
