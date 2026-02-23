@@ -1658,6 +1658,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When blocked_tasks shows not_found for a dependency, verify the dependency STATE.md directly. The diagnostic is for context only; the selection result is authoritative. The code fix (remove .limit(1000) from buildIssueIndex) is tracked as task M401-fix."
+    },
+    {
+      "id": "M402",
+      "timestamp": "2026-02-24T17:26:24Z",
+      "category": "protocol_violation",
+      "description": "Backup branch left behind after failed rebase \u2014 merge subagent never cleaned it up",
+      "root_cause": "git-rebase skill ERROR recovery table said 'restore from backup if needed' but gave no instruction to delete backup after handling. Agent completed error recovery via alternative approach but skipped backup cleanup because no guidance existed.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/git-rebase/first-use.md",
+      "pattern_keywords": [
+        "backup-before-rebase",
+        "backup_branch",
+        "git-rebase-safe",
+        "branch cleanup",
+        "orphaned branch"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "After handling a rebase ERROR (investigation complete, alternative taken, or escalated): delete the backup branch with 'git branch -D <backup_branch>'. Same applies to CONFLICT resolution. Backup exists only during investigation."
     }
   ]
 }
