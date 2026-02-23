@@ -14,11 +14,11 @@ its own context, keeping main agent context minimal (~5-10K tokens).
 
 | Format | Example | Behavior |
 |--------|---------|----------|
-| Empty | `/cat:work` | Work on next available task |
-| Version | `/cat:work 2.1` | Work on tasks in version 2.1 |
-| Task ID | `/cat:work 2.1-migrate-api` | Work on specific task |
-| Bare name | `/cat:work migrate-api` | Work on specific task by name only (resolves to current branch version) |
-| Filter | `/cat:work skip compression` | Filter task selection (natural language) |
+| Empty | `/cat:work` | Work on next available issue |
+| Version | `/cat:work 2.1` | Work on issues in version 2.1 |
+| Issue ID | `/cat:work 2.1-migrate-api` | Work on specific issue |
+| Bare name | `/cat:work migrate-api` | Work on specific issue by name only (resolves to current branch version) |
+| Filter | `/cat:work skip compression` | Filter issue selection (natural language) |
 
 **Flags:**
 - `--override-gate` - Skip approval gate (use with caution)
@@ -26,8 +26,8 @@ its own context, keeping main agent context minimal (~5-10K tokens).
 **Bare name format:** Issue name without version prefix, starting with a letter (e.g., `fix-work-prepare-issue-name-matching`). If multiple versions contain the same issue name, prefers the version matching the current git branch. Falls back to first match if no branch version match exists.
 
 **Filter examples:**
-- `skip compression tasks` - exclude tasks with "compression" in name
-- `only migration` - only tasks with "migration" in name
+- `skip compression tasks` - exclude issues with "compression" in name
+- `only migration` - only issues with "migration" in name
 
 Filters are interpreted by the prepare phase subagent using natural language understanding.
 
@@ -65,7 +65,7 @@ Run `"${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --arguments "${ARGUMENTS}"`
 | READY | Continue to Phase 2 |
 | READY + `potentially_complete: true` | Ask user to verify (see below), then skip or continue |
 | NO_TASKS | Display extended diagnostics (see below), stop |
-| LOCKED | Display lock message, try next task |
+| LOCKED | Display lock message, try next issue |
 | OVERSIZED | Invoke /cat:decompose-issue, then retry |
 | ERROR | Display error, stop |
 | No JSON / empty | Subagent failed to produce output - display error, release lock if acquired, stop |
@@ -75,7 +75,7 @@ Run `"${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --arguments "${ARGUMENTS}"`
 **No-result handling:** If the prepare script returns no parseable JSON (empty output
 or malformed JSON), treat as ERROR and STOP. Do NOT attempt to reconstruct the result by listing
 worktrees or reading lock files. Artifacts from other sessions may exist and will mislead you into
-working on the wrong task.
+working on the wrong issue.
 
 Display: "Prepare phase failed to return a result. The script may have encountered an error."
 Then STOP. Do not proceed to work-with-issue.
@@ -84,10 +84,10 @@ Then STOP. Do not proceed to work-with-issue.
 
 When prepare phase returns NO_TASKS, use extended failure fields to provide specific diagnostics:
 
-1. If `blocked_tasks` is non-empty: list each blocked task and what it's blocked by
+1. If `blocked_tasks` is non-empty: list each blocked issue and what it's blocked by
 2. If `locked_tasks` is non-empty: suggest `/cat:cleanup` to clear stale locks
-3. If `closed_count == total_count`: all tasks done - suggest `/cat:add` for new work
-4. Otherwise: suggest `/cat:status` to see available tasks
+3. If `closed_count == total_count`: all issues done - suggest `/cat:add` for new work
+4. Otherwise: read `get-available-issues.sh` output to determine which issues are available and display them
 
 Fallback to `message` field if extended fields are absent:
 
@@ -95,8 +95,8 @@ Fallback to `message` field if extended fields are absent:
 |------------------|------------------|
 | "locked" | Suggest `/cat:cleanup` to clear stale locks, or wait for other sessions |
 | "blocked" | Suggest resolving blocking dependencies first |
-| "closed" | All tasks done - suggest `/cat:status` to verify or `/cat:add` for new work |
-| other | Suggest `/cat:status` to see available tasks |
+| "closed" | All issues done - suggest `/cat:status` to verify or `/cat:add` for new work |
+| other | Run `get-available-issues.sh` to determine which issues are available and display them |
 
 **NEVER suggest working on a previous version** - if user is on v2.1, suggesting v2.0 is unhelpful.
 
@@ -115,7 +115,7 @@ with STATE.md not reflecting completion (e.g., stale merge overwrote status).
        header: "${issue_id}"
        question: "Is ${issue_id} already complete?"
        options:
-         - "Already complete" (Fix STATE.md to closed, release lock, clean up worktree, select next task)
+         - "Already complete" (Fix STATE.md to closed, release lock, clean up worktree, select next issue)
          - "Not complete, continue" (Proceed to Phase 2 normally)
      ```
    - **NO** (commits are unrelated or tangential to the goal) → log a note that the suspicious commits don't
@@ -207,7 +207,7 @@ The skill will:
 **Store final results:**
 - `commits`, `files_changed`, `tokens_used`, `merged`
 
-## Next Task
+## Next Issue
 
 After successful merge, invoke `/cat:work-complete` with positional arguments:
 
@@ -217,29 +217,29 @@ After successful merge, invoke `/cat:work-complete` with positional arguments:
 
 Output the skill result verbatim.
 
-**Parse the result to determine next task status:**
-- If result contains "**Next:**" followed by an issue ID → next task found
-- If result contains "Scope Complete" → no next task
+**Parse the result to determine next issue status:**
+- If result contains "**Next:**" followed by an issue ID → next issue found
+- If result contains "Scope Complete" → no next issue
 
 **Route based on trust level:**
 
 | Condition | Action |
 |-----------|--------|
-| No next task | Scope complete - stop |
-| Next task + trust == "low" | Display box, stop for user |
-| Next task + trust >= "medium" | Display box, auto-continue to `/cat:work ${next_issue_id}` |
+| No next issue | Scope complete - stop |
+| Next issue + trust == "low" | Display box, stop for user |
+| Next issue + trust >= "medium" | Display box, auto-continue to `/cat:work ${next_issue_id}` |
 
 **Low-trust stop message:**
 
-If trust == "low" and next task found, display after the box:
+If trust == "low" and next issue found, display after the box:
 
 ```
-Ready to continue to next task. Use /cat:work to continue, or /cat:status to review remaining tasks.
+Ready to continue to next issue. Use /cat:work to continue, or /cat:status to review remaining issues.
 ```
 
 **Auto-continue (trust >= medium):**
 
-Invoke the Skill tool again with `/cat:work ${next_issue_id}` to continue to the next task.
+Invoke the Skill tool again with `/cat:work ${next_issue_id}` to continue to the next issue.
 No delay needed - the work skill handles its own orchestration.
 
 ## Error Handling

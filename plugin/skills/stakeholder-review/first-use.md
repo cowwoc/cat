@@ -652,7 +652,7 @@ Do NOT access files outside this directory.
 The following context has been pre-fetched from the worktree. Use this content directly
 rather than reading these files yourself.
 
-### Task PLAN.md ({ISSUE_DIR}PLAN.md)
+### Issue PLAN.md ({ISSUE_DIR}PLAN.md)
 {ISSUE_PLAN_CONTENT}
 
 ### Version PLAN.md

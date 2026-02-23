@@ -115,7 +115,7 @@ plugin/agents/
 ## Usage
 
 Agents are invoked by Claude Code automatically when their description matches the
-task context, or explicitly via delegation patterns in skills and commands.
+issue context, or explicitly via delegation patterns in skills and commands.
 
 ## Development Guidelines
 

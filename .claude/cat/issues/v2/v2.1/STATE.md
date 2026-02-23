@@ -33,7 +33,6 @@ Finalize naming conventions and UI polish before recording demo videos.
 - compress-templates-md
 - developer-local-bundle-rebuild
 - migrate-python-to-java
-- rename-task-to-issue-terminology
 - session-start-version-check
 
 
@@ -308,3 +307,4 @@ Finalize naming conventions and UI polish before recording demo videos.
 - use-patch-id-for-commit-tracking
 - verify-subagent-commit-messages
 - wrap-markdown-files-120-chars
+- rename-task-to-issue-terminology

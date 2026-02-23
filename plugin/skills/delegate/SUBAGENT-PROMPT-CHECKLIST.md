@@ -42,7 +42,7 @@ CURIOSITY_PREF=$(jq -r '.curiosity // "low"' .claude/cat/cat-config.json)
 
 | Value | Include in Implementation Prompt |
 |-------|----------------------------------|
-| `low` | "Focus ONLY on the assigned task. Report only task-related issues." |
+| `low` | "Focus ONLY on the assigned issue. Report only issue-related findings." |
 | `medium` | "NOTE obvious issues in files you touch. Report in .completion.json." |
 | `high` | "Actively look for code quality issues. Report ALL findings." |
 
@@ -79,8 +79,8 @@ Do NOT include patience instructions in implementation subagent prompts.
 | Value | Main Agent Action on Returned Issues |
 |-------|--------------------------------------|
 | `low` | Resume PLANNER subagent to update plan with fixes, then continue |
-| `medium` | Create tasks for discovered issues in CURRENT version backlog |
-| `high` | Create tasks for discovered issues in FUTURE version backlog |
+| `medium` | Create issues for discovered items in CURRENT version backlog |
+| `high` | Create issues for discovered items in FUTURE version backlog |
 
 ## Token Tracking Requirements (A017)
 
@@ -104,19 +104,19 @@ TOKENS=$(jq -s '[.[] | select(.type == "assistant") | .message.usage |
 
 ## Context Limit Enforcement (A018)
 
-**MANDATORY: Validate task size BEFORE delegating.**
+**MANDATORY: Validate issue size BEFORE delegating.**
 
 | Limit | Percentage | Tokens (200K) | Purpose |
 |-------|------------|---------------|---------|
-| Soft target | 40% | 80,000 | Recommended task size |
+| Soft target | 40% | 80,000 | Recommended issue size |
 | Hard limit | 80% | 160,000 | MANDATORY decomposition above |
 | Context limit | 100% | 200,000 | Absolute ceiling |
 
 ```bash
 # Pre-delegation validation
 if [ "${ESTIMATED_TOKENS}" -ge "${HARD_LIMIT}" ]; then
-  echo "ERROR: Task estimate (${ESTIMATED_TOKENS}) exceeds hard limit (${HARD_LIMIT})"
-  echo "MANDATORY: Decompose task before delegating. Use /cat:decompose-task"
+  echo "ERROR: Issue estimate (${ESTIMATED_TOKENS}) exceeds hard limit (${HARD_LIMIT})"
+  echo "MANDATORY: Decompose issue before delegating. Use /cat:decompose-issue"
   exit 1
 fi
 ```

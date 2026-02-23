@@ -139,7 +139,7 @@ if [[ "$REGRESSIONS" -gt 0 ]]; then
 fi
 ```
 
-### Step 3: Rebase task branch onto base
+### Step 3: Rebase issue branch onto base
 
 The `merge-and-cleanup` tool in Step 5 handles origin sync and rebasing atomically. No manual
 rebase is required here.
@@ -151,7 +151,7 @@ rebase is required here.
 If rebase fails with conflicts:
 1. Count conflicting files
 2. If > 3 files: Return CONFLICT, require manual intervention
-3. If <= 3 files: Attempt resolution (prefer task branch changes), then `git rebase --continue`
+3. If <= 3 files: Attempt resolution (prefer issue branch changes), then `git rebase --continue`
 
 **NEVER fall back to merge commit.** Linear history is mandatory.
 
