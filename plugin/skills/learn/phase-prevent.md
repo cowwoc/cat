@@ -274,7 +274,7 @@ action: |
 |-----------|-------------|-----------------|
 | Similar documentation already exists | Documentation already failed | Escalate to hook or code_fix |
 | Mistake category is `protocol_violation` | Protocol was documented but violated | Escalate to hook enforcement |
-| This is a recurrence (`recurrence_of` is set) | Previous prevention failed | Escalate to stronger level |
+| This is a recurrence (`recurrence_of` is set) | Verify that previous prevention addressed the correct root cause before escalating | Re-examine root cause from fresh evidence first |
 | prevention_type would be `documentation` (level 7) | Weakest level, often ineffective | Consider hook (level 2) or validation (level 3) |
 
 **Self-check before recording prevention_type: documentation:**
