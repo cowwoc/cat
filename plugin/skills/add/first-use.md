@@ -720,7 +720,7 @@ This check ensures the agent is reminded that decomposed parents require all sub
 Run the renderer script and output its result verbatim:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/render-add-complete.sh" --type issue --name "{issue-name}" --version "{version}" --issue-type "{type}" --deps "{dependencies}"
+"${CLAUDE_PLUGIN_ROOT}/client/bin/get-add-output" issue "{issue-name}" "{version}" "{type}" "{dependencies}"
 ```
 
 </step>
@@ -1434,7 +1434,7 @@ EOF
 Run the renderer script and output its result verbatim:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/render-add-complete.sh" --type version --name "{version-name}" --version "{version}" --version-type "{VERSION_TYPE}" --parent "{parent-info}" --path "{version-path}"
+"${CLAUDE_PLUGIN_ROOT}/client/bin/get-add-output" version "{version-name}" "{version}" "{parent-info}" "{version-path}"
 ```
 
 </step>
