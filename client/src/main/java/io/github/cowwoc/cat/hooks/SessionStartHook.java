@@ -12,7 +12,7 @@ import io.github.cowwoc.cat.hooks.session.CheckRetrospectiveDue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import io.github.cowwoc.cat.hooks.session.CheckUpdateAvailable;
-import io.github.cowwoc.cat.hooks.session.CheckUpgrade;
+import io.github.cowwoc.cat.hooks.session.CheckDataMigration;
 import io.github.cowwoc.cat.hooks.session.ClearSkillMarkers;
 import io.github.cowwoc.cat.hooks.session.EchoSessionId;
 import io.github.cowwoc.cat.hooks.session.InjectCriticalThinking;
@@ -44,7 +44,7 @@ public final class SessionStartHook implements HookHandler
   public SessionStartHook(JvmScope scope)
   {
     this(List.of(
-      new CheckUpgrade(scope),
+      new CheckDataMigration(scope),
       new CheckUpdateAvailable(scope),
       new EchoSessionId(),
       new CheckRetrospectiveDue(scope),
