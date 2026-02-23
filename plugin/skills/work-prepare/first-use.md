@@ -148,8 +148,39 @@ Parse the result and handle statuses:
 - `found` - Continue to worktree creation
 - `not_found` - Return NO_TASKS with extended info (see below)
 - `locked` - Return LOCKED status with owner info
-- `existing_worktree` - Return LOCKED status; treat as locked by another session. Do NOT investigate, inspect, or
-  remove the worktree. Pick a different issue.
+- `existing_worktree` - Check whether a lock file exists for this issue:
+  - **Lock file present:** Treat as locked by another session. Return LOCKED status. Do NOT investigate, inspect, or
+    remove the worktree. Pick a different issue.
+  - **No lock file (orphaned worktree):** The worktree was left behind by a previous session. Apply the Orphaned
+    Worktree Recovery Protocol below.
+
+#### Orphaned Worktree Recovery Protocol
+
+When a worktree exists for the target issue but no lock file is present:
+
+1. **Check merge status first.** Determine whether the branch's commits are already merged into base:
+
+   ```bash
+   UNMERGED=$(git -C "${CLAUDE_PROJECT_DIR}" log --oneline "${BASE_BRANCH}..${ISSUE_BRANCH}" 2>/dev/null)
+   ```
+
+2. **If already merged** (`UNMERGED` is empty): The work was completed in a prior session and merged. Clean up:
+
+   ```bash
+   git -C "${CLAUDE_PROJECT_DIR}" worktree remove "${WORKTREE_PATH}" --force
+   git -C "${CLAUDE_PROJECT_DIR}" branch -D "${ISSUE_BRANCH}" 2>/dev/null || true
+   ```
+
+   Then proceed with normal issue discovery (the issue may now show as available, or STATE.md needs updating).
+
+3. **If NOT merged** (`UNMERGED` has commits): Prior work exists but was not merged. Resume work in the existing
+   worktree:
+   - Acquire the lock: run `issue-lock.sh acquire`
+   - Use the existing worktree path as `worktree_path` in the output
+   - Return status `READY` with `has_existing_work: true`
+
+**NEVER force-remove a worktree without first checking merge status.** Removing an unmerged worktree destroys
+in-progress work permanently.
 
 **Extended failure info:** When discovery returns `not_found`, gather diagnostic context
 before returning NO_TASKS. Scan issue directories to report why no tasks are available:
@@ -347,7 +378,9 @@ Output the JSON result with all required fields.
 - Planning structure missing: Return ERROR immediately
 - Script returns error: Return ERROR with message
 - Lock unavailable: Return LOCKED, do NOT investigate
-- Existing worktree detected (`existing_worktree` status): Return LOCKED, do NOT investigate or remove the worktree
+- Existing worktree with lock file (`existing_worktree` status, lock present): Return LOCKED, do NOT investigate or
+  remove the worktree
+- Existing worktree without lock file (orphaned): Apply Orphaned Worktree Recovery Protocol (Step 2)
 - Task exceeds hard limit: Return OVERSIZED
 - **Worktree on wrong branch:** Clean up and return ERROR
 
