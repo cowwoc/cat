@@ -370,7 +370,7 @@ else
                     if (entry != "") print entry; else print "- Previous version complete (or no prerequisites)"
                     print ""
                     print "## Post-conditions"
-                    if (exit_cond != "") print exit_cond; else print "- All tasks complete"
+                    if (exit_cond != "") print exit_cond; else print "- All issues complete"
                     print ""
                     print
                     next
@@ -384,7 +384,7 @@ else
                         if (entry != "") print entry; else print "- Previous version complete (or no prerequisites)"
                         print ""
                         print "## Post-conditions"
-                        if (exit_cond != "") print exit_cond; else print "- All tasks complete"
+                        if (exit_cond != "") print exit_cond; else print "- All issues complete"
                     }
                 }
             ' "$plan_file" > "${plan_file}.tmp" && mv "${plan_file}.tmp" "$plan_file"

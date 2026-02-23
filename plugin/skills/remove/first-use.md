@@ -70,7 +70,7 @@ Use AskUserQuestion:
 **Route based on selection:**
 
 **If "Issue":**
-- Continue to remove_task workflow (step: task_select)
+- Continue to remove_issue workflow (step: issue_select)
 
 **If "Patch version":**
 - Set VERSION_TYPE="patch", PARENT_TYPE="minor"
@@ -88,7 +88,7 @@ Use AskUserQuestion:
 
 <!-- ========== ISSUE REMOVAL WORKFLOW ========== -->
 
-<step name="task_select">
+<step name="issue_select">
 
 **Determine issue to remove:**
 
@@ -97,11 +97,11 @@ List all issues:
 ```bash
 find .claude/cat/issues/v*/v*.* -mindepth 1 -maxdepth 1 -type d ! -name "v*" 2>/dev/null | while read d; do
     [ -f "$d/STATE.md" ] || continue
-    TASK_NAME=$(basename "$d")
+    ISSUE_NAME=$(basename "$d")
     MAJOR=$(echo "$d" | sed 's|.*/v\([0-9]*\)/v[0-9]*\.[0-9]*/.*|\1|')
     MINOR=$(echo "$d" | sed 's|.*/v[0-9]*/v[0-9]*\.\([0-9]*\)/.*|\1|')
     STATUS=$(grep "Status:" "$d/STATE.md" | sed 's/.*: //')
-    echo "$MAJOR.$MINOR-$TASK_NAME ($STATUS)"
+    echo "$MAJOR.$MINOR-$ISSUE_NAME ($STATUS)"
 done
 ```
 
@@ -114,16 +114,16 @@ If "Cancel" -> exit command.
 
 </step>
 
-<step name="task_validate">
+<step name="issue_validate">
 
 **Validate issue can be removed:**
 
 ```bash
-TASK_PATH=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/$TASK_NAME"
+ISSUE_PATH=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/$ISSUE_NAME"
 
-[ ! -d "$TASK_PATH" ] && echo "ERROR: Issue does not exist" && exit 1
+[ ! -d "$ISSUE_PATH" ] && echo "ERROR: Issue does not exist" && exit 1
 
-STATUS=$(grep "Status:" "$TASK_PATH/STATE.md" | sed 's/.*: //')
+STATUS=$(grep "Status:" "$ISSUE_PATH/STATE.md" | sed 's/.*: //')
 ```
 
 **Block removal if in-progress:**
@@ -158,13 +158,13 @@ If "No, keep it" -> exit command.
 
 </step>
 
-<step name="task_check_dependencies">
+<step name="issue_check_dependencies">
 
 **Check if other issues depend on this one:**
 
 ```bash
 find .claude/cat/issues/v*/v*.* -mindepth 1 -maxdepth 1 -type d ! -name "v*" \
-    -exec grep -l "Dependencies:.*$TASK_NAME" {}/STATE.md \; 2>/dev/null
+    -exec grep -l "Dependencies:.*$ISSUE_NAME" {}/STATE.md \; 2>/dev/null
 ```
 
 If dependents found:
@@ -183,7 +183,7 @@ Removing will leave these issues with unmet
 
 </step>
 
-<step name="task_confirm">
+<step name="issue_confirm">
 
 **Final confirmation:**
 
@@ -202,27 +202,27 @@ If "No, cancel" -> exit command.
 
 </step>
 
-<step name="task_remove">
+<step name="issue_remove">
 
 **Remove issue directory:**
 
 ```bash
-rm -rf "$TASK_PATH"
+rm -rf "$ISSUE_PATH"
 ```
 
 **Update issues that depended on this issue:**
 
 ```bash
 find .claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR -mindepth 1 -maxdepth 1 -type d ! -name "v*" | while read d; do
-    if grep -q "Dependencies:.*$TASK_NAME" "$d/STATE.md" 2>/dev/null; then
-        sed -i "s/$TASK_NAME, //g; s/, $TASK_NAME//g; s/$TASK_NAME//g" "$d/STATE.md"
+    if grep -q "Dependencies:.*$ISSUE_NAME" "$d/STATE.md" 2>/dev/null; then
+        sed -i "s/$ISSUE_NAME, //g; s/, $ISSUE_NAME//g; s/$ISSUE_NAME//g" "$d/STATE.md"
     fi
 done
 ```
 
 </step>
 
-<step name="task_update_parent">
+<step name="issue_update_parent">
 
 **Update parent minor STATE.md - remove issue from list:**
 
@@ -230,28 +230,28 @@ done
 VERSION_STATE=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/STATE.md"
 
 # Remove issue from Issues Pending section
-sed -i "/^- $TASK_NAME$/d" "$VERSION_STATE"
+sed -i "/^- $ISSUE_NAME$/d" "$VERSION_STATE"
 
 # Also remove from Issues Completed if present
-sed -i "/^| $TASK_NAME |/d" "$VERSION_STATE"
+sed -i "/^| $ISSUE_NAME |/d" "$VERSION_STATE"
 
 # Recalculate progress
-TOTAL_TASKS=$(grep -c "^- " "$VERSION_STATE" 2>/dev/null || echo 0)
-COMPLETED_TASKS=$(grep -c "^| .* | completed |" "$VERSION_STATE" 2>/dev/null || echo 0)
-if [ "$TOTAL_TASKS" -gt 0 ]; then
-  PROGRESS=$((COMPLETED_TASKS * 100 / TOTAL_TASKS))
+TOTAL_ISSUES=$(grep -c "^- " "$VERSION_STATE" 2>/dev/null || echo 0)
+COMPLETED_ISSUES=$(grep -c "^| .* | completed |" "$VERSION_STATE" 2>/dev/null || echo 0)
+if [ "$TOTAL_ISSUES" -gt 0 ]; then
+  PROGRESS=$((COMPLETED_ISSUES * 100 / TOTAL_ISSUES))
 else
   PROGRESS=0
 fi
 sed -i "s/Progress:.*$/Progress:** $PROGRESS%/" "$VERSION_STATE"
 
 # Verify issue removed
-! grep -q "^- $TASK_NAME$" "$VERSION_STATE" || echo "ERROR: Issue not removed from STATE.md"
+! grep -q "^- $ISSUE_NAME$" "$VERSION_STATE" || echo "ERROR: Issue not removed from STATE.md"
 ```
 
 </step>
 
-<step name="task_commit">
+<step name="issue_commit">
 
 **Commit removal:**
 
@@ -267,7 +267,7 @@ EOF
 
 </step>
 
-<step name="task_done">
+<step name="issue_done">
 
 **Present completion:**
 
@@ -310,9 +310,9 @@ List all major versions:
 for d in .claude/cat/v[0-9]*/; do
     MAJOR=$(basename "$d" | sed 's/v//')
     MINOR_COUNT=$(ls -1d "$d"v$MAJOR.[0-9]* 2>/dev/null | wc -l)
-    TASK_COUNT=$(find "$d" -mindepth 2 -maxdepth 2 -type d ! -name "v*" ! -name "issue" 2>/dev/null | wc -l)
+    ISSUE_COUNT=$(find "$d" -mindepth 2 -maxdepth 2 -type d ! -name "v*" ! -name "issue" 2>/dev/null | wc -l)
     STATUS=$(grep "Status:" "$d/STATE.md" 2>/dev/null | sed 's/.*: //' || echo "unknown")
-    echo "Major $MAJOR: $MINOR_COUNT minor versions, $TASK_COUNT issues ($STATUS)"
+    echo "Major $MAJOR: $MINOR_COUNT minor versions, $ISSUE_COUNT issues ($STATUS)"
 done
 ```
 
@@ -330,8 +330,8 @@ find .claude/cat -maxdepth 2 -type d -name "v[0-9]*.[0-9]*" 2>/dev/null | while 
     VERSION=$(basename "$d" | sed 's/v//')
     MAJOR=$(echo "$VERSION" | cut -d. -f1)
     MINOR=$(echo "$VERSION" | cut -d. -f2)
-    TASK_COUNT=$(find "$d" -mindepth 1 -maxdepth 1 -type d ! -name "issue" ! -name "v*" 2>/dev/null | wc -l)
-    echo "$MAJOR.$MINOR ($TASK_COUNT issues)"
+    ISSUE_COUNT=$(find "$d" -mindepth 1 -maxdepth 1 -type d ! -name "issue" ! -name "v*" 2>/dev/null | wc -l)
+    echo "$MAJOR.$MINOR ($ISSUE_COUNT issues)"
 done | sort -V
 ```
 
@@ -350,9 +350,9 @@ find .claude/cat -maxdepth 3 -type d -name "v[0-9]*.[0-9]*.[0-9]*" 2>/dev/null |
     MAJOR=$(echo "$VERSION" | cut -d. -f1)
     MINOR=$(echo "$VERSION" | cut -d. -f2)
     PATCH=$(echo "$VERSION" | cut -d. -f3)
-    TASK_COUNT=$(find "$d" -mindepth 1 -maxdepth 1 -type d ! -name "v*" 2>/dev/null | wc -l)
+    ISSUE_COUNT=$(find "$d" -mindepth 1 -maxdepth 1 -type d ! -name "v*" 2>/dev/null | wc -l)
     STATUS=$(grep -oP '(?<=\*\*Status:\*\* )\w+' "$d/STATE.md" 2>/dev/null || echo "open")
-    echo "$MAJOR.$MINOR.$PATCH ($TASK_COUNT issues, $STATUS)"
+    echo "$MAJOR.$MINOR.$PATCH ($ISSUE_COUNT issues, $STATUS)"
 done | sort -V
 ```
 
@@ -502,13 +502,13 @@ If "No, cancel" -> exit command.
 
 ```bash
 MINOR_COUNT=$(ls -1d "$VERSION_PATH"/v$MAJOR.[0-9]* 2>/dev/null | wc -l)
-TASK_COUNT=$(find "$VERSION_PATH" -mindepth 2 -maxdepth 2 -type d ! -name "v*" ! -name "issue" 2>/dev/null | wc -l)
+ISSUE_COUNT=$(find "$VERSION_PATH" -mindepth 2 -maxdepth 2 -type d ! -name "v*" ! -name "issue" 2>/dev/null | wc -l)
 ```
 
 **If VERSION_TYPE is "minor" or "patch":**
 
 ```bash
-TASK_COUNT=$(find "$VERSION_PATH" -mindepth 1 -maxdepth 1 -type d ! -name "issue" ! -name "v*" 2>/dev/null | wc -l)
+ISSUE_COUNT=$(find "$VERSION_PATH" -mindepth 1 -maxdepth 1 -type d ! -name "issue" ! -name "v*" 2>/dev/null | wc -l)
 ```
 
 </step>
@@ -526,7 +526,7 @@ Use AskUserQuestion:
 This will permanently delete:
 - {minor_count} minor
   versions
-- {task_count} issues
+- {issue_count} issues
 - All associated STATE.md, PLAN.md, CHANGELOG.md files
 
 This action cannot be
@@ -542,7 +542,7 @@ Use AskUserQuestion:
 - question: "Remove minor version {major}.{minor}?
 
 This will delete:
-- {task_count} issues
+- {issue_count} issues
 - All STATE.md, PLAN.md
   files"
 - options:
@@ -556,7 +556,7 @@ Use AskUserQuestion:
 - question: "Remove patch version $MAJOR.$MINOR.$PATCH?
 
 This will delete:
-- $TASK_COUNT issues
+- $ISSUE_COUNT issues
 - All STATE.md,
   PLAN.md, CHANGELOG.md files"
 - options:
@@ -674,7 +674,7 @@ git commit -m "$(cat <<'EOF'
 docs: remove major version {major}
 
 Major version removed by user request.
-Removed {minor_count} minor versions and {task_count} issues.
+Removed {minor_count} minor versions and {issue_count} issues.
 EOF
 )"
 ```
@@ -688,7 +688,7 @@ git commit -m "$(cat <<'EOF'
 docs: remove minor version {major}.{minor}
 
 Minor version removed by user request.
-Removed {task_count} issues.
+Removed {issue_count} issues.
 EOF
 )"
 ```
@@ -702,7 +702,7 @@ git commit -m "$(cat <<'EOF'
 docs: remove patch version {major}.{minor}.{patch}
 
 Patch version removed by user request.
-Removed {task_count} issues.
+Removed {issue_count} issues.
 EOF
 )"
 ```
@@ -720,7 +720,7 @@ Major version removed:
 
 - Version: Major {major}
 - Minor versions removed: {minor_count}
-- Issues removed: {task_count}
+- Issues removed: {issue_count}
 
 ---
 
@@ -740,7 +740,7 @@ git revert HEAD  # Undo the removal commit
 Minor version removed:
 
 - Version: {major}.{minor}
-- Issues removed: {task_count}
+- Issues removed: {issue_count}
 
 ---
 
@@ -755,7 +755,7 @@ Use `/cat:status` to see current state.
 Patch version removed:
 
 - Version: {major}.{minor}.{patch}
-- Issues removed: {task_count}
+- Issues removed: {issue_count}
 
 ---
 

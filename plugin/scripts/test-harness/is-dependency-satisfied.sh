@@ -97,7 +97,7 @@ get_issue_status() {
 
     if [[ "$status" == "closed" ]]; then
         if ! all_subissues_closed "$state_file"; then
-            echo "ERROR: Decomposed parent task marked 'closed' but sub-issues are not all closed in $state_file" >&2
+            echo "ERROR: Decomposed parent issue marked 'closed' but sub-issues are not all closed in $state_file" >&2
             return 1
         fi
     fi

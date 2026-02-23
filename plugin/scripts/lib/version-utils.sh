@@ -67,7 +67,7 @@ get_issue_dir() {
     fi
 }
 
-# Get version directory path (without task)
+# Get version directory path (without issue)
 get_version_dir() {
     local version="$1"
     # Fail-fast: require cat_dir argument

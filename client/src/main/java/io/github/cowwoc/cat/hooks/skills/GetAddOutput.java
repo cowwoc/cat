@@ -90,7 +90,7 @@ public final class GetAddOutput implements SkillOutput
    * @throws IllegalArgumentException if itemName or version is blank
    */
   public String getOutput(ItemType itemType, String itemName, String version,
-                          TaskType issueType, List<String> dependencies,
+                          IssueType issueType, List<String> dependencies,
                           String parentInfo, String path)
   {
     requireThat(itemType, "itemType").isNotNull();
@@ -112,11 +112,11 @@ public final class GetAddOutput implements SkillOutput
    * @param dependencies the issue dependencies
    * @return the formatted issue box with next command hint
    */
-  private String buildIssueDisplay(String itemName, String version, TaskType issueType, List<String> dependencies)
+  private String buildIssueDisplay(String itemName, String version, IssueType issueType, List<String> dependencies)
   {
-    TaskType effectiveIssueType = issueType;
+    IssueType effectiveIssueType = issueType;
     if (effectiveIssueType == null)
-      effectiveIssueType = TaskType.FEATURE;
+      effectiveIssueType = IssueType.FEATURE;
 
     String issueTypeDisplay = effectiveIssueType.name().charAt(0) +
                              effectiveIssueType.name().substring(1).toLowerCase(Locale.ROOT);

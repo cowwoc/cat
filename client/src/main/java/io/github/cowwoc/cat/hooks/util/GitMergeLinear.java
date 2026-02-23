@@ -362,7 +362,7 @@ public final class GitMergeLinear
     json.put("status", "success");
     json.put("message", "Linear merge completed successfully");
     json.put("duration_seconds", duration);
-    json.put("task_branch", taskBranch);
+    json.put("issue_branch", taskBranch);
     json.put("commit_sha", commitSha);
     json.put("commit_message", commitMessage);
     json.put("commit_count", commitCount);
