@@ -1,9 +1,8 @@
----
-description: "Internal skill for subagent preloading. Do not invoke directly."
-user-invocable: false
----
-
-
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Skill: stakeholder-review
 
 Multi-perspective stakeholder review gate for implementation quality assurance.
@@ -220,20 +219,20 @@ TASK_TEXT=$(echo "$TASK_PLAN" | tr '[:upper:]' '[:lower:]')
 if echo "$TASK_TEXT" | grep -qE 'license|compliance|legal'; then
     SELECTED="$SELECTED legal"
 fi
-if echo "$TASK_TEXT" | grep -qE '\bui\b|frontend|user interface'; then
+if echo "$TASK_TEXT" | grep -qE 'ui|frontend|user interface'; then
     SELECTED="$SELECTED ux"
 fi
-if echo "$TASK_TEXT" | grep -qE '\bapi\b|endpoint|public'; then
+if echo "$TASK_TEXT" | grep -qE 'api|endpoint|public'; then
     SELECTED="$SELECTED architecture security business"
 fi
-if echo "$TASK_TEXT" | grep -qE 'internal|tooling|\bcli\b'; then
+if echo "$TASK_TEXT" | grep -qE 'internal|tooling|cli'; then
     SELECTED="$SELECTED architecture design"
     EXCLUDED="$EXCLUDED ux business"
 fi
 if echo "$TASK_TEXT" | grep -qE 'security|auth|permission'; then
     SELECTED="$SELECTED security"
 fi
-if echo "$TASK_TEXT" | grep -qE '\bci\b|\bcd\b|pipeline|build|deploy|release|migration'; then
+if echo "$TASK_TEXT" | grep -qE 'ci|cd|pipeline|build|deploy|release|migration'; then
     SELECTED="$SELECTED deployment"
 fi
 
@@ -249,7 +248,9 @@ for stakeholder in $FORCED; do
 done
 
 # Deduplicate and finalize selection
-SELECTED=$(echo "$SELECTED" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+SELECTED=$(echo "$SELECTED" | tr ' ' '
+' | sort -u | tr '
+' ' ')
 ```
 
 ### File-Based Override Logic (Review Mode)
@@ -341,9 +342,11 @@ Skill tool:
 `selected-count must be an integer` error. Compute counts before invoking:
 
 ```bash
-SELECTED_COUNT=$(echo "$SELECTED" | tr ' ' '\n' | grep -c '.')
+SELECTED_COUNT=$(echo "$SELECTED" | tr ' ' '
+' | grep -c '.')
 SELECTED_LIST=$(echo "$SELECTED" | tr ' ' ',')
-SKIPPED_COUNT=$(echo "$SKIPPED" | tr ' ' '\n' | grep -c '.' 2>/dev/null || echo 0)
+SKIPPED_COUNT=$(echo "$SKIPPED" | tr ' ' '
+' | grep -c '.' 2>/dev/null || echo 0)
 SKIPPED_LIST=$(echo "$SKIPPED" | tr ' ' ',')
 # Then invoke: args: "${SELECTED_COUNT} 10 ${SELECTED_LIST} ${SKIPPED_LIST}"
 ```
@@ -440,7 +443,8 @@ if [[ -d ".claude/cat/conventions" ]]; then
 
             if [[ -n "$stakeholder_line" ]]; then
                 # Extract stakeholders from array format: [design, architecture] or [design,architecture]
-                convention_stakeholders=$(echo "$stakeholder_line" | sed 's/^stakeholders:\s*\[//;s/\]\s*$//' | tr ',' '\n' | sed 's/^[ \t]*//;s/[ \t]*$//')
+                convention_stakeholders=$(echo "$stakeholder_line" | sed 's/^stakeholders:\s*\[//;s/\]\s*$//' | tr ',' '
+' | sed 's/^[ 	]*//;s/[ 	]*$//')
 
                 # Add this convention to each stakeholder's map
                 for stakeholder in $convention_stakeholders; do
@@ -461,14 +465,25 @@ for file in $CHANGED_FILES; do
         size=$(wc -c < "$file")
         if [[ $size -lt $MAX_FILE_SIZE ]]; then
             # Small file: include full content
-            FILE_CONTENTS="${FILE_CONTENTS}\n\n### File: ${file}\n\`\`\`\n$(cat "$file")\n\`\`\`"
+            FILE_CONTENTS="${FILE_CONTENTS}
+
+### File: ${file}
+\`\`\`
+$(cat "$file")
+\`\`\`"
         else
             # Large file: structure summary + diff with extended context
-            FILE_CONTENTS="${FILE_CONTENTS}\n\n### File: ${file} (large file)\n"
+            FILE_CONTENTS="${FILE_CONTENTS}
+
+### File: ${file} (large file)
+"
 
             # Extract file structure summary based on language
             ext="${file##*.}"
-            FILE_CONTENTS="${FILE_CONTENTS}\n#### Structure Summary:\n\`\`\`\n"
+            FILE_CONTENTS="${FILE_CONTENTS}
+#### Structure Summary:
+\`\`\`
+"
             case "$ext" in
                 java)
                     # Java: package, imports, class/interface/enum declarations, method signatures
@@ -493,11 +508,17 @@ for file in $CHANGED_FILES; do
                     grep -nE '^\s*(function|def|class|struct|enum|interface|impl|pub fn|fn |sub |proc )' "$file" 2>/dev/null | head -50
                     ;;
             esac
-            FILE_CONTENTS="${FILE_CONTENTS}\`\`\`\n"
+            FILE_CONTENTS="${FILE_CONTENTS}\`\`\`
+"
 
             # Diff with 100 lines of context for this file
-            FILE_CONTENTS="${FILE_CONTENTS}\n#### Changes (with 100 lines context):\n\`\`\`diff\n"
-            FILE_CONTENTS="${FILE_CONTENTS}$(git diff "${BASE_BRANCH}..HEAD" -U100 -- "$file" 2>/dev/null)\n\`\`\`\n"
+            FILE_CONTENTS="${FILE_CONTENTS}
+#### Changes (with 100 lines context):
+\`\`\`diff
+"
+            FILE_CONTENTS="${FILE_CONTENTS}$(git diff "${BASE_BRANCH}..HEAD" -U100 -- "$file" 2>/dev/null)
+\`\`\`
+"
         fi
     fi
 done
@@ -556,7 +577,10 @@ for entry in $CONVENTION_MAP; do
     conv_stakeholder="${entry%%:*}"
     conv_path="${entry#*:}"
     if [[ "$conv_stakeholder" == "$stakeholder" ]]; then
-        STAKEHOLDER_CONVENTIONS="${STAKEHOLDER_CONVENTIONS}\n### Convention: ${conv_path}\n$(cat "$conv_path")\n"
+        STAKEHOLDER_CONVENTIONS="${STAKEHOLDER_CONVENTIONS}
+### Convention: ${conv_path}
+$(cat "$conv_path")
+"
     fi
 done
 ```

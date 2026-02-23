@@ -1,8 +1,8 @@
----
-description: "Internal skill for subagent preloading. Do not invoke directly."
-user-invocable: false
----
-
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Register Hook Skill
 
 **Purpose**: Create **project-specific** hook scripts and register them in `.claude/settings.json`.
@@ -376,7 +376,8 @@ jq empty ~/.claude/settings.json
 ## Multi-Line Message Formatting
 
 When hooks output `systemMessage` or other text that agents will read, use heredocs with actual
-newlines instead of `\n` escape sequences. This makes messages easier to review and debug.
+newlines instead of `
+` escape sequences. This makes messages easier to review and debug.
 
 ### ✅ GOOD: Heredoc with jq for JSON escaping
 
@@ -403,7 +404,13 @@ jq -n --arg msg "$MESSAGE" '{"decision": "approve", "systemMessage": $msg}'
 
 ```bash
 # Hard to read, review, and debug
-echo '{"decision": "approve", "systemMessage": "⚠️ Warning Title\n\nFirst paragraph.\n\nSecond paragraph:\n- Bullet 1\n- Bullet 2"}'
+echo '{"decision": "approve", "systemMessage": "⚠️ Warning Title
+
+First paragraph.
+
+Second paragraph:
+- Bullet 1
+- Bullet 2"}'
 ```
 
 ### Variable Substitution in Heredocs
