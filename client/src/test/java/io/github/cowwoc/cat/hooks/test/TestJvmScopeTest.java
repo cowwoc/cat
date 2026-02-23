@@ -25,14 +25,13 @@ public final class TestJvmScopeTest
    *
    * @throws IOException if temporary directory creation fails
    */
+  @SuppressWarnings("try")
   @Test
-  @SuppressWarnings("PMD.CloseResource")
   public void getJsonMapperThrowsAfterClose() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    try
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JvmScope scope = new TestJvmScope(tempDir, tempDir);
       scope.close();
 
       try
@@ -55,14 +54,13 @@ public final class TestJvmScopeTest
    *
    * @throws IOException if temporary directory creation fails
    */
+  @SuppressWarnings("try")
   @Test
-  @SuppressWarnings("PMD.CloseResource")
   public void getDisplayUtilsThrowsAfterClose() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    try
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JvmScope scope = new TestJvmScope(tempDir, tempDir);
       scope.close();
 
       try
@@ -85,14 +83,13 @@ public final class TestJvmScopeTest
    *
    * @throws IOException if temporary directory creation fails
    */
+  @SuppressWarnings("try")
   @Test
-  @SuppressWarnings("PMD.CloseResource")
   public void getClaudeProjectDirThrowsAfterClose() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    try
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JvmScope scope = new TestJvmScope(tempDir, tempDir);
       scope.close();
 
       try
