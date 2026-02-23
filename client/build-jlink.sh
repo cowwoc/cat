@@ -10,8 +10,10 @@
 #   1. Build the client JAR (if needed)
 #   2. Stage runtime dependency JARs
 #   3. Patch automatic modules with generated module-info.class
-#   4. Create jlink runtime image with per-handler launchers
-#   5. Generate Leyden AOT startup archive
+#   4. Create jlink runtime image
+#   5. Generate per-handler launcher scripts
+#   6. Verify jlink image
+#   7. Generate Leyden AOT startup archive
 #
 # Usage:
 #   ./build-jlink.sh
@@ -382,9 +384,9 @@ main() {
   stage_dependencies
   patch_automatic_modules
   build_jlink_image
-  generate_startup_archives
   generate_launchers
   verify_image
+  generate_startup_archives
 
   log "Build complete!"
   log "Output: $OUTPUT_DIR"
