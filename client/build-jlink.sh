@@ -59,6 +59,7 @@ readonly -a HANDLERS=(
   "get-render-diff-output:skills.GetRenderDiffOutput"
   "get-token-report-output:skills.GetTokenReportOutput"
   "get-cleanup-output:skills.GetCleanupOutput"
+  "get-add-output:skills.GetAddOutput"
   "create-issue:util.IssueCreator"
   "session-analyzer:util.SessionAnalyzer"
   "extract-investigation-context:util.InvestigationContextExtractor"
