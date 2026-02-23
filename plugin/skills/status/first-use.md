@@ -5,7 +5,7 @@ user-invocable: false
 
 # Status
 
-Read the `<output skill="status">` tag below and respond with its content verbatim.
+Echo the content inside the LATEST `<output skill="status">` tag. Do not summarize, interpret, or add commentary.
 After the verbatim content, append exactly:
 
 **NEXT STEPS**

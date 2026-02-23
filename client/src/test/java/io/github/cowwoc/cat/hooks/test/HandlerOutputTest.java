@@ -13,10 +13,7 @@ import io.github.cowwoc.cat.hooks.skills.ItemType;
 import io.github.cowwoc.cat.hooks.skills.TaskType;
 import org.testng.annotations.Test;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -47,7 +44,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.ISSUE,
-        List.of("parse-tokens"),
+        "parse-tokens",
         "2.0",
         TaskType.FEATURE,
         List.of(),
@@ -72,7 +69,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.ISSUE,
-        List.of("test-issue"),
+        "test-issue",
         "2.1",
         TaskType.BUGFIX,
         List.of("dep1", "dep2"),
@@ -96,7 +93,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.ISSUE,
-        List.of("test-issue"),
+        "test-issue",
         "2.1",
         TaskType.FEATURE,
         List.of(),
@@ -120,7 +117,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.VERSION,
-        List.of("v3.0"),
+        "v3.0",
         "3.0",
         null,
         List.of(),
@@ -144,7 +141,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.ISSUE,
-        List.of("my-task"),
+        "my-task",
         "2.0",
         TaskType.FEATURE,
         List.of(),
@@ -168,7 +165,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.ISSUE,
-        List.of("test-issue"),
+        "test-issue",
         "2.0",
         null,
         List.of(),
@@ -192,7 +189,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.ISSUE,
-        List.of("test-issue"),
+        "test-issue",
         "2.0",
         TaskType.BUGFIX,
         List.of(),
@@ -216,7 +213,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.VERSION,
-        List.of("Major-Release"),
+        "Major-Release",
         "3.0",
         null,
         List.of(),
@@ -240,7 +237,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.VERSION,
-        List.of("Major-Release"),
+        "Major-Release",
         "3.0",
         null,
         List.of(),
@@ -264,7 +261,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.ISSUE,
-        List.of("test-issue"),
+        "test-issue",
         "2.0",
         TaskType.FEATURE,
         List.of(),
@@ -289,7 +286,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.ISSUE,
-        List.of("test-issue"),
+        "test-issue",
         "2.0",
         TaskType.FEATURE,
         List.of(),
@@ -313,7 +310,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.VERSION,
-        List.of("New-Features"),
+        "New-Features",
         "2.1",
         null,
         List.of(),
@@ -337,7 +334,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.VERSION,
-        List.of("New-Features"),
+        "New-Features",
         "2.1",
         null,
         List.of(),
@@ -361,7 +358,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.VERSION,
-        List.of("New-Features"),
+        "New-Features",
         "2.1",
         null,
         List.of(),
@@ -385,7 +382,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.VERSION,
-        List.of("New-Features"),
+        "New-Features",
         "2.1",
         null,
         List.of(),
@@ -540,7 +537,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.VERSION,
-        List.of("New-Features"),
+        "New-Features",
         "2.1",
         null,
         List.of(),
@@ -568,7 +565,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.VERSION,
-        List.of("New-Version"),
+        "New-Version",
         "0.0",
         null,
         List.of(),
@@ -595,7 +592,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.ISSUE,
-        List.of("unknown-task"),
+        "unknown-task",
         "0.0",
         null,
         List.of(),
@@ -625,7 +622,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.ISSUE,
-        List.of("parse-tokens"),
+        "parse-tokens",
         "2.0",
         TaskType.FEATURE,
         List.of(),
@@ -634,231 +631,5 @@ public class HandlerOutputTest
 
       requireThat(result, "result").contains("Issue Created").contains("Next:");
     }
-  }
-
-  // --- CLI argument parsing tests ---
-
-  /**
-   * Verifies that run() prints usage when no arguments are provided.
-   */
-  @Test
-  public void runPrintsUsageWhenNoArguments()
-  {
-    ByteArrayOutputStream errBytes = new ByteArrayOutputStream();
-    PrintStream err = new PrintStream(errBytes, true, StandardCharsets.UTF_8);
-    PrintStream out = new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8);
-
-    int exitCode = GetAddOutput.run(new String[0], out, err);
-
-    requireThat(exitCode, "exitCode").isNotEqualTo(0);
-    requireThat(errBytes.toString(StandardCharsets.UTF_8), "stderr").contains("Usage");
-  }
-
-  /**
-   * Verifies that run() returns non-zero when fewer than 3 positional arguments are provided.
-   */
-  @Test
-  public void runFailsWhenTooFewArguments()
-  {
-    ByteArrayOutputStream errBytes = new ByteArrayOutputStream();
-    PrintStream err = new PrintStream(errBytes, true, StandardCharsets.UTF_8);
-    PrintStream out = new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8);
-
-    int exitCode = GetAddOutput.run(new String[]{"issue", "my-issue"}, out, err);
-
-    requireThat(exitCode, "exitCode").isNotEqualTo(0);
-    requireThat(errBytes.toString(StandardCharsets.UTF_8), "stderr").contains("Usage");
-  }
-
-  /**
-   * Verifies that run() returns non-zero when --type has an invalid value.
-   */
-  @Test
-  public void runFailsWhenTypeIsInvalid()
-  {
-    ByteArrayOutputStream errBytes = new ByteArrayOutputStream();
-    PrintStream err = new PrintStream(errBytes, true, StandardCharsets.UTF_8);
-    PrintStream out = new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8);
-
-    int exitCode = GetAddOutput.run(new String[]{"invalid", "name", "2.0", "Feature", ""}, out, err);
-
-    requireThat(exitCode, "exitCode").isNotEqualTo(0);
-    requireThat(errBytes.toString(StandardCharsets.UTF_8), "stderr").contains("invalid");
-  }
-
-  /**
-   * Verifies that run() returns non-zero when too many arguments are provided.
-   */
-  @Test
-  public void runFailsWhenTooManyArguments()
-  {
-    ByteArrayOutputStream errBytes = new ByteArrayOutputStream();
-    PrintStream err = new PrintStream(errBytes, true, StandardCharsets.UTF_8);
-    PrintStream out = new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8);
-
-    int exitCode = GetAddOutput.run(new String[]{"issue", "name", "2.0", "Feature", "", "extra"}, out, err);
-
-    requireThat(exitCode, "exitCode").isNotEqualTo(0);
-    requireThat(errBytes.toString(StandardCharsets.UTF_8), "stderr").contains("4 arguments");
-  }
-
-  // --- Multi-issue display tests ---
-
-  /**
-   * Verifies that a list of issue names produces a numbered list with "Issues Created" header.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void getAddOutputMultipleIssuesProducesNumberedList() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      GetAddOutput handler = new GetAddOutput(scope);
-      String result = handler.getOutput(
-        ItemType.ISSUE,
-        List.of("issue1", "issue2", "issue3"),
-        "2.1",
-        TaskType.FEATURE,
-        List.of(),
-        "",
-        "");
-
-      requireThat(result, "result").contains("Issues Created").
-        contains("1. issue1").contains("2. issue2").contains("3. issue3");
-    }
-  }
-
-  /**
-   * Verifies that a list of two issue names uses "Issues Created" (plural) header.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void getAddOutputMultipleIssuesUsesPluralHeader() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      GetAddOutput handler = new GetAddOutput(scope);
-      String result = handler.getOutput(
-        ItemType.ISSUE,
-        List.of("task-a", "task-b"),
-        "2.0",
-        null,
-        List.of(),
-        "",
-        "");
-
-      requireThat(result, "result").contains("✅ Issues Created");
-    }
-  }
-
-  // --- buildIssueOutput/buildVersionOutput validation tests ---
-
-  /**
-   * Verifies that getOutput throws IllegalArgumentException when itemNames is empty.
-   */
-  @Test
-  public void getAddOutputThrowsWhenItemNamesIsEmpty() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      GetAddOutput handler = new GetAddOutput(scope);
-      try
-      {
-        handler.getOutput(ItemType.ISSUE, List.of(), "2.0", TaskType.FEATURE, List.of(), "", "");
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").isNotBlank();
-      }
-    }
-  }
-
-  /**
-   * Verifies that getOutput throws IllegalArgumentException when version is blank.
-   */
-  @Test
-  public void getAddOutputThrowsWhenVersionIsBlank() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      GetAddOutput handler = new GetAddOutput(scope);
-      try
-      {
-        handler.getOutput(ItemType.ISSUE, List.of("my-issue"), "  ", TaskType.FEATURE, List.of(), "", "");
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").isNotBlank();
-      }
-    }
-  }
-
-  /**
-   * Verifies that dependency parsing handles comma-separated values correctly.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void getAddOutputParsesCommaSeparatedDependencies() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      GetAddOutput handler = new GetAddOutput(scope);
-      String result = handler.getOutput(
-        ItemType.ISSUE,
-        List.of("my-issue"),
-        "2.0",
-        TaskType.FEATURE,
-        List.of("dep-a", "dep-b", "dep-c"),
-        "",
-        "");
-
-      requireThat(result, "result").contains("dep-a").contains("dep-b").contains("dep-c");
-    }
-  }
-
-  /**
-   * Verifies that issue type falls back to FEATURE when null is passed.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void getAddOutputFallsBackToFeatureWhenIssueTypeIsNull() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      GetAddOutput handler = new GetAddOutput(scope);
-      String result = handler.getOutput(
-        ItemType.ISSUE,
-        List.of("my-issue"),
-        "2.0",
-        null,
-        List.of(),
-        "",
-        "");
-
-      requireThat(result, "result").contains("Type: Feature");
-    }
-  }
-
-  /**
-   * Verifies that run() filters empty entries when --name contains double commas.
-   */
-  @Test
-  public void runFiltersEmptyEntriesFromDoubleCommasInName()
-  {
-    ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-    PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
-    PrintStream err = new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8);
-
-    int exitCode = GetAddOutput.run(
-      new String[]{"issue", "issue1,,issue2", "2.0", "Feature", ""},
-      out, err);
-
-    requireThat(exitCode, "exitCode").isEqualTo(0);
-    requireThat(outBytes.toString(StandardCharsets.UTF_8), "stdout").
-      contains("issue1").contains("issue2");
   }
 }
