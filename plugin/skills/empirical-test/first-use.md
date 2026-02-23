@@ -149,7 +149,7 @@ fi
 
 "$CLIENT_BIN/empirical-test-runner" \
     --config /tmp/empirical-test-config.json \
-    --trials 5 \
+    --trials 1 \
     --model haiku
 ```
 
@@ -157,16 +157,15 @@ fi
 
 | Baseline Rate | Interpretation | Next Step |
 |---------------|---------------|-----------|
-| 0-20% | Failure confirmed | Proceed to isolation |
-| 30-70% | Intermittent failure | Increase trials to 10, proceed to isolation |
-| 80-100% | Cannot reproduce | Verify priming context matches real usage |
+| 0% | Failure confirmed | Proceed to isolation |
+| 100% | Single trial cannot confirm — expand to 5 trials | Run with `--trials 5`, then verify priming context matches real usage |
 
-If the baseline shows 80%+ success, the failure may depend on specific conversation context. Add more priming messages
-or adjust the test prompt to match the real failure scenario.
+If the baseline shows 80%+ success after 5 trials, the failure may depend on specific conversation context. Add more
+priming messages or adjust the test prompt to match the real failure scenario.
 
 ## Step 4: Examine Raw JSONL from Test Trials
 
-When baseline confirms failure (0-70% success rate), run with `--output` to capture full agent responses, then examine
+When baseline confirms failure (0% success rate), run with `--output` to capture full agent responses, then examine
 the raw JSONL session files to understand what the agent actually received and produced. The summary output shows only a
 short preview — raw JSONL reveals the complete conversation, including what content was actually delivered vs what the
 source files intended to deliver.
@@ -303,7 +302,7 @@ Once the root cause is identified, create the candidate fix and test it in produ
 ```bash
 "$CLIENT_BIN/empirical-test-runner" \
     --config /tmp/empirical-test-final.json \
-    --trials 15 \
+    --trials 10 \
     --model haiku \
     --output /tmp/empirical-test-results.json
 ```
@@ -340,7 +339,7 @@ Present a summary report to the user:
 ## Tips
 
 - **Start with haiku** — it's cheaper and more sensitive to prompt issues. If haiku passes, sonnet will too.
-- **Use 5 trials** for initial exploration, 10-15 for final validation.
+- **Use 1 trial** for baseline and isolation (quick signal), **5 trials** for confirmation, **10 trials** for final validation.
 - **Priming matters** — always include tool-use priming if the real scenario has it.
 - **Include system prompt for verbatim-output tests** — tests of skills that echo content verbatim MUST include
   CLAUDE.md content as the `system_prompt`. General project instructions compete with verbatim-copy instructions and
