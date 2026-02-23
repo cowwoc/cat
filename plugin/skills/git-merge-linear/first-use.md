@@ -70,8 +70,8 @@ to stderr (exit code 1) with `"status": "error"` and a `"message"` field contain
 | `"status": "success"` (stdout) | Merge completed successfully | Report `commit_sha` and `task_branch`, continue |
 | `"status": "error"`: Must be on {base} branch | Wrong branch checked out | `git checkout {base_branch}` first |
 | `"status": "error"`: Working directory is not clean | Uncommitted changes | Commit or stash changes before merging |
-| `"status": "error"`: Task branch must have exactly 1 commit | Multiple commits | Squash commits first |
-| `"status": "error"`: Task branch is behind {base} | Base has commits not in issue branch | Rebase onto base before merging |
+| `"status": "error"`: Issue branch must have exactly 1 commit | Multiple commits | Squash commits first |
+| `"status": "error"`: Issue branch is behind {base} | Base has commits not in issue branch | Rebase onto base before merging |
 | `"status": "error"`: Fast-forward merge failed | History diverged | Rebase issue branch onto base first |
 | `"status": "error"`: Merge commit detected | Non-linear history after merge | Investigate merge state, should not occur with ff-only |
 | `"status": "error"`: cat-base file not found | Cannot auto-detect base branch | Pass `--base {branch}` explicitly or recreate worktree |

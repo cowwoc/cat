@@ -140,7 +140,7 @@ cd /workspace
 # Verify you're on the base branch
 git branch --show-current  # Should show base branch (e.g., v2.1)
 
-# Merge task branch using fast-forward only (enforces linear history)
+# Merge issue branch using fast-forward only (enforces linear history)
 git merge --ff-only {issue-branch}
 # If fast-forward not possible, rebase the issue branch first:
 #   git rebase v2.1  (in the worktree), then retry --ff-only
@@ -148,7 +148,7 @@ git merge --ff-only {issue-branch}
 
 **Why this works:**
 - Main workspace stays on base branch for stability
-- Worktrees are for task branches
+- Worktrees are for issue branches
 - No checkout needed when base is already active
 
 ### 8. Worktree Cleanup
