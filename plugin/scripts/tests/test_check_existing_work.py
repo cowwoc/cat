@@ -5,7 +5,7 @@
 """
 Tests for check-existing-work.sh (M362, M363).
 
-M362: Original issue - detect existing work on task branch
+M362: Original issue - detect existing work on issue branch
 M363: Should be a handler/script, not LLM-executed instructions
 """
 
@@ -50,7 +50,7 @@ class TestCheckExistingWork(unittest.TestCase):
 
         # Create worktree WITH commits
         subprocess.run([
-            "git", "worktree", "add", "-b", "task-with-work",
+            "git", "worktree", "add", "-b", "issue-with-work",
             cls.worktree_with_commits, "v2.1"
         ], cwd=cls.main_repo, capture_output=True)
 
@@ -67,7 +67,7 @@ class TestCheckExistingWork(unittest.TestCase):
 
         # Create worktree WITHOUT commits
         subprocess.run([
-            "git", "worktree", "add", "-b", "task-no-work",
+            "git", "worktree", "add", "-b", "issue-no-work",
             cls.worktree_no_commits, "v2.1"
         ], cwd=cls.main_repo, capture_output=True)
 

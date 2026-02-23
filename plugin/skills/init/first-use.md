@@ -882,7 +882,7 @@ Next: /clear -> /cat:work {issue} OR /cat:add
 
 </step>
 
-<step name="first_task_guide">
+<step name="first_issue_guide">
 
 **Offer guided first-issue creation**
 
@@ -896,7 +896,7 @@ options=[
 
 **If "Yes, guide me":**
 
-Use the **first_task_walkthrough** box from `<output skill="init">`.
+Use the **first_issue_walkthrough** box from `<output skill="init">`.
 
 **If `<output skill="init">` not found:**
 ```
@@ -916,8 +916,8 @@ Do NOT manually construct output or invoke scripts. Output the error and STOP.
 
 3. Create the issue directory structure:
 ```bash
-TASK_NAME="[sanitized-issue-name]"
-mkdir -p ".claude/cat/issues/v0/v0.0/${TASK_NAME}"
+ISSUE_NAME="[sanitized-issue-name]"
+mkdir -p ".claude/cat/issues/v0/v0.0/${ISSUE_NAME}"
 ```
 
 4. Create initial PLAN.md for the issue:
@@ -955,10 +955,10 @@ mkdir -p ".claude/cat/issues/v0/v0.0/${TASK_NAME}"
 6. Commit the new issue:
 ```bash
 git add ".claude/cat/"
-git commit -m "docs: add first issue - ${TASK_NAME}"
+git commit -m "docs: add first issue - ${ISSUE_NAME}"
 ```
 
-7. Use the **first_task_created** box from `<output skill="init">`.
+7. Use the **first_issue_created** box from `<output skill="init">`.
    Replace `{issue-name}` with the actual sanitized issue name.
 
 **If `<output skill="init">` not found:**

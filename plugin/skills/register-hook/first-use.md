@@ -420,14 +420,14 @@ Use `${VAR}` substitution after heredoc capture for dynamic content:
 ```bash
 # Capture template with placeholder
 MESSAGE=$(cat << 'MSGEOF'
-Issue '$TASK_NAME' needs attention.
+Issue '$ISSUE_NAME' needs attention.
 
 Details follow...
 MSGEOF
 )
 
 # Substitute variables
-MESSAGE="${MESSAGE//\$TASK_NAME/$TASK_NAME}"
+MESSAGE="${MESSAGE//\$ISSUE_NAME/$ISSUE_NAME}"
 
 # Output as JSON
 jq -n --arg msg "$MESSAGE" '{"systemMessage": $msg}'
