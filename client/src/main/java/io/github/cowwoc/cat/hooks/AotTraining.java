@@ -10,7 +10,7 @@ import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner;
 import io.github.cowwoc.cat.hooks.skills.GetCheckpointOutput;
 import io.github.cowwoc.cat.hooks.skills.GetIssueCompleteOutput;
 import io.github.cowwoc.cat.hooks.skills.GetNextTaskOutput;
-import io.github.cowwoc.cat.hooks.skills.GetRenderDiffOutput;
+import io.github.cowwoc.cat.hooks.skills.GetDiffOutput;
 import io.github.cowwoc.cat.hooks.skills.GetStatusOutput;
 import io.github.cowwoc.cat.hooks.skills.ProgressBanner;
 import io.github.cowwoc.cat.hooks.skills.VerifyAudit;
@@ -77,7 +77,7 @@ public final class AotTraining
       // Skill handlers - construct to load class graphs.
       // Calling getOutput() would read the filesystem, which is unnecessary for training.
       new GetStatusOutput(scope);
-      new GetRenderDiffOutput(scope);
+      new GetDiffOutput(scope);
 
       // VerifyAudit training - create temp file for parse() and minimal JSON for report()
       Path tempDir = Files.createTempDirectory("aot-training-");

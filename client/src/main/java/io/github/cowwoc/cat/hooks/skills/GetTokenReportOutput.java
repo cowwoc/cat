@@ -18,6 +18,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
 import static io.github.cowwoc.cat.hooks.skills.JsonHelper.getStringOrDefault;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -28,7 +29,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * Reads session JSONL directly and computes token table in Java,
  * eliminating the Python subprocess call.
  */
-public final class GetTokenReportOutput
+public final class GetTokenReportOutput implements SkillOutput
 {
   /**
    * Column widths (fixed).
@@ -62,15 +63,22 @@ public final class GetTokenReportOutput
   }
 
   /**
-   * Run token table computation using session ID from environment.
+   * Generates the token report output for this skill.
+   * <p>
+   * This class does not accept any arguments. The session ID is resolved from the environment
+   * via {@code scope.getClaudeSessionId()}.
    *
-   * This method supports direct preprocessing pattern - it collects all
-   * necessary data from the environment without requiring LLM-provided arguments.
-   *
+   * @param args the arguments from the preprocessor directive (must be empty)
    * @return the formatted output, or null if session not found or CLAUDE_SESSION_ID not set
+   * @throws NullPointerException     if {@code args} is null
+   * @throws IllegalArgumentException if any arguments are provided
    */
-  public String getOutput()
+  @Override
+  public String getOutput(String[] args)
   {
+    requireThat(args, "args").isNotNull();
+    if (args.length > 0)
+      throw new IllegalArgumentException("Unexpected arguments: " + String.join(" ", args));
     String sessionId;
     try
     {
@@ -532,7 +540,7 @@ public final class GetTokenReportOutput
   {
     try (JvmScope scope = new MainJvmScope())
     {
-      String output = new GetTokenReportOutput(scope).getOutput();
+      String output = new GetTokenReportOutput(scope).getOutput(args);
       if (output != null)
         System.out.println(output);
     }
