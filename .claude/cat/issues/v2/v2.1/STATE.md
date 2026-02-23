@@ -309,3 +309,4 @@ Finalize naming conventions and UI polish before recording demo videos.
 - verify-subagent-commit-messages
 - wrap-markdown-files-120-chars
 - rename-task-to-issue-terminology
+- fix-work-prepare-diagnostic-scan-limit
