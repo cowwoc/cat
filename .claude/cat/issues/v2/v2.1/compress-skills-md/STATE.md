@@ -8,11 +8,11 @@
 - **Last Updated:** 2026-02-03
 
 ## Decomposed Into
-- compress-skills-batch-1 (files 1-9: add through format-documentation)
-- compress-skills-batch-2 (files 10-18: get-history through grep-and-read)
-- compress-skills-batch-3 (files 19-27: help through render-diff)
-- compress-skills-batch-4 (files 28-36: research through tdd-implementation)
-- compress-skills-batch-5 (files 37-45: token-report through write-and-commit)
+- 2.1-compress-skills-batch-1 (files 1-9: add through format-documentation)
+- 2.1-compress-skills-batch-2 (files 10-18: get-history through grep-and-read)
+- 2.1-compress-skills-batch-3 (files 19-27: help through render-diff)
+- 2.1-compress-skills-batch-4 (files 28-36: research through tdd-implementation)
+- 2.1-compress-skills-batch-5 (files 37-45: token-report through write-and-commit)
 
 ## Parallel Execution Plan
 

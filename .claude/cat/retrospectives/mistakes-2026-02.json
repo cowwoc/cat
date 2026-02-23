@@ -1685,6 +1685,32 @@
         "catches_variations": true
       },
       "correct_behavior": "After handling a rebase ERROR (investigation complete, alternative taken, or escalated): delete the backup branch with 'git branch -D <backup_branch>'. Same applies to CONFLICT resolution. Backup exists only during investigation."
+    },
+    {
+      "id": "M403",
+      "timestamp": "2026-02-24T18:59:28Z",
+      "category": "protocol_violation",
+      "description": "Invoked cat:stakeholder-selection-box with JSON object args instead of positional space-separated args",
+      "root_cause": "Agent passed parent skill's JSON invocation context ({issue_id, worktree_path}) as the args to the internal cat:stakeholder-selection-box skill, instead of computing and passing the positional args <selected_count> <total_count> <running_list> <skipped_list>",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "validation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetStakeholderSelectionBox.java",
+      "pattern_keywords": [
+        "stakeholder-selection-box",
+        "json-args",
+        "positional-args",
+        "skill-invocation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Compute SELECTED_COUNT and SKIPPED_LIST as positional values before invoking cat:stakeholder-selection-box. Use args: \"<selected_count> 10 <running_list> <skipped_list>\" — never pass a JSON object as the args field."
     }
   ]
 }
