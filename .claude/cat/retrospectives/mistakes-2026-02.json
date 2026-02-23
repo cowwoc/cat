@@ -1523,6 +1523,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Before implementing any bugfix or feature with testable inputs/outputs, invoke cat:tdd-implementation to write failing tests first. This applies to all contexts including ad-hoc user-requested fixes, not only formal /cat:work issue workflows."
+    },
+    {
+      "id": "M397",
+      "timestamp": "2026-02-24T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "Subagent added documentation to plugin/concepts/agent-architecture.md with table rows 180-200 chars wide, violating the 120-char line wrapping convention",
+      "root_cause": "TAXONOMY: PLANNING module failure. The main agent's delegation prompt omitted the project's 120-char line wrapping convention. The subagent had CLAUDE.md in context but the rule was not salient when constructing wide table rows. The Pre-Spawn Checklist in subagent-delegation.md had no item requiring documentation conventions to be included in prompts for documentation work.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/subagent-delegation.md",
+      "pattern_keywords": [
+        "line_wrapping",
+        "120_char",
+        "delegation_prompt",
+        "documentation_convention",
+        "subagent_documentation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M382",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When delegating documentation work to a subagent, include project documentation conventions (120-char line wrapping, license headers) explicitly in the delegation prompt. Use bullet lists instead of tables when cell content would exceed 120 chars."
     }
   ]
 }
