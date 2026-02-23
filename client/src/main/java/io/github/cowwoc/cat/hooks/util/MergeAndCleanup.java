@@ -28,13 +28,14 @@ import java.nio.file.Paths;
  * Merge issue branch and clean up worktree, branch, and lock.
  * <p>
  * Handles the happy path of the merging phase for CAT's /cat:work command:
- * 1. Fast-forward merge issue branch to base branch (from worktree, no checkout required)
+ * 1. Fast-forward merge issue branch to base branch in the main worktree
  * 2. Remove the issue worktree
  * 3. Delete the issue branch
  * 4. Release the issue lock
  */
 public final class MergeAndCleanup
 {
+  private final Logger log = LoggerFactory.getLogger(MergeAndCleanup.class);
   private final JvmScope scope;
 
   /**
@@ -92,7 +93,7 @@ public final class MergeAndCleanup
         ". Commit or stash changes first.");
     }
 
-    syncBaseBranchWithOrigin(worktreePath, baseBranch);
+    syncBaseBranchWithOrigin(projectDir, baseBranch);
 
     int diverged = getDivergenceCount(worktreePath, baseBranch);
     if (diverged > 0)
@@ -104,10 +105,8 @@ public final class MergeAndCleanup
         baseBranch + ". Rebase required.");
     }
 
-    String baseSha = runGitCommandSingleLineInDirectory(worktreePath, "rev-parse",
-      "refs/heads/" + baseBranch);
     String commitSha = getCommitSha(worktreePath, "HEAD");
-    fastForwardMerge(worktreePath, baseBranch, baseSha);
+    fastForwardMerge(projectDir, taskBranch);
 
     boolean worktreeRemoved = false;
     if (autoRemoveWorktrees)
@@ -219,44 +218,33 @@ public final class MergeAndCleanup
   }
 
   /**
-   * Fetches the base branch from origin and fast-forwards the local base branch to match.
-   * <p>
-   * This ensures the local base branch is up to date with origin before checking divergence.
+   * Fetches the base branch from origin and fast-forwards the local base branch to match
+   * using {@code git merge --ff-only}. This updates the ref, index, and working tree atomically.
    *
-   * @param worktreePath the worktree path
+   * @param projectDir the project root directory (main worktree)
    * @param baseBranch the base branch name
    * @throws IOException if fetch fails (network/remote unavailable) or fast-forward fails
    *   (local branch has diverged from origin)
    */
-  private void syncBaseBranchWithOrigin(String worktreePath, String baseBranch) throws IOException
+  private void syncBaseBranchWithOrigin(String projectDir, String baseBranch) throws IOException
   {
     try
     {
-      runGit(Path.of(worktreePath), "fetch", "origin", baseBranch);
+      runGit(Path.of(projectDir), "fetch", "origin", baseBranch);
     }
     catch (IOException e)
     {
       throw new IOException(
-        "Failed to fetch origin/" + baseBranch + " in worktree: " + worktreePath +
+        "Failed to fetch origin/" + baseBranch + " in directory: " + projectDir +
           ". Check network connectivity and that 'origin' remote is available. " +
           "Original error: " + e.getMessage(), e);
     }
 
-    try
-    {
-      String oldSha = runGitCommandSingleLineInDirectory(worktreePath, "rev-parse",
-        "refs/heads/" + baseBranch);
-      runGit(Path.of(worktreePath), "update-ref", "refs/heads/" + baseBranch,
-        "origin/" + baseBranch, oldSha);
-    }
-    catch (IOException e)
-    {
-      throw new IOException(
-        "Failed to update local " + baseBranch + " to match origin/" + baseBranch +
-          " in worktree: " + worktreePath + ". The local " + baseBranch +
-          " branch has diverged from origin and cannot be fast-forwarded. " +
-          "Resolve the divergence before merging. Original error: " + e.getMessage(), e);
-    }
+    mergeWithRetry(projectDir, "origin/" + baseBranch,
+      "Failed to update local " + baseBranch + " to match origin/" + baseBranch +
+        " in directory: " + projectDir + ". The local " + baseBranch +
+        " branch has diverged from origin and cannot be fast-forwarded. " +
+        "Resolve the divergence before merging.");
   }
 
   /**
@@ -409,20 +397,97 @@ public final class MergeAndCleanup
   }
 
   /**
-   * Performs a fast-forward merge using {@code git update-ref} with compare-and-swap.
+   * Fast-forward merges the issue branch into the base branch using {@code git merge --ff-only}.
    * <p>
-   * This advances the base branch pointer to HEAD without requiring the branch to be checked out,
-   * and without being blocked by {@code receive.denyCurrentBranch}.
+   * This is run in the main worktree ({@code projectDir}), which atomically updates the ref,
+   * index, and working tree. Retries up to 3 times on index.lock contention.
    *
-   * @param worktreePath the worktree path
-   * @param baseBranch the base branch
-   * @param baseSha the expected current SHA of the base branch (for compare-and-swap)
+   * @param projectDir the project root directory (main worktree)
+   * @param issueBranch the issue branch to merge
    * @throws IOException if the merge fails
    */
-  private void fastForwardMerge(String worktreePath, String baseBranch, String baseSha)
+  private void fastForwardMerge(String projectDir, String issueBranch) throws IOException
+  {
+    mergeWithRetry(projectDir, issueBranch,
+      "Fast-forward merge of " + issueBranch + " failed in directory: " + projectDir +
+        ". The base branch may have diverged.");
+  }
+
+  /**
+   * Runs {@code git merge --ff-only <ref>} in the given directory, retrying up to 3 times
+   * if the failure is caused by index.lock contention from concurrent agents.
+   * <p>
+   * Fails fast with a clear error if uncommitted changes would be overwritten by the merge.
+   *
+   * @param directory the directory to run the merge in
+   * @param ref the ref to merge (e.g., branch name or "origin/branch")
+   * @param failureMessage the message to include in the exception if the merge fails
+   *   for reasons other than index.lock contention
+   * @throws IOException if the merge fails after retries or due to a non-retryable error
+   */
+  private void mergeWithRetry(String directory, String ref, String failureMessage)
     throws IOException
   {
-    runGit(Path.of(worktreePath), "update-ref", "refs/heads/" + baseBranch, "HEAD", baseSha);
+    int maxRetries = 3;
+    for (int attempt = 1; attempt <= maxRetries; ++attempt)
+    {
+      String[] command = {"git", "-C", directory, "merge", "--ff-only", ref};
+      ProcessBuilder pb = new ProcessBuilder(command);
+      pb.redirectErrorStream(true);
+      Process process = pb.start();
+      StringBuilder output = new StringBuilder();
+      try (BufferedReader reader = new BufferedReader(
+        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
+      {
+        String line = reader.readLine();
+        while (line != null)
+        {
+          if (!output.isEmpty())
+            output.append('\n');
+          output.append(line);
+          line = reader.readLine();
+        }
+      }
+      int exitCode;
+      try
+      {
+        exitCode = process.waitFor();
+      }
+      catch (InterruptedException e)
+      {
+        Thread.currentThread().interrupt();
+        throw new IOException("Interrupted while running: " + String.join(" ", command), e);
+      }
+      if (exitCode == 0)
+        return;
+
+      String errorOutput = output.toString();
+
+      if (errorOutput.contains("would be overwritten"))
+      {
+        throw new IOException("Uncommitted changes in " + directory +
+          " would be overwritten by merge. Commit or stash changes first. " +
+          "Git output: " + errorOutput);
+      }
+
+      if (errorOutput.contains("index.lock") && attempt < maxRetries)
+      {
+        log.debug("index.lock contention on attempt {}/{}, retrying in 1 second: {}",
+          attempt, maxRetries, directory);
+        try
+        {
+          Thread.sleep(1000);
+        }
+        catch (InterruptedException e)
+        {
+          Thread.currentThread().interrupt();
+          throw new IOException("Interrupted while waiting to retry merge", e);
+        }
+        continue;
+      }
+
+      throw new IOException(failureMessage + " Original error: " + errorOutput);
+    }
   }
 
   /**
