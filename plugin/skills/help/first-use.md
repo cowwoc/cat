@@ -5,7 +5,7 @@ user-invocable: false
 
 # Help
 
-Echo the contents of the `<output skill="help">` tag below verbatim. Do not summarize, interpret, or add commentary.
+Echo the content inside the LATEST `<output skill="help">` tag. Do not summarize, interpret, or add commentary.
 
 <output skill="help">
 # CAT Command Reference
