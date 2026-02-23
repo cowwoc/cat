@@ -4,7 +4,7 @@
 # Licensed under the CAT Commercial License.
 # See LICENSE.md in the project root for license terms.
 #
-# check-existing-work.sh - Check if a task branch has existing commits (M362)
+# check-existing-work.sh - Check if an issue branch has existing commits
 #
 # This is a deterministic check that does NOT require LLM decision-making.
 # It should be called by work-prepare after worktree creation to detect

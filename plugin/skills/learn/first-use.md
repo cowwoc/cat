@@ -182,17 +182,17 @@ Phase: Record
 **If prevent.prevention_implemented is false:**
 
 The prevent phase could not implement prevention directly because the current branch is protected and the prevention
-requires source code changes. Create a CAT issue from the task_creation_info:
+requires source code changes. Create a CAT issue from the issue_creation_info:
 
-1. **Validate task_creation_info before proceeding.** Verify that:
-   - `task_creation_info` is present and non-empty in the prevent phase output
-   - `task_creation_info.suggested_title` is a non-empty string
-   - `task_creation_info.suggested_description` is a non-empty string
-   - `task_creation_info.suggested_acceptance_criteria` is a non-empty string
+1. **Validate issue_creation_info before proceeding.** Verify that:
+   - `issue_creation_info` is present and non-empty in the prevent phase output
+   - `issue_creation_info.suggested_title` is a non-empty string
+   - `issue_creation_info.suggested_description` is a non-empty string
+   - `issue_creation_info.suggested_acceptance_criteria` is a non-empty string
 
    If any field is missing or empty, display:
    ```
-   Error: Cannot create follow-up issue — task_creation_info is incomplete.
+   Error: Cannot create follow-up issue — issue_creation_info is incomplete.
    Missing fields: [list the missing field names]
    Please create the issue manually using /cat:add.
    Suggested title: {suggested_title or "(not provided)"}

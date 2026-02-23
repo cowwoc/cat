@@ -6,7 +6,7 @@
       "name": "Core",
       "description": "The reliable AI coding workflow",
       "features": [
-        "basic-task-management",
+        "basic-issue-management",
         "local-worktrees",
         "basic-commit-hooks",
         "git-safety-tools",
@@ -20,11 +20,11 @@
       "features": [
         "single-agent-execution",
         "multi-agent-orchestration",
-        "parallel-task-execution",
+        "parallel-issue-execution",
         "stakeholder-reviews",
         "token-usage-tracking",
         "learn",
-        "task-decomposition",
+        "issue-decomposition",
         "research-skill",
         "all-commands",
         "all-skills",
@@ -63,12 +63,12 @@
     }
   },
   "features": {
-    "basic-task-management": {
-      "description": "Create and track tasks with plan-work-commit-merge workflow",
+    "basic-issue-management": {
+      "description": "Create and track issues with plan-work-commit-merge workflow",
       "category": "planning"
     },
     "local-worktrees": {
-      "description": "Isolated git worktrees for tasks",
+      "description": "Isolated git worktrees for issues",
       "category": "isolation"
     },
     "basic-commit-hooks": {
@@ -88,15 +88,15 @@
       "category": "commands"
     },
     "single-agent-execution": {
-      "description": "Execute tasks with single subagent",
+      "description": "Execute issues with single subagent",
       "category": "execution"
     },
     "multi-agent-orchestration": {
       "description": "Coordinate multiple subagents",
       "category": "execution"
     },
-    "parallel-task-execution": {
-      "description": "Run independent tasks concurrently",
+    "parallel-issue-execution": {
+      "description": "Run independent issues concurrently",
       "category": "execution"
     },
     "stakeholder-reviews": {
@@ -111,8 +111,8 @@
       "description": "Mistake learning, RCA, and retrospective analysis",
       "category": "quality"
     },
-    "task-decomposition": {
-      "description": "Auto-decompose oversized tasks",
+    "issue-decomposition": {
+      "description": "Auto-decompose oversized issues",
       "category": "planning"
     },
     "research-skill": {
@@ -128,7 +128,7 @@
       "category": "skills"
     },
     "collision-prevention": {
-      "description": "Prevent multiple devs working same task",
+      "description": "Prevent multiple devs working same issue",
       "category": "collaboration"
     },
     "team-pulse": {

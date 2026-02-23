@@ -26,7 +26,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 /**
  * Tests for WorkPrepare.
  * <p>
- * Tests verify JSON output contracts for all status codes: READY, NO_TASKS, LOCKED, OVERSIZED, and ERROR.
+ * Tests verify JSON output contracts for all status codes: READY, NO_ISSUES, LOCKED, OVERSIZED, and ERROR.
  * Each test is self-contained with temporary git repositories to support parallel execution.
  */
 public class WorkPrepareTest
@@ -60,12 +60,12 @@ public class WorkPrepareTest
   }
 
   /**
-   * Verifies that execute returns NO_TASKS when there are no executable issues.
+   * Verifies that execute returns NO_ISSUES when there are no executable issues.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeReturnsNoTasksWhenNoExecutableIssues() throws IOException
+  public void executeReturnsNoIssuesWhenNoExecutableIssues() throws IOException
   {
     Path projectDir = createTempCatProject();
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
@@ -80,7 +80,7 @@ public class WorkPrepareTest
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree(json);
-      requireThat(node.path("status").asString(), "status").isEqualTo("NO_TASKS");
+      requireThat(node.path("status").asString(), "status").isEqualTo("NO_ISSUES");
       requireThat(node.path("message").asString(), "message").isNotBlank();
       requireThat(node.path("closed_count").asInt(), "closedCount").isEqualTo(1);
       requireThat(node.path("total_count").asInt(), "totalCount").isEqualTo(1);
@@ -291,12 +291,12 @@ public class WorkPrepareTest
   }
 
   /**
-   * Verifies that execute applies exclude pattern and returns NO_TASKS when all issues are excluded.
+   * Verifies that execute applies exclude pattern and returns NO_ISSUES when all issues are excluded.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeReturnsNoTasksWhenAllIssuesExcluded() throws IOException
+  public void executeReturnsNoIssuesWhenAllIssuesExcluded() throws IOException
   {
     Path projectDir = createTempCatProject();
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
@@ -310,7 +310,7 @@ public class WorkPrepareTest
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree(json);
-      requireThat(node.path("status").asString(), "status").isEqualTo("NO_TASKS");
+      requireThat(node.path("status").asString(), "status").isEqualTo("NO_ISSUES");
     }
     finally
     {
@@ -677,13 +677,13 @@ public class WorkPrepareTest
   }
 
   /**
-   * Verifies that execute returns NO_TASKS with blocked_tasks diagnostic when an issue has
+   * Verifies that execute returns NO_ISSUES with blocked_issues diagnostic when an issue has
    * unresolved dependencies.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeReturnsNoTasksWithBlockedTasksDiagnostic() throws IOException
+  public void executeReturnsNoIssuesWithBlockedIssuesDiagnostic() throws IOException
   {
     Path projectDir = createTempGitCatProject("v2.1");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
@@ -706,21 +706,21 @@ public class WorkPrepareTest
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree(json);
-      requireThat(node.path("status").asString(), "status").isEqualTo("NO_TASKS");
-      requireThat(node.has("blocked_tasks"), "hasBlockedTasks").isTrue();
+      requireThat(node.path("status").asString(), "status").isEqualTo("NO_ISSUES");
+      requireThat(node.has("blocked_issues"), "hasBlockedIssues").isTrue();
 
-      JsonNode blockedTasks = node.path("blocked_tasks");
-      requireThat(blockedTasks.size(), "blockedTaskCount").isGreaterThan(0);
+      JsonNode blockedIssues = node.path("blocked_issues");
+      requireThat(blockedIssues.size(), "blockedIssueCount").isGreaterThan(0);
 
       // Find the blocked-feature entry
       boolean foundBlockedFeature = false;
-      for (JsonNode task : blockedTasks)
+      for (JsonNode issue : blockedIssues)
       {
-        if (task.path("issue_id").asString().equals("2.1-blocked-feature"))
+        if (issue.path("issue_id").asString().equals("2.1-blocked-feature"))
         {
           foundBlockedFeature = true;
-          requireThat(task.has("blocked_by"), "hasBlockedBy").isTrue();
-          requireThat(task.path("reason").asString(), "reason").contains("2.1-dependency-issue");
+          requireThat(issue.has("blocked_by"), "hasBlockedBy").isTrue();
+          requireThat(issue.path("reason").asString(), "reason").contains("2.1-dependency-issue");
         }
       }
       requireThat(foundBlockedFeature, "foundBlockedFeature").isTrue();

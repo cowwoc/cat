@@ -54,7 +54,7 @@ fi
 
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/client/bin/git-merge-linear" \
-  "$TASK_BRANCH" --base "$BASE_BRANCH"
+  "$ISSUE_BRANCH" --base "$BASE_BRANCH"
 ```
 
 The Java tool implements all steps: detect base branch, check divergence, check suspicious deletions, verify
@@ -67,7 +67,7 @@ to stderr (exit code 1) with `"status": "error"` and a `"message"` field contain
 
 | Output | Meaning | Agent Recovery Action |
 |--------|---------|----------------------|
-| `"status": "success"` (stdout) | Merge completed successfully | Report `commit_sha` and `task_branch`, continue |
+| `"status": "success"` (stdout) | Merge completed successfully | Report `commit_sha` and `issue_branch`, continue |
 | `"status": "error"`: Must be on {base} branch | Wrong branch checked out | `git checkout {base_branch}` first |
 | `"status": "error"`: Working directory is not clean | Uncommitted changes | Commit or stash changes before merging |
 | `"status": "error"`: Issue branch must have exactly 1 commit | Multiple commits | Squash commits first |

@@ -9,10 +9,10 @@ package io.github.cowwoc.cat.hooks;
 import tools.jackson.databind.JsonNode;
 
 /**
- * Interface for Task tool handlers.
+ * Interface for Claude Task tool handlers.
  * <p>
- * Task handlers validate task operations (subagent spawning) before they are executed.
- * PreToolUse handlers can block task operations.
+ * Validates subagent-spawning Task tool operations (not CAT issue operations).
+ * PreToolUse handlers can block Task tool invocations before they are executed.
  * <p>
  * Result factory methods: TaskHandler uses warn() to emit stderr warnings
  * for non-blocking violations (unlike AskHandler which uses withContext()).

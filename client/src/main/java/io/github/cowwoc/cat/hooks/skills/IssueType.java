@@ -7,9 +7,9 @@
 package io.github.cowwoc.cat.hooks.skills;
 
 /**
- * Types of tasks that can be created.
+ * Types of issues that can be created.
  */
-public enum TaskType
+public enum IssueType
 {
   /**
    * A new feature implementation.

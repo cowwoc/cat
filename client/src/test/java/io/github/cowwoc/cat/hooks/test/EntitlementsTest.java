@@ -36,7 +36,7 @@ public final class EntitlementsTest
         {
           "tiers": {
             "core": {
-              "features": ["single-agent-execution", "basic-task-management"]
+              "features": ["single-agent-execution", "basic-issue-management"]
             }
           }
         }
@@ -50,7 +50,7 @@ public final class EntitlementsTest
 
         requireThat(entitlements.hasFeature(Tier.CORE, "single-agent-execution"), "hasFeature").
           isTrue();
-        requireThat(entitlements.hasFeature(Tier.CORE, "basic-task-management"), "hasFeature").
+        requireThat(entitlements.hasFeature(Tier.CORE, "basic-issue-management"), "hasFeature").
           isTrue();
         requireThat(entitlements.hasFeature(Tier.CORE, "multi-agent-orchestration"), "hasFeature").
           isFalse();

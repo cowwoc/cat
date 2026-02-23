@@ -192,7 +192,7 @@ public final class FeatureGateTest
       {
         "tiers": {
           "core": {
-            "features": ["single-agent-execution", "basic-task-management"]
+            "features": ["single-agent-execution", "basic-issue-management"]
           },
           "pro": {
             "features": ["multi-agent-orchestration"],

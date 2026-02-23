@@ -28,29 +28,29 @@ when a issue exceeds safe context bounds.
 **MANDATORY: Verify issue exists. FAIL immediately if not found.**
 
 ```bash
-TASK_DIR=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${TASK_NAME}"
+ISSUE_DIR=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${ISSUE_NAME}"
 
 # FAIL immediately if issue directory missing
-if [ ! -d "$TASK_DIR" ]; then
-  echo "ERROR: Issue directory not found at $TASK_DIR"
+if [ ! -d "$ISSUE_DIR" ]; then
+  echo "ERROR: Issue directory not found at $ISSUE_DIR"
   echo "Cannot decompose a issue that doesn't exist."
   echo "FAIL immediately - do NOT attempt workarounds."
   exit 1
 fi
 
 # FAIL immediately if PLAN.md missing
-if [ ! -f "${TASK_DIR}/PLAN.md" ]; then
-  echo "ERROR: PLAN.md not found at ${TASK_DIR}/PLAN.md"
+if [ ! -f "${ISSUE_DIR}/PLAN.md" ]; then
+  echo "ERROR: PLAN.md not found at ${ISSUE_DIR}/PLAN.md"
   echo "Cannot decompose a issue without a plan - create PLAN.md first."
   echo "FAIL immediately - do NOT attempt workarounds."
   exit 1
 fi
 
 # Read current PLAN.md
-cat "${TASK_DIR}/PLAN.md"
+cat "${ISSUE_DIR}/PLAN.md"
 
 # Read STATE.md for progress
-cat "${TASK_DIR}/STATE.md"
+cat "${ISSUE_DIR}/STATE.md"
 
 # If subagent exists, check its progress
 if [ -d ".claude/cat/worktrees/${ISSUE}-sub-${UUID}" ]; then
@@ -277,16 +277,16 @@ Ensure no parallel issues within the same wave modify the same files:
 
 ```yaml
 conflict_check:
-  task_1: 1.2a-parser-lexer
+  issue_1: 1.2a-parser-lexer
     files: [src/parser/Lexer.java, test/parser/LexerTest.java]
-  task_2: 1.2c-parser-tests
+  issue_2: 1.2c-parser-tests
     files: [test/parser/ParserIntegrationTest.java]
 
   overlap: []  # No conflicts - safe to parallelize in same wave
 
   # If overlap exists:
   conflict_resolution:
-    move_conflicting_task_to_next_wave: true
+    move_conflicting_issue_to_next_wave: true
 ```
 
 ### 9. Update Original Issue for Decomposition
@@ -301,7 +301,7 @@ echo "---
 decomposed: true
 decomposed_into: [1.2a, 1.2b, 1.2c]
 parallel_plan: wave_1=[1.2a, 1.2c], wave_2=[1.2b]
----" >> "${TASK_DIR}/PLAN.md"
+---" >> "${ISSUE_DIR}/PLAN.md"
 
 # Update STATE.md - status stays in-progress, add Decomposed field
 # Parent transitions to 'closed' only when ALL sub-issues are implemented and tested
@@ -415,12 +415,12 @@ emergency_decomposition:
 
 ```yaml
 # ❌ Starting fresh after decomposition
-decompose_task "1.2-parser"
+decompose_issue "1.2-parser"
 # Subagent work discarded!
 
 # ✅ Preserve progress
 collect_results "${SUBAGENT}"
-decompose_task "1.2-parser"
+decompose_issue "1.2-parser"
 merge_to_appropriate_sub-issue "${SUBAGENT_WORK}"
 ```
 

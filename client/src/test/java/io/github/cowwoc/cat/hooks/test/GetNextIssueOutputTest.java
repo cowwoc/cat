@@ -7,7 +7,7 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.skills.GetNextTaskOutput;
+import io.github.cowwoc.cat.hooks.skills.GetNextIssueOutput;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -17,7 +17,7 @@ import java.nio.file.Path;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Tests for GetNextTaskOutput functionality.
+ * Tests for GetNextIssueOutput functionality.
  * <p>
  * Tests verify box rendering output structure and business logic for
  * extracting scope and reading issue goals from PLAN.md fixtures.
@@ -25,7 +25,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * Tests are designed for parallel execution - each test is self-contained
  * with no shared state.
  */
-public class GetNextTaskOutputTest
+public class GetNextIssueOutputTest
 {
   /**
    * Verifies that extractScope extracts version prefix correctly.
@@ -35,7 +35,7 @@ public class GetNextTaskOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetNextTaskOutput output = new GetNextTaskOutput(scope);
+      GetNextIssueOutput output = new GetNextIssueOutput(scope);
       String result = output.extractScopePublic("2.1-add-feature");
       requireThat(result, "result").isEqualTo("v2.1");
     }
@@ -49,7 +49,7 @@ public class GetNextTaskOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetNextTaskOutput output = new GetNextTaskOutput(scope);
+      GetNextIssueOutput output = new GetNextIssueOutput(scope);
       String result = output.extractScopePublic("3-fix-bug");
       requireThat(result, "result").isEqualTo("v3");
     }
@@ -63,7 +63,7 @@ public class GetNextTaskOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetNextTaskOutput output = new GetNextTaskOutput(scope);
+      GetNextIssueOutput output = new GetNextIssueOutput(scope);
       String result = output.extractScopePublic("");
       requireThat(result, "result").isEqualTo("");
     }
@@ -77,7 +77,7 @@ public class GetNextTaskOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetNextTaskOutput output = new GetNextTaskOutput(scope);
+      GetNextIssueOutput output = new GetNextIssueOutput(scope);
       String result = output.extractScopePublic("noDashHere");
       requireThat(result, "result").isEqualTo("noDashHere");
     }
@@ -91,7 +91,7 @@ public class GetNextTaskOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetNextTaskOutput output = new GetNextTaskOutput(scope);
+      GetNextIssueOutput output = new GetNextIssueOutput(scope);
       String result = output.extractScopePublic("feature-add-login");
       requireThat(result, "result").isEqualTo("feature");
     }
@@ -124,7 +124,7 @@ public class GetNextTaskOutputTest
 
       try (JvmScope scope = new TestJvmScope())
       {
-        GetNextTaskOutput output = new GetNextTaskOutput(scope);
+        GetNextIssueOutput output = new GetNextIssueOutput(scope);
         String goal = output.readIssueGoalPublic(tempDir.toString());
         requireThat(goal, "goal").isEqualTo("This is the first paragraph.");
       }
@@ -157,7 +157,7 @@ public class GetNextTaskOutputTest
 
       try (JvmScope scope = new TestJvmScope())
       {
-        GetNextTaskOutput output = new GetNextTaskOutput(scope);
+        GetNextIssueOutput output = new GetNextIssueOutput(scope);
         String goal = output.readIssueGoalPublic(tempDir.toString());
         requireThat(goal, "goal").isEqualTo("No goal found");
       }
@@ -180,7 +180,7 @@ public class GetNextTaskOutputTest
     {
       try (JvmScope scope = new TestJvmScope())
       {
-        GetNextTaskOutput output = new GetNextTaskOutput(scope);
+        GetNextIssueOutput output = new GetNextIssueOutput(scope);
         String goal = output.readIssueGoalPublic(tempDir.toString());
         requireThat(goal, "goal").isEqualTo("No goal found");
       }
@@ -212,7 +212,7 @@ public class GetNextTaskOutputTest
 
       try (JvmScope scope = new TestJvmScope())
       {
-        GetNextTaskOutput output = new GetNextTaskOutput(scope);
+        GetNextIssueOutput output = new GetNextIssueOutput(scope);
         String goal = output.readIssueGoalPublic(tempDir.toString());
         requireThat(goal, "goal").isEqualTo("First paragraph with leading/trailing spaces.");
       }
@@ -230,136 +230,136 @@ public class GetNextTaskOutputTest
   @Test(expectedExceptions = NullPointerException.class)
   public void constructorThrowsOnNullScope()
   {
-    new GetNextTaskOutput(null);
+    new GetNextIssueOutput(null);
   }
 
   /**
-   * Verifies that getNextTaskBox throws for null completedIssue.
+   * Verifies that getNextIssueBox throws for null completedIssue.
    */
   @Test(expectedExceptions = NullPointerException.class)
-  public void getNextTaskBoxThrowsOnNullCompletedIssue() throws IOException
+  public void getNextIssueBoxThrowsOnNullCompletedIssue() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetNextTaskOutput output = new GetNextTaskOutput(scope);
-      output.getNextTaskBox(null, "main", "session123", "/tmp", "");
+      GetNextIssueOutput output = new GetNextIssueOutput(scope);
+      output.getNextIssueBox(null, "main", "session123", "/tmp", "");
     }
   }
 
   /**
-   * Verifies that getNextTaskBox throws for blank completedIssue.
+   * Verifies that getNextIssueBox throws for blank completedIssue.
    */
   @Test(expectedExceptions = IllegalArgumentException.class)
-  public void getNextTaskBoxThrowsOnBlankCompletedIssue() throws IOException
+  public void getNextIssueBoxThrowsOnBlankCompletedIssue() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetNextTaskOutput output = new GetNextTaskOutput(scope);
-      output.getNextTaskBox("", "main", "session123", "/tmp", "");
+      GetNextIssueOutput output = new GetNextIssueOutput(scope);
+      output.getNextIssueBox("", "main", "session123", "/tmp", "");
     }
   }
 
   /**
-   * Verifies that getNextTaskBox throws for null baseBranch.
+   * Verifies that getNextIssueBox throws for null baseBranch.
    */
   @Test(expectedExceptions = NullPointerException.class)
-  public void getNextTaskBoxThrowsOnNullBaseBranch() throws IOException
+  public void getNextIssueBoxThrowsOnNullBaseBranch() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetNextTaskOutput output = new GetNextTaskOutput(scope);
-      output.getNextTaskBox("2.1-test", null, "session123", "/tmp", "");
+      GetNextIssueOutput output = new GetNextIssueOutput(scope);
+      output.getNextIssueBox("2.1-test", null, "session123", "/tmp", "");
     }
   }
 
   /**
-   * Verifies that getNextTaskBox throws for blank baseBranch.
+   * Verifies that getNextIssueBox throws for blank baseBranch.
    */
   @Test(expectedExceptions = IllegalArgumentException.class)
-  public void getNextTaskBoxThrowsOnBlankBaseBranch() throws IOException
+  public void getNextIssueBoxThrowsOnBlankBaseBranch() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetNextTaskOutput output = new GetNextTaskOutput(scope);
-      output.getNextTaskBox("2.1-test", "", "session123", "/tmp", "");
+      GetNextIssueOutput output = new GetNextIssueOutput(scope);
+      output.getNextIssueBox("2.1-test", "", "session123", "/tmp", "");
     }
   }
 
   /**
-   * Verifies that getNextTaskBox throws for null sessionId.
+   * Verifies that getNextIssueBox throws for null sessionId.
    */
   @Test(expectedExceptions = NullPointerException.class)
-  public void getNextTaskBoxThrowsOnNullSessionId() throws IOException
+  public void getNextIssueBoxThrowsOnNullSessionId() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetNextTaskOutput output = new GetNextTaskOutput(scope);
-      output.getNextTaskBox("2.1-test", "main", null, "/tmp", "");
+      GetNextIssueOutput output = new GetNextIssueOutput(scope);
+      output.getNextIssueBox("2.1-test", "main", null, "/tmp", "");
     }
   }
 
   /**
-   * Verifies that getNextTaskBox throws for blank sessionId.
+   * Verifies that getNextIssueBox throws for blank sessionId.
    */
   @Test(expectedExceptions = IllegalArgumentException.class)
-  public void getNextTaskBoxThrowsOnBlankSessionId() throws IOException
+  public void getNextIssueBoxThrowsOnBlankSessionId() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetNextTaskOutput output = new GetNextTaskOutput(scope);
-      output.getNextTaskBox("2.1-test", "main", "", "/tmp", "");
+      GetNextIssueOutput output = new GetNextIssueOutput(scope);
+      output.getNextIssueBox("2.1-test", "main", "", "/tmp", "");
     }
   }
 
   /**
-   * Verifies that getNextTaskBox throws for null projectDir.
+   * Verifies that getNextIssueBox throws for null projectDir.
    */
   @Test(expectedExceptions = NullPointerException.class)
-  public void getNextTaskBoxThrowsOnNullProjectDir() throws IOException
+  public void getNextIssueBoxThrowsOnNullProjectDir() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetNextTaskOutput output = new GetNextTaskOutput(scope);
-      output.getNextTaskBox("2.1-test", "main", "session123", null, "");
+      GetNextIssueOutput output = new GetNextIssueOutput(scope);
+      output.getNextIssueBox("2.1-test", "main", "session123", null, "");
     }
   }
 
   /**
-   * Verifies that getNextTaskBox throws for blank projectDir.
+   * Verifies that getNextIssueBox throws for blank projectDir.
    */
   @Test(expectedExceptions = IllegalArgumentException.class)
-  public void getNextTaskBoxThrowsOnBlankProjectDir() throws IOException
+  public void getNextIssueBoxThrowsOnBlankProjectDir() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetNextTaskOutput output = new GetNextTaskOutput(scope);
-      output.getNextTaskBox("2.1-test", "main", "session123", "", "");
+      GetNextIssueOutput output = new GetNextIssueOutput(scope);
+      output.getNextIssueBox("2.1-test", "main", "session123", "", "");
     }
   }
 
   /**
-   * Verifies that getNextTaskBox throws for null excludePattern.
+   * Verifies that getNextIssueBox throws for null excludePattern.
    */
   @Test(expectedExceptions = NullPointerException.class)
-  public void getNextTaskBoxThrowsOnNullExcludePattern() throws IOException
+  public void getNextIssueBoxThrowsOnNullExcludePattern() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetNextTaskOutput output = new GetNextTaskOutput(scope);
-      output.getNextTaskBox("2.1-test", "main", "session123", "/tmp", null);
+      GetNextIssueOutput output = new GetNextIssueOutput(scope);
+      output.getNextIssueBox("2.1-test", "main", "session123", "/tmp", null);
     }
   }
 
   /**
-   * Verifies that getNextTaskBox accepts empty excludePattern and returns output with box structure.
+   * Verifies that getNextIssueBox accepts empty excludePattern and returns output with box structure.
    */
   @Test
-  public void getNextTaskBoxAcceptsEmptyExcludePattern() throws IOException
+  public void getNextIssueBoxAcceptsEmptyExcludePattern() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetNextTaskOutput output = new GetNextTaskOutput(scope);
-      String result = output.getNextTaskBox("2.1-test", "main", "session123", "/tmp", "");
+      GetNextIssueOutput output = new GetNextIssueOutput(scope);
+      String result = output.getNextIssueBox("2.1-test", "main", "session123", "/tmp", "");
       requireThat(result, "result").isNotEmpty();
     }
   }
@@ -374,7 +374,7 @@ public class GetNextTaskOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetNextTaskOutput output = new GetNextTaskOutput(scope);
+      GetNextIssueOutput output = new GetNextIssueOutput(scope);
       String[] args = {
         "--completed-issue", "2.1-test-issue",
         "--base-branch", "v2.1",
@@ -396,7 +396,7 @@ public class GetNextTaskOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetNextTaskOutput output = new GetNextTaskOutput(scope);
+      GetNextIssueOutput output = new GetNextIssueOutput(scope);
       output.getOutput(new String[]{"--completed-issue", "2.1-test"});
     }
   }
@@ -414,7 +414,7 @@ public class GetNextTaskOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetNextTaskOutput output = new GetNextTaskOutput(scope);
+      GetNextIssueOutput output = new GetNextIssueOutput(scope);
       String jsonValue = "{\"key\":\"value\"}";
       String[] args = {
         "--completed-issue", "2.1-test-issue",
@@ -438,7 +438,7 @@ public class GetNextTaskOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetNextTaskOutput output = new GetNextTaskOutput(scope);
+      GetNextIssueOutput output = new GetNextIssueOutput(scope);
       output.getOutput(null);
     }
   }
@@ -453,7 +453,7 @@ public class GetNextTaskOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetNextTaskOutput output = new GetNextTaskOutput(scope);
+      GetNextIssueOutput output = new GetNextIssueOutput(scope);
       // Omit --session-id and --project-dir; scope provides defaults
       String[] args = {
         "--completed-issue", "2.1-test-issue",

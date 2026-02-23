@@ -26,7 +26,7 @@ its own context, keeping main agent context minimal (~5-10K tokens).
 **Bare name format:** Issue name without version prefix, starting with a letter (e.g., `fix-work-prepare-issue-name-matching`). If multiple versions contain the same issue name, prefers the version matching the current git branch. Falls back to first match if no branch version match exists.
 
 **Filter examples:**
-- `skip compression tasks` - exclude issues with "compression" in name
+- `skip compression issues` - exclude issues with "compression" in name
 - `only migration` - only issues with "migration" in name
 
 Filters are interpreted by the prepare phase subagent using natural language understanding.
@@ -64,7 +64,7 @@ Run `"${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --arguments "${ARGUMENTS}"`
 |--------|--------|
 | READY | Continue to Phase 2 |
 | READY + `potentially_complete: true` | Ask user to verify (see below), then skip or continue |
-| NO_TASKS | Display extended diagnostics (see below), stop |
+| NO_ISSUES | Display extended diagnostics (see below), stop |
 | LOCKED | Display lock message, try next issue |
 | OVERSIZED | Invoke /cat:decompose-issue, then retry |
 | ERROR | Display error, stop |
@@ -80,12 +80,12 @@ working on the wrong issue.
 Display: "Prepare phase failed to return a result. The script may have encountered an error."
 Then STOP. Do not proceed to work-with-issue.
 
-**NO_TASKS Guidance:**
+**NO_ISSUES Guidance:**
 
-When prepare phase returns NO_TASKS, use extended failure fields to provide specific diagnostics:
+When prepare phase returns NO_ISSUES, use extended failure fields to provide specific diagnostics:
 
-1. If `blocked_tasks` is non-empty: list each blocked issue and what it's blocked by
-2. If `locked_tasks` is non-empty: suggest `/cat:cleanup` to clear stale locks
+1. If `blocked_issues` is non-empty: list each blocked issue and what it's blocked by
+2. If `locked_issues` is non-empty: suggest `/cat:cleanup` to clear stale locks
 3. If `closed_count == total_count`: all issues done - suggest `/cat:add` for new work
 4. Otherwise: read `get-available-issues.sh` output to determine which issues are available and display them
 

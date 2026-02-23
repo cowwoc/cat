@@ -9,7 +9,7 @@ package io.github.cowwoc.cat.hooks;
 import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner;
 import io.github.cowwoc.cat.hooks.skills.GetCheckpointOutput;
 import io.github.cowwoc.cat.hooks.skills.GetIssueCompleteOutput;
-import io.github.cowwoc.cat.hooks.skills.GetNextTaskOutput;
+import io.github.cowwoc.cat.hooks.skills.GetNextIssueOutput;
 import io.github.cowwoc.cat.hooks.skills.GetDiffOutput;
 import io.github.cowwoc.cat.hooks.skills.GetStatusOutput;
 import io.github.cowwoc.cat.hooks.skills.ProgressBanner;
@@ -69,7 +69,7 @@ public final class AotTraining
       new UserPromptSubmitHook(scope).run(input, output);
       new PreAskHook(scope).run(input, output);
       new PreWriteHook(scope).run(input, output);
-      new PreTaskHook(scope).run(input, output);
+      new PreIssueHook(scope).run(input, output);
       new SessionEndHook(scope).run(input, output);
       new SessionStartHook(scope).run(input, output);
       new SubagentStartHook(scope).run(input, output);
@@ -108,7 +108,7 @@ public final class AotTraining
       referenceClass(TokenCounter.class);
       referenceClass(GetCheckpointOutput.class);
       referenceClass(GetIssueCompleteOutput.class);
-      referenceClass(GetNextTaskOutput.class);
+      referenceClass(GetNextIssueOutput.class);
       referenceClass(SessionAnalyzer.class);
       referenceClass(ProgressBanner.class);
       referenceClass(EmpiricalTestRunner.class);

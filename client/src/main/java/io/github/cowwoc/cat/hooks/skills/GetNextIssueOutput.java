@@ -25,11 +25,11 @@ import java.util.Map;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Output generator for next task box with task discovery.
- *
- * Combines lock release, next task discovery, and box rendering into a single operation.
+ * Output generator for next issue box with issue discovery.
+ * <p>
+ * Combines lock release, next issue discovery, and box rendering into a single operation.
  */
-public final class GetNextTaskOutput implements SkillOutput
+public final class GetNextIssueOutput implements SkillOutput
 {
   private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>()
   {
@@ -41,12 +41,12 @@ public final class GetNextTaskOutput implements SkillOutput
   private final JvmScope scope;
 
   /**
-   * Creates a GetNextTaskOutput instance.
+   * Creates a GetNextIssueOutput instance.
    *
    * @param scope the JVM scope for accessing shared services
    * @throws NullPointerException if scope is null
    */
-  public GetNextTaskOutput(JvmScope scope)
+  public GetNextIssueOutput(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -135,15 +135,15 @@ public final class GetNextTaskOutput implements SkillOutput
 
     if (completedIssue.isEmpty() || baseBranch.isEmpty() || sessionId.isEmpty() || projectDir.isEmpty())
     {
-      throw new IOException("GetNextTaskOutput.getOutput() requires --completed-issue, --base-branch, " +
+      throw new IOException("GetNextIssueOutput.getOutput() requires --completed-issue, --base-branch, " +
         "--session-id, and --project-dir arguments. Got: " + String.join(" ", args));
     }
 
-    return getNextTaskBox(completedIssue, baseBranch, sessionId, projectDir, excludePattern);
+    return getNextIssueBox(completedIssue, baseBranch, sessionId, projectDir, excludePattern);
   }
 
   /**
-   * CLI entry point for generating next task boxes with discovery.
+   * CLI entry point for generating next issue boxes with discovery.
    *
    * @param args command line arguments
    */
@@ -160,7 +160,7 @@ public final class GetNextTaskOutput implements SkillOutput
 
       if (completedIssue.isEmpty() || baseBranch.isEmpty() || sessionId.isEmpty() || projectDir.isEmpty())
       {
-        System.err.println("Usage: GetNextTaskOutput --completed-issue ID --base-branch BRANCH " +
+        System.err.println("Usage: GetNextIssueOutput --completed-issue ID --base-branch BRANCH " +
           "--session-id ID --project-dir DIR [--exclude-pattern GLOB]");
         System.exit(1);
         return;
@@ -168,15 +168,15 @@ public final class GetNextTaskOutput implements SkillOutput
 
       try (JvmScope scope = new MainJvmScope())
       {
-        GetNextTaskOutput output = new GetNextTaskOutput(scope);
-        String box = output.getNextTaskBox(completedIssue, baseBranch, sessionId, projectDir, excludePattern);
+        GetNextIssueOutput output = new GetNextIssueOutput(scope);
+        String box = output.getNextIssueBox(completedIssue, baseBranch, sessionId, projectDir, excludePattern);
         System.out.println(box);
       }
     }
     catch (Exception e)
     {
-      Logger log = LoggerFactory.getLogger(GetNextTaskOutput.class);
-      log.error("ERROR generating next task box", e);
+      Logger log = LoggerFactory.getLogger(GetNextIssueOutput.class);
+      log.error("ERROR generating next issue box", e);
       System.out.println();
       if (args.length >= 2)
       {
@@ -202,7 +202,7 @@ public final class GetNextTaskOutput implements SkillOutput
   }
 
   /**
-   * Generates an issue complete box with next task discovery.
+   * Generates an issue complete box with next issue discovery.
    * <p>
    * Depends on external resources:
    * <ul>
@@ -214,7 +214,7 @@ public final class GetNextTaskOutput implements SkillOutput
    * If external scripts are missing or fail, the method gracefully degrades by:
    * <ul>
    *   <li>Skipping lock release if issue-lock.sh is missing</li>
-   *   <li>Generating scope complete box if get-available-issues.sh is missing or returns no tasks</li>
+   *   <li>Generating scope complete box if get-available-issues.sh is missing or returns no issues</li>
    * </ul>
    *
    * @param completedIssue the ID of the completed issue
@@ -226,8 +226,8 @@ public final class GetNextTaskOutput implements SkillOutput
    * @throws NullPointerException if any parameter is null
    * @throws IllegalArgumentException if any required parameter is blank
    */
-  public String getNextTaskBox(String completedIssue, String baseBranch, String sessionId, String projectDir,
-                               String excludePattern)
+  public String getNextIssueBox(String completedIssue, String baseBranch, String sessionId, String projectDir,
+                                String excludePattern)
   {
     requireThat(completedIssue, "completedIssue").isNotBlank();
     requireThat(baseBranch, "baseBranch").isNotBlank();
@@ -238,12 +238,12 @@ public final class GetNextTaskOutput implements SkillOutput
     List<String> warnings = new ArrayList<>();
     releaseLock(projectDir, completedIssue, sessionId, warnings);
 
-    Map<String, Object> nextTask = findNextTask(projectDir, sessionId, excludePattern, warnings);
+    Map<String, Object> nextIssue = findNextIssue(projectDir, sessionId, excludePattern, warnings);
 
-    if (!nextTask.isEmpty())
+    if (!nextIssue.isEmpty())
     {
-      String nextIssueId = nextTask.getOrDefault("issue_id", "").toString();
-      String nextIssuePath = nextTask.getOrDefault("issue_path", "").toString();
+      String nextIssueId = nextIssue.getOrDefault("issue_id", "").toString();
+      String nextIssuePath = nextIssue.getOrDefault("issue_path", "").toString();
 
       String goal;
       if (!nextIssuePath.isEmpty())
@@ -291,15 +291,15 @@ public final class GetNextTaskOutput implements SkillOutput
   }
 
   /**
-   * Finds the next available task using get-available-issues.sh.
+   * Finds the next available issue using get-available-issues.sh.
    *
    * @param projectDir the project root directory
    * @param sessionId the current session ID
    * @param excludePattern optional glob pattern to exclude issues (may be empty)
    * @param warnings list to collect warning messages
-   * @return map with task info if found, empty map otherwise
+   * @return map with issue info if found, empty map otherwise
    */
-  private Map<String, Object> findNextTask(String projectDir, String sessionId, String excludePattern,
+  private Map<String, Object> findNextIssue(String projectDir, String sessionId, String excludePattern,
     List<String> warnings)
   {
     try
@@ -339,7 +339,7 @@ public final class GetNextTaskOutput implements SkillOutput
     }
     catch (Exception e)
     {
-      warnings.add("WARNING: Failed to find next task: " + e.getMessage());
+      warnings.add("WARNING: Failed to find next issue: " + e.getMessage());
       return Map.of();
     }
   }

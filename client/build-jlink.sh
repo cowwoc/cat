@@ -49,11 +49,11 @@ readonly -a HANDLERS=(
   "pre-write:PreWriteHook"
 
   "subagent-start:SubagentStartHook"
-  "pre-task:PreTaskHook"
+  "pre-issue:PreIssueHook"
   "session-end:SessionEndHook"
   "get-checkpoint-box:skills.GetCheckpointOutput"
   "get-issue-complete-box:skills.GetIssueCompleteOutput"
-  "get-next-task-box:skills.GetNextTaskOutput"
+  "get-next-issue-box:skills.GetNextIssueOutput"
   "get-config-output:skills.GetConfigOutput"
   "get-status-output:skills.GetStatusOutput"
   "get-statusline-output:skills.GetStatuslineOutput"

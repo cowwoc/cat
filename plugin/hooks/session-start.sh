@@ -10,7 +10,7 @@
 # local bundle version against plugin.json version. If they match, uses the
 # existing bundle. If they differ, downloads the correct bundle from GitHub.
 # After JDK is ready, invokes the SessionStartHook Java dispatcher
-# which handles all session start tasks (update check, data migration,
+# which handles all session start operations (update check, data migration,
 # session ID injection, retrospective reminders, instructions, env injection,
 # skill marker cleanup).
 
@@ -293,7 +293,7 @@ main() {
     debug "JDK runtime ready, invoking Java dispatcher"
 
     # Invoke the SessionStartHook Java dispatcher
-    # It handles all session start tasks: update check, data migration, session ID,
+    # It handles all session start operations: update check, data migration, session ID,
     # retrospective reminders, session instructions, env injection, skill marker cleanup.
     # Pipe stdin directly to avoid buffering large input in memory.
     local java_exit=0
