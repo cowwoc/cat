@@ -1263,4 +1263,85 @@ public class GetCleanupOutputTest
     // The condition i + 1 >= args.length is true for i=0, confirming the boundary check triggers.
     requireThat(0 + 1 >= args.length, "boundaryCheckTriggered").isTrue();
   }
+
+  // --- getOutput(String[] args) tests ---
+
+  /**
+   * Verifies that getOutput(null) throws NullPointerException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = NullPointerException.class)
+  public void getOutputNullArgsThrowsNullPointerException() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetCleanupOutput handler = new GetCleanupOutput(scope);
+      handler.getOutput(null);
+    }
+  }
+
+  /**
+   * Verifies that getOutput(new String[]{}) falls back to scope.getClaudeProjectDir() and returns non-null.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getOutputEmptyArgsReturnsNonNull() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetCleanupOutput handler = new GetCleanupOutput(scope);
+      String result = handler.getOutput(new String[]{});
+      requireThat(result, "result").isNotNull();
+    }
+  }
+
+  /**
+   * Verifies that getOutput with --project-dir uses the provided path and returns non-null.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getOutputWithProjectDirUsesProvidedPath() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("test-project");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetCleanupOutput handler = new GetCleanupOutput(scope);
+      String result = handler.getOutput(new String[]{"--project-dir", projectDir.toString()});
+      requireThat(result, "result").isNotNull();
+    }
+  }
+
+  /**
+   * Verifies that getOutput with --project-dir but no following value throws IllegalArgumentException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Missing PATH argument.*")
+  public void getOutputMissingProjectDirValueThrowsIllegalArgumentException() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetCleanupOutput handler = new GetCleanupOutput(scope);
+      handler.getOutput(new String[]{"--project-dir"});
+    }
+  }
+
+  /**
+   * Verifies that getOutput with an unknown flag throws IllegalArgumentException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void getOutputUnknownFlagThrowsIllegalArgumentException() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetCleanupOutput handler = new GetCleanupOutput(scope);
+      handler.getOutput(new String[]{"--unknown-flag"});
+    }
+  }
 }
