@@ -15,6 +15,7 @@
 Finalize naming conventions and UI polish before recording demo videos.
 
 ## Issues Pending
+- audience-aware-rules-injection
 - add-preconditions-postconditions
 - fix-status-line-wrapping
 - require-reviewer-file-evidence
