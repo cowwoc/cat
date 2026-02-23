@@ -589,17 +589,16 @@ public class MergeAndCleanupTest
   }
 
   /**
-   * Verifies that after execute completes, the base branch ref is updated but the main working
-   * tree is intentionally left unchanged.
+   * Verifies that after execute completes, the main working tree is synced with the merged
+   * commits.
    * <p>
-   * The merge uses {@code git update-ref} which only moves the branch pointer.
-   * The working tree in the main repo is not synced because git commands resolve branches
-   * through refs, not disk files.
+   * The merge uses {@code git merge --ff-only} which atomically updates the ref, index, and
+   * working tree. Files added in the issue branch should appear in the main working tree.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeUpdatesRefWithoutSyncingWorkingTree() throws IOException
+  public void executeSyncsMainWorkingTree() throws IOException
   {
     Path originRepo = Files.createTempDirectory("origin-repo-");
     Path mainRepo = Files.createTempDirectory("main-repo-");
@@ -660,9 +659,9 @@ public class MergeAndCleanupTest
         String v21Log = TestUtils.runGitCommandWithOutput(mainRepo, "log", "--oneline", "v2.1");
         requireThat(v21Log, "v21Log").contains("Add new feature file");
 
-        // Verify the main working tree was NOT synced (no syncMainWorkingTree call)
+        // Verify the main working tree IS synced (merge --ff-only updates working tree)
         requireThat(Files.exists(mainRepo.resolve("new-feature.txt")),
-          "fileExistsAfterMerge").isFalse();
+          "fileExistsAfterMerge").isTrue();
       }
     }
     finally
