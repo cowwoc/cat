@@ -1527,29 +1527,28 @@
     {
       "id": "M397",
       "timestamp": "2026-02-24T00:00:00Z",
-      "category": "protocol_violation",
-      "description": "Subagent added documentation to plugin/concepts/agent-architecture.md with table rows 180-200 chars wide, violating the 120-char line wrapping convention",
-      "root_cause": "TAXONOMY: PLANNING module failure. The main agent's delegation prompt omitted the project's 120-char line wrapping convention. The subagent had CLAUDE.md in context but the rule was not salient when constructing wide table rows. The Pre-Spawn Checklist in subagent-delegation.md had no item requiring documentation conventions to be included in prompts for documentation work.",
+      "category": "tool_misuse",
+      "description": "stakeholder-selection-box invoked with stakeholder names as first positional args instead of integer counts",
+      "root_cause": "Skill argument format not documented inline at the invocation point. Agent saw template variable names (SELECTED_COUNT) but confused them for semantic labels, passing stakeholder names directly instead of computing integer counts first.",
       "rca_method": "B",
       "rca_method_name": "taxonomy",
       "prevention_type": "skill",
-      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/subagent-delegation.md",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/stakeholder-review/first-use.md",
       "pattern_keywords": [
-        "line_wrapping",
-        "120_char",
-        "delegation_prompt",
-        "documentation_convention",
-        "subagent_documentation"
+        "stakeholder-selection-box",
+        "positional-args",
+        "integer-count",
+        "argument-format"
       ],
       "prevention_implemented": true,
       "prevention_verified": true,
-      "recurrence_of": "M382",
+      "recurrence_of": null,
       "prevention_quality": {
         "verification_type": "positive",
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "When delegating documentation work to a subagent, include project documentation conventions (120-char line wrapping, license headers) explicitly in the delegation prompt. Use bullet lists instead of tables when cell content would exceed 120 chars."
+      "correct_behavior": "Compute SELECTED_COUNT as integer before invoking cat:stakeholder-selection-box. Args 1 and 2 must be integers; args 3 and 4 are comma-separated name lists."
     }
   ]
 }

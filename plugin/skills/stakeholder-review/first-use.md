@@ -331,8 +331,24 @@ Skill tool:
   args: "${SELECTED_COUNT} 10 ${SELECTED_LIST} ${SKIPPED_LIST}"
 ```
 
-Copy the output verbatim. The third argument is a comma-separated list of selected stakeholder names.
-The fourth argument is a comma-separated list of `stakeholder:reason` pairs.
+**Argument format (positional):**
+- Arg 1: `${SELECTED_COUNT}` — integer count of selected stakeholders (e.g., `5`)
+- Arg 2: `10` — integer total stakeholder count (always 10)
+- Arg 3: `${SELECTED_LIST}` — comma-separated stakeholder names (e.g., `requirements,architecture,design`)
+- Arg 4: `${SKIPPED_LIST}` — comma-separated `stakeholder:reason` pairs
+
+**CRITICAL:** Args 1 and 2 MUST be integers. Passing stakeholder names as args 1 or 2 will cause
+`selected-count must be an integer` error. Compute counts before invoking:
+
+```bash
+SELECTED_COUNT=$(echo "$SELECTED" | tr ' ' '\n' | grep -c '.')
+SELECTED_LIST=$(echo "$SELECTED" | tr ' ' ',')
+SKIPPED_COUNT=$(echo "$SKIPPED" | tr ' ' '\n' | grep -c '.' 2>/dev/null || echo 0)
+SKIPPED_LIST=$(echo "$SKIPPED" | tr ' ' ',')
+# Then invoke: args: "${SELECTED_COUNT} 10 ${SELECTED_LIST} ${SKIPPED_LIST}"
+```
+
+Copy the output verbatim.
 
 If file-based overrides occurred, add an "Overrides (file-based):" section inside the box.
 
