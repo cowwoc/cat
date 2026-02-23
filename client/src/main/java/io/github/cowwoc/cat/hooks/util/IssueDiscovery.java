@@ -1003,7 +1003,7 @@ public final class IssueDiscovery
         continue;
 
       // Skip if matches exclude pattern
-      if (!options.excludePattern().isEmpty() && matchesGlob(issueName, options.excludePattern()))
+      if (!options.excludePattern().isEmpty() && GlobMatcher.matches(options.excludePattern(), issueName))
       {
         excludedCount.incrementAndGet();
         continue;
@@ -1604,35 +1604,5 @@ public final class IssueDiscovery
         sorted().
         toList();
     }
-  }
-
-  /**
-   * Tests if an issue name matches a glob pattern.
-   * <p>
-   * Supports {@code *} as a wildcard matching any sequence of characters (not including path separators).
-   *
-   * @param issueName the issue name to test
-   * @param pattern the glob pattern (may contain {@code *})
-   * @return true if the issue name matches the pattern
-   */
-  private boolean matchesGlob(String issueName, String pattern)
-  {
-    if (!pattern.contains("*"))
-      return issueName.equals(pattern);
-
-    // Convert glob to regex
-    StringBuilder regex = new StringBuilder("^");
-    for (char c : pattern.toCharArray())
-    {
-      if (c == '*')
-        regex.append(".*");
-      else if ("\\^$.|+?()[]{}".indexOf(c) >= 0)
-        regex.append('\\').append(c);
-      else
-        regex.append(c);
-    }
-    regex.append('$');
-
-    return issueName.matches(regex.toString());
   }
 }
