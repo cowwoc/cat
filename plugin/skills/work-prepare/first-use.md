@@ -148,6 +148,8 @@ Parse the result and handle statuses:
 - `found` - Continue to worktree creation
 - `not_found` - Return NO_TASKS with extended info (see below)
 - `locked` - Return LOCKED status with owner info
+- `existing_worktree` - Return LOCKED status; treat as locked by another session. Do NOT investigate, inspect, or
+  remove the worktree. Pick a different issue.
 
 **Extended failure info:** When discovery returns `not_found`, gather diagnostic context
 before returning NO_TASKS. Scan issue directories to report why no tasks are available:
@@ -345,6 +347,7 @@ Output the JSON result with all required fields.
 - Planning structure missing: Return ERROR immediately
 - Script returns error: Return ERROR with message
 - Lock unavailable: Return LOCKED, do NOT investigate
+- Existing worktree detected (`existing_worktree` status): Return LOCKED, do NOT investigate or remove the worktree
 - Task exceeds hard limit: Return OVERSIZED
 - **Worktree on wrong branch:** Clean up and return ERROR
 

@@ -1549,6 +1549,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Compute SELECTED_COUNT as integer before invoking cat:stakeholder-selection-box. Args 1 and 2 must be integers; args 3 and 4 are comma-separated name lists."
+    },
+    {
+      "id": "M398",
+      "timestamp": "2026-02-24T04:28:34Z",
+      "category": "protocol_violation",
+      "description": "Agent investigated and nearly removed a worktree that was potentially in use by another Claude session",
+      "root_cause": "work-prepare/first-use.md status handler list omitted existing_worktree status, leaving agent without explicit instruction to treat it as LOCKED and pick another issue",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-prepare/first-use.md",
+      "pattern_keywords": [
+        "worktree_removal",
+        "concurrent_session",
+        "protocol_violation",
+        "existing_worktree",
+        "fail_fast"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When work-prepare returns existing_worktree status, treat as LOCKED, return LOCKED to caller, and pick a different issue without investigation or removal"
     }
   ]
 }
