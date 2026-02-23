@@ -12,6 +12,7 @@ module io.github.cowwoc.cat.hooks.test
   requires io.github.cowwoc.requirements13.jackson;
   requires tools.jackson.core;
   requires tools.jackson.databind;
+  requires tools.jackson.dataformat.yaml;
   requires io.github.cowwoc.pouch10.core;
 
   exports io.github.cowwoc.cat.hooks.test to org.testng, io.github.cowwoc.cat.hooks;

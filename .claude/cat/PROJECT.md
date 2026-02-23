@@ -45,7 +45,7 @@ claude-code-cat/
 │   ├── PROJECT.md         # Project overview
 │   ├── ROADMAP.md         # Version roadmap
 │   ├── cat-config.json    # User preferences
-│   ├── conventions/       # Coding standards
+│   ├── rules/             # Coding standards and audience-filtered rules
 │   ├── references/        # Reference documentation
 │   ├── templates/         # Document templates
 │   └── workflows/         # Workflow definitions
@@ -66,44 +66,34 @@ claude-code-cat/
 | Linear git history | Easier debugging and rollback | Adopted |
 | Source-available license | Balance open development with commercial sustainability | Adopted |
 
-## Conventions
+## Rules and Conventions
 
-Claude-facing coding standards live in `.claude/cat/conventions/`. Place files here that define:
-- Code style rules (naming, formatting, patterns)
-- Testing standards and requirements
-- Architecture guidelines
-- Language-specific conventions
+Claude-facing coding standards live in `.claude/cat/rules/`. This directory uses a two-tier system with
+audience-aware injection via CAT hooks.
 
 **Structure:**
 ```
 .claude/rules/
-└── common.md             # Cross-cutting conventions (auto-loaded by Claude Code)
+└── common.md             # Truly universal content (auto-loaded by Claude Code for ALL agents)
 
-.claude/cat/conventions/
-├── INDEX.md              # Summary with links to load sub-conventions on demand
-├── {language}.md         # Language-specific (python.md, typescript.md, etc.)
-├── testing.md            # Testing standards
-└── {domain}/             # Optional subdirectories for complex domains
-    └── {topic}.md
+.claude/cat/rules/
+├── INDEX.md              # Summary of all rules with audience information
+├── common.md             # Common CAT conventions (main + all subagents)
+├── hooks.md              # Hook registration rules (main agent only)
+├── {language}.md         # Language-specific (java.md, etc.) with paths: frontmatter
+└── state-schema.md       # STATE.md schema reference
 ```
 
-**Two loading mechanisms:**
+**Frontmatter properties:**
+```yaml
+---
+paths: ["*.java"]      # Only inject when editing matching files (default: always)
+---
+```
 
-1. **Auto-loading:** Place `common.md` in `.claude/rules/` for automatic loading at session start.
-   Use for cross-cutting rules that apply to all work.
-
-2. **On-demand loading:** For language-specific conventions, add a directive to `CLAUDE.md`:
-   ```markdown
-   ## Language Conventions
-
-   | File Pattern | Convention File | Read Before Editing |
-   |--------------|-----------------|---------------------|
-   | `*.java` | `.claude/cat/conventions/java.md` | Any `.java` file |
-   | `*.py` | `.claude/cat/conventions/python.md` | Any `.py` file |
-   ```
-   This ensures conventions are loaded only when needed, minimizing context usage.
-
-**INDEX.md purpose:** Documents which conventions exist and how they're loaded (auto vs on-demand).
+All properties have defaults and can be omitted: `mainAgent` defaults to `true`, `subAgents` defaults to
+all, `paths` defaults to always inject.
+See `plugin/concepts/rules-audience.md` for full documentation.
 
 **Content guidelines:**
 - Optimized for AI consumption (concise, unambiguous, examples over prose)

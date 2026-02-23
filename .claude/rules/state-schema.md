@@ -1,3 +1,6 @@
+---
+paths: ["STATE.md", "**/STATE.md"]
+---
 # STATE.md Schema
 
 All issue STATE.md files must conform to this standardized schema.

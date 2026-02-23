@@ -18,6 +18,7 @@ import io.github.cowwoc.pouch10.core.ConcurrentLazyReference;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -36,6 +37,8 @@ public final class TestJvmScope implements JvmScope
     JsonMapper.builder().
       enable(SerializationFeature.INDENT_OUTPUT).
       build());
+  private final ConcurrentLazyReference<YAMLMapper> yamlMapper = ConcurrentLazyReference.create(() ->
+    YAMLMapper.builder().build());
   private final ConcurrentLazyReference<DisplayUtils> displayUtils = ConcurrentLazyReference.create(() ->
   {
     try
@@ -144,6 +147,13 @@ public final class TestJvmScope implements JvmScope
   {
     ensureOpen();
     return jsonMapper.getValue();
+  }
+
+  @Override
+  public YAMLMapper getYamlMapper()
+  {
+    ensureOpen();
+    return yamlMapper.getValue();
   }
 
   @Override
