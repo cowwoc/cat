@@ -16,7 +16,7 @@ import org.testng.annotations.Test;
 /**
  * Tests the VERSION file behavior for CAT migration version tracking.
  */
-public final class CheckUpgradeTest
+public final class CheckDataMigrationTest
 {
   /**
    * Recursively deletes a directory and all its contents.
