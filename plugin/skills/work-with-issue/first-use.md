@@ -754,6 +754,17 @@ Skip approval gate. Continue directly to Step 8 (merge).
 
 **STOP HERE for user approval.** Do NOT proceed to merge automatically.
 
+### Check for Prior Direct Approval
+
+Before presenting AskUserQuestion, check whether the user has already typed an explicit approval in the current
+conversation. Scan recent conversation messages for user messages containing both "approve" and "merge" (e.g.,
+"approve and merge", "approve merge", "approved merge").
+
+**If direct approval is detected:** Skip AskUserQuestion and proceed directly to Step 8 (merge). The
+PreToolUse hook reads the session JSONL file and will recognize the user's direct message as approval.
+
+**If no direct approval is detected:** Continue to the approval gate below.
+
 ### Present Changes Before Approval Gate (BLOCKING)
 
 **MANDATORY: Render the diff and output the full change summary BEFORE invoking AskUserQuestion.**
