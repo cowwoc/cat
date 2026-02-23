@@ -145,7 +145,7 @@ Read the execution steps from PLAN.md to understand what needs to be done:
 # Read PLAN.md execution steps
 PLAN_MD="${ISSUE_PATH}/PLAN.md"
 EXECUTION_STEPS=$(sed -n '/## Execution Steps/,/^## /p' "$PLAN_MD" | head -n -1)
-TASK_GOAL=$(sed -n '/## Goal/,/^## /p' "$PLAN_MD" | head -n -1 | tail -n +2)
+ISSUE_GOAL=$(sed -n '/## Goal/,/^## /p' "$PLAN_MD" | head -n -1 | tail -n +2)
 ```
 
 Scan execution steps for skill references that require spawning capability:
@@ -210,7 +210,7 @@ Task tool:
     TRUST_LEVEL: ${TRUST}
 
     ## Issue Goal (from PLAN.md)
-    ${TASK_GOAL}
+    ${ISSUE_GOAL}
 
     ## Execution Steps (from PLAN.md)
     ${EXECUTION_STEPS}
@@ -239,7 +239,7 @@ Task tool:
         {"hash": "abc123", "message": "feature: description", "type": "feature"}
       ],
       "files_changed": <actual>,
-      "task_metrics": {},
+      "issue_metrics": {},
       "discovered_issues": [],
       "verification": {
         "build_passed": true,
@@ -830,7 +830,7 @@ If MEDIUM+ concerns exist:
 ```
 AskUserQuestion:
   header: "${ISSUE_ID}"
-  question: "Ready to merge ${ISSUE_ID}? (Goal: ${TASK_GOAL})"
+  question: "Ready to merge ${ISSUE_ID}? (Goal: ${ISSUE_GOAL})"
   options:
     - "Approve and merge"
     - "Fix remaining concerns" (auto-fix MEDIUM concerns, re-review, then prompt again)
@@ -842,7 +842,7 @@ If no concerns or only LOW concerns:
 ```
 AskUserQuestion:
   header: "${ISSUE_ID}"
-  question: "Ready to merge ${ISSUE_ID}? (Goal: ${TASK_GOAL})"
+  question: "Ready to merge ${ISSUE_ID}? (Goal: ${ISSUE_GOAL})"
   options:
     - "Approve and merge"
     - "Request changes" (provide feedback)

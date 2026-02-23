@@ -340,7 +340,7 @@ IN_ISSUE_WORKTREE=$([[ -f "$CAT_BASE_FILE" ]] && echo "true" || echo "false")
 
 - Do NOT edit source files (`plugin/` or `client/` directories)
 - Set `prevention_implemented` to `false` in your output JSON
-- Populate `task_creation_info` with enough detail to create a follow-up issue:
+- Populate `issue_creation_info` with enough detail to create a follow-up issue:
   - `suggested_title`: Short description of the prevention needed
   - `suggested_description`: Full description including what files to modify and why
   - `suggested_acceptance_criteria`: List of criteria to verify the prevention works
@@ -414,7 +414,7 @@ Before adding prevention to a skill, ask: **Does this require LLM decision-makin
 | "Is file path inside worktree?" | Yes - path comparison | Script |
 | "Does commit message follow convention?" | Yes - regex match | Hook |
 | "Is this change architecturally sound?" | No - requires judgment | Skill instructions |
-| "Should we decompose this task?" | No - context-dependent | Skill instructions |
+| "Should we decompose this issue?" | No - context-dependent | Skill instructions |
 
 **When in doubt, ask:** "Could a bash script do this with no LLM?" If yes → script with tests.
 
@@ -700,8 +700,8 @@ Your final message MUST be ONLY this JSON (no other text):
       "rationale": "Why this file needs to change"
     }
   ],
-  "task_creation_info": {
-    "suggested_title": "Short title for prevention task",
+  "issue_creation_info": {
+    "suggested_title": "Short title for prevention issue",
     "suggested_description": "Detailed description for /cat:add",
     "suggested_acceptance_criteria": ["criterion 1", "criterion 2"]
   }
