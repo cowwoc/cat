@@ -140,7 +140,7 @@ or "Locate the preprocessed box" are Claude-directed actions, not human-facing U
 
 ## Core Function
 
-**This stakeholder verifies the implementation satisfies the requirements the task claims to satisfy.**
+**This stakeholder verifies the implementation satisfies the requirements the issue claims to satisfy.**
 
 Unlike other stakeholders that evaluate code quality, security, or performance, the Requirements
 stakeholder answers: *"Does this implementation actually satisfy the requirements listed in its
@@ -184,7 +184,7 @@ When the PLAN.md describes porting a script or migrating code to a new language/
 ### Critical (Must Fix)
 - **Missing Functionality**: Requirement specified in PLAN.md but not implemented
 - **Incorrect Behavior**: Implementation behaves differently than specification
-- **Broken Core Feature**: Primary task objective not achieved
+- **Broken Core Feature**: Primary issue objective not achieved
 - **Silent Failure**: Feature appears to work but produces wrong results
 
 ### High Priority
@@ -256,7 +256,7 @@ For each requirement in PLAN.md:
     "partial": 1,
     "not_satisfied": 0
   },
-  "summary": "Brief assessment of whether task satisfies its claimed requirements"
+  "summary": "Brief assessment of whether issue satisfies its claimed requirements"
 }
 ```
 
@@ -264,9 +264,9 @@ For each requirement in PLAN.md:
 
 - **APPROVED**: All claimed requirements are satisfied (acceptance criteria met)
 - **CONCERNS**: Claimed requirements partially implemented or acceptance criteria unclear
-- **REJECTED**: Task claims to satisfy requirements it does not implement
+- **REJECTED**: Issue claims to satisfy requirements it does not implement
 
-**Special case - No claims**: If task has `Satisfies: None`, approve if task achieves its stated
+**Special case - No claims**: If issue has `Satisfies: None`, approve if issue achieves its stated
 goal without claiming specific requirements.
 
 ## Key Differences from Other Stakeholders
@@ -277,11 +277,11 @@ goal without claiming specific requirements.
 | Tester | "Are there tests?" | "Do tests verify claimed requirements?" |
 | Architect | "Is it well-structured?" | "Does structure enable requirements?" |
 | Security | "Is it secure?" | "Does it meet security requirements?" |
-| **Requirements** | — | "Does task satisfy what it claims to satisfy?" |
+| **Requirements** | — | "Does issue satisfy what it claims to satisfy?" |
 
 ## Relationship to Version Completion
 
 This stakeholder's review is critical for version completion:
-- Tasks must satisfy their claimed requirements to be considered complete
-- Minor versions cannot complete until all must-have requirements are satisfied by some task
+- Issues must satisfy their claimed requirements to be considered complete
+- Minor versions cannot complete until all must-have requirements are satisfied by some issue
 - The Requirements stakeholder catches false claims before they propagate to version level
