@@ -1576,6 +1576,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When work-prepare returns existing_worktree status, treat as LOCKED, return LOCKED to caller, and pick a different issue without investigation or removal"
+    },
+    {
+      "id": "M399",
+      "timestamp": "2026-02-24T12:30:00Z",
+      "category": "protocol_violation",
+      "description": "Agent force-removed an orphaned worktree without first checking whether its commits were already merged into the base branch",
+      "root_cause": "No protocol existed in work-prepare/first-use.md for the orphaned worktree case (worktree present, no lock file). The skill only documented the lock-present case as LOCKED, leaving agents without guidance for what to do when the user explicitly targets an issue with an orphaned worktree.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-prepare/first-use.md",
+      "pattern_keywords": [
+        "orphaned-worktree",
+        "merge-status",
+        "force-remove",
+        "lock-file",
+        "worktree-recovery"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When a worktree exists but no lock file is present (orphaned worktree), check merge status first. If already merged into base: clean up worktree and branch. If not merged: acquire lock and resume work in the existing worktree. Never force-remove without checking merge status."
     }
   ]
 }
