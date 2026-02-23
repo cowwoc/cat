@@ -55,7 +55,7 @@ work was completed on the base branch. Resetting to `pending` causes duplicate w
 
 ### Step 1: Survey Current State
 
-Echo the contents of the `<output skill="cleanup">` tag below verbatim.
+Echo the content inside the LATEST `<output skill="cleanup">` tag. Do not summarize, interpret, or add commentary.
 
 ---
 
