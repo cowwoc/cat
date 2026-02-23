@@ -47,13 +47,19 @@ If BASE_BRANCH not provided, the script reads from the cat-base file. The skill 
 | Status | Meaning | Agent Recovery Action |
 |--------|---------|----------------------|
 | `OK` | Rebase completed successfully | Report commits rebased, verify no content changes |
-| `CONFLICT` | Rebase stopped due to conflicts | Agent examines conflicting_files and decides: manual resolution, alternative strategy, or abort. Backup preserved at backup_branch |
-| `ERROR` | Rebase failed (not a conflict) | Check backup_branch and error message. Restore from backup if needed |
+| `CONFLICT` | Rebase stopped due to conflicts | Agent examines conflicting_files and decides: manual resolution, alternative strategy, or abort. Backup preserved at backup_branch. Delete backup after resolution is complete. |
+| `ERROR` | Rebase failed (not a conflict) | Check backup_branch and error message. Restore from backup if needed. Delete backup after the error is handled. |
 
 **On CONFLICT status:** Agent should examine the conflicting files to determine the best strategy:
 - If conflicts are simple (whitespace, formatting), attempt manual resolution
 - If conflicts involve complex logic changes, consider alternative merge strategy
 - If uncertain, abort and restore from backup
+- After resolution is complete (or error handled): `git branch -D <backup_branch>`
+
+**On ERROR status:** After handling the error (investigation complete, alternative approach taken, or
+issue escalated to user):
+- Delete the backup: `git branch -D <backup_branch>`
+- The backup exists only during investigation — leaving it permanently clutters the repository
 
 ### Interactive rebase (reorder, edit, squash)
 
