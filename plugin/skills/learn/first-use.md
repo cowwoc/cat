@@ -35,7 +35,7 @@ Determine whether this is a quick-tier or deep-tier mistake.
 
 | Tier | Criteria | Phases to Run | Rationale |
 |------|----------|---------------|-----------|
-| **Quick** | `protocol_violation` category OR `recurrence_of` is set | Analyze, Prevent, Record (skip Investigate) | Known pattern, investigation already done |
+| **Quick** | `protocol_violation` category | Analyze, Prevent, Record (skip Investigate) | Protocol rules are explicit, investigation unnecessary |
 | **Deep** | All other cases | Investigate, Analyze, Prevent, Record (all 4) | Novel failure, needs full investigation |
 
 **How to determine:**
@@ -43,6 +43,9 @@ Determine whether this is a quick-tier or deep-tier mistake.
 1. Ask user for mistake category (if not already provided in invocation)
 2. Ask if this is a recurrence of a previous mistake (check mistakes.json if needed)
 3. Apply classification logic above
+
+Note: While `recurrence_of` does not affect tier selection, this information is passed to phase-analyze Step 4d for
+architectural pattern detection and to phase-prevent blocking criteria (A002) for escalation decisions.
 
 **Store tier decision:**
 - `tier: "quick" | "deep"`
