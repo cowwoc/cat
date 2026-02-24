@@ -100,7 +100,6 @@ plugin/agents/
 ├── README.md                      # This file
 ├── work-execute.md                # Implementation specialist (Phase 2)
 ├── work-merge.md                  # Work merge agent
-├── work-verify.md                 # Verification specialist (Phase 3a+3b)
 ├── stakeholder-architecture.md    # Architecture review
 ├── stakeholder-business.md        # Commercial readiness review (sales + marketing)
 ├── stakeholder-deployment.md      # Deployment/release review
