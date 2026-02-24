@@ -117,3 +117,4 @@ None - infrastructure/setup task
 - [ ] All Python test files removed (`tests/**/*.py`)
 - [ ] Token counting uses JTokkit and matches Python tiktoken (±1% tolerance)
 - [ ] System JDK and jlinked JDK bundle both work correctly
+- [ ] No `.py` files remain anywhere in the project — all Python code ported to Java (or Bash) and removed
