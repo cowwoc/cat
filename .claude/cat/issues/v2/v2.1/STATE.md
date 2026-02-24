@@ -44,6 +44,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - rename-task-to-issue-phase2
 - session-start-version-check
 - use-qualified-issue-names-in-responses
+- restore-worktree-on-resume
 
 
 ## Issues Completed
