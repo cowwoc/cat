@@ -43,6 +43,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - remove-userinputprotocol-from-config
 - rename-task-to-issue-phase2
 - session-start-version-check
+- use-qualified-issue-names-in-responses
 
 
 ## Issues Completed
