@@ -421,6 +421,20 @@ public final class WorkPrepare
         "message", "Failed to verify worktree branch: " + e.getMessage()));
     }
 
+    // Update lock with worktree path
+    try
+    {
+      updateLockWorktree(issueId, input.sessionId(), worktreePath.toString());
+    }
+    catch (IOException e)
+    {
+      cleanupWorktree(projectDir, worktreePath);
+      releaseLock(issueId, input.sessionId());
+      return mapper.writeValueAsString(Map.of(
+        "status", "ERROR",
+        "message", "Failed to update lock with worktree path: " + e.getMessage()));
+    }
+
     // Step 7: Check for existing work
     ExistingWorkChecker.CheckResult existingWork;
     try
@@ -1325,6 +1339,24 @@ public final class WorkPrepare
     }
 
     return preconditions;
+  }
+
+  /**
+   * Updates the lock file with the worktree path.
+   *
+   * @param issueId the issue ID to update the lock for
+   * @param sessionId the session ID that owns the lock
+   * @param worktreePath the worktree path to store in the lock
+   * @throws IOException if the lock file cannot be updated
+   */
+  private void updateLockWorktree(String issueId, String sessionId, String worktreePath)
+    throws IOException
+  {
+    assert that(issueId, "issueId").isNotBlank().elseThrow();
+    assert that(sessionId, "sessionId").isNotBlank().elseThrow();
+    assert that(worktreePath, "worktreePath").isNotBlank().elseThrow();
+    IssueLock issueLock = new IssueLock(scope);
+    issueLock.update(issueId, sessionId, worktreePath);
   }
 
   /**

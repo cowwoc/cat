@@ -1,8 +1,7 @@
 # State
 
-- **Status:** closed
-- **Resolution:** implemented
-- **Progress:** 100%
+- **Status:** open
+- **Progress:** 0%
 - **Dependencies:** []
 - **Blocks:** []
-- **Last Updated:** 2026-02-25
+- **Last Updated:** 2026-02-24

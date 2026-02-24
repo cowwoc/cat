@@ -91,6 +91,3 @@ JSON and XML files are exempt (JSON has no comment syntax; XML files are configu
 
 `SKILL.md` files under `plugin/skills/` are exempt. These files are injected into agent context as prompts; license
 headers waste tokens without providing value.
-
-`.md` files under `plugin/agents/` are also exempt for the same reason. Agent definition files are injected into
-subagent context as system prompts; license headers consume tokens in every subagent invocation without providing value.
