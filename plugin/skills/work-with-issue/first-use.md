@@ -377,7 +377,7 @@ Parse verification result to determine if all post-conditions were satisfied.
   Task tool:
     description: "Fix missing post-conditions (iteration ${ITERATION})"
     subagent_type: "cat:work-execute"
-    model: "haiku"
+    model: "sonnet"
     prompt: |
       Fix the following missing post-conditions for issue ${ISSUE_ID}.
 
@@ -529,12 +529,14 @@ The stakeholder-review skill will spawn its own reviewer subagents and return ag
 
 Parse review result and filter false positives (concerns from reviewers that read base branch instead of worktree).
 
-**Read auto-fix level from config:**
+**Read auto-fix level and patience from config:**
 
 ```bash
-# Read reviewThreshold from .claude/cat/cat-config.json
+# Read reviewThreshold and patience from .claude/cat/cat-config.json
 # Default is "low" (fix all concerns automatically) if config is missing or field is absent
 AUTOFIX_LEVEL="low"
+# Default is "medium" if config is missing or field is absent
+PATIENCE_LEVEL="medium"
 
 CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json"
 if [[ -f "$CONFIG_FILE" ]]; then
@@ -543,6 +545,13 @@ if [[ -f "$CONFIG_FILE" ]]; then
         sed 's/.*"reviewThreshold"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
     if [[ -n "$AUTOFIX_RAW" ]]; then
         AUTOFIX_LEVEL="$AUTOFIX_RAW"
+    fi
+
+    # Extract patience simple string value using grep/sed (no jq available)
+    PATIENCE_RAW=$(grep -o '"patience"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" | head -1 | \
+        sed 's/.*"patience"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+    if [[ -n "$PATIENCE_RAW" ]]; then
+        PATIENCE_LEVEL="$PATIENCE_RAW"
     fi
 fi
 
@@ -566,75 +575,28 @@ The auto-fix threshold is determined by `AUTOFIX_LEVEL`:
 - `"critical"`: loop while CRITICAL concerns exist
 
 1. Increment iteration counter: `AUTOFIX_ITERATION++`
-2. Extract concerns at or above the auto-fix threshold. For each concern, collect: severity, location, explanation,
-   recommendation, detail_file path. The main agent must NOT read the detail files — pass their paths to subagents.
-3. Spawn **planning subagent** to revise PLAN.md with fix steps:
-   ```
-   Task tool:
-     description: "Plan fixes for review concerns (iteration ${AUTOFIX_ITERATION})"
-     subagent_type: "cat:work-execute"
-     model: "sonnet"
-     prompt: |
-       Revise PLAN.md to add fix steps for the following stakeholder review concerns.
-
-       ## Issue Configuration
-       ISSUE_ID: ${ISSUE_ID}
-       ISSUE_PATH: ${ISSUE_PATH}
-       WORKTREE_PATH: ${WORKTREE_PATH}
-       BRANCH: ${BRANCH}
-
-       ## Concerns to Address
-       ${concerns_formatted}
-       (severity, location, explanation, recommendation, detail_file for each concern)
-
-       ## Instructions
-       - Read each detail file listed above for comprehensive analysis of each concern
-       - Revise ${ISSUE_PATH}/PLAN.md to add concrete fix steps under "## Execution Steps"
-       - Each step must reference the specific file/line from the concern location
-       - Do NOT implement anything - only update PLAN.md with fix steps
-       - Commit the updated PLAN.md with message: planning: add fix steps for review concerns (iteration ${AUTOFIX_ITERATION})
-       - Return JSON status when complete
-
-       ## Plan Quality Requirement
-       Your plan will be executed mechanically by a Sonnet implementation subagent that will NOT
-       read the detail files or exercise judgment. Each step must be unambiguous and self-contained:
-       - Specify exact code changes (change X to Y), not directional guidance ("consider improving")
-       - Include file paths, line numbers, and the specific transformation needed
-       - If a concern has multiple valid fixes, choose one — do not present options
-
-       ## Return Format
-       ```json
-       {
-         "status": "SUCCESS|FAILED",
-         "plan_updated": true,
-         "fix_steps_added": N
-       }
-       ```
-   ```
-4. Spawn **implementation subagent** with the revised PLAN.md to implement the fixes:
+2. Extract concerns at or above the auto-fix threshold (severity, description, location, recommendation)
+3. Spawn implementation subagent to fix the concerns:
    ```
    Task tool:
      description: "Fix review concerns (iteration ${AUTOFIX_ITERATION})"
      subagent_type: "cat:work-execute"
-     model: "haiku"
+     model: "sonnet"
      prompt: |
-       Implement the fix steps from PLAN.md to address stakeholder review concerns.
+       Fix the following stakeholder review concerns for issue ${ISSUE_ID}.
 
        ## Issue Configuration
        ISSUE_ID: ${ISSUE_ID}
-       ISSUE_PATH: ${ISSUE_PATH}
        WORKTREE_PATH: ${WORKTREE_PATH}
        BRANCH: ${BRANCH}
        BASE_BRANCH: ${BASE_BRANCH}
 
-       ## Concern Detail Files
-       ${detail_files_list}
-       (Read these files directly for comprehensive analysis of each concern)
+       ## HIGH+ Concerns to Fix
+       ${concerns_formatted}
 
        ## Instructions
        - Work in the worktree at ${WORKTREE_PATH}
-       - Read each detail file listed above to understand the full context of each concern
-       - Follow the fix steps added to PLAN.md
+       - Fix each concern according to the recommendation
        - Commit your fixes using the same commit type as the primary implementation
          (e.g., `bugfix:`, `feature:`). These commits will be squashed into the main
          implementation commit in Step 6. Do NOT use `test:` as an independent commit
@@ -651,29 +613,93 @@ The auto-fix threshold is determined by `AUTOFIX_LEVEL`:
        }
        ```
    ```
-5. Re-run stakeholder review based on verify config:
-   - `all`: re-spawn all reviewer subagents
-   - `changed`: re-spawn only stakeholders that had concerns in the last review round
-   - `none`: skip (this point is unreachable since review is skipped entirely when verify=none)
+4. Re-run stakeholder review (encode all commits in compact format `hash:type,hash:type`):
    ```
    Skill tool:
      skill: "cat:stakeholder-review"
      args: "${ISSUE_ID} ${WORKTREE_PATH} ${VERIFY} ${ALL_COMMITS_COMPACT}"
    ```
-6. Parse new review result
-7. If concerns at or above the configured auto-fix threshold remain, continue loop (if under iteration limit)
+5. Parse new review result
+6. If concerns at or above the configured auto-fix threshold remain, continue loop (if under iteration limit)
 
 **If concerns at or above the threshold persist after 3 iterations:**
 - Note that auto-fix reached iteration limit
 - Store all remaining concerns for display at approval gate
-- Continue to Step 6
+- Continue to out-of-scope classification below
 
 **If no concerns remain at or above the threshold (or no concerns at all):**
 - Store concerns for display at approval gate
-- Continue to Step 6
+- Continue to out-of-scope classification below
 
 **NOTE:** "REVIEW_PASSED" means stakeholder review passed, NOT user approval to merge.
-User approval is a SEPARATE gate in Step 7.
+User approval is a SEPARATE gate in Step 6.
+
+### Evaluate Remaining Concerns (Cost/Benefit)
+
+After the auto-fix loop, apply a cost/benefit analysis to determine whether to fix each remaining concern inline or
+defer it.
+
+**Step 1: Read the list of files changed by this issue:**
+
+```bash
+git -C "${WORKTREE_PATH}" diff --name-only "${BASE_BRANCH}..HEAD"
+```
+
+**Step 2: For each remaining concern, calculate benefit and cost:**
+
+**Benefit** = severity weight of the concern:
+- CRITICAL = 10
+- HIGH = 6
+- MEDIUM = 3
+- LOW = 1
+
+**Cost** = estimated scope of out-of-scope changes needed to address the concern. "Out-of-scope changes" means
+modifications to files or code NOT already changed by the current issue:
+- 0: Fix is entirely within files already changed by this issue (no out-of-scope changes)
+- 1: Minor out-of-scope changes (~1-10 lines in 1 additional file)
+- 4: Moderate out-of-scope changes (~10-30 lines or 2+ additional files)
+- 10: Significant out-of-scope changes (~30+ lines or architectural changes across files)
+
+**Step 3: Apply the decision rule based on patience:**
+
+Determine the `patience_multiplier` from `PATIENCE_LEVEL`:
+- `low` (fix aggressively): multiplier = 0.5 — fix if `benefit >= cost × 0.5`
+- `medium` (balanced): multiplier = 2 — fix if `benefit >= cost × 2`
+- `high` (stay focused): multiplier = 5 — fix if `benefit >= cost × 5`
+
+For each concern: fix inline if `benefit >= cost × patience_multiplier`
+
+**Key implications:**
+- Cost=0 (fix within already-changed files): Always fix regardless of patience (any benefit >= 0)
+- High severity + low cost: Fix at all patience levels
+- Low severity + high cost: Defer at all patience levels
+- Medium cases: patience determines the decision
+
+The non-linear cost scale (0, 1, 4, 10) reflects that larger changes have disproportionately higher cost (more risk,
+more review surface, more context required). The patience multipliers (0.5, 2, 5) give clear differentiation: low
+patience fixes 13/16 combinations, medium fixes 8/16, high fixes 6/16.
+
+**Step 4: Act on the evaluation:**
+
+**Concerns that pass the threshold** (benefit >= cost × patience_multiplier):
+- Add back into the auto-fix loop for fixing
+- These additional loop iterations count toward the existing `AUTOFIX_ITERATION < 3` limit
+
+**Concerns that don't pass the threshold** (benefit < cost × patience_multiplier):
+- Defer by creating issues via `/cat:add`:
+  - `patience: medium` → create in the current version backlog:
+    ```
+    Skill tool:
+      skill: "cat:add"
+      args: "add issue: [brief title derived from the concern description]"
+    ```
+  - `patience: high` → create in a later version backlog:
+    ```
+    Skill tool:
+      skill: "cat:add"
+      args: "add issue to next major version: [brief title derived from the concern description]"
+    ```
+- Mark these concerns as "deferred" in the approval gate display
 
 ## Step 6: Rebase and Squash Commits Before Review
 
@@ -852,16 +878,32 @@ verified, and what the results were. This helps the user determine whether the f
 If E2E testing was skipped (no E2E criteria in PLAN.md, or non-feature issue), state that explicitly.
 
 **MANDATORY: Display ALL stakeholder concerns before the approval gate**, regardless of severity.
-Users need full visibility into review findings to make informed merge decisions. For each concern
-(CRITICAL, HIGH, MEDIUM, or LOW), render a concern box using the compact fields (severity, stakeholder,
-explanation, location). Do NOT read the detail files — the brief explanation and recommendation are
-sufficient for the user to understand each concern:
+Users need full visibility into review findings to make informed merge decisions.
+
+Display fixed and deferred concerns in separate groups:
+
+**Fixed concerns** (addressed in this issue based on cost/benefit analysis):
+
+For each concern that was fixed (CRITICAL, HIGH, MEDIUM, or LOW), render a concern box:
 
 ```
 Skill tool:
   skill: "cat:stakeholder-concern-box"
-  args: "${SEVERITY} ${STAKEHOLDER} ${CONCERN_EXPLANATION} ${FILE_LOCATION}"
+  args: "${SEVERITY} ${STAKEHOLDER} ${CONCERN_DESCRIPTION} ${FILE_LOCATION}"
 ```
+
+**Deferred concerns** (cost/benefit below patience threshold — not acted on in this issue):
+
+For each concern deferred based on the cost/benefit analysis, render a concern box showing the benefit, cost, and
+threshold values so the user understands why each was deferred:
+
+```
+Skill tool:
+  skill: "cat:stakeholder-concern-box"
+  args: "${SEVERITY} ${STAKEHOLDER} ${CONCERN_DESCRIPTION} [deferred: benefit=${BENEFIT}, cost=${COST}, threshold=${THRESHOLD}] ${FILE_LOCATION}"
+```
+
+If there are no deferred concerns, omit this group entirely.
 
 Do NOT suppress MEDIUM or LOW concerns. The auto-fix loop only addresses HIGH+ concerns automatically,
 but all concerns must be visible to the user at the approval gate.
@@ -901,74 +943,28 @@ Fail-fast principle: Unknown consent = No consent = STOP.
 **If approved:** Continue to Step 8
 
 **If "Fix remaining concerns" selected:**
-1. Extract MEDIUM+ concerns. For each concern, collect: severity, location, explanation, recommendation, detail_file.
-   The main agent must NOT read the detail files — pass their paths to subagents.
-2. Spawn **planning subagent** to revise PLAN.md with fix steps:
-   ```
-   Task tool:
-     description: "Plan user-requested concern fixes"
-     subagent_type: "cat:work-execute"
-     model: "sonnet"
-     prompt: |
-       Revise PLAN.md to add fix steps for the following stakeholder review concerns (user-requested).
-
-       ## Issue Configuration
-       ISSUE_ID: ${ISSUE_ID}
-       ISSUE_PATH: ${ISSUE_PATH}
-       WORKTREE_PATH: ${WORKTREE_PATH}
-       BRANCH: ${BRANCH}
-
-       ## Concerns to Address
-       ${concerns_formatted}
-       (severity, location, explanation, recommendation, detail_file for each concern)
-
-       ## Instructions
-       - Read each detail file listed above for comprehensive analysis of each concern
-       - Revise ${ISSUE_PATH}/PLAN.md to add concrete fix steps under "## Execution Steps"
-       - Do NOT implement anything - only update PLAN.md with fix steps
-       - Commit the updated PLAN.md
-       - Return JSON status when complete
-
-       ## Plan Quality Requirement
-       Your plan will be executed mechanically by a Sonnet implementation subagent that will NOT
-       read the detail files or exercise judgment. Each step must be unambiguous and self-contained:
-       - Specify exact code changes (change X to Y), not directional guidance ("consider improving")
-       - Include file paths, line numbers, and the specific transformation needed
-       - If a concern has multiple valid fixes, choose one — do not present options
-
-       ## Return Format
-       ```json
-       {
-         "status": "SUCCESS|FAILED",
-         "plan_updated": true,
-         "fix_steps_added": N
-       }
-       ```
-   ```
-3. Spawn **implementation subagent** with the revised PLAN.md to implement the fixes:
+1. Extract MEDIUM+ concerns
+2. Spawn implementation subagent to fix:
    ```
    Task tool:
      description: "Fix remaining concerns (user-requested)"
      subagent_type: "cat:work-execute"
-     model: "haiku"
+     model: "sonnet"
      prompt: |
-       Implement the fix steps from PLAN.md to address user-requested concern fixes.
+       Fix the following stakeholder review concerns for issue ${ISSUE_ID}.
 
        ## Issue Configuration
        ISSUE_ID: ${ISSUE_ID}
-       ISSUE_PATH: ${ISSUE_PATH}
        WORKTREE_PATH: ${WORKTREE_PATH}
        BRANCH: ${BRANCH}
        BASE_BRANCH: ${BASE_BRANCH}
 
-       ## Concern Detail Files
-       ${detail_files_list}
-       (Read these files directly for comprehensive analysis of each concern)
+       ## MEDIUM+ Concerns to Fix
+       ${concerns_formatted}
 
        ## Instructions
        - Work in the worktree at ${WORKTREE_PATH}
-       - Read each detail file listed above to understand the full context of each concern
-       - Follow the fix steps added to PLAN.md
+       - Fix each concern according to the recommendation
        - Commit your fixes using the same commit type as the primary implementation
          (e.g., `bugfix:`, `feature:`). These commits will be squashed into the main
          implementation commit in Step 6. Do NOT use `test:` as an independent commit
@@ -985,9 +981,7 @@ Fail-fast principle: Unknown consent = No consent = STOP.
        }
        ```
    ```
-4. **MANDATORY: Re-run stakeholder review after fixes** based on verify config:
-   - `all`: re-spawn all reviewer subagents
-   - `changed`: re-spawn only stakeholders that had concerns
+3. **MANDATORY: Re-run stakeholder review after fixes** (encode all commits in compact format `hash:type,hash:type`):
    ```
    Skill tool:
      skill: "cat:stakeholder-review"
@@ -997,7 +991,7 @@ Fail-fast principle: Unknown consent = No consent = STOP.
    - Verify the concerns were actually resolved
    - Detect new concerns introduced by the fixes
    - Provide updated results to the user at the approval gate
-5. Return to Step 7 approval gate with updated results
+4. Return to Step 7 approval gate with updated results
 
 **If changes requested:** Return to user with feedback for iteration. Return status:
 ```json
