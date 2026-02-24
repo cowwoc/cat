@@ -11,12 +11,13 @@ Shows progress banners at phase transitions while maintaining clean user output.
 **Architecture:** This skill is invoked by `/cat:work` after issue discovery (Phase 1). The main agent
 directly orchestrates all phases:
 - Implement: Spawn implementation subagent
-- Confirm: Invoke verify-implementation skill
+- Confirm: Spawn verify subagent (writes verbose output to files, returns compact JSON)
 - Review: Invoke stakeholder-review skill
 - Merge: Spawn merge subagent
 
 This eliminates nested subagent spawning (which is architecturally impossible) and enables proper
-skill invocation at the main agent level.
+skill invocation at the main agent level. The verify subagent offloads verbose acceptance-criteria
+checking and E2E test output from parent-agent context to files, reducing parent token consumption.
 
 ## Arguments Format
 
@@ -86,25 +87,22 @@ This indicates Phase 1 (prepare) has completed and work phases are starting.
 **Before any execution, verify the lock for this issue belongs to the current session.**
 
 ```bash
-python3 -c "
-import json, os, sys
-lock_file = '${CLAUDE_PROJECT_DIR}/.claude/cat/locks/${ISSUE_ID}.lock'
-expected = os.environ.get('CLAUDE_SESSION_ID', '')
-if not expected:
-    print('ERROR: CLAUDE_SESSION_ID environment variable is not set')
-    sys.exit(1)
-try:
-    with open(lock_file) as f:
-        session = json.load(f).get('session_id', '')
-    if session == expected:
-        print('OK: Lock verified for current session')
-    else:
-        print(f'ERROR: Lock for ${ISSUE_ID} belongs to session {session}, not {expected}')
-        sys.exit(1)
-except FileNotFoundError:
-    print(f'ERROR: No lock file found for ${ISSUE_ID}. Issue was not properly prepared.')
-    sys.exit(1)
-"
+LOCK_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/locks/${ISSUE_ID}.lock"
+if [[ -z "${CLAUDE_SESSION_ID:-}" ]]; then
+  echo "ERROR: CLAUDE_SESSION_ID environment variable is not set"
+  exit 1
+fi
+if [[ ! -f "$LOCK_FILE" ]]; then
+  echo "ERROR: No lock file found for ${ISSUE_ID}. Issue was not properly prepared."
+  exit 1
+fi
+LOCK_SESSION=$(grep -o '"session_id"[[:space:]]*:[[:space:]]*"[^"]*"' "$LOCK_FILE" | grep -o '"[^"]*"$' | tr -d '"')
+if [[ "$LOCK_SESSION" == "$CLAUDE_SESSION_ID" ]]; then
+  echo "OK: Lock verified for current session"
+else
+  echo "ERROR: Lock for ${ISSUE_ID} belongs to session $LOCK_SESSION, not $CLAUDE_SESSION_ID"
+  exit 1
+fi
 ```
 
 If lock ownership verification fails, STOP immediately and return FAILED status. Do NOT proceed
@@ -343,147 +341,161 @@ Skip if: `VERIFY == "none"`
 
 If skipping, output: "Verification skipped (verify: ${VERIFY})"
 
-### Invoke Verify Implementation
+### Spawn Verify Subagent
 
-Invoke the verify-implementation skill at main agent level:
+Spawn a verify subagent to check acceptance criteria and run E2E tests. The subagent writes verbose
+output to files in the worktree and returns only a compact JSON summary.
 
 ```
-Skill tool:
-  skill: "cat:verify-implementation"
-  args: |
-    {
-      "issue_id": "${ISSUE_ID}",
-      "issue_path": "${ISSUE_PATH}",
-      "worktree_path": "${WORKTREE_PATH}",
-      "execution_result": {
-        "commits": ${execution_commits_json},
-        "files_changed": ${files_changed}
-      }
-    }
+Task tool:
+  description: "Verify: check acceptance criteria and E2E tests for ${ISSUE_ID}"
+  subagent_type: "cat:work-verify"
+  model: "sonnet"
+  prompt: |
+    Verify the implementation for issue ${ISSUE_ID}.
+
+    ISSUE_ID: ${ISSUE_ID}
+    ISSUE_PATH: ${ISSUE_PATH}
+    WORKTREE_PATH: ${WORKTREE_PATH}
+    BASE_BRANCH: ${BASE_BRANCH}
+    PLAN_MD_PATH: ${ISSUE_PATH}/PLAN.md
+    EXECUTION_RESULT:
+      commits: ${execution_commits_json}
+      files_changed: ${files_changed}
 ```
 
-### Handle Verification Result
+### Handle Verify Result
 
-Parse verification result to determine if all post-conditions were satisfied.
+Parse the compact JSON returned by the verify subagent.
 
-**If all criteria Done:**
+**If status is PASSED (all criteria Done, e2e PASSED or SKIPPED):**
 - Output: "All post-conditions verified - proceeding to review"
 - Continue to Step 5
 
-**If any criteria Missing:**
-- Extract missing criteria details
-- Spawn implementation subagent to fix gaps (max 2 iterations):
-  ```
-  Task tool:
-    description: "Fix missing post-conditions (iteration ${ITERATION})"
-    subagent_type: "cat:work-execute"
-    model: "haiku"
-    prompt: |
-      Fix the following missing post-conditions for issue ${ISSUE_ID}.
+**If status is PARTIAL or FAILED (any criteria Missing or e2e FAILED):**
 
-      ## Issue Configuration
-      ISSUE_ID: ${ISSUE_ID}
-      WORKTREE_PATH: ${WORKTREE_PATH}
-      BRANCH: ${BRANCH}
+Extract missing criteria from the `criteria` array where `status == "Missing"`.
 
-      ## Missing Post-conditions
-      ${missing_criteria_formatted}
+### Iteration Loop (max 2 iterations)
 
-      ## Instructions
-      - Work in the worktree at ${WORKTREE_PATH}
-      - Implement each missing post-condition according to PLAN.md
-      - Commit your fixes with appropriate commit messages
-      - Return JSON status when complete
+Initialize: `VERIFY_ITERATION=0`
 
-      ## Return Format
-      ```json
-      {
-        "status": "SUCCESS|PARTIAL|FAILED",
-        "commits": [{"hash": "...", "message": "...", "type": "..."}],
-        "files_changed": N,
-        "criteria_addressed": N
-      }
-      ```
-  ```
-- Re-run verify-implementation after fixes
-- If still Missing after 2 iterations, continue to Step 5 with gaps noted
+While Missing criteria exist AND `VERIFY_ITERATION < 2`:
 
-**If any criteria Partial:**
-- Note partial status in metrics
-- Continue to E2E verification below
+1. Increment: `VERIFY_ITERATION++`
 
-### End-to-End Verification
+2. Spawn **planning subagent** to revise PLAN.md with fix steps:
+   ```
+   Task tool:
+     description: "Plan fixes for missing criteria (iteration ${VERIFY_ITERATION})"
+     subagent_type: "cat:work-execute"
+     model: "sonnet"
+     prompt: |
+       Revise PLAN.md for issue ${ISSUE_ID} to add fix steps for missing acceptance criteria.
 
-**After acceptance criteria verification, run E2E testing to verify the change works in its real environment.**
+       ## Issue Configuration
+       ISSUE_ID: ${ISSUE_ID}
+       ISSUE_PATH: ${ISSUE_PATH}
+       WORKTREE_PATH: ${WORKTREE_PATH}
+       BRANCH: ${BRANCH}
 
-This applies to all implementation issue types (feature, bugfix, refactor, performance). Skip for docs and config
-issues that don't change runtime behavior.
+       ## Missing Criteria
+       ${missing_criteria_from_verify_result}
 
-**Step 1: Check for E2E criteria in PLAN.md:**
+       ## Detail Files
+       Criteria analysis: ${WORKTREE_PATH}/.claude/cat/verify/criteria-analysis.json
+       E2E test output: ${WORKTREE_PATH}/.claude/cat/verify/e2e-test-output.json
 
-```bash
-grep -i "e2e\|end.to.end\|end-to-end" "${ISSUE_PATH}/PLAN.md"
-```
+       ## Instructions
+       - Read the detail files to understand exactly what is missing
+       - Add concrete fix steps to ${ISSUE_PATH}/PLAN.md under a new section
+         "## Fix Steps (iteration ${VERIFY_ITERATION})"
+       - Commit the revised PLAN.md with message: "planning: add fix steps for missing criteria"
+       - Return JSON when complete
 
-**If no E2E criteria found in PLAN.md:**
-- Output: "Warning: No E2E post-conditions found in PLAN.md for this issue."
-- Output: "Running E2E verification based on the feature's goal."
-- Proceed to Step 2 using the goal from PLAN.md to determine what to test.
+       ## Return Format
+       ```json
+       {
+         "status": "SUCCESS|FAILED",
+         "fix_steps": "summary of fix steps added to PLAN.md"
+       }
+       ```
+   ```
 
-**If E2E criteria found:**
-- Extract the E2E criteria text.
-- Proceed to Step 2 using those criteria.
+3. Spawn **implementation subagent** to apply the fix steps:
+   ```
+   Task tool:
+     description: "Fix missing criteria (iteration ${VERIFY_ITERATION})"
+     subagent_type: "cat:work-execute"
+     model: "sonnet"
+     prompt: |
+       Fix missing acceptance criteria for issue ${ISSUE_ID}.
 
-**Step 2: Run E2E verification:**
+       ## Issue Configuration
+       ISSUE_ID: ${ISSUE_ID}
+       ISSUE_PATH: ${ISSUE_PATH}
+       WORKTREE_PATH: ${WORKTREE_PATH}
+       BRANCH: ${BRANCH}
+       BASE_BRANCH: ${BASE_BRANCH}
 
-**Isolation requirement:** E2E tests must not impact other Claude instances or the main worktree. Always test using the
-worktree's own built artifacts (jlink image, scripts) rather than the cached plugin installation. If the test requires
-modifying shared state (e.g., updating the cached plugin, writing to shared config), explain the impact to the user via
-AskUserQuestion and let them decide whether to proceed or skip E2E testing.
+       ## Missing Criteria
+       ${missing_criteria_from_verify_result}
 
-The main agent (not a subagent) must verify the change works in its real environment. This means:
-- If the change adds/modifies a hook: build the jlink image from the worktree and test the binary with realistic input
-- If the change adds/modifies a skill: invoke load-skill.sh from the worktree and confirm it produces expected output
-- If the change modifies agent behavior: spawn a test subagent and verify the behavior
-- If the change adds/modifies a CLI tool: run the tool from the worktree with test input and verify output
-- If the change fixes a bug: reproduce the bug scenario and verify it no longer occurs
+       ## Detail Files (read these to understand what needs fixing)
+       Criteria analysis: ${WORKTREE_PATH}/.claude/cat/verify/criteria-analysis.json
+       E2E test output: ${WORKTREE_PATH}/.claude/cat/verify/e2e-test-output.json
 
-**Runtime invocation is required. Static file checks are not E2E testing.** Inspecting file contents
-(grep for patterns, cat of file, reading the file) does NOT verify runtime behavior. Skill variable
-expansion, argument passing, and output rendering only occur when the skill is actually invoked. Always
-run the artifact — do not substitute reading it for running it.
+       ## Instructions
+       - Read the detail files directly to understand the failures
+       - Read the fix steps from ${ISSUE_PATH}/PLAN.md (section "## Fix Steps")
+       - Implement each fix step
+       - Commit fixes using the same commit type as the primary implementation
+       - Return JSON status when complete
 
-```bash
-# Example: testing a hook binary (uses worktree's jlink, not cached plugin)
-echo '{"test": "input"}' | "${WORKTREE_PATH}/client/target/jlink/bin/<hook-name>" 2>/dev/null
+       ## Return Format
+       ```json
+       {
+         "status": "SUCCESS|PARTIAL|FAILED",
+         "commits": [{"hash": "...", "message": "...", "type": "..."}],
+         "files_changed": N,
+         "criteria_addressed": N
+       }
+       ```
+   ```
 
-# Example: testing skill loading (uses worktree's scripts, not cached plugin)
-"${WORKTREE_PATH}/plugin/scripts/load-skill.sh" "${WORKTREE_PATH}/plugin" "cat:<skill>" \
-  "${CAT_AGENT_ID}" "${CLAUDE_SESSION_ID}" "${CLAUDE_PROJECT_DIR}"
-```
+4. Re-spawn verify subagent to re-check:
+   ```
+   Task tool:
+     description: "Re-verify after fixes (iteration ${VERIFY_ITERATION})"
+     subagent_type: "cat:work-verify"
+     model: "sonnet"
+     prompt: |
+       Verify the implementation for issue ${ISSUE_ID} after fixes.
 
-**If the jlink image is not built**, build it first:
-```bash
-"${WORKTREE_PATH}/client/build-jlink.sh"
-```
+       ISSUE_ID: ${ISSUE_ID}
+       ISSUE_PATH: ${ISSUE_PATH}
+       WORKTREE_PATH: ${WORKTREE_PATH}
+       BASE_BRANCH: ${BASE_BRANCH}
+       PLAN_MD_PATH: ${ISSUE_PATH}/PLAN.md
+       EXECUTION_RESULT:
+         commits: ${all_commits_json}
+         files_changed: ${total_files_changed}
+   ```
 
-**If E2E test requires shared state changes:**
-```
-AskUserQuestion:
-  header: "E2E Test"
-  question: "E2E testing for this feature requires [describe impact]. Proceed or skip?"
-  options:
-    - "Proceed with E2E test" (accept the impact)
-    - "Skip E2E test" (proceed to review without E2E verification)
-```
+5. Parse new verify result. If all criteria Done, exit loop.
 
-**If E2E test passes:** Continue to Step 5.
+**Early exit:** The loop exits immediately when no `Missing` criteria remain (even before iteration 2). A result
+with only `Partial` or `Done` criteria triggers exit — re-verification is only needed if `Missing` criteria
+exist.
 
-**If E2E test fails:**
-- Spawn implementation subagent to fix (max 1 iteration)
-- Re-run E2E test
-- If still failing after fix attempt, note the failure and continue to Step 5 (stakeholder review
-  may catch the issue, and the user can decide at the approval gate)
+**Why 2 iterations:** Each fix cycle consists of plan → implement → verify. Two cycles allow for an initial fix
+plus one correction if the first fix introduces a regression or misses edge cases. Beyond 2 iterations, the pattern
+suggests a more fundamental issue that stakeholder review (Step 5) is better positioned to catch — continuing
+to loop would delay the workflow without reliable convergence.
+
+**If still Missing after 2 iterations:**
+- Note gaps in metrics
+- Continue to Step 5 with gaps noted (stakeholder review may catch remaining issues)
 
 ## Step 5: Review Phase
 
