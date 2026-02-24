@@ -28,12 +28,6 @@ via `${CLAUDE_SESSION_ID}`.
 /cat:command-optimizer
 ```
 
-Or invoke programmatically with a specific session file:
-
-```bash
-SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl"
-```
-
 ## Analysis Steps
 
 ### Step 1: Run Session Analysis
@@ -41,7 +35,7 @@ SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}
 Execute the session analyzer to extract all mechanical data:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/session-analyzer" "$SESSION_FILE"
+"${CLAUDE_PLUGIN_ROOT}/client/bin/session-analyzer" "${CLAUDE_SESSION_ID}"
 ```
 
 The skill outputs a JSON object with:
