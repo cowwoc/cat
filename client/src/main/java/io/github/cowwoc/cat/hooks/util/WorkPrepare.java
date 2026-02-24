@@ -37,52 +37,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
 public final class WorkPrepare
 {
   /**
-   * The trust level for execution.
-   */
-  public enum TrustLevel
-  {
-    /**
-     * Low trust: requires explicit approval for all operations.
-     */
-    LOW,
-    /**
-     * Medium trust: requires approval for destructive operations.
-     */
-    MEDIUM,
-    /**
-     * High trust: all operations are auto-approved.
-     */
-    HIGH;
-
-    /**
-     * Parses a trust level from a string value.
-     *
-     * @param value the string value to parse (case-insensitive)
-     * @return the parsed trust level
-     * @throws IllegalArgumentException if {@code value} is not a valid trust level
-     * @throws NullPointerException if {@code value} is null
-     */
-    public static TrustLevel fromString(String value)
-    {
-      requireThat(value, "value").isNotNull();
-      return switch (value.toLowerCase(java.util.Locale.ROOT))
-      {
-        case "low" -> LOW;
-        case "medium" -> MEDIUM;
-        case "high" -> HIGH;
-        default -> throw new IllegalArgumentException("Invalid trust level: \"" + value +
-          "\". Expected: low, medium, or high");
-      };
-    }
-
-    @Override
-    public String toString()
-    {
-      return name().toLowerCase(java.util.Locale.ROOT);
-    }
-  }
-
-  /**
    * Matches the status line in STATE.md: {@code - **Status:** open}.
    */
   private static final Pattern STATUS_PATTERN = Pattern.compile("\\*\\*Status:\\*\\*\\s+(\\S+)");
