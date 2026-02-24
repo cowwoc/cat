@@ -1739,6 +1739,32 @@
         "catches_variations": true
       },
       "correct_behavior": "When review_status is REJECTED (CRITICAL_COUNT > 0 or REJECTED_COUNT > 0), enter the auto-fix loop immediately. The approval gate is only reached after the auto-fix loop completes or exhausts 3 iterations."
+    },
+    {
+      "id": "M405",
+      "timestamp": "2026-02-25T00:00:00Z",
+      "category": "assumption_without_verification",
+      "description": "Added YAML frontmatter to agent file without verifying whether frontmatter is parsed by Claude Code's plugin system",
+      "root_cause": "Agent cargo-culted the frontmatter pattern from skills (which do parse frontmatter) without verifying the same applies to agents. The README for plugin/agents/ explicitly documents all frontmatter fields and their effects, confirming frontmatter IS used.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/agents/README.md",
+      "pattern_keywords": [
+        "agent-frontmatter",
+        "cargo-cult",
+        "assumption-without-verification",
+        "plugin-agents"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Before questioning whether frontmatter is used in plugin/agents/*.md files, read plugin/agents/README.md which documents all frontmatter fields and their effects. Claude Code parses agent frontmatter for name, description, model, tools, skills, permissionMode, and other fields \u2014 all are active configuration, not dead documentation."
     }
   ]
 }
