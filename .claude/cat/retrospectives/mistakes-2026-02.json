@@ -1710,7 +1710,35 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Compute SELECTED_COUNT and SKIPPED_LIST as positional values before invoking cat:stakeholder-selection-box. Use args: \"<selected_count> 10 <running_list> <skipped_list>\" — never pass a JSON object as the args field."
+      "correct_behavior": "Compute SELECTED_COUNT and SKIPPED_LIST as positional values before invoking cat:stakeholder-selection-box. Use args: \"<selected_count> 10 <running_list> <skipped_list>\" \u2014 never pass a JSON object as the args field."
+    },
+    {
+      "id": "M404",
+      "timestamp": "2026-02-25T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "Presented user approval gate when stakeholder review was REJECTED due to CRITICAL security concerns",
+      "root_cause": "The skill instructions described the auto-fix loop and approval gate as sequential sections but lacked an explicit blocking rule preventing the approval gate from being reached when review_status == REJECTED. The agent read the approval gate section and applied it without checking the pre-condition that the auto-fix loop must complete first.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue/first-use.md",
+      "pattern_keywords": [
+        "stakeholder-review",
+        "REJECTED",
+        "approval-gate",
+        "CRITICAL",
+        "auto-fix",
+        "protocol_violation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When review_status is REJECTED (CRITICAL_COUNT > 0 or REJECTED_COUNT > 0), enter the auto-fix loop immediately. The approval gate is only reached after the auto-fix loop completes or exhausts 3 iterations."
     }
   ]
 }
