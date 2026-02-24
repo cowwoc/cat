@@ -248,7 +248,7 @@ public final class EnforceApprovalBeforeMerge implements TaskHandler
       JsonNode contentNode = messageNode.get("content");
       if (contentNode == null)
         return "";
-      if (contentNode.isTextual())
+      if (contentNode.isString())
         return contentNode.asString().toLowerCase(Locale.ROOT);
       if (!contentNode.isArray())
         return "";
