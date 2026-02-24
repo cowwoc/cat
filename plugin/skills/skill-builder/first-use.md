@@ -1927,3 +1927,15 @@ plugin/concepts/
 |---------------|----------|
 | Single skill only | `plugin/skills/{skill-name}/` |
 | Multiple skills | `plugin/concepts/` |
+
+**After creating a concept file, wire it into agent context.** Files in `plugin/concepts/` are NOT loaded
+automatically — they must be explicitly referenced by a skill, hook, or rules file to reach agents. After
+creating a concept file:
+
+1. Identify every skill or hook that should apply the convention.
+2. Add an `@${CLAUDE_PLUGIN_ROOT}/concepts/<filename>.md` reference inside the `<execution_context>` of each
+   relevant skill's SKILL.md (or `first-use.md`).
+3. Verify the reference appears in at least one skill's context block before committing.
+
+If no existing skill is the right home, add the concept to a rules file in `.claude/rules/` instead — rules
+files ARE injected automatically into the main agent's context.

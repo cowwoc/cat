@@ -20,6 +20,7 @@ import io.github.cowwoc.cat.hooks.session.InjectCriticalThinking;
 import io.github.cowwoc.cat.hooks.session.InjectEnv;
 import io.github.cowwoc.cat.hooks.session.InjectSessionInstructions;
 import io.github.cowwoc.cat.hooks.session.InjectSkillListing;
+import io.github.cowwoc.cat.hooks.session.RestoreWorktreeOnResume;
 import io.github.cowwoc.cat.hooks.session.SessionStartHandler;
 
 import java.util.ArrayList;
@@ -54,7 +55,8 @@ public final class SessionStartHook implements HookHandler
       new InjectSkillListing(scope),
       new ClearSkillMarkers(scope),
       new InjectCriticalThinking(),
-      new InjectEnv(scope)));
+      new InjectEnv(scope),
+      new RestoreWorktreeOnResume(scope)));
   }
 
   /**

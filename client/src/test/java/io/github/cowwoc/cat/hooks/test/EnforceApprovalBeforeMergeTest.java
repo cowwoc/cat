@@ -502,4 +502,35 @@ public final class EnforceApprovalBeforeMergeTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that "approve and merge" in plain string content format is accepted.
+   * <p>
+   * Direct user messages use {@code "content":"text"} (plain string) rather than the array format
+   * {@code "content":[{"type":"text","text":"..."}]}. Both formats must be recognized.
+   */
+  @Test
+  public void plainStringContentFormatAllows() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("enforce-approval-test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      writeCatConfig(tempDir, "medium");
+      writeSessionFile(tempDir, SESSION_ID, """
+        {"type":"user","message":{"role":"user","content":"approve and merge"}}
+        """);
+
+      EnforceApprovalBeforeMerge handler = new EnforceApprovalBeforeMerge(scope);
+      JsonNode toolInput = createMergeToolInput(mapper);
+
+      TaskHandler.Result result = handler.check(toolInput, SESSION_ID, "");
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }
