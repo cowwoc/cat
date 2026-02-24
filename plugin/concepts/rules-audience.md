@@ -60,7 +60,7 @@ Controls which subagents receive this rule.
 
 | Value | Behavior |
 |-------|----------|
-| `[all]` (default) | Inject into all subagents |
+| Omitted (default) | Inject into all subagents |
 | `[]` | Do not inject into any subagent |
 | `["cat:work-execute", "Explore"]` | Inject only into matching subagents |
 
