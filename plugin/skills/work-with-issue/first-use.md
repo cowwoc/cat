@@ -529,6 +529,16 @@ The stakeholder-review skill will spawn its own reviewer subagents and return ag
 
 Parse review result and filter false positives (concerns from reviewers that read base branch instead of worktree).
 
+**False positive definition:** A false positive is a concern raised because the reviewer read the wrong source
+(base branch instead of the worktree's implementation branch). These are technical artifacts of reviewer setup, not
+real quality concerns. Identify them by checking whether the concern references code that does not exist in the
+worktree branch or describes a problem the implementation already addresses.
+
+**Pre-existing concerns are NOT false positives.** A concern about code that existed before this issue started is
+real — it just may be expensive to fix relative to this issue's scope. Apply the patience cost/benefit framework
+(see "Evaluate Remaining Concerns" below) to decide whether to fix inline or defer as a new issue. Do NOT dismiss
+pre-existing concerns by labeling them false positives.
+
 **Read auto-fix level and patience from config:**
 
 ```bash
