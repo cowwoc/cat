@@ -18,6 +18,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - add-java-build-to-ci
 - audience-aware-rules-injection
 - ci-build-jlink-bundle
+- create-config-property-enums
 - compress-concepts-batch-1
 - compress-concepts-batch-4
 - compress-concepts-batch-5
@@ -39,6 +40,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - port-statusline-scripts-to-java
 - port-workflow-scripts-to-java
 - remove-unused-scripts
+- remove-userinputprotocol-from-config
 - rename-task-to-issue-phase2
 - session-start-version-check
 
