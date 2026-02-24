@@ -31,9 +31,7 @@ None - performance optimization
 - [ ] Main agent never reads verify detail files or test output files
 - [ ] For missing criteria: main agent delegates to a planning subagent to revise PLAN.md, then delegates the revised
   plan to an implementation subagent. Fix subagents read detail files directly.
-- [x] Parent agent context consumed by Phases 3a+3b is substantially reduced: verbose output (criterion analysis,
-  test output) is written to files; parent agent receives only compact JSON with per-criterion status and 1-2
-  sentence explanations
+- [ ] Parent agent context consumed by Phases 3a+3b is reduced by at least 50% compared to current baseline
 
 ## Execution Steps
 1. **Measure current baseline**
@@ -85,8 +83,7 @@ None - performance optimization
    - Compare parent-agent token consumption for Phases 3a+3b against baseline
 
 ## Post-conditions
-- [x] Phases 3a+3b parent-agent context usage substantially reduced (file-based handoff eliminates inline verbose
-  output from parent context)
+- [ ] Phases 3a+3b parent-agent context usage reduced by >= 50%
 - [ ] All acceptance criteria still verified (no criterion skipped)
 - [ ] E2E tests still run and results reported accurately
 - [ ] Fix iteration loop works via planning subagent → implementation subagent delegation
