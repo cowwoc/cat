@@ -8,9 +8,9 @@ package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
+import io.github.cowwoc.cat.hooks.util.TrustLevel;
 import io.github.cowwoc.cat.hooks.util.WorkPrepare;
 import io.github.cowwoc.cat.hooks.util.WorkPrepare.PrepareInput;
-import io.github.cowwoc.cat.hooks.util.WorkPrepare.TrustLevel;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
