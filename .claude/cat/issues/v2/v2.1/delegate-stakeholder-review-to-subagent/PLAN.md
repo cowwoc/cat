@@ -28,7 +28,16 @@ None - performance optimization
 ## Files to Modify
 - `plugin/skills/work-with-issue/SKILL.md` - Restructure Phase 3c for file-based concern handoff and fix delegation
 - `plugin/agents/stakeholder-*.md` - Trim reviewer output; write detail files instead of returning inline
-- `plugin/skills/stakeholder-review/SKILL.md` - Update orchestration to use new compact return format
+- `plugin/skills/stakeholder-review/SKILL.md` - Update orchestration to use new compact return format; remove evidence
+  validation logic
+- `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetStakeholderConcernBox.java` - Update to render from compact
+  concern format (severity, location, explanation, recommendation); remove handling of removed fields
+- `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetStakeholderReviewBox.java` - Update to work with compact
+  reviewer results
+- `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetStakeholderSelectionBox.java` - Review for compatibility
+  with new format
+- `client/src/test/java/io/github/cowwoc/cat/hooks/test/GetStakeholderOutputTest.java` - Update tests for new compact
+  schema
 
 ## Acceptance Criteria
 - [ ] Each reviewer subagent writes comprehensive concern details to a file in the worktree
@@ -91,7 +100,16 @@ None - performance optimization
      }
      ```
 
-4. **Restructure Phase 3c fix loop in work-with-issue**
+4. **Update Java display handlers for compact concern format**
+   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetStakeholderConcernBox.java`,
+     `GetStakeholderReviewBox.java`, `GetStakeholderSelectionBox.java`
+   - Update `GetStakeholderConcernBox` to render from compact fields: severity, location, explanation, recommendation
+   - Remove handling of fields that no longer exist (attack_vector, current_complexity, userImpact, customerImpact,
+     legal_risk, files_reviewed, diff_summary)
+   - Update `GetStakeholderReviewBox` to work with compact per-reviewer status (no evidence fields)
+   - Update `GetStakeholderOutputTest` to validate rendering with new compact schema
+
+5. **Restructure Phase 3c fix loop in work-with-issue**
    - Files: `plugin/skills/work-with-issue/SKILL.md`
    - Main agent spawns reviewer subagents in parallel, receives compact results
    - For concerns at/above auto-fix threshold:
@@ -104,11 +122,11 @@ None - performance optimization
    - Loop up to 3 iterations
    - At approval gate: show brief concern summaries (severity + explanation + location), not full details
 
-5. **Run tests**
+6. **Run tests**
    - Verify stakeholder review tests pass with new compact format
    - Verify fix loop still functions with file-based handoff
 
-6. **Measure post-change context usage**
+7. **Measure post-change context usage**
    - Compare parent-agent token consumption for Phase 3c against baseline
 
 ## Post-conditions
