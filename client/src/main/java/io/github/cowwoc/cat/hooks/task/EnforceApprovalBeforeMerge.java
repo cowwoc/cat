@@ -40,11 +40,11 @@ import java.util.function.Predicate;
 public final class EnforceApprovalBeforeMerge implements TaskHandler
 {
   /**
-   * Number of recent JSONL lines to scan for approval messages. 50 lines covers approximately
-   * the last few user interactions, which is sufficient to detect recent approval without scanning
+   * Number of recent JSONL lines to scan for approval messages. 75 lines covers approximately
+   * the last several user interactions, which is sufficient to detect recent approval without scanning
    * the entire session file.
    */
-  private static final int RECENT_LINES_TO_SCAN = 50;
+  private static final int RECENT_LINES_TO_SCAN = 75;
 
   /**
    * Recognized phrases for direct merge approval. Each phrase is lowercased for case-insensitive
@@ -224,7 +224,12 @@ public final class EnforceApprovalBeforeMerge implements TaskHandler
   /**
    * Extracts the text content from a user message JSONL line.
    * <p>
-   * Expects the structure: {@code {"type":"user","message":{"content":[{"type":"text","text":"..."}]}}}
+   * Handles two content formats used by Claude Code:
+   * <ul>
+   *   <li>Plain string: {@code {"content":"text here"}} — used for direct user-typed messages</li>
+   *   <li>Array format: {@code {"content":[{"type":"tool_result",...}]}} — used for messages
+   *       containing tool results (responses to AskUserQuestion, Read, Bash, etc.)</li>
+   * </ul>
    *
    * @param line the raw JSONL line
    * @return the lowercased text content, or empty string if the structure is not recognized
@@ -240,11 +245,15 @@ public final class EnforceApprovalBeforeMerge implements TaskHandler
       JsonNode messageNode = node.get("message");
       if (messageNode == null || !messageNode.isObject())
         return "";
-      JsonNode contentArray = messageNode.get("content");
-      if (contentArray == null || !contentArray.isArray())
+      JsonNode contentNode = messageNode.get("content");
+      if (contentNode == null)
+        return "";
+      if (contentNode.isTextual())
+        return contentNode.asString().toLowerCase(Locale.ROOT);
+      if (!contentNode.isArray())
         return "";
       StringBuilder text = new StringBuilder();
-      for (JsonNode element : contentArray)
+      for (JsonNode element : contentNode)
       {
         JsonNode textNode = element.get("text");
         if (textNode != null)
