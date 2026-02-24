@@ -1,30 +1,36 @@
 # Plan: delegate-verify-to-subagent
 
 ## Goal
-Delegate the verify-implementation phase (Phase 3a) and E2E testing (Phase 3b) to a subagent, saving ~4% of parent
-agent context from acceptance criteria analysis and test output.
+Minimize parent agent context consumed by the verify-implementation phase (Phase 3a) and E2E testing (Phase 3b) by
+delegating verification to a subagent that writes detailed analysis to files and returns only a compact summary.
 
 ## Satisfies
 None - performance optimization
 
 ## Risk Assessment
 - **Risk Level:** LOW
-- **Concerns:** Verify phase reads PLAN.md acceptance criteria, checks changed files, and may spawn fix subagents
-  for missing criteria. The fix subagent spawning creates a nesting concern if verify itself runs as a subagent.
-  E2E testing can produce verbose output (build logs, stack traces) that inflates context.
-- **Mitigation:** For the nesting issue: the verify subagent can return a structured report of missing criteria,
-  and the parent can spawn fix subagents based on that report. This keeps nesting flat. E2E test output is
-  naturally contained within the subagent.
+- **Concerns:** Verify phase reads PLAN.md, checks changed files, and runs E2E tests — all of which can produce
+  verbose output (build logs, stack traces, file contents). E2E testing is especially noisy.
+- **Mitigation:** Verify subagent writes detailed criterion analysis and test output to files. Returns only pass/fail
+  status per criterion with brief explanations. Main agent delegates fixes based on file references without reading
+  the files.
+
+## Design Principles
+1. **Trust subagents.** If the verify subagent says a criterion passed, trust it.
+2. **Return only what the parent needs.** Per-criterion: status (Done/Missing/Partial), brief explanation, detail file.
+3. **File-based handoff.** Comprehensive analysis and test output go to files. Fix subagents read them directly.
 
 ## Files to Modify
-- `plugin/skills/work-with-issue/SKILL.md` - Replace inline verify + E2E logic with subagent delegation
-- `plugin/agents/` - New agent definition for verify subagent
+- `plugin/skills/work-with-issue/SKILL.md` - Restructure Phases 3a+3b to use verify subagent with file-based output
+- `plugin/agents/work-verify.md` - New agent definition for verify subagent
 
 ## Acceptance Criteria
-- [ ] Verify-implementation phase runs within a subagent
-- [ ] E2E testing runs within a subagent (same or separate)
-- [ ] Parent agent receives only a compact JSON summary (criteria status, test results)
-- [ ] Fix iterations for missing criteria still function (parent spawns fix subagent based on verify report)
+- [ ] Verify subagent writes detailed criterion analysis to a file in the worktree
+- [ ] Verify subagent writes E2E test output to a file in the worktree
+- [ ] Verify subagent returns only: per-criterion status (Done/Missing/Partial), brief explanation, detail file path
+- [ ] Main agent never reads verify detail files or test output files
+- [ ] For missing criteria: main agent delegates to a planning subagent to revise PLAN.md, then delegates the revised
+  plan to an implementation subagent. Fix subagents read detail files directly.
 - [ ] Parent agent context consumed by Phases 3a+3b is reduced by at least 50% compared to current baseline
 
 ## Execution Steps
@@ -33,15 +39,42 @@ None - performance optimization
 
 2. **Create verify subagent definition**
    - Files: `plugin/agents/work-verify.md`
-   - Define agent that accepts: issue metadata, worktree path, PLAN.md path, execution result (commits, files)
-   - Agent responsibilities: invoke verify-implementation skill, run E2E tests, return structured JSON with
-     acceptance criteria status (Done/Missing/Partial per criterion) and E2E test results
+   - Agent accepts: issue metadata, worktree path, PLAN.md path, execution result (commits, files changed)
+   - Agent writes detailed analysis to `<worktree>/.claude/cat/verify/criteria-analysis.json`
+   - Agent writes E2E test output to `<worktree>/.claude/cat/verify/e2e-test-output.json`
+   - Agent returns compact JSON:
+     ```json
+     {
+       "status": "PARTIAL",
+       "criteria": [
+         {
+           "name": "hooks.json contains _description field",
+           "status": "Done",
+           "explanation": "Field exists with correct value"
+         },
+         {
+           "name": "All tests pass",
+           "status": "Missing",
+           "explanation": "2 test failures in UserDaoTest",
+           "detail_file": ".claude/cat/verify/criteria-analysis.json"
+         }
+       ],
+       "e2e": {
+         "status": "PASSED",
+         "explanation": "CLI tool produces expected output",
+         "detail_file": ".claude/cat/verify/e2e-test-output.json"
+       }
+     }
+     ```
 
 3. **Restructure Phases 3a+3b in work-with-issue**
    - Files: `plugin/skills/work-with-issue/SKILL.md`
    - Replace inline verify and E2E logic with Task tool spawn of verify subagent
    - Parse compact JSON result
-   - If missing criteria: parent spawns fix subagent (cat:work-execute), then re-invokes verify subagent
+   - If missing criteria:
+     a. Spawn **planning subagent** with detail file paths → revises PLAN.md with fix steps
+     b. Spawn **implementation subagent** with revised PLAN.md → implements fixes, reads detail files directly
+   - Re-invoke verify subagent after fixes (max 2 iterations)
 
 4. **Run tests**
    - Verify acceptance criteria checking still works with new delegation
@@ -53,5 +86,6 @@ None - performance optimization
 - [ ] Phases 3a+3b parent-agent context usage reduced by >= 50%
 - [ ] All acceptance criteria still verified (no criterion skipped)
 - [ ] E2E tests still run and results reported accurately
-- [ ] Fix iteration loop still works for missing criteria
+- [ ] Fix iteration loop works via planning subagent → implementation subagent delegation
+- [ ] Detail files exist in worktree after verification
 - [ ] E2E: A complete /cat:work run succeeds with the new verify delegation
