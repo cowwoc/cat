@@ -71,9 +71,9 @@ Output: `client/target/jlink/`
 
 The `session-start.sh` hook downloads the jlink image from GitHub releases to `${CLAUDE_PLUGIN_ROOT}/runtime/client/` if not already present.
 
-**Using the `/cat-update-hooks` skill:** For development workflows, use the `/cat-update-hooks` skill to build and
-install the hooks into your current Claude Code project. This skill handles building, installation, and plugin cache
-updates automatically.
+**Using the `/cat-update-client` skill:** For development workflows, use the `/cat-update-client` skill to build and
+install the jlink runtime into the plugin cache. This skill handles building, installation, and cache updates
+automatically. Run it after modifying any Java source files under `client/src/`.
 
 ### Handler Registry
 
