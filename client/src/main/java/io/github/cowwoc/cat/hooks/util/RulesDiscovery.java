@@ -28,7 +28,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * <ul>
  *   <li>{@code mainAgent: true|false} — whether to inject into the main agent (default: true)</li>
  *   <li>{@code subAgents: [type1, type2]} or {@code subAgents: []} —
- *       which subagent types receive this rule (default: all; omit for all)</li>
+ *       which subagent types receive this rule (default when omitted: all subagents)</li>
  *   <li>{@code paths: ["*.java", "src/**"]} — only inject when an active file matches one of
  *       these globs (default: always inject)</li>
  * </ul>
@@ -40,8 +40,8 @@ public final class RulesDiscovery
    *
    * @param path       the path to the rule file
    * @param mainAgent  whether to inject into the main agent
-   * @param subAgents  the subagent types that receive this rule; empty means none, ["all"] means all
- *                   (default when omitted from frontmatter)
+   * @param subAgents  the subagent types that receive this rule; {@code null} means all subagents
+   *                   (default when omitted from frontmatter), empty means none
    * @param paths      glob patterns restricting injection to matching active files; empty means always inject
    * @param content    the full file content (including frontmatter stripped)
    */
@@ -57,16 +57,16 @@ public final class RulesDiscovery
      *
      * @param path      the file path
      * @param mainAgent inject into main agent
-     * @param subAgents subagent types
+     * @param subAgents subagent types ({@code null} means all subagents)
      * @param paths     glob patterns
      * @param content   file content (body without frontmatter)
-     * @throws NullPointerException if any parameter is null
+     * @throws NullPointerException if {@code path}, {@code paths}, or {@code content} are null
      */
     public RuleFile
     {
       requireThat(path, "path").isNotNull();
-      requireThat(subAgents, "subAgents").isNotNull();
-      subAgents = List.copyOf(subAgents);
+      if (subAgents != null)
+        subAgents = List.copyOf(subAgents);
       requireThat(paths, "paths").isNotNull();
       paths = List.copyOf(paths);
       requireThat(content, "content").isNotNull();
@@ -105,6 +105,7 @@ public final class RulesDiscovery
    *
    * @return list of discovered rule files sorted by filename
    * @throws WrappedCheckedException if reading the directory or any file fails
+   * @throws IllegalArgumentException if any rule file has malformed YAML frontmatter
    */
   public List<RuleFile> discoverAll()
   {
@@ -147,7 +148,7 @@ public final class RulesDiscovery
     String body = stripFrontmatter(content);
 
     if (frontmatter == null)
-      return new RuleFile(path, true, List.of("all"), List.of(), body);
+      return new RuleFile(path, true, null, List.of(), body);
 
     try
     {
@@ -155,14 +156,14 @@ public final class RulesDiscovery
       boolean mainAgent = true;
       if (root.has("mainAgent"))
         mainAgent = root.get("mainAgent").asBoolean(true);
-      List<String> subAgents = parseListNode(root.get("subAgents"), List.of("all"));
+      List<String> subAgents = parseListNode(root.get("subAgents"), null);
       List<String> paths = parseListNode(root.get("paths"), List.of());
       return new RuleFile(path, mainAgent, subAgents, paths, body);
     }
-    catch (Exception _)
+    catch (Exception e)
     {
-      // Malformed frontmatter - treat as no frontmatter (defaults)
-      return new RuleFile(path, true, List.of("all"), List.of(), body);
+      throw new IllegalArgumentException("Malformed YAML frontmatter in " + path + ": " +
+        e.getMessage(), e);
     }
   }
 
@@ -264,7 +265,7 @@ public final class RulesDiscovery
    * @param rules           all discovered rules
    * @param subagentType    the type identifier of the subagent (e.g. {@code "cat:work-execute"})
    * @param activeFiles     the list of files currently being operated on (for paths matching)
-   * @return rules where subAgents contains the subagent type (or "all") and paths match
+   * @return rules where subAgents is {@code null} (all) or contains the subagent type, and paths match
    * @throws NullPointerException if any parameter is null
    */
   public static List<RuleFile> filterForSubagent(List<RuleFile> rules, String subagentType,
@@ -278,9 +279,7 @@ public final class RulesDiscovery
     for (RuleFile rule : rules)
     {
       List<String> subAgents = rule.subAgents();
-      if (subAgents.isEmpty())
-        continue;
-      if (!subAgents.contains("all") && !subAgents.contains(subagentType))
+      if (subAgents != null && !subAgents.contains(subagentType))
         continue;
       if (!matchesPaths(rule.paths(), activeFiles))
         continue;
