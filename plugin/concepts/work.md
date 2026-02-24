@@ -80,6 +80,17 @@ See individual skill files for full contracts:
 - work-with-issue/SKILL.md (orchestrates execute/review/merge)
 - work-merge/SKILL.md
 
+## CRITICAL: Fix Pre-existing Problems Within Scope
+
+When working on an issue, fix pre-existing problems if they fall within the issue's goal, scope, and post-conditions.
+Do not dismiss problems as "out of scope" merely because they existed before the current commit.
+
+The issue's acceptance criteria define what must be true when the issue is closed. If a pre-existing problem violates
+those criteria, it must be fixed — regardless of when it was introduced.
+
+**Example:** If an issue's goal is "remove all Python from the project" and pre-existing shell scripts contain inline
+`python3` calls, those must be addressed.
+
 ## CRITICAL: Worktree Isolation
 
 **ALL issue implementation work MUST happen in the issue worktree, NEVER in `/workspace` main.**

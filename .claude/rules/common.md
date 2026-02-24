@@ -211,6 +211,17 @@ Keep M-codes only in:
 - `.claude/rules/` — project rules
 - `.claude/cat/retrospectives/` — historical record
 
+## Pre-existing Problems
+
+**MANDATORY:** When working on an issue, fix pre-existing problems if they fall within the issue's goal, scope, and
+post-conditions. Do not dismiss problems as "out of scope" merely because they existed before the current commit.
+
+**Rationale:** The issue's acceptance criteria define what must be true when the issue is closed. If a pre-existing
+problem violates those criteria, it must be fixed — regardless of when it was introduced.
+
+**Example:** If an issue's goal is "remove all Python from the project" and pre-existing shell scripts contain inline
+`python3` calls, those must be addressed. The fact that they existed before the issue started is irrelevant.
+
 ## Shell Efficiency
 
 **Chain independent commands** with `&&` in a single Bash call instead of separate tool calls.
