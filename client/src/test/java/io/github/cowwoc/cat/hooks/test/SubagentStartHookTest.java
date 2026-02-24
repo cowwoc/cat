@@ -333,8 +333,8 @@ public final class SubagentStartHookTest
   // ---- getCatRules behavior: blank vs populated subagent_type ----
 
   /**
-   * Verifies that getCatRules (via run()) includes a rule with subAgents:[all] when
-   * subagent_type is blank. Rules with "all" target should reach all subagents regardless of type.
+   * Verifies that getCatRules (via run()) includes a rule with no subAgents restriction when
+   * subagent_type is blank. Rules with null subAgents should reach all subagents regardless of type.
    *
    * @throws IOException if file operations fail
    */
@@ -347,10 +347,10 @@ public final class SubagentStartHookTest
     {
       Path rulesDir = scope.getClaudeProjectDir().resolve(".claude/cat/rules");
       Files.createDirectories(rulesDir);
+      // No subAgents frontmatter → null → matches all subagents
       Files.writeString(rulesDir.resolve("universal.md"), """
         ---
         mainAgent: false
-        subAgents: [all]
         ---
         # Universal subagent content
         Applies to any subagent.

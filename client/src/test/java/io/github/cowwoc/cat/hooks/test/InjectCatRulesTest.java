@@ -114,10 +114,10 @@ public final class InjectCatRulesTest
     {
       Path rulesDir = scope.getClaudeProjectDir().resolve(".claude/cat/rules");
       Files.createDirectories(rulesDir);
+      // No subAgents frontmatter → null → targets all subagents; mainAgent: false excludes main agent
       Files.writeString(rulesDir.resolve("subagent-only.md"), """
         ---
         mainAgent: false
-        subAgents: [all]
         ---
         # Only for subagents
         """);
