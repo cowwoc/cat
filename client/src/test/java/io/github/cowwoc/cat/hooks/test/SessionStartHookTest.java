@@ -242,6 +242,7 @@ public class SessionStartHookTest
       requireThat(context, "context").contains("Worktree Isolation");
       requireThat(context, "context").contains("Fail-Fast Protocol");
       requireThat(context, "context").contains("Verbatim Output Skills");
+      requireThat(context, "context").contains("Qualified Issue Names");
     }
   }
 
