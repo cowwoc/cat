@@ -464,7 +464,7 @@ if [[ -d ".claude/cat/rules" ]]; then
             # Extract lines between --- delimiters at start of file
             frontmatter=$(sed -n '1{/^---$/!q};1,/^---$/p' "$convention_file" | sed '1d;$d')
 
-            # Extract subAgents array from frontmatter (format: subAgents: [all] or [cat:stakeholder-design, ...])
+            # Extract subAgents array from frontmatter (format: subAgents: [] or [cat:stakeholder-design, ...])
             subagents_line=$(echo "$frontmatter" | grep '^subAgents:' || echo "")
 
             if [[ -n "$subagents_line" ]]; then
