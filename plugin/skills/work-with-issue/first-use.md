@@ -377,7 +377,7 @@ Parse verification result to determine if all post-conditions were satisfied.
   Task tool:
     description: "Fix missing post-conditions (iteration ${ITERATION})"
     subagent_type: "cat:work-execute"
-    model: "sonnet"
+    model: "haiku"
     prompt: |
       Fix the following missing post-conditions for issue ${ISSUE_ID}.
 
@@ -566,28 +566,75 @@ The auto-fix threshold is determined by `AUTOFIX_LEVEL`:
 - `"critical"`: loop while CRITICAL concerns exist
 
 1. Increment iteration counter: `AUTOFIX_ITERATION++`
-2. Extract concerns at or above the auto-fix threshold (severity, description, location, recommendation)
-3. Spawn implementation subagent to fix the concerns:
+2. Extract concerns at or above the auto-fix threshold. For each concern, collect: severity, location, explanation,
+   recommendation, detail_file path. The main agent must NOT read the detail files — pass their paths to subagents.
+3. Spawn **planning subagent** to revise PLAN.md with fix steps:
+   ```
+   Task tool:
+     description: "Plan fixes for review concerns (iteration ${AUTOFIX_ITERATION})"
+     subagent_type: "cat:work-execute"
+     model: "sonnet"
+     prompt: |
+       Revise PLAN.md to add fix steps for the following stakeholder review concerns.
+
+       ## Issue Configuration
+       ISSUE_ID: ${ISSUE_ID}
+       ISSUE_PATH: ${ISSUE_PATH}
+       WORKTREE_PATH: ${WORKTREE_PATH}
+       BRANCH: ${BRANCH}
+
+       ## Concerns to Address
+       ${concerns_formatted}
+       (severity, location, explanation, recommendation, detail_file for each concern)
+
+       ## Instructions
+       - Read each detail file listed above for comprehensive analysis of each concern
+       - Revise ${ISSUE_PATH}/PLAN.md to add concrete fix steps under "## Execution Steps"
+       - Each step must reference the specific file/line from the concern location
+       - Do NOT implement anything - only update PLAN.md with fix steps
+       - Commit the updated PLAN.md with message: planning: add fix steps for review concerns (iteration ${AUTOFIX_ITERATION})
+       - Return JSON status when complete
+
+       ## Plan Quality Requirement
+       Your plan will be executed mechanically by a Sonnet implementation subagent that will NOT
+       read the detail files or exercise judgment. Each step must be unambiguous and self-contained:
+       - Specify exact code changes (change X to Y), not directional guidance ("consider improving")
+       - Include file paths, line numbers, and the specific transformation needed
+       - If a concern has multiple valid fixes, choose one — do not present options
+
+       ## Return Format
+       ```json
+       {
+         "status": "SUCCESS|FAILED",
+         "plan_updated": true,
+         "fix_steps_added": N
+       }
+       ```
+   ```
+4. Spawn **implementation subagent** with the revised PLAN.md to implement the fixes:
    ```
    Task tool:
      description: "Fix review concerns (iteration ${AUTOFIX_ITERATION})"
      subagent_type: "cat:work-execute"
-     model: "sonnet"
+     model: "haiku"
      prompt: |
-       Fix the following stakeholder review concerns for issue ${ISSUE_ID}.
+       Implement the fix steps from PLAN.md to address stakeholder review concerns.
 
        ## Issue Configuration
        ISSUE_ID: ${ISSUE_ID}
+       ISSUE_PATH: ${ISSUE_PATH}
        WORKTREE_PATH: ${WORKTREE_PATH}
        BRANCH: ${BRANCH}
        BASE_BRANCH: ${BASE_BRANCH}
 
-       ## HIGH+ Concerns to Fix
-       ${concerns_formatted}
+       ## Concern Detail Files
+       ${detail_files_list}
+       (Read these files directly for comprehensive analysis of each concern)
 
        ## Instructions
        - Work in the worktree at ${WORKTREE_PATH}
-       - Fix each concern according to the recommendation
+       - Read each detail file listed above to understand the full context of each concern
+       - Follow the fix steps added to PLAN.md
        - Commit your fixes using the same commit type as the primary implementation
          (e.g., `bugfix:`, `feature:`). These commits will be squashed into the main
          implementation commit in Step 6. Do NOT use `test:` as an independent commit
@@ -604,26 +651,29 @@ The auto-fix threshold is determined by `AUTOFIX_LEVEL`:
        }
        ```
    ```
-4. Re-run stakeholder review (encode all commits in compact format `hash:type,hash:type`):
+5. Re-run stakeholder review based on verify config:
+   - `all`: re-spawn all reviewer subagents
+   - `changed`: re-spawn only stakeholders that had concerns in the last review round
+   - `none`: skip (this point is unreachable since review is skipped entirely when verify=none)
    ```
    Skill tool:
      skill: "cat:stakeholder-review"
      args: "${ISSUE_ID} ${WORKTREE_PATH} ${VERIFY} ${ALL_COMMITS_COMPACT}"
    ```
-5. Parse new review result
-6. If concerns at or above the configured auto-fix threshold remain, continue loop (if under iteration limit)
+6. Parse new review result
+7. If concerns at or above the configured auto-fix threshold remain, continue loop (if under iteration limit)
 
 **If concerns at or above the threshold persist after 3 iterations:**
 - Note that auto-fix reached iteration limit
 - Store all remaining concerns for display at approval gate
-- Continue to Step 5
+- Continue to Step 6
 
 **If no concerns remain at or above the threshold (or no concerns at all):**
 - Store concerns for display at approval gate
-- Continue to Step 5
+- Continue to Step 6
 
 **NOTE:** "REVIEW_PASSED" means stakeholder review passed, NOT user approval to merge.
-User approval is a SEPARATE gate in Step 6.
+User approval is a SEPARATE gate in Step 7.
 
 ## Step 6: Rebase and Squash Commits Before Review
 
@@ -803,12 +853,14 @@ If E2E testing was skipped (no E2E criteria in PLAN.md, or non-feature issue), s
 
 **MANDATORY: Display ALL stakeholder concerns before the approval gate**, regardless of severity.
 Users need full visibility into review findings to make informed merge decisions. For each concern
-(CRITICAL, HIGH, MEDIUM, or LOW), render a concern box:
+(CRITICAL, HIGH, MEDIUM, or LOW), render a concern box using the compact fields (severity, stakeholder,
+explanation, location). Do NOT read the detail files — the brief explanation and recommendation are
+sufficient for the user to understand each concern:
 
 ```
 Skill tool:
   skill: "cat:stakeholder-concern-box"
-  args: "${SEVERITY} ${STAKEHOLDER} ${CONCERN_DESCRIPTION} ${FILE_LOCATION}"
+  args: "${SEVERITY} ${STAKEHOLDER} ${CONCERN_EXPLANATION} ${FILE_LOCATION}"
 ```
 
 Do NOT suppress MEDIUM or LOW concerns. The auto-fix loop only addresses HIGH+ concerns automatically,
@@ -849,28 +901,74 @@ Fail-fast principle: Unknown consent = No consent = STOP.
 **If approved:** Continue to Step 8
 
 **If "Fix remaining concerns" selected:**
-1. Extract MEDIUM+ concerns
-2. Spawn implementation subagent to fix:
+1. Extract MEDIUM+ concerns. For each concern, collect: severity, location, explanation, recommendation, detail_file.
+   The main agent must NOT read the detail files — pass their paths to subagents.
+2. Spawn **planning subagent** to revise PLAN.md with fix steps:
+   ```
+   Task tool:
+     description: "Plan user-requested concern fixes"
+     subagent_type: "cat:work-execute"
+     model: "sonnet"
+     prompt: |
+       Revise PLAN.md to add fix steps for the following stakeholder review concerns (user-requested).
+
+       ## Issue Configuration
+       ISSUE_ID: ${ISSUE_ID}
+       ISSUE_PATH: ${ISSUE_PATH}
+       WORKTREE_PATH: ${WORKTREE_PATH}
+       BRANCH: ${BRANCH}
+
+       ## Concerns to Address
+       ${concerns_formatted}
+       (severity, location, explanation, recommendation, detail_file for each concern)
+
+       ## Instructions
+       - Read each detail file listed above for comprehensive analysis of each concern
+       - Revise ${ISSUE_PATH}/PLAN.md to add concrete fix steps under "## Execution Steps"
+       - Do NOT implement anything - only update PLAN.md with fix steps
+       - Commit the updated PLAN.md
+       - Return JSON status when complete
+
+       ## Plan Quality Requirement
+       Your plan will be executed mechanically by a Sonnet implementation subagent that will NOT
+       read the detail files or exercise judgment. Each step must be unambiguous and self-contained:
+       - Specify exact code changes (change X to Y), not directional guidance ("consider improving")
+       - Include file paths, line numbers, and the specific transformation needed
+       - If a concern has multiple valid fixes, choose one — do not present options
+
+       ## Return Format
+       ```json
+       {
+         "status": "SUCCESS|FAILED",
+         "plan_updated": true,
+         "fix_steps_added": N
+       }
+       ```
+   ```
+3. Spawn **implementation subagent** with the revised PLAN.md to implement the fixes:
    ```
    Task tool:
      description: "Fix remaining concerns (user-requested)"
      subagent_type: "cat:work-execute"
-     model: "sonnet"
+     model: "haiku"
      prompt: |
-       Fix the following stakeholder review concerns for issue ${ISSUE_ID}.
+       Implement the fix steps from PLAN.md to address user-requested concern fixes.
 
        ## Issue Configuration
        ISSUE_ID: ${ISSUE_ID}
+       ISSUE_PATH: ${ISSUE_PATH}
        WORKTREE_PATH: ${WORKTREE_PATH}
        BRANCH: ${BRANCH}
        BASE_BRANCH: ${BASE_BRANCH}
 
-       ## MEDIUM+ Concerns to Fix
-       ${concerns_formatted}
+       ## Concern Detail Files
+       ${detail_files_list}
+       (Read these files directly for comprehensive analysis of each concern)
 
        ## Instructions
        - Work in the worktree at ${WORKTREE_PATH}
-       - Fix each concern according to the recommendation
+       - Read each detail file listed above to understand the full context of each concern
+       - Follow the fix steps added to PLAN.md
        - Commit your fixes using the same commit type as the primary implementation
          (e.g., `bugfix:`, `feature:`). These commits will be squashed into the main
          implementation commit in Step 6. Do NOT use `test:` as an independent commit
@@ -887,7 +985,9 @@ Fail-fast principle: Unknown consent = No consent = STOP.
        }
        ```
    ```
-3. **MANDATORY: Re-run stakeholder review after fixes** (encode all commits in compact format `hash:type,hash:type`):
+4. **MANDATORY: Re-run stakeholder review after fixes** based on verify config:
+   - `all`: re-spawn all reviewer subagents
+   - `changed`: re-spawn only stakeholders that had concerns
    ```
    Skill tool:
      skill: "cat:stakeholder-review"
@@ -897,7 +997,7 @@ Fail-fast principle: Unknown consent = No consent = STOP.
    - Verify the concerns were actually resolved
    - Detect new concerns introduced by the fixes
    - Provide updated results to the user at the approval gate
-4. Return to Step 7 approval gate with updated results
+5. Return to Step 7 approval gate with updated results
 
 **If changes requested:** Return to user with feedback for iteration. Return status:
 ```json
