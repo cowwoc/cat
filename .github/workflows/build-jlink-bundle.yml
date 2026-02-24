@@ -30,7 +30,7 @@ jobs:
             platform: linux-aarch64
           - os: macos-latest
             platform: macos-x64
-          - os: macos-latest-xlarge
+          - os: macos-latest
             platform: macos-aarch64
 
     runs-on: ${{ matrix.os }}
