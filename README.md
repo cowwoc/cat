@@ -288,10 +288,13 @@ Your CAT settings live in `.claude/cat/cat-config.json`:
 - `medium` — Notes obvious issues in touched files; documents but doesn't act
 - `high` — Actively explores for improvements; documents opportunities found
 
-**patience** — When CAT acts on opportunities discovered during work:
-- `low` — Acts immediately on high-priority discoveries (benefit/cost > 3)
-- `medium` — Defers most discoveries; acts on critical issues only
-- `high` — Defers all discoveries to backlog; maximum focus on current task
+**patience** — When CAT acts on opportunities discovered during work and how review concerns are handled. CAT weighs
+each concern's severity against the cost of fixing it, then decides whether to fix inline or defer:
+- `low` — Fixes most concerns inline; only defers low-value, high-cost changes
+- `medium` — Fixes concerns when the benefit clearly outweighs the cost; defers others to the backlog
+- `high` — Fixes only high-value, low-cost concerns; defers everything else to maximize focus on the current task
+
+See [patience details](docs/patience.md) for the full cost/benefit framework and decision matrix.
 
 **terminalWidth** — Display width in characters for output formatting:
 - `120` — Desktop/Laptop (Recommended). Optimized for wide monitors
