@@ -80,7 +80,18 @@ Do NOT include patience instructions in implementation subagent prompts.
 |-------|--------------------------------------|
 | `low` | Resume PLANNER subagent to update plan with fixes, then continue |
 | `medium` | Create issues for discovered items in CURRENT version backlog |
-| `high` | Create issues for discovered items in FUTURE version backlog |
+| `high` | Create issues for discovered items in LATER version backlog |
+
+**Patience also applies to stakeholder review concerns after the auto-fix loop.** The main agent evaluates each
+remaining concern using a cost/benefit framework: benefit = severity weight (CRITICAL=10, HIGH=6, MEDIUM=3, LOW=1);
+cost = estimated scope of changes to files NOT already changed by the issue (0=in-scope, 1=minor, 4=moderate,
+10=significant). A concern is fixed inline if `benefit >= cost × patience_multiplier`; otherwise it is deferred.
+
+| Value | Review Concern Handling |
+|-------|------------------------|
+| `low` | Fix if benefit >= 0.5× cost (multiplier=0.5); fixes aggressively, only defers low-value high-cost concerns |
+| `medium` | Fix if benefit >= 2× cost (multiplier=2); defer remainder to current version backlog |
+| `high` | Fix if benefit >= 5× cost (multiplier=5); defer remainder to later version backlog |
 
 ## Token Tracking Requirements (A017)
 
