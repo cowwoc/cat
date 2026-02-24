@@ -1,7 +1,8 @@
 # State
 
-- **Status:** open
-- **Progress:** 0%
+- **Status:** closed
+- **Resolution:** implemented
+- **Progress:** 100%
 - **Dependencies:** [ci-build-jlink-bundle]
 - **Blocks:** []
-- **Last Updated:** 2026-02-07
+- **Last Updated:** 2026-02-24
