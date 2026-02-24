@@ -9,6 +9,10 @@ package io.github.cowwoc.cat.hooks.test;
 import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetConfigOutput;
+import io.github.cowwoc.cat.hooks.util.CuriosityLevel;
+import io.github.cowwoc.cat.hooks.util.PatienceLevel;
+import io.github.cowwoc.cat.hooks.util.TrustLevel;
+import io.github.cowwoc.cat.hooks.util.VerifyLevel;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.testng.annotations.Test;
 import tools.jackson.core.JacksonException;
@@ -628,6 +632,308 @@ public class ConfigTest
 
       GetConfigOutput handler = new GetConfigOutput(scope);
       handler.getOutput(new String[0]);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getTrust() returns MEDIUM by default when the config file is missing.
+   */
+  @Test
+  public void getTrustDefaultsToMedium() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Config config = Config.load(mapper, tempDir);
+
+      requireThat(config.getTrust(), "trust").isEqualTo(TrustLevel.MEDIUM);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getTrust() parses "high" from the config file correctly.
+   */
+  @Test
+  public void getTrustParsesHighFromConfig() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), """
+        {
+          "trust": "high"
+        }
+        """);
+
+      Config config = Config.load(mapper, tempDir);
+
+      requireThat(config.getTrust(), "trust").isEqualTo(TrustLevel.HIGH);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getTrust() throws IllegalArgumentException for an unrecognized trust value in the config file.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void getTrustThrowsForInvalidValue() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), """
+        {
+          "trust": "unknown"
+        }
+        """);
+
+      Config config = Config.load(mapper, tempDir);
+      config.getTrust();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getVerify() returns CHANGED by default when the config file is missing.
+   */
+  @Test
+  public void getVerifyDefaultsToChanged() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Config config = Config.load(mapper, tempDir);
+
+      requireThat(config.getVerify(), "verify").isEqualTo(VerifyLevel.CHANGED);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getVerify() parses "all" from the config file correctly.
+   */
+  @Test
+  public void getVerifyParsesAllFromConfig() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), """
+        {
+          "verify": "all"
+        }
+        """);
+
+      Config config = Config.load(mapper, tempDir);
+
+      requireThat(config.getVerify(), "verify").isEqualTo(VerifyLevel.ALL);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getVerify() throws IllegalArgumentException for an unrecognized verify value in the config file.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void getVerifyThrowsForInvalidValue() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), """
+        {
+          "verify": "unknown"
+        }
+        """);
+
+      Config config = Config.load(mapper, tempDir);
+      config.getVerify();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getCuriosity() returns LOW by default when the config file is missing.
+   */
+  @Test
+  public void getCuriosityDefaultsToLow() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Config config = Config.load(mapper, tempDir);
+
+      requireThat(config.getCuriosity(), "curiosity").isEqualTo(CuriosityLevel.LOW);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getCuriosity() parses "high" from the config file correctly.
+   */
+  @Test
+  public void getCuriosityParsesHighFromConfig() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), """
+        {
+          "curiosity": "high"
+        }
+        """);
+
+      Config config = Config.load(mapper, tempDir);
+
+      requireThat(config.getCuriosity(), "curiosity").isEqualTo(CuriosityLevel.HIGH);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getCuriosity() throws IllegalArgumentException for an unrecognized curiosity value in the config
+   * file.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void getCuriosityThrowsForInvalidValue() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), """
+        {
+          "curiosity": "unknown"
+        }
+        """);
+
+      Config config = Config.load(mapper, tempDir);
+      config.getCuriosity();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getPatience() returns HIGH by default when the config file is missing.
+   */
+  @Test
+  public void getPatienceDefaultsToHigh() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Config config = Config.load(mapper, tempDir);
+
+      requireThat(config.getPatience(), "patience").isEqualTo(PatienceLevel.HIGH);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getPatience() parses "low" from the config file correctly.
+   */
+  @Test
+  public void getPatienceParsesLowFromConfig() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), """
+        {
+          "patience": "low"
+        }
+        """);
+
+      Config config = Config.load(mapper, tempDir);
+
+      requireThat(config.getPatience(), "patience").isEqualTo(PatienceLevel.LOW);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getPatience() throws IllegalArgumentException for an unrecognized patience value in the config
+   * file.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void getPatienceThrowsForInvalidValue() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), """
+        {
+          "patience": "unknown"
+        }
+        """);
+
+      Config config = Config.load(mapper, tempDir);
+      config.getPatience();
     }
     finally
     {

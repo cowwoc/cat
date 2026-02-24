@@ -6,6 +6,11 @@
  */
 package io.github.cowwoc.cat.hooks;
 
+import io.github.cowwoc.cat.hooks.util.CuriosityLevel;
+import io.github.cowwoc.cat.hooks.util.PatienceLevel;
+import io.github.cowwoc.cat.hooks.util.TrustLevel;
+import io.github.cowwoc.cat.hooks.util.VerifyLevel;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -222,6 +227,50 @@ public final class Config
       }
     }
     return defaultValue;
+  }
+
+  /**
+   * Get the trust level.
+   *
+   * @return the parsed {@link TrustLevel} (defaults to {@link TrustLevel#MEDIUM} if not configured)
+   * @throws IllegalArgumentException if the configured value is not a recognized trust level
+   */
+  public TrustLevel getTrust()
+  {
+    return TrustLevel.fromString(getString("trust", "medium"));
+  }
+
+  /**
+   * Get the verify level.
+   *
+   * @return the parsed {@link VerifyLevel} (defaults to {@link VerifyLevel#CHANGED} if not configured)
+   * @throws IllegalArgumentException if the configured value is not a recognized verify level
+   */
+  public VerifyLevel getVerify()
+  {
+    return VerifyLevel.fromString(getString("verify", "changed"));
+  }
+
+  /**
+   * Get the curiosity level.
+   *
+   * @return the parsed {@link CuriosityLevel} (defaults to {@link CuriosityLevel#LOW} if not configured)
+   * @throws IllegalArgumentException if the configured value is not a recognized curiosity level
+   */
+  public CuriosityLevel getCuriosity()
+  {
+    return CuriosityLevel.fromString(getString("curiosity", "low"));
+  }
+
+  /**
+   * Get the patience level.
+   *
+   * @return the parsed {@link PatienceLevel} (defaults to {@link PatienceLevel#HIGH} if not configured)
+   * @throws IllegalArgumentException if the configured value is not a recognized patience level
+   */
+  public PatienceLevel getPatience()
+  {
+    return PatienceLevel.fromString(getString("patience", "high"));
   }
 
   /**
