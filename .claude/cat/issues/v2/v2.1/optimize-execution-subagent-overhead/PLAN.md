@@ -184,6 +184,82 @@ listings).
    achieve very high cache hit rates (the shared system prompt, tool definitions, and CLAUDE.md are all
    cache reads at 0.1x).
 
+5. **Add pre-delegation estimation section** to `plugin/skills/optimize-execution/first-use.md`
+   - This section provides a decision function for whether to delegate BEFORE implementing the delegation
+   - Unlike the post-hoc analysis (steps 1-4), this uses known constants + estimates to predict outcomes
+
+   **Known constants (empirically derived, stable across sessions):**
+
+   | Constant | Value | Source | Variability |
+   |----------|-------|--------|-------------|
+   | Subagent baseline context | ~17-20k tokens | First-turn `total_context` across multiple sessions | <15% |
+   | Subagent cache hit rate (first turn) | ~54% | `cache_read / total_context` on first subagent turn | Depends on cache TTL |
+   | Main agent spawn overhead | 2 turns | Task tool call + result processing | Fixed |
+   | Subagent per-turn growth | ~500-2000 tokens | Delta between consecutive subagent turns | Varies with tool output size |
+
+   **Pre-delegation estimation formula:**
+
+   ```
+   Inputs:
+     C_main          = current main agent context (read from last usage in JSONL or /context)
+     N_estimated     = estimated turns the work will take
+     C_sub_base      = 18,500 (empirical median subagent first-turn context)
+     C_sub_growth    = 1,200 (empirical median per-turn context growth in subagent)
+
+   Inline cost estimate:
+     inline_cost = N_estimated × C_main
+
+   Delegation cost estimate:
+     main_cost   = 2 × C_main
+     sub_cost    = sum(C_sub_base + i × C_sub_growth for i in 0..N_estimated-1)
+                 = N_estimated × C_sub_base + N_estimated × (N_estimated - 1) / 2 × C_sub_growth
+     delegate_cost = main_cost + sub_cost
+
+   Decision:
+     savings = inline_cost - delegate_cost
+     savings_pct = savings / inline_cost × 100
+
+   Delegate when savings > 0 (equivalently: when C_main > C_sub_base + overhead)
+   ```
+
+   **Decision rule (simplified):**
+
+   Delegation saves tokens when the main agent's context significantly exceeds the subagent's baseline.
+   The breakeven point is approximately:
+
+   ```
+   C_main > C_sub_base + (2 × C_main / N_estimated)
+   ```
+
+   Simplifying: delegation is almost always beneficial when `C_main > 2 × C_sub_base` (~37k tokens),
+   which is typically reached after 3-5 main agent turns. For very short tasks (1-2 turns), the spawn
+   overhead dominates and inline is cheaper.
+
+   **Quick decision table (using empirical constants):**
+
+   | Main Context | Estimated Turns | Delegate? | Estimated Savings |
+   |-------------|----------------|-----------|-------------------|
+   | <20k | Any | No | Subagent baseline ≈ main context; no benefit |
+   | 20-40k | 1-2 | No | Spawn overhead exceeds savings |
+   | 20-40k | 3+ | Maybe | Marginal; depends on task |
+   | 40-80k | 2+ | Yes | ~20-40% raw token savings |
+   | 80k+ | 2+ | Yes | ~50-70% raw token savings |
+   | 120k+ | Any | Yes | Always; even 1-turn delegation saves context |
+
+   **Cost-weighted adjustment:** The raw token savings understate the actual cost savings because
+   subagent tokens have a higher cache-read ratio (0.1x pricing) than main agent tokens at the same
+   context size. Multiply raw savings by ~1.5-2x for cost-weighted estimate.
+
+6. **Add pre-delegation fields to JSON output format**
+   - When optimize-execution detects a delegation that did NOT occur but could have been beneficial,
+     emit a `"delegation_opportunity"` entry:
+     - `phase`: which phase could have been delegated
+     - `main_context_at_opportunity`: C_main at that point
+     - `estimated_turns`: inferred turn count for the phase
+     - `estimated_savings_tokens`: predicted raw savings
+     - `estimated_savings_percent`: predicted percentage savings
+     - `recommendation`: "delegate" | "keep_inline" | "marginal"
+
 ## Post-conditions
 
 - [ ] `plugin/skills/optimize-execution/first-use.md` contains a delegation analysis section
@@ -194,4 +270,7 @@ listings).
 - [ ] Cost-weighted analysis applies cache pricing multipliers (0.1x for reads, 1.25x/2x for writes)
 - [ ] The JSON output format includes a `delegation` category with empirical fields
 - [ ] A worked example with real JSONL-derived numbers is included
+- [ ] A pre-delegation estimation section provides a decision function using empirical constants
+- [ ] The decision table maps main context size × estimated turns to delegate/keep-inline recommendations
+- [ ] The JSON output format includes a `delegation_opportunity` category for missed delegation opportunities
 - [ ] No existing optimization patterns are removed or broken
