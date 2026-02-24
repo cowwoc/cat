@@ -32,7 +32,6 @@ Finalize naming conventions and UI polish before recording demo videos.
 - compress-stakeholders-md
 - compress-templates-md
 - developer-local-bundle-rebuild
-- guard-get-diff-against-large-diffs
 - migrate-python-to-java
 - port-display-scripts-to-java
 - port-git-scripts-to-java
@@ -317,3 +316,4 @@ Finalize naming conventions and UI polish before recording demo videos.
 - wrap-markdown-files-120-chars
 - rename-task-to-issue-terminology
 - fix-work-prepare-diagnostic-scan-limit
+- guard-get-diff-against-large-diffs
