@@ -78,10 +78,10 @@ public final class GetConfigOutput implements SkillOutput
     // Load config using the Config class
     Config config = Config.load(scope.getJsonMapper(), projectRoot);
 
-    String trust = config.getString("trust", "medium");
-    String verify = config.getString("verify", "changed");
-    String curiosity = config.getString("curiosity", "low");
-    String patience = config.getString("patience", "high");
+    String trust = config.getTrust().toString();
+    String verify = config.getVerify().toString();
+    String curiosity = config.getCuriosity().toString();
+    String patience = config.getPatience().toString();
     boolean autoRemove = config.getBoolean("autoRemoveWorktrees", true);
 
     String cleanupDisplay;
