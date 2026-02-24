@@ -2,7 +2,7 @@
 name: stakeholder-requirements
 description: "Requirements Engineer stakeholder for code review and research. Focus: functional correctness, requirement satisfaction, specification compliance"
 tools: Read, Grep, Glob, WebSearch, WebFetch
-model: haiku
+model: sonnet
 ---
 
 # Stakeholder: Requirements
@@ -126,8 +126,6 @@ Before analyzing any code, you MUST complete these steps in order:
 3. **Note cross-file relationships**: Identify any patterns, interfaces, or dependencies that span multiple
    modified files.
 
-Record what you analyzed: populate the `files_reviewed` array and `diff_summary` field in your output.
-
 These steps must be completed before forming any review opinions.
 
 ## CAT Domain Context
@@ -213,52 +211,37 @@ For each requirement in PLAN.md:
 | **Integrated** | Does it work with other components as specified? |
 | **Semantically Correct** | Does reported data reflect actual computed state, not just raw field extraction? |
 
+## Detail File
+
+Before returning your review, write comprehensive analysis to:
+`<worktree>/.claude/cat/review/requirements-concerns.json`
+
+The detail file is consumed by a planning subagent that creates concrete fix steps. Include:
+- Exact file paths and line numbers for each problem
+- Specific code changes needed (change X to Y)
+- No persuasive prose or context-setting — just actionable instructions
+
 ## Review Output Format
+
+Return compact JSON inline. Write full details to the detail file, not inline.
 
 ```json
 {
   "stakeholder": "requirements",
   "approval": "APPROVED|CONCERNS|REJECTED",
-  "files_reviewed": [
-    {
-      "path": "relative/path/to/file.ext",
-      "action": "modified|added|deleted",
-      "analyzed": true
-    }
-  ],
-  "diff_summary": "Brief description of what changed across all files",
-  "issue_claims": ["REQ-001", "REQ-003"],
-  "version_requirements_source": ".claude/cat/issues/v1/v1.0/PLAN.md",
-  "requirements_checked": [
-    {
-      "id": "REQ-001",
-      "description": "Full description from minor version PLAN.md",
-      "priority": "must-have|should-have|nice-to-have",
-      "acceptance_criteria": "How to verify from PLAN.md",
-      "status": "SATISFIED|PARTIAL|NOT_SATISFIED|NOT_CLAIMED",
-      "evidence": "Where/how this is implemented",
-      "gaps": "What's missing or wrong (if any)"
-    }
-  ],
   "concerns": [
     {
       "severity": "CRITICAL|HIGH|MEDIUM",
-      "category": "not_implemented|partial|acceptance_criteria_not_met|over_claimed",
-      "requirement_id": "REQ-001",
       "location": "file:line or component",
-      "issue": "Clear description of the gap",
-      "recommendation": "How to fix or remove from Satisfies list"
+      "explanation": "Brief description of the requirements gap",
+      "recommendation": "Brief guidance on how to fix or remove from Satisfies list",
+      "detail_file": ".claude/cat/review/requirements-concerns.json"
     }
-  ],
-  "coverage_summary": {
-    "claimed_requirements": 2,
-    "satisfied": 1,
-    "partial": 1,
-    "not_satisfied": 0
-  },
-  "summary": "Brief assessment of whether issue satisfies its claimed requirements"
+  ]
 }
 ```
+
+If there are no concerns, return an empty `concerns` array.
 
 ## Approval Criteria
 

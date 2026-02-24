@@ -127,8 +127,6 @@ Before analyzing any code, you MUST complete these steps in order:
 3. **Note cross-file relationships**: Identify any patterns, interfaces, or dependencies that span multiple
    modified files.
 
-Record what you analyzed: populate the `files_reviewed` array and `diff_summary` field in your output.
-
 These steps must be completed before forming any review opinions.
 
 ## Review Concerns
@@ -166,37 +164,37 @@ For new code:
 - Edge cases: 3-5 tests
 - Error paths: At least 1 test per exception type
 
+## Detail File
+
+Before returning your review, write comprehensive analysis to:
+`<worktree>/.claude/cat/review/testing-concerns.json`
+
+The detail file is consumed by a planning subagent that creates concrete fix steps. Include:
+- Exact file paths and line numbers for each problem
+- Specific code changes needed (change X to Y)
+- No persuasive prose or context-setting — just actionable instructions
+
 ## Review Output Format
+
+Return compact JSON inline. Write full details to the detail file, not inline.
 
 ```json
 {
   "stakeholder": "testing",
   "approval": "APPROVED|CONCERNS|REJECTED",
-  "files_reviewed": [
-    {
-      "path": "relative/path/to/file.ext",
-      "action": "modified|added|deleted",
-      "analyzed": true
-    }
-  ],
-  "diff_summary": "Brief description of what changed across all files",
   "concerns": [
     {
       "severity": "CRITICAL|HIGH|MEDIUM",
-      "category": "missing_tests|broken_tests|edge_cases|error_paths|isolation|assertions|...",
       "location": "file:line or test class",
-      "issue": "Clear description of the testing gap",
-      "recommendation": "Specific tests to add or fix"
+      "explanation": "Brief description of the testing gap",
+      "recommendation": "Brief guidance on tests to add or fix",
+      "detail_file": ".claude/cat/review/testing-concerns.json"
     }
-  ],
-  "test_coverage_assessment": {
-    "critical_paths_covered": true|false,
-    "edge_cases_covered": true|false,
-    "error_paths_covered": true|false
-  },
-  "summary": "Brief overall test coverage assessment"
+  ]
 }
 ```
+
+If there are no concerns, return an empty `concerns` array.
 
 ## Approval Criteria
 
