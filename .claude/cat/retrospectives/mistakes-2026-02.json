@@ -1765,6 +1765,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Before questioning whether frontmatter is used in plugin/agents/*.md files, read plugin/agents/README.md which documents all frontmatter fields and their effects. Claude Code parses agent frontmatter for name, description, model, tools, skills, permissionMode, and other fields \u2014 all are active configuration, not dead documentation."
+    },
+    {
+      "id": "M406",
+      "timestamp": "2026-02-25T12:00:00Z",
+      "category": "misleading_documentation",
+      "description": "License header exemption in CLAUDE.md only covered SKILL.md files, not agent .md files, causing unnecessary header to be added to plugin/agents/work-verify.md",
+      "root_cause": "SYSTEM: The exemption clause in CLAUDE.md narrowly specified \"SKILL.md files under plugin/skills/\" without generalizing to the broader category of files injected into agent context as prompts. Agent .md files in plugin/agents/ serve the same purpose but the documentation gap led the design stakeholder to flag the missing header as CRITICAL, causing the auto-fix subagent to add an unnecessary HTML comment license header.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/CLAUDE.md",
+      "pattern_keywords": [
+        "license-header",
+        "agent-files",
+        "prompt-injection",
+        "exemption-scope",
+        "misleading-documentation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Files injected into agent/subagent context as prompts are exempt from license headers \u2014 this includes both SKILL.md files under plugin/skills/ AND .md files under plugin/agents/. License headers in prompt files waste tokens in every invocation without providing legal value. CLAUDE.md now explicitly documents both exemptions."
     }
   ]
 }
