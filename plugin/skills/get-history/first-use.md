@@ -18,19 +18,18 @@ the JSON structure rather than treating lines as text.
 
 ```bash
 SESSION_ANALYZER="${CLAUDE_PLUGIN_ROOT}/client/bin/session-analyzer"
-SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl"
 
 # Search for keyword with 2 lines of surrounding context
-"$SESSION_ANALYZER" search "$SESSION_FILE" "keyword" --context 2
+"$SESSION_ANALYZER" search "${CLAUDE_SESSION_ID}" "keyword" --context 2
 
 # List all tool errors (non-zero exit codes and error patterns)
-"$SESSION_ANALYZER" errors "$SESSION_FILE"
+"$SESSION_ANALYZER" errors "${CLAUDE_SESSION_ID}"
 
 # Trace all reads/writes/edits to a file path
-"$SESSION_ANALYZER" file-history "$SESSION_FILE" "config.json"
+"$SESSION_ANALYZER" file-history "${CLAUDE_SESSION_ID}" "config.json"
 
 # Full session analysis (tool frequency, cache/batch/parallel candidates)
-"$SESSION_ANALYZER" analyze "$SESSION_FILE"
+"$SESSION_ANALYZER" analyze "${CLAUDE_SESSION_ID}"
 ```
 
 Output is structured JSON, suitable for further processing or direct inspection.
@@ -39,10 +38,10 @@ Output is structured JSON, suitable for further processing or direct inspection.
 
 | Subcommand | Arguments | Description |
 |------------|-----------|-------------|
-| `analyze` | `<file>` | Full session analysis (default when no subcommand given) |
-| `search` | `<file> <keyword> [--context N]` | Find entries containing keyword with N context lines |
-| `errors` | `<file>` | List tool_result entries with error indicators |
-| `file-history` | `<file> <path-pattern>` | Chronological list of Read/Write/Edit/Bash ops on a file |
+| `analyze` | `<session-id>` | Full session analysis (default when no subcommand given) |
+| `search` | `<session-id> <keyword> [--context N]` | Find entries containing keyword with N context lines |
+| `errors` | `<session-id>` | List tool_result entries with error indicators |
+| `file-history` | `<session-id> <path-pattern>` | Chronological list of Read/Write/Edit/Bash ops on a file |
 
 ## Entry Types
 
@@ -62,23 +61,19 @@ Subagent sessions are stored in a subdirectory of the parent session, NOT at the
 
 **Finding agentId from parent session:**
 ```bash
-SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl"
-
 # Search for agentId references in parent session
-"$SESSION_ANALYZER" search "$SESSION_FILE" "agentId"
+"$SESSION_ANALYZER" search "${CLAUDE_SESSION_ID}" "agentId"
 ```
 
 **Verifying what tools a subagent actually used:**
 ```bash
 AGENT_ID="ad630cb"  # Example agentId
-PARENT_SESSION="${CLAUDE_SESSION_ID}"
-SUBAGENT_FILE="/home/node/.config/claude/projects/-workspace/$PARENT_SESSION/subagents/agent-$AGENT_ID.jsonl"
 
-# Full analysis of subagent session
-"$SESSION_ANALYZER" analyze "$SUBAGENT_FILE"
+# Full analysis of subagent session (session-analyzer resolves the path internally)
+"$SESSION_ANALYZER" analyze "${CLAUDE_SESSION_ID}/subagents/agent-$AGENT_ID"
 
 # Search for specific skill invocation
-"$SESSION_ANALYZER" search "$SUBAGENT_FILE" "compare-docs"
+"$SESSION_ANALYZER" search "${CLAUDE_SESSION_ID}/subagents/agent-$AGENT_ID" "compare-docs"
 ```
 
 **Note:** The agentId is included in the Task tool result output. Look for patterns like:
