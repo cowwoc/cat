@@ -50,6 +50,11 @@ import org.slf4j.LoggerFactory;
 public final class GetDiffOutput implements SkillOutput
 {
   /**
+   * Maximum total changes (insertions + deletions) before the diff is considered too large to render inline.
+   * Exceeding this threshold avoids OutOfMemoryError from the word-level diff generator.
+   */
+  private static final int MAX_TOTAL_CHANGES = 50_000;
+  /**
    * Maximum number of files to display in the summary.
    */
   private static final int MAX_FILES_DISPLAYED = 20;
@@ -425,6 +430,17 @@ public final class GetDiffOutput implements SkillOutput
 
     // Get diff stats
     DiffStats stats = GitHelper.getDiffStats(projectRoot, baseBranch);
+
+    // Guard against excessively large diffs that would cause OutOfMemoryError
+    int totalChanges = stats.insertions() + stats.deletions();
+    if (totalChanges > MAX_TOTAL_CHANGES)
+    {
+      return "The diff is too large to render inline (" + stats.filesChanged() + " files changed, +" +
+        stats.insertions() + " insertions, -" + stats.deletions() + " deletions = " + totalChanges +
+        " total changes, threshold is " + MAX_TOTAL_CHANGES + ").\n\n" +
+        "Use `git diff " + baseBranch + "..HEAD --stat` to see a summary of changes, or " +
+        "`git diff " + baseBranch + "..HEAD -- <file>` to inspect individual files.";
+    }
 
     // Get raw diff output
     String rawDiff = GitHelper.getRawDiff(projectRoot, baseBranch);

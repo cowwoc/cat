@@ -1516,6 +1516,65 @@ public class GetDiffOutputTest
   }
 
   /**
+   * Verifies that getOutput returns a descriptive message instead of attempting to render
+   * when the diff is excessively large (insertions + deletions exceeds threshold).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void largeDiffReturnsDescriptiveMessageInsteadOfRendering() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      Path tempDir = Files.createTempDirectory("render-diff-large-test");
+      try
+      {
+        // Initialize git repo with a base branch
+        runGit(tempDir, "init");
+        runGit(tempDir, "checkout", "-b", "main");
+
+        // Create cat-config
+        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Files.createDirectories(catDir);
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 80}");
+
+        // Create initial commit with no files
+        Files.writeString(tempDir.resolve("README.md"), "initial");
+        runGit(tempDir, "add", ".");
+        runGit(tempDir, "commit", "-m", "initial commit");
+
+        // Create version branch and feature branch
+        runGit(tempDir, "checkout", "-b", "v2.0");
+        runGit(tempDir, "checkout", "-b", "2.0-large-diff");
+
+        // Generate 100 files with 600 lines each = 60,000 insertions (exceeds 50,000)
+        for (int f = 0; f < 100; ++f)
+        {
+          StringBuilder content = new StringBuilder();
+          for (int line = 0; line < 600; ++line)
+            content.append("line ").append(line).append(" of file ").append(f).append('\n');
+          Files.writeString(tempDir.resolve("file" + f + ".txt"), content.toString());
+        }
+        runGit(tempDir, "add", ".");
+        runGit(tempDir, "commit", "-m", "add large number of files");
+
+        GetDiffOutput handler = new GetDiffOutput(scope);
+        String result = handler.getOutput(tempDir);
+
+        // Should return a descriptive message about the diff being too large
+        requireThat(result, "result").contains("too large");
+        requireThat(result, "result").contains("git diff");
+        // Should NOT contain rendered diff sections
+        requireThat(result, "result").doesNotContain("Rendered Diff");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
    * Runs a git command in the specified directory.
    *
    * @param directory the working directory
