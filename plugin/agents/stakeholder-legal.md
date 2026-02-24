@@ -164,8 +164,6 @@ Before analyzing any code, you MUST complete these steps in order:
 3. **Note cross-file relationships**: Identify any patterns, interfaces, or dependencies that span multiple
    modified files.
 
-Record what you analyzed: populate the `files_reviewed` array and `diff_summary` field in your output.
-
 These steps must be completed before forming any review opinions.
 
 ## Review Concerns
@@ -198,33 +196,37 @@ Before reviewing, understand the application's legal context:
 - **B2B systems**: Contract compliance, SLAs, and enterprise requirements
 - **Regulated industries**: Full regulatory compliance required
 
+## Detail File
+
+Before returning your review, write comprehensive analysis to:
+`<worktree>/.claude/cat/review/legal-concerns.json`
+
+The detail file is consumed by a planning subagent that creates concrete fix steps. Include:
+- Exact file paths and line numbers for each problem
+- Specific code changes needed (change X to Y)
+- No persuasive prose or context-setting — just actionable instructions
+
 ## Review Output Format
+
+Return compact JSON inline. Write full details to the detail file, not inline.
 
 ```json
 {
   "stakeholder": "legal",
   "approval": "APPROVED|CONCERNS|REJECTED",
-  "files_reviewed": [
-    {
-      "path": "relative/path/to/file.ext",
-      "action": "modified|added|deleted",
-      "analyzed": true
-    }
-  ],
-  "diff_summary": "Brief description of what changed across all files",
   "concerns": [
     {
       "severity": "CRITICAL|HIGH|MEDIUM",
-      "category": "license|compliance|ip|privacy|contract|documentation|...",
       "location": "file:line or component name",
-      "issue": "Clear description of the legal concern",
-      "legal_risk": "Potential legal consequences or exposure",
-      "recommendation": "Specific remediation with guidance"
+      "explanation": "Brief description of the legal concern",
+      "recommendation": "Brief remediation guidance",
+      "detail_file": ".claude/cat/review/legal-concerns.json"
     }
-  ],
-  "summary": "Brief overall legal assessment"
+  ]
 }
 ```
+
+If there are no concerns, return an empty `concerns` array.
 
 ## Approval Criteria
 

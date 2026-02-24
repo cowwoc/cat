@@ -127,8 +127,6 @@ Before analyzing any code, you MUST complete these steps in order:
 3. **Note cross-file relationships**: Identify any patterns, interfaces, or dependencies that span multiple
    modified files.
 
-Record what you analyzed: populate the `files_reviewed` array and `diff_summary` field in your output.
-
 These steps must be completed before forming any review opinions.
 
 ## Review Concerns
@@ -160,33 +158,37 @@ Evaluate against:
 - **Affordance**: Is it clear what users can do?
 - **Recovery**: Can users undo mistakes easily?
 
+## Detail File
+
+Before returning your review, write comprehensive analysis to:
+`<worktree>/.claude/cat/review/ux-concerns.json`
+
+The detail file is consumed by a planning subagent that creates concrete fix steps. Include:
+- Exact file paths and line numbers for each problem
+- Specific code changes needed (change X to Y)
+- No persuasive prose or context-setting — just actionable instructions
+
 ## Review Output Format
+
+Return compact JSON inline. Write full details to the detail file, not inline.
 
 ```json
 {
   "stakeholder": "ux",
   "approval": "APPROVED|CONCERNS|REJECTED",
-  "files_reviewed": [
-    {
-      "path": "relative/path/to/file.ext",
-      "action": "modified|added|deleted",
-      "analyzed": true
-    }
-  ],
-  "diff_summary": "Brief description of what changed across all files",
   "concerns": [
     {
       "severity": "CRITICAL|HIGH|MEDIUM",
-      "category": "flow|accessibility|feedback|consistency|affordance|recovery|...",
       "location": "file:line or UI component",
-      "issue": "Clear description of the UX problem",
-      "userImpact": "How this affects users",
-      "recommendation": "Specific improvement with rationale"
+      "explanation": "Brief description of the UX problem",
+      "recommendation": "Brief improvement guidance",
+      "detail_file": ".claude/cat/review/ux-concerns.json"
     }
-  ],
-  "summary": "Brief overall UX assessment"
+  ]
 }
 ```
+
+If there are no concerns, return an empty `concerns` array.
 
 ## Approval Criteria
 

@@ -129,8 +129,6 @@ Before analyzing any code, you MUST complete these steps in order:
 3. **Note cross-file relationships**: Identify any patterns, interfaces, or dependencies that span multiple
    modified files.
 
-Record what you analyzed: populate the `files_reviewed` array and `diff_summary` field in your output.
-
 These steps must be completed before forming any review opinions.
 
 ## Review Concerns
@@ -154,32 +152,37 @@ Evaluate implementation against these deployment and release criteria:
 - **Test Coverage**: Changes to deployment-critical paths without integration tests
 - **Performance Baseline**: Changes that might affect startup time or resource usage
 
+## Detail File
+
+Before returning your review, write comprehensive analysis to:
+`<worktree>/.claude/cat/review/deployment-concerns.json`
+
+The detail file is consumed by a planning subagent that creates concrete fix steps. Include:
+- Exact file paths and line numbers for each problem
+- Specific code changes needed (change X to Y)
+- No persuasive prose or context-setting — just actionable instructions
+
 ## Review Output Format
+
+Return compact JSON inline. Write full details to the detail file, not inline.
 
 ```json
 {
   "stakeholder": "deployment",
   "approval": "APPROVED|CONCERNS|REJECTED",
-  "files_reviewed": [
-    {
-      "path": "relative/path/to/file.ext",
-      "action": "modified|added|deleted",
-      "analyzed": true
-    }
-  ],
-  "diff_summary": "Brief description of what changed across all files",
   "concerns": [
     {
       "severity": "CRITICAL|HIGH|MEDIUM",
-      "category": "build|pipeline|configuration|migration|compatibility|documentation",
       "location": "file:line or component name",
-      "issue": "Clear description of the deployment/release concern",
-      "recommendation": "Specific fix or approach to resolve"
+      "explanation": "Brief description of the deployment/release concern",
+      "recommendation": "Brief fix or approach",
+      "detail_file": ".claude/cat/review/deployment-concerns.json"
     }
-  ],
-  "summary": "Brief overall deployment readiness assessment"
+  ]
 }
 ```
+
+If there are no concerns, return an empty `concerns` array.
 
 ## Approval Criteria
 
