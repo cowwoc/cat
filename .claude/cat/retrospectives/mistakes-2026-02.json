@@ -1792,6 +1792,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Files injected into agent/subagent context as prompts are exempt from license headers \u2014 this includes both SKILL.md files under plugin/skills/ AND .md files under plugin/agents/. License headers in prompt files waste tokens in every invocation without providing legal value. CLAUDE.md now explicitly documents both exemptions."
+    },
+    {
+      "id": "M407",
+      "timestamp": "2026-02-25T12:30:00Z",
+      "category": "protocol_violation",
+      "description": "Dismissed pre-existing stakeholder review concerns as false positives instead of applying the patience cost/benefit framework",
+      "root_cause": "The work-with-issue skill's false positive filtering section lacked a definition distinguishing reviewer errors (wrong branch state) from pre-existing real concerns (higher fix cost). The agent misclassified pre-existing concerns as false positives instead of routing them through the patience framework.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue/first-use.md",
+      "pattern_keywords": [
+        "false_positive",
+        "pre-existing",
+        "patience",
+        "cost_benefit",
+        "stakeholder_review"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Classify a concern as a false positive only when the reviewer read the wrong branch. Treat pre-existing concerns as real issues and route them through the patience cost/benefit framework to decide whether to fix inline or defer as a new issue."
     }
   ]
 }
