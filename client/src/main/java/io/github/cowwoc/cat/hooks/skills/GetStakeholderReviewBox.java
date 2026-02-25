@@ -148,12 +148,16 @@ public final class GetStakeholderReviewBox
 
   /**
    * Parses a comma-separated list of "stakeholder:status" pairs into reviewer statuses.
+   * <p>
+   * Leading and trailing whitespace is stripped from both stakeholder and status values.
    *
    * @param value the comma-separated string of "stakeholder:status" pairs
    * @return the list of reviewer statuses
-   * @throws NullPointerException if {@code value} is null
+   * @throws NullPointerException     if {@code value} is null
+   * @throws IllegalArgumentException if any entry is missing a colon separator, has an empty stakeholder
+   *                                  name, or has an empty status
    */
-  private static List<ReviewerStatus> parseReviewers(String value)
+  public static List<ReviewerStatus> parseReviewers(String value)
   {
     requireThat(value, "value").isNotNull();
     if (value.isEmpty())
@@ -161,13 +165,26 @@ public final class GetStakeholderReviewBox
     List<ReviewerStatus> result = new ArrayList<>();
     for (String pair : value.split(","))
     {
-      int colonIndex = pair.indexOf(':');
+      String trimmedPair = pair.strip();
+      int colonIndex = trimmedPair.indexOf(':');
       if (colonIndex < 0)
-        continue;
-      String name = pair.substring(0, colonIndex).strip();
-      String status = pair.substring(colonIndex + 1).strip();
-      if (!name.isEmpty() && !status.isEmpty())
-        result.add(new ReviewerStatus(name, status));
+      {
+        throw new IllegalArgumentException("Entry missing colon separator: \"" + trimmedPair +
+          "\". Expected format: \"stakeholder:status\"");
+      }
+      String name = trimmedPair.substring(0, colonIndex).strip();
+      if (name.isEmpty())
+      {
+        throw new IllegalArgumentException("Empty stakeholder name in entry: \"" + trimmedPair +
+          "\". Expected format: \"stakeholder:status\"");
+      }
+      String status = trimmedPair.substring(colonIndex + 1).strip();
+      if (status.isEmpty())
+      {
+        throw new IllegalArgumentException("Empty status in entry: \"" + trimmedPair +
+          "\". Expected format: \"stakeholder:status\"");
+      }
+      result.add(new ReviewerStatus(name, status));
     }
     return result;
   }

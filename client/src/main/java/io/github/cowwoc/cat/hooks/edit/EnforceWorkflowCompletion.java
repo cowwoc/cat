@@ -14,7 +14,7 @@ import tools.jackson.databind.JsonNode;
 import java.util.regex.Pattern;
 
 /**
- * Prevent marking task as closed without completing workflow phases (M217).
+ * Prevent marking task as closed without completing workflow phases.
  * <p>
  * This handler detects attempts to set task status to "closed" and warns if workflow
  * phases appear incomplete.
@@ -93,7 +93,7 @@ public final class EnforceWorkflowCompletion implements FileWriteHandler
    */
   private String buildWarningMessage(String taskName)
   {
-    return "⚠️ WORKFLOW COMPLETION CHECK (M217)\n" +
+    return "⚠️ WORKFLOW COMPLETION CHECK\n" +
            "\n" +
            "You are marking task '" + taskName + "' as closed.\n" +
            "\n" +

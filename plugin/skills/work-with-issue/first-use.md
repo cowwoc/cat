@@ -586,15 +586,26 @@ The stakeholder-review skill will spawn its own reviewer subagents and return ag
 
 Parse review result and filter false positives (concerns from reviewers that read base branch instead of worktree).
 
-**False positive definition:** A false positive is a concern raised because the reviewer read the wrong source
-(base branch instead of the worktree's implementation branch). These are technical artifacts of reviewer setup, not
-real quality concerns. Identify them by checking whether the concern references code that does not exist in the
-worktree branch or describes a problem the implementation already addresses.
+**False Positive Classification:**
 
-**Pre-existing concerns are NOT false positives.** A concern about code that existed before this issue started is
-real — it just may be expensive to fix relative to this issue's scope. Apply the patience cost/benefit framework
-(see "Evaluate Remaining Concerns" below) to decide whether to fix inline or defer as a new issue. Do NOT dismiss
-pre-existing concerns by labeling them false positives.
+A false positive is a concern raised because the reviewer read the wrong branch (base branch vs worktree). Stakeholder
+reviewers run inside the worktree with pre-fetched file content, so false positives should be rare and only occur when
+a reviewer ignores the provided file contents and reads from its default working directory.
+
+**Pre-existing concerns are NOT false positives.** If a reviewer raises a concern about code that existed before the
+current issue began, that is a real concern — apply the patience cost/benefit framework (below) to decide whether to
+fix it inline or defer it as a new issue. Never classify a pre-existing concern as a false positive simply because the
+code was not changed in this issue.
+
+**Parse Review Result:**
+
+The `cat:stakeholder-review` skill returns a JSON object. Extract the following fields:
+
+- `REVIEW_STATUS` = `review_result.review_status` (e.g., `"REVIEW_PASSED"` or `"CONCERNS_FOUND"`)
+- `ALL_CONCERNS` = `review_result.concerns[]` — the full list of concern objects returned by the review
+
+Store `ALL_CONCERNS` for use in the auto-fix loop and the approval gate. Each concern object has fields:
+`severity`, `stakeholder`, `location`, `explanation`, `recommendation`, and optionally `detail_file`.
 
 **Read auto-fix level and patience from config:**
 
@@ -642,8 +653,70 @@ The auto-fix threshold is determined by `AUTOFIX_LEVEL`:
 - `"critical"`: loop while CRITICAL concerns exist
 
 1. Increment iteration counter: `AUTOFIX_ITERATION++`
-2. Extract concerns at or above the auto-fix threshold (severity, description, location, recommendation)
-3. Spawn implementation subagent to fix the concerns:
+2. Extract concerns at or above the auto-fix threshold from `ALL_CONCERNS` and construct the following variables:
+
+   **`concerns_formatted`** — a numbered Markdown list, one entry per filtered concern. For each concern, use the
+   format:
+   ```
+   ### Concern N: SEVERITY - brief description
+   - Stakeholder: [stakeholder]
+   - Location: [location or "(no location)"]
+   - Explanation: [explanation or "(field missing — see detail_file for full context)"]
+   - Recommendation: [recommendation or "(field missing — see detail_file for full context)"]
+   ```
+   If a concern is missing `severity`, treat it as `MEDIUM`. If `explanation` or `recommendation` are absent,
+   substitute `"(field missing — see detail_file for full context)"`.
+
+   **`detail_file_paths`** — a newline-separated list of absolute paths to concern detail files. For each filtered
+   concern, if `detail_file` is present and non-empty, prepend `${WORKTREE_PATH}/` to form an absolute path, then
+   include it only if the file exists on disk. Omit concerns with no `detail_file` or a non-existent file — this is
+   normal when a reviewer found no detailed concerns worth recording.
+
+3. Spawn a planning subagent to analyze the concerns and produce a fix strategy:
+   ```
+   Task tool:
+     description: "Plan fixes for review concerns (iteration ${AUTOFIX_ITERATION})"
+     subagent_type: "cat:work-execute"
+     model: "sonnet"
+     prompt: |
+       Analyze the following stakeholder review concerns for issue ${ISSUE_ID} and produce a fix strategy.
+
+       ## Issue Configuration
+       ISSUE_ID: ${ISSUE_ID}
+       WORKTREE_PATH: ${WORKTREE_PATH}
+       BRANCH: ${BRANCH}
+       BASE_BRANCH: ${BASE_BRANCH}
+
+       ## Concerns to Analyze
+       ${concerns_formatted}
+
+       ## Concern Detail Files
+       For comprehensive analysis, read these detail files (if present):
+       ${detail_file_paths}
+
+       ## Instructions
+       - Read the concern detail files to understand the full context of each concern
+       - For each concern, determine:
+         1. What specific code changes are needed
+         2. Which files need to be modified
+         3. What the correct implementation should look like
+       - Produce a concrete fix plan listing exact changes needed for each concern
+       - Do NOT implement the fixes yet — only plan them
+
+       ## Return Format
+       Return a fix plan in this format:
+       ```
+       ## Fix Plan
+
+       ### Concern 1: [severity] [brief description]
+       - File: [file path]
+       - Change: [what needs to change and why]
+       - Approach: [how to implement the fix]
+
+       ### Concern 2: ...
+       ```
+   ```
+4. Spawn implementation subagent to execute the fix plan:
    ```
    Task tool:
      description: "Fix review concerns (iteration ${AUTOFIX_ITERATION})"
@@ -660,9 +733,17 @@ The auto-fix threshold is determined by `AUTOFIX_LEVEL`:
        ## HIGH+ Concerns to Fix
        ${concerns_formatted}
 
+       ## Concern Detail Files
+       For comprehensive analysis, read these detail files (if present):
+       ${detail_file_paths}
+
+       ## Fix Plan (from planning step)
+       ${fix_plan_from_planning_subagent}
+
        ## Instructions
        - Work in the worktree at ${WORKTREE_PATH}
-       - Fix each concern according to the recommendation
+       - Fix each concern according to the fix plan and recommendation
+       - Read the concern detail files for full context on each concern
        - Commit your fixes using the same commit type as the primary implementation
          (e.g., `bugfix:`, `feature:`). These commits will be squashed into the main
          implementation commit in Step 6. Do NOT use `test:` as an independent commit
@@ -679,14 +760,14 @@ The auto-fix threshold is determined by `AUTOFIX_LEVEL`:
        }
        ```
    ```
-4. Re-run stakeholder review (encode all commits in compact format `hash:type,hash:type`):
+5. Re-run stakeholder review (encode all commits in compact format `hash:type,hash:type`):
    ```
    Skill tool:
      skill: "cat:stakeholder-review"
      args: "${ISSUE_ID} ${WORKTREE_PATH} ${VERIFY} ${ALL_COMMITS_COMPACT}"
    ```
-5. Parse new review result
-6. If concerns at or above the configured auto-fix threshold remain, continue loop (if under iteration limit)
+6. Parse new review result
+7. If concerns at or above the configured auto-fix threshold remain, continue loop (if under iteration limit)
 
 **If concerns at or above the threshold persist after 3 iterations:**
 - Note that auto-fix reached iteration limit
@@ -970,7 +1051,7 @@ Fail-fast principle: Unknown consent = No consent = STOP.
 **If approved:** Continue to Step 8
 
 **If "Fix remaining concerns" selected:**
-1. Extract MEDIUM+ concerns
+1. Extract MEDIUM+ concerns (severity, description, location, recommendation, detail_file)
 2. Spawn implementation subagent to fix:
    ```
    Task tool:
@@ -988,9 +1069,14 @@ Fail-fast principle: Unknown consent = No consent = STOP.
        ## MEDIUM+ Concerns to Fix
        ${concerns_formatted}
 
+       ## Concern Detail Files
+       For comprehensive analysis, read these detail files (if present):
+       ${detail_file_paths}
+
        ## Instructions
        - Work in the worktree at ${WORKTREE_PATH}
        - Fix each concern according to the recommendation
+       - Read the concern detail files for full context on each concern
        - Commit your fixes using the same commit type as the primary implementation
          (e.g., `bugfix:`, `feature:`). These commits will be squashed into the main
          implementation commit in Step 6. Do NOT use `test:` as an independent commit

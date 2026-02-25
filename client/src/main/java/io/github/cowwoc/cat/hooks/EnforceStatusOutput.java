@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
  * <p>
  * TRIGGER: When /cat:status was invoked in this turn
  * <p>
- * M402: After 3+ documentation-level failures (M341, M395, M401), this hook
+ * After 3+ documentation-level failures, this hook
  * escalates enforcement to programmatic level.
  * <p>
  * Detects when:

@@ -23,7 +23,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Warn when presenting approval gate without get-diff output (M232).
+ * Warn when presenting approval gate without get-diff output.
  * <p>
  * This handler detects when an approval gate is being presented during /cat:work
  * and warns if cat:get-diff wasn't used to display the diff.
@@ -98,7 +98,7 @@ public final class WarnApprovalWithoutRenderDiff implements AskHandler
 
       if (getDiffCount == 0 && boxCharsCount < MIN_BOX_CHARS_FOR_RENDER_DIFF)
       {
-        String warning = "⚠️ RENDER-DIFF NOT DETECTED (M232/A021)\n" +
+        String warning = "⚠️ RENDER-DIFF NOT DETECTED\n" +
                          "\n" +
                          "Approval gate REQUIRES 4-column table diff format.\n" +
                          "\n" +
@@ -109,14 +109,14 @@ public final class WarnApprovalWithoutRenderDiff implements AskHandler
                          "4. Then show the approval question\n" +
                          "\n" +
                          "If diff is large, present ALL of it across multiple messages.\n" +
-                         "NEVER summarize with 'remaining files show...' (M231)";
+                         "NEVER summarize with 'remaining files show...'";
         return Result.withContext(warning);
       }
 
       if (getDiffCount > 0 && boxCharsCount < MIN_BOX_CHARS_WITH_INVOCATION &&
         manualDiffCount > MIN_MANUAL_DIFF_SIGNS)
       {
-        String warning = "⚠️ RENDER-DIFF OUTPUT MAY BE REFORMATTED (M211)\n" +
+        String warning = "⚠️ RENDER-DIFF OUTPUT MAY BE REFORMATTED\n" +
                          "\n" +
                          "cat:get-diff was invoked but box characters (╭╮╰╯│) are sparse.\n" +
                          "The diff may have been reformatted into plain diff format.\n" +
