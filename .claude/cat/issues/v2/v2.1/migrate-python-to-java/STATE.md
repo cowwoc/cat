@@ -1,10 +1,10 @@
 # State
 
-- **Status:** in-progress
-- **Progress:** 90%
+- **Status:** closed
+- **Progress:** 100%
 - **Dependencies:** [port-display-scripts-to-java, port-git-scripts-to-java, port-infra-scripts-to-java, port-statusline-scripts-to-java, port-workflow-scripts-to-java]
 - **Blocks:** [add-java-build-to-ci]
-- **Last Updated:** 2026-02-24
+- **Last Updated:** 2026-02-25
 
 ## Decomposed Into
 - 2.1-java-jdk-infrastructure (JDK bundle, bootstrap scripts)
