@@ -25,6 +25,9 @@ workflow based on user selection.
 **Shortcut:** When invoked with a description argument (e.g., `/cat:add make installation easier`),
 treats the argument as a issue description and skips directly to issue creation workflow.
 
+**Efficiency:** Independent questions are batched into single AskUserQuestion calls (up to 4 questions per call)
+to minimize wizard interactions and reduce user friction.
+
 </objective>
 
 
@@ -140,62 +143,6 @@ Continue to next step.
 
 </step>
 
-<step name="issue_ask_type_and_criteria">
-
-**Ask issue type and custom post-conditions:**
-
-Use AskUserQuestion with multiple questions:
-- questions:
-    - question: "What type of work is this?"
-      header: "Issue Type"
-      options:
-        - label: "Feature"
-          description: "Add new functionality"
-        - label: "Bugfix"
-          description: "Fix a problem"
-        - label: "Refactor"
-          description: "Improve code structure"
-        - label: "Performance"
-          description: "Improve speed/efficiency"
-      multiSelect: false
-
-    - question: "Standard post-conditions (functionality, tests, no regressions) will be applied. Any additional
-      post-conditions?"
-      header: "Custom Post-conditions"
-      options:
-        - label: "No, standard post-conditions are sufficient"
-          description: "Use the default post-conditions for this issue type"
-        - label: "Yes, add custom post-conditions"
-          description: "I have specific requirements beyond the standard"
-      multiSelect: false
-
-Capture issue type as ISSUE_TYPE.
-
-**If "Yes, add custom post-conditions":**
-
-Ask inline: "What additional post-conditions should be met?"
-
-Append custom post-conditions to the standard list for ISSUE_TYPE.
-
-**Standard post-conditions by type (applied automatically):**
-
-| Type | Standard Post-conditions |
-|------|--------------------------|
-| Feature | Functionality works, Tests passing, No regressions, E2E verification |
-| Bugfix | Bug fixed, Regression test added, No new issues, E2E verification |
-| Refactor | User-visible behavior unchanged, Tests passing, Code quality improved, E2E verification |
-| Performance | Target met, Benchmarks added, No functionality regression, E2E verification |
-
-**E2E verification post-condition:** For all implementation issues (feature, bugfix, refactor, performance), always
-include at least one post-condition that verifies the change works end-to-end in its real environment, not just that
-unit tests pass. Describe an observable outcome (e.g., "Spawn a subagent and confirm it receives the skill listing",
-"Run the hook and verify output contains expected fields", or "Reproduce the bug scenario and confirm it no longer
-occurs"). This ensures the change is tested as a whole before review.
-
-Set POSTCONDITIONS to standard post-conditions for ISSUE_TYPE, plus any custom additions.
-
-</step>
-
 <step name="issue_analyze_versions">
 
 **Analyze existing versions and suggest best fit:**
@@ -231,23 +178,75 @@ Score each version based on:
 
 </step>
 
-<step name="issue_suggest_version">
+<step name="issue_ask_type_and_criteria">
 
-**Present intelligent version recommendation:**
+**Ask issue type, custom post-conditions, and version selection in a single batch:**
 
-Based on analysis, present options with the best match first:
+This step combines type selection, post-conditions, and version selection into one AskUserQuestion call.
 
-**If clear best match exists:**
+First, build the version options from the analysis performed in issue_analyze_versions:
+- If a clear best match exists, list it first as "{best_match} (Recommended) — {brief_reason}"
+- Include the second-best match if applicable
+- Always include "Show all versions" and "Create new minor" as trailing options
 
-Use AskUserQuestion:
-- header: "Suggested Version"
-- question: "Based on your issue description, I recommend adding this to version {best_match}
-  ({brief_reason}). Which version should this issue be added to?"
-- options:
-  - "{best_match} (Recommended)" - {version_focus_summary}
-  - "{second_match}" - {version_focus_summary} (if applicable)
-  - "Show all versions" - See complete list
-  - "Create new minor" - This doesn't fit existing versions
+Use AskUserQuestion with multiple questions:
+- questions:
+    - question: "What type of work is this?"
+      header: "Issue Type"
+      options:
+        - label: "Feature"
+          description: "Add new functionality"
+        - label: "Bugfix"
+          description: "Fix a problem"
+        - label: "Refactor"
+          description: "Improve code structure"
+        - label: "Performance"
+          description: "Improve speed/efficiency"
+      multiSelect: false
+
+    - question: "Standard post-conditions (functionality, tests, no regressions) will be applied. Any additional
+      post-conditions?"
+      header: "Custom Post-conditions"
+      options:
+        - label: "No, standard post-conditions are sufficient"
+          description: "Use the default post-conditions for this issue type"
+        - label: "Yes, add custom post-conditions"
+          description: "I have specific requirements beyond the standard"
+      multiSelect: false
+
+    - question: "Based on your issue description, which version should this issue be added to?"
+      header: "Target Version"
+      options:
+        - "{best_match} (Recommended)" - {version_focus_summary}
+        - "{second_match}" - {version_focus_summary} (if applicable)
+        - "Show all versions" - See complete list
+        - "Create new minor" - This doesn't fit existing versions
+      multiSelect: false
+
+Capture issue type as ISSUE_TYPE.
+
+**If "Yes, add custom post-conditions":**
+
+Ask inline: "What additional post-conditions should be met?"
+
+Append custom post-conditions to the standard list for ISSUE_TYPE.
+
+**Standard post-conditions by type (applied automatically):**
+
+| Type | Standard Post-conditions |
+|------|--------------------------|
+| Feature | Functionality works, Tests passing, No regressions, E2E verification |
+| Bugfix | Bug fixed, Regression test added, No new issues, E2E verification |
+| Refactor | User-visible behavior unchanged, Tests passing, Code quality improved, E2E verification |
+| Performance | Target met, Benchmarks added, No functionality regression, E2E verification |
+
+**E2E verification post-condition:** For all implementation issues (feature, bugfix, refactor, performance), always
+include at least one post-condition that verifies the change works end-to-end in its real environment, not just that
+unit tests pass. Describe an observable outcome (e.g., "Spawn a subagent and confirm it receives the skill listing",
+"Run the hook and verify output contains expected fields", or "Reproduce the bug scenario and confirm it no longer
+occurs"). This ensures the change is tested as a whole before review.
+
+Set POSTCONDITIONS to standard post-conditions for ISSUE_TYPE, plus any custom additions.
 
 **If "Show all versions" selected:**
 
@@ -346,9 +345,9 @@ If name already exists:
 
 </step>
 
-<step name="issue_discuss">
+<step name="issue_discuss_and_requirements">
 
-**Gather additional issue context:**
+**Gather additional issue context and requirements in a single batch:**
 
 Note: Issue description and type were already captured in issue_gather_intent step.
 Use ISSUE_DESCRIPTION and ISSUE_TYPE from that step.
@@ -359,17 +358,7 @@ Initialize UNKNOWNS as empty list.
 
 Use HANDLER_DATA.versions[selected_version].issue_count to determine if this is the first issue.
 
-**2. Smart defaults based on context:**
-
-**If issue_count = 0 (first issue in version):**
-- Set DEPENDENCIES = [] (no issues to depend on)
-- Set BLOCKS = [] (no issues to block)
-- Skip dependency/blocker questions entirely
-
-**If issue_count > 0:**
-- Only then ask about dependencies and blockers
-
-**3. Scope estimation (LLM inference):**
+**2. Scope estimation (LLM inference):**
 
 Estimate the number of files this issue will touch based on the description and type:
 - Consider the issue type (Feature, Bugfix, Refactor, Performance)
@@ -378,11 +367,28 @@ Estimate the number of files this issue will touch based on the description and 
 
 Store the estimate internally as SCOPE_ESTIMATE (do not ask user).
 
-**4. Dependencies/Blockers (only if version has existing issues):**
+**3. Read parent version requirements:**
 
-**If EXISTING_ISSUES > 0:**
+```bash
+# VERSION_PLAN is set to the parent version path (works for any level: major, minor, or patch)
+VERSION_PLAN=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/PLAN.md"
+```
 
-Use AskUserQuestion:
+Extract REQ-XXX items from PLAN.md. Store as VERSION_REQUIREMENTS (may be empty).
+
+**4. Batch question strategy:**
+
+**If issue_count = 0 (first issue in version):**
+- Set DEPENDENCIES = [] (no issues to depend on)
+- Set BLOCKS = [] (no issues to block)
+- Only ask requirements (if any exist):
+  - If VERSION_REQUIREMENTS is non-empty: use AskUserQuestion with the requirements question below
+  - If VERSION_REQUIREMENTS is empty: set Satisfies = None, skip to step: issue_research
+
+**If issue_count > 0 (version has existing issues):**
+- Batch dependencies, blocks, and requirements into a single AskUserQuestion call (3 questions):
+
+Use AskUserQuestion with multiple questions:
 - questions:
     - question: "Does this issue depend on other issues completing first?"
       header: "Dependencies"
@@ -401,6 +407,12 @@ Use AskUserQuestion:
         - label: "Yes, select blocked issues"
           description: "Show issue list to choose from"
       multiSelect: false
+
+    - question: "Which requirements does this issue satisfy? (Select all that apply)"
+      header: "Satisfies"
+      options: [List of REQ-XXX from VERSION_REQUIREMENTS] + "None - infrastructure/setup issue"
+      multiSelect: true
+      (omit this question entirely if VERSION_REQUIREMENTS is empty; set Satisfies = None)
 
 **5. Conditional follow-ups:**
 
@@ -448,35 +460,7 @@ Args: "{ISSUE_DESCRIPTION}"
 Capture research findings as RESEARCH_FINDINGS.
 
 **If UNKNOWNS is empty:**
-Skip to step: issue_select_requirements.
-
-</step>
-
-<step name="issue_select_requirements">
-
-**Select requirements this issue satisfies:**
-
-Requirements can be defined at any version level (major, minor, or patch). This step reads
-requirements from the parent version's PLAN.md, regardless of which level that is.
-
-**1. Read parent version requirements:**
-
-```bash
-# VERSION_PLAN is set to the parent version path (works for any level: major, minor, or patch)
-VERSION_PLAN=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/PLAN.md"
-```
-
-**2. Present requirements for selection:**
-
-If requirements exist in the parent version's PLAN.md:
-
-Use AskUserQuestion:
-- header: "Satisfies"
-- question: "Which requirements does this issue satisfy? (Select all that apply)"
-- multiSelect: true
-- options: [List of REQ-XXX from parent version PLAN.md] + "None - infrastructure/setup issue"
-
-If no requirements defined in parent version: Satisfies = None
+Skip to step: issue_validate_criteria.
 
 </step>
 
@@ -493,7 +477,7 @@ Gather the following for validation:
 - ISSUE_DESCRIPTION (from issue_gather_intent)
 - ISSUE_TYPE (from issue_ask_type_and_criteria)
 - POSTCONDITIONS (from issue_ask_type_and_criteria)
-- All ancestor version requirements (from issue_select_requirements and ancestor PLAN.md files)
+- All ancestor version requirements (from issue_discuss_and_requirements and ancestor PLAN.md files)
 
 **Spawn requirements stakeholder subagent:**
 
