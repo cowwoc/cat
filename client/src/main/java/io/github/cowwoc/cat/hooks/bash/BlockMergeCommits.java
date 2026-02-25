@@ -13,8 +13,6 @@ import java.util.regex.Pattern;
 
 /**
  * Block merge commits to enforce linear git history.
- * <p>
- * See: Learning M047 - use ff-merge to maintain linear history
  */
 public final class BlockMergeCommits implements BashHandler
 {
@@ -55,7 +53,7 @@ public final class BlockMergeCommits implements BashHandler
 
         Or use the `/cat:git-merge-linear` skill which handles this correctly.
 
-        **See**: Learning M047 - merge commits break linear history""");
+        Use `/cat:git-merge-linear` to merge with linear history.""");
     }
 
     // BLOCK: git merge without --ff-only or --squash
@@ -71,7 +69,7 @@ public final class BlockMergeCommits implements BashHandler
 
         Or use the `/cat:git-merge-linear` skill which handles this correctly.
 
-        **See**: Learning M047 - merge commits break linear history""");
+        Use `/cat:git-merge-linear` to merge with linear history.""");
     }
 
     return Result.allow();

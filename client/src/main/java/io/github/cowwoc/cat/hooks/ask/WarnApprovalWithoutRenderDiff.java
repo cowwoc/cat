@@ -27,8 +27,6 @@ import java.util.regex.Pattern;
  * <p>
  * This handler detects when an approval gate is being presented during /cat:work
  * and warns if cat:get-diff wasn't used to display the diff.
- * <p>
- * Related mistakes: M170, M171, M201, M211, M231, M232, R013/A021
  */
 public final class WarnApprovalWithoutRenderDiff implements AskHandler
 {

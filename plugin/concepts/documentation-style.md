@@ -23,3 +23,11 @@ not just **what** they are.
 
 This applies to Javadoc, code comments, markdown documentation, and configuration files. The reader should never need
 to investigate separately to understand when each scenario applies.
+
+## M-Code References
+
+M-code labels (e.g., `M088`, `M252`) must only appear in `.claude/cat/retrospectives/` files. They must not appear in
+any other file — including plugin source, Java source, project rules, configuration, or documentation.
+
+M-codes in agent-visible files consume context tokens without providing value, and create a priming pattern where agents
+copy the convention into new code.

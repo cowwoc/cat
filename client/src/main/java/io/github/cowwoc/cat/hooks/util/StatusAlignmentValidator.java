@@ -24,9 +24,6 @@ import java.util.regex.Pattern;
  *   <li>Content lines starting and ending with │</li>
  *   <li>Inner box structure alignment</li>
  * </ul>
- * <p>
- * Created as prevention for M137 (recurrence of M136).
- * Enhanced for M140 with display width validation.
  */
 public final class StatusAlignmentValidator
 {

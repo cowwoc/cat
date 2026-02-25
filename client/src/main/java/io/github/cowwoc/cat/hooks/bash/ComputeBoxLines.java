@@ -20,9 +20,8 @@ import java.util.StringJoiner;
 /**
  * Compute box lines via hook interception.
  * <p>
- * M192: Agent calculated box widths correctly but re-typed output from memory,
- * causing alignment errors. This handler computes box lines with correct padding
- * and returns results via additionalContext.
+ * This handler computes box lines with correct padding and returns results via additionalContext,
+ * ensuring alignment is correct without relying on the agent to re-type pre-calculated values.
  * <p>
  * USAGE: Agent invokes Bash with marker comment:
  * Bash("#BOX_COMPUTE\ncontent1\ncontent2\ncontent3")

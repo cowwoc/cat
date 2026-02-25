@@ -44,7 +44,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.ISSUE,
-        "parse-tokens",
+        List.of("parse-tokens"),
         "2.0",
         IssueType.FEATURE,
         List.of(),
@@ -69,7 +69,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.ISSUE,
-        "test-issue",
+        List.of("test-issue"),
         "2.1",
         IssueType.BUGFIX,
         List.of("dep1", "dep2"),
@@ -93,7 +93,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.ISSUE,
-        "test-issue",
+        List.of("test-issue"),
         "2.1",
         IssueType.FEATURE,
         List.of(),
@@ -117,7 +117,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.VERSION,
-        "v3.0",
+        List.of("v3.0"),
         "3.0",
         null,
         List.of(),
@@ -141,7 +141,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.ISSUE,
-        "my-task",
+        List.of("my-task"),
         "2.0",
         IssueType.FEATURE,
         List.of(),
@@ -165,7 +165,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.ISSUE,
-        "test-issue",
+        List.of("test-issue"),
         "2.0",
         null,
         List.of(),
@@ -189,7 +189,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.ISSUE,
-        "test-issue",
+        List.of("test-issue"),
         "2.0",
         IssueType.BUGFIX,
         List.of(),
@@ -213,7 +213,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.VERSION,
-        "Major-Release",
+        List.of("Major-Release"),
         "3.0",
         null,
         List.of(),
@@ -237,7 +237,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.VERSION,
-        "Major-Release",
+        List.of("Major-Release"),
         "3.0",
         null,
         List.of(),
@@ -261,7 +261,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.ISSUE,
-        "test-issue",
+        List.of("test-issue"),
         "2.0",
         IssueType.FEATURE,
         List.of(),
@@ -286,7 +286,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.ISSUE,
-        "test-issue",
+        List.of("test-issue"),
         "2.0",
         IssueType.FEATURE,
         List.of(),
@@ -310,7 +310,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.VERSION,
-        "New-Features",
+        List.of("New-Features"),
         "2.1",
         null,
         List.of(),
@@ -334,7 +334,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.VERSION,
-        "New-Features",
+        List.of("New-Features"),
         "2.1",
         null,
         List.of(),
@@ -358,7 +358,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.VERSION,
-        "New-Features",
+        List.of("New-Features"),
         "2.1",
         null,
         List.of(),
@@ -382,7 +382,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.VERSION,
-        "New-Features",
+        List.of("New-Features"),
         "2.1",
         null,
         List.of(),
@@ -537,7 +537,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.VERSION,
-        "New-Features",
+        List.of("New-Features"),
         "2.1",
         null,
         List.of(),
@@ -565,7 +565,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.VERSION,
-        "New-Version",
+        List.of("New-Version"),
         "0.0",
         null,
         List.of(),
@@ -592,7 +592,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.ISSUE,
-        "unknown-task",
+        List.of("unknown-task"),
         "0.0",
         null,
         List.of(),
@@ -622,7 +622,7 @@ public class HandlerOutputTest
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
         ItemType.ISSUE,
-        "parse-tokens",
+        List.of("parse-tokens"),
         "2.0",
         IssueType.FEATURE,
         List.of(),
