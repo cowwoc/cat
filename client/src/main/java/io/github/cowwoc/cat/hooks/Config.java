@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks;
 
+import io.github.cowwoc.cat.hooks.util.ConcernSeverity;
 import io.github.cowwoc.cat.hooks.util.CuriosityLevel;
 import io.github.cowwoc.cat.hooks.util.PatienceLevel;
 import io.github.cowwoc.cat.hooks.util.TrustLevel;
@@ -61,6 +62,7 @@ public final class Config
     defaults.put("terminalWidth", 120);
     defaults.put("completionWorkflow", "merge");
     defaults.put("reviewThreshold", DEFAULT_AUTOFIX_THRESHOLD);
+    defaults.put("minSeverity", "low");
     DEFAULTS = Map.copyOf(defaults);
   }
 
@@ -271,6 +273,26 @@ public final class Config
   public PatienceLevel getPatience()
   {
     return PatienceLevel.fromString(getString("patience", "high"));
+  }
+
+  /**
+   * Get the minimum concern severity level.
+   * <p>
+   * Controls which concerns are visible at all. Concerns below the minimum severity are silently ignored —
+   * not fixed, not deferred, not tracked. This is a hard floor that determines which concerns exist at all.
+   * <ul>
+   * <li>{@code "low"} — all concerns (CRITICAL, HIGH, MEDIUM, LOW) are visible (default)</li>
+   * <li>{@code "medium"} — MEDIUM, HIGH, and CRITICAL concerns are visible; LOW are ignored</li>
+   * <li>{@code "high"} — HIGH and CRITICAL concerns are visible; MEDIUM and LOW are ignored</li>
+   * <li>{@code "critical"} — only CRITICAL concerns are visible; HIGH, MEDIUM, and LOW are ignored</li>
+   * </ul>
+   *
+   * @return the minimum concern severity (defaults to {@link ConcernSeverity#LOW} if not configured)
+   * @throws IllegalArgumentException if the configured value is not a recognized severity level
+   */
+  public ConcernSeverity getMinSeverity()
+  {
+    return ConcernSeverity.fromString(getString("minSeverity", "low"));
   }
 
   /**

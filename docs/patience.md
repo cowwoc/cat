@@ -1,3 +1,8 @@
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Patience Decision Matrix
 
 Decision rule: fix inline if `benefit >= cost × patience_multiplier`
@@ -36,3 +41,26 @@ Decision rule: fix inline if `benefit >= cost × patience_multiplier`
 - LOW severity only survives at low+minor; at medium/high, LOW+any-cost always defers
 - The 3 deferred cases at low patience all have benefit-to-cost ratios below 1:1
 - In-scope concerns (cost=0) always fixed regardless of severity or patience
+
+## Relationship to minSeverity
+
+`patience` operates on concerns that have already passed the `minSeverity` filter. The full concern pipeline is:
+
+```
+concern raised → minSeverity filter → patience fix/defer decision → reviewThreshold auto-fix loop
+```
+
+- **`minSeverity`** — a hard floor: concerns below this threshold are silently ignored. They never reach the
+  patience decision. See [severity.md](severity.md) for details.
+- **`patience`** — a cost/benefit analysis: for concerns that pass `minSeverity`, determines whether to fix now
+  (inline) or defer to a future issue.
+- **`reviewThreshold`** — controls auto-fix iteration: determines which severity levels trigger automatic fix
+  loops before presenting results to the user approval gate.
+
+Configure `patience` in `.claude/cat/cat-config.json`:
+
+```json
+{
+  "patience": "medium"
+}
+```
