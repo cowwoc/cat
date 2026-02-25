@@ -259,10 +259,10 @@ public class ConfigTest
   }
 
   /**
-   * Verifies that getAutofixLevel returns "low" by default when no config file exists.
+   * Verifies that getAutofixThreshold returns "low" by default when no config file exists.
    */
   @Test
-  public void autofixLevelDefaultsToLow() throws IOException
+  public void autofixThresholdDefaultsToLow() throws IOException
   {
     Path tempDir = createTempDir();
     try (JvmScope scope = new TestJvmScope())
@@ -270,7 +270,7 @@ public class ConfigTest
       JsonMapper mapper = scope.getJsonMapper();
       Config config = Config.load(mapper, tempDir);
 
-      requireThat(config.getAutofixLevel(), "autofixLevel").isEqualTo("low");
+      requireThat(config.getAutofixThreshold(), "autofixThreshold").isEqualTo("low");
     }
     finally
     {
@@ -300,7 +300,7 @@ public class ConfigTest
 
       Config config = Config.load(mapper, tempDir);
 
-      requireThat(config.getAutofixLevel(), "autofixLevel").isEqualTo("critical");
+      requireThat(config.getAutofixThreshold(), "autofixThreshold").isEqualTo("critical");
     }
     finally
     {
@@ -332,12 +332,12 @@ public class ConfigTest
   }
 
   /**
-   * Verifies that getAutofixLevel throws IllegalArgumentException for an unrecognized value.
+   * Verifies that getAutofixThreshold throws IllegalArgumentException for an unrecognized value.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = IllegalArgumentException.class)
-  public void getAutofixLevelThrowsForInvalidValue() throws IOException
+  public void getAutofixThresholdThrowsForInvalidValue() throws IOException
   {
     Path tempDir = createTempDir();
     try (JvmScope scope = new TestJvmScope())
@@ -352,7 +352,7 @@ public class ConfigTest
         """);
 
       Config config = Config.load(mapper, tempDir);
-      config.getAutofixLevel();
+      config.getAutofixThreshold();
     }
     finally
     {
@@ -361,12 +361,12 @@ public class ConfigTest
   }
 
   /**
-   * Verifies that getAutofixLevel returns "medium" when reviewThreshold is set to "medium" in config.
+   * Verifies that getAutofixThreshold returns "medium" when reviewThreshold is set to "medium" in config.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void autofixLevelMediumReadFromConfigFile() throws IOException
+  public void autofixThresholdMediumReadFromConfigFile() throws IOException
   {
     Path tempDir = createTempDir();
     try (JvmScope scope = new TestJvmScope())
@@ -382,7 +382,7 @@ public class ConfigTest
 
       Config config = Config.load(mapper, tempDir);
 
-      requireThat(config.getAutofixLevel(), "autofixLevel").isEqualTo("medium");
+      requireThat(config.getAutofixThreshold(), "autofixThreshold").isEqualTo("medium");
     }
     finally
     {
@@ -391,12 +391,12 @@ public class ConfigTest
   }
 
   /**
-   * Verifies that getAutofixLevel returns "high" when reviewThreshold is set to "high" in config.
+   * Verifies that getAutofixThreshold returns "high" when reviewThreshold is set to "high" in config.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void autofixLevelHighReadFromConfigFile() throws IOException
+  public void autofixThresholdHighReadFromConfigFile() throws IOException
   {
     Path tempDir = createTempDir();
     try (JvmScope scope = new TestJvmScope())
@@ -412,7 +412,7 @@ public class ConfigTest
 
       Config config = Config.load(mapper, tempDir);
 
-      requireThat(config.getAutofixLevel(), "autofixLevel").isEqualTo("high");
+      requireThat(config.getAutofixThreshold(), "autofixThreshold").isEqualTo("high");
     }
     finally
     {
@@ -421,15 +421,16 @@ public class ConfigTest
   }
 
   /**
-   * Verifies that getAutofixLevel falls back to DEFAULT_AUTOFIX_LEVEL when reviewThreshold is a non-String value.
+   * Verifies that getAutofixThreshold falls back to DEFAULT_AUTOFIX_THRESHOLD when reviewThreshold is a non-String
+   * value.
    * <p>
    * When a JSON number (e.g., 42) is stored in reviewThreshold, Jackson parses it as an Integer.
-   * The getAutofixLevel() method checks {@code instanceof String} and falls back to the default "low".
+   * The getAutofixThreshold() method checks {@code instanceof String} and falls back to the default "low".
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void autofixLevelFallsBackForNonStringValue() throws IOException
+  public void autofixThresholdFallsBackForNonStringValue() throws IOException
   {
     Path tempDir = createTempDir();
     try (JvmScope scope = new TestJvmScope())
@@ -445,7 +446,7 @@ public class ConfigTest
 
       Config config = Config.load(mapper, tempDir);
 
-      requireThat(config.getAutofixLevel(), "autofixLevel").isEqualTo(Config.DEFAULT_AUTOFIX_LEVEL);
+      requireThat(config.getAutofixThreshold(), "autofixThreshold").isEqualTo(Config.DEFAULT_AUTOFIX_THRESHOLD);
     }
     finally
     {
@@ -454,14 +455,14 @@ public class ConfigTest
   }
 
   /**
-   * Verifies that getAutofixLevel throws IllegalArgumentException when reviewThreshold uses uppercase.
+   * Verifies that getAutofixThreshold throws IllegalArgumentException when reviewThreshold uses uppercase.
    * <p>
    * Only lowercase values ("low", "medium", "high", "critical") are valid. Uppercase variants are rejected.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = IllegalArgumentException.class)
-  public void autofixLevelThrowsForUppercaseValue() throws IOException
+  public void autofixThresholdThrowsForUppercaseValue() throws IOException
   {
     Path tempDir = createTempDir();
     try (JvmScope scope = new TestJvmScope())
@@ -476,7 +477,7 @@ public class ConfigTest
         """);
 
       Config config = Config.load(mapper, tempDir);
-      config.getAutofixLevel();
+      config.getAutofixThreshold();
     }
     finally
     {
