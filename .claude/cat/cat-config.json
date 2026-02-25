@@ -4,5 +4,6 @@
   "verify": "all",
   "curiosity": "high",
   "patience": "medium",
-  "autoRemoveWorktrees": true
+  "autoRemoveWorktrees": true,
+  "minSeverity": "low"
 }
