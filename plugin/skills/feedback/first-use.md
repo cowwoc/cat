@@ -51,11 +51,11 @@ Please confirm or edit the title before I search for duplicates.
 
 ## Step 3: Search for Duplicates
 
-Always search GitHub for existing issues before creating a new one. Use the `github-feedback.sh` script with keywords
+Always search GitHub for existing issues before creating a new one. Use the `feedback` tool with keywords
 from the confirmed title:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/github-feedback.sh" search "<keywords from title>"
+"${CLAUDE_PLUGIN_ROOT}/client/bin/feedback" search "<keywords from title>"
 ```
 
 The script returns JSON with an `issues` array. Each element has `number`, `title`, `url`, and `state`.
@@ -96,10 +96,10 @@ Build the issue body with diagnostic context:
 <any reproduction steps derived from the error context>
 ```
 
-Open the GitHub issue creation page in the user's browser using the `github-feedback.sh` script:
+Open the GitHub issue creation page in the user's browser using the `feedback` tool:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/github-feedback.sh" open \
+"${CLAUDE_PLUGIN_ROOT}/client/bin/feedback" open \
   "Title here" \
   "Body here" \
   "bug"
