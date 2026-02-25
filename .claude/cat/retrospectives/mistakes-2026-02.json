@@ -1815,6 +1815,27 @@
       "correct_behavior": "Classify a concern as a false positive only when the reviewer read the wrong branch. Treat pre-existing concerns as real issues and route them through the patience cost/benefit framework to decide whether to fix inline or defer as a new issue.",
       "resolution_status": "superseded",
       "superseded_by": "2.1-delegate-stakeholder-review-to-subagent (architectural fix: worktree isolation prevents base-branch reads)"
+    },
+    {
+      "id": "M408",
+      "timestamp": "2026-02-25T18:03:25Z",
+      "category": "assumption_without_verification",
+      "description": "work-prepare potentially_complete detection missed commit 6cb3124f2 that implemented delegate-stakeholder-review-to-subagent because its message used descriptive language, not the issue name",
+      "root_cause": "checkBaseBranchCommits searched only by --grep=<issueName>, assuming all implementation commits would reference the issue name in their message. Commit 6cb3124f2 used the message 'minimize parent-agent context in stakeholder review via file-based concern handoff' — correct but with no issue name reference. The assumption that commit messages always reference the issue name is false.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/client/src/main/java/io/github/cowwoc/cat/hooks/util/WorkPrepare.java",
+      "pattern_keywords": ["work_prepare", "potentially_complete", "suspicious_commits", "commit_message", "file_overlap"],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Detect potentially-complete implementations using two strategies: (1) message-based --grep search for the issue name, AND (2) file-overlap search checking whether any recent base-branch commit modified files listed in PLAN.md's 'Files to Create' or 'Files to Modify' sections. Both strategies filter out planning commits as false positives."
     }
   ]
 }
