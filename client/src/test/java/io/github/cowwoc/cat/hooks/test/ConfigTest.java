@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks.test;
 import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetConfigOutput;
+import io.github.cowwoc.cat.hooks.util.ConcernSeverity;
 import io.github.cowwoc.cat.hooks.util.CuriosityLevel;
 import io.github.cowwoc.cat.hooks.util.PatienceLevel;
 import io.github.cowwoc.cat.hooks.util.TrustLevel;
@@ -212,6 +213,7 @@ public class ConfigTest
       requireThat(values.get("patience"), "patience").isEqualTo("high");
       requireThat(values.get("terminalWidth"), "terminalWidth").isEqualTo(120);
       requireThat(values.get("completionWorkflow"), "completionWorkflow").isEqualTo("merge");
+      requireThat(values.get("minSeverity"), "minSeverity").isEqualTo("low");
     }
     finally
     {
@@ -935,6 +937,159 @@ public class ConfigTest
 
       Config config = Config.load(mapper, tempDir);
       config.getPatience();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getMinSeverity() returns LOW by default when the config file is missing.
+   */
+  @Test
+  public void getMinSeverityDefaultsToLow() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Config config = Config.load(mapper, tempDir);
+
+      requireThat(config.getMinSeverity(), "minSeverity").isEqualTo(ConcernSeverity.LOW);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getMinSeverity() parses "medium" from the config file correctly.
+   */
+  @Test
+  public void getMinSeverityParsesMediumFromConfig() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), """
+        {
+          "minSeverity": "medium"
+        }
+        """);
+
+      Config config = Config.load(mapper, tempDir);
+
+      requireThat(config.getMinSeverity(), "minSeverity").isEqualTo(ConcernSeverity.MEDIUM);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getMinSeverity() parses "high" from the config file correctly.
+   */
+  @Test
+  public void getMinSeverityParsesHighFromConfig() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), """
+        {
+          "minSeverity": "high"
+        }
+        """);
+
+      Config config = Config.load(mapper, tempDir);
+
+      requireThat(config.getMinSeverity(), "minSeverity").isEqualTo(ConcernSeverity.HIGH);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getMinSeverity() parses "critical" from the config file correctly.
+   */
+  @Test
+  public void getMinSeverityParsesCriticalFromConfig() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), """
+        {
+          "minSeverity": "critical"
+        }
+        """);
+
+      Config config = Config.load(mapper, tempDir);
+
+      requireThat(config.getMinSeverity(), "minSeverity").isEqualTo(ConcernSeverity.CRITICAL);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getMinSeverity() throws IllegalArgumentException for an unrecognized value in the config file.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void getMinSeverityThrowsForInvalidValue() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), """
+        {
+          "minSeverity": "unknown"
+        }
+        """);
+
+      Config config = Config.load(mapper, tempDir);
+      config.getMinSeverity();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that asMap includes minSeverity in defaults.
+   */
+  @Test
+  public void configAsMapIncludesMinSeverityDefault() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Config config = Config.load(mapper, tempDir);
+      Map<String, Object> values = config.asMap();
+
+      requireThat(values.containsKey("minSeverity"), "hasMinSeverity").isTrue();
+      requireThat(values.get("minSeverity"), "minSeverity").isEqualTo("low");
     }
     finally
     {

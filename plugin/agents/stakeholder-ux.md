@@ -189,7 +189,7 @@ Return compact JSON inline. Write full details to the detail file, not inline.
   "approval": "APPROVED|CONCERNS|REJECTED",
   "concerns": [
     {
-      "severity": "CRITICAL|HIGH|MEDIUM",
+      "severity": "CRITICAL|HIGH|MEDIUM|LOW",
       "location": "file:line or UI component",
       "explanation": "Brief description of the UX problem",
       "recommendation": "Brief improvement guidance",

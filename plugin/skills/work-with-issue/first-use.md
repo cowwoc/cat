@@ -877,9 +877,10 @@ Example invocations:
     in [file/location]: [full concern description]. Recommended fix: [recommended fix]"
   ```
 
-Any deferred concern that does NOT have an issue automatically created above (e.g., MEDIUM or LOW severity, or any
-concern not covered by the severity × patience matrix) is collected for the interactive wizard in Step 6 where the
-user decides how to handle them.
+Any deferred concern that (a) is at or above `minSeverity` AND (b) was not automatically tracked as an issue above
+(e.g., MEDIUM or LOW severity concerns deferred by the patience matrix) is collected for the interactive wizard in
+Step 6 where the user decides how to handle them. Concerns below `minSeverity` are silently ignored and never appear
+in Step 6.
 
 ## Step 6: Deferred Concern Review (Interactive Wizard)
 
@@ -918,8 +919,9 @@ AskUserQuestion tool:
 
 ### Part B: Review untracked deferred concerns
 
-If any deferred concerns were NOT automatically tracked as issues (any severity — this includes MEDIUM/LOW concerns
-and any other concern that fell outside the auto-creation matrix), present them to the user:
+If any deferred concerns were NOT automatically tracked as issues AND are at or above `minSeverity` (this includes
+MEDIUM/LOW concerns deferred by the patience matrix), present them to the user. Concerns below `minSeverity` are
+silently ignored and do not appear here.
 
 1. Display a summary of each untracked concern:
    - Severity and stakeholder
@@ -952,6 +954,7 @@ AskUserQuestion tool:
 
 Skip this step entirely and proceed to Step 7 if ANY of:
 - There are no deferred concerns (all concerns passed the threshold or there were no concerns)
+- All deferred concerns are below `minSeverity` (they are silently ignored, not presented to the user)
 - `TRUST == "high"` (high-trust mode auto-creates issues per Step 5 and proceeds without user interaction)
 
 ## Step 7: Rebase and Squash Commits Before Review
