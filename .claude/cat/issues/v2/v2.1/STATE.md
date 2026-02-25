@@ -47,6 +47,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - restore-worktree-on-resume
 - add-min-severity-config
 - refactor-curiosity-to-effort
+- add-smart-questioning-to-add
 
 
 ## Issues Completed
