@@ -116,6 +116,7 @@ The following files do not require license headers:
 - `*.json` files (no comment syntax)
 - `*.xml` files (configuration files, no semantic code)
 - All `SKILL.md` files in plugin skills (both main and `-first-use` companion)
+- All `*.md` files in `plugin/agents/` (injected into subagent context as prompts; same rationale as SKILL.md)
 - Files in `.claude/cat/issues/` (planning artifacts)
 - Files in `.claude/cat/` config directory
 - `LICENSE.md` itself
