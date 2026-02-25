@@ -46,6 +46,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - use-qualified-issue-names-in-responses
 - restore-worktree-on-resume
 - add-min-severity-config
+- refactor-curiosity-to-effort
 
 
 ## Issues Completed
