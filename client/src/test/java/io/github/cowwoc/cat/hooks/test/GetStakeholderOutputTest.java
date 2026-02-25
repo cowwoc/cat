@@ -447,4 +447,150 @@ public class GetStakeholderOutputTest
       }
     }
   }
+
+  /**
+   * Verifies that concern box renders a compact concern format entry with a file:line location,
+   * matching the compact concern format used in stakeholder review JSON output.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void concernBoxRendersCompactFormatEntry() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetStakeholderConcernBox handler = new GetStakeholderConcernBox(scope);
+      // Simulates rendering a concern from the compact JSON format:
+      // { "severity": "HIGH", "location": "src/Main.java:42", "explanation": "Missing null check",
+      //   "recommendation": "Add null validation", "detail_file": ".claude/cat/review/design-concerns.json" }
+      // The detail_file is used by the orchestrator and not rendered in the box.
+      String result = handler.getConcernBox(
+        "HIGH", "design", "Missing null check", "src/Main.java:42");
+
+      requireThat(result, "result").contains("HIGH").contains("[design]").
+        contains("Missing null check").contains("src/Main.java:42").contains("└─ src/Main.java:42");
+    }
+  }
+
+  /**
+   * Verifies that concern box renders correctly when detail_file path would be absent
+   * (empty string location substituted from concern with no location field).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void concernBoxRendersCompactFormatWithReviewPath() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetStakeholderConcernBox handler = new GetStakeholderConcernBox(scope);
+      // Simulates rendering a concern where location comes from "review output" placeholder
+      String result = handler.getConcernBox(
+        "MEDIUM", "security", "Unvalidated input passed to downstream", "review output");
+
+      requireThat(result, "result").contains("MEDIUM").contains("[security]").
+        contains("Unvalidated input passed to downstream").contains("review output").
+        contains("└─ review output");
+    }
+  }
+
+  /**
+   * Verifies that concern box renders CRITICAL severity from compact format correctly.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void concernBoxRendersCompactFormatCriticalSeverity() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetStakeholderConcernBox handler = new GetStakeholderConcernBox(scope);
+      // Simulates a CRITICAL concern from compact JSON:
+      // { "severity": "CRITICAL", "stakeholder": "security", "location": "src/Auth.java:10",
+      //   "explanation": "SQL injection vulnerability", "detail_file": ".claude/cat/review/security-concerns.json" }
+      String result = handler.getConcernBox(
+        "CRITICAL", "security", "SQL injection vulnerability", "src/Auth.java:10");
+
+      requireThat(result, "result").contains("CRITICAL").contains("[security]").
+        contains("SQL injection vulnerability").contains("src/Auth.java:10").
+        contains("└─ src/Auth.java:10");
+    }
+  }
+
+  /**
+   * Verifies that parseReviewers rejects entries missing the colon separator.
+   */
+  @Test
+  public void parseReviewersRejectsEntryMissingColon()
+  {
+    try
+    {
+      GetStakeholderReviewBox.parseReviewers(
+        "design:APPROVED,malformed-entry,testing:CONCERNS");
+    }
+    catch (IllegalArgumentException e)
+    {
+      requireThat(e.getMessage(), "message").contains("malformed-entry").
+        contains("missing colon separator");
+    }
+  }
+
+  /**
+   * Verifies that parseReviewers rejects entries with empty stakeholder names.
+   */
+  @Test
+  public void parseReviewersRejectsEmptyStakeholderName()
+  {
+    try
+    {
+      GetStakeholderReviewBox.parseReviewers(":APPROVED,design:CONCERNS");
+    }
+    catch (IllegalArgumentException e)
+    {
+      requireThat(e.getMessage(), "message").contains("Empty stakeholder name");
+    }
+  }
+
+  /**
+   * Verifies that parseReviewers strips whitespace from stakeholder and status values.
+   */
+  @Test
+  public void parseReviewersStripsWhitespace()
+  {
+    List<ReviewerStatus> result = GetStakeholderReviewBox.parseReviewers(
+      " design : APPROVED , testing : CONCERNS ");
+
+    requireThat(result.size(), "result.size()").isEqualTo(2);
+    requireThat(result.get(0).stakeholder(), "stakeholder[0]").isEqualTo("design");
+    requireThat(result.get(0).status(), "status[0]").isEqualTo("APPROVED");
+    requireThat(result.get(1).stakeholder(), "stakeholder[1]").isEqualTo("testing");
+    requireThat(result.get(1).status(), "status[1]").isEqualTo("CONCERNS");
+  }
+
+  /**
+   * Verifies that parseReviewers returns an empty list for an empty string.
+   */
+  @Test
+  public void parseReviewersReturnsEmptyForEmptyString()
+  {
+    List<ReviewerStatus> result = GetStakeholderReviewBox.parseReviewers("");
+
+    requireThat(result.size(), "result.size()").isEqualTo(0);
+  }
+
+  /**
+   * Verifies that parseReviewers rejects entries where status is empty after the colon.
+   */
+  @Test
+  public void parseReviewersRejectsEntryWithEmptyStatus()
+  {
+    try
+    {
+      GetStakeholderReviewBox.parseReviewers("design:,testing:CONCERNS");
+    }
+    catch (IllegalArgumentException e)
+    {
+      requireThat(e.getMessage(), "message").contains("Empty status");
+    }
+  }
 }

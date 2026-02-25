@@ -38,7 +38,7 @@ public final class RemindGitSquash implements BashHandler
     if (GIT_RESET_SOFT_PATTERN.matcher(command).find())
     {
       return Result.block("""
-        **BLOCKED: Manual git reset --soft is prohibited (M503).**
+        **BLOCKED: Manual git reset --soft is prohibited.**
 
         Use /cat:git-squash instead. Manual reset --soft:
         - Captures working directory state (can include stale files)

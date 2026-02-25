@@ -105,7 +105,7 @@ public final class BlockMainRebase implements BashHandler
       if (!isCheckoutFlag(target))
       {
         return Result.block(String.format("""
-          GIT CHECKOUT IN MAIN WORKTREE BLOCKED (M205)
+          GIT CHECKOUT IN MAIN WORKTREE BLOCKED
 
           Attempted: git checkout %s in main worktree
           Correct:   Use task worktrees - never change main worktree's branch
@@ -142,7 +142,7 @@ public final class BlockMainRebase implements BashHandler
         if (!isCheckoutFlag(target))
         {
           return Result.block(String.format(
-            "Blocked (M205): Cannot checkout '%s' in main worktree. Use issue worktrees instead.",
+            "Blocked: Cannot checkout '%s' in main worktree. Use issue worktrees instead.",
             target));
         }
       }

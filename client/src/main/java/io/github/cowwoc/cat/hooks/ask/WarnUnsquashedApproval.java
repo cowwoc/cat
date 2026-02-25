@@ -97,7 +97,7 @@ public final class WarnUnsquashedApproval implements AskHandler
 
     if (isConfigOrPlanningWithProgress(firstCommit) && isImplementationCommit(secondCommit))
     {
-      String warning = "⚠️ PRE-APPROVAL CHECK: RELATED COMMITS SHOULD BE SQUASHED (M224)\n" +
+      String warning = "⚠️ PRE-APPROVAL CHECK: RELATED COMMITS SHOULD BE SQUASHED\n" +
                        "\n" +
                        "Found separate commits that should be combined:\n" +
                        "  " + firstCommit + "\n" +
