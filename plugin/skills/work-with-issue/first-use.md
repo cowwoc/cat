@@ -1198,8 +1198,7 @@ Return summary to the main `/cat:work` skill:
 If any phase fails:
 
 1. Capture error message and phase name
-2. Attempt lock release: `${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh release "${CLAUDE_PROJECT_DIR}" "${ISSUE_ID}"
-   "$CLAUDE_SESSION_ID"`
+2. Attempt lock release: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${ISSUE_ID}" "$CLAUDE_SESSION_ID"`
 3. Return FAILED status with actual error details
 
 ```json

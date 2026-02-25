@@ -18,7 +18,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public final class BlockLockManipulationTest
 {
   /**
-   * Verifies that rm targeting a lock file is blocked and the error message mentions issue-lock.sh.
+   * Verifies that rm targeting a lock file is blocked and the error message mentions issue-lock.
    */
   @Test
   public void rmLockFileIsBlockedWithIssueLockReference()
@@ -29,7 +29,7 @@ public final class BlockLockManipulationTest
     BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
 
     requireThat(result.blocked(), "blocked").isTrue();
-    requireThat(result.reason(), "reason").contains("issue-lock.sh force-release");
+    requireThat(result.reason(), "reason").contains("issue-lock force-release");
   }
 
   /**
@@ -48,7 +48,7 @@ public final class BlockLockManipulationTest
   }
 
   /**
-   * Verifies that rm targeting the locks directory is blocked and the error message mentions issue-lock.sh.
+   * Verifies that rm targeting the locks directory is blocked and the error message mentions issue-lock.
    */
   @Test
   public void rmLocksDirIsBlockedWithIssueLockReference()
@@ -59,7 +59,7 @@ public final class BlockLockManipulationTest
     BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
 
     requireThat(result.blocked(), "blocked").isTrue();
-    requireThat(result.reason(), "reason").contains("issue-lock.sh force-release");
+    requireThat(result.reason(), "reason").contains("issue-lock force-release");
   }
 
   /**
@@ -104,7 +104,7 @@ public final class BlockLockManipulationTest
     BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
 
     requireThat(result.blocked(), "blocked").isTrue();
-    requireThat(result.reason(), "reason").contains("issue-lock.sh force-release");
+    requireThat(result.reason(), "reason").contains("issue-lock force-release");
   }
 
   /**
@@ -119,7 +119,7 @@ public final class BlockLockManipulationTest
     BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
 
     requireThat(result.blocked(), "blocked").isTrue();
-    requireThat(result.reason(), "reason").contains("issue-lock.sh force-release");
+    requireThat(result.reason(), "reason").contains("issue-lock force-release");
     requireThat(result.reason(), "reason").contains("/cat:cleanup");
   }
 }

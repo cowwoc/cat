@@ -94,21 +94,9 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# If no issue ID provided, try to auto-discover
+# If no issue ID provided, use placeholder display
 if [[ -z "$ISSUE_ID" ]]; then
-    if [[ -n "$PROJECT_DIR" && -n "$SESSION_ID" ]]; then
-        # Try to discover next issue
-        DISCOVERY_SCRIPT="$SCRIPT_DIR/get-available-issues.sh"
-        if [[ -x "$DISCOVERY_SCRIPT" ]]; then
-            RESULT=$("$DISCOVERY_SCRIPT" --session-id "$SESSION_ID" 2>/dev/null) || true
-            if echo "$RESULT" | jq -e '.status == "found"' > /dev/null 2>&1; then
-                MAJOR=$(echo "$RESULT" | jq -r '.major')
-                MINOR=$(echo "$RESULT" | jq -r '.minor')
-                ISSUE_NAME=$(echo "$RESULT" | jq -r '.issue_name')
-                ISSUE_ID="${MAJOR}.${MINOR}-${ISSUE_NAME}"
-            fi
-        fi
-    fi
+    ISSUE_ID=""
 fi
 
 # Phase symbols (defined early for use in placeholder banner)

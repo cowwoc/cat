@@ -1,7 +1,7 @@
 # Plan: port-workflow-scripts-to-java
 
 ## Current State
-Four bash scripts handle issue workflow operations: `issue-lock.sh` (acquire/release/check/heartbeat locking),
+Four bash scripts handle issue workflow operations: `issue-lock.sh` (acquire/release/check/update locking),
 `get-available-issues.sh` (find next executable issue), `check-existing-work.sh` (detect existing commits on issue
 branches), and `lib/version-utils.sh` (version parsing and issue directory resolution, used by `get-available-issues.sh`).
 
@@ -16,7 +16,7 @@ None (infrastructure/tech debt)
 - **Risk Level:** MEDIUM
 - **Concerns:** `issue-lock.sh` is heavily used across skills; breaking it disrupts all `/cat:work` flows
 - **Mitigation:** TDD approach, extensive testing of all subcommands (acquire, release, check, force-release, update,
-  heartbeat, list)
+  list)
 
 ## Files to Modify
 - `plugin/scripts/issue-lock.sh` — remove after port

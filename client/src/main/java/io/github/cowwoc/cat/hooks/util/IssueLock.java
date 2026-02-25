@@ -7,9 +7,11 @@
 package io.github.cowwoc.cat.hooks.util;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -17,6 +19,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -50,6 +53,7 @@ public final class IssueLock
     "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$");
   private static final DateTimeFormatter ISO_FORMATTER =
     DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC);
+  private static final int MAX_LOCK_FILES = 1000;
 
   private final JvmScope scope;
   private final Path lockDir;
@@ -138,19 +142,13 @@ public final class IssueLock
      * @param owner the session ID that owns the lock
      * @param action the suggested action
      * @param guidance the detailed guidance text
-     * @param remoteAuthor the remote branch author
-     * @param remoteEmail the remote branch author email
-     * @param remoteDate the remote branch last commit date
      */
     record Locked(
       String status,
       String message,
       String owner,
       String action,
-      String guidance,
-      String remoteAuthor,
-      String remoteEmail,
-      String remoteDate) implements LockResult
+      String guidance) implements LockResult
     {
       /**
        * Creates a new locked result.
@@ -160,11 +158,8 @@ public final class IssueLock
        * @param owner the session ID that owns the lock
        * @param action the suggested action
        * @param guidance the detailed guidance text
-       * @param remoteAuthor the remote branch author
-       * @param remoteEmail the remote branch author email
-       * @param remoteDate the remote branch last commit date
-       * @throws NullPointerException if {@code status}, {@code message}, {@code owner}, {@code action},
-       *   {@code guidance}, {@code remoteAuthor}, {@code remoteEmail} or {@code remoteDate} are null
+       * @throws NullPointerException if {@code status}, {@code message}, {@code owner}, {@code action}
+       *   or {@code guidance} are null
        */
       public Locked
       {
@@ -173,9 +168,6 @@ public final class IssueLock
         requireThat(owner, "owner").isNotNull();
         requireThat(action, "action").isNotNull();
         requireThat(guidance, "guidance").isNotNull();
-        requireThat(remoteAuthor, "remoteAuthor").isNotNull();
-        requireThat(remoteEmail, "remoteEmail").isNotNull();
-        requireThat(remoteDate, "remoteDate").isNotNull();
       }
 
       @Override
@@ -187,10 +179,7 @@ public final class IssueLock
           "message", message,
           "owner", owner,
           "action", action,
-          "guidance", guidance,
-          "remote_author", remoteAuthor,
-          "remote_email", remoteEmail,
-          "remote_date", remoteDate));
+          "guidance", guidance));
       }
     }
 
@@ -422,46 +411,10 @@ public final class IssueLock
       if (existingSession.equals(sessionId))
         return new LockResult.Acquired("acquired", "Lock already held by this session");
 
-      String remoteAuthor = "unknown";
-      String remoteEmail = "";
-      String remoteDate = "unknown";
-      String remoteBranch = "";
-
-      try
-      {
-        String branchList = GitCommands.runGit("branch", "-r");
-        for (String pattern : List.of("origin/" + issueId, "origin/*-" + issueId.replaceFirst("^[^-]*-", "")))
-        {
-          for (String line : branchList.split("\n"))
-          {
-            String branch = line.strip();
-            if (branch.matches(".*" + Pattern.quote(pattern.replace("*", ".*")) + ".*"))
-            {
-              remoteBranch = branch;
-              break;
-            }
-          }
-          if (!remoteBranch.isEmpty())
-            break;
-        }
-
-        if (!remoteBranch.isEmpty())
-        {
-          remoteAuthor = GitCommands.runGit("log", "-1", "--format=%an", remoteBranch).strip();
-          remoteEmail = GitCommands.runGit("log", "-1", "--format=%ae", remoteBranch).strip();
-          remoteDate = GitCommands.runGit("log", "-1", "--format=%cr", remoteBranch).strip();
-        }
-      }
-      catch (IOException _)
-      {
-        // Git operations failed - use defaults
-      }
-
       return new LockResult.Locked("locked", "Issue locked by another session", existingSession,
         "FIND_ANOTHER_ISSUE",
         "Do NOT investigate, remove, or question this lock. Execute a different issue instead. " +
-        "If you believe this is a stale lock from a crashed session, ask the USER to run /cat:cleanup.",
-        remoteAuthor, remoteEmail, remoteDate);
+        "If you believe this is a stale lock from a crashed session, ask the USER to run /cat:cleanup.");
     }
 
     long now = Instant.now().getEpochSecond();
@@ -484,7 +437,22 @@ public final class IssueLock
     catch (IOException _)
     {
       Files.deleteIfExists(tempFile);
-      return new LockResult.Acquired("locked", "Lock acquired by another process during race");
+      // Another process acquired the lock during the race; read to find the owner
+      try
+      {
+        String content = Files.readString(lockFile);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> raceLockData = scope.getJsonMapper().readValue(content, Map.class);
+        String raceOwner = raceLockData.get("session_id").toString();
+        return new LockResult.Locked("locked", "Issue locked by another session", raceOwner,
+          "FIND_ANOTHER_ISSUE",
+          "Do NOT investigate, remove, or question this lock. Execute a different issue instead. " +
+          "If you believe this is a stale lock from a crashed session, ask the USER to run /cat:cleanup.");
+      }
+      catch (Exception readEx)
+      {
+        return new LockResult.Error("error", "Race condition: could not read lock owner: " + readEx.getMessage());
+      }
     }
   }
 
@@ -631,6 +599,9 @@ public final class IssueLock
 
   /**
    * Lists all locks.
+   * <p>
+   * Skips malformed lock files with a warning to stderr.
+   * Returns at most {@value MAX_LOCK_FILES} entries; warns to stderr if the limit is exceeded.
    *
    * @return list of lock entries
    * @throws IOException if file operations fail
@@ -641,11 +612,18 @@ public final class IssueLock
 
     List<LockListEntry> locks = new ArrayList<>();
     long now = Instant.now().getEpochSecond();
+    int[] count = {0};
 
     Files.list(lockDir).
       filter(path -> path.toString().endsWith(".lock")).
       forEach(lockFile ->
       {
+        if (count[0] >= MAX_LOCK_FILES)
+        {
+          System.err.println("WARNING: More than " + MAX_LOCK_FILES +
+            " lock files found in " + lockDir + ". Only the first " + MAX_LOCK_FILES + " are listed.");
+          return;
+        }
         try
         {
           String issueId = lockFile.getFileName().toString().replace(".lock", "");
@@ -658,10 +636,11 @@ public final class IssueLock
           long age = now - createdAt;
 
           locks.add(new LockListEntry(issueId, sessionId, age));
+          ++count[0];
         }
-        catch (Exception _)
+        catch (Exception e)
         {
-          // Skip malformed lock files
+          System.err.println("WARNING: Skipping malformed lock file " + lockFile + ": " + e.getMessage());
         }
       });
 
@@ -682,14 +661,18 @@ public final class IssueLock
   /**
    * Sanitizes an issue ID for use as a filename.
    * <p>
-   * Replaces forward slashes with hyphens to avoid directory traversal.
+   * Replaces forward slashes, backslashes, and {@code ..} sequences with hyphens to prevent
+   * directory traversal attacks.
    *
    * @param issueId the issue identifier
    * @return the sanitized identifier
    */
   private String sanitizeIssueId(String issueId)
   {
-    return issueId.replace('/', '-');
+    return issueId.
+      replace('/', '-').
+      replace('\\', '-').
+      replace("..", "-");
   }
 
   /**
@@ -705,5 +688,297 @@ public final class IssueLock
       throw new IllegalArgumentException("Invalid session_id format: '" + sessionId +
         "'. Expected UUID. Did you swap issue_id and session_id arguments?");
     }
+  }
+
+  /**
+   * Main method for command-line execution.
+   * <p>
+   * Commands:
+   * <ul>
+   *   <li>{@code acquire <issue-id> <session-id> [worktree]}</li>
+   *   <li>{@code update <issue-id> <session-id> <worktree>}</li>
+   *   <li>{@code release <issue-id> <session-id>}</li>
+   *   <li>{@code force-release <issue-id>}</li>
+   *   <li>{@code check <issue-id>}</li>
+   *   <li>{@code list}</li>
+   * </ul>
+   * <p>
+   * The project directory is read from the {@code CLAUDE_PROJECT_DIR} environment variable.
+   *
+   * @param args command-line arguments
+   * @throws IOException if file operations fail
+   */
+  public static void main(String[] args) throws IOException
+  {
+    if (args.length < 1)
+    {
+      System.err.println("""
+        {
+          "status": "error",
+          "message": "Usage: issue-lock <command> [args].\
+         Commands: acquire, update, release, force-release, check, list"
+        }""");
+      System.exit(1);
+      return;
+    }
+
+    String command = args[0];
+
+    try (MainJvmScope scope = new MainJvmScope())
+    {
+      boolean success = runWithScope(args, command, scope, System.out, System.err);
+      if (!success)
+        System.exit(1);
+    }
+  }
+
+  /**
+   * Executes a command with an injectable scope and output streams for testability.
+   * <p>
+   * This method does not call {@link System#exit(int)}.
+   * Error output is written to {@code err} and {@code false} is returned on failure.
+   *
+   * @param args the command-line arguments
+   * @param scope the JVM scope to use for lock operations
+   * @param out the output stream for successful results
+   * @param err the error stream for error messages
+   * @return true if the command succeeded, false if an error occurred
+   * @throws IOException if file operations fail
+   */
+  public static boolean run(String[] args, JvmScope scope, PrintStream out, PrintStream err) throws IOException
+  {
+    if (args.length < 1)
+    {
+      err.println("""
+        {
+          "status": "error",
+          "message": "Usage: issue-lock <command> [args].\
+         Commands: acquire, update, release, force-release, check, list"
+        }""");
+      return false;
+    }
+
+    String command = args[0];
+    return runWithScope(args, command, scope, out, err);
+  }
+
+  /**
+   * Executes a command using the provided scope.
+   *
+   * @param args the full command-line arguments
+   * @param command the parsed command name
+   * @param scope the JVM scope to use
+   * @param out the output stream for successful results
+   * @param err the error stream for error messages
+   * @return true if the command succeeded, false if an error occurred
+   * @throws IOException if file operations fail
+   */
+  private static boolean runWithScope(String[] args, String command, JvmScope scope, PrintStream out,
+    PrintStream err) throws IOException
+  {
+    JsonMapper mapper = scope.getJsonMapper();
+    try
+    {
+      IssueLock lock = new IssueLock(scope);
+
+      return switch (command)
+      {
+        case "acquire" -> handleAcquire(lock, mapper, args, out, err);
+        case "update" -> handleUpdate(lock, mapper, args, out, err);
+        case "release" -> handleRelease(lock, mapper, args, out, err);
+        case "force-release" -> handleForceRelease(lock, mapper, args, out, err);
+        case "check" -> handleCheck(lock, mapper, args, out, err);
+        case "list" ->
+        {
+          handleList(lock, mapper, out);
+          yield true;
+        }
+        default ->
+        {
+          err.println(mapper.writeValueAsString(Map.of(
+            "status", "error",
+            "message", "Unknown command: " + command +
+              ". Use acquire, update, release, force-release, check, or list.")));
+          yield false;
+        }
+      };
+    }
+    catch (IllegalArgumentException e)
+    {
+      err.println(mapper.writeValueAsString(Map.of(
+        "status", "error",
+        "message", e.getMessage())));
+      return false;
+    }
+  }
+
+  /**
+   * Handles the acquire subcommand.
+   *
+   * @param lock the issue lock instance
+   * @param mapper the JSON mapper
+   * @param args the command-line arguments
+   * @param out the output stream
+   * @param err the error stream
+   * @return true if the command succeeded, false if an error occurred
+   * @throws IOException if the operation fails
+   */
+  private static boolean handleAcquire(IssueLock lock, JsonMapper mapper, String[] args, PrintStream out,
+    PrintStream err) throws IOException
+  {
+    if (args.length < 3)
+    {
+      err.println("""
+        {
+          "status": "error",
+          "message": "Usage: acquire <issue-id> <session-id> [worktree]"
+        }""");
+      return false;
+    }
+    String issueId = args[1];
+    String sessionId = args[2];
+    String worktree;
+    if (args.length > 3)
+      worktree = args[3];
+    else
+      worktree = "";
+    LockResult result = lock.acquire(issueId, sessionId, worktree);
+    out.println(result.toJson(mapper));
+    return !(result instanceof LockResult.Locked);
+  }
+
+  /**
+   * Handles the update subcommand.
+   *
+   * @param lock the issue lock instance
+   * @param mapper the JSON mapper
+   * @param args the command-line arguments
+   * @param out the output stream
+   * @param err the error stream
+   * @return true if the command succeeded, false if an error occurred
+   * @throws IOException if the operation fails
+   */
+  private static boolean handleUpdate(IssueLock lock, JsonMapper mapper, String[] args, PrintStream out,
+    PrintStream err) throws IOException
+  {
+    if (args.length < 4)
+    {
+      err.println("""
+        {
+          "status": "error",
+          "message": "Usage: update <issue-id> <session-id> <worktree>"
+        }""");
+      return false;
+    }
+    LockResult result = lock.update(args[1], args[2], args[3]);
+    out.println(result.toJson(mapper));
+    return !(result instanceof LockResult.Error);
+  }
+
+  /**
+   * Handles the release subcommand.
+   *
+   * @param lock the issue lock instance
+   * @param mapper the JSON mapper
+   * @param args the command-line arguments
+   * @param out the output stream
+   * @param err the error stream
+   * @return true if the command succeeded, false if an error occurred
+   * @throws IOException if the operation fails
+   */
+  private static boolean handleRelease(IssueLock lock, JsonMapper mapper, String[] args, PrintStream out,
+    PrintStream err) throws IOException
+  {
+    if (args.length < 3)
+    {
+      err.println("""
+        {
+          "status": "error",
+          "message": "Usage: release <issue-id> <session-id>"
+        }""");
+      return false;
+    }
+    LockResult result = lock.release(args[1], args[2]);
+    out.println(result.toJson(mapper));
+    return !(result instanceof LockResult.Error);
+  }
+
+  /**
+   * Handles the force-release subcommand.
+   *
+   * @param lock the issue lock instance
+   * @param mapper the JSON mapper
+   * @param args the command-line arguments
+   * @param out the output stream
+   * @param err the error stream
+   * @return true if the command succeeded, false if an error occurred
+   * @throws IOException if the operation fails
+   */
+  private static boolean handleForceRelease(IssueLock lock, JsonMapper mapper, String[] args, PrintStream out,
+    PrintStream err) throws IOException
+  {
+    if (args.length < 2)
+    {
+      err.println("""
+        {
+          "status": "error",
+          "message": "Usage: force-release <issue-id>"
+        }""");
+      return false;
+    }
+    LockResult result = lock.forceRelease(args[1]);
+    out.println(result.toJson(mapper));
+    return true;
+  }
+
+  /**
+   * Handles the check subcommand.
+   *
+   * @param lock the issue lock instance
+   * @param mapper the JSON mapper
+   * @param args the command-line arguments
+   * @param out the output stream
+   * @param err the error stream
+   * @return true if the command succeeded, false if an error occurred
+   * @throws IOException if the operation fails
+   */
+  private static boolean handleCheck(IssueLock lock, JsonMapper mapper, String[] args, PrintStream out,
+    PrintStream err) throws IOException
+  {
+    if (args.length < 2)
+    {
+      err.println("""
+        {
+          "status": "error",
+          "message": "Usage: check <issue-id>"
+        }""");
+      return false;
+    }
+    LockResult result = lock.check(args[1]);
+    out.println(result.toJson(mapper));
+    return true;
+  }
+
+  /**
+   * Handles the list subcommand.
+   *
+   * @param lock the issue lock instance
+   * @param mapper the JSON mapper
+   * @param out the output stream
+   * @throws IOException if the operation fails
+   */
+  private static void handleList(IssueLock lock, JsonMapper mapper, PrintStream out) throws IOException
+  {
+    List<LockListEntry> locks = lock.list();
+    List<Map<String, Object>> lockMaps = new ArrayList<>();
+    for (LockListEntry entry : locks)
+    {
+      Map<String, Object> entryMap = new LinkedHashMap<>();
+      entryMap.put("issue", entry.issue());
+      entryMap.put("session", entry.session());
+      entryMap.put("age_seconds", entry.ageSeconds());
+      lockMaps.add(entryMap);
+    }
+    out.println(mapper.writeValueAsString(lockMaps));
   }
 }

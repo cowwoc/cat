@@ -80,7 +80,7 @@ Analyze survey results to classify artifacts:
 For each lock, check status:
 ```bash
 issue_id="<from-survey>"
-"${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" check "${CLAUDE_PROJECT_DIR}" "$issue_id"
+"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" check "$issue_id"
 ```
 
 The output shows: `{"locked":true,"session_id":"...","age_seconds":...,"worktree":"..."}`
@@ -195,7 +195,7 @@ Execute in strict order. Errors should propagate - do not suppress with `|| true
 **Remove stale locks:**
 ```bash
 issue_id="<from-plan>"
-"${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" force-release "${CLAUDE_PROJECT_DIR}" "$issue_id"
+"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" force-release "$issue_id"
 ```
 
 **Remove worktrees:**

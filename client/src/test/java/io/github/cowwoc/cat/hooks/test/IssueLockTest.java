@@ -679,7 +679,7 @@ public class IssueLockTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       LockResult.Locked result = new LockResult.Locked("locked", "Issue locked", "session-123",
-        "FIND_ANOTHER_ISSUE", "guidance text", "author", "email", "date");
+        "FIND_ANOTHER_ISSUE", "guidance text");
 
       String json = result.toJson(mapper);
 
@@ -818,7 +818,7 @@ public class IssueLockTest
         lock.acquire("v2.1\\fix-bug", sessionId, "/path/to/worktree");
 
         Path lockDir = tempDir.resolve(".claude").resolve("cat").resolve("locks");
-        Path lockFile = lockDir.resolve("v2.1\\fix-bug.lock");
+        Path lockFile = lockDir.resolve("v2.1-fix-bug.lock");
 
         requireThat(Files.exists(lockFile), "lockFileExists").isTrue();
       }
