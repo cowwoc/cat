@@ -612,7 +612,7 @@ Store `ALL_CONCERNS` for use in the auto-fix loop and the approval gate. Each co
 ```bash
 # Read reviewThreshold and patience from .claude/cat/cat-config.json
 # Default is "low" (fix all concerns automatically) if config is missing or field is absent
-AUTOFIX_LEVEL="low"
+AUTOFIX_THRESHOLD="low"
 # Default is "medium" if config is missing or field is absent
 PATIENCE_LEVEL="medium"
 
@@ -622,7 +622,7 @@ if [[ -f "$CONFIG_FILE" ]]; then
     AUTOFIX_RAW=$(grep -o '"reviewThreshold"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" | head -1 | \
         sed 's/.*"reviewThreshold"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
     if [[ -n "$AUTOFIX_RAW" ]]; then
-        AUTOFIX_LEVEL="$AUTOFIX_RAW"
+        AUTOFIX_THRESHOLD="$AUTOFIX_RAW"
     fi
 
     # Extract patience simple string value using grep/sed (no jq available)
@@ -633,20 +633,20 @@ if [[ -f "$CONFIG_FILE" ]]; then
     fi
 fi
 
-# Determine minimum severity to auto-fix based on AUTOFIX_LEVEL:
+# Determine minimum severity to auto-fix based on AUTOFIX_THRESHOLD:
 # "low"      -> auto-fix CRITICAL, HIGH, MEDIUM, and LOW (default)
 # "medium"   -> auto-fix CRITICAL, HIGH, and MEDIUM
 # "high"     -> auto-fix CRITICAL and HIGH
 # "critical" -> auto-fix CRITICAL only
 ```
 
-**Auto-fix loop for concerns (based on configured autofix level):**
+**Auto-fix loop for concerns (based on configured autofix threshold):**
 
 Initialize loop counter: `AUTOFIX_ITERATION=0`
 
 **While concerns exist at or above the configured auto-fix threshold and AUTOFIX_ITERATION < 3:**
 
-The auto-fix threshold is determined by `AUTOFIX_LEVEL`:
+The auto-fix threshold is determined by `AUTOFIX_THRESHOLD`:
 - `"low"`: loop while CRITICAL, HIGH, MEDIUM, or LOW concerns exist (default)
 - `"medium"`: loop while CRITICAL, HIGH, or MEDIUM concerns exist
 - `"high"`: loop while CRITICAL or HIGH concerns exist
