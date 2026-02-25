@@ -28,7 +28,8 @@ import java.util.stream.Stream;
 public final class EnforceJvmScopeEnvAccessTest
 {
   /**
-   * Verifies that no Java file except MainJvmScope.java and TerminalType.java contains System.getenv().
+   * Verifies that no Java file except MainJvmScope.java, TerminalType.java, and ClaudeEnv.java
+   * contains System.getenv().
    *
    * @throws IOException if scanning source files fails
    */
@@ -46,6 +47,7 @@ public final class EnforceJvmScopeEnvAccessTest
         filter(path -> path.toString().endsWith(".java")).
         filter(path -> !path.toString().endsWith("MainJvmScope.java")).
         filter(path -> !path.toString().endsWith("TerminalType.java")).
+        filter(path -> !path.toString().endsWith("ClaudeEnv.java")).
         forEach(path ->
         {
           try
@@ -66,15 +68,21 @@ public final class EnforceJvmScopeEnvAccessTest
     if (!violations.isEmpty())
     {
       String message = """
-        System.getenv() found in files other than MainJvmScope.java and TerminalType.java.
+        System.getenv() found in files other than MainJvmScope.java, TerminalType.java, and
+        ClaudeEnv.java.
 
-        REQUIREMENT: All environment variable access must go through JvmScope methods.
+        REQUIREMENT: Non-hook classes must access environment variables through ClaudeEnv.
+        Hook classes access session data through HookInput JSON parameter.
 
         Violations found in:
         """ + String.join("\n", violations.stream().map(v -> "  - " + v).toList()) + """
 
 
-        FIX: Replace System.getenv("VAR_NAME") with scope.getVarName() calls.
+        FIX: Use ClaudeEnv for environment variable access, not JvmScope methods.
+        - Replace scope.getClaudeSessionId() with ClaudeEnv.getInstance().getClaudeSessionId()
+        - Replace scope.getClaudeProjectDir() with ClaudeEnv.getInstance().getClaudeProjectDir()
+        - Replace scope.getClaudePluginRoot() with ClaudeEnv.getInstance().getClaudePluginRoot()
+        - Replace scope.getClaudeEnvFile() with ClaudeEnv.getInstance().getClaudeEnvFile()
         """;
       throw new AssertionError(message);
     }
