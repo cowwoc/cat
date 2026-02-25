@@ -746,7 +746,7 @@ The auto-fix threshold is determined by `AUTOFIX_THRESHOLD`:
        - Read the concern detail files for full context on each concern
        - Commit your fixes using the same commit type as the primary implementation
          (e.g., `bugfix:`, `feature:`). These commits will be squashed into the main
-         implementation commit in Step 6. Do NOT use `test:` as an independent commit
+         implementation commit in Step 7. Do NOT use `test:` as an independent commit
          type for concern fixes.
        - Return JSON status when complete
 
@@ -779,7 +779,7 @@ The auto-fix threshold is determined by `AUTOFIX_THRESHOLD`:
 - Continue to out-of-scope classification below
 
 **NOTE:** "REVIEW_PASSED" means stakeholder review passed, NOT user approval to merge.
-User approval is a SEPARATE gate in Step 7.
+User approval is a SEPARATE gate in Step 8.
 
 ### Evaluate Remaining Concerns (Cost/Benefit)
 
@@ -832,23 +832,129 @@ patience fixes 13/16 combinations, medium fixes 8/16, high fixes 6/16.
 - Add back into the auto-fix loop for fixing
 - These additional loop iterations count toward the existing `AUTOFIX_ITERATION < 3` limit
 
-**Concerns that don't pass the threshold** (benefit < cost × patience_multiplier):
-- Defer by creating issues via `/cat:add`:
-  - `patience: medium` → create in the current version backlog:
-    ```
-    Skill tool:
-      skill: "cat:add"
-      args: "add issue: [brief title derived from the concern description]"
-    ```
-  - `patience: high` → create in a later version backlog:
-    ```
-    Skill tool:
-      skill: "cat:add"
-      args: "add issue to next major version: [brief title derived from the concern description]"
-    ```
-- Mark these concerns as "deferred" in the approval gate display
+**Step 5: Handle deferred concerns** (benefit < cost × patience_multiplier):
 
-## Step 6: Rebase and Squash Commits Before Review
+Perform these actions immediately, before proceeding to Step 6 (Deferred Concern Review).
+
+For **HIGH or CRITICAL severity** deferred concerns — create a tracking issue via `/cat:add` so the concern is not
+lost. The target version is determined by the combination of severity and patience:
+
+| Severity | Patience | Target Version | `/cat:add` args prefix |
+|----------|----------|----------------|------------------------|
+| CRITICAL | low      | current minor  | `add issue:`           |
+| CRITICAL | medium   | current minor  | `add issue:`           |
+| CRITICAL | high     | next minor     | `add issue to next minor version:` |
+| HIGH     | low      | current minor  | `add issue:`           |
+| HIGH     | medium   | next minor     | `add issue to next minor version:` |
+| HIGH     | high     | next major     | `add issue to next major version:` |
+
+- Build an issue title following the naming convention: `{version}-fix-{short-description}` where `{version}` is the
+  current version (e.g. `v2.1`) and `{short-description}` is a 2–4 word slug of the concern.
+- Include in the args: the stakeholder name, severity, file location, concern description, and recommended fix
+  so the created issue is immediately actionable.
+
+Example invocations:
+
+- Current minor (CRITICAL/low, CRITICAL/medium, HIGH/low):
+  ```
+  Skill tool:
+    skill: "cat:add"
+    args: "add issue: {version}-fix-{short-description} — [stakeholder]: [severity] concern in [file/location]:
+    [full concern description]. Recommended fix: [recommended fix]"
+  ```
+- Next minor (CRITICAL/high, HIGH/medium):
+  ```
+  Skill tool:
+    skill: "cat:add"
+    args: "add issue to next minor version: {version}-fix-{short-description} — [stakeholder]: [severity] concern
+    in [file/location]: [full concern description]. Recommended fix: [recommended fix]"
+  ```
+- Next major (HIGH/high):
+  ```
+  Skill tool:
+    skill: "cat:add"
+    args: "add issue to next major version: {version}-fix-{short-description} — [stakeholder]: [severity] concern
+    in [file/location]: [full concern description]. Recommended fix: [recommended fix]"
+  ```
+
+Any deferred concern that does NOT have an issue automatically created above (e.g., MEDIUM or LOW severity, or any
+concern not covered by the severity × patience matrix) is collected for the interactive wizard in Step 6 where the
+user decides how to handle them.
+
+## Step 6: Deferred Concern Review (Interactive Wizard)
+
+This step runs BEFORE the Rebase and Squash step (Step 7) and BEFORE the Approval Gate (Step 8), giving the user a
+chance to review and adjust deferred concern handling before committing to the merge.
+
+### Part A: Review HIGH/CRITICAL concern scheduling
+
+If any HIGH or CRITICAL concerns had issues created in Step 5, present them to the user:
+
+1. Display a summary of each concern:
+   - Severity and stakeholder
+   - Short description of the concern
+   - The version it was scheduled for (current minor / next minor / next major)
+
+2. Use AskUserQuestion to ask the user about the scheduling:
+
+```
+AskUserQuestion tool:
+  question: "The following deferred concerns were automatically scheduled as new issues:
+
+  [list each concern: severity, stakeholder, description → scheduled for: version]
+
+  Are these deferred concern schedules acceptable?"
+  options:
+    - "Accept all schedules"
+    - "Reschedule one or more concerns"
+    - "Other"
+```
+
+3. If user selects **"Reschedule one or more concerns"**: use AskUserQuestion to ask which ones to reschedule and
+   what version to target, then invoke the appropriate `/cat:add` with the corrected version args. Replace the
+   originally created issue(s) if possible, or note that the original issue(s) should be manually removed.
+
+4. If user selects **"Other"**: pause and let the user provide freeform instructions, then act on them.
+
+### Part B: Review untracked deferred concerns
+
+If any deferred concerns were NOT automatically tracked as issues (any severity — this includes MEDIUM/LOW concerns
+and any other concern that fell outside the auto-creation matrix), present them to the user:
+
+1. Display a summary of each untracked concern:
+   - Severity and stakeholder
+   - Short description of the concern
+
+2. Use AskUserQuestion to ask the user how to handle them:
+
+```
+AskUserQuestion tool:
+  question: "The following concerns remain untracked:
+
+  [list each concern: severity, stakeholder, description]
+
+  How should these be handled?"
+  options:
+    - "Skip all (no action needed)"
+    - "Create issues for selected concerns"
+    - "Other"
+```
+
+3. If user selects **"Create issues for selected concerns"**: use AskUserQuestion with multiSelect to let the user
+   pick which concerns to track, then invoke `/cat:add` for each selected concern. Use the same severity × patience
+   matrix from Step 5 to determine the target version for each selected concern.
+
+4. If user selects **"Skip all"**: proceed without creating issues for these concerns.
+
+5. If user selects **"Other"**: pause and let the user provide freeform instructions, then act on them.
+
+### Skip conditions
+
+Skip this step entirely and proceed to Step 7 if ANY of:
+- There are no deferred concerns (all concerns passed the threshold or there were no concerns)
+- `TRUST == "high"` (high-trust mode auto-creates issues per Step 5 and proceeds without user interaction)
+
+## Step 7: Rebase and Squash Commits Before Review
 
 **MANDATORY: Delegate rebase, squash, and STATE.md closure verification to a squash subagent.** This keeps the parent
 agent context lean by offloading git operations to a dedicated haiku-model subagent.
@@ -893,11 +999,11 @@ Task tool:
 
 Parse the subagent result:
 
-- **SUCCESS**: Extract `commits` array for use at the approval gate. Continue to Step 7.
+- **SUCCESS**: Extract `commits` array for use at the approval gate. Continue to Step 8.
 - **FAILED** (phase: rebase): Return FAILED status with conflict details. Do NOT proceed.
 - **FAILED** (phase: squash or verify): Return FAILED status with error details. Do NOT proceed.
 
-## Step 7: Approval Gate
+## Step 8: Approval Gate
 
 **CRITICAL: This step is MANDATORY when trust != "high".**
 
@@ -906,13 +1012,13 @@ and no explicit user approval is detected in session history.
 
 ### Pre-Gate Squash Verification (BLOCKING)
 
-Before presenting the approval gate, verify that Step 6 (Rebase and Squash) was executed. Squashing by topic
+Before presenting the approval gate, verify that Step 7 (Rebase and Squash) was executed. Squashing by topic
 may produce 1-2 commits (e.g., one implementation commit + one config commit), so commit count alone does not
-determine completion. Instead, confirm that `/cat:git-squash` was invoked in Step 6.
+determine completion. Instead, confirm that `/cat:git-squash` was invoked in Step 7.
 
-**If Step 6 was skipped:** STOP — return to Step 6 and complete the rebase and squash before proceeding.
+**If Step 7 was skipped:** STOP — return to Step 7 and complete the rebase and squash before proceeding.
 
-**If Step 6 was completed:** Proceed to approval gate below.
+**If Step 7 was completed:** Proceed to approval gate below.
 
 ### Pre-Gate Skill-Builder Review (BLOCKING)
 
@@ -932,7 +1038,7 @@ to the approval gate.
 
 ### If trust == "high"
 
-Skip approval gate. Continue directly to Step 8 (merge).
+Skip approval gate. Continue directly to Step 9 (merge).
 
 ### If trust == "low" or trust == "medium"
 
@@ -944,7 +1050,7 @@ Before presenting AskUserQuestion, check whether the user has already typed an e
 conversation. Scan recent conversation messages for user messages containing both "approve" and "merge" (e.g.,
 "approve and merge", "approve merge", "approved merge").
 
-**If direct approval is detected:** Skip AskUserQuestion and proceed directly to Step 8 (merge). The
+**If direct approval is detected:** Skip AskUserQuestion and proceed directly to Step 9 (merge). The
 PreToolUse hook reads the session JSONL file and will recognize the user's direct message as approval.
 
 **If no direct approval is detected:** Continue to the approval gate below.
@@ -1048,7 +1154,7 @@ AskUserQuestion:
 
 Fail-fast principle: Unknown consent = No consent = STOP.
 
-**If approved:** Continue to Step 8
+**If approved:** Continue to Step 9
 
 **If "Fix remaining concerns" selected:**
 1. Extract MEDIUM+ concerns (severity, description, location, recommendation, detail_file)
@@ -1079,7 +1185,7 @@ Fail-fast principle: Unknown consent = No consent = STOP.
        - Read the concern detail files for full context on each concern
        - Commit your fixes using the same commit type as the primary implementation
          (e.g., `bugfix:`, `feature:`). These commits will be squashed into the main
-         implementation commit in Step 6. Do NOT use `test:` as an independent commit
+         implementation commit in Step 7. Do NOT use `test:` as an independent commit
          type for concern fixes.
        - Return JSON status when complete
 
@@ -1103,7 +1209,7 @@ Fail-fast principle: Unknown consent = No consent = STOP.
    - Verify the concerns were actually resolved
    - Detect new concerns introduced by the fixes
    - Provide updated results to the user at the approval gate
-4. Return to Step 7 approval gate with updated results
+4. Return to Step 8 approval gate with updated results
 
 **If changes requested:** Return to user with feedback for iteration. Return status:
 ```json
@@ -1123,7 +1229,7 @@ Fail-fast principle: Unknown consent = No consent = STOP.
 }
 ```
 
-## Step 8: Merge Phase
+## Step 9: Merge Phase
 
 Display the **Merging phase** banner by running:
 
@@ -1174,11 +1280,11 @@ Task tool:
 
 Parse merge result:
 
-- **MERGED**: Continue to Step 9
+- **MERGED**: Continue to Step 10
 - **CONFLICT**: Return FAILED with conflict details
 - **ERROR**: Return FAILED with error
 
-## Step 9: Return Success
+## Step 10: Return Success
 
 Return summary to the main `/cat:work` skill:
 
