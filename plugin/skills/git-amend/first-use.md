@@ -20,12 +20,12 @@ Only amend when ALL conditions are met:
 For deterministic amend with TOCTOU race detection:
 
 ```bash
-"$(git rev-parse --show-toplevel)/plugin/scripts/git-amend-safe.sh" --no-edit "$WORKTREE_PATH"
+"${CLAUDE_PLUGIN_ROOT}/client/bin/git-amend-safe" --no-edit "$WORKTREE_PATH"
 # Or with new message:
-"$(git rev-parse --show-toplevel)/plugin/scripts/git-amend-safe.sh" --message "new msg" "$WORKTREE_PATH"
+"${CLAUDE_PLUGIN_ROOT}/client/bin/git-amend-safe" --message "new msg" "$WORKTREE_PATH"
 ```
 
-The script verifies push status before amending and detects if the original commit was pushed during the amend window.
+The tool verifies push status before amending and detects if the original commit was pushed during the amend window.
 
 ### Result Handling
 
