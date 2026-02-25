@@ -152,6 +152,17 @@ Evaluate implementation against these deployment and release criteria:
 - **Test Coverage**: Changes to deployment-critical paths without integration tests
 - **Performance Baseline**: Changes that might affect startup time or resource usage
 
+### Severity Examples
+
+Use these domain-specific examples to calibrate your severity ratings against the universal framework:
+
+| Severity | Example for this domain |
+|----------|------------------------|
+| CRITICAL | Build is broken and CI pipeline cannot produce artifacts, or deployment produces corrupt output |
+| HIGH     | Missing health check endpoint, no rollback strategy documented for a destructive schema migration |
+| MEDIUM   | Docker image unnecessarily large due to missing multi-stage build, missing build cache optimization |
+| LOW      | CI job naming inconsistency, minor Dockerfile layer ordering that could be marginally improved |
+
 ## Detail File
 
 Before returning your review, write comprehensive analysis to:

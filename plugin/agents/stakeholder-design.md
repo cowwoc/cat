@@ -175,6 +175,17 @@ Flag methods exceeding these thresholds:
 - Parameter count > 5
 - Nesting depth > 4
 
+### Severity Examples
+
+Use these domain-specific examples to calibrate your severity ratings against the universal framework:
+
+| Severity | Example for this domain |
+|----------|------------------------|
+| CRITICAL | Core business logic duplicated across modules — two diverging implementations, a maintenance nightmare |
+| HIGH     | Method duplicated in sibling classes, or JDK standard library functionality reimplemented from scratch |
+| MEDIUM   | Cyclomatic complexity above threshold, poor class cohesion, or deep nesting making logic hard to follow |
+| LOW      | Minor naming convention inconsistency, slightly verbose code with no functional impact |
+
 ## Detail File
 
 Before returning your review, write comprehensive analysis to:

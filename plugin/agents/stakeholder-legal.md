@@ -196,6 +196,17 @@ Before reviewing, understand the application's legal context:
 - **B2B systems**: Contract compliance, SLAs, and enterprise requirements
 - **Regulated industries**: Full regulatory compliance required
 
+### Severity Examples
+
+Use these domain-specific examples to calibrate your severity ratings against the universal framework:
+
+| Severity | Example for this domain |
+|----------|------------------------|
+| CRITICAL | License violation (e.g., GPL code in a proprietary product), or a clear GDPR/privacy breach |
+| HIGH     | Missing license headers on source files, unclear or absent data retention policy for personal data |
+| MEDIUM   | License compatibility concern that requires legal review before shipping |
+| LOW      | Copyright year needs updating, minor attribution formatting inconsistency |
+
 ## Detail File
 
 Before returning your review, write comprehensive analysis to:
