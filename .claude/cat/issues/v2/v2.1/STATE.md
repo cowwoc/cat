@@ -45,6 +45,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - session-start-version-check
 - use-qualified-issue-names-in-responses
 - restore-worktree-on-resume
+- add-fix-threshold-config
 
 
 ## Issues Completed
