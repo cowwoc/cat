@@ -33,8 +33,8 @@ How to register, invoke, and reference skills for main agents and subagents in C
 The Skill tool triggers the full SkillLoader pipeline:
 
 1. Claude Code routes to the skill's SKILL.md
-2. SKILL.md preprocessor directive (`!` backtick) calls `load-skill.sh`
-3. `load-skill.sh` invokes `SkillLoader.java`
+2. SKILL.md preprocessor directive (`!` backtick) calls `load-skill`
+3. `load-skill` invokes `SkillLoader.java`
 4. SkillLoader checks marker file, returns full content from `first-use.md` or `reference.md`
 5. Variable substitution and `@path` expansion run on the returned content
 
@@ -146,7 +146,7 @@ argument to the binary.
 |-------------|-------------|----------------------|
 | Main agent via Skill tool | `cat:{skill-name}` | Yes — returns `first-use.md` or `reference.md` |
 | Subagent via `skills:` frontmatter | `cat:{skill-name}` | Yes — shared with parent's marker file |
-| Subagent via SubagentStartHook | skill listing injected at spawn | On-demand via `load-skill.sh` |
+| Subagent via SubagentStartHook | skill listing injected at spawn | On-demand via `load-skill` |
 
 ## Session Markers (First-Use vs Reference)
 

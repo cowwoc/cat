@@ -4,4 +4,4 @@ user-invocable: false
 argument-hint: "<issue_id> <worktree_path> <verify_level> <commits_compact>"
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" "${CLAUDE_PLUGIN_ROOT}" stakeholder-review "${CLAUDE_SESSION_ID}"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" stakeholder-review "${CLAUDE_SESSION_ID}" "${CLAUDE_PROJECT_DIR}"`

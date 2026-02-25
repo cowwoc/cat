@@ -3,4 +3,4 @@ description: Use when you need the current session ID - access via ${CLAUDE_SESS
 user-invocable: false
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" "${CLAUDE_PLUGIN_ROOT}" get-session-id "${CLAUDE_SESSION_ID}"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" get-session-id "${CLAUDE_SESSION_ID}" "${CLAUDE_PROJECT_DIR}"`

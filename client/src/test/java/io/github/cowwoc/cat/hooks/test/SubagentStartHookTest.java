@@ -260,7 +260,7 @@ public final class SubagentStartHookTest
       {
         String listing = SkillDiscovery.getMainAgentSkillListing(scope);
         requireThat(listing, "listing").contains("The following skills are available.");
-        requireThat(listing, "listing").contains("load-skill.sh");
+        requireThat(listing, "listing").contains("load-skill");
         requireThat(listing, "listing").contains("fmt:format-test-skill");
         requireThat(listing, "listing").contains("Format test skill description.");
         requireThat(listing, "listing").contains("fmt:format-test-skill: Format test skill description.");

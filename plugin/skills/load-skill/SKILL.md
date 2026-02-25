@@ -3,4 +3,4 @@ description: Use when you need full instructions for a specific CAT skill - load
 model-invocable: true
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" "${CLAUDE_PLUGIN_ROOT}" load-skill "${CLAUDE_SESSION_ID}"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" load-skill "${CLAUDE_SESSION_ID}" "${CLAUDE_PROJECT_DIR}"`
