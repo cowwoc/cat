@@ -118,6 +118,21 @@ Add `minSeverity` to `cat-config.json`:
      - `critical` — Quick prototypes, throwaway spikes, proof-of-concept work. Only blocks on release-blocking
        issues (data loss, security breach, system crash). Allows unsanitized inputs, missing critical-path tests,
        method duplication. Not suitable for any code that will be deployed to users.
+   - Clarify the distinction between minSeverity and patience near the top of the file:
+     - `minSeverity` controls WHAT gets fixed — a hard floor that determines which concerns exist at all
+     - `patience` controls WHEN it gets fixed — a cost/benefit analysis that determines whether an acknowledged concern
+       is fixed now (inline) or deferred to a future issue
+   - Include a concrete example illustrating the difference:
+     > **Example:** A reviewer raises a MEDIUM concern: "High cyclomatic complexity in `PaymentService.process()`."
+     >
+     > - With `minSeverity: "high"` — the concern is **ignored**. It never appears in review results, is never
+     >   tracked, and no one is asked about it. It ceases to exist.
+     > - With `minSeverity: "low"` and `patience: "high"` — the concern is **acknowledged but deferred**. It appears
+     >   in review results, a tracking issue is created (or the user is asked how to handle it), and it will be
+     >   addressed in a future issue. The concern is real; the team just decided "not now."
+     >
+     > Both result in the concern not being fixed in the current issue. The difference: deferred concerns are tracked
+     > and will eventually be addressed. Ignored concerns are permanently dropped.
    - Document the concern pipeline: minSeverity → patience → reviewThreshold
 
 8. **Update patience documentation**
