@@ -4,6 +4,7 @@ description: >
   Trigger words: "run retrospective", "analyze patterns", "learning session", "retrospective on learnings", "patterns from".
   Analyzes patterns across multiple learning entries, not individual mistakes.
   MANDATORY after learn threshold is reached.
+model: sonnet
 user-invocable: true
 ---
 

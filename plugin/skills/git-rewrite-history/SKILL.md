@@ -1,5 +1,6 @@
 ---
 description: "MANDATORY: Use instead of `git filter-branch` - safer git-filter-repo with recovery"
+model: sonnet
 user-invocable: false
 ---
 
