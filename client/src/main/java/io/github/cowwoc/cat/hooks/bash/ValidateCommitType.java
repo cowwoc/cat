@@ -44,10 +44,10 @@ public final class ValidateCommitType implements BashHandler
     "revert");      // Revert commit
 
   // Files that are Claude-facing and should use config:, not docs:
-  // Per M255, M306: plugin/, CLAUDE.md, .claude/, client/, skills/, etc.
+  // Files that are Claude-facing and should use config:, not docs:
   private static final List<String> CLAUDE_FACING_PATTERNS = Arrays.asList(
     "CLAUDE.md",
-    "plugin/",         // CAT plugin directory (M255, M306)
+    "plugin/",         // CAT plugin directory
     ".claude/",        // Claude config directory
     "client/",         // Client scripts
     "skills/",         // Skill definitions
@@ -212,7 +212,7 @@ public final class ValidateCommitType implements BashHandler
 
             Fix: Change 'docs:' to 'config:' in your commit message
 
-            See CLAUDE.md "Commit Types" section for reference (M255, M306).""",
+            See CLAUDE.md "Commit Types" section for reference.""",
             filePath, pattern));
         }
       }

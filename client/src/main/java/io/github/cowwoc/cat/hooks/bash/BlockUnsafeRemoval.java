@@ -255,7 +255,7 @@ public final class BlockUnsafeRemoval implements BashHandler
       if (isInsideOrEqual(protectedPath, targetPath))
       {
         return Result.block(String.format("""
-          UNSAFE DIRECTORY REMOVAL BLOCKED (M464, M491)
+          UNSAFE DIRECTORY REMOVAL BLOCKED
 
           Attempted: %s %s
           Problem:   A protected path is inside the deletion target
