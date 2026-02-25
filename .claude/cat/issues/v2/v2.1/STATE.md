@@ -48,6 +48,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - add-min-severity-config
 - refactor-curiosity-to-effort
 - add-smart-questioning-to-add
+- refactor-add-wizard-batching
 
 
 ## Issues Completed
