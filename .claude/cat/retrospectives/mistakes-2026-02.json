@@ -1803,7 +1803,13 @@
       "rca_method_name": "causal-barrier",
       "prevention_type": "skill",
       "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue/first-use.md",
-      "pattern_keywords": ["false_positive", "pre-existing", "patience", "cost_benefit", "stakeholder_review"],
+      "pattern_keywords": [
+        "false_positive",
+        "pre-existing",
+        "patience",
+        "cost_benefit",
+        "stakeholder_review"
+      ],
       "prevention_implemented": true,
       "prevention_verified": true,
       "recurrence_of": null,
@@ -1812,21 +1818,25 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Classify a concern as a false positive only when the reviewer read the wrong branch. Treat pre-existing concerns as real issues and route them through the patience cost/benefit framework to decide whether to fix inline or defer as a new issue.",
-      "resolution_status": "superseded",
-      "superseded_by": "2.1-delegate-stakeholder-review-to-subagent (architectural fix: worktree isolation prevents base-branch reads)"
+      "correct_behavior": "Classify a concern as a false positive only when the reviewer read the wrong branch. Treat pre-existing concerns as real issues and route them through the patience cost/benefit framework to decide whether to fix inline or defer as a new issue."
     },
     {
       "id": "M408",
-      "timestamp": "2026-02-25T18:03:25Z",
-      "category": "assumption_without_verification",
-      "description": "work-prepare potentially_complete detection missed commit 6cb3124f2 that implemented delegate-stakeholder-review-to-subagent because its message used descriptive language, not the issue name",
-      "root_cause": "checkBaseBranchCommits searched only by --grep=<issueName>, assuming all implementation commits would reference the issue name in their message. Commit 6cb3124f2 used the message 'minimize parent-agent context in stakeholder review via file-based concern handoff' — correct but with no issue name reference. The assumption that commit messages always reference the issue name is false.",
+      "timestamp": "2026-02-25T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "Displayed raw JSON from stakeholder-review to user and stopped on REJECTED status instead of entering auto-fix loop",
+      "root_cause": "work-with-issue skill Handle Review Result section lacked explicit guidance that: (1) the stakeholder-review JSON is an internal machine contract not for display, and (2) REJECTED status means CRITICAL concerns exist and triggers the auto-fix loop, not workflow termination",
       "rca_method": "A",
       "rca_method_name": "5-whys",
-      "prevention_type": "code_fix",
-      "prevention_path": "${CLAUDE_PROJECT_DIR}/client/src/main/java/io/github/cowwoc/cat/hooks/util/WorkPrepare.java",
-      "pattern_keywords": ["work_prepare", "potentially_complete", "suspicious_commits", "commit_message", "file_overlap"],
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue/first-use.md",
+      "pattern_keywords": [
+        "raw_json_display",
+        "rejected_status",
+        "stakeholder_review",
+        "auto_fix_loop",
+        "protocol_violation"
+      ],
       "prevention_implemented": true,
       "prevention_verified": true,
       "recurrence_of": null,
@@ -1835,7 +1845,89 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Detect potentially-complete implementations using two strategies: (1) message-based --grep search for the issue name, AND (2) file-overlap search checking whether any recent base-branch commit modified files listed in PLAN.md's 'Files to Create' or 'Files to Modify' sections. Both strategies filter out planning commits as false positives."
+      "correct_behavior": "Parse stakeholder-review JSON silently as an internal contract; use the already-rendered review box and concern boxes for user display; when review_status is REJECTED extract concerns and enter the auto-fix loop immediately"
+    },
+    {
+      "id": "M409",
+      "timestamp": "2026-02-25T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "Invoked cat:stakeholder-review-box with space-separated reviewers instead of single comma-separated string",
+      "root_cause": "The stakeholder-review/first-use.md report step documented the reviewers arg format as a comma-separated list but did not make explicit that all reviewers must be passed as one single argument. The agent expanded each reviewer as a separate space-separated arg, producing 8 args instead of 4, causing the CLI (GetStakeholderReviewBox.main) to misparse arguments.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/stakeholder-review/first-use.md",
+      "pattern_keywords": [
+        "stakeholder-review-box",
+        "argument-count",
+        "comma-separated",
+        "cli-invocation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Build the entire REVIEWER_STATUS_LIST as a single comma-separated string before invoking cat:stakeholder-review-box. Pass it as one arg: args: \"${ISSUE_ID} ${REVIEWER_STATUS_LIST} ${REVIEW_RESULT} ${REVIEW_SUMMARY}\" \u2014 never expand reviewers as space-separated args."
+    },
+    {
+      "id": "M410",
+      "timestamp": "2026-02-25T19:18:00Z",
+      "category": "documentation_priming",
+      "description": "Agent added (M232) to Javadoc comment in GetAddOutput.java, copying M-code convention from existing Java source files",
+      "root_cause": "Existing Java source files (WarnApprovalWithoutRenderDiff.java, BlockLockManipulation.java, etc.) contained M-code references in Javadoc comments. Agent read these files during implementation and copied the convention into new code. The M-code policy in common.md only prohibited agent-facing documentation (plugin/skills/, plugin/concepts/, plugin/agents/) but did not explicitly cover Java source files.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/.claude/rules/common.md",
+      "pattern_keywords": [
+        "M-code",
+        "mcode",
+        "Javadoc",
+        "priming",
+        "java-source",
+        "convention-copying"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Do not add M-code references (e.g., M232, M097) to Javadoc comments or string literals in Java source files under client/src/. Describe the behavior in plain language. M-codes belong only in MEMORY.md, CLAUDE.md, .claude/rules/, and .claude/cat/retrospectives/."
+    },
+    {
+      "id": "M411",
+      "timestamp": "2026-02-25T19:30:00Z",
+      "category": "protocol_violation",
+      "description": "After rebase onto v2.1, squash included 12 unrelated Java files because conflict resolution used --theirs (feature branch) instead of HEAD (target branch)",
+      "root_cause": "During rebase, --ours/--theirs semantics are inverted compared to merge. The agent used git checkout --theirs intending to take v2.1's version, but --theirs during rebase means the commit being replayed (feature branch). This produced non-empty commits carrying old file versions instead of empty commits that git would auto-drop.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/git-rebase/first-use.md",
+      "pattern_keywords": [
+        "rebase",
+        "conflict-resolution",
+        "ours-theirs-inversion",
+        "unrelated-files",
+        "HEAD",
+        "REBASE_HEAD"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "During rebase conflict resolution, use git checkout HEAD -- <file> to take the target branch version (unambiguous). Never use --ours/--theirs during rebase — their meaning is inverted compared to merge."
     }
   ]
 }

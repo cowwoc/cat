@@ -717,10 +717,14 @@ This check ensures the agent is reminded that decomposed parents require all sub
 
 **Present completion:**
 
-Run the renderer script and output its result verbatim:
+Run the renderer and output its result verbatim:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/render-add-complete.sh" --type issue --name "{issue-name}" --version "{version}" --issue-type "{type}" --deps "{dependencies}"
+CLIENT_BIN="${WORKTREE_PATH}/client/target/jlink/bin"
+if [[ ! -x "$CLIENT_BIN/get-add-output" ]]; then
+  CLIENT_BIN="/workspace/client/target/jlink/bin"
+fi
+"$CLIENT_BIN/get-add-output" --type issue --name "{issue-name}" --version "{version}" --issue-type "{type}" --dependencies "{dependencies}"
 ```
 
 </step>
@@ -1435,10 +1439,14 @@ EOF
 
 **Present completion:**
 
-Run the renderer script and output its result verbatim:
+Run the renderer and output its result verbatim:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/render-add-complete.sh" --type version --name "{version-name}" --version "{version}" --version-type "{VERSION_TYPE}" --parent "{parent-info}" --path "{version-path}"
+CLIENT_BIN="${WORKTREE_PATH}/client/target/jlink/bin"
+if [[ ! -x "$CLIENT_BIN/get-add-output" ]]; then
+  CLIENT_BIN="/workspace/client/target/jlink/bin"
+fi
+"$CLIENT_BIN/get-add-output" --type version --name "{version-name}" --version "{version}" --version-type "{VERSION_TYPE}" --parent "{parent-info}" --path "{version-path}"
 ```
 
 </step>

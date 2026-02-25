@@ -87,6 +87,7 @@ readonly -a HANDLERS=(
   "validate-status-alignment:util.StatusAlignmentValidator"
   "load-skill:util.SkillLoader"
   "feedback:util.Feedback"
+  "get-add-output:skills.GetAddOutput"
 )
 
 # --- Logging ---

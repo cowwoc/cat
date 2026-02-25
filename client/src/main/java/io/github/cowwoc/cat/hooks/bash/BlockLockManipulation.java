@@ -13,8 +13,6 @@ import java.util.regex.Pattern;
 
 /**
  * Block direct manipulation of CAT lock files.
- * <p>
- * M096: Agent deleted lock files without user permission.
  */
 public final class BlockLockManipulation implements BashHandler
 {
