@@ -1,5 +1,6 @@
 ---
 description: Internal merge phase (invoked by /cat:work) - squashes commits, merges to base branch, cleans up
+model: haiku
 user-invocable: false
 ---
 
