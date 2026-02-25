@@ -87,7 +87,7 @@ When prepare phase returns NO_ISSUES, use extended failure fields to provide spe
 1. If `blocked_issues` is non-empty: list each blocked issue and what it's blocked by
 2. If `locked_issues` is non-empty: suggest `/cat:cleanup` to clear stale locks
 3. If `closed_count == total_count`: all issues done - suggest `/cat:add` for new work
-4. Otherwise: read `get-available-issues.sh` output to determine which issues are available and display them
+4. Otherwise: run `work-prepare` to determine which issues are available and display them
 
 Fallback to `message` field if extended fields are absent:
 
@@ -96,7 +96,7 @@ Fallback to `message` field if extended fields are absent:
 | "locked" | Suggest `/cat:cleanup` to clear stale locks, or wait for other sessions |
 | "blocked" | Suggest resolving blocking dependencies first |
 | "closed" | All issues done - suggest `/cat:status` to verify or `/cat:add` for new work |
-| other | Run `get-available-issues.sh` to determine which issues are available and display them |
+| other | Run `work-prepare` to determine which issues are available and display them |
 
 **NEVER suggest working on a previous version** - if user is on v2.1, suggesting v2.0 is unhelpful.
 
@@ -239,7 +239,7 @@ No delay needed - the work skill handles its own orchestration.
 If any phase subagent fails unexpectedly:
 
 1. Capture error message
-2. Run `"${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" release "${CLAUDE_PROJECT_DIR}" "${issue_id}" "${CLAUDE_SESSION_ID}"` to release the lock.
+2. Run `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"` to release the lock.
 3. Display error to user
 4. Offer: Retry, Abort, or Manual cleanup
 

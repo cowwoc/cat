@@ -179,7 +179,7 @@ exits with code 1.
 | `"status": "error"`: Base branch has diverged | Base has commits not in HEAD | Rebase onto base branch before merging |
 | `"status": "error"`: Fast-forward merge not possible | History diverged | Rebase issue branch onto base first |
 | `"status": "error"`: cat-base file missing | Cannot determine base branch | Recreate worktree with `/cat:work` |
-| `"status": "error"`: Failed to release lock | Lock script failed | Manually release with `issue-lock.sh force-release` |
+| `"status": "error"`: Failed to release lock | Lock tool failed | Manually release with `issue-lock force-release` |
 
 ### Step 6: Auto-Complete Decomposed Parent
 

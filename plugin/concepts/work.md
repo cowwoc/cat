@@ -123,7 +123,7 @@ manual debugging sessions.
 
 ## Issue Discovery
 
-**MANDATORY: Use get-available-issues.sh script. FAIL-FAST if script fails.**
+**MANDATORY: Use `IssueDiscovery` Java class (via `work-prepare` launcher). FAIL-FAST if tool fails.**
 
 The work-prepare subagent handles discovery internally. Main agent receives the result
 as JSON with issue_id, worktree_path, and other metadata.
