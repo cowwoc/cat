@@ -73,6 +73,8 @@ readonly -a HANDLERS=(
   "merge-and-cleanup:util.MergeAndCleanup"
   "git-squash:util.GitSquash"
   "git-merge-linear:util.GitMergeLinear"
+  "git-amend-safe:util.GitAmendSafe"
+  "git-rebase-safe:util.GitRebaseSafe"
   "post-tool-use-failure:PostToolUseFailureHook"
 
   "work-prepare:util.WorkPrepare"
