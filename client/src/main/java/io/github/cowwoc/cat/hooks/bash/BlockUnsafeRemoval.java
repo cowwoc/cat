@@ -45,6 +45,7 @@ public final class BlockUnsafeRemoval implements BashHandler
 {
   private static final Pattern WORKTREE_REMOVE_PATTERN =
     Pattern.compile("\\bgit\\s+worktree\\s+remove\\s+(?:-[^\\s]+\\s+)*([^\\s;&|]+)", Pattern.CASE_INSENSITIVE);
+  private static final Pattern RECURSIVE_FLAG_PATTERN = Pattern.compile("(?:^|\\s)-[^\\s]*[rR]");
   private static final Duration STALE_LOCK_THRESHOLD = Duration.ofHours(4);
   private final JsonMapper jsonMapper;
   private final Clock clock;
@@ -117,8 +118,7 @@ public final class BlockUnsafeRemoval implements BashHandler
    */
   private boolean hasRecursiveFlag(String command)
   {
-    Pattern flagPattern = Pattern.compile("(?:^|\\s)-[^\\s]*[rR]");
-    return flagPattern.matcher(command).find() || command.contains("--recursive");
+    return RECURSIVE_FLAG_PATTERN.matcher(command).find() || command.contains("--recursive");
   }
 
   /**
@@ -246,8 +246,19 @@ public final class BlockUnsafeRemoval implements BashHandler
     if (protectedPaths.isEmpty())
       return null;
 
-    // Resolve target path (may not exist yet, so use normalize not toRealPath)
-    Path targetPath = ShellParser.resolvePath(target, workingDirectory);
+    // Resolve target path, resolving symlinks when the path exists on disk so that symlink-based
+    // path traversal cannot bypass the safety check. Fall back to the normalized path when the
+    // target doesn't exist yet.
+    Path normalizedPath = ShellParser.resolvePath(target, workingDirectory);
+    Path targetPath;
+    try
+    {
+      targetPath = normalizedPath.toRealPath();
+    }
+    catch (IOException _)
+    {
+      targetPath = normalizedPath;
+    }
 
     // Check if any protected path is inside or equal to the target
     for (Path protectedPath : protectedPaths)
@@ -261,6 +272,7 @@ public final class BlockUnsafeRemoval implements BashHandler
           Problem:   A protected path is inside the deletion target
           Protected: %s
           Target:    %s
+          CWD:       %s
 
           WHY THIS IS BLOCKED:
           - Deleting a directory containing your current location corrupts the shell session
@@ -273,7 +285,7 @@ public final class BlockUnsafeRemoval implements BashHandler
           2. Then delete: %s %s
 
           See: /cat:safe-rm for detailed safe removal protocol
-          """, commandType, target, protectedPath, targetPath, commandType, target));
+          """, commandType, target, protectedPath, targetPath, workingDirectory, commandType, target));
       }
     }
 
@@ -312,7 +324,7 @@ public final class BlockUnsafeRemoval implements BashHandler
     {
       paths.add(mainWorktree.toRealPath());
 
-      // 3. Locked worktrees owned by OTHER active sessions
+      // 2. Locked worktrees owned by OTHER active sessions
       Path locksDir = mainWorktree.resolve(".claude/cat/locks");
       if (Files.isDirectory(locksDir))
       {
@@ -331,7 +343,9 @@ public final class BlockUnsafeRemoval implements BashHandler
             // Lock file name = {issue-id}.lock
             // Worktree path = {mainWorktree}/.claude/cat/worktrees/{issue-id}
             String fileName = lockFile.getFileName().toString();
-            String issueId = fileName.substring(0, fileName.length() - 5); // Remove ".lock"
+            String issueId = fileName.substring(0, fileName.length() - ".lock".length());
+            if (issueId.contains("/") || issueId.contains("\\") || issueId.contains(".."))
+              continue;
             Path worktreePath = mainWorktree.resolve(".claude/cat/worktrees/" + issueId);
             if (Files.isDirectory(worktreePath))
               paths.add(worktreePath.toRealPath());
@@ -340,7 +354,7 @@ public final class BlockUnsafeRemoval implements BashHandler
       }
     }
 
-    // 2. Current session's CWD
+    // 3. Current session's CWD
     Path cwdPath = Paths.get(workingDirectory);
     if (Files.exists(cwdPath))
       paths.add(cwdPath.toRealPath());
