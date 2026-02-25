@@ -824,6 +824,19 @@ Skill tool:
   args: "${ISSUE_ID} ${REVIEWER_STATUS_LIST} ${REVIEW_RESULT} ${REVIEW_SUMMARY}"
 ```
 
+**CRITICAL - Argument Count:** `cat:stakeholder-review-box` expects exactly 4 arguments. The entire reviewer list MUST
+be a single comma-separated string (the second positional argument). Build the string before invoking — do NOT pass
+each reviewer as a separate space-separated argument (that produces 8+ args instead of 4 and causes a CLI error).
+
+```bash
+# Correct: build comma-separated string first, then pass as single arg
+REVIEWER_STATUS_LIST="requirements:✓ APPROVED,architecture:✓ APPROVED,security:⚠ 1 HIGH"
+# Invoke: args: "${ISSUE_ID} ${REVIEWER_STATUS_LIST} ${REVIEW_RESULT} ${REVIEW_SUMMARY}"
+
+# WRONG: space-separated — each reviewer becomes a separate arg → CLI rejects as wrong argument count
+# args: "${ISSUE_ID} requirements:APPROVED architecture:APPROVED security:CONCERNS ..."
+```
+
 The second argument is a comma-separated list of `stakeholder:status` pairs
 (e.g., `"architecture:✓ APPROVED,design:⚠ 1 HIGH"`).
 
