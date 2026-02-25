@@ -282,6 +282,37 @@ JAVA_EOF
   unset CLAUDE_PLUGIN_ROOT
 }
 
+@test "main fails when plugin.json has no version field" {
+  export CLAUDE_PLUGIN_ROOT="${TEST_DIR}/no-version-plugin"
+  mkdir -p "$CLAUDE_PLUGIN_ROOT/.claude-plugin"
+  echo '{"repository":"https://github.com/cowwoc/cat"}' > "$CLAUDE_PLUGIN_ROOT/.claude-plugin/plugin.json"
+  run main
+  [ "$status" -ne 0 ]
+  unset CLAUDE_PLUGIN_ROOT
+}
+
+@test "symlink detection rejects extracted directory containing symlinks" {
+  local target_dir="${TEST_DIR}/extracted-jdk"
+  mkdir -p "$target_dir"
+  # Create a symlink inside the extracted directory to simulate a symlink attack
+  ln -s /etc/passwd "${target_dir}/malicious-link"
+
+  # The symlink detection logic from download_runtime
+  run bash -c "find \"$target_dir\" -type l 2>/dev/null | grep -q . && echo 'symlinks_found' || echo 'no_symlinks'"
+  [ "$status" -eq 0 ]
+  [[ "$output" == "symlinks_found" ]]
+}
+
+@test "symlink detection passes on clean directory" {
+  local target_dir="${TEST_DIR}/clean-jdk"
+  mkdir -p "${target_dir}/bin"
+  touch "${target_dir}/bin/java"
+
+  # The symlink detection logic from download_runtime
+  run bash -c "find \"$target_dir\" -type l 2>/dev/null | grep -q . && echo 'symlinks_found' || echo 'no_symlinks'"
+  [ "$status" -ne 0 ]  # grep -q exits 1 when no match
+}
+
 @test "flush_log renders newlines as JSON escape sequences" {
   LOG_LEVEL=""
   LOG_MESSAGE=""
