@@ -51,6 +51,9 @@ Add `fixThreshold` to `cat-config.json`:
 - `client/src/main/java/io/github/cowwoc/cat/hooks/util/ConcernSeverity.java` — New enum for CRITICAL/HIGH/MEDIUM/LOW
   severity levels (reusable by both fixThreshold and future severity-based logic)
 - `plugin/skills/stakeholder-review/first-use.md` — Filter out concerns below fixThreshold before aggregation
+- `plugin/skills/work-with-issue/first-use.md` — Redefine "untracked deferred concerns" (line 880, Step 6 Part B) in
+  terms of fixThreshold: concerns below fixThreshold are ignored entirely (not presented in wizard), replacing the
+  current ad-hoc "MEDIUM or LOW severity, or any concern not covered by the severity × patience matrix" language
 - `plugin/agents/stakeholder-*.md` — Update severity table to note that LOW concerns may be ignored depending on config
 - `docs/patience.md` — Add section explaining how fixThreshold interacts with patience
 - `.claude/cat/cat-config.json` — Add `fixThreshold` default value
@@ -78,11 +81,21 @@ Add `fixThreshold` to `cat-config.json`:
    - After collecting concerns from all stakeholders, filter out concerns with severity below fixThreshold
    - Add a note in the report step indicating how many concerns were filtered
 
-4. **Update cat-config.json default**
+4. **Redefine untracked concerns in work-with-issue**
+   - Files: `plugin/skills/work-with-issue/first-use.md`
+   - Line 880: Replace "Any deferred concern that does NOT have an issue automatically created above (e.g., MEDIUM or
+     LOW severity, or any concern not covered by the severity × patience matrix)" with a fixThreshold-based definition:
+     concerns below fixThreshold are ignored entirely (not deferred, not presented in wizard)
+   - Step 6 Part B (line 919-949): Redefine "untracked deferred concerns" as concerns that (a) are at or above
+     fixThreshold AND (b) were deferred by the patience matrix but not auto-tracked as issues. Concerns below
+     fixThreshold never appear here — they are already filtered out upstream
+   - Step 6 skip conditions (line 951-955): Add skip condition when all deferred concerns are below fixThreshold
+
+5. **Update cat-config.json default**
    - Files: `.claude/cat/cat-config.json`
    - Add `"fixThreshold": "low"` to the default config
 
-5. **Update patience documentation**
+6. **Update patience documentation**
    - Files: `docs/patience.md`
    - Add section explaining the concern pipeline: fixThreshold → patience → reviewThreshold
 
