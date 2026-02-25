@@ -22,7 +22,7 @@ Code's subagent architecture:
 | Subagent Capability | Available? | Evidence |
 |---------------------|------------|----------|
 | Spawn nested subagents (Task tool) | **NO** | Task tool not exposed to subagents |
-| Invoke skills dynamically (Skill tool) | **NO** | Skill tool not available to subagents. Use `load-skill.sh` via Bash instead |
+| Invoke skills dynamically (Skill tool) | **NO** | Skill tool not available to subagents. Use `load-skill` via Bash instead |
 | Read/Write/Edit files | YES | Standard file tools available |
 | Run bash commands | YES | Bash tool available |
 | Web search/fetch | YES | Available to subagents |
@@ -43,10 +43,10 @@ technically_impossible_check:
 
 | Instruction Pattern | Why Impossible | Correct Design |
 |--------------------|----------------|----------------|
-| "Subagent must invoke /cat:skill" | Skill tool unavailable | Subagent uses load-skill.sh via Bash, or main agent invokes skill before delegation |
+| "Subagent must invoke /cat:skill" | Skill tool unavailable | Subagent uses load-skill via Bash, or main agent invokes skill before delegation |
 | "Spawn reviewer subagents" | Task tool unavailable | Main agent spawns reviewers directly |
 | "Delegate to sub-subagent" | Max depth is 1 | Flatten to single delegation level |
-| "Use parallel-execute skill" | Skill tool unavailable | Subagent uses load-skill.sh, or main agent handles parallelization |
+| "Use parallel-execute skill" | Skill tool unavailable | Subagent uses load-skill, or main agent handles parallelization |
 
 **When this check identifies impossible instructions:**
 
@@ -96,12 +96,12 @@ subagent_skills_analysis:
   subagent_type_used: "general-purpose"
   domain_knowledge_needed: ["git-squash", "git-rebase"]
   skill_invocation_attempted: true
-  skill_invocation_succeeded: false  # Skill tool not available; use load-skill.sh via Bash
+  skill_invocation_succeeded: false  # Skill tool not available; use load-skill via Bash
 
   recommendation:
-    action: "Use load-skill.sh to load skill content dynamically"
+    action: "Use load-skill to load skill content dynamically"
     skills_to_load: ["skill-1", "skill-2"]
-    rationale: "Subagent receives skill listing at startup and can load skills via load-skill.sh"
+    rationale: "Subagent receives skill listing at startup and can load skills via load-skill"
 ```
 
 **Prevention pattern for skill preloading issues:**

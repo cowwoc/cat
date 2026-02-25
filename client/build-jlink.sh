@@ -83,6 +83,8 @@ readonly -a HANDLERS=(
   "monitor-subagents:util.SubagentMonitor"
   "register-hook:util.HookRegistrar"
   "validate-status-alignment:util.StatusAlignmentValidator"
+  "load-skill:util.SkillLoader"
+  "feedback:util.Feedback"
 )
 
 # --- Logging ---

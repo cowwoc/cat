@@ -33,13 +33,13 @@ import java.util.StringJoiner;
  * <p>
  * CLI usage:
  * <pre>
- *   GitHubFeedback search "query string"
- *   GitHubFeedback open "title" "body" [label1,label2,...]
+ *   feedback search "query string"
+ *   feedback open "title" "body" [label1,label2,...]
  * </pre>
  * <p>
  * Returns JSON output suitable for agent parsing.
  */
-public final class GitHubFeedback
+public final class Feedback
 {
   private static final String GITHUB_API_BASE = "https://api.github.com";
   private static final String GITHUB_BASE = "https://github.com";
@@ -50,12 +50,12 @@ public final class GitHubFeedback
   private final HttpClient httpClient;
 
   /**
-   * Creates a new GitHubFeedback instance.
+   * Creates a new Feedback instance.
    *
    * @param scope the JVM scope providing the JSON mapper
    * @throws NullPointerException if {@code scope} is null
    */
-  public GitHubFeedback(JvmScope scope)
+  public Feedback(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -155,7 +155,7 @@ public final class GitHubFeedback
    */
   public String openIssue(String title, String body, String labels) throws IOException
   {
-    return openIssue(title, body, labels, GitHubFeedback::openInBrowser);
+    return openIssue(title, body, labels, Feedback::openInBrowser);
   }
 
   /**
@@ -288,10 +288,10 @@ public final class GitHubFeedback
   /**
    * Runs the "search" subcommand.
    *
-   * @param feedback the GitHub feedback instance
+   * @param feedback the feedback instance
    * @param args the command-line arguments
    */
-  private static void runSearch(GitHubFeedback feedback, String[] args)
+  private static void runSearch(Feedback feedback, String[] args)
   {
     String query = args[1];
     try
@@ -308,14 +308,14 @@ public final class GitHubFeedback
   /**
    * Runs the "open" subcommand.
    *
-   * @param feedback the GitHub feedback instance
+   * @param feedback the feedback instance
    * @param args the command-line arguments
    */
-  private static void runOpen(GitHubFeedback feedback, String[] args)
+  private static void runOpen(Feedback feedback, String[] args)
   {
     if (args.length < 3)
     {
-      exitWithError("Usage: GitHubFeedback open <title> <body> [labels]");
+      exitWithError("Usage: feedback open <title> <body> [labels]");
       return;
     }
     String title = args[1];
@@ -362,7 +362,7 @@ public final class GitHubFeedback
       System.err.println("""
         {
           "status": "error",
-          "message": "Usage: GitHubFeedback search <query> | GitHubFeedback open <title> <body> [labels]"
+          "message": "Usage: feedback search <query> | feedback open <title> <body> [labels]"
         }""");
       System.exit(1);
       return;
@@ -372,7 +372,7 @@ public final class GitHubFeedback
 
     try (JvmScope scope = new MainJvmScope())
     {
-      GitHubFeedback feedback = new GitHubFeedback(scope);
+      Feedback feedback = new Feedback(scope);
 
       switch (subcommand)
       {

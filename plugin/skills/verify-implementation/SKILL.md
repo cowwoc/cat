@@ -6,4 +6,4 @@ allowed-tools:
   - Skill
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" "${CLAUDE_PLUGIN_ROOT}" verify-implementation "${CLAUDE_SESSION_ID}" "$(pwd)"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" verify-implementation "${CLAUDE_SESSION_ID}" "${CLAUDE_PROJECT_DIR}" "$(pwd)"`

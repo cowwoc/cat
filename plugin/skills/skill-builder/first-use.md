@@ -1507,7 +1507,7 @@ re-runs with new args, and the agent follows the already-loaded skill content in
 | Is the entire skill output script-generated (thin wrapper)? | Handler + thin skill content | Handler |
 
 **Benefits of handler pattern**:
-- **Session-efficient**: The full skill content loads only once per session (via `load-skill.sh`).
+- **Session-efficient**: The full skill content loads only once per session (via `load-skill`).
   Subsequent invocations load a tiny reference (~2 lines) instead. The handler output (`<output>` tag)
   is fresh every time, but the skill instructions are not re-loaded, saving significant context.
   After context compaction, `clear_skill_markers.py` (SessionStart hook) resets the markers so skills
@@ -1756,7 +1756,7 @@ When a skill spawns subagents (via Task tool), check whether those subagents wou
 having skills preloaded via frontmatter.
 
 **The problem**: Subagents cannot use the Skill tool directly. They can load skills dynamically via
-`load-skill.sh` (Bash), and receive the skill listing at startup. For skills that must be available
+`load-skill` (Bash), and receive the skill listing at startup. For skills that must be available
 immediately without a load step, preload them via frontmatter.
 
 **Claude Code `skills` frontmatter field**: Agents in `plugin/agents/` can specify skills to

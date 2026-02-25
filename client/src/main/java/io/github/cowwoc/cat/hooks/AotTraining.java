@@ -15,9 +15,11 @@ import io.github.cowwoc.cat.hooks.skills.GetStatusOutput;
 import io.github.cowwoc.cat.hooks.skills.ProgressBanner;
 import io.github.cowwoc.cat.hooks.skills.VerifyAudit;
 import io.github.cowwoc.cat.hooks.util.BatchReader;
+import io.github.cowwoc.cat.hooks.util.Feedback;
 import io.github.cowwoc.cat.hooks.util.HookRegistrar;
 import io.github.cowwoc.cat.hooks.util.MarkdownWrapper;
 import io.github.cowwoc.cat.hooks.util.SessionAnalyzer;
+import io.github.cowwoc.cat.hooks.util.SkillLoader;
 import io.github.cowwoc.cat.hooks.util.StatusAlignmentValidator;
 import io.github.cowwoc.cat.hooks.util.SubagentMonitor;
 import io.github.cowwoc.cat.hooks.util.WorkPrepare;
@@ -118,6 +120,8 @@ public final class AotTraining
       referenceClass(SubagentMonitor.class);
       referenceClass(HookRegistrar.class);
       referenceClass(StatusAlignmentValidator.class);
+      referenceClass(SkillLoader.class);
+      referenceClass(Feedback.class);
     }
   }
 
