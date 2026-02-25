@@ -451,7 +451,7 @@ public final class WorkPrepare
     }
 
     // Step 8: Check base branch for suspicious commits
-    String suspiciousCommits = checkBaseBranchCommits(projectDir, baseBranch, issueName);
+    String suspiciousCommits = checkBaseBranchCommits(projectDir, baseBranch, issueName, planPath);
 
     // Step 9: Update STATE.md in worktree
     try
@@ -1160,29 +1160,37 @@ public final class WorkPrepare
   }
 
   /**
-   * Checks the base branch for suspicious commits mentioning the issue name.
+   * Checks the base branch for suspicious commits that may have already implemented this issue.
    * <p>
-   * Filters out planning commits that merely add issue definitions (false positives).
+   * Uses two complementary strategies:
+   * <ol>
+   *   <li>Message search: looks for commits whose message mentions the issue name.</li>
+   *   <li>File overlap search: looks for commits that modified files listed in PLAN.md's
+   *       "Files to Create" or "Files to Modify" sections.</li>
+   * </ol>
+   * Planning commits (e.g., {@code planning: add issue ...}) are filtered out as false positives.
    *
    * @param projectDir the project root directory
    * @param baseBranch the base branch to search
    * @param issueName the issue name to search for in commit messages
+   * @param planPath the path to PLAN.md, used to extract planned files for overlap detection
    * @return a newline-separated list of suspicious commit lines, or empty string if none found
    */
-  private String checkBaseBranchCommits(Path projectDir, String baseBranch, String issueName)
+  private String checkBaseBranchCommits(Path projectDir, String baseBranch, String issueName,
+    Path planPath)
   {
+    List<String> planningPrefixes = List.of(
+      "planning:", "config: add issue", "planning: add issue", "config: mark", "config: decompose");
+
+    Set<String> suspiciousHashes = new LinkedHashSet<>();
+    List<String> suspiciousLines = new ArrayList<>();
+
+    // Strategy 1: message-based search
     try
     {
       String logOutput = GitCommands.runGit(projectDir, "log", "--oneline",
         "--grep=" + issueName, baseBranch, "-5");
 
-      if (logOutput.isEmpty())
-        return "";
-
-      List<String> planningPrefixes = List.of(
-        "planning:", "config: add issue", "planning: add issue", "config: mark", "config: decompose");
-
-      List<String> filtered = new ArrayList<>();
       for (String line : logOutput.split("\n"))
       {
         if (line.isBlank())
@@ -1204,15 +1212,162 @@ public final class WorkPrepare
           }
         }
         if (!isPlanning)
-          filtered.add(line);
+        {
+          String hash;
+          if (spaceIndex >= 0)
+            hash = line.substring(0, spaceIndex);
+          else
+            hash = "";
+          if (!hash.isEmpty() && suspiciousHashes.add(hash))
+            suspiciousLines.add(line);
+        }
       }
-
-      return String.join("\n", filtered);
     }
     catch (IOException _)
     {
-      return "";
+      // Ignore - strategy 2 may still find results
     }
+
+    // Strategy 2: file-overlap search — catches implementations whose commit messages don't
+    // reference the issue name (the failure mode that triggered M408)
+    Set<String> plannedFiles = extractPlannedFiles(planPath);
+    if (!plannedFiles.isEmpty())
+    {
+      try
+      {
+        // Get the last 20 commits on base to check for file overlap
+        String logOutput = GitCommands.runGit(projectDir, "log", "--oneline", baseBranch, "-20");
+        for (String line : logOutput.split("\n"))
+        {
+          if (line.isBlank())
+            continue;
+          int spaceIndex = line.indexOf(' ');
+          if (spaceIndex < 0)
+            continue;
+          String hash = line.substring(0, spaceIndex);
+          String msg = line.substring(spaceIndex + 1);
+
+          // Skip already-found commits and planning commits
+          if (suspiciousHashes.contains(hash))
+            continue;
+          boolean isPlanning = false;
+          for (String prefix : planningPrefixes)
+          {
+            if (msg.toLowerCase(java.util.Locale.ROOT).startsWith(prefix))
+            {
+              isPlanning = true;
+              break;
+            }
+          }
+          if (isPlanning)
+            continue;
+
+          // Check if this commit touched any of the planned files
+          String changedFiles = GitCommands.runGit(projectDir, "diff-tree", "--no-commit-id",
+            "-r", "--name-only", hash);
+          for (String changedFile : changedFiles.split("\n"))
+          {
+            if (changedFile.isBlank())
+              continue;
+            for (String plannedFile : plannedFiles)
+            {
+              // Match by suffix to handle glob patterns like `plugin/agents/stakeholder-*.md`
+              if (changedFile.endsWith(plannedFile) || matchesGlobSuffix(changedFile, plannedFile))
+              {
+                suspiciousHashes.add(hash);
+                suspiciousLines.add(line + " [touches planned file: " + changedFile + "]");
+                break;
+              }
+            }
+            if (suspiciousHashes.contains(hash))
+              break;
+          }
+        }
+      }
+      catch (IOException _)
+      {
+        // Ignore - return whatever was found by strategy 1
+      }
+    }
+
+    return String.join("\n", suspiciousLines);
+  }
+
+  /**
+   * Extracts the set of file paths listed under "Files to Create" and "Files to Modify" in PLAN.md.
+   * <p>
+   * Glob patterns (e.g., {@code plugin/agents/stakeholder-*.md}) are included as-is and matched
+   * using {@link #matchesGlobSuffix(String, String)}.
+   *
+   * @param planPath the path to PLAN.md
+   * @return the set of planned file paths, or an empty set if PLAN.md is absent or unreadable
+   */
+  private Set<String> extractPlannedFiles(Path planPath)
+  {
+    if (!Files.isRegularFile(planPath))
+      return Collections.emptySet();
+
+    String content;
+    try
+    {
+      content = Files.readString(planPath);
+    }
+    catch (IOException _)
+    {
+      return Collections.emptySet();
+    }
+
+    Set<String> files = new HashSet<>();
+    // Match backtick-quoted file paths in list items under Files to Create / Files to Modify
+    Pattern filePattern = Pattern.compile("`([^`]+)`");
+
+    for (Pattern sectionPattern : List.of(FILES_TO_CREATE_PATTERN, FILES_TO_MODIFY_PATTERN))
+    {
+      Matcher sectionMatcher = sectionPattern.matcher(content);
+      if (!sectionMatcher.find())
+        continue;
+      String sectionContent = sectionMatcher.group(1);
+      for (String line : sectionContent.split("\n"))
+      {
+        if (!line.strip().startsWith("-"))
+          continue;
+        Matcher fileMatcher = filePattern.matcher(line);
+        if (fileMatcher.find())
+        {
+          String filePath = fileMatcher.group(1);
+          // Normalize: strip leading ./ or /
+          if (filePath.startsWith("./"))
+            filePath = filePath.substring(2);
+          else if (filePath.startsWith("/"))
+            filePath = filePath.substring(1);
+          files.add(filePath);
+        }
+      }
+    }
+    return files;
+  }
+
+  /**
+   * Returns true if {@code filePath} matches {@code pattern} treating {@code *} as a wildcard
+   * that matches any sequence of non-separator characters.
+   * <p>
+   * Only the final path segment of {@code pattern} is checked for glob wildcards. Patterns without
+   * {@code *} are matched by exact suffix.
+   *
+   * @param filePath the actual file path from git
+   * @param pattern the planned file path, optionally containing a {@code *} wildcard
+   * @return true if the path matches the pattern
+   */
+  private boolean matchesGlobSuffix(String filePath, String pattern)
+  {
+    if (!pattern.contains("*"))
+      return filePath.endsWith(pattern);
+
+    // Convert glob pattern to regex: escape dots, replace * with [^/]*
+    String regexPattern = pattern.
+      replace(".", "\\.").
+      replace("*", "[^/]*");
+    return filePath.matches(".*" + regexPattern);
   }
 
   /**

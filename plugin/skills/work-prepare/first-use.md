@@ -328,21 +328,38 @@ returns JSON. Using a script instead of inline LLM instructions ensures:
 The check-existing-work.sh script only detects commits on the issue branch. If work was
 implemented directly on base (bypassing the issue workflow), STATE.md won't reflect completion.
 
-```bash
-# Search for commits on base that mention this issue name
-ISSUE_COMMITS=$(git -C "${CLAUDE_PROJECT_DIR}" log --oneline --grep="${ISSUE_NAME}" "${BASE_BRANCH}" -5 2>/dev/null)
+Two complementary strategies are used to detect suspicious commits:
 
-if [[ -n "$ISSUE_COMMITS" ]]; then
-  # Found suspicious commits - return for user verification
-  echo "WARNING: Found commits on base branch mentioning '${ISSUE_NAME}':"
-  echo "$ISSUE_COMMITS"
-  # Include in output JSON: "potentially_complete": true, "suspicious_commits": "..."
-fi
+**Strategy 1 — message search:** Find commits whose message contains the issue name.
+
+```bash
+ISSUE_COMMITS=$(git -C "${CLAUDE_PROJECT_DIR}" log --oneline \
+  --grep="${ISSUE_NAME}" "${BASE_BRANCH}" -5 2>/dev/null)
 ```
+
+**Strategy 2 — file-overlap search:** Find recent commits that modified files listed in PLAN.md's
+"Files to Create" or "Files to Modify" sections. This catches implementations whose commit messages
+use descriptive language instead of referencing the issue name.
+
+```bash
+# Extract planned files from PLAN.md backtick-quoted paths in file list sections
+# Check last 20 commits on base for file overlap
+git -C "${CLAUDE_PROJECT_DIR}" log --oneline "${BASE_BRANCH}" -20 | while read -r hash msg; do
+  git -C "${CLAUDE_PROJECT_DIR}" diff-tree --no-commit-id -r --name-only "$hash" | \
+    while read -r changed_file; do
+      # If changed_file matches any planned file (exact or glob), flag as suspicious
+      echo "suspicious: $hash $msg [touches planned file: $changed_file]"
+    done
+done
+```
+
+Both strategies filter out planning commits (`planning:`, `config: add issue`, etc.) as false
+positives.
 
 **Why this matters:** Work may be implemented directly on the base branch without using
 the issue workflow (e.g., previous session implemented work but didn't update STATE.md, or
-manual work outside `/cat:work`). When suspicious commits are found:
+manual work outside `/cat:work`). Commit messages often use descriptive language that does not
+reference the issue ID — message-only search misses these cases. When suspicious commits are found:
 
 1. Include `"potentially_complete": true` in output JSON
 2. Include the suspicious commit hashes and messages
