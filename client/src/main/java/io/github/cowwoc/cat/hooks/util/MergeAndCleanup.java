@@ -18,7 +18,6 @@ import tools.jackson.databind.node.ObjectNode;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -123,11 +122,15 @@ public final class MergeAndCleanup
     }
 
     boolean lockReleased = false;
-    Path lockScript = Paths.get(pluginRoot, "scripts/issue-lock.sh");
-    if (Files.isExecutable(lockScript))
+    try
     {
-      releaseLock(lockScript, projectDir, issueId, sessionId);
+      IssueLock issueLock = new IssueLock(scope);
+      issueLock.release(issueId, sessionId);
       lockReleased = true;
+    }
+    catch (IllegalArgumentException _)
+    {
+      // Not a CAT project or lock directory not set up - skip lock release
     }
 
     long endTime = System.currentTimeMillis();
@@ -276,83 +279,25 @@ public final class MergeAndCleanup
    */
   private void rebaseOnto(String worktreePath, String baseBranch) throws IOException
   {
-    String mergeBase;
-    try
-    {
-      String[] mergeBaseCommand = {"git", "-C", worktreePath, "merge-base", "HEAD", baseBranch};
-      ProcessBuilder pb = new ProcessBuilder(mergeBaseCommand);
-      pb.redirectErrorStream(true);
-      Process process = pb.start();
-      StringBuilder output = new StringBuilder();
-      try (BufferedReader reader = new BufferedReader(
-        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
-      {
-        String line = reader.readLine();
-        while (line != null)
-        {
-          if (output.length() > 0)
-            output.append('\n');
-          output.append(line);
-          line = reader.readLine();
-        }
-      }
-      int exitCode = process.waitFor();
-      if (exitCode != 0)
-      {
-        throw new IOException("Failed to compute merge-base between HEAD and " + baseBranch +
-          " in worktree: " + worktreePath + ". Output: " + output.toString().strip());
-      }
-      mergeBase = output.toString().strip();
-    }
-    catch (InterruptedException e)
-    {
-      Thread.currentThread().interrupt();
-      throw new IOException("Interrupted while computing merge-base", e);
-    }
+    Path worktree = Path.of(worktreePath);
+    String mergeBase = runGit(worktree, "merge-base", "HEAD", baseBranch).strip();
 
     try
     {
-      String[] rebaseCommand = {"git", "-C", worktreePath, "rebase", "--onto", baseBranch, mergeBase};
-      ProcessBuilder pb = new ProcessBuilder(rebaseCommand);
-      pb.redirectErrorStream(true);
-      Process process = pb.start();
-      StringBuilder output = new StringBuilder();
-      try (BufferedReader reader = new BufferedReader(
-        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
-      {
-        String line = reader.readLine();
-        while (line != null)
-        {
-          if (output.length() > 0)
-            output.append('\n');
-          output.append(line);
-          line = reader.readLine();
-        }
-      }
-      int exitCode = process.waitFor();
-      if (exitCode != 0)
-      {
-        try
-        {
-          String[] abortCommand = {"git", "-C", worktreePath, "rebase", "--abort"};
-          ProcessBuilder abortPb = new ProcessBuilder(abortCommand);
-          abortPb.redirectErrorStream(true);
-          Process abortProcess = abortPb.start();
-          abortProcess.getInputStream().transferTo(OutputStream.nullOutputStream());
-          abortProcess.waitFor();
-        }
-        catch (InterruptedException _)
-        {
-          Thread.currentThread().interrupt();
-        }
-        throw new IOException("Rebase --onto failed in worktree: " + worktreePath +
-          ". Conflicts may exist. Output: " + output.toString().strip());
-      }
+      runGit(worktree, "rebase", "--onto", baseBranch, mergeBase);
     }
-    catch (InterruptedException e)
+    catch (IOException e)
     {
-      Thread.currentThread().interrupt();
-      throw new IOException("Interrupted while rebasing onto " + baseBranch, e);
+      try
+      {
+        runGit(worktree, "rebase", "--abort");
+      }
+      catch (IOException _)
+      {
+        // Abort best-effort: ignore errors
+      }
+      throw new IOException("Rebase --onto failed in worktree: " + worktreePath +
+        ". Conflicts may exist.", e);
     }
   }
 
@@ -368,18 +313,12 @@ public final class MergeAndCleanup
   {
     try
     {
-      String[] command = {"git", "-C", worktreePath, "merge-base",
-        "--is-ancestor", baseBranch, "HEAD"};
-      ProcessBuilder pb = new ProcessBuilder(command);
-      pb.redirectErrorStream(true);
-      Process process = pb.start();
-      int exitCode = process.waitFor();
-      return exitCode == 0;
+      runGit(Path.of(worktreePath), "merge-base", "--is-ancestor", baseBranch, "HEAD");
+      return true;
     }
-    catch (InterruptedException e)
+    catch (IOException _)
     {
-      Thread.currentThread().interrupt();
-      throw new IOException("Interrupted while checking merge-base", e);
+      return false;
     }
   }
 
@@ -514,51 +453,6 @@ public final class MergeAndCleanup
     runGit(Path.of(projectDir), "branch", "-d", branch);
   }
 
-  /**
-   * Releases the issue lock by calling the lock script.
-   *
-   * @param lockScript the lock script path
-   * @param projectDir the project directory
-   * @param issueId the issue ID
-   * @param sessionId the session ID
-   * @throws IOException if the operation fails
-   */
-  private void releaseLock(Path lockScript, String projectDir, String issueId, String sessionId)
-    throws IOException
-  {
-    ProcessBuilder pb = new ProcessBuilder(lockScript.toString(), "release", projectDir,
-      issueId, sessionId);
-    pb.redirectErrorStream(true);
-    Process process = pb.start();
-
-    StringBuilder output = new StringBuilder();
-    try (BufferedReader reader = new BufferedReader(
-      new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
-    {
-      String line = reader.readLine();
-      while (line != null)
-      {
-        if (output.length() > 0)
-          output.append('\n');
-        output.append(line);
-        line = reader.readLine();
-      }
-    }
-
-    int exitCode;
-    try
-    {
-      exitCode = process.waitFor();
-    }
-    catch (InterruptedException e)
-    {
-      Thread.currentThread().interrupt();
-      throw new IOException("Interrupted while releasing lock", e);
-    }
-
-    if (exitCode != 0)
-      throw new IOException("Failed to release lock: " + output.toString());
-  }
 
   /**
    * Builds the success JSON response.
