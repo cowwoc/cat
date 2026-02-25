@@ -1,5 +1,6 @@
 ---
 description: "MANDATORY: Use instead of `git commit --amend` - verifies HEAD and push status first"
+model: haiku
 user-invocable: false
 ---
 

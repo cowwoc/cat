@@ -1,5 +1,6 @@
 ---
 description: Use when you need to examine past conversation, session logs, or raw chat history
+model: haiku
 user-invocable: false
 ---
 

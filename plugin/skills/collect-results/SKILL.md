@@ -1,5 +1,6 @@
 ---
 description: Use when a subagent finishes - collect its commits, metrics, and state updates
+model: haiku
 user-invocable: false
 ---
 

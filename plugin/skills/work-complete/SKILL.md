@@ -1,5 +1,6 @@
 ---
 description: Internal (invoked by /cat:work after merge) - generates the Issue Complete summary box
+model: haiku
 user-invocable: false
 argument-hint: "<completedIssue> <baseBranch>"
 ---

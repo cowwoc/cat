@@ -1,5 +1,6 @@
 ---
 description: Internal - renders a stakeholder review box during review
+model: haiku
 user-invocable: false
 argument-hint: "<issue> <reviewers> <result> <summary>"
 ---

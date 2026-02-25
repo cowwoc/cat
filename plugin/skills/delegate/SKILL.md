@@ -1,5 +1,6 @@
 ---
 description: Use for batch skill execution, long-running issues, or isolating verbose skill output
+model: sonnet
 user-invocable: false
 ---
 

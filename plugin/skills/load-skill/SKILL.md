@@ -1,5 +1,6 @@
 ---
 description: Use when you need full instructions for a specific CAT skill - loads skill content on demand
+model: haiku
 model-invocable: true
 ---
 

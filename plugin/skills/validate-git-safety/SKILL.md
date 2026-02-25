@@ -1,5 +1,6 @@
 ---
 description: "MANDATORY: Run before git push --force, rebase, or reset to verify safety"
+model: haiku
 user-invocable: false
 ---
 

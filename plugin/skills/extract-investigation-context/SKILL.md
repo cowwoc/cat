@@ -1,5 +1,6 @@
 ---
 description: "Silently extract investigation context from the current session for the learn skill"
+model: haiku
 user-invocable: false
 argument-hint: "<keywords...>"
 ---
