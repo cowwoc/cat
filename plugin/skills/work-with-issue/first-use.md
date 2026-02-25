@@ -86,25 +86,28 @@ This indicates Phase 1 (prepare) has completed and work phases are starting.
 **Before any execution, verify the lock for this issue belongs to the current session.**
 
 ```bash
-python3 -c "
-import json, os, sys
-lock_file = '${CLAUDE_PROJECT_DIR}/.claude/cat/locks/${ISSUE_ID}.lock'
-expected = os.environ.get('CLAUDE_SESSION_ID', '')
-if not expected:
-    print('ERROR: CLAUDE_SESSION_ID environment variable is not set')
-    sys.exit(1)
-try:
-    with open(lock_file) as f:
-        session = json.load(f).get('session_id', '')
-    if session == expected:
-        print('OK: Lock verified for current session')
-    else:
-        print(f'ERROR: Lock for ${ISSUE_ID} belongs to session {session}, not {expected}')
-        sys.exit(1)
-except FileNotFoundError:
-    print(f'ERROR: No lock file found for ${ISSUE_ID}. Issue was not properly prepared.')
-    sys.exit(1)
-"
+LOCK_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/locks/${ISSUE_ID}.lock"
+
+if [[ -z "${CLAUDE_SESSION_ID:-}" ]]; then
+  echo "ERROR: CLAUDE_SESSION_ID environment variable is not set"
+  exit 1
+fi
+
+if [[ ! -f "$LOCK_FILE" ]]; then
+  echo "ERROR: No lock file found for ${ISSUE_ID}. Issue was not properly prepared."
+  exit 1
+fi
+
+# Extract session_id value from the lock JSON using grep/sed (no jq available)
+LOCK_SESSION=$(grep -o '"session_id"[[:space:]]*:[[:space:]]*"[^"]*"' "$LOCK_FILE" | \
+  head -1 | sed 's/"session_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+
+if [[ "$LOCK_SESSION" == "$CLAUDE_SESSION_ID" ]]; then
+  echo "OK: Lock verified for current session"
+else
+  echo "ERROR: Lock for ${ISSUE_ID} belongs to session ${LOCK_SESSION}, not ${CLAUDE_SESSION_ID}"
+  exit 1
+fi
 ```
 
 If lock ownership verification fails, STOP immediately and return FAILED status. Do NOT proceed
@@ -695,7 +698,7 @@ The auto-fix threshold is determined by `AUTOFIX_LEVEL`:
 - Continue to out-of-scope classification below
 
 **NOTE:** "REVIEW_PASSED" means stakeholder review passed, NOT user approval to merge.
-User approval is a SEPARATE gate in Step 6.
+User approval is a SEPARATE gate in Step 7.
 
 ### Evaluate Remaining Concerns (Cost/Benefit)
 
@@ -766,91 +769,52 @@ patience fixes 13/16 combinations, medium fixes 8/16, high fixes 6/16.
 
 ## Step 6: Rebase and Squash Commits Before Review
 
-**MANDATORY: Rebase the issue branch onto the base branch before presenting work for user review.** The base branch may
-have advanced since the worktree was created (e.g., learning commits, other merges). Rebasing ensures the user reviews
-changes against the current base, not a stale snapshot, and that squashing only captures issue changes:
+**MANDATORY: Delegate rebase, squash, and STATE.md closure verification to a squash subagent.** This keeps the parent
+agent context lean by offloading git operations to a dedicated haiku-model subagent.
+
+Determine the primary commit message from the execution result (the most significant commit's message). If multiple
+topics exist, use the most significant commit's message. Do NOT use generic messages like "squash commit".
+
+**Before constructing the prompt below**, extract the primary commit message from the execution result's `commits`
+array. Use the first implementation commit's `message` field. Substitute the actual message string in place of the
+`PRIMARY_COMMIT_MESSAGE` value — do NOT pass the placeholder text literally.
 
 ```bash
-git -C ${WORKTREE_PATH} rebase ${BASE_BRANCH}
+# Example: extract the primary commit message from the execution result JSON
+PRIMARY_COMMIT_MESSAGE=$(echo "$EXECUTION_RESULT" | \
+  grep -o '"message"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | \
+  sed 's/"message"[[:space:]]*:[[:space:]]*"\(.*\)"/\1/')
 ```
 
-Then use `/cat:git-squash` to consolidate commits:
+Spawn the squash subagent:
 
-- All implementation work + STATE.md closure into 1 feature/bugfix commit
-- Target: 1 commit (STATE.md belongs with implementation, not in a separate commit)
+```
+Task tool:
+  description: "Squash: rebase, squash commits, verify STATE.md"
+  subagent_type: "cat:work-squash"
+  model: "haiku"
+  prompt: |
+    Execute the squash phase for issue ${ISSUE_ID}.
 
-**Commit message for squash:** Use the primary implementation commit's message from the execution result. If multiple
-topics exist, use the most significant commit's message. The squash script requires the message as its second argument:
+    ## Configuration
+    ISSUE_ID: ${ISSUE_ID}
+    ISSUE_PATH: ${ISSUE_PATH}
+    WORKTREE_PATH: ${WORKTREE_PATH}
+    BASE_BRANCH: ${BASE_BRANCH}
+    PRIMARY_COMMIT_MESSAGE: ${PRIMARY_COMMIT_MESSAGE}
 
-```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/git-squash" "${BASE_BRANCH}" "<commit message from execution result>" "${WORKTREE_PATH}"
+    Load and follow: @${CLAUDE_PLUGIN_ROOT}/agents/work-squash.md
+
+    Return JSON per the output contract in the agent definition.
 ```
 
-Do NOT use generic messages like "squash commit", "squash commits", or "combined work". The main agent already has the
-commits from the execution result — reuse the primary implementation commit's message as the squash message
+### Handle Squash Result
 
-**CRITICAL: STATE.md file grouping:**
-- STATE.md status changes belong IN THE SAME COMMIT as the implementation work
-- Do NOT create separate `planning:` or `config:` commits for STATE.md updates
-- Commit type should match the implementation work (`feature:`, `bugfix:`, `config:`, etc.)
-- Example: `feature: add user authentication` includes STATE.md closure in that commit
+Parse the subagent result:
 
-This ensures the user reviews clean commit history, not intermediate implementation state.
-
-### Verify Squash Quality
-
-**After squashing, verify that no further squashing is needed.**
-
-Run this check against the commits on the branch:
-
-```bash
-git -C ${WORKTREE_PATH} log --format="%H %s" ${BASE_BRANCH}..HEAD
-```
-
-**Indicators that further squashing is needed** (any one triggers):
-
-1. **Same type prefix + overlapping files:** Two or more commits share the same type prefix (e.g., both `feature:`)
-   AND modify at least one file in common. Check with:
-   ```bash
-   # For each pair of same-prefix commits, check file overlap
-   comm -12 <(git show --name-only --format="" COMMIT_A | sort) \
-            <(git show --name-only --format="" COMMIT_B | sort)
-   ```
-
-2. **Iterative commit messages:** Commit messages containing words like "fix", "update", "address", "correct",
-   "adjust" that reference work done in an earlier commit on the same branch.
-
-3. **Refactor touching same files as feature:** A `refactor:` commit modifies the same files as a preceding
-   `feature:` or `bugfix:` commit, suggesting the refactor is part of the same work.
-
-**If any indicator triggers:** Return to squash step and consolidate the affected commits.
-
-**If no indicators trigger:** Proceed to STATE.md closure verification.
-
-### Verify STATE.md Closure (BLOCKING)
-
-**Before proceeding to the approval gate, verify that STATE.md is closed in the final commit.**
-
-```bash
-# Check STATE.md status in the HEAD commit
-STATE_RELATIVE=$(realpath --relative-to="${WORKTREE_PATH}" "${ISSUE_PATH}/STATE.md")
-STATUS_IN_COMMIT=$(git -C "${WORKTREE_PATH}" show "HEAD:${STATE_RELATIVE}" 2>/dev/null | \
-  grep -i "^\*\*Status:\*\*\|^- \*\*Status:\*\*" | head -1)
-echo "STATE.md status in HEAD commit: ${STATUS_IN_COMMIT}"
-```
-
-**Blocking condition:** If STATE.md status is NOT `closed` in HEAD, STOP and fix before presenting the approval gate:
-
-1. Open `${ISSUE_PATH}/STATE.md` and set `Status: closed`, `Progress: 100%`
-2. Amend the most recent implementation commit to include the STATE.md change:
-   ```bash
-   git -C "${WORKTREE_PATH}" add "${ISSUE_PATH}/STATE.md"
-   git -C "${WORKTREE_PATH}" commit --amend --no-edit
-   ```
-3. Re-run squash quality verification above
-
-**Why this check exists:** The approval gate presents final work for user review. STATE.md must already
-reflect the closed state at review time — not in a separate follow-up commit.
+- **SUCCESS**: Extract `commits` array for use at the approval gate. Continue to Step 7.
+- **FAILED** (phase: rebase): Return FAILED status with conflict details. Do NOT proceed.
+- **FAILED** (phase: squash or verify): Return FAILED status with error details. Do NOT proceed.
 
 ## Step 7: Approval Gate
 
