@@ -20,6 +20,8 @@ set -euo pipefail
 #    "## Gates" / "### Entry" / "### Exit" → "## Pre-conditions" / "## Post-conditions"
 #    "## Entry Gate" / "## Exit Gate" → "## Pre-conditions" / "## Post-conditions"
 #    "## Exit Gate Tasks" → "## Post-conditions"
+# 5. Create .claude/cat/.gitignore with patterns for temporary files if missing;
+#    if it exists, add any missing patterns (/worktrees/, /locks/, /verify/)
 
 trap 'echo "ERROR in 2.1.sh at line $LINENO: $BASH_COMMAND" >&2; exit 1' ERR
 
@@ -415,6 +417,48 @@ else
     done <<< "$all_plan_files"
 
     log_migration "Phase 4 complete: $phase4_changed files changed"
+fi
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase 5: Create or update .claude/cat/.gitignore with patterns for temp files
+# ──────────────────────────────────────────────────────────────────────────────
+
+log_migration "Phase 5: Create or update .claude/cat/.gitignore"
+
+gitignore_file=".claude/cat/.gitignore"
+gitignore_template="${CLAUDE_PLUGIN_ROOT}/concepts/.gitignore-template"
+
+if [[ ! -f "$gitignore_template" ]]; then
+    echo "ERROR: .gitignore template not found: $gitignore_template" >&2
+    echo "Solution: Verify plugin installation is complete." >&2
+    exit 1
+fi
+
+if [[ ! -f "$gitignore_file" ]]; then
+    log_migration "No .gitignore found - copying template"
+    cp "$gitignore_template" "$gitignore_file"
+    log_migration "Phase 5 complete: created $gitignore_file"
+else
+    log_migration ".gitignore exists - checking for missing patterns"
+    phase5_changed=0
+
+    # Extract patterns from template (non-comment, non-empty lines)
+    patterns=$(grep -v '^#' "$gitignore_template" | grep -v '^[[:space:]]*$' | sed 's/#.*//' | sed 's/[[:space:]]*$//')
+
+    while IFS= read -r pattern; do
+        [[ -z "$pattern" ]] && continue
+        if ! grep -qF "$pattern" "$gitignore_file" 2>/dev/null; then
+            printf '%s\n' "$pattern" >> "$gitignore_file"
+            log_migration "  Added missing pattern: $pattern"
+            ((phase5_changed++)) || true
+        fi
+    done <<< "$patterns"
+
+    if [[ "$phase5_changed" -eq 0 ]]; then
+        log_migration "Phase 5 complete: all patterns already present"
+    else
+        log_migration "Phase 5 complete: added $phase5_changed missing patterns"
+    fi
 fi
 
 log_success "Migration to 2.1 completed"
