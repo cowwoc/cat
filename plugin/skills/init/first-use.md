@@ -95,6 +95,13 @@ AskUserQuestion: header="Project Type", question="What type?", options=["New pro
 
 ```bash
 mkdir -p .claude/rules .claude/cat/rules
+if [[ ! -f .claude/cat/.gitignore ]]; then
+  if [[ -f "${CLAUDE_PLUGIN_ROOT}/concepts/.gitignore-template" ]]; then
+    cp "${CLAUDE_PLUGIN_ROOT}/concepts/.gitignore-template" .claude/cat/.gitignore
+  else
+    echo "WARNING: .gitignore template not found at ${CLAUDE_PLUGIN_ROOT}/concepts/.gitignore-template"
+  fi
+fi
 ```
 
 **Deep questioning flow:**
@@ -220,6 +227,13 @@ grep -rl "## Objective\|## Issues" . --include="*.md" 2>/dev/null | head -30
 
 ```bash
 mkdir -p .claude/rules .claude/cat/rules
+if [[ ! -f .claude/cat/.gitignore ]]; then
+  if [[ -f "${CLAUDE_PLUGIN_ROOT}/concepts/.gitignore-template" ]]; then
+    cp "${CLAUDE_PLUGIN_ROOT}/concepts/.gitignore-template" .claude/cat/.gitignore
+  else
+    echo "WARNING: .gitignore template not found at ${CLAUDE_PLUGIN_ROOT}/concepts/.gitignore-template"
+  fi
+fi
 ```
 
 Create PROJECT.md with inferred state (existing capabilities → Validated requirements).
