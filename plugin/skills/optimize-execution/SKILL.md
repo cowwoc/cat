@@ -1,5 +1,6 @@
 ---
 description: Use after complex issues to analyze session efficiency and generate optimization recommendations
+model: sonnet
 user-invocable: true
 ---
 

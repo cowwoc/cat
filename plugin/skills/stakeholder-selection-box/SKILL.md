@@ -1,5 +1,6 @@
 ---
 description: Internal - renders a stakeholder selection box during review
+model: haiku
 user-invocable: false
 argument-hint: "<selected_count> <total_count> <running> <skipped>"
 ---

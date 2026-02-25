@@ -1,5 +1,6 @@
 ---
 description: "MANDATORY: Use instead of rm -rf or rm -r to prevent shell session breakage"
+model: haiku
 user-invocable: false
 ---
 
