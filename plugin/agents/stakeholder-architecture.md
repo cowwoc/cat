@@ -148,6 +148,17 @@ Evaluate implementation against these architectural criteria:
 - **Extensibility Concerns**: Designs that will be difficult to extend or modify
 - **API Ergonomics**: Interfaces that are confusing or error-prone to use
 
+### Severity Examples
+
+Use these domain-specific examples to calibrate your severity ratings against the universal framework:
+
+| Severity | Example for this domain |
+|----------|------------------------|
+| CRITICAL | Circular dependency between core modules, or fundamental separation violated (e.g., UI accessing the DB) |
+| HIGH     | Public API leaks internal types; tight coupling between subsystems that should be independent |
+| MEDIUM   | Utility function placed in wrong package, minor abstraction leak across a layer boundary |
+| LOW      | Class or method name does not match architectural convention (e.g., `FooService` vs `FooHandler`) |
+
 ## Detail File
 
 Before returning your review, write comprehensive analysis to:
