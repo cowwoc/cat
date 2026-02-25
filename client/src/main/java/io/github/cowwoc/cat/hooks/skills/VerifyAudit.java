@@ -319,7 +319,7 @@ public final class VerifyAudit
 
     List<String> prompts = new ArrayList<>();
     for (CriteriaGroup group : groups)
-      prompts.add(buildPromptForGroup(buildGroupNode(group)));
+      prompts.add(buildPromptForGroup(buildGroupNode(group), worktreePath));
 
     String fileSpecsJson = buildFileSpecsJson(fileSpecs);
     String fileResultsJson = verifyFilesInternal(fileSpecsJson, Path.of(worktreePath));
@@ -471,9 +471,10 @@ public final class VerifyAudit
    * Builds a verification prompt for a single criteria group.
    *
    * @param group the group node with "files" and "criteria" arrays
+   * @param worktreePath the absolute path to the issue worktree
    * @return the prompt text
    */
-  private String buildPromptForGroup(JsonNode group)
+  private String buildPromptForGroup(JsonNode group, String worktreePath)
   {
     JsonNode filesNode = group.path("files");
     JsonNode criteriaNode = group.path("criteria");
@@ -513,6 +514,12 @@ public final class VerifyAudit
 
       %s
 
+      ## Worktree Path
+      All implementation changes are in the issue worktree, NOT in the main workspace.
+      Search for files in: %s
+      Do NOT search /workspace directly — use the worktree path above for all file lookups.
+      Example: use `%s/plugin/skills/` not `/workspace/plugin/skills/`
+
       ## Task
       Verify whether %s satisfied in the codebase.
 
@@ -548,7 +555,7 @@ public final class VerifyAudit
       ]
 
       Be thorough but efficient. Check actual implementation, not just file existence.""".
-      formatted(criterionSection, taskVerb, fileList.toString());
+      formatted(criterionSection, worktreePath, worktreePath, taskVerb, fileList.toString());
   }
 
   /**
