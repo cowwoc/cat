@@ -76,6 +76,8 @@ readonly -a HANDLERS=(
   "post-tool-use-failure:PostToolUseFailureHook"
 
   "work-prepare:util.WorkPrepare"
+  "issue-lock:util.IssueLock"
+  "check-existing-work:util.ExistingWorkChecker"
   "wrap-markdown:util.MarkdownWrapper"
   "batch-read:util.BatchReader"
   "monitor-subagents:util.SubagentMonitor"

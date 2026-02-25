@@ -88,23 +88,23 @@ by checking its STATE.md directly before concluding there is a bug.
 
 ## Critical Constraints
 
-### Use Existing Scripts
+### Use Existing Java Tools
 
-**MANDATORY: Use `get-available-issues.sh` for issue discovery. NEVER reimplement its logic.**
+**MANDATORY: Use `IssueDiscovery` (via `work-prepare` launcher) for issue discovery. NEVER reimplement its logic.**
 
-The discovery script handles:
+The discovery logic handles:
 - Version traversal and issue ordering
 - Dependency checking
 - Lock acquisition
 - Decomposed parent detection
 
-If the script doesn't support a needed feature (like filtering by name):
-1. Call the script to get the available issue
+If the discovery doesn't support a needed feature (like filtering by name):
+1. Use the tool to get the available issue
 2. Check if result matches filter criteria in memory
 3. If not, return appropriate status (e.g., NO_ISSUES with message about filter)
 
 **NEVER** write custom Python/bash to traverse issues directories and check STATE.md files.
-That logic already exists in the script and is tested.
+That logic already exists in the Java implementation and is tested.
 
 ### No Temporary State Mutations
 
@@ -136,7 +136,7 @@ Temporary mutations that rely on cleanup code are unsafe because:
 
 ### Step 2: Find Available Issue
 
-Use the discovery script with `--exclude-pattern` when arguments contain a filter:
+Use the `work-prepare` Java launcher with `--exclude-pattern` when arguments contain a filter:
 
 ```bash
 # Convert natural language filter to glob pattern:
@@ -145,10 +145,10 @@ Use the discovery script with `--exclude-pattern` when arguments contain a filte
 #   "only migration"   → exclude everything NOT matching: use no --exclude-pattern, filter result in memory
 
 # When filter maps to an exclusion pattern:
-RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/get-available-issues.sh" --session-id "${SESSION_ID}" --exclude-pattern "compress*")
+RESULT=$("${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --session-id "${SESSION_ID}" --exclude-pattern "compress*")
 
 # When no filter:
-RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/get-available-issues.sh" --session-id "${SESSION_ID}")
+RESULT=$("${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --session-id "${SESSION_ID}")
 ```
 
 Parse the result and handle statuses:
@@ -182,7 +182,7 @@ When a worktree exists for the target issue but no lock file is present:
 
 3. **If NOT merged** (`UNMERGED` has commits): Prior work exists but was not merged. Resume work in the existing
    worktree:
-   - Acquire the lock: run `issue-lock.sh acquire`
+   - Acquire the lock: run `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" acquire "${issue_id}" "${CLAUDE_SESSION_ID}"`
    - Use the existing worktree path as `worktree_path` in the output
    - Return status `READY` with `has_existing_work: true`
 
@@ -292,13 +292,13 @@ branch, causing commits to go to the wrong branch and bypass the review/merge wo
 
 ### Step 6: Check for Existing Work
 
-**MANDATORY: Use the check-existing-work.sh script to detect existing commits.**
+**MANDATORY: Use the `check-existing-work` Java launcher to detect existing commits.**
 
-This check is deterministic (no LLM decision-making required) so it's implemented as a script
+This check is deterministic (no LLM decision-making required) so it's implemented as a Java tool
 with full test coverage.
 
 ```bash
-EXISTING_WORK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/check-existing-work.sh" \
+EXISTING_WORK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/client/bin/check-existing-work" \
   --worktree "${WORKTREE_PATH}" \
   --base-branch "${BASE_BRANCH}")
 ```
@@ -315,8 +315,8 @@ COMMIT_SUMMARY=$(echo "$EXISTING_WORK_RESULT" | jq -r '.commit_summary')
 an execution subagent for work that's already done. When `has_existing_work: true`, the main
 agent should skip execution phase and proceed directly to review/merge.
 
-**Why a script:** This check is entirely deterministic - it just runs git commands and
-returns JSON. Using a script instead of inline LLM instructions ensures:
+**Why a Java tool:** This check is entirely deterministic - it just runs git commands and
+returns JSON. Using a Java tool instead of inline LLM instructions ensures:
 - Test coverage for the detection logic
 - Consistent behavior across invocations
 - No risk of LLM misimplementing the check
@@ -325,7 +325,7 @@ returns JSON. Using a script instead of inline LLM instructions ensures:
 
 **MANDATORY: Check if issue was already implemented on base branch.**
 
-The check-existing-work.sh script only detects commits on the issue branch. If work was
+The `check-existing-work` Java tool only detects commits on the issue branch. If work was
 implemented directly on base (bypassing the issue workflow), STATE.md won't reflect completion.
 
 Two complementary strategies are used to detect suspicious commits:

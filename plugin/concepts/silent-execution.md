@@ -14,7 +14,7 @@ When a workflow runs shell commands via the Bash tool, each call appears in the 
 
 ```
 ● Bash(get-next-issue-box --completed-issue 2.1-fix-bug ...)    ← visible noise
-● Bash(issue-lock.sh release ...)                               ← visible noise
+● Bash(issue-lock release ...)                               ← visible noise
 ```
 
 Users see implementation details instead of meaningful results.
