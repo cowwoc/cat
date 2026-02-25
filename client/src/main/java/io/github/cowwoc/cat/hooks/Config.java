@@ -32,15 +32,15 @@ import tools.jackson.databind.json.JsonMapper;
 public final class Config
 {
   /**
-   * Default autofix level for the stakeholder review loop.
+   * Default autofix threshold for the stakeholder review loop.
    * <p>
    * Controls which concern severity levels trigger automatic fix attempts before presenting results to the
    * user. {@code "low"} means all concerns (CRITICAL, HIGH, MEDIUM, and LOW) are auto-fixed before
    * presenting results to the user approval gate.
    *
-   * @see #getAutofixLevel()
+   * @see #getAutofixThreshold()
    */
-  public static final String DEFAULT_AUTOFIX_LEVEL = "low";
+  public static final String DEFAULT_AUTOFIX_THRESHOLD = "low";
 
   // Type reference for JSON deserialization (avoids unchecked cast)
   private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>()
@@ -60,7 +60,7 @@ public final class Config
     defaults.put("patience", "high");
     defaults.put("terminalWidth", 120);
     defaults.put("completionWorkflow", "merge");
-    defaults.put("reviewThreshold", DEFAULT_AUTOFIX_LEVEL);
+    defaults.put("reviewThreshold", DEFAULT_AUTOFIX_THRESHOLD);
     DEFAULTS = Map.copyOf(defaults);
   }
 
@@ -274,7 +274,7 @@ public final class Config
   }
 
   /**
-   * Get the autofix level from review thresholds.
+   * Get the autofix threshold from review thresholds.
    * <p>
    * Controls the minimum severity level that triggers automatic fix loops. The value is the minimum severity
    * at which the agent will automatically iterate to fix concerns:
@@ -285,21 +285,21 @@ public final class Config
    * <li>{@code "critical"} — fix CRITICAL only; present HIGH, MEDIUM, and LOW to user</li>
    * </ul>
    *
-   * @return the autofix level (defaults to "low" if not configured)
+   * @return the autofix threshold (defaults to "low" if not configured)
    * @throws IllegalArgumentException if the configured value is not a recognized severity level
    */
-  public String getAutofixLevel()
+  public String getAutofixThreshold()
   {
     Object value = values.get("reviewThreshold");
     String level;
     if (value instanceof String s)
       level = s;
     else
-      level = DEFAULT_AUTOFIX_LEVEL;
+      level = DEFAULT_AUTOFIX_THRESHOLD;
     Set<String> allowed = Set.of("low", "medium", "high", "critical");
     if (!allowed.contains(level))
     {
-      throw new IllegalArgumentException("Invalid autofix level: '" + level +
+      throw new IllegalArgumentException("Invalid autofix threshold: '" + level +
         "'. Expected one of: " + allowed);
     }
     return level;
