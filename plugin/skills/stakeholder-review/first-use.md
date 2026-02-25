@@ -768,7 +768,7 @@ Wait for all stakeholder subagents to complete. Parse each response as JSON:
   "approval": "APPROVED|CONCERNS|REJECTED",
   "concerns": [
     {
-      "severity": "CRITICAL|HIGH|MEDIUM",
+      "severity": "CRITICAL|HIGH|MEDIUM|LOW",
       "location": "file:line",
       "explanation": "Brief description of the concern",
       "recommendation": "Brief remediation guidance",
@@ -789,25 +789,41 @@ Trust subagents: do not validate evidence fields. Accept reviewer results at fac
 
 **Aggregate and evaluate severity:**
 
-Count concerns across all stakeholders:
+Read `minSeverity` from `.claude/cat/cat-config.json` (default: `"low"`). Filter out any concerns with severity
+below `minSeverity` before counting. Filtered concerns are silently dropped — they are never shown to the user,
+never tracked, and never fixed.
+
+Severity ordering (highest to lowest): CRITICAL > HIGH > MEDIUM > LOW.
+
+Count concerns across all stakeholders after filtering:
 
 ```bash
+MIN_SEVERITY=$(read "minSeverity" from cat-config.json, default "low")
 CRITICAL_COUNT=0
 HIGH_COUNT=0
 MEDIUM_COUNT=0
+LOW_COUNT=0
+FILTERED_COUNT=0
 REJECTED_COUNT=0
 
 for review in reviews:
     if review.approval == "REJECTED":
         REJECTED_COUNT++
     for concern in review.concerns:
-        if concern.severity == "CRITICAL":
+        if concern.severity is below MIN_SEVERITY:
+            FILTERED_COUNT++
+            skip this concern
+        elif concern.severity == "CRITICAL":
             CRITICAL_COUNT++
         elif concern.severity == "HIGH":
             HIGH_COUNT++
         elif concern.severity == "MEDIUM":
             MEDIUM_COUNT++
+        elif concern.severity == "LOW":
+            LOW_COUNT++
 ```
+
+If FILTERED_COUNT > 0, note in the report summary how many concerns were filtered by minSeverity.
 
 **Decision rules:**
 
@@ -881,9 +897,9 @@ This skill returns the review outcome for the calling skill (work-with-issue) to
 Auto-fix iteration and user approval gates are managed by the caller, not by this skill.
 
 **Return structure:**
-- REJECTED status with full concern details (CRITICAL, HIGH, MEDIUM)
-- CONCERNS status with full concern details (HIGH, MEDIUM)
-- APPROVED status with any LOW concerns noted
+- REJECTED status with full concern details (CRITICAL, HIGH, MEDIUM, LOW at or above minSeverity)
+- CONCERNS status with full concern details (HIGH, MEDIUM, LOW at or above minSeverity)
+- APPROVED status with any LOW concerns noted (if LOW is at or above minSeverity)
 
 The calling skill (work-with-issue) is responsible for:
 - Auto-fix iteration for HIGH+ concerns
@@ -909,7 +925,7 @@ Return the structured result below as your final message for the orchestrating a
   "review_status": "APPROVED|CONCERNS|REJECTED",
   "concerns": [
     {
-      "severity": "CRITICAL|HIGH|MEDIUM",
+      "severity": "CRITICAL|HIGH|MEDIUM|LOW",
       "stakeholder": "security",
       "location": "src/UserDao.java:45",
       "explanation": "Brief description of the concern",

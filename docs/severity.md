@@ -1,3 +1,8 @@
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Severity Definitions
 
 Stakeholder reviews use four severity levels to classify concerns. This page defines each level
@@ -106,3 +111,44 @@ concern wouldn't block a release, it's not CRITICAL.
 | HIGH | Confusing workflow most users would struggle with, or poor error feedback with no clear recovery path |
 | MEDIUM | Inconsistent interaction pattern vs. the rest of the system (e.g., confirm needed here but not elsewhere) |
 | LOW | Minor label wording that could be clearer, slightly suboptimal spacing with no usability impact |
+
+## Configuring minSeverity
+
+The `minSeverity` config option sets a hard floor for which concerns require any action at all. Concerns below this
+threshold are **silently ignored** — not fixed, not deferred, not tracked. They simply cease to exist from the
+review's perspective.
+
+This is distinct from `patience` (see [patience.md](patience.md)), which controls whether an acknowledged concern is
+fixed now or deferred to a future issue.
+
+**Concern pipeline:** `minSeverity` filter → `patience` fix/defer decision → `reviewThreshold` auto-fix loop
+
+### minSeverity vs patience: a concrete example
+
+A reviewer raises a MEDIUM concern: "High cyclomatic complexity in `PaymentService.process()`."
+
+- With `minSeverity: "high"` — the concern is **ignored**. It never appears in review results, is never tracked,
+  and no one is asked about it. It ceases to exist.
+- With `minSeverity: "low"` and `patience: "high"` — the concern is **acknowledged but deferred**. It appears in
+  review results, a tracking issue is created (or the user is asked how to handle it), and it will be addressed in
+  a future issue. The concern is real; the team just decided "not now."
+
+Both result in the concern not being fixed in the current issue. The difference: deferred concerns are tracked and
+will eventually be addressed. Ignored concerns are permanently dropped.
+
+### Use-case guidance
+
+| minSeverity | Concerns requiring action | Ignored | When to use |
+|-------------|--------------------------|---------|-------------|
+| `low` (default) | CRITICAL, HIGH, MEDIUM, LOW | None | Production systems, regulated environments, security-sensitive applications. All concerns are actionable. Ideal when quality, compliance, and correctness are non-negotiable. |
+| `medium` | CRITICAL, HIGH, MEDIUM | LOW | Standard development. Ignores minor stylistic suggestions while preserving all substantive concerns. Appropriate for most production software. |
+| `high` | CRITICAL, HIGH | MEDIUM, LOW | MVPs, internal tools, time-boxed sprints. Ignores MEDIUM improvements (cyclomatic complexity, missing edge case tests) to focus on significant issues. Acceptable when shipping speed outweighs polish. |
+| `critical` | CRITICAL | HIGH, MEDIUM, LOW | Quick prototypes, throwaway spikes, proof-of-concept work. Only blocks on release-blocking issues (data loss, security breach, system crash). Not suitable for any code deployed to users. |
+
+Configure `minSeverity` in `.claude/cat/cat-config.json`:
+
+```json
+{
+  "minSeverity": "medium"
+}
+```
