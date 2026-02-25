@@ -1928,6 +1928,27 @@
         "catches_variations": true
       },
       "correct_behavior": "During rebase conflict resolution, use git checkout HEAD -- <file> to take the target branch version (unambiguous). Never use --ours/--theirs during rebase — their meaning is inverted compared to merge."
+    },
+    {
+      "id": "M412",
+      "timestamp": "2026-02-26T03:51:33.088Z",
+      "category": "misleading_documentation",
+      "description": "Agent passed verify=none to work-with-issue despite cat-config.json having verify=all, skipping all verification phases",
+      "root_cause": "first-use.md claimed TRUST/VERIFY/AUTO_REMOVE are 'pre-loaded by handler preprocessing (shown above in CONFIGURATION section)' but no such preprocessing exists. The skill output was 48.7KB and truncated to 2KB, hiding content before the Configuration section. Agent fabricated 'none' for VERIFY instead of reading cat-config.json.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work/first-use.md",
+      "pattern_keywords": ["verify", "config", "truncated", "fabricated", "work-with-issue", "cat-config"],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Before invoking work-with-issue, read cat-config.json to extract TRUST, VERIFY, and AUTO_REMOVE values. Never fabricate config values."
     }
   ]
 }

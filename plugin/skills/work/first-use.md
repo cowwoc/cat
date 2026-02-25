@@ -45,8 +45,16 @@ session becomes corrupted (all commands fail with exit code 1).
 
 ## Configuration
 
-Values are pre-loaded by handler preprocessing (shown above in CONFIGURATION section).
-Use these values: TRUST, VERIFY, AUTO_REMOVE.
+Read configuration from `${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json` before invoking work-with-issue:
+
+```bash
+cat "${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json"
+```
+
+Extract these values:
+- `TRUST` — from `"trust"` field (e.g., `"low"`, `"medium"`, `"high"`)
+- `VERIFY` — from `"verify"` field (e.g., `"none"`, `"tests"`, `"all"`)
+- `AUTO_REMOVE` — from `"autoRemoveWorktrees"` field (`true` or `false`)
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" --phase preparing`
 
