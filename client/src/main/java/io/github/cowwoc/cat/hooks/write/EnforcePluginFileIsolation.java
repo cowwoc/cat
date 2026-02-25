@@ -18,7 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * Enforce source file isolation to issue worktrees (M252).
+ * Enforce source file isolation to issue worktrees.
  * <p>
  * Blocks Edit/Write operations on plugin/ and client/ files when not in an issue worktree.
  * An issue worktree is identified by the presence of a {@code cat-base} file in its git directory,
@@ -68,7 +68,7 @@ public final class EnforcePluginFileIsolation implements FileWriteHandler
       String message =
         "❌ BLOCKED: Cannot edit source files outside of an issue worktree.\n" +
         "\n" +
-        "**Worktree Isolation Required (M252)**\n" +
+        "**Worktree Isolation Required**\n" +
         "\n" +
         "File: " + filePath + "\n" +
         "\n" +

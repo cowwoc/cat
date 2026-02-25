@@ -147,7 +147,7 @@ public final class VerifyCommitType implements BashHandler
           Commit %s contains Claude-facing files (matched: %s)
           Claude-facing files should use 'config:', not 'docs:'
 
-          Rule (M089): docs: = user-facing, config: = Claude-facing
+          Rule: docs: = user-facing, config: = Claude-facing
 
           TO FIX: git commit --amend
             Then change 'docs:' to 'config:' in the commit message""", commitHash, pattern));

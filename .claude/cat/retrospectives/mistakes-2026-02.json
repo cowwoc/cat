@@ -1803,13 +1803,7 @@
       "rca_method_name": "causal-barrier",
       "prevention_type": "skill",
       "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue/first-use.md",
-      "pattern_keywords": [
-        "false_positive",
-        "pre-existing",
-        "patience",
-        "cost_benefit",
-        "stakeholder_review"
-      ],
+      "pattern_keywords": ["false_positive", "pre-existing", "patience", "cost_benefit", "stakeholder_review"],
       "prevention_implemented": true,
       "prevention_verified": true,
       "recurrence_of": null,
@@ -1818,7 +1812,9 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Classify a concern as a false positive only when the reviewer read the wrong branch. Treat pre-existing concerns as real issues and route them through the patience cost/benefit framework to decide whether to fix inline or defer as a new issue."
+      "correct_behavior": "Classify a concern as a false positive only when the reviewer read the wrong branch. Treat pre-existing concerns as real issues and route them through the patience cost/benefit framework to decide whether to fix inline or defer as a new issue.",
+      "resolution_status": "superseded",
+      "superseded_by": "2.1-delegate-stakeholder-review-to-subagent (architectural fix: worktree isolation prevents base-branch reads)"
     }
   ]
 }
