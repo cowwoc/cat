@@ -5,4 +5,4 @@ description: >
   Shows subagent token/context usage. For current session tokens, use /cat:token-report instead.
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" "${CLAUDE_PLUGIN_ROOT}" monitor-subagents "${CLAUDE_SESSION_ID}"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" monitor-subagents "${CLAUDE_SESSION_ID}" "${CLAUDE_PROJECT_DIR}"`

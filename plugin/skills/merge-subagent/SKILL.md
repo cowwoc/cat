@@ -3,4 +3,4 @@ description: Use when subagent work is done and needs merging back - merge subag
 user-invocable: false
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" "${CLAUDE_PLUGIN_ROOT}" merge-subagent "${CLAUDE_SESSION_ID}"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" merge-subagent "${CLAUDE_SESSION_ID}" "${CLAUDE_PROJECT_DIR}"`
