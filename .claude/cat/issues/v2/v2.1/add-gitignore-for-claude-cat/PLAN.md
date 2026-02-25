@@ -33,11 +33,12 @@ None - Infrastructure/maintenance issue
    - Files: plugin/skills/init/SKILL.md
 
 3. **Update v2.1 migration script**
-   - Add step to create `.gitignore` for existing installations
+   - Create `.gitignore` if missing, or update existing `.gitignore` for existing installations
+   - Add lines: /worktrees/, /locks/, /verify/ only if not already present (idempotent)
    - Files: plugin/migrations/v2.1-migration.sh
 
 ## Post-conditions
 - [ ] `.gitignore` created in new CAT installations via `/cat:init`
-- [ ] `.gitignore` created in existing installations via v2.1 migration
-- [ ] File only created if it doesn't already exist
+- [ ] `.gitignore` created or updated in existing installations via v2.1 migration
+- [ ] Idempotent: can safely run multiple times without duplication
 - [ ] Correct patterns exclude temporary files: /worktrees/, /locks/, /verify/
