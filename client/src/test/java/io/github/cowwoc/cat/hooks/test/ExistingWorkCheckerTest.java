@@ -14,7 +14,10 @@ import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.testng.annotations.Test;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -297,6 +300,106 @@ public class ExistingWorkCheckerTest
       requireThat(json, "json").contains("3");
       requireThat(json, "json").contains("\"commit_summary\"");
       requireThat(json, "json").contains("abc1234");
+    }
+  }
+
+  /**
+   * Verifies that run() with valid --worktree and --base-branch writes JSON output and returns true.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void runWithValidArgsWritesJsonToStdout() throws IOException
+  {
+    Path tempDir = createTempGitRepo();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      try
+      {
+        GitCommands.runGit(tempDir, "checkout", "-b", "base-branch");
+        createCommit(tempDir, "Initial commit");
+        GitCommands.runGit(tempDir, "checkout", "-b", "task-branch");
+
+        ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
+        ByteArrayOutputStream errBytes = new ByteArrayOutputStream();
+        PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
+        PrintStream err = new PrintStream(errBytes, true, StandardCharsets.UTF_8);
+
+        boolean success = ExistingWorkChecker.run(
+          new String[]{"--worktree", tempDir.toString(), "--base-branch", "base-branch"},
+          scope, out, err);
+
+        requireThat(success, "success").isTrue();
+        String output = outBytes.toString(StandardCharsets.UTF_8);
+        requireThat(output, "output").contains("\"has_existing_work\"");
+        requireThat(output, "output").contains("\"existing_commits\"");
+        String errOutput = errBytes.toString(StandardCharsets.UTF_8);
+        requireThat(errOutput, "errOutput").isEmpty();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that run() with missing --worktree writes error to stderr and returns false.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void runWithMissingWorktreeWritesErrorToStderr() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
+      ByteArrayOutputStream errBytes = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
+      PrintStream err = new PrintStream(errBytes, true, StandardCharsets.UTF_8);
+
+      boolean success = ExistingWorkChecker.run(
+        new String[]{"--base-branch", "main"},
+        scope, out, err);
+
+      requireThat(success, "success").isFalse();
+      String errOutput = errBytes.toString(StandardCharsets.UTF_8);
+      requireThat(errOutput, "errOutput").contains("--worktree");
+      requireThat(errOutput, "errOutput").contains("required");
+    }
+  }
+
+  /**
+   * Verifies that run() with missing --base-branch writes error to stderr and returns false.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void runWithMissingBaseBranchWritesErrorToStderr() throws IOException
+  {
+    Path tempDir = createTempGitRepo();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      try
+      {
+        ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
+        ByteArrayOutputStream errBytes = new ByteArrayOutputStream();
+        PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
+        PrintStream err = new PrintStream(errBytes, true, StandardCharsets.UTF_8);
+
+        boolean success = ExistingWorkChecker.run(
+          new String[]{"--worktree", tempDir.toString()},
+          scope, out, err);
+
+        requireThat(success, "success").isFalse();
+        String errOutput = errBytes.toString(StandardCharsets.UTF_8);
+        requireThat(errOutput, "errOutput").contains("--base-branch");
+        requireThat(errOutput, "errOutput").contains("required");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
     }
   }
 

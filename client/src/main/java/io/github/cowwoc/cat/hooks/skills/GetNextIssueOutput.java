@@ -8,17 +8,17 @@ package io.github.cowwoc.cat.hooks.skills;
 
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.util.ProcessRunner;
+import io.github.cowwoc.cat.hooks.util.IssueDiscovery;
+import io.github.cowwoc.cat.hooks.util.IssueLock;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,10 +31,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  */
 public final class GetNextIssueOutput implements SkillOutput
 {
-  private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>()
-  {
-  };
-
   /**
    * The JVM scope for accessing shared services.
    */
@@ -204,18 +200,8 @@ public final class GetNextIssueOutput implements SkillOutput
   /**
    * Generates an issue complete box with next issue discovery.
    * <p>
-   * Depends on external resources:
-   * <ul>
-   *   <li>CLAUDE_PLUGIN_ROOT environment variable must be set</li>
-   *   <li>issue-lock.sh script must exist at $CLAUDE_PLUGIN_ROOT/scripts/issue-lock.sh</li>
-   *   <li>get-available-issues.sh script must exist at $CLAUDE_PLUGIN_ROOT/scripts/get-available-issues.sh</li>
-   * </ul>
-   * <p>
-   * If external scripts are missing or fail, the method gracefully degrades by:
-   * <ul>
-   *   <li>Skipping lock release if issue-lock.sh is missing</li>
-   *   <li>Generating scope complete box if get-available-issues.sh is missing or returns no issues</li>
-   * </ul>
+   * If lock release or issue discovery fails, the method gracefully degrades by returning a scope
+   * complete box with warnings.
    *
    * @param completedIssue the ID of the completed issue
    * @param baseBranch the base branch that was merged to
@@ -236,9 +222,9 @@ public final class GetNextIssueOutput implements SkillOutput
     requireThat(excludePattern, "excludePattern").isNotNull();
 
     List<String> warnings = new ArrayList<>();
-    releaseLock(projectDir, completedIssue, sessionId, warnings);
+    releaseLock(completedIssue, sessionId, warnings);
 
-    Map<String, Object> nextIssue = findNextIssue(projectDir, sessionId, excludePattern, warnings);
+    Map<String, Object> nextIssue = findNextIssue(sessionId, excludePattern, warnings);
 
     if (!nextIssue.isEmpty())
     {
@@ -262,27 +248,15 @@ public final class GetNextIssueOutput implements SkillOutput
   /**
    * Releases the lock for the completed issue.
    *
-   * @param projectDir the project root directory
    * @param issueId the issue ID to release
    * @param sessionId the current session ID
    * @param warnings list to collect warning messages
    */
-  private void releaseLock(String projectDir, String issueId, String sessionId, List<String> warnings)
+  private void releaseLock(String issueId, String sessionId, List<String> warnings)
   {
     try
     {
-      Path lockScript = scope.getClaudePluginRoot().resolve("scripts").resolve("issue-lock.sh");
-      if (!Files.exists(lockScript))
-        return;
-
-      List<String> command = List.of(
-        lockScript.toString(),
-        "release",
-        projectDir,
-        issueId,
-        sessionId);
-
-      ProcessRunner.runAndCaptureIgnoreExit(command);
+      new IssueLock(scope).release(issueId, sessionId);
     }
     catch (Exception e)
     {
@@ -291,50 +265,30 @@ public final class GetNextIssueOutput implements SkillOutput
   }
 
   /**
-   * Finds the next available issue using get-available-issues.sh.
+   * Finds the next available issue using IssueDiscovery.
    *
-   * @param projectDir the project root directory
    * @param sessionId the current session ID
    * @param excludePattern optional glob pattern to exclude issues (may be empty)
    * @param warnings list to collect warning messages
    * @return map with issue info if found, empty map otherwise
    */
-  private Map<String, Object> findNextIssue(String projectDir, String sessionId, String excludePattern,
+  private Map<String, Object> findNextIssue(String sessionId, String excludePattern,
     List<String> warnings)
   {
     try
     {
-      Path discoveryScript = scope.getClaudePluginRoot().resolve("scripts").resolve("get-available-issues.sh");
-      if (!Files.exists(discoveryScript))
-        return Map.of();
-
-      List<String> command = new ArrayList<>();
-      command.add(discoveryScript.toString());
-      command.add("--scope");
-      command.add("all");
-      command.add("--session-id");
-      command.add(sessionId);
-
-      if (!excludePattern.isEmpty())
+      IssueDiscovery discovery = new IssueDiscovery(scope);
+      IssueDiscovery.SearchOptions options = new IssueDiscovery.SearchOptions(
+        IssueDiscovery.Scope.ALL, "", sessionId, excludePattern, false);
+      IssueDiscovery.DiscoveryResult result = discovery.findNextIssue(options);
+      if (result instanceof IssueDiscovery.DiscoveryResult.Found found)
       {
-        command.add("--exclude-pattern");
-        command.add(excludePattern);
-      }
-
-      ProcessBuilder pb = new ProcessBuilder(command);
-      pb.directory(Path.of(projectDir).toFile());
-      pb.redirectErrorStream(true);
-
-      String output = ProcessRunner.runAndCapture(command);
-      if (output == null)
-        return Map.of();
-
-      JsonMapper mapper = scope.getJsonMapper();
-      Map<String, Object> data = mapper.readValue(output, MAP_TYPE);
-
-      String status = data.getOrDefault("status", "").toString();
-      if (status.equals("found"))
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("status", "found");
+        data.put("issue_id", found.issueId());
+        data.put("issue_path", found.issuePath());
         return data;
+      }
       return Map.of();
     }
     catch (Exception e)
