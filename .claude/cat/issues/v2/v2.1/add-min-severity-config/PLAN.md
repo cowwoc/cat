@@ -56,6 +56,7 @@ Add `minSeverity` to `cat-config.json`:
   current ad-hoc "MEDIUM or LOW severity, or any concern not covered by the severity × patience matrix" language
 - `plugin/agents/stakeholder-*.md` — Change JSON severity enum from `CRITICAL|HIGH|MEDIUM` to
   `CRITICAL|HIGH|MEDIUM|LOW` in all 10 agent files
+- `docs/severity.md` — New file documenting severity levels, minSeverity config, and use-case guidance per threshold
 - `docs/patience.md` — Add section explaining how minSeverity interacts with patience
 - `.claude/cat/cat-config.json` — Add `minSeverity` default value
 
@@ -74,7 +75,7 @@ Add `minSeverity` to `cat-config.json`:
 2. **Add minSeverity to Config**
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/Config.java`
    - Add `"minSeverity"` to DEFAULTS with value `"low"`
-   - Add `getFixThreshold()` method returning `ConcernSeverity`
+   - Add `getMinSeverity()` method returning `ConcernSeverity`
    - Add tests for config loading with and without the new field
 
 3. **Enable LOW severity in stakeholder instructions**
@@ -104,8 +105,24 @@ Add `minSeverity` to `cat-config.json`:
    - Files: `.claude/cat/cat-config.json`
    - Add `"minSeverity": "low"` to the default config
 
-7. **Update patience documentation**
+7. **Create docs/severity.md**
+   - Files: `docs/severity.md`
+   - Document the four severity levels (CRITICAL, HIGH, MEDIUM, LOW) with definitions and examples
+   - Document `minSeverity` config option with use-case guidance for each threshold value:
+     - `low` — Production systems, regulated environments, security-sensitive applications. All concerns are
+       actionable. Ideal when quality, compliance, and correctness are non-negotiable.
+     - `medium` — Standard development. Ignores minor stylistic suggestions (LOW) while preserving all substantive
+       concerns. Appropriate for most production software.
+     - `high` — MVPs, internal tools, time-boxed sprints. Ignores MEDIUM improvements (cyclomatic complexity, missing
+       edge case tests) to focus on significant issues. Acceptable when shipping speed outweighs polish.
+     - `critical` — Quick prototypes, throwaway spikes, proof-of-concept work. Only blocks on release-blocking
+       issues (data loss, security breach, system crash). Allows unsanitized inputs, missing critical-path tests,
+       method duplication. Not suitable for any code that will be deployed to users.
+   - Document the concern pipeline: minSeverity → patience → reviewThreshold
+
+8. **Update patience documentation**
    - Files: `docs/patience.md`
+   - Add cross-reference to `docs/severity.md` for minSeverity details
    - Add section explaining the concern pipeline: minSeverity → patience → reviewThreshold
 
 ## Post-conditions
@@ -115,5 +132,6 @@ Add `minSeverity` to `cat-config.json`:
 - [ ] Setting `minSeverity` to `"low"` preserves all concerns (backward compatible)
 - [ ] `ConcernSeverity` enum exists with `fromString()` and `isAtLeast()` methods
 - [ ] Config getter returns `ConcernSeverity` enum (not raw string)
+- [ ] `docs/severity.md` exists with use-case guidance for each minSeverity threshold value
 - [ ] Stakeholder agents and review skill accept LOW severity in their JSON format
 - [ ] All tests pass (`mvn -f client/pom.xml verify`)
