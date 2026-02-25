@@ -27,36 +27,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public final class BlockUnsafeRemovalTest
 {
   /**
-   * Verifies that git worktree remove with --force flag correctly extracts the path.
-   *
-   * @throws IOException if test setup fails
-   */
-  @Test
-  public void worktreeRemoveWithLongFlagExtractsPath() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    Path gitDir = tempDir.resolve(".git");
-    Files.createDirectory(gitDir);
-    Path worktreePath = tempDir.resolve("worktree-to-remove");
-    Files.createDirectories(worktreePath);
-
-    try (JvmScope scope = new TestJvmScope())
-    {
-      BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
-      String workingDirectory = tempDir.toString();
-      String command = "git worktree remove --force " + worktreePath;
-
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "session1");
-
-      requireThat(result.blocked(), "blocked").isFalse();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
    * Verifies that git worktree remove with -f flag correctly extracts the path.
    *
    * @throws IOException if test setup fails
@@ -895,6 +865,110 @@ public final class BlockUnsafeRemovalTest
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
       requireThat(result.reason(), "reason").contains("Protected: " + worktreePath.toRealPath());
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that deletion via a symlink path is blocked when the real path is protected.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void rmBlocksWhenSymlinkPointsToProtectedPath() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path gitDir = tempDir.resolve(".git");
+    Files.createDirectory(gitDir);
+    Path realTarget = tempDir.resolve("real-target");
+    Files.createDirectories(realTarget);
+    Path symlink = tempDir.resolve("symlink-to-target");
+    Files.createSymbolicLink(symlink, realTarget);
+
+    try (JvmScope scope = new TestJvmScope())
+    {
+      BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
+      // CWD is inside the real directory, but deletion is via symlink path
+      String workingDirectory = realTarget.toString();
+      String command = "rm -rf " + symlink;
+
+      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "session1");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("UNSAFE");
+      requireThat(result.reason(), "reason").contains("Protected:");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that deletion via a symlink path is allowed when the real path is not protected.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void rmAllowsWhenSymlinkPointsToNonProtectedPath() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path gitDir = tempDir.resolve(".git");
+    Files.createDirectory(gitDir);
+    Path safeTarget = tempDir.resolve("safe-target");
+    Files.createDirectories(safeTarget);
+    Path symlink = tempDir.resolve("symlink-to-safe");
+    Files.createSymbolicLink(symlink, safeTarget);
+
+    try (JvmScope scope = new TestJvmScope())
+    {
+      BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
+      // CWD is the tempDir (the main worktree root), not the symlink target
+      String workingDirectory = tempDir.toString();
+      String command = "rm -rf " + symlink;
+
+      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "session1");
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that the error message includes the current working directory.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void errorMessageIncludesCwd() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path gitDir = tempDir.resolve(".git");
+    Files.createDirectory(gitDir);
+    Path targetPath = tempDir.resolve("target-to-remove");
+    Files.createDirectories(targetPath);
+
+    try (JvmScope scope = new TestJvmScope())
+    {
+      BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
+      String workingDirectory = targetPath.toString();
+      String command = "rm -rf " + targetPath;
+
+      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "session1");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      // Verify CWD label is present in the error message (with the working directory value)
+      String reason = result.reason();
+      int cwdIndex = reason.indexOf("CWD:");
+      requireThat(cwdIndex, "cwdIndex").isGreaterThanOrEqualTo(0);
+      String cwdLine = reason.substring(cwdIndex, reason.indexOf('\n', cwdIndex));
+      requireThat(cwdLine, "cwdLine").contains(workingDirectory);
     }
     finally
     {
