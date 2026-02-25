@@ -90,7 +90,7 @@ not to abandon rebase for cherry-picking.
 # 1. Check which files have conflicts
 git status
 
-# 2. Edit files to resolve conflicts (look for <<<<<<< markers)
+# 2. Resolve conflicts (see "Conflict Resolution References" below)
 
 # 3. Stage resolved files
 git add <resolved-files>
@@ -103,6 +103,42 @@ git rebase --continue
 # If you want to abort:
 git rebase --abort
 git reset --hard "$BACKUP"
+```
+
+### Conflict Resolution References
+
+**Use explicit ref names instead of `--ours`/`--theirs`.** During rebase, git checks out the target branch and replays
+your commits on top. This **inverts** the meaning of `--ours` and `--theirs` compared to merge:
+
+| Context | `--ours` | `--theirs` |
+|---------|----------|------------|
+| `git merge` | Current branch | Branch being merged in |
+| `git rebase` | Target branch (e.g., v2.1) | Commit being replayed (your branch) |
+
+This inversion is a common source of bugs — the agent intends to take the target branch's version but `--theirs`
+gives the opposite.
+
+**Use unambiguous references instead:**
+
+| To take... | Use | Avoid |
+|------------|-----|-------|
+| Target branch version (e.g., v2.1) | `git checkout HEAD -- <file>` | `git checkout --ours <file>` |
+| Replayed commit version (your branch) | `git checkout REBASE_HEAD -- <file>` | `git checkout --theirs <file>` |
+
+`HEAD` always points to the target during rebase. `REBASE_HEAD` always points to the commit being replayed. These
+references are unambiguous in any context.
+
+```bash
+# Take target branch version for a file (e.g., file already merged via another issue)
+git checkout HEAD -- path/to/file.java
+git add path/to/file.java
+
+# Take your branch's version for a file
+git checkout REBASE_HEAD -- path/to/file.java
+git add path/to/file.java
+
+# For commits already merged to the target branch, take HEAD's version.
+# This makes the commit empty, and git drops it automatically.
 ```
 
 ### "Skipped previously applied" Messages
