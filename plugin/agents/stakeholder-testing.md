@@ -164,6 +164,17 @@ For new code:
 - Edge cases: 3-5 tests
 - Error paths: At least 1 test per exception type
 
+### Severity Examples
+
+Use these domain-specific examples to calibrate your severity ratings against the universal framework:
+
+| Severity | Example for this domain |
+|----------|------------------------|
+| CRITICAL | No tests for critical business logic, or a tautological test that always passes regardless of behavior |
+| HIGH     | Missing edge case test for a known error path, or no test covering a newly added public method |
+| MEDIUM   | Test covers the happy path but misses boundary conditions (e.g., empty input, max value) |
+| LOW      | Test method name does not follow naming convention, minor improvement to assertion failure message |
+
 ## Detail File
 
 Before returning your review, write comprehensive analysis to:

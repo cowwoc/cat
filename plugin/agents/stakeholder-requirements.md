@@ -211,6 +211,17 @@ For each requirement in PLAN.md:
 | **Integrated** | Does it work with other components as specified? |
 | **Semantically Correct** | Does reported data reflect actual computed state, not just raw field extraction? |
 
+### Severity Examples
+
+Use these domain-specific examples to calibrate your severity ratings against the universal framework:
+
+| Severity | Example for this domain |
+|----------|------------------------|
+| CRITICAL | A core requirement from PLAN.md is not implemented at all — the feature is missing entirely |
+| HIGH     | Requirement partially implemented; a key acceptance criterion listed in PLAN.md is not satisfied |
+| MEDIUM   | Implementation satisfies the stated requirement but an unspecified edge case is unhandled |
+| LOW      | Minor deviation from spec wording with no functional impact on behavior |
+
 ## Detail File
 
 Before returning your review, write comprehensive analysis to:

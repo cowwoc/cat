@@ -227,6 +227,17 @@ Evaluate against:
 - **Story-worthy**: Is there a compelling narrative?
 - **Launchable**: Is this ready for marketing activities?
 
+### Severity Examples
+
+Use these domain-specific examples to calibrate your severity ratings against the universal framework:
+
+| Severity | Example for this domain |
+|----------|------------------------|
+| CRITICAL | Feature directly contradicts a stated business objective, or actively destroys customer value |
+| HIGH     | Missing a competitive differentiator explicitly called out in the version goals |
+| MEDIUM   | Feature works correctly but its positioning could be stronger for the target market |
+| LOW      | Minor messaging opportunity, cosmetic market alignment improvement with no functional impact |
+
 ## Detail File
 
 Before returning your review, write comprehensive analysis to:

@@ -158,6 +158,17 @@ Evaluate against:
 - **Affordance**: Is it clear what users can do?
 - **Recovery**: Can users undo mistakes easily?
 
+### Severity Examples
+
+Use these domain-specific examples to calibrate your severity ratings against the universal framework:
+
+| Severity | Example for this domain |
+|----------|------------------------|
+| CRITICAL | Feature is completely unusable — infinite loop in the UI, or a critical action gives no feedback |
+| HIGH     | Confusing workflow most users would struggle with, or poor error feedback with no clear recovery path |
+| MEDIUM   | Inconsistent interaction pattern vs. the rest of the system (e.g., confirm needed here but not elsewhere) |
+| LOW      | Minor label wording that could be clearer, slightly suboptimal spacing with no usability impact |
+
 ## Detail File
 
 Before returning your review, write comprehensive analysis to:

@@ -157,6 +157,17 @@ Automatically flag (language-agnostic):
 
 **Note**: See `lang/{language}.md` for language-specific red flags.
 
+### Severity Examples
+
+Use these domain-specific examples to calibrate your severity ratings against the universal framework:
+
+| Severity | Example for this domain |
+|----------|------------------------|
+| CRITICAL | O(n!) or O(2^n) algorithm in a hot path, or unbounded memory growth under normal load |
+| HIGH     | Missing database index on a frequently queried column, N+1 query pattern in a list endpoint |
+| MEDIUM   | Unnecessary object allocation inside a loop, suboptimal collection type choice |
+| LOW      | Micro-optimization opportunity with negligible real-world impact (< 1% improvement) |
+
 ## Detail File
 
 Before returning your review, write comprehensive analysis to:

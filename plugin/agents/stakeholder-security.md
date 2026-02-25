@@ -172,6 +172,17 @@ conditions and TOCTOU vulnerabilities:
 **Note**: These checks are most relevant for bash scripts, git operation skills, and file-based state management. Not
 applicable to pure documentation changes.
 
+### Severity Examples
+
+Use these domain-specific examples to calibrate your severity ratings against the universal framework:
+
+| Severity | Example for this domain |
+|----------|------------------------|
+| CRITICAL | Exploitable vulnerability — SQL injection, command injection, or authentication bypass |
+| HIGH     | Unsanitized input at a trust boundary, secrets in source code, or overly permissive access control |
+| MEDIUM   | Missing rate limiting, error messages leaking internal stack traces, or HTTP-only flag absent on session cookies |
+| LOW      | Inconsistent error message format, minor logging verbosity concern with low exposure risk |
+
 ## Detail File
 
 Before returning your review, write comprehensive analysis to:

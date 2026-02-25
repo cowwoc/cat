@@ -714,11 +714,27 @@ You have access to the FULL content of changed files, not just diffs. Use this t
 3. **Verify consistency** - Does this follow existing patterns in the surrounding code?
 4. **Assess completeness** - Are there related areas that should also be updated?
 
+## Severity Definitions
+
+Use this universal framework to assign severity consistently. Each level reflects urgency and impact,
+not domain-specific importance:
+
+| Severity | Definition | Examples |
+|----------|-----------|----------|
+| CRITICAL | Blocks release. Causes data loss, security breach, or breaks core functionality. Must fix before merge. | Exploitable vulnerability, data corruption, system crash |
+| HIGH | Significant issue that should be fixed soon. Does not block release but degrades quality materially. | Unsanitized input, method duplication, missing test for critical path |
+| MEDIUM | Improvement that would meaningfully benefit the codebase. Acceptable to defer. | High cyclomatic complexity, overly broad permissions, missing edge case test |
+| LOW | Minor suggestion, stylistic preference, or nice-to-have. No material impact if deferred indefinitely. | Naming convention, micro-optimization, comment clarity |
+
+**Calibration rule:** A CRITICAL from any stakeholder should have roughly equivalent urgency — e.g., a
+CRITICAL security concern (exploitable vulnerability) and a CRITICAL architecture concern (breaks system
+invariant) both warrant blocking the merge. If your concern wouldn't block a release, it's not CRITICAL.
+
 ## Review Criteria
 1. Review the implementation against your stakeholder criteria
 2. Apply language-specific red flags from the supplement (if loaded)
 3. Consider the change in context of the full file, not just the diff
-4. Identify concerns at CRITICAL, HIGH, or MEDIUM severity
+4. Identify concerns using the severity definitions above
 5. Return your assessment in the specified JSON format
 6. Be specific about locations and recommendations
 
