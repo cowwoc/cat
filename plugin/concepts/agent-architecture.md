@@ -452,7 +452,7 @@ path resolution failures.
 
 **Context details:**
 
-1. **Skill preprocessing (`!` subprocess)**: The `!` line in SKILL.md runs load-skill.sh, which processes handler.sh
+1. **Skill preprocessing (`!` subprocess)**: The `!` line in SKILL.md runs load-skill, which processes handler.sh
    output AND skill content through substitute_vars. Only CLAUDE_PLUGIN_ROOT and CLAUDE_SESSION_ID are
    string-substituted. CLAUDE_PROJECT_DIR is neither substituted nor available as an env var. When skill content
    contains

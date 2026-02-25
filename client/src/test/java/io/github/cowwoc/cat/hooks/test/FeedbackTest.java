@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.util.GitHubFeedback;
+import io.github.cowwoc.cat.hooks.util.Feedback;
 import org.testng.annotations.Test;
 import tools.jackson.databind.node.ObjectNode;
 
@@ -17,12 +17,12 @@ import java.nio.file.Path;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Tests for GitHubFeedback functionality.
+ * Tests for Feedback functionality.
  * <p>
  * Tests are designed for parallel execution - each test is self-contained
  * with no shared state.
  */
-public class GitHubFeedbackTest
+public class FeedbackTest
 {
   /**
    * Verifies that openIssue returns status "url_only" when the browser fails to open.
@@ -32,10 +32,10 @@ public class GitHubFeedbackTest
   @Test
   public void openIssueReturnsUrlOnlyWhenBrowserUnavailable() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("github-feedback-test");
+    Path tempDir = Files.createTempDirectory("feedback-test");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      GitHubFeedback feedback = new GitHubFeedback(scope);
+      Feedback feedback = new Feedback(scope);
       // Inject a browser opener that always fails
       String result = feedback.openIssue("Test Title", "Test body content", "",
         url ->
@@ -68,10 +68,10 @@ public class GitHubFeedbackTest
   @Test
   public void openIssueReturnsOpenedWhenBrowserSucceeds() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("github-feedback-test");
+    Path tempDir = Files.createTempDirectory("feedback-test");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      GitHubFeedback feedback = new GitHubFeedback(scope);
+      Feedback feedback = new Feedback(scope);
       // Inject a browser opener that succeeds (no-op)
       String result = feedback.openIssue("Test Title", "Test body content", "",
         url ->
@@ -100,10 +100,10 @@ public class GitHubFeedbackTest
   @Test(expectedExceptions = NullPointerException.class)
   public void openIssueRejectsNullTitle() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("github-feedback-test");
+    Path tempDir = Files.createTempDirectory("feedback-test");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      GitHubFeedback feedback = new GitHubFeedback(scope);
+      Feedback feedback = new Feedback(scope);
       feedback.openIssue(null, "body", "", url ->
       {
       });
@@ -122,10 +122,10 @@ public class GitHubFeedbackTest
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void openIssueRejectsBlankTitle() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("github-feedback-test");
+    Path tempDir = Files.createTempDirectory("feedback-test");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      GitHubFeedback feedback = new GitHubFeedback(scope);
+      Feedback feedback = new Feedback(scope);
       feedback.openIssue("  ", "body", "", url ->
       {
       });
@@ -144,10 +144,10 @@ public class GitHubFeedbackTest
   @Test(expectedExceptions = NullPointerException.class)
   public void openIssueRejectsNullBody() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("github-feedback-test");
+    Path tempDir = Files.createTempDirectory("feedback-test");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      GitHubFeedback feedback = new GitHubFeedback(scope);
+      Feedback feedback = new Feedback(scope);
       feedback.openIssue("title", null, "", url ->
       {
       });
@@ -166,10 +166,10 @@ public class GitHubFeedbackTest
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void openIssueRejectsBlankBody() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("github-feedback-test");
+    Path tempDir = Files.createTempDirectory("feedback-test");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      GitHubFeedback feedback = new GitHubFeedback(scope);
+      Feedback feedback = new Feedback(scope);
       feedback.openIssue("title", "  ", "", url ->
       {
       });
@@ -188,10 +188,10 @@ public class GitHubFeedbackTest
   @Test(expectedExceptions = NullPointerException.class)
   public void openIssueRejectsNullLabels() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("github-feedback-test");
+    Path tempDir = Files.createTempDirectory("feedback-test");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      GitHubFeedback feedback = new GitHubFeedback(scope);
+      Feedback feedback = new Feedback(scope);
       feedback.openIssue("title", "body", null, url ->
       {
       });
@@ -210,10 +210,10 @@ public class GitHubFeedbackTest
   @Test(expectedExceptions = NullPointerException.class)
   public void openIssueRejectsNullBrowserOpener() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("github-feedback-test");
+    Path tempDir = Files.createTempDirectory("feedback-test");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      GitHubFeedback feedback = new GitHubFeedback(scope);
+      Feedback feedback = new Feedback(scope);
       feedback.openIssue("title", "body", "", null);
     }
     finally
@@ -230,10 +230,10 @@ public class GitHubFeedbackTest
   @Test
   public void openIssueEncodesLabelsInUrl() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("github-feedback-test");
+    Path tempDir = Files.createTempDirectory("feedback-test");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      GitHubFeedback feedback = new GitHubFeedback(scope);
+      Feedback feedback = new Feedback(scope);
       String result = feedback.openIssue("Test Title", "Test body", "bug,enhancement",
         url ->
         {
