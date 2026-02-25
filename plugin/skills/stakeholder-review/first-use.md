@@ -806,7 +806,7 @@ User approval is a separate gate that follows stakeholder review.
 | Otherwise | REVIEW_PASSED - Proceed to user approval |
 
 The calling skill (work-with-issue) reads the reviewThreshold config and decides whether to trigger the auto-fix loop
-and when to stop, based on the configured AUTOFIX_LEVEL severity threshold.
+and when to stop, based on the configured AUTOFIX_THRESHOLD severity threshold.
 
 </step>
 
