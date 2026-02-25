@@ -23,7 +23,7 @@ import java.util.List;
  * <p>
  * CAT workflow requires:
  * <ol>
- *   <li>Issue work happens in isolated worktrees (M220)</li>
+ *   <li>Issue work happens in isolated worktrees</li>
  *   <li>Main agent delegates source edits to subagents (A003/M097)</li>
  * </ol>
  * <p>
@@ -121,7 +121,7 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
 
     if (isBaseBranch(currentBranch))
     {
-      String warning = "⚠️ BASE BRANCH EDIT DETECTED (M220)\n" +
+      String warning = "⚠️ BASE BRANCH EDIT DETECTED\n" +
                        "\n" +
                        "Branch: " + currentBranch + "\n" +
                        "File: " + filePath + "\n" +

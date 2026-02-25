@@ -99,10 +99,10 @@ public final class InjectSessionInstructions implements SessionStartHandler
 
       **Anti-pattern**: Starting to write code without first creating or selecting a task.
 
-      **CRITICAL (M339)**: User selecting an implementation option from AskUserQuestion does NOT bypass this rule.
+      **CRITICAL**: User selecting an implementation option from AskUserQuestion does NOT bypass this rule.
       Create the issue first, then delegate via /cat:work. Direct implementation is only for true trivial fixes.
 
-      ### Implementation Delegation (M30x)
+      ### Implementation Delegation
       **CRITICAL**: Main agent orchestrates; subagents implement.
 
       When implementing code changes within a task, delegate to a subagent via the Task tool.
@@ -126,7 +126,7 @@ public final class InjectSessionInstructions implements SessionStartHandler
       - Parallel implementation possible
       - Clear separation: main agent = brain, subagent = hands
 
-      ### Worktree Isolation (M252)
+      ### Worktree Isolation
       **CRITICAL**: NEVER work on tasks in the main worktree. ALWAYS use isolated worktrees.
       *(Enforced by hook - Edit/Write blocked on protected branches for plugin/ files)*
 

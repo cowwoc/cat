@@ -27,7 +27,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 /**
- * Block work-merge subagent spawn when trust=medium/low without explicit user approval (M479/M480).
+ * Block work-merge subagent spawn when trust=medium/low without explicit user approval.
  * <p>
  * This handler enforces the trust-based approval requirement:
  * <ul>
@@ -127,7 +127,7 @@ public final class EnforceApprovalBeforeMerge implements TaskHandler
     if (checkApprovalInSession(sessionFile))
       return Result.allow();
 
-    String reason = "FAIL: Explicit user approval required before merge (M479/M480)\n" +
+    String reason = "FAIL: Explicit user approval required before merge\n" +
                     "\n" +
                     "Trust level: " + trust + "\n" +
                     "Requirement: Explicit user approval via AskUserQuestion or direct message\n" +
