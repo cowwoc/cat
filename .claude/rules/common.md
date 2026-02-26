@@ -181,6 +181,10 @@ if (!SESSION_ID_PATTERN.matcher(value).matches()) {
 3. Provide a migration script to convert existing data
 4. Document the change in the issue's PLAN.md
 
+**Idempotency:** Migration scripts MUST be idempotent. Running a migration consecutively must be a no-op on the 2nd+
+run. Scripts should check current state before making changes (e.g., skip renaming a file that's already renamed, skip
+adding a field that already exists).
+
 **DO NOT:**
 - Add "legacy format" branches in readers
 - Keep old writers alongside new writers
