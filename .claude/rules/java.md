@@ -70,6 +70,25 @@ for (int i = 0; i < 10; i += 1)
 count += 1;
 ```
 
+### Iteration
+Avoid `stream.forEach()` and `iterable.forEach()`. Use native for-loops instead:
+
+```java
+// Good - native for-loop
+for (String item : items)
+  process(item);
+
+// Avoid - forEach
+items.forEach(item -> process(item));
+items.stream().forEach(item -> process(item));
+```
+
+**Why:** For-loops support `break`, `continue`, checked exceptions, and mutable local variables. `forEach()` obscures
+control flow and offers no advantage for simple iteration.
+
+**Exception:** Terminal stream operations like `collect()`, `map()`, `filter()` are fine — the rule applies specifically
+to `forEach()` as a terminal operation replacing a loop.
+
 ### Indentation
 - 2 spaces (not tabs)
 - Continuation indent: 2 spaces
