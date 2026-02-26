@@ -70,7 +70,7 @@ If user selects "Yes, overwrite", continue to step: install
 Run the install command:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/statusline-install.sh" --install "${CLAUDE_PROJECT_DIR}" "${CLAUDE_PLUGIN_ROOT}"
+"${CLAUDE_PLUGIN_ROOT}/client/bin/statusline-install" "${CLAUDE_PROJECT_DIR}" "${CLAUDE_PLUGIN_ROOT}"
 ```
 
 Parse the JSON output and determine the result:
@@ -109,8 +109,7 @@ Restart Claude Code or start a new session to see it in action.
 <success_criteria>
 
 - [ ] `.claude/` directory exists in project root
-- [ ] `statusline-command.sh` copied to `.claude/statusline-command.sh` with mode 755
-- [ ] `.claude/settings.json` contains `statusLine` configuration with correct `type` and `command` values
+- [ ] `.claude/settings.json` contains `statusLine` configuration with correct `type` and `command` values pointing to the jlink binary
 - [ ] If existing `statusLine` configuration was found, user was asked before overwriting
 - [ ] If user declined overwrite, skill exited gracefully without error
 - [ ] Success message displayed to user
