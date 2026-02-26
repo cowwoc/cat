@@ -31,17 +31,24 @@ data contains:
 
 **When using pre-extracted context:**
 
-1. Use `documents_read` to identify which documents to look up in the JSONL (not to assume delivery was correct)
-2. Use `skill_invocations` to identify which skills to look up in the JSONL
+1. Use `documents_read` as an index to identify which documents to examine in JSONL (not as confirmation that delivery
+   was correct)
+2. Use `skill_invocations` as an index to identify which skills to examine in JSONL
 3. Use `bash_commands` to find the failing commands and their outputs — no grep/jq needed
-4. Use `timeline_events` to reconstruct the event sequence
+4. Use `timeline_events` as a starting-point reconstruction — verify critical events against JSONL
 5. Use `timezone_context` to interpret timestamps — skip timezone investigation
-6. Use session-analyzer on the raw JSONL to verify the content the agent actually received for any document that may
-   be relevant to the mistake (see Step 2)
+6. Use session-analyzer on the raw JSONL to verify the actual content the agent received, especially for documents
+   relevant to the mistake (see Step 2)
 
-**Early termination rule:** Stop searching for evidence once you have enough to establish the timeline. If you have
-found 3 or more positive matches for each evidence type (relevant commands, failure outputs, documents read), stop
-searching — additional matches rarely change the root cause.
+**CRITICAL: Pre-extracted context is a starting-point index, not evidence itself.** JSONL is authoritative. Count only
+direct JSONL confirmations toward your investigation completeness.
+
+**Early termination rule:** Stop searching for evidence once you have established the timeline via JSONL. You need:
+- Timeline verified against JSONL (not just pre-extracted index)
+- Root cause document identified and content verified in JSONL
+- Priming pathway confirmed in JSONL (showing what agent actually received)
+
+Do NOT count pre-extracted context entries as evidence — they are pointers to where evidence is located in JSONL.
 
 **Parallel reference file reads:** If you need to read reference files (scripts, skill files, agent definitions),
 read all of them in a single parallel batch at the start of this phase rather than reading them one at a time as
