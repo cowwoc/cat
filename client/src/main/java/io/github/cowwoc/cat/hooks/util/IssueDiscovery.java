@@ -7,6 +7,8 @@
 package io.github.cowwoc.cat.hooks.util;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.SharedSecrets;
+import io.github.cowwoc.cat.hooks.IssueStatus;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
@@ -43,6 +45,10 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  */
 public final class IssueDiscovery
 {
+  static
+  {
+    SharedSecrets.setIssueDiscoveryAccess(IssueDiscovery::getIssueStatus);
+  }
   /**
    * Pattern matching a bare issue name like {@code fix-bug}.
    */
@@ -1113,42 +1119,29 @@ public final class IssueDiscovery
    * @return the normalized status string
    * @throws IOException if the status field is missing or the status is invalid
    */
-  private String getIssueStatus(List<String> lines, Path statePath) throws IOException
+  private static String getIssueStatus(List<String> lines, Path statePath) throws IOException
   {
-    String rawStatus = null;
+    String status = null;
     for (String line : lines)
     {
       if (line.startsWith("- **Status:**"))
       {
-        rawStatus = line.substring("- **Status:**".length()).strip();
+        status = line.substring("- **Status:**".length()).strip();
         break;
       }
     }
 
-    if (rawStatus == null)
+    if (status == null)
       throw new IOException("Status field missing in " + statePath +
         ". STATE.md must contain a '- **Status:**' line.");
 
-    // Normalize aliases to canonical values
-    String status;
-    switch (rawStatus)
-    {
-      case "pending" -> status = "open";
-      case "completed", "complete", "done" -> status = "closed";
-      case "in_progress", "active" -> status = "in-progress";
-      default -> status = rawStatus;
-    }
-
-    // Validate against allowed status values
-    switch (status)
-    {
-      case "open", "in-progress", "closed", "blocked" ->
-      {
-        // Valid
-      }
-      default -> throw new IOException("Unknown status '" + status + "' in " + statePath +
-        ". Valid values: open, in-progress, closed, blocked");
-    }
+    // Validate against allowed canonical status values only (no aliases).
+    // Legacy alias values must be migrated using plugin/migrations/2.1.sh before reading.
+    if (IssueStatus.fromString(status) == null)
+      throw new IOException("Unknown status '" + status + "' in " + statePath +
+        ". Valid values: " + IssueStatus.asCommaSeparated() + ".\n" +
+        "Legacy statuses (pending, completed, complete, done, in_progress, active) must be migrated:\n" +
+        "  Run: plugin/migrations/2.1.sh");
 
     return status;
   }

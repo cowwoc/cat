@@ -21,36 +21,6 @@ import org.testng.annotations.Test;
 public final class RetrospectiveMigratorTest
 {
   /**
-   * Recursively deletes a directory and all its contents.
-   *
-   * @param dir directory to delete
-   */
-  private void deleteRecursively(Path dir)
-  {
-    try
-    {
-      if (Files.exists(dir))
-      {
-        Files.walk(dir).
-          sorted((a, b) -> -a.compareTo(b)).
-          forEach(path ->
-          {
-            try
-            {
-              Files.deleteIfExists(path);
-            }
-            catch (Exception _)
-            {
-            }
-          });
-      }
-    }
-    catch (Exception _)
-    {
-    }
-  }
-
-  /**
    * Verifies that migration returns skipped status when directory doesn't exist.
    *
    * @throws IOException if file operations fail
@@ -69,7 +39,7 @@ public final class RetrospectiveMigratorTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -100,7 +70,7 @@ public final class RetrospectiveMigratorTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -148,7 +118,7 @@ public final class RetrospectiveMigratorTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -208,7 +178,7 @@ public final class RetrospectiveMigratorTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -267,7 +237,7 @@ public final class RetrospectiveMigratorTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -340,7 +310,7 @@ public final class RetrospectiveMigratorTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -402,7 +372,7 @@ public final class RetrospectiveMigratorTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -429,7 +399,7 @@ public final class RetrospectiveMigratorTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -477,7 +447,7 @@ public final class RetrospectiveMigratorTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -521,7 +491,7 @@ public final class RetrospectiveMigratorTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 }
