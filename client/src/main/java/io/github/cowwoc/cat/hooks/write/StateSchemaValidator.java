@@ -10,6 +10,7 @@ import static io.github.cowwoc.cat.hooks.skills.JsonHelper.getStringOrDefault;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
+import io.github.cowwoc.cat.hooks.IssueStatus;
 import tools.jackson.databind.JsonNode;
 
 import java.util.HashMap;
@@ -34,7 +35,6 @@ public final class StateSchemaValidator implements FileWriteHandler
   private static final Pattern PROGRESS_FORMAT = Pattern.compile("^(\\d+)%$");
   private static final Pattern DATE_FORMAT = Pattern.compile("^\\d{4}-\\d{2}-\\d{2}$");
   private static final Pattern ISSUE_SLUG_FORMAT = Pattern.compile("^[a-z0-9][a-z0-9.-]*$");
-  private static final Set<String> VALID_STATUSES = Set.of("open", "in-progress", "closed");
   private static final Set<String> VALID_RESOLUTION_PREFIXES =
     Set.of("implemented", "duplicate", "obsolete", "won't-fix", "not-applicable");
   private static final Set<String> MANDATORY_KEYS =
@@ -221,12 +221,14 @@ public final class StateSchemaValidator implements FileWriteHandler
    */
   private FileWriteHandler.Result validateStatus(String status)
   {
-    if (status != null && !VALID_STATUSES.contains(status))
+    if (status != null && IssueStatus.fromString(status) == null)
     {
       return FileWriteHandler.Result.block(
         "STATE.md schema violation: Invalid Status value '" + status + "'.\n" +
         "\n" +
-        "Status must be one of: open, in-progress, closed");
+        "Status must be one of: " + IssueStatus.asCommaSeparated() + "\n" +
+        "\n" +
+        "If migrating from older versions, run: plugin/migrations/2.1.sh");
     }
     return FileWriteHandler.Result.allow();
   }
