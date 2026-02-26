@@ -1,0 +1,13 @@
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+
+# Temporary worktrees created for issue isolation
+/worktrees/
+
+# Lock files used to prevent concurrent access
+/locks/
+
+# Verification output from audit and verify commands
+/verify/
