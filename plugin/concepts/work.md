@@ -103,6 +103,11 @@ those criteria, it must be fixed — regardless of when it was introduced.
 +-- parser/src/...             <- NEVER edit these files during issue execution
 ```
 
+**Keep the issue branch isolated until the merge phase.** Do NOT merge the issue branch into the base branch before
+the full merge phase (squash + approval gate) completes. Stakeholder review concerns and their fixes must be committed
+to the issue branch in the worktree. Fast-forwarding the issue branch to the base branch before review completes
+bypasses isolation and causes subsequent fixes to land directly on the base branch.
+
 ## CRITICAL: Commit Before Stopping in Worktrees
 
 **When working in a worktree, commit all changes before requesting user review or stopping work.**
