@@ -51,7 +51,7 @@ If `planning_valid` is false in HANDLER_DATA:
 
 If the command was invoked with arguments (e.g., `/cat:add make installation easier`):
 - Capture the full argument string as ISSUE_DESCRIPTION
-- Skip directly to step: issue_ask_type_and_criteria (bypassing select_type and the freeform description question)
+- Skip directly to step: issue_read_config (bypassing select_type and the freeform description question)
 
 If no arguments provided:
 - Continue to step: select_type
@@ -105,13 +105,43 @@ version it belongs to.
 
 **If ISSUE_DESCRIPTION already set (from command args):**
 - Skip the freeform question
-- Continue directly to step: issue_ask_type_and_criteria
+- Continue directly to step: issue_read_config
 
 **Otherwise, ask for description (FREEFORM):**
 
 Ask inline: "What do you want to accomplish? Describe the issue you have in mind."
 
-Capture as ISSUE_DESCRIPTION, then continue to step: issue_clarify_intent.
+Capture as ISSUE_DESCRIPTION, then continue to step: issue_read_config.
+
+</step>
+
+<step name="issue_read_config">
+
+**Read and validate configuration:**
+
+Read the `effort` value from cat-config.json and store it for all downstream steps:
+
+```bash
+CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json"
+if [[ ! -f "$CONFIG_FILE" ]]; then
+    echo "ERROR: cat-config.json not found: $CONFIG_FILE" >&2
+    echo "Solution: Run /cat:init to initialize the project." >&2
+    exit 1
+fi
+EFFORT=$(grep '"effort"' "$CONFIG_FILE" | sed 's/.*"effort"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+if [[ -z "$EFFORT" ]]; then
+    echo "ERROR: 'effort' key not found in $CONFIG_FILE." >&2
+    echo "Add: \"effort\": \"low|medium|high\" to cat-config.json" >&2
+    exit 1
+fi
+if [[ "$EFFORT" != "low" && "$EFFORT" != "medium" && "$EFFORT" != "high" ]]; then
+    echo "ERROR: Invalid effort value '$EFFORT' in $CONFIG_FILE." >&2
+    echo "Valid values: low, medium, high" >&2
+    exit 1
+fi
+```
+
+Store EFFORT for use in issue_smart_questioning, issue_impact_analysis, and issue_create.
 
 </step>
 
@@ -140,6 +170,80 @@ Append clarification to ISSUE_DESCRIPTION.
 
 **If "Description is complete":**
 Continue to next step.
+
+</step>
+
+<step name="issue_smart_questioning">
+
+**Probe for ambiguities in the issue description (effort-scaled):**
+
+Use the EFFORT value set in issue_read_config.
+
+**If EFFORT is "low":**
+
+Skip this step entirely. Continue to step: issue_analyze_versions.
+
+**If EFFORT is "medium":**
+
+Analyze ISSUE_DESCRIPTION for the following ambiguity indicators:
+- **Scope ambiguity:** The description could apply to multiple subsystems, layers, or components without specifying which
+- **Conflicting requirements:** The description implies goals that are difficult to achieve simultaneously (e.g., "faster and more thorough")
+- **Unclear success criteria:** No observable outcome is described (e.g., "improve the UX" without saying what "improved" looks like)
+
+If one or more ambiguities are detected, use AskUserQuestion to present them. Ask only the ambiguities that were
+actually detected (omit questions where no ambiguity exists). Batch all detected ambiguities into a single
+AskUserQuestion call.
+
+Example questions (adapt to the specific ambiguity found):
+
+- **Scope ambiguity detected:**
+  - question: "Your description could apply to multiple areas. Which scope is intended?"
+  - options: [Two or three concrete scope interpretations derived from the description] + "Covers all of the above"
+
+- **Conflicting requirements detected:**
+  - question: "The description implies [goal A] and [goal B], which may be in tension. Which takes priority?"
+  - options: ["Prioritize [goal A]", "Prioritize [goal B]", "Balance both — I understand the trade-off", "Clarify description"]
+
+- **Unclear success criteria detected:**
+  - question: "How will we know this issue is complete? What should a user observe?"
+  - options: [Two or three concrete observable outcomes derived from context] + "I'll describe it: (free text)"
+
+If user provides clarification, append it to ISSUE_DESCRIPTION.
+
+If no ambiguities are detected, skip to step: issue_analyze_versions.
+
+**If EFFORT is "high":**
+
+Perform a deeper analysis of ISSUE_DESCRIPTION covering:
+- All medium-level checks above
+- **Edge cases:** Are there boundary conditions or unusual inputs the description does not address?
+- **Trade-offs:** Does the approach imply architectural trade-offs (e.g., memory vs. speed, simplicity vs. flexibility)?
+- **Alternative interpretations:** Are there materially different ways to read the description?
+- **Missing context:** Are there referenced systems, components, or dependencies that are not named?
+
+For each detected concern, batch into AskUserQuestion calls (up to 4 questions per call).
+
+In addition to the medium-level questions, include:
+
+- **Edge case gap detected:**
+  - question: "The description doesn't address [specific edge case]. Should it?"
+  - options: ["Yes, include edge case handling", "No, out of scope for this issue", "Add to UNKNOWNS for research"]
+
+- **Trade-off detected:**
+  - question: "This approach implies a trade-off between [A] and [B]. Which is preferred?"
+  - options: ["Prioritize [A]", "Prioritize [B]", "Document the trade-off and decide during implementation"]
+
+- **Alternative interpretation detected:**
+  - question: "The description could mean [interpretation 1] or [interpretation 2]. Which is correct?"
+  - options: ["[Interpretation 1]", "[Interpretation 2]", "Both — describe the full scope", "Neither — clarify description"]
+
+- **Missing context detected:**
+  - question: "The description references [component/system] without specifying [what's missing]. Please clarify:"
+  - options: [Two or three reasonable defaults derived from context] + "I'll describe it: (free text)"
+
+If user provides clarification, append it to ISSUE_DESCRIPTION.
+
+If no concerns are detected at any level, skip silently to step: issue_analyze_versions.
 
 </step>
 
@@ -526,7 +630,7 @@ Capture the subagent's response.
 
 If the subagent fails to return output, times out, or returns unparseable output:
 - Display: "Requirements validation could not be completed. Proceeding with existing criteria."
-- Skip validation processing and proceed to next step (issue_create)
+- Skip validation processing and proceed to next step (issue_impact_analysis)
 
 If the subagent returns output but individual fields are missing or unparseable:
 - Treat missing fields as PASS (no issues detected for that check)
@@ -567,7 +671,124 @@ Parse the subagent response to extract:
 
 **If all checks PASS:**
 
-Proceed silently to next step (no user interaction needed).
+Proceed silently to step: issue_impact_analysis (no user interaction needed).
+
+</step>
+
+<step name="issue_impact_analysis">
+
+**Analyze potential impact of the proposed issue on existing features (effort-scaled):**
+
+Initialize IMPACT_NOTES="".
+
+Use the EFFORT value set in issue_read_config.
+
+**If EFFORT is "low":**
+
+Skip this step entirely. Continue to step: issue_create.
+
+**If EFFORT is "medium":**
+
+Load existing issues from the selected version using HANDLER_DATA.versions[selected_version].existing_issues.
+
+For each existing issue in the version, compare its name and any available STATE.md/PLAN.md summary against
+ISSUE_DESCRIPTION. Identify:
+- **Direct conflicts:** The new issue modifies or removes something an existing issue depends on
+- **Overlap:** The new issue covers ground already addressed by an existing issue
+- **Ordering constraints:** The new issue should logically precede or follow an existing issue but no dependency
+  is currently declared
+
+If one or more concerns are found, use AskUserQuestion:
+- header: "Impact Concerns"
+- question: "The following potential impacts were detected with existing issues in v{major}.{minor}. How would you like to proceed?"
+- Present each concern as context above the question (not as a selectable option):
+  - "[existing-issue-name]: {brief description of the conflict or overlap}"
+- options:
+  - "Proceed as described" — Create the issue without changes
+  - "Revise description" — I want to adjust the scope to avoid the conflict
+  - "Split into multiple issues" — Separate the conflicting parts
+  - "Add impact notes to plan" — Document the impact relationship in PLAN.md
+
+**If "Revise description":**
+
+Ask inline: "Please provide the revised issue description:"
+
+Capture revised input and replace ISSUE_DESCRIPTION.
+
+<!-- Note: Smart questioning (issue_smart_questioning) is not re-run after description revision here.
+     The revised description goes through re-evaluation within impact_analysis only. Re-running the full
+     smart questioning loop would require returning to issue_smart_questioning and re-traversing the entire
+     pipeline, which is deferred as a future enhancement. -->
+
+Loop back to the start of issue_impact_analysis to re-evaluate the revised description for impact concerns.
+
+**If "Split into multiple issues":**
+
+Inform user: "Restart `/cat:add` for each sub-issue. You may use the current description as a starting point for
+each." Then STOP execution.
+
+**If "Add impact notes to plan":**
+
+Set IMPACT_NOTES to the concern descriptions. These will be appended to the PLAN.md in the issue_create step.
+
+**If no concerns are detected:**
+
+Skip silently to step: issue_create.
+
+**If EFFORT is "high":**
+
+Perform a broader impact analysis covering multiple dimensions:
+
+**1. Same-version conflict check (same as medium):**
+
+Apply the medium-level check against existing issues in the selected version.
+
+**2. Cross-version dependency analysis:**
+
+Scan HANDLER_DATA for other open versions. For each, check if ISSUE_DESCRIPTION touches areas those versions depend
+on. Flag potential backward compatibility breaks or API changes that downstream versions consume.
+
+**3. Feature interaction analysis:**
+
+Based on ISSUE_DESCRIPTION and ISSUE_TYPE, reason about which existing system behaviors the change might
+implicitly alter:
+- If ISSUE_TYPE is "Refactor": flag tests that exercise the refactored area as potentially needing updates
+- If ISSUE_TYPE is "Feature": flag additive changes that could conflict with planned features in other open versions
+- If ISSUE_TYPE is "Bugfix": flag whether the fix is a targeted correction or requires broader behavioral change
+
+**4. Present consolidated impact report:**
+
+If any concerns were found across dimensions, use AskUserQuestion:
+- header: "Impact Analysis"
+- question: "Impact analysis found the following concerns. How would you like to proceed?"
+- Present each concern with its dimension label (e.g., "Same-version overlap:", "Cross-version compatibility:",
+  "Feature interaction:") as context above the question
+- options:
+  - "Proceed as described" — Create the issue without changes
+  - "Revise description" — I want to adjust the scope
+  - "Split into multiple issues" — Separate the impacted parts
+  - "Add impact notes to plan" — Document the relationships in PLAN.md
+
+**If "Revise description":**
+
+Ask inline: "Please provide the revised issue description:"
+
+Capture revised input and replace ISSUE_DESCRIPTION.
+
+Loop back to the start of issue_impact_analysis to re-evaluate the revised description for impact concerns.
+
+**If "Split into multiple issues":**
+
+Inform user: "Restart `/cat:add` for each sub-issue. You may use the current description as a starting point for
+each." Then STOP execution.
+
+**If "Add impact notes to plan":**
+
+Set IMPACT_NOTES to the concern descriptions. These will be appended to the PLAN.md in the issue_create step.
+
+**If no concerns are detected at any level:**
+
+Skip silently to step: issue_create.
 
 </step>
 
@@ -618,16 +839,7 @@ is not detailed enough. The subagent should only decide "how to write the code",
 
 **Effort-Based Planning Depth:**
 
-Read the `effort` value from cat-config.json to calibrate planning thoroughness:
-
-```bash
-CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json"
-EFFORT="medium"  # default
-if [[ -f "$CONFIG_FILE" ]]; then
-    EFFORT=$(grep '"effort"' "$CONFIG_FILE" | sed 's/.*"effort"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
-    EFFORT="${EFFORT:-medium}"
-fi
-```
+Use the EFFORT value set in issue_read_config to calibrate planning thoroughness.
 
 Apply the following depth to PLAN.md content based on `$EFFORT`:
 
@@ -657,6 +869,18 @@ Add a Research Findings section to PLAN.md after the Goal/Problem section:
 ```
 
 This section should appear before the "Satisfies" section in all templates.
+
+**If IMPACT_NOTES is non-empty:**
+
+Add an Impact Notes section to PLAN.md after the Research Findings section (or after the Goal/Problem section if no
+Research Findings):
+
+```markdown
+## Impact Notes
+{IMPACT_NOTES}
+```
+
+This section documents the potential impact of this issue on existing features, identified during issue creation.
 
 **After generating STATE.md and PLAN.md content, create the issue:**
 
