@@ -30,18 +30,18 @@ Reference: agent-architecture.md § Context Limit Constants
 
 ```yaml
 context_degradation_analysis:
-  tokens_at_error: 95000
-  threshold_exceeded: true
-  threshold_exceeded_by: 15000
-  compaction_events: 2
-  errors_after_compaction: true
-  session_duration: 4.5 hours
-  messages_before_error: 127
-  early_session_quality: high
-  late_session_quality: degraded
-  quality_degradation_detected: true
-  context_related: LIKELY
-  confidence: 0.85
+  tokens_at_error: {from phase-analyze context_metrics}
+  threshold_exceeded: {true|false}
+  threshold_exceeded_by: {token count if exceeded}
+  compaction_events: {from phase-analyze context_metrics}
+  errors_after_compaction: {true|false}
+  session_duration: {from phase-analyze context_metrics}
+  messages_before_error: {from phase-analyze context_metrics}
+  early_session_quality: {high|medium|low}
+  late_session_quality: {high|medium|low}
+  quality_degradation_detected: {true|false}
+  context_related: {LIKELY|POSSIBLE|UNLIKELY}
+  confidence: {0.0-1.0}
 ```
 
 ## Step 6: Identify Prevention Level
