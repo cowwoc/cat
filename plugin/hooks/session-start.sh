@@ -20,6 +20,12 @@ set -euo pipefail
 
 readonly JDK_SUBDIR="client"
 
+# --- Locking ---
+
+# LOCK_PATH is a global variable used by acquire_runtime_lock and release_runtime_lock.
+# It is single-use per try_acquire_runtime invocation and should NOT be used elsewhere.
+LOCK_PATH=""
+
 # --- Logging ---
 
 LOG_LEVEL=""
@@ -207,13 +213,72 @@ download_runtime() {
   debug "Runtime installed to $target_dir"
 }
 
+# --- Atomic lock helpers ---
+
+# Acquire an exclusive lock using mkdir (atomic on POSIX filesystems).
+# Handles stale locks (mtime > 10 minutes) and waits up to 30s for active locks.
+# Sets LOCK_PATH to the lock directory path on success.
+# Usage: acquire_runtime_lock <jdk_path>
+# Returns: 0 if lock acquired, 1 if timeout
+acquire_runtime_lock() {
+  local jdk_path="$1"
+  local lock_path="${jdk_path}.lock"
+  local stale_threshold_seconds=600  # 10 minutes
+  local timeout_seconds=30
+  local elapsed=0
+
+  while true; do
+    # Remove stale locks first (crashed/killed sessions)
+    if [[ -d "$lock_path" ]]; then
+      local lock_mtime now age
+      # Use platform-aware stat: GNU format on Linux, BSD format on macOS
+      lock_mtime=$(stat -c "%Y" "$lock_path" 2>/dev/null || stat -f "%m" "$lock_path" 2>/dev/null || echo 0)
+      now=$(date +%s)
+      age=$(( now - lock_mtime ))
+      if (( age > stale_threshold_seconds )); then
+        debug "Removing stale lock (age: ${age}s): $lock_path"
+        rmdir "$lock_path" 2>/dev/null || true
+      fi
+    fi
+
+    # Try atomic lock acquisition
+    if mkdir "$lock_path" 2>/dev/null; then
+      LOCK_PATH="$lock_path"
+      debug "Lock acquired: $lock_path"
+      return 0
+    fi
+
+    if (( elapsed >= timeout_seconds )); then
+      debug "Timed out waiting for lock after ${elapsed}s: $lock_path"
+      return 1
+    fi
+
+    debug "Lock held by another session, waiting... (${elapsed}s elapsed)"
+    sleep 1
+    (( elapsed++ )) || true
+  done
+}
+
+# Release the lock acquired by acquire_runtime_lock.
+release_runtime_lock() {
+  if [[ -n "${LOCK_PATH:-}" && -d "$LOCK_PATH" ]]; then
+    rmdir "$LOCK_PATH" 2>/dev/null || true
+    debug "Lock released: $LOCK_PATH"
+    LOCK_PATH=""
+  fi
+}
+
+# Ensure locks are cleaned up even when script exits via set -euo pipefail error.
+# The RETURN trap on individual functions provides defense-in-depth for function-level exits.
+trap 'release_runtime_lock' EXIT
+
 # --- Runtime setup with version comparison ---
 
 try_acquire_runtime() {
   local jdk_path="$1"
   local plugin_version="$2"
 
-  # Check if the local bundle version matches the plugin version
+  # Fast path: check if the runtime is already valid (no lock needed for read-only check)
   local version_file="${jdk_path}/VERSION"
   if [[ -f "$version_file" ]]; then
     local local_version
@@ -221,7 +286,7 @@ try_acquire_runtime() {
     debug "Local bundle version: $local_version, plugin version: $plugin_version"
 
     if [[ "$local_version" == "$plugin_version" ]]; then
-      # Versions match - verify runtime works and return
+      # Versions match - verify runtime works and return without locking
       debug "Versions match, checking existing runtime..."
       if check_runtime "$jdk_path"; then
         return 0
@@ -232,6 +297,29 @@ try_acquire_runtime() {
     fi
   else
     debug "No VERSION file found at $version_file, downloading bundle..."
+  fi
+
+  # Slow path: download required. Acquire a lock to prevent concurrent downloads.
+  # LOCK_PATH is a global (not local) so release_runtime_lock can access it from the trap.
+  LOCK_PATH=""
+  if ! acquire_runtime_lock "$jdk_path"; then
+    fail "Timed out waiting for concurrent download lock: ${jdk_path}.lock"
+    return 1
+  fi
+
+  # Ensure lock is released on any exit from this point
+  trap 'release_runtime_lock' RETURN
+
+  # Re-check VERSION after acquiring the lock: another session may have completed the download
+  if [[ -f "$version_file" ]]; then
+    local_version=$(cat "$version_file")
+    if [[ "$local_version" == "$plugin_version" ]]; then
+      debug "Another session completed the download while we waited, checking runtime..."
+      if check_runtime "$jdk_path"; then
+        return 0
+      fi
+      debug "Runtime check failed after lock re-check, re-downloading..."
+    fi
   fi
 
   # Download the bundle matching the plugin version
