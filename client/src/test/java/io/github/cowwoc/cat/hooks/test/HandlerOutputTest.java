@@ -431,7 +431,7 @@ public class HandlerOutputTest
           {
             "trust": "high",
             "verify": "all",
-            "curiosity": "medium",
+            "effort": "medium",
             "patience": "low",
             "autoRemoveWorktrees": false
           }

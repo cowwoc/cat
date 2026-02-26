@@ -76,7 +76,7 @@ Show current values in descriptions using data from read-config step.
 - question: "What would you like to configure?"
 - options:
   - label: "🐱 CAT Behavior"
-    description: "Currently: {trust} · {verify} · {curiosity} · {patience}"
+    description: "Currently: {trust} · {verify} · {effort} · {patience}"
   - label: "🧹 Cleanup"
     description: "Currently: {autoRemoveWorktrees ? 'Auto-remove' : 'Keep'}"
   - label: "📏 Display Width"
@@ -120,8 +120,8 @@ Then AskUserQuestion:
     description: "Currently: {trust || 'medium'}"
   - label: "✅ Verify"
     description: "Currently: {verify || 'changed'}"
-  - label: "🔍 Curiosity"
-    description: "Currently: {curiosity || 'low'}"
+  - label: "🔍 Effort"
+    description: "Currently: {effort || 'medium'}"
   - label: "⏳ Patience"
     description: "Currently: {patience || 'high'}"
   - label: "← Back"
@@ -171,13 +171,13 @@ Map: None → `verify: "none"`, Changed → `verify: "changed"`, All → `verify
 
 </step>
 
-<step name="curiosity">
+<step name="effort">
 
-**🔍 Curiosity — How much CAT explores beyond the immediate issue**
+**🔍 Effort — How much CAT explores beyond the immediate issue**
 
 Display current setting, then AskUserQuestion:
-- header: "Curiosity"
-- question: "How much should CAT explore beyond the issue? (Current: {curiosity || 'low'})"
+- header: "Effort"
+- question: "How much should CAT explore beyond the issue? (Current: {effort || 'medium'})"
 - options:
   - label: "Low (Recommended)"
     description: "Issue-only, minimal scope"
@@ -188,7 +188,7 @@ Display current setting, then AskUserQuestion:
   - label: "← Back"
     description: "Return to behavior menu"
 
-Map: Low → `curiosity: "low"`, Medium → `curiosity: "medium"`, High → `curiosity: "high"`
+Map: Low → `effort: "low"`, Medium → `effort: "medium"`, High → `effort: "high"`
 
 </step>
 
@@ -573,7 +573,7 @@ Do NOT manually construct output or invoke scripts. Output the error and STOP.
 |---------|------|---------|-------------|
 | `trust` | string | "medium" | Trust level (controls review and autonomy) |
 | `verify` | string | "changed" | What verification runs before commits |
-| `curiosity` | string | "low" | Exploration beyond immediate issue |
+| `effort` | string | "medium" | Exploration beyond immediate issue |
 | `patience` | string | "high" | When to act on discoveries |
 | `autoRemoveWorktrees` | boolean | true | Auto-remove worktrees |
 | `completionWorkflow` | string | "merge" | Issue completion behavior (merge or PR) |
@@ -591,7 +591,7 @@ Do NOT manually construct output or invoke scripts. Output the error and STOP.
 - `changed` — Verify modified file/module only.
 - `all` — Verify entire project.
 
-### Curiosity Values
+### Effort Values
 - `low` — Issue-only. Don't explore.
 - `medium` — Notice obvious issues while working.
 - `high` — Actively explore for improvements.

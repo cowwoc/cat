@@ -200,7 +200,7 @@ cat-config.json:
 {
   "trust": "medium",            // low | medium | high (autonomy level)
   "verify": "changed",          // changed | all (verification scope)
-  "curiosity": "medium",        // low | medium | high (exploration level)
+  "effort": "medium",        // low | medium | high (exploration level)
   "patience": "medium"          // low | medium | high (refactoring tolerance)
 }
 ```

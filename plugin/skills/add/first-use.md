@@ -616,6 +616,28 @@ model to implement mechanically without making architectural decisions. Include:
 If the execution subagent needs to make judgment calls about "how" to implement, the PLAN.md
 is not detailed enough. The subagent should only decide "how to write the code", not "what approach to take".
 
+**Effort-Based Planning Depth:**
+
+Read the `effort` value from cat-config.json to calibrate planning thoroughness:
+
+```bash
+CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json"
+EFFORT="medium"  # default
+if [[ -f "$CONFIG_FILE" ]]; then
+    EFFORT=$(grep '"effort"' "$CONFIG_FILE" | sed 's/.*"effort"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+    EFFORT="${EFFORT:-medium}"
+fi
+```
+
+Apply the following depth to PLAN.md content based on `$EFFORT`:
+
+- `low`: Generate a concise plan. Assume the obvious approach. Skip alternative analysis. List only essential steps
+  and post-conditions.
+- `medium`: Explore two or three alternative approaches before settling on one. Note key trade-offs in a brief
+  section. Execution steps should cover non-obvious edge cases.
+- `high`: Perform deep research on the problem space. Document the reasoning for the chosen approach and explicitly
+  list rejected alternatives with rationale. Execution steps must cover all known edge cases and failure modes.
+
 **Batch Execution Check:** When the issue involves multiple files AND a skill (e.g., compress 9 files with
 /cat:shrink-doc):
 1. Read the target skill's documentation for batch/parallel execution patterns
