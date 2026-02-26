@@ -89,6 +89,8 @@ readonly -a HANDLERS=(
   "load-skill:util.SkillLoader"
   "feedback:util.Feedback"
   "get-add-output:skills.GetAddOutput"
+  "statusline-command:util.StatuslineCommand"
+  "statusline-install:util.StatuslineInstall"
 )
 
 # --- Logging ---

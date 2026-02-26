@@ -17,6 +17,20 @@ public final class Strings
   }
 
   /**
+   * Escapes a string for safe inclusion in a JSON string value.
+   * <p>
+   * Escapes backslash, double-quote, newline, and carriage-return characters.
+   *
+   * @param value the string to escape
+   * @return the escaped string
+   * @throws NullPointerException if {@code value} is null
+   */
+  public static String escapeJson(String value)
+  {
+    return value.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r");
+  }
+
+  /**
    * Compares two strings for equality, ignoring case.
    * Similar to Objects.equals() but uses String.equalsIgnoreCase().
    *
