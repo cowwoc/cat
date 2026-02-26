@@ -119,8 +119,6 @@ rca_depth_check:
   # Question 4: Is this a recurring failure?
   recurring_pattern:
     question: "Has this type of failure occurred before? Check recurrence_of in mistakes.json"
-    if_yes_multiple: "Investigate independently. Do NOT assume past RCA conclusions are correct. Verify the root cause from fresh evidence, then compare with past conclusions."
-    if_3_plus_recurrences: "Investigate independently first. After establishing root cause from fresh evidence, check Step 4d for architectural patterns."
     your_answer: "_______________"
 
   # Question 5: Prevention vs Detection
@@ -160,6 +158,42 @@ If ANY answer is blank or says "agent should have...":
 **Why this gate exists:** M299 showed that completion bias causes premature RCA termination.
 Stopping at "agent did X wrong" is describing the SYMPTOM, not the CAUSE.
 The cause is always in the system that allowed or encouraged the wrong action.
+
+## Step 4b-R: Recurrence Independence Gate (BLOCKING GATE - M416)
+
+**MANDATORY: Complete this gate BEFORE reading Step 4d.**
+
+If `recurring_pattern.your_answer` indicates YES (this is a recurrence):
+
+```yaml
+recurrence_independence_gate:
+  # BLOCKING: You MUST complete all items below BEFORE reading Step 4d
+  step_1:
+    action: "Complete your independent RCA in Step 4 using only fresh evidence"
+    not_allowed: "Referencing past mistake entries (M341, M353, etc.) as the root cause"
+    allowed: "Reading the source file directly to find structural problems"
+    your_independent_root_cause: "_______________"  # Fill this in FIRST
+
+  step_2:
+    action: "Only after step_1 is filled: Check mistakes.json for past RCA conclusions"
+    purpose: "Compare past conclusions against your independent finding"
+    questions:
+      - "Does your independent finding match past conclusions?"
+      - "If they match: confirms pattern is real"
+      - "If they differ: your fresh analysis takes precedence — past conclusions may have been wrong"
+
+  step_3:
+    action: "Proceed to Step 4d ONLY after completing steps 1 and 2 above"
+```
+
+**Why this gate exists (M416):** The agent naturally skips to Step 4d when it sees a recurrence chain
+mentioned in the mistake description. Step 4d provides tooling and examples that prime the agent to
+build its analysis FROM past conclusions rather than reaching them independently. The recurrence chain
+becomes the conclusion instead of the evidence. This gate forces independent analysis before historical
+comparison, preserving RCA integrity.
+
+**BLOCKING CONDITION:** Do NOT proceed to Step 4d until `step_1.your_independent_root_cause` is filled
+with a cause derived from reading source files — not from the recurrence chain listing.
 
 ## Step 4c: Multiple Independent Mistakes
 
