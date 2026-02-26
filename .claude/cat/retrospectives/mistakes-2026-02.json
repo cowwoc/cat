@@ -1927,7 +1927,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "During rebase conflict resolution, use git checkout HEAD -- <file> to take the target branch version (unambiguous). Never use --ours/--theirs during rebase — their meaning is inverted compared to merge."
+      "correct_behavior": "During rebase conflict resolution, use git checkout HEAD -- <file> to take the target branch version (unambiguous). Never use --ours/--theirs during rebase \u2014 their meaning is inverted compared to merge."
     },
     {
       "id": "M412",
@@ -1939,7 +1939,14 @@
       "rca_method_name": "taxonomy",
       "prevention_type": "skill",
       "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work/first-use.md",
-      "pattern_keywords": ["verify", "config", "truncated", "fabricated", "work-with-issue", "cat-config"],
+      "pattern_keywords": [
+        "verify",
+        "config",
+        "truncated",
+        "fabricated",
+        "work-with-issue",
+        "cat-config"
+      ],
       "prevention_implemented": true,
       "prevention_verified": true,
       "recurrence_of": null,
@@ -1949,6 +1956,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Before invoking work-with-issue, read cat-config.json to extract TRUST, VERIFY, and AUTO_REMOVE values. Never fabricate config values."
+    },
+    {
+      "id": "M413",
+      "timestamp": "2026-02-26T10:00:00.000Z",
+      "category": "protocol_violation",
+      "description": "Issue work done directly on base branch (v2.1) after premature fast-forward merge, bypassing worktree isolation",
+      "root_cause": "The issue branch was fast-forward merged into v2.1 before stakeholder review completed. No explicit barrier prevented this premature merge. Subsequent concern fixes and squash committed directly to v2.1 instead of the issue worktree branch.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/work.md",
+      "pattern_keywords": [
+        "worktree_isolation",
+        "premature_merge",
+        "base_branch_commit",
+        "stakeholder_review"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "Keep the issue branch in the worktree until all phases complete: stakeholder review, concern fixes, squash, approval gate, then merge to base branch via work-merge"
     }
   ]
 }
