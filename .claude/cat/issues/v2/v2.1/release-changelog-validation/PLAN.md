@@ -15,7 +15,7 @@ None - infrastructure/workflow improvement task
 ## Files to Modify
 - `.claude/commands/release-plugin/SKILL.md` - Add validation step and auto-update logic
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Functionality works as described - validates CHANGELOG.md at deepest level and ancestors
 - [ ] Tests written and passing - validation logic tested
 - [ ] Documentation updated - skill docs explain the validation

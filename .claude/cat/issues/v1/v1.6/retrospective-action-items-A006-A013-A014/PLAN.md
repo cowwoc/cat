@@ -22,6 +22,6 @@ implement retrospective action items A006, A013, A014
 
 Retrospective: R006
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

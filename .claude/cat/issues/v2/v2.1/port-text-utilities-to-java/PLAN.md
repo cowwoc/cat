@@ -43,7 +43,7 @@ Parent: port-utility-scripts
 6. Write tests for MarkdownWrapper and StatusAlignmentValidator
 7. Run `mvn verify` to confirm all tests pass
 
-## Success Criteria
+## Post-conditions
 - [ ] wrap-markdown.py fully replaced by MarkdownWrapper.java
 - [ ] validate-status-alignment.sh replaced by StatusAlignmentValidator.java
 - [ ] get-render-diff.sh updated to use Java path

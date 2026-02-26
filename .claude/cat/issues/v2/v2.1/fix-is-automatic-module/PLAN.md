@@ -58,7 +58,7 @@ already contains `module-info.class`, it is a named module regardless of what `j
 2. **Step 2:** Run `mvn -f hooks/pom.xml verify` and verify no jdeps warnings for modular JARs
 3. **Step 3:** Verify jlink image builds and launchers work
 
-## Success Criteria
+## Post-conditions
 - [ ] `mvn -f hooks/pom.xml verify` produces no "is a modular JAR file" jdeps errors
 - [ ] All 318 tests pass
 - [ ] jlink image builds successfully with all launchers functional

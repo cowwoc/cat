@@ -73,7 +73,7 @@ argument-hint: "<severity> <stakeholder> <description> <location>"
 4. **Step 4:** Run tests
    - Run `mvn -f client/pom.xml test`
 
-## Success Criteria
+## Post-conditions
 - [ ] All test cases pass
 - [ ] No regressions in related functionality
 - [ ] Zero grep matches for ARGUMENTS in SKILL.md preprocessor commands

@@ -27,7 +27,7 @@ The template was written before flexible versioning was added.
   - Update task_select_requirements step to reference "parent version" not "parent minor"
   - Update any other minor-specific language in task workflow
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Template says "parent version" not "parent minor version"
 - [ ] add.md task workflow is version-agnostic
 

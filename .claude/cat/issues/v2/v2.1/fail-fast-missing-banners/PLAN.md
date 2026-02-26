@@ -17,11 +17,15 @@ None - infrastructure/retrospective action item
 - plugin/skills/ - Skills that reference SCRIPT OUTPUT banner sections
 - Plugin skills with banner references need fail-fast + script path
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All skills with SCRIPT OUTPUT references include fail-fast on missing banners
 - [ ] Fail-fast message includes exact script path and arguments to re-run
 - [ ] No manual banner construction anywhere in skill instructions
 - [ ] No regressions
+
+- [ ] All banner-dependent skills have fail-fast with re-run commands
+- [ ] No manual box/banner construction instructions remain
+- [ ] All tests pass
 
 ## Execution Steps
 1. **Step 1:** Grep all skills for SCRIPT OUTPUT references to identify affected files
@@ -31,7 +35,3 @@ None - infrastructure/retrospective action item
 4. **Step 4:** Run all tests
    - Command: python3 /workspace/run_tests.py
 
-## Success Criteria
-- [ ] All banner-dependent skills have fail-fast with re-run commands
-- [ ] No manual box/banner construction instructions remain
-- [ ] All tests pass

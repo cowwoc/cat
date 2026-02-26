@@ -13,6 +13,6 @@ Enhance the status skill with improved formatting and visual elements:
 - Add legend and improve visual hierarchy
 - Improve README navigation and organization
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

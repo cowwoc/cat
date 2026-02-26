@@ -17,7 +17,7 @@ GitHub, Jira, Linear, etc.).
 - New: `plugin/storage/types.py` - Shared types (Version, Task, etc.)
 - Modify: `plugin/cat-config-schema.json` - Add backend selection
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Storage interface defined with CRUD operations for versions/tasks
 - [ ] Common types defined (Version, Task, State, Plan)
 - [ ] Backend selection added to cat-config.json schema

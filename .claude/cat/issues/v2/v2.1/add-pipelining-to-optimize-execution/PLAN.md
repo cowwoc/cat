@@ -37,7 +37,7 @@ None - infrastructure improvement
 - plugin/skills/optimize-execution/content.md - Add pipelining analysis pattern, reference skill-builder for script extraction
 - plugin/skills/skill-builder/content.md - Add script extraction architectural principle
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] optimize-execution skill includes pipeline_candidates alongside existing batch/parallel/cache
 - [ ] optimize-execution skill includes script_extraction_candidates as optimization pattern
 - [ ] Pipelining pattern defined with detection criteria and examples
@@ -47,6 +47,16 @@ None - infrastructure improvement
 - [ ] Applicability notes about Claude Code execution model constraints included
 - [ ] Hybrid workflow pattern documented in skill-builder (script + skill markdown)
 - [ ] Functionality works, tests passing, no regressions
+
+- [ ] pipeline_candidates pattern added to optimization analysis
+- [ ] script_extraction_candidates pattern added to optimization analysis
+- [ ] Script extraction principle added to skill-builder as architectural rule
+- [ ] optimize-execution references skill-builder (not self-contained)
+- [ ] Skill-relevant examples demonstrate practical pipelining opportunities
+- [ ] Hybrid workflow pattern documented in skill-builder (script + skill markdown collaboration)
+- [ ] Anti-patterns documented in skill-builder for script extraction
+- [ ] Applicability constraints clearly documented
+- [ ] All existing tests pass with no regressions
 
 ## Execution Steps
 1. **Step 1:** Add pipelining pattern to optimize-execution analysis categories
@@ -83,13 +93,3 @@ None - infrastructure improvement
 6. **Step 6:** Run existing tests to verify no regressions
    - Run: mvn -f hooks/pom.xml test
 
-## Success Criteria
-- [ ] pipeline_candidates pattern added to optimization analysis
-- [ ] script_extraction_candidates pattern added to optimization analysis
-- [ ] Script extraction principle added to skill-builder as architectural rule
-- [ ] optimize-execution references skill-builder (not self-contained)
-- [ ] Skill-relevant examples demonstrate practical pipelining opportunities
-- [ ] Hybrid workflow pattern documented in skill-builder (script + skill markdown collaboration)
-- [ ] Anti-patterns documented in skill-builder for script extraction
-- [ ] Applicability constraints clearly documented
-- [ ] All existing tests pass with no regressions

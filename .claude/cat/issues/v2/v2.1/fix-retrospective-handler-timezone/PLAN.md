@@ -44,7 +44,7 @@ may be naive or use Z suffix. The comparison at line 168 mixes these.
 2. **Add test:** Create test in tests/ covering mixed timezone comparison scenarios.
 3. **Verify:** Run handler against real project data to confirm no crash.
 
-## Success Criteria
+## Post-conditions
 - [ ] Handler produces SCRIPT OUTPUT when invoked against project with mixed timezone data
 - [ ] All existing tests pass
 - [ ] New test covers the timezone comparison edge case

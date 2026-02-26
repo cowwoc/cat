@@ -57,11 +57,14 @@ This issue requires research before implementation. Key questions:
 - **Description:** Keep the 4-column table but add `**bold**` around changed words within each line. Requires
   computing per-word diff for each changed line pair.
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Changed words within a line are visually distinguishable from unchanged words
 - [ ] Formatting works in Claude Code terminal (monochrome, no ANSI colors)
 - [ ] Existing line-level diff still works for added/removed lines (word-level applies to modified lines only)
 - [ ] Output remains readable at typical terminal widths (120-200 chars)
+
+- [ ] Word-level changes are visually distinct in Claude Code terminal output
+- [ ] No regression in line-level diff rendering
 
 ## Execution Steps
 1. **Research:** Run `/cat:research` to investigate formatting options and test what renders in Claude Code
@@ -69,6 +72,3 @@ This issue requires research before implementation. Key questions:
 3. **Test:** Validate with real diffs from recent issues
 4. **Integrate:** Update render-diff skill to use the new output format
 
-## Success Criteria
-- [ ] Word-level changes are visually distinct in Claude Code terminal output
-- [ ] No regression in line-level diff rendering

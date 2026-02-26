@@ -121,7 +121,7 @@ Task tool:
 - Old: `/cat:research {topic}` → skill orchestrates
 - New: `/cat:research {topic}` → skill provides template, main agent spawns
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Research skill converted to prompt template format
 - [ ] At least 3 research templates provided (codebase, implementation, external)
 - [ ] Clear documentation on how main agent uses templates

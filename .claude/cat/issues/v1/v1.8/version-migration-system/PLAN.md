@@ -21,6 +21,6 @@ The system:
 Also updates release-plugin skill to create migration scripts/entries
 as part of the release process.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

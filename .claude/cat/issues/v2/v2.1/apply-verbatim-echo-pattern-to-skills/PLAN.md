@@ -24,7 +24,7 @@ None (infrastructure improvement)
 - **Concerns:** None — mechanical text replacement
 - **Mitigation:** Verify wording matches the status skill pattern
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] All "The user wants you to respond with the contents of the latest" instances replaced
 - [ ] New wording uses "Echo the content inside the LATEST `<output skill="X">` tag below. Do not summarize, interpret,

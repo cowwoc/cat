@@ -27,7 +27,7 @@ None - infrastructure/optimization task
 
 **Excluded**: `plugin/node_modules/` (third-party files)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Execution equivalence verified (all files score 1.0 on /compare-docs)
 - [ ] No functionality regression (skills and commands work correctly)
 

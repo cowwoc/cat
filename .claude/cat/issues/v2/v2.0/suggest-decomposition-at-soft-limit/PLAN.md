@@ -15,7 +15,7 @@ None - UX improvement task
 ## Files to Modify
 - plugin/commands/work.md - Update analyze_task_size step to suggest decomposition
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Functionality works as described
 - [ ] Tests written and passing
 - [ ] Documentation updated

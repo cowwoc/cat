@@ -30,13 +30,16 @@ workspace take precedence.
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/skills/GetStatusOutput.java` - Add lock file and branch existence
   checks to override `open` status to `in-progress`
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Indie tier: issues with an active lock file show as 🔄 in `/cat:status`
 - [ ] Team tier: issues with STATE.md changed to "in-progress" on a branch show as 🔄
 - [ ] Issues with STATE.md still "open" on branches (or no branch at all) show as 🔳 (pending/open)
 - [ ] Closed issues in the main workspace are not incorrectly shown as in-progress, even if their STATE.md on a branch
   says "in-progress" (closed status in main workspace takes precedence)
 - [ ] Branch scanning uses local git operations only (no network calls)
+
+- [ ] `mvn -f hooks/pom.xml test` passes
+- [ ] Manual verification: issue with active lock file shows 🔄 in status output
 
 ## Execution Steps
 1. **Add lock file detection:** In `getTaskStatus()`, after reading STATE.md, if status is `open`, check if a lock file
@@ -52,6 +55,3 @@ workspace take precedence.
 4. **Run tests:** Verify existing tests pass and add tests for lock-file and branch-based status detection.
    - Files: `hooks/src/test/java/...`
 
-## Success Criteria
-- [ ] `mvn -f hooks/pom.xml test` passes
-- [ ] Manual verification: issue with active lock file shows 🔄 in status output

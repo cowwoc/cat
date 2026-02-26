@@ -81,7 +81,7 @@ implementing `SkillOutput`. The class must have a public constructor accepting `
 7. Update `plugin/hooks/README.md` to document `bindings.json` mechanism
 8. Run `mvn -f hooks/pom.xml verify`
 
-## Success Criteria
+## Post-conditions
 
 - [ ] SkillLoader resolves `bindings.json` variables via in-process SkillOutput invocation (no subprocess)
 - [ ] No handler.sh or handler.class files remain

@@ -46,7 +46,7 @@ The `reference.md` file (used for subsequent invocations) says "scroll up and RE
    - Run load-skill.sh for each skill to confirm no breakage
    - Files: `plugin/scripts/load-skill.sh`
 
-## Success Criteria
+## Post-conditions
 - [ ] reference.md contains explicit "use Skill tool" instruction
 - [ ] reference.md contains explicit "do NOT manually reconstruct" warning
 - [ ] All four verbatim skills (status, help, token-report, render-diff) use identical re-invocation guidance (via shared reference.md)

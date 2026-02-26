@@ -51,7 +51,7 @@ None
 
 4. **Step 4:** Run all tests: `mvn -f client/pom.xml test`
 
-## Success Criteria
+## Post-conditions
 - [ ] All inner version boxes in /cat:status output have the same visual width
 - [ ] Right borders (╮, │, ╯) of all version boxes align at the same horizontal position
 - [ ] Regression test verifies equal display width for inner box lines across multiple major versions with different content lengths

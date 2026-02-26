@@ -14,7 +14,7 @@ preprocessor directives that reference launcher scripts (e.g., `/cat:status` out
 - `client/src/main/java/io/github/cowwoc/cat/hooks/util/SkillLoader.java` — add `Pattern.DOTALL`
 - `client/src/test/java/io/github/cowwoc/cat/hooks/test/SkillLoaderTest.java` — add failing test first (TDD)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Test proves regex fails on multi-line launcher content without fix
 - [ ] Test passes after adding `Pattern.DOTALL`
 - [ ] `load-skill.sh` for status skill produces expanded output (manual verification)

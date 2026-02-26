@@ -67,7 +67,7 @@ If found, apply the same fix: replace skip guidance with fail-fast.
 
 Confirm that all "not found" checks in the modified file(s) consistently say FAIL/STOP, with no remaining skip guidance.
 
-## Success Criteria
+## Post-conditions
 - [ ] No "skip banner output" guidance remains in work-with-issue/content.md
 - [ ] All banner-not-found checks consistently say FAIL and STOP
 - [ ] No other skill files have similar skip-instead-of-failfast contradictions

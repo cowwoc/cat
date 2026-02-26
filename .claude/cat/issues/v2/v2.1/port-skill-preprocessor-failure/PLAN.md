@@ -29,7 +29,7 @@ None (migration/cleanup)
 - `plugin/hooks/skill-preprocessor-failure.sh` - Delete
 - `plugin/hooks/test/test-skill-preprocessor-failure.sh` - Delete
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] `DetectPreprocessorFailure` implements `PostToolHandler` and detects preprocessor failures in the error field
 - [ ] Handler returns additionalContext suggesting `/cat:feedback` when pattern matches

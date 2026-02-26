@@ -33,13 +33,18 @@ None
 - .claude/hooks/validate-state-md-format.sh - DELETE
 - .claude/hooks/block-worktree-cd.sh - DELETE
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] validate-state-md-format.sh STATE.md format validation ported to Java
 - [ ] block-worktree-cd.sh cd detection and blocking ported to Java
 - [ ] .claude/settings.json hooks section removed
 - [ ] .claude/hooks/ directory removed
 - [ ] Both bash scripts deleted
 - [ ] Tests pass
+
+- [ ] All tests pass
+- [ ] .claude/settings.json has no hooks section
+- [ ] .claude/hooks/ directory removed
+- [ ] Project hook behavior preserved via Java plugin hooks
 
 ## Key Implementation Details
 - validate-state-md-format.sh: Checks Write tool_input.file_path for STATE.md pattern, validates bullet-point format (Status, Progress, Dependencies), blocks invalid writes
@@ -55,8 +60,3 @@ None
 5. Delete .claude/hooks/ bash scripts
 6. Run full test suite
 
-## Success Criteria
-- [ ] All tests pass
-- [ ] .claude/settings.json has no hooks section
-- [ ] .claude/hooks/ directory removed
-- [ ] Project hook behavior preserved via Java plugin hooks

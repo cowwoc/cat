@@ -37,13 +37,17 @@ None - convention update
 - `plugin/skills/decompose-issue/content.md` - Uses git -C operationally
 - `plugin/skills/safe-rm/content.md` - Already correctly documents the "don't rm your cwd" pattern
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] No convention text mandates `git -C` as the only way to work with worktrees
 - [ ] No convention text prohibits `cd` into worktrees
 - [ ] All modified files include the safety rule: do not remove the directory you are inside
 - [ ] Operational `git -C` usage in scripts/skills is left unchanged
 - [ ] MEMORY.md M464 entry updated
 - [ ] Tests pass
+
+- [ ] No file contains text prohibiting cd into worktrees
+- [ ] All modified files reference safe-rm or the cwd-removal safety rule
+- [ ] All tests pass
 
 ## Execution Steps
 1. **Step 1:** Update `.claude/rules/common.md` line 154
@@ -93,7 +97,3 @@ None - convention update
    - Run: `mvn -f hooks/pom.xml test`
    - Files: none
 
-## Success Criteria
-- [ ] No file contains text prohibiting cd into worktrees
-- [ ] All modified files reference safe-rm or the cwd-removal safety rule
-- [ ] All tests pass

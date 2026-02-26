@@ -33,7 +33,7 @@ compaction. Then ForcedEvalSkills can list just skill names (saving tokens on ev
 - `client/src/main/java/io/github/cowwoc/cat/hooks/SessionStartHook.java` — add skill listing to compact mode
 - `plugin/hooks/hooks.json` — register compact matcher for SessionStart
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] `ForcedEvalSkills` filters on `model-invocable: false` instead of `user-invocable: false`
 - [ ] `ForcedEvalSkills` outputs skill names only (no descriptions)
 - [ ] SessionStart hook with `compact` matcher re-injects full skill listing with descriptions

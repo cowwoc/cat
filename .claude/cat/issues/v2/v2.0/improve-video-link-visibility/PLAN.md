@@ -19,7 +19,7 @@ clickable video link.
 ## Files to Modify
 - README.md - Update video thumbnail markup
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Play button overlay visible on video thumbnail
 - [ ] Hover effect indicates clickability (if supported by GitHub markdown)
 - [ ] Video link still works correctly

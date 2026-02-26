@@ -15,7 +15,7 @@ and "The Compass: Your Preferences" becomes "Your Style".
 ## Files to Modify
 - README.md - Rename two section headings
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] "The Map: Hierarchical Planning" renamed to "Hierarchical Planning"
 - [ ] "The Compass: Your Preferences" renamed to "Your Style"
 - [ ] Any internal anchor links updated if needed

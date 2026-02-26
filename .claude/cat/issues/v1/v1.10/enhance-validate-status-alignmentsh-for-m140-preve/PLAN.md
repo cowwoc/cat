@@ -12,6 +12,6 @@ Improved nested box validation to catch missing outer borders:
 This catches the exact error pattern observed in M140 where inner
 box lines were missing their outer right border.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

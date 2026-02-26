@@ -36,7 +36,7 @@ Parent: port-utility-scripts
 5. Write tests for both classes with sample data
 6. Run `mvn verify` to confirm all tests pass
 
-## Success Criteria
+## Post-conditions
 - [ ] analyze-session.py replaced by SessionAnalyzer.java
 - [ ] migrate-retrospectives.py replaced by RetrospectiveMigrator.java
 - [ ] JSON output matches original scripts

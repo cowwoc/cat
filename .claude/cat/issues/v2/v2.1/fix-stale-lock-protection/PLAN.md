@@ -26,7 +26,7 @@ None (infrastructure improvement)
 - `client/src/test/java/io/github/cowwoc/cat/hooks/test/BlockUnsafeRemovalTest.java`
   - Add tests for stale lock handling
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] Stale locks (> 4 hours old) are not treated as protection
 - [ ] Current session's locks are still protected

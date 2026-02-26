@@ -13,6 +13,6 @@ said "MANDATORY: execute different task") was insufficient. Embedding
 the guidance directly in the script output provides immediate context
 at the point of failure.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

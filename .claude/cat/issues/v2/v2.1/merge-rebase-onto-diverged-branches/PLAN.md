@@ -19,11 +19,14 @@ None (infrastructure improvement)
   `rebase --onto` logic
 - `client/src/test/java/io/github/cowwoc/cat/hooks/test/MergeAndCleanupTest.java` - Add test for divergence handling
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] MergeAndCleanup auto-rebases when base branch has diverged
 - [ ] Uses `rebase --onto` to replay only issue commits (not shared history)
 - [ ] Falls back to error with clear message if rebase has conflicts
 - [ ] All existing tests still pass
+
+- [ ] `mvn -f client/pom.xml test` passes with exit code 0
+- [ ] Diverged branch scenario results in successful merge (not error)
 
 ## Execution Steps
 1. **Step 1:** In MergeAndCleanup.java, replace the divergence error throw (lines 94-99) with a `rebaseOnto` method
@@ -37,6 +40,3 @@ None (infrastructure improvement)
 4. **Step 4:** Add test that creates diverged branches and verifies auto-rebase succeeds
    - Files: MergeAndCleanupTest.java
 
-## Success Criteria
-- [ ] `mvn -f client/pom.xml test` passes with exit code 0
-- [ ] Diverged branch scenario results in successful merge (not error)

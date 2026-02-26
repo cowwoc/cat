@@ -25,13 +25,17 @@ None - M465 prevention
 - plugin/skills/work-merge/SKILL.md - Clarify Step 3 heading
 - plugin/agents/work-merge.md - Verify git-merge-linear is still appropriate in frontmatter
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] git-merge-linear no longer requires running FROM inside worktree
 - [ ] All git operations use git -C instead of assuming pwd
 - [ ] No `cd` into worktree paths anywhere in the skill
 - [ ] work-merge Step 3 heading clarified to not suggest cd
 - [ ] All tests pass
 - [ ] No regressions
+
+- [ ] No `cd` into worktree paths in either skill
+- [ ] git-merge-linear works when invoked from any directory
+- [ ] All tests pass
 
 ## Execution Steps
 1. **Step 1:** Read current git-merge-linear/SKILL.md and work-merge/SKILL.md
@@ -48,7 +52,3 @@ None - M465 prevention
 4. **Step 4:** Run all tests
    - Command: python3 /workspace/run_tests.py
 
-## Success Criteria
-- [ ] No `cd` into worktree paths in either skill
-- [ ] git-merge-linear works when invoked from any directory
-- [ ] All tests pass

@@ -15,7 +15,7 @@ Add PreToolUse hook on AskUserQuestion to enforce render-diff usage at approval 
 - plugin/hooks/pretool_handlers/enforce_render_diff.py - New handler (or update existing
   warn-approval-without-renderdiff.sh)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Hook detects approval-related AskUserQuestion calls
 - [ ] Warning emitted when render-diff skill wasn't invoked recently
 - [ ] No false positives on non-approval questions

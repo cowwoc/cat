@@ -120,7 +120,7 @@ all 46 skills to communicate loading semantics (loaded on first invocation only;
 - `@path` references use bare file contents (no XML wrapping) to match Claude Code's built-in `@file` behavior
 - `@path` pattern: `^@(.+\.(?:md|json))$` — must be the entire line, path ends in `.md` or `.json`
 
-## Success Criteria
+## Post-conditions
 
 - [ ] User-visible behavior unchanged: all skills load with variables fully resolved
 - [ ] `${CAT_SKILL_OUTPUT}` in status/first-use.md resolves to actual GetStatusOutput result

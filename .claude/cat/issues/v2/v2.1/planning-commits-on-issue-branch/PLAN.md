@@ -30,7 +30,7 @@ None (workflow improvement)
 - `plugin/skills/git-squash/first-use.md` — Document that planning commits on issue branches
   should be kept separate during squash-by-topic (different topic)
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] `/cat:add` creates planning commits on the current issue branch when inside an active
   worktree (cat-base file exists)

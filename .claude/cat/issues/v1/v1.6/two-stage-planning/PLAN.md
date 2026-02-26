@@ -24,6 +24,6 @@ Updated:
 - choose-approach: Agent resumption after selection
 - spawn-subagent: Planning stage documentation
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

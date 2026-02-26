@@ -21,7 +21,7 @@ None - developer tooling improvement
 1. **Step 1:** Create `.claude/skills/build-hooks/SKILL.md` with build, test, and install steps
    - Files: `.claude/skills/build-hooks/SKILL.md`
 
-## Success Criteria
+## Post-conditions
 - [ ] Skill file exists at `.claude/skills/build-hooks/SKILL.md`
 - [ ] Skill defines clear build, test, and install workflow
 - [ ] No regressions in existing skills

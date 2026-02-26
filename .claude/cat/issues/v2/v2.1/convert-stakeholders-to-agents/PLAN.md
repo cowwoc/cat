@@ -68,13 +68,17 @@ model: haiku
 - No `Write, Edit` - Stakeholders are reviewers, not implementers
 - `model: haiku` - Review tasks are well-suited to faster model
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All 12 stakeholder files converted to agent format with proper frontmatter
 - [ ] Each agent has: name, description, tools (Read, Grep, Glob, WebSearch, WebFetch), model (haiku)
 - [ ] System prompt content preserved (review criteria, research approach, output formats)
 - [ ] All 4 external references updated from `stakeholders/` to `agents/stakeholder-`
 - [ ] Old `plugin/stakeholders/` directory removed
 - [ ] No broken references remain (verify with grep)
+
+- [ ] All 12 stakeholders converted with proper frontmatter
+- [ ] `grep -r 'stakeholders/' plugin/` returns no results
+- [ ] Stakeholder-based skills (stakeholder-review, research) still function
 
 ## Execution Steps
 
@@ -110,7 +114,3 @@ model: haiku
 6. **Step 6:** Commit changes
    - Commit type: `config:` (Claude-facing agent definitions)
 
-## Success Criteria
-- [ ] All 12 stakeholders converted with proper frontmatter
-- [ ] `grep -r 'stakeholders/' plugin/` returns no results
-- [ ] Stakeholder-based skills (stakeholder-review, research) still function

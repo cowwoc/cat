@@ -16,7 +16,7 @@ preventing PATTERN-008 mistakes.
 - plugin/hooks/posttool_handlers/detect_manual_boxes.py - New handler
 - plugin/hooks/posttool_handlers/__init__.py - Register handler
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Hook detects box-drawing characters (─│┌┐└┘├┤┬┴┼) in agent messages
 - [ ] Warning emitted when boxes appear without get-progress-banner.sh or get-work-boxes.py execution
 - [ ] No false positives on legitimate uses (e.g., in code blocks)

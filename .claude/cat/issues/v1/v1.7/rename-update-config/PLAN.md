@@ -13,6 +13,6 @@ rename update-preferences to update-config with adventure theme
   - Cleanup behavior (auto-cleanup toggle)
 - Updated CHANGELOG.md to reflect skill rename
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

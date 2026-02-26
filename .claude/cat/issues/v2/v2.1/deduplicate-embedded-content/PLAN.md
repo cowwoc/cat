@@ -33,7 +33,7 @@ None - infrastructure/optimization task
 - `plugin/hooks/skill_handlers/add_handler.py` - Use shared function (2 places)
 - `plugin/hooks/skill_handlers/cleanup_handler.py` - Use shared function (3 places)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] `build_header_box()` exists in `status_handler.py`
 - [ ] `stakeholder_handler.py` imports and uses shared function
 - [ ] `add_handler.py` uses shared function (2 places)

@@ -17,7 +17,7 @@ None - marketing/documentation task
 - Record demo videos for orchestration features
 - Write feature descriptions
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Page showcases /cat:spawn-subagent command with video
 - [ ] Page showcases /cat:parallel-execute command with video
 - [ ] Page showcases /cat:collect-results command with video

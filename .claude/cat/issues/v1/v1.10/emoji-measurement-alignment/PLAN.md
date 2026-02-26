@@ -10,6 +10,6 @@ Add emojis used by cat:config skill:
 
 Measurements from Windows Terminal included.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

@@ -71,7 +71,7 @@ None - infrastructure/performance optimization
    - Test error handling (missing structure, script failures)
    - Test JSON output contract matches expected format
 
-## Success Criteria
+## Post-conditions
 - [ ] Prepare phase completes in under 10 seconds (target: ~4s)
 - [ ] JSON output contract unchanged (all existing fields present)
 - [ ] All edge cases handled: NO_TASKS, LOCKED, OVERSIZED, ERROR, READY, potentially_complete

@@ -42,11 +42,15 @@ None - infrastructure improvement
 | `plugin/scripts/render-add-complete.sh` | Detect multi-issue input, render numbered list |
 | `plugin/hooks/skill_handlers/add_handler.py` | Update `_build_issue_display` for multi-issue |
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Single issue rendering unchanged (backward compatible)
 - [ ] Multiple issues (comma-separated) render as numbered list
 - [ ] Header changes to "Issues Created" (plural) for multiple
 - [ ] Box alignment correct for both single and multi-issue cases
+
+- [ ] `render-add-complete.sh --name "single-issue"` produces original format
+- [ ] `render-add-complete.sh --name "a, b, c"` produces numbered list with plural header
+- [ ] Box alignment correct in both cases (verify with terminal output)
 
 ## Execution Steps
 
@@ -67,7 +71,3 @@ None - infrastructure improvement
 4. **Step 4:** Commit changes
    - Commit type: `feature:` (new capability)
 
-## Success Criteria
-- [ ] `render-add-complete.sh --name "single-issue"` produces original format
-- [ ] `render-add-complete.sh --name "a, b, c"` produces numbered list with plural header
-- [ ] Box alignment correct in both cases (verify with terminal output)

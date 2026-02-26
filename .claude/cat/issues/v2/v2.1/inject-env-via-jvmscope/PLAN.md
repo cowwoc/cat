@@ -41,7 +41,7 @@ None
 6. Bulk rename all `DefaultJvmScope` references to `MainJvmScope`
 7. Update 3 failing tests to create temp directories and use `TestJvmScope`
 
-## Success Criteria
+## Post-conditions
 - [x] `JvmScope` declares `getClaudeProjectDir()` and `getClaudePluginRoot()`
 - [x] `MainJvmScope` reads env vars lazily; `TestJvmScope` accepts constructor params
 - [x] 3 handlers use `JvmScope` instead of `System.getenv()`

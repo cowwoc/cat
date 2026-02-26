@@ -14,6 +14,6 @@ add lightweight subagent monitoring via completion markers
 The completion marker approach is far more efficient than parsing
 potentially large session JSONL files (~200 bytes vs megabytes).
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

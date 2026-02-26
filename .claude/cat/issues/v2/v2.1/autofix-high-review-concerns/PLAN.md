@@ -112,7 +112,7 @@ The stakeholder-review skill should:
 
 - Files: `plugin/skills/stakeholder-review/content.md`
 
-## Success Criteria
+## Post-conditions
 - [ ] HIGH+ concerns trigger automatic fix loop (up to 3 iterations) before reaching approval gate
 - [ ] MEDIUM concerns appear at approval gate with "Fix remaining concerns" option
 - [ ] "Fix remaining concerns" spawns subagent, re-reviews, returns to approval gate
