@@ -12,13 +12,10 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import io.github.cowwoc.cat.hooks.task.EnforceApprovalBeforeMerge;
 import io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 /**
  * Unified PreToolUse hook for Task operations.
  * <p>
@@ -68,23 +65,7 @@ public final class PreIssueHook implements HookHandler
    */
   public static void main(String[] args)
   {
-    try (JvmScope scope = new MainJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = HookInput.readFromStdin(mapper);
-      HookOutput output = new HookOutput(scope);
-      HookResult result = new PreIssueHook(scope).run(input, output);
-
-      for (String warning : result.warnings())
-        System.err.println(warning);
-      System.out.println(result.output());
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(PreIssueHook.class);
-      log.error("Unexpected error", e);
-      throw e;
-    }
+    HookRunner.execute(PreIssueHook::new, args);
   }
 
   /**
