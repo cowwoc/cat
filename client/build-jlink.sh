@@ -348,8 +348,11 @@ exec "$DIR/java" \
 EOF
 
     # Replace MODULE_CLASS placeholder
-    sed -i "s|MODULE_CLASS|$main_class|g" "$launcher"
-    grep -q "$main_class" "$launcher" || error "Failed to generate launcher: $name"
+    sed "s|MODULE_CLASS|$main_class|g" "$launcher" > "${launcher}.tmp" && mv "${launcher}.tmp" "$launcher"
+    # Validate launcher generation: check file is non-empty, placeholder was removed, and main class is present
+    [[ -s "$launcher" ]] || error "Failed to generate launcher: $name (empty file)"
+    ! grep -q "MODULE_CLASS" "$launcher" || error "Failed to generate launcher: $name (placeholder not removed)"
+    grep -q "$main_class" "$launcher" || error "Failed to generate launcher: $name (main class not found)"
     chmod +x "$launcher"
   done
 
