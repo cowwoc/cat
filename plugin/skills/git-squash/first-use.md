@@ -171,6 +171,32 @@ commit but on-disk files will differ from HEAD. The `git status --porcelain` che
 4. **Verify immediately** - no changes lost or added
 5. Cleanup backup only after verification passes
 
+### STATE.md Regression Check (MANDATORY after Interactive Rebase)
+
+After any interactive rebase that drops or squashes commits, verify no STATE.md file regressed from `closed` to
+`open`. A dropped commit can silently remove STATE.md changes even when the overall diff appears clean.
+
+```bash
+# After interactive rebase completes, check for STATE.md regressions
+RETRO_FILES=$(git diff "$BACKUP" --name-only -- "*.STATE.md" "**/STATE.md" 2>/dev/null | head -20)
+for state_file in $(find . -name "STATE.md" -path "*/.claude/cat/issues/*" 2>/dev/null); do
+    # Get status in backup (before squash)
+    BACKUP_STATUS=$(git show "$BACKUP":"${state_file#./}" 2>/dev/null | grep "^status:" | head -1 | sed 's/status: *//')
+    # Get current status (after squash)
+    CURRENT_STATUS=$(grep "^status:" "$state_file" 2>/dev/null | head -1 | sed 's/status: *//')
+
+    if [[ "$BACKUP_STATUS" == "closed" && "$CURRENT_STATUS" != "closed" ]]; then
+        echo "ERROR: STATE.md regression detected: $state_file"
+        echo "  Before squash: status=$BACKUP_STATUS"
+        echo "  After squash:  status=$CURRENT_STATUS"
+        echo "Restore from backup: git reset --hard \$BACKUP"
+        echo "Or manually restore: git show \$BACKUP:${state_file#./} > $state_file && git add $state_file"
+        exit 1
+    fi
+done
+echo "STATE.md regression check passed."
+```
+
 ### Interactive Rebase Steps
 
 ```bash
