@@ -189,23 +189,10 @@ At each milestone, run this analysis and make explicit decision:
 
 ```bash
 # Run at 30, 60, 90 mistake milestones
-RETRO_DIR=".claude/cat/retrospectives"
 START_ID=86  # First A/B test mistake
 
-# Aggregate mistakes from all split files
-cat "$RETRO_DIR"/mistakes-*.json 2>/dev/null | jq -s --argjson start "$START_ID" '
-  [.[].mistakes[] | select((.id | ltrimstr("M") | tonumber) >= $start)] |
-  group_by(.rca_method) |
-  map({
-    method: .[0].rca_method // "unassigned",
-    method_name: .[0].rca_method_name // "unknown",
-    count: length,
-    recurrences: [.[] | select(.recurrence_of != null)] | length,
-    recurrence_rate: (([.[] | select(.recurrence_of != null)] | length) / length),
-    complete_entries: [.[] | select(.rca_method != null and .prevention_implemented == true)] | length
-  }) |
-  sort_by(.method)
-'
+# Uses the root-cause-analyzer jlink tool to analyze RCA method statistics
+"${CLAUDE_PLUGIN_ROOT}/client/bin/root-cause-analyzer" --start-id "$START_ID"
 ```
 
 **Decision at each milestone:**

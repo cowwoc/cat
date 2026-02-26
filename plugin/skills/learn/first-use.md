@@ -312,25 +312,11 @@ At each milestone, run analysis and document decision:
 ### Milestone Review Command
 
 ```bash
-# NOTE: jq is NOT available in the plugin runtime environment per .claude/rules/common.md
-# This command must be run manually on a developer workstation with jq installed.
-# Do NOT attempt to invoke this from an agent without verifying jq availability.
-
-MISTAKES_FILE=".claude/cat/retrospectives/mistakes.json"
+# Replace with actual start mistake ID for the A/B test
 START_ID=86
 
-# Example command (developer machine only):
-# jq --argjson start "$START_ID" '
-#   [.mistakes[] | select((.id | ltrimstr("M") | tonumber) >= $start)] |
-#   group_by(.rca_method) |
-#   map({
-#     method: .[0].rca_method // "unassigned",
-#     count: length,
-#     recurrences: [.[] | select(.recurrence_of != null)] | length,
-#     recurrence_rate: (([.[] | select(.recurrence_of != null)] | length) / length * 100 | floor)
-#   }) |
-#   sort_by(.method)
-# ' "$MISTAKES_FILE"
+# Uses the root-cause-analyzer jlink tool to analyze RCA method statistics
+"${CLAUDE_PLUGIN_ROOT}/client/bin/root-cause-analyzer" --start-id "$START_ID"
 ```
 
 ### Early Termination
