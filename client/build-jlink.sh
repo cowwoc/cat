@@ -301,22 +301,34 @@ generate_startup_archives() {
   # replacing 20 separate JVM launches (~19s -> ~1s).
   log "Recording AOT training data..."
   # Set environment variables required by MainJvmScope so handlers can initialize.
-  CLAUDE_PROJECT_DIR="${PROJECT_DIR%/*}" CLAUDE_PLUGIN_ROOT="${PROJECT_DIR%/*}/plugin" \
-  "$java_bin" \
-    -XX:AOTMode=record \
-    -XX:AOTConfiguration="$aot_config" \
-    -m "$(handler_main AotTraining)" \
-    2>/dev/null || error "Failed to record AOT training data"
+  # Capture stderr: suppress expected JVM AOT warnings on success, show them on failure.
+  local aot_stderr
+  aot_stderr=$(mktemp)
+  # shellcheck disable=SC2064
+  trap "rm -f '$aot_stderr'" RETURN
+  if ! CLAUDE_PROJECT_DIR="${PROJECT_DIR%/*}" CLAUDE_PLUGIN_ROOT="${PROJECT_DIR%/*}/plugin" \
+    "$java_bin" \
+      -XX:AOTMode=record \
+      -XX:AOTConfiguration="$aot_config" \
+      -m "$(handler_main AotTraining)" \
+      2>"$aot_stderr"; then
+    cat "$aot_stderr" >&2
+    error "Failed to record AOT training data"
+  fi
+  rm -f "$aot_stderr"
+  trap - RETURN
 
   [[ -f "$aot_config" ]] || error "AOT configuration file not created: $aot_config"
 
-  "$java_bin" \
+  if ! "$java_bin" \
     -XX:AOTMode=create \
     -XX:AOTConfiguration="$aot_config" \
     -XX:AOTCache="$aot_cache" \
     -XX:+AOTClassLinking \
     -m "$(handler_main PreToolUseHook)" \
-    2>/dev/null || error "Failed to create AOT cache"
+    2>&1; then
+    error "Failed to create AOT cache"
+  fi
 
   rm -f "$aot_config"
   log "  AOT cache: $(du -h "$aot_cache" | cut -f1)"
