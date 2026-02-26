@@ -35,29 +35,6 @@ Block comment before `package` declaration. For `module-info.java`, place at the
 package io.github.cowwoc.cat.hooks;
 ```
 
-### Python Files (*.py)
-
-Hash comments at the top of the file. If the file has a shebang line, place the header after it.
-
-```python
-# Copyright (c) 2026 Gili Tzabari. All rights reserved.
-#
-# Licensed under the CAT Commercial License.
-# See LICENSE.md in the project root for license terms.
-import sys
-```
-
-With shebang:
-
-```python
-#!/usr/bin/env python3
-# Copyright (c) 2026 Gili Tzabari. All rights reserved.
-#
-# Licensed under the CAT Commercial License.
-# See LICENSE.md in the project root for license terms.
-import sys
-```
-
 ### Shell Scripts (*.sh)
 
 Hash comments after the shebang line.
@@ -102,8 +79,8 @@ See LICENSE.md in the project root for license terms.
 # Document Title
 ```
 
-**Skill files:** All `SKILL.md` files in plugin skills (both main and `-first-use` companion) are exempt from license
-headers. SkillLoader processes these files and license headers would waste tokens.
+**Skill files:** `SKILL.md` files are exempt from license headers; SkillLoader processes these files and license headers
+would waste tokens. `first-use.md` companion files are NOT exempt and require headers.
 
 ### JSON Files (*.json)
 
@@ -115,10 +92,9 @@ The following files do not require license headers:
 
 - `*.json` files (no comment syntax)
 - `*.xml` files (configuration files, no semantic code)
-- All `SKILL.md` files in plugin skills (both main and `-first-use` companion)
+- All `SKILL.md` files in plugin skills (`first-use.md` companions are NOT exempt and require headers)
 - All `*.md` files in `plugin/agents/` (injected into subagent context as prompts; same rationale as SKILL.md)
-- Files in `.claude/cat/issues/` (planning artifacts)
-- Files in `.claude/cat/` config directory
+- Files in `.claude/cat/` (planning artifacts, config, runtime data)
 - `LICENSE.md` itself
 - Build artifacts (`target/`, `node_modules/`, etc.)
 - Project root documentation (`README.md`, `CHANGELOG.md`)

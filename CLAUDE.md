@@ -71,6 +71,6 @@ need updating.
 ## License Headers
 
 **MANDATORY:** All new source files must include a license header at the top. Before adding a header to any file, you
-**must** read `plugin/concepts/license-header.md` — it contains the exact header text, the copyright year (2026),
+**must** read `.claude/rules/license-header.md` — it contains the exact header text, the copyright year (2026),
 file-type-specific comment syntax, and the complete list of exemptions. Some file types are exempt; check the
 exemptions before adding a header.
