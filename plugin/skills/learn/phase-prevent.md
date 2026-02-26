@@ -68,7 +68,24 @@ context_degradation_analysis:
 
 ```yaml
 prevention_quality_check:
-  # FIRST: Check for general vs specific solutions
+  # FIRST: Can the problem be made impossible by design?
+  structural_prevention:
+    question: "Can I restructure so this failure path doesn't exist?"
+    principle: "Prevent by construction > Detect and recover"
+    examples:
+      construction: |
+        Move all file modifications before merge step
+        → uncommitted files are structurally impossible
+      detection: |
+        Check for dirty files after merge and commit them
+        → problem can still occur, you're just catching it
+    preference_order:
+      1: "Eliminate the failure path entirely (reorder, restructure)"
+      2: "Make the incorrect state unrepresentable (type system, invariants)"
+      3: "Detect and block before the damage occurs (validation, hook)"
+      4: "Detect and recover after the fact (last resort)"
+
+  # SECOND: Check for general vs specific solutions
   generality_analysis:
     question: "Am I fixing the ROOT CAUSE or just this specific symptom?"
     root_cause_example: |
