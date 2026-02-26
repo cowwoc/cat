@@ -7,6 +7,7 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.IssueStatus;
 import io.github.cowwoc.cat.hooks.skills.DisplayUtils;
 import io.github.cowwoc.cat.hooks.skills.GetStatusOutput;
 import org.testng.annotations.Test;
@@ -16,7 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -86,7 +86,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -111,7 +111,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -136,7 +136,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -161,7 +161,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -194,7 +194,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -225,7 +225,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -255,7 +255,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -292,7 +292,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -325,7 +325,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -355,7 +355,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -385,7 +385,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -415,7 +415,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -457,7 +457,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -489,7 +489,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -526,7 +526,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -554,7 +554,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -584,7 +584,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -618,7 +618,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -655,7 +655,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -693,7 +693,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -723,7 +723,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -764,7 +764,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -788,55 +788,49 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
   /**
-   * Verifies that parseStatusFromContent handles invalid status values.
+   * Verifies that parseStatusFromContent rejects invalid status values.
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
-  public void parseStatusFromContentReturnsOpenForInvalidStatus() throws IOException
+  @Test(expectedExceptions = IOException.class)
+  public void parseStatusFromContentRejectsInvalidStatus() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-invalid-status");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String content = "- **Status:** invalid-value\n";
-
-      String status = handler.parseStatusFromContent(content);
-
-      requireThat(status, "status").isEqualTo("open");
+      handler.parseStatusFromContent(content);
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
   /**
-   * Verifies that parseStatusFromContent returns open when status field is missing.
+   * Verifies that parseStatusFromContent rejects content with missing Status field.
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
-  public void parseStatusFromContentReturnsOpenForMissingStatus() throws IOException
+  @Test(expectedExceptions = IOException.class)
+  public void parseStatusFromContentRejectsMissingStatus() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-missing-status");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String content = "- **Owner:** alice\n- **Created:** 2024-01-01\n";
-
-      String status = handler.parseStatusFromContent(content);
-
-      requireThat(status, "status").isEqualTo("open");
+      handler.parseStatusFromContent(content);
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -860,7 +854,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -877,17 +871,16 @@ public class GetStatusOutputTest
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
 
-      String[] validStatuses = {"open", "in-progress", "closed", "blocked"};
-      for (String expected : validStatuses)
+      for (IssueStatus expected : IssueStatus.values())
       {
-        String content = "- **Status:** " + expected + "\n";
+        String content = "- **Status:** " + expected.toString() + "\n";
         String actual = handler.parseStatusFromContent(content);
-        requireThat(actual, "status").isEqualTo(expected);
+        requireThat(actual, "status").isEqualTo(expected.toString());
       }
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -921,7 +914,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -955,7 +948,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -978,7 +971,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -1009,7 +1002,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -1040,7 +1033,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -1071,7 +1064,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -1102,7 +1095,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -1125,7 +1118,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -1183,30 +1176,7 @@ public class GetStatusOutputTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
-  }
-
-  /**
-   * Recursively deletes a directory and all its contents.
-   *
-   * @param path the directory to delete
-   * @throws IOException if deletion fails
-   */
-  private void deleteRecursively(Path path) throws IOException
-  {
-    if (!Files.exists(path))
-      return;
-
-    if (Files.isDirectory(path))
-    {
-      try (Stream<Path> stream = Files.list(path))
-      {
-        for (Path child : stream.toList())
-          deleteRecursively(child);
-      }
-    }
-
-    Files.delete(path);
   }
 }

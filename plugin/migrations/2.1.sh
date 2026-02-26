@@ -11,7 +11,7 @@ set -euo pipefail
 # 1. Remove "## Issues In Progress" section from version-level STATE.md files,
 #    merging its entries into "## Issues Pending"
 # 2. Rename issue status values in STATE.md files:
-#    pending → open, completed/complete → closed
+#    pending → open, completed/complete/done → closed
 # 3. Move version tracking from cat-config.json to .claude/cat/VERSION plain text file
 #    (handles both old "version" field and renamed "last_migrated_version" field)
 # 4. Rename sections in PLAN.md files:
@@ -195,6 +195,21 @@ else
 
         if grep -q '\*\*Status:\*\* complete' "$state_file" 2>/dev/null; then
             sed -i 's/\*\*Status:\*\* complete/**Status:** closed/' "$state_file"
+            changed=true
+        fi
+
+        if grep -q '\*\*Status:\*\* done' "$state_file" 2>/dev/null; then
+            sed -i 's/\*\*Status:\*\* done/**Status:** closed/' "$state_file"
+            changed=true
+        fi
+
+        if grep -q '\*\*Status:\*\* in_progress' "$state_file" 2>/dev/null; then
+            sed -i 's/\*\*Status:\*\* in_progress/**Status:** in-progress/' "$state_file"
+            changed=true
+        fi
+
+        if grep -q '\*\*Status:\*\* active' "$state_file" 2>/dev/null; then
+            sed -i 's/\*\*Status:\*\* active/**Status:** in-progress/' "$state_file"
             changed=true
         fi
 

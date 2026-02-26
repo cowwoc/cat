@@ -7,6 +7,7 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.SharedSecrets;
 import io.github.cowwoc.cat.hooks.util.IssueDiscovery;
 import io.github.cowwoc.cat.hooks.util.IssueDiscovery.DiscoveryResult;
 import io.github.cowwoc.cat.hooks.util.IssueDiscovery.SearchOptions;
@@ -840,57 +841,74 @@ public class IssueDiscoveryTest
   }
 
   /**
-   * Provides test cases for status alias normalization.
-   * Each row contains: status alias, whether the issue should be found (true = open/in-progress, false = closed).
+   * Returns status values that are canonical and should be accepted.
    *
-   * @return test data rows
+   * @return the canonical status values
    */
   @DataProvider
-  public Object[][] statusAliasProvider()
+  public Object[][] canonicalStatusProvider()
   {
     return new Object[][]
-    {
-      {"pending", true},
-      {"completed", false},
-      {"in_progress", true},
-      {"active", true},
-      {"complete", false},
-      {"done", false}
-    };
+      {
+        {"open"},
+        {"in-progress"},
+        {"closed"},
+        {"blocked"}
+      };
   }
 
   /**
-   * Verifies that a status alias is normalized to its canonical value and the issue is found or skipped
-   * accordingly.
+   * Verifies that canonical status values are accepted by getIssueStatus().
    *
-   * @param statusAlias the status alias to use in STATE.md
-   * @param shouldBeFound true if the alias maps to an eligible status (open or in-progress)
+   * @param status the canonical status value
    * @throws IOException if an I/O error occurs
    */
-  @Test(dataProvider = "statusAliasProvider")
-  public void statusAliasIsNormalized(String statusAlias, boolean shouldBeFound) throws IOException
+  @Test(dataProvider = "canonicalStatusProvider")
+  public void canonicalStatusIsAccepted(String status) throws IOException
   {
-    Path projectDir = createTempProject();
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    List<String> lines = List.of("- **Status:** " + status);
+    Path fakePath = Path.of("fake/STATE.md");
+    String result = SharedSecrets.getIssueStatus(lines, fakePath);
+    requireThat(result, "result").isEqualTo(status);
+  }
+
+  /**
+   * Returns status values that are non-canonical aliases and should be rejected.
+   *
+   * @return the non-canonical status aliases
+   */
+  @DataProvider
+  public Object[][] nonCanonicalStatusProvider()
+  {
+    return new Object[][]
+      {
+        {"pending"},
+        {"completed"},
+        {"complete"},
+        {"done"},
+        {"in_progress"},
+        {"active"}
+      };
+  }
+
+  /**
+   * Verifies that non-canonical status aliases are rejected by getIssueStatus().
+   *
+   * @param status the non-canonical status alias
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(dataProvider = "nonCanonicalStatusProvider")
+  public void nonCanonicalStatusIsRejected(String status) throws IOException
+  {
+    List<String> lines = List.of("- **Status:** " + status);
+    Path fakePath = Path.of("fake/STATE.md");
+    try
     {
-      try
-      {
-        String sessionId = UUID.randomUUID().toString();
-        createIssue(projectDir, "2", "1", "test-issue", statusAlias);
-
-        IssueDiscovery discovery = new IssueDiscovery(scope);
-        SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
-        DiscoveryResult result = discovery.findNextIssue(options);
-
-        if (shouldBeFound)
-          requireThat(result, "result").isInstanceOf(DiscoveryResult.Found.class);
-        else
-          requireThat(result, "result").isInstanceOf(DiscoveryResult.NotFound.class);
-      }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(projectDir);
-      }
+      SharedSecrets.getIssueStatus(lines, fakePath);
+    }
+    catch (IOException e)
+    {
+      requireThat(e.getMessage(), "message").contains("Unknown status");
     }
   }
 

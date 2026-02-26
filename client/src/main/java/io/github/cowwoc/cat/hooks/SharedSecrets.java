@@ -6,9 +6,15 @@
  */
 package io.github.cowwoc.cat.hooks;
 
+import io.github.cowwoc.cat.hooks.util.IssueDiscovery;
+
+import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
+import java.nio.file.Path;
 import java.util.List;
+
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
  * A repository of "shared secrets" for calling package-private constructors from other modules without
@@ -25,6 +31,7 @@ public final class SharedSecrets
   private static final Lookup LOOKUP = MethodHandles.lookup();
   private static PostToolUseHookAccess postToolUseHookAccess;
   private static PostToolUseFailureHookAccess postToolUseFailureHookAccess;
+  private static IssueDiscoveryAccess issueDiscoveryAccess;
 
   private SharedSecrets()
   {
@@ -34,9 +41,11 @@ public final class SharedSecrets
    * Registers the access object for {@link PostToolUseHook}.
    *
    * @param access the access object
+   * @throws NullPointerException if {@code access} is null
    */
   public static void setPostToolUseHookAccess(PostToolUseHookAccess access)
   {
+    requireThat(access, "access").isNotNull();
     postToolUseHookAccess = access;
   }
 
@@ -49,23 +58,20 @@ public final class SharedSecrets
    */
   public static PostToolUseHook newPostToolUseHook(List<PostToolHandler> handlers)
   {
-    PostToolUseHookAccess access = postToolUseHookAccess;
-    if (access == null)
-    {
+    if (postToolUseHookAccess == null)
       initialize(PostToolUseHook.class);
-      access = postToolUseHookAccess;
-      assert access != null;
-    }
-    return access.newPostToolUseHook(handlers);
+    return postToolUseHookAccess.newPostToolUseHook(handlers);
   }
 
   /**
    * Registers the access object for {@link PostToolUseFailureHook}.
    *
    * @param access the access object
+   * @throws NullPointerException if {@code access} is null
    */
   public static void setPostToolUseFailureHookAccess(PostToolUseFailureHookAccess access)
   {
+    requireThat(access, "access").isNotNull();
     postToolUseFailureHookAccess = access;
   }
 
@@ -78,14 +84,39 @@ public final class SharedSecrets
    */
   public static PostToolUseFailureHook newPostToolUseFailureHook(List<PostToolHandler> handlers)
   {
-    PostToolUseFailureHookAccess access = postToolUseFailureHookAccess;
-    if (access == null)
-    {
+    if (postToolUseFailureHookAccess == null)
       initialize(PostToolUseFailureHook.class);
-      access = postToolUseFailureHookAccess;
-      assert access != null;
-    }
-    return access.newPostToolUseFailureHook(handlers);
+    return postToolUseFailureHookAccess.newPostToolUseFailureHook(handlers);
+  }
+
+  /**
+   * Registers the access object for {@link IssueDiscovery}.
+   *
+   * @param access the access object
+   * @throws NullPointerException if {@code access} is null
+   */
+  public static void setIssueDiscoveryAccess(IssueDiscoveryAccess access)
+  {
+    requireThat(access, "access").isNotNull();
+    issueDiscoveryAccess = access;
+  }
+
+  /**
+   * Parses the status field from STATE.md lines and validates it against canonical values.
+   *
+   * @param lines the lines from the STATE.md file
+   * @param statePath the path to the STATE.md file (used in error messages only)
+   * @return the validated status string
+   * @throws NullPointerException if {@code lines} or {@code statePath} are null
+   * @throws IOException if the status field is missing or the status value is non-canonical
+   */
+  public static String getIssueStatus(List<String> lines, Path statePath) throws IOException
+  {
+    requireThat(lines, "lines").isNotNull();
+    requireThat(statePath, "statePath").isNotNull();
+    if (issueDiscoveryAccess == null)
+      initialize(IssueDiscovery.class);
+    return issueDiscoveryAccess.getIssueStatus(lines, statePath);
   }
 
   /**
