@@ -380,7 +380,7 @@ Before delegating, verify your prompt answers:
 
 </conditional_load>
 
-The checklist covers: STATE.md requirements, trust/curiosity settings, token tracking,
+The checklist covers: STATE.md requirements, trust/effort settings, token tracking,
 context limits, and skill delegation rules. Load it before constructing any subagent prompt.
 
 ## Workflow
