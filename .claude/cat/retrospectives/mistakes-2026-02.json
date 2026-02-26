@@ -1982,6 +1982,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Keep the issue branch in the worktree until all phases complete: stakeholder review, concern fixes, squash, approval gate, then merge to base branch via work-merge"
+    },
+    {
+      "id": "M414",
+      "timestamp": "2026-02-26T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "Agent displayed raw JSON machine-facing return value from stakeholder-review to user instead of using review box CLI tools",
+      "root_cause": "stakeholder-review/first-use.md Output Format section used instructional framing (\"Return the structured result below as your final message\") with a full JSON example, priming the agent to emit machine-facing JSON as visible output even in standalone invocation where no caller consumes it",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/stakeholder-review/first-use.md",
+      "pattern_keywords": [
+        "raw_json_display",
+        "machine_facing_output",
+        "stakeholder_review",
+        "output_format_priming",
+        "standalone_invocation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M408",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "After the report step renders review boxes and concern boxes, no further output is needed. The review boxes are the complete user-facing output. When invoked standalone, offer to address HIGH+ concerns; when invoked via work-with-issue, the caller handles auto-fix iteration."
     }
   ]
 }

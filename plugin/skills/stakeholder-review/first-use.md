@@ -891,22 +891,25 @@ Where `${SEVERITY}` is CRITICAL, HIGH, MEDIUM, or LOW.
 
 <step name="decide">
 
-**Return aggregated result to caller:**
+**Finalize review output:**
 
-This skill returns the review outcome for the calling skill (work-with-issue) to handle.
-Auto-fix iteration and user approval gates are managed by the caller, not by this skill.
+The review box and concern boxes rendered in the `report` step are the complete user-facing output. No additional
+output or JSON is needed after the boxes are displayed.
 
-**Return structure:**
-- REJECTED status with full concern details (CRITICAL, HIGH, MEDIUM, LOW at or above minSeverity)
-- CONCERNS status with full concern details (HIGH, MEDIUM, LOW at or above minSeverity)
-- APPROVED status with any LOW concerns noted (if LOW is at or above minSeverity)
+When invoked via `work-with-issue`, the caller reads the aggregated result from the internal state to drive auto-fix
+iteration and user approval gates. When invoked standalone, read `reviewThreshold` from `.claude/cat/cat-config.json`
+(default `"low"`) and offer to address concerns at or above that threshold without the auto-fix loop — the review
+boxes already provide the full picture for the user.
+
+**Concern coverage by status:**
+- REJECTED: full concern details (CRITICAL, HIGH, MEDIUM, LOW at or above minSeverity)
+- CONCERNS: full concern details (HIGH, MEDIUM, LOW at or above minSeverity)
+- APPROVED: any LOW concerns noted (if LOW is at or above minSeverity)
 
 The calling skill (work-with-issue) is responsible for:
 - Auto-fix iteration for HIGH+ concerns
 - User approval gates for MEDIUM concerns
 - Escalation handling when auto-fix fails
-
-**Output the final review status** using the review box generated above.
 
 </step>
 
@@ -914,32 +917,27 @@ The calling skill (work-with-issue) is responsible for:
 
 **User-Facing Output:**
 
-Display review results to the user using the review box CLI tool described in the report step. The box report provides all information users need (stakeholder names, concern counts, icons, overall result).
+The review box CLI tools (`cat:stakeholder-review-box` and `cat:stakeholder-concern-box`) are the complete user-facing
+output. Invoke them in the `report` step — they provide all information users need (stakeholder names, concern counts,
+icons, overall result). No additional output is needed after the boxes are rendered.
 
-**Machine-Facing Return Value (DO NOT DISPLAY TO USER):**
+**Internal Result Contract (for work-with-issue only):**
 
-Return the structured result below as your final message for the orchestrating agent to parse. This JSON is an internal contract for integration with the work-with-issue workflow - it should NOT be displayed to end users as they have already seen the human-friendly box report above.
+When invoked by `work-with-issue`, the skill's final internal state is consumed by the caller as a structured object.
+The caller parses these fields:
 
-```json
-{
-  "review_status": "APPROVED|CONCERNS|REJECTED",
-  "concerns": [
-    {
-      "severity": "CRITICAL|HIGH|MEDIUM|LOW",
-      "stakeholder": "security",
-      "location": "src/UserDao.java:45",
-      "explanation": "Brief description of the concern",
-      "recommendation": "Brief remediation guidance",
-      "detail_file": ".claude/cat/review/security-concerns.json"
-    }
-  ],
-  "summary": "Brief summary of review outcome"
-}
-```
+- `review_status`: `"APPROVED"`, `"CONCERNS"`, or `"REJECTED"`
+- `concerns[]`: flat list of concern objects, each with:
+  - `severity`: `"CRITICAL"`, `"HIGH"`, `"MEDIUM"`, or `"LOW"`
+  - `stakeholder`: name of the reviewing stakeholder (e.g., `"security"`)
+  - `location`: file and line reference (e.g., `"src/UserDao.java:45"`)
+  - `explanation`: brief description of the concern
+  - `recommendation`: brief remediation guidance
+  - `detail_file`: path to detailed reviewer analysis (e.g., `".claude/cat/review/security-concerns.json"`)
+- `summary`: brief summary of review outcome
 
-The `concerns` array is a flat list aggregated from all reviewers. Each concern includes the `stakeholder` field to
-identify its source. The `detail_file` path points to the comprehensive analysis written by the reviewer subagent.
-The main agent must NOT read these detail files — pass the paths to fix subagents instead.
+The `detail_file` path points to the comprehensive analysis written by the reviewer subagent. The main agent must NOT
+read these detail files — pass the paths to fix subagents instead.
 
 ## Integration with work
 
