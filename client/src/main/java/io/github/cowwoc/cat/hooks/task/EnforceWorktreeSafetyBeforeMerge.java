@@ -55,11 +55,9 @@ public final class EnforceWorktreeSafetyBeforeMerge implements TaskHandler
     if (isInsideWorktree(cwd))
     {
       String reason = """
-        BLOCKED: Shell CWD is inside a worktree that will be deleted during merge.
+        BLOCKED: Shell working directory (%s) is inside a worktree that will be deleted during merge.
 
-        Current CWD: %s
-
-        The merge subagent removes the worktree after merging. If the parent shell's CWD is inside
+        The merge subagent removes the worktree after merging. If the parent shell's working directory is inside
         the worktree when it is deleted, all subsequent Bash commands fail with exit code 1 until
         Claude Code is restarted.
 
