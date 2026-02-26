@@ -1,8 +1,8 @@
-# Plan: add-rca-method-analyzer-tool
+# Plan: add-root-cause-analyzer-tool
 
 ## Goal
 
-Add a jlink-bundled Java tool `rca-method-analyzer` that computes A/B test RCA method statistics
+Add a jlink-bundled Java tool `root-cause-analyzer` that computes A/B test RCA method statistics
 from `mistakes-YYYY-MM.json` files, replacing the `jq` command in the learn skill's milestone
 review section. `jq` is not available in the plugin runtime per `.claude/rules/common.md`.
 
@@ -18,9 +18,9 @@ None (infrastructure issue)
 
 ## Files to Modify
 
-- `client/src/main/java/io/github/cowwoc/cat/hooks/util/RcaMethodAnalyzer.java` — new tool
-- `client/src/test/java/io/github/cowwoc/cat/hooks/util/RcaMethodAnalyzerTest.java` — tests
-- `client/build-jlink.sh` — register `rca-method-analyzer` launcher
+- `client/src/main/java/io/github/cowwoc/cat/hooks/util/RootCauseAnalyzer.java` — new tool
+- `client/src/test/java/io/github/cowwoc/cat/hooks/util/RootCauseAnalyzerTest.java` — tests
+- `client/build-jlink.sh` — register `root-cause-analyzer` launcher
 - `plugin/skills/learn/first-use.md` — replace commented-out jq block with tool invocation
 
 ## Pre-conditions
@@ -35,7 +35,7 @@ None (infrastructure issue)
    - Read `client/build-jlink.sh` to understand how to register a new launcher
 
 2. **Write failing tests first (TDD):**
-   - Create `client/src/test/java/io/github/cowwoc/cat/hooks/util/RcaMethodAnalyzerTest.java`
+   - Create `client/src/test/java/io/github/cowwoc/cat/hooks/util/RootCauseAnalyzerTest.java`
    - Test cases:
      - Groups mistakes by rca_method and computes count, recurrences, recurrence_rate
      - Filters mistakes by START_ID (includes mistakes with numeric ID >= START_ID)
@@ -44,7 +44,7 @@ None (infrastructure issue)
      - Handles month-split file format (`mistakes-YYYY-MM.json`)
    - Run `mvn -f client/pom.xml test` — tests must FAIL at this point
 
-3. **Implement `RcaMethodAnalyzer.java`:**
+3. **Implement `RootCauseAnalyzer.java`:**
    - `main(String[] args)`: accepts `--start-id N` optional arg (default 0), reads all
      `mistakes-YYYY-MM.json` files from `.claude/cat/retrospectives/`, produces JSON array to stdout
    - Output format (JSON array, one entry per rca_method):
@@ -57,10 +57,10 @@ None (infrastructure issue)
      ```
    - Sort by method name alphabetically
    - Filter: only include entries where numeric part of ID >= START_ID
-   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/RcaMethodAnalyzer.java`
+   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/RootCauseAnalyzer.java`
 
 4. **Register launcher in `build-jlink.sh`:**
-   - Add entry to HANDLERS array: `rca-method-analyzer io.github.cowwoc.cat.hooks.util.RcaMethodAnalyzer`
+   - Add entry to HANDLERS array: `root-cause-analyzer io.github.cowwoc.cat.hooks.util.RootCauseAnalyzer`
    - Files: `client/build-jlink.sh`
 
 5. **Run tests to verify implementation:**
@@ -71,9 +71,9 @@ None (infrastructure issue)
      ```bash
      # Replace with actual start mistake ID for the A/B test
      START_ID=86
-     "/path/to/rca-method-analyzer" --start-id "$START_ID"
+     "/path/to/root-cause-analyzer" --start-id "$START_ID"
      ```
-   - Use `${CLAUDE_PLUGIN_ROOT}/client/bin/rca-method-analyzer` as the path (available via jlink)
+   - Use `${CLAUDE_PLUGIN_ROOT}/client/bin/root-cause-analyzer` as the path (available via jlink)
    - Files: `plugin/skills/learn/first-use.md`
 
 7. **Rebuild jlink image:**
@@ -81,10 +81,10 @@ None (infrastructure issue)
 
 ## Post-conditions
 
-- [ ] `RcaMethodAnalyzer.java` exists and compiles
-- [ ] All `RcaMethodAnalyzerTest` tests pass
-- [ ] `rca-method-analyzer` launcher registered in `build-jlink.sh`
-- [ ] `plugin/skills/learn/first-use.md` milestone review section uses `rca-method-analyzer` invocation,
+- [ ] `RootCauseAnalyzer.java` exists and compiles
+- [ ] All `RootCauseAnalyzerTest` tests pass
+- [ ] `root-cause-analyzer` launcher registered in `build-jlink.sh`
+- [ ] `plugin/skills/learn/first-use.md` milestone review section uses `root-cause-analyzer` invocation,
   not a jq command or commented-out block
 - [ ] All tests pass: `mvn -f client/pom.xml test` exits 0
 - [ ] `mvn -f client/pom.xml verify` exits 0 (jlink image rebuilt with new tool)
