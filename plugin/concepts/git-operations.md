@@ -58,6 +58,12 @@ git worktree remove /workspace/.claude/cat/worktrees/issue
 
 See `/cat:safe-rm` for detailed guidance on safe directory removal.
 
+## User Rebase Requests
+
+When the user asks to "rebase on `<branch>`", use the **local** version of that branch (`git rebase <branch>`), not the
+remote (`git rebase origin/<branch>`). Do not fetch before rebasing unless the user explicitly asks to rebase on the
+remote.
+
 ## Linear History Workflow
 
 To merge an issue branch to its base branch with linear history:

@@ -84,6 +84,7 @@ readonly -a HANDLERS=(
   "batch-read:util.BatchReader"
   "monitor-subagents:util.SubagentMonitor"
   "register-hook:util.HookRegistrar"
+  "root-cause-analyzer:util.RootCauseAnalyzer"
   "validate-status-alignment:util.StatusAlignmentValidator"
   "load-skill:util.SkillLoader"
   "feedback:util.Feedback"
