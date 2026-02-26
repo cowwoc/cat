@@ -14,14 +14,11 @@ import io.github.cowwoc.cat.hooks.tool.post.DetectAssistantGivingUp;
 import io.github.cowwoc.cat.hooks.tool.post.DetectTokenThreshold;
 import io.github.cowwoc.cat.hooks.tool.post.RemindRestartAfterSkillModification;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 /**
  * Unified PostToolUse hook for all tools
  *
@@ -33,28 +30,11 @@ import org.slf4j.LoggerFactory;
  * Handlers can:
  * - Warn about tool results (return warning string)
  * - Inject additional context (return additionalContext)
- * - Allow silently (return null)
+ * - Allow silently (return empty result)
  */
 public final class PostToolUseHook implements HookHandler
 {
-  static
-  {
-    SharedSecrets.setPostToolUseHookAccess(PostToolUseHook::new);
-  }
-
-  private final List<PostToolHandler> handlers;
-
-  /**
-   * Creates a new PostToolUseHook with the specified handlers.
-   *
-   * @param handlers the handlers to use
-   * @throws NullPointerException if {@code handlers} is null
-   */
-  private PostToolUseHook(List<PostToolHandler> handlers)
-  {
-    requireThat(handlers, "handlers").isNotNull();
-    this.handlers = handlers;
-  }
+  private final JvmScope scope;
 
   /**
    * Creates a new PostToolUseHook instance.
@@ -65,14 +45,7 @@ public final class PostToolUseHook implements HookHandler
   public PostToolUseHook(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
-    Path claudeConfigDir = scope.getClaudeConfigDir();
-    Path sessionDirectory = scope.getSessionDirectory();
-    this.handlers = List.of(
-      new ResetFailureCounter(sessionDirectory),
-      new AutoLearnMistakes(),
-      new DetectAssistantGivingUp(claudeConfigDir),
-      new DetectTokenThreshold(claudeConfigDir),
-      new RemindRestartAfterSkillModification());
+    this.scope = scope;
   }
 
   /**
@@ -82,23 +55,7 @@ public final class PostToolUseHook implements HookHandler
    */
   public static void main(String[] args)
   {
-    try (JvmScope scope = new MainJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = HookInput.readFromStdin(mapper);
-      HookOutput output = new HookOutput(scope);
-      HookResult result = new PostToolUseHook(scope).run(input, output);
-
-      for (String warning : result.warnings())
-        System.err.println(warning);
-      System.out.println(result.output());
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(PostToolUseHook.class);
-      log.error("Unexpected error", e);
-      throw e;
-    }
+    HookRunner.execute(PostToolUseHook::new, args);
   }
 
   /**
@@ -123,6 +80,16 @@ public final class PostToolUseHook implements HookHandler
     String sessionId = input.getSessionId();
     requireThat(sessionId, "sessionId").isNotBlank();
 
+    // Create handlers using sessionId from HookInput
+    Path claudeConfigDir = scope.getClaudeConfigDir();
+    Path sessionDirectory = scope.getSessionBasePath().resolve(sessionId);
+    List<PostToolHandler> handlers = List.of(
+      new ResetFailureCounter(sessionDirectory),
+      new AutoLearnMistakes(),
+      new DetectAssistantGivingUp(claudeConfigDir),
+      new DetectTokenThreshold(claudeConfigDir),
+      new RemindRestartAfterSkillModification());
+
     List<String> warnings = new ArrayList<>();
     List<String> additionalContexts = new ArrayList<>();
     List<String> errorWarnings = new ArrayList<>();
@@ -138,7 +105,7 @@ public final class PostToolUseHook implements HookHandler
         if (!result.additionalContext().isEmpty())
           additionalContexts.add(result.additionalContext());
       }
-      catch (Exception e)
+      catch (RuntimeException | AssertionError e)
       {
         errorWarnings.add("post-tool-use: handler error: " + e.getMessage());
       }

@@ -64,7 +64,7 @@ public class SessionStartHookTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{\"session_id\": \"test-session-123\"}");
+      HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"test-session-123\"}");
       SessionStartHandler.Result result = new EchoSessionId().handle(input);
       requireThat(result.additionalContext(), "additionalContext").isEqualTo("Session ID: test-session-123");
       requireThat(result.stderr(), "stderr").isEmpty();
@@ -130,7 +130,7 @@ public class SessionStartHookTest
       Files.writeString(markerFile, "test-skill");
       try
       {
-        HookInput input = createInput(mapper, "{\"session_id\": \"" + sessionId + "\"}");
+        HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}");
         SessionStartHandler.Result result = new ClearSkillMarkers(scope).handle(input);
         requireThat(result.additionalContext(), "additionalContext").isEmpty();
         requireThat(result.stderr(), "stderr").isEmpty();
@@ -168,7 +168,7 @@ public class SessionStartHookTest
       Files.createSymbolicLink(symlink, targetFile);
       try
       {
-        HookInput input = createInput(mapper, "{\"session_id\": \"" + sessionId + "\"}");
+        HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}");
         SessionStartHandler.Result result = new ClearSkillMarkers(scope).handle(input);
         requireThat(result.additionalContext(), "additionalContext").isEmpty();
         requireThat(result.stderr(), "stderr").isEmpty();
@@ -199,7 +199,7 @@ public class SessionStartHookTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{\"session_id\": \"my-session\"}");
+      HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"my-session\"}");
       SessionStartHandler.Result result = new InjectSessionInstructions().handle(input);
       requireThat(result.additionalContext(), "additionalContext").contains("CAT SESSION INSTRUCTIONS");
       requireThat(result.additionalContext(), "additionalContext").contains("Session ID: my-session");
@@ -231,7 +231,7 @@ public class SessionStartHookTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{\"session_id\": \"test\"}");
+      HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"test\"}");
       SessionStartHandler.Result result = new InjectSessionInstructions().handle(input);
       String context = result.additionalContext();
       requireThat(context, "context").contains("User Input Handling");
@@ -249,17 +249,19 @@ public class SessionStartHookTest
   // --- InjectEnv tests ---
 
   /**
-   * Verifies that InjectEnv throws when CLAUDE_ENV_FILE is not set.
+   * Verifies that InjectEnv skips env file writing on resumed sessions.
    */
-  @Test(expectedExceptions = AssertionError.class)
-  public void injectEnvThrowsWhenNoEnvFile() throws IOException
+  @Test
+  public void injectEnvSkipsResumedSessions() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      // CLAUDE_ENV_FILE is not set in the test environment
-      HookInput input = createInput(mapper, "{}");
-      new InjectEnv(scope).handle(input);
+      // Resumed session should skip env file writing
+      HookInput input = createInput(mapper, "{\"source\": \"resume\", \"session_id\": \"test-session\"}");
+      SessionStartHandler.Result result = new InjectEnv(scope).handle(input);
+      requireThat(result.additionalContext(), "additionalContext").isEmpty();
+      requireThat(result.stderr(), "stderr").isEmpty();
     }
   }
 
@@ -293,7 +295,7 @@ public class SessionStartHookTest
           envFile, TerminalType.WINDOWS_TERMINAL))
         {
           JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"session_id\": \"" + sessionId + "\"}");
+          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}");
           new InjectEnv(scope).handle(input);
         }
         requireThat(Files.exists(envFile), "startupEnvFileExists").isTrue();
@@ -340,7 +342,7 @@ public class SessionStartHookTest
           envFile, TerminalType.WINDOWS_TERMINAL))
         {
           JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"session_id\": \"" + sessionId + "\"}");
+          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}");
           new InjectEnv(scope).handle(input);
         }
         // Non-UUID directory should not have an env file written
@@ -383,7 +385,7 @@ public class SessionStartHookTest
           envFile, TerminalType.WINDOWS_TERMINAL))
         {
           JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"session_id\": \"" + startupId + "\"}");
+          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}");
           new InjectEnv(scope).handle(input);
         }
         // File should exist but should not be double-written (appended twice)
@@ -438,7 +440,7 @@ public class SessionStartHookTest
           envFile, TerminalType.WINDOWS_TERMINAL))
         {
           JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"session_id\": \"" + sessionId + "\"}");
+          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}");
           SessionStartHandler.Result result = new InjectEnv(scope).handle(input);
           // Should succeed with no warnings (only the startup dir and the resumed session dir)
           requireThat(result.stderr(), "stderr").isEmpty();
@@ -482,7 +484,7 @@ public class SessionStartHookTest
           envFile, TerminalType.WINDOWS_TERMINAL))
         {
           JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"session_id\": \"" + sessionId + "\"}");
+          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}");
           // sessionEnvBase = envFile.getParent().getParent() = tempBase
           // tempBase exists and has startupId in it, so this will iterate without crashing
           SessionStartHandler.Result result = new InjectEnv(scope).handle(input);
@@ -531,7 +533,7 @@ public class SessionStartHookTest
           envFile, TerminalType.WINDOWS_TERMINAL))
         {
           JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"session_id\": \"" + sessionId + "\"}");
+          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}");
           new InjectEnv(scope).handle(input);
         }
         // Symlink directory should not have an env file written inside it
@@ -581,7 +583,7 @@ public class SessionStartHookTest
           envFile, TerminalType.WINDOWS_TERMINAL))
         {
           JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"session_id\": \"" + startupId + "\"}");
+          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}");
           // validateEnvValue is called with projectDir.toString() which contains '$'
           new InjectEnv(scope).handle(input);
         }
@@ -626,7 +628,7 @@ public class SessionStartHookTest
           envFile, TerminalType.WINDOWS_TERMINAL))
         {
           JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"session_id\": \"" + startupId + "\"}");
+          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}");
           new InjectEnv(scope).handle(input);
         }
       }
@@ -670,7 +672,7 @@ public class SessionStartHookTest
           envFile, TerminalType.WINDOWS_TERMINAL))
         {
           JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"session_id\": \"" + startupId + "\"}");
+          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}");
           new InjectEnv(scope).handle(input);
         }
       }
@@ -714,7 +716,7 @@ public class SessionStartHookTest
           envFile, TerminalType.WINDOWS_TERMINAL))
         {
           JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"session_id\": \"" + startupId + "\"}");
+          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}");
           new InjectEnv(scope).handle(input);
         }
       }
@@ -765,7 +767,7 @@ public class SessionStartHookTest
           envFile, TerminalType.WINDOWS_TERMINAL))
         {
           JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"session_id\": \"" + sessionId + "\"}");
+          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}");
           SessionStartHandler.Result result = new InjectEnv(scope).handle(input);
           // The env file in the resumed session dir is a symlink - should return a warning
           requireThat(result.additionalContext(), "additionalContext").contains("symlink");
@@ -814,7 +816,7 @@ public class SessionStartHookTest
           envFile, TerminalType.WINDOWS_TERMINAL))
         {
           JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"session_id\": \"" + startupId + "\"}");
+          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}");
           SessionStartHandler.Result result = new InjectEnv(scope).handle(input);
           requireThat(result.additionalContext(), "additionalContext").contains("symlink");
         }
@@ -860,7 +862,7 @@ public class SessionStartHookTest
           envFile, TerminalType.WINDOWS_TERMINAL))
         {
           JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"session_id\": \"" + startupId + "\"}");
+          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}");
           new InjectEnv(scope).handle(input);
         }
       }
@@ -903,7 +905,7 @@ public class SessionStartHookTest
         {
           JsonMapper mapper = scope.getJsonMapper();
           // Inject a session_id that contains '$' - a dangerous shell character
-          HookInput input = createInput(mapper, "{\"session_id\": \"test-$INJECTED\"}");
+          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"test-$INJECTED\"}");
           new InjectEnv(scope).handle(input);
         }
       }
@@ -956,7 +958,7 @@ public class SessionStartHookTest
         {
           JsonMapper mapper = scope.getJsonMapper();
           // Use startupId as session_id so the resumed session dir equals startupDir (no resumed write)
-          HookInput input = createInput(mapper, "{\"session_id\": \"" + startupId + "\"}");
+          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}");
           SessionStartHandler.Result result = new InjectEnv(scope).handle(input);
           requireThat(result.additionalContext(), "additionalContext").contains("symlink");
         }
@@ -1254,7 +1256,7 @@ public class SessionStartHookTest
       SessionStartHandler handler = input -> SessionStartHandler.Result.context("test context");
       SessionStartHook dispatcher = new SessionStartHook(List.of(handler));
 
-      HookInput input = createInput(mapper, "{\"session_id\": \"test\"}");
+      HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);

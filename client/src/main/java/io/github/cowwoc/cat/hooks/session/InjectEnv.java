@@ -30,6 +30,10 @@ import java.util.regex.Pattern;
  * {@code CLAUDE_SESSION_ID} to the env file so they are available in all subsequent
  * Bash tool calls.
  * <p>
+ * Only writes for new sessions (source="startup"). On resumed (source="resume") or
+ * compacted (source="compact") sessions, the env file already has the correct content
+ * and re-appending would cause duplicates.
+ * <p>
  * Workaround for <a href="https://github.com/anthropics/claude-code/issues/24775">#24775</a>:
  * On resumed sessions, CLAUDE_ENV_FILE points to a startup session directory, but the env
  * loader reads from the resumed session directory. To fix this, we also write the env file
@@ -56,11 +60,17 @@ public final class InjectEnv implements SessionStartHandler
   /**
    * Writes environment variables to CLAUDE_ENV_FILE, the resumed session's env directory, and all sibling session
    * directories.
+   * <p>
+   * Only writes for new sessions (source="startup"). On resumed (source="resume") or compacted (source="compact")
+   * sessions, the env file already has the correct content and re-appending would cause duplicates.
+   * <p>
+   * The env file path is read from the {@code CLAUDE_ENV_FILE} environment variable via {@link ClaudeEnv}.
    *
    * @param input the hook input
    * @return a result with warnings if symlinks were skipped, otherwise empty
    * @throws NullPointerException if {@code input} is null
-   * @throws AssertionError if required environment variables are not set
+   * @throws AssertionError if required environment variables are not set (CLAUDE_ENV_FILE, CLAUDE_PROJECT_DIR,
+   *   CLAUDE_PLUGIN_ROOT) or if session_id is not found in hook input
    * @throws IllegalArgumentException if any environment value contains dangerous shell characters
    * @throws WrappedCheckedException if writing to the env file fails
    */
@@ -74,8 +84,12 @@ public final class InjectEnv implements SessionStartHandler
 
     // CLAUDE_SESSION_ID is empty in the hook environment. Read from stdin JSON instead.
     String sessionId = input.getSessionId();
-    if (sessionId.isEmpty())
-      throw new AssertionError("session_id not found in hook input");
+    requireThat(sessionId, "session_id").isNotEmpty();
+
+    // Only write for new sessions (startup). Skip for resumed (resume) or compacted (compact) sessions.
+    String source = input.getString("source");
+    if (!source.equals("startup"))
+      return Result.empty();
 
     String projectDir = scope.getClaudeProjectDir().toString();
     String pluginRoot = scope.getClaudePluginRoot().toString();

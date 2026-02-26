@@ -301,23 +301,17 @@ generate_startup_archives() {
     -XX:AOTMode=record \
     -XX:AOTConfiguration="$aot_config" \
     -m "$(handler_main AotTraining)" \
-    2>/dev/null || true
+    2>/dev/null || error "Failed to record AOT training data"
 
-  if [[ ! -f "$aot_config" ]]; then
-    log "Warning: Failed to record AOT configuration"
-    return 0
-  fi
+  [[ -f "$aot_config" ]] || error "AOT configuration file not created: $aot_config"
 
-  if ! "$java_bin" \
+  "$java_bin" \
     -XX:AOTMode=create \
     -XX:AOTConfiguration="$aot_config" \
     -XX:AOTCache="$aot_cache" \
     -XX:+AOTClassLinking \
     -m "$(handler_main PreToolUseHook)" \
-    2>/dev/null; then
-    log "Warning: Failed to create AOT cache"
-    return 0
-  fi
+    2>/dev/null || error "Failed to create AOT cache"
 
   rm -f "$aot_config"
   log "  AOT cache: $(du -h "$aot_cache" | cut -f1)"
@@ -330,7 +324,6 @@ generate_launchers() {
   log "Generating launcher scripts..."
 
   local bin_dir="${OUTPUT_DIR}/bin"
-  local aot_cache="../lib/server/aot-cache.aot"
 
   for handler in "${HANDLERS[@]}"; do
     local name="${handler%%:*}"
@@ -392,8 +385,8 @@ main() {
   patch_automatic_modules
   build_jlink_image
   generate_launchers
-  verify_image
   generate_startup_archives
+  verify_image
 
   log "Build complete!"
   log "Output: $OUTPUT_DIR"

@@ -25,7 +25,6 @@ import io.github.cowwoc.cat.hooks.bash.ValidateGitOperations;
 import io.github.cowwoc.cat.hooks.bash.VerifyStateInCommit;
 import io.github.cowwoc.cat.hooks.bash.WarnFileExtraction;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -81,23 +80,7 @@ public final class PreToolUseHook implements HookHandler
    */
   public static void main(String[] args)
   {
-    try (JvmScope scope = new MainJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = HookInput.readFromStdin(mapper);
-      HookOutput output = new HookOutput(scope);
-      HookResult result = new PreToolUseHook(scope).run(input, output);
-
-      for (String warning : result.warnings())
-        System.err.println(warning);
-      System.out.println(result.output());
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(PreToolUseHook.class);
-      log.error("Unexpected error", e);
-      throw e;
-    }
+    HookRunner.execute(PreToolUseHook::new, args);
   }
 
   /**

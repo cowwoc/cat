@@ -12,12 +12,9 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import io.github.cowwoc.cat.hooks.ask.WarnApprovalWithoutRenderDiff;
 import io.github.cowwoc.cat.hooks.ask.WarnUnsquashedApproval;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 /**
  * Unified PreToolUse hook for AskUserQuestion.
  * <p>
@@ -64,23 +61,7 @@ public final class PreAskHook implements HookHandler
    */
   public static void main(String[] args)
   {
-    try (JvmScope scope = new MainJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = HookInput.readFromStdin(mapper);
-      HookOutput output = new HookOutput(scope);
-      HookResult result = new PreAskHook(scope).run(input, output);
-
-      for (String warning : result.warnings())
-        System.err.println(warning);
-      System.out.println(result.output());
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(PreAskHook.class);
-      log.error("Unexpected error", e);
-      throw e;
-    }
+    HookRunner.execute(PreAskHook::new, args);
   }
 
   /**
