@@ -54,24 +54,7 @@ public final class SubagentStartHook implements HookHandler
    */
   public static void main(String[] args)
   {
-    try (JvmScope scope = new MainJvmScope())
-    {
-      tools.jackson.databind.json.JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = HookInput.readFromStdin(mapper);
-      HookOutput output = new HookOutput(scope);
-      SubagentStartHook hook = new SubagentStartHook(scope);
-      HookResult result = hook.run(input, output);
-
-      for (String warning : result.warnings())
-        System.err.println(warning);
-      System.out.println(result.output());
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(SubagentStartHook.class);
-      log.error("Unexpected error", e);
-      throw e;
-    }
+    HookRunner.execute(SubagentStartHook::new, args);
   }
 
   /**

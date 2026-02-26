@@ -11,8 +11,8 @@ import io.github.cowwoc.cat.hooks.failure.DetectRepeatedFailures;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 
+import java.nio.file.Path;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,25 +34,8 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  */
 public final class PostToolUseFailureHook implements HookHandler
 {
-  static
-  {
-    SharedSecrets.setPostToolUseFailureHookAccess(PostToolUseFailureHook::new);
-  }
-
   private final Logger log = LoggerFactory.getLogger(getClass());
-  private final List<PostToolHandler> handlers;
-
-  /**
-   * Creates a new PostToolUseFailureHook with the specified handlers.
-   *
-   * @param handlers the handlers to use
-   * @throws NullPointerException if {@code handlers} is null
-   */
-  private PostToolUseFailureHook(List<PostToolHandler> handlers)
-  {
-    requireThat(handlers, "handlers").isNotNull();
-    this.handlers = handlers;
-  }
+  private final JvmScope scope;
 
   /**
    * Creates a new PostToolUseFailureHook instance.
@@ -63,9 +46,7 @@ public final class PostToolUseFailureHook implements HookHandler
   public PostToolUseFailureHook(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
-    this.handlers = List.of(
-      new DetectRepeatedFailures(Clock.systemUTC(), scope.getSessionDirectory()),
-      new DetectPreprocessorFailure());
+    this.scope = scope;
   }
 
   /**
@@ -75,23 +56,7 @@ public final class PostToolUseFailureHook implements HookHandler
    */
   public static void main(String[] args)
   {
-    try (JvmScope scope = new MainJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = HookInput.readFromStdin(mapper);
-      HookOutput output = new HookOutput(scope);
-      HookResult result = new PostToolUseFailureHook(scope).run(input, output);
-
-      for (String warning : result.warnings())
-        System.err.println(warning);
-      System.out.println(result.output());
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(PostToolUseFailureHook.class);
-      log.error("Unexpected error", e);
-      throw e;
-    }
+    HookRunner.execute(PostToolUseFailureHook::new, args);
   }
 
   /**
@@ -111,6 +76,12 @@ public final class PostToolUseFailureHook implements HookHandler
     String sessionId = input.getSessionId();
     if (sessionId.isEmpty())
       return HookResult.withoutWarnings(output.empty());
+
+    // Create handlers using sessionId from HookInput
+    Path sessionDirectory = scope.getSessionBasePath().resolve(sessionId);
+    List<PostToolHandler> handlers = List.of(
+      new DetectRepeatedFailures(Clock.systemUTC(), sessionDirectory),
+      new DetectPreprocessorFailure());
 
     String toolName = input.getToolName();
     JsonNode toolResult = input.getToolResult();
