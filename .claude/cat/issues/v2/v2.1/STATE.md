@@ -49,6 +49,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - refactor-curiosity-to-effort
 - add-smart-questioning-to-add
 - refactor-add-wizard-batching
+- fix-macos-sed-incompatibility
 
 
 ## Issues Completed
