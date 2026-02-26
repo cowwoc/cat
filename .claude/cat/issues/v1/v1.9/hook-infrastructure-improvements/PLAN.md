@@ -12,6 +12,6 @@ the hook now provides specific guidance:
 
 This helps agents recover from the block without falling back to workarounds.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

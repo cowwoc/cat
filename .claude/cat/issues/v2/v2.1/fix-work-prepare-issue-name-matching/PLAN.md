@@ -33,7 +33,7 @@ names fall through to the else branch which treats them as filter patterns (or i
 - `plugin/skills/work/SKILL.md` - Update argument parsing to also match bare issue names (letters, numbers, dashes)
 - `plugin/scripts/get-available-issues.sh` - Accept bare issue names and search for matching issue across versions
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] `/cat:work issue-name` (without version prefix) correctly selects the issue
 - [ ] `/cat:work 2.1-issue-name` (with version prefix) continues to work
 - [ ] Unrecognized arguments produce a warning instead of silent fallthrough

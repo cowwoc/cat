@@ -25,7 +25,7 @@ require full re-execution of the original skill instructions.
 ## Files to Modify
 - `plugin/skills/reference.md` - Rewrite with stronger re-execution instructions
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] reference.md explicitly prohibits summarizing, paraphrasing, or abbreviating skill output
 - [ ] reference.md explicitly requires full re-execution of the original skill instructions
 - [ ] No other files modified (single-file change)

@@ -49,7 +49,7 @@ git for-each-ref --sort=-committerdate \
 - **>7 days idle**: Do not warn (avoid noise for long-running or abandoned work)
 - **Never auto-remove**: Remote locks are only reported, never deleted
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] /cat:work displays last committer name and email when skipping due to remote lock
 - [ ] /cat:work displays relative time since last commit (e.g., "2 days ago")
 - [ ] /cat:cleanup scans remote branches matching CAT lock pattern

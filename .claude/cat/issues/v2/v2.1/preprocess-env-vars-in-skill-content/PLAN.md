@@ -43,7 +43,7 @@ agent. The script already receives plugin root (`$1`) and session ID (`$3`) as a
 ## Files to Modify
 - `plugin/scripts/load-skill.sh` - Add sed-based variable substitution after content loading
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Bash commands in skill content have literal paths when agent receives them
 - [ ] `${CLAUDE_PLUGIN_ROOT}`, `${CLAUDE_PROJECT_DIR}`, `${CLAUDE_SESSION_ID}` are all substituted
 - [ ] `!` backtick preprocessing still works (not affected by this change)

@@ -44,7 +44,7 @@ container.
 |------|--------|-------------|
 | `hooks/build-jlink.sh` | Modify | Add `-Dstdout.encoding=UTF-8` to launcher template in `generate_launchers()` |
 
-## Success Criteria
+## Post-conditions
 
 - [ ] All 18 generated launcher scripts contain `-Dstdout.encoding=UTF-8`
 - [ ] `get-status-output` produces valid UTF-8 bytes (box-drawing chars, emojis) instead of `0x3F`

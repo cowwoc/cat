@@ -62,7 +62,7 @@ None - cleanup task
 7. **Verify no Python references remain** in hooks.json
 8. **Run `mvn test`** to verify Java tests still pass after cleanup
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] No Python `.py` files remain in `plugin/hooks/` (except standalone shell-helper scripts)
 - [ ] No Python test files remain in `tests/`
 - [ ] `run_tests.py` removed

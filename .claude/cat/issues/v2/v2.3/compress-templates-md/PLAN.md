@@ -20,7 +20,7 @@ None - infrastructure/optimization sub-issue
 |----------|-------|--------------|
 | Templates | 12 | `plugin/templates/*.md` |
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All 12 template files compressed
 - [ ] Execution equivalence verified (all files score 1.0 on /compare-docs)
 - [ ] No functionality regression

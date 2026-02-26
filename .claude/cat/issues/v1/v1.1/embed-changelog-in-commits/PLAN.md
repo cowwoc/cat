@@ -25,6 +25,6 @@ Files modified:
 - .claude/cat/references/hierarchy.md
 - .claude/cat/workflows/execute-task.md, merge-and-cleanup.md
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

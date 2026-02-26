@@ -669,7 +669,7 @@ def find_duplicates(db: sqlite3.Connection, new_claims: list, threshold: float =
 | `plugin/skills/index-claims/SKILL.md` | Create | Manual/incremental indexing command |
 | `.claude/cat/claim-index.db` | Create | SQLite database (git-tracked) |
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] Claim extraction extracts WHAT (semantic meaning), not HOW (implementation)
 - [ ] Claim extraction uses categories: input, output, behavior, side_effect, edge_case

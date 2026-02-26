@@ -32,7 +32,7 @@ None
 
 Exclude: `.claude/cat/backups/`, `.worktrees/`, `node_modules/`, `.git/`
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All markdown files have no lines exceeding 120 characters
 - [ ] Code blocks (``` fenced) are NOT wrapped (would break code)
 - [ ] Markdown tables (| delimited rows) are NOT wrapped (would break tables)
@@ -40,6 +40,10 @@ Exclude: `.claude/cat/backups/`, `.worktrees/`, `node_modules/`, `.git/`
 - [ ] Content meaning is preserved - only whitespace changes
 - [ ] All tests pass
 - [ ] No regressions
+
+- [ ] Zero non-exempt lines exceed 120 characters across all project markdown files
+- [ ] All existing tests pass
+- [ ] Code blocks, tables, and URLs are intact
 
 ## Execution Steps
 
@@ -68,7 +72,3 @@ Exclude: `.claude/cat/backups/`, `.worktrees/`, `node_modules/`, `.git/`
    - Commit the wrapper script and all reformatted files
    - Files: `plugin/scripts/wrap-markdown.py` + all modified .md files
 
-## Success Criteria
-- [ ] Zero non-exempt lines exceed 120 characters across all project markdown files
-- [ ] All existing tests pass
-- [ ] Code blocks, tables, and URLs are intact

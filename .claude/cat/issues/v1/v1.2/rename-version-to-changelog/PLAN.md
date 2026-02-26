@@ -6,6 +6,6 @@ rename VERSION.md to CHANGELOG.md
 ## Details
 
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

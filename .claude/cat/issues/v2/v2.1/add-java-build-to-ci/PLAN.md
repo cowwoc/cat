@@ -40,7 +40,7 @@ End user starts session
   -> If match: skip (fast path, no network call needed)
 ```
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] GitHub Actions workflow builds jlink bundle on push
 - [ ] Bundle includes JDK runtime + cat-hooks.jar + Jackson dependencies
 - [ ] session_start.sh downloads bundle when local version != plugin.json version
@@ -49,6 +49,11 @@ End user starts session
 - [ ] Plugin developers can build bundle locally
 - [ ] Existing Java hook execution still works with bundled JAR
 - [ ] Tests pass
+
+- [ ] End users get a working jlink bundle without needing Maven or JDK installed
+- [ ] Bundle is automatically updated when plugin version changes
+- [ ] Plugin developers can iterate on Java hooks with local builds
+- [ ] No regression in existing hook behavior
 
 ## Decomposition
 
@@ -70,8 +75,3 @@ files change. This is the local development workflow counterpart to the CI build
 ## Execution Steps
 See individual sub-issue PLAN.md files for detailed execution steps.
 
-## Success Criteria
-- [ ] End users get a working jlink bundle without needing Maven or JDK installed
-- [ ] Bundle is automatically updated when plugin version changes
-- [ ] Plugin developers can iterate on Java hooks with local builds
-- [ ] No regression in existing hook behavior

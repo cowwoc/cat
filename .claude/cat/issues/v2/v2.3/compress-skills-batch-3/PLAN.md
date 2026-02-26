@@ -27,7 +27,7 @@ None - sub-issue of parent
 | 26 | plugin/skills/remove/SKILL.md |
 | 27 | plugin/skills/render-diff/SKILL.md |
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All 9 files compressed
 - [ ] All files score 1.0 on /compare-docs validation
 - [ ] No functionality regression

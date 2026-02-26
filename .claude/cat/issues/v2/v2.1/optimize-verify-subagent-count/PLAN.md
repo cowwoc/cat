@@ -14,13 +14,17 @@ None - infrastructure optimization
 ## Files to Modify
 - `plugin/skills/verify-implementation/first-use.md` - Change spawn_verifiers step to group criteria by file dependencies and spawn single agent for same-file criteria, parallel agents only for genuinely independent criteria
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Criteria referencing the same files (from PLAN.md file specs and execution steps) are verified by a single subagent
 - [ ] Criteria referencing completely different files are verified by separate parallel subagents
 - [ ] Verification report output format (Summary, Acceptance Criteria Verification, File Specifications, Overall Assessment) remains unchanged
 - [ ] Verification still correctly identifies missing, partial, and complete criteria
 - [ ] Token usage reduced for same-file scenarios (single agent reads file once instead of N times)
 - [ ] No functionality regression
+
+- [ ] For a 7-criterion issue touching 1 file, only 1 verification subagent is spawned (not 7)
+- [ ] For an issue with criteria touching 3 different files, up to 3 subagents are spawned
+- [ ] Report format is identical to current output
 
 ## Execution Steps
 1. **Step 1:** Read current verify-implementation skill definition
@@ -33,7 +37,3 @@ None - infrastructure optimization
 3. **Step 3:** Update the collect_results step to handle both single-result and multi-result responses from subagents
 4. **Step 4:** Verify the report step still produces identical output format
 
-## Success Criteria
-- [ ] For a 7-criterion issue touching 1 file, only 1 verification subagent is spawned (not 7)
-- [ ] For an issue with criteria touching 3 different files, up to 3 subagents are spawned
-- [ ] Report format is identical to current output

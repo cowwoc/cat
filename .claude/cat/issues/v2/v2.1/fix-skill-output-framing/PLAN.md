@@ -49,7 +49,7 @@ Empirical testing (configs A-S, 100+ trials) identified:
 - `plugin/skills/work-first-use/SKILL.md` - Convert Next Task section to use silent execution pattern via
   work-complete skill invocation
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Bug fixed: status skill outputs only verbatim content + NEXT STEPS table, no instruction leakage
 - [ ] SkillLoader reference text is generic and works for any skill with output tags
 - [ ] Subsequent invocation ordering: reference instruction BEFORE output tag (instructions first, content second)
@@ -58,6 +58,13 @@ Empirical testing (configs A-S, 100+ trials) identified:
 - [ ] No new issues introduced in other skills using output tags (statusline, run-retrospective)
 - [ ] silent-execution.md documents the correct argument substitution pipeline
 - [ ] Work skill Next Task section uses silent execution via skill invocation instead of inline Bash
+
+- [ ] status-first-use/SKILL.md uses user-centric framing with no negative instructions
+- [ ] SkillLoader subsequent invocation text is generic and appears before the output tag
+- [ ] All SkillLoader tests pass
+- [ ] Empirical test with production content achieves >= 90% compliance on haiku
+- [ ] silent-execution.md correctly documents `$ARGUMENTS` (no braces) as the working syntax
+- [ ] Work skill Next Task section invokes work-complete skill instead of inline Bash
 
 ## Execution Steps
 1. **Update status-first-use/SKILL.md:**
@@ -91,10 +98,3 @@ Empirical testing (configs A-S, 100+ trials) identified:
 6. **Run tests:**
    - Run `mvn -f client/pom.xml test` to verify all tests pass
 
-## Success Criteria
-- [ ] status-first-use/SKILL.md uses user-centric framing with no negative instructions
-- [ ] SkillLoader subsequent invocation text is generic and appears before the output tag
-- [ ] All SkillLoader tests pass
-- [ ] Empirical test with production content achieves >= 90% compliance on haiku
-- [ ] silent-execution.md correctly documents `$ARGUMENTS` (no braces) as the working syntax
-- [ ] Work skill Next Task section invokes work-complete skill instead of inline Bash

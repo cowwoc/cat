@@ -48,7 +48,7 @@ None
 7. Create `EnforceJvmScopeEnvAccessTest` that scans all `.java` source files for `System.getenv` and fails if found outside `MainJvmScope.java`
 8. Run `mvn -f hooks/pom.xml test` to verify all tests pass
 
-## Success Criteria
+## Post-conditions
 - [ ] No Java file except `MainJvmScope.java` contains `System.getenv()`
 - [ ] All migrated handlers call `JvmScope` methods (no hardcoded fallbacks or removed env access)
 - [ ] `EnforceJvmScopeEnvAccessTest` scans all `.java` source files and fails listing any violations

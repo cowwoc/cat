@@ -16,7 +16,7 @@ interface.
 - New: `plugin/storage/backends/local.py` - Local file backend implementation
 - Modify: Skills that currently do file I/O directly
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] LocalFileBackend implements storage interface
 - [ ] All existing .claude/cat operations work through backend
 - [ ] No changes to file structure (backwards compatible)

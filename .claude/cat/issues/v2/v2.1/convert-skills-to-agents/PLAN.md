@@ -95,7 +95,7 @@ These remain as skills but are now preloaded into agents:
 - `plugin/skills/batch-read/SKILL.md`
 - `plugin/skills/grep-and-read/SKILL.md`
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] 6 subagent-style skills converted to agent format in `plugin/agents/`
 - [ ] Each agent has appropriate `skills` field for domain knowledge preloading
 - [ ] work-execute agent preloads: write-and-commit, batch-read, grep-and-read
@@ -105,6 +105,11 @@ These remain as skills but are now preloaded into agents:
 - [ ] Task tool invocations updated to use `subagent_type` matching agent names
 - [ ] Work phases function correctly with new agent structure
 - [ ] Original skill files can be removed (or kept as documentation)
+
+- [ ] Work phases complete successfully with agent-based subagents
+- [ ] work-merge agent demonstrates git safety knowledge from preloaded skills
+- [ ] No manual duplication of git instructions in agent prompts
+- [ ] Clean separation: agents in plugin/agents/, skills in plugin/skills/
 
 ## Execution Steps
 
@@ -168,8 +173,3 @@ Is it invoked via Task tool as a subagent?
         └── NO: Regular user-invocable skill
 ```
 
-## Success Criteria
-- [ ] Work phases complete successfully with agent-based subagents
-- [ ] work-merge agent demonstrates git safety knowledge from preloaded skills
-- [ ] No manual duplication of git instructions in agent prompts
-- [ ] Clean separation: agents in plugin/agents/, skills in plugin/skills/

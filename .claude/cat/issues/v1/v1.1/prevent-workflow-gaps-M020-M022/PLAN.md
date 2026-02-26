@@ -14,6 +14,6 @@ prevent workflow gaps that caused M020-M022
   must be a real file path. "N/A" or "behavioral change" is not valid -
   if no file was changed, prevention was not implemented.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

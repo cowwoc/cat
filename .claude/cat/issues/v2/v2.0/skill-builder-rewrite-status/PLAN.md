@@ -23,7 +23,7 @@ None - infrastructure/maintenance task
 ## Files to Modify
 - plugin/commands/status.md - Complete rewrite using skill-builder
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] status.md rewritten using skill-builder methodology
 - [ ] Display renders correctly without alignment calculations
 - [ ] /cat:status command works as expected

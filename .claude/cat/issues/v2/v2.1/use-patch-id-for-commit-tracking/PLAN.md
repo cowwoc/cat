@@ -43,7 +43,7 @@ None - infrastructure/architectural improvement
 - plugin/skills/work/commit-rules.md - Remove Issue ID footer requirement
 - plugin/templates/state.md - Remove hash format, show simple "Resolution: implemented"
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] No Issue ID in commit messages - footer removed from format
 - [ ] All tests still pass
 - [ ] Documentation shows how to find commits via git log

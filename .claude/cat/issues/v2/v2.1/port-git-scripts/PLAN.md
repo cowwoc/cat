@@ -37,7 +37,7 @@ None - infrastructure/tech debt
 6. **Test with real git operations:** Verify merge, squash, and cleanup in test repos
 7. **Run tests:** Execute `mvn -f hooks/pom.xml test`
 
-## Success Criteria
+## Post-conditions
 - [ ] All 4 git operation scripts have Java equivalents
 - [ ] Exit codes and error messages identical to bash originals
 - [ ] Git operations produce identical results (commits, branches, merges)

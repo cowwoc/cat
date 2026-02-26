@@ -43,7 +43,7 @@ Parent: 2.1-port-workflow-scripts (sub-issue 1 of 4)
 6. Run `mvn -f hooks/pom.xml verify`
 7. Update STATE.md (status: closed, progress: 100%)
 
-## Success Criteria
+## Post-conditions
 - [ ] IssueLock produces identical JSON output for all 6 commands
 - [ ] ExistingWorkChecker produces identical JSON output
 - [ ] Lock file format preserved (JSON with session_id, created_at, worktree, created_iso)

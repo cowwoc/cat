@@ -145,7 +145,7 @@ Test that status skill works: `CLAUDE_PROJECT_DIR=/workspace /home/node/.config/
 
 Test a hooks.json entry works: `echo '{}' | /home/node/.config/claude/plugins/cache/cat/cat/2.1/hooks/bin/bash-pretool`
 
-## Success Criteria
+## Post-conditions
 - [ ] `bin/get-status-output` executes successfully and produces status output
 - [ ] All hooks.json entries invoke launchers directly (no hook.sh references remain)
 - [ ] hook.sh is deleted from plugin/hooks/

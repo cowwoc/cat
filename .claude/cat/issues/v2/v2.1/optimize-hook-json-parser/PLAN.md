@@ -64,12 +64,18 @@ simultaneously when both files exist. These are mutually exclusive JVM flags. AO
 - `.claude/cat/conventions/java.md` - Update "JSON Library" from `JsonMapper` to `JsonParser/JsonGenerator
   (jackson-core streaming)`; update the JsonMapper Usage section
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Performance target met: hook startup <= 55ms with AOTCache
 - [ ] No functionality regression: all existing tests pass
 - [ ] No jackson-databind imports remain in any source file
 - [ ] hook.sh correctly uses elif for AOTCache vs SharedArchiveFile (mutually exclusive)
 - [ ] jlink image size reduced (jackson-core only: ~69MB vs current ~92MB)
+
+- [ ] All tests pass (`mvn -f hooks/pom.xml verify` exits 0)
+- [ ] No files import `tools.jackson.databind` (`grep -r 'import tools.jackson.databind' hooks/src/` returns empty)
+- [ ] Hook startup time <= 55ms with AOTCache (measured via benchmark)
+- [ ] jlink image size < 75MB (down from ~92MB)
+- [ ] hook.sh uses elif for AOTCache/SharedArchiveFile flags
 
 ## Execution Steps
 1. **Fix hook.sh mutual exclusivity bug:** Change the two independent `[[ -f ]]` checks on lines 68-69 to an
@@ -110,9 +116,3 @@ simultaneously when both files exist. These are mutually exclusive JVM flags. AO
 11. **Rebuild jlink image and measure:** Run `hooks/build-jlink.sh` and measure startup time to verify performance
     target
 
-## Success Criteria
-- [ ] All tests pass (`mvn -f hooks/pom.xml verify` exits 0)
-- [ ] No files import `tools.jackson.databind` (`grep -r 'import tools.jackson.databind' hooks/src/` returns empty)
-- [ ] Hook startup time <= 55ms with AOTCache (measured via benchmark)
-- [ ] jlink image size < 75MB (down from ~92MB)
-- [ ] hook.sh uses elif for AOTCache/SharedArchiveFile flags

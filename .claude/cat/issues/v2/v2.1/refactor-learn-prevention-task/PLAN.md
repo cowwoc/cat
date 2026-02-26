@@ -25,7 +25,7 @@ None - infrastructure improvement
 - plugin/skills/learn/SKILL.md - Update Step 3 (Display Phase Summaries) to: parse prevention proposal from subagent,
   present findings to user, use AskUserQuestion to offer task creation for prevention, invoke /cat:add if user accepts
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Prevent phase subagent returns prevention proposal without implementing changes
 - [ ] Proposal includes: prevention_type, prevention_level, target_files, description_of_changes, task_creation_info
 - [ ] Parent agent presents prevention findings to user after subagent completes
@@ -35,6 +35,10 @@ None - infrastructure improvement
 - [ ] Existing learn workflow still functions for all mistake tiers (quick and deep)
 - [ ] Tests passing
 - [ ] No regressions to existing skills
+
+- [ ] Prevent phase no longer requires direct file edits
+- [ ] Parent agent successfully proposes task creation to user
+- [ ] All existing tests pass with no regressions
 
 ## Execution Steps
 1. **Step 1:** Refactor plugin/skills/learn/phase-prevent.md
@@ -59,7 +63,3 @@ None - infrastructure improvement
 4. **Step 4:** Run existing tests to verify no regressions
    - Run: mvn -f hooks/pom.xml verify
 
-## Success Criteria
-- [ ] Prevent phase no longer requires direct file edits
-- [ ] Parent agent successfully proposes task creation to user
-- [ ] All existing tests pass with no regressions

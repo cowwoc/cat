@@ -21,12 +21,17 @@ None
 - `plugin/hooks/skill_handlers/__init__.py` - Add import for `work_complete_handler`
 - `plugin/skills/work/SKILL.md` - Replace "Next Task" section (lines 201-221) with Skill invocation
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] No bash tool calls visible before Issue Complete box
 - [ ] Issue Complete box renders correctly (alignment, widths)
 - [ ] Scope Complete box works when no next task exists
 - [ ] Lock released silently after merge
 - [ ] All existing tests pass
+
+- [ ] No bash tool output visible between merge completion and Issue Complete box
+- [ ] Handler correctly parses JSON args and calls combined script
+- [ ] Combined script correctly releases lock, discovers next task, renders box
+- [ ] All existing tests pass (226+ tests)
 
 ## Execution Steps
 
@@ -84,8 +89,3 @@ None
    - Command: `python3 /workspace/run_tests.py`
    - Files: `run_tests.py`
 
-## Success Criteria
-- [ ] No bash tool output visible between merge completion and Issue Complete box
-- [ ] Handler correctly parses JSON args and calls combined script
-- [ ] Combined script correctly releases lock, discovers next task, renders box
-- [ ] All existing tests pass (226+ tests)

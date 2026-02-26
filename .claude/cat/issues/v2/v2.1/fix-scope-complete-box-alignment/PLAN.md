@@ -38,7 +38,7 @@ Compare with `build_issue_complete_box()` (line 74) which correctly uses plain t
 | `plugin/scripts/get-issue-complete-box.py` | Remove `**` markers from line 114 in `build_scope_complete_box()` |
 | `tests/test_get_issue_complete_box.py` | Add test verifying Scope Complete box alignment (all lines same width) |
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Bug fixed - Scope Complete box has aligned borders
 - [ ] Regression test added verifying all box lines have equal display width
 - [ ] Existing tests still pass

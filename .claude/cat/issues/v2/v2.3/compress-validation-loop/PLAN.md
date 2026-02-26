@@ -43,7 +43,7 @@ To be determined through automated iteration of compress -> validate -> learn cy
 - [ ] /cat:learn fixes are properly isolated and merged
 - [ ] Loop terminates when all scores reach 1.0
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Bug fixed - compression validation is consistent across sessions
 - [ ] Regression test added - validation loop can be re-run
 - [ ] No new issues introduced

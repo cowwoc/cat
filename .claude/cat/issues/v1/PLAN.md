@@ -3,10 +3,8 @@
 ## Objective
 Complete rewrite with multi-agent orchestration, token-aware decomposition, and commercial readiness.
 
-## Gates
-
-### Entry
+## Pre-conditions
 - Previous major version complete
 
-### Exit
+## Post-conditions
 - All minor versions complete

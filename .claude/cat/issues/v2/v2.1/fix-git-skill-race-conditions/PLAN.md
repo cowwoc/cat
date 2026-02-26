@@ -34,7 +34,7 @@ None - infrastructure bugfix
 - plugin/skills/git-rebase/content.md - Pin base reference before rebase operation
 - plugin/skills/git-amend/content.md - Add note about push status race (documentation only)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] git-squash: Base branch reference resolved once, reused for rebase and commit-tree
 - [ ] git-merge-linear: Base branch reference resolved once, reused across verify/merge/cleanup steps
 - [ ] git-rebase: Base branch reference resolved once before rebase
@@ -51,6 +51,13 @@ None - infrastructure bugfix
 - [ ] Each failure mode has a distinct status code (CONFLICT, FF_FAILED, NOT_LINEAR, etc.)
 - [ ] Error JSON includes enough context for agent recovery (backup_branch, conflicting_files, etc.)
 - [ ] Scripts fail fast - no attempt at recovery, just clear error reporting
+
+- [ ] Base reference pinned once in git-squash (both workflows)
+- [ ] Base reference pinned once in git-merge-linear (all operations)
+- [ ] Base reference pinned once in git-rebase
+- [ ] Post-amend TOCTOU detection implemented in git-amend
+- [ ] Warnings documented in Critical Rules sections
+- [ ] All existing tests pass with no regressions
 
 ## Execution Steps
 1. **Step 1:** Fix git-squash Quick Workflow
@@ -107,10 +114,3 @@ None - infrastructure bugfix
     - Enhance: plugin/scripts/git-merge-linear.sh with specific error JSON for each failure mode
     - Enhance: plugin/scripts/git-squash-quick.sh with rebase conflict and verify failure handling
 
-## Success Criteria
-- [ ] Base reference pinned once in git-squash (both workflows)
-- [ ] Base reference pinned once in git-merge-linear (all operations)
-- [ ] Base reference pinned once in git-rebase
-- [ ] Post-amend TOCTOU detection implemented in git-amend
-- [ ] Warnings documented in Critical Rules sections
-- [ ] All existing tests pass with no regressions

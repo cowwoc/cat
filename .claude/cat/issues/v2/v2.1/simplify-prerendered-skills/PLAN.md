@@ -27,7 +27,7 @@ None - infrastructure/optimization issue addressing PATTERN-008
 - `plugin/skills/help/SKILL.md` - Simplify output workflow
 - `plugin/skills/add/SKILL.md` - Simplify completion display
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Behavior unchanged - same output before and after
 - [ ] All tests still pass
 - [ ] Skills reduced to "check → output verbatim → done" pattern

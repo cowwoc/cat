@@ -49,7 +49,7 @@ The missing link is argument parsing in the skill content that detects task ID p
 3. **Step 3:** Update the python3 invocation to include `${ISSUE_ID_ARG}` parameter
 4. **Step 4:** Verify by reading the modified file that the argument flow is correct
 
-## Success Criteria
+## Post-conditions
 - [ ] Bug fixed: task ID arguments are forwarded to work-prepare.py
 - [ ] Regression test: filter/exclusion arguments still work
 - [ ] No new issues introduced

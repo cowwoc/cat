@@ -21,7 +21,7 @@ None - documentation cleanup task
 - `plugin/.claude/cat/templates/config.json` - remove yoloMode
 - `README.md` - add autoRemoveWorktrees to Options Reference table
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] `yoloMode` removed from config template
 - [ ] `autoRemoveWorktrees` documented in README Options Reference
 - [ ] README options match template defaults

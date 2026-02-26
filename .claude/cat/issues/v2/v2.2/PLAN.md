@@ -13,7 +13,7 @@ Create showcase pages with video demos for marketing and user onboarding.
 - Requires v2.1 (Pre-Demo Polish) complete
 - All naming and UI must be finalized before recording
 
-## Success Criteria
+## Post-conditions
 - Each demo page has embedded video
 - Videos demonstrate real usage (not mockups)
 - Pages follow showcase-template design

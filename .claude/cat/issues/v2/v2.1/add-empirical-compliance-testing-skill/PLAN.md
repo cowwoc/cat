@@ -29,7 +29,7 @@ The skill orchestrates the empirical testing methodology proven in M507/fix-verb
 - `plugin/skills/empirical-test/metadata.json` - Skill metadata
 - `plugin/scripts/empirical-test-runner.py` - Test execution engine
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] `/cat:empirical-test` skill accepts a compliance failure description
 - [ ] Skill generates isolated test configurations varying one element at a time
 - [ ] Test runner executes N trials per config using claude CLI stream-json
@@ -37,6 +37,10 @@ The skill orchestrates the empirical testing methodology proven in M507/fix-verb
 - [ ] Supports model selection (haiku/sonnet) and configurable trial count
 - [ ] Supports optional tool-use priming context (messages before the test prompt)
 - [ ] Test runner handles timeouts and errors gracefully
+
+- [ ] Skill correctly orchestrates the full empirical testing workflow
+- [ ] Test runner reliably executes trials and collects statistics
+- [ ] Results are actionable (clear identification of which variable causes failure)
 
 ## Execution Steps
 1. **Step 1:** Create the test runner script (`plugin/scripts/empirical-test-runner.py`)
@@ -57,7 +61,3 @@ The skill orchestrates the empirical testing methodology proven in M507/fix-verb
    - Files: `plugin/skills/empirical-test/first-use.md`, `plugin/skills/empirical-test/metadata.json`
 3. **Step 3:** Verify skill loads and test runner executes correctly
 
-## Success Criteria
-- [ ] Skill correctly orchestrates the full empirical testing workflow
-- [ ] Test runner reliably executes trials and collects statistics
-- [ ] Results are actionable (clear identification of which variable causes failure)

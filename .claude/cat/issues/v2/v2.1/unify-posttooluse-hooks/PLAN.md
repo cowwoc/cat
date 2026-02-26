@@ -28,12 +28,16 @@ None
 - plugin/hooks/detect-assistant-giving-up.sh - DELETE
 - plugin/hooks/remind-restart-after-skill-modification.sh - DELETE
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] detect-assistant-giving-up.sh ported: rate limiting (60s), JSONL reading, token rationalization pattern detection
 - [ ] remind-restart-after-skill-modification.sh ported: skill/settings/hook file detection, stderr banner
 - [ ] hooks.json PostToolUse consolidated
 - [ ] Both bash scripts deleted
 - [ ] Tests pass
+
+- [ ] All tests pass
+- [ ] No bash PostToolUse scripts remain
+- [ ] hooks.json PostToolUse entries reduced
 
 ## Key Implementation Details
 - detect-assistant-giving-up.sh: Reads last 20 assistant messages from session JSONL, detects token usage rationalization patterns, rate-limited to once per 60s via /tmp file
@@ -48,7 +52,3 @@ None
 6. Delete bash scripts
 7. Run full test suite
 
-## Success Criteria
-- [ ] All tests pass
-- [ ] No bash PostToolUse scripts remain
-- [ ] hooks.json PostToolUse entries reduced

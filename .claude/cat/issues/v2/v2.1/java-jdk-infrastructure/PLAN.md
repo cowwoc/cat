@@ -37,7 +37,7 @@ JDK requirement: `CAT_JAVA_HOME` must be set (jlinked runtime only, no system JD
 3. Verify java.sh correctly invokes Java hooks with correct package prefix
 4. Verify scripts work on Linux (primary platform)
 
-## Acceptance Criteria
+## Post-conditions
 - [x] jlink config creates minimal JDK with Jackson 3
 - [x] session_start.sh correctly detects existing JDK or downloads bundle
 - [x] java.sh correctly invokes Java hooks with `io.github.cowwoc.cat.hooks` prefix

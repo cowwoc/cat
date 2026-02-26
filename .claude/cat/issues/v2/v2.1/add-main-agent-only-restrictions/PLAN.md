@@ -56,7 +56,7 @@ Add cross-reference to ensure agents understand the architectural constraint:
 and when to use main agent vs subagent execution.
 ```
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] shrink-doc has invocation restriction marker
 - [ ] compare-docs has invocation restriction marker
 - [ ] stakeholder-review has invocation restriction marker

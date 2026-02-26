@@ -42,7 +42,7 @@ instructions.
   direct CLI invocation instructions at each phase transition
 - `hooks/src/test/java/io/github/cowwoc/cat/hooks/test/ProgressBannerTest.java` - Add tests for VERIFYING phase
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] ProgressBanner.Phase enum includes VERIFYING between EXECUTING and REVIEWING (5 phases total)
 - [ ] buildBanner() renders 5-phase progress line (Preparing, Executing, Verifying, Reviewing, Merging)
 - [ ] generateAllPhases() generates banners for all 5 phases
@@ -54,6 +54,11 @@ instructions.
 - [ ] ProgressBanner Javadoc updated to list 5 phases
 - [ ] Existing 4-phase CLI callers continue to work (they just do not reference VERIFYING)
 - [ ] All tests pass: `mvn -f hooks/pom.xml verify`
+
+- [ ] All 5 phases render correct symbol patterns in unit tests
+- [ ] CLI accepts all 5 phase names including "verifying"
+- [ ] work-with-issue skill no longer references pre-rendered banner sections
+- [ ] `mvn -f hooks/pom.xml verify` passes with exit code 0
 
 ## Execution Steps
 
@@ -104,8 +109,3 @@ instructions.
 9. **Step 9:** Update STATE.md to closed with progress 100%
    - Files: `.claude/cat/issues/v2/v2.1/add-work-with-issue-banners/STATE.md`
 
-## Success Criteria
-- [ ] All 5 phases render correct symbol patterns in unit tests
-- [ ] CLI accepts all 5 phase names including "verifying"
-- [ ] work-with-issue skill no longer references pre-rendered banner sections
-- [ ] `mvn -f hooks/pom.xml verify` passes with exit code 0

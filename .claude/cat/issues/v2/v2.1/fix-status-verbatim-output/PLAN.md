@@ -94,7 +94,7 @@ Empirical testing (5 rounds, 80+ trials across haiku and sonnet) identified two 
    - Single invocation with production content (target: 90%+)
    - Multi-invocation with 2 priming messages (measure improvement)
 
-## Success Criteria
+## Post-conditions
 - [ ] Single invocation pass rate >= 90% on haiku with production-sized content
 - [ ] Multi-invocation pass rate improves over 0% baseline
 - [ ] All Java tests pass

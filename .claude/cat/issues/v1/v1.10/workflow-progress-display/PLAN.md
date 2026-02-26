@@ -24,7 +24,7 @@ None - UX improvement task
 - .claude/commands/cat/skills/render-box.md - Leverage existing box rendering capability
 - Related workflow files that need progress indicators
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Header shows cat emoji and task name (e.g., "🐱 CAT › 2.0-variant2-diff-tool")
 - [ ] Double-line separator under header (═══)
 - [ ] Step indicators show all workflow phases (Preparing, Executing, Reviewing, Merging)

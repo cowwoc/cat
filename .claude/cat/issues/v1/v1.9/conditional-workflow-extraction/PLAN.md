@@ -11,6 +11,6 @@ Split uncommon scenarios from execute-task.md into separate files:
 
 Reduces execute-task.md context size while maintaining functionality.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

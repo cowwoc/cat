@@ -29,7 +29,7 @@ None (first in sequence)
 4. Update internal references in issue-lock.sh
 5. Update any other scripts referencing old filenames
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Scripts renamed successfully
 - [ ] Internal variable names updated (TASK → ISSUE where appropriate)
 - [ ] Scripts still function correctly

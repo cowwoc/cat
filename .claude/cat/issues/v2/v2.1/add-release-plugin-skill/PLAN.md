@@ -24,7 +24,7 @@ None - infrastructure reorganization
 2. **Step 2:** Delete `.claude/commands/release-plugin/SKILL.md`
    - Files: `.claude/commands/release-plugin/SKILL.md`
 
-## Success Criteria
+## Post-conditions
 - [ ] Skill file exists at `.claude/skills/release-plugin/SKILL.md`
 - [ ] Old command at `.claude/commands/release-plugin/SKILL.md` is deleted
 - [ ] Skill content matches or improves on the original command

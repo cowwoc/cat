@@ -29,6 +29,6 @@ feature: add visual progress bar to step progress format
 
 Step progress now shows [=====>    ] bar alongside elapsed/remaining time.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

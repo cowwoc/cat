@@ -11,6 +11,6 @@ trailing spaces to compensate.
 Also fixes incorrect command name in README
 (/cat:update-preferences → /cat:update-config).
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

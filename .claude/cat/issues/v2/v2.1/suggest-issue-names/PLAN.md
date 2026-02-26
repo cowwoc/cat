@@ -32,7 +32,7 @@ None - workflow improvement
    - Files: plugin/skills/add.md
    - Verify: Invalid/duplicate names rejected with clear error
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Suggested names based on task description
 - [ ] Multiple name options presented (3-4 suggestions)
 - [ ] Custom name option always available

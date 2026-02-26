@@ -33,7 +33,7 @@ per-device.
 - **Risk:** HIGH
 - **Tradeoff:** Over-engineering for simple config
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] /cat:config wizard includes terminal width option
 - [ ] Wizard asks about device type: Desktop/Laptop (120) vs Mobile (50) vs Custom
 - [ ] Value persisted to cat-config.json as terminalWidth

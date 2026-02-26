@@ -11,6 +11,6 @@ extraction that correctly parses HEREDOC blocks.
 Fixes detection gap where invalid types like 'feat:' could bypass validation
 when used with HEREDOC commit messages.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

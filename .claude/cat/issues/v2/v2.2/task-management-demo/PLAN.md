@@ -17,7 +17,7 @@ None - marketing/documentation task
 - Record demo videos for each feature
 - Write feature descriptions
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Page showcases /cat:add command with video
 - [ ] Page showcases /cat:status command with video
 - [ ] Page showcases /cat:work command with video

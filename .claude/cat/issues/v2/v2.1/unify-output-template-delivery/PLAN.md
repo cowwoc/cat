@@ -17,7 +17,7 @@ None - infrastructure improvement
 - `plugin/hooks/posttool_handlers/skill_precompute.py` - May need to handle more skills
 - `plugin/commands/*.md` - Update documentation if needed
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Functionality works as described - output templates delivered for both invocation methods
 - [ ] Tests written and passing - test coverage for PostToolUse handler
 - [ ] No regressions - existing UserPromptSubmit path still works

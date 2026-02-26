@@ -7,6 +7,6 @@ remove legacy lock file support from cleanup
 Legacy lock files (.cat-*.lock in repo root) are no longer supported.
 Only the current task lock format in .claude/cat/locks/ is recognized.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

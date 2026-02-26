@@ -6,6 +6,6 @@ add backward thinking for requirements derivation
 ## Details
 - feature: add backward thinking for requirements derivation
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

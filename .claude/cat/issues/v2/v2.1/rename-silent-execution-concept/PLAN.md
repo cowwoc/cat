@@ -22,12 +22,16 @@ Fold both changes into the existing implementation commit (826d991f).
 - `plugin/skills/skill-builder-first-use/SKILL.md` - Add reference to `plugin/concepts/silent-execution.md`
 - `.claude/cat/issues/v2/v2.1/fix-skill-output-framing/PLAN.md` - Update references
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] `plugin/concepts/silent-execution.md` exists
 - [ ] `plugin/concepts/silent-execution-pattern.md` does not exist
 - [ ] skill-builder references `plugin/concepts/silent-execution.md`
 - [ ] fix-skill-output-framing PLAN.md references updated
 - [ ] All changes folded into commit 826d991f
+
+- [ ] Commit 826d991f (or its replacement) contains all changes
+- [ ] No separate commit for the rename/reference
+- [ ] v2.1 branch history is clean
 
 ## Execution Steps
 1. **Rename concept file:** `git mv plugin/concepts/silent-execution-pattern.md plugin/concepts/silent-execution.md`
@@ -39,7 +43,3 @@ Fold both changes into the existing implementation commit (826d991f).
 5. **Rebase with autosquash** to fold into the target commit
 6. **Force push** v2.1
 
-## Success Criteria
-- [ ] Commit 826d991f (or its replacement) contains all changes
-- [ ] No separate commit for the rename/reference
-- [ ] v2.1 branch history is clean

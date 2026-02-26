@@ -28,7 +28,7 @@ Documentation-level prevention is the only effective approach for subagent behav
 - `plugin/skills/work/phase-prepare.md` (lines 395, 408) - Replace `cd "$WORKTREE_PATH"` with `git -C`
 - `plugin/scripts/check-existing-work.sh` (line 57) - Replace `cd` with `git -C` (bash script, lower priority)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Zero instances of `cd` into worktree paths in any skill content.md or concept .md file
 - [ ] All replacements use `git -C` equivalents
 - [ ] Non-git commands that needed cwd use explicit path arguments instead of cd

@@ -77,13 +77,17 @@ Parent: optimize-hook-json-parser (core API migration)
 - `hooks/pom.xml` - Add jackson-core dependency alongside jackson-databind (temporary)
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/module-info.java` - Add `requires tools.jackson.core`
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] HookInput parses JSON using JsonParser (jackson-core streaming) into Map<String, Object>
 - [ ] HookOutput builds JSON without ObjectNode (manual string building or JsonGenerator)
 - [ ] All handler interfaces use Map<String, Object> instead of JsonNode
 - [ ] All simple and medium handler implementations compile and work with new API
 - [ ] `mvn -f hooks/pom.xml verify` passes
 - [ ] jackson-databind remains temporarily for complex handlers (removed in next sub-issue)
+
+- [ ] `mvn -f hooks/pom.xml verify` exits 0
+- [ ] HookInput uses jackson-core JsonParser internally
+- [ ] All handler interfaces use Map<String, Object>
 
 ## Execution Steps
 1. **Add jackson-core to pom.xml** alongside jackson-databind and add `requires tools.jackson.core` to module-info
@@ -105,7 +109,3 @@ Parent: optimize-hook-json-parser (core API migration)
    these have a few more internal JsonNode usages to convert.
 8. **Run `mvn -f hooks/pom.xml verify`** to ensure everything compiles and tests pass.
 
-## Success Criteria
-- [ ] `mvn -f hooks/pom.xml verify` exits 0
-- [ ] HookInput uses jackson-core JsonParser internally
-- [ ] All handler interfaces use Map<String, Object>

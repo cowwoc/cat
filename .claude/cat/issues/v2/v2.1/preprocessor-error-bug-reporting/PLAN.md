@@ -22,13 +22,17 @@ None (infrastructure improvement)
 - `plugin/skills/feedback/first-use.md` - Bug reporting skill definition
 - `plugin/skills/feedback/metadata.json` - Skill metadata
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Preprocessor RuntimeException produces user-friendly error message with skill name, directive, and error details
 - [ ] Error message offers to invoke `/cat:feedback` with pre-filled context
 - [ ] `/cat:feedback` skill checks GitHub issues for duplicates using `gh` CLI
 - [ ] If duplicate found, subscribes to it and notifies user
 - [ ] If no duplicate, creates new issue with diagnostic context
 - [ ] Bug report includes: CAT version, skill name, preprocessor directive, error message, stack trace summary
+
+- [ ] Preprocessor errors display readable error message (not XML tags)
+- [ ] Bug report skill successfully creates/finds GitHub issues via `gh` CLI
+- [ ] All existing SkillLoader tests pass with updated expectations
 
 ## Execution Steps
 1. **Step 1:** Modify SkillLoader.java error handling to produce user-friendly error message instead of `<error>` XML
@@ -39,7 +43,3 @@ None (infrastructure improvement)
 3. **Step 3:** Update existing tests for new error message format
    - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/SkillLoaderTest.java`
 
-## Success Criteria
-- [ ] Preprocessor errors display readable error message (not XML tags)
-- [ ] Bug report skill successfully creates/finds GitHub issues via `gh` CLI
-- [ ] All existing SkillLoader tests pass with updated expectations

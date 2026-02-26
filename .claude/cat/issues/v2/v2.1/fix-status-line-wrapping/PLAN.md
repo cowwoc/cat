@@ -61,7 +61,7 @@ The M376 fix (commit daa321ca) already caps `maxContentWidth` to `terminalWidth 
 6. **Step 6:** Add unit tests for `wrapLine()` covering the test cases above
 7. **Step 7:** Run `mvn -f client/pom.xml test` to verify all tests pass
 
-## Success Criteria
+## Post-conditions
 - [ ] All test cases pass
 - [ ] No regressions in existing DisplayUtils or GetStatusOutput tests
 - [ ] E2E: Run `/cat:status` and verify that `cleanup-ported-scripts` blocked-by list wraps within terminal width instead of overflowing

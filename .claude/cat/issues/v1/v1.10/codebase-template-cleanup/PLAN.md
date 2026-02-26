@@ -15,6 +15,6 @@ Removed:
 - .claude/cat/templates/codebase/structure.md
 - .claude/cat/templates/codebase/testing.md
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

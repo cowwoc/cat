@@ -20,7 +20,7 @@ None - infrastructure/documentation improvement
 - `plugin/skills/delegate/SKILL.md` - Add Opus to model selection table and guidance
 - `plugin/concepts/subagent-delegation.md` - Add notes on validation task model selection (optional)
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] Behavior unchanged - existing model selection guidance preserved
 - [ ] All tests still pass

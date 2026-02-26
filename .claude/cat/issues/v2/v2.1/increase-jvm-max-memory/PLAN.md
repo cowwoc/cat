@@ -32,7 +32,7 @@ Conservative initial memory setting in `generate_launchers()` in `hooks/build-jl
 | `hooks/build-jlink.sh` | Modify | Change `-Xmx64m` to `-Xmx96m` in launcher template |
 | `plugin/scripts/load-skill.sh` | Modify | Change `-Xmx64m` to `-Xmx96m` in JVM invocation |
 
-## Success Criteria
+## Post-conditions
 
 - [ ] All generated launcher scripts contain `-Xmx96m`
 - [ ] `load-skill.sh` uses `-Xmx96m`

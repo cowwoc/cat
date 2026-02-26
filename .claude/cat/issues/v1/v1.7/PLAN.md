@@ -3,12 +3,10 @@
 ## Objective
 Improve configuration command and consolidate merge blocking.
 
-## Gates
-
-### Entry
+## Pre-conditions
 - v1.6 complete
 
-### Exit
+## Post-conditions
 - All tasks complete
 - /cat:config command working
 - Merge blocking consolidated

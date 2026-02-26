@@ -16,7 +16,7 @@ None - UI enhancement
 - plugin/hooks/skill_handlers/status_handler.py - Add active agents section to status display
 - plugin/scripts/render-status.sh - Include active session rendering (if applicable)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Functionality works as described
 - [ ] Tests written and passing
 - [ ] Documentation updated

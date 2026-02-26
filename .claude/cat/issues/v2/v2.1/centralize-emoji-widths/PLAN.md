@@ -67,7 +67,7 @@ None - infrastructure/code quality task
 - **plugin/scripts/build-init-boxes.py** - Already imports from lib.emoji_widths
 - **plugin/scripts/compute-token-table.py** - Already imports from emoji_widths
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] No file defines its own WIDTH_2_EMOJIS or WIDTH_2_SINGLE sets
 - [ ] No file defines its own display_width() function (except emoji_widths.py)
 - [ ] All display_width calls use the lib/emoji_widths module

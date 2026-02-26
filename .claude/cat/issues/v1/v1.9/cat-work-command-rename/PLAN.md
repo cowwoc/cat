@@ -21,6 +21,6 @@ Fixed in:
 - workflows/execute-task.md (STATE.md paths)
 - workflows/merge-and-cleanup.md (STATE.md paths)
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

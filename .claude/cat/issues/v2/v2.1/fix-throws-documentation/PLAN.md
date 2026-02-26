@@ -25,7 +25,7 @@ None (convention compliance fix)
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/ProcessRunner.java` - Fix @throws on Result record
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/TokenCounter.java` - Add @throws to 2 methods
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All `requireThat().isNotNull()` calls have `@throws NullPointerException` documented
 - [ ] All `requireThat().isNotBlank()` calls have both `@throws NullPointerException` and
       `@throws IllegalArgumentException` documented

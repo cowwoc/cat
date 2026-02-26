@@ -21,7 +21,7 @@ None (infrastructure bugfix)
 
 - `plugin/scripts/get-available-issues.sh` - Update `is_dependency_satisfied()` to handle version-qualified names
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] `is_dependency_satisfied "2.1-port-lock-and-worktree"` returns `true` when `port-lock-and-worktree` under `v2.1/`
   is closed

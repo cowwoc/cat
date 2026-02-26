@@ -32,7 +32,7 @@ can reference it as a live shell variable.
 - `plugin/scripts/load-skill.sh` - Remove CLAUDE_PROJECT_DIR substitution (lines 19, 24)
 - `plugin/skills/work/content.md` - Verify `${CLAUDE_PROJECT_DIR}` works as live shell variable
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] SessionStart hook persists CLAUDE_PROJECT_DIR to CLAUDE_ENV_FILE
 - [ ] `env | grep CLAUDE_PROJECT_DIR` returns the project dir in Bash tool context after session start
 - [ ] `load-skill.sh` no longer substitutes CLAUDE_PROJECT_DIR (only CLAUDE_PLUGIN_ROOT and CLAUDE_SESSION_ID)

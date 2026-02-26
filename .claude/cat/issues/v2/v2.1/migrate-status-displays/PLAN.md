@@ -11,7 +11,7 @@ Migrate status command displays to use silent `!`command`` preprocessing.
 - plugin/commands/status.md - Update to use new mechanism
 - New: .claude/commands/cat-status-box/ - Create skill with preprocessing
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Status boxes generated via silent preprocessing
 - [ ] status_handler.py simplified or removed
 - [ ] No manual box construction in status display

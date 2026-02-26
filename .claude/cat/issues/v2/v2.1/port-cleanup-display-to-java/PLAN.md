@@ -26,7 +26,7 @@ Parent: 2.1-port-display-scripts
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/skills/GetCleanupOutput.java` - Add data gathering methods
 - `hooks/src/test/java/io/github/cowwoc/cat/hooks/test/GetCleanupOutputTest.java` - Add/update tests
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] GetCleanupOutput.java gathers worktree data identically to Python's `get_worktrees()` (parses `git worktree list
       --porcelain` output with state, HEAD, branch)
 - [ ] Lock file parsing produces identical results to Python's `get_locks()` (reads JSON lock files, calculates age)
@@ -38,6 +38,10 @@ Parent: 2.1-port-display-scripts
 - [ ] Verify phase output is character-for-character identical to Python version
 - [ ] No Python subprocess spawning remains for cleanup display
 - [ ] All tests pass (`mvn -f hooks/pom.xml test`)
+
+- [ ] Data gathering methods produce identical data to Python equivalents
+- [ ] All three phase outputs match Python character-for-character
+- [ ] All existing and new tests pass
 
 ## Execution Steps
 1. **Read `get-cleanup-display.py`** to catalog all data gathering logic per phase
@@ -52,7 +56,3 @@ Parent: 2.1-port-display-scripts
 10. **Write tests** covering: empty state, populated state, stale locks, multiple worktrees
 11. **Run tests:** `mvn -f hooks/pom.xml test`
 
-## Success Criteria
-- [ ] Data gathering methods produce identical data to Python equivalents
-- [ ] All three phase outputs match Python character-for-character
-- [ ] All existing and new tests pass

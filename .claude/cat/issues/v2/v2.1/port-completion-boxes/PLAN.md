@@ -39,7 +39,7 @@ Parent: 2.1-port-display-scripts
 7. **Update handlers** that currently invoke these Python scripts to call Java classes directly
 8. **Run tests:** `mvn -f hooks/pom.xml test`
 
-## Success Criteria
+## Post-conditions
 - [ ] Three Java classes created matching exact Python output
 - [ ] Handlers updated to call Java instead of Python
 - [ ] All tests pass

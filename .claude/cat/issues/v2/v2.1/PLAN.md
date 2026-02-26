@@ -12,10 +12,10 @@ marketing materials.
 ## Dependencies
 - Requires v2.0 (Licensing) complete
 
-## Exit Gate Tasks
+## Post-conditions
 - enforce-jvmscope-env-access
 
-## Success Criteria
+## Post-conditions
 - All user-facing terminology finalized
 - Command output displays correctly aligned
 - Ready to record demo videos without needing re-records

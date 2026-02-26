@@ -39,7 +39,7 @@ GetConfigOutput.java exists with all box-building methods but:
 - [ ] New test: `getOutput(new String[0])` returns non-null string containing "CURRENT SETTINGS" box
 - [ ] New test: `getOutput(new String[0])` returns non-null string containing "CONFIGURATION SAVED" box
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] GetConfigOutput class signature includes `implements SkillOutput`
 - [ ] GetConfigOutput defines `String getOutput(String[] args) throws IOException` matching interface contract
 - [ ] GetConfigOutput has `main(String[] args)` entry point for jlink launcher
@@ -49,6 +49,11 @@ GetConfigOutput.java exists with all box-building methods but:
 - [ ] New test verifies `getOutput()` returns output containing all config boxes
 - [ ] E2E: Invoke `/cat:config` and confirm the CURRENT_SETTINGS box is displayed before the first
   AskUserQuestion prompt
+
+- [ ] `mvn -f client/pom.xml test` passes with exit code 0
+- [ ] jlink build produces `client/target/jlink/bin/get-config-output` launcher
+- [ ] GetConfigOutput implements SkillOutput interface
+- [ ] first-use.md contains output preprocessor directive
 
 ## Execution Steps
 
@@ -82,8 +87,3 @@ GetConfigOutput.java exists with all box-building methods but:
 5. **Build and run tests:**
    - Run `mvn -f client/pom.xml test` to verify all tests pass
 
-## Success Criteria
-- [ ] `mvn -f client/pom.xml test` passes with exit code 0
-- [ ] jlink build produces `client/target/jlink/bin/get-config-output` launcher
-- [ ] GetConfigOutput implements SkillOutput interface
-- [ ] first-use.md contains output preprocessor directive

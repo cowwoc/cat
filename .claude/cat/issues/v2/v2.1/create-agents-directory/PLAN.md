@@ -67,11 +67,14 @@ You are a senior code reviewer ensuring high standards of code quality and secur
 | `plugin/agents/` | Directory for all plugin agents |
 | `plugin/agents/README.md` | Documents agent format, fields, and usage |
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] `plugin/agents/` directory exists
 - [ ] `README.md` documents all frontmatter fields from Claude Code spec
 - [ ] `README.md` explains the `skills` field and its importance for preloading context
 - [ ] `README.md` includes example agent showing proper format
+
+- [ ] Directory structure created
+- [ ] README.md is comprehensive enough to guide subsequent migration issues
 
 ## Execution Steps
 
@@ -87,6 +90,3 @@ You are a senior code reviewer ensuring high standards of code quality and secur
 3. **Step 3:** Commit changes
    - Commit type: `config:` (Claude-facing documentation)
 
-## Success Criteria
-- [ ] Directory structure created
-- [ ] README.md is comprehensive enough to guide subsequent migration issues

@@ -38,7 +38,7 @@ All handlers have been evaluated and are already using silent preprocessing:
 (display_width, build_header_box, etc.) used by other handlers. Status display generation
 was migrated to get-status-display.sh/py in task migrate-status-displays.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Each handler evaluated for migration
 - [x] Handlers with complex output migrated to preprocessing
 - [x] Handlers with simple context injection can remain

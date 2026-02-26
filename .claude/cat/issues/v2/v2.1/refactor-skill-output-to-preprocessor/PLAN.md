@@ -181,7 +181,7 @@ mvn -f client/pom.xml test
 
 All tests must pass.
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] User-visible behavior unchanged (skill output identical before and after)
 - [ ] SkillOutput interface removed from codebase

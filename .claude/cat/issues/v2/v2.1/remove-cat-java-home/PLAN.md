@@ -72,7 +72,7 @@ unnecessary.
    - Verify java binary is found and handler is invoked
    - Files: none (manual verification)
 
-## Success Criteria
+## Post-conditions
 
 - [ ] `hook.sh` invokes Java handlers successfully without `CAT_JAVA_HOME` being set
 - [ ] No references to `CAT_JAVA_HOME` remain in `hook.sh` or `session_start.sh`

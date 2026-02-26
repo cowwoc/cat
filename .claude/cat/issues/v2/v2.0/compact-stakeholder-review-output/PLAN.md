@@ -61,7 +61,7 @@ Details: Run with --verbose for full recommendations
 - scripts/lib/box.sh - Add new box styles if needed (concern-box)
 - references/stakeholders/*.md - Update output format in each stakeholder
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Summary box shows all stakeholders in tree format with status icons
 - [ ] Concerns grouped by severity in separate boxes (CRITICAL, HIGH, MEDIUM)
 - [ ] Each concern shows stakeholder, brief issue, and location on 2 lines max

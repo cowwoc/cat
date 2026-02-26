@@ -10,6 +10,6 @@ which strips checkbox syntax in Claude Code CLI output.
 
 Fixes M056.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

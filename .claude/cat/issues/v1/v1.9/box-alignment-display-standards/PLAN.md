@@ -8,6 +8,6 @@ Emojis take 2 character widths in terminals but were counted as 1,
 causing right borders to misalign. Reduced spacing on emoji lines
 to compensate. Also standardized all box widths to 61 characters.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

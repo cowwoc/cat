@@ -35,6 +35,6 @@ None - code quality / convention alignment
 1. Replace all `.trim()` with `.strip()` across all 16 files
 2. Run `mvn -f hooks/pom.xml verify`
 
-## Success Criteria
+## Post-conditions
 - [ ] Zero occurrences of `.trim()` in `hooks/src/`
 - [ ] All tests pass (`mvn -f hooks/pom.xml verify`)

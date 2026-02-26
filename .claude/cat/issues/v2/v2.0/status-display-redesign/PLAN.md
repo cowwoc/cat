@@ -62,7 +62,7 @@ The approved design from conversation:
 ## Files to Modify
 - `hooks/skill_handlers/status_handler.py` - Main rendering logic
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Progress bar and task count on single line
 - [ ] Completed major versions collapsed to range
 - [ ] 🔄 only on active version (not parent)

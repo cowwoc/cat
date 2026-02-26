@@ -9,7 +9,7 @@ None - infrastructure/maintenance task
 ## Files to Modify
 - plugin/commands/config.md - Complete rewrite using skill-builder
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] config.md rewritten using skill-builder methodology
 - [ ] Display renders correctly without alignment calculations
 - [ ] /cat:config command works as expected

@@ -15,7 +15,7 @@ None - infrastructure/performance improvement
 ## Files to Modify
 - `plugin/skills/git-squash/SKILL.md` - Add parallel commands and pattern detection
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All initial git investigation commands run in parallel
 - [ ] Auto-detect "feature + planning STATE.md update" commit pattern
 - [ ] Automatically preserve final STATE.md when squashing planning commits

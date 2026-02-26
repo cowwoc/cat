@@ -32,7 +32,7 @@ Replace "task" terminology with "issue" in remaining files (templates, reference
 4. Update any discovered files
 5. Verify changelogs still contain historical "task" references (preserve)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All template files updated
 - [ ] All Python handlers updated
 - [ ] No "task" terminology anywhere except changelogs

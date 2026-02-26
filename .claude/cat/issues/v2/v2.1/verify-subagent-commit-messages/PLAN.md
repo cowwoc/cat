@@ -21,10 +21,14 @@ to detect it before the squash/merge phase propagates the bad message.
 ## Files to Modify
 - `plugin/skills/work-with-issue/first-use.md` - Add verification step after execution phase
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] After execution subagent returns, orchestrator runs `git log` on the worktree to get actual commit messages
 - [ ] Orchestrator compares actual messages against subagent-reported messages
 - [ ] Mismatch triggers mandatory fix (amend commit message before proceeding to review)
+
+- [ ] work-with-issue first-use.md includes commit message verification step
+- [ ] Verification compares git log output against subagent-reported messages
+- [ ] Mismatch triggers mandatory amend operation to fix commit messages
 
 ## Execution Steps
 1. **Add commit message verification after execution result parsing:** In `plugin/skills/work-with-issue/first-use.md`,
@@ -38,7 +42,3 @@ to detect it before the squash/merge phase propagates the bad message.
    commits.
    - Files: `plugin/skills/work-with-issue/first-use.md`
 
-## Success Criteria
-- [ ] work-with-issue first-use.md includes commit message verification step
-- [ ] Verification compares git log output against subagent-reported messages
-- [ ] Mismatch triggers mandatory amend operation to fix commit messages

@@ -17,7 +17,7 @@ None - infrastructure/marketing task
 - Create styling for feature sections
 - Create video embed component
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Template includes header section with feature name
 - [ ] Template includes description section (few sentences)
 - [ ] Template includes video embed section with responsive sizing

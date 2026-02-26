@@ -14,6 +14,6 @@ insert-before-and-renumber option.
 
 Updates all documentation references accordingly.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

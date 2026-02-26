@@ -20,6 +20,6 @@ A022: Prevention File Edit Verification (learn-from-mistakes/SKILL.md)
 
 Also includes M136 fix: Added four_pointed_star to emoji-widths.json with width 2
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

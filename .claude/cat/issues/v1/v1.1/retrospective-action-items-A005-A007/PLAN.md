@@ -20,6 +20,6 @@ implement retrospective action items A005, A007
 
 Addresses: M034, M035, M037, M040, M041, M025, M026
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

@@ -37,7 +37,7 @@ Two gaps in multi-release JAR handling:
 - `hooks/build-jlink.sh` - Fix `is_automatic_module()` grep pattern and add `--multi-release` to jdeps in
   `patch_automatic_module()`
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] `is_automatic_module()` returns 1 (not automatic) when module-info.class exists at any path in the JAR (root or
   META-INF/versions/N/)
 - [ ] `patch_automatic_module()` passes `--multi-release base` to jdeps for multi-release JARs (defensive fallback for
@@ -46,6 +46,10 @@ Two gaps in multi-release JAR handling:
 - [ ] jackson-core-3.0.3.jar and pouch-core-10.3.jar are processed without warnings
 - [ ] All tests pass
 - [ ] jlink image builds successfully with all launchers functional
+
+- [ ] No "Warning: jdeps failed for" lines in mvn verify output
+- [ ] All tests pass
+- [ ] jlink image builds with all launchers functional
 
 ## Execution Steps
 1. **Step 1:** Fix `is_automatic_module()` in `hooks/build-jlink.sh`
@@ -60,7 +64,3 @@ Two gaps in multi-release JAR handling:
 3. **Step 3:** Run `mvn -f hooks/pom.xml verify` and confirm no "Warning: jdeps failed for" lines
 4. **Step 4:** Verify jlink image builds and all launchers work
 
-## Success Criteria
-- [ ] No "Warning: jdeps failed for" lines in mvn verify output
-- [ ] All tests pass
-- [ ] jlink image builds with all launchers functional

@@ -29,6 +29,6 @@ add auto-decomposition and parallel execution for large tasks
 Threshold = contextLimit × targetContextUsage / 100
 Default: 200000 × 40% = 80,000 tokens
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

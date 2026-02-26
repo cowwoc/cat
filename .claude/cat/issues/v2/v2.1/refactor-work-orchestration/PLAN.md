@@ -115,7 +115,7 @@ work → work-with-issue (main agent orchestrates directly)
 - Skill pre-detection → NEW in work-with-issue
 - Subagent prompt construction → work-with-issue (updated)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] work-with-issue directly orchestrates all phases without spawning nested subagents
 - [ ] Skills requiring spawning (shrink-doc, compare-docs, stakeholder-review) invoked at main level
 - [ ] Approval gates preserved per trust level

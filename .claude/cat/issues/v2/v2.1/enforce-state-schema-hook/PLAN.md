@@ -41,7 +41,7 @@ None - infrastructure enforcement
 7. Resolution value must start with: implemented, duplicate, obsolete, won't-fix, not-applicable
 8. Parent value must be a valid issue slug (lowercase, hyphens, alphanumeric)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Hook validates all mandatory keys are present
 - [ ] Hook rejects non-standard keys
 - [ ] Hook validates value formats
@@ -49,6 +49,11 @@ None - infrastructure enforcement
 - [ ] Hook allows optional Parent key
 - [ ] All tests pass
 - [ ] Hook registered in hooks.json
+
+- [ ] All tests pass
+- [ ] Hook correctly blocks invalid STATE.md modifications
+- [ ] Hook passes valid STATE.md modifications
+- [ ] Hook only triggers for issue STATE.md files (not version STATE.md files)
 
 ## Execution Steps
 1. **Step 1:** Read Java conventions from `.claude/cat/conventions/java.md`
@@ -66,8 +71,3 @@ None - infrastructure enforcement
 4. **Step 4:** Register hook in plugin/hooks/hooks.json for Edit and Write tools targeting STATE.md
 5. **Step 5:** Run tests with `mvn -f hooks/pom.xml test`
 
-## Success Criteria
-- [ ] All tests pass
-- [ ] Hook correctly blocks invalid STATE.md modifications
-- [ ] Hook passes valid STATE.md modifications
-- [ ] Hook only triggers for issue STATE.md files (not version STATE.md files)

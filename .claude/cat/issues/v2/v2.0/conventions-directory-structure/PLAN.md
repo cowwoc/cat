@@ -14,7 +14,7 @@ None - infrastructure improvement
 ## Files to Modify
 - `plugin/commands/init.md` - Update directory creation and documentation
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] init.md creates both .claude/rules/ and .claude/cat/conventions/
 - [ ] Documentation explains when to use each location
 - [ ] conventions.md in .claude/rules/ points to on-demand conventions

@@ -21,10 +21,13 @@ None (infrastructure/tooling improvement)
 - `plugin/skills/empirical-test-first-use/SKILL.md` - Add investigation step using `--output` flag
   and manual conversation inspection
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] `--output` flag produces valid JSON file without Jackson exception
 - [ ] `/cat:empirical-test` skill includes step for inspecting full agent responses on failure
 - [ ] Skill methodology warns about multi-message evaluation pitfalls
+
+- [ ] Running `--output /tmp/test.json` produces valid JSON with full trial responses
+- [ ] Skill document includes response investigation step
 
 ## Execution Steps
 1. **Step 1:** Make ConfigResult and TrialResult records public (or add Jackson module opens) in
@@ -40,6 +43,3 @@ None (infrastructure/tooling improvement)
    - Files: `plugin/skills/empirical-test-first-use/SKILL.md`
 4. **Step 4:** Run `mvn -f client/pom.xml test` to verify changes compile and tests pass
 
-## Success Criteria
-- [ ] Running `--output /tmp/test.json` produces valid JSON with full trial responses
-- [ ] Skill document includes response investigation step

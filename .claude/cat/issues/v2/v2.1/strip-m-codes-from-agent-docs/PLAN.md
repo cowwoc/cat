@@ -27,7 +27,7 @@ None (infrastructure cleanup / token optimization)
 - `.claude/rules/*.md` — project config, keep M-codes (except adding the new convention)
 - `.claude/cat/retrospectives/` — historical record, keep M-codes
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] No `(M###)` patterns remain in plugin/skills/**/*.md or plugin/concepts/**/*.md
 - [ ] Convention added to .claude/rules/common.md under "Documentation Style" section as new subsection
   "### M-Code References"

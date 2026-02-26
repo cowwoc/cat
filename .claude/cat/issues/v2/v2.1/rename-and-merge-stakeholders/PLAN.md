@@ -35,7 +35,7 @@ None (naming consistency and consolidation)
 - `.claude/cat/issues/v2/v2.1/convert-stakeholders-to-agents/PLAN.md` — update references
 - `.claude/cat/issues/v2/v2.0/pricing-page/PLAN.md` — update section headings
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] `stakeholder-architect.md` renamed to `stakeholder-architecture.md` with updated name/heading
 - [ ] `stakeholder-sales.md` and `stakeholder-marketing.md` merged into `stakeholder-business.md`
 - [ ] All skill references updated (stakeholder-review, research)

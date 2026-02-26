@@ -66,7 +66,7 @@ None - bugfix + cleanup
 | `hooks/src/main/java/.../skills/GetStatusOutput.java` | Modify | Add `main()` method from RunGetStatusOutput |
 | `hooks/src/main/java/.../skills/RunGetStatusOutput.java` | Delete | Merged into GetStatusOutput |
 
-## Success Criteria
+## Post-conditions
 
 - [ ] `load-skill.sh` contains all three `-D*encoding=UTF-8` flags
 - [ ] All generated launcher scripts contain all three encoding flags

@@ -23,7 +23,7 @@ None - infrastructure improvement
 - plugin/skills/status/content.md - Add header before verbatim output instruction
 - plugin/skills/token-report/content.md - Add header before verbatim output instruction
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All 10 content.md files have a `# Skill Name` markdown header as first line
 - [ ] Each header is followed by a brief description paragraph
 - [ ] Existing behavior is unchanged (no functional regressions)
@@ -31,6 +31,9 @@ None - infrastructure improvement
 - [ ] Verbatim output skills still function correctly
 - [ ] Tests passing
 - [ ] No regressions to existing skills
+
+- [ ] All 10 files updated with consistent header format
+- [ ] All existing tests pass with no regressions
 
 ## Execution Steps
 1. **Step 1:** Add headers to XML-tagged skills (5 files)
@@ -44,6 +47,3 @@ None - infrastructure improvement
 3. **Step 3:** Verify no regressions by running existing tests
    - Run: mvn -f hooks/pom.xml verify
 
-## Success Criteria
-- [ ] All 10 files updated with consistent header format
-- [ ] All existing tests pass with no regressions

@@ -22,7 +22,7 @@ Feature
 3. Fork the task branch from this base branch instead of hardcoded "main"
 4. In the `merge` step, merge back to the recorded base branch
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] Task branch forks from current branch (not main)
 - [ ] Base branch name is recorded for later merge

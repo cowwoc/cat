@@ -58,7 +58,7 @@ lookahead after `merge` to exclude `merge-*` subcommands.
 3. **Step 3:** Run test suite
    - Command: `python3 /workspace/run_tests.py`
 
-## Success Criteria
+## Post-conditions
 - [ ] `git merge-base` no longer blocked by hook
 - [ ] `git merge` without --ff-only still blocked
 - [ ] All existing tests pass

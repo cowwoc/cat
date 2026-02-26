@@ -15,7 +15,7 @@ Implement GitHub Issues backend that stores planning metadata as GitHub Issues w
 - New: `plugin/storage/backends/github.py` - GitHub Issues backend
 - Modify: `plugin/cat-config-schema.json` - GitHub-specific config options
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] GitHubBackend implements storage interface
 - [ ] Versions map to GitHub Milestones
 - [ ] Tasks map to GitHub Issues with labels

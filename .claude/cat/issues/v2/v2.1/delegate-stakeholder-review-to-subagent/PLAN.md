@@ -39,7 +39,7 @@ None - performance optimization
 - `client/src/test/java/io/github/cowwoc/cat/hooks/test/GetStakeholderOutputTest.java` - Update tests for new compact
   schema
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Each reviewer subagent writes comprehensive concern details to a file in the worktree
 - [ ] Each reviewer returns only: approval status, and per-concern: severity, location, brief explanation, brief
   recommendation, detail file path

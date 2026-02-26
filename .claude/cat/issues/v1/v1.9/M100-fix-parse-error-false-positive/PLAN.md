@@ -9,7 +9,7 @@ caused false positive mistake detection when jq subcommands failed but the scrip
 - Only trigger parse_error patterns when TOOL_EXIT_CODE != 0
 - Benign stderr output no longer flags as mistakes
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Exit code checked before triggering parse_error
 - [x] No false positives when command succeeds
 - [x] Legitimate parse errors still detected

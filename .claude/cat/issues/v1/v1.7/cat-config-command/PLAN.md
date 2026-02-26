@@ -13,6 +13,6 @@ Changes:
 - All submenus include "← Back" option for navigation
 - Clarified approach descriptions (Conservative/Balanced/Aggressive)
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

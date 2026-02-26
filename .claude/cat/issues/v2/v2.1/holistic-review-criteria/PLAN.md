@@ -24,7 +24,7 @@ None - process improvement
 - plugin/stakeholders/marketing.md - Add holistic marketing criteria
 - plugin/stakeholders/legal.md - Add holistic legal criteria
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All 10 stakeholder files have holistic review instructions
 - [ ] Consistent format across all stakeholders
 - [ ] Criteria explicitly require evaluating impact on entire project

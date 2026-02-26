@@ -25,7 +25,7 @@ privacy).
 - **Risk:** HIGH
 - **Tradeoff:** Over-engineering for current needs
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Legal stakeholder perspective added to stakeholder-review skill
 - [ ] Legal perspective includes relevant focus areas (licensing, compliance, IP, liability)
 - [ ] Stakeholder can be invoked during /cat:research and /cat:stakeholder-review

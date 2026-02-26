@@ -44,15 +44,13 @@ None
 3. **For CheckResult** (boolean-only record): add compact constructor with Javadoc only (no validation needed for primitives with no constraints)
 4. **Run `mvn -f hooks/pom.xml verify`** to confirm all tests pass
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] All 7 private records have compact constructors
 - [ ] All String parameters validated as not blank
 - [ ] All object/collection parameters validated as not null
 - [ ] All compact constructors have Javadoc
 - [ ] All tests pass
-
-## Success Criteria
 
 - [ ] `mvn -f hooks/pom.xml verify` passes with exit code 0
 - [ ] Zero records with `// Record validation` comments remain

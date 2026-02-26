@@ -17,6 +17,6 @@ Key insight: If pointing to a file that already contained the violated
 instruction, you have NOT implemented prevention - just documented failure
 to read. Must automate enforcement.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

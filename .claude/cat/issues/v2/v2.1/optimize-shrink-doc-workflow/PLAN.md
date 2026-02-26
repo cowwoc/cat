@@ -19,7 +19,7 @@ None - internal optimization
 ## Files to Modify
 - plugin/skills/shrink-doc/SKILL.md - Update workflow steps
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All tests still pass
 - [ ] Code quality improved (fewer round-trips)
 

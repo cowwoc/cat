@@ -7,6 +7,6 @@ add warn-merge-commits hook
 Warns when MERGE_HEAD exists (merge in progress), complementing
 block-merge-commits.sh which checks command syntax.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

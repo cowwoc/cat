@@ -24,7 +24,7 @@ None (user onboarding improvement)
 - docs/tips.md - NEW: Best practices
 - docs/contributing.md - NEW: Contribution guidelines
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] User can try CAT in < 30 seconds from reading README
 - [ ] All detail pages linked from README
 - [ ] No content lost, only reorganized

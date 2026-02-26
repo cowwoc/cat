@@ -19,7 +19,7 @@ None - infrastructure/optimization sub-issue
 |----------|-------|--------------|
 | Lang | 1 | `plugin/lang/*.md` |
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All 1 lang file compressed
 - [ ] Execution equivalence verified (all files score 1.0 on /compare-docs)
 - [ ] No functionality regression

@@ -20,6 +20,6 @@ Text mappings added for planning subagents to guide approach style:
 - balanced: "Balance safety and thoroughness, address core issue"
 - aggressive: "Favor comprehensive solutions, address root causes"
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

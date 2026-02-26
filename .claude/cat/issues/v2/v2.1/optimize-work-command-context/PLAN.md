@@ -29,7 +29,7 @@ The `/cat:work` command loads ~5,500+ lines (~22-25K tokens) at invocation:
 - `plugin/concepts/work.md` - Remove duplication with phase files (consolidate or reference)
 - `plugin/hooks/skill_handlers/work_handler.py` - Generate boxes conditionally based on workflow state
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Behavior unchanged - all /cat:work flows produce same results
 - [ ] All tests still pass - run_tests.py exits 0
 - [ ] Code quality improved - measurable reduction in loaded context

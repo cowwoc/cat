@@ -42,7 +42,7 @@ branch names use `date +%Y%m%d-%H%M%S` which follows $TZ."
 - `plugin/skills/learn/phase-investigate.md` - Add early termination instructions, reference pre-extracted data
 - `plugin/skills/learn/SKILL.md` - Update Step 2 prompt to run pre-extraction and include results
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Pre-extraction script extracts relevant tool calls in one pass
 - [ ] Investigation subagent receives pre-extracted data instead of raw session log path
 - [ ] Early termination instruction prevents redundant searching

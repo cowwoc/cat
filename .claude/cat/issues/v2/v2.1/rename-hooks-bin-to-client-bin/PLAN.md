@@ -30,7 +30,7 @@ None - infrastructure rename
 - client/src/main/java/io/github/cowwoc/cat/hooks/util/SkillLoader.java - 3 occurrences (lines 67, 473, 521)
 - client/src/test/java/io/github/cowwoc/cat/hooks/test/SkillLoaderTest.java - 17 occurrences
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All `hooks/bin` references in Java source replaced with `client/bin`
 - [ ] All `hooks/bin` references in Java tests replaced with `client/bin`
 - [ ] All tests pass (`mvn -f client/pom.xml test`)

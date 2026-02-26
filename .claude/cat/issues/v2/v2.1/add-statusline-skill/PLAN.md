@@ -20,7 +20,7 @@ None (UX enhancement)
 ## Files to Modify
 - None (new skill only)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] `/cat:statusline` skill exists and is invocable
 - [ ] Running the skill copies `statusline-command.sh` to `${CLAUDE_PROJECT_DIR}/.claude/` with mode 755
 - [ ] Creates `.claude/` directory if it doesn't exist
@@ -32,6 +32,10 @@ None (UX enhancement)
   `display_name`, `session_id`, and `used_percentage` fields on stdin
 - [ ] Script handles missing git repo gracefully (displays "N/A" for worktree, exits 0)
 
+- [ ] Skill appears in `/cat:help` output
+- [ ] After invocation, `.claude/settings.json` contains correct `statusLine` JSON structure
+- [ ] Installed script is executable and produces colored output when fed sample JSON on stdin
+
 ## Execution Steps
 1. **Create statusline script:** Copy the statusline-command.sh into `plugin/scripts/statusline-command.sh`
    - Files: `plugin/scripts/statusline-command.sh`
@@ -41,7 +45,3 @@ None (UX enhancement)
    - Files: `plugin/skills/statusline/first-use.md`
 4. **Test:** Verify the skill loads correctly via the skill loader
 
-## Success Criteria
-- [ ] Skill appears in `/cat:help` output
-- [ ] After invocation, `.claude/settings.json` contains correct `statusLine` JSON structure
-- [ ] Installed script is executable and produces colored output when fed sample JSON on stdin

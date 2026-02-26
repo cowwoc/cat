@@ -50,7 +50,7 @@ None (bugfix for regression)
 2. **Run tests** to verify no regressions
    - Files: `run_tests.py`
 
-## Success Criteria
+## Post-conditions
 
 - [ ] `python3 plugin/scripts/get-status-display.py --project-dir /workspace` produces output
 - [ ] `status_handler.py` has a registered handler for "status"

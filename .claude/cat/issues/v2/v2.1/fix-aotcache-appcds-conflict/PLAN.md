@@ -56,7 +56,7 @@ is dead weight when AOTCache exists.
 5. **Update STATE.md** to status: closed, progress: 100% in the same commit as implementation
 6. **Commit all changes** with message: `bugfix: remove AppCDS and use only AOTCache for hook JVM startup`
 
-## Success Criteria
+## Post-conditions
 - [ ] No references to appcds, AppCDS, or SharedArchiveFile in hook.sh
 - [ ] No AppCDS generation in build-jlink.sh
 - [ ] build-jlink.sh still generates AOT cache successfully

@@ -14,7 +14,7 @@ None - infrastructure task
 ## Files to Modify
 - plugin/hooks/lib/config.py - Add local config loading logic (or equivalent config loader)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] cat-config.local.json overrides cat-config.json settings
 - [ ] cat-config.json overrides default values
 - [ ] cat-config.local.json is gitignored by default (add to .gitignore template)

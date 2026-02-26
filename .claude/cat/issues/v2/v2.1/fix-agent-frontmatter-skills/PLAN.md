@@ -23,7 +23,7 @@ None (convention compliance)
 - `plugin/concepts/skill-loading.md` - Update documentation: remove stale `<skill>` tag references, clarify prefix
   requirement, update examples to match current conventions
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All agent frontmatter `skills:` entries use `-first-use` suffix
 - [ ] Prefix requirement is researched and documented
 - [ ] skill-loading.md reflects current `<output>` tag pattern (no `<skill>` tag references)

@@ -25,12 +25,16 @@ None
 ## Files to Delete
 - `plugin/hooks/forced-eval-skills.py`
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] forced-eval-skills.py logic ported to Java ForcedEvalSkills.java
 - [ ] ForcedEvalSkills integrated into GetSkillOutput dispatcher
 - [ ] hooks.json has single UserPromptSubmit entry
 - [ ] forced-eval-skills.py deleted
 - [ ] Tests pass
+
+- [ ] All tests pass
+- [ ] hooks.json UserPromptSubmit section has exactly 1 entry
+- [ ] No Python UserPromptSubmit scripts remain
 
 ## Execution Steps
 1. Create ForcedEvalSkills handler class with instruction text
@@ -40,7 +44,3 @@ None
 5. Delete forced-eval-skills.py
 6. Run full test suite
 
-## Success Criteria
-- [ ] All tests pass
-- [ ] hooks.json UserPromptSubmit section has exactly 1 entry
-- [ ] No Python UserPromptSubmit scripts remain

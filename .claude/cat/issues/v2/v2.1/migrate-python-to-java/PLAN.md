@@ -110,7 +110,7 @@ None - infrastructure/setup task
 - Test token counting on sample files
 - Verify: Token counts match Python tiktoken (±1% tolerance)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All 7 entry point hooks use Java (via java.sh in hooks.json)
 - [ ] All tests migrated to Java TestNG and passing (`mvn test` exit code 0)
 - [ ] All Python hook files removed (`plugin/hooks/*.py`)

@@ -34,7 +34,7 @@ refactor
 ╰──┴────────────────────────────────────────────────────────────────────╯
 ```
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] 2-column layout: line number column `│` indicator+content column
 - [ ] Line number column width is dynamic, sized to max line number digits in each hunk
 - [ ] All lines show line numbers: context=new line, deletion=old line, addition=new line
@@ -48,6 +48,11 @@ refactor
 - [ ] content_width recalculated per hunk based on dynamic line column width
 - [ ] Max displayable line number is 9999 (4 digits)
 - [ ] Multi-hunk same file: subsequent hunks use `├──┼─ ⌁ context ─┤` as separator
+
+- [ ] Diff output uses 2 visual columns with dynamic line number width
+- [ ] All box-drawing characters align correctly including `┬`/`┼`/`┴` column markers
+- [ ] Line wrapping continuation rows align with content column
+- [ ] Multiple hunks in same file share one file header box
 
 ## Execution Steps
 1. **Remove fixed column constants:** Delete `COL_OLD`, `COL_NEW`, `COL_SYM`. Add a helper method
@@ -75,8 +80,3 @@ refactor
    - Files: `plugin/scripts/render-diff.py`
 9. **Visual verification:** Run render-diff on a real diff and verify output matches target format.
 
-## Success Criteria
-- [ ] Diff output uses 2 visual columns with dynamic line number width
-- [ ] All box-drawing characters align correctly including `┬`/`┼`/`┴` column markers
-- [ ] Line wrapping continuation rows align with content column
-- [ ] Multiple hunks in same file share one file header box

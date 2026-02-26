@@ -33,7 +33,7 @@ The version schema determines where tasks are stored:
 - References: hierarchy.md, task-resolution.md
 - Scripts: status.sh, task-lock.sh, and other version-parsing scripts
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Version format supports MAJOR alone (e.g., v1)
 - [ ] Version format supports MAJOR.MINOR (e.g., v1.0)
 - [ ] Version format supports MAJOR.MINOR.PATCH (e.g., v1.0.1)

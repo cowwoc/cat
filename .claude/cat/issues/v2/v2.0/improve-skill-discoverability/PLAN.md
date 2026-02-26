@@ -70,7 +70,7 @@ Each skill should have:
 
 6. **Success Criteria checklist**
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All skills have `cat:` prefix in name
 - [ ] All skills have action-oriented descriptions
 - [ ] Skills that replace dangerous commands have MANDATORY header

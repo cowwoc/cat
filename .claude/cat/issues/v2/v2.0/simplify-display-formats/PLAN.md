@@ -108,7 +108,7 @@ None - infrastructure/maintenance task
 **Column widths:** Type=17, Description=30, Tokens=8, Context=16, Duration=10
 Note: Warning emojis ⚠️/🚨 placed OUTSIDE the table on the right.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] cat:status outputs open-border format
 - [x] cat:token-report uses `[HIGH]`/`[EXCEEDED]` instead of ⚠ emoji in cells
 - [x] cat:shrink-doc uses `[REJECTED]`/`[APPLIED]` instead of ❌/✓

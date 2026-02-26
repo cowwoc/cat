@@ -23,6 +23,6 @@ New files:
 - .claude/cat/references/task-locking.md - locking documentation
 - .claude/cat/references/subagent-delegation.md - delegation principles
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

@@ -17,6 +17,6 @@ Fail-fast behavior:
 
 Related to M156 - status.sh crash when task/ subdirectory used.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

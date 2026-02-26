@@ -61,7 +61,7 @@ These files contain `hooks/` paths. Update to `hooks/`:
    - `mvn -f hooks/pom.xml verify`
    - All tests must pass
 
-## Success Criteria
+## Post-conditions
 - [ ] `hooks/` directory no longer exists
 - [ ] `hooks/pom.xml` exists and `mvn -f hooks/pom.xml verify` passes all tests
 - [ ] No remaining references to `plugin/hooks/java` in active files

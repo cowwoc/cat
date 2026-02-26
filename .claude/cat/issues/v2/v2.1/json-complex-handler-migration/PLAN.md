@@ -34,12 +34,16 @@ Parent: optimize-hook-json-parser (complete handler migration + dependency remov
 - `hooks/pom.xml` - Remove jackson-databind, keep only jackson-core
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/module-info.java` - Remove `requires tools.jackson.databind`
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] No jackson-databind imports remain in any source file
 - [ ] `mvn -f hooks/pom.xml verify` passes with jackson-core only
 - [ ] All JSON parsing uses jackson-core JsonParser or Map-based access
 - [ ] All JSON output uses jackson-core JsonGenerator or manual string building
 - [ ] No `tools.jackson.databind` in module-info.java or pom.xml
+
+- [ ] `mvn -f hooks/pom.xml verify` exits 0
+- [ ] `grep -r 'import tools.jackson.databind' hooks/src/` returns empty
+- [ ] pom.xml has jackson-core only (no jackson-databind)
 
 ## Execution Steps
 1. **Migrate each complex handler** replacing:
@@ -56,7 +60,3 @@ Parent: optimize-hook-json-parser (complete handler migration + dependency remov
    `grep -r 'import tools.jackson.databind' hooks/src/` should return empty
 5. **Run `mvn -f hooks/pom.xml verify`** to ensure no regressions
 
-## Success Criteria
-- [ ] `mvn -f hooks/pom.xml verify` exits 0
-- [ ] `grep -r 'import tools.jackson.databind' hooks/src/` returns empty
-- [ ] pom.xml has jackson-core only (no jackson-databind)

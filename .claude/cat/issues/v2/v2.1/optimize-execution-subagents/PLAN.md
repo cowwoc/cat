@@ -16,10 +16,15 @@ None (infrastructure enhancement to existing optimization tooling)
 - `plugin/scripts/analyze-session.py` - Add subagent discovery and combined analysis
 - `plugin/skills/optimize-execution/SKILL.md` - Document subagent analysis in output format
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Functionality works: script discovers and analyzes subagent JSONL files
 - [ ] Tests passing: new tests cover subagent discovery and combined analysis
 - [ ] No regressions: existing single-session analysis still works identically
+
+- [ ] Running `analyze-session.py` on a session with subagents produces per-subagent and combined analysis
+- [ ] Running on a session without subagents produces identical output to current behavior (backward compat)
+- [ ] All existing tests continue to pass
+- [ ] New tests cover subagent discovery, per-agent analysis, and combined aggregation
 
 ## Execution Steps
 1. **Add subagent discovery function to `analyze-session.py`:**
@@ -55,8 +60,3 @@ None (infrastructure enhancement to existing optimization tooling)
    - Test: combined metrics correctly aggregate across agents
    - Test: missing subagent files are skipped gracefully
 
-## Success Criteria
-- [ ] Running `analyze-session.py` on a session with subagents produces per-subagent and combined analysis
-- [ ] Running on a session without subagents produces identical output to current behavior (backward compat)
-- [ ] All existing tests continue to pass
-- [ ] New tests cover subagent discovery, per-agent analysis, and combined aggregation

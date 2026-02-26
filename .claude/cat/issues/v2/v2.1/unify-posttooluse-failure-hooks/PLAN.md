@@ -17,7 +17,7 @@ removed.
 - `client/src/main/java/io/github/cowwoc/cat/hooks/` - New Java handler class
 - `plugin/hooks/detect-repeated-failures.sh` - Delete after migration
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] PostToolUseFailure hook dispatched via Java binary
 - [ ] `detect-repeated-failures.sh` removed
 - [ ] Behavior preserved exactly (failure counting logic identical)

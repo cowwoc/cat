@@ -41,7 +41,7 @@ review, this task implements a unified pricing strategy.
 - docs/pricing.html (NEW)
   - GitHub Pages styled pricing page
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] README has simplified pricing reference (free tier mention + link)
 - [ ] LICENSE.md references pricing URL instead of hardcoded prices
 - [ ] GitHub Pages pricing page is live and professional

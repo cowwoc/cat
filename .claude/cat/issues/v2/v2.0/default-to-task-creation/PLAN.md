@@ -60,7 +60,7 @@ When work is suggested or requested:
 - .claude/cat/SESSION.md or hooks - Add startup instruction
 - plugin/CLAUDE.md - Add behavioral guideline
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] When user requests work, agent proposes task creation first
 - [ ] Agent explains: "I'll create a task for this so it's tracked properly"
 - [ ] User can override with "just do it" for trivial fixes

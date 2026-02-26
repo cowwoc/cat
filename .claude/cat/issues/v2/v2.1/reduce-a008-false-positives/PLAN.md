@@ -37,7 +37,7 @@ None - bugfix for existing A008 hook
 4. **Step 4:** If no matching script output found, emit the warning as before (likely manual construction)
 5. **Step 5:** Run `python3 /workspace/run_tests.py` to verify no regressions
 
-## Success Criteria
+## Post-conditions
 - [ ] A008 hook no longer fires when assistant copies render-add-complete.sh output verbatim
 - [ ] A008 hook still fires when assistant manually constructs boxes without preceding script execution
 - [ ] All tests pass

@@ -26,7 +26,7 @@ None
 - `plugin/skills/stakeholder-concern-box/SKILL.md` - Use named parameters
 - `plugin/skills/skill-builder/SKILL.md` - Document named parameter pattern
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] SkillLoader resolves named parameters from frontmatter `parameters:` field
 - [ ] stakeholder-selection-box uses named params (selected_count, total_count, running, skipped)
 - [ ] stakeholder-concern-box uses named params (severity, stakeholder, description, location)

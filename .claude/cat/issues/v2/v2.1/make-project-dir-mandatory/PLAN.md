@@ -18,7 +18,7 @@ None (infrastructure improvement)
 - `plugin/hooks/bin/load-skill.sh` (or equivalent caller) - Ensure project-dir is always passed
 - `client/src/test/java/io/github/cowwoc/cat/hooks/test/SkillLoaderTest.java` - Update test constructors
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] SkillLoader.main() requires exactly 4 arguments
 - [ ] Constructor requires non-empty projectDir
 - [ ] All callers pass project-dir

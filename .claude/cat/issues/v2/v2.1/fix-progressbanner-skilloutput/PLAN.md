@@ -19,7 +19,7 @@ handler but its class doesn't implement the required interface.
   - Make `ProgressBanner` implement `SkillOutput`, or
   - Fix the registration to not treat it as a `SkillOutput`
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] `/cat:work` no longer throws `ProgressBanner does not implement SkillOutput`
 - [ ] Progress banners still render correctly

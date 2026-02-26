@@ -51,7 +51,7 @@ None (infrastructure/UX improvement)
    - Add test case in work_handler tests verifying config values appear in handler output
    - Test default values when cat-config.json doesn't exist
 
-## Success Criteria
+## Post-conditions
 - [ ] Running `/cat:work` no longer shows a Bash call to read cat-config.json
 - [ ] Trust/verify/autoRemove values are correctly available in the skill context
 - [ ] All existing tests pass after refactoring

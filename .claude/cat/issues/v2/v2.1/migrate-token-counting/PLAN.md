@@ -36,7 +36,7 @@ None - infrastructure/setup task
 5. **Compare results** with Python tiktoken output
 6. **Run `mvn test`** to verify build passes with new dependency
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] TokenCounter.java produces accurate token counts
 - [ ] Token counts match Python tiktoken within +/-1% tolerance
 - [ ] compare-docs SKILL.md uses Java command instead of Python

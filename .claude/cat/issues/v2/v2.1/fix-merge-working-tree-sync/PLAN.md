@@ -61,7 +61,7 @@ This is equivalent to `git update-ref` or `git branch -f`. The working tree must
 3. **Run tests**
    - `mvn -f client/pom.xml test`
 
-## Success Criteria
+## Post-conditions
 
 - [ ] All existing tests pass
 - [ ] New test verifies working tree is clean after merge

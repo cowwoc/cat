@@ -27,7 +27,7 @@ rather than scattered file-by-file diffs.
 - `plugin/scripts/render-diff.py` - Extend with execution-order mode or create new script
 - `plugin/skills/render-diff/SKILL.md` - Document new capability
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Functionality works as described
 - [ ] Tests written and passing
 - [ ] Documentation updated
