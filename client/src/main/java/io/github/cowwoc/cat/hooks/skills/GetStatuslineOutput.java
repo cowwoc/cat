@@ -12,6 +12,7 @@ import java.nio.file.Path;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.Strings;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
@@ -78,7 +79,7 @@ public final class GetStatuslineOutput implements SkillOutput
         {
           "status": "ERROR",
           "message": "%s"
-        }""".formatted(escapeJson(errorMsg));
+        }""".formatted(Strings.escapeJson(errorMsg));
     }
 
     JsonNode root;
@@ -93,7 +94,7 @@ public final class GetStatuslineOutput implements SkillOutput
         {
           "status": "ERROR",
           "message": "%s"
-        }""".formatted(escapeJson(errorMsg));
+        }""".formatted(Strings.escapeJson(errorMsg));
     }
 
     JsonNode statusLineNode = root.get("statusLine");
@@ -112,19 +113,6 @@ public final class GetStatuslineOutput implements SkillOutput
         "status": "EXISTING",
         "current_config": %s
       }""".formatted(currentConfig);
-  }
-
-  /**
-   * Escapes a string for safe inclusion in JSON.
-   *
-   * @param value the string to escape
-   * @return the escaped string
-   * @throws NullPointerException if {@code value} is null
-   */
-  private String escapeJson(String value)
-  {
-    requireThat(value, "value").isNotNull();
-    return value.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r");
   }
 
   /**
