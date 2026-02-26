@@ -40,7 +40,7 @@ None - terminology consistency task
 
 - `plugin/hooks/posttool_handlers/skill_precompute.py` → `skill_preprocessor_output.py`
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Behavior unchanged
 - [ ] All tests still pass
 - [ ] No remaining references to "pre-computed output" (except in retrospectives)

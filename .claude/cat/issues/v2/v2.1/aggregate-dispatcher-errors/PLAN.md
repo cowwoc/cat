@@ -47,7 +47,7 @@ The additionalContext output includes an error section:
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/GetSessionStartOutput.java` - Collect errors, include in output
 - `hooks/src/test/java/io/github/cowwoc/cat/hooks/GetSessionStartOutputTest.java` - Test error aggregation
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Handler exceptions are collected, not just caught-and-logged
 - [ ] Error messages appear in additionalContext (visible to agent)
 - [ ] Error messages appear on stderr (visible to user in terminal)

@@ -28,7 +28,7 @@ None (UX polish)
 - `plugin/skills/work/first-use.md` — Replace "Progress Display" section to call `progress-banner --phase preparing`
   (no issue ID) instead of relying on the simple preparing banner
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] `/cat:work` Phase 1 displays the boxed phase progression banner with `◉ Preparing` highlighted
 - [ ] Banner shows no issue ID (issue ID is unknown at Phase 1)

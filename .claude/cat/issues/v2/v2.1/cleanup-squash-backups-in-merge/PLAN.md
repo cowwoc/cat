@@ -21,7 +21,7 @@ None (infrastructure fix from M348/M349)
 - `plugin/scripts/merge-and-cleanup.sh` - Add new step between branch deletion and lock release: find all
   `backup-before-squash-*` branches, delete those that are ancestors of the merged commit
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] git-squash-quick.sh no longer deletes its own backup branch
 - [ ] git-squash-quick.sh EXIT trap no longer deletes backup (backup preserved for investigation on any failure)
 - [ ] git-squash-quick.sh dead code removed: rebase conflict handling (lines 57-93) replaced with proper `set -e`

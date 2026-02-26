@@ -3,12 +3,10 @@
 ## Objective
 Stabilization release with workflow improvements and better context management.
 
-## Gates
-
-### Entry
+## Pre-conditions
 - v1.0 complete
 
-### Exit
+## Post-conditions
 - All tasks complete
 - Context injection working
 - Workflow gaps addressed

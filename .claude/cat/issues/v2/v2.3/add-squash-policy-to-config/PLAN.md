@@ -36,12 +36,16 @@ The selected policy is written to the `### Squash Policy` section in PROJECT.md.
 - plugin/skills/config/SKILL.md — add squash policy question to wizard flow
 - .claude/cat/PROJECT.md — written by wizard when policy is selected
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] `/cat:config` wizard includes squash policy question
 - [ ] Selected policy is written to PROJECT.md `### Squash Policy` section
 - [ ] Existing manual policies are preserved as default selection
 - [ ] git-squash skill correctly reads the wizard-set policy
+
+- [ ] Running `/cat:config` shows squash policy option
+- [ ] Setting policy via wizard produces correct PROJECT.md section
+- [ ] git-squash skill honors the wizard-configured policy
 
 ## Execution Steps
 
@@ -51,8 +55,3 @@ The selected policy is written to the `### Squash Policy` section in PROJECT.md.
    - Files: .claude/cat/PROJECT.md
 3. **Step 3:** Verify git-squash reads the new policy correctly
 
-## Success Criteria
-
-- [ ] Running `/cat:config` shows squash policy option
-- [ ] Setting policy via wizard produces correct PROJECT.md section
-- [ ] git-squash skill honors the wizard-configured policy

@@ -164,7 +164,7 @@ instructions over negative prohibitions when the positive form is equally clear.
 **Key insight:** Compression should reduce TOKENS, not CONSTRAINTS.
 ```
 
-## Acceptance Criteria
+## Post-conditions
 
 **Extraction Agent:**
 - [ ] Conservative extraction principle documented

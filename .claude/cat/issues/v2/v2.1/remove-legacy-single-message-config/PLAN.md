@@ -23,7 +23,7 @@ None (code cleanup)
   - Update tests that use `buildInput(priming, "prompt")` to use multi-message format
   - Remove/update tests for the removed overloads
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] Only multi-message config format accepted (Map with `messages` key)
 - [ ] Single-message tests work via 1-element `messages` array

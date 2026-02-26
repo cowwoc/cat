@@ -10,6 +10,6 @@ replace hardcoded plugin version paths with CLAUDE_PLUGIN_ROOT
 
 Fixes M064 - hardcoded version paths become stale
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

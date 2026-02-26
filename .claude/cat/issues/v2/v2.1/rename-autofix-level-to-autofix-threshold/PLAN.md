@@ -76,7 +76,7 @@ The following files contain references to `AUTOFIX_LEVEL`, `autofixLevel`, `auto
 - All references are internal implementation details
 - Public APIs (config file keys) remain unchanged
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] All Java files renamed: `AUTOFIX_LEVEL` → `AUTOFIX_THRESHOLD`, `autofixLevel` → `autofixThreshold`, `getAutofixLevel()` → `getAutofixThreshold()`
 - [ ] All documentation updated with consistent "threshold" terminology

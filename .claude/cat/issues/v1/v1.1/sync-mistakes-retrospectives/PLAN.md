@@ -7,6 +7,6 @@ commit mistakes.json and retrospectives.json together
 Step 10 now updates the counter and commits both files atomically,
 preventing the split-commit anti-pattern.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

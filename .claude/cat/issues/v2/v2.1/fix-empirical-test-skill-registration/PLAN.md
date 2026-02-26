@@ -16,10 +16,13 @@ None (bugfix for add-empirical-compliance-testing-skill)
 ## Files to Modify
 - `plugin/skills/empirical-test/SKILL.md` - Create with YAML front-matter and load-skill.sh invocation
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] `plugin/skills/empirical-test/SKILL.md` exists with correct YAML front-matter
 - [ ] SKILL.md invokes load-skill.sh like other skills
 - [ ] `metadata.json` removed (redundant with SKILL.md)
+
+- [ ] Skill registers in Claude Code's skill list after plugin cache update
+- [ ] SKILL.md follows same pattern as other skills (e.g., learn/SKILL.md)
 
 ## Execution Steps
 1. **Step 1:** Create `plugin/skills/empirical-test/SKILL.md` with description and load-skill.sh invocation
@@ -27,6 +30,3 @@ None (bugfix for add-empirical-compliance-testing-skill)
 2. **Step 2:** Remove `plugin/skills/empirical-test/metadata.json` (redundant)
    - Files: `plugin/skills/empirical-test/metadata.json`
 
-## Success Criteria
-- [ ] Skill registers in Claude Code's skill list after plugin cache update
-- [ ] SKILL.md follows same pattern as other skills (e.g., learn/SKILL.md)

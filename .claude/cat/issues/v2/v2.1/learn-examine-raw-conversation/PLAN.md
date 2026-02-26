@@ -40,11 +40,14 @@ None (infrastructure improvement)
   examination phase that, when testing skill compliance, retrieves the raw conversation from the test trial and compares
   the delivered skill content against the source SKILL.md. Report any content truncation or structural damage.
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] `/cat:learn` investigation phase compares source SKILL.md against raw JSONL for skill-related mistakes
 - [ ] `/cat:empirical-test` examination phase compares delivered skill content against source for skill compliance tests
 - [ ] Discrepancies between source and delivered content are flagged as "preprocessor corruption" with specific diff
 - [ ] Token cost is bounded: only triggered for skill-related failures, uses targeted session-analyzer searches
+
+- [ ] Running `/cat:learn` on a skill preprocessing failure correctly identifies "preprocessor corruption" as root cause
+- [ ] Running `/cat:empirical-test` on a skill with broken preprocessing detects the content mismatch
 
 ## Execution Steps
 1. **Read current phase-investigate.md:** Understand the existing investigation flow and where the new step fits
@@ -63,6 +66,3 @@ None (infrastructure improvement)
 5. **Test with the status skill case:** Verify that the new comparison step would have caught the M341-M372 failure
    pattern by running against the known-broken status-first-use/SKILL.md content
 
-## Success Criteria
-- [ ] Running `/cat:learn` on a skill preprocessing failure correctly identifies "preprocessor corruption" as root cause
-- [ ] Running `/cat:empirical-test` on a skill with broken preprocessing detects the content mismatch

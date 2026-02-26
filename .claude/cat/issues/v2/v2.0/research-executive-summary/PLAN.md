@@ -16,7 +16,7 @@ None (infrastructure improvement)
 ## Files to Modify
 - plugin/skills/research/SKILL.md - Add executive summary generation step
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Executive summary section added at top of research output
 - [ ] 2-4 solution approaches identified with clear pros/cons
 - [ ] Options organized by user preferences (cost vs speed vs simplicity vs control)

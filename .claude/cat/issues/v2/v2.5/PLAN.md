@@ -13,12 +13,10 @@ Tirith.
 | REQ-003 | Configurable alert/block behavior | must-have | User can choose warn vs block in config |
 | REQ-004 | Input prompt validation | should-have | Detect homograph attacks in user prompts |
 
-## Gates
-
-### Entry
+## Pre-conditions
 - v2.4 complete
 
-### Exit
+## Post-conditions
 - All issues complete
 - All tests pass
 - Security audit passed

@@ -16,13 +16,18 @@ None - infrastructure improvement
 - `.claude/skills/build-hooks/SKILL.md` - Add step to copy jlink runtime to plugin cache
 - `plugin/hooks/session_start.sh` - Verify JDK_SUBDIR path still matches output location
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] `mvn -f hooks/pom.xml verify` produces `target/jlink/bin/java`
 - [ ] jlink image includes modules: java.base, java.logging, java.sql, jdk.unsupported
 - [ ] jlink image includes Jackson 3 modules from Maven dependencies
 - [ ] build-hooks skill installs jlink image to `CLAUDE_PLUGIN_ROOT/runtime/cat-jdk-25/`
 - [ ] session_start.sh finds and validates the installed runtime
 - [ ] All existing tests still pass
+
+- [ ] `mvn -f hooks/pom.xml verify` produces working jlink image at `target/jlink/`
+- [ ] build-hooks skill installs both JAR and jlink image to plugin cache
+- [ ] session_start.sh debug trace shows JDK runtime verified
+- [ ] All 318+ tests still pass
 
 ## Execution Steps
 
@@ -48,8 +53,3 @@ None - infrastructure improvement
    - Check `hooks/target/jlink/bin/java -version` works
    - Run build-hooks skill and verify session_start.sh finds the runtime
 
-## Success Criteria
-- [ ] `mvn -f hooks/pom.xml verify` produces working jlink image at `target/jlink/`
-- [ ] build-hooks skill installs both JAR and jlink image to plugin cache
-- [ ] session_start.sh debug trace shows JDK runtime verified
-- [ ] All 318+ tests still pass

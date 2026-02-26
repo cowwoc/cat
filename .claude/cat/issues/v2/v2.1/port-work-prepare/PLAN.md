@@ -44,7 +44,7 @@ Parent: 2.1-port-workflow-scripts (sub-issue 4 of 4)
 7. Run `mvn -f hooks/pom.xml verify`
 8. Update STATE.md (status: closed, progress: 100%)
 
-## Success Criteria
+## Post-conditions
 - [ ] WorkPrepare produces identical JSON output for all status codes (READY, NO_TASKS, LOCKED, OVERSIZED, ERROR)
 - [ ] Worktree creation and branch management works correctly
 - [ ] Potentially-complete detection matches Python implementation

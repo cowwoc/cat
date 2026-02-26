@@ -16,7 +16,7 @@ None - infrastructure/performance improvement
 - plugin/scripts/find-next-task.sh - New script (create)
 - plugin/commands/work.md - Update find_task step to call script
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Script outputs next task info in parseable JSON format
 - [ ] Script handles: version filtering, dependency checks, lock checks, gate evaluation
 - [ ] work.md find_task step updated to invoke the script

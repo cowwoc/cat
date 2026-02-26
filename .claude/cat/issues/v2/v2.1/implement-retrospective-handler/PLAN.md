@@ -23,7 +23,7 @@ None (infrastructure issue - filling a gap where handler was never implemented)
 - `plugin/skills/run-retrospective/first-use.md` - Update to reference `${CAT_RETROSPECTIVE_OUTPUT}` and remove
   Python handler reference
 
-## Acceptance Criteria
+## Post-conditions
 
 ### Handler Structure
 - [ ] `GetRetrospectiveOutput` implements `SkillOutput` with constructor accepting `JvmScope`

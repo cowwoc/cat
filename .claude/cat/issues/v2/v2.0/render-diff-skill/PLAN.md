@@ -155,7 +155,7 @@ If content also changed, show normal diff boxes below.
 ```
 Only includes symbols actually used in the diff.
 
-## Acceptance Criteria
+## Post-conditions
 
 ### Core Functionality
 - [x] Script reads git diff (stdin or file argument)

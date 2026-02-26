@@ -15,7 +15,7 @@ compress-concepts-md (decomposed)
 - plugin/concepts/research-pitfalls.md
 - plugin/concepts/duplicate-issue.md
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All 4 files compressed
 - [ ] All files score 1.0 on /compare-docs validation
 - [ ] Tests pass

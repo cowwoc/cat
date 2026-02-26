@@ -36,7 +36,7 @@ None - workflow improvement
    - Files: plugin/skills/add.md
    - Verify: Created PLAN.md includes research findings
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] /cat:add asks clarifying questions for vague requirements
 - [ ] "Unsure/Unknown" option available during wizard
 - [ ] /cat:research auto-triggers when unknowns identified

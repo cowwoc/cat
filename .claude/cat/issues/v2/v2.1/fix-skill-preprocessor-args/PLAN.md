@@ -34,7 +34,7 @@ None - bug fix
 
 - `plugin/hooks/posttool_handlers/skill_preprocessor_output.py` - Include args in user_prompt
 
-## Acceptance Criteria
+## Post-conditions
 
 - [x] All tests still pass
 - [x] Args included in user_prompt for skill handlers

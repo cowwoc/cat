@@ -15,7 +15,7 @@ The parent agent spawns the merge subagent while its own shell cwd is inside the
 ## Execution Steps
 1. **Add cd /workspace instruction:** In plugin/skills/work-with-issue/first-use.md Step 8, add a Bash command `cd /workspace` after the progress-banner call and before the Task tool spawn. Include a comment explaining this prevents parent shell corruption when the merge subagent removes the worktree.
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Step 8 includes cd /workspace before spawning the merge subagent
 - [ ] Comment explains why the cd is needed
 - [ ] No regressions in merge workflow

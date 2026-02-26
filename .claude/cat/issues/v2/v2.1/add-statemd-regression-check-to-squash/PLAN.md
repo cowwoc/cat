@@ -31,7 +31,7 @@ None (infrastructure/prevention from M363)
 - plugin/scripts/git-squash-quick.sh - Replaced by Java
 - tests/hooks/git-squash-quick.bats - Replaced by TestNG
 
-## Acceptance Criteria
+## Post-conditions
 
 - [x] GitSquash.java warns (in JSON output) when files are modified on both branches
 - [x] GitSquash.java succeeds normally when only the issue branch modifies files

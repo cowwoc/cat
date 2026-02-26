@@ -32,7 +32,7 @@ All parent update steps have explicit bash commands showing:
   - `task_update_parent` - Remove task from minor/STATE.md Tasks Pending/Completed
   - `minor_update_parent` - Remove minor from major/STATE.md Minor Versions list
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All 6 vague steps replaced with explicit bash commands
 - [ ] Each step includes verification (grep to confirm update)
 - [ ] Edge cases handled (missing sections create them)

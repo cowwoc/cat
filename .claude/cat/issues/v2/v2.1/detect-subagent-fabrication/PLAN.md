@@ -22,7 +22,7 @@ fabricated validation claims.
 - plugin/hooks/posttool_handlers/detect_validation_fabrication.py - New handler
 - plugin/hooks/get-posttool-output.py - Register new handler
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Functionality works as described
 - [ ] Tests written and passing
 - [ ] No regressions

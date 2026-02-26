@@ -44,7 +44,7 @@ users - some are implementation details that add noise to the output. This skill
 - [ ] Optimization recommendation engine
 - [ ] Optional: Auto-configuration generator for hiding tool outputs
 
-## Acceptance Criteria
+## Post-conditions
 
 - Skill can analyze a session's command history
 - Produces actionable optimization recommendations

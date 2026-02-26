@@ -15,7 +15,7 @@ the subsequent `git diff backupBranch` check compares the wrong state.
 - `client/src/main/java/io/github/cowwoc/cat/hooks/util/GitSquash.java` — add post-reset HEAD verification
 - `client/src/test/java/io/github/cowwoc/cat/hooks/test/GitSquashTest.java` — add test for HEAD verification
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] After `reset --hard`, verify `HEAD == newCommit` explicitly
 - [ ] If HEAD != newCommit, throw IOException with diagnostic info (expected vs actual)
 - [ ] Existing tests still pass

@@ -40,7 +40,7 @@ None - infrastructure/setup task
 8. **Test status output** - Verify output identical to Python version
 9. **Run test suite** - `python3 /workspace/run_tests.py`
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] EnforceWorktreeIsolation.java blocks Write/Edit on base branch correctly
 - [ ] EnforceStatusOutput.java produces identical output to Python
 - [ ] Both hooks wired up in hooks.json via java.sh

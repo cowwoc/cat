@@ -20,7 +20,7 @@ None (infrastructure/optimization)
 - client/src/main/java/io/github/cowwoc/cat/hooks/util/SessionAnalyzer.java - Add query methods and CLI subcommands
 - plugin/skills/get-history-first-use/SKILL.md - Update to reference Java tool instead of raw grep
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] `session-analyzer search <file> <keyword> [--context N]` extracts matching content with surrounding context
 - [ ] `session-analyzer errors <file>` extracts all error outputs (generalizes DetectFailures pattern)

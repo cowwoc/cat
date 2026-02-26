@@ -39,7 +39,7 @@ With optional --verbose for full breakdown.
 - skills/token-report/SKILL.md - Rewrite output format instructions
 - scripts/token-report.sh (if exists) - Simplify to single output
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Default output is single box, max 8 lines
 - [ ] Shows: context usage, status indicator, cost estimate, tool count, subagent count
 - [ ] No intermediate bash commands or errors visible to user

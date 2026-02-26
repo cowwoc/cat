@@ -59,7 +59,7 @@ None - infrastructure/refactor improvement
    - Add path resolution logic or reference shared constants
    - Verify: All 84 tests still pass
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Centralized version-paths.md reference created
 - [ ] All commands use centralized path resolution
 - [ ] All skills use centralized path resolution

@@ -10,7 +10,7 @@ None - infrastructure/maintenance task
 ## Files to Modify
 - plugin/skills/stakeholder-review/SKILL.md - Complete rewrite using skill-builder
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] SKILL.md rewritten using skill-builder methodology
 - [ ] Display renders correctly without alignment calculations
 - [ ] /cat:stakeholder-review skill works as expected

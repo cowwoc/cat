@@ -15,7 +15,7 @@ Improve visual presentation, clarity, and commercial appeal.
 ## Files to Modify
 - README.md - Visual polish, professional tone, SMB-focused messaging
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] README presents a professional, polished appearance
 - [ ] Value proposition clear for SMB decision makers
 - [ ] Technical content preserved and accessible

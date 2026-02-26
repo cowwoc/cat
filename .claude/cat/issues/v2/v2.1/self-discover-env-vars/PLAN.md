@@ -41,7 +41,7 @@ boundary.
 - [ ] Script fails gracefully when --session-id not provided
 - [ ] Self-discovery finds correct paths from various working directories
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Bug no longer reproducible - scripts work without hook-set environment variables
 - [ ] Regression test added - tests prevent this bug from recurring
 - [ ] Root cause addressed - hybrid approach handles all three variables appropriately

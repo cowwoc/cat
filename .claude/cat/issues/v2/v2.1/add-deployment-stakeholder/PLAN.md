@@ -17,7 +17,7 @@ Add a new "deployment" stakeholder that reviews implementation changes for:
 ## Scope
 - 1-2 files (stakeholder definition + SKILL.md update)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Functionality works as described
 - [ ] Tests written and passing
 - [ ] Documentation updated

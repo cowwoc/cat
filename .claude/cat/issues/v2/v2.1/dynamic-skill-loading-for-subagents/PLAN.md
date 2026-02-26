@@ -67,7 +67,7 @@ Hook event behavior (verified from Claude Code source):
 ### H. ClearSkillMarkers improvements
 - `ClearSkillMarkers.java` — log warnings on deletion/directory listing failures instead of silent swallow
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] SubagentStartHook injects model-invocable skill list into subagent context at spawn
 - [ ] InjectSkillListing reinjects skill list after subagent compaction (SessionStart source=="compact")
 - [ ] Skill listing entry format matches Claude Code's native format ("- name: description")
@@ -83,6 +83,13 @@ Hook event behavior (verified from Claude Code source):
 - [ ] ClearSkillMarkers logs warnings on failures
 - [ ] Existing tests pass, new tests cover SkillDiscovery and SubagentStartHook
 
+- [ ] SubagentStartHook registered in hooks.json and fires for subagents
+- [ ] Subagent receives skill listing with load-skill.sh instructions and skill entries
+- [ ] Main agent does NOT receive duplicate skill listing from our hooks
+- [ ] No `-first-use` sibling directories remain under plugin/skills/
+- [ ] Subagent can load a skill via load-skill.sh when it identifies one from the listing
+- [ ] All tests pass
+
 ## Execution Steps
 1. **Step 1:** Rename ForcedEvalSkills → ConsiderSkills, then remove from UserPromptSubmit
 2. **Step 2:** Delete WarnSkillEditWithoutBuilder, remove from PreEditHook handler list
@@ -96,10 +103,3 @@ Hook event behavior (verified from Claude Code source):
 10. **Step 10:** Update ClearSkillMarkers to log warnings on failures
 11. **Step 11:** Run tests, verify skill listing appears in subagent context but not main agent
 
-## Success Criteria
-- [ ] SubagentStartHook registered in hooks.json and fires for subagents
-- [ ] Subagent receives skill listing with load-skill.sh instructions and skill entries
-- [ ] Main agent does NOT receive duplicate skill listing from our hooks
-- [ ] No `-first-use` sibling directories remain under plugin/skills/
-- [ ] Subagent can load a skill via load-skill.sh when it identifies one from the listing
-- [ ] All tests pass

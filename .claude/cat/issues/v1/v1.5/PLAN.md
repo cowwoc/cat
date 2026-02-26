@@ -3,12 +3,10 @@
 ## Objective
 Add multi-perspective stakeholder reviews and progress indicators.
 
-## Gates
-
-### Entry
+## Pre-conditions
 - v1.4 complete
 
-### Exit
+## Post-conditions
 - All tasks complete
 - Stakeholder review system working
 - Progress indicators functional

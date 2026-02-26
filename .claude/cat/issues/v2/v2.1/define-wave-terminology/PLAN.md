@@ -45,7 +45,7 @@ None - terminology and documentation
 ### plugin/skills/batch-read/SKILL.md - Reference wave concept
 - Batch reading groups files for parallel processing; reference wave terminology for consistency
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] README.md defines issue, sub-issue, and wave
 - [ ] Wave definition matches migrate-python-to-java usage: dependency-ordered parallel execution groups
 - [ ] decompose-issue SKILL.md uses wave_N grouping labels and Wave N headings
@@ -53,6 +53,11 @@ None - terminology and documentation
 - [ ] Skills that orchestrate parallel work reference wave terminology
 - [ ] No regressions in existing functionality
 - [ ] Tests pass
+
+- [ ] README.md contains clear definitions for issue, sub-issue, and wave
+- [ ] decompose-issue SKILL.md generates Wave N groupings in parallel execution plans
+- [ ] delegate/SKILL.md contains formal wave definition and respects wave ordering
+- [ ] All tests pass
 
 ## Execution Steps
 1. **Step 1:** Add terminology definitions section to README.md
@@ -72,8 +77,3 @@ None - terminology and documentation
 6. **Step 6:** Run test suite
    - Command: python3 /workspace/run_tests.py
 
-## Success Criteria
-- [ ] README.md contains clear definitions for issue, sub-issue, and wave
-- [ ] decompose-issue SKILL.md generates Wave N groupings in parallel execution plans
-- [ ] delegate/SKILL.md contains formal wave definition and respects wave ordering
-- [ ] All tests pass

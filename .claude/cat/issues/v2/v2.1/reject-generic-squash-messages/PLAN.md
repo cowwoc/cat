@@ -37,13 +37,20 @@ can't invoke the git-squash skill construct their own messages, defaulting to ge
 - `plugin/skills/work-merge/first-use.md` - Replace `/cat:git-squash` reference with direct `git-squash-quick.sh` call
 - `plugin/concepts/subagent-delegation.md` - Add standard fail-fast preamble for impossible instructions
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] git-squash-quick.sh rejects messages that don't match conventional commit format (`type: description`)
 - [ ] Rejection error message shows expected format and lists valid types
 - [ ] Valid conventional commit messages are accepted without change
 - [ ] work-merge skill/agent no longer references `/cat:git-squash` skill invocation
 - [ ] work-merge instructs subagent to call `git-squash-quick.sh` directly with commit message from COMMITS data
 - [ ] subagent-delegation.md includes standard fail-fast preamble for capability limitations
+
+- [ ] Script exits with error when given "squash commit" as message
+- [ ] Script exits with error when given message without type prefix
+- [ ] Script accepts "feature: add user authentication" without error
+- [ ] work-merge/first-use.md contains `git-squash-quick.sh` direct invocation (not `/cat:git-squash`)
+- [ ] subagent-delegation.md contains capability limitation fail-fast instruction
+- [ ] All existing tests pass
 
 ## Execution Steps
 1. **Step 1:** Add commit message validation to `plugin/scripts/git-squash-quick.sh`
@@ -73,10 +80,3 @@ can't invoke the git-squash skill construct their own messages, defaulting to ge
 5. **Step 5:** Run existing tests to verify no regression
    - Files: `hooks/pom.xml`
 
-## Success Criteria
-- [ ] Script exits with error when given "squash commit" as message
-- [ ] Script exits with error when given message without type prefix
-- [ ] Script accepts "feature: add user authentication" without error
-- [ ] work-merge/first-use.md contains `git-squash-quick.sh` direct invocation (not `/cat:git-squash`)
-- [ ] subagent-delegation.md contains capability limitation fail-fast instruction
-- [ ] All existing tests pass

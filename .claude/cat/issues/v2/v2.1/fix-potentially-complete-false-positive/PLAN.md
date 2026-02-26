@@ -47,7 +47,7 @@ verifies decomposition commits are filtered out.
 
 3. **Step 3:** Update STATE.md to closed, progress 100%
 
-## Success Criteria
+## Post-conditions
 
 - [ ] Decomposition commits no longer trigger `potentially_complete` flag on sub-issues
 - [ ] Regression test covers all planning prefix patterns including `config: decompose`

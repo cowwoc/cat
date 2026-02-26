@@ -103,7 +103,7 @@ Skipped:
   - performance: No algorithm-heavy code changes
 ```
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Workflow analyzes task context before stakeholder review
 - [ ] Irrelevant stakeholders are automatically skipped
 - [ ] User is informed which stakeholders were skipped and why

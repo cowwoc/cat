@@ -23,6 +23,6 @@ Changes:
    - execute-task: Checks dependent tasks when task completes, unblocks if ready
    - remove-task: Removes task from dependencies lists when deleted
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

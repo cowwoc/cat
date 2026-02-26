@@ -100,7 +100,7 @@ Add `reviewThresholds` to `cat-config.json`:
 - `plugin/skills/work-with-issue/SKILL.md` - Use configured thresholds for auto-fix loop decision
 - `client/src/main/java/io/github/cowwoc/cat/hooks/ConfigReader.java` (or equivalent) - Parse new config field
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] `reviewThresholds` field is read from `cat-config.json` with sensible defaults when absent
 - [ ] `autofix` field controls which severity levels trigger automatic fix loops

@@ -9,7 +9,7 @@ None - infrastructure/maintenance task
 ## Files to Modify
 - plugin/commands/help.md - Complete rewrite using skill-builder
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] help.md rewritten using skill-builder methodology
 - [ ] Display renders correctly without alignment calculations
 - [ ] /cat:help command works as expected

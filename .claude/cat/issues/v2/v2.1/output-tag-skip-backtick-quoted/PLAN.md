@@ -51,13 +51,16 @@ Instead of changing the regex pattern itself, modify `parseContent()` to:
 This preserves the existing regex behavior while making it immune to backtick-quoted tag references. The convention
 becomes: any `<output>` reference in instruction text that should NOT be parsed must be wrapped in backticks.
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] `parseContent()` ignores `<output>` tags inside backtick-quoted text (`` `<output ...>` ``)
 - [ ] `parseContent()` still correctly finds real `<output>` tags that are NOT backtick-quoted
 - [ ] The status-first-use/SKILL.md pattern (backtick-quoted reference + real `<output>` tag) works correctly
 - [ ] All existing SKILL.md files with `<output>` tags continue to work
 - [ ] Unit tests cover: backtick-quoted reference, real tag, mixed content, nested backticks
 - [ ] Any SKILL.md files that reference `<output>` literally are updated to use backtick quoting
+
+- [ ] `mvn -f client/pom.xml test` passes with all new tests
+- [ ] The status skill correctly delivers full instructions when backtick-quoted reference is present
 
 ## Execution Steps
 1. **Audit existing SKILL.md files for `<output>` usage:** Find all files that reference `<output>` tags, distinguish
@@ -76,6 +79,3 @@ becomes: any `<output>` reference in instruction text that should NOT be parsed 
    - Files: `plugin/skills/status-first-use/SKILL.md`
 6. **Run full test suite:** Verify no regressions.
 
-## Success Criteria
-- [ ] `mvn -f client/pom.xml test` passes with all new tests
-- [ ] The status skill correctly delivers full instructions when backtick-quoted reference is present

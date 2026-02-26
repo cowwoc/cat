@@ -25,7 +25,7 @@ None (migration/cleanup)
 - `plugin/hooks/hooks.json` - Remove the `reset-failure-counter.sh` entry from PostToolUse
 - `plugin/hooks/reset-failure-counter.sh` - Delete
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] `ResetFailureCounter` implements `PostToolHandler` and deletes the tracking file on success
 - [ ] Handler registered in `PostToolUseHook` handler pipeline

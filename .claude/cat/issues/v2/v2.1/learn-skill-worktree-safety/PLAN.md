@@ -21,12 +21,17 @@ Learn Phase 4 subagent used bare `git add` and `git commit` commands from whatev
 (e.g., `/workspace`), concurrent git operations on the same repo caused shell state corruption (all bash commands
 returning exit code 1).
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All `git add` and `git commit` commands in phase-record.md use `git -C "${CLAUDE_PROJECT_DIR}"` prefix
 - [ ] Active worktree check added before Step 12 git operations
 - [ ] If active worktrees detected, phase outputs warning but continues (non-blocking)
 - [ ] No bare `cd` commands into repository directories
 - [ ] Bug fixed, regression test added, no new issues
+
+- [ ] All git commands in phase-record.md use `git -C` instead of bare `git`
+- [ ] Worktree detection warning present before git operations
+- [ ] No `cd` commands that change into repo directories
+- [ ] All tests pass
 
 ## Execution Steps
 1. **Step 1:** In `plugin/skills/learn/phase-record.md`, find Step 12 (lines ~203-267) where git commands are used
@@ -45,8 +50,3 @@ returning exit code 1).
    - Ensure `RETRO_DIR` is defined relative to `${CLAUDE_PROJECT_DIR}` so paths resolve correctly
 5. **Step 5:** Run all tests: `python3 /workspace/run_tests.py`
 
-## Success Criteria
-- [ ] All git commands in phase-record.md use `git -C` instead of bare `git`
-- [ ] Worktree detection warning present before git operations
-- [ ] No `cd` commands that change into repo directories
-- [ ] All tests pass

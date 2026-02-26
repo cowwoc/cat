@@ -120,7 +120,7 @@ cd hooks && mvn verify
 
 All tests must pass. No checkstyle or PMD violations.
 
-## Success Criteria
+## Post-conditions
 
 - [ ] `GitCommandNormalizer` strips `-C`, `--git-dir`, `--work-tree`, `-c` flags from git commands
 - [ ] `BlockDestructiveGitCommands` blocks: force push (any branch), version branch deletion, checkout/restore discard-all, clean -f, stash clear

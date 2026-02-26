@@ -54,7 +54,7 @@ None - follow-up to 2.1-port-git-scripts infrastructure work
 ## Dependencies
 - 2.1-port-git-scripts (must be merged first)
 
-## Success Criteria
+## Post-conditions
 - [ ] All 17 files updated to reference Java classes
 - [ ] 4 bash scripts removed
 - [ ] All tests pass

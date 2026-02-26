@@ -95,10 +95,13 @@ None - terminology consistency
 | `subtask-pending` | `subissue-pending` | Test directory names |
 | `subtask-completion` | `subissue-completion` | JSON tag |
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Behavior unchanged - all tests pass
 - [ ] No remaining references to sub-task/subtask/sub_task (except v1.10 historical issue)
 - [ ] Code quality maintained
+
+- [ ] All tests pass after rename
+- [ ] Grep for subtask/sub-task/sub_task returns only the v1.10 historical issue
 
 ## Execution Steps
 1. **Step 1:** Rename function and variables in `plugin/scripts/get-available-issues.sh`
@@ -118,6 +121,3 @@ None - terminology consistency
 7. **Step 7:** Run test suite to verify no regressions
    - Command: `python3 /workspace/run_tests.py`
 
-## Success Criteria
-- [ ] All tests pass after rename
-- [ ] Grep for subtask/sub-task/sub_task returns only the v1.10 historical issue

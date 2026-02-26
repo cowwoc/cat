@@ -26,7 +26,7 @@ Instead, a handler should precompute all outputs before the skill runs.
 - [ ] Update `plugin/skills/monitor-subagents/SKILL.md` to use OUTPUT TEMPLATE pattern
 - [ ] Tests for handler
 
-## Acceptance Criteria
+## Post-conditions
 
 - Skill invocation shows no Bash tool calls
 - Handler produces identical output to shell script

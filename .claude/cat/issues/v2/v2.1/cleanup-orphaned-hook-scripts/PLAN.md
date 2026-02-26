@@ -23,7 +23,7 @@ Orphaned scripts either removed (if truly unused) or documented and registered (
 2. If no references found, delete the script
 3. If references found, document why it exists and ensure proper registration
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Each orphaned script investigated for references
 - [ ] Unused scripts removed
 - [ ] Any kept scripts documented with rationale

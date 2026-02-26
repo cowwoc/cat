@@ -26,7 +26,7 @@ None - infrastructure/organization task
 - plugin/.claude/cat/stakeholders/tester.md - rename to testing.md
 - All files referencing old paths - update references
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] `plugin/.claude/cat/stakeholders/` directory exists with moved files
 - [ ] `quality.md` renamed to `design.md`
 - [ ] `tester.md` renamed to `testing.md`

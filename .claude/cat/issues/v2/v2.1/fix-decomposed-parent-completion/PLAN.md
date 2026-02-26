@@ -70,7 +70,7 @@ Two locations in `get-available-issues.sh` skip decomposed parents without check
 5. **Step 5:** Run full test suite
    - Run: `python3 /workspace/run_tests.py`
 
-## Success Criteria
+## Post-conditions
 - [ ] All 5 test cases pass
 - [ ] Existing tests still pass (no regressions)
 - [ ] `migrate-python-to-java` would be returned by the script when all its sub-issues are closed

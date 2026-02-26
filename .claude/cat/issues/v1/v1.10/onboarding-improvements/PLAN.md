@@ -15,6 +15,6 @@ improve onboarding with guided first-task and tiered help
 
 Addresses onboarding gaps: no guided tutorial, no progressive disclosure.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

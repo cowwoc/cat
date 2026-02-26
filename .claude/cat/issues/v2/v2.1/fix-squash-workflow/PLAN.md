@@ -18,11 +18,15 @@ None - infrastructure/retrospective action item
 - plugin/skills/work-with-issue/SKILL.md - Update squash step instructions
 - plugin/skills/git-squash/SKILL.md - Add rebase-first requirement
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Squash skill requires rebase on base branch HEAD before squashing
 - [ ] STATE.md grouped with implementation files, not as separate config commit
 - [ ] Instructions are unambiguous for haiku-level model
 - [ ] No regressions
+
+- [ ] Squash instructions include mandatory rebase-first check
+- [ ] STATE.md file grouping rules are explicit and unambiguous
+- [ ] All tests pass
 
 ## Execution Steps
 1. **Step 1:** Read current squash skill and work-with-issue squash instructions
@@ -34,7 +38,3 @@ None - infrastructure/retrospective action item
 4. **Step 4:** Run all tests
    - Command: python3 /workspace/run_tests.py
 
-## Success Criteria
-- [ ] Squash instructions include mandatory rebase-first check
-- [ ] STATE.md file grouping rules are explicit and unambiguous
-- [ ] All tests pass

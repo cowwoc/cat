@@ -57,7 +57,7 @@ Core infrastructure (already implemented):
 5. **Wire up GetReadPosttoolOutput** - Edit hooks.json line ~186, test by reading a file
 6. **Run full test suite** - `python3 /workspace/run_tests.py` to verify no regressions
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All 5 remaining entry points wired to Java in hooks.json
 - [ ] Each Java entry point produces identical JSON output to Python equivalent
 - [ ] All existing tests pass (`python3 /workspace/run_tests.py` exit code 0)

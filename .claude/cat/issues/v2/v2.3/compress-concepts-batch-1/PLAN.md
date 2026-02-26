@@ -14,7 +14,7 @@ compress-concepts-md (decomposed)
 - plugin/concepts/subagent-delegation.md
 - plugin/concepts/token-warning.md
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All 3 files compressed
 - [ ] All files score 1.0 on /compare-docs validation
 - [ ] Tests pass

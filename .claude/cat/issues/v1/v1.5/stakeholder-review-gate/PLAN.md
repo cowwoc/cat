@@ -20,6 +20,6 @@ Each stakeholder reviews implementation and returns concerns with severity
 Loops back to implementation phase until concerns resolved or max iterations.
 Integrates between token check and user approval gate in execute-task.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

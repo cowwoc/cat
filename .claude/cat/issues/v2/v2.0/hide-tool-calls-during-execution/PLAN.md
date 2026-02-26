@@ -72,7 +72,7 @@ Claude Code automatically displays tool calls to users. CAT cannot directly hide
 - skills/token-report/SKILL.md - Minimize bash calls
 - references/workflow-output.md (new) - Document output conventions
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Each workflow phase starts with clear progress message
 - [ ] File reads batched where possible (1 read vs 5 sequential)
 - [ ] Progress indicators use consistent format (◐ ◑ ◒ ◓ or similar)
