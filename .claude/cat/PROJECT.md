@@ -19,7 +19,7 @@ decomposition to prevent context overflow.
 - Stakeholder review system (architect, security, quality, tester, performance)
 - Learn-from-mistakes workflow with retrospectives
 - Git safety validation and linear history enforcement
-- User preference system (trust, curiosity, patience)
+- User preference system (trust, effort, patience)
 - Interactive and YOLO execution modes
 
 ### Active
@@ -104,7 +104,7 @@ See `plugin/concepts/rules-audience.md` for full documentation.
 These preferences shape how CAT makes autonomous decisions:
 
 - **Trust Level:** medium - trust routine calls, review key decisions
-- **Curiosity:** low - stay focused on the task
+- **Effort:** medium - explore alternatives and note trade-offs
 - **Patience:** medium - grab low-hanging fruit, note the rest
 
 Update anytime with: `/cat:config`

@@ -2,7 +2,7 @@
   "terminalWidth": 50,
   "trust": "medium",
   "verify": "all",
-  "curiosity": "high",
+  "effort": "high",
   "patience": "medium",
   "autoRemoveWorktrees": true,
   "minSeverity": "low"
