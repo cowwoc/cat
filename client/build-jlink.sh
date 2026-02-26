@@ -300,6 +300,8 @@ generate_startup_archives() {
   # Uses a single AotTraining class that exercises all handlers in one JVM invocation,
   # replacing 20 separate JVM launches (~19s -> ~1s).
   log "Recording AOT training data..."
+  # Set environment variables required by MainJvmScope so handlers can initialize.
+  CLAUDE_PROJECT_DIR="${PROJECT_DIR%/*}" CLAUDE_PLUGIN_ROOT="${PROJECT_DIR%/*}/plugin" \
   "$java_bin" \
     -XX:AOTMode=record \
     -XX:AOTConfiguration="$aot_config" \
