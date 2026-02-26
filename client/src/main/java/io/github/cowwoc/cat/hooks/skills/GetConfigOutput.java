@@ -80,7 +80,7 @@ public final class GetConfigOutput implements SkillOutput
 
     String trust = config.getTrust().toString();
     String verify = config.getVerify().toString();
-    String curiosity = config.getCuriosity().toString();
+    String effort = config.getEffort().toString();
     String patience = config.getPatience().toString();
     boolean autoRemove = config.getBoolean("autoRemoveWorktrees", true);
 
@@ -97,7 +97,7 @@ public final class GetConfigOutput implements SkillOutput
         "",
         "  🤝 Trust: " + trust,
         "  ✅ Verify: " + verify,
-        "  🔍 Curiosity: " + curiosity,
+        "  💪 Effort: " + effort,
         "  ⏳ Patience: " + patience,
         "  🧹 Cleanup: " + cleanupDisplay,
         ""));

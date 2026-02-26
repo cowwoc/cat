@@ -7,7 +7,7 @@
 package io.github.cowwoc.cat.hooks;
 
 import io.github.cowwoc.cat.hooks.util.ConcernSeverity;
-import io.github.cowwoc.cat.hooks.util.CuriosityLevel;
+import io.github.cowwoc.cat.hooks.util.EffortLevel;
 import io.github.cowwoc.cat.hooks.util.PatienceLevel;
 import io.github.cowwoc.cat.hooks.util.TrustLevel;
 import io.github.cowwoc.cat.hooks.util.VerifyLevel;
@@ -57,7 +57,7 @@ public final class Config
     defaults.put("autoRemoveWorktrees", true);
     defaults.put("trust", "medium");
     defaults.put("verify", "changed");
-    defaults.put("curiosity", "low");
+    defaults.put("effort", "medium");
     defaults.put("patience", "high");
     defaults.put("terminalWidth", 120);
     defaults.put("completionWorkflow", "merge");
@@ -254,14 +254,14 @@ public final class Config
   }
 
   /**
-   * Get the curiosity level.
+   * Get the effort level.
    *
-   * @return the parsed {@link CuriosityLevel} (defaults to {@link CuriosityLevel#LOW} if not configured)
-   * @throws IllegalArgumentException if the configured value is not a recognized curiosity level
+   * @return the parsed {@link EffortLevel} (defaults to {@link EffortLevel#MEDIUM} if not configured)
+   * @throws IllegalArgumentException if the configured value is not a recognized effort level
    */
-  public CuriosityLevel getCuriosity()
+  public EffortLevel getEffort()
   {
-    return CuriosityLevel.fromString(getString("curiosity", "low"));
+    return EffortLevel.fromString(getString("effort", "medium"));
   }
 
   /**

@@ -210,7 +210,7 @@ public class GetInitOutputTest
       String result = handler.getCatInitialized("high", "medium", "low");
 
       requireThat(result, "result").contains("Trust: high").
-        contains("Curiosity: medium").contains("Patience: low");
+        contains("Effort: medium").contains("Patience: low");
     }
   }
 

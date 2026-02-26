@@ -561,6 +561,21 @@ done
 
 # Also prepare full diff for supplementary context (smaller context for overview)
 DIFF_SUMMARY=$(git diff "${BASE_BRANCH}..HEAD" -U3 2>/dev/null || git diff --cached -U3)
+
+# Read effort level from cat-config.json to determine review scope
+CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json"
+EFFORT="medium"  # default
+if [[ -f "$CONFIG_FILE" ]]; then
+    EFFORT=$(grep '"effort"' "$CONFIG_FILE" | sed 's/.*"effort"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+    EFFORT="${EFFORT:-medium}"
+fi
+
+case "$EFFORT" in
+    low)    REVIEW_SCOPE="Review changed lines only. Flag obvious issues visible in the diff." ;;
+    medium) REVIEW_SCOPE="Review changed lines and their surrounding context (functions, classes containing the change). Flag issues that arise from the interaction between new and existing code." ;;
+    high)   REVIEW_SCOPE="Review the broader impact on surrounding code. Flag pre-existing issues in any file you read, not just the changed lines. Consider systemic effects across the codebase." ;;
+    *)      REVIEW_SCOPE="Review changed lines only. Flag obvious issues visible in the diff." ;;
+esac
 ```
 
 **Holistic context enables:**
@@ -729,6 +744,9 @@ not domain-specific importance:
 **Calibration rule:** A CRITICAL from any stakeholder should have roughly equivalent urgency — e.g., a
 CRITICAL security concern (exploitable vulnerability) and a CRITICAL architecture concern (breaks system
 invariant) both warrant blocking the merge. If your concern wouldn't block a release, it's not CRITICAL.
+
+## Review Scope
+{REVIEW_SCOPE}
 
 ## Review Criteria
 1. Review the implementation against your stakeholder criteria

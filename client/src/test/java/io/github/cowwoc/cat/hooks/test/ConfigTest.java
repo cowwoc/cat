@@ -10,7 +10,7 @@ import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetConfigOutput;
 import io.github.cowwoc.cat.hooks.util.ConcernSeverity;
-import io.github.cowwoc.cat.hooks.util.CuriosityLevel;
+import io.github.cowwoc.cat.hooks.util.EffortLevel;
 import io.github.cowwoc.cat.hooks.util.PatienceLevel;
 import io.github.cowwoc.cat.hooks.util.TrustLevel;
 import io.github.cowwoc.cat.hooks.util.VerifyLevel;
@@ -209,7 +209,7 @@ public class ConfigTest
       requireThat(values.get("trust"), "trust").isEqualTo("medium");
       requireThat(values.get("verify"), "verify").isEqualTo("changed");
       requireThat(values.get("autoRemoveWorktrees"), "autoRemoveWorktrees").isEqualTo(true);
-      requireThat(values.get("curiosity"), "curiosity").isEqualTo("low");
+      requireThat(values.get("effort"), "effort").isEqualTo("medium");
       requireThat(values.get("patience"), "patience").isEqualTo("high");
       requireThat(values.get("terminalWidth"), "terminalWidth").isEqualTo(120);
       requireThat(values.get("completionWorkflow"), "completionWorkflow").isEqualTo("merge");
@@ -238,7 +238,7 @@ public class ConfigTest
         {
           "trust": "high",
           "verify": "all",
-          "curiosity": "medium",
+          "effort": "medium",
           "patience": "low",
           "autoRemoveWorktrees": false
         }
@@ -250,9 +250,10 @@ public class ConfigTest
       requireThat(result, "result").contains("CURRENT SETTINGS");
       requireThat(result, "result").contains("Trust: high");
       requireThat(result, "result").contains("Verify: all");
-      requireThat(result, "result").contains("Curiosity: medium");
+      requireThat(result, "result").contains("Effort: medium");
       requireThat(result, "result").contains("Patience: low");
       requireThat(result, "result").contains("Keep");
+      requireThat(result, "result").doesNotContain("Curiosity");
     }
     finally
     {
@@ -793,10 +794,10 @@ public class ConfigTest
   }
 
   /**
-   * Verifies that getCuriosity() returns LOW by default when the config file is missing.
+   * Verifies that getEffort() returns MEDIUM by default when the config file is missing.
    */
   @Test
-  public void getCuriosityDefaultsToLow() throws IOException
+  public void getEffortDefaultsToMedium() throws IOException
   {
     Path tempDir = createTempDir();
     try (JvmScope scope = new TestJvmScope())
@@ -804,7 +805,7 @@ public class ConfigTest
       JsonMapper mapper = scope.getJsonMapper();
       Config config = Config.load(mapper, tempDir);
 
-      requireThat(config.getCuriosity(), "curiosity").isEqualTo(CuriosityLevel.LOW);
+      requireThat(config.getEffort(), "effort").isEqualTo(EffortLevel.MEDIUM);
     }
     finally
     {
@@ -813,10 +814,10 @@ public class ConfigTest
   }
 
   /**
-   * Verifies that getCuriosity() parses "high" from the config file correctly.
+   * Verifies that getEffort() parses "high" from the config file correctly.
    */
   @Test
-  public void getCuriosityParsesHighFromConfig() throws IOException
+  public void getEffortParsesHighFromConfig() throws IOException
   {
     Path tempDir = createTempDir();
     try (JvmScope scope = new TestJvmScope())
@@ -826,13 +827,13 @@ public class ConfigTest
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
         {
-          "curiosity": "high"
+          "effort": "high"
         }
         """);
 
       Config config = Config.load(mapper, tempDir);
 
-      requireThat(config.getCuriosity(), "curiosity").isEqualTo(CuriosityLevel.HIGH);
+      requireThat(config.getEffort(), "effort").isEqualTo(EffortLevel.HIGH);
     }
     finally
     {
@@ -841,11 +842,39 @@ public class ConfigTest
   }
 
   /**
-   * Verifies that getCuriosity() throws IllegalArgumentException for an unrecognized curiosity value in the config
+   * Verifies that getEffort() parses "medium" from the config file correctly.
+   */
+  @Test
+  public void getEffortParsesMediumFromConfig() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), """
+        {
+          "effort": "medium"
+        }
+        """);
+
+      Config config = Config.load(mapper, tempDir);
+
+      requireThat(config.getEffort(), "effort").isEqualTo(EffortLevel.MEDIUM);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getEffort() throws IllegalArgumentException for an unrecognized effort value in the config
    * file.
    */
   @Test(expectedExceptions = IllegalArgumentException.class)
-  public void getCuriosityThrowsForInvalidValue() throws IOException
+  public void getEffortThrowsForInvalidValue() throws IOException
   {
     Path tempDir = createTempDir();
     try (JvmScope scope = new TestJvmScope())
@@ -855,12 +884,12 @@ public class ConfigTest
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
         {
-          "curiosity": "unknown"
+          "effort": "unknown"
         }
         """);
 
       Config config = Config.load(mapper, tempDir);
-      config.getCuriosity();
+      config.getEffort();
     }
     finally
     {

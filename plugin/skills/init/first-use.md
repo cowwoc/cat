@@ -457,7 +457,7 @@ AskUserQuestion: header="Trust", question="How do you prefer to work together?",
   "🏹 Autonomous - let the partner lead, step in when critical"
 ]
 
-AskUserQuestion: header="Curiosity", question="How should your partner handle discoveries?", options=[
+AskUserQuestion: header="Effort", question="How should your partner handle discoveries?", options=[
   "🎯 Focused - stay on the issue, ignore tangents",
   "🗺️ Observant - note interesting finds, but stay on mission (Recommended)",
   "🔮 Thorough - explore every corner, document all discoveries"
@@ -471,7 +471,7 @@ AskUserQuestion: header="Patience", question="When your partner spots an opportu
 
 Map responses to preference values:
 - Trust: low | medium | high
-- Curiosity: low | medium | high
+- Effort: low | medium | high
 - Patience: high | medium | low
 
 </step>
@@ -580,7 +580,7 @@ Create `.claude/cat/cat-config.json`:
   "last_migrated_version": "[CAT_VERSION from above]",
   "trust": "[low|medium|high]",
   "verify": "changed",
-  "curiosity": "[low|medium|high]",
+  "effort": "[low|medium|high]",
   "patience": "[high|medium|low]",
   "gitWorkflow": {
     "branchingStrategy": "[main-only|feature|version]",
@@ -852,7 +852,7 @@ paths: ["*.java"]      # default: always (omit to always inject)
 These preferences shape how CAT makes autonomous decisions:
 
 - **Trust Level:** [low|medium|high] - review frequency
-- **Curiosity:** [low|medium|high] - exploration beyond immediate issue
+- **Effort:** [low|medium|high] - exploration beyond immediate issue
 - **Patience:** [high|medium|low] - tolerance for opportunistic improvements
 
 Update anytime with: `/cat:config`
@@ -872,7 +872,7 @@ git commit -m "docs: initialize CAT planning structure"
 <step name="done">
 
 Use the **cat_initialized** box from `<output skill="init">`.
-Replace `{trust}`, `{curiosity}`, `{patience}` with actual preference values.
+Replace `{trust}`, `{effort}`, `{patience}` with actual preference values.
 
 **If `<output skill="init">` not found:**
 ```

@@ -20,7 +20,8 @@ set -euo pipefail
 #    "## Gates" / "### Entry" / "### Exit" → "## Pre-conditions" / "## Post-conditions"
 #    "## Entry Gate" / "## Exit Gate" → "## Pre-conditions" / "## Post-conditions"
 #    "## Exit Gate Tasks" → "## Post-conditions"
-# 5. Create .claude/cat/.gitignore with patterns for temporary files if missing;
+# 5. Rename "curiosity" config key to "effort" in existing cat-config.json files
+# 6. Create .claude/cat/.gitignore with patterns for temporary files if missing;
 #    if it exists, add any missing patterns (/worktrees/, /locks/, /verify/)
 
 trap 'echo "ERROR in 2.1.sh at line $LINENO: $BASH_COMMAND" >&2; exit 1' ERR
@@ -437,10 +438,30 @@ else
 fi
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Phase 5: Create or update .claude/cat/.gitignore with patterns for temp files
+# Phase 5: Rename "curiosity" to "effort" in cat-config.json
 # ──────────────────────────────────────────────────────────────────────────────
 
-log_migration "Phase 5: Create or update .claude/cat/.gitignore"
+log_migration "Phase 5: Rename curiosity → effort in cat-config.json"
+
+config_file=".claude/cat/cat-config.json"
+
+if [[ ! -f "$config_file" ]]; then
+    log_migration "No config file found - skipping phase 5"
+else
+    if grep -q '"curiosity"' "$config_file" 2>/dev/null; then
+        log_migration "Found curiosity key - renaming to effort"
+        sed -i 's/"curiosity"/"effort"/g' "$config_file"
+        log_migration "Phase 5 complete: renamed curiosity → effort"
+    else
+        log_migration "No curiosity key found - skipping phase 5"
+    fi
+fi
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase 6: Create or update .claude/cat/.gitignore with patterns for temp files
+# ──────────────────────────────────────────────────────────────────────────────
+
+log_migration "Phase 6: Create or update .claude/cat/.gitignore"
 
 gitignore_file=".claude/cat/.gitignore"
 gitignore_template="${CLAUDE_PLUGIN_ROOT}/concepts/.gitignore-template"
@@ -457,7 +478,7 @@ if [[ ! -f "$gitignore_file" ]]; then
     log_migration "Phase 5 complete: created $gitignore_file"
 else
     log_migration ".gitignore exists - checking for missing patterns"
-    phase5_changed=0
+    phase6_changed=0
 
     # Extract patterns from template (non-comment, non-empty lines)
     patterns=$(grep -v '^#' "$gitignore_template" | grep -v '^[[:space:]]*$' | sed 's/#.*//' | sed 's/[[:space:]]*$//')
@@ -467,14 +488,14 @@ else
         if ! grep -qF "$pattern" "$gitignore_file" 2>/dev/null; then
             printf '%s\n' "$pattern" >> "$gitignore_file"
             log_migration "  Added missing pattern: $pattern"
-            ((phase5_changed++)) || true
+            ((phase6_changed++)) || true
         fi
     done <<< "$patterns"
 
-    if [[ "$phase5_changed" -eq 0 ]]; then
-        log_migration "Phase 5 complete: all patterns already present"
+    if [[ "$phase6_changed" -eq 0 ]]; then
+        log_migration "Phase 6 complete: all patterns already present"
     else
-        log_migration "Phase 5 complete: added $phase5_changed missing patterns"
+        log_migration "Phase 6 complete: added $phase6_changed missing patterns"
     fi
 fi
 
