@@ -44,15 +44,24 @@ public final class StatuslineCommand
 {
   // ANSI color codes
   private static final String RESET = "\033[0m";
-  private static final String BOLD = "\033[1m";
-  private static final String DIM = "\033[2m";
-  private static final String GREEN = "\033[32m";
-  private static final String YELLOW = "\033[33m";
-  private static final String RED = "\033[31m";
-  private static final String CYAN = "\033[36m";
-  private static final String GRAY = "\033[90m";
 
-  private static final int USAGE_BAR_SEGMENTS = 10;
+  // RGB color codes for components
+  private static final String WORKTREE_COLOR = "\033[38;2;255;255;255m";  // Bright White
+  private static final String MODEL_COLOR = "\033[38;2;220;150;9m";       // Warm Gold
+  private static final String TIME_COLOR = "\033[38;2;255;127;80m";       // Coral
+  private static final String SESSION_COLOR = "\033[38;2;147;112;219m";   // Medium Purple
+
+  // Separator color
+  private static final String SEPARATOR_COLOR = "\033[38;2;64;64;64m";    // Dark Gray
+
+  private static final int USAGE_BAR_SEGMENTS = 20;
+
+  // Component emojis
+  private static final String WORKTREE_EMOJI = "🌿";
+  private static final String MODEL_EMOJI = "🤖";
+  private static final String TIME_EMOJI = "⏰";
+  private static final String SESSION_EMOJI = "🆔";
+  private static final String USAGE_EMOJI = "📊";
 
   private final JsonMapper mapper;
 
@@ -79,6 +88,22 @@ public final class StatuslineCommand
    * @throws IOException          if an I/O error occurs reading from the input stream
    */
   public void execute(InputStream inputStream, PrintStream outputStream) throws IOException
+  {
+    execute(inputStream, outputStream, null);
+  }
+
+  /**
+   * Reads JSON from the input stream and writes the formatted statusline to the output stream.
+   * <p>
+   * On input parse failure or missing fields, defaults are used for graceful degradation.
+   *
+   * @param inputStream  the input stream providing JSON data
+   * @param outputStream the output stream to write the statusline to
+   * @param directory    the directory to use for git operations, or {@code null} to use the current working directory
+   * @throws NullPointerException if {@code inputStream} or {@code outputStream} are null
+   * @throws IOException          if an I/O error occurs reading from the input stream
+   */
+  public void execute(InputStream inputStream, PrintStream outputStream, Path directory) throws IOException
   {
     requireThat(inputStream, "inputStream").isNotNull();
     requireThat(outputStream, "outputStream").isNotNull();
@@ -136,21 +161,19 @@ public final class StatuslineCommand
       usedPercentage = 100;
 
     // Get git info (graceful degradation if not in git repo)
-    String gitInfo = getGitInfo(null);
+    String gitInfo = getGitInfo(directory);
 
     // Format duration
     String duration = formatDuration(totalDurationMs);
 
-    // Session ID (first 8 chars), sanitized against ANSI injection
-    String shortSessionId;
-    if (sessionId.length() > 8)
-      shortSessionId = sessionId.substring(0, 8);
-    else
-      shortSessionId = sessionId;
-    shortSessionId = sanitizeForTerminal(shortSessionId);
+    // Session ID, sanitized against ANSI injection
+    String displaySessionId = sanitizeForTerminal(sessionId);
 
     // Sanitize display name against ANSI injection
     displayName = sanitizeForTerminal(displayName);
+
+    // Calculate scaled usage percentage
+    int contextPct = Math.min(100, (usedPercentage * 1000) / 835);
 
     // Usage color
     String usageColor = getUsageColor(usedPercentage);
@@ -158,20 +181,27 @@ public final class StatuslineCommand
     // Usage bar
     String usageBar = createUsageBar(usedPercentage);
 
-    outputStream.println(CYAN + BOLD + gitInfo + RESET + " " + GRAY + "|" + RESET + " " +
-      DIM + displayName + RESET + " " + GRAY + "|" + RESET + " " +
-      DIM + "⏱ " + duration + RESET + " " + GRAY + "|" + RESET + " " +
-      DIM + "📋 " + shortSessionId + RESET + " " + GRAY + "|" + RESET + " " +
-      usageColor + usageBar + " " + usedPercentage + "%" + RESET);
+    // Format the statusline with component emojis and colors
+    String statusline = WORKTREE_COLOR + WORKTREE_EMOJI + " " + gitInfo + RESET + " " +
+      SEPARATOR_COLOR + "|" + RESET + " " +
+      MODEL_COLOR + MODEL_EMOJI + " " + displayName + RESET + " " +
+      SEPARATOR_COLOR + "|" + RESET + " " +
+      TIME_COLOR + TIME_EMOJI + " " + duration + RESET + " " +
+      SEPARATOR_COLOR + "|" + RESET + " " +
+      SESSION_COLOR + SESSION_EMOJI + " " + displaySessionId + RESET + " " +
+      SEPARATOR_COLOR + "|" + RESET + " " +
+      usageColor + USAGE_EMOJI + " " + usageBar + " " + String.format("%3d%%", contextPct) + RESET;
+
+    outputStream.println(statusline);
   }
 
   /**
-   * Gets the git branch or worktree name for the given directory (or current directory if null).
+   * Gets the repository directory name for the given directory (or current directory if null).
    * <p>
    * Returns "N/A" if not in a git repository.
    *
    * @param directory the directory to check, or {@code null} to use the current working directory
-   * @return the git info string
+   * @return the git info string (repository directory name)
    */
   String getGitInfo(Path directory)
   {
@@ -186,44 +216,28 @@ public final class StatuslineCommand
       if (!"true".equals(checkOutput))
         return "N/A";
 
-      // Get current branch
-      String branch;
+      // Get the top-level directory of the repository
+      String topLevel;
       if (directory != null)
-        branch = GitCommands.runGit(directory, "branch", "--show-current");
+        topLevel = GitCommands.runGit(directory, "rev-parse", "--show-toplevel");
       else
-        branch = GitCommands.runGit("branch", "--show-current");
-      if (branch.isEmpty())
-        branch = "detached";
+        topLevel = GitCommands.runGit("rev-parse", "--show-toplevel");
 
-      // Check if we're in a worktree (git-dir contains "worktrees")
-      String gitDir;
-      if (directory != null)
-        gitDir = GitCommands.runGit(directory, "rev-parse", "--git-dir");
+      if (topLevel.isEmpty())
+        return "N/A";
+
+      // Extract the directory name (basename)
+      int lastSlash = topLevel.lastIndexOf('/');
+      String dirName;
+      if (lastSlash >= 0)
+        dirName = topLevel.substring(lastSlash + 1);
       else
-        gitDir = GitCommands.runGit("rev-parse", "--git-dir");
+        dirName = topLevel;
 
-      if (gitDir.contains("worktrees"))
-      {
-        // Get worktree name from top-level directory
-        String topLevel;
-        if (directory != null)
-          topLevel = GitCommands.runGit(directory, "rev-parse", "--show-toplevel");
-        else
-          topLevel = GitCommands.runGit("rev-parse", "--show-toplevel");
-        if (!topLevel.isEmpty())
-        {
-          int lastSlash = topLevel.lastIndexOf('/');
-          String worktreeName;
-          if (lastSlash >= 0)
-            worktreeName = topLevel.substring(lastSlash + 1);
-          else
-            worktreeName = topLevel;
-          if (!worktreeName.isEmpty())
-            return worktreeName;
-        }
-      }
+      if (dirName.isEmpty())
+        return "N/A";
 
-      return branch;
+      return dirName;
     }
     catch (IOException _)
     {
@@ -232,45 +246,56 @@ public final class StatuslineCommand
   }
 
   /**
-   * Formats a duration in milliseconds to a human-readable string.
-   * <p>
-   * Format examples: "45s", "3m30s", "1h2m".
+   * Formats a duration in milliseconds to HH:MM format.
    *
    * @param milliseconds the duration in milliseconds
-   * @return the formatted duration string
+   * @return the formatted duration string in HH:MM format
    */
   private String formatDuration(long milliseconds)
   {
-    long seconds = milliseconds / 1000;
-    long minutes = seconds / 60;
-    long hours = minutes / 60;
+    long totalSeconds = milliseconds / 1000;
+    long hours = totalSeconds / 3600;
+    long minutes = (totalSeconds % 3600) / 60;
 
-    if (hours > 0)
-      return hours + "h" + (minutes % 60) + "m";
-    if (minutes > 0)
-      return minutes + "m" + (seconds % 60) + "s";
-    return seconds + "s";
+    return String.format("%02d:%02d", hours, minutes);
   }
 
   /**
-   * Returns the ANSI color code for the given usage percentage.
+   * Returns the RGB color code for the given usage percentage.
    * <p>
-   * Red above 80%, yellow between 50% and 80%, green below or equal to 50%.
+   * Colors scale from green (0%) to red (100%), with a non-linear scaling
+   * where 83.5% raw becomes 100% scaled.
    *
    * @param percentage the usage percentage (0-100)
-   * @return the ANSI color escape code string
+   * @return the RGB color escape code string
    */
   private String getUsageColor(int percentage)
   {
-    if (percentage > 80)
-      return RED;
-    if (percentage > 50)
-      return YELLOW;
-    return GREEN;
+    // Scale: contextPct = (used% * 1000) / 835, clamped to 0-100
+    int contextPct = Math.min(100, (percentage * 1000) / 835);
+
+    if (contextPct >= 80)
+    {
+      // Red above 80%
+      int red = 255;
+      int green = Math.max(0, (int) ((100 - contextPct) * 255.0 / 50));
+      return "\033[38;2;" + red + ";" + green + ";0m";
+    }
+    if (contextPct >= 50)
+    {
+      // Orange-red between 50% and 80%
+      int red = 255;
+      int green = (int) ((100 - contextPct) * 255.0 / 50);
+      return "\033[38;2;" + red + ";" + green + ";0m";
+    }
+    // Green-yellow below 50%
+    int red = (int) (contextPct * 255.0 / 50);
+    int green = 255;
+    return "\033[38;2;" + red + ";" + green + ";0m";
   }
 
   /**
-   * Creates a 10-segment usage bar using block characters.
+   * Creates a 20-segment usage bar using block characters.
    * <p>
    * Filled segments use "█" and empty segments use "░".
    *
@@ -279,7 +304,10 @@ public final class StatuslineCommand
    */
   private String createUsageBar(int percentage)
   {
-    int filled = percentage / USAGE_BAR_SEGMENTS;
+    // Scale: contextPct = (used% * 1000) / 835, clamped to 0-100
+    int contextPct = Math.min(100, (percentage * 1000) / 835);
+    int filled = (contextPct * USAGE_BAR_SEGMENTS) / 100;
+
     StringBuilder bar = new StringBuilder(USAGE_BAR_SEGMENTS);
     for (int i = 0; i < USAGE_BAR_SEGMENTS; ++i)
     {
@@ -294,7 +322,31 @@ public final class StatuslineCommand
   /**
    * Strips control characters from a string to prevent ANSI injection in terminal output.
    * <p>
-   * Removes characters with code points below U+0020 (except newline U+000A) and U+007F (DEL).
+   * This method protects against ANSI injection attacks where untrusted input (e.g., model name,
+   * session ID from external sources) could contain escape sequences that manipulate terminal behavior.
+   * Potential attacks include:
+   * <ul>
+   *   <li><b>Cursor movement:</b> Sequences like ESC[H move the cursor, allowing attackers to overwrite
+   *       previous output and spoof system messages (e.g., hiding an error to make output look successful)</li>
+   *   <li><b>Screen clearing:</b> Sequences like ESC[2J clear the screen, destroying legitimate output</li>
+   *   <li><b>Text attribute injection:</b> Sequences like ESC[0m (RESET) or ESC[1m (BOLD) manipulate colors
+   *       and text styling to hide malicious content or mislead users</li>
+   *   <li><b>Terminal emulator exploits:</b> Control sequences can trigger vulnerabilities in specific
+   *       terminal emulators (e.g., xterm, iTerm2)</li>
+   *   <li><b>Output spoofing:</b> Attackers inject sequences to make malicious output appear to be
+   *       legitimate system output by matching the statusline format</li>
+   * </ul>
+   * <p>
+   * This method removes all C0 control characters (code points U+0000 to U+001F, except newline U+000A)
+   * and DEL (U+007F). This blocks the ESC character (U+001B) which initiates most ANSI escape sequences,
+   * plus other control characters with special terminal meanings (bell, backspace, tab, etc.).
+   * <p>
+   * Removed characters include:
+   * <ul>
+   *   <li>U+001B (ESC) - initiates ANSI escape sequences</li>
+   *   <li>U+0000-U+0008, U+000B-U+001F - various C0 controls</li>
+   *   <li>U+007F (DEL) - recognized as control by some terminals</li>
+   * </ul>
    *
    * @param value the string to sanitize
    * @return the sanitized string with control characters removed
