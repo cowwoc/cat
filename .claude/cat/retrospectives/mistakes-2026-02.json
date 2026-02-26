@@ -2065,6 +2065,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When a mistake is a recurrence, complete independent RCA by reading source files directly before consulting past mistake entries. The independent root cause must be documented in Step 4b-R before Step 4d recurrence tooling is accessible."
+    },
+    {
+      "id": "M417",
+      "timestamp": "2026-02-27T11:17:24Z",
+      "category": "protocol_violation",
+      "description": "Interactive rebase dropped STATE.md changes from pre-squash-range commit, regressing closed issue back to open",
+      "root_cause": "git-squash skill STATE.md regression check only existed for Quick Workflow, not Interactive Rebase Workflow. When commits outside the squash range are dropped during interactive rebase, the post-squash git diff check may miss STATE.md regressions.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/git-squash/first-use.md",
+      "pattern_keywords": [
+        "state-regression",
+        "interactive-rebase",
+        "STATE.md",
+        "squash",
+        "closed-issue"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "After any interactive rebase that drops or squashes commits, run STATE.md regression check comparing backup branch STATE.md status fields against current; fail if any closed issue regressed to open"
     }
   ]
 }
