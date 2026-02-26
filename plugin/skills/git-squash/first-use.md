@@ -162,40 +162,52 @@ commit but on-disk files will differ from HEAD. The `git status --porcelain` che
 
 **Use when commits to squash have other commits after them.**
 
+### Safer Two-Step Approach (MANDATORY when Dropping AND Squashing)
+
+**When you need to both DROP and SQUASH commits in the middle of history, do NOT combine them into one operation.**
+
+Why: Complex interactive rebases that both drop and squash commits can silently lose content from commits before the squash range. The tree-building process doesn't properly preserve all file changes.
+
+**Instead, use two separate operations:**
+
+#### Step 1: Drop Unwanted Commits (Simple Rebase)
+
+```bash
+# First, remove commits you don't want using a simple rebase
+# This is a straightforward operation with minimal risk
+COMMITS_TO_DROP="ccfd263f 06635253"  # List the commits to remove
+BASE=$(git rev-parse main)  # or your base branch
+
+# Create backup
+BACKUP="backup-before-drop-$(date +%Y%m%d-%H%M%S)"
+git branch "$BACKUP"
+
+# Simple rebase to drop the commits
+# List all commits you want to KEEP (inverse of drop list)
+git rebase $BASE  # This starts with the commits to drop already excluded
+
+# Verify
+git diff "$BACKUP"  # Should be empty (or only show dropped commits removed)
+```
+
+#### Step 2: Squash Remaining Commits (Separate Operation)
+
+After dropping unwanted commits, NOW use the Interactive Rebase Workflow below to squash the commits you want to combine.
+
+**Benefits of this approach:**
+- Simple rebase for dropping: easy to verify, low risk
+- Separate squash operation: tree-building is clean and predictable
+- Prevents any file loss (not just STATE.md-specific)
+- Each step is independently verifiable
+
 ### Safety Pattern: Backup-Verify-Cleanup
 
-**ALWAYS follow this pattern:**
+**ALWAYS follow this pattern for the squash operation:**
 1. Create timestamped backup branch
 2. Execute the rebase
 3. Handle conflicts if any
 4. **Verify immediately** - no changes lost or added
 5. Cleanup backup only after verification passes
-
-### STATE.md Regression Check (MANDATORY after Interactive Rebase)
-
-After any interactive rebase that drops or squashes commits, verify no STATE.md file regressed from `closed` to
-`open`. A dropped commit can silently remove STATE.md changes even when the overall diff appears clean.
-
-```bash
-# After interactive rebase completes, check for STATE.md regressions
-RETRO_FILES=$(git diff "$BACKUP" --name-only -- "*.STATE.md" "**/STATE.md" 2>/dev/null | head -20)
-for state_file in $(find . -name "STATE.md" -path "*/.claude/cat/issues/*" 2>/dev/null); do
-    # Get status in backup (before squash)
-    BACKUP_STATUS=$(git show "$BACKUP":"${state_file#./}" 2>/dev/null | grep "^status:" | head -1 | sed 's/status: *//')
-    # Get current status (after squash)
-    CURRENT_STATUS=$(grep "^status:" "$state_file" 2>/dev/null | head -1 | sed 's/status: *//')
-
-    if [[ "$BACKUP_STATUS" == "closed" && "$CURRENT_STATUS" != "closed" ]]; then
-        echo "ERROR: STATE.md regression detected: $state_file"
-        echo "  Before squash: status=$BACKUP_STATUS"
-        echo "  After squash:  status=$CURRENT_STATUS"
-        echo "Restore from backup: git reset --hard \$BACKUP"
-        echo "Or manually restore: git show \$BACKUP:${state_file#./} > $state_file && git add $state_file"
-        exit 1
-    fi
-done
-echo "STATE.md regression check passed."
-```
 
 ### Interactive Rebase Steps
 
