@@ -99,6 +99,43 @@ public final class StateSchemaValidatorTest
   }
 
   /**
+   * Verifies that a valid blocked STATE.md file is accepted.
+   */
+  @Test
+  public void validBlockedStateIsAccepted() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String content = """
+        # State
+
+        - **Status:** blocked
+        - **Progress:** 25%
+        - **Dependencies:** [v2.1-other-issue]
+        - **Blocks:** []
+        - **Last Updated:** 2026-02-12
+        """;
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("content", content);
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.reason(), "reason").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that a valid closed STATE.md file with resolution is accepted.
    */
   @Test

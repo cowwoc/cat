@@ -270,7 +270,7 @@ public class IssueCreatorTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -304,7 +304,7 @@ public class IssueCreatorTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -362,7 +362,7 @@ public class IssueCreatorTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -395,7 +395,7 @@ public class IssueCreatorTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -430,26 +430,7 @@ public class IssueCreatorTest
     {
       if (madeReadOnly)
         versionDir.toFile().setWritable(true);
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
-  }
-
-  /**
-   * Recursively deletes a directory.
-   *
-   * @param path the directory to delete
-   * @throws IOException if deletion fails
-   */
-  private void deleteRecursively(Path path) throws IOException
-  {
-    if (Files.isDirectory(path))
-    {
-      try (java.util.stream.Stream<Path> stream = Files.list(path))
-      {
-        for (Path child : stream.toList())
-          deleteRecursively(child);
-      }
-    }
-    Files.deleteIfExists(path);
   }
 }

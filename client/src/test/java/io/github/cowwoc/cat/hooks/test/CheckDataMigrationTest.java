@@ -19,36 +19,6 @@ import org.testng.annotations.Test;
 public final class CheckDataMigrationTest
 {
   /**
-   * Recursively deletes a directory and all its contents.
-   *
-   * @param dir directory to delete
-   */
-  private void deleteRecursively(Path dir)
-  {
-    try
-    {
-      if (Files.exists(dir))
-      {
-        Files.walk(dir).
-          sorted((a, b) -> -a.compareTo(b)).
-          forEach(path ->
-          {
-            try
-            {
-              Files.deleteIfExists(path);
-            }
-            catch (Exception _)
-            {
-            }
-          });
-      }
-    }
-    catch (Exception _)
-    {
-    }
-  }
-
-  /**
    * Verifies that reading a VERSION file that does not exist returns the default version "0.0.0".
    *
    * @throws IOException if file operations fail
@@ -73,7 +43,7 @@ public final class CheckDataMigrationTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -99,7 +69,7 @@ public final class CheckDataMigrationTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -125,7 +95,7 @@ public final class CheckDataMigrationTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -152,7 +122,7 @@ public final class CheckDataMigrationTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -176,7 +146,7 @@ public final class CheckDataMigrationTest
     }
     finally
     {
-      deleteRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 }

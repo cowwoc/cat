@@ -15,9 +15,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -25,6 +23,7 @@ import java.util.stream.Stream;
 import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.IssueStatus;
 import io.github.cowwoc.cat.hooks.licensing.LicenseResult;
 import io.github.cowwoc.cat.hooks.licensing.LicenseValidator;
 import io.github.cowwoc.cat.hooks.licensing.Tier;
@@ -47,8 +46,8 @@ import org.slf4j.LoggerFactory;
 public final class GetStatusOutput implements SkillOutput
 {
   private static final int MAX_VISIBLE_COMPLETED = 5;
-  private static final Set<String> VALID_STATUSES = Set.of("open", "in-progress", "closed", "blocked");
 
+  private final Logger log = LoggerFactory.getLogger(GetStatusOutput.class);
   private final DisplayUtils display;
   private final JvmScope scope;
   private Map<String, String> branchStatusCache;
@@ -356,21 +355,28 @@ public final class GetStatusOutput implements SkillOutput
 
   /**
    * Parses the status field from STATE.md content.
+   * <p>
+   * Throws IOException if the Status field is missing or contains an unrecognized value,
+   * enforcing canonical status validation at read time.
    *
    * @param content the STATE.md file content
-   * @return the normalized status, or "open" if not found or invalid
+   * @return the parsed status
+   * @throws IOException if the Status field is missing or its value is not a recognized canonical value
    */
-  public String parseStatusFromContent(String content)
+  public String parseStatusFromContent(String content) throws IOException
   {
     Pattern pattern = Pattern.compile("^- \\*\\*Status:\\*\\*\\s*(.+)$", Pattern.MULTILINE);
     Matcher matcher = pattern.matcher(content);
     if (!matcher.find())
-      return "open";
+      throw new IOException("Missing Status field in STATE.md content");
 
-    String rawStatus = matcher.group(1).strip().toLowerCase(Locale.ROOT);
-    if (VALID_STATUSES.contains(rawStatus))
-      return rawStatus;
-    return "open";
+    String rawStatus = matcher.group(1).strip();
+    IssueStatus status = IssueStatus.fromString(rawStatus);
+    if (status != null)
+      return status.toString();
+    throw new IOException("Unknown status '" + rawStatus + "'. Valid values: " +
+      IssueStatus.asCommaSeparated() + ".\n" +
+      "If migrating from older versions, run: plugin/migrations/2.1.sh");
   }
 
   /**
@@ -542,7 +548,7 @@ public final class GetStatusOutput implements SkillOutput
           allMatch(m -> m.completed == m.total && m.total > 0);
       }
 
-      if (major.status.equals("closed") || major.status.equals("done"))
+      if (major.status.equals("closed"))
         allComplete = true;
 
       List<String> innerContent = new ArrayList<>();
@@ -589,7 +595,7 @@ public final class GetStatusOutput implements SkillOutput
 
             for (IssueItem issue : minor.issues)
             {
-              if (issue.status.equals("closed") || issue.status.equals("done"))
+              if (issue.status.equals("closed"))
                 completedIssues.add(issue);
               else
                 nonCompletedIssues.add(issue);
@@ -600,8 +606,7 @@ public final class GetStatusOutput implements SkillOutput
             for (IssueItem issue : nonCompletedIssues)
             {
               String issueEmoji;
-              if (issue.status.equals("in-progress") || issue.status.equals("active") ||
-                  issue.status.equals("in_progress"))
+              if (issue.status.equals("in-progress"))
                 issueEmoji = "🔄";
               else if (!issue.blockedBy.isEmpty())
                 issueEmoji = "🚫";
@@ -759,7 +764,16 @@ public final class GetStatusOutput implements SkillOutput
 
       for (String stateFilePath : changedStateFiles)
       {
-        String status = getStatusFromBranch(projectDir, branch, stateFilePath);
+        String status;
+        try
+        {
+          status = getStatusFromBranch(projectDir, branch, stateFilePath);
+        }
+        catch (IOException e)
+        {
+          log.warn("Skipping branch '{}' file '{}': {}", branch, stateFilePath, e.getMessage());
+          continue;
+        }
         if (!status.isEmpty())
         {
           String issueRelPath = stateFilePath.replace("/STATE.md", "");
