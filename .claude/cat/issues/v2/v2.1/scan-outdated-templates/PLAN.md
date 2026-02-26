@@ -21,7 +21,7 @@ placeholder-based templates that encourage manual construction.
 
 None (infrastructure/cleanup issue)
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] All tests still pass
 - [ ] Code quality improved - no placeholder templates remain

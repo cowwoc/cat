@@ -29,7 +29,7 @@ None - infrastructure/optimization issue
 - `plugin/skills/help/SKILL.md` - Remove manual script fallback, rename terminology
 - `plugin/skills/add/SKILL.md` - Remove manual script fallback, rename terminology
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Behavior unchanged when scripts run correctly
 - [ ] All tests still pass
 - [ ] Skills fail fast if SCRIPT OUTPUT missing (no manual fallback)

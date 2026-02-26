@@ -15,7 +15,7 @@ None - infrastructure/performance task
 ## Files to Modify
 - plugin/commands/add.md - combine Scope + Dependencies + Blocks into single question step
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Scope, Dependencies, and Blocks questions combined into single wizard step
 - [ ] Conditional flows still work (e.g., "Yes, select dependencies" still shows task list)
 - [ ] Wizard completes with fewer user interactions

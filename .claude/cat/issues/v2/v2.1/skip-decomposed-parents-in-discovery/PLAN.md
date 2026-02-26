@@ -37,7 +37,7 @@ on sub-issues instead.
 - [ ] Non-decomposed tasks continue to work normally
 - [ ] "No executable tasks" returned when all sub-issues are blocked
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Script skips tasks with `## Decomposed Into` section in STATE.md
 - [ ] Sub-issues are discovered when their dependencies are satisfied
 - [ ] No regressions in existing task discovery behavior

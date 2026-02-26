@@ -44,7 +44,7 @@ This fails for grep output format `123:{"type":...}` because the line starts wit
    - Expected: No false positive detected
    - Verify: `python3 /workspace/run_tests.py`
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Bug no longer reproducible
 - [ ] Regression test added
 - [ ] Root cause addressed

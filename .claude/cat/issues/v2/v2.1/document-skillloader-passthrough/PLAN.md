@@ -23,6 +23,6 @@ None - documentation
 |------|--------|-------------|
 | `plugin/hooks/README.md` | Modify | Document SkillLoader variable pass-through behavior |
 
-## Success Criteria
+## Post-conditions
 
 - [ ] README documents variable resolution behavior (built-ins, bindings, pass-through for unknowns)

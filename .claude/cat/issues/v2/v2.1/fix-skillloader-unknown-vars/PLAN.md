@@ -46,7 +46,7 @@ No code-fence awareness — Claude Code resolves known variables inside code fen
 | `hooks/src/main/java/.../util/SkillLoader.java` | Modify | Return literal `${varName}` instead of throwing on unknowns |
 | `hooks/src/test/java/.../test/SkillLoaderTest.java` | Modify | Update/add tests for pass-through behavior |
 
-## Success Criteria
+## Post-conditions
 
 - [ ] Unknown `${...}` variables pass through as literals (not errors)
 - [ ] Known variables (`CLAUDE_SESSION_ID`, `CLAUDE_PLUGIN_ROOT`, `CLAUDE_PROJECT_DIR`, bindings) still resolve

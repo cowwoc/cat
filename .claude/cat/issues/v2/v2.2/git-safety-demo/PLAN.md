@@ -17,7 +17,7 @@ None - marketing/documentation task
 - Record demo videos for git safety features
 - Write feature descriptions
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Page showcases /cat:git-rebase command with video
 - [ ] Page showcases /cat:git-squash command with video
 - [ ] Page showcases /cat:git-rewrite-history command with video

@@ -6,6 +6,6 @@ add stop/abort messaging for auto-continue mode
 ## Details
 - feature: add stop/abort messaging for auto-continue mode
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

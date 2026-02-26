@@ -38,19 +38,6 @@ Separate actions from success criteria in PLAN.md template:
 1. Compress files using /cat:shrink-doc
 2. Run /compare-docs validation
 
-## Success Criteria (MEASURABLE OUTCOMES)
-- All files achieve EQUIVALENT status on /compare-docs
-- Token reduction > 30%
-```
-
-Subagent prompts reference Execution Steps; orchestrator verifies Success Criteria.
-
-### Layer 3: Deterministic Scripts
-Move validation/iteration loops to Python scripts that:
-- Run the actual tool and capture output
-- Parse results deterministically
-- Return pass/fail without agent interpretation
-
 ## Execution Steps
 
 1. Create hook script `plugin/hooks/bash_handlers/validate_plan_md.py`
@@ -65,13 +52,19 @@ Move validation/iteration loops to Python scripts that:
 
 4. Validate existing PLAN.md files don't violate new structure
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] Hook blocks PLAN.md with expected values in Execution Steps
 - [ ] PLAN.md template has separate Actions and Success Criteria sections
 - [ ] /cat:add creates issues using new template
 - [ ] All tests pass
 - [ ] No regressions in existing functionality
+
+- All files achieve EQUIVALENT status on /compare-docs
+- Token reduction > 30%
+- Run the actual tool and capture output
+- Parse results deterministically
+- Return pass/fail without agent interpretation
 
 ## Estimated Tokens
 

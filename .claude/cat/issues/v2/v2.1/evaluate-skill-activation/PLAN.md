@@ -44,12 +44,16 @@ None (quality assurance / infrastructure)
 - `tests/eval/results/` - Directory for eval result artifacts
 - `plugin/skills/*/SKILL.md` - Update skill descriptions if activation < 100%
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Eval harness can run test prompts through Claude Code and detect skill activation
 - [ ] Test suite covers all user-invocable CAT skills with at least 2 prompts each
 - [ ] Activation results are reported with per-skill pass/fail breakdown
 - [ ] If activation < 100%, skill definitions are updated and re-evaluated
 - [ ] Eval can be re-run to measure improvement
+
+- [ ] All user-invocable skills achieve 100% activation on standard test prompts
+- [ ] Zero false positives on negative test prompts
+- [ ] Eval harness is reproducible (documented setup, deterministic test cases)
 
 ## Execution Steps
 1. **Inventory user-invocable skills:** List all CAT skills that users can trigger, extract their descriptions
@@ -73,11 +77,6 @@ None (quality assurance / infrastructure)
    activation with zero false positives. Reference:
    https://scottspence.com/posts/measuring-claude-code-skill-activation-with-sandboxed-evals
    - Files: `.claude/settings.json` (hook registration), `plugin/hooks/` (hook handler)
-
-## Success Criteria
-- [ ] All user-invocable skills achieve 100% activation on standard test prompts
-- [ ] Zero false positives on negative test prompts
-- [ ] Eval harness is reproducible (documented setup, deterministic test cases)
 
 ## Reference
 - [Measuring Claude Code Skill Activation with Sandboxed Evals](https://scottspence.com/posts/measuring-claude-code-skill-activation-with-sandboxed-evals)

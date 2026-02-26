@@ -90,7 +90,7 @@ The following are deferred because their production code counterparts have not y
 - `tests/scripts/test_work_prepare.py` - script not yet in Java
 - `tests/test_analyze_session.py` - script not yet in Java
 
-## Acceptance Criteria
+## Post-conditions
 - [x] All migrated handler tests have equivalent Java TestNG tests with error path and boundary coverage
 - [x] `mvn verify` passes with all Java tests, checkstyle, and PMD (exit code 0)
 - [x] Java test suite covers error paths, null validation, and boundary conditions

@@ -18,7 +18,7 @@ None - infrastructure/maintenance task
 - Scripts referencing planning paths
 - Documentation with path references
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All version directories moved to `.claude/cat/issues/`
 - [ ] All external references updated (plugin, scripts, docs)
 - [ ] No broken path references remain

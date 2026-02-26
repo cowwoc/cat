@@ -30,7 +30,7 @@ Replace "task" terminology with "issue" in all command files.
 2. Update references to old script names
 3. Update any terminology in user-facing messages
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All command files updated
 - [ ] Script references point to new names
 - [ ] No "task" terminology in command files

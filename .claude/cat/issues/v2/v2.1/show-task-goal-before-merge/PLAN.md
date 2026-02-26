@@ -15,7 +15,7 @@ None - UX improvement
 ## Files to Modify
 - `plugin/skills/work/SKILL.md` or `plugin/skills/work-with-task/SKILL.md` - Add goal display before approval question
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Goal/description from PLAN.md shown before merge approval question
 - [ ] Tests written and passing
 - [ ] No regressions to existing functionality

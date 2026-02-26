@@ -46,7 +46,7 @@ Replace "task" terminology with "issue" in all skill files.
 3. Update directory name: decompose-task → decompose-issue
 4. Verify no "task" references remain (except changelogs)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All skill files updated
 - [ ] decompose-task directory renamed to decompose-issue
 - [ ] Script references point to new names

@@ -36,7 +36,7 @@ None
    - Keep Steps 4-5 (UX categorization, recommendations) as LLM-interpreted guidance
    - Keep output format and example sections unchanged
 
-## Success Criteria
+## Post-conditions
 - [ ] Python script runs successfully against a real session JSONL file
 - [ ] Script output contains all metrics previously extracted by inline jq
 - [ ] Skill document no longer contains inline jq commands

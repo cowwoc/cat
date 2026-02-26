@@ -15,7 +15,7 @@ None - infrastructure improvement
 ## Files to Modify
 - plugin/scripts/build-box-lines.py - Add dynamic width expansion logic
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Boxes expand to fit longest content line
 - [ ] Nested boxes (inner/outer) size correctly relative to each other
 - [ ] /cat:status displays correctly with dynamic sizing

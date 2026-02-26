@@ -18,11 +18,15 @@ None - terminology cleanup
 - plugin/hooks/**/*.py - Hook handlers
 - .claude/cat/retrospectives/ - Retrospective entries (if applicable)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] No instances of "pre-computed" remain in active skill/concept files
 - [ ] All replacements preserve original meaning
 - [ ] Tests pass
 - [ ] No regressions
+
+- [ ] Zero instances of "pre-computed"/"precomputed" in active plugin files
+- [ ] All replacements are contextually appropriate
+- [ ] All tests pass
 
 ## Execution Steps
 1. **Step 1:** Search all files for "pre-computed", "precomputed", "Pre-computed", "Precomputed" variations
@@ -32,7 +36,3 @@ None - terminology cleanup
 4. **Step 4:** Run all tests
    - Command: python3 /workspace/run_tests.py
 
-## Success Criteria
-- [ ] Zero instances of "pre-computed"/"precomputed" in active plugin files
-- [ ] All replacements are contextually appropriate
-- [ ] All tests pass

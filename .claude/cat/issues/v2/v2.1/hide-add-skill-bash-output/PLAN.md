@@ -35,10 +35,16 @@ None - UX polish
 | `plugin/scripts/create-issue.py` | New script: mkdir + write STATE.md + write PLAN.md + update parent STATE.md + git commit |
 | `plugin/skills/add/SKILL.md` | Remove inline bash blocks; use HANDLER_DATA for validation; call create-issue.py for creation |
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Functionality works - issues and versions created identically to before
 - [ ] Tests passing
 - [ ] No regressions - version workflow still works
+
+- [ ] `/cat:add` with arguments shows 0-1 visible Bash calls (only create-issue.py)
+- [ ] `/cat:add` without arguments shows 0-1 visible Bash calls
+- [ ] All handler tests pass
+- [ ] All create-issue.py tests pass
+- [ ] Existing add_handler display tests still pass
 
 ## Execution Steps
 
@@ -126,9 +132,3 @@ None - UX polish
 7. **Step 7:** Commit changes
    - Commit type: `config:` for handler/skill changes, `feature:` for new script
 
-## Success Criteria
-- [ ] `/cat:add` with arguments shows 0-1 visible Bash calls (only create-issue.py)
-- [ ] `/cat:add` without arguments shows 0-1 visible Bash calls
-- [ ] All handler tests pass
-- [ ] All create-issue.py tests pass
-- [ ] Existing add_handler display tests still pass

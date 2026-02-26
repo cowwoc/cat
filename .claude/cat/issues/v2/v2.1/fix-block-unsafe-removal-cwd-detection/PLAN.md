@@ -74,7 +74,7 @@ echo "git worktree remove --force /workspace/.claude/cat/worktrees/foo" | grep -
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/bash/BlockUnsafeRemoval.java`
 6. **Run all tests:** `mvn -f client/pom.xml test` to verify fixes and no regressions
 
-## Success Criteria
+## Post-conditions
 - [ ] All new test cases pass
 - [ ] `git worktree remove --force <path>` correctly identifies `<path>` as the target
 - [ ] CWD detection uses the best available source for shell CWD

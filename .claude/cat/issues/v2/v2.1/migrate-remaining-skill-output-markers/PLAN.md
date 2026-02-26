@@ -38,12 +38,16 @@ None
 - plugin/skills/learn/phase-analyze.md - Update minor reference
 - Java handlers (if any) that produce SKILL OUTPUT headers
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All 6 skills use `<output skill="X">` tags instead of SKILL OUTPUT markers
 - [ ] Java handler output matches new tag format (if applicable)
 - [ ] skill-builder documentation updated to teach the new pattern
 - [ ] All skills still function correctly after migration
 - [ ] E2E: Invoke /cat:help, /cat:render-diff, /cat:token-report and confirm output is displayed correctly
+
+- [ ] grep -r "SKILL OUTPUT" plugin/skills/ returns zero matches (excluding learn example text if kept)
+- [ ] All migrated skills produce correct output when invoked
+- [ ] No regressions in existing functionality
 
 ## Execution Steps
 1. **Audit each skill**: For each of the 6 skills, identify all files that reference SKILL OUTPUT markers and check
@@ -58,7 +62,3 @@ None
 9. **Update learn phase-analyze**: Fix minor reference
 10. **Test migrated skills**: Verify each skill works correctly
 
-## Success Criteria
-- [ ] grep -r "SKILL OUTPUT" plugin/skills/ returns zero matches (excluding learn example text if kept)
-- [ ] All migrated skills produce correct output when invoked
-- [ ] No regressions in existing functionality

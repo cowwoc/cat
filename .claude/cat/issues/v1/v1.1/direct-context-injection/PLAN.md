@@ -10,6 +10,6 @@ replace CLAUDE.md injection with direct context injection
 - No longer modifies project CLAUDE.md files
 - Added counter validation to learn-from-mistakes skill (M045 prevention)
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

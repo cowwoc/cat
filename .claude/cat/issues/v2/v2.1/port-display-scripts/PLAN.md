@@ -52,7 +52,7 @@ None - infrastructure/tech debt
 4. **Verify output parity:** Run before/after comparison for each ported script
 5. **Run tests:** Execute `mvn -f hooks/pom.xml test` to verify no regressions
 
-## Success Criteria
+## Post-conditions
 - [ ] All 10 Python display scripts have Java equivalents
 - [ ] All 6 bash wrapper scripts removed
 - [ ] Output is character-for-character identical to original scripts

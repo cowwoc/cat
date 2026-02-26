@@ -38,7 +38,7 @@ Create dedicated feedback-handler skill with specialized prompts for incremental
 - **Risk:** HIGH
 - **Tradeoff:** Over-engineering for current needs
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] User feedback during approval gate spawns a subagent
 - [ ] Subagent receives: task PLAN.md, current diff, user feedback
 - [ ] Main agent context preserved across feedback iterations

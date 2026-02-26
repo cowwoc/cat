@@ -19,12 +19,10 @@ context-dependent) and phone screens (narrow, limited content).
 - Real-time collaboration (no live co-editing)
 - IDE integrations (no VS Code/JetBrains plugins)
 
-## Gates
-
-### Entry
+## Pre-conditions
 - v2.1 complete (stable diff rendering)
 
-### Exit
+## Post-conditions
 - All tasks complete
 - Execution-order viewer working for TypeScript/JavaScript
 - 100% diff coverage guaranteed

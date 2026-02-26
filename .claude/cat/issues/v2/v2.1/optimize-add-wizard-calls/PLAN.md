@@ -12,7 +12,7 @@ None - UX improvement
 - **Concerns:** May change user experience flow
 - **Mitigation:** Ensure same information is gathered, just more efficiently
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Fewer round-trips (measurably fewer AskUserQuestion calls)
 - [ ] Same information gathered (no loss of functionality)
 - [ ] Behavior unchanged (same outcomes for users)

@@ -20,6 +20,6 @@ For duplicate tasks, the commit that resolved the functionality has
 the original task's ID. To find it, check the duplicate task's
 STATE.md for "Duplicate Of" and search for that task ID.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

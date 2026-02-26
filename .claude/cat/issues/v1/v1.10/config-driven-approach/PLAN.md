@@ -49,7 +49,7 @@ Current config: Read from cat-config.json at execution time.
 - `plugin/commands/add.md` - Update task creation to use new template
 - `plugin/commands/work.md` - Remove choose_approach step (config already determines behavior)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Task templates no longer have Conservative/Balanced/Aggressive sections
 - [ ] Templates explain how Trust/Verify/Curiosity/Patience affect execution
 - [ ] /cat:add creates tasks with new template structure

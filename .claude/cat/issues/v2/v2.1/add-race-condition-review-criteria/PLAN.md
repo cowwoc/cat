@@ -21,12 +21,17 @@ None - infrastructure improvement
 ## Files to Modify
 - plugin/agents/stakeholder-security.md - Add race condition/concurrency review criteria
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Security stakeholder has TOCTOU/race condition criteria under High Priority section
 - [ ] Criteria cover: TOCTOU (CWE-367), atomicity violations, unprotected shared state, check-then-act patterns
 - [ ] Context-appropriate: scoped to file-system ops, git operations, shared state (not general threading)
 - [ ] Examples provided showing what to look for in skill/script code
 - [ ] Functionality works, tests passing, no regressions
+
+- [ ] Security stakeholder agent includes race condition/TOCTOU in High Priority criteria
+- [ ] Concurrency Safety Checks section provides actionable review patterns
+- [ ] Patterns are scoped appropriately (file-system, git, shared state - not general threading)
+- [ ] All existing tests pass with no regressions
 
 ## Execution Steps
 1. **Step 1:** Add race condition criteria to security stakeholder
@@ -47,8 +52,3 @@ None - infrastructure improvement
 3. **Step 3:** Run existing tests to verify no regressions
    - Run: mvn -f hooks/pom.xml test
 
-## Success Criteria
-- [ ] Security stakeholder agent includes race condition/TOCTOU in High Priority criteria
-- [ ] Concurrency Safety Checks section provides actionable review patterns
-- [ ] Patterns are scoped appropriately (file-system, git, shared state - not general threading)
-- [ ] All existing tests pass with no regressions

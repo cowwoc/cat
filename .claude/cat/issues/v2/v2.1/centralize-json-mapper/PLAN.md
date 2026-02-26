@@ -21,11 +21,15 @@ None - infrastructure/tech debt
   as parameter
 - `.claude/cat/conventions/java.md` - Update JsonMapper convention to reference JvmScope
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] JvmScope provides a shared JsonMapper instance configured with pretty print
 - [ ] No file in the codebase calls `JsonMapper.builder().build()` directly
 - [ ] All JSON output is pretty-printed
 - [ ] All tests pass (`mvn -f hooks/pom.xml verify`)
+
+- [ ] Zero occurrences of `JsonMapper.builder().build()` in codebase
+- [ ] All JSON output is pretty-printed
+- [ ] All tests pass
 
 ## Execution Steps
 1. Add `getJsonMapper()` to `JvmScope` interface
@@ -35,7 +39,3 @@ None - infrastructure/tech debt
 5. Update Java conventions to document the new pattern
 6. Run `mvn -f hooks/pom.xml verify`
 
-## Success Criteria
-- [ ] Zero occurrences of `JsonMapper.builder().build()` in codebase
-- [ ] All JSON output is pretty-printed
-- [ ] All tests pass

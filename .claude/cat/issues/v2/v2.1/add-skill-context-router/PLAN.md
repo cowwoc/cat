@@ -94,7 +94,7 @@ No changes needed. Each skill remains a single directory with SKILL.md. No neste
 - `plugin/hooks/skill_handlers/*.py` - No handler changes
 - `plugin/hooks/posttool_handlers/skill_preprocessor_output.py` - No changes
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] Behavior unchanged - all skill invocations produce identical results on first call
 - [ ] Tests passing - `python3 /workspace/run_tests.py` exits 0
@@ -102,6 +102,13 @@ No changes needed. Each skill remains a single directory with SKILL.md. No neste
 - [ ] A/B test confirms token reduction on second invocation
 - [ ] Each skill directory has SKILL.md + content.md + router.md
 - [ ] No handler or hook modifications
+
+- [ ] All 44 skills have SKILL.md + content.md + router.md structure
+- [ ] First invocation loads full content (identical to current behavior)
+- [ ] Second+ invocation loads tiny router (~2 lines vs hundreds/thousands)
+- [ ] All tests pass
+- [ ] A/B test shows significant token reduction on repeat invocations
+- [ ] No user-visible behavior changes
 
 ## Execution Steps
 
@@ -116,11 +123,3 @@ No changes needed. Each skill remains a single directory with SKILL.md. No neste
 
 4. **Run tests**: `python3 /workspace/run_tests.py` to verify no regressions.
 
-## Success Criteria
-
-- [ ] All 44 skills have SKILL.md + content.md + router.md structure
-- [ ] First invocation loads full content (identical to current behavior)
-- [ ] Second+ invocation loads tiny router (~2 lines vs hundreds/thousands)
-- [ ] All tests pass
-- [ ] A/B test shows significant token reduction on repeat invocations
-- [ ] No user-visible behavior changes

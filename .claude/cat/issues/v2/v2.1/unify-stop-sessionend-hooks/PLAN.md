@@ -24,7 +24,7 @@ None
 - plugin/hooks/hooks.json - Replace session-unlock.sh with java.sh SessionEndHook
 - plugin/hooks/session-unlock.sh - DELETE
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] session-unlock.sh lock cleanup logic ported to Java
 - [ ] Project lock removal preserved
 - [ ] Task lock cleanup preserved
@@ -33,6 +33,10 @@ None
 - [ ] hooks.json SessionEnd uses Java dispatcher
 - [ ] session-unlock.sh deleted
 - [ ] Tests pass
+
+- [ ] All tests pass
+- [ ] No bash SessionEnd scripts remain
+- [ ] hooks.json SessionEnd entry uses java.sh
 
 ## Key Implementation Details
 - session-unlock.sh removes .claude/cat/locks/${PROJECT_NAME}.lock
@@ -49,7 +53,3 @@ None
 5. Delete session-unlock.sh
 6. Run full test suite
 
-## Success Criteria
-- [ ] All tests pass
-- [ ] No bash SessionEnd scripts remain
-- [ ] hooks.json SessionEnd entry uses java.sh

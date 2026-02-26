@@ -27,7 +27,7 @@ None - sub-issue of parent
 | 35 | plugin/skills/status/SKILL.md |
 | 36 | plugin/skills/tdd-implementation/SKILL.md |
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All 9 files compressed
 - [ ] All files score 1.0 on /compare-docs validation
 - [ ] No functionality regression

@@ -24,6 +24,6 @@ Hooks:
 - Add license notice hook to SessionStart
 - Check for PLAN.md files missing Research section on upgrade
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

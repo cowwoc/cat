@@ -17,7 +17,7 @@ None - infrastructure improvement
 - `plugin/hooks/skill_handlers/render_diff_handler.py` - New handler (created)
 - `plugin/skills/render-diff/SKILL.md` - Document preprocessor output pattern
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Handler registered in __init__.py
 - [ ] Handler generates preprocessor output for diff on skill invocation
 - [ ] SKILL.md documents PREPROCESSOR OUTPUT pattern

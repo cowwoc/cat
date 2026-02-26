@@ -16,7 +16,7 @@ with per-cycle commits squashed before review.
 - `plugin/skills/tdd-implementation/first-use.md` — Update state machine, add iteration step, update commit pattern
 - `plugin/skills/tdd-implementation/tdd.md` — Update execution_flow, commit_pattern, context_budget sections
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] State machine diagram shows both feature iteration loop and bug verification loop
 - [ ] New STEP 4 (ITERATE OR VERIFY) inserted between REFACTOR and VERIFY
 - [ ] Steps renumbered sequentially (1-5)

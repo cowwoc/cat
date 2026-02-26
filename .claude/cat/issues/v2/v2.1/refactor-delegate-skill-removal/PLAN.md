@@ -73,7 +73,7 @@ For each file:
 Or use parallel Task tool invocations with skill instructions embedded in prompts.
 ```
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] --skill parameter removed from delegate
 - [ ] No references to skill delegation remain in delegate.md
 - [ ] Alternative pattern documented

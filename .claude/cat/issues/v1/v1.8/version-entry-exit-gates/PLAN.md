@@ -26,6 +26,6 @@ Gate conditions supported:
 
 Gates stored in PLAN.md files under ## Gates section.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

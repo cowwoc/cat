@@ -24,7 +24,7 @@ None - performance optimization
 - `plugin/skills/work-with-issue/SKILL.md` - Restructure Phases 3a+3b to use verify subagent with file-based output
 - `plugin/agents/work-verify.md` - New agent definition for verify subagent
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Verify subagent writes detailed criterion analysis to a file in the worktree
 - [ ] Verify subagent writes E2E test output to a file in the worktree
 - [ ] Verify subagent returns only: per-criterion status (Done/Missing/Partial), brief explanation, detail file path

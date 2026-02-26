@@ -25,7 +25,7 @@ requirements are not met.
 - `plugin/scripts/status-data.sh` - Require CAT_DIR argument instead of defaulting to `.claude/cat/issues`
 - `plugin/scripts/lib/version-utils.sh` - Require cat_dir parameter in get_task_dir() and get_version_dir()
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] register-hook.sh fails with clear error if CLAUDE_CONFIG_DIR not set
 - [ ] status-data.sh fails with clear error if no argument provided
 - [ ] version-utils.sh functions fail with clear error if cat_dir not provided

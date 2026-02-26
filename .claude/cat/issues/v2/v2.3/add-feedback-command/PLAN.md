@@ -52,7 +52,7 @@ But instead of applying fixes locally, package this as a GitHub issue.
 - `plugin/skills/feedback/feedback.md` - New skill definition
 - `plugin/skills/feedback/index.md` - Skill registration
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Functionality works as described
 - [ ] Tests written and passing
 - [ ] Documentation updated

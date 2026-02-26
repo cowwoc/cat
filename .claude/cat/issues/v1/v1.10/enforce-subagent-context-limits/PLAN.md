@@ -32,7 +32,7 @@ Feature
 - `plugin/commands/work.md` - Update collect_and_report step with aggregation and limit checking
 - `plugin/.claude/cat/references/agent-architecture.md` - Document context limit enforcement
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] Spawn-subagent skill documents context limit responsibility
 - [ ] Token report shows overall usage across all subagents

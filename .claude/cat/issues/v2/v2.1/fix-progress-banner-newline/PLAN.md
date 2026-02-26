@@ -39,7 +39,7 @@ Silent preprocessing treats newlines as command separators.
 ## Execution Steps
 1. **Edit SKILL.md:** Join lines 40-41 so the entire `!` command is on a single line
 
-## Success Criteria
+## Post-conditions
 - [ ] The `!` silent preprocessing command is on a single line in SKILL.md
 - [ ] No `$2: unbound variable` error when the script is invoked
 - [ ] All existing tests pass (`python3 /workspace/run_tests.py`)

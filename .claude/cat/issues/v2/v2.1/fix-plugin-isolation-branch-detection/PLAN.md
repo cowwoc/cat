@@ -24,11 +24,14 @@ This calls the no-argument variant which defaults to the current working directo
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/write/EnforcePluginFileIsolation.java` - Pass file's parent
   directory to `getCurrentBranch(directory)` instead of calling the no-arg variant
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Hook uses `getCurrentBranch(directory)` where directory is derived from the file being edited
 - [ ] Plugin file edits in worktrees are allowed (worktree branch is not protected)
 - [ ] Plugin file edits on actual protected branches (v2.1, main) are still blocked
 - [ ] `mvn -f hooks/pom.xml verify` passes
+
+- [ ] `mvn -f hooks/pom.xml verify` exits 0
+- [ ] Hook correctly resolves worktree branch from file path
 
 ## Execution Steps
 1. **Read the current hook** at `hooks/src/main/java/io/github/cowwoc/cat/hooks/write/EnforcePluginFileIsolation.java`
@@ -36,6 +39,3 @@ This calls the no-argument variant which defaults to the current working directo
    `GitCommands.getCurrentBranch(Paths.get(filePath).getParent().toString())`
 3. **Run `mvn -f hooks/pom.xml verify`** to ensure the fix compiles and tests pass
 
-## Success Criteria
-- [ ] `mvn -f hooks/pom.xml verify` exits 0
-- [ ] Hook correctly resolves worktree branch from file path

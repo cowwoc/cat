@@ -204,7 +204,7 @@ planning: update STATE.md
 - Line length SHOULD be ≤72 characters
 ```
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] /cat:init includes git workflow wizard
 - [ ] Wizard asks clarifying questions until understanding confirmed
 - [ ] User explicitly confirms wizard understood correctly

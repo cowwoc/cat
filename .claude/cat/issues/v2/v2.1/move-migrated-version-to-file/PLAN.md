@@ -24,7 +24,7 @@ None - infrastructure cleanup
 ## Files to Delete
 None
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] `get_last_migrated_version()` reads from `.claude/cat/VERSION` (plain text, single line)
 - [ ] `set_last_migrated_version()` writes to `.claude/cat/VERSION` (plain text, single line)
 - [ ] `last_migrated_version` field removed from `cat-config.json`

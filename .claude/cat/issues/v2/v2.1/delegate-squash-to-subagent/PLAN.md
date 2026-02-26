@@ -23,7 +23,7 @@ None - performance optimization
 - `plugin/skills/work-with-issue/SKILL.md` - Replace inline squash logic with subagent delegation
 - `plugin/agents/work-squash.md` - New agent definition for squash subagent
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Squash phase runs entirely within a subagent
 - [ ] Parent agent receives only: final commit hash, commit count, brief summary
 - [ ] Squash quality is maintained (overlapping files detected, unsquashed indicators caught)

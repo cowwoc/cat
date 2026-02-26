@@ -44,7 +44,7 @@ Requirements can exist at ANY version level that contains tasks:
 - plugin/.claude/cat/workflows/version-completion.md
   - Update requirements satisfaction check to work at any level
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Major PLAN.md template has optional Requirements section
 - [ ] Patch PLAN.md template exists with optional Requirements
 - [ ] /cat:add offers requirements during major version creation

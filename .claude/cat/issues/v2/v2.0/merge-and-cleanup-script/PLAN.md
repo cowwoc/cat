@@ -16,7 +16,7 @@ None - infrastructure/performance task
 - plugin/scripts/merge-and-cleanup.sh - new script (primary)
 - plugin/commands/work.md - reference the new script in merging phase (optional)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Script performs fast-forward merge to base branch
 - [ ] Script removes worktree cleanly
 - [ ] Script deletes task branch
