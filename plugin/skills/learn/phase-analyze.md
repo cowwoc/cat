@@ -9,47 +9,50 @@ This phase documents the mistake, gathers context metrics, performs root cause a
 
 ## Your Task
 
-Complete the analysis phase for the learn skill. You will receive investigation results from Phase 1 as input.
+Complete the analysis phase for the learn skill.
+
+**IMPORTANT - Quick-Tier Note:** If you are analyzing a quick-tier mistake, you will not have Phase 1 investigation
+results. You will have the mistake description from the main agent. Use that description as your source of truth, not
+Phase 1 output.
+
+**Deep-Tier:** You will receive investigation results from Phase 1 as input.
 
 Your final message must be ONLY the JSON result object with no surrounding text or explanation. The parent agent parses
 your response as JSON.
 
 ## Input
 
-You will receive a JSON object with investigation results containing:
+**For Deep-Tier:** You will receive a JSON object with investigation results containing:
 - Event sequence and timeline
 - Documents the agent read
 - Priming analysis results
 - Session ID
 
+**For Quick-Tier:** You receive the mistake description from the main agent directly.
+
 ## Step 2: Document the Mistake
+
+**(Note: Step 1 = Phase 1: Investigate, executed for deep-tier only. Quick-tier analysis begins here at Step 2.)**
 
 ```yaml
 mistake:
-  timestamp: 2026-01-10T16:30:00Z
-  type: incorrect_implementation
+  timestamp: {ISO-8601 timestamp}
+  type: {mistake type from categories}
   description: |
-    Subagent implemented parser with wrong precedence rules.
-    Expressions like "a + b * c" parsed as "(a + b) * c" instead of "a + (b * c)".
+    {actual description of what happened from investigation or main agent}
   impact: |
-    All tests using operator precedence failing. Required complete rewrite.
+    {impact of the mistake}
 ```
 
 ## Step 3: Gather Context Metrics
 
-**CAT-specific: Always collect token data**
+**CAT-specific: Always collect token data from investigation output**
 
-```bash
-# Replace with actual subagent session ID
-SESSION_ID="actual-subagent-session-id-here"
-SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
+If you completed Phase 1 (Investigation), use the context metrics that Phase 1 already gathered from the session. Phase 1
+investigation includes token tracking as part of event sequence verification. Reference those values directly.
 
-TOKENS_AT_ERROR=$(jq -s 'map(select(.type == "assistant")) |
-  map(.message.usage | .input_tokens + .output_tokens) | add' "${SESSION_FILE}")
-COMPACTIONS=$(jq -s '[.[] | select(.type == "summary")] | length' "${SESSION_FILE}")
-MESSAGE_COUNT=$(jq -s '[.[] | select(.type == "assistant")] | length' "${SESSION_FILE}")
-SESSION_DURATION=$(calculate_duration "${SESSION_FILE}")
-```
+For quick-tier analysis (no Phase 1): You have pre-extracted context available including session metadata. Use
+`context_degradation_analysis` block in Phase 3 (Prevent) to structure the findings you do have.
 
 ## Step 4: Perform Root Cause Analysis
 
@@ -118,9 +121,48 @@ rca_depth_check:
 
   # Question 4: Is this a recurring failure?
   recurring_pattern:
-    question: "Has this type of failure occurred before? Check recurrence_of in mistakes.json"
+    question: "Has this type of failure occurred before? Check recurrence_of in investigation output"
     your_answer: "_______________"
+```
 
+### Step 4b-R: Recurrence Independence Gate (BLOCKING GATE - M416)
+
+**MANDATORY: If you answered YES to Question 4 (recurring pattern), complete this gate BEFORE proceeding to Question 5.**
+
+If the failure is recurring, you MUST verify your RCA independently before reading past conclusions:
+
+```yaml
+recurrence_independence_gate:
+  step_1:
+    action: "Complete your independent RCA using ONLY fresh evidence from this session"
+    not_allowed: "Referencing past mistake entries (M341, M353, etc.) as if they explain this occurrence"
+    allowed: "Reading the source file/code directly to find the structural problem"
+    your_independent_root_cause: "_______________"  # Fill this in FIRST
+
+  step_2:
+    action: "Only after step_1 is complete: Compare against Phase 1 investigation output"
+    purpose: "Did Phase 1 identify the same root cause as your independent analysis?"
+    questions:
+      - "Does your finding match what Phase 1 discovered?"
+      - "If they match: confirms the pattern is consistent"
+      - "If they differ: your fresh analysis takes precedence"
+
+  step_3:
+    action: "Only after step_1 AND step_2 are complete, proceed to Question 5 below"
+```
+
+**Why this gate exists (M416):** When a mistake recurs, the phase description naturally includes past
+mistake chain information. Reading that information makes it hard to analyze independently. This gate
+ensures you form your own conclusions from source files first, before reading historical context.
+
+**BLOCKING CONDITION:** Do NOT proceed to Question 5 below until `step_1.your_independent_root_cause` is
+filled in with a cause based on reading source code, not reading historical entries.
+
+### Continuing Step 4b After Recurrence Gate
+
+If the failure is NOT recurring, proceed directly to Question 5.
+
+```yaml
   # Question 5: Prevention vs Detection
   fix_type:
     question: "Does your proposed fix PREVENT the problem, or DETECT/MITIGATE after it occurs?"
@@ -159,42 +201,6 @@ If ANY answer is blank or says "agent should have...":
 Stopping at "agent did X wrong" is describing the SYMPTOM, not the CAUSE.
 The cause is always in the system that allowed or encouraged the wrong action.
 
-## Step 4b-R: Recurrence Independence Gate (BLOCKING GATE - M416)
-
-**MANDATORY: Complete this gate BEFORE reading Step 4d.**
-
-If `recurring_pattern.your_answer` indicates YES (this is a recurrence):
-
-```yaml
-recurrence_independence_gate:
-  # BLOCKING: You MUST complete all items below BEFORE reading Step 4d
-  step_1:
-    action: "Complete your independent RCA in Step 4 using only fresh evidence"
-    not_allowed: "Referencing past mistake entries (M341, M353, etc.) as the root cause"
-    allowed: "Reading the source file directly to find structural problems"
-    your_independent_root_cause: "_______________"  # Fill this in FIRST
-
-  step_2:
-    action: "Only after step_1 is filled: Check mistakes.json for past RCA conclusions"
-    purpose: "Compare past conclusions against your independent finding"
-    questions:
-      - "Does your independent finding match past conclusions?"
-      - "If they match: confirms pattern is real"
-      - "If they differ: your fresh analysis takes precedence — past conclusions may have been wrong"
-
-  step_3:
-    action: "Proceed to Step 4d ONLY after completing steps 1 and 2 above"
-```
-
-**Why this gate exists (M416):** The agent naturally skips to Step 4d when it sees a recurrence chain
-mentioned in the mistake description. Step 4d provides tooling and examples that prime the agent to
-build its analysis FROM past conclusions rather than reaching them independently. The recurrence chain
-becomes the conclusion instead of the evidence. This gate forces independent analysis before historical
-comparison, preserving RCA integrity.
-
-**BLOCKING CONDITION:** Do NOT proceed to Step 4d until `step_1.your_independent_root_cause` is filled
-with a cause derived from reading source files — not from the recurrence chain listing.
-
 ## Step 4c: Multiple Independent Mistakes
 
 **If investigation reveals multiple independent mistakes:** Read `MULTIPLE-MISTAKES.md` and follow its workflow.
@@ -210,13 +216,11 @@ Do NOT assume past analyses were correct -- they may have had wrong conclusions 
 
 **Recurrence Chain Check:**
 
-```bash
-# Find recurrence chains in mistakes
-jq -r '.mistakes[] | select(.recurrence_of != null) |
-  "\(.id) recurs \(.recurrence_of)"' "$MISTAKES_FILE"
-```
+If Phase 1 investigation identified this as a recurring mistake (via `recurrence_of` field in investigation output),
+reference those past mistake entries directly from Phase 1 to build your recurrence chain. Do NOT attempt to query
+mistakes.json from within this phase.
 
-**If 3+ recurrences exist for the same failure type:**
+**If 3+ recurrences exist for the same failure type (indicated by recurrence chain in Phase 1 output):**
 
 Ask these architectural questions:
 
@@ -297,10 +301,10 @@ Your final message MUST be ONLY this JSON (no other text):
     "impact": "impact description"
   },
   "context_metrics": {
-    "tokens_at_error": 95000,
-    "compactions": 2,
-    "message_count": 127,
-    "session_duration_hours": 4.5
+    "tokens_at_error": "{from Phase 1 investigation output}",
+    "compactions": "{from Phase 1 investigation output}",
+    "message_count": "{from Phase 1 investigation output}",
+    "session_duration_hours": "{from Phase 1 investigation output}"
   },
   "root_cause": "The actual root cause from RCA",
   "rca_method": "A|B|C",
