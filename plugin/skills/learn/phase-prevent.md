@@ -68,6 +68,27 @@ context_degradation_analysis:
 
 ```yaml
 prevention_quality_check:
+  # FIRST: Check for general vs specific solutions
+  generality_analysis:
+    question: "Am I fixing the ROOT CAUSE or just this specific symptom?"
+    root_cause_example: |
+      Problem: Interactive rebase lost STATE.md changes during tree-building
+      ❌ Specific fix: Check if STATE.md regressed from closed→open
+      ✅ General fix: Use two-step approach (drop, then squash) for all files
+
+    # Ask: Could this failure affect OTHER files?
+    symptom_questions:
+      - "Is this failure specific to one data type (e.g., STATE.md)?"
+      - "Would the same root cause cause similar problems with other files?"
+      - "Would a different manifestation of the same root cause evade this check?"
+
+    # If root cause could affect multiple files → prefer general solution
+    # If specific symptoms, check if general prevention is achievable
+    preference_order:
+      1: "General solution that prevents the root cause for ALL files"
+      2: "Process change that eliminates risky operation entirely"
+      3: "Specific symptom check as last resort"
+
   verification_type:
     positive: "Check for PRESENCE of correct behavior"  # ✅ Preferred
     negative: "Check for ABSENCE of specific failure"   # ❌ Fragile
@@ -99,6 +120,8 @@ prevention_quality_check:
 ```
 
 **Decision gate:** If fragility is HIGH, redesign the prevention before implementing.
+
+**General vs Specific Prevention Gate:** If prevention addresses only one symptom of a broader root cause, explore whether a general solution is achievable (e.g., process change, root cause elimination) before implementing the specific check.
 
 ## Step 7b: Replay Scenario Verification (BLOCKING GATE - M305)
 
