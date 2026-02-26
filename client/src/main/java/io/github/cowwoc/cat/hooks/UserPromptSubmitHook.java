@@ -10,8 +10,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.prompt.DestructiveOps;
 import io.github.cowwoc.cat.hooks.prompt.DetectGivingUp;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,22 +48,7 @@ public final class UserPromptSubmitHook implements HookHandler
    */
   public static void main(String[] args)
   {
-    try (JvmScope scope = new MainJvmScope())
-    {
-      HookInput input = HookInput.readFromStdin(scope.getJsonMapper());
-      HookOutput output = new HookOutput(scope);
-      HookResult result = new UserPromptSubmitHook(scope).run(input, output);
-
-      for (String warning : result.warnings())
-        System.err.println(warning);
-      System.out.println(result.output());
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(UserPromptSubmitHook.class);
-      log.error("Unexpected error", e);
-      throw e;
-    }
+    HookRunner.execute(UserPromptSubmitHook::new, args);
   }
 
   /**

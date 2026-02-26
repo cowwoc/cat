@@ -9,8 +9,6 @@ package io.github.cowwoc.cat.hooks;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.session.CheckRetrospectiveDue;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import io.github.cowwoc.cat.hooks.session.CheckUpdateAvailable;
 import io.github.cowwoc.cat.hooks.session.CheckDataMigration;
 import io.github.cowwoc.cat.hooks.session.ClearSkillMarkers;
@@ -78,24 +76,7 @@ public final class SessionStartHook implements HookHandler
    */
   public static void main(String[] args)
   {
-    try (JvmScope scope = new MainJvmScope())
-    {
-      tools.jackson.databind.json.JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = HookInput.readFromStdin(mapper);
-      HookOutput output = new HookOutput(scope);
-      SessionStartHook hook = new SessionStartHook(scope);
-      HookResult result = hook.run(input, output);
-
-      for (String warning : result.warnings())
-        System.err.println(warning);
-      System.out.println(result.output());
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(SessionStartHook.class);
-      log.error("Unexpected error", e);
-      throw e;
-    }
+    HookRunner.execute(SessionStartHook::new, args);
   }
 
   /**

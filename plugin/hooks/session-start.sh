@@ -87,7 +87,7 @@ flush_log() {
   fi
 
   if [[ "$LOG_LEVEL" == "error" ]]; then
-    exit 1
+    exit 0
   fi
 }
 

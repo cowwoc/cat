@@ -14,8 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 /**
  * Unified PostToolUse hook for Read/Glob/Grep/WebFetch/WebSearch
  *
@@ -53,18 +51,7 @@ public final class PostReadHook implements HookHandler
    */
   public static void main(String[] args)
   {
-    try (JvmScope scope = new MainJvmScope())
-    {
-      HookInput input = HookInput.readFromStdin(scope.getJsonMapper());
-      HookOutput output = new HookOutput(scope);
-      new PostReadHook(scope).run(input, output);
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(PostReadHook.class);
-      log.error("Unexpected error", e);
-      throw e;
-    }
+    HookRunner.execute(PostReadHook::new, args);
   }
 
   /**

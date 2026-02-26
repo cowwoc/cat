@@ -13,6 +13,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -32,6 +33,7 @@ public final class SharedSecrets
   private static PostToolUseHookAccess postToolUseHookAccess;
   private static PostToolUseFailureHookAccess postToolUseFailureHookAccess;
   private static IssueDiscoveryAccess issueDiscoveryAccess;
+  private static ClaudeEnvAccess claudeEnvAccess;
 
   private SharedSecrets()
   {
@@ -120,6 +122,35 @@ public final class SharedSecrets
   }
 
   /**
+   * Registers the access object for {@link ClaudeEnv}.
+   *
+   * @param access the access object
+   * @throws NullPointerException if {@code access} is null
+   */
+  public static void setClaudeEnvAccess(ClaudeEnvAccess access)
+  {
+    requireThat(access, "access").isNotNull();
+    claudeEnvAccess = access;
+  }
+
+  /**
+   * Creates a new {@link ClaudeEnv} with the specified environment map.
+   * <p>
+   * This is intended for testing, where a controlled environment map avoids dependencies on the
+   * host environment.
+   *
+   * @param env the environment variable map to use
+   * @return a new ClaudeEnv
+   * @throws NullPointerException if {@code env} is null
+   */
+  public static ClaudeEnv newClaudeEnv(Map<String, String> env)
+  {
+    if (claudeEnvAccess == null)
+      initialize(ClaudeEnv.class);
+    return claudeEnvAccess.newClaudeEnv(env);
+  }
+
+  /**
    * Initializes a class. If the class is already initialized, this method has no effect.
    *
    * @param clazz the class
@@ -134,5 +165,67 @@ public final class SharedSecrets
     {
       throw new AssertionError(e);
     }
+  }
+
+  /**
+   * Provides test-specific access to {@link PostToolUseHook}.
+   */
+  @FunctionalInterface
+  public interface PostToolUseHookAccess
+  {
+    /**
+     * Creates a new {@link PostToolUseHook} with the specified handlers.
+     *
+     * @param handlers the handlers
+     * @return a new PostToolUseHook
+     */
+    PostToolUseHook newPostToolUseHook(List<PostToolHandler> handlers);
+  }
+
+  /**
+   * Provides test-specific access to {@link PostToolUseFailureHook}.
+   */
+  @FunctionalInterface
+  public interface PostToolUseFailureHookAccess
+  {
+    /**
+     * Creates a new {@link PostToolUseFailureHook} with the specified handlers.
+     *
+     * @param handlers the handlers
+     * @return a new PostToolUseFailureHook
+     */
+    PostToolUseFailureHook newPostToolUseFailureHook(List<PostToolHandler> handlers);
+  }
+
+  /**
+   * Provides access to {@link IssueDiscovery}.
+   */
+  @FunctionalInterface
+  public interface IssueDiscoveryAccess
+  {
+    /**
+     * Gets the issue status from STATE.md lines.
+     *
+     * @param lines the lines
+     * @param statePath the path
+     * @return the status
+     * @throws IOException if parsing fails
+     */
+    String getIssueStatus(List<String> lines, Path statePath) throws IOException;
+  }
+
+  /**
+   * Provides test-specific access to {@link ClaudeEnv}.
+   */
+  @FunctionalInterface
+  public interface ClaudeEnvAccess
+  {
+    /**
+     * Creates a new {@link ClaudeEnv} with the specified environment map.
+     *
+     * @param env the environment variable map
+     * @return a new ClaudeEnv
+     */
+    ClaudeEnv newClaudeEnv(Map<String, String> env);
   }
 }
