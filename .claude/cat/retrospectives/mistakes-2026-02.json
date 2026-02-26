@@ -2009,6 +2009,62 @@
         "catches_variations": true
       },
       "correct_behavior": "After the report step renders review boxes and concern boxes, no further output is needed. The review boxes are the complete user-facing output. When invoked standalone, offer to address HIGH+ concerns; when invoked via work-with-issue, the caller handles auto-fix iteration."
+    },
+    {
+      "id": "M415",
+      "timestamp": "2026-02-26T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "Agent skipped verbatim echo of <output skill=\"status\"> tag content and output only the NEXT STEPS table when invoking /cat:status",
+      "root_cause": "ARCHITECTURAL (6th recurrence: M341, M353, M354, M355, M372): status/first-use.md still used instructional framing ('Echo the content...Do not summarize...') and placed NEXT STEPS before the <output> tag. M372 recorded prevention_implemented:true but the source file was never actually updated, so the failure recurred. LLM training to be concise conflicts with verbatim copy-paste; only user-centric framing ('The user wants you to respond with the following text verbatim:') triggers mechanical reproduction.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/status/first-use.md",
+      "pattern_keywords": [
+        "verbatim-output",
+        "status-skill",
+        "user-centric-framing",
+        "NEXT-STEPS-position",
+        "M408-pattern",
+        "prevention-not-applied"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M372",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use user-centric framing 'The user wants you to respond with the following text verbatim:' immediately before the <output skill='status'> tag, with NEXT STEPS table appearing AFTER the closing </output> tag so content order mirrors output production order."
+    },
+    {
+      "id": "M416",
+      "timestamp": "2026-02-26T18:30:00Z",
+      "category": "protocol_violation",
+      "description": "Analyze phase subagent cited recurrence chain (M341 \u2192 M353 \u2192 M354 \u2192 M355 \u2192 M372 \u2192 M415) as root cause without conducting independent RCA from fresh evidence, violating the recurring_pattern rule in phase-analyze.md Step 4b",
+      "root_cause": "phase-analyze.md Step 4b embedded the independence requirement (if_yes_multiple, if_3_plus_recurrences) as passive YAML comments inside a template block \u2014 not as a blocking gate. Step 4d appeared immediately after and provided tooling (jq command) and an example recurrence chain template, priming the agent to jump from recurrence detection directly to Step 4d and build its conclusion from past entries rather than fresh evidence. No structural barrier existed between the recurring_pattern check and the Step 4d recurrence tooling.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/learn/phase-analyze.md",
+      "pattern_keywords": [
+        "recurring_pattern",
+        "independent_rca",
+        "recurrence_chain",
+        "phase-analyze",
+        "documentation_priming",
+        "step-4d-bypass"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When a mistake is a recurrence, complete independent RCA by reading source files directly before consulting past mistake entries. The independent root cause must be documented in Step 4b-R before Step 4d recurrence tooling is accessible."
     }
   ]
 }
