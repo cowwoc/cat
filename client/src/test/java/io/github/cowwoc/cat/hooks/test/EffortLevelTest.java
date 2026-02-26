@@ -8,14 +8,14 @@ package io.github.cowwoc.cat.hooks.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.util.CuriosityLevel;
+import io.github.cowwoc.cat.hooks.util.EffortLevel;
 
 import org.testng.annotations.Test;
 
 /**
- * Tests for {@link CuriosityLevel}.
+ * Tests for {@link EffortLevel}.
  */
-public final class CuriosityLevelTest
+public final class EffortLevelTest
 {
   /**
    * Verifies that fromString("low") returns LOW.
@@ -23,7 +23,7 @@ public final class CuriosityLevelTest
   @Test
   public void fromStringLowReturnsLOW()
   {
-    requireThat(CuriosityLevel.fromString("low"), "level").isEqualTo(CuriosityLevel.LOW);
+    requireThat(EffortLevel.fromString("low"), "level").isEqualTo(EffortLevel.LOW);
   }
 
   /**
@@ -32,7 +32,7 @@ public final class CuriosityLevelTest
   @Test
   public void fromStringMediumReturnsMEDIUM()
   {
-    requireThat(CuriosityLevel.fromString("medium"), "level").isEqualTo(CuriosityLevel.MEDIUM);
+    requireThat(EffortLevel.fromString("medium"), "level").isEqualTo(EffortLevel.MEDIUM);
   }
 
   /**
@@ -41,7 +41,7 @@ public final class CuriosityLevelTest
   @Test
   public void fromStringHighReturnsHIGH()
   {
-    requireThat(CuriosityLevel.fromString("high"), "level").isEqualTo(CuriosityLevel.HIGH);
+    requireThat(EffortLevel.fromString("high"), "level").isEqualTo(EffortLevel.HIGH);
   }
 
   /**
@@ -50,7 +50,7 @@ public final class CuriosityLevelTest
   @Test
   public void fromStringIsCaseInsensitive()
   {
-    requireThat(CuriosityLevel.fromString("HIGH"), "level").isEqualTo(CuriosityLevel.HIGH);
+    requireThat(EffortLevel.fromString("HIGH"), "level").isEqualTo(EffortLevel.HIGH);
   }
 
   /**
@@ -59,7 +59,7 @@ public final class CuriosityLevelTest
   @Test
   public void toStringLowReturnsLowercase()
   {
-    requireThat(CuriosityLevel.LOW.toString(), "str").isEqualTo("low");
+    requireThat(EffortLevel.LOW.toString(), "str").isEqualTo("low");
   }
 
   /**
@@ -68,7 +68,7 @@ public final class CuriosityLevelTest
   @Test
   public void toStringMediumReturnsLowercase()
   {
-    requireThat(CuriosityLevel.MEDIUM.toString(), "str").isEqualTo("medium");
+    requireThat(EffortLevel.MEDIUM.toString(), "str").isEqualTo("medium");
   }
 
   /**
@@ -77,7 +77,7 @@ public final class CuriosityLevelTest
   @Test
   public void toStringHighReturnsLowercase()
   {
-    requireThat(CuriosityLevel.HIGH.toString(), "str").isEqualTo("high");
+    requireThat(EffortLevel.HIGH.toString(), "str").isEqualTo("high");
   }
 
   /**
@@ -88,7 +88,7 @@ public final class CuriosityLevelTest
   {
     try
     {
-      CuriosityLevel.fromString("unknown");
+      EffortLevel.fromString("unknown");
     }
     catch (IllegalArgumentException e)
     {
@@ -105,7 +105,7 @@ public final class CuriosityLevelTest
   {
     try
     {
-      CuriosityLevel.fromString("");
+      EffortLevel.fromString("");
     }
     catch (IllegalArgumentException e)
     {
@@ -116,14 +116,14 @@ public final class CuriosityLevelTest
   /**
    * Verifies that fromString throws IllegalArgumentException for whitespace-padded input.
    * <p>
-   * The implementation does not strip whitespace before matching, so " low " is not a valid curiosity level.
+   * The implementation does not strip whitespace before matching, so " low " is not a valid effort level.
    */
   @Test
   public void fromStringWhitespacePaddedThrowsIllegalArgument()
   {
     try
     {
-      CuriosityLevel.fromString(" low ");
+      EffortLevel.fromString(" low ");
     }
     catch (IllegalArgumentException e)
     {
@@ -139,7 +139,7 @@ public final class CuriosityLevelTest
   {
     try
     {
-      CuriosityLevel.fromString(null);
+      EffortLevel.fromString(null);
     }
     catch (NullPointerException e)
     {

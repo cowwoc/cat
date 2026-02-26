@@ -124,7 +124,7 @@ of structured subagent management.
 
 ### 4. Extract Discovered Issues
 
-If curiosity was medium or high, the subagent may have noted issues in `.completion.json`:
+If effort was medium or high, the subagent may have noted issues in `.completion.json`:
 
 ```bash
 COMPLETION_FILE="${WORKTREE}/.completion.json"

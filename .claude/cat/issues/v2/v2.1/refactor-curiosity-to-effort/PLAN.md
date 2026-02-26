@@ -122,6 +122,27 @@ None (internal restructuring)
 ### Step 10: Build and test
 - Run `mvn -f client/pom.xml verify` to confirm all tests pass
 
+### Step 11: Delete orphaned CuriosityLevel files
+- Delete `client/src/main/java/io/github/cowwoc/cat/hooks/util/CuriosityLevel.java`
+- Delete `client/src/test/java/io/github/cowwoc/cat/hooks/test/CuriosityLevelTest.java`
+- These files were superseded by EffortLevel.java and EffortLevelTest.java and should not exist alongside the new implementation
+
+### Step 12: Update add/first-use.md with effort-based planning instructions
+- In the `issue_create` step, add instructions that read the `effort` config value
+- Include guidance for each effort level:
+  - `low`: Generate concise plan, assume obvious approach
+  - `medium`: Explore alternatives, note trade-offs in plan
+  - `high`: Deep research, document reasoning for chosen vs rejected approaches
+- This redirects the former curiosity behavior to the planning phase where it is effective
+
+### Step 13: Update stakeholder-review/first-use.md with effort-based review instructions
+- In the stakeholder review prompts, add instructions that read the `effort` config value
+- Include guidance for each effort level:
+  - `low`: Review changed lines only, flag obvious issues
+  - `medium`: Review changed lines + surrounding context
+  - `high`: Review broader impact on surrounding code, flag pre-existing issues in reviewed files
+- This redirects the former curiosity behavior to the review phase where it is effective
+
 ## Post-conditions
 - [ ] No references to `curiosity` remain in Java source, tests, config, skills, or documentation (except CHANGELOG.md historical entries and v1.9 CHANGELOG.md)
 - [ ] `EffortLevel` enum exists with LOW/MEDIUM/HIGH values

@@ -3,6 +3,6 @@
   "autoRemoveWorktrees": true,
   "trust": "medium",
   "verify": "changed",
-  "curiosity": "low",
+  "effort": "medium",
   "patience": "high"
 }

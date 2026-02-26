@@ -34,42 +34,11 @@ TRUST_PREF=$(jq -r '.trust // "medium"' .claude/cat/cat-config.json)
 | `medium` | "Present options for meaningful trade-offs. Proceed with balanced for routine." |
 | `long` | "Make autonomous decisions. Only present options for significant choices." |
 
-## Curiosity Setting (for IMPLEMENTATION subagents)
+## Implementation Subagent Behavior
 
-```bash
-CURIOSITY_PREF=$(jq -r '.curiosity // "low"' .claude/cat/cat-config.json)
-```
-
-| Value | Include in Implementation Prompt |
-|-------|----------------------------------|
-| `low` | "Focus ONLY on the assigned issue. Report only issue-related findings." |
-| `medium` | "NOTE obvious issues in files you touch. Report in .completion.json." |
-| `high` | "Actively look for code quality issues. Report ALL findings." |
-
-## Issues Return Format
-
-Subagent writes to .completion.json when curiosity is medium/high:
-
-```json
-{
-  "status": "{actual status}",
-  "tokensUsed": "{actual token count}",
-  "inputTokens": "{actual input tokens}",
-  "outputTokens": "{actual output tokens}",
-  "compactionEvents": "{actual count}",
-  "summary": "{actual summary of work done}",
-  "discoveredIssues": [
-    {
-      "file": "{actual file path}",
-      "line": "{actual line number}",
-      "type": "{code-quality|security|performance}",
-      "severity": "{low|medium|high}",
-      "description": "{actual description}",
-      "benefitCost": "{actual ratio}"
-    }
-  ]
-}
-```
+Implementation subagents ALWAYS focus ONLY on the assigned issue. They do not investigate or report
+code quality issues beyond the scope of the current issue. This constraint applies regardless of
+configuration settings.
 
 ## Patience Setting (Main Agent Uses This)
 
@@ -82,14 +51,15 @@ Do NOT include patience instructions in implementation subagent prompts.
 | `medium` | Create issues for discovered items in CURRENT version backlog |
 | `high` | Create issues for discovered items in LATER version backlog |
 
-**Patience also applies to stakeholder review concerns after the auto-fix loop.** The main agent evaluates each
-remaining concern using a cost/benefit framework: benefit = severity weight (CRITICAL=10, HIGH=6, MEDIUM=3, LOW=1);
-cost = estimated scope of changes to files NOT already changed by the issue (0=in-scope, 1=minor, 4=moderate,
-10=significant). A concern is fixed inline if `benefit >= cost × patience_multiplier`; otherwise it is deferred.
+**Patience also applies to stakeholder review concerns after the auto-fix loop.** The main agent
+evaluates each remaining concern using a cost/benefit framework: benefit = severity weight
+(CRITICAL=10, HIGH=6, MEDIUM=3, LOW=1); cost = estimated scope of changes to files NOT already
+changed by the issue (0=in-scope, 1=minor, 4=moderate, 10=significant). A concern is fixed inline
+if `benefit >= cost × patience_multiplier`; otherwise it is deferred.
 
 | Value | Review Concern Handling |
 |-------|------------------------|
-| `low` | Fix if benefit >= 0.5× cost (multiplier=0.5); fixes aggressively, only defers low-value high-cost concerns |
+| `low` | Fix if benefit >= 0.5× cost (multiplier=0.5); fixes aggressively |
 | `medium` | Fix if benefit >= 2× cost (multiplier=2); defer remainder to current version backlog |
 | `high` | Fix if benefit >= 5× cost (multiplier=5); defer remainder to later version backlog |
 

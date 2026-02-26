@@ -166,22 +166,22 @@ public final class GetInitOutput implements SkillOutput
    * Build the CAT initialized box.
    *
    * @param trust the trust preference value
-   * @param curiosity the curiosity preference value
+   * @param effort the effort preference value
    * @param patience the patience preference value
    * @return the formatted box
    * @throws NullPointerException if any parameter is null
    * @throws IllegalArgumentException if any parameter is blank
    */
-  public String getCatInitialized(String trust, String curiosity, String patience)
+  public String getCatInitialized(String trust, String effort, String patience)
   {
     requireThat(trust, "trust").isNotBlank();
-    requireThat(curiosity, "curiosity").isNotBlank();
+    requireThat(effort, "effort").isNotBlank();
     requireThat(patience, "patience").isNotBlank();
 
     String pad = " ".repeat(50);
     String trustLine = "  🤝 Trust: " + trust + pad.substring(0, Math.max(1, 53 - trust.length()));
-    String curiosityLine = "  🔍 Curiosity: " + curiosity +
-      pad.substring(0, Math.max(1, 49 - curiosity.length()));
+    String effortLine = "  💪 Effort: " + effort +
+      pad.substring(0, Math.max(1, 49 - effort.length()));
     String patienceLine = "  ⏳ Patience: " + patience +
       pad.substring(0, Math.max(1, 51 - patience.length()));
 
@@ -190,7 +190,7 @@ public final class GetInitOutput implements SkillOutput
       List.of(
         "                                                                  ",
         trustLine,
-        curiosityLine,
+        effortLine,
         patienceLine,
         "                                                                  ",
         "  Your partner is ready. Let's build something solid.             ",

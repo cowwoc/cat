@@ -136,7 +136,7 @@ During `/cat:init`, you configure preferences that apply consistently across you
 |------------|------------------|
 | **Trust** | How much autonomy CAT has to make decisions |
 | **Verify** | What verification runs before presenting changes |
-| **Curiosity** | Whether CAT notes optimization opportunities beyond the task |
+| **Effort** | Whether CAT notes optimization opportunities beyond the task |
 | **Patience** | When CAT acts on discovered opportunities |
 
 **For Teams:** These preferences become your team's coding standards. Every developer, every project, every session
@@ -256,7 +256,7 @@ Your CAT settings live in `.claude/cat/cat-config.json`:
 {
   "trust": "medium",
   "verify": "changed",
-  "curiosity": "low",
+  "effort": "medium",
   "patience": "high",
   "terminalWidth": 120
 }
@@ -268,7 +268,7 @@ Your CAT settings live in `.claude/cat/cat-config.json`:
 |--------|------|---------|-------------|
 | `trust` | string | `medium` | Autonomy level (controls review and approval behavior) |
 | `verify` | string | `changed` | What verification runs before checkpoints |
-| `curiosity` | string | `low` | Whether CAT notices opportunities beyond the task |
+| `effort` | string | `medium` | How thoroughly CAT investigates during planning and review |
 | `patience` | string | `high` | When CAT acts on discovered opportunities |
 | `terminalWidth` | number | `120` | Display width in characters for output formatting |
 | `autoRemoveWorktrees` | boolean | `true` | Auto-cleanup worktrees on task completion |
@@ -283,10 +283,10 @@ Your CAT settings live in `.claude/cat/cat-config.json`:
 - `changed` — Verify modified file/module only; balanced confidence
 - `all` — Verify entire project; highest confidence before checkpoint
 
-**curiosity** — Whether CAT notices optimization opportunities while working:
-- `low` — Stays focused; only completes the assigned task
-- `medium` — Notes obvious issues in touched files; documents but doesn't act
-- `high` — Actively explores for improvements; documents opportunities found
+**effort** — How thoroughly CAT investigates during planning and review:
+- `low` — Concise plan assuming obvious approach; review changed lines only for obvious issues
+- `medium` — Plan explores alternatives and notes trade-offs; review changed lines plus surrounding context
+- `high` — Deep research plan with documented reasoning; review broader code impact and flag pre-existing issues
 
 **patience** — When CAT acts on opportunities discovered during work and how review concerns are handled. CAT weighs
 each concern's severity against the cost of fixing it, then decides whether to fix inline or defer:
