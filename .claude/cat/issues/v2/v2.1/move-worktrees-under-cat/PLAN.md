@@ -29,10 +29,14 @@ None - infrastructure cleanup
 - All other files in the 35-file list that reference `.worktrees/` in examples, constraints,
   or documentation text
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Behavior unchanged - worktrees still created and managed correctly
 - [ ] Tests passing - no regressions
 - [ ] Code quality improved - all CAT artifacts consolidated under `.claude/cat/`
+
+- [ ] All references to `.worktrees/` updated to `.claude/cat/worktrees/`
+- [ ] All tests pass
+- [ ] No hardcoded old paths remain in plugin directory
 
 ## Execution Steps
 1. **Step 1:** Find all files referencing `.worktrees/` or `.worktrees` path pattern
@@ -45,7 +49,3 @@ None - infrastructure cleanup
 5. **Step 5:** Run test suite to verify no regressions
    - Files: `python3 /workspace/run_tests.py`
 
-## Success Criteria
-- [ ] All references to `.worktrees/` updated to `.claude/cat/worktrees/`
-- [ ] All tests pass
-- [ ] No hardcoded old paths remain in plugin directory

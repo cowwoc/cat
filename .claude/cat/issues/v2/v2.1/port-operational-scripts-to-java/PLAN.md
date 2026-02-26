@@ -41,7 +41,7 @@ Parent: port-utility-scripts
 7. Write tests for SubagentMonitor and BatchReader
 8. Run `mvn verify` to confirm all tests pass
 
-## Success Criteria
+## Post-conditions
 - [ ] All three operational scripts have Java equivalents
 - [ ] JSON output matches original scripts
 - [ ] All tests pass (`mvn verify`)

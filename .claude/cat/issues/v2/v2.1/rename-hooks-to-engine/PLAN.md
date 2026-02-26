@@ -130,7 +130,7 @@ grep -r "mvn -f hooks/" /workspace/CLAUDE.md /workspace/.claude/
 
 All should return 0 results (excluding git history and completed issue files).
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] `/workspace/engine` directory exists with full Maven project structure
 - [ ] `/workspace/hooks` directory no longer exists

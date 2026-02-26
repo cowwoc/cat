@@ -17,6 +17,6 @@ The echo-session-id.sh hook is retained for user visibility - it
 injects the session ID into conversation context so users can
 reference it when needed.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

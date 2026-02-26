@@ -23,7 +23,7 @@ None - infrastructure/simplification task
 - plugin/commands/config.md - Removed references
 - plugin/commands/init.md - Removed banner_formats section
 
-## Acceptance Criteria
+## Post-conditions
 - [x] box-alignment skill deleted
 - [x] All references to box-alignment removed (8 files)
 - [x] "Closed-border format" jargon removed

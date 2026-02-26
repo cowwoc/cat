@@ -22,7 +22,7 @@ established in the Java handlers.
 - plugin/hooks/skill_handlers/work_handler.py - Use pre-rendered pattern
 - plugin/hooks/skill_handlers/cleanup_handler.py - Use pre-rendered pattern
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All tests still pass
 - [ ] Python handlers use pre-rendered output pattern
 - [ ] No "OUTPUT TEMPLATE" references remain in handler output

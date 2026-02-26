@@ -20,7 +20,7 @@ None - infrastructure/optimization sub-issue
 |----------|-------|--------------|
 | Stakeholders | 11 | `plugin/stakeholders/*.md` |
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All 11 stakeholder files compressed
 - [ ] Execution equivalence verified (all files score 1.0 on /compare-docs)
 - [ ] No functionality regression

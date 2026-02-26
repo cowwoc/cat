@@ -51,7 +51,7 @@ checks each dependency's STATE.md status before adding to BLOCKED_TASKS. The com
 2. **Step 2:** Run existing tests to verify no regressions
    - Files: `run_tests.py`
 
-## Success Criteria
+## Post-conditions
 - [ ] Diagnostic snippet checks each dependency's STATE.md status before reporting as blocker
 - [ ] All existing tests pass
 - [ ] No regressions in task discovery or lock acquisition

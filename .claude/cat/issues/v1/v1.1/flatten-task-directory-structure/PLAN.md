@@ -18,6 +18,6 @@ Updated files:
 - All commands referencing task paths
 - Skills and reference documentation
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

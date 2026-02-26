@@ -23,7 +23,7 @@ outside the worktree.
 - `client/src/main/java/io/github/cowwoc/cat/hooks/GetBashOutput.java` - add handler to list
 - `client/src/test/java/io/github/cowwoc/cat/hooks/test/BlockWorktreeIsolationViolationTest.java` - TestNG tests
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Bash commands with `> /workspace/path` outside worktree are blocked when a session lock exists
 - [ ] Bash commands with `>> /workspace/path` outside worktree are blocked
 - [ ] Bash commands with `tee /workspace/path` outside worktree are blocked
@@ -31,6 +31,10 @@ outside the worktree.
 - [ ] Bash commands targeting paths inside the worktree are allowed
 - [ ] Bash commands when no session lock exists are allowed (no false positives)
 - [ ] All test cases pass with `mvn -f client/pom.xml test`
+
+- [ ] Bash file-write commands outside worktree are blocked when session lock exists
+- [ ] No false positives for legitimate Bash operations
+- [ ] All tests pass
 
 ## Execution Steps
 1. **Step 1:** Create `BlockWorktreeIsolationViolation` BashHandler that checks for file-writing bash patterns targeting
@@ -42,7 +46,3 @@ outside the worktree.
    - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/BlockWorktreeIsolationViolationTest.java`
 4. **Step 4:** Run tests and verify no regressions
 
-## Success Criteria
-- [ ] Bash file-write commands outside worktree are blocked when session lock exists
-- [ ] No false positives for legitimate Bash operations
-- [ ] All tests pass

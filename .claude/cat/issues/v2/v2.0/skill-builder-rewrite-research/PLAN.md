@@ -9,7 +9,7 @@ None - infrastructure/maintenance task
 ## Files to Modify
 - plugin/commands/research.md - Complete rewrite using skill-builder
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] research.md rewritten using skill-builder methodology
 - [ ] Display renders correctly without alignment calculations
 - [ ] /cat:research command works as expected

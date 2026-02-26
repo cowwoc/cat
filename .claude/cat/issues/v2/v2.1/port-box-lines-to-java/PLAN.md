@@ -25,7 +25,7 @@ Parent: 2.1-port-display-scripts
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/bash/ComputeBoxLines.java` - Replace Python delegation with Java logic
 - `hooks/src/test/java/io/github/cowwoc/cat/hooks/test/ComputeBoxLinesTest.java` - Add/update tests
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] ComputeBoxLines.java computes box lines natively without calling Python
 - [ ] Output is character-for-character identical to build_box_lines.py for all input scenarios
 - [ ] Display width calculation handles emoji characters identically to Python's emoji_widths.py
@@ -34,6 +34,10 @@ Parent: 2.1-port-display-scripts
 - [ ] Empty content and edge cases (single line, very long lines) produce identical output
 - [ ] No Python subprocess spawning remains in the class
 - [ ] All tests pass (`mvn -f hooks/pom.xml test`)
+
+- [ ] Python subprocess call removed from ComputeBoxLines.java
+- [ ] All existing tests pass
+- [ ] New tests verify output parity with Python for at least 5 distinct input scenarios
 
 ## Execution Steps
 1. **Read `build_box_lines.py`** to catalog all computation logic: display width, line building, border rendering
@@ -44,7 +48,3 @@ Parent: 2.1-port-display-scripts
 6. **Write tests** covering: single line, multi-line, emoji content, empty content, wide characters
 7. **Run tests:** `mvn -f hooks/pom.xml test`
 
-## Success Criteria
-- [ ] Python subprocess call removed from ComputeBoxLines.java
-- [ ] All existing tests pass
-- [ ] New tests verify output parity with Python for at least 5 distinct input scenarios

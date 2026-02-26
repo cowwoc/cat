@@ -16,7 +16,7 @@ None (performance optimization)
 - `plugin/scripts/get-status-display.py` - Modify active minor task rendering to collapse completed issues
 - `tests/test_status_handler.py` - Add test for collapse behavior
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Active minor shows at most 5 completed issues (the 5 most recently completed)
 - [x] Remaining completed issues are collapsed into a single summary line like "☑️ ... and N more completed"
 - [x] Non-completed issues (open, in-progress, blocked) are always shown

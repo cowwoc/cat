@@ -20,6 +20,6 @@ Updated skill/workflow docs with progress output guidance:
 - execute-task.md (14-step workflow)
 - spawn-subagent, collect-results, parallel-execute skills
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

@@ -27,7 +27,7 @@ is a string, treat it as a user message (backward compatible). When it is an obj
   builders; update `buildInput` to dispatch on priming message type
 - `plugin/skills/empirical-test/first-use.md` - Document structured priming message format
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] String priming messages still work as user messages (backward compatible)
 - [ ] Object priming messages with `type: "tool_use"` generate proper tool_use + assistant + tool_result sequences
 - [ ] Test runner can simulate a conversation with completed Bash tool calls before the test prompt

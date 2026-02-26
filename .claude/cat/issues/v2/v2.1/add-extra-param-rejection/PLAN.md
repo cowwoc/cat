@@ -35,7 +35,7 @@ Scripts that need extra-parameter rejection added (bash scripts without `$#` val
 **Already covered:** Python scripts using `argparse` reject extra args automatically. Bash scripts with existing `$#`
 checks already validate parameter counts.
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All 7 scripts listed in Scope are modified with parameter count or unknown-argument validation
 - [ ] Each modified script exits with code 1 and prints error to stderr when extra/unknown parameters are passed
 - [ ] Existing correct invocations continue to work (no behavioral change for valid calls)

@@ -39,7 +39,7 @@ Replace "task" terminology with "issue" in all concept documentation files.
 4. Update references to old script names
 5. Update references to old file names
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All concept files updated
 - [ ] Files renamed appropriately
 - [ ] Script references point to new names

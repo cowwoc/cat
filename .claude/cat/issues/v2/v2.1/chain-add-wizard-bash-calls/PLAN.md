@@ -46,7 +46,7 @@ None - efficiency optimization
 4. **Step 4:** Combine the STATE.md update and verification grep in task_update_parent into a single call
 5. **Step 5:** Run `python3 /workspace/run_tests.py` to verify no regressions
 
-## Success Criteria
+## Post-conditions
 - [ ] Issue creation workflow uses fewer Bash calls (target: ~5 instead of ~10)
 - [ ] All validation, setup, and update operations still execute correctly
 - [ ] Error handling preserved (&&-chaining stops on failure)

@@ -9,6 +9,6 @@ to incorrectly identify v0.10 as current when v0.5 has pending tasks.
 
 Fix: iterate through version-sorted keys after collecting all stats.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

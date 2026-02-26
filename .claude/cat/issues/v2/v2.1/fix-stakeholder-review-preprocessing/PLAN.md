@@ -24,7 +24,7 @@ was replaced by the Java class but never wired up.
 - `plugin/skills/stakeholder-review/SKILL.md` - Update error message to reference Java class instead of Python handler
 - `client/src/main/java/...` - May need CLI entry point for GetStakeholderOutput (like progress-banner has)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] `stakeholder-review-first-use/SKILL.md` includes preprocessor command that generates STAKEHOLDER BOXES
 - [ ] Stakeholder review skill no longer hits fail-fast for missing boxes
 - [ ] Error messages reference correct Java class instead of `stakeholder_review_handler.py`

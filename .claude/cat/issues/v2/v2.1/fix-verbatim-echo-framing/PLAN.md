@@ -98,13 +98,16 @@ providing context or motivation behind your instructions helps Claude better und
 - `plugin/skills/shrink-doc/first-use.md` - Replace FAIL-FAST label with "Iteration required"
 - `plugin/skills/render-output/first-use.md` - Update echo instruction wording
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] No `**FAIL-FAST:**` blocks remain in any skill files
 - [ ] No "FAIL-FAST" terminology used as bold instruction labels in any skill
 - [ ] All verbatim output skills use the explanatory guard pattern
 - [ ] Description lines removed from verbatim output skills (degrade haiku 100% → 60%)
 - [ ] `skill-builder/first-use.md` template recommends explanatory guard pattern
 - [ ] All affected skills load correctly via load-skill.sh
+
+- [ ] Zero `**FAIL-FAST:**` blocks in verbatim output skill files
+- [ ] Haiku achieves ~100% echo success with explanatory guard (verified by empirical test)
 
 ## Execution Steps
 1. **Step 1:** Replace FAIL-FAST blocks in all affected skill files with explanatory guard pattern:
@@ -116,6 +119,3 @@ providing context or motivation behind your instructions helps Claude better und
 2. **Step 2:** Update skill-builder template to recommend explanatory guard instead of FAIL-FAST
 3. **Step 3:** Update STATE.md to closed
 
-## Success Criteria
-- [ ] Zero `**FAIL-FAST:**` blocks in verbatim output skill files
-- [ ] Haiku achieves ~100% echo success with explanatory guard (verified by empirical test)

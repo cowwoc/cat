@@ -3,12 +3,10 @@
 ## Objective
 Complete the core rewrite with workflow refinements and display improvements.
 
-## Gates
-
-### Entry
+## Pre-conditions
 - v1.9 complete
 
-### Exit
+## Post-conditions
 - All tasks complete
 - Show diff before approval gate implemented
 - Review feedback loop functional

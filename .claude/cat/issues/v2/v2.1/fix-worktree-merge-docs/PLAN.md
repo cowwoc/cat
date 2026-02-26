@@ -25,7 +25,7 @@ prevent accidental branch switches.
 - plugin/concepts/merge-and-cleanup.md - Add "Merging When Base Is Checked Out" section
 - plugin/skills/work-merge/SKILL.md - Reference the pattern (if not already)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Bug no longer reproducible (agent follows correct pattern)
 - [ ] Documentation clearly explains the scenario
 - [ ] No regressions

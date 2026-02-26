@@ -88,7 +88,7 @@ None
    - Assert on warning data returned by `run()` methods instead
 6. **Run `mvn -f hooks/pom.xml verify`** to confirm all tests pass with zero console output
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] Behavior unchanged: hook output identical in production (same messages to stdout/stderr)
 - [ ] All tests pass
@@ -98,8 +98,6 @@ None
 - [ ] Only `main()` entry points print to stdout/stderr
 - [ ] SLF4J used for unexpected errors/diagnostics (not for testable assertions)
 - [ ] `logback-test.xml` exists and silences output during tests
-
-## Success Criteria
 
 - [ ] `mvn -f hooks/pom.xml verify` passes with exit code 0
 - [ ] Running tests produces zero lines on stdout/stderr (verified by redirecting test output)

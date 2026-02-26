@@ -63,7 +63,7 @@ Read handlers:
 8. **Verify all handlers** produce identical output to Python equivalents
 9. **Run test suite** - `python3 /workspace/run_tests.py` to verify no regressions
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] 6 new Java handlers created and registered
 - [ ] All prompt handlers (4 total) produce identical output to Python
 - [ ] All posttool handlers (6 total) produce identical output to Python

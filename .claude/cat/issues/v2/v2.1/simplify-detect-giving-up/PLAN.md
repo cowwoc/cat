@@ -74,7 +74,7 @@ state, cleanupStaleSessionDirs() is also unnecessary.
    (tests no longer use /tmp or file-based cleanup)
 5. **Step 5:** Run `mvn -f hooks/pom.xml verify` to confirm all tests pass
 
-## Success Criteria
+## Post-conditions
 - [ ] All tests pass with `mvn -f hooks/pom.xml verify`
 - [ ] No /tmp file I/O in DetectGivingUp.java
 - [ ] No flaky tests (no cross-test /tmp interference)

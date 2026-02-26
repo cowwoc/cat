@@ -38,7 +38,7 @@ None - context optimization
 4. **Step 4:** If "No", display the existing completion message and end normally.
 5. **Step 5:** Run `python3 /workspace/run_tests.py` to verify no regressions
 
-## Success Criteria
+## Post-conditions
 - [ ] After creating an issue, user is offered option to create another without re-invoking the skill
 - [ ] Second issue creation reuses existing conversation context (no skill re-expansion)
 - [ ] Single-issue flow unchanged when user selects "No, done"

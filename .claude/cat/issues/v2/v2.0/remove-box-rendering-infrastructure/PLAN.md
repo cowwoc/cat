@@ -40,7 +40,7 @@ None - infrastructure cleanup task
 - `plugin/.claude/cat/references/display-standards.md` - Complex padding documentation
 - `plugin/skills/render-box/SKILL.md` - Box rendering skill (entire directory)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] No files reference box.sh
 - [ ] No files reference emoji-widths.json
 - [ ] All emoji width scripts removed

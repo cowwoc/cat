@@ -29,7 +29,7 @@ to `ANSI_X3.4-1968` (ASCII).
 |------|--------|-------------|
 | `hooks/pom.xml` | Modify | Add `-Dstdout.encoding=UTF-8` argLine to surefire configuration |
 
-## Success Criteria
+## Post-conditions
 
 - [ ] Surefire configuration includes `-Dstdout.encoding=UTF-8` in argLine
 - [ ] `mvn -f hooks/pom.xml verify` passes

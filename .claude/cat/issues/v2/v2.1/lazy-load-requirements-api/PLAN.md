@@ -31,7 +31,7 @@ None - infrastructure optimization
    requirements API conventions before editing Java files.
 4. **Step 4:** Run `python3 /workspace/run_tests.py` to verify no regressions
 
-## Success Criteria
+## Post-conditions
 - [ ] `requirements-api.md` no longer exists in `.claude/rules/`
 - [ ] `requirements-api.md` exists in `plugin/concepts/` with identical content
 - [ ] CLAUDE.md convention table correctly references the new location

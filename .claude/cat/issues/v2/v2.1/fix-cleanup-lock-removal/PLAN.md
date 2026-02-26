@@ -35,13 +35,17 @@ The `BlockLockManipulation` hook error message does not include information abou
 - [ ] Hook still blocks direct `rm` commands targeting lock files
 - [ ] Hook still blocks direct `rm` commands targeting locks directory
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] Both error message branches in BlockLockManipulation updated to mention `issue-lock.sh force-release`
 - [ ] Error message distinguishes when to use `/cat:cleanup` (user-facing) vs `issue-lock.sh force-release` (skill-internal)
 - [ ] Tests verify error message content for both LOCK_FILE_PATTERN and LOCKS_DIR_PATTERN code paths
 - [ ] Hook still blocks direct `rm` commands (no regression in blocking behavior)
 - [ ] All existing tests pass
+
+- [ ] Both error messages mention `issue-lock.sh force-release` as the authorized alternative
+- [ ] Test suite passes with exit code 0
+- [ ] No regressions in existing BlockLockManipulation blocking behavior
 
 ## Execution Steps
 
@@ -53,8 +57,3 @@ The `BlockLockManipulation` hook error message does not include information abou
 
 3. **Run tests:** Execute `mvn -f client/pom.xml verify` to ensure all tests pass.
 
-## Success Criteria
-
-- [ ] Both error messages mention `issue-lock.sh force-release` as the authorized alternative
-- [ ] Test suite passes with exit code 0
-- [ ] No regressions in existing BlockLockManipulation blocking behavior

@@ -14,7 +14,7 @@ worktree hook pattern did not account for the `-C` flag, allowing operations to 
 
 None (infrastructure/reliability improvement)
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] Bug fixed: Hook patterns match git commands with -C flag
 - [ ] Regression test added: Test cases for git -C command variations

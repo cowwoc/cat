@@ -13,6 +13,6 @@ Introduces the "fun AND reliable" philosophy with adventure-style workflow:
 - Enhanced approval gate with checkpoint-style presentation
 - License change to CAT Commercial License
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

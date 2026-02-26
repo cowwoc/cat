@@ -33,13 +33,16 @@ Note: Only modify files where (1) AskUserQuestion is an active instruction for t
 (2) the issue ID or goal is available as a variable at runtime. Files like config, init, research, cleanup,
 and skill-builder are workflow wizards without issue context - use workflow name only if helpful.
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] AskUserQuestion calls in /cat:work approval gate include issue ID and goal in question text
 - [ ] AskUserQuestion calls in /cat:work potentially-complete handling include issue ID
 - [ ] AskUserQuestion calls in /cat:work-with-issue include issue ID and goal
 - [ ] Question text format: includes `(Goal: <brief goal>)` where goal is available
 - [ ] No behavioral changes to wizard flows
 - [ ] Tests passing (mvn -f hooks/pom.xml verify)
+
+- [ ] Users can identify which issue AND its goal when answering wizard questions
+- [ ] All existing tests pass with no regressions
 
 ## Execution Steps
 1. **Step 1:** Audit each file in "Files to Modify" to identify AskUserQuestion instructions where the agent
@@ -49,6 +52,3 @@ and skill-builder are workflow wizards without issue context - use workflow name
    available. For the header field, include the issue ID if space permits (max 12 chars).
 3. **Step 3:** Run existing tests to verify no regressions: `mvn -f hooks/pom.xml verify`
 
-## Success Criteria
-- [ ] Users can identify which issue AND its goal when answering wizard questions
-- [ ] All existing tests pass with no regressions

@@ -3,11 +3,9 @@
 ## Objective
 Fix SESSION_ID usage in skills - read from context not env var.
 
-## Gates
-
-### Entry
+## Pre-conditions
 - v1.2 complete
 
-### Exit
+## Post-conditions
 - All tasks complete
 - SESSION_ID correctly read from context

@@ -3,12 +3,10 @@
 ## Objective
 Add version migration system for CAT upgrades.
 
-## Gates
-
-### Entry
+## Pre-conditions
 - v1.7 complete
 
-### Exit
+## Post-conditions
 - All tasks complete
 - Migration system working
 - Duplicate detection functional

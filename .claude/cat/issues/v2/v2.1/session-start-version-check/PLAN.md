@@ -16,7 +16,7 @@ None - infrastructure sub-issue of add-java-build-to-ci
 - `plugin/hooks/session_start.sh` - Rewrite download logic to use version-based comparison and GitHub API
 - `plugin/.claude-plugin/plugin.json` - Read version from here (already exists)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] session_start.sh reads plugin.json version on startup
 - [ ] session_start.sh reads local bundle VERSION marker file
 - [ ] If versions match: skip download (fast path, no network call)
@@ -25,6 +25,11 @@ None - infrastructure sub-issue of add-java-build-to-ci
 - [ ] After download, verify bundle is functional (java -version check)
 - [ ] Handle API failures gracefully (warn but do not block session)
 - [ ] Works for both upgrades and downgrades
+
+- [ ] Version match skips all network calls
+- [ ] Version mismatch triggers GitHub API call and download
+- [ ] Downloaded bundle passes functionality check
+- [ ] API failures produce clear warning without blocking session
 
 ## Execution Steps
 1. **Add version reading logic to session_start.sh**
@@ -49,8 +54,3 @@ None - infrastructure sub-issue of add-java-build-to-ci
 4. **Run tests**
    - `python3 /workspace/run_tests.py`
 
-## Success Criteria
-- [ ] Version match skips all network calls
-- [ ] Version mismatch triggers GitHub API call and download
-- [ ] Downloaded bundle passes functionality check
-- [ ] API failures produce clear warning without blocking session

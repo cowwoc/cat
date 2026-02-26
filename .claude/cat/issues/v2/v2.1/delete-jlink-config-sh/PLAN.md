@@ -24,7 +24,7 @@ None (cleanup)
 - `.claude/cat/issues/v2/v2.1/ci-build-jlink-bundle/PLAN.md` - Remove jlink-config.sh references
 - `.claude/cat/issues/v2/v2.1/developer-local-bundle-rebuild/PLAN.md` - Remove jlink-config.sh references
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] `plugin/hooks/jlink-config.sh` deleted
 - [ ] No remaining references to `jlink-config.sh` in README.md

@@ -16,7 +16,7 @@ confirmation, and completion verification.
 - plugin/hooks/skill_handlers/cleanup_handler.py - Create new handler for preprocessor output
 - plugin/commands/cleanup.md - Update survey/plan/completion output to use preprocessor displays
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Survey results shown in bordered table with type/artifact/status columns
 - [ ] Cleanup plan shows bordered box with grouped removal items
 - [ ] Completion shows verification counts in bordered box

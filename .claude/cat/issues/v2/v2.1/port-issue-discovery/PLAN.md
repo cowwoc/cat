@@ -46,7 +46,7 @@ Parent: 2.1-port-workflow-scripts (sub-issue 3 of 4)
 7. Run `mvn -f hooks/pom.xml verify`
 8. Update STATE.md (status: closed, progress: 100%)
 
-## Success Criteria
+## Post-conditions
 - [ ] IssueDiscovery produces identical JSON output
 - [ ] Dependency resolution matches bash implementation
 - [ ] Lock integration works with IssueLock.java

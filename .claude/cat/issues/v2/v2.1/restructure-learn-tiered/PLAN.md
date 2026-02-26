@@ -44,7 +44,7 @@ None
 5. **Add user_summary requirement** to each phase file output spec
 6. **Update SKILL.md summary display** to show tier used and token savings
 
-## Success Criteria
+## Post-conditions
 - [ ] Quick tier completes in single subagent invocation (~40K tokens)
 - [ ] Deep tier completes in single subagent invocation (~80K tokens)
 - [ ] User sees phase summaries (investigation findings, RCA, prevention description) during execution

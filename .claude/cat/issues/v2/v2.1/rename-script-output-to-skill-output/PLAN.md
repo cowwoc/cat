@@ -81,7 +81,7 @@ Files:
 - `MEMORY.md` — session-specific, updated separately
 - Java class/interface names (`SkillOutput`, `GetSkillOutput`) — already correct
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Zero grep matches for `SCRIPT OUTPUT` in `plugin/` (excluding worktrees)
 - [ ] Zero grep matches for `SCRIPT OUTPUT` in `hooks/src/`
 - [ ] Zero grep matches for `script output` (case-insensitive) in `plugin/` except where it refers to
@@ -90,6 +90,11 @@ Files:
 - [ ] Within each first-use.md, marker text and fail-fast references use the same renamed string
   (e.g., both say `SKILL OUTPUT STATUS DISPLAY`, not a mix of old and new)
 - [ ] All tests pass (`mvn -f hooks/pom.xml test`)
+
+- [ ] `grep -ri "SCRIPT OUTPUT" plugin/` returns no matches (excluding worktrees)
+- [ ] `grep -ri "SCRIPT OUTPUT" hooks/src/` returns no matches
+- [ ] `mvn -f hooks/pom.xml test` passes
+- [ ] Verbatim skills (/cat:status, /cat:help, /cat:token-report, /cat:render-diff) produce correct output
 
 ## Execution Steps
 
@@ -118,8 +123,3 @@ Files:
 8. **Step 8:** Verify with grep
    - Confirm zero remaining `SCRIPT OUTPUT` references in plugin/ and hooks/src/
 
-## Success Criteria
-- [ ] `grep -ri "SCRIPT OUTPUT" plugin/` returns no matches (excluding worktrees)
-- [ ] `grep -ri "SCRIPT OUTPUT" hooks/src/` returns no matches
-- [ ] `mvn -f hooks/pom.xml test` passes
-- [ ] Verbatim skills (/cat:status, /cat:help, /cat:token-report, /cat:render-diff) produce correct output

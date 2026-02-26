@@ -9,7 +9,7 @@ None - infrastructure/maintenance task
 ## Files to Modify
 - plugin/commands/init.md - Complete rewrite using skill-builder
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] init.md rewritten using skill-builder methodology
 - [ ] Display renders correctly without alignment calculations
 - [ ] /cat:init command works as expected

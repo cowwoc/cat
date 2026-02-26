@@ -50,7 +50,7 @@ Parent: 2.1-port-workflow-scripts (sub-issue 2 of 4)
 8. Run `mvn -f hooks/pom.xml verify`
 9. Update STATE.md (status: closed, progress: 100%)
 
-## Success Criteria
+## Post-conditions
 - [ ] IssueCreator produces identical JSON output and directory structure
 - [ ] SkillLoader performs identical env var substitution
 - [ ] ProgressBanner renders identical banner output

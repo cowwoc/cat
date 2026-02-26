@@ -13,6 +13,6 @@ consolidate and strengthen merge commit blocking
 BLOCKED: git merge --no-ff, git merge (without --ff-only/--squash)
 ALLOWED: git merge --ff-only, git merge --squash
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

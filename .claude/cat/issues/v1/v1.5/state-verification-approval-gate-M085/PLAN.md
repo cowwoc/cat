@@ -9,6 +9,6 @@ for STATE.md presence. If missing, blocks approval gate presentation.
 
 Escalated from documentation (spawn-subagent checklist was ignored).
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

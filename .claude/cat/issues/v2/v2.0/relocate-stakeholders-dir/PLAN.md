@@ -19,7 +19,7 @@ None - infrastructure/cleanup task
 - `plugin/concepts/stakeholders/*` - move to `plugin/stakeholders/`
 - Any files referencing `plugin/concepts/stakeholders` - update paths
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Behavior unchanged
 - [ ] All tests still pass
 - [ ] References updated - all file references point to new location

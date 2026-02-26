@@ -15,6 +15,6 @@ subagent spawning for functionality that already exists.
 Addresses efficiency issue where full workflow ran before discovering
 a task was already implemented in pre-CAT codebase.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

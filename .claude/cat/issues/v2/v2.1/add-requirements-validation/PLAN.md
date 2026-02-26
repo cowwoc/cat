@@ -18,7 +18,7 @@ None - infrastructure improvement
 ## Files to Modify
 - plugin/skills/add/content.md - Add requirements validation step before task_create (after task_select_requirements)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] /cat:add runs a requirements validation step before task_create (right before PLAN.md generation)
 - [ ] Validation checks that acceptance criteria cover ALL aspects of the task description
 - [ ] Validation checks that no requirements from the task goal are missing from acceptance criteria
@@ -30,6 +30,11 @@ None - infrastructure improvement
 - [ ] Existing /cat:add workflow still functions correctly for all issue types
 - [ ] Tests passing
 - [ ] No regressions to existing skills
+
+- [ ] Requirements validation step exists in /cat:add workflow, positioned before task_create
+- [ ] Validation catches missing criteria (test with known-gap scenario)
+- [ ] Validation cross-checks against parent version REQ-xxx requirements
+- [ ] All existing tests pass with no regressions
 
 ## Execution Steps
 1. **Step 1:** Add a new step `task_validate_criteria` to plugin/skills/add/content.md
@@ -55,8 +60,3 @@ None - infrastructure improvement
 2. **Step 2:** Run existing tests to verify no regressions
    - Run: mvn -f hooks/pom.xml verify
 
-## Success Criteria
-- [ ] Requirements validation step exists in /cat:add workflow, positioned before task_create
-- [ ] Validation catches missing criteria (test with known-gap scenario)
-- [ ] Validation cross-checks against parent version REQ-xxx requirements
-- [ ] All existing tests pass with no regressions

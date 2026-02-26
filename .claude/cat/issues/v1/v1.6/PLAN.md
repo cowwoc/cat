@@ -3,12 +3,10 @@
 ## Objective
 Introduce adventure-style workflow with user preference system.
 
-## Gates
-
-### Entry
+## Pre-conditions
 - v1.5 complete
 
-### Exit
+## Post-conditions
 - All tasks complete
 - Adventure mode functional
 - User preferences working

@@ -25,7 +25,7 @@ None (infrastructure/internal improvement)
 - `plugin/hooks/restore-todowrite.sh` - Delete
 - Skills that track progress - Add TaskCreate/TaskUpdate calls
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] TodoWrite backup hooks removed from hooks.json
 - [ ] save-todowrite.sh and restore-todowrite.sh deleted
 - [ ] Skills create/update Task tool entries for progress visibility

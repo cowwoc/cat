@@ -16,7 +16,7 @@ None (token optimization)
 ## Files to Modify
 - All `plugin/skills/**/SKILL.md` files containing the license banner
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] No SKILL.md files under `plugin/skills/` contain the HTML license comment banner
 - [ ] CLAUDE.md license header rule updated to exempt SKILL.md files (or note the exemption)
 

@@ -28,7 +28,7 @@ None - workflow improvement
 - `plugin/commands/work.md` - Add version boundary detection and approval gate logic
 - `plugin/concepts/work.md` (if exists) - Document the approval gate behavior
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Approval gate triggers when all tasks in current version are completed
 - [ ] Approval gate triggers when next available task is in a different version
 - [ ] Gate displays version completion summary

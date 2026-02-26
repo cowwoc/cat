@@ -39,7 +39,7 @@ Parent: 2.1-port-display-scripts
 10. **Verify output parity** with diff-based comparison
 11. **Run tests:** `mvn -f hooks/pom.xml test`
 
-## Success Criteria
+## Post-conditions
 - [ ] Java class created matching exact Python output
 - [ ] Status handler updated to call Java instead of Python
 - [ ] Bash wrapper removed

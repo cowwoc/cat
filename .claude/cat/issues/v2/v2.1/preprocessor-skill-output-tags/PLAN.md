@@ -110,7 +110,7 @@ as proof-of-concept, enabling future subagent preloading without additional refa
 - `plugin/skills/statusline/first-use.md` — DELETE
 - `plugin/concepts/skill-loading.md` — Update with `-first-use` pattern documentation
 
-## Acceptance Criteria
+## Post-conditions
 
 ### Phase 1 (done)
 - [x] `invokeSkillOutput` wraps successful output in `<skill-output>` tags

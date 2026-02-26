@@ -20,7 +20,7 @@ None - infrastructure/optimization sub-issue
 |----------|-------|--------------|
 | Skills | 34 | `plugin/skills/*/SKILL.md` and extras |
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All 34 skill files compressed
 - [ ] Execution equivalence verified (all files score 1.0 on /compare-docs)
 - [ ] No functionality regression

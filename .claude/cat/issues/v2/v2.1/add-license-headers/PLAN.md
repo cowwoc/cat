@@ -130,7 +130,7 @@ JSON and XML files are exempt (JSON has no comment syntax; XML files are configu
 ### File: plugin/concepts/license-header.md
 Create a reference document with all header formats by file type (Java, Python, Shell, Markdown, XML).
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All Java files have license header block comment before package/module declaration
 - [ ] All Python files have license header hash comments at top (after shebang if present)
 - [ ] All Shell scripts have license header hash comments after shebang line
@@ -141,6 +141,16 @@ Create a reference document with all header formats by file type (Java, Python, 
 - [ ] plugin/concepts/license-header.md created with all header formats
 - [ ] All tests pass after modifications
 - [ ] No files broken by header insertion
+
+- [ ] 100% of Java source files contain the license header
+- [ ] 100% of Python source files contain the license header
+- [ ] 100% of Shell scripts contain the license header
+- [ ] 100% of Markdown source files (skills/concepts/commands) contain the license header
+- [ ] XML files are not modified (configuration files, no semantic code)
+- [ ] No blank lines appear between license headers and code
+- [ ] CLAUDE.md contains the license header convention
+- [ ] license-header.md reference document exists
+- [ ] All tests pass (mvn -f hooks/pom.xml verify exits 0)
 
 ## Execution Steps
 1. **Create license-header.md reference:** Create `plugin/concepts/license-header.md` with all header formats by file
@@ -161,13 +171,3 @@ Create a reference document with all header formats by file type (Java, Python, 
 7. **Run tests:** Execute `mvn -f hooks/pom.xml verify` to verify no breakage
    - Files: None (validation step)
 
-## Success Criteria
-- [ ] 100% of Java source files contain the license header
-- [ ] 100% of Python source files contain the license header
-- [ ] 100% of Shell scripts contain the license header
-- [ ] 100% of Markdown source files (skills/concepts/commands) contain the license header
-- [ ] XML files are not modified (configuration files, no semantic code)
-- [ ] No blank lines appear between license headers and code
-- [ ] CLAUDE.md contains the license header convention
-- [ ] license-header.md reference document exists
-- [ ] All tests pass (mvn -f hooks/pom.xml verify exits 0)

@@ -77,7 +77,7 @@ None - infrastructure cleanup
 5. **Step 5:** Verify migration results - spot check 10+ files across different categories
 6. **Step 6:** Commit all changes
 
-## Success Criteria
+## Post-conditions
 - [ ] All issue STATE.md files have exactly the mandatory keys
 - [ ] No issue STATE.md contains any removed key
 - [ ] All closed issues have a Resolution field

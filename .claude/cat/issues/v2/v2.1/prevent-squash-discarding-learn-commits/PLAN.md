@@ -62,11 +62,14 @@ modifications."
 - `plugin/skills/work-with-issue/first-use.md` - Update Step 6 squash logic to detect and preserve learn commits
 - `plugin/skills/learn/first-use.md` - Add commit trailer or marker file when committing prevention fixes
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Learn prevention fixes survive the squash step in `/cat:work`
 - [ ] Learn commits are preserved as a separate commit (not mixed into the implementation squash)
 - [ ] Non-learn out-of-scope files are still correctly excluded from squash
 - [ ] No regressions in normal squash behavior when no learn commits exist
+
+- [ ] Simulated learn commit survives squash in worktree
+- [ ] Normal squash (no learn commits) behaves identically to current behavior
 
 ## Execution Steps
 1. **Step 1:** Determine selected approach (from user choice or config alignment)
@@ -77,6 +80,3 @@ modifications."
    - Files: `plugin/skills/work-with-issue/first-use.md`
 4. **Step 4:** Test by simulating the scenario: create worktree, add learn commit, verify squash preserves it
 
-## Success Criteria
-- [ ] Simulated learn commit survives squash in worktree
-- [ ] Normal squash (no learn commits) behaves identically to current behavior

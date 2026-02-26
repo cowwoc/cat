@@ -49,7 +49,7 @@ Migrate remaining handlers: add, help, cleanup, config, init, token-report, rend
 - All remaining *_handler.py files
 - Corresponding command/skill .md files
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] skill-builder docs updated to teach new mechanism
 - [ ] Progress banners use silent preprocessing (no more M298-type errors)
 - [ ] Status displays use silent preprocessing

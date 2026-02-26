@@ -3,12 +3,10 @@
 ## Objective
 Add auto-decomposition and parallel execution for large tasks.
 
-## Gates
-
-### Entry
+## Pre-conditions
 - v1.1 complete
 
-### Exit
+## Post-conditions
 - All tasks complete
 - Auto-decomposition working
 - Task locking functional

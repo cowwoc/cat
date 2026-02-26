@@ -10,6 +10,6 @@ add conventions/ directory structure to init
 - Update PROJECT.md template with Conventions section
 - Add conventions/ to success criteria
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

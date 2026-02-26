@@ -24,10 +24,14 @@ None - UX improvement
 |------|--------|
 | `plugin/skills/add/SKILL.md` | Remove scope AskUserQuestion, add LLM estimation instruction |
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Behavior unchanged for issue creation output
 - [ ] Tests passing
 - [ ] No AskUserQuestion about file count in add wizard
+
+- [ ] Add wizard no longer asks "How many files will this issue likely touch?"
+- [ ] Large-scope issues (6+ files) still trigger the split suggestion
+- [ ] All tests pass
 
 ## Execution Steps
 
@@ -46,7 +50,3 @@ None - UX improvement
 3. **Step 3:** Commit changes
    - Commit type: `config:` (Claude-facing skill modification)
 
-## Success Criteria
-- [ ] Add wizard no longer asks "How many files will this issue likely touch?"
-- [ ] Large-scope issues (6+ files) still trigger the split suggestion
-- [ ] All tests pass

@@ -41,7 +41,7 @@ Decomposed into 4 sub-issues (2026-02-11):
 | port-issue-discovery | get-available-issues.sh, lib/version-utils.sh | port-lock-and-worktree |
 | port-work-prepare | work-prepare.py | port-lock-and-worktree, port-issue-discovery |
 
-## Success Criteria
+## Post-conditions
 - [ ] All 7 workflow scripts have Java equivalents
 - [ ] JSON output contracts preserved exactly
 - [ ] File locking behavior identical (including stale lock detection)

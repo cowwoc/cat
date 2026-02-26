@@ -86,7 +86,7 @@ In Step 4 (collect_reviews), add validation that each reviewer's JSON output inc
 
 If validation fails, flag the review as incomplete (treat as CONCERNS with a note about missing evidence).
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All 10 stakeholder agent files include "Mandatory Pre-Review Steps" section
 - [ ] All 10 stakeholder agent files include `files_reviewed` and `diff_summary` in JSON output schema
 - [ ] Stakeholder review SKILL.md validates evidence fields in collected reviews
@@ -94,6 +94,11 @@ If validation fails, flag the review as incomplete (treat as CONCERNS with a not
 - [ ] All existing tests pass
 - [ ] No regressions in existing review workflow
 - [ ] E2E: Run stakeholder review on a real change and verify output includes files_reviewed with correct count
+
+- [ ] All 10 agent files contain the pre-review steps section
+- [ ] All 10 agent files define files_reviewed in their output schema
+- [ ] SKILL.md validates evidence and flags missing evidence as CONCERNS
+- [ ] All tests pass (exit code 0)
 
 ## Execution Steps
 1. **Step 1:** Add "Mandatory Pre-Review Steps" section to all 10 stakeholder agent files
@@ -110,8 +115,3 @@ If validation fails, flag the review as incomplete (treat as CONCERNS with a not
 4. **Step 4:** Run tests to verify no regressions
    - Command: mvn -f client/pom.xml test
 
-## Success Criteria
-- [ ] All 10 agent files contain the pre-review steps section
-- [ ] All 10 agent files define files_reviewed in their output schema
-- [ ] SKILL.md validates evidence and flags missing evidence as CONCERNS
-- [ ] All tests pass (exit code 0)

@@ -16,6 +16,6 @@ remove task/ subdirectory from task path structure
 
 Learning ID: M135
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

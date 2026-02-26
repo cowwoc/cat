@@ -14,11 +14,9 @@ layer.
 | REQ-004 | Backend selection via config | must-have | cat-config.json specifies active backend |
 | REQ-005 | Extensible for future backends | nice-to-have | Clear pattern for adding Jira, Linear, etc. |
 
-## Gates
-
-### Entry
+## Pre-conditions
 - v2.0 complete
 
-### Exit
+## Post-conditions
 - All tasks complete
 - At least local + GitHub backends working

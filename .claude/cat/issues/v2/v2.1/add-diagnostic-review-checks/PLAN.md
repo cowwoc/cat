@@ -18,11 +18,15 @@ None
 - `plugin/agents/stakeholder-testing.md` - Add diagnostic path review items
 - `plugin/agents/stakeholder-requirements.md` - Add output contract validation items
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Testing stakeholder config updated with new review items
 - [ ] Requirements stakeholder config updated with new review items
 - [ ] No regressions in existing stakeholder review functionality
 - [ ] All tests pass
+
+- [ ] Testing stakeholder has diagnostic path coverage and comment-code consistency items
+- [ ] Requirements stakeholder has output contract semantic correctness item and checklist row
+- [ ] All existing tests pass
 
 ## Execution Steps
 
@@ -48,7 +52,3 @@ None
    - Run `python3 /workspace/run_tests.py`
    - Files: none (validation only)
 
-## Success Criteria
-- [ ] Testing stakeholder has diagnostic path coverage and comment-code consistency items
-- [ ] Requirements stakeholder has output contract semantic correctness item and checklist row
-- [ ] All existing tests pass

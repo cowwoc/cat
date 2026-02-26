@@ -22,7 +22,7 @@ tags — both of which affect agent behavior. Without these, compliance tests gi
 - `client/src/test/java/io/github/cowwoc/cat/hooks/test/EmpiricalTestRunnerTest.java` - Add tests for new fields
 - `plugin/skills/empirical-test-first-use/SKILL.md` - Document new config fields
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Config JSON supports `system_prompt` field (string) passed as `--append-system-prompt` to claude CLI
 - [ ] Config JSON supports `system_reminders` field (array of strings) injected as `<system-reminder>` tags in user
       messages before the test prompt

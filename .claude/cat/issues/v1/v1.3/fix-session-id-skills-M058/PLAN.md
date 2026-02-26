@@ -21,6 +21,6 @@ fix SESSION_ID usage in skills - read from context not env var
 
 Learning: M058
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

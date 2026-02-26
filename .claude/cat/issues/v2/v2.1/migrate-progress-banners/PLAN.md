@@ -13,7 +13,7 @@ M256, M257, M288, M298).
 - plugin/commands/work.md - Update to instruct using /cat-banner skill
 - plugin/skills/work/SKILL.md - Update phase display instructions
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] /cat-banner skill generates correct banners for all phases
 - [ ] work_handler.py no longer provides banner templates
 - [ ] work.md instructs to use /cat-banner instead of manual construction

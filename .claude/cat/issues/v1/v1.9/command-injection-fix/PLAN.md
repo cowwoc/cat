@@ -13,6 +13,6 @@ register-hook.sh:
 - Add bash syntax validation before writing
 - Warn on dangerous patterns (curl|bash, rm -rf /, etc.)
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

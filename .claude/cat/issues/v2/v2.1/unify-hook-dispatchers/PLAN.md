@@ -23,20 +23,20 @@ Split into 6 sub-issues by hook type:
 5. **unify-stop-sessionend-hooks** - 1 script (session-unlock.sh) + existing EnforceStatusOutput
 6. **unify-project-hooks** - 2 scripts (validate-state-md-format.sh, block-worktree-cd.sh) from .claude/settings.json
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All hook behavior preserved exactly (no functional changes)
 - [ ] All tests passing
 - [ ] All bash/python hook scripts removed
 - [ ] hooks.json has one Java registration per hook type
 - [ ] .claude/settings.json project hooks migrated to Java
 
+- [ ] Zero bash/python hook scripts remain in plugin/hooks/ (except java.sh bridge)
+- [ ] hooks.json has maximum one java.sh registration per hook type per matcher
+- [ ] All existing tests pass
+- [ ] New Java handler tests cover migrated logic
+
 ## Execution Steps
 1. Complete all 6 sub-issues
 2. Verify no remaining bash/python hook scripts
 3. Verify hooks.json consolidation
 
-## Success Criteria
-- [ ] Zero bash/python hook scripts remain in plugin/hooks/ (except java.sh bridge)
-- [ ] hooks.json has maximum one java.sh registration per hook type per matcher
-- [ ] All existing tests pass
-- [ ] New Java handler tests cover migrated logic

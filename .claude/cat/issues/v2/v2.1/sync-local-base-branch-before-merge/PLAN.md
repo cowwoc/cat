@@ -19,7 +19,7 @@ issue branches.
   branch before divergence check
 - `plugin/skills/work-merge/first-use.md` - Remove redundant/ineffective fetch from Step 3 (Java now handles it)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] MergeAndCleanup fetches `origin/${baseBranch}` before `getDivergenceCount`
 - [ ] MergeAndCleanup fast-forwards local base branch to match `origin/${baseBranch}` via
   `git push . origin/${baseBranch}:${baseBranch}`
@@ -28,6 +28,10 @@ issue branches.
 - [ ] work-merge Step 3 no longer contains the ineffective `git fetch` (Java handles it)
 - [ ] All existing tests pass
 - [ ] E2E: MergeAndCleanup with a stale local base branch successfully incorporates origin's commits before merging
+
+- `mvn -f client/pom.xml test` passes with exit code 0
+- MergeAndCleanup.java contains syncBaseBranchWithOrigin called before getDivergenceCount
+- work-merge Step 3 no longer contains redundant fetch
 
 ## Execution Steps
 1. **Add `syncBaseBranchWithOrigin` method to MergeAndCleanup.java:**
@@ -55,7 +59,3 @@ issue branches.
 5. **Run all tests:**
    - `mvn -f client/pom.xml test`
 
-## Success Criteria
-- `mvn -f client/pom.xml test` passes with exit code 0
-- MergeAndCleanup.java contains syncBaseBranchWithOrigin called before getDivergenceCount
-- work-merge Step 3 no longer contains redundant fetch

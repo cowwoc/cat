@@ -17,7 +17,7 @@ None - infrastructure improvement
 - plugin/skills/work-with-issue/content.md - Add verify-implementation phase between execute and review
 - plugin/hooks/hooks.json - Register skill in plugin hooks if needed
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] /cat:verify-implementation skill exists and is invocable (renamed from audit-plan)
 - [ ] Skill can be invoked automatically by /cat:work with JSON arguments
 - [ ] Skill can also be invoked manually from worktree or with issue ID
@@ -31,6 +31,13 @@ None - infrastructure improvement
 - [ ] Functionality works end-to-end
 - [ ] Tests passing
 - [ ] No regressions to existing skills
+
+- [ ] Skill directory renamed to verify-implementation
+- [ ] All references updated from audit-plan to verify-implementation
+- [ ] work-with-issue includes new verification phase
+- [ ] Step numbering correct throughout work-with-issue
+- [ ] Banner patterns show 5 phases
+- [ ] All existing tests pass with no regressions
 
 ## Execution Steps
 1. **Step 1:** Rename plugin/skills/audit-plan to plugin/skills/verify-implementation
@@ -58,10 +65,3 @@ None - infrastructure improvement
 5. **Step 5:** Run existing tests to verify no regressions
    - Run: mvn -f hooks/pom.xml test
 
-## Success Criteria
-- [ ] Skill directory renamed to verify-implementation
-- [ ] All references updated from audit-plan to verify-implementation
-- [ ] work-with-issue includes new verification phase
-- [ ] Step numbering correct throughout work-with-issue
-- [ ] Banner patterns show 5 phases
-- [ ] All existing tests pass with no regressions

@@ -12,6 +12,6 @@ Add visual markers showing current settings throughout the config wizard:
 
 Icons: 😌⚖️🔒 (caution), 🎯👀🔭 (curiosity), ⚡📋📅 (patience)
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

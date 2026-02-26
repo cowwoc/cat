@@ -43,7 +43,7 @@ Parent: port-utility-scripts
 7. Write tests for each class
 8. Run `mvn verify` to confirm all tests pass
 
-## Success Criteria
+## Post-conditions
 - [ ] All three licensing scripts have Java equivalents
 - [ ] feature-gate latency eliminated (no subprocess chaining)
 - [ ] JSON output matches original scripts

@@ -35,7 +35,7 @@ None - infrastructure/build improvement
    - Files: `hooks/build.sh`
 6. **Step 6:** Verify compilation with `mvn -f hooks/pom.xml compile`
 
-## Success Criteria
+## Post-conditions
 - [ ] All Java sources under standard Maven layout `src/main/java/`
 - [ ] `mvn -f hooks/pom.xml compile` succeeds
 - [ ] All tests pass: `mvn -f hooks/pom.xml test`

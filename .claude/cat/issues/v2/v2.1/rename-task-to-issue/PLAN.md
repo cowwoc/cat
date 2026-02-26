@@ -44,7 +44,7 @@ None - terminology standardization
 5. **Step 5:** Verify changelogs preserved
    - Verify: Changelogs still contain historical "task" references
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] No mention of "task" in any file except changelogs
 - [ ] All "issue" terminology is grammatically correct
 - [ ] Scripts renamed: find-task.sh → get-available-issues.sh, task-lock.sh → issue-lock.sh

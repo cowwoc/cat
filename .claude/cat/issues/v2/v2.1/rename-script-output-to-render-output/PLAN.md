@@ -28,10 +28,15 @@ None - naming convention/refactoring
 | `plugin/skills/render-diff/SKILL.md` | Update `script-output` reference to `render-output` |
 | `plugin/skills/token-report/SKILL.md` | Update `script-output` reference to `render-output` |
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Behavior unchanged - all output passthrough skills still work
 - [ ] Tests passing
 - [ ] No remaining references to `script-output` in plugin/skills/
+
+- [ ] `grep -r "script-output" plugin/skills/` returns no results
+- [ ] All 4 referencing skills invoke `render-output` instead of `script-output`
+- [ ] `render-output/SKILL.md` has `user-invocable: false` in frontmatter
+- [ ] All tests pass
 
 ## Execution Steps
 
@@ -56,8 +61,3 @@ None - naming convention/refactoring
 6. **Step 6:** Commit changes
    - Commit type: `config:` (Claude-facing skill rename)
 
-## Success Criteria
-- [ ] `grep -r "script-output" plugin/skills/` returns no results
-- [ ] All 4 referencing skills invoke `render-output` instead of `script-output`
-- [ ] `render-output/SKILL.md` has `user-invocable: false` in frontmatter
-- [ ] All tests pass

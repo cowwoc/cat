@@ -20,7 +20,7 @@ None - infrastructure/optimization sub-issue
 |----------|-------|--------------|
 | Concepts | 18 | `plugin/concepts/*.md` |
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All 18 concept files compressed
 - [ ] Execution equivalence verified (all files score 1.0 on /compare-docs)
 - [ ] No functionality regression

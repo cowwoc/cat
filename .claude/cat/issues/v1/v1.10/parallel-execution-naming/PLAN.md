@@ -12,6 +12,6 @@ Changes across 6 files:
 - Wave N/M → Sub-task N/M
 - wave-based → sub-task-based
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

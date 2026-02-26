@@ -17,7 +17,7 @@ None (infrastructure task)
 - `plugin/hooks/skill_handlers/add_handler.py` - Add tests
 - `tests/test_handlers.py` - New test file(s)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Each business use-case has a dedicated test
 - [ ] All handler scripts have test coverage
 - [ ] Tests pass in CI

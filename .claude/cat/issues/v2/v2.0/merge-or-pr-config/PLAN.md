@@ -18,7 +18,7 @@ after receiving user approval.
 - `skills/git-merge-linear/SKILL.md` - Check config before merging
 - `workflows/execute-task.md` - Branch on config value at approval gate
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] New config option `completionWorkflow` with values: `merge` or `pr`
 - [ ] Config wizard updated to allow setting this option
 - [ ] Approval gate respects the setting (merge to main OR create PR)

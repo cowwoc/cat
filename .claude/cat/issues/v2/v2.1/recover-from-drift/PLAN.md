@@ -15,7 +15,7 @@ None - infrastructure improvement
 - plugin/skills/recover-from-drift/SKILL.md - New skill definition for /cat:recover-from-drift
 - plugin/hooks/hooks.json - Add PostToolUseFailure hook to suggest skill after 2+ failures (if not already present)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] /cat:recover-from-drift skill exists and is invocable
 - [ ] Skill reads the current issue PLAN.md from the active worktree
 - [ ] Extracts the current execution step being worked on
@@ -26,6 +26,11 @@ None - infrastructure improvement
 - [ ] Functionality works end-to-end
 - [ ] Tests passing
 - [ ] No regressions to existing skills or hooks
+
+- [ ] Skill file exists at plugin/skills/recover-from-drift/SKILL.md
+- [ ] Skill is listed in /cat:help output
+- [ ] PostToolUseFailure hook suggests skill after repeated failures
+- [ ] All existing tests pass with no regressions
 
 ## Execution Steps
 1. **Step 1:** Create plugin/skills/recover-from-drift/SKILL.md with the drift detection skill
@@ -45,8 +50,3 @@ None - infrastructure improvement
 3. **Step 3:** Run existing tests to verify no regressions
    - Run: mvn -f hooks/pom.xml test
 
-## Success Criteria
-- [ ] Skill file exists at plugin/skills/recover-from-drift/SKILL.md
-- [ ] Skill is listed in /cat:help output
-- [ ] PostToolUseFailure hook suggests skill after repeated failures
-- [ ] All existing tests pass with no regressions

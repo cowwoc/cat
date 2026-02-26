@@ -20,7 +20,7 @@ because `$(pwd)` returns the current directory (which may be a worktree), not th
 - All skills already work because `CLAUDE_PROJECT_DIR` is set in the environment; the bug is that `load-skill.sh`
   overwrites it
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] `load-skill.sh` exits with code 1 and prints error to stderr if `CLAUDE_PLUGIN_ROOT` (arg 1) is missing
 - [ ] `load-skill.sh` exits with code 1 and prints error to stderr if `SKILL` (arg 2) is missing
 - [ ] `load-skill.sh` exits with code 1 and prints error to stderr if `CLAUDE_SESSION_ID` (arg 3) is missing

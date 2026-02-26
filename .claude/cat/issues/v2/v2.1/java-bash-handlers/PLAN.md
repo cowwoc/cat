@@ -59,7 +59,7 @@ Post-tool handlers at `plugin/hooks/src/io/github/cowwoc/cat/hooks/bash/post/`:
 5. **Verify all 17 handlers** produce identical output to Python equivalents
 6. **Run test suite** - `python3 /workspace/run_tests.py` to verify no regressions
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] 3 new Java bash handlers created and registered
 - [ ] All 17 bash handlers (10 pre + 4 post + 3 new) produce identical decisions to Python
 - [ ] Regex patterns behave identically to Python

@@ -3,10 +3,8 @@
 ## Objective
 Prepare CAT for commercial release with pricing tiers and license key system.
 
-## Gates
-
-### Entry
+## Pre-conditions
 - Previous minor version complete
 
-### Exit
+## Post-conditions
 - All tasks complete

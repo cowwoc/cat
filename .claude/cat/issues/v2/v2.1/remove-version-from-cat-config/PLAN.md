@@ -58,7 +58,7 @@ The field is NOT simply redundant - it tracks migration state. Removing it requi
 6. **Update cat-config.json** - Remove or rename the version field
 7. **Run tests** - `python3 /workspace/run_tests.py`
 
-## Success Criteria
+## Post-conditions
 - [ ] All tests pass after refactoring
 - [ ] Migration detection still works (upgrades trigger migrations)
 - [ ] New installations initialize correctly

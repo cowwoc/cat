@@ -161,7 +161,7 @@ Implementation should choose one that renders well across terminals.
 - `plugin/scripts/work-progress.sh` - Update rendering functions for horizontal format
 - `plugin/.claude/cat/workflows/work.md` - Sync progress display documentation
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Header shows cat emoji and task name: `🐱 CAT › {task-name}`
 - [ ] Phases displayed horizontally connected with `──────` lines
 - [ ] Pending phases show empty circle `○`

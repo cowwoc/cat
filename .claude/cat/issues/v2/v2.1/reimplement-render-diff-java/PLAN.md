@@ -23,7 +23,7 @@ None
 - `hooks/src/test/java/io/github/cowwoc/cat/hooks/test/GetRenderDiffOutputTest.java` — Add tests for 2-column rendering
 - `plugin/scripts/render-diff.py` — Remove after Java parity verified
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Java DiffRenderer produces 2-column layout: Line+Symbol | Content
 - [ ] Dynamic line number column width (2-4 digits based on max line in hunk)
 - [ ] Column markers in structural borders (┬ top, ┼ separator, ┴ bottom)
@@ -37,6 +37,10 @@ None
 - [ ] All existing tests pass, new tests added for 2-column format
 - [ ] render-diff.py removed after parity verified
 - [ ] User-visible behavior unchanged (output matches Python implementation)
+
+- [ ] `mvn -f hooks/pom.xml verify` passes (all tests + checkstyle + PMD)
+- [ ] Java output matches Python output format on sample diffs
+- [ ] render-diff.py no longer exists in the repository
 
 ## Execution Steps
 1. **Read Python render-diff.py** to understand the 2-column format implementation details
@@ -66,7 +70,3 @@ None
 8. **Remove render-diff.py** after parity confirmed
    - Files: `plugin/scripts/render-diff.py`
 
-## Success Criteria
-- [ ] `mvn -f hooks/pom.xml verify` passes (all tests + checkstyle + PMD)
-- [ ] Java output matches Python output format on sample diffs
-- [ ] render-diff.py no longer exists in the repository

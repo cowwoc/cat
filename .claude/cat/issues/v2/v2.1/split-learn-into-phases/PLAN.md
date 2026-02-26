@@ -77,7 +77,7 @@ Existing auxiliary files remain unchanged - they're already separate and referen
    - Includes error handling and phase routing
 7. **Step 7:** Run `python3 /workspace/run_tests.py` to verify no regressions
 
-## Success Criteria
+## Post-conditions
 - [ ] Learn skill SKILL.md reduced to ~200-250 lines (from 1,454)
 - [ ] All 4 phase files created with complete step content
 - [ ] No content lost - all steps, anti-patterns, and references preserved across phase files

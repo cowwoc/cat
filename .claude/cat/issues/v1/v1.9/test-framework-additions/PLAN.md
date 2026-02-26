@@ -12,6 +12,6 @@ Add comprehensive test coverage for critical shell scripts:
 Includes test helper with git repo setup, JSON assertion utilities,
 and cleanup functions.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

@@ -59,7 +59,7 @@ None - infrastructure/tech debt
 8. **Verify output parity:** Compare old vs new output for each script
 9. **Run tests:** Execute `mvn -f hooks/pom.xml test`
 
-## Success Criteria
+## Post-conditions
 - [ ] All 15 utility scripts have Java equivalents
 - [ ] feature-gate latency reduced from ~481ms to <10ms (no subprocess chaining)
 - [ ] render-diff output identical to Python version

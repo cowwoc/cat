@@ -18,7 +18,7 @@ in URLs, domains, and user input prompts. Inspired by Tirith's terminal security
 - `plugin/hooks/` - Add validation hook
 - `plugin/` - Core detection logic
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Functionality works as described
 - [ ] Tests written and passing
 - [ ] Documentation updated

@@ -7,7 +7,7 @@ Feature
 The /cat:shrink-doc skill should report compression metrics in terms of tokens instead of lines. Token counts are more
 meaningful for LLM context management since Claude's context window is measured in tokens, not lines.
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Functionality works as described - shrink-doc reports compression in tokens
 - [ ] Tests written and passing - unit tests cover token counting
 - [ ] Documentation updated - SKILL.md reflects token-based reporting

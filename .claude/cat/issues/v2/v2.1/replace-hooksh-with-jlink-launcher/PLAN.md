@@ -17,7 +17,7 @@ None (infrastructure fix)
 - `hooks/build-jlink.sh` - Add `session-analyzer` to HANDLERS array
 - `plugin/skills/optimize-execution/first-use.md` - Replace `hook.sh run_handler` with jlink launcher path
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] `session-analyzer` entry added to HANDLERS array in `hooks/build-jlink.sh`
 - [ ] `plugin/skills/optimize-execution/first-use.md` uses `${CLAUDE_PLUGIN_ROOT}/hooks/bin/session-analyzer`
   instead of `hook.sh run_handler`

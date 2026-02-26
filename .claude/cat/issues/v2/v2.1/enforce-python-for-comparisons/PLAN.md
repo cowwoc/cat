@@ -17,12 +17,16 @@ None - infrastructure/retrospective action item
 - plugin/hooks/bash_handlers/ - New handler file for operator detection
 - tests/ - New test file for the handler
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] PreToolUse handler detects !=, ==, // in inline Bash commands
 - [ ] Warning message suggests using Python instead
 - [ ] Legitimate script execution not affected
 - [ ] Tests pass
 - [ ] No regressions
+
+- [ ] Handler correctly identifies problematic operators in inline Bash
+- [ ] No false positives for script file execution
+- [ ] All existing tests continue to pass
 
 ## Execution Steps
 1. **Step 1:** Create PreToolUse bash handler that inspects Bash command input for problematic operators
@@ -34,7 +38,3 @@ None - infrastructure/retrospective action item
 4. **Step 4:** Run all tests to verify no regressions
    - Command: python3 /workspace/run_tests.py
 
-## Success Criteria
-- [ ] Handler correctly identifies problematic operators in inline Bash
-- [ ] No false positives for script file execution
-- [ ] All existing tests continue to pass

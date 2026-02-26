@@ -26,11 +26,14 @@ None - naming consistency cleanup
 - `engine/src/**/HookEntryPointTest.java` - update path references
 - Various `.md` files with `engine/` references
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Directory renamed from `engine/` to `client/`
 - [ ] All references to `engine/` updated to `client/`
 - [ ] `mvn -f client/pom.xml test` passes
 - [ ] No remaining references to `engine/` in active code (planning docs excluded)
+
+- [ ] All tests pass with `mvn -f client/pom.xml test`
+- [ ] `grep -r "engine/" --include="*.java" --include="*.sh" --include="*.md" client/` returns no stale references
 
 ## Execution Steps
 1. **Step 1:** `git mv engine client`
@@ -38,6 +41,3 @@ None - naming consistency cleanup
    active documentation
 3. **Step 3:** Run `mvn -f client/pom.xml test` to verify
 
-## Success Criteria
-- [ ] All tests pass with `mvn -f client/pom.xml test`
-- [ ] `grep -r "engine/" --include="*.java" --include="*.sh" --include="*.md" client/` returns no stale references

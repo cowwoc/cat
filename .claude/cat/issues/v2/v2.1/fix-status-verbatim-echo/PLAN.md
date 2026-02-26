@@ -91,7 +91,7 @@ No variant achieved 100% across all depths.
 - `plugin/skills/status-first-use/SKILL.md` - Optimize instruction wording
 - `client/src/test/java/io/github/cowwoc/cat/hooks/test/SkillLoaderTest.java` - Update tests for new behavior
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] `/cat:status` achieves 100% verbatim compliance across 10 trials at each of 3 invocation depths
 - [ ] Empirical tests use production-like system-reminders context
 - [ ] Agent displays LATEST output (not previous invocation's output)

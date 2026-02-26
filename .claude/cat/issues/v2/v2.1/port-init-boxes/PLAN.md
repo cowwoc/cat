@@ -35,7 +35,7 @@ Parent: 2.1-port-display-scripts
 7. **Remove `get-init-boxes.sh`** bash wrapper
 8. **Run tests:** `mvn -f hooks/pom.xml test`
 
-## Success Criteria
+## Post-conditions
 - [ ] Java class created matching exact Python output
 - [ ] Init handler updated to call Java instead of Python
 - [ ] Bash wrapper removed

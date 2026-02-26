@@ -59,7 +59,7 @@ Supporting utility classes (already exist):
 8. **Verify box characters** (special chars render correctly in Java)
 9. **Run test suite** - `python3 /workspace/run_tests.py` to verify no regressions
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] 5 new Java skill handlers created and registered
 - [ ] All 16 skill handlers produce identical output to Python equivalents
 - [ ] Box characters render correctly

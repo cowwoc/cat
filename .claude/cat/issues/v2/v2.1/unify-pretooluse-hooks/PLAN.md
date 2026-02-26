@@ -50,7 +50,7 @@ None
 - plugin/hooks/warn-base-branch-edit.sh - DELETE
 - plugin/hooks/enforce-approval-before-merge.sh - DELETE
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All 6 bash PreToolUse scripts ported to Java handlers
 - [ ] warn-unsquashed-approval.sh commit counting logic preserved
 - [ ] warn-approval-without-renderdiff.sh box-character detection preserved
@@ -61,6 +61,10 @@ None
 - [ ] hooks.json PreToolUse consolidated (one entry per matcher)
 - [ ] All 6 bash scripts deleted
 - [ ] Tests pass
+
+- [ ] All tests pass
+- [ ] No bash PreToolUse scripts remain
+- [ ] hooks.json PreToolUse has one entry per unique matcher
 
 ## Key Implementation Details
 - warn-unsquashed-approval.sh: Needs git operations (commit count vs base branch) - use ProcessRunner or GitCommands util
@@ -80,7 +84,3 @@ None
 7. Delete old bash scripts
 8. Run full test suite
 
-## Success Criteria
-- [ ] All tests pass
-- [ ] No bash PreToolUse scripts remain
-- [ ] hooks.json PreToolUse has one entry per unique matcher

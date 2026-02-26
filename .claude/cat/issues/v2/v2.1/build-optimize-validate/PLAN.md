@@ -17,12 +17,16 @@ Parent: optimize-hook-json-parser (acceptance criteria 1, 5 + conventions update
 - `.claude/cat/conventions/java.md` - Change JSON Library convention from JsonMapper to
   JsonParser/JsonGenerator (jackson-core streaming)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] jlink image builds successfully with jackson-core only
 - [ ] jlink image size < 75MB (down from ~92MB)
 - [ ] All handler launchers work (verified by build-jlink.sh Phase 6)
 - [ ] Hook startup time ≤ 55ms with AOTCache
 - [ ] java.md conventions updated to reflect jackson-core streaming API
+
+- [ ] `hooks/build-jlink.sh` completes successfully
+- [ ] jlink image size < 75MB
+- [ ] Startup time ≤ 55ms with AOTCache
 
 ## Execution Steps
 1. **Update build-jlink.sh:** Review and update any jackson-databind-specific module references. The jlink
@@ -33,7 +37,3 @@ Parent: optimize-hook-json-parser (acceptance criteria 1, 5 + conventions update
 4. **Measure jlink image size:** Verify < 75MB
 5. **Benchmark startup time:** Run handler launchers with AOTCache and measure startup time
 
-## Success Criteria
-- [ ] `hooks/build-jlink.sh` completes successfully
-- [ ] jlink image size < 75MB
-- [ ] Startup time ≤ 55ms with AOTCache

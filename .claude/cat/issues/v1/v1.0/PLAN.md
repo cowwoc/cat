@@ -3,10 +3,8 @@
 ## Objective
 Implement the new multi-agent architecture from scratch.
 
-## Gates
-
-### Entry
+## Pre-conditions
 - Previous minor version complete
 
-### Exit
+## Post-conditions
 - All tasks complete

@@ -14,7 +14,7 @@ compress-concepts-md (decomposed)
 - plugin/concepts/git-operations.md
 - plugin/concepts/merge-and-cleanup.md
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All 3 files compressed
 - [ ] All files score 1.0 on /compare-docs validation
 - [ ] Tests pass

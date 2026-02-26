@@ -24,7 +24,7 @@ None - infrastructure/refactoring task
 - plugin/scripts/build-box-lines.py - Extract functions for import
 - plugin/hooks/hooks.json - Update hook registration
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] /cat:status works correctly after refactor
 - [ ] All existing tests pass
 - [ ] No subprocess calls to build-box-lines.py from the new Python hook

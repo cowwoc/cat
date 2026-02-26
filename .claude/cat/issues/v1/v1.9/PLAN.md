@@ -3,11 +3,9 @@
 ## Objective
 Implement display standards and fix hook detection issues.
 
-## Gates
-
-### Entry
+## Pre-conditions
 - v1.8 complete
 
-### Exit
+## Post-conditions
 - All tasks complete
 - No parse_error false positives

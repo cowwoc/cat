@@ -6,6 +6,6 @@ remove prompt-handling.md (not auto-loaded by Claude)
 ## Details
 
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

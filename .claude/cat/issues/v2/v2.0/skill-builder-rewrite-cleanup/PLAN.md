@@ -9,7 +9,7 @@ None - infrastructure/maintenance task
 ## Files to Modify
 - plugin/commands/cleanup.md - Complete rewrite using skill-builder
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] cleanup.md rewritten using skill-builder methodology
 - [ ] Display renders correctly without alignment calculations
 - [ ] /cat:cleanup command works as expected

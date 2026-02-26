@@ -17,12 +17,16 @@ None - infrastructure/reliability fix
   `openIssue()`, return JSON with `status: "url_only"` and `url` field
 - `plugin/skills/feedback/SKILL.md` - Handle `url_only` status by displaying URL to user
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] `openIssue()` returns JSON with `url` field when browser open fails
 - [ ] JSON includes `status: "url_only"` to distinguish from successful browser open
 - [ ] Feedback skill displays URL to user when browser unavailable
 - [ ] No regression when browser IS available (success path unchanged)
 - [ ] Tests cover both browser-available and browser-unavailable paths
+
+- [ ] `mvn -f client/pom.xml test` passes
+- [ ] `openIssue()` returns valid JSON with `url` field in both browser-available and browser-unavailable paths
+- [ ] Feedback skill instructions handle `url_only` status
 
 ## Execution Steps
 1. **Modify `openIssue()` in GitHubFeedback.java:** Catch `IOException` from `openInBrowser()`. On failure, build
@@ -38,7 +42,3 @@ None - infrastructure/reliability fix
 4. **Run tests:** Verify all existing tests pass and add test for headless fallback path.
    - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/util/GitHubFeedbackTest.java`
 
-## Success Criteria
-- [ ] `mvn -f client/pom.xml test` passes
-- [ ] `openIssue()` returns valid JSON with `url` field in both browser-available and browser-unavailable paths
-- [ ] Feedback skill instructions handle `url_only` status

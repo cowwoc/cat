@@ -33,7 +33,7 @@ skill-builder methodology (M215), a handler should precompute all formatted outp
 - [ ] Update `plugin/skills/run-retrospective/SKILL.md` to use OUTPUT TEMPLATE pattern
 - [ ] Tests for handler
 
-## Acceptance Criteria
+## Post-conditions
 
 - Skill invocation shows no Bash tool calls for data gathering
 - Handler produces correctly formatted analysis output

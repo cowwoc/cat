@@ -56,7 +56,7 @@ None - infrastructure/optimization task
 - plugin/skills/work-review/SKILL.md (new) - Review phase
 - plugin/skills/work-merge/SKILL.md (new) - Merge phase
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Main agent context reduced from ~60K to ~10K reference docs
 - [ ] Each phase runs in isolated subagent with fresh context
 - [ ] Subagents return structured JSON for main agent decisions

@@ -29,7 +29,7 @@ squashing before the approval gate, making the worktree check redundant.
 - `client/src/test/java/io/github/cowwoc/cat/hooks/test/HookEntryPointTest.java` — Fix
   environment-dependent tests to mock git state
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] WarnUnsquashedApproval returns Result.allow() for worktree contexts (orchestrator handles squash)
 - [ ] Approval gate only checks main workspace commits (config/planning + implementation pattern)

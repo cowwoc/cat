@@ -17,7 +17,7 @@ None (infrastructure improvement)
 - `plugin/skills/stakeholder-review/first-use.md` - Update prepare step to glob for conventions,
   parse frontmatter, and include filtered conventions in each stakeholder's prompt
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Convention files with `subAgents:` frontmatter targeting specific stakeholder types are routed
   only to matching stakeholders
 - [ ] Convention files without `subAgents` restriction are included in all stakeholder prompts

@@ -9,7 +9,7 @@ SESSION_ID check showed "NOT SET". Bash code block with `exit 1` was not suffici
 - Clear numbered steps: STOP, inform user, instruct to register hook, EXIT
 - Conditional wording: "Only if SESSION_ID is set, proceed with lock acquisition"
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Agents stop when SESSION_ID is not set
 - [x] Clear instructions for user to register hook
 - [x] No concurrent task execution

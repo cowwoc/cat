@@ -33,7 +33,7 @@ section expansion.
 - **Risk:** HIGH
 - **Tradeoff:** Over-engineering, complexity
 
-## Acceptance Criteria
+## Post-conditions
 
 ### Core Functionality
 - [ ] Script reads git diff (stdin or file argument)

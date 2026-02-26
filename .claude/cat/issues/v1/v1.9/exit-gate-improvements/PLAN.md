@@ -11,6 +11,6 @@ tasks can only execute when every non-gating task is completed.
 This prevents running validation/gate tasks before all implementation
 work is done.
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

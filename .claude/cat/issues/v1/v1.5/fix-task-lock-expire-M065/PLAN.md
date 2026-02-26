@@ -15,6 +15,6 @@ New guidance:
 - MANDATORY: Execute a DIFFERENT task instead
 - DO NOT wait, force release, or retry
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

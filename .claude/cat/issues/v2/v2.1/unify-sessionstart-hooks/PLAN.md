@@ -41,7 +41,7 @@ None
 - plugin/hooks/session_start_handlers/clear_skill_markers.py - DELETE after migration
 - plugin/hooks/inject-env.sh - DELETE after migration
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] All 7 SessionStart handlers implemented in Java
 - [ ] Combined additionalContext output matches concatenated output of individual scripts
 - [ ] check-upgrade.sh migration logic preserved (version compare, backup, run migrations)
@@ -53,6 +53,10 @@ None
 - [ ] hooks.json has single SessionStart entry
 - [ ] All 7 bash/python scripts deleted
 - [ ] Tests pass
+
+- [ ] All tests pass including new handler tests
+- [ ] hooks.json SessionStart section has exactly 1 entry
+- [ ] No bash/python SessionStart scripts remain
 
 ## Handler Interface
 Create a new SessionStartHandler interface:
@@ -81,7 +85,3 @@ Dispatcher collects all non-null results and combines into single additionalCont
 5. Delete old bash/python scripts
 6. Run full test suite
 
-## Success Criteria
-- [ ] All tests pass including new handler tests
-- [ ] hooks.json SessionStart section has exactly 1 entry
-- [ ] No bash/python SessionStart scripts remain

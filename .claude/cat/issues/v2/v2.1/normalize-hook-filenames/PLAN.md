@@ -53,7 +53,7 @@ None - naming consistency and bugfix
    - Add a note explaining the workaround: pass `"$(pwd)"` as argument from SKILL.md `!` lines
 7. **Step 7:** Verify `session-start.sh` is executable (`chmod +x` if needed after rename)
 
-## Success Criteria
+## Post-conditions
 - [ ] All tests pass after refactoring
 - [ ] No functional references to `session_start.sh` remain
 - [ ] `session-start.sh` is executable and functions identically

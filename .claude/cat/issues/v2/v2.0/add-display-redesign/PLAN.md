@@ -16,7 +16,7 @@ reliable emoji alignment.
 - plugin/hooks/skill_handlers/add_handler.py - Create new handler for preprocessor output
 - plugin/commands/add.md - Update completion output to use preprocessor display
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Task completion shows bordered box with success indicator
 - [ ] Version completion shows bordered box with requirements summary
 - [ ] Output uses same box-drawing style as /cat:status

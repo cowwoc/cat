@@ -28,7 +28,7 @@ All runtime logging is lost, making hook debugging difficult.
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/module-info.java` - Add `requires org.slf4j;`
 - `hooks/src/main/resources/logback.xml` - Create production logging config
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] `logback-classic` dependency has no `<scope>` element
 - [ ] `module-info.java` includes `requires org.slf4j;`
 - [ ] `hooks/src/main/resources/logback.xml` exists with: NopStatusListener, stderr-only appender, root level WARN

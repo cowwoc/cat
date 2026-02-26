@@ -29,7 +29,7 @@ None - infrastructure/organization task
 - Move: `plugin/.claude/cat/references/stakeholders/lang/` → `plugin/lang/`
 - Update: Any files referencing old paths (including `references/` → `concepts/`)
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Behavior unchanged - plugin functions identically
 - [ ] All tests still pass
 - [ ] Code quality improved - cleaner directory structure

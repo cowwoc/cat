@@ -43,7 +43,7 @@ Or with helpful suggestion if close match exists:
 - workflows/work.md - Update task-not-found handling section
 - scripts/task-lookup.sh (if exists) - Simplify search output
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Error box is max 5 lines
 - [ ] No visible search commands during lookup
 - [ ] Clear actionable next step (/cat:status)

@@ -20,7 +20,7 @@ None - internal architecture improvement
 - plugin/skills/compare-docs/SKILL.md - Remove threshold logic, context detection, PASS/FAIL determination
 - plugin/skills/shrink-doc/SKILL.md - Add explicit 1.0 threshold check after receiving score
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Behavior unchanged (same validation outcomes)
 - [ ] All tests still pass
 - [ ] Code quality improved (clear separation of concerns)

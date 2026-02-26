@@ -15,7 +15,7 @@ None - process improvement
 ## Files to Modify
 - plugin/skills/stakeholder-review/SKILL.md - Update context preparation and spawning instructions
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Skill passes full file context to stakeholders, not just diffs
 - [ ] Tests written and passing
 - [ ] Documentation updated

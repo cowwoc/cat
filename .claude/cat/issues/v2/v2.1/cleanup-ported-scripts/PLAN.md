@@ -83,7 +83,7 @@ produces reasonable output without errors.
 - 2.1-port-init-boxes (for init-boxes script)
 - 2.1-port-status-display (for status-display script)
 
-## Success Criteria
+## Post-conditions
 - [ ] Every code path in each Python script has a verified counterpart in the Java equivalent (Step 1)
 - [ ] Every handler/skill that referenced old scripts now references Java equivalents (Step 2)
 - [ ] Zero references to deleted files remain in the codebase (Step 3)

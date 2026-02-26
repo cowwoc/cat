@@ -32,7 +32,7 @@ None - workflow improvement
    - Files: plugin/skills/add.md
    - Verify: Selecting "Custom" prompts for text input
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Options provided for all acceptance criteria questions
 - [ ] Context-aware options based on task type (Feature/Bugfix/Refactor)
 - [ ] Custom option always available for freeform input

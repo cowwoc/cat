@@ -45,7 +45,7 @@ All of these are deterministic operations that don't require LLM judgment.
 - `plugin/scripts/git-merge-linear.sh` - Replaced by Java
 - `plugin/scripts/git-merge-linear-optimized.sh` - Replaced by Java
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Single `merge-and-cleanup` Java CLI tool handles: divergence check, suspicious deletion detection, ff merge
   (push + fallback to merge --ff-only), worktree removal (with cwd safety), branch deletion, lock release, backup
   branch cleanup
@@ -56,6 +56,10 @@ All of these are deterministic operations that don't require LLM judgment.
 - [ ] Merge completes in 1 tool call (no hook failures, no retries)
 - [ ] STATE.md update included in the merge workflow (closed, 100%, implemented)
 - [ ] Build passes with all tests green
+
+- [ ] Merge workflow completes in exactly 1 Bash tool call from skill
+- [ ] No hook-blocked failures during merge (Java bypasses per-command hooks)
+- [ ] All existing merge functionality preserved (divergence check, suspicious deletion, backup cleanup)
 
 ## Execution Steps
 1. **Create MergeAndCleanup.java:** Implement CLI tool with subcommands mirroring the consolidated workflow:
@@ -69,7 +73,3 @@ All of these are deterministic operations that don't require LLM judgment.
 4. **Delete bash scripts:** Remove the three replaced scripts
 5. **Run tests:** `mvn -f client/pom.xml test` — all tests pass
 
-## Success Criteria
-- [ ] Merge workflow completes in exactly 1 Bash tool call from skill
-- [ ] No hook-blocked failures during merge (Java bypasses per-command hooks)
-- [ ] All existing merge functionality preserved (divergence check, suspicious deletion, backup cleanup)

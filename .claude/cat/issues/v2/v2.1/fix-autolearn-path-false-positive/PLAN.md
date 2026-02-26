@@ -38,11 +38,15 @@ output but does NOT check `exit_code != 0`. Compare with Pattern 13 (line 195-20
 | `plugin/hooks/posttool_handlers/auto_learn.py` | Add `exit_code != 0` guard to Pattern 12c (line 188) |
 | Test file for auto_learn.py | Add regression test for exit_code=0 with path error output |
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Bug fixed - Pattern 12c no longer triggers when exit_code is 0
 - [ ] Regression test added for the false positive scenario
 - [ ] Existing tests still pass
 - [ ] No new issues introduced
+
+- [ ] All tests pass including new regression tests
+- [ ] No false positives for intentional path handling with exit_code=0
+- [ ] Real path errors (exit_code != 0) still detected
 
 ## Execution Steps
 1. **Step 1:** Edit `plugin/hooks/posttool_handlers/auto_learn.py`
@@ -62,7 +66,3 @@ output but does NOT check `exit_code != 0`. Compare with Pattern 13 (line 195-20
 4. **Step 4:** Commit changes
    - Commit type: `config:` (plugin hook modification)
 
-## Success Criteria
-- [ ] All tests pass including new regression tests
-- [ ] No false positives for intentional path handling with exit_code=0
-- [ ] Real path errors (exit_code != 0) still detected

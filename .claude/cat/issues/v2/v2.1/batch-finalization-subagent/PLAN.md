@@ -33,7 +33,7 @@ None - UX improvement / architecture consistency task
 - `plugin/commands/work.md` - Replace steps merge/cleanup/update_state/commit_metadata/update_changelogs with single
   finalization step
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Single `<step name="finalization">` spawns subagent for post-approval work
 - [ ] Subagent prompt includes all merge/cleanup/state/changelog logic
 - [ ] Subagent returns structured result for error handling

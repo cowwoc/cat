@@ -21,6 +21,6 @@ Files updated:
 - .claude/cat/references/display-standards.md (all examples)
 - .claude/cat/references/task-resolution.md (M126 validation rules)
 
-## Acceptance Criteria
+## Post-conditions
 - [x] Implementation complete
 - [x] Verified working

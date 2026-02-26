@@ -23,7 +23,7 @@ None - infrastructure/maintenance task
 - plugin/skills/run-retrospective/SKILL.md - Update to handle splits
 - Any scripts that read mistakes.json directly
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] mistakes.json split by year/month
 - [ ] retrospectives.json split by year/month
 - [ ] learn-from-mistakes skill reads/writes to correct split file

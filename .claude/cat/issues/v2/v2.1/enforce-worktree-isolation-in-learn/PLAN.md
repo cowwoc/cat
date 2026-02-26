@@ -34,7 +34,7 @@ None (infrastructure fix from M347 investigation)
   `prevention_implemented: false` and populate `task_creation_info` instead of editing source files directly
 - Optionally: `client/src/main/java/.../BlockUnsafeRemoval.java` or equivalent hook - Expand protected paths
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Learn subagent does not commit code_fix/hook prevention directly to protected branches
 - [ ] Learn subagent still commits documentation/config prevention directly (safe paths)
 - [ ] `task_creation_info` is populated with enough detail to create a follow-up issue
