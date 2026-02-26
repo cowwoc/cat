@@ -12,6 +12,9 @@ plugin/node_modules/
 # User-specific license configuration
 cat-config.local.json
 
+# Local directories not tracked in git
+demo-recording/
+
 # Compiled code
 plugin/runtime/
 __pycache__/
