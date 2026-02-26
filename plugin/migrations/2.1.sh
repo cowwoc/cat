@@ -383,6 +383,7 @@ else
                 skip && /^### / { next }
                 skip && /^## / {
                     skip=0
+                    if (!last_blank) print ""
                     print "## Pre-conditions"
                     if (entry != "") print entry; else print "- Previous version complete (or no prerequisites)"
                     print ""
@@ -390,13 +391,14 @@ else
                     if (exit_cond != "") print exit_cond; else print "- All issues complete"
                     print ""
                     print
+                    last_blank=0
                     next
                 }
                 skip { next }
-                { print }
+                { print; last_blank=($0 == "") }
                 END {
                     if (skip) {
-                        print ""
+                        if (!last_blank) print ""
                         print "## Pre-conditions"
                         if (entry != "") print entry; else print "- Previous version complete (or no prerequisites)"
                         print ""
