@@ -2471,6 +2471,44 @@
         "catches_variations": true
       },
       "correct_behavior": "When creating a new plugin skill that dispatches to a Java handler: (1) register the handler in build-jlink.sh HANDLERS array, (2) call the binary launcher in SKILL.md (not load-skill). Run mvn -f client/pom.xml verify and empirical tests before merge to catch integration failures early."
+    },
+    {
+      "id": "M432",
+      "timestamp": "2026-02-27T22:17:25Z",
+      "category": "incorrect_implementation",
+      "description": "pre-bash hook blocked git worktree remove with false positive when CWD is parent of target worktree across sessions",
+      "root_cause": "BlockUnsafeRemoval adds a locked worktree to protectedPaths when the lock's session_id doesn't match the current hook session. When a worktree is created in one Claude session and cleaned up in another, isOwnedBySession() returns false, causing the worktree to be treated as another session's protected resource. The explicit git worktree remove command targeting that path is then blocked even though CWD is safely outside the target.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/client/src/main/java/io/github/cowwoc/cat/hooks/bash/BlockUnsafeRemoval.java",
+      "pattern_keywords": [
+        "worktree_remove",
+        "session_mismatch",
+        "false_positive",
+        "lock_ownership",
+        "cross_session"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "git worktree remove targeting a specific path should be allowed when CWD is not inside the target, regardless of which session owns the lock. Lock-based protection is appropriate for rm -rf on parent directories but not for explicit git worktree remove commands targeting the locked path directly.",
+      "issue_creation_info": {
+        "suggested_title": "Fix BlockUnsafeRemoval false positive for git worktree remove across sessions",
+        "suggested_description": "BlockUnsafeRemoval.getProtectedPaths() adds a worktree to protectedPaths when the lock file's session_id does not match the current session. This causes a false positive when a worktree is created in one Claude Code session and cleaned up in another \u2014 the owning session has ended, so the lock file's session_id will never match the cleanup session. Fix: for git worktree remove (as opposed to rm -rf), skip lock-based protection when the target is the explicit target of the worktree remove command. Lock protection is appropriate for rm -rf sweeping parent directories but not for an explicit targeted worktree remove. File to modify: client/src/main/java/io/github/cowwoc/cat/hooks/bash/BlockUnsafeRemoval.java. Add a test: worktreeRemoveAllowsWhenDifferentSessionLockButCwdOutsideTarget.",
+        "suggested_acceptance_criteria": [
+          "git worktree remove <path> is allowed when CWD is not inside <path>, even if the lock file for <path> was created by a different session",
+          "rm -rf <path> is still blocked when <path> is locked by another fresh session",
+          "git worktree remove <path> is still blocked when CWD is inside <path>",
+          "New test: worktreeRemoveAllowsWhenDifferentSessionLockButCwdOutsideTarget passes",
+          "All existing BlockUnsafeRemovalTest tests continue to pass"
+        ]
+      }
     }
   ]
 }
