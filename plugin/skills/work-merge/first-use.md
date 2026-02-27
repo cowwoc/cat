@@ -141,10 +141,10 @@ fi
 
 ### Step 3: Rebase issue branch onto base
 
-The `merge-and-cleanup` tool in Step 5 handles origin sync and rebasing atomically. No manual
+The `merge-and-cleanup` tool in Step 7 handles origin sync and rebasing atomically. No manual
 rebase is required here.
 
-**Note:** Before Step 5 (worktree removal), ensure your shell is NOT inside the worktree directory.
+**Note:** Before Step 7 (worktree removal), ensure your shell is NOT inside the worktree directory.
 
 ### Step 4: Handle Rebase Conflicts (if any)
 
@@ -155,36 +155,11 @@ If rebase fails with conflicts:
 
 **NEVER fall back to merge commit.** Linear history is mandatory.
 
-### Step 5: Remove Worktree, Merge, and Cleanup
+### Step 5: Auto-Complete Decomposed Parent
 
-```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/merge-and-cleanup" \
-  "${CLAUDE_PROJECT_DIR}" "${ISSUE_ID}" "${SESSION_ID}" --worktree "${WORKTREE_PATH}"
-```
-
-The Java tool handles: fast-forward merge, worktree removal, branch deletion, backup branch cleanup,
-and lock release in a single atomic operation.
-
-**Result Handling:**
-
-On success, the tool prints JSON to stdout and exits with code 0. On failure, it prints a JSON error to stderr and
-exits with code 1.
-
-| Output | Meaning | Agent Recovery Action |
-|--------|---------|----------------------|
-| `"status": "success"` (stdout JSON) | Merge and cleanup completed | Report `commit_sha` and `base_branch`, continue to Step 6 |
-| `"status": "error"`: Not a CAT project | Missing `.claude/cat` directory | Verify `CLAUDE_PROJECT_DIR` is correct |
-| `"status": "error"`: Worktree not found | No worktree for issue branch | Check worktree exists with `git worktree list` |
-| `"status": "error"`: Worktree has uncommitted changes | Dirty worktree | Commit or stash changes in worktree first |
-| `"status": "error"`: Base branch has diverged | Base has commits not in HEAD | Rebase onto base branch before merging |
-| `"status": "error"`: Fast-forward merge not possible | History diverged | Rebase issue branch onto base first |
-| `"status": "error"`: cat-base file missing | Cannot determine base branch | Recreate worktree with `/cat:work` |
-| `"status": "error"`: Failed to release lock | Lock tool failed | Manually release with `issue-lock force-release` |
-
-### Step 6: Auto-Complete Decomposed Parent
-
-After merging, check if this issue is a sub-issue of a decomposed parent. If all sibling
-sub-issues are now implemented and tested, mark the parent as completed.
+Check if this issue is a sub-issue of a decomposed parent. If all sibling sub-issues are now implemented and tested,
+mark the parent as completed. This step runs inside the worktree so any changes are committed before the merge in
+Step 7.
 
 **LIMITATION:** This auto-completion only checks sub-issue status, NOT parent acceptance criteria.
 If parent has acceptance criteria beyond sub-issues being completed, auto-closure may be premature.
@@ -194,8 +169,9 @@ decompose-issue § Closing Decomposed Parents.
 ```bash
 # Find parent by checking all issues in the same version for "Decomposed Into" sections
 # that reference this issue name
-VERSION_DIR=$(dirname "${ISSUE_PATH}")
-ISSUE_NAME=$(basename "${ISSUE_PATH}")
+WORKTREE_ISSUE_PATH="${WORKTREE_PATH}/${ISSUE_PATH#/*/}"
+VERSION_DIR=$(dirname "${WORKTREE_ISSUE_PATH}")
+ISSUE_NAME=$(basename "${WORKTREE_ISSUE_PATH}")
 
 for parent_dir in "$VERSION_DIR"/*/; do
   parent_state="$parent_dir/STATE.md"
@@ -224,10 +200,11 @@ for parent_dir in "$VERSION_DIR"/*/; do
     done < <(sed -n '/^## Decomposed Into/,/^##/p' "$parent_state" | grep -E '^\- ')
 
     if [[ "$all_complete" == "true" ]]; then
-      # Update parent STATE.md to completed
+      # Update parent STATE.md to completed and stage the change in the worktree
       parent_name=$(basename "$parent_dir")
       sed -i 's/\*\*Status:\*\* .*/\*\*Status:\*\* closed/' "$parent_state"
       sed -i 's/\*\*Progress:\*\* .*/\*\*Progress:\*\* 100%/' "$parent_state"
+      git -C "${WORKTREE_PATH}" add "${parent_state#${WORKTREE_PATH}/}"
       echo "Auto-closed decomposed parent: $parent_name"
     fi
     break  # Only one parent possible
@@ -235,9 +212,35 @@ for parent_dir in "$VERSION_DIR"/*/; do
 done
 ```
 
-### Step 7: Update Changelog
+### Step 6: Update Changelog
 
-If minor version is now complete, update CHANGELOG.md.
+If minor version is now complete, update CHANGELOG.md inside the worktree and commit the change before merge.
+
+### Step 7: Remove Worktree, Merge, and Cleanup
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/client/bin/merge-and-cleanup" \
+  "${CLAUDE_PROJECT_DIR}" "${ISSUE_ID}" "${SESSION_ID}" --worktree "${WORKTREE_PATH}"
+```
+
+The Java tool handles: fast-forward merge, worktree removal, branch deletion, backup branch cleanup,
+and lock release in a single atomic operation.
+
+**Result Handling:**
+
+On success, the tool prints JSON to stdout and exits with code 0. On failure, it prints a JSON error to stderr and
+exits with code 1.
+
+| Output | Meaning | Agent Recovery Action |
+|--------|---------|----------------------|
+| `"status": "success"` (stdout JSON) | Merge and cleanup completed | Report `commit_sha` and `base_branch`, continue to Step 8 |
+| `"status": "error"`: Not a CAT project | Missing `.claude/cat` directory | Verify `CLAUDE_PROJECT_DIR` is correct |
+| `"status": "error"`: Worktree not found | No worktree for issue branch | Check worktree exists with `git worktree list` |
+| `"status": "error"`: Worktree has uncommitted changes | Dirty worktree | Commit or stash changes in worktree first |
+| `"status": "error"`: Base branch has diverged | Base has commits not in HEAD | Rebase onto base branch before merging |
+| `"status": "error"`: Fast-forward merge not possible | History diverged | Rebase issue branch onto base first |
+| `"status": "error"`: cat-base file missing | Cannot determine base branch | Recreate worktree with `/cat:work` |
+| `"status": "error"`: Failed to release lock | Lock tool failed | Manually release with `issue-lock force-release` |
 
 ### Step 8: Return Result
 

@@ -306,33 +306,6 @@ Key rules when squashing:
 - **Related same-type commits** → can combine
 - **Implementation + refactor of same code** → combine into one commit
 
-### Automatic STATE.md Preservation
-
-**CRITICAL: Preserve final STATE.md state when squashing planning commits.**
-
-When squashing commits that include STATE.md updates:
-
-1. **Before squash:** Record the final STATE.md content
-   ```bash
-   # Store final state before squash
-   ISSUE_STATE=".claude/cat/issues/v*/v*.*/*/STATE.md"
-   git show HEAD:$ISSUE_STATE > /tmp/final-state.md 2>/dev/null || true
-   ```
-
-2. **After squash:** Verify STATE.md wasn't reverted to intermediate state
-   ```bash
-   # Check if STATE.md was affected
-   if [[ -f /tmp/final-state.md ]]; then
-       # Compare current vs final
-       if ! diff -q "$ISSUE_STATE" /tmp/final-state.md >/dev/null 2>&1; then
-           echo "⚠️ STATE.md reverted to intermediate state - restoring final state"
-           cp /tmp/final-state.md "$ISSUE_STATE"
-           git add "$ISSUE_STATE"
-           git commit --amend --no-edit
-       fi
-   fi
-   ```
-
 ### Write Meaningful Commit Messages
 
 ```bash
