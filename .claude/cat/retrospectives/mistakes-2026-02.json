@@ -2146,6 +2146,34 @@
         "catches_variations": true
       },
       "correct_behavior": "After outputting the CURRENT_SETTINGS box in display-settings step, immediately proceed to main-menu step and call AskUserQuestion to present the interactive settings wizard"
+    },
+    {
+      "id": "M420",
+      "timestamp": "2026-02-27T15:48:36Z",
+      "category": "protocol_violation",
+      "description": "Agent invoked /cat:config skill but responded conversationally instead of calling AskUserQuestion to run interactive wizard - recurrence of M419",
+      "root_cause": "ARCHITECTURAL: LLM trained conversational behavior overrides skill documentation guidance. Negative framing triggers interpretation mode. Documentation-only (level 5) prevention is insufficient when correct behavior fights LLM training.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/config/first-use.md",
+      "pattern_keywords": [
+        "config",
+        "wizard",
+        "AskUserQuestion",
+        "conversational",
+        "user-centric-framing",
+        "training-conflict"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M419",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "After outputting the CURRENT_SETTINGS box, call AskUserQuestion immediately with the main-menu options. Never ask a free-text question or summarize settings conversationally."
     }
   ]
 }
