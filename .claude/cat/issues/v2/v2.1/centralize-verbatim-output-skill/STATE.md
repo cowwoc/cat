@@ -7,6 +7,6 @@ See LICENSE.md in the project root for license terms.
 
 - **Status:** open
 - **Progress:** 0%
-- **Dependencies:** [centralize-verbatim-output-skill]
-- **Blocks:** []
+- **Dependencies:** []
+- **Blocks:** [refactor-config-skill-lazy-screens]
 - **Last Updated:** 2026-02-27
