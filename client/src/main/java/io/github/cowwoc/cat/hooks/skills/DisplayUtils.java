@@ -80,6 +80,17 @@ public final class DisplayUtils
   private final List<String> sortedEmojis;
 
   /**
+   * Whether fallback widths are being used because the detected terminal type was not found in
+   * emoji-widths.json.
+   */
+  private final boolean usingFallbackWidths;
+
+  /**
+   * The JSON key of the detected terminal type (e.g. "unknown", "kitty").
+   */
+  private final String detectedTerminalKey;
+
+  /**
    * Creates a DisplayUtils instance.
    *
    * @param scope the JVM scope providing JSON mapper, plugin root, and terminal type
@@ -94,26 +105,63 @@ public final class DisplayUtils
     Path pluginRoot = scope.getClaudePluginRoot();
     TerminalType terminalType = scope.getTerminalType();
 
+    this.detectedTerminalKey = terminalType.getJsonKey();
+
     Path widthsFile = pluginRoot.resolve("emoji-widths.json");
     if (!Files.exists(widthsFile))
       throw new IOException("emoji-widths.json not found at " + widthsFile);
 
-    Map<String, Integer> widths = loadEmojiWidthsFromFile(widthsFile, terminalType, mapper);
-    this.emojiWidths = widths;
-    this.sortedEmojis = new ArrayList<>(widths.keySet());
+    LoadResult loadResult = loadEmojiWidthsFromFile(widthsFile, terminalType, mapper);
+    this.emojiWidths = loadResult.widths;
+    this.usingFallbackWidths = loadResult.usingFallback;
+    this.sortedEmojis = new ArrayList<>(loadResult.widths.keySet());
     this.sortedEmojis.sort(Comparator.comparingInt(String::length).reversed());
   }
 
   /**
+   * Indicates whether fallback widths are being used because the detected terminal type was not found in
+   * emoji-widths.json.
+   *
+   * @return {@code true} if fallback widths are in use
+   */
+  public boolean isUsingFallbackWidths()
+  {
+    return usingFallbackWidths;
+  }
+
+  /**
+   * Returns the JSON key of the detected terminal type.
+   *
+   * @return the terminal type key (e.g. "unknown", "kitty", "Windows Terminal")
+   */
+  public String getDetectedTerminalKey()
+  {
+    return detectedTerminalKey;
+  }
+
+  /**
+   * Result of loading emoji widths from the JSON file.
+   *
+   * @param widths the emoji-to-width map
+   * @param usingFallback whether fallback widths were used because the detected terminal was not found
+   */
+  private record LoadResult(Map<String, Integer> widths, boolean usingFallback)
+  {
+  }
+
+  /**
    * Loads emoji widths from the JSON file.
+   * <p>
+   * If the detected terminal type is not found in the file, falls back to the first available terminal's
+   * widths.
    *
    * @param path the path to emoji-widths.json
    * @param terminalType the terminal type to look up
    * @param mapper the JSON mapper to use for parsing
-   * @return the map of emoji to width
-   * @throws IOException if the file cannot be loaded
+   * @return the load result containing widths and whether fallback was used
+   * @throws IOException if the file cannot be loaded or contains no terminal data
    */
-  private Map<String, Integer> loadEmojiWidthsFromFile(Path path, TerminalType terminalType, JsonMapper mapper)
+  private LoadResult loadEmojiWidthsFromFile(Path path, TerminalType terminalType, JsonMapper mapper)
     throws IOException
   {
     String content = Files.readString(path);
@@ -125,11 +173,16 @@ public final class DisplayUtils
     if (terminals == null || terminals.isEmpty())
       throw new IOException("No terminals found in " + path);
 
-    Map<String, Integer> result = new HashMap<>();
     Object terminalData = terminals.get(terminalType.getJsonKey());
+    boolean usingFallback = false;
     if (terminalData == null)
-      throw new IOException("Terminal type " + terminalType.getJsonKey() + " not found in " + path);
+    {
+      // Fall back to the first available terminal's widths
+      terminalData = terminals.values().iterator().next();
+      usingFallback = true;
+    }
 
+    Map<String, Integer> result = new HashMap<>();
     if (terminalData instanceof Map)
     {
       @SuppressWarnings("unchecked")
@@ -144,7 +197,7 @@ public final class DisplayUtils
     if (result.isEmpty())
       throw new IOException("No emoji widths found in " + path);
 
-    return result;
+    return new LoadResult(result, usingFallback);
   }
 
   /**

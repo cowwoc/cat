@@ -20,6 +20,7 @@ import io.github.cowwoc.cat.hooks.session.InjectSessionInstructions;
 import io.github.cowwoc.cat.hooks.session.InjectSkillListing;
 import io.github.cowwoc.cat.hooks.session.RestoreWorktreeOnResume;
 import io.github.cowwoc.cat.hooks.session.SessionStartHandler;
+import io.github.cowwoc.cat.hooks.session.WarnUnknownTerminal;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +47,7 @@ public final class SessionStartHook implements HookHandler
     this(List.of(
       new CheckDataMigration(scope),
       new CheckUpdateAvailable(scope),
+      new WarnUnknownTerminal(scope),
       new EchoSessionId(),
       new CheckRetrospectiveDue(scope),
       new InjectSessionInstructions(),
