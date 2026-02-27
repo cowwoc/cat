@@ -8,7 +8,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/statusline-command"
+    "command": "/home/node/.config/claude/plugins/cache/cat/cat/2.1/client/bin/statusline-command"
   },
   "hooks": {}
 }
