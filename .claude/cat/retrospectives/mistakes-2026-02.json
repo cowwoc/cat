@@ -2389,6 +2389,27 @@
         "catches_variations": true
       },
       "correct_behavior": "Commits on the same topic should be squashed together even if they have different type prefixes (bugfix: + refactor:). Topic grouping takes precedence over type boundaries. Choose the type that best describes the combined change."
+    },
+    {
+      "id": "M429",
+      "timestamp": "2026-02-27T20:45:59Z",
+      "category": "incorrect_implementation",
+      "description": "Could not delete issue branch because HEAD symbolic ref still pointed to it after git update-ref fast-forward",
+      "root_cause": "merge-and-cleanup.md Step 9 lacked guidance to move HEAD symbolic ref before branch deletion. git update-ref and git reset --hard move branch pointers but do NOT update HEAD as a symbolic ref.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/merge-and-cleanup.md",
+      "pattern_keywords": ["git", "symbolic-ref", "HEAD", "branch-deletion", "merge-cleanup"],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Run 'git symbolic-ref HEAD refs/heads/{base-branch}' before 'git branch -d {issue-branch}' to move HEAD's symbolic ref off the issue branch first."
     }
   ]
 }
