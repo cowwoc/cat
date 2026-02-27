@@ -175,8 +175,14 @@ git worktree remove --force .claude/cat/worktrees/{issue-name}
 
 ### 9. Branch Cleanup
 
-Delete merged branches:
+Move HEAD's symbolic ref to the base branch before deleting the issue branch. `git reset --hard` and
+`git update-ref` move branch pointers but do NOT update the symbolic ref (HEAD). If HEAD still points to
+the issue branch, `git branch -d` will fail with "Cannot delete branch X checked out".
+
 ```bash
+# Move HEAD's symbolic ref to the base branch first
+git symbolic-ref HEAD refs/heads/{base-branch}
+
 # Delete issue branch
 git branch -d {major}.{minor}-{issue-name}
 
