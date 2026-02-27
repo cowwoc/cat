@@ -96,10 +96,10 @@ AskUserQuestion: header="Project Type", question="What type?", options=["New pro
 ```bash
 mkdir -p .claude/rules .claude/cat/rules
 if [[ ! -f .claude/cat/.gitignore ]]; then
-  if [[ -f "${CLAUDE_PLUGIN_ROOT}/concepts/.gitignore-template" ]]; then
-    cp "${CLAUDE_PLUGIN_ROOT}/concepts/.gitignore-template" .claude/cat/.gitignore
+  if [[ -f "${CLAUDE_PLUGIN_ROOT}/templates/gitignore" ]]; then
+    cp "${CLAUDE_PLUGIN_ROOT}/templates/gitignore" .claude/cat/.gitignore
   else
-    echo "WARNING: .gitignore template not found at ${CLAUDE_PLUGIN_ROOT}/concepts/.gitignore-template"
+    echo "WARNING: .gitignore template not found at ${CLAUDE_PLUGIN_ROOT}/templates/gitignore"
   fi
 fi
 ```
@@ -228,10 +228,10 @@ grep -rl "## Objective\|## Issues" . --include="*.md" 2>/dev/null | head -30
 ```bash
 mkdir -p .claude/rules .claude/cat/rules
 if [[ ! -f .claude/cat/.gitignore ]]; then
-  if [[ -f "${CLAUDE_PLUGIN_ROOT}/concepts/.gitignore-template" ]]; then
-    cp "${CLAUDE_PLUGIN_ROOT}/concepts/.gitignore-template" .claude/cat/.gitignore
+  if [[ -f "${CLAUDE_PLUGIN_ROOT}/templates/gitignore" ]]; then
+    cp "${CLAUDE_PLUGIN_ROOT}/templates/gitignore" .claude/cat/.gitignore
   else
-    echo "WARNING: .gitignore template not found at ${CLAUDE_PLUGIN_ROOT}/concepts/.gitignore-template"
+    echo "WARNING: .gitignore template not found at ${CLAUDE_PLUGIN_ROOT}/templates/gitignore"
   fi
 fi
 ```
