@@ -708,6 +708,10 @@ BEFORE proceeding to next step, you MUST complete this gate:
    The prevention_path in the JSON entry MUST match a file listed above.
    If they don't match, the learning system is corrupted.
 
+5. **DO NOT COMMIT here.** All commits happen in Phase 4 Step 13 — prevention files AND retrospective metadata go into
+   a SINGLE commit. Committing prevention files now creates a split-commit mistake where the retrospective counter
+   update lands in a separate commit, violating the single-commit rule.
+
 ## Step 9b: Verify Fix Doesn't Introduce Priming
 
 **MANDATORY: After editing documentation, read `PRIMING-VERIFICATION.md` to verify no new priming introduced.**
