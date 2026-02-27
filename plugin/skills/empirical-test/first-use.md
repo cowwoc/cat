@@ -66,12 +66,6 @@ Build the initial test configuration to reproduce the failure.
 ```json
 {
     "target_description": "[Description of expected behavior]",
-    "success_criteria": {
-        "must_contain": ["text the output must contain"],
-        "must_not_contain": ["text that indicates failure"],
-        "must_use_tools": [],
-        "must_not_use_tools": []
-    },
     "system_prompt": "Optional string passed as --append-system-prompt to claude CLI",
     "system_reminders": [
         "Content injected as <system-reminder> tags in the test prompt user message"
@@ -82,7 +76,19 @@ Build the initial test configuration to reproduce the failure.
         {"type": "tool_use", "tool": "Bash", "input": {"command": "git log --oneline -3"}, "output": "abc123 feat"}
     ],
     "configs": {
-        "A_baseline": "[The exact prompt/skill content that fails]"
+        "A_baseline": {
+            "messages": [
+                {
+                    "prompt": "[The exact prompt/skill content that fails]",
+                    "success_criteria": {
+                        "must_contain": ["text the output must contain"],
+                        "must_not_contain": ["text that indicates failure"],
+                        "must_use_tools": [],
+                        "must_not_use_tools": []
+                    }
+                }
+            ]
+        }
     }
 }
 ```
@@ -113,7 +119,7 @@ CLAUDE_MD_CONTENT=$(cat "${CLAUDE_PROJECT_DIR}/CLAUDE.md")
 `<system-reminder>` tags. This simulates hook-injected system reminders that appear in production sessions and can
 affect agent behavior.
 
-**Success criteria** define what constitutes a passing trial:
+**Success criteria** are defined per message inside the `messages` array (not at the top level):
 - `must_contain`: Strings that must appear in agent output (case-insensitive)
 - `must_not_contain`: Strings that indicate failure
 - `must_use_tools`: Tools the agent must invoke
@@ -284,10 +290,18 @@ improvements:
 ```json
 {
     "configs": {
-        "A_original": "...",
-        "B_best_single_fix": "...",
-        "C_combined_top2": "...",
-        "D_combined_top3": "..."
+        "A_original": {
+            "messages": [{"prompt": "...", "success_criteria": {"must_contain": ["expected"]}}]
+        },
+        "B_best_single_fix": {
+            "messages": [{"prompt": "...", "success_criteria": {"must_contain": ["expected"]}}]
+        },
+        "C_combined_top2": {
+            "messages": [{"prompt": "...", "success_criteria": {"must_contain": ["expected"]}}]
+        },
+        "D_combined_top3": {
+            "messages": [{"prompt": "...", "success_criteria": {"must_contain": ["expected"]}}]
+        }
     }
 }
 ```
