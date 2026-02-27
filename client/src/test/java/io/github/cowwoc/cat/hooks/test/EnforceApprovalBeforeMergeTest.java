@@ -533,4 +533,46 @@ public final class EnforceApprovalBeforeMergeTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that an AskUserQuestion tool_result containing "Approve and merge" is accepted.
+   * <p>
+   * When the user selects "Approve and merge" from the approval gate wizard, Claude Code records a
+   * user entry whose content array contains {@code {"type":"tool_result","content":"...Approve and merge..."}}.
+   * The approval text is in the element's {@code "content"} field (a string), not {@code "text"}.
+   * The hook must read the {@code "content"} field from tool_result elements in addition to {@code "text"}.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void askUserQuestionToolResultApprovalAllows() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("enforce-approval-test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      writeCatConfig(tempDir, "medium");
+      // Simulate the assistant invoking AskUserQuestion followed by the user's wizard selection.
+      // The tool_result carries the approval text in the "content" field, not "text".
+      String assistantLine =
+        "{\"type\":\"assistant\",\"message\":{\"role\":\"assistant\",\"content\":" +
+        "[{\"type\":\"tool_use\",\"id\":\"tu1\",\"name\":\"AskUserQuestion\",\"input\":{}}]}}";
+      String userLine =
+        "{\"type\":\"user\",\"message\":{\"role\":\"user\",\"content\":" +
+        "[{\"type\":\"tool_result\",\"tool_use_id\":\"tu1\"," +
+        "\"content\":\"User answered: Approve and merge\"}]}}";
+      writeSessionFile(tempDir, SESSION_ID, assistantLine + "\n" + userLine + "\n");
+
+      EnforceApprovalBeforeMerge handler = new EnforceApprovalBeforeMerge(scope);
+      JsonNode toolInput = createMergeToolInput(mapper);
+
+      TaskHandler.Result result = handler.check(toolInput, SESSION_ID, "");
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }

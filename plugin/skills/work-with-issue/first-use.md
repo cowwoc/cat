@@ -23,7 +23,7 @@ skill invocation at the main agent level.
 The main `/cat:work` skill invokes this with positional space-separated arguments:
 
 ```
-<issue_id> <issue_path> <worktree_path> <branch> <base_branch> <estimated_tokens> <trust> <verify> <auto_remove>
+<issue_id> <issue_path> <worktree_path> <branch> <base_branch> <estimated_tokens> <trust> <verify>
 ```
 
 | Position | Name | Example |
@@ -36,7 +36,6 @@ The main `/cat:work` skill invokes this with positional space-separated argument
 | 6 | estimated_tokens | `45000` |
 | 7 | trust | `medium` |
 | 8 | verify | `changed` |
-| 9 | auto_remove | `true` |
 
 ## Progress Banners
 
@@ -61,7 +60,7 @@ split on whitespace:
 
 ```bash
 # Parse positional arguments
-read ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH BASE_BRANCH ESTIMATED_TOKENS TRUST VERIFY AUTO_REMOVE <<< "$ARGUMENTS"
+read ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH BASE_BRANCH ESTIMATED_TOKENS TRUST VERIFY <<< "$ARGUMENTS"
 ```
 
 ## Step 1: Display Preparing Banner
@@ -1292,7 +1291,6 @@ Task tool:
     BRANCH: ${BRANCH}
     BASE_BRANCH: ${BASE_BRANCH}
     COMMITS: ${commits_json}
-    AUTO_REMOVE_WORKTREES: ${AUTO_REMOVE}
 
     Load and follow: @${CLAUDE_PLUGIN_ROOT}/skills/work-merge/SKILL.md
 

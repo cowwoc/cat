@@ -207,7 +207,7 @@ public class GetConfigOutputTest
   }
 
   /**
-   * Verifies that getCurrentSettings still contains existing settings.
+   * Verifies that getCurrentSettings still contains existing settings and does not display removed settings.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -229,7 +229,8 @@ public class GetConfigOutputTest
         contains("Verify").
         contains("Effort").
         contains("Patience").
-        contains("Cleanup");
+        doesNotContain("Auto-remove").
+        doesNotContain("Keep");
     }
     finally
     {

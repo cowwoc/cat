@@ -432,8 +432,7 @@ public class HandlerOutputTest
             "trust": "high",
             "verify": "all",
             "effort": "medium",
-            "patience": "low",
-            "autoRemoveWorktrees": false
+            "patience": "low"
           }
           """);
 
@@ -441,76 +440,6 @@ public class HandlerOutputTest
         String result = handler.getCurrentSettings(tempDir);
 
         requireThat(result, "result").contains("Trust").contains("high");
-      }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
-    }
-  }
-
-  /**
-   * Verifies that GetConfigOutput shows auto-remove setting.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void getConfigOutputShowsAutoRemoveSetting() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      Path tempDir = Files.createTempDirectory("handler-test");
-      try
-      {
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
-        Files.createDirectories(catDir);
-        Path configFile = catDir.resolve("cat-config.json");
-        Files.writeString(configFile, """
-          {
-            "trust": "medium",
-            "autoRemoveWorktrees": true
-          }
-          """);
-
-        GetConfigOutput handler = new GetConfigOutput(scope);
-        String result = handler.getCurrentSettings(tempDir);
-
-        requireThat(result, "result").contains("Auto-remove");
-      }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
-    }
-  }
-
-  /**
-   * Verifies that GetConfigOutput shows keep setting when auto-remove is false.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void getConfigOutputShowsKeepSetting() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      Path tempDir = Files.createTempDirectory("handler-test");
-      try
-      {
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
-        Files.createDirectories(catDir);
-        Path configFile = catDir.resolve("cat-config.json");
-        Files.writeString(configFile, """
-          {
-            "trust": "medium",
-            "autoRemoveWorktrees": false
-          }
-          """);
-
-        GetConfigOutput handler = new GetConfigOutput(scope);
-        String result = handler.getCurrentSettings(tempDir);
-
-        requireThat(result, "result").contains("Keep");
       }
       finally
       {

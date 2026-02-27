@@ -54,7 +54,6 @@ cat "${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json"
 Extract these values:
 - `TRUST` — from `"trust"` field (e.g., `"low"`, `"medium"`, `"high"`)
 - `VERIFY` — from `"verify"` field (e.g., `"none"`, `"tests"`, `"all"`)
-- `AUTO_REMOVE` — from `"autoRemoveWorktrees"` field (`true` or `false`)
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" --phase preparing`
 
@@ -181,7 +180,7 @@ Use the Skill tool to invoke `/cat:work-with-issue` with positional space-separa
 ```
 Skill tool:
   skill: "cat:work-with-issue"
-  args: "${issue_id} ${issue_path} ${worktree_path} ${branch} ${base_branch} ${estimated_tokens} ${TRUST} ${VERIFY} ${AUTO_REMOVE}"
+  args: "${issue_id} ${issue_path} ${worktree_path} ${branch} ${base_branch} ${estimated_tokens} ${TRUST} ${VERIFY}"
 ```
 
 The skill will:

@@ -161,8 +161,6 @@ subagents:
     merged_at: 2026-01-10T15:30:00Z
     merge_commit: abc123def456
     conflicts_resolved: 0
-    worktree_cleaned: true
-    branch_deleted: true
 ```
 
 ## Examples

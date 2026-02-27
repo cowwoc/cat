@@ -2227,6 +2227,34 @@
         "catches_variations": true
       },
       "correct_behavior": "After implementing a skill documentation fix for a compliance failure (protocol_violation category), run /cat:empirical-test to verify the fix achieves >=70% compliance before recording the prevention as complete"
+    },
+    {
+      "id": "M423",
+      "timestamp": "2026-02-27T16:33:33Z",
+      "category": "protocol_violation",
+      "description": "Approval gate hook failed to detect AskUserQuestion wizard approval because tool_result content elements use a different JSON field (content) than text messages (text)",
+      "root_cause": "extractUserMessageText() only reads element[\"text\"] from content array elements, but AskUserQuestion tool_result entries store the approval text in element[\"content\"] (a string field), causing the wizard approval to go undetected",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/client/src/main/java/io/github/cowwoc/cat/hooks/task/EnforceApprovalBeforeMerge.java",
+      "pattern_keywords": [
+        "approval",
+        "AskUserQuestion",
+        "tool_result",
+        "content",
+        "pre-issue",
+        "merge"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "extractUserMessageText() must check both element[\"text\"] (for regular user messages) and element[\"content\"] (for tool_result entries like AskUserQuestion responses) when iterating content array elements"
     }
   ]
 }

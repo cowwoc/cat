@@ -1,6 +1,5 @@
 {
   "version": "${CAT_VERSION}",
-  "autoRemoveWorktrees": true,
   "trust": "medium",
   "verify": "changed",
   "effort": "medium",

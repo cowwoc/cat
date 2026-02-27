@@ -82,16 +82,9 @@ public final class GetConfigOutput implements SkillOutput
     String verify = config.getVerify().toString();
     String effort = config.getEffort().toString();
     String patience = config.getPatience().toString();
-    boolean autoRemove = config.getBoolean("autoRemoveWorktrees", true);
     String completionWorkflow = config.getString("completionWorkflow");
     String reviewThreshold = config.getAutofixThreshold();
     String minSeverity = config.getMinSeverity().toString();
-
-    String cleanupDisplay;
-    if (autoRemove)
-      cleanupDisplay = "Auto-remove";
-    else
-      cleanupDisplay = "Keep";
 
     return buildSimpleHeaderBox(
       "⚙️",
@@ -102,7 +95,6 @@ public final class GetConfigOutput implements SkillOutput
         "  ✅ Verify: " + verify,
         "  💪 Effort: " + effort,
         "  ⏳ Patience: " + patience,
-        "  🧹 Cleanup: " + cleanupDisplay,
         "  🔀 Completion: " + completionWorkflow,
         "  🔍 Review: " + reviewThreshold,
         "  📈 Min Severity: " + minSeverity,
