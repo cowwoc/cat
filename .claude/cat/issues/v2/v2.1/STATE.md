@@ -42,6 +42,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-git-rebase-safe-false-positive-when-base-branch-advances
 - refactor-config-skill-lazy-screens
 - fix-cleanup-survey-missing-worktrees
+- fix-block-unsafe-removal-cross-session
 
 
 ## Issues Completed
