@@ -60,8 +60,8 @@ Run /cat:feedback to report this issue.
 ```
 Do NOT manually construct output or invoke scripts. Output the error and STOP.
 
-After outputting the settings box, proceed immediately to the main-menu step. Do NOT ask a conversational
-question — the AskUserQuestion call in main-menu drives the interactive wizard.
+The user wants an interactive wizard — proceed directly to the main-menu step and call AskUserQuestion.
+Do not summarize settings or ask a free-text question.
 
 </step>
 
