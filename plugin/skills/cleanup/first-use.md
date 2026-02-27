@@ -55,7 +55,7 @@ work was completed on the base branch. Resetting to `pending` causes duplicate w
 
 ### Step 1: Survey Current State
 
-INVOKE: Skill("cat:get-output", args="cleanup")
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" cleanup`
 
 ---
 
