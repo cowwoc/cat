@@ -2335,6 +2335,60 @@
         "catches_variations": true
       },
       "correct_behavior": "When the user requests 'squash and rebase', complete only the squash+rebase operation and return control. Do NOT proceed to git merge, worktree removal, branch deletion, or work-complete without explicit user approval through the approval gate."
+    },
+    {
+      "id": "M427",
+      "timestamp": "2026-02-27T19:24:13.000Z",
+      "category": "protocol_violation",
+      "description": "Used git add -A before amend without verifying HEAD, causing rename changes to land in planning commit added by another session between operations",
+      "root_cause": "Agent did not run git log to verify HEAD before staging with git add -A. A concurrent session committed a planning issue (dc6b8014) to the same branch between the second and third amend operations, making HEAD no longer the intended refactor commit. git-amend-safe detected no push race (only checks remote) but not local concurrent commits.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/git-amend/first-use.md",
+      "pattern_keywords": [
+        "git-amend",
+        "git-add-A",
+        "concurrent-commit",
+        "HEAD-verification",
+        "planning-commit"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Run git log --oneline -3 immediately before staging files for an amend. Confirm HEAD is the intended commit before proceeding."
+    },
+    {
+      "id": "M428",
+      "timestamp": "2026-02-27T19:59:49Z",
+      "category": "logical_error",
+      "description": "Kept same-topic commits separate because they had different type prefixes (bugfix: vs refactor:)",
+      "root_cause": "git-squash first-use.md stated 'Different commit types -> keep separate' as a hard rule without clarifying that topic takes precedence over commit type prefix when grouping commits for squashing",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/git-squash/first-use.md",
+      "pattern_keywords": [
+        "squash",
+        "commit_type",
+        "same_topic",
+        "type_prefix",
+        "grouping"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Commits on the same topic should be squashed together even if they have different type prefixes (bugfix: + refactor:). Topic grouping takes precedence over type boundaries. Choose the type that best describes the combined change."
     }
   ]
 }
