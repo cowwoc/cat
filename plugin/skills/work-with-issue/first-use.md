@@ -1255,6 +1255,26 @@ Do NOT skip the banner or continue without it.
 cd /workspace
 ```
 
+**Pre-merge approval verification (when trust != "high"):**
+
+Before spawning the merge subagent, verify that user approval was obtained in Step 8. This proactive check
+eliminates wasted Task calls that would otherwise be blocked by the PreToolUse hook.
+
+```
+if TRUST != "high":
+    # Verify Step 8 approval gate was completed
+    # If no approval was obtained (e.g., Step 8 was skipped due to a logic error),
+    # invoke AskUserQuestion now as a safety net:
+    AskUserQuestion:
+      question: "Ready to merge ${ISSUE_ID} to ${BASE_BRANCH}?"
+      options:
+        - label: "Approve and merge"
+          description: "Squash commits and merge to ${BASE_BRANCH}"
+        - label: "Abort"
+          description: "Cancel the merge"
+    # If user selects "Abort", return ABORTED status (same as Step 8 abort handling)
+```
+
 Spawn a merge subagent:
 
 ```

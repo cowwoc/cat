@@ -422,8 +422,9 @@ if [[ -n "${WORKTREE_PATH}" ]]; then
     cd "${WORKTREE_PATH}" || { echo "ERROR: Cannot cd to worktree: ${WORKTREE_PATH}"; exit 1; }
 fi
 
-# Get changed files from base branch to HEAD (captures all commits since worktree creation)
-# Read base branch from cat-base metadata (fail-fast if missing - stakeholder-review always runs in worktrees)
+# --- Batch 1: Gather git data, detect language, read config (all independent) ---
+# Chain these independent operations in a single Bash call to reduce round-trips.
+
 WORKTREE_NAME=$(basename "$PWD" 2>/dev/null)
 CAT_BASE_FILE="$(git rev-parse --git-common-dir)/worktrees/${WORKTREE_NAME}/cat-base"
 if [[ ! -f "$CAT_BASE_FILE" ]]; then
@@ -431,31 +432,40 @@ if [[ ! -f "$CAT_BASE_FILE" ]]; then
     echo "Stakeholder review requires worktree context. Run via /cat:work." >&2
     exit 1
 fi
-BASE_BRANCH=$(cat "$CAT_BASE_FILE")
-
-CHANGED_FILES=$(git diff --name-only "${BASE_BRANCH}..HEAD" 2>/dev/null || git diff --name-only --cached)
-
-# Detect primary language from file extensions
-PRIMARY_LANG=$(echo "$CHANGED_FILES" | grep -oE '\.[a-z]+$' | sort | uniq -c | sort -rn | head -1 | awk '{print $2}' | tr -d '.')
-# Maps: java, py, ts, js, go, rs, etc.
-
-# Categorize by type (language-agnostic patterns)
-SOURCE_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(java|py|ts|js|go|rs|c|cpp|cs)$' || true)
-TEST_FILES=$(echo "$CHANGED_FILES" | grep -E '(Test|Spec|_test|_spec)\.' || true)
+BASE_BRANCH=$(cat "$CAT_BASE_FILE") && \
+CHANGED_FILES=$(git diff --name-only "${BASE_BRANCH}..HEAD" 2>/dev/null || git diff --name-only --cached) && \
+DIFF_SUMMARY=$(git diff "${BASE_BRANCH}..HEAD" -U3 2>/dev/null || git diff --cached -U3) && \
+PRIMARY_LANG=$(echo "$CHANGED_FILES" | grep -oE '\.[a-z]+$' | sort | uniq -c | sort -rn | head -1 | awk '{print $2}' | tr -d '.') && \
+SOURCE_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(java|py|ts|js|go|rs|c|cpp|cs)$' || true) && \
+TEST_FILES=$(echo "$CHANGED_FILES" | grep -E '(Test|Spec|_test|_spec)\.' || true) && \
 CONFIG_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(json|yaml|yml|xml|properties|toml)$' || true)
 
-# Check for language supplement
+# Read language supplement and effort config (chain with above if in same Bash call)
 LANG_SUPPLEMENT=""
 if [[ -f "${CLAUDE_PLUGIN_ROOT}/lang/${PRIMARY_LANG}.md" ]]; then
     LANG_SUPPLEMENT=$(cat "${CLAUDE_PLUGIN_ROOT}/lang/${PRIMARY_LANG}.md")
 fi
+
+CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json"
+EFFORT="medium"  # default
+if [[ -f "$CONFIG_FILE" ]]; then
+    EFFORT=$(grep '"effort"' "$CONFIG_FILE" | sed 's/.*"effort"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+    EFFORT="${EFFORT:-medium}"
+fi
+
+case "$EFFORT" in
+    low)    REVIEW_SCOPE="Review changed lines only. Flag obvious issues visible in the diff." ;;
+    medium) REVIEW_SCOPE="Review changed lines and their surrounding context (functions, classes containing the change). Flag issues that arise from the interaction between new and existing code." ;;
+    high)   REVIEW_SCOPE="Review the broader impact on surrounding code. Flag pre-existing issues in any file you read, not just the changed lines. Consider systemic effects across the codebase." ;;
+    *)      REVIEW_SCOPE="Review changed lines only. Flag obvious issues visible in the diff." ;;
+esac
 
 # SELECTED is populated by analyze_context step
 # Contains: space-separated stakeholder names (e.g., "requirements architecture security design testing")
 # SKIPPED contains: stakeholder:reason pairs for reporting
 # OVERRIDDEN contains: stakeholder:reason pairs for file-based overrides
 
-# Discover convention files and build per-stakeholder convention map
+# --- Batch 2: Discover convention files and build per-stakeholder convention map ---
 CONVENTION_MAP=""  # Will store "stakeholder:convention_path" entries
 if [[ -d ".claude/cat/rules" ]]; then
     for convention_file in .claude/cat/rules/*.md; do
@@ -491,7 +501,7 @@ if [[ -d ".claude/cat/rules" ]]; then
     done
 fi
 
-# Prepare file content for holistic review
+# --- Batch 3: Prepare file content for holistic review ---
 # For small files: include full content
 # For large files: diff with extended context + file structure summary
 MAX_FILE_SIZE=50000  # characters threshold for "large file" handling
@@ -558,24 +568,6 @@ $(cat "$file")
         fi
     fi
 done
-
-# Also prepare full diff for supplementary context (smaller context for overview)
-DIFF_SUMMARY=$(git diff "${BASE_BRANCH}..HEAD" -U3 2>/dev/null || git diff --cached -U3)
-
-# Read effort level from cat-config.json to determine review scope
-CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json"
-EFFORT="medium"  # default
-if [[ -f "$CONFIG_FILE" ]]; then
-    EFFORT=$(grep '"effort"' "$CONFIG_FILE" | sed 's/.*"effort"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
-    EFFORT="${EFFORT:-medium}"
-fi
-
-case "$EFFORT" in
-    low)    REVIEW_SCOPE="Review changed lines only. Flag obvious issues visible in the diff." ;;
-    medium) REVIEW_SCOPE="Review changed lines and their surrounding context (functions, classes containing the change). Flag issues that arise from the interaction between new and existing code." ;;
-    high)   REVIEW_SCOPE="Review the broader impact on surrounding code. Flag pre-existing issues in any file you read, not just the changed lines. Consider systemic effects across the codebase." ;;
-    *)      REVIEW_SCOPE="Review changed lines only. Flag obvious issues visible in the diff." ;;
-esac
 ```
 
 **Holistic context enables:**
