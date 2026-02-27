@@ -38,6 +38,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - refactor-add-wizard-batching
 - fix-macos-sed-incompatibility
 - fix-work-merge-parent-state-uncommitted
+- fix-git-rebase-safe-false-positive-when-base-branch-advances
 
 
 ## Issues Completed
