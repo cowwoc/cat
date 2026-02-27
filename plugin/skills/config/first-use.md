@@ -33,8 +33,6 @@ Do NOT manually construct output or invoke scripts. Output the error and STOP.
 
 <step name="read-config">
 
-<step name="read-config">
-
 **Read current configuration:**
 
 ```bash
@@ -85,6 +83,8 @@ Show current values in descriptions using data from read-config step.
     description: "Currently: {completionWorkflow || 'merge'}"
   - label: "🔍 Review Thresholds"
     description: "Currently: autofix={reviewThreshold || 'low'}"
+  - label: "📈 Min Severity"
+    description: "Currently: {minSeverity || 'low'}"
   - label: "📊 Version Conditions"
     description: "Pre/post-conditions for versions"
 
@@ -269,11 +269,22 @@ AskUserQuestion:
 
 Validate input is a number between 40-200. If invalid, show error and re-prompt.
 
-**Update config with safe jq pattern:**
-```bash
-jq '.terminalWidth = {value}' .claude/cat/cat-config.json > .claude/cat/cat-config.json.tmp \
-  && mv .claude/cat/cat-config.json.tmp .claude/cat/cat-config.json
+**Update config using the Write tool:**
+
+1. Read the current `.claude/cat/cat-config.json` content using the Read tool.
+2. Merge the new `terminalWidth` integer value into the existing config object (update or add the key).
+3. Write the complete updated JSON back using the Write tool.
+
+Example: if the current config has `{"trust": "medium"}` and the user selected "Custom" with value 100, write:
+
+```json
+{
+  "trust": "medium",
+  "terminalWidth": 100
+}
 ```
+
+Do NOT use `python3`, `jq`, or any external tool. Use the Write tool directly.
 
 </step>
 
@@ -294,11 +305,22 @@ AskUserQuestion:
 
 Map: Merge → `completionWorkflow: "merge"`, Pull Request → `completionWorkflow: "pr"`
 
-**Update config with safe jq pattern:**
-```bash
-jq '.completionWorkflow = "{value}"' .claude/cat/cat-config.json > .claude/cat/cat-config.json.tmp \
-  && mv .claude/cat/cat-config.json.tmp .claude/cat/cat-config.json
+**Update config using the Write tool:**
+
+1. Read the current `.claude/cat/cat-config.json` content using the Read tool.
+2. Merge the new `completionWorkflow` string value into the existing config object (update or add the key).
+3. Write the complete updated JSON back using the Write tool.
+
+Example: if the current config has `{"trust": "medium"}` and the user selected "Pull Request", write:
+
+```json
+{
+  "trust": "medium",
+  "completionWorkflow": "pr"
+}
 ```
+
+Do NOT use `python3`, `jq`, or any external tool. Use the Write tool directly.
 
 </step>
 
@@ -342,6 +364,53 @@ Example: if the current config has `{"trust": "medium"}` and the user selected "
 {
   "trust": "medium",
   "reviewThreshold": "high"
+}
+```
+
+Do NOT use `python3`, `jq`, or any external tool. Use the Write tool directly.
+
+</step>
+
+<step name="min-severity">
+
+**📊 Min Severity configuration:**
+
+Min severity controls the minimum concern severity level that is visible at all. Concerns below this level are
+silently ignored — not fixed, not deferred, not tracked.
+
+AskUserQuestion:
+- header: "Min Severity — Concern Visibility"
+- question: "Minimum severity level to make visible? (Current: {minSeverity || 'low'})"
+- options:
+  - label: "LOW (Recommended)"
+    description: "All concerns visible (CRITICAL, HIGH, MEDIUM, and LOW)"
+  - label: "MEDIUM"
+    description: "MEDIUM, HIGH, and CRITICAL concerns visible; LOW are ignored"
+  - label: "HIGH"
+    description: "HIGH and CRITICAL concerns visible; MEDIUM and LOW are ignored"
+  - label: "CRITICAL"
+    description: "Only CRITICAL concerns visible; HIGH, MEDIUM, and LOW are ignored"
+  - label: "← Back"
+    description: "Return to main menu"
+
+Map selections:
+- LOW → `minSeverity: "low"`
+- MEDIUM → `minSeverity: "medium"`
+- HIGH → `minSeverity: "high"`
+- CRITICAL → `minSeverity: "critical"`
+
+**Update config using the Write tool:**
+
+1. Read the current `.claude/cat/cat-config.json` content using the Read tool.
+2. Merge the new `minSeverity` string value into the existing config object (update or add the key).
+3. Write the complete updated JSON back using the Write tool.
+
+Example: if the current config has `{"trust": "medium"}` and the user selected "HIGH", write:
+
+```json
+{
+  "trust": "medium",
+  "minSeverity": "high"
 }
 ```
 
@@ -578,6 +647,7 @@ Do NOT manually construct output or invoke scripts. Output the error and STOP.
 | `autoRemoveWorktrees` | boolean | true | Auto-remove worktrees |
 | `completionWorkflow` | string | "merge" | Issue completion behavior (merge or PR) |
 | `reviewThreshold` | string | "low" | Minimum severity to auto-fix before presenting to user |
+| `minSeverity` | string | "low" | Minimum severity level for concerns to be visible at all |
 
 **Context Limits:** Fixed values, not configurable. See agent-architecture.md § Context Limit Constants.
 
@@ -611,13 +681,19 @@ Do NOT manually construct output or invoke scripts. Output the error and STOP.
 - `high` — Auto-fix CRITICAL and HIGH; present MEDIUM and LOW to user.
 - `critical` — Auto-fix CRITICAL only; present HIGH, MEDIUM, and LOW to user.
 
+### Min Severity Values
+- `low` — All concerns visible (CRITICAL, HIGH, MEDIUM, and LOW) (default).
+- `medium` — MEDIUM, HIGH, and CRITICAL concerns visible; LOW are ignored.
+- `high` — HIGH and CRITICAL concerns visible; MEDIUM and LOW are ignored.
+- `critical` — Only CRITICAL concerns visible; HIGH, MEDIUM, and LOW are ignored.
+
 </configuration_reference>
 
 <success_criteria>
 
 - [ ] Current configuration displayed
 - [ ] User navigated wizard successfully
-- [ ] Settings updated in cat-config.json using safe jq pattern
+- [ ] Settings updated in cat-config.json using Write tool
 - [ ] Review thresholds configurable via wizard
 - [ ] Version conditions viewable and editable via wizard
 - [ ] Gate changes saved to version PLAN.md files

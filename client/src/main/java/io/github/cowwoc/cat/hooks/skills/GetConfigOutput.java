@@ -83,6 +83,9 @@ public final class GetConfigOutput implements SkillOutput
     String effort = config.getEffort().toString();
     String patience = config.getPatience().toString();
     boolean autoRemove = config.getBoolean("autoRemoveWorktrees", true);
+    String completionWorkflow = config.getString("completionWorkflow");
+    String reviewThreshold = config.getAutofixThreshold();
+    String minSeverity = config.getMinSeverity().toString();
 
     String cleanupDisplay;
     if (autoRemove)
@@ -100,6 +103,9 @@ public final class GetConfigOutput implements SkillOutput
         "  💪 Effort: " + effort,
         "  ⏳ Patience: " + patience,
         "  🧹 Cleanup: " + cleanupDisplay,
+        "  🔀 Completion: " + completionWorkflow,
+        "  🔍 Review: " + reviewThreshold,
+        "  📈 Min Severity: " + minSeverity,
         ""));
   }
 
