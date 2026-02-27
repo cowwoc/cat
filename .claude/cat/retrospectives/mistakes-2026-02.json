@@ -2536,6 +2536,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When verify returns PARTIAL, read each partial criterion; for any that describe empirical tests (compliance percentages, /cat:empirical-test, /cat:status, /cat:config), run those tests and confirm >=95% pass before proceeding to stakeholder review"
+    },
+    {
+      "id": "M434",
+      "timestamp": "2026-02-27T23:41:01Z",
+      "category": "protocol_violation",
+      "description": "Skipped approval gate re-presentation after user rejected AskUserQuestion and invoked /cat:learn mid-workflow",
+      "root_cause": "work-with-issue skill has no instruction for resuming the approval gate when the user rejects the AskUserQuestion tool call to run an interrupting skill; after the interrupt completes, no guidance exists to return to Step 8",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue/first-use.md",
+      "pattern_keywords": [
+        "approval_gate",
+        "askuserquestion_rejected",
+        "mid_workflow_interrupt",
+        "learn",
+        "protocol_violation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When AskUserQuestion is rejected (user invokes another skill), return to Step 8 and re-present the approval gate after the interrupting skill completes; never merge, release lock, or invoke work-complete without explicit user selection"
     }
   ]
 }
