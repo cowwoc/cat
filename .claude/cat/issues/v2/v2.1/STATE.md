@@ -15,6 +15,7 @@
 Finalize naming conventions and UI polish before recording demo videos.
 
 ## Issues Pending
+- unknown-terminal-fallback
 - add-java-build-to-ci
 - audience-aware-rules-injection
 - ci-build-jlink-bundle
