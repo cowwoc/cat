@@ -18,21 +18,36 @@ receive only the abbreviated reference instead of full first-use content.
 Claude Code's `SubagentStart` hook provides a native `agent_id` field — cryptographically unique (64-bit random,
 globally unique) per subagent instance. We can use this directly instead of rolling our own ID scheme.
 
+## How agentId Reaches load-skill
+
+The agentId is passed as a **required** positional argument to `load-skill`, with no default or fallback.
+
+**Main agent:** SKILL.md preprocessor directives pass `${CLAUDE_SESSION_ID}` as the agentId argument. This is already
+available in the preprocessor shell environment.
+
+**Subagents:** `SubagentStartHook` injects the subagent's identity into its conversation context at spawn:
+
+> Your CAT agent ID is: `{sessionId}/subagents/{agent_id}`. You MUST pass this as the first argument when invoking any
+> skill via the Skill tool.
+
+The subagent passes this value via the Skill tool's `args` parameter. The SKILL.md preprocessor receives it as `$0`
+(first positional argument from SkillLoader's argument tokenization). When `$0` is present, it overrides the default
+`${CLAUDE_SESSION_ID}` value in the preprocessor directive.
+
 ## New Marker File Structure
 
 ```
 {configDir}/projects/-workspace/
-  {sessionId}/skills-loaded          ← main agent marker
-  {sessionId}/subagents/{agentId}/   ← per-subagent directory
-    skills-loaded                    ← subagent marker
+  {sessionId}/skills-loaded                          ← main agent marker
+  {sessionId}/subagents/{agentId}/skills-loaded      ← per-subagent marker
 ```
 
-The `agentId` string passed to `SkillLoader` encodes the full relative path from `projects/-workspace/`:
+The `agentId` string encodes the full relative path from `projects/-workspace/`:
 
 | Agent       | agentId value                            | Resolved marker path                                              |
 |-------------|------------------------------------------|-------------------------------------------------------------------|
 | Main agent  | `{sessionId}`                            | `{configDir}/projects/-workspace/{sessionId}/skills-loaded`       |
-| Subagent    | `{sessionId}/subagents/{agent_id}`       | `{configDir}/projects/-workspace/{sessionId}/subagents/{agentId}/skills-loaded` |
+| Subagent    | `{sessionId}/subagents/{agent_id}`       | `{configDir}/projects/-workspace/{sessionId}/subagents/{agent_id}/skills-loaded` |
 
 `SkillLoader` constructs the marker file as:
 ```java
@@ -42,41 +57,85 @@ this.agentMarkerFile = scope.getClaudeConfigDir()
     .resolve("skills-loaded");
 ```
 
-## How agentId Reaches load-skill
+## SKILL.md Preprocessor Pattern
 
-The SKILL.md preprocessor shell has no access to `agent_id` — it is only available in SubagentStart hook input. The
-bridge is a **file written by hooks and read by `load-skill`**:
+Each SKILL.md uses a conditional pattern: if `$0` is provided (subagent passes its agentId), use it; otherwise use
+`${CLAUDE_SESSION_ID}` (main agent):
 
-1. `ClearSkillMarkers` (SessionStart) writes `{sessionId}` to `{sessionDir}/current-agent-id` — establishes the main
-   agent's identity and resets it after compaction.
-2. `SubagentStartHook` writes `{sessionId}/subagents/{agent_id}` to `{sessionDir}/current-agent-id` when a subagent
-   spawns.
-3. `load-skill` binary reads `{sessionDir}/current-agent-id` to obtain `agentId`. If the file is absent, it falls back
-   to `{sessionId}` (main agent behaviour, fail-safe).
-4. `CLAUDE_SESSION_ID` is available in the SKILL.md preprocessor environment, so `load-skill` can locate the file via
-   `{configDir}/projects/-workspace/{sessionId}/current-agent-id`.
+```
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" <skill> "${0:-${CLAUDE_SESSION_ID}}" "${CLAUDE_PROJECT_DIR}"`
+```
 
-**Known limitation:** Concurrent subagents racing to write `current-agent-id` may briefly overwrite each other's
-value. The worst outcome is a subagent receives redundant full-content (no marker found for the other ID) or skips
-first-use (marker exists for the wrong ID). This is a minor token-efficiency issue, not a correctness failure.
+Wait — this introduces a default/fallback, which the user does not want. Instead, the SKILL.md always passes
+`${CLAUDE_SESSION_ID}`. For the main agent this is the correct agentId. For subagents, the SubagentStartHook instructs
+them to pass their agentId as `$0`, and the SKILL.md preprocessor uses `$0` when present.
+
+Actually, SkillLoader already supports positional arguments (`$0`, `$1`, etc.) via its `argTokens` list. The SKILL.md
+can reference `$0` in the preprocessor command. But `$0` only has a value when the agent passes args via the Skill
+tool. The main agent invokes skills without args, so `$0` would be empty/unresolved.
+
+**Revised pattern:** The `load-skill` CLI always requires the agentId argument. Each SKILL.md preprocessor always
+passes `${CLAUDE_SESSION_ID}` — this is correct for the main agent. For subagents, `SubagentStartHook` injects
+instructions telling the subagent its full agentId (`{sessionId}/subagents/{agent_id}`). The subagent passes this as
+the Skill tool's `args`. SkillLoader tokenizes `args` into `$0`. If `$0` is present, the SKILL.md preprocessor can
+use it to override the default.
+
+**Simplest correct pattern:** Use shell parameter expansion in the SKILL.md preprocessor:
+
+```
+!`AGENT_ID=$0; "${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" <skill> "${AGENT_ID:-${CLAUDE_SESSION_ID}}" "${CLAUDE_PROJECT_DIR}"`
+```
+
+No — this is still a fallback. The user explicitly said no defaults or fallbacks.
+
+**Final pattern:** The agentId is always the first `$ARGUMENTS` token. Both main agent and subagents must pass it:
+
+- **Main agent:** SessionStart hook injects "Your CAT agent ID is: `{sessionId}`" — the main agent passes this when
+  invoking skills.
+- **Subagents:** SubagentStartHook injects "Your CAT agent ID is: `{sessionId}/subagents/{agent_id}`" — the subagent
+  passes this when invoking skills.
+
+Both agents pass their agentId as the first argument to every skill invocation. SkillLoader receives it as `$0`.
+
+The SKILL.md pattern becomes:
+```
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" <skill> "$0" "${CLAUDE_PROJECT_DIR}"`
+```
+
+For skills that also accept their own arguments, the agentId is always the first arg (`$0`) and skill-specific args
+start from `$1`.
+
+## Risk Assessment
+- **Risk Level:** MEDIUM
+- **Concerns:** Relies on agents always passing agentId as the first skill argument. If an agent forgets, `load-skill`
+  fails fast (required parameter). This is intentional — we prefer a visible failure over silent wrong behaviour.
+- **Mitigation:** Clear instructions injected at agent start. Fail-fast on missing agentId.
 
 ## Files to Modify
 
 - `client/src/main/java/io/github/cowwoc/cat/hooks/util/SkillLoader.java`
-  — rename `catAgentId` → `agentId`; remove CLI arg position 2; read agentId from `current-agent-id` file;
-  change marker file construction to `configDir.resolve("projects/-workspace").resolve(agentId).resolve("skills-loaded")`
+  — rename `catAgentId` → `agentId`; change from CLI arg to `$0` positional arg from skill invocation;
+  change marker file to `configDir.resolve("projects/-workspace").resolve(agentId).resolve("skills-loaded")`
 - `client/src/main/java/io/github/cowwoc/cat/hooks/session/ClearSkillMarkers.java`
-  — write `{sessionId}` to `{sessionDir}/current-agent-id` on SessionStart; update glob to also delete
-  `subagents/*/skills-loaded` files
+  — update glob to delete `{sessionDir}/skills-loaded` and `{sessionDir}/subagents/*/skills-loaded`;
+  also clean up legacy `skills-loaded-*` flat files
 - `client/src/main/java/io/github/cowwoc/cat/hooks/SubagentStartHook.java`
-  — write `{sessionId}/subagents/{agent_id}` to `{sessionDir}/current-agent-id` on SubagentStart
+  — inject agentId (`{sessionId}/subagents/{agent_id}`) into subagent context with instructions to pass it
+  when invoking skills
+- `client/src/main/java/io/github/cowwoc/cat/hooks/session/InjectSkillListing.java` (or equivalent SessionStart
+  handler) — inject agentId (`{sessionId}`) into main agent context with instructions to pass it when invoking skills
 - `plugin/skills/*/SKILL.md` (~50 files)
-  — remove the `catAgentId` positional argument (`"${CLAUDE_SESSION_ID}"`) from all `load-skill` invocations;
-  new CLI signature: `load-skill <plugin-root> <skill-name> <project-dir> [skill-args...]`
+  — change the agentId argument from `"${CLAUDE_SESSION_ID}"` to `"$0"` in all `load-skill` invocations
+- `plugin/skills/load-skill/first-use.md`
+  — update the Bash template to use agentId (already passed by the agent)
+- `plugin/concepts/skill-loading.md`
+  — update marker file path documentation and agentId description
 - `client/src/test/java/io/github/cowwoc/cat/hooks/test/SkillLoaderTest.java`
-  — update to new constructor/CLI signature
+  — update to new constructor/CLI signature and agentId semantics
 - `client/src/test/java/io/github/cowwoc/cat/hooks/test/ClearSkillMarkersTest.java`
-  — update to verify new file write and subagent glob behaviour
+  — update to verify new glob behaviour
+- `client/src/test/java/io/github/cowwoc/cat/hooks/test/SubagentStartHookTest.java`
+  — verify agentId injection into context
 
 ## Pre-conditions
 
@@ -84,43 +143,53 @@ first-use (marker exists for the wrong ID). This is a minor token-efficiency iss
 
 ## Execution Steps
 
-1. **Step 1:** Update `SkillLoader` — rename `catAgentId` to `agentId`, remove it from CLI arg parsing (drop arg[2]),
-   read `agentId` from `{sessionDir}/current-agent-id` (fall back to `sessionId` if absent), change marker file
-   construction to `configDir.resolve("projects/-workspace").resolve(agentId).resolve("skills-loaded")`.
+1. **Step 1:** Update `SkillLoader` — rename `catAgentId` to `agentId` throughout; change `main()` CLI signature to
+   `<plugin-root> <skill-name> <project-dir> [skill-args...]` (agentId is no longer a CLI arg, it comes from `$0`
+   skill arg); change marker file construction to
+   `configDir.resolve("projects/-workspace").resolve(agentId).resolve("skills-loaded")`.
+   The agentId is extracted from the first skill arg (`$0`) and is required (fail-fast if absent).
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/SkillLoader.java`
 
-2. **Step 2:** Update `ClearSkillMarkers` — write `{sessionId}` to `{sessionDir}/current-agent-id` at session start;
-   extend cleanup to also delete `{sessionDir}/subagents/*/skills-loaded` and the old flat
-   `{sessionDir}/skills-loaded-*` pattern (migration cleanup).
+2. **Step 2:** Update `ClearSkillMarkers` — extend cleanup to delete `{sessionDir}/skills-loaded` (main marker),
+   `{sessionDir}/subagents/*/skills-loaded` (subagent markers), and legacy `{sessionDir}/skills-loaded-*` flat files.
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/session/ClearSkillMarkers.java`
 
-3. **Step 3:** Update `SubagentStartHook` — after existing context injection, write
-   `{sessionId}/subagents/{agent_id}` to `{sessionDir}/current-agent-id`, creating the `subagents/` directory if
-   needed. Use `agent_id` from `input.getString("agent_id")`.
+3. **Step 3:** Update `SubagentStartHook` — inject agentId into subagent context. Format:
+   "Your CAT agent ID is: `{sessionId}/subagents/{agent_id}`. You MUST pass this as the first argument when invoking
+   any skill via the Skill tool."
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/SubagentStartHook.java`
 
-4. **Step 4:** Update all SKILL.md preprocessor directives — remove the `"${CLAUDE_SESSION_ID}"` catAgentId argument
-   from every `load-skill` invocation. New form:
-   `"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" <skill-name> "${CLAUDE_PROJECT_DIR}"`
+4. **Step 4:** Inject agentId into main agent context at SessionStart. Format:
+   "Your CAT agent ID is: `{sessionId}`. You MUST pass this as the first argument when invoking any skill via the
+   Skill tool."
+   - Files: SessionStart handler (e.g., `InjectSkillListing.java` or new handler)
+
+5. **Step 5:** Update all SKILL.md preprocessor directives — change the agentId argument from
+   `"${CLAUDE_SESSION_ID}"` to `"$0"` in all `load-skill` invocations. For skills that already use `$0` for other
+   purposes, shift their positional args by 1 (agentId becomes `$0`, previous `$0` becomes `$1`, etc.).
    - Files: all `plugin/skills/*/SKILL.md` (~50 files)
 
-5. **Step 5:** Update tests — revise `SkillLoaderTest` for the new no-agentId CLI signature and file-based agentId
-   resolution; revise `ClearSkillMarkersTest` for new write and glob behaviour; revise `SubagentStartHookTest` for
-   agent-id file write.
+6. **Step 6:** Update `plugin/skills/load-skill/first-use.md` and `plugin/concepts/skill-loading.md` — update
+   documentation to reflect new agentId semantics and marker file paths.
+   - Files: `plugin/skills/load-skill/first-use.md`, `plugin/concepts/skill-loading.md`
+
+7. **Step 7:** Update tests — revise `SkillLoaderTest` for new CLI signature and `$0`-based agentId; revise
+   `ClearSkillMarkersTest` for new glob behaviour; revise `SubagentStartHookTest` for agentId context injection.
    - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/SkillLoaderTest.java`,
      `client/src/test/java/io/github/cowwoc/cat/hooks/test/ClearSkillMarkersTest.java`,
      `client/src/test/java/io/github/cowwoc/cat/hooks/test/SubagentStartHookTest.java`
 
-6. **Step 6:** Run `mvn -f client/pom.xml verify` and confirm all tests pass.
+8. **Step 8:** Run `mvn -f client/pom.xml verify` and confirm all tests pass.
 
 ## Post-conditions
 
-- [ ] `SkillLoader` has no `catAgentId` parameter; constructor accepts `agentId` read internally from
-  `current-agent-id` file
+- [ ] No references to `catAgentId` remain in the codebase
+- [ ] `SkillLoader` constructor parameter is named `agentId`
 - [ ] Main agent marker lives at `{sessionDir}/skills-loaded`
 - [ ] Subagent markers live at `{sessionDir}/subagents/{agentId}/skills-loaded`
-- [ ] `ClearSkillMarkers` writes `{sessionId}` to `{sessionDir}/current-agent-id` on SessionStart
-- [ ] `SubagentStartHook` writes `{sessionId}/subagents/{agentId}` to `{sessionDir}/current-agent-id` on SubagentStart
-- [ ] All SKILL.md `load-skill` invocations use 3-arg form (no catAgentId argument)
+- [ ] SessionStart hook injects main agent's agentId (`{sessionId}`) into context
+- [ ] SubagentStartHook injects subagent's agentId (`{sessionId}/subagents/{agent_id}`) into context
+- [ ] All SKILL.md `load-skill` invocations reference `"$0"` for the agentId argument
 - [ ] `load-skill` CLI accepts `<plugin-root> <skill-name> <project-dir> [skill-args...]`
+- [ ] `load-skill` fails fast if agentId (`$0` skill arg) is not provided
 - [ ] All tests pass (`mvn -f client/pom.xml verify`)
