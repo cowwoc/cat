@@ -74,7 +74,7 @@ Analyze survey results to classify artifacts:
 - No corresponding lock exists (orphaned)
 
 **Stale lock indicators:**
-- Lock age exceeds reasonable session duration (hours old)
+- Lock age exceeds 4 hours (14400 seconds) — do not label a worktree or lock as "abandoned" unless idle time meets this threshold
 - No heartbeat updates (if heartbeat tracking enabled)
 
 For each lock, check status:
