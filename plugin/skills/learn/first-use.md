@@ -42,11 +42,7 @@ Determine whether this is a quick-tier or deep-tier mistake.
 
 1. Read the mistake description provided
 2. Ask yourself: Can the event sequence be established clearly WITHOUT reading JSONL? If yes → Quick tier. If no → Deep tier.
-3. Check mistakes.json for recurrence information (pass to phase-analyze but don't use tier classification)
-4. If unsure, default to deep-tier (safer - all phases give better RCA)
-
-Note: While `recurrence_of` does not affect tier selection, this information is passed to phase-analyze Step 4d for
-architectural pattern detection and to phase-prevent blocking criteria (A002) for escalation decisions.
+3. If unsure, default to deep-tier (safer - all phases give better RCA)
 
 **Store tier decision:**
 - `tier: "quick" | "deep"`

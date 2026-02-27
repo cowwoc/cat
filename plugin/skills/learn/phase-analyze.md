@@ -118,52 +118,56 @@ rca_depth_check:
     question: "Does prevention modify code, config, or documentation?"
     if_answer_is_no: "RCA is incomplete - behavioral changes without enforcement recur"
     your_answer: "_______________"
-
-  # Question 4: Is this a recurring failure?
-  recurring_pattern:
-    question: "Has this type of failure occurred before? Check recurrence_of in investigation output"
-    your_answer: "_______________"
 ```
 
 ### Step 4b-R: Recurrence Independence Gate (BLOCKING GATE - M416)
 
-**MANDATORY: If you answered YES to Question 4 (recurring pattern), complete this gate BEFORE proceeding to Question 5.**
+**MANDATORY: Complete this gate to verify your RCA is independent before checking recurrence history.**
 
-If the failure is recurring, you MUST verify your RCA independently before reading past conclusions:
+You MUST verify your RCA independently before reading past conclusions from mistakes.json:
 
 ```yaml
 recurrence_independence_gate:
   step_1:
     action: "Complete your independent RCA using ONLY fresh evidence from this session"
-    not_allowed: "Referencing past mistake entries (M341, M353, etc.) as if they explain this occurrence"
+    not_allowed:
+      - "Referencing past mistake entries (M341, M353, etc.) as if they explain this occurrence"
+      - "Reading mistakes.json or checking for recurrence_of until this step is complete"
     allowed: "Reading the source file/code directly to find the structural problem"
     your_independent_root_cause: "_______________"  # Fill this in FIRST
 
   step_2:
     action: "Only after step_1 is complete: Compare against Phase 1 investigation output"
     purpose: "Did Phase 1 identify the same root cause as your independent analysis?"
+    note: "If deep-tier, compare your finding against Phase 1 investigation output. If quick-tier, skip this step and proceed to step_3."
     questions:
       - "Does your finding match what Phase 1 discovered?"
       - "If they match: confirms the pattern is consistent"
       - "If they differ: your fresh analysis takes precedence"
 
   step_3:
-    action: "Only after step_1 AND step_2 are complete, proceed to Question 5 below"
+    action: "Only after step_1 AND step_2 are complete: Check recurrence history"
+    question: "Is this a recurring failure? Check recurrence_of in investigation output or mistakes.json"
+    purpose: "Verify the pattern after independent analysis is complete"
+    your_answer: "_______________"
 ```
 
-**Why this gate exists (M416):** When a mistake recurs, the phase description naturally includes past
-mistake chain information. Reading that information makes it hard to analyze independently. This gate
-ensures you form your own conclusions from source files first, before reading historical context.
+**Why this gate exists (M416):** When a mistake recurs, historical information about past mistake chains
+makes it hard to analyze independently. This gate ensures you form your own conclusions from source files
+first, before reading mistakes.json or past mistake entries. Recurrence checks happen AFTER independent
+RCA is complete.
 
-**BLOCKING CONDITION:** Do NOT proceed to Question 5 below until `step_1.your_independent_root_cause` is
-filled in with a cause based on reading source code, not reading historical entries.
+**BLOCKING CONDITION:** Do NOT proceed to Question 5 below until:
+1. `step_1.your_independent_root_cause` is filled in with a cause based on reading source code ONLY
+2. `step_3.your_answer` is filled in with recurrence information checked AFTER steps 1 and 2 are
+   complete (never before)
 
 ### Continuing Step 4b After Recurrence Gate
 
-If the failure is NOT recurring, proceed directly to Question 5.
+Proceed to Question 5 (Prevention vs Detection) after all steps 1-3 of the independence gate are complete.
 
 ```yaml
-  # Question 5: Prevention vs Detection
+  # Question 5: Prevention vs Detection (after recurrence gate)
   fix_type:
     question: "Does your proposed fix PREVENT the problem, or DETECT/MITIGATE after it occurs?"
     prevention: "Makes the wrong thing impossible or the right thing automatic"
@@ -211,7 +215,7 @@ Each independent mistake gets its own `/cat:learn` invocation with full RCA and 
 
 **CRITICAL: Check for recurring patterns that indicate architectural flaws.**
 
-When a mistake has recurrences (check `recurrence_of` field in mistakes.json), independently verify the root cause.
+When a mistake has recurrences (use `recurrence_of` from Step 4b-R step_3 output), independently verify the root cause.
 Do NOT assume past analyses were correct -- they may have had wrong conclusions that cascaded.
 
 **Recurrence Chain Check:**
