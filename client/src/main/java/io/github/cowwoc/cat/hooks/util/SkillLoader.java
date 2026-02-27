@@ -10,6 +10,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ShellParser;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
@@ -18,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -58,9 +60,9 @@ import org.slf4j.LoggerFactory;
  *   <li>{@code ${CLAUDE_PROJECT_DIR}} — project directory path</li>
  * </ul>
  * <p>
- * <b>Positional arguments:</b> When constructed with a skill-args string (see 5-arg constructor),
- * the string is split on whitespace into tokens. Skills reference these as {@code $0}, {@code $1},
- * etc. Use the {@code argument-hint} frontmatter field to document expected arguments.
+ * <b>Positional arguments:</b> Skills reference pre-tokenized arguments as {@code $0}, {@code $1},
+ * etc. Arguments with spaces are preserved in the substitution. Use the {@code argument-hint} frontmatter
+ * field to document expected arguments.
  * <p>
  * Undefined variables are passed through unchanged, matching Claude Code's native behavior.
  * <p>
@@ -114,7 +116,7 @@ public final class SkillLoader
   private final JvmScope scope;
   private final Path pluginRoot;
   private final String projectDir;
-  private final String[] argTokens;
+  private final List<String> argTokens;
   private final Path agentMarkerFile;
   private final Set<String> loadedSkills;
 
@@ -132,7 +134,7 @@ public final class SkillLoader
    */
   public SkillLoader(JvmScope scope, String pluginRoot, String catAgentId, String projectDir) throws IOException
   {
-    this(scope, pluginRoot, catAgentId, projectDir, "");
+    this(scope, pluginRoot, catAgentId, projectDir, List.of());
   }
 
   /**
@@ -142,14 +144,14 @@ public final class SkillLoader
    * @param pluginRoot the Claude plugin root directory
    * @param catAgentId the CAT agent identifier (unique per agent instance within the session)
    * @param projectDir the Claude project directory
-   * @param skillArgs the whitespace-separated positional arguments to map to named parameters
+   * @param skillArgs pre-tokenized positional arguments to map to named parameters
    * @throws NullPointerException if {@code scope}, {@code pluginRoot}, {@code catAgentId},
    *   {@code projectDir}, or {@code skillArgs} are null
    * @throws IllegalArgumentException if {@code pluginRoot}, {@code catAgentId}, or {@code projectDir} are blank
    * @throws IOException if the agent marker file cannot be read
    */
-  public SkillLoader(JvmScope scope, String pluginRoot, String catAgentId, String projectDir, String skillArgs)
-    throws IOException
+  public SkillLoader(JvmScope scope, String pluginRoot, String catAgentId, String projectDir,
+    List<String> skillArgs) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(pluginRoot, "pluginRoot").isNotBlank();
@@ -160,10 +162,7 @@ public final class SkillLoader
     this.scope = scope;
     this.pluginRoot = Paths.get(pluginRoot);
     this.projectDir = projectDir;
-    if (skillArgs.isBlank())
-      this.argTokens = new String[0];
-    else
-      this.argTokens = skillArgs.strip().split("\\s+");
+    this.argTokens = List.copyOf(skillArgs);
 
     String sessionId = scope.getClaudeSessionId();
     Path sessionDir = scope.getClaudeConfigDir().resolve("projects/-workspace/" + sessionId);
@@ -437,6 +436,12 @@ public final class SkillLoader
       result.append(content, lastEnd, matcher.start());
       String relativePath = matcher.group(1);
       Path filePath = pluginRoot.resolve(relativePath).toAbsolutePath().normalize();
+      Path normalizedPluginRoot = pluginRoot.toAbsolutePath().normalize();
+      if (!filePath.startsWith(normalizedPluginRoot))
+      {
+        throw new IOException("@path reference '" + relativePath + "' resolves outside the plugin root. " +
+          "Resolved to: " + filePath + ". Plugin root: " + normalizedPluginRoot);
+      }
       if (!Files.exists(filePath))
       {
         throw new IOException("@path reference '" + relativePath + "' not found. " +
@@ -538,8 +543,8 @@ public final class SkillLoader
     {
       argResult.append(afterVars, lastEnd, argMatcher.start());
       int index = Integer.parseInt(argMatcher.group(1));
-      if (index >= 0 && index < argTokens.length)
-        argResult.append(argTokens[index]);
+      if (index >= 0 && index < argTokens.size())
+        argResult.append(argTokens.get(index));
       else
         argResult.append(argMatcher.group(0));
       lastEnd = argMatcher.end();
@@ -574,7 +579,10 @@ public final class SkillLoader
       String argumentsToken = matcher.group(2);
       String[] arguments;
       if (argumentsToken != null)
-        arguments = argumentsToken.strip().split("\\s+");
+      {
+        List<String> tokenList = ShellParser.tokenize(argumentsToken.strip());
+        arguments = tokenList.toArray(new String[0]);
+      }
       else
         arguments = new String[0];
 
@@ -752,16 +760,16 @@ public final class SkillLoader
    * <p>
    * Provides CLI entry point to replace the original load-skill script.
    * Invoked as: java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.util.SkillLoader
-   * plugin-root skill-name cat-agent-id project-dir [skill-args]
+   * plugin-root skill-name cat-agent-id project-dir [skill-args...]
    *
-   * @param args command-line arguments: plugin-root skill-name cat-agent-id project-dir [skill-args]
+   * @param args command-line arguments: plugin-root skill-name cat-agent-id project-dir [skill-args...]
    */
   public static void main(String[] args)
   {
-    if (args.length < 4 || args.length > 5)
+    if (args.length < 4)
     {
       System.err.println(
-        "Usage: load-skill <plugin-root> <skill-name> <cat-agent-id> <project-dir> [skill-args]");
+        "Usage: load-skill <plugin-root> <skill-name> <cat-agent-id> <project-dir> [skill-args...]");
       System.exit(1);
     }
 
@@ -769,11 +777,7 @@ public final class SkillLoader
     String skillName = args[1];
     String catAgentId = args[2];
     String projectDir = args[3];
-    String skillArgs;
-    if (args.length == 5)
-      skillArgs = args[4];
-    else
-      skillArgs = "";
+    List<String> skillArgs = List.of(args).subList(4, args.length);
 
     try (JvmScope scope = new MainJvmScope())
     {
