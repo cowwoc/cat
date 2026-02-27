@@ -79,8 +79,6 @@ Show current values in descriptions using data from read-config step.
 - options:
   - label: "🐱 CAT Behavior"
     description: "Currently: {trust} · {verify} · {effort} · {patience}"
-  - label: "🧹 Cleanup"
-    description: "Currently: {autoRemoveWorktrees ? 'Auto-remove' : 'Keep'}"
   - label: "📏 Display Width"
     description: "Currently: {terminalWidth || 120} characters"
   - label: "🔀 Completion Workflow"
@@ -219,26 +217,6 @@ Map: Low → `patience: "low"`, Medium → `patience: "medium"`, High → `patie
 - High benefit, low cost → Current or next version
 - Moderate → Next major version
 - Low benefit, high cost → Backlog or distant future
-
-</step>
-
-<step name="cleanup">
-
-**🧹 Cleanup selection:**
-
-AskUserQuestion:
-- header: "Cleanup"
-- question: "Worktree cleanup behavior: (Current: {autoRemoveWorktrees ? 'Auto-remove' : 'Keep'})"
-- options:
-  - label: "🧹 Auto-remove (Recommended)"
-    description: "Remove after issue completion"
-  - label: "📦 Keep"
-    description: "Preserve for manual inspection"
-  - label: "← Back"
-    description: "Return to main menu"
-
-
-Map: Auto-remove → `autoRemoveWorktrees: true`, Keep → `autoRemoveWorktrees: false`
 
 </step>
 
@@ -573,11 +551,8 @@ Return to Step 3 (Choose action) to allow further edits or navigation.
 
 **Update configuration file:**
 
-```bash
-# Safe jq update pattern
-jq '.settingName = "newValue"' .claude/cat/cat-config.json > .claude/cat/cat-config.json.tmp \
-  && mv .claude/cat/cat-config.json.tmp .claude/cat/cat-config.json
-```
+Use the Read tool to read `.claude/cat/cat-config.json`, modify the target setting value, then use the Write tool to
+write the updated JSON back to the same path.
 
 </step>
 
@@ -602,7 +577,6 @@ Do NOT manually construct output or invoke scripts. Output the error and STOP.
 Examples:
 - Changed "Trust" → return to CAT Behavior menu
 - Changed "Context window size" → return to Context Limits menu
-- Changed "Cleanup" → return to Cleanup/Gates menu
 
 </step>
 
@@ -648,7 +622,6 @@ Do NOT manually construct output or invoke scripts. Output the error and STOP.
 | `verify` | string | "changed" | What verification runs before commits |
 | `effort` | string | "medium" | Exploration beyond immediate issue |
 | `patience` | string | "high" | When to act on discoveries |
-| `autoRemoveWorktrees` | boolean | true | Auto-remove worktrees |
 | `completionWorkflow` | string | "merge" | Issue completion behavior (merge or PR) |
 | `reviewThreshold` | string | "low" | Minimum severity to auto-fix before presenting to user |
 | `minSeverity` | string | "low" | Minimum severity level for concerns to be visible at all |
