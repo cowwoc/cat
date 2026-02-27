@@ -720,6 +720,35 @@ Quick check: Do edited files contain concrete values (1.0, SUCCESS) in output fo
 
 Skip only when: fix is unique to one file (typo) or no similar files exist (verified).
 
+## Step 9d: Empirical Verification for Compliance Fixes (M422)
+
+**MANDATORY when `prevention_type` is `skill` AND the mistake category is `protocol_violation`:**
+
+Documentation changes for compliance failures require empirical verification — committing a skill edit without running
+`/cat:empirical-test` provides no feedback loop and allows the same failure to recur immediately.
+
+**Invoke `/cat:empirical-test` before recording the prevention as complete:**
+
+```
+/cat:empirical-test "[describe the compliance failure that was fixed]"
+```
+
+The empirical test must confirm the fixed skill content achieves ≥70% compliance before the prevention is considered
+implemented.
+
+**Acceptance threshold:**
+
+| Result | Action |
+|--------|--------|
+| ≥70% success | Prevention verified — proceed to output |
+| <70% success | Return to Step 9 — skill fix is insufficient |
+
+**Skip only when:**
+- The compliance behavior cannot be tested with the empirical test runner (e.g., requires live session state)
+- The skill fix targets structural layout (not instruction wording or tool invocation)
+
+In those cases, set `empirical_verification_skipped: true` in output JSON with a brief reason.
+
 ## Output Format
 
 Your final message MUST be ONLY this JSON (no other text):
