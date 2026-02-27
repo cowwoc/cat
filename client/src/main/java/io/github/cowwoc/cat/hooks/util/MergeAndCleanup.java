@@ -75,7 +75,6 @@ public final class MergeAndCleanup
     if (!Files.isDirectory(projectPath.resolve(".claude/cat")))
       throw new IOException("Not a CAT project: '" + projectDir + "' (no .claude/cat directory)");
 
-    boolean autoRemoveWorktrees = getAutoRemoveWorktrees(projectPath);
     String taskBranch = issueId;
 
     if (worktreePath.isEmpty())
@@ -107,19 +106,8 @@ public final class MergeAndCleanup
     String commitSha = getCommitSha(worktreePath, "HEAD");
     fastForwardMerge(projectDir, taskBranch);
 
-    boolean worktreeRemoved = false;
-    if (autoRemoveWorktrees)
-    {
-      removeWorktree(projectDir, worktreePath);
-      worktreeRemoved = true;
-    }
-
-    boolean branchDeleted = false;
-    if (autoRemoveWorktrees)
-    {
-      deleteBranch(projectDir, taskBranch);
-      branchDeleted = true;
-    }
+    removeWorktree(projectDir, worktreePath);
+    deleteBranch(projectDir, taskBranch);
 
     boolean lockReleased = false;
     try
@@ -136,27 +124,7 @@ public final class MergeAndCleanup
     long endTime = System.currentTimeMillis();
     long duration = (endTime - startTime) / 1000;
 
-    return buildSuccessJson(issueId, baseBranch, commitSha, worktreeRemoved, branchDeleted,
-      lockReleased, duration);
-  }
-
-  /**
-   * Gets the autoRemoveWorktrees setting from cat-config.json.
-   *
-   * @param projectPath the project root path
-   * @return true if worktrees should be auto-removed
-   * @throws IOException if the config file exists but cannot be read
-   */
-  private boolean getAutoRemoveWorktrees(Path projectPath) throws IOException
-  {
-    Path configPath = projectPath.resolve(".claude/cat/cat-config.json");
-    if (!Files.exists(configPath))
-      return true;
-
-    String content = Files.readString(configPath, StandardCharsets.UTF_8);
-    ObjectNode config = (ObjectNode) scope.getJsonMapper().readTree(content);
-
-    return !config.has("autoRemoveWorktrees") || config.get("autoRemoveWorktrees").asBoolean(true);
+    return buildSuccessJson(issueId, baseBranch, commitSha, lockReleased, duration);
   }
 
   /**
@@ -460,15 +428,13 @@ public final class MergeAndCleanup
    * @param issueId the issue ID
    * @param baseBranch the base branch
    * @param commitSha the commit SHA
-   * @param worktreeRemoved whether the worktree was removed
-   * @param branchDeleted whether the branch was deleted
    * @param lockReleased whether the lock was released
    * @param duration the operation duration in seconds
    * @return JSON string
    * @throws IOException if JSON creation fails
    */
   private String buildSuccessJson(String issueId, String baseBranch, String commitSha,
-    boolean worktreeRemoved, boolean branchDeleted, boolean lockReleased, long duration)
+    boolean lockReleased, long duration)
     throws IOException
   {
     ObjectNode json = scope.getJsonMapper().createObjectNode();
@@ -477,8 +443,6 @@ public final class MergeAndCleanup
     json.put("issue_id", issueId);
     json.put("base_branch", baseBranch);
     json.put("commit_sha", commitSha);
-    json.put("worktree_removed", worktreeRemoved);
-    json.put("branch_deleted", branchDeleted);
     json.put("lock_released", lockReleased);
     json.put("duration_seconds", duration);
 

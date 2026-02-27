@@ -93,27 +93,19 @@ public final class GitMergeLinear
 
     String commitShaAfter = getCommitSha("HEAD");
 
-    boolean worktreeRemoved = false;
-    boolean branchDeleted = false;
-
     if (cleanup)
     {
       String worktreePath = findWorktreeForBranch(taskBranch);
       if (!worktreePath.isEmpty() && Files.isDirectory(Paths.get(worktreePath)))
-      {
         removeWorktree(worktreePath);
-        worktreeRemoved = true;
-      }
-
-      if (deleteBranch(taskBranch))
-        branchDeleted = true;
+      deleteBranch(taskBranch);
     }
 
     long endTime = System.currentTimeMillis();
     long duration = (endTime - startTime) / 1000;
 
     return buildSuccessJson(taskBranch, commitShaAfter, commitMsg, commitCount,
-      cleanup, worktreeRemoved, branchDeleted, duration);
+      cleanup, duration);
   }
 
   /**
@@ -348,14 +340,12 @@ public final class GitMergeLinear
    * @param commitMessage the commit message
    * @param commitCount the number of commits merged
    * @param cleanup whether cleanup was requested
-   * @param worktreeRemoved whether the worktree was removed
-   * @param branchDeleted whether the branch was deleted
    * @param duration the operation duration in seconds
    * @return JSON string
    * @throws IOException if JSON creation fails
    */
   private String buildSuccessJson(String taskBranch, String commitSha, String commitMessage,
-    int commitCount, boolean cleanup, boolean worktreeRemoved, boolean branchDeleted, long duration)
+    int commitCount, boolean cleanup, long duration)
     throws IOException
   {
     ObjectNode json = scope.getJsonMapper().createObjectNode();
@@ -367,8 +357,6 @@ public final class GitMergeLinear
     json.put("commit_message", commitMessage);
     json.put("commit_count", commitCount);
     json.put("cleanup", cleanup);
-    json.put("worktree_removed", worktreeRemoved);
-    json.put("branch_deleted", branchDeleted);
     json.put("timestamp", Instant.now().toString());
 
     return scope.getJsonMapper().writerWithDefaultPrettyPrinter().writeValueAsString(json);
