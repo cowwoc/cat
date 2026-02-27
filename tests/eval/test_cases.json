@@ -145,14 +145,14 @@
       "category": "implicit"
     },
     {
-      "id": "monitor-subagents-1",
-      "skill": "monitor-subagents",
+      "id": "get-subagent-status-1",
+      "skill": "get-subagent-status",
       "prompt": "Check the status of running subagents",
       "category": "explicit"
     },
     {
-      "id": "monitor-subagents-2",
-      "skill": "monitor-subagents",
+      "id": "get-subagent-status-2",
+      "skill": "get-subagent-status",
       "prompt": "How much context are my subagents using?",
       "category": "implicit"
     },

@@ -402,4 +402,231 @@ public class GetInitOutputTest
       requireThat(result, "result").contains("Tip:").contains("/cat:status");
     }
   }
+
+  /**
+   * Verifies that getOutput with empty args returns empty string.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getOutputEmptyArgsReturnsEmptyString() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetInitOutput handler = new GetInitOutput(scope);
+      String result = handler.getOutput(new String[]{});
+
+      requireThat(result, "result").isEqualTo("");
+    }
+  }
+
+  /**
+   * Verifies that getOutput with unknown page throws IllegalArgumentException listing valid pages.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getOutputUnknownPageThrows() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetInitOutput handler = new GetInitOutput(scope);
+      try
+      {
+        handler.getOutput(new String[]{"invalid-page"});
+        requireThat(false, "shouldThrowException").isEqualTo(true);
+      }
+      catch (IllegalArgumentException e)
+      {
+        requireThat(e.getMessage(), "message").
+          contains("Unknown page").
+          contains("default-gates-configured").
+          contains("research-skipped").
+          contains("choose-your-partner").
+          contains("cat-initialized").
+          contains("first-issue-walkthrough").
+          contains("first-issue-created").
+          contains("all-set").
+          contains("explore-at-your-own-pace");
+      }
+    }
+  }
+
+  /**
+   * Verifies that default-gates-configured with non-numeric arg throws IllegalArgumentException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void defaultGatesConfiguredNonNumericArgThrows() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetInitOutput handler = new GetInitOutput(scope);
+      try
+      {
+        handler.getOutput(new String[]{"default-gates-configured", "not-a-number"});
+        requireThat(false, "shouldThrowException").isEqualTo(true);
+      }
+      catch (IllegalArgumentException e)
+      {
+        requireThat(e.getMessage(), "message").
+          contains("version-count must be a number").
+          contains("not-a-number");
+      }
+    }
+  }
+
+  /**
+   * Verifies that research-skipped with insufficient args throws IllegalArgumentException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void researchSkippedInsufficientArgsThrows() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetInitOutput handler = new GetInitOutput(scope);
+      try
+      {
+        handler.getOutput(new String[]{"research-skipped"});
+        requireThat(false, "shouldThrowException").isEqualTo(true);
+      }
+      catch (IllegalArgumentException e)
+      {
+        requireThat(e.getMessage(), "message").
+          contains("research-skipped requires 1 argument").
+          contains("example-version");
+      }
+    }
+  }
+
+  /**
+   * Verifies that cat-initialized with insufficient args throws IllegalArgumentException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void catInitializedInsufficientArgsThrows() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetInitOutput handler = new GetInitOutput(scope);
+      try
+      {
+        handler.getOutput(new String[]{"cat-initialized", "high", "medium"});
+        requireThat(false, "shouldThrowException").isEqualTo(true);
+      }
+      catch (IllegalArgumentException e)
+      {
+        requireThat(e.getMessage(), "message").
+          contains("cat-initialized requires 3 arguments").
+          contains("trust").
+          contains("effort").
+          contains("patience");
+      }
+    }
+  }
+
+  /**
+   * Verifies that first-issue-created with insufficient args throws IllegalArgumentException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void firstIssueCreatedInsufficientArgsThrows() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetInitOutput handler = new GetInitOutput(scope);
+      try
+      {
+        handler.getOutput(new String[]{"first-issue-created"});
+        requireThat(false, "shouldThrowException").isEqualTo(true);
+      }
+      catch (IllegalArgumentException e)
+      {
+        requireThat(e.getMessage(), "message").
+          contains("first-issue-created requires 1 argument").
+          contains("issue-name");
+      }
+    }
+  }
+
+  /**
+   * Verifies that getOutput returns correct box for default-gates-configured.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getOutputDefaultGatesConfiguredDispatch() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetInitOutput handler = new GetInitOutput(scope);
+      String result = handler.getOutput(new String[]{"default-gates-configured", "5"});
+
+      requireThat(result, "result").contains("Default gates configured for 5 versions");
+    }
+  }
+
+  /**
+   * Verifies that getOutput returns correct box for research-skipped.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getOutputResearchSkippedDispatch() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetInitOutput handler = new GetInitOutput(scope);
+      String result = handler.getOutput(new String[]{"research-skipped", "v2.0"});
+
+      requireThat(result, "result").
+        contains("RESEARCH SKIPPED").
+        contains("/cat:research v2.0");
+    }
+  }
+
+  /**
+   * Verifies that getOutput returns correct box for cat-initialized.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getOutputCatInitializedDispatch() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetInitOutput handler = new GetInitOutput(scope);
+      String result = handler.getOutput(new String[]{"cat-initialized", "high", "medium", "low"});
+
+      requireThat(result, "result").
+        contains("CAT INITIALIZED").
+        contains("high").
+        contains("medium").
+        contains("low");
+    }
+  }
+
+  /**
+   * Verifies that getOutput returns correct box for first-issue-created.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getOutputFirstIssueCreatedDispatch() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetInitOutput handler = new GetInitOutput(scope);
+      String result = handler.getOutput(new String[]{"first-issue-created", "my-feature"});
+
+      requireThat(result, "result").
+        contains("FIRST ISSUE CREATED").
+        contains("my-feature");
+    }
+  }
 }

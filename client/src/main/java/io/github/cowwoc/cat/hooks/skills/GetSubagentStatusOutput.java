@@ -4,12 +4,14 @@
  * Licensed under the CAT Commercial License.
  * See LICENSE.md in the project root for license terms.
  */
-package io.github.cowwoc.cat.hooks.util;
+package io.github.cowwoc.cat.hooks.skills;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.util.SkillOutput;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ArrayNode;
@@ -28,13 +30,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Monitors subagent worktrees and provides status information.
+ * Output generator for /cat:get-subagent-status skill.
  * <p>
- * Parses git worktree list to find subagent worktrees (containing "-sub-"),
- * reads completion markers and session files to compute token counts,
- * and outputs structured JSON results.
+ * Collects subagent worktree status, parses git worktree list to find subagent worktrees,
+ * reads completion markers and session files to compute token counts, and outputs structured JSON results.
  */
-public final class SubagentMonitor
+public final class GetSubagentStatusOutput implements SkillOutput
 {
   private static final int THRESHOLD_TOKENS = 80_000;
   private static final Pattern SUB_PATTERN = Pattern.compile("sub-([a-f0-9]+)");
@@ -111,7 +112,7 @@ public final class SubagentMonitor
   }
 
   /**
-   * Summary of subagent monitoring results.
+   * Summary of subagent status results.
    *
    * @param total total number of subagents found
    * @param running number of running subagents
@@ -139,12 +140,12 @@ public final class SubagentMonitor
   }
 
   /**
-   * Result of monitoring subagents.
+   * Result of subagent status report.
    *
    * @param subagents list of subagent information
    * @param summary summary statistics
    */
-  public record MonitorResult(List<SubagentInfo> subagents, Summary summary)
+  public record StatusResult(List<SubagentInfo> subagents, Summary summary)
   {
     /**
      * Creates a new monitor result.
@@ -153,7 +154,7 @@ public final class SubagentMonitor
      * @param summary summary statistics
      * @throws NullPointerException if {@code subagents} or {@code summary} is null
      */
-    public MonitorResult
+    public StatusResult
     {
       requireThat(subagents, "subagents").isNotNull();
       requireThat(summary, "summary").isNotNull();
@@ -198,16 +199,37 @@ public final class SubagentMonitor
   }
 
   /**
-   * Private constructor to prevent instantiation.
+   * The JVM scope for accessing shared services.
    */
-  private SubagentMonitor()
+  private final JvmScope scope;
+
+  /**
+   * Creates a GetSubagentStatusOutput instance.
+   *
+   * @param scope the JVM scope for accessing shared services
+   * @throws NullPointerException if {@code scope} is null
+   */
+  public GetSubagentStatusOutput(JvmScope scope)
   {
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
+  }
+
+  @Override
+  public String getOutput(String[] args) throws IOException
+  {
+    requireThat(args, "args").isNotNull();
+
+    JsonMapper mapper = scope.getJsonMapper();
+    String sessionBase = scope.getSessionBasePath().toString();
+    StatusResult result = getStatus(sessionBase, mapper);
+    return result.toJson(mapper);
   }
 
   /**
    * Main method for command-line execution.
    * <p>
-   * Usage: {@code monitor-subagents [--session-base DIR]}
+   * Usage: {@code get-subagent-status [--session-base DIR]}
    * <p>
    * Outputs JSON with status of all active subagents to stdout.
    *
@@ -239,7 +261,7 @@ public final class SubagentMonitor
       try
       {
         JsonMapper mapper = scope.getJsonMapper();
-        MonitorResult result = monitor(sessionBase, mapper);
+        StatusResult result = getStatus(sessionBase, mapper);
         System.out.println(result.toJson(mapper));
       }
       catch (IOException e)
@@ -264,7 +286,7 @@ public final class SubagentMonitor
   }
 
   /**
-   * Monitors all subagent worktrees and returns status information.
+   * Reports the status of all subagent worktrees.
    *
    * @param sessionBase the session files base directory (e.g., "/home/node/.config/claude/projects/-workspace")
    * @param mapper the JSON mapper to use for parsing completion files
@@ -272,7 +294,7 @@ public final class SubagentMonitor
    * @throws NullPointerException if {@code sessionBase} or {@code mapper} is null
    * @throws IOException if git operations or file reading fails
    */
-  public static MonitorResult monitor(String sessionBase, JsonMapper mapper) throws IOException
+  public static StatusResult getStatus(String sessionBase, JsonMapper mapper) throws IOException
   {
     requireThat(sessionBase, "sessionBase").isNotNull();
     requireThat(mapper, "mapper").isNotNull();
@@ -349,7 +371,7 @@ public final class SubagentMonitor
     }
 
     Summary summary = new Summary(total, running, complete, warning);
-    return new MonitorResult(subagents, summary);
+    return new StatusResult(subagents, summary);
   }
 
   /**

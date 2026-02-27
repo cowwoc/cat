@@ -5,9 +5,8 @@ See LICENSE.md in the project root for license terms.
 -->
 # Help
 
-Echo the content inside the LATEST `<output skill="help">` tag. Do not summarize, interpret, or add commentary.
+Output the following content verbatim. Do not summarize, interpret, or add commentary.
 
-<output skill="help">
 # CAT Command Reference
 
 **CAT** enables hierarchical project planning with multi-agent issue execution.
@@ -53,13 +52,11 @@ Power user features for complex workflows:
 |---------|--------------|
 | `/cat:research` | Run stakeholder research on pending versions |
 | `/cat:cleanup` | Clean up abandoned worktrees and stale locks |
-| `/cat:spawn-subagent` | Launch isolated subagent for an issue |
-| `/cat:monitor-subagents` | Check status of running subagents |
+| `/cat:get-subagent-status` | Check status of running subagents |
 | `/cat:collect-results` | Gather results from completed subagents |
 | `/cat:merge-subagent` | Merge subagent branch into issue branch |
 | `/cat:token-report` | Generate token usage report |
 | `/cat:decompose-issue` | Split oversized issue into smaller issues |
-| `/cat:parallel-execute` | Orchestrate multiple subagents concurrently |
 
 ---
 
@@ -213,4 +210,3 @@ cat-config.json:
 - Check `.claude/cat/ROADMAP.md` for version overview
 - Use `/cat:status` to see current state
 - Review individual STATE.md files for detailed progress
-</output>

@@ -282,4 +282,4 @@ git branch --merged | grep "${SUBAGENT_BRANCH}" && git branch -d "${SUBAGENT_BRA
 - `cat:collect-results` - Must run before merge
 - `cat:spawn-subagent` - Creates subagent that will later be merged
 - `cat:parallel-execute` - Orchestrates multiple subagent merges
-- `cat:monitor-subagents` - Verify subagent complete before merge
+- `cat:get-subagent-status` - Verify subagent complete before merge

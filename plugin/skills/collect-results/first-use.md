@@ -105,7 +105,7 @@ if [ ! -f "$COMPLETION_FILE" ]; then
   echo ""
   echo "The subagent should have written this file on completion."
   echo "Possible causes:"
-  echo "1. Subagent is still running (check /cat:monitor-subagents)"
+  echo "1. Subagent is still running (check /cat:get-subagent-status)"
   echo "2. Subagent crashed before writing completion marker"
   echo "3. Worktree path is incorrect"
   echo ""
@@ -416,7 +416,7 @@ fi
 
 ## Related Skills
 
-- `cat:monitor-subagents` - Check if subagent is ready for collection
+- `cat:get-subagent-status` - Check if subagent is ready for collection
 - `cat:merge-subagent` - Merge collected results to issue branch
 - `cat:token-report` - Detailed analysis of token usage
 - `cat:decompose-issue` - Split remaining work after partial collection

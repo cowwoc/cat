@@ -82,7 +82,7 @@ readonly -a HANDLERS=(
   "check-existing-work:util.ExistingWorkChecker"
   "wrap-markdown:util.MarkdownWrapper"
   "batch-read:util.BatchReader"
-  "monitor-subagents:util.SubagentMonitor"
+  "get-subagent-status:skills.GetSubagentStatusOutput"
   "register-hook:util.HookRegistrar"
   "root-cause-analyzer:util.RootCauseAnalyzer"
   "validate-status-alignment:util.StatusAlignmentValidator"

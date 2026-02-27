@@ -27,7 +27,11 @@ Configure the user's Claude Code statusline to use CAT's custom statusline scrip
 
 **Check for existing statusline configuration:**
 
-Read the status from inside the latest `<output skill="statusline">` tag. Parse the JSON and determine the next step:
+Invoke the centralized output skill to check the current statusline status. Parse the JSON result and determine the next step:
+
+INVOKE: Skill("cat:get-output", args="statusline")
+
+Result:
 
 | Status | Meaning | Action |
 |--------|---------|--------|
@@ -115,6 +119,3 @@ Restart Claude Code or start a new session to see it in action.
 - [ ] Success message displayed to user
 
 </success_criteria>
-<output skill="statusline">
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-statusline-output"`
-</output>

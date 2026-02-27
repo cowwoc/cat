@@ -5,8 +5,7 @@ See LICENSE.md in the project root for license terms.
 -->
 # Status
 
-Echo the content inside the LATEST `<output skill="status">` tag. Do not summarize, interpret, or add commentary.
-After the verbatim content, append exactly:
+After the output, append exactly:
 
 **NEXT STEPS**
 
@@ -15,6 +14,4 @@ After the verbatim content, append exactly:
 | [**1**] | Execute an issue | `/cat:work {version}-<issue-name>` |
 | [**2**] | Add new issue | `/cat:add` |
 
-<output skill="status">
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-status-output"`
-</output>
+INVOKE: Skill("cat:get-output", args="status")

@@ -55,7 +55,7 @@ work was completed on the base branch. Resetting to `pending` causes duplicate w
 
 ### Step 1: Survey Current State
 
-Echo the content inside the LATEST `<output skill="cleanup">` tag. Do not summarize, interpret, or add commentary.
+INVOKE: Skill("cat:get-output", args="cleanup")
 
 ---
 
@@ -312,6 +312,3 @@ The resulting box will be output verbatim.
 2. Confirm they have no unique unmerged commits
 3. Delete branches
 
-<output skill="cleanup">
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-cleanup-output" --project-dir "${CLAUDE_PROJECT_DIR}"`
-</output>

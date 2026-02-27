@@ -303,7 +303,7 @@ CAT v1.0 introduces multi-agent orchestration for AI-assisted software developme
 
 **Skills:**
 - `spawn-subagent` - Launch subagent with task context in isolated worktree
-- `monitor-subagents` - Check status of running subagents including token usage
+- `get-subagent-status` - Check status of running subagents including token usage
 - `collect-results` - Gather results from completed subagents
 - `merge-subagent` - Merge subagent branch into task branch
 - `parallel-execute` - Orchestrate multiple independent subagents concurrently
