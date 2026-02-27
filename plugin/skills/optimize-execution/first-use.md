@@ -286,7 +286,7 @@ cache-read ratio (0.1x pricing) than main agent tokens at the same context size.
 a cost-weighted estimate.
 
 When optimize-execution detects a phase that was NOT delegated but meets the "Delegate?" criteria above, emit a
-`delegation_opportunity` entry in the JSON output (see Output Format below).
+`delegation_opportunity` in the analysis data for presentation in Step 6.
 
 ### Step 5: Generate Recommendations
 
@@ -348,322 +348,133 @@ deterministic execution, and produces fewer tool call round-trips.
 
 See `/cat:skill-builder` for the full script extraction architecture and hybrid workflow pattern.
 
-## Output Format
+### Step 6: Present Results
 
-The skill produces a JSON structure with main agent metrics, subagent analysis, and combined aggregations:
+After collecting all analysis data from Steps 1-5, present results as a human-readable markdown report.
+Do NOT output raw JSON to the user. Use the JSON data internally to populate the sections below.
 
-```json
-{
-  "main": {
-    "tool_frequency": [...],
-    "token_usage": [...],
-    "output_sizes": [...],
-    "cache_candidates": [...],
-    "batch_candidates": [...],
-    "parallel_candidates": [...],
-    "pipeline_candidates": [...],
-    "script_extraction_candidates": [...],
-    "summary": {
-      "total_tool_calls": 45,
-      "unique_tools": ["Read", "Grep", "Edit"],
-      "total_entries": 120
-    }
-  },
-  "subagents": {
-    "agent-abc123": {
-      "tool_frequency": [...],
-      "token_usage": [...],
-      "output_sizes": [...],
-      "cache_candidates": [...],
-      "batch_candidates": [...],
-      "parallel_candidates": [...],
-      "pipeline_candidates": [...],
-      "script_extraction_candidates": [...],
-      "summary": {
-        "total_tool_calls": 23,
-        "unique_tools": ["Read", "Bash"],
-        "total_entries": 58
-      }
-    }
-  },
-  "combined": {
-    "tool_frequency": [...],
-    "cache_candidates": [...],
-    "token_usage": [...],
-    "summary": {
-      "total_tool_calls": 68,
-      "unique_tools": ["Read", "Grep", "Edit", "Bash"],
-      "total_entries": 178,
-      "agent_count": 2
-    }
-  }
-}
+#### Report Structure
+
+```markdown
+## Session Optimization Report
+
+### Session Overview
+- **Issue:** {issue_id}
+- **Total tool calls:** {combined.summary.total_tool_calls} ({main count} main + {subagent count} subagent)
+- **Unique tools used:** {combined.summary.unique_tools joined with ", "}
+- **Delegations:** {number of Task tool calls}
+
+### What Went Well
+{List 2-4 things the session did efficiently, e.g.:}
+- Correctly parallelized N independent Grep operations in a single message
+- Delegated {phase} to subagent, saving ~{savings}% cost-weighted tokens
+- Cached file content from earlier reads instead of re-reading
+
+### Issues Found
+
+#### {Issue Title} ({impact: high/medium/low})
+- **Problem:** {description of the inefficiency}
+- **Root cause:** {why it happened}
+- **Fix:** {specific actionable recommendation}
+- **Estimated savings:** {e.g., "3 fewer tool calls, ~8s wall time"}
+
+{Repeat for each issue found, ordered by impact (high first)}
+
+### Delegation Analysis
+{Include this section only if subagent delegations were detected}
+
+| Phase | Turns | Raw Δ | Cost-weighted Δ | Cache Hit Rate |
+|-------|-------|-------|------------------|----------------|
+| {phase} | {N_sub_turns} | {delta_percent}% | {cost_weighted_delta_percent}% | {cache_hit_rate}% |
+
+{For each delegation, include a brief paragraph:}
+
+**{Phase}:** Main context was {C_main} tokens. Subagent ran {N_sub_turns} turns with {cache_hit_rate}%
+cache hit rate. Cost-weighted savings: {cost_weighted_delta} tokens ({cost_weighted_delta_percent}%).
+{Verdict: "Delegation was beneficial" or "Delegation had marginal benefit" or "Inline would have been cheaper"}
+
+{For missed delegation opportunities:}
+
+**Missed opportunity — {phase}:** Main context was {C_main} tokens with ~{estimated_turns} turns of work.
+Delegating would have saved ~{estimated_savings_percent}% tokens. Recommend delegating this phase.
+
+### Recommendations
+
+| Priority | Recommendation | Estimated Savings |
+|----------|---------------|-------------------|
+| {1} | {actionable recommendation} | {savings estimate} |
+| {2} | {actionable recommendation} | {savings estimate} |
+| ... | ... | ... |
 ```
 
-After running the analysis script, categorize tool outputs and generate recommendations:
+#### Presentation Rules
 
-```json
-{
-  "executionPatterns": [
-    {
-      "type": "repeated_operation",
-      "tool": "Read",
-      "input_signature": "/path/to/file.md",
-      "count": 3,
-      "recommendation": "Cache file content or reference earlier read"
-    },
-    {
-      "type": "consecutive_batch",
-      "tool": "Glob",
-      "count": 5,
-      "recommendation": "Combine into single glob with multiple patterns"
-    },
-    {
-      "type": "parallelizable",
-      "tools": ["Grep", "Glob"],
-      "context": "Independent searches in same directory",
-      "recommendation": "Execute in parallel for faster results"
-    },
-    {
-      "type": "pipelinable",
-      "phases": ["generate_diff", "spawn_reviewer"],
-      "context": "Reviewer only needs diff, not subsequent squash operation",
-      "recommendation": "Spawn reviewer immediately after diff available"
-    },
-    {
-      "type": "script_extractable",
-      "skill": "git-merge-linear",
-      "bash_lines": 348,
-      "context": "Deterministic git operations with no judgment required",
-      "recommendation": "Extract to standalone script with JSON output"
-    }
-  ],
-  "optimizations": [
-    {
-      "category": "batch",
-      "impact": "high",
-      "description": "5 consecutive Read operations could be combined",
-      "current_cost": "5 tool calls, ~15s",
-      "optimized_cost": "1-2 tool calls, ~5s",
-      "implementation": "Use batch-read skill"
-    },
-    {
-      "category": "cache",
-      "impact": "medium",
-      "description": "File read 3 times with identical content",
-      "recommendation": "Reference content from earlier in conversation"
-    },
-    {
-      "category": "parallel",
-      "impact": "medium",
-      "description": "3 independent Grep operations executed sequentially",
-      "recommendation": "Use parallel tool calls in single response"
-    },
-    {
-      "category": "pipeline",
-      "impact": "medium",
-      "description": "Stakeholder review waited for commit squash to complete",
-      "current_cost": "Sequential: diff generation + squash + review spawn",
-      "optimized_cost": "Pipelined: diff generation + parallel(squash, review spawn)",
-      "implementation": "Reorder skill steps to spawn reviewer immediately after diff available"
-    },
-    {
-      "category": "script_extraction",
-      "impact": "high",
-      "description": "git-merge-linear skill executes 15 sequential bash commands for deterministic merge",
-      "current_cost": "15 tool calls, ~348 lines markdown, Claude reads and reasons each step",
-      "optimized_cost": "1 script call, ~167 lines script + 97 lines skill markdown, deterministic execution",
-      "implementation": "Extract to plugin/hooks/scripts/git-merge-linear.sh with JSON output"
-    },
-    {
-      "category": "delegation",
-      "phase": "squash",
-      "subagent_turns": 8,
-      "main_context_at_delegation": 52341,
-      "subagent_first_turn_context": 21503,
-      "subagent_first_turn_breakdown": {
-        "cache_read": 12847,
-        "cache_create": 8653,
-        "new": 3
-      },
-      "subagent_last_turn_context": 74219,
-      "inline_estimate_cumulative": 418728,
-      "delegation_actual_cumulative": 367841,
-      "delta_tokens": -50887,
-      "delta_percent": -12.2,
-      "cost_weighted_inline": 187432,
-      "cost_weighted_delegation": 94210,
-      "cost_weighted_delta": -93222,
-      "cache_hit_rate": 0.78
-    },
-    {
-      "category": "delegation_opportunity",
-      "phase": "implement",
-      "main_context_at_opportunity": 68423,
-      "estimated_turns": 5,
-      "estimated_savings_tokens": 183645,
-      "estimated_savings_percent": 35.8,
-      "recommendation": "delegate"
-    }
-  ],
-  "uxRelevance": {
-    "HIGH": {
-      "count": 12,
-      "tools": ["Write", "Edit", "Bash (errors)"],
-      "recommendation": "Always display full output"
-    },
-    "MEDIUM": {
-      "count": 25,
-      "tools": ["Grep", "Glob", "Read"],
-      "recommendation": "Show summary with expansion option"
-    },
-    "LOW": {
-      "count": 18,
-      "tools": ["pwd", "ls", "repeated reads"],
-      "recommendation": "Hide by default, show on request"
-    }
-  },
-  "configuration": {
-    "suggested_rules": [
-      {
-        "rule": "hide_tool_output",
-        "tool": "Bash",
-        "condition": "command matches '^pwd$'",
-        "reason": "Internal navigation check"
-      },
-      {
-        "rule": "summarize_output",
-        "tool": "Grep",
-        "condition": "output_lines > 50",
-        "format": "First 10 lines + '{remaining} more matches'",
-        "reason": "Reduce visual noise for large search results"
-      },
-      {
-        "rule": "collapse_consecutive",
-        "tool": "Read",
-        "condition": "same_file_within_5_calls",
-        "format": "Show only first read, collapse repeats",
-        "reason": "Repeated reads indicate cache opportunity"
-      }
-    ]
-  }
-}
-```
+1. **No JSON in output.** All JSON structures from Steps 1-5 are internal working data only.
+2. **Actionable language.** Each recommendation must specify what to change and where (skill name, step number, or
+   file path).
+3. **Quantify savings.** Use token counts, percentages, or tool call counts — not vague terms like "significant."
+4. **Order by impact.** Issues and recommendations sorted by estimated savings (highest first).
+5. **Skip empty sections.** If no delegation was detected, omit "Delegation Analysis." If nothing went well
+   (unlikely), omit "What Went Well."
 
 ## Example Output
 
 For a session with 45 tool calls building a feature:
 
-```json
-{
-  "executionPatterns": [
-    {
-      "type": "repeated_operation",
-      "tool": "Read",
-      "input_signature": "CLAUDE.md",
-      "count": 4,
-      "recommendation": "Cache CLAUDE.md content early in session"
-    },
-    {
-      "type": "consecutive_batch",
-      "tool": "Grep",
-      "count": 6,
-      "recommendation": "Combine related searches into single Grep with regex alternation"
-    }
-  ],
-  "optimizations": [
-    {
-      "category": "batch",
-      "impact": "high",
-      "description": "6 Grep operations searching same directory",
-      "current_cost": "6 tool calls",
-      "optimized_cost": "1-2 tool calls",
-      "implementation": "Combine patterns: 'pattern1|pattern2|pattern3'"
-    },
-    {
-      "category": "cache",
-      "impact": "medium",
-      "description": "CLAUDE.md read 4 times, content unchanged",
-      "recommendation": "Read once at session start, reference from context"
-    },
-    {
-      "category": "pipeline",
-      "impact": "low",
-      "description": "Lock acquisition and PLAN.md read executed sequentially",
-      "current_cost": "Sequential operations with no true dependency",
-      "optimized_cost": "Reorder to overlap independent operations",
-      "implementation": "Read PLAN.md first, then acquire lock while analyzing"
-    },
-    {
-      "category": "script_extraction",
-      "impact": "medium",
-      "description": "5 sequential bash commands performing deterministic validation",
-      "current_cost": "5 tool calls, Claude reasons about each step",
-      "optimized_cost": "1 script call with structured JSON output",
-      "implementation": "Extract validation logic to standalone script"
-    },
-    {
-      "category": "delegation",
-      "phase": "explore",
-      "subagent_turns": 15,
-      "main_context_at_delegation": 40396,
-      "subagent_first_turn_context": 17761,
-      "subagent_first_turn_breakdown": {
-        "cache_read": 9539,
-        "cache_create": 8219,
-        "new": 3
-      },
-      "subagent_last_turn_context": 62294,
-      "inline_estimate_cumulative": 605940,
-      "delegation_actual_cumulative": 584651,
-      "delta_tokens": -21289,
-      "delta_percent": -3.5,
-      "cost_weighted_inline": 393861,
-      "cost_weighted_delegation": 140188,
-      "cost_weighted_delta": -253673,
-      "cache_hit_rate": 0.84
-    },
-    {
-      "category": "delegation_opportunity",
-      "phase": "implement",
-      "main_context_at_opportunity": 45200,
-      "estimated_turns": 8,
-      "estimated_savings_tokens": 214040,
-      "estimated_savings_percent": 59.1,
-      "recommendation": "delegate"
-    }
-  ],
-  "uxRelevance": {
-    "HIGH": {
-      "count": 8,
-      "examples": ["git commit output", "test results", "build errors"]
-    },
-    "MEDIUM": {
-      "count": 22,
-      "examples": ["file searches", "intermediate reads"]
-    },
-    "LOW": {
-      "count": 15,
-      "examples": ["pwd checks", "repeated ls", "git status"]
-    }
-  },
-  "configuration": {
-    "suggested_rules": [
-      {
-        "rule": "hide_tool_output",
-        "tool": "Bash",
-        "condition": "command == 'pwd'",
-        "reason": "37% of Bash calls were pwd"
-      },
-      {
-        "rule": "summarize_output",
-        "tool": "Glob",
-        "condition": "matches > 20",
-        "format": "'{count} files found, showing first 10'"
-      }
-    ]
-  }
-}
+```markdown
+## Session Optimization Report
+
+### Session Overview
+- **Issue:** 2.1-add-config-validation
+- **Total tool calls:** 68 (45 main + 23 subagent)
+- **Unique tools used:** Read, Grep, Edit, Bash, Glob, Task
+- **Delegations:** 2
+
+### What Went Well
+- Correctly parallelized 3 independent Grep searches in a single message
+- Delegated explore phase to Haiku subagent with 84% cache hit rate, saving 64% cost-weighted tokens
+- Used batch-read for 4 related config files instead of sequential reads
+
+### Issues Found
+
+#### Repeated CLAUDE.md reads (medium)
+- **Problem:** CLAUDE.md read 4 times with identical content across the session
+- **Root cause:** Each phase re-reads CLAUDE.md instead of referencing earlier context
+- **Fix:** Read CLAUDE.md once at session start; reference from conversation context in later phases
+- **Estimated savings:** 3 fewer Read calls, ~6s wall time
+
+#### Sequential Grep operations (high)
+- **Problem:** 6 consecutive Grep operations searching the same directory for related patterns
+- **Root cause:** Patterns searched one at a time instead of combined
+- **Fix:** Combine into 1-2 Grep calls using regex alternation: `pattern1|pattern2|pattern3`
+- **Estimated savings:** 4-5 fewer tool calls, ~12s wall time
+
+#### Missed delegation for implement phase (high)
+- **Problem:** Implementation ran inline at 45,200 token main context for ~8 turns
+- **Root cause:** No delegation decision made; work executed on main agent by default
+- **Fix:** Delegate implement phase to subagent when main context exceeds 37k tokens
+- **Estimated savings:** ~59% token reduction (~214,040 tokens)
+
+### Delegation Analysis
+
+| Phase | Turns | Raw Δ | Cost-weighted Δ | Cache Hit Rate |
+|-------|-------|-------|------------------|----------------|
+| explore | 15 | -3.5% | -64.4% | 84% |
+
+**Explore:** Main context was 40,396 tokens. Subagent ran 15 turns with 84% cache hit rate.
+Cost-weighted savings: 253,673 tokens (64.4%). Delegation was highly beneficial.
+
+**Missed opportunity — implement:** Main context was 45,200 tokens with ~8 turns of work.
+Delegating would have saved ~59.1% tokens. Recommend delegating this phase.
+
+### Recommendations
+
+| Priority | Recommendation | Estimated Savings |
+|----------|---------------|-------------------|
+| 1 | Delegate implement phase when main context > 37k tokens | ~214k tokens (59%) |
+| 2 | Combine 6 sequential Grep calls into 1-2 with regex alternation | 4-5 tool calls |
+| 3 | Cache CLAUDE.md content after first read; reference from context | 3 Read calls |
+| 4 | Extract 5 deterministic validation bash commands to standalone script | 5 tool calls |
 ```
 
 ## Worked Example: Subagent Delegation Trade-off Analysis
