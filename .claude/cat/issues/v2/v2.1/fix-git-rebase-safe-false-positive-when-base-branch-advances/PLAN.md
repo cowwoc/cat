@@ -135,6 +135,29 @@ The fix is patch-diff comparison: compare issue branch content relative to its b
    Run: `mvn -f client/pom.xml test -Dtest=GitRebaseSafeTest#verifyDetectsActualContentChanges` — test must
    pass (green).
 
+5. **Fix Step 2 (Add missing `verifyPatchDiffWhenBaseAdvances` test AND implement patch-diff fix):** Two
+   sub-problems must both be resolved:
+
+   **a. Add `verifyPatchDiffWhenBaseAdvances` test** to
+   `client/src/test/java/io/github/cowwoc/cat/hooks/test/GitRebaseSafeTest.java` if it is absent or not
+   passing.
+
+   **`verifyPatchDiffWhenBaseAdvances`:** Create temp git repo with branch "main" and initial commit. Create
+   "feature" branch, add "feature.txt", commit. Checkout "main", add "main-advance.txt", commit (base
+   advances). Checkout "feature". Run `GitRebaseSafe.execute("main")`. Assert result contains `"OK"`.
+
+   **b. Implement patch-diff fix in `GitRebaseSafe.java` Step 5** if it still uses tree-state comparison
+   (`git diff --quiet backup`). The current implementation at lines 156-170 compares full tree state, which
+   causes a false positive when the base branch has advanced. Replace it with the patch-diff comparison
+   described in Step 2 of the Execution Steps above.
+
+   Verify `GitRebaseSafe.java` Step 5 reads: `git diff base backup` vs `git diff base HEAD` (patch-diff),
+   NOT `git diff --quiet backup` (tree-state). If the tree-state comparison is still present, apply the
+   replacement block from Step 2.
+
+   Run: `mvn -f client/pom.xml test -Dtest=GitRebaseSafeTest#verifyPatchDiffWhenBaseAdvances` — test must
+   pass (green).
+
 ## Post-conditions
 
 - [ ] `verifyPatchDiffWhenBaseAdvances` test passes: no false positive when base branch advances
