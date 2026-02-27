@@ -2509,6 +2509,33 @@
           "All existing BlockUnsafeRemovalTest tests continue to pass"
         ]
       }
+    },
+    {
+      "id": "M433",
+      "timestamp": "2026-02-27T23:25:50Z",
+      "category": "protocol_violation",
+      "description": "Proceeded to stakeholder review and approval gate when verify returned PARTIAL with unrun empirical post-conditions (post-conditions 8 and 9 in PLAN.md)",
+      "root_cause": "work-with-issue/first-use.md PARTIAL handler said only \"Note partial status in metrics - Continue to Step 5\" without requiring empirical-test criteria to be run. The verify-implementation subagent cannot execute empirical tests; it marks them PARTIAL. The skill gave no instruction to run them before proceeding, so the orchestrator treated PARTIAL as equivalent to COMPLETE for progression purposes.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue/first-use.md",
+      "pattern_keywords": [
+        "approval_gate",
+        "empirical_test",
+        "partial_verification",
+        "post-conditions",
+        "verify_partial"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M277",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When verify returns PARTIAL, read each partial criterion; for any that describe empirical tests (compliance percentages, /cat:empirical-test, /cat:status, /cat:config), run those tests and confirm >=95% pass before proceeding to stakeholder review"
     }
   ]
 }
