@@ -229,6 +229,52 @@ public class GitRebaseSafeTest
   }
 
   /**
+   * Verifies that actual content changes in the issue branch are still detected as ERROR after rebase.
+   * <p>
+   * This test guards against regressions where the content-change verification is too permissive.
+   * It simulates a scenario where the issue branch content diverges: after amending, the feature
+   * commit has different content than what would be produced by a clean rebase of the original commit.
+   */
+  @Test
+  public void verifyDetectsActualContentChanges() throws IOException
+  {
+    Path repoDir = TestUtils.createTempGitRepo("main");
+    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    {
+      try
+      {
+        // Create feature branch with "original content" in feature.txt
+        TestUtils.runGit(repoDir, "checkout", "-b", "feature");
+        Files.writeString(repoDir.resolve("feature.txt"), "original content");
+        TestUtils.runGit(repoDir, "add", "feature.txt");
+        TestUtils.runGit(repoDir, "commit", "-m", "feature commit");
+
+        // Advance main with a new commit (base advances)
+        TestUtils.runGit(repoDir, "checkout", "main");
+        Files.writeString(repoDir.resolve("main-advance.txt"), "main advance content");
+        TestUtils.runGit(repoDir, "add", "main-advance.txt");
+        TestUtils.runGit(repoDir, "commit", "-m", "main advances");
+
+        // Return to feature branch and amend to corrupt feature.txt content
+        TestUtils.runGit(repoDir, "checkout", "feature");
+        Files.writeString(repoDir.resolve("feature.txt"), "corrupted content");
+        TestUtils.runGit(repoDir, "add", "feature.txt");
+        TestUtils.runGit(repoDir, "commit", "--amend", "--no-edit");
+
+        GitRebaseSafe cmd = new GitRebaseSafe(scope, repoDir.toString());
+        String result = cmd.execute("main");
+
+        requireThat(result, "result").contains("\"status\"");
+        requireThat(result, "result").contains("\"ERROR\"");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(repoDir);
+      }
+    }
+  }
+
+  /**
    * Verifies that rebase with conflicts returns CONFLICT status and preserves backup.
    */
   @Test
