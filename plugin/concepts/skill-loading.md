@@ -234,7 +234,30 @@ prompt: |
 1. Create directory: `plugin/skills/{skill-name}/`
 2. Create `SKILL.md` with frontmatter and preprocessor directive
 3. Create `plugin/skills/{skill-name}/first-use.md` with full skill content
-4. The skill is automatically available as `cat:{skill-name}`
+4. If the skill dispatches to a Java handler: register the handler in `client/build-jlink.sh`
+   and invoke the binary launcher in `SKILL.md` (not `load-skill`)
+5. The skill is automatically available as `cat:{skill-name}`
+
+**Java handler registration (step 4):** Skills that execute Java code must have two things:
+
+- A binary launcher entry in `client/build-jlink.sh` HANDLERS array:
+  ```
+  "get-output:skills.GetOutput"
+  ```
+- A `SKILL.md` preprocessor that calls the binary launcher — NOT `load-skill`:
+  ```
+  # CORRECT: calls the Java binary launcher directly
+  !`"${CLAUDE_PLUGIN_ROOT}/client/target/jlink/bin/get-output" "${CLAUDE_PLUGIN_ROOT}" \
+    "${CLAUDE_SESSION_ID}" "${CLAUDE_PROJECT_DIR}" $ARGUMENTS`
+
+  # WRONG: calls load-skill, which loads skill content but does NOT invoke Java handlers
+  !`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" get-output \
+    "${CLAUDE_SESSION_ID}" "${CLAUDE_PROJECT_DIR}" $ARGUMENTS`
+  ```
+
+`load-skill` (SkillLoader) reads and returns skill content from `first-use.md`. It does not route to
+Java handlers. Using `load-skill` when the intent is to invoke a Java handler produces empty or
+incorrect output — the skill appears to work (no error) but generates no computed output.
 
 ### Creating a New Project Skill
 
