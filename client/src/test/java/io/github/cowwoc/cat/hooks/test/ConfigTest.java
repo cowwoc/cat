@@ -80,27 +80,6 @@ public class ConfigTest
   }
 
   /**
-   * Verifies that Config uses default autoRemoveWorktrees=true when config file is missing.
-   */
-  @Test
-  public void configUsesDefaultAutoRemoveWhenConfigMissing() throws IOException
-  {
-    Path tempDir = createTempDir();
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      Config config = Config.load(mapper, tempDir);
-      boolean autoRemove = config.getBoolean("autoRemoveWorktrees", false);
-
-      requireThat(autoRemove, "autoRemove").isTrue();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
    * Verifies that Config reads values from cat-config.json when it exists.
    *
    * @throws IOException if an I/O error occurs
@@ -117,8 +96,7 @@ public class ConfigTest
       Files.writeString(catDir.resolve("cat-config.json"), """
         {
           "trust": "high",
-          "verify": "all",
-          "autoRemoveWorktrees": false
+          "verify": "all"
         }
         """);
 
@@ -126,7 +104,6 @@ public class ConfigTest
 
       requireThat(config.getString("trust"), "trust").isEqualTo("high");
       requireThat(config.getString("verify"), "verify").isEqualTo("all");
-      requireThat(config.getBoolean("autoRemoveWorktrees", true), "autoRemove").isFalse();
     }
     finally
     {
@@ -158,7 +135,6 @@ public class ConfigTest
 
       requireThat(config.getString("trust"), "trust").isEqualTo("low");
       requireThat(config.getString("verify"), "verify").isEqualTo("changed");
-      requireThat(config.getBoolean("autoRemoveWorktrees", false), "autoRemove").isTrue();
     }
     finally
     {
@@ -208,7 +184,6 @@ public class ConfigTest
 
       requireThat(values.get("trust"), "trust").isEqualTo("medium");
       requireThat(values.get("verify"), "verify").isEqualTo("changed");
-      requireThat(values.get("autoRemoveWorktrees"), "autoRemoveWorktrees").isEqualTo(true);
       requireThat(values.get("effort"), "effort").isEqualTo("medium");
       requireThat(values.get("patience"), "patience").isEqualTo("high");
       requireThat(values.get("terminalWidth"), "terminalWidth").isEqualTo(120);
@@ -239,8 +214,7 @@ public class ConfigTest
           "trust": "high",
           "verify": "all",
           "effort": "medium",
-          "patience": "low",
-          "autoRemoveWorktrees": false
+          "patience": "low"
         }
         """);
 
@@ -252,7 +226,6 @@ public class ConfigTest
       requireThat(result, "result").contains("Verify: all");
       requireThat(result, "result").contains("Effort: medium");
       requireThat(result, "result").contains("Patience: low");
-      requireThat(result, "result").contains("Keep");
       requireThat(result, "result").doesNotContain("Curiosity");
     }
     finally

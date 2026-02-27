@@ -54,7 +54,6 @@ public final class Config
   static
   {
     Map<String, Object> defaults = new HashMap<>();
-    defaults.put("autoRemoveWorktrees", true);
     defaults.put("trust", "medium");
     defaults.put("verify", "changed");
     defaults.put("effort", "medium");
