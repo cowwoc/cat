@@ -13,6 +13,7 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -314,7 +315,7 @@ Full skill content
         System.nanoTime(), "/project");
       String result = loader.load("empty-skill");
 
-      requireThat(result, "result").isNotNull();
+      requireThat(result, "result").isEmpty();
     }
     finally
     {
@@ -560,6 +561,44 @@ Root: ${CLAUDE_PLUGIN_ROOT}
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
         System.nanoTime(), "/project");
       loader.load("test-skill");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that load rejects @path references that resolve outside the plugin root.
+   * <p>
+   * A path like {@code @../../etc/passwd} must not be allowed to read files outside the plugin root.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadRejectsPathTraversalOutsidePluginRoot() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      // Attempt path traversal: @../../etc/passwd resolves above the plugin root
+      Files.writeString(companionDir.resolve("first-use.md"), """
+@../../etc/passwd
+# Main
+""");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "/project");
+      try
+      {
+        loader.load("test-skill");
+      }
+      catch (IOException e)
+      {
+        requireThat(e.getMessage(), "message").contains("resolves outside the plugin root");
+      }
     }
     finally
     {
@@ -1780,7 +1819,7 @@ Dynamic output with attribute.
   }
 
   /**
-   * Verifies that positional arguments are resolved from the args string.
+   * Verifies that positional arguments are resolved from the args array.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -1796,7 +1835,7 @@ Dynamic output with attribute.
         "Count: $0, Label: $1\n");
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project", "42 hello");
+        System.nanoTime(), "/project", List.of("42", "hello"));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1827,7 +1866,7 @@ Dynamic output with attribute.
         "First: $0, Second: $1\n");
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project", "value1");
+        System.nanoTime(), "/project", List.of("value1"));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1857,7 +1896,7 @@ Dynamic output with attribute.
         "Name: $0\n");
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project", "Alice Bob Charlie");
+        System.nanoTime(), "/project", List.of("Alice", "Bob", "Charlie"));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1900,13 +1939,15 @@ Dynamic output with attribute.
   }
 
   /**
-   * Verifies that whitespace-only args leave positional references unresolved (passed through as
-   * literals).
+   * Verifies that whitespace-only args are preserved as argument values.
+   * <p>
+   * With the new variadic constructor, passing "   " (whitespace-only string) as a single
+   * argument means we have one argument with that value, so $0 is replaced with that whitespace.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void whitespaceOnlyArgsLeavePositionalRefsUnresolved() throws IOException
+  public void whitespaceOnlyArgPreservedAsValue() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
@@ -1917,10 +1958,11 @@ Dynamic output with attribute.
         "Count: $0\n");
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project", "   ");
+        System.nanoTime(), "/project", List.of("   "));
       String result = loader.load("test-skill");
 
-      requireThat(result, "result").contains("Count: $0");
+      // The whitespace-only arg is preserved as the value of $0
+      requireThat(result, "result").contains("Count:    ");
     }
     finally
     {
@@ -2262,6 +2304,215 @@ Prefixed skill content
       String result = loader.load("cat:test-skill");
 
       requireThat(result, "result").contains("Prefixed skill content");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that preprocessor directive arguments enclosed in double-quotes are stripped of their
+   * surrounding quotes before being passed to the SkillOutput handler.
+   * <p>
+   * The cleanup skill uses directives like:
+   * {@code !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-cleanup-output" --project-dir "${CLAUDE_PROJECT_DIR}"`}
+   * After variable substitution, the path argument becomes {@code "/workspace"} (with surrounding
+   * quotes). The argument parser must strip those quotes, otherwise the handler receives
+   * {@code "\"/workspace\""} which is not a valid path.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadStripsQuotesFromDirectiveArguments() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutput "$@"
+        """);
+
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      // Simulate what cleanup skill does after variable substitution:
+      // the path value is enclosed in double-quotes, e.g., --project-dir "/workspace"
+      Files.writeString(companionDir.resolve("first-use.md"), """
+        Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output" --flag "/some/path"`
+        Done
+        """);
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "/project");
+      String result = loader.load("test-skill");
+
+      // The argument "/some/path" must arrive without surrounding quotes
+      requireThat(result, "result").contains("ARGS:--flag,/some/path");
+      requireThat(result, "result").doesNotContain("\"/some/path\"");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that preprocessor directive arguments with embedded spaces are correctly
+   * tokenized when enclosed in quotes.
+   * <p>
+   * Tests that a path like {@code "/path with spaces"} is parsed as a single argument
+   * containing the literal spaces, not split into multiple tokens.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadHandlesDirectiveArgumentsWithEmbeddedSpaces() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutput "$@"
+        """);
+
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      // Path with embedded spaces: "/my work/project folder"
+      Files.writeString(companionDir.resolve("first-use.md"), """
+        Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output" --dir "/my work/project folder"`
+        Done
+        """);
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "/project");
+      String result = loader.load("test-skill");
+
+      // The path with spaces must arrive as a single argument
+      requireThat(result, "result").contains("ARGS:--dir,/my work/project folder");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that preprocessor directive arguments enclosed in single quotes are correctly
+   * handled by the shell parser.
+   * <p>
+   * Tests that single-quoted arguments work in addition to double-quoted arguments.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadHandlesDirectiveArgumentsWithSingleQuotes() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutput "$@"
+        """);
+
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      // Path with single quotes
+      Files.writeString(companionDir.resolve("first-use.md"), """
+        Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output" --path '/some/path with spaces'`
+        Done
+        """);
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "/project");
+      String result = loader.load("test-skill");
+
+      // The path with single-quoted spaces must arrive as a single argument
+      requireThat(result, "result").contains("ARGS:--path,/some/path with spaces");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that preprocessor directive handles multiple arguments with mixed quoting styles.
+   * <p>
+   * Tests that multiple flags and values, some quoted and some unquoted, are correctly
+   * tokenized and passed to the handler.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadHandlesMultipleDirectiveArgumentsWithMixedQuoting() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutput "$@"
+        """);
+
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      // Multiple arguments: unquoted flag, quoted path, unquoted flag, quoted value
+      Files.writeString(companionDir.resolve("first-use.md"), """
+        Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output" --verbose "/home/user/workspace" --mode "read-write"`
+        Done
+        """);
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "/project");
+      String result = loader.load("test-skill");
+
+      // All arguments must be correctly parsed: --verbose, /home/user/workspace, --mode, read-write
+      requireThat(result, "result").contains("ARGS:--verbose,/home/user/workspace,--mode,read-write");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that positional arguments with spaces are preserved when passed as separate array elements.
+   * <p>
+   * This test verifies that the new variadic constructor correctly handles arguments containing
+   * spaces (e.g., "hello world", "foo bar") without splitting them on whitespace.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void positionalArgsWithSpacesPreserved() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      Files.writeString(companionDir.resolve("first-use.md"),
+        "First: $0, Second: $1\n");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "/project", List.of("hello world", "foo bar"));
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").
+        contains("First: hello world, Second: foo bar").
+        doesNotContain("$0").
+        doesNotContain("$1");
     }
     finally
     {

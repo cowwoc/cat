@@ -32,6 +32,11 @@ public final class ShellParser
    * <p>
    * Quote characters are consumed (stripped from the resulting tokens). Whitespace inside
    * quoted regions is preserved as part of the token.
+   * <p>
+   * Inside double-quoted regions, POSIX backslash escape sequences are processed: {@code \"},
+   * {@code \\}, and {@code \$} are each replaced by the character after the backslash. All other
+   * backslash sequences inside double quotes are passed through literally (backslash retained).
+   * Inside single-quoted regions, no escape processing is performed.
    *
    * @param input the input string to tokenize
    * @return list of tokens
@@ -48,6 +53,17 @@ public final class ShellParser
     for (int i = 0; i < input.length(); ++i)
     {
       char c = input.charAt(i);
+
+      if (inDoubleQuote && c == '\\' && i + 1 < input.length())
+      {
+        char next = input.charAt(i + 1);
+        if (next == '"' || next == '\\' || next == '$')
+        {
+          current.append(next);
+          ++i;
+          continue;
+        }
+      }
 
       if (c == '\'' && !inDoubleQuote)
       {
