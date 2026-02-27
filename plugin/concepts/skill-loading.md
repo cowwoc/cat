@@ -22,8 +22,7 @@ How to register, invoke, and reference skills for main agents and subagents in C
 ```
 {skill-name}/
   SKILL.md        — Frontmatter (description, user-invocable) + preprocessor directive or content
-  first-use.md    — Full content returned on first invocation (required)
-  reference.md    — Short content returned on subsequent invocations (optional; empty if absent)
+  first-use.md    — Full skill content (required)
 ```
 
 ## Invoking Skills
@@ -35,7 +34,7 @@ The Skill tool triggers the full SkillLoader pipeline:
 1. Claude Code routes to the skill's SKILL.md
 2. SKILL.md preprocessor directive (`!` backtick) calls `load-skill`
 3. `load-skill` invokes `SkillLoader.java`
-4. SkillLoader checks marker file, returns full content from `first-use.md` or `reference.md`
+4. SkillLoader checks per-agent marker file, returns full content or a short reference
 5. Variable substitution and `@path` expansion run on the returned content
 
 ```
@@ -73,12 +72,9 @@ directive. Debug log: `[Agent: cat:preprocess-tester] Preloaded skill 'cat:prepr
 **Limitations:**
 - Only works when agent is spawned via the **Task tool** (not `--agent` CLI flag)
 - Agent must be discovered at session start (cannot be created mid-session)
-- Shares the parent's `CLAUDE_SESSION_ID`, so SkillLoader marker files are shared state — if the
-  parent already invoked the skill, frontmatter injection gets `reference.md` instead of full content
 
 **When to use:** For preloading skill content into subagents at spawn time. Works for both plain-text
-and preprocessor-based plugin skills. Be aware of the shared marker file issue when the same skill is
-also invoked by the parent agent.
+and preprocessor-based plugin skills.
 
 ## Skill Arguments
 
@@ -142,36 +138,56 @@ argument to the binary.
 
 ## Loading Paths
 
-| Loader Path | How Invoked | Session Marker Used? |
+| Loader Path | How Invoked | Agent Marker Used? |
 |-------------|-------------|----------------------|
-| Main agent via Skill tool | `cat:{skill-name}` | Yes — returns `first-use.md` or `reference.md` |
-| Subagent via `skills:` frontmatter | `cat:{skill-name}` | Yes — shared with parent's marker file |
+| Main agent via Skill tool | `cat:{skill-name}` | Yes — per-agent marker file |
+| Subagent via `skills:` frontmatter | `cat:{skill-name}` | Yes — subagent's own marker file |
 | Subagent via SubagentStartHook | skill listing injected at spawn | On-demand via `load-skill` |
 
 ## Session Markers (First-Use vs Reference)
 
-SkillLoader tracks which skills have been loaded via marker files:
+SkillLoader tracks which skills have been loaded via **per-agent** marker files:
 
 ```
-/tmp/cat-skills-loaded-{sessionId}
+~/.config/claude/projects/-workspace/{sessionId}/skills-loaded-{catAgentId}
 ```
+
+Each agent instance (main agent, each subagent) has its own marker file. Parent and subagents track
+skill loading independently — a skill invoked by the parent does not affect a subagent's first-use
+behavior, and vice versa.
 
 - **First invocation:** Returns full content from `first-use.md`, writes skill name to marker file
-- **Subsequent invocations:** Returns `reference.md` (or empty string if no reference.md exists)
+- **Subsequent invocations:** Returns a short reference directing the model to reuse the instructions
+  already present in the conversation history (generated dynamically, not from a file)
 
-### Shared Session ID Between Parent and Subagents
+### Why First-Use/Reference Exists: Context Window, Not Caching
 
-Subagents share the parent's `CLAUDE_SESSION_ID`. This means the marker file is shared state:
+This optimization targets **context window conservation**, not prompt caching. The distinction matters:
 
-| Scenario | Result |
-|----------|--------|
-| Parent invokes skill, then subagent invokes same skill | Subagent gets `reference.md` (usually empty) |
-| Subagent invokes skill first | Subagent gets full content; parent later gets `reference.md` |
-| Two subagents invoke same skill | First gets full content; second gets `reference.md` |
+**Prompt caching** works by prefix matching — the API caches everything from the start of the request
+up to each cache breakpoint. When a skill is invoked the first time, its full content lands in the
+conversation as a tool result. On the next API call, that tool result is part of the cached
+conversation prefix. Re-injecting the same content on a second invocation would not cost additional
+cache computation — it's already cached.
 
-**Implication:** If a skill must be available to both parent and subagent with full content, the
-`reference.md` file must contain sufficient content for the second invocation. Most CAT skills lack a
-`reference.md` file, which means the second invocation returns an empty string.
+**Context window space** is the real constraint. Every token in the conversation — cached or not —
+counts against the context window limit. A 2,000-token skill body invoked 5 times would consume
+10,000 tokens. Returning a short reference on subsequent calls saves ~8,000 tokens, delaying
+compaction and leaving room for actual work.
+
+| Concern | Does first-use/reference help? |
+|---------|-------------------------------|
+| Prompt cache computation | **No** — first invocation is cached in the prefix automatically |
+| Context window space | **Yes** — avoids duplicating skill content per re-invocation |
+| Delaying compaction | **Yes** — fewer tokens consumed means more room before hitting the limit |
+
+### Interaction with Claude Code's Caching Model
+
+Skill loading via the Skill tool is **cache-safe** because:
+- Content flows through **conversation messages** (tool results), not system prompt modifications
+- The tool set is never changed — skills are loaded as message content, not tool definitions
+- Re-invocations append a short reference at the tail of the conversation (always uncached), while
+  the original full content remains in the cached prefix
 
 ## Plugin Skill Name Resolution
 
@@ -213,25 +229,12 @@ prompt: |
   subagent doesn't need the skill for every execution path.
 - **Skill tool**: content loaded only when needed. But requires an extra tool call round-trip.
 
-### Shared Marker File Caveat
-
-Parent and subagent share `CLAUDE_SESSION_ID`, so the marker file at
-`/tmp/cat-skills-loaded-{sessionId}` is shared state. If the parent already invoked a skill (or a
-previous subagent did), subsequent invocations — whether via Skill tool or frontmatter injection —
-get `reference.md` instead of full content.
-
-**Workarounds:**
-1. Let only the subagent invoke the skill (don't pre-invoke in parent)
-2. Pass the skill output from parent to subagent via the delegation prompt
-3. Ensure the skill has a meaningful `reference.md` file
-
 ### Creating a New Plugin Skill
 
 1. Create directory: `plugin/skills/{skill-name}/`
 2. Create `SKILL.md` with frontmatter and preprocessor directive
 3. Create `plugin/skills/{skill-name}/first-use.md` with full skill content
-4. Optionally create `plugin/skills/{skill-name}/reference.md` for subsequent invocations
-5. The skill is automatically available as `cat:{skill-name}`
+4. The skill is automatically available as `cat:{skill-name}`
 
 ### Creating a New Project Skill
 
