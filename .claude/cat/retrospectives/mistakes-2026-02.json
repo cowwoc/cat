@@ -2174,6 +2174,32 @@
         "catches_variations": true
       },
       "correct_behavior": "After outputting the CURRENT_SETTINGS box, call AskUserQuestion immediately with the main-menu options. Never ask a free-text question or summarize settings conversationally."
+    },
+    {
+      "id": "M421",
+      "timestamp": "2026-02-27T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "Prevent phase subagent edited plugin/skills/config/first-use.md without invoking /cat:skill-builder first",
+      "root_cause": "phase-prevent.md Step 9 lacked a gate requiring skill-builder invocation before editing skill files; the MANDATORY rule exists only in the skill listing, not enforced in the workflow",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/learn/phase-prevent.md",
+      "pattern_keywords": [
+        "skill-builder",
+        "protocol_violation",
+        "skill_editing",
+        "prevent_phase"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Before editing any skill or command file as prevention, invoke /cat:skill-builder with the target file path and follow its backward-reasoning decomposition"
     }
   ]
 }
