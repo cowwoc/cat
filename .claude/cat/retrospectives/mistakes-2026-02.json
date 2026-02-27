@@ -2400,7 +2400,13 @@
       "rca_method_name": "5-whys",
       "prevention_type": "documentation",
       "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/merge-and-cleanup.md",
-      "pattern_keywords": ["git", "symbolic-ref", "HEAD", "branch-deletion", "merge-cleanup"],
+      "pattern_keywords": [
+        "git",
+        "symbolic-ref",
+        "HEAD",
+        "branch-deletion",
+        "merge-cleanup"
+      ],
       "prevention_implemented": true,
       "prevention_verified": true,
       "recurrence_of": null,
@@ -2410,6 +2416,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Run 'git symbolic-ref HEAD refs/heads/{base-branch}' before 'git branch -d {issue-branch}' to move HEAD's symbolic ref off the issue branch first."
+    },
+    {
+      "id": "M430",
+      "timestamp": "2026-02-27T00:00:00Z",
+      "category": "assumption_without_verification",
+      "description": "Looked for jlink binary launchers in /workspace/client/bin/ instead of plugin cache path",
+      "root_cause": "Agent assumed /workspace/client/bin/ would contain compiled jlink launchers because client/ is the Java source module, without verifying that jlink build output goes to the plugin cache at /home/node/.config/claude/plugins/cache/cat/cat/2.1/client/bin/",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/CLAUDE.md",
+      "pattern_keywords": [
+        "jlink",
+        "binary-launcher",
+        "client-bin",
+        "plugin-cache",
+        "path-assumption"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Binary launchers are at /home/node/.config/claude/plugins/cache/cat/cat/2.1/client/bin/. The workspace client/ directory contains only Java source code in src/main/java/ - no compiled binaries exist in /workspace/client/bin/"
     }
   ]
 }
