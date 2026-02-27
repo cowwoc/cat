@@ -464,7 +464,7 @@ fi
 log_migration "Phase 6: Create or update .claude/cat/.gitignore"
 
 gitignore_file=".claude/cat/.gitignore"
-gitignore_template="${CLAUDE_PLUGIN_ROOT}/concepts/.gitignore-template"
+gitignore_template="${CLAUDE_PLUGIN_ROOT}/templates/gitignore"
 
 if [[ ! -f "$gitignore_template" ]]; then
     echo "ERROR: .gitignore template not found: $gitignore_template" >&2
