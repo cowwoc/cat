@@ -10,7 +10,6 @@ import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -58,37 +57,77 @@ public final class GetInitOutput implements SkillOutput
   }
 
   /**
-   * Generates the output for this skill.
+   * Generates the output based on requested page.
    * <p>
-   * Parses {@code --project-dir PATH} from {@code args} if present; otherwise falls back to
-   * {@code scope.getClaudeProjectDir()}.
+   * When called with no arguments, returns a placeholder (should not occur in normal usage).
+   * When called with a page argument, returns the specific box.
+   * Some pages require additional arguments.
    *
-   * @param args the arguments from the preprocessor directive
-   * @return the generated output
-   * @throws NullPointerException     if {@code args} is null
-   * @throws IllegalArgumentException if an unknown argument is provided or {@code --project-dir} lacks a value
-   * @throws IOException              if an I/O error occurs
+   * @param args page argument and optional extra args: [default-gates-configured count |
+   *             research-skipped version | choose-your-partner | cat-initialized trust effort patience |
+   *             first-issue-walkthrough | first-issue-created issue-name | all-set | explore-at-your-own-pace]
+   * @return the formatted box
+   * @throws NullPointerException if {@code args} is null
+   * @throws IllegalArgumentException if an unknown page is provided or insufficient args for parameterized pages
+   * @throws IOException if an I/O error occurs
    */
   @Override
   public String getOutput(String[] args) throws IOException
   {
     requireThat(args, "args").isNotNull();
-    Path projectDir = null;
-    for (int i = 0; i < args.length; ++i)
+
+    if (args.length == 0)
+      return "";
+
+    String page = args[0];
+    return switch (page)
     {
-      if (args[i].equals("--project-dir"))
+      case "default-gates-configured" ->
       {
-        if (i + 1 >= args.length)
-          throw new IllegalArgumentException("Missing PATH argument for --project-dir");
-        projectDir = Path.of(args[i + 1]);
-        ++i;
+        if (args.length < 2)
+          throw new IllegalArgumentException(
+            "default-gates-configured requires 1 argument: version-count");
+        try
+        {
+          int versionCount = Integer.parseInt(args[1]);
+          yield getDefaultGatesConfigured(versionCount);
+        }
+        catch (NumberFormatException _)
+        {
+          throw new IllegalArgumentException(
+            "default-gates-configured: version-count must be a number, got: " + args[1]);
+        }
       }
-      else
-        throw new IllegalArgumentException("Unknown argument: " + args[i]);
-    }
-    if (projectDir == null)
-      projectDir = scope.getClaudeProjectDir();
-    return "GetInitOutput: project-dir=" + projectDir;
+      case "research-skipped" ->
+      {
+        if (args.length < 2)
+          throw new IllegalArgumentException(
+            "research-skipped requires 1 argument: example-version");
+        yield getResearchSkipped(args[1]);
+      }
+      case "choose-your-partner" -> getChooseYourPartner();
+      case "cat-initialized" ->
+      {
+        if (args.length < 4)
+          throw new IllegalArgumentException(
+            "cat-initialized requires 3 arguments: trust effort patience");
+        yield getCatInitialized(args[1], args[2], args[3]);
+      }
+      case "first-issue-walkthrough" -> getFirstIssueWalkthrough();
+      case "first-issue-created" ->
+      {
+        if (args.length < 2)
+          throw new IllegalArgumentException(
+            "first-issue-created requires 1 argument: issue-name");
+        yield getFirstIssueCreated(args[1]);
+      }
+      case "all-set" -> getAllSet();
+      case "explore-at-your-own-pace" -> getExploreAtYourOwnPace();
+      default -> throw new IllegalArgumentException("Unknown page: '" + page +
+        "'. Valid pages: default-gates-configured, research-skipped, choose-your-partner, " +
+        "cat-initialized, first-issue-walkthrough, first-issue-created, all-set, " +
+        "explore-at-your-own-pace");
+    };
   }
 
   /**

@@ -327,7 +327,7 @@ you can call directly:
 `git-commit` · `git-squash` · `git-rebase` · `git-amend` · `git-merge-linear`
 
 ### Multi-Agent Coordination
-`spawn-subagent` · `monitor-subagents` · `collect-results` · `merge-subagent` · `parallel-execute`
+`spawn-subagent` · `get-subagent-status` · `collect-results` · `merge-subagent` · `parallel-execute`
 
 ### Quality & Learning
 `stakeholder-review` · `learn-from-mistakes` · `run-retrospective` · `decompose-task`

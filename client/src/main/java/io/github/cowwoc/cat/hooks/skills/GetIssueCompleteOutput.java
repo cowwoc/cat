@@ -11,7 +11,6 @@ import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,35 +47,35 @@ public final class GetIssueCompleteOutput implements SkillOutput
   /**
    * Generates the output for this skill.
    * <p>
-   * Parses {@code --project-dir PATH} from {@code args} if present; otherwise falls back to
-   * {@code scope.getClaudeProjectDir()}.
+   * Routes to getIssueCompleteBox() or getScopeCompleteBox() based on available arguments.
    *
-   * @param args the arguments from the preprocessor directive
-   * @return the generated output
+   * @param args the arguments from the dispatcher: [issueName, nextIssue, nextGoal, baseBranch] for
+   *             issue-complete, or [scopeName] for scope-complete
+   * @return the formatted issue or scope complete box
    * @throws NullPointerException     if {@code args} is null
-   * @throws IllegalArgumentException if an unknown argument is provided or {@code --project-dir} lacks a value
+   * @throws IllegalArgumentException if insufficient arguments provided
    * @throws IOException              if an I/O error occurs
    */
   @Override
   public String getOutput(String[] args) throws IOException
   {
     requireThat(args, "args").isNotNull();
-    Path projectDir = null;
-    for (int i = 0; i < args.length; ++i)
+
+    if (args.length == 0)
+      return "";
+
+    // Determine routing based on arg count and content
+    if (args.length >= 4)
     {
-      if (args[i].equals("--project-dir"))
-      {
-        if (i + 1 >= args.length)
-          throw new IllegalArgumentException("Missing PATH argument for --project-dir");
-        projectDir = Path.of(args[i + 1]);
-        ++i;
-      }
-      else
-        throw new IllegalArgumentException("Unknown argument: " + args[i]);
+      // Issue complete: issueName, nextIssue, nextGoal, baseBranch
+      return getIssueCompleteBox(args[0], args[1], args[2], args[3]);
     }
-    if (projectDir == null)
-      projectDir = scope.getClaudeProjectDir();
-    return "GetIssueCompleteOutput: project-dir=" + projectDir;
+    if (args.length == 1)
+      // Scope complete: scopeName
+      return getScopeCompleteBox(args[0]);
+    throw new IllegalArgumentException(
+      "Expected 1 or 4+ arguments (scope-name OR issue-name next-issue next-goal base-branch), got " +
+      args.length);
   }
 
   /**

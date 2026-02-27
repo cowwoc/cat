@@ -282,7 +282,7 @@ Key anti-patterns to avoid:
 - `cat:run-retrospective` - Aggregate analysis triggered by this skill
 - `cat:token-report` - Provides data for context analysis
 - `cat:decompose-issue` - Implements earlier decomposition
-- `cat:monitor-subagents` - Catches context issues early
+- `cat:get-subagent-status` - Catches context issues early
 - `cat:collect-results` - Preserves progress before intervention
 
 ## A/B Test: RCA Method Comparison

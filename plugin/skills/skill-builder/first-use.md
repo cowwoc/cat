@@ -1429,46 +1429,50 @@ For each concern, invoke the `render-concern` skill:
 [BANG]`render-concern.sh '$ARGUMENTS'`
 ```
 
-**Pattern 3: Handler Preprocessing** (Python handler generates output before skill loads)
+**Pattern 3: Centralized Output Dispatch** (Java handler generates output via `get-output` skill)
 
 Use when the skill's output is entirely script-generated and the skill content is just a thin wrapper
-that tells the agent to output the handler's result verbatim. The handler runs as a hook
-(UserPromptSubmit or PostToolUse:Skill) and its output appears as `additionalContext` above the
-skill content.
+that invokes `Skill("cat:get-output", args="TYPE")` and echoes the result verbatim.
+The `get-output` skill dispatches to the appropriate Java `SkillOutput` handler and returns the output
+wrapped in `<output type="TYPE">` tags.
 
 ```
 ┌──────────────────────┐     ┌──────────────────────────────┐
-│   Handler            │     │   skill content (thin)       │
-│   (Python)           │     │                              │
-│                      │     │ "Respond with the contents   │
-│ Runs script/logic    │──→  │  of the latest               │
-│ Returns output via   │     │  <output skill="X"> tag      │
-│ <output skill="X">   │     │  verbatim."                  │
+│   Java Handler       │     │   skill content (thin)       │
+│   (SkillOutput impl) │     │                              │
+│                      │     │ "INVOKE: Skill(cat:get-output │
+│ Returns content via  │──→  │  args=TYPE), echo returned   │
+│ <output type="TYPE"> │     │  content verbatim."          │
 └──────────────────────┘     └──────────────────────────────┘
 ```
 
-**Example**: Status display - handler generates full status output, skill content outputs it.
+**Example**: Status display — handler generates full status output, skill content echoes it.
 
-Handler (`skill_handlers/status_handler.py`):
-```python
-def handle(self, context):
-    return rendered_status
+Java handler (`GetStatusOutput.java`):
+```java
+public String getOutput(String[] args) throws IOException {
+    // ... generates status content
+    return renderedStatus;
+}
 ```
 
-Skill content (-first-use/SKILL.md):
+Registered in `GetOutput.java`:
+```java
+case "status" -> new GetStatusOutput(scope).getOutput(handlerArgs);
+```
+
+Skill content (first-use.md):
 ```markdown
-Echo the content inside the LATEST `<output skill="status">` tag below. Do not summarize, interpret, or add commentary.
+INVOKE: Skill("cat:get-output", args="status")
 
-<output skill="status">
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-status-output" --project-dir "${CLAUDE_PROJECT_DIR}"`
-</output>
+Echo the returned content verbatim. Do not summarize, interpret, or add commentary.
 ```
 
-**Skill content pattern for handler-preprocessed skills:**
+**Skill content pattern for handler-dispatched skills:**
 
 The thin wrapper skill content MUST follow this exact pattern:
-1. Line 1: `Echo the content inside the LATEST \`<output skill="X">\` tag below. Do not summarize, interpret, or add commentary.`
-2. An `<output skill="X">` block containing a `!` backtick preprocessor directive that invokes the script.
+1. `INVOKE: Skill("cat:get-output", args="TYPE")` — calls the centralized dispatcher
+2. A directive to echo the content inside `<output type="TYPE">` verbatim
 
 **Anti-pattern - meta-description that agents echo literally:**
 ```markdown
@@ -1479,21 +1483,21 @@ This text gets echoed to the user verbatim because the agent treats it as output
 
 **Handler vs skill content responsibilities:**
 
-| Aspect | Handler (runs every invocation) | Skill content (loaded once per session) |
-|--------|--------------------------------|--------------------------------------|
-| Output | Fresh `<output>` content based on current args | Static behavioral instructions |
-| Args | Parses args from `context["user_prompt"]` | References `$ARGUMENTS` for conditional logic |
+| Aspect | Java Handler (runs every invocation) | Skill content (loaded once per session) |
+|--------|--------------------------------------|--------------------------------------|
+| Output | Fresh content based on current state | Static behavioral instructions |
+| Args | Receives args from `getOutput(String[] args)` | References `$ARGUMENTS` for conditional logic |
 | Changes | Different output each call | Same instructions, reused via reference.md |
 
 For skills with argument-dependent behavior (e.g., `/cat:work` vs `/cat:work 2.1-task`), the handler
-generates argument-specific `<output>` content while skill content contains the static conditional logic
+generates argument-specific output while skill content contains the static conditional logic
 ("if ARGUMENTS contains a filter, do X"). Both work correctly on subsequent invocations: the handler
-re-runs with new args, and the agent follows the already-loaded skill content instructions.
+re-runs via `get-output` with new args, and the agent follows the already-loaded skill content instructions.
 
-**When to use handler preprocessing instead of direct preprocessing:**
-- Skill output requires Python logic (complex rendering, config reading, multi-script orchestration)
+**When to use centralized output dispatch instead of direct preprocessing:**
+- Skill output requires complex Java logic (rendering, config reading, multi-source composition)
 - Handler needs to compose output from multiple sources
-- Output depends on context not available to shell scripts (e.g., parsed skill arguments)
+- Output depends on runtime state not available to shell scripts
 
 **Decision checklist**:
 
@@ -1503,19 +1507,17 @@ re-runs with new args, and the agent follows the already-loaded skill content in
 | Does output depend on LLM analysis or judgment? | LLM must decide first | Delegated |
 | Is the same rendering used with different data sources? | Reusable renderer | Delegated |
 | Is there only one way to determine what goes in output? | No LLM needed | Direct |
-| Does output need Python logic or multi-source composition? | Handler computes it | Handler |
-| Is the entire skill output script-generated (thin wrapper)? | Handler + thin skill content | Handler |
+| Does output need complex Java logic or multi-source composition? | Java handler computes it | Centralized |
+| Is the entire skill output script-generated (thin wrapper)? | Java handler + thin skill content | Centralized |
 
-**Benefits of handler pattern**:
+**Benefits of centralized output dispatch pattern**:
 - **Session-efficient**: The full skill content loads only once per session (via `load-skill`).
-  Subsequent invocations load a tiny reference (~2 lines) instead. The handler output (`<output>` tag)
-  is fresh every time, but the skill instructions are not re-loaded, saving significant context.
-  After context compaction, `clear_skill_markers.py` (SessionStart hook) resets the markers so skills
-  re-load in full automatically.
-- Python handlers can compose output from multiple scripts, config files, and state
-- Handler runs before the agent sees the skill, so output is guaranteed correct
-- Agent cannot attempt manual construction - it only sees the final rendered output
-- Testable: handlers are Python modules with unit tests (see `tests/` directory)
+  Subsequent invocations load a tiny reference (~2 lines) instead. The handler output (`<output type="...">` tag)
+  is fresh every time via `get-output`, but the skill instructions are not re-loaded, saving significant context.
+  After context compaction, skill markers reset so skills re-load in full automatically.
+- Java handlers compose output from multiple sources (config files, git state, session data)
+- Output is type-safe and testable via `TestJvmScope` (see `tests/` directory)
+- Agent cannot attempt manual construction — it only sees the final rendered output
 
 **Benefits of delegated pattern**:
 - Rendering logic is reusable across multiple orchestrator skills

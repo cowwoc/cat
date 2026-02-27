@@ -22,8 +22,6 @@ Initialize CAT planning structure. Creates `.claude/cat/` with PROJECT.md, ROADM
 
 <step name="verify">
 
-<step name="verify">
-
 ```bash
 [ -f .claude/cat/PROJECT.md ] && echo "ERROR: CAT already initialized" && exit 1
 CODE_COUNT=$(find . -name "*.ts" -o -name "*.js" -o -name "*.py" -o -name "*.go" \
@@ -336,16 +334,11 @@ For each minor version PLAN.md, add:
 - All issues complete
 ```
 
-After applying defaults, use the **default_gates_configured** box from `<output skill="init">`.
-Replace `{N}` with the version count.
+After applying defaults:
 
-**If `<output skill="init">` not found:**
-```
-FAIL: `<output skill="init">` tag not found.
-The get-init-output preprocessor directive should have provided this.
-Check that hooks are properly loaded.
-```
-Do NOT manually construct output or invoke scripts. Output the error and STOP.
+INVOKE: Skill("cat:get-output", args="init.default-gates-configured {N}")
+
+Replace `{N}` with the version count.
 
 **If "Configure per version":**
 
@@ -423,15 +416,9 @@ Note in PROJECT.md:
 - Research not run during init. Use `/cat:research {version}` for pending versions.
 ```
 
-Use the **research_skipped** box from `<output skill="init">`.
+INVOKE: Skill("cat:get-output", args="init.research-skipped {PENDING_VERSION}")
 
-**If `<output skill="init">` not found:**
-```
-FAIL: `<output skill="init">` tag not found.
-The get-init-output preprocessor directive should have provided this.
-Check that hooks are properly loaded.
-```
-Do NOT manually construct output or invoke scripts. Output the error and STOP.
+Replace `{PENDING_VERSION}` with an example pending version for the help text.
 
 </step>
 
@@ -441,15 +428,7 @@ Do NOT manually construct output or invoke scripts. Output the error and STOP.
 
 **Choose Your Partner - Capture development style preferences**
 
-Use the **choose_your_partner** box from `<output skill="init">`.
-
-**If `<output skill="init">` not found:**
-```
-FAIL: `<output skill="init">` tag not found.
-The get-init-output preprocessor directive should have provided this.
-Check that hooks are properly loaded.
-```
-Do NOT manually construct output or invoke scripts. Output the error and STOP.
+INVOKE: Skill("cat:get-output", args="init.choose-your-partner")
 
 AskUserQuestion: header="Trust", question="How do you prefer to work together?", options=[
   "🛡️ Hands-On - check in often, verify each move",
@@ -571,7 +550,7 @@ AskUserQuestion: header="Confirm Workflow", question="Did I understand your work
 
 Get plugin version for config:
 ```bash
-CAT_VERSION=$(jq -r '.version' "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json")
+CAT_VERSION=$(grep -o '"version"[[:space:]]*:[[:space:]]*"[^"]*"' "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json" | head -1 | sed 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 ```
 
 Create `.claude/cat/cat-config.json`:
@@ -871,16 +850,9 @@ git commit -m "docs: initialize CAT planning structure"
 
 <step name="done">
 
-Use the **cat_initialized** box from `<output skill="init">`.
-Replace `{trust}`, `{effort}`, `{patience}` with actual preference values.
+INVOKE: Skill("cat:get-output", args="init.cat-initialized {trust} {effort} {patience}")
 
-**If `<output skill="init">` not found:**
-```
-FAIL: `<output skill="init">` tag not found.
-The get-init-output preprocessor directive should have provided this.
-Check that hooks are properly loaded.
-```
-Do NOT manually construct output or invoke scripts. Output the error and STOP.
+Replace `{trust}`, `{effort}`, `{patience}` with actual preference values.
 
 **New projects:**
 ```
@@ -910,15 +882,7 @@ options=[
 
 **If "Yes, guide me":**
 
-Use the **first_issue_walkthrough** box from `<output skill="init">`.
-
-**If `<output skill="init">` not found:**
-```
-FAIL: `<output skill="init">` tag not found.
-The get-init-output preprocessor directive should have provided this.
-Check that hooks are properly loaded.
-```
-Do NOT manually construct output or invoke scripts. Output the error and STOP.
+INVOKE: Skill("cat:get-output", args="init.first-issue-walkthrough")
 
 1. AskUserQuestion: header="First Goal", question="What's the first thing you want to accomplish?", options=[
    "[Let user describe in their own words]" - FREEFORM
@@ -972,16 +936,9 @@ git add ".claude/cat/"
 git commit -m "docs: add first issue - ${ISSUE_NAME}"
 ```
 
-7. Use the **first_issue_created** box from `<output skill="init">`.
-   Replace `{issue-name}` with the actual sanitized issue name.
+7. INVOKE: Skill("cat:get-output", args="init.first-issue-created {ISSUE_NAME}")
 
-**If `<output skill="init">` not found:**
-```
-FAIL: `<output skill="init">` tag not found.
-The get-init-output preprocessor directive should have provided this.
-Check that hooks are properly loaded.
-```
-Do NOT manually construct output or invoke scripts. Output the error and STOP.
+   Replace `{ISSUE_NAME}` with the actual sanitized issue name.
 
 AskUserQuestion: header="Start Work", question="Ready to start working on this issue?", options=[
   "Yes, let's go! (Recommended)" - Run /cat:work immediately,
@@ -993,27 +950,11 @@ AskUserQuestion: header="Start Work", question="Ready to start working on this i
 
 **If "No, I'll start later":**
 
-Use the **all_set** box from `<output skill="init">`.
-
-**If `<output skill="init">` not found:**
-```
-FAIL: `<output skill="init">` tag not found.
-The get-init-output preprocessor directive should have provided this.
-Check that hooks are properly loaded.
-```
-Do NOT manually construct output or invoke scripts. Output the error and STOP.
+INVOKE: Skill("cat:get-output", args="init.all-set")
 
 **If "No, I'll explore" (from initial question):**
 
-Use the **explore_at_your_own_pace** box from `<output skill="init">`.
-
-**If `<output skill="init">` not found:**
-```
-FAIL: `<output skill="init">` tag not found.
-The get-init-output preprocessor directive should have provided this.
-Check that hooks are properly loaded.
-```
-Do NOT manually construct output or invoke scripts. Output the error and STOP.
+INVOKE: Skill("cat:get-output", args="init.explore-at-your-own-pace")
 
 </step>
 

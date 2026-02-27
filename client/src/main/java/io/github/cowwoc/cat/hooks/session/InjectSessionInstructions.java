@@ -156,8 +156,8 @@ public final class InjectSessionInstructions implements SessionStartHandler
       Output the error message and STOP execution. The fail-fast exists because workarounds produce incorrect results.
 
       ### Verbatim Output Skills
-      These skills produce skill output. Follow their instructions exactly:
-      `/cat:status`, `/cat:help`, `/cat:token-report`, `/cat:get-diff`
+      The centralized skill for all display box generation:
+      `/cat:get-output`
 
       ### Qualified Issue Names
       **MANDATORY**: Always use fully-qualified issue names when referencing issues in responses.

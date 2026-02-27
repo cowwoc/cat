@@ -244,40 +244,54 @@ public final class GetConfigOutput implements SkillOutput
   }
 
   /**
-   * Generates all config output boxes as a labeled string for use by the skill preprocessor.
-   * <p>
-   * Each box is labeled with its section name so the skill can reference it by name.
+   * Generates a config output box for the requested page.
    *
-   * @param args the arguments from the preprocessor directive (must be empty)
-   * @return the formatted config output containing all boxes, or an error message if the project
-   *   directory is not available
-   * @throws NullPointerException if {@code args} is null
-   * @throws IllegalArgumentException if {@code args} is not empty
+   * @param args the page argument and optional extra args: [settings | versions | saved | no-changes |
+   *             conditions-for-version version preconditions postconditions |
+   *             setting-updated name old new | conditions-updated version preconditions postconditions]
+   * @return the formatted box
    * @throws IOException if an I/O error occurs
+   * @throws IllegalArgumentException if {@code args} is empty, an unknown page argument is provided, or
+   *                                  insufficient args for the requested page
    */
   @Override
   public String getOutput(String[] args) throws IOException
   {
-    requireThat(args, "args").length().isEqualTo(0);
-    String currentSettings = getCurrentSettings();
-    String versionConditionsOverview = getVersionConditionsOverview();
-    String configurationSaved = getConfigurationSaved();
-    String noChanges = getNoChanges();
-
-    StringBuilder output = new StringBuilder(100).
-      append("CURRENT_SETTINGS:\n");
-    if (currentSettings != null)
-      output.append(currentSettings).append('\n');
-    output.append("\nVERSION_CONDITIONS_OVERVIEW:\n").
-      append(versionConditionsOverview).
-      append('\n').
-      append("\nCONFIGURATION_SAVED:\n").
-      append(configurationSaved).
-      append('\n').
-      append("\nNO_CHANGES:\n").
-      append(noChanges).
-      append('\n');
-    return output.toString();
+    requireThat(args, "args").isNotNull();
+    if (args.length == 0)
+      throw new IllegalArgumentException("args must contain at least a page argument");
+    String page = args[0];
+    return switch (page)
+    {
+      case "settings" -> getCurrentSettings();
+      case "versions" -> getVersionConditionsOverview();
+      case "saved" -> getConfigurationSaved();
+      case "no-changes" -> getNoChanges();
+      case "conditions-for-version" ->
+      {
+        if (args.length < 4)
+          throw new IllegalArgumentException(
+            "conditions-for-version requires 3 arguments: version preconditions postconditions");
+        yield getConditionsForVersion(args[1], args[2], args[3]);
+      }
+      case "setting-updated" ->
+      {
+        if (args.length < 4)
+          throw new IllegalArgumentException(
+            "setting-updated requires 3 arguments: name old new");
+        yield getSettingUpdated(args[1], args[2], args[3]);
+      }
+      case "conditions-updated" ->
+      {
+        if (args.length < 4)
+          throw new IllegalArgumentException(
+            "conditions-updated requires 3 arguments: version preconditions postconditions");
+        yield getConditionsUpdated(args[1], args[2], args[3]);
+      }
+      default -> throw new IllegalArgumentException("Unknown page: '" + page +
+        "'. Valid pages: settings, versions, saved, no-changes, conditions-for-version, " +
+        "setting-updated, conditions-updated");
+    };
   }
 
   /**
@@ -291,7 +305,7 @@ public final class GetConfigOutput implements SkillOutput
     {
       GetConfigOutput generator = new GetConfigOutput(scope);
       String output = generator.getOutput(args);
-      System.out.println(output);
+      System.out.print(output);
     }
     catch (IOException e)
     {

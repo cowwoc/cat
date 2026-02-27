@@ -6,10 +6,11 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.util.SubagentMonitor;
-import io.github.cowwoc.cat.hooks.util.SubagentMonitor.MonitorResult;
-import io.github.cowwoc.cat.hooks.util.SubagentMonitor.SubagentInfo;
-import io.github.cowwoc.cat.hooks.util.SubagentMonitor.SubagentStatus;
+import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.skills.GetSubagentStatusOutput;
+import io.github.cowwoc.cat.hooks.skills.GetSubagentStatusOutput.StatusResult;
+import io.github.cowwoc.cat.hooks.skills.GetSubagentStatusOutput.SubagentInfo;
+import io.github.cowwoc.cat.hooks.skills.GetSubagentStatusOutput.SubagentStatus;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -21,12 +22,141 @@ import java.nio.file.Path;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Tests for SubagentMonitor.
+ * Tests for GetSubagentStatusOutput.
  * <p>
- * Tests verify monitoring of subagent worktrees, token counting, and JSON output.
+ * Tests verify that the monitor subagents handler returns JSON output,
+ * validates its inputs, and correctly reports subagent status.
+ * <p>
+ * Tests are designed for parallel execution - each test is self-contained
+ * with no shared state.
  */
-public class SubagentMonitorTest
+public class GetSubagentStatusOutputTest
 {
+  /**
+   * Verifies that getOutput returns JSON string.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getOutputReturnsJsonString() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-subagent-status-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetSubagentStatusOutput handler = new GetSubagentStatusOutput(scope);
+      String result = handler.getOutput(new String[]{});
+
+      // Result should be JSON
+      requireThat(result, "result").
+        isNotNull().
+        contains("{").
+        contains("}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that null args throw NullPointerException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void nullArgsThrows() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-subagent-status-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetSubagentStatusOutput handler = new GetSubagentStatusOutput(scope);
+      try
+      {
+        handler.getOutput(null);
+        requireThat(false, "shouldThrowException").isEqualTo(true);
+      }
+      catch (NullPointerException _)
+      {
+        // Expected
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that constructor validates scope parameter.
+   */
+  @Test
+  public void constructorValidatesScope()
+  {
+    try
+    {
+      new GetSubagentStatusOutput(null);
+      requireThat(false, "shouldThrowException").isEqualTo(true);
+    }
+    catch (NullPointerException _)
+    {
+      // Expected
+    }
+  }
+
+  /**
+   * Verifies that empty args array returns valid JSON.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void emptyArgsReturnsValidJson() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-subagent-status-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetSubagentStatusOutput handler = new GetSubagentStatusOutput(scope);
+      String result = handler.getOutput(new String[]{});
+
+      // Parse as JSON to validate
+      requireThat(result, "result").
+        isNotNull().
+        isNotEmpty();
+      // JSON must be valid - check for basic JSON structure
+      requireThat(result.trim(), "result").
+        startsWith("{").
+        endsWith("}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that output contains data key (expected JSON structure).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void outputContainsExpectedJsonStructure() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-subagent-status-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetSubagentStatusOutput handler = new GetSubagentStatusOutput(scope);
+      String result = handler.getOutput(new String[]{});
+
+      // Result should contain data or subagents array or status - at least one expected key
+      boolean hasExpectedKey = result.contains("\"data\"") || result.contains("\"subagents\"") ||
+        result.contains("\"status\"");
+      requireThat(hasExpectedKey, "hasExpectedKey").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
   /**
    * Verifies that monitor returns empty result when no subagent worktrees exist.
    *
@@ -39,7 +169,7 @@ public class SubagentMonitorTest
     try
     {
       JsonMapper mapper = JsonMapper.builder().build();
-      MonitorResult result = SubagentMonitor.monitor(sessionBase.toString(), mapper);
+      StatusResult result = GetSubagentStatusOutput.getStatus(sessionBase.toString(), mapper);
 
       requireThat(result.summary().total(), "total").isEqualTo(0);
       requireThat(result.summary().running(), "running").isEqualTo(0);
@@ -65,7 +195,7 @@ public class SubagentMonitorTest
     try
     {
       JsonMapper mapper = JsonMapper.builder().build();
-      MonitorResult result = SubagentMonitor.monitor(sessionBase.toString(), mapper);
+      StatusResult result = GetSubagentStatusOutput.getStatus(sessionBase.toString(), mapper);
       String json = result.toJson(mapper);
 
       JsonNode root = mapper.readTree(json);
@@ -167,7 +297,7 @@ public class SubagentMonitorTest
   {
     try
     {
-      new SubagentMonitor.Summary(-1, 0, 0, 0);
+      new GetSubagentStatusOutput.Summary(-1, 0, 0, 0);
     }
     catch (IllegalArgumentException e)
     {
@@ -176,7 +306,7 @@ public class SubagentMonitorTest
 
     try
     {
-      new SubagentMonitor.Summary(0, -1, 0, 0);
+      new GetSubagentStatusOutput.Summary(0, -1, 0, 0);
     }
     catch (IllegalArgumentException e)
     {
@@ -185,7 +315,7 @@ public class SubagentMonitorTest
 
     try
     {
-      new SubagentMonitor.Summary(0, 0, -1, 0);
+      new GetSubagentStatusOutput.Summary(0, 0, -1, 0);
     }
     catch (IllegalArgumentException e)
     {
@@ -194,7 +324,7 @@ public class SubagentMonitorTest
 
     try
     {
-      new SubagentMonitor.Summary(0, 0, 0, -1);
+      new GetSubagentStatusOutput.Summary(0, 0, 0, -1);
     }
     catch (IllegalArgumentException e)
     {
@@ -211,9 +341,9 @@ public class SubagentMonitorTest
   public void toJsonIncludesAllSubagentFields() throws IOException
   {
     SubagentInfo info = new SubagentInfo("abc123", "test-task", SubagentStatus.RUNNING, 5000, 2, "/path/to/worktree");
-    MonitorResult result = new MonitorResult(
+    StatusResult result = new StatusResult(
       java.util.List.of(info),
-      new SubagentMonitor.Summary(1, 1, 0, 0));
+      new GetSubagentStatusOutput.Summary(1, 1, 0, 0));
 
     JsonMapper mapper = JsonMapper.builder().build();
     String json = result.toJson(mapper);
@@ -237,21 +367,21 @@ public class SubagentMonitorTest
   public void monitorHandlesNonExistentSessionBase() throws IOException
   {
     JsonMapper mapper = JsonMapper.builder().build();
-    MonitorResult result = SubagentMonitor.monitor("/nonexistent/path", mapper);
+    StatusResult result = GetSubagentStatusOutput.getStatus("/nonexistent/path", mapper);
 
     requireThat(result.summary().total(), "total").isNotNegative();
     requireThat(result.subagents(), "subagents").isNotNull();
   }
 
   /**
-   * Verifies that MonitorResult validates null subagents list.
+   * Verifies that StatusResult validates null subagents list.
    */
   @Test
   public void monitorResultValidatesNullSubagents()
   {
     try
     {
-      new MonitorResult(null, new SubagentMonitor.Summary(0, 0, 0, 0));
+      new StatusResult(null, new GetSubagentStatusOutput.Summary(0, 0, 0, 0));
     }
     catch (NullPointerException e)
     {
@@ -260,14 +390,14 @@ public class SubagentMonitorTest
   }
 
   /**
-   * Verifies that MonitorResult validates null summary.
+   * Verifies that StatusResult validates null summary.
    */
   @Test
   public void monitorResultValidatesNullSummary()
   {
     try
     {
-      new MonitorResult(java.util.List.of(), null);
+      new StatusResult(java.util.List.of(), null);
     }
     catch (NullPointerException e)
     {
@@ -287,9 +417,9 @@ public class SubagentMonitorTest
       "abc123", "task-one", SubagentStatus.RUNNING, 5_000, 2, "/path/to/worktree1");
     SubagentInfo info2 = new SubagentInfo(
       "def456", "task-two", SubagentStatus.COMPLETE, 10_000, 3, "/path/to/worktree2");
-    MonitorResult result = new MonitorResult(
+    StatusResult result = new StatusResult(
       java.util.List.of(info1, info2),
-      new SubagentMonitor.Summary(2, 1, 1, 0));
+      new GetSubagentStatusOutput.Summary(2, 1, 1, 0));
 
     JsonMapper mapper = JsonMapper.builder().build();
     String json = result.toJson(mapper);

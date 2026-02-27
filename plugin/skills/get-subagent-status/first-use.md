@@ -3,7 +3,7 @@ Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
-# Monitor Subagents
+# Get Subagent Status
 
 ## Purpose
 
@@ -21,19 +21,9 @@ about intervention or result collection.
 
 ## Progress Output (MANDATORY)
 
-**Check for `<output skill="monitor-subagents">` in context.**
+INVOKE: Skill("cat:get-output", args="get-subagent-status")
 
-If found: Output the JSON EXACTLY as provided. Do NOT invoke scripts or Bash commands.
-
-If NOT found: **FAIL immediately.**
-
-```
-ERROR: `<output skill="monitor-subagents">` tag not found.
-The get-monitor-subagents-output preprocessor directive should have provided this.
-Check that hooks are properly loaded.
-```
-
-Output the error and STOP. Do NOT manually construct monitoring output or invoke scripts.
+The skill returns monitoring data wrapped in `<output type="get-subagent-status">`. Do NOT invoke Bash or construct monitoring output manually.
 
 ## Output Format
 
@@ -88,11 +78,11 @@ For accurate token metrics on completed subagents, use `/cat:token-report` which
 ### Never invoke Bash for monitoring
 
 ```bash
-# ❌ Invoking shell script (exposes tool calls to user)
-"${CLAUDE_PLUGIN_ROOT}/client/bin/monitor-subagents"
+# ❌ Invoking shell script directly (exposes tool calls to user)
+"${CLAUDE_PLUGIN_ROOT}/client/bin/get-subagent-status"
 
-# ✅ Use preprocessed output
-# Check for `<output skill="monitor-subagents">` tag in context
+# ✅ Use get-output skill
+# INVOKE: Skill("cat:get-output", args="get-subagent-status")
 ```
 
 ### Treat compaction as intervention signal
