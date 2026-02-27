@@ -120,7 +120,23 @@ public final class GetOutput implements SkillOutput
 
     if (content == null)
       return null;
-    return "<output type=\"" + type + "\">\n" + content + "\n</output>";
+    String sanitizedType = escapeXmlAttribute(type);
+    return "<output type=\"" + sanitizedType + "\">\n" + content + "\n</output>";
+  }
+
+  /**
+   * Escapes special XML characters in a string for use in XML attributes.
+   *
+   * @param value the string to escape
+   * @return the escaped string safe for use in XML attributes
+   */
+  private static String escapeXmlAttribute(String value)
+  {
+    return value.replace("&", "&amp;").
+      replace("<", "&lt;").
+      replace(">", "&gt;").
+      replace("\"", "&quot;").
+      replace("'", "&apos;");
   }
 
   /**

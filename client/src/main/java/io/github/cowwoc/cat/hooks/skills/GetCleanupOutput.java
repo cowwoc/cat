@@ -839,7 +839,7 @@ public final class GetCleanupOutput implements SkillOutput
   public String formatPlanFromJson(String json) throws IOException
   {
     requireThat(json, "json").isNotNull();
-    JsonMapper mapper = JsonMapper.builder().build();
+    JsonMapper mapper = scope.getJsonMapper();
     JsonNode root = mapper.readTree(json);
     JsonNode context = root.path("context");
 
@@ -880,7 +880,7 @@ public final class GetCleanupOutput implements SkillOutput
   public String formatVerifyFromJson(String json) throws IOException
   {
     requireThat(json, "json").isNotNull();
-    JsonMapper mapper = JsonMapper.builder().build();
+    JsonMapper mapper = scope.getJsonMapper();
     JsonNode root = mapper.readTree(json);
     JsonNode context = root.path("context");
 

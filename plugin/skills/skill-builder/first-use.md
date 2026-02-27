@@ -1429,20 +1429,20 @@ For each concern, invoke the `render-concern` skill:
 [BANG]`render-concern.sh '$ARGUMENTS'`
 ```
 
-**Pattern 3: Centralized Output Dispatch** (Java handler generates output via `get-output` skill)
+**Pattern 3: Centralized Output Dispatch** (Java handler generates output via `get-output` preprocessor)
 
 Use when the skill's output is entirely script-generated and the skill content is just a thin wrapper
-that invokes `Skill("cat:get-output", args="TYPE")` and echoes the result verbatim.
-The `get-output` skill dispatches to the appropriate Java `SkillOutput` handler and returns the output
+that invokes the `get-output` binary dispatcher via a ! preprocessor directive and echoes the result verbatim.
+The `get-output` dispatcher routes to the appropriate Java `SkillOutput` handler and returns the output
 wrapped in `<output type="TYPE">` tags.
 
 ```
 ┌──────────────────────┐     ┌──────────────────────────────┐
 │   Java Handler       │     │   skill content (thin)       │
 │   (SkillOutput impl) │     │                              │
-│                      │     │ "INVOKE: Skill(cat:get-output │
-│ Returns content via  │──→  │  args=TYPE), echo returned   │
-│ <output type="TYPE"> │     │  content verbatim."          │
+│                      │     │ !`"${CLAUDE_PLUGIN_ROOT}/    │
+│ Returns content via  │──→  │  client/bin/get-output" TYPE`│
+│ <output type="TYPE"> │     │  (! preprocessor directive)  │
 └──────────────────────┘     └──────────────────────────────┘
 ```
 
@@ -1461,18 +1461,20 @@ Registered in `GetOutput.java`:
 case "status" -> new GetStatusOutput(scope).getOutput(handlerArgs);
 ```
 
-Skill content (first-use.md):
+Skill content (SKILL.md):
 ```markdown
-INVOKE: Skill("cat:get-output", args="status")
+---
+description: Use when user asks about progress, status, what's done, or what's next
+---
 
-Echo the returned content verbatim. Do not summarize, interpret, or add commentary.
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" status`
 ```
 
 **Skill content pattern for handler-dispatched skills:**
 
 The thin wrapper skill content MUST follow this exact pattern:
-1. `INVOKE: Skill("cat:get-output", args="TYPE")` — calls the centralized dispatcher
-2. A directive to echo the content inside `<output type="TYPE">` verbatim
+1. `!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" TYPE`` — calls the centralized dispatcher via ! preprocessor
+2. The output is automatically wrapped in `<output type="TYPE">` tags by the dispatcher
 
 **Anti-pattern - meta-description that agents echo literally:**
 ```markdown
