@@ -255,12 +255,16 @@ public final class EnforceApprovalBeforeMerge implements TaskHandler
       StringBuilder text = new StringBuilder();
       for (JsonNode element : contentNode)
       {
-        JsonNode textNode = element.get("text");
-        if (textNode != null)
+        // "text" is used by regular user messages; "content" is used by tool_result entries
+        // (e.g., AskUserQuestion wizard responses). Both must be checked.
+        JsonNode valueNode = element.get("text");
+        if (valueNode == null)
+          valueNode = element.get("content");
+        if (valueNode != null && valueNode.isString())
         {
           if (!text.isEmpty())
             text.append(' ');
-          text.append(textNode.asString());
+          text.append(valueNode.asString());
         }
       }
       return text.toString().toLowerCase(Locale.ROOT);

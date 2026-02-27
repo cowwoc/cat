@@ -23,8 +23,7 @@ The main agent provides:
   "commits": [
     {"hash": "abc123", "message": "feature: add parser", "type": "feature"},
     {"hash": "def456", "message": "test: add parser tests", "type": "test"}
-  ],
-  "auto_remove_worktrees": true
+  ]
 }
 ```
 
@@ -39,8 +38,6 @@ Return JSON on success:
   "squashed_commits": [
     {"type": "feature", "message": "feature: add parser with tests", "hash": "new123"}
   ],
-  "branch_deleted": true,
-  "worktree_removed": true,
   "state_updated": true,
   "changelog_updated": true,
   "lock_released": true

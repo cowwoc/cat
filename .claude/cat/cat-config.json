@@ -4,6 +4,5 @@
   "verify": "all",
   "effort": "high",
   "patience": "medium",
-  "autoRemoveWorktrees": true,
   "minSeverity": "low"
 }
