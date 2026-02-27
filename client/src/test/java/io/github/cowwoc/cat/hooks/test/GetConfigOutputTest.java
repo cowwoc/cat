@@ -368,4 +368,207 @@ public class GetConfigOutputTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that getOutput with unknown page throws IllegalArgumentException listing valid pages.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getOutputUnknownPageThrows() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-config-output-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), "{}");
+
+      GetConfigOutput handler = new GetConfigOutput(scope);
+      try
+      {
+        handler.getOutput(new String[]{"invalid-page"});
+        requireThat(false, "shouldThrowException").isEqualTo(true);
+      }
+      catch (IllegalArgumentException e)
+      {
+        requireThat(e.getMessage(), "message").
+          contains("Unknown page").
+          contains("settings").
+          contains("versions").
+          contains("saved").
+          contains("no-changes").
+          contains("conditions-for-version").
+          contains("setting-updated").
+          contains("conditions-updated");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that conditions-for-version with insufficient args throws IllegalArgumentException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void conditionsForVersionInsufficientArgsThrows() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-config-output-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), "{}");
+
+      GetConfigOutput handler = new GetConfigOutput(scope);
+      try
+      {
+        handler.getOutput(new String[]{"conditions-for-version", "v1.0"});
+        requireThat(false, "shouldThrowException").isEqualTo(true);
+      }
+      catch (IllegalArgumentException e)
+      {
+        requireThat(e.getMessage(), "message").
+          contains("conditions-for-version requires 3 arguments").
+          contains("version").
+          contains("preconditions").
+          contains("postconditions");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that setting-updated with insufficient args throws IllegalArgumentException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void settingUpdatedInsufficientArgsThrows() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-config-output-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), "{}");
+
+      GetConfigOutput handler = new GetConfigOutput(scope);
+      try
+      {
+        handler.getOutput(new String[]{"setting-updated", "trust", "low"});
+        requireThat(false, "shouldThrowException").isEqualTo(true);
+      }
+      catch (IllegalArgumentException e)
+      {
+        requireThat(e.getMessage(), "message").
+          contains("setting-updated requires 3 arguments").
+          contains("name").
+          contains("old").
+          contains("new");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that conditions-updated with insufficient args throws IllegalArgumentException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void conditionsUpdatedInsufficientArgsThrows() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-config-output-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), "{}");
+
+      GetConfigOutput handler = new GetConfigOutput(scope);
+      try
+      {
+        handler.getOutput(new String[]{"conditions-updated", "v1.0"});
+        requireThat(false, "shouldThrowException").isEqualTo(true);
+      }
+      catch (IllegalArgumentException e)
+      {
+        requireThat(e.getMessage(), "message").
+          contains("conditions-updated requires 3 arguments").
+          contains("version").
+          contains("preconditions").
+          contains("postconditions");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getOutput settings page returns current settings.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getOutputSettingsPageReturnsCurrent() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-config-output-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), "{}");
+
+      GetConfigOutput handler = new GetConfigOutput(scope);
+      String result = handler.getOutput(new String[]{"settings"});
+
+      requireThat(result, "result").
+        contains("CURRENT SETTINGS").
+        contains("🔀 Completion");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getOutput with empty args throws IllegalArgumentException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getOutputEmptyArgsThrows() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-config-output-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetConfigOutput handler = new GetConfigOutput(scope);
+      try
+      {
+        handler.getOutput(new String[]{});
+      }
+      catch (IllegalArgumentException e)
+      {
+        requireThat(e.getMessage(), "message").contains("page argument");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }

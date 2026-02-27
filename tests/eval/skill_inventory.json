@@ -38,10 +38,10 @@
       "path": "/workspace/.claude/cat/worktrees/2.1-evaluate-skill-activation/plugin/skills/learn/SKILL.md"
     },
     {
-      "name": "monitor-subagents",
+      "name": "get-subagent-status",
       "description": "Check status of running subagents including token usage and context limits",
       "argument_hint": "",
-      "path": "/workspace/.claude/cat/worktrees/2.1-evaluate-skill-activation/plugin/skills/monitor-subagents/SKILL.md"
+      "path": "/workspace/.claude/cat/worktrees/2.1-evaluate-skill-activation/plugin/skills/get-subagent-status/SKILL.md"
     },
     {
       "name": "optimize-execution",
