@@ -37,7 +37,7 @@ Baseline evaluation of CAT skill activation rates using sandboxed evals against 
 |-------|------|-------|------------|
 | add | 66.7% | 2/3 | "Add a task" sometimes doesn't activate |
 | learn | 50.0% | 1/2 | "Document what went wrong" too general |
-| monitor-subagents | 50.0% | 1/2 | Confused with token-report |
+| get-subagent-status | 50.0% | 1/2 | Confused with token-report |
 | research | 33.3% | 1/3 | "Look up best practices" doesn't trigger |
 | run-retrospective | 50.0% | 1/2 | "Analyze patterns" too general |
 | work | 25.0% | 1/4 | Vague prompts activate status instead |
@@ -66,7 +66,7 @@ Newer or specialized skills (shrink-doc, debug-env, research) struggle even with
 
 ### Pattern 3: Semantic Overlap Causes Confusion
 
-- `monitor-subagents` vs `token-report`: Both relate to context/tokens
+- `get-subagent-status` vs `token-report`: Both relate to context/tokens
 - `work` vs `status`: "work on X" interpreted as inquiry rather than action
 - `learn` vs general documentation: "Document what went wrong" too broad
 
@@ -78,7 +78,7 @@ This suggests Claude's skill matching uses factors beyond description text alone
 ## Improvements Made
 
 Updated 8 skill definitions with clearer trigger words and more explicit use cases:
-- add, debug-env, learn, monitor-subagents, research, run-retrospective, shrink-doc, work
+- add, debug-env, learn, get-subagent-status, research, run-retrospective, shrink-doc, work
 
 Changes included:
 - Added "Trigger words:" sections listing specific phrases

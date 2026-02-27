@@ -108,6 +108,12 @@ the full merge phase (squash + approval gate) completes. Stakeholder review conc
 to the issue branch in the worktree. Fast-forwarding the issue branch to the base branch before review completes
 bypasses isolation and causes subsequent fixes to land directly on the base branch.
 
+**Planning commits created mid-implementation belong on the issue branch.** When `/cat:add` is invoked during
+implementation (e.g., to track a newly discovered issue), the resulting `planning:` commit lands on the current
+branch — the issue branch. This is correct behavior. Do NOT treat such a commit as a mistake or attempt to move it to
+the base branch. The planning commit will flow through the normal squash+merge process along with the implementation
+commits.
+
 ## CRITICAL: Commit Before Stopping in Worktrees
 
 **When working in a worktree, commit all changes before requesting user review or stopping work.**

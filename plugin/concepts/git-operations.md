@@ -46,6 +46,27 @@ git diff --stat
 git status && git log --oneline -3 && git diff --stat
 ```
 
+### Working Directory During Implementation
+
+When executing an issue, run git commands from inside the issue worktree — not from the main workspace using `git -C`.
+
+```bash
+# Correct: cd into worktree, then run git commands normally
+cd /workspace/.claude/cat/worktrees/2.1-issue-name
+git log --oneline -3
+git add file.txt && git commit -m "feature: add thing"
+
+# Wrong: running git -C /workspace from outside the worktree
+git -C /workspace log --oneline -3     # commits to main workspace, not issue branch
+git -C /workspace add file.txt         # stages in main workspace
+```
+
+Using `git -C /workspace` from outside the worktree targets the main workspace git state, not the issue
+branch. Commits, adds, and log output will reflect the main workspace — bypassing worktree isolation.
+
+The `git -C WORKTREE_PATH` form is acceptable when the caller cannot cd (e.g., orchestration scripts),
+but implementation agents should `cd` into the worktree at the start of their work and use plain git.
+
 ### Worktree Directory Safety
 
 You may `cd` into worktrees to work. However, before removing a directory (via `rm`, `git worktree remove`, etc.), ensure your shell is NOT inside the directory being removed.

@@ -20,9 +20,9 @@ Implements the full workflow defined in `retrospectives.json`.
 
 ## Skill Output Analysis
 
-Echo the contents of the latest `<output skill="run-retrospective">` tag verbatim.
+INVOKE: Skill("cat:get-output", args="run-retrospective")
 
-The tag contains one of three result types:
+The result is one of three types:
 
 | Content starts with | Action |
 |---------------------|--------|
@@ -307,6 +307,3 @@ Before completing retrospective:
 - `cat:learn` - Records individual mistakes, triggers this skill
 - `cat:token-report` - Provides context metrics for analysis
 - `cat:work` - Can be used to implement action items
-<output skill="run-retrospective">
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-retrospective-output"`
-</output>

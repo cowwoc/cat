@@ -526,8 +526,7 @@ public class ConfigTest
   }
 
   /**
-   * Verifies that getOutput returns non-null output containing expected box headers
-   * when a cat-config.json file exists.
+   * Verifies that getOutput returns settings box when a cat-config.json file exists.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -547,13 +546,10 @@ public class ConfigTest
         """);
 
       GetConfigOutput handler = new GetConfigOutput(scope);
-      String result = handler.getOutput(new String[0]);
+      String result = handler.getOutput(new String[]{"settings"});
 
       requireThat(result, "result").isNotNull();
-      requireThat(result, "result").contains("CURRENT_SETTINGS:");
-      requireThat(result, "result").contains("VERSION_CONDITIONS_OVERVIEW:");
-      requireThat(result, "result").contains("CONFIGURATION_SAVED:");
-      requireThat(result, "result").contains("NO_CHANGES:");
+      requireThat(result, "result").contains("CURRENT SETTINGS");
     }
     finally
     {
@@ -562,10 +558,7 @@ public class ConfigTest
   }
 
   /**
-   * Verifies that getOutput returns non-null output even when no cat-config.json file exists.
-   * <p>
-   * When CURRENT_SETTINGS returns null (no config file), the section header is still present
-   * but contains no box content. The remaining sections are always present.
+   * Verifies that getOutput returns null for settings page when no cat-config.json file exists.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -576,15 +569,9 @@ public class ConfigTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetConfigOutput handler = new GetConfigOutput(scope);
-      String result = handler.getOutput(new String[0]);
+      String result = handler.getOutput(new String[]{"settings"});
 
-      requireThat(result, "result").isNotNull();
-      // CURRENT_SETTINGS section header is present but has no box content (null when config missing)
-      requireThat(result, "result").contains("CURRENT_SETTINGS:");
-      requireThat(result, "result").doesNotContain("CURRENT SETTINGS");
-      requireThat(result, "result").contains("VERSION_CONDITIONS_OVERVIEW:");
-      requireThat(result, "result").contains("CONFIGURATION_SAVED:");
-      requireThat(result, "result").contains("NO_CHANGES:");
+      requireThat(result, "result").isNull();
     }
     finally
     {
@@ -608,7 +595,7 @@ public class ConfigTest
       Files.writeString(catDir.resolve("cat-config.json"), "{ invalid json }");
 
       GetConfigOutput handler = new GetConfigOutput(scope);
-      handler.getOutput(new String[0]);
+      handler.getOutput(new String[]{"settings"});
     }
     finally
     {
