@@ -122,6 +122,19 @@ The fix is patch-diff comparison: compare issue branch content relative to its b
    ```
    All tests must pass (exit code 0). Both new tests should now pass (green).
 
+4. **Fix Step 1 (Add missing `verifyDetectsActualContentChanges` test):** Add the
+   `verifyDetectsActualContentChanges` test method to
+   `client/src/test/java/io/github/cowwoc/cat/hooks/test/GitRebaseSafeTest.java` if it is absent or not
+   passing.
+
+   **`verifyDetectsActualContentChanges`:** Create temp git repo with "main". Create "feature" branch, add
+   "feature.txt" with "original content", commit. Checkout "main", add "main-advance.txt", commit (base
+   advances). Checkout "feature". Before executing GitRebaseSafe, amend the last feature commit to change
+   "feature.txt" to "corrupted content". Run `GitRebaseSafe.execute("main")`. Assert result contains `"ERROR"`.
+
+   Run: `mvn -f client/pom.xml test -Dtest=GitRebaseSafeTest#verifyDetectsActualContentChanges` — test must
+   pass (green).
+
 ## Post-conditions
 
 - [ ] `verifyPatchDiffWhenBaseAdvances` test passes: no false positive when base branch advances
