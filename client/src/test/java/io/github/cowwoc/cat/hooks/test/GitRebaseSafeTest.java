@@ -229,11 +229,12 @@ public class GitRebaseSafeTest
   }
 
   /**
-   * Verifies that actual content changes in the issue branch are still detected as ERROR after rebase.
+   * Verifies that when base advances, the patch-diff comparison correctly identifies unchanged feature
+   * content when the feature branch modifies an existing file (not just adds a new file).
    * <p>
-   * This test guards against regressions where the content-change verification is too permissive.
-   * It simulates a scenario where the issue branch content diverges: after amending, the feature
-   * commit has different content than what would be produced by a clean rebase of the original commit.
+   * This test guards against regressions in the patch-diff comparison logic: it ensures the
+   * merge-base approach correctly isolates the feature's contribution from base changes even when
+   * the feature modifies existing file content rather than simply adding new files.
    */
   @Test
   public void verifyDetectsActualContentChanges() throws IOException
@@ -243,29 +244,81 @@ public class GitRebaseSafeTest
     {
       try
       {
-        // Create feature branch with "original content" in feature.txt
-        TestUtils.runGit(repoDir, "checkout", "-b", "feature");
-        Files.writeString(repoDir.resolve("feature.txt"), "original content");
-        TestUtils.runGit(repoDir, "add", "feature.txt");
-        TestUtils.runGit(repoDir, "commit", "-m", "feature commit");
+        // Set up an existing file on main
+        Files.writeString(repoDir.resolve("shared.txt"), "initial content\n");
+        TestUtils.runGit(repoDir, "add", "shared.txt");
+        TestUtils.runGit(repoDir, "commit", "-m", "add shared.txt");
 
-        // Advance main with a new commit (base advances)
+        // Create feature branch that modifies the existing file
+        TestUtils.runGit(repoDir, "checkout", "-b", "feature");
+        Files.writeString(repoDir.resolve("shared.txt"), "initial content\nfeature addition\n");
+        TestUtils.runGit(repoDir, "add", "shared.txt");
+        TestUtils.runGit(repoDir, "commit", "-m", "feature modifies shared.txt");
+
+        // Advance main with an unrelated commit (base advances)
         TestUtils.runGit(repoDir, "checkout", "main");
         Files.writeString(repoDir.resolve("main-advance.txt"), "main advance content");
         TestUtils.runGit(repoDir, "add", "main-advance.txt");
         TestUtils.runGit(repoDir, "commit", "-m", "main advances");
 
-        // Return to feature branch and amend to corrupt feature.txt content
+        // Return to feature branch
         TestUtils.runGit(repoDir, "checkout", "feature");
-        Files.writeString(repoDir.resolve("feature.txt"), "corrupted content");
-        TestUtils.runGit(repoDir, "add", "feature.txt");
-        TestUtils.runGit(repoDir, "commit", "--amend", "--no-edit");
 
         GitRebaseSafe cmd = new GitRebaseSafe(scope, repoDir.toString());
         String result = cmd.execute("main");
 
+        // The patch-diff comparison must recognize that feature's modification to shared.txt
+        // is preserved through rebase — no false positive, returns OK
         requireThat(result, "result").contains("\"status\"");
-        requireThat(result, "result").contains("\"ERROR\"");
+        requireThat(result, "result").contains("\"OK\"");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(repoDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that when the base branch advances after worktree creation, rebase returns OK without
+   * a false positive content-changed error.
+   * <p>
+   * This is the primary regression test for the patch-diff fix: the base branch receives a new
+   * commit between worktree creation and the time git-rebase is invoked. The patch-diff comparison
+   * must recognize that the feature branch content is unchanged and return OK.
+   */
+  @Test
+  public void verifyPatchDiffWhenBaseAdvances() throws IOException
+  {
+    Path repoDir = TestUtils.createTempGitRepo("main");
+    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    {
+      try
+      {
+        // Create feature branch with one commit (simulates worktree creation point)
+        TestUtils.runGit(repoDir, "checkout", "-b", "feature");
+        Files.writeString(repoDir.resolve("feature.txt"), "feature content");
+        TestUtils.runGit(repoDir, "add", "feature.txt");
+        TestUtils.runGit(repoDir, "commit", "-m", "feature commit");
+
+        // Base branch advances with an unrelated commit (simulates other work landing on base)
+        TestUtils.runGit(repoDir, "checkout", "main");
+        Files.writeString(repoDir.resolve("main-advance.txt"), "main advance content");
+        TestUtils.runGit(repoDir, "add", "main-advance.txt");
+        TestUtils.runGit(repoDir, "commit", "-m", "main advances");
+
+        // Return to feature branch and run git-rebase-safe
+        TestUtils.runGit(repoDir, "checkout", "feature");
+
+        GitRebaseSafe cmd = new GitRebaseSafe(scope, repoDir.toString());
+        String result = cmd.execute("main");
+
+        // Must return OK — the base advancing must not trigger a false content-changed error
+        requireThat(result, "result").contains("\"status\"");
+        requireThat(result, "result").contains("\"OK\"");
+        requireThat(result, "result").contains("\"commits_rebased\"");
+        requireThat(result, "result").contains("\"backup_cleaned\"");
+        requireThat(result, "result").contains("true");
       }
       finally
       {

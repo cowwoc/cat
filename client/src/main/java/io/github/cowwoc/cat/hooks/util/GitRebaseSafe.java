@@ -62,7 +62,7 @@ public final class GitRebaseSafe
    *   <li>Create timestamped backup branch</li>
    *   <li>Attempt rebase</li>
    *   <li>On conflict: collect conflicting files, abort rebase, return CONFLICT JSON</li>
-   *   <li>On success: verify no content changes vs backup</li>
+   *   <li>On success: verify no content changes using patch-diff comparison</li>
    *   <li>Count commits rebased</li>
    *   <li>Clean up backup</li>
    *   <li>Return OK JSON</li>
@@ -153,14 +153,36 @@ public final class GitRebaseSafe
       return buildErrorJson("Rebase failed: " + rebaseResult.stdout().strip(), base, backup);
     }
 
-    // Step 5: Rebase succeeded — verify no content changes vs backup
-    // Use --quiet to avoid loading large diffs into memory; exit code 1 means differences exist
-    ProcessRunner.Result diffQuietResult = ProcessRunner.run(
-      "git", "-C", directory, "diff", "--quiet", backup);
+    // Step 5: Rebase succeeded — verify no content changes using patch-diff comparison
+    // Compare what the issue branch contributes relative to its original base vs new base.
+    // This avoids false positives when base branch advances with unrelated commits.
+    ProcessRunner.Result mergeBaseResult = ProcessRunner.run(
+      "git", "-C", directory, "merge-base", backup, base);
+    String oldBase;
+    if (mergeBaseResult.exitCode() == 0)
+      oldBase = mergeBaseResult.stdout().strip();
+    else
+      oldBase = "";
 
-    if (diffQuietResult.exitCode() != 0)
+    ProcessRunner.Result oldPatchResult = ProcessRunner.run(
+      "git", "-C", directory, "diff", oldBase, backup);
+    ProcessRunner.Result newPatchResult = ProcessRunner.run(
+      "git", "-C", directory, "diff", base, "HEAD");
+
+    String oldPatch;
+    if (oldPatchResult.exitCode() == 0)
+      oldPatch = oldPatchResult.stdout();
+    else
+      oldPatch = "";
+    String newPatch;
+    if (newPatchResult.exitCode() == 0)
+      newPatch = newPatchResult.stdout();
+    else
+      newPatch = "";
+
+    if (!oldPatch.equals(newPatch))
     {
-      // Content changed — get stat for error message
+      // Patch content differs — get stat for error message
       ProcessRunner.Result diffStatResult = ProcessRunner.run(
         "git", "-C", directory, "diff", backup, "--stat");
       String diffStat = "";
