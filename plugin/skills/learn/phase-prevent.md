@@ -733,15 +733,15 @@ Documentation changes for compliance failures require empirical verification —
 /cat:empirical-test "[describe the compliance failure that was fixed]"
 ```
 
-The empirical test must confirm the fixed skill content achieves ≥70% compliance before the prevention is considered
+The empirical test must confirm the fixed skill content achieves ≥95% compliance before the prevention is considered
 implemented.
 
 **Acceptance threshold:**
 
 | Result | Action |
 |--------|--------|
-| ≥70% success | Prevention verified — proceed to output |
-| <70% success | Return to Step 9 — skill fix is insufficient |
+| ≥95% success | Prevention verified — proceed to output |
+| <95% success | Return to Step 9 — skill fix is insufficient |
 
 **Skip only when:**
 - The compliance behavior cannot be tested with the empirical test runner (e.g., requires live session state)
