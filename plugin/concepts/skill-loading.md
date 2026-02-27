@@ -264,3 +264,46 @@ incorrect output — the skill appears to work (no error) but generates no compu
 1. Create directory: `.claude/skills/{skill-name}/`
 2. Create `SKILL.md` with content (no preprocessor needed)
 3. The skill is available as `{skill-name}` within the project
+
+## Output Path Changes Convention
+
+**MANDATORY:** When modifying a skill's output mechanism, changes must be validated with empirical testing before and after.
+
+### What Constitutes an Output Path Change
+
+An output path change is any modification to:
+- The `<output>` block in a skill's `first-use.md`
+- The `!` preprocessor directive that generates output
+- Migration between static output (via `<output>` + `!` block) and dynamic output (via `INVOKE: Skill`)
+- Refactoring of Java handlers that generate skill output (e.g., `GetStatusOutput`, `GetDiffOutput`)
+
+### Testing Requirement
+
+For each output path change:
+
+1. **Before modification:** Run `/cat:empirical-test` on the affected skill to establish baseline behavior
+2. **After modification:** Run `/cat:empirical-test` again to verify the skill produces output
+3. **Success criteria:** Both tests must achieve ≥95% compliance on the haiku model
+
+### Example Workflow
+
+```
+# 1. Baseline test
+/cat:empirical-test /cat:status
+
+# 2. Modify the skill (e.g., change from INVOKE: to <output> pattern)
+# Edit: plugin/skills/status/first-use.md
+# Edit: client/src/main/java/.../GetStatusOutput.java
+
+# 3. Verify fix
+/cat:empirical-test /cat:status
+
+# 4. If both tests pass, proceed to commit
+# If second test fails, investigate output generation and re-test
+```
+
+### Why This Matters
+
+Output paths affect core user workflows. Silent regressions (skill runs but produces no computed output, or output
+format changes unexpectedly) can propagate to dependent skills. Empirical testing detects these regressions early,
+before merging to main.

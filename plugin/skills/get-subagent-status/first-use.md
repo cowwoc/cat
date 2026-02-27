@@ -21,7 +21,7 @@ about intervention or result collection.
 
 ## Progress Output (MANDATORY)
 
-INVOKE: Skill("cat:get-output", args="get-subagent-status")
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" get-subagent-status`
 
 The skill returns monitoring data wrapped in `<output type="get-subagent-status">`. Do NOT invoke Bash or construct monitoring output manually.
 

@@ -8,9 +8,11 @@ package io.github.cowwoc.cat.hooks;
 
 import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner;
 import io.github.cowwoc.cat.hooks.skills.GetCheckpointOutput;
+import io.github.cowwoc.cat.hooks.skills.GetCleanupOutput;
 import io.github.cowwoc.cat.hooks.skills.GetIssueCompleteOutput;
 import io.github.cowwoc.cat.hooks.skills.GetNextIssueOutput;
 import io.github.cowwoc.cat.hooks.skills.GetDiffOutput;
+import io.github.cowwoc.cat.hooks.skills.GetOutput;
 import io.github.cowwoc.cat.hooks.skills.GetStatusOutput;
 import io.github.cowwoc.cat.hooks.skills.GetSubagentStatusOutput;
 import io.github.cowwoc.cat.hooks.skills.ProgressBanner;
@@ -80,6 +82,8 @@ public final class AotTraining
       // Calling getOutput() would read the filesystem, which is unnecessary for training.
       new GetStatusOutput(scope);
       new GetDiffOutput(scope);
+      new GetCleanupOutput(scope);
+      new GetOutput(scope);
 
       // VerifyAudit training - create temp file for parse() and minimal JSON for report()
       Path tempDir = Files.createTempDirectory("aot-training-");

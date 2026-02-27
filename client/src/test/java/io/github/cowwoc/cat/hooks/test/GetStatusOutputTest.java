@@ -1123,6 +1123,34 @@ public class GetStatusOutputTest
   }
 
   /**
+   * Verifies that output includes NEXT STEPS table with header and option rows.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void outputIncludesNextStepsTable() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-next-steps");
+    Path issuesDir = tempDir.resolve(".claude/cat/issues");
+    Files.createDirectories(issuesDir);
+
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetStatusOutput handler = new GetStatusOutput(scope);
+      String result = handler.getOutput(new String[0]);
+
+      requireThat(result, "result").contains("**NEXT STEPS**").
+        contains("| Option | Action | Command |").
+        contains("| [**1**] | Execute an issue | `/cat:work {version}-<issue-name>` |").
+        contains("| [**2**] | Add new issue | `/cat:add` |");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that inner version boxes have the same visual width when major versions have different
    * content lengths, ensuring right borders align vertically.
    *
