@@ -2200,6 +2200,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Before editing any skill or command file as prevention, invoke /cat:skill-builder with the target file path and follow its backward-reasoning decomposition"
+    },
+    {
+      "id": "M422",
+      "timestamp": "2026-02-27T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "After implementing compliance fixes for M419/M420 in plugin/skills/config/first-use.md, /cat:empirical-test was not run to verify the fixes worked, allowing the same recurrence to occur without a feedback loop",
+      "root_cause": "The learn skill's phase-prevent.md had no gate requiring empirical verification after compliance fixes to skill files. Compliance fixes could be committed as 'done' without any behavioral validation, breaking the feedback loop.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/learn/phase-prevent.md",
+      "pattern_keywords": [
+        "empirical-test",
+        "compliance-verification",
+        "feedback-loop",
+        "protocol_violation",
+        "skill-fix-validation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "After implementing a skill documentation fix for a compliance failure (protocol_violation category), run /cat:empirical-test to verify the fix achieves >=70% compliance before recording the prevention as complete"
     }
   ]
 }
