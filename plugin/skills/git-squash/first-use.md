@@ -7,6 +7,14 @@ See LICENSE.md in the project root for license terms.
 
 **Purpose**: Safely squash multiple commits into one with automatic backup, verification, and cleanup.
 
+## Scope Boundary
+
+**This skill covers squash and rebase only.** After squash completes, return results to the caller and stop.
+
+Subsequent operations — `git merge`, worktree removal (`git worktree remove`), branch deletion (`git branch -D`),
+and invoking `work-complete` — are NOT part of this skill. Performing them without explicit user approval is a
+protocol violation. These operations require the full `work-with-issue` approval gate before they can proceed.
+
 ## MANDATORY: Use This Skill
 
 **NEVER manually run `git reset --soft` for squashing.** Always use this skill.
