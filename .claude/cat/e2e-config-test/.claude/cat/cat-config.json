@@ -1,0 +1,5 @@
+{
+  "completionWorkflow": "merge",
+  "reviewThreshold": "medium",
+  "minSeverity": "low"
+}
