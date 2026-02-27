@@ -2307,6 +2307,34 @@
         "catches_variations": true
       },
       "correct_behavior": "All learn session changes (prevention files + retrospective metadata) must go into a SINGLE commit in Phase 4 Step 13. Phase 3 edits files but does not commit."
+    },
+    {
+      "id": "M426",
+      "timestamp": "2026-02-27T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "Merged issue branch into base branch without user permission after squash+rebase, also removed worktree, deleted branch, and invoked work-complete",
+      "root_cause": "git-squash/first-use.md has no scope boundary clause. The skill covers squash and rebase only, but contained no explicit stop point. The agent, after completing squash+rebase as requested, continued into full merge workflow (git merge --ff-only, git worktree remove, git branch -D, work-complete) because nothing in the skill told it to stop and return control to the caller.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/git-squash/first-use.md",
+      "pattern_keywords": [
+        "merge-without-approval",
+        "scope-overrun",
+        "worktree-removal",
+        "git-squash",
+        "approval-gate",
+        "work-complete"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When the user requests 'squash and rebase', complete only the squash+rebase operation and return control. Do NOT proceed to git merge, worktree removal, branch deletion, or work-complete without explicit user approval through the approval gate."
     }
   ]
 }
