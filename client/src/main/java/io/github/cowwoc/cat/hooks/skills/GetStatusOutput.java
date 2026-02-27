@@ -697,11 +697,20 @@ public final class GetStatusOutput implements SkillOutput
       }
     }
 
-    StringBuilder result = new StringBuilder();
+    StringBuilder result = new StringBuilder(1024);
     result.append(display.buildTopBorder(maxContentWidth)).append('\n');
     for (String item : wrappedContentItems)
       result.append(display.buildLine(item, maxContentWidth)).append('\n');
-    result.append(display.buildBottomBorder(maxContentWidth));
+    result.append(display.buildBottomBorder(maxContentWidth)).
+      append("""
+
+        **NEXT STEPS**
+
+        | Option | Action | Command |
+        |--------|--------|----------|
+        | [**1**] | Execute an issue | `/cat:work {version}-<issue-name>` |
+        | [**2**] | Add new issue | `/cat:add` |
+        """);
 
     return result.toString();
   }

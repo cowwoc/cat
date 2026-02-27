@@ -20,7 +20,7 @@ Implements the full workflow defined in `retrospectives.json`.
 
 ## Skill Output Analysis
 
-INVOKE: Skill("cat:get-output", args="run-retrospective")
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" run-retrospective`
 
 The result is one of three types:
 
