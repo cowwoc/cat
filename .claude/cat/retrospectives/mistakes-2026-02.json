@@ -2443,6 +2443,34 @@
         "catches_variations": true
       },
       "correct_behavior": "Binary launchers are at /home/node/.config/claude/plugins/cache/cat/cat/2.1/client/bin/. The workspace client/ directory contains only Java source code in src/main/java/ - no compiled binaries exist in /workspace/client/bin/"
+    },
+    {
+      "id": "M431",
+      "timestamp": "2026-02-27T21:20:03Z",
+      "category": "incorrect_implementation",
+      "description": "centralize-verbatim-output-skill: get-output SKILL.md used load-skill instead of binary launcher, and GetOutput.java was not registered in build-jlink.sh, breaking all 10 migrated skills",
+      "root_cause": "Agent creating a new Java-dispatching skill used load-skill (SkillLoader) in SKILL.md preprocessor instead of calling the Java binary launcher directly. Additionally, GetOutput.java was not registered in build-jlink.sh HANDLERS array, so no binary existed. No E2E verification was run (mvn verify + empirical test) before merge, leaving both defects undetected. PLAN.md Steps 6-7 (build + empirical test) were skipped entirely.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/skill-loading.md",
+      "pattern_keywords": [
+        "build-jlink",
+        "load-skill",
+        "binary-launcher",
+        "java-handler",
+        "registration",
+        "skill-creation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When creating a new plugin skill that dispatches to a Java handler: (1) register the handler in build-jlink.sh HANDLERS array, (2) call the binary launcher in SKILL.md (not load-skill). Run mvn -f client/pom.xml verify and empirical tests before merge to catch integration failures early."
     }
   ]
 }
