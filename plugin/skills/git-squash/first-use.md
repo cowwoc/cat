@@ -69,7 +69,8 @@ fi
 
 - Group related commits by their purpose/topic
 - Each topic becomes one squashed commit
-- Preserve commit type boundaries (e.g., `feature:` vs `config:`)
+- Topic is primary — commits on the same topic combine even if they have different type prefixes
+- Preserve commit type boundaries only when topics are also different (e.g., `feature:` vs `docs:`)
 
 **Example:** If branch has these commits:
 ```
@@ -83,6 +84,18 @@ Squash to:
 ```
 config: add handler registry with null handling and conventions
 docs: update README
+```
+
+**Cross-type example (same topic, different prefixes):**
+```
+bugfix: fix SkillLoader argument parsing with ShellParser.tokenize()
+refactor: change SkillLoader to accept pre-tokenized arguments
+```
+
+These two commits both change `SkillLoader.java` and `SkillLoaderTest.java` and address the same argument-handling
+concern. Squash to one commit, choosing the type that best describes the combined change:
+```
+bugfix: fix SkillLoader argument parsing and pre-tokenize inputs
 ```
 
 **What is NOT the same topic (keep separate):**
@@ -310,7 +323,9 @@ git commit-tree "$TREE" -p $BASE -m "$MESSAGE"  # Use same pinned ref
 
 Key rules when squashing:
 - **Issue STATE.md** → same commit as implementation
-- **Different commit types** (`feature:` vs `docs:`) → keep separate
+- **Same topic, different type prefixes** (`bugfix:` + `refactor:` on same code) → combine into one commit; choose
+  the type that best describes the combined change
+- **Different topics AND different commit types** (`feature:` vs `docs:`) → keep separate
 - **Related same-type commits** → can combine
 - **Implementation + refactor of same code** → combine into one commit
 
