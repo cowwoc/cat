@@ -2092,6 +2092,33 @@
         "catches_variations": true
       },
       "correct_behavior": "After any interactive rebase that drops or squashes commits, run STATE.md regression check comparing backup branch STATE.md status fields against current; fail if any closed issue regressed to open"
+    },
+    {
+      "id": "M418",
+      "timestamp": "2026-02-27T00:00:00Z",
+      "category": "incorrect_implementation",
+      "description": "git-rebase-safe VERIFY_FAILED false positive when base branch advanced since worktree creation",
+      "root_cause": "GitRebaseSafe.java Step 5 compares post-rebase tree against pre-rebase backup using git diff --quiet backup, but backup was taken before rebase and does not include new base branch commits. When base branch advances, the post-rebase tree legitimately differs from backup, triggering false VERIFY_FAILED even though issue branch content is intact.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/client/src/main/java/io/github/cowwoc/cat/hooks/util/GitRebaseSafe.java",
+      "pattern_keywords": [
+        "git-rebase-safe",
+        "false-positive",
+        "verification",
+        "content-changed",
+        "base-branch-advanced"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Step 5 verification should compare the patch diff of the issue branch before and after rebase (git diff <old-base>..backup vs git diff <new-base>..HEAD), not tree state. If the issue branch patch content is identical, the rebase is a success regardless of new base commits."
     }
   ]
 }
