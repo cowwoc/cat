@@ -5,4 +5,4 @@ See LICENSE.md in the project root for license terms.
 -->
 # Token Report
 
-INVOKE: Skill("cat:get-output", args="token-report")
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" token-report`

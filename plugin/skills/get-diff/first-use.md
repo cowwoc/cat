@@ -5,4 +5,4 @@ See LICENSE.md in the project root for license terms.
 -->
 # Get Diff
 
-INVOKE: Skill("cat:get-output", args="get-diff")
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" get-diff`
