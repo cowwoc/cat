@@ -2,7 +2,7 @@
 
 - **Dependencies:** []
 - **Blocks:** []
-- **Last Updated:** 2026-02-24
+- **Last Updated:** 2026-02-27
 
 
 # v2.1 State: Pre-Demo Polish
@@ -39,6 +39,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-macos-sed-incompatibility
 - fix-work-merge-parent-state-uncommitted
 - fix-git-rebase-safe-false-positive-when-base-branch-advances
+- refactor-config-skill-lazy-screens
 
 
 ## Issues Completed
