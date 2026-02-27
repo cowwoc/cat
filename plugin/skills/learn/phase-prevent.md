@@ -367,6 +367,19 @@ The checklist covers:
 
 ## Step 9: Implement Prevention
 
+### Skill-Builder Gate
+
+**MANDATORY: Invoke `/cat:skill-builder` before editing any skill or command file.**
+
+If `prevention_type` is `skill` and the fix involves editing a skill or command file:
+
+1. Invoke `/cat:skill-builder` with the target file path before making any edits
+2. Follow skill-builder's backward reasoning to decompose the change into forward steps
+3. Only proceed to edit the file after skill-builder has been invoked
+
+**BLOCKING CONDITION:** Do NOT edit a skill or command file without first invoking `/cat:skill-builder`. Skipping
+skill-builder bypasses the backward-reasoning decomposition that ensures the change is correct and complete.
+
 ### Issue Worktree Gate
 
 Before implementing prevention, check if you are in an issue worktree:
