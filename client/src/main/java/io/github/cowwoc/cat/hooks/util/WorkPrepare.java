@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -57,17 +58,17 @@ public final class WorkPrepare
    * Matches the "Files to Create" section in PLAN.md.
    */
   private static final Pattern FILES_TO_CREATE_PATTERN =
-    Pattern.compile("## Files to Create\\s+(.*?)(?=\\n##|\\Z)", Pattern.DOTALL);
+    Pattern.compile("## Files to Create\\s+(.*?)(?=\\n## [^#]|\\Z)", Pattern.DOTALL);
   /**
    * Matches the "Files to Modify" section in PLAN.md.
    */
   private static final Pattern FILES_TO_MODIFY_PATTERN =
-    Pattern.compile("## Files to Modify\\s+(.*?)(?=\\n##|\\Z)", Pattern.DOTALL);
+    Pattern.compile("## Files to Modify\\s+(.*?)(?=\\n## [^#]|\\Z)", Pattern.DOTALL);
   /**
-   * Matches the "Execution Steps" section in PLAN.md.
+   * Matches the "Execution Waves" section in PLAN.md.
    */
-  private static final Pattern EXECUTION_STEPS_PATTERN =
-    Pattern.compile("## Execution Steps\\s+(.*?)(?=\\n##|\\Z)", Pattern.DOTALL);
+  private static final Pattern EXECUTION_WAVES_PATTERN =
+    Pattern.compile("## Execution Waves\\s+(.*?)(?=\\n## [^#]|\\Z)", Pattern.DOTALL);
   /**
    * Hard limit for token estimation: issues estimated above this are considered oversized.
    */
@@ -486,6 +487,7 @@ public final class WorkPrepare
         "message", "Failed to read pre-conditions from PLAN.md: " + e.getMessage()));
     }
 
+    // Read execution groups from PLAN.md (parallel subagent annotations)
     // Step 10: Return READY JSON
     Map<String, Object> result = new LinkedHashMap<>();
     result.put("status", "READY");
@@ -1076,7 +1078,7 @@ public final class WorkPrepare
         if (line.strip().startsWith("-"))
         {
           ++filesToCreate;
-          if (line.toLowerCase(java.util.Locale.ROOT).contains("test"))
+          if (line.toLowerCase(Locale.ROOT).contains("test"))
             ++testFilesInCreate;
         }
       }
@@ -1094,7 +1096,7 @@ public final class WorkPrepare
         if (line.strip().startsWith("-"))
         {
           ++filesToModify;
-          if (line.toLowerCase(java.util.Locale.ROOT).contains("test"))
+          if (line.toLowerCase(Locale.ROOT).contains("test"))
             ++testFilesInModify;
         }
       }
@@ -1102,19 +1104,21 @@ public final class WorkPrepare
 
     int testFiles = testFilesInCreate + testFilesInModify;
 
-    // Count execution steps
-    Matcher stepsSection = EXECUTION_STEPS_PATTERN.matcher(content);
-    int steps = 0;
-    if (stepsSection.find())
+    // Count items in Execution Waves (### Wave N sections with bullet items)
+    int executionItems = 0;
+    Matcher wavesSection = EXECUTION_WAVES_PATTERN.matcher(content);
+    if (wavesSection.find())
     {
-      for (String line : stepsSection.group(1).split("\n"))
+      String wavesContent = wavesSection.group(1);
+      for (String line : wavesContent.split("\n"))
       {
-        if (line.strip().matches("^\\d+\\..*"))
-          ++steps;
+        // Count top-level bullet items only; top-level items start with "- " (zero indent)
+        if (line.startsWith("- "))
+          ++executionItems;
       }
     }
 
-    return filesToCreate * 5_000 + filesToModify * 3_000 + testFiles * 4_000 + steps * 2_000 + 10_000;
+    return filesToCreate * 5_000 + filesToModify * 3_000 + testFiles * 4_000 + executionItems * 2_000 + 10_000;
   }
 
   /**
@@ -1208,7 +1212,7 @@ public final class WorkPrepare
         boolean isPlanning = false;
         for (String prefix : planningPrefixes)
         {
-          if (msg.toLowerCase(java.util.Locale.ROOT).startsWith(prefix))
+          if (msg.toLowerCase(Locale.ROOT).startsWith(prefix))
           {
             isPlanning = true;
             break;
@@ -1236,6 +1240,19 @@ public final class WorkPrepare
     Set<String> plannedFiles = extractPlannedFiles(planPath);
     if (!plannedFiles.isEmpty())
     {
+      // Pre-compile glob patterns once before the triple-nested loop
+      Map<String, Pattern> globPatterns = new LinkedHashMap<>();
+      for (String plannedFile : plannedFiles)
+      {
+        if (plannedFile.contains("*"))
+        {
+          String regexPattern = plannedFile.
+            replace(".", "\\.").
+            replace("*", "[^/]*");
+          globPatterns.put(plannedFile, Pattern.compile(".*" + regexPattern));
+        }
+      }
+
       try
       {
         // Get the last 20 commits on base to check for file overlap
@@ -1256,7 +1273,7 @@ public final class WorkPrepare
           boolean isPlanning = false;
           for (String prefix : planningPrefixes)
           {
-            if (msg.toLowerCase(java.util.Locale.ROOT).startsWith(prefix))
+            if (msg.toLowerCase(Locale.ROOT).startsWith(prefix))
             {
               isPlanning = true;
               break;
@@ -1275,7 +1292,12 @@ public final class WorkPrepare
             for (String plannedFile : plannedFiles)
             {
               // Match by suffix to handle glob patterns like `plugin/agents/stakeholder-*.md`
-              if (changedFile.endsWith(plannedFile) || matchesGlobSuffix(changedFile, plannedFile))
+              boolean matches;
+              if (plannedFile.contains("*"))
+                matches = globPatterns.get(plannedFile).matcher(changedFile).matches();
+              else
+                matches = changedFile.endsWith(plannedFile);
+              if (matches)
               {
                 suspiciousHashes.add(hash);
                 suspiciousLines.add(line + " [touches planned file: " + changedFile + "]");
@@ -1299,8 +1321,8 @@ public final class WorkPrepare
   /**
    * Extracts the set of file paths listed under "Files to Create" and "Files to Modify" in PLAN.md.
    * <p>
-   * Glob patterns (e.g., {@code plugin/agents/stakeholder-*.md}) are included as-is and matched
-   * using {@link #matchesGlobSuffix(String, String)}.
+   * Glob patterns (e.g., {@code plugin/agents/stakeholder-*.md}) are included as-is for later
+   * matching against actual changed files.
    *
    * @param planPath the path to PLAN.md
    * @return the set of planned file paths, or an empty set if PLAN.md is absent or unreadable
@@ -1348,29 +1370,6 @@ public final class WorkPrepare
       }
     }
     return files;
-  }
-
-  /**
-   * Returns true if {@code filePath} matches {@code pattern} treating {@code *} as a wildcard
-   * that matches any sequence of non-separator characters.
-   * <p>
-   * Only the final path segment of {@code pattern} is checked for glob wildcards. Patterns without
-   * {@code *} are matched by exact suffix.
-   *
-   * @param filePath the actual file path from git
-   * @param pattern the planned file path, optionally containing a {@code *} wildcard
-   * @return true if the path matches the pattern
-   */
-  private boolean matchesGlobSuffix(String filePath, String pattern)
-  {
-    if (!pattern.contains("*"))
-      return filePath.endsWith(pattern);
-
-    // Convert glob pattern to regex: escape dots, replace * with [^/]*
-    String regexPattern = pattern.
-      replace(".", "\\.").
-      replace("*", "[^/]*");
-    return filePath.matches(".*" + regexPattern);
   }
 
   /**

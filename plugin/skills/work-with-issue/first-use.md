@@ -60,7 +60,7 @@ split on whitespace:
 
 ```bash
 # Parse positional arguments
-read ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH BASE_BRANCH ESTIMATED_TOKENS TRUST VERIFY <<< "$ARGUMENTS"
+read ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH ESTIMATED_TOKENS TRUST VERIFY <<< "$ARGUMENTS"
 ```
 
 ## Step 1: Display Preparing Banner
@@ -161,6 +161,29 @@ or failed results to the subagent for manual fixing — that bypasses the skill'
 
 Capture the output from these skills - the implementation subagent will need the results.
 
+### Detect Parallel Execution Waves
+
+Read PLAN.md directly to detect `## Execution Waves` sections and count the number of `### Wave N` subsections.
+
+For each wave subsection found, count the top-level bullet items (`- `) that don't start with indentation. Ignore
+sub-items (indented bullets with `  - `).
+
+**Simplified detection in Bash:**
+
+```bash
+# Count number of ### Wave N sections in PLAN.md
+WAVES_COUNT=$(grep -c "^### Wave " "$PLAN_MD" 2>/dev/null || echo 0)
+```
+
+Where `$PLAN_MD` is the path to the issue's PLAN.md file.
+
+**If waves are empty or only one wave is present (`WAVES_COUNT` is 0 or 1):** proceed to single-subagent execution
+(see below). Parse execution items from `## Execution Steps` (old format) or `## Execution Waves` / `### Wave 1`
+(new format).
+
+**If two or more waves are present (`WAVES_COUNT` >= 2):** use parallel execution (see Parallel Subagent Execution
+below). Extract the wave sections from PLAN.md and count items in each wave.
+
 ### Delegation Prompt Construction
 
 **Pass PLAN.md execution steps verbatim without interpretive summarization.**
@@ -178,7 +201,7 @@ the subagent to treat distinct steps as a single operation, causing incomplete e
 - ❌ Do NOT add interpretive summaries or aggregate instructions
 - ❌ Do NOT synthesize "Important Notes" that restate steps differently
 
-### Spawn Implementation Subagent
+### Single-Subagent Execution (no groups or only one group)
 
 Spawn a subagent to implement the issue:
 
@@ -194,15 +217,15 @@ Task tool:
     ISSUE_PATH: ${ISSUE_PATH}
     WORKTREE_PATH: ${WORKTREE_PATH}
     BRANCH: ${BRANCH}
-    BASE_BRANCH: ${BASE_BRANCH}
+    TARGET_BRANCH: ${TARGET_BRANCH}
     ESTIMATED_TOKENS: ${ESTIMATED_TOKENS}
     TRUST_LEVEL: ${TRUST}
 
     ## Issue Goal (from PLAN.md)
     ${ISSUE_GOAL}
 
-    ## Execution Steps (from PLAN.md)
-    ${EXECUTION_STEPS}
+    ## Execution Waves (from PLAN.md)
+    [Include the ## Execution Waves section from PLAN.md, or ## Execution Steps for old-format plans]
 
     ## Pre-Invoked Skill Results
     [If skills were pre-invoked above, include their output here]
@@ -258,13 +281,115 @@ Task tool:
     CRITICAL: You are the implementation agent - implement directly, do NOT spawn another subagent.
 ```
 
+### Parallel Subagent Execution (two or more groups)
+
+When PLAN.md contains two or more execution groups, spawn one subagent per group simultaneously.
+Each subagent works in the **same issue worktree** (`${WORKTREE_PATH}`) but executes only its
+assigned steps. The last group's subagent updates STATE.md; other groups skip it.
+
+**IMPORTANT:** Parallel subagents all push to the same branch (`${BRANCH}`). Each subagent must
+pull before pushing to avoid conflicts. Only one subagent should update STATE.md — assign this
+responsibility to the last group (highest group label alphabetically).
+
+**Step order:** For each group label (A, B, C, ... sorted alphabetically), extract the steps
+belonging to that group from PLAN.md, then spawn the subagent. Spawn all subagents in the same
+message (Task tool calls can be parallel).
+
+For each group (example for group A with steps 1, 2, 3):
+
+```
+Task tool:
+  description: "Execute: implement ${ISSUE_ID} group A (steps 1, 2, 3)"
+  subagent_type: "cat:work-execute"
+  prompt: |
+    Execute the implementation for issue ${ISSUE_ID}, group A only.
+
+    ## Issue Configuration
+    ISSUE_ID: ${ISSUE_ID}
+    ISSUE_PATH: ${ISSUE_PATH}
+    WORKTREE_PATH: ${WORKTREE_PATH}
+    BRANCH: ${BRANCH}
+    TARGET_BRANCH: ${TARGET_BRANCH}
+    ESTIMATED_TOKENS: ${ESTIMATED_TOKENS}
+    TRUST_LEVEL: ${TRUST}
+    ASSIGNED_WAVE: 1
+    ASSIGNED_ITEMS: [List of bullet items from ### Wave 1 section]
+
+    ## Issue Goal (from PLAN.md)
+    ${ISSUE_GOAL}
+
+    ## Execution Items for This Wave (from PLAN.md)
+    [Include ONLY the execution items belonging to this wave, verbatim from PLAN.md's ### Wave N section]
+
+    ## Pre-Invoked Skill Results
+    [If skills were pre-invoked above, include their output here]
+
+    ## First Action (MANDATORY)
+    Your working directory defaults to /workspace (main worktree). Before doing ANYTHING else:
+    ```bash
+    cd ${WORKTREE_PATH}
+    git branch --show-current  # Must output: ${BRANCH}
+    ```
+    If the branch does not match ${BRANCH}, STOP and return BLOCKED immediately.
+
+    ## Critical Requirements
+    - Work ONLY in the worktree at ${WORKTREE_PATH} — cd there as your FIRST action (see above)
+    - Verify you are on branch ${BRANCH} before making changes
+    - Execute ONLY the items assigned to your wave (ASSIGNED_ITEMS above)
+    - Do NOT execute items from other waves
+    - After committing your work, run: git -C ${WORKTREE_PATH} pull --rebase origin ${BRANCH} (if remote exists)
+    - **STATE.md ownership:** You are [DETERMINED AUTOMATICALLY: if wave is the last one, "the STATE.md owner" else "NOT the STATE.md owner"]. [If owner: "Update STATE.md in your final commit: status: closed, progress: 100%." Else: "Do NOT modify STATE.md in any commit."]
+    - Run tests if applicable
+    - Commit your changes using the commit type from PLAN.md (e.g., `feature:`, `bugfix:`, `docs:`). The commit message must follow the format: `<type>: <descriptive summary>`. Do NOT use generic messages.
+
+    ## Return Format
+    Return JSON when complete:
+    ```json
+    {
+      "status": "SUCCESS|PARTIAL|FAILED|BLOCKED",
+      "group": "A",
+      "tokens_used": <actual>,
+      "percent_of_context": <actual>,
+      "compaction_events": 0,
+      "commits": [
+        {"hash": "abc123", "message": "feature: description", "type": "feature"}
+      ],
+      "files_changed": <actual>,
+      "issue_metrics": {},
+      "discovered_issues": [],
+      "verification": {
+        "build_passed": true,
+        "tests_passed": true,
+        "test_count": 15
+      }
+    }
+    ```
+
+    If you encounter a blocker, return:
+    ```json
+    {
+      "status": "BLOCKED",
+      "group": "A",
+      "message": "Description of blocker",
+      "blocker": "What needs to be resolved"
+    }
+    ```
+
+    CRITICAL: You are the implementation agent - implement directly, do NOT spawn another subagent.
+```
+
+**Wait for all group subagents to complete, then merge their results:**
+- Collect commits from all groups into a single combined list
+- If any group returns FAILED or BLOCKED, stop and report failure
+- Aggregate `files_changed`, `tokens_used`, and `compaction_events` across all groups
+
 ### Handle Execution Result
 
-Parse the subagent result:
+Parse the subagent result(s):
 
-- **SUCCESS/PARTIAL**: Store metrics, proceed to verification
-- **FAILED**: Return FAILED status with error details
-- **BLOCKED**: Return FAILED with blocker info
+- **SUCCESS/PARTIAL** (all groups): Merge commits, aggregate metrics, proceed to verification
+- **FAILED** (any group): Return FAILED status with error details from that group
+- **BLOCKED** (any group): Return FAILED with blocker info from that group
 
 ### Verify Commit Messages
 
@@ -281,7 +406,7 @@ what the orchestrator instructed for that specific deliverable.
 **Get actual commit messages from git:**
 
 ```bash
-git -C ${WORKTREE_PATH} log --format="%H %s" ${BASE_BRANCH}..HEAD
+git -C ${WORKTREE_PATH} log --format="%H %s" ${TARGET_BRANCH}..HEAD
 ```
 
 This returns lines of: `<commit-hash> <commit-subject>`.
@@ -375,7 +500,7 @@ Task tool:
     ISSUE_PATH: ${ISSUE_PATH}
     WORKTREE_PATH: ${WORKTREE_PATH}
     BRANCH: ${BRANCH}
-    BASE_BRANCH: ${BASE_BRANCH}
+    TARGET_BRANCH: ${TARGET_BRANCH}
 
     ## Execution Result
     Commits: ${execution_commits_json}
@@ -486,10 +611,10 @@ Initialize loop: `VERIFY_ITERATION=0`
        ## Instructions
        - Read ${ISSUE_PATH}/PLAN.md to understand the current plan
        - Read the detail files to understand what specifically failed
-       - Add new "Fix" steps to the Execution Steps section of PLAN.md
-       - Each fix step must address exactly one missing criterion
-       - Do NOT remove or alter existing steps — only append new fix steps
-       - Commit the revised PLAN.md: `planning: add fix steps for missing criteria (iteration ${VERIFY_ITERATION})`
+       - Add new items to the Execution Waves section of PLAN.md (or Execution Steps for old-format plans)
+       - Each new item must address exactly one missing criterion
+       - Do NOT remove or alter existing items — only append new items to the last wave (or steps section)
+       - Commit the revised PLAN.md: `planning: add fix items for missing criteria (iteration ${VERIFY_ITERATION})`
 
        ## Return Format
        ```json
@@ -514,7 +639,7 @@ Initialize loop: `VERIFY_ITERATION=0`
        ISSUE_PATH: ${ISSUE_PATH}
        WORKTREE_PATH: ${WORKTREE_PATH}
        BRANCH: ${BRANCH}
-       BASE_BRANCH: ${BASE_BRANCH}
+       TARGET_BRANCH: ${TARGET_BRANCH}
 
        ## Fix Steps (from revised PLAN.md)
        ${fix_steps_from_planning_result}
@@ -699,7 +824,7 @@ The auto-fix threshold is determined by `AUTOFIX_THRESHOLD`:
        ISSUE_ID: ${ISSUE_ID}
        WORKTREE_PATH: ${WORKTREE_PATH}
        BRANCH: ${BRANCH}
-       BASE_BRANCH: ${BASE_BRANCH}
+       TARGET_BRANCH: ${TARGET_BRANCH}
 
        ## Concerns to Analyze
        ${concerns_formatted}
@@ -742,7 +867,7 @@ The auto-fix threshold is determined by `AUTOFIX_THRESHOLD`:
        ISSUE_ID: ${ISSUE_ID}
        WORKTREE_PATH: ${WORKTREE_PATH}
        BRANCH: ${BRANCH}
-       BASE_BRANCH: ${BASE_BRANCH}
+       TARGET_BRANCH: ${TARGET_BRANCH}
 
        ## HIGH+ Concerns to Fix
        ${concerns_formatted}
@@ -803,7 +928,7 @@ defer it.
 **Step 1: Read the list of files changed by this issue:**
 
 ```bash
-git -C "${WORKTREE_PATH}" diff --name-only "${BASE_BRANCH}..HEAD"
+git -C "${WORKTREE_PATH}" diff --name-only "${TARGET_BRANCH}..HEAD"
 ```
 
 **Step 2: For each remaining concern, calculate benefit and cost:**
@@ -1004,7 +1129,7 @@ Task tool:
     ISSUE_ID: ${ISSUE_ID}
     ISSUE_PATH: ${ISSUE_PATH}
     WORKTREE_PATH: ${WORKTREE_PATH}
-    BASE_BRANCH: ${BASE_BRANCH}
+    TARGET_BRANCH: ${TARGET_BRANCH}
     PRIMARY_COMMIT_MESSAGE: ${PRIMARY_COMMIT_MESSAGE}
 
     Load and follow: @${CLAUDE_PLUGIN_ROOT}/agents/work-squash.md
@@ -1091,7 +1216,7 @@ about what they are approving.
 
 2. **Display commit summary** — list commits since base branch:
    ```bash
-   git -C ${WORKTREE_PATH} log --oneline ${BASE_BRANCH}..HEAD
+   git -C ${WORKTREE_PATH} log --oneline ${TARGET_BRANCH}..HEAD
    ```
 
 3. **Display issue goal** (from PLAN.md)
@@ -1191,7 +1316,7 @@ NOT proceed to merge, release the lock, remove the worktree, or invoke work-comp
        ISSUE_ID: ${ISSUE_ID}
        WORKTREE_PATH: ${WORKTREE_PATH}
        BRANCH: ${BRANCH}
-       BASE_BRANCH: ${BASE_BRANCH}
+       TARGET_BRANCH: ${TARGET_BRANCH}
 
        ## MEDIUM+ Concerns to Fix
        ${concerns_formatted}
@@ -1284,10 +1409,10 @@ if TRUST != "high":
     # If no approval was obtained (e.g., Step 8 was skipped due to a logic error),
     # invoke AskUserQuestion now as a safety net:
     AskUserQuestion:
-      question: "Ready to merge ${ISSUE_ID} to ${BASE_BRANCH}?"
+      question: "Ready to merge ${ISSUE_ID} to ${TARGET_BRANCH}?"
       options:
         - label: "Approve and merge"
-          description: "Squash commits and merge to ${BASE_BRANCH}"
+          description: "Squash commits and merge to ${TARGET_BRANCH}"
         - label: "Abort"
           description: "Cancel the merge"
     # If user selects "Abort", return ABORTED status (same as Step 8 abort handling)
@@ -1308,7 +1433,7 @@ Task tool:
     ISSUE_PATH: ${ISSUE_PATH}
     WORKTREE_PATH: ${WORKTREE_PATH}
     BRANCH: ${BRANCH}
-    BASE_BRANCH: ${BASE_BRANCH}
+    TARGET_BRANCH: ${TARGET_BRANCH}
     COMMITS: ${commits_json}
 
     Load and follow: @${CLAUDE_PLUGIN_ROOT}/skills/work-merge/SKILL.md

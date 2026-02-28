@@ -46,13 +46,15 @@ Select the appropriate template based on issue type.
 <!-- Default: all dependent issues listed in STATE.md are closed -->
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 <!-- ACTIONS ONLY - Do NOT include expected outcomes like "score = 1.0" or "should be X" -->
 <!-- Expected values prime subagents to fabricate results instead of running actual validation -->
-1. **Step 1:** [action to perform]
-   - Files: [paths]
-2. **Step 2:** [action to perform]
-   ...
+- [action item 1]
+  - Files: [paths]
+- [action item 2]
+  - Files: [paths]
 
 ## Post-conditions
 <!-- MEASURABLE OUTCOMES - What must be true after execution completes -->
@@ -104,10 +106,12 @@ code_that_fails();
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 <!-- ACTIONS ONLY - Do NOT include expected outcomes -->
-1. **Step 1:** [action with specific code changes]
-2. **Step 2:** [next action]
+- [action item 1 with specific code changes]
+- [action item 2]
 
 ## Post-conditions
 <!-- MEASURABLE OUTCOMES - verified separately from execution -->
@@ -143,10 +147,12 @@ code_that_fails();
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 <!-- ACTIONS ONLY - Do NOT include expected outcomes -->
-1. **Step 1:** [action with before/after patterns]
-2. **Step 2:** [next action]
+- [action item 1 with before/after patterns]
+- [action item 2]
 
 ## Post-conditions
 <!-- MEASURABLE OUTCOMES - verified separately from execution -->
