@@ -2725,6 +2725,27 @@
         "catches_variations": true
       },
       "correct_behavior": "Set Status: closed, Progress: 100%, Resolution: implemented, and Completed: {date} together in STATE.md when closing an issue via work-merge"
+    },
+    {
+      "id": "M441",
+      "timestamp": "2026-02-28T00:00:00Z",
+      "category": "tool_misuse",
+      "description": "Used git commit --amend which always amends HEAD, but the intended target was an earlier commit on the branch. Required three interactive rebases to fix.",
+      "root_cause": "Agent ran git commit --amend --no-edit after staging a fix to skill-loading.md. The fix belonged in the refactor commit (not HEAD), but --amend always modifies HEAD. The agent did not verify which commit was at HEAD before amending.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "process",
+      "prevention_path": null,
+      "pattern_keywords": ["git_amend", "wrong_commit", "interactive_rebase"],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Before amending, verify HEAD is the correct commit with git log -1 --oneline. If the target is an earlier commit, use interactive rebase with edit instead of --amend. The cat:git-amend skill already documents this but was not invoked."
     }
   ]
 }
