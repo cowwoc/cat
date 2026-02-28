@@ -641,9 +641,11 @@ fi
 
 **Auto-fix loop for concerns (based on configured autofix threshold):**
 
-**Proceed automatically without asking the user.** When stakeholder review returns REJECTED or CONCERNS_FOUND, the
-auto-fix loop handles it automatically. Do NOT present options to the user or ask what to do — spawn fix subagents
-and continue. The user already approved the workflow by invoking `/cat:work`.
+**Proceed automatically without asking the user.** When stakeholder review returns REJECTED, always enter the
+auto-fix loop — CRITICAL concerns must be fixed before merge. When review returns CONCERNS_FOUND, enter the
+auto-fix loop only if concerns exist at or above the configured `AUTOFIX_THRESHOLD`. In both cases, do NOT present
+options to the user or ask what to do — spawn fix subagents and continue. The user already approved the workflow by
+invoking `/cat:work`.
 
 Initialize loop counter: `AUTOFIX_ITERATION=0`
 
