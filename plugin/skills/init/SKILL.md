@@ -4,4 +4,4 @@ model: sonnet
 allowed-tools: [Read, Write, Bash, Glob, Grep, AskUserQuestion]
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" init "${CLAUDE_SESSION_ID}" "${CLAUDE_PROJECT_DIR}"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" init "${CLAUDE_PROJECT_DIR}" "$0"`

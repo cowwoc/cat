@@ -8,12 +8,15 @@ package io.github.cowwoc.cat.hooks;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.session.ClearSkillMarker;
+import io.github.cowwoc.cat.hooks.session.InjectCatAgentId;
 import io.github.cowwoc.cat.hooks.util.RulesDiscovery;
 import io.github.cowwoc.cat.hooks.util.SkillDiscovery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -58,11 +61,12 @@ public final class SubagentStartHook implements HookHandler
   }
 
   /**
-   * Processes the SubagentStart hook by injecting the skill listing and CAT rules as additional context.
+   * Processes the SubagentStart hook by injecting the agent ID, skill listing, and CAT rules as
+   * additional context.
    *
    * @param input  the hook input to process
    * @param output the hook output builder for creating responses
-   * @return the hook result containing JSON output with the skill listing and rules
+   * @return the hook result containing JSON output with the agent ID, skill listing, and rules
    * @throws NullPointerException if {@code input} or {@code output} are null
    */
   @Override
@@ -72,10 +76,34 @@ public final class SubagentStartHook implements HookHandler
     requireThat(output, "output").isNotNull();
 
     StringBuilder combinedContext = new StringBuilder();
+    List<String> warnings = new ArrayList<>();
+
+    String sessionId = input.getSessionId();
+    if (sessionId.isBlank())
+    {
+      throw new IllegalArgumentException(
+        "session_id is blank. SubagentStart hook requires a valid session ID.");
+    }
+    String agentId = input.getAgentId();
+    if (agentId.isBlank())
+    {
+      throw new IllegalArgumentException(
+        "agent_id is blank. SubagentStart hook requires a valid agent ID.");
+    }
+
+    String clearWarning = new ClearSkillMarker(scope).clearSubagentMarker(sessionId, agentId);
+    if (!clearWarning.isEmpty())
+      warnings.add(clearWarning);
+
+    combinedContext.append(InjectCatAgentId.getSubagentContext(sessionId, agentId));
 
     String skillListing = SkillDiscovery.getSubagentSkillListing(scope);
     if (!skillListing.isEmpty())
+    {
+      if (!combinedContext.isEmpty())
+        combinedContext.append("\n\n");
       combinedContext.append(skillListing);
+    }
 
     String catRules = getCatRules(input);
     if (!catRules.isEmpty())
@@ -86,9 +114,9 @@ public final class SubagentStartHook implements HookHandler
     }
 
     if (combinedContext.isEmpty())
-      return HookResult.withoutWarnings(output.empty());
-    return HookResult.withoutWarnings(output.additionalContext("SubagentStart",
-      combinedContext.toString()));
+      return new HookResult(output.empty(), warnings);
+    return new HookResult(output.additionalContext("SubagentStart",
+      combinedContext.toString()), warnings);
   }
 
   /**
