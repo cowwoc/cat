@@ -140,6 +140,35 @@ With `cat-base` storing an immutable fork-point commit, the following mitigation
    - `mvn -f client/pom.xml test`
    - `bats tests/worktree-isolation.bats`
 
+8. **Fix Step 8:** Fix `work-prepare/first-use.md` to write commit hash instead of branch name
+   - Files: `plugin/skills/work-prepare/first-use.md`
+   - Criterion: "All diff/verification operations use `cat-base` directly as a commit hash"
+   - At line 273 the script writes the branch name to `cat-base`; replace with the output of `git rev-parse HEAD` so
+     the fork-point commit hash is written instead
+   - Verify no other location in the skill file writes a branch name to `cat-base`
+
+9. **Fix Step 9:** Remove `rev-parse` pin call from `GitRebaseSafe.java` Step 2
+   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/GitRebaseSafe.java`
+   - Criterion: "Per-skill pin-once patterns removed (`cat-base` IS the pinned commit)"
+   - Step 2 contains a `git rev-parse` call with a "Pin target ref to prevent race conditions" comment; remove this
+     call and its comment because `cat-base` already contains the immutable fork-point commit hash
+   - Update tests if the removed call was exercised by a test
+
+10. **Fix Step 10:** Remove race-condition pin comments from `git-squash/first-use.md`
+    - Files: `plugin/skills/git-squash/first-use.md`
+    - Criterion: "Race-condition documentation sections removed from `git-squash/first-use.md`"
+    - Lines 236 and 272 contain race-condition pin comments; remove those comments and any surrounding pin-once
+      guidance sections (e.g., "MANDATORY: Pin base branch reference before rebase")
+    - Verify no remaining race-condition mitigation text references pinning a mutable branch name
+
+11. **Fix Step 11:** Create `tests/worktree-isolation.bats` with `cat-base` hash verification tests
+    - Files: `tests/worktree-isolation.bats`
+    - Criterion: "Bats tests verify `cat-base` contains a commit hash and is immutable"
+    - Create the Bats test file if it does not exist
+    - Add test: `cat-base` file content matches a 40-character hex commit hash (not a branch name)
+    - Add test: `cat-base` value is unchanged after the base branch advances by one commit
+    - Follow test isolation rules: use temporary git repos, never operate against the real project repo
+
 ## Post-conditions
 
 - [ ] `WorkPrepare` writes the fork-point commit hash to `cat-base`
