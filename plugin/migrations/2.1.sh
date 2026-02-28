@@ -23,6 +23,8 @@ set -euo pipefail
 # 5. Rename "curiosity" config key to "effort" in existing cat-config.json files
 # 6. Create .claude/cat/.gitignore with patterns for temporary files if missing;
 #    if it exists, add any missing patterns (/worktrees/, /locks/, /verify/)
+# 7. Migrate ## Execution Steps → ## Execution Waves in PLAN.md files
+#    (numbered steps become bullet items under ### Wave 1)
 
 trap 'echo "ERROR in 2.1.sh at line $LINENO: $BASH_COMMAND" >&2; exit 1' ERR
 
@@ -497,6 +499,69 @@ else
     else
         log_migration "Phase 6 complete: added $phase6_changed missing patterns"
     fi
+fi
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase 7: Migrate ## Execution Steps to ## Execution Waves in PLAN.md files
+# ──────────────────────────────────────────────────────────────────────────────
+
+log_migration "Phase 7: Migrate Execution Steps → Execution Waves in PLAN.md files"
+
+all_plan_files=$(find .claude/cat/issues -name "PLAN.md" -type f 2>/dev/null || true)
+
+if [[ -z "$all_plan_files" ]]; then
+    log_migration "No PLAN.md files found - skipping phase 7"
+else
+    phase7_migrated=0
+
+    while IFS= read -r plan_file; do
+        [[ -z "$plan_file" ]] && continue
+
+        # Skip if already migrated (has Execution Waves)
+        if grep -q "^## Execution Waves" "$plan_file" 2>/dev/null; then
+            continue
+        fi
+
+        # Skip if no old format exists
+        if ! grep -q "^## Execution Steps" "$plan_file" 2>/dev/null; then
+            continue
+        fi
+
+        log_migration "  Migrating: $plan_file"
+
+        # Extract the content before and after the Execution Steps section
+        before_steps=$(sed -n '1,/^## Execution Steps/p' "$plan_file" | head -n -1)
+        after_steps=$(sed -n '/^## Execution Steps/,$ p' "$plan_file" | sed -n '/^## [^E]/,$ p')
+
+        # Extract numbered steps and convert to bullet points
+        steps_content=$(sed -n '/^## Execution Steps/,/^## /p' "$plan_file" | tail -n +2 | \
+            grep -v "^## " | sed 's/^[[:space:]]*[0-9]\+\.[[:space:]]\(.*\)$/- \1/' | \
+            grep "^- " || true)
+
+        # Build new file content
+        {
+            echo "$before_steps"
+            echo ""
+            echo "## Execution Waves"
+            echo ""
+            echo "### Wave 1"
+            if [[ -n "$steps_content" ]]; then
+                echo "$steps_content"
+            else
+                echo "- [migrated from Execution Steps - review and update]"
+            fi
+            if [[ -n "$after_steps" ]]; then
+                echo ""
+                echo "$after_steps"
+            fi
+        } > "$plan_file"
+
+        ((phase7_migrated++)) || true
+        log_migration "    Done: $plan_file"
+
+    done <<< "$all_plan_files"
+
+    log_migration "Phase 7 complete: $phase7_migrated files migrated"
 fi
 
 log_success "Migration to 2.1 completed"

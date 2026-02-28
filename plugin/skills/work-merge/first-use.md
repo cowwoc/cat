@@ -27,6 +27,11 @@ The main agent provides:
 }
 ```
 
+**Parallel subagent scenario:** When work-with-issue spawned multiple wave subagents, `commits`
+contains all commits from all waves combined (they all pushed to the same branch). The `git-squash`
+tool squashes all commits from `TARGET_BRANCH..HEAD` regardless of how many subagents produced them.
+No special handling is required — the merge process is identical to the single-subagent case.
+
 ## Output Contract
 
 Return JSON on success:
@@ -83,7 +88,7 @@ constructing a valid message before calling the tool:
 PRIMARY_MESSAGE=$(echo "$COMMITS" | grep -o '"message"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/"message"[[:space:]]*:[[:space:]]*"\(.*\)"/\1/')
 
 # Squash implementation commits
-"${CLAUDE_PLUGIN_ROOT}/client/bin/git-squash" "${BASE_BRANCH}" "$PRIMARY_MESSAGE" "${WORKTREE_PATH}"
+"${CLAUDE_PLUGIN_ROOT}/client/bin/git-squash" "${TARGET_BRANCH}" "$PRIMARY_MESSAGE" "${WORKTREE_PATH}"
 
 # Target: 1-2 commits max
 # - Implementation commit (all feature/bugfix/test work)
@@ -123,16 +128,16 @@ before calling the `git-squash` tool:
 
 ```bash
 # Check for STATE.md regressions: other issues showing closed→open
-REGRESSIONS=$(git -C "${WORKTREE_PATH}" diff "${BASE_BRANCH}..HEAD" -- \
+REGRESSIONS=$(git -C "${WORKTREE_PATH}" diff "${TARGET_BRANCH}..HEAD" -- \
   '.claude/cat/issues/**/*.md' 2>/dev/null | \
   grep -A5 "^---.*STATE.md" | grep "^-.*Status.*closed" | wc -l)
 
 if [[ "$REGRESSIONS" -gt 0 ]]; then
-  echo "WARNING: Found STATE.md regressions (closed→open) vs ${BASE_BRANCH}:"
-  git -C "${WORKTREE_PATH}" diff "${BASE_BRANCH}..HEAD" -- \
+  echo "WARNING: Found STATE.md regressions (closed→open) vs ${TARGET_BRANCH}:"
+  git -C "${WORKTREE_PATH}" diff "${TARGET_BRANCH}..HEAD" -- \
     '.claude/cat/issues/**/*.md' | grep -B2 "^-.*Status.*closed"
   echo "Restore the correct state from base branch before squashing:"
-  echo "  git checkout ${BASE_BRANCH} -- .claude/cat/issues/v*/v*/<issue-name>/STATE.md"
+  echo "  git checkout ${TARGET_BRANCH} -- .claude/cat/issues/v*/v*/<issue-name>/STATE.md"
 fi
 ```
 
@@ -221,7 +226,7 @@ If minor version is now complete, update CHANGELOG.md inside the worktree and co
 
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/client/bin/merge-and-cleanup" \
-  "${CLAUDE_PROJECT_DIR}" "${ISSUE_ID}" "${SESSION_ID}" "${BASE_BRANCH}" --worktree "${WORKTREE_PATH}"
+  "${CLAUDE_PROJECT_DIR}" "${ISSUE_ID}" "${SESSION_ID}" "${TARGET_BRANCH}" --worktree "${WORKTREE_PATH}"
 ```
 
 The Java tool handles: fast-forward merge, worktree removal, branch deletion, backup branch cleanup,
@@ -240,7 +245,7 @@ exits with code 1.
 | `"status": "error"`: Worktree has uncommitted changes | Dirty worktree | Commit or stash changes in worktree first |
 | `"status": "error"`: Base branch has diverged | Base has commits not in HEAD | Rebase onto base branch before merging |
 | `"status": "error"`: Fast-forward merge not possible | History diverged | Rebase issue branch onto base first |
-| `"status": "error"`: base-branch not provided | Missing base branch argument | Ensure BASE_BRANCH is set in skill input |
+| `"status": "error"`: base-branch not provided | Missing base branch argument | Ensure TARGET_BRANCH is set in skill input |
 | `"status": "error"`: Failed to release lock | Lock tool failed | Manually release with `issue-lock force-release` |
 
 ### Step 8: Return Result
