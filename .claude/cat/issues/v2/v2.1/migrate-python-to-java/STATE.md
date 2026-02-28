@@ -2,6 +2,7 @@
 
 - **Status:** closed
 - **Progress:** 100%
+- **Resolution:** implemented
 - **Dependencies:** [port-display-scripts-to-java, port-git-scripts-to-java, port-infra-scripts-to-java, port-statusline-scripts-to-java, port-workflow-scripts-to-java]
 - **Blocks:** [add-java-build-to-ci]
 - **Last Updated:** 2026-02-25
