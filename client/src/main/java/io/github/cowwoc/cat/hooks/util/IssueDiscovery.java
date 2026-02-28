@@ -511,8 +511,8 @@ public final class IssueDiscovery
    * @param excludePattern a glob-style pattern to exclude issues by name (may be empty)
    * @param overridePostconditions if true, skip post-condition evaluation
    */
-  public record SearchOptions(Scope scope, String target, String sessionId, String excludePattern,
-    boolean overridePostconditions)
+  public record SearchOptions(Scope scope, String target, String sessionId,
+    String excludePattern, boolean overridePostconditions)
   {
     /**
      * Creates new search options.
@@ -522,8 +522,8 @@ public final class IssueDiscovery
      * @param sessionId the Claude session ID for lock acquisition (may be empty to skip locking)
      * @param excludePattern a glob-style pattern to exclude issues by name (may be empty)
      * @param overridePostconditions if true, skip post-condition evaluation
-     * @throws NullPointerException if {@code scope}, {@code target}, {@code sessionId} or
-     *   {@code excludePattern} are null
+     * @throws NullPointerException if {@code scope}, {@code target}, {@code sessionId},
+     *   or {@code excludePattern} are null
      */
     public SearchOptions
     {

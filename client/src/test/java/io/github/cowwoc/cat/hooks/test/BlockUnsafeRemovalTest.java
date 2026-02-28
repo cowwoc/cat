@@ -80,7 +80,7 @@ public final class BlockUnsafeRemovalTest
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
-      requireThat(result.reason(), "reason").contains("Protected: " + worktreePath.toRealPath());
+      requireThat(result.reason(), "reason").contains("working directory is inside the deletion target");
     }
     finally
     {
@@ -112,7 +112,7 @@ public final class BlockUnsafeRemovalTest
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
-      requireThat(result.reason(), "reason").contains("Protected: " + targetPath.toRealPath());
+      requireThat(result.reason(), "reason").contains("working directory is inside the deletion target");
     }
     finally
     {
@@ -151,12 +151,12 @@ public final class BlockUnsafeRemovalTest
   }
 
   /**
-   * Verifies that removal blocks when main worktree would be deleted.
+   * Verifies that removal blocks when the current working directory is inside the deletion target.
    *
    * @throws IOException if test setup fails
    */
   @Test
-  public void rmBlocksWhenDeletingMainWorktree() throws IOException
+  public void rmBlocksWhenCwdInDeletionTarget() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     Path gitDir = tempDir.resolve(".git");
@@ -174,11 +174,46 @@ public final class BlockUnsafeRemovalTest
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
-      requireThat(result.reason(), "reason").contains("Protected: " + tempDir.toRealPath());
+      requireThat(result.reason(), "reason").contains("working directory is inside the deletion target");
     }
     finally
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that removal blocks when the target is the main git worktree root.
+   * <p>
+   * The current working directory is outside the target, demonstrating that the block is due to
+   * the MAIN_WORKTREE protection, not the CURRENT_WORKING_DIRECTORY protection.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void rmBlocksWhenDeletingMainWorktree() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path gitDir = tempDir.resolve(".git");
+    Files.createDirectory(gitDir);
+    Path safeDir = Files.createTempDirectory("safe-");
+
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
+      String workingDirectory = safeDir.toString();  // CWD is outside the deletion target
+      String command = "rm -rf " + tempDir;
+
+      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "session1");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("UNSAFE");
+      requireThat(result.reason(), "reason").contains("main git worktree");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(safeDir);
     }
   }
 
@@ -207,8 +242,9 @@ public final class BlockUnsafeRemovalTest
     Files.writeString(lockFile, """
       {
         "session_id": "other-session",
+        "worktrees": {"%s": ""},
         "created_at": %d
-      }""".formatted(lockCreatedAt));
+      }""".formatted(worktreePath.toString(), lockCreatedAt));
 
     try (JvmScope scope = new TestJvmScope())
     {
@@ -221,7 +257,7 @@ public final class BlockUnsafeRemovalTest
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
-      requireThat(result.reason(), "reason").contains("Protected: " + worktreePath.toRealPath());
+      requireThat(result.reason(), "reason").contains("locked by another agent");
     }
     finally
     {
@@ -252,8 +288,9 @@ public final class BlockUnsafeRemovalTest
     Files.writeString(lockFile, """
       {
         "session_id": "my-session",
+        "worktrees": {"%s": ""},
         "created_at": 1771266833
-      }""");
+      }""".formatted(worktreePath.toString()));
 
     try (JvmScope scope = new TestJvmScope())
     {
@@ -296,8 +333,9 @@ public final class BlockUnsafeRemovalTest
     Files.writeString(lockFile, """
       {
         "session_id": "other-session",
+        "worktrees": {"%s": ""},
         "created_at": %d
-      }""".formatted(lockCreatedAt));
+      }""".formatted(worktreePath.toString(), lockCreatedAt));
 
     try (JvmScope scope = new TestJvmScope())
     {
@@ -371,8 +409,9 @@ public final class BlockUnsafeRemovalTest
     Files.writeString(lockFile, """
       {
         "session_id": "other-session",
+        "worktrees": {"%s": ""},
         "created_at": %d
-      }""".formatted(lockCreatedAt));
+      }""".formatted(worktreePath.toString(), lockCreatedAt));
 
     try (JvmScope scope = new TestJvmScope())
     {
@@ -416,8 +455,9 @@ public final class BlockUnsafeRemovalTest
     Files.writeString(lockFile, """
       {
         "session_id": "other-session",
+        "worktrees": {"%s": ""},
         "created_at": %d
-      }""".formatted(lockCreatedAt));
+      }""".formatted(worktreePath.toString(), lockCreatedAt));
 
     try (JvmScope scope = new TestJvmScope())
     {
@@ -431,7 +471,7 @@ public final class BlockUnsafeRemovalTest
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
-      requireThat(result.reason(), "reason").contains("Protected: " + worktreePath.toRealPath());
+      requireThat(result.reason(), "reason").contains("locked by another agent");
     }
     finally
     {
@@ -464,8 +504,9 @@ public final class BlockUnsafeRemovalTest
     Files.writeString(lockFile, """
       {
         "session_id": "my-session",
+        "worktrees": {"%s": ""},
         "created_at": %d
-      }""".formatted(lockCreatedAt));
+      }""".formatted(worktreePath.toString(), lockCreatedAt));
 
     try (JvmScope scope = new TestJvmScope())
     {
@@ -509,7 +550,7 @@ public final class BlockUnsafeRemovalTest
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
-      requireThat(result.reason(), "reason").contains("Protected: " + targetPath.toRealPath());
+      requireThat(result.reason(), "reason").contains("working directory is inside the deletion target");
     }
     finally
     {
@@ -541,7 +582,7 @@ public final class BlockUnsafeRemovalTest
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
-      requireThat(result.reason(), "reason").contains("Protected: " + targetPath.toRealPath());
+      requireThat(result.reason(), "reason").contains("working directory is inside the deletion target");
     }
     finally
     {
@@ -573,7 +614,7 @@ public final class BlockUnsafeRemovalTest
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
-      requireThat(result.reason(), "reason").contains("Protected: " + targetPath.toRealPath());
+      requireThat(result.reason(), "reason").contains("working directory is inside the deletion target");
     }
     finally
     {
@@ -605,7 +646,7 @@ public final class BlockUnsafeRemovalTest
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
-      requireThat(result.reason(), "reason").contains("Protected: " + targetPath.toRealPath());
+      requireThat(result.reason(), "reason").contains("working directory is inside the deletion target");
     }
     finally
     {
@@ -637,7 +678,7 @@ public final class BlockUnsafeRemovalTest
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
-      requireThat(result.reason(), "reason").contains("Protected: " + targetPath.toRealPath());
+      requireThat(result.reason(), "reason").contains("working directory is inside the deletion target");
     }
     finally
     {
@@ -669,8 +710,9 @@ public final class BlockUnsafeRemovalTest
     Files.writeString(lockFile, """
       {
         "session_id": "other-session",
+        "worktrees": {"%s": ""},
         "created_at": %d
-      }""".formatted(lockCreatedAt));
+      }""".formatted(worktreePath.toString(), lockCreatedAt));
 
     try (JvmScope scope = new TestJvmScope())
     {
@@ -714,8 +756,9 @@ public final class BlockUnsafeRemovalTest
     Files.writeString(lockFile, """
       {
         "session_id": "other-session",
+        "worktrees": {"%s": ""},
         "created_at": %d
-      }""".formatted(lockCreatedAt));
+      }""".formatted(worktreePath.toString(), lockCreatedAt));
 
     try (JvmScope scope = new TestJvmScope())
     {
@@ -759,8 +802,9 @@ public final class BlockUnsafeRemovalTest
     Files.writeString(lockFile, """
       {
         "session_id": "other-session",
+        "worktrees": {"%s": ""},
         "created_at": %d
-      }""".formatted(lockCreatedAt));
+      }""".formatted(worktreePath.toString(), lockCreatedAt));
 
     try (JvmScope scope = new TestJvmScope())
     {
@@ -803,8 +847,9 @@ public final class BlockUnsafeRemovalTest
     Path lockFile = locksDir.resolve("no-created-at-task.lock");
     Files.writeString(lockFile, """
       {
-        "session_id": "other-session"
-      }""");
+        "session_id": "other-session",
+        "worktrees": {"%s": ""}
+      }""".formatted(worktreePath.toString()));
 
     try (JvmScope scope = new TestJvmScope())
     {
@@ -847,8 +892,9 @@ public final class BlockUnsafeRemovalTest
     Path lockFile = locksDir.resolve("no-session-id-task.lock");
     Files.writeString(lockFile, """
       {
+        "worktrees": {"%s": ""},
         "created_at": %d
-      }""".formatted(lockCreatedAt));
+      }""".formatted(worktreePath.toString(), lockCreatedAt));
 
     try (JvmScope scope = new TestJvmScope())
     {
@@ -864,7 +910,7 @@ public final class BlockUnsafeRemovalTest
       // and since the lock is fresh, isStale() returns false, so the removal is blocked.
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
-      requireThat(result.reason(), "reason").contains("Protected: " + worktreePath.toRealPath());
+      requireThat(result.reason(), "reason").contains("locked by another agent");
     }
     finally
     {
@@ -899,7 +945,7 @@ public final class BlockUnsafeRemovalTest
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
-      requireThat(result.reason(), "reason").contains("Protected:");
+      requireThat(result.reason(), "reason").contains("UNSAFE DIRECTORY REMOVAL BLOCKED");
     }
     finally
     {
@@ -963,12 +1009,12 @@ public final class BlockUnsafeRemovalTest
       BashHandler.Result result = handler.check(command, workingDirectory, null, null, "session1");
 
       requireThat(result.blocked(), "blocked").isTrue();
-      // Verify CWD label is present in the error message (with the working directory value)
+      // Verify working directory label is present in the error message (with the working directory value)
       String reason = result.reason();
-      int cwdIndex = reason.indexOf("CWD:");
-      requireThat(cwdIndex, "cwdIndex").isGreaterThanOrEqualTo(0);
-      String cwdLine = reason.substring(cwdIndex, reason.indexOf('\n', cwdIndex));
-      requireThat(cwdLine, "cwdLine").contains(workingDirectory);
+      int workingDirIndex = reason.indexOf("Working directory:");
+      requireThat(workingDirIndex, "workingDirIndex").isGreaterThanOrEqualTo(0);
+      String workingDirLine = reason.substring(workingDirIndex, reason.indexOf('\n', workingDirIndex));
+      requireThat(workingDirLine, "workingDirLine").contains(workingDirectory);
     }
     finally
     {
@@ -999,6 +1045,397 @@ public final class BlockUnsafeRemovalTest
       BashHandler.Result result = handler.check(command, workingDirectory, null, null, "session1");
 
       requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Test A: Verifies that a lock with agent_id blocks removal when no CAT_AGENT_ID is in the command
+   * (fail-safe: agent must self-identify).
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void worktreeRemoveBlockedWhenNoAgentId() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path gitDir = tempDir.resolve(".git");
+    Files.createDirectory(gitDir);
+    Path locksDir = tempDir.resolve(".claude/cat/locks");
+    Files.createDirectories(locksDir);
+    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
+    Files.createDirectories(worktreesDir);
+    Path worktreePath = worktreesDir.resolve("task-agentA");
+    Files.createDirectories(worktreePath);
+
+    long lockCreatedAt = 1_771_266_833L;
+    Path lockFile = locksDir.resolve("task-agentA.lock");
+    Files.writeString(lockFile, """
+      {
+        "session_id": "aaaaaaaa-0000-0000-0000-000000000001",
+        "worktrees": {"%s": "aaaaaaaa-0000-0000-0000-000000000001/subagents/xyz"},
+        "created_at": %d
+      }""".formatted(worktreePath.toString(), lockCreatedAt));
+
+    try (JvmScope scope = new TestJvmScope())
+    {
+      Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)),
+        ZoneOffset.UTC);
+      BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
+      String workingDirectory = tempDir.toString();
+      // No CAT_AGENT_ID prefix in command
+      String command = "git worktree remove " + worktreePath;
+
+      BashHandler.Result result = handler.check(command, workingDirectory, null, null,
+        "aaaaaaaa-0000-0000-0000-000000000001");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      String reason = result.reason();
+      requireThat(reason, "reason").contains("locked by another agent");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Test B: Verifies that removal is allowed when CAT_AGENT_ID in the command matches the lock's agent_id
+   * (owner deleting own worktree).
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void worktreeRemoveAllowedWhenAgentIdMatchesLock() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path gitDir = tempDir.resolve(".git");
+    Files.createDirectory(gitDir);
+    Path locksDir = tempDir.resolve(".claude/cat/locks");
+    Files.createDirectories(locksDir);
+    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
+    Files.createDirectories(worktreesDir);
+    Path worktreePath = worktreesDir.resolve("task-agentB");
+    Files.createDirectories(worktreePath);
+
+    long lockCreatedAt = 1_771_266_833L;
+    String ownerAgentId = "aaaaaaaa-0000-0000-0000-000000000001/subagents/abc123";
+    Path lockFile = locksDir.resolve("task-agentB.lock");
+    Files.writeString(lockFile, """
+      {
+        "session_id": "aaaaaaaa-0000-0000-0000-000000000001",
+        "worktrees": {"%s": "%s"},
+        "created_at": %d
+      }""".formatted(worktreePath.toString(), ownerAgentId, lockCreatedAt));
+
+    try (JvmScope scope = new TestJvmScope())
+    {
+      Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)),
+        ZoneOffset.UTC);
+      BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
+      String workingDirectory = tempDir.toString();
+      // Matching CAT_AGENT_ID prefix
+      String command = "CAT_AGENT_ID=" + ownerAgentId + " git worktree remove " + worktreePath;
+
+      BashHandler.Result result = handler.check(command, workingDirectory, null, null,
+        "aaaaaaaa-0000-0000-0000-000000000001");
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Test C: Verifies that removal is blocked when CAT_AGENT_ID in the command does not match the lock's
+   * agent_id (sibling agent protection).
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void worktreeRemoveBlockedWhenAgentIdMismatch() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path gitDir = tempDir.resolve(".git");
+    Files.createDirectory(gitDir);
+    Path locksDir = tempDir.resolve(".claude/cat/locks");
+    Files.createDirectories(locksDir);
+    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
+    Files.createDirectories(worktreesDir);
+    Path worktreePath = worktreesDir.resolve("task-agentC");
+    Files.createDirectories(worktreePath);
+
+    long lockCreatedAt = 1_771_266_833L;
+    String lockOwnerAgentId = "aaaaaaaa-0000-0000-0000-000000000001/subagents/ownerX";
+    String commandAgentId = "aaaaaaaa-0000-0000-0000-000000000001/subagents/siblingY";
+    Path lockFile = locksDir.resolve("task-agentC.lock");
+    Files.writeString(lockFile, """
+      {
+        "session_id": "aaaaaaaa-0000-0000-0000-000000000001",
+        "worktrees": {"%s": "%s"},
+        "created_at": %d
+      }""".formatted(worktreePath.toString(), lockOwnerAgentId, lockCreatedAt));
+
+    try (JvmScope scope = new TestJvmScope())
+    {
+      Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)),
+        ZoneOffset.UTC);
+      BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
+      String workingDirectory = tempDir.toString();
+      // Different agent_id in command than in lock
+      String command = "CAT_AGENT_ID=" + commandAgentId + " git worktree remove " + worktreePath;
+
+      BashHandler.Result result = handler.check(command, workingDirectory, null, null,
+        "aaaaaaaa-0000-0000-0000-000000000001");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("locked by another agent");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Test D: Verifies that removal is allowed when no lock exists and no CAT_AGENT_ID (unowned worktree).
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void worktreeRemoveAllowedWhenNoLock() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path gitDir = tempDir.resolve(".git");
+    Files.createDirectory(gitDir);
+    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
+    Files.createDirectories(worktreesDir);
+    Path worktreePath = worktreesDir.resolve("task-agentD");
+    Files.createDirectories(worktreePath);
+
+    try (JvmScope scope = new TestJvmScope())
+    {
+      BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
+      String workingDirectory = tempDir.toString();
+      // No lock file, no CAT_AGENT_ID
+      String command = "git worktree remove " + worktreePath;
+
+      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "session1");
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Test E: Verifies that CWD-based block shows CWD-specific message, even when CAT_AGENT_ID matches.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void worktreeRemoveBlockedByCwdShowsCwdMessage() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path gitDir = tempDir.resolve(".git");
+    Files.createDirectory(gitDir);
+    Path locksDir = tempDir.resolve(".claude/cat/locks");
+    Files.createDirectories(locksDir);
+    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
+    Files.createDirectories(worktreesDir);
+    Path worktreePath = worktreesDir.resolve("task-agentE");
+    Files.createDirectories(worktreePath);
+
+    long lockCreatedAt = 1_771_266_833L;
+    String ownerAgentId = "aaaaaaaa-0000-0000-0000-000000000001/subagents/abc";
+    Path lockFile = locksDir.resolve("task-agentE.lock");
+    Files.writeString(lockFile, """
+      {
+        "session_id": "aaaaaaaa-0000-0000-0000-000000000001",
+        "worktrees": {"%s": "%s"},
+        "created_at": %d
+      }""".formatted(worktreePath.toString(), ownerAgentId, lockCreatedAt));
+
+    try (JvmScope scope = new TestJvmScope())
+    {
+      Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)),
+        ZoneOffset.UTC);
+      BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
+      // CWD is INSIDE the target (shell corruption scenario)
+      String workingDirectory = worktreePath.toString();
+      // Matching CAT_AGENT_ID but CWD is inside target
+      String command = "CAT_AGENT_ID=" + ownerAgentId + " git worktree remove " + worktreePath;
+
+      BashHandler.Result result = handler.check(command, workingDirectory, null, null,
+        "aaaaaaaa-0000-0000-0000-000000000001");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      String reason = result.reason();
+      requireThat(reason, "reason").contains("working directory is inside");
+      // Ensure only CWD message is shown, not lock owner message
+      requireThat(reason, "reason").doesNotContain("locked by another agent");
+      requireThat(reason, "reason").doesNotContain("Lock owner");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Test F: Verifies that legacy locks without agent_id fall back to session_id comparison (backward
+   * compatibility).
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void worktreeRemoveFallsBackToSessionIdForLegacyLock() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path gitDir = tempDir.resolve(".git");
+    Files.createDirectory(gitDir);
+    Path locksDir = tempDir.resolve(".claude/cat/locks");
+    Files.createDirectories(locksDir);
+    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
+    Files.createDirectories(worktreesDir);
+    Path worktreePath = worktreesDir.resolve("task-agentF");
+    Files.createDirectories(worktreePath);
+
+    long lockCreatedAt = 1_771_266_833L;
+    String mySessionId = "bbbbbbbb-0000-0000-0000-000000000002";
+    Path lockFile = locksDir.resolve("task-agentF.lock");
+    // Lock with worktrees map but no agent IDs: falls back to session_id comparison
+    Files.writeString(lockFile, """
+      {
+        "session_id": "%s",
+        "worktrees": {"%s": ""},
+        "created_at": %d
+      }""".formatted(mySessionId, worktreePath.toString(), lockCreatedAt));
+
+    try (JvmScope scope = new TestJvmScope())
+    {
+      Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)),
+        ZoneOffset.UTC);
+      BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
+      String workingDirectory = tempDir.toString();
+      String command = "git worktree remove " + worktreePath;
+
+      // Same session as lock → allowed (backward compat fallback)
+      BashHandler.Result result = handler.check(command, workingDirectory, null, null, mySessionId);
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Test G: Verifies that lock-based blocks show "locked by another agent" message with actionable
+   * guidance.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void lockBlockedShowsLockMessage() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path gitDir = tempDir.resolve(".git");
+    Files.createDirectory(gitDir);
+    Path locksDir = tempDir.resolve(".claude/cat/locks");
+    Files.createDirectories(locksDir);
+    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
+    Files.createDirectories(worktreesDir);
+    Path worktreePath = worktreesDir.resolve("task-agentG");
+    Files.createDirectories(worktreePath);
+
+    long lockCreatedAt = 1_771_266_833L;
+    String lockOwnerAgentId = "aaaaaaaa-0000-0000-0000-000000000001/subagents/owner";
+    Path lockFile = locksDir.resolve("task-agentG.lock");
+    Files.writeString(lockFile, """
+      {
+        "session_id": "aaaaaaaa-0000-0000-0000-000000000001",
+        "worktrees": {"%s": "%s"},
+        "created_at": %d
+      }""".formatted(worktreePath.toString(), lockOwnerAgentId, lockCreatedAt));
+
+    try (JvmScope scope = new TestJvmScope())
+    {
+      Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)),
+        ZoneOffset.UTC);
+      BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
+      String workingDirectory = tempDir.toString();
+      // No CAT_AGENT_ID in command
+      String command = "rm -rf " + worktreePath;
+
+      BashHandler.Result result = handler.check(command, workingDirectory, null, null,
+        "aaaaaaaa-0000-0000-0000-000000000001");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      String reason = result.reason();
+      requireThat(reason, "reason").contains("locked by another agent");
+      requireThat(reason, "reason").contains("CAT_AGENT_ID=");
+      requireThat(reason, "reason").contains("issue-lock force-release");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Test H: Verifies that a legacy lock (no agent_id field) from a different session BLOCKS removal.
+   * This proves backward compatibility: the fallback to session_id prevents removal from other sessions.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void legacyLockFromDifferentSessionBlocks() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path gitDir = tempDir.resolve(".git");
+    Files.createDirectory(gitDir);
+    Path locksDir = tempDir.resolve(".claude/cat/locks");
+    Files.createDirectories(locksDir);
+    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
+    Files.createDirectories(worktreesDir);
+    Path worktreePath = worktreesDir.resolve("task-agentH");
+    Files.createDirectories(worktreePath);
+
+    long lockCreatedAt = 1_771_266_833L;
+    String lockSessionId = "aaaaaaaa-0000-0000-0000-000000000001";
+    Path lockFile = locksDir.resolve("task-agentH.lock");
+    // Lock with no agent IDs in worktrees map: falls back to session_id comparison
+    Files.writeString(lockFile, """
+      {
+        "session_id": "%s",
+        "worktrees": {"%s": ""},
+        "created_at": %d
+      }""".formatted(lockSessionId, worktreePath.toString(), lockCreatedAt));
+
+    try (JvmScope scope = new TestJvmScope())
+    {
+      Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)),
+        ZoneOffset.UTC);
+      BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
+      String workingDirectory = tempDir.toString();
+      // No CAT_AGENT_ID prefix in command, and called from DIFFERENT session
+      String command = "git worktree remove " + worktreePath;
+
+      BashHandler.Result result = handler.check(command, workingDirectory, null, null,
+        "bbbbbbbb-1111-1111-1111-111111111111");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      String reason = result.reason();
+      requireThat(reason, "reason").contains("locked by another agent");
     }
     finally
     {

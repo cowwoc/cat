@@ -514,13 +514,14 @@ public class WorkPrepareTest
       // Create a lock file owned by a different session
       Path locksDir = projectDir.resolve(".claude").resolve("cat").resolve("locks");
       Files.createDirectories(locksDir);
+      String otherSession = UUID.randomUUID().toString();
       String lockContent = """
         {
           "session_id": "%s",
+          "worktrees": {"/some/worktree": "%s"},
           "created_at": 1700000000,
-          "worktree": "",
           "created_iso": "2026-02-01T00:00:00Z"
-        }""".formatted(UUID.randomUUID().toString());
+        }""".formatted(otherSession, otherSession);
       Files.writeString(locksDir.resolve("2.1-locked-feature.lock"), lockContent);
 
       WorkPrepare prepare = new WorkPrepare(scope);
