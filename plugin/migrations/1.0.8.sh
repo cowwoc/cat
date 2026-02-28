@@ -37,7 +37,7 @@ fi
 log_migration "Adding last_migrated_version field to config..."
 
 tmp_file="${config_file}.tmp"
-jq '. + {"last_migrated_version": "1.8"}' "$config_file" > "$tmp_file"
+jq '. + {"last_migrated_version": "1.0.8"}' "$config_file" > "$tmp_file"
 mv "$tmp_file" "$config_file"
 
 log_success "Added last_migrated_version field to cat-config.json"

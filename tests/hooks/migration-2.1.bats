@@ -77,13 +77,13 @@ EOF
 }
 
 @test "2.1.sh phase 3: moves old version field from config to VERSION file" {
-    echo '{"version": "1.10", "trust": "medium"}' > "$TEST_TEMP_DIR/.claude/cat/cat-config.json"
+    echo '{"version": "1.0.10", "trust": "medium"}' > "$TEST_TEMP_DIR/.claude/cat/cat-config.json"
 
     cd "$TEST_TEMP_DIR"
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
     [ -f ".claude/cat/VERSION" ]
-    [ "$(cat .claude/cat/VERSION | tr -d '[:space:]')" = "1.10" ]
+    [ "$(cat .claude/cat/VERSION | tr -d '[:space:]')" = "1.0.10" ]
 }
 
 @test "2.1.sh phase 3: removes version field from cat-config.json after migration" {
