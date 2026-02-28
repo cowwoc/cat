@@ -29,7 +29,7 @@ This provides session-level protection but not agent-level protection.
 
 ### Design
 
-Each agent has a unique `agentId` (from `2.1-drop-cat-agent-id`):
+Each agent has a unique `catAgentId` (from `2.1-per-agent-skill-markers`):
 - Main agent: `{sessionId}`
 - Subagent: `{sessionId}/subagents/{agent_id}`
 
