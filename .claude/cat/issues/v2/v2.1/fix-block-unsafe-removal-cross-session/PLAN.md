@@ -24,6 +24,23 @@ The `getProtectedPaths()` lock logic implements the ownership model correctly:
 This applies identically to both `rm -rf` and `git worktree remove`, which is the correct behavior
 for Approach A (must hold the lock or no lock to delete).
 
+### Sibling Agent Limitation
+Within a single session, all agents (main + subagents) share the same `session_id` in both lock
+files and PreToolUse hook input. This means sibling agents can delete each other's worktrees — they
+all look like "the same session."
+
+`2.1-drop-cat-agent-id` introduced per-agent `agentId` values (main: `{sessionId}`, subagent:
+`{sessionId}/subagents/{agent_id}`), but these are only available in:
+- **Agent conversation context** (injected at SessionStart / SubagentStart)
+- **SkillLoader** (passed as `$0` argument to `load-skill`)
+
+They are **NOT** available in:
+- **PreToolUse hook input** (only has `session_id`)
+- **Lock files** (only store `session_id`)
+
+Per-agent sibling protection would require propagating `agentId` to both lock files and PreToolUse
+hooks — a separate infrastructure issue beyond this bugfix scope.
+
 ### Actual Bug
 The error message in `checkProtectedPaths()` is generic — it always blames CWD/shell corruption
 regardless of whether the block is caused by:
