@@ -5,4 +5,4 @@ user-invocable: false
 argument-hint: "<completedIssue> <targetBranch>"
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" work-complete "${CLAUDE_SESSION_ID}" "${CLAUDE_PROJECT_DIR}" $ARGUMENTS`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" work-complete "${CLAUDE_PROJECT_DIR}" "$0" $ARGUMENTS`

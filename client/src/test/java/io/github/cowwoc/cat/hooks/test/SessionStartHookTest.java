@@ -13,7 +13,7 @@ import io.github.cowwoc.cat.hooks.SessionStartHook;
 import io.github.cowwoc.cat.hooks.session.CheckRetrospectiveDue;
 import io.github.cowwoc.cat.hooks.session.CheckUpdateAvailable;
 import io.github.cowwoc.cat.hooks.session.CheckDataMigration;
-import io.github.cowwoc.cat.hooks.session.ClearSkillMarkers;
+import io.github.cowwoc.cat.hooks.session.ClearSkillMarker;
 import io.github.cowwoc.cat.hooks.session.EchoSessionId;
 import io.github.cowwoc.cat.hooks.session.InjectEnv;
 import io.github.cowwoc.cat.hooks.session.InjectSessionInstructions;
@@ -87,59 +87,27 @@ public class SessionStartHookTest
     }
   }
 
-  // --- ClearSkillMarkers tests ---
+  // --- ClearSkillMarker tests ---
 
   /**
-   * Verifies that ClearSkillMarkers returns empty result when no session ID is present.
+   * Verifies that ClearSkillMarker deletes the main agent's marker file.
    */
   @Test
-  public void clearSkillMarkersReturnsEmptyResultWhenNoSessionId() throws IOException
+  public void clearSkillMarkerDeletesMainAgentMarker() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("cat-test-clear-markers-");
+    Path projectDir = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
     try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{}");
-      SessionStartHandler.Result result = new ClearSkillMarkers(scope).handle(input);
-      requireThat(result.additionalContext(), "additionalContext").isEmpty();
-      requireThat(result.stderr(), "stderr").isEmpty();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(projectDir);
-      TestUtils.deleteDirectoryRecursively(pluginRoot);
-    }
-  }
-
-  /**
-   * Verifies that ClearSkillMarkers deletes skill marker files for the current session.
-   */
-  @Test
-  public void clearSkillMarkersDeletesCurrentSessionMarker() throws IOException
-  {
-    Path projectDir = Files.createTempDirectory("cat-test-clear-markers-");
-    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-session-" + System.nanoTime();
       Path sessionDir = scope.getClaudeConfigDir().resolve("projects/-workspace/" + sessionId);
       Files.createDirectories(sessionDir);
-      Path markerFile = sessionDir.resolve("skills-loaded-agent-1");
-      Files.writeString(markerFile, "test-skill");
-      try
-      {
-        HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}");
-        SessionStartHandler.Result result = new ClearSkillMarkers(scope).handle(input);
-        requireThat(result.additionalContext(), "additionalContext").isEmpty();
-        requireThat(result.stderr(), "stderr").isEmpty();
-        requireThat(Files.exists(markerFile), "markerFileExists").isFalse();
-      }
-      finally
-      {
-        Files.deleteIfExists(markerFile);
-      }
+      Path markerFile = sessionDir.resolve("skills-loaded");
+      Files.writeString(markerFile, "loaded");
+
+      String warning = new ClearSkillMarker(scope).clearMainAgentMarker(sessionId);
+      requireThat(warning, "warning").isEmpty();
+      requireThat(Files.exists(markerFile), "markerFileExists").isFalse();
     }
     finally
     {
@@ -149,37 +117,25 @@ public class SessionStartHookTest
   }
 
   /**
-   * Verifies that ClearSkillMarkers skips symlinked marker files in the session directory.
+   * Verifies that ClearSkillMarker deletes a specific subagent's marker file.
    */
   @Test
-  public void clearSkillMarkersSkipsSymlinks() throws IOException
+  public void clearSkillMarkerDeletesSubagentMarker() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("cat-test-clear-markers-");
+    Path projectDir = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
     try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      String sessionId = "test-symlink-" + System.nanoTime();
-      Path sessionDir = scope.getClaudeConfigDir().resolve("projects/-workspace/" + sessionId);
-      Files.createDirectories(sessionDir);
-      Path targetFile = sessionDir.resolve("real-target.txt");
-      Path symlink = sessionDir.resolve("skills-loaded-agent-1");
-      Files.writeString(targetFile, "should-not-be-deleted");
-      Files.createSymbolicLink(symlink, targetFile);
-      try
-      {
-        HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}");
-        SessionStartHandler.Result result = new ClearSkillMarkers(scope).handle(input);
-        requireThat(result.additionalContext(), "additionalContext").isEmpty();
-        requireThat(result.stderr(), "stderr").isEmpty();
-        // Symlink should not have been deleted
-        requireThat(Files.isSymbolicLink(symlink), "symlinkExists").isTrue();
-      }
-      finally
-      {
-        Files.deleteIfExists(symlink);
-        Files.deleteIfExists(targetFile);
-      }
+      String sessionId = "test-session-" + System.nanoTime();
+      Path markerDir = scope.getClaudeConfigDir().resolve(
+        "projects/-workspace/" + sessionId + "/subagents/agent-1");
+      Files.createDirectories(markerDir);
+      Path markerFile = markerDir.resolve("skills-loaded");
+      Files.writeString(markerFile, "loaded");
+
+      String warning = new ClearSkillMarker(scope).clearSubagentMarker(sessionId, "agent-1");
+      requireThat(warning, "warning").isEmpty();
+      requireThat(Files.exists(markerFile), "markerFileExists").isFalse();
     }
     finally
     {
@@ -1067,7 +1023,7 @@ public class SessionStartHookTest
   // --- SessionStartHook dispatcher tests (normal mode) ---
 
   /**
-   * Verifies that SessionStartHook returns empty JSON when all handlers return empty.
+   * Verifies that SessionStartHook injects the agent ID context even when all handlers return empty.
    */
   @Test
   public void dispatcherReturnsEmptyWhenAllHandlersReturnEmpty() throws IOException
@@ -1076,14 +1032,15 @@ public class SessionStartHookTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       SessionStartHandler emptyHandler = input -> SessionStartHandler.Result.empty();
-      SessionStartHook dispatcher = new SessionStartHook(List.of(emptyHandler));
+      SessionStartHook dispatcher = new SessionStartHook(scope, List.of(emptyHandler));
 
-      HookInput input = createInput(mapper, "{}");
+      HookInput input = createInput(mapper, "{\"session_id\": \"test-session\"}");
       HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
-      requireThat(result.output(), "output").isEqualTo("{}");
+      requireThat(result.output(), "output").contains("Your CAT agent ID is:");
+      requireThat(result.output(), "output").contains("test-session");
     }
   }
 
@@ -1098,9 +1055,9 @@ public class SessionStartHookTest
       JsonMapper mapper = scope.getJsonMapper();
       SessionStartHandler handler1 = input -> SessionStartHandler.Result.context("context from handler 1");
       SessionStartHandler handler2 = input -> SessionStartHandler.Result.context("context from handler 2");
-      SessionStartHook dispatcher = new SessionStartHook(List.of(handler1, handler2));
+      SessionStartHook dispatcher = new SessionStartHook(scope, List.of(handler1, handler2));
 
-      HookInput input = createInput(mapper, "{}");
+      HookInput input = createInput(mapper, "{\"session_id\": \"test-session\"}");
       HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
@@ -1113,7 +1070,7 @@ public class SessionStartHookTest
   }
 
   /**
-   * Verifies that SessionStartHook returns warnings from handlers.
+   * Verifies that SessionStartHook returns warnings from handlers and always includes agent ID context.
    */
   @Test
   public void dispatcherReturnsWarningsFromHandlers() throws IOException
@@ -1122,16 +1079,41 @@ public class SessionStartHookTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       SessionStartHandler handler = input -> SessionStartHandler.Result.stderr("stderr message");
-      SessionStartHook dispatcher = new SessionStartHook(List.of(handler));
+      SessionStartHook dispatcher = new SessionStartHook(scope, List.of(handler));
 
-      HookInput input = createInput(mapper, "{}");
+      HookInput input = createInput(mapper, "{\"session_id\": \"test-session\"}");
       HookOutput output = new HookOutput(scope);
       io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
       requireThat(result.warnings(), "warnings").contains("stderr message");
 
-      // No context -> empty output
-      requireThat(result.output(), "output").isEqualTo("{}");
+      // Agent ID context is always injected even when handlers produce no additional context
+      requireThat(result.output(), "output").contains("Your CAT agent ID is:");
+      requireThat(result.output(), "output").contains("test-session");
+    }
+  }
+
+  /**
+   * Verifies that SessionStartHook.run() throws IllegalArgumentException when session_id is blank.
+   */
+  @Test
+  public void dispatcherThrowsWhenSessionIdIsBlank() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      SessionStartHook dispatcher = new SessionStartHook(scope, List.of());
+
+      HookInput input = createInput(mapper, "{\"session_id\": \"\"}");
+      HookOutput output = new HookOutput(scope);
+      try
+      {
+        dispatcher.run(input, output);
+      }
+      catch (IllegalArgumentException e)
+      {
+        requireThat(e.getMessage(), "message").contains("session_id");
+      }
     }
   }
 
@@ -1149,9 +1131,9 @@ public class SessionStartHookTest
         throw new IllegalStateException("test error");
       };
       SessionStartHandler goodHandler = input -> SessionStartHandler.Result.context("good context");
-      SessionStartHook dispatcher = new SessionStartHook(List.of(failingHandler, goodHandler));
+      SessionStartHook dispatcher = new SessionStartHook(scope, List.of(failingHandler, goodHandler));
 
-      HookInput input = createInput(mapper, "{}");
+      HookInput input = createInput(mapper, "{\"session_id\": \"test-session\"}");
       HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
@@ -1176,9 +1158,9 @@ public class SessionStartHookTest
       {
         throw new AssertionError("CLAUDE_SESSION_ID is not set");
       };
-      SessionStartHook dispatcher = new SessionStartHook(List.of(failingHandler));
+      SessionStartHook dispatcher = new SessionStartHook(scope, List.of(failingHandler));
 
-      HookInput input = createInput(mapper, "{}");
+      HookInput input = createInput(mapper, "{\"session_id\": \"test-session\"}");
       HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
@@ -1204,9 +1186,9 @@ public class SessionStartHookTest
         throw new IllegalStateException("handler 2 failed");
       };
       SessionStartHandler handler3 = input -> SessionStartHandler.Result.context("handler 3 output");
-      SessionStartHook dispatcher = new SessionStartHook(List.of(handler1, failingHandler, handler3));
+      SessionStartHook dispatcher = new SessionStartHook(scope, List.of(handler1, failingHandler, handler3));
 
-      HookInput input = createInput(mapper, "{}");
+      HookInput input = createInput(mapper, "{\"session_id\": \"test-session\"}");
       HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
@@ -1230,9 +1212,9 @@ public class SessionStartHookTest
       JsonMapper mapper = scope.getJsonMapper();
       SessionStartHandler handler1 = input -> SessionStartHandler.Result.context("output 1");
       SessionStartHandler handler2 = input -> SessionStartHandler.Result.context("output 2");
-      SessionStartHook dispatcher = new SessionStartHook(List.of(handler1, handler2));
+      SessionStartHook dispatcher = new SessionStartHook(scope, List.of(handler1, handler2));
 
-      HookInput input = createInput(mapper, "{}");
+      HookInput input = createInput(mapper, "{\"session_id\": \"test-session\"}");
       HookOutput output = new HookOutput(scope);
       io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
@@ -1254,7 +1236,7 @@ public class SessionStartHookTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       SessionStartHandler handler = input -> SessionStartHandler.Result.context("test context");
-      SessionStartHook dispatcher = new SessionStartHook(List.of(handler));
+      SessionStartHook dispatcher = new SessionStartHook(scope, List.of(handler));
 
       HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
@@ -1281,9 +1263,9 @@ public class SessionStartHookTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       SessionStartHandler handler = input -> SessionStartHandler.Result.both("context msg", "stderr msg");
-      SessionStartHook dispatcher = new SessionStartHook(List.of(handler));
+      SessionStartHook dispatcher = new SessionStartHook(scope, List.of(handler));
 
-      HookInput input = createInput(mapper, "{}");
+      HookInput input = createInput(mapper, "{\"session_id\": \"test-session\"}");
       HookOutput output = new HookOutput(scope);
       io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 

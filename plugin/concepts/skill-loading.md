@@ -149,8 +149,16 @@ argument to the binary.
 SkillLoader tracks which skills have been loaded via **per-agent** marker files:
 
 ```
-~/.config/claude/projects/-workspace/{sessionId}/skills-loaded-{catAgentId}
+~/.config/claude/projects/-workspace/{sessionId}/skills-loaded               ← main agent
+~/.config/claude/projects/-workspace/{sessionId}/subagents/{agent_id}/skills-loaded  ← subagent
 ```
+
+The `catAgentId` encodes the full relative path from `projects/-workspace/`:
+
+| Agent | catAgentId value | Resolved marker path |
+|-------|------------------|----------------------|
+| Main agent | `{sessionId}` | `{configDir}/projects/-workspace/{sessionId}/skills-loaded` |
+| Subagent | `{sessionId}/subagents/{agent_id}` | `{configDir}/projects/-workspace/{sessionId}/subagents/{agent_id}/skills-loaded` |
 
 Each agent instance (main agent, each subagent) has its own marker file. Parent and subagents track
 skill loading independently — a skill invoked by the parent does not affect a subagent's first-use
@@ -248,11 +256,11 @@ prompt: |
   ```
   # CORRECT: calls the Java binary launcher directly
   !`"${CLAUDE_PLUGIN_ROOT}/client/target/jlink/bin/get-output" "${CLAUDE_PLUGIN_ROOT}" \
-    "${CLAUDE_SESSION_ID}" "${CLAUDE_PROJECT_DIR}" $ARGUMENTS`
+    "${CLAUDE_PROJECT_DIR}" "$0" $ARGUMENTS`
 
   # WRONG: calls load-skill, which loads skill content but does NOT invoke Java handlers
   !`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" get-output \
-    "${CLAUDE_SESSION_ID}" "${CLAUDE_PROJECT_DIR}" $ARGUMENTS`
+    "${CLAUDE_PROJECT_DIR}" "$0" $ARGUMENTS`
   ```
 
 `load-skill` (SkillLoader) reads and returns skill content from `first-use.md`. It does not route to

@@ -41,7 +41,8 @@ Before creating, modifying, or debugging skills or agent `skills:` frontmatter, 
 
 Key points:
 - Plugin skills use the `cat:` prefix (e.g., `cat:git-squash`)
-- Subagents share the parent's session ID, so skill marker files are shared state
+- Each agent (main and subagents) has an independent per-agent marker file under
+  `{sessionDir}/skills-loaded` (main) or `{sessionDir}/subagents/{agent_id}/skills-loaded` (subagents)
 
 ## Skill Step Numbering
 

@@ -33,9 +33,18 @@ public final class HookInput
    */
   private static final Pattern SESSION_ID_PATTERN = Pattern.compile("^[a-zA-Z0-9_-]+$");
 
+  /**
+   * Pattern that accepts alphanumeric characters, hyphens, and underscores.
+   * <p>
+   * Prevents path traversal characters ({@code /}, {@code ..}) while accepting any reasonable
+   * agent ID format.
+   */
+  private static final Pattern AGENT_ID_PATTERN = Pattern.compile("^[a-zA-Z0-9_-]+$");
+
   private final JsonMapper mapper;
   private final JsonNode data;
   private final String sessionId;
+  private final String agentId;
 
   /**
    * Creates a new HookInput.
@@ -48,6 +57,7 @@ public final class HookInput
     this.mapper = mapper;
     this.data = data;
     this.sessionId = validateSessionId(data);
+    this.agentId = validateAgentId(data);
   }
 
   /**
@@ -69,6 +79,30 @@ public final class HookInput
     if (!SESSION_ID_PATTERN.matcher(value).matches())
     {
       throw new IllegalArgumentException("Invalid session_id format: '" + value +
+        "'. Expected alphanumeric, hyphens, and underscores only.");
+    }
+    return value;
+  }
+
+  /**
+   * Validates and returns the agent ID from the JSON data.
+   *
+   * @param data the parsed JSON data
+   * @return the agent ID, or empty string if missing or empty
+   * @throws IllegalArgumentException if the agent_id field is present but contains characters other than
+   *   alphanumerics, hyphens, and underscores
+   */
+  private static String validateAgentId(JsonNode data)
+  {
+    JsonNode node = data.get("agent_id");
+    if (node == null || !node.isString())
+      return "";
+    String value = node.asString();
+    if (value == null || value.isBlank())
+      return "";
+    if (!AGENT_ID_PATTERN.matcher(value).matches())
+    {
+      throw new IllegalArgumentException("Invalid agent_id format: '" + value +
         "'. Expected alphanumeric, hyphens, and underscores only.");
     }
     return value;
@@ -268,6 +302,19 @@ public final class HookInput
   public String getSessionId()
   {
     return sessionId;
+  }
+
+  /**
+   * Get the agent ID from standard hook input locations.
+   * <p>
+   * Returns empty string if the agent ID is missing or empty. Throws if the agent ID is present but
+   * contains characters other than alphanumerics, hyphens, and underscores.
+   *
+   * @return the agent ID, or empty string if not present
+   */
+  public String getAgentId()
+  {
+    return agentId;
   }
 
   /**
