@@ -11,6 +11,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 /**
  * enforce-status-output - Stop hook to enforce verbatim status box output.
  * <p>
@@ -38,6 +40,11 @@ import org.slf4j.LoggerFactory;
  */
 public final class EnforceStatusOutput
 {
+  /**
+   * Maximum transcript file size to read, in bytes (100 MB).
+   */
+  private static final long MAX_TRANSCRIPT_SIZE = 100L * 1024 * 1024;
+
   private EnforceStatusOutput()
   {
     // Utility class
@@ -103,27 +110,25 @@ public final class EnforceStatusOutput
   {
     CheckResult result = checkTranscriptForStatusSkill(mapper, transcriptPath);
 
-    if (stopHookActive)
+    if (result.statusInvoked && !result.hasBoxOutput)
     {
-      if (result.statusInvoked && !result.hasBoxOutput)
+      String reason;
+      if (stopHookActive)
       {
-        String reason =
+        reason =
           "ENFORCEMENT FAILED: /cat:status was invoked but the status box was not output on " +
           "two consecutive attempts. The model has been blocked twice and is still not complying. " +
           "Please retry /cat:status manually to get the status box.";
-        return hookOutput.block(reason);
       }
-      return hookOutput.empty();
-    }
-
-    if (result.statusInvoked && !result.hasBoxOutput)
-    {
-      String reason =
-        "M402 ENFORCEMENT: /cat:status was invoked but you did NOT output the status box. " +
-        "The skill's MANDATORY OUTPUT REQUIREMENT states: Copy-paste ALL content between " +
-        "the START and END markers. You summarized instead of copy-pasting. " +
-        "OUTPUT THE COMPLETE STATUS BOX NOW - including the ╭── border, all issue lines, " +
-        "the NEXT STEPS table, and the Legend. Do NOT summarize or interpret.";
+      else
+      {
+        reason =
+          "M402 ENFORCEMENT: /cat:status was invoked but you did NOT output the status box. " +
+          "The skill's MANDATORY OUTPUT REQUIREMENT states: Copy-paste ALL content between " +
+          "the START and END markers. You summarized instead of copy-pasting. " +
+          "OUTPUT THE COMPLETE STATUS BOX NOW - including the ╭── border, all issue lines, " +
+          "the NEXT STEPS table, and the Legend. Do NOT summarize or interpret.";
+      }
       return hookOutput.block(reason);
     }
     return hookOutput.empty();
@@ -135,17 +140,26 @@ public final class EnforceStatusOutput
    * @param mapper the JSON mapper to use for parsing
    * @param transcriptPath path to the transcript file
    * @return result indicating whether status was invoked and whether response had box output
+   * @throws IOException if the transcript file cannot be read
    */
   private static CheckResult checkTranscriptForStatusSkill(JsonMapper mapper, String transcriptPath) throws IOException
   {
-    if (transcriptPath.isEmpty())
+    if (transcriptPath.isBlank())
       return new CheckResult(false, true);
 
     Path path = Paths.get(transcriptPath);
-    if (!Files.exists(path))
+    List<String> lines;
+    try
+    {
+      long fileSize = Files.size(path);
+      if (fileSize > MAX_TRANSCRIPT_SIZE)
+        return new CheckResult(false, true);
+      lines = Files.readAllLines(path);
+    }
+    catch (NoSuchFileException _)
+    {
       return new CheckResult(false, true);
-
-    List<String> lines = Files.readAllLines(path);
+    }
 
     List<String> recentLines = getRecentLines(lines, 10);
 
@@ -154,8 +168,8 @@ public final class EnforceStatusOutput
 
     for (String line : recentLines)
     {
-      String trimmed = line.trim();
-      if (trimmed.isEmpty())
+      String trimmed = line.strip();
+      if (trimmed.isBlank())
         continue;
 
       JsonNode entry;
