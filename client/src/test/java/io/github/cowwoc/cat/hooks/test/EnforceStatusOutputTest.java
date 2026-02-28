@@ -10,6 +10,7 @@ import io.github.cowwoc.cat.hooks.EnforceStatusOutput;
 import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import org.testng.annotations.Test;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
@@ -101,8 +102,8 @@ public final class EnforceStatusOutputTest
       HookOutput hookOutput = new HookOutput(scope);
       String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), true, hookOutput);
 
-      requireThat(result, "result").contains("\"decision\"");
-      requireThat(result, "result").contains("\"block\"");
+      JsonNode resultNode = mapper.readTree(result);
+      requireThat(resultNode.get("decision").asString(), "decision").isEqualTo("block");
       requireThat(result, "result").contains("/cat:status");
     }
     finally
@@ -157,9 +158,108 @@ public final class EnforceStatusOutputTest
       HookOutput hookOutput = new HookOutput(scope);
       String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, hookOutput);
 
-      requireThat(result, "result").contains("\"decision\"");
-      requireThat(result, "result").contains("\"block\"");
+      JsonNode resultNode = mapper.readTree(result);
+      requireThat(resultNode.get("decision").asString(), "decision").isEqualTo("block");
       requireThat(result, "result").contains("M402");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a status invocation beyond the recent 10-line window is not detected, so the hook
+   * returns empty (no enforcement triggered).
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void statusBeyondRecentWindow() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path transcriptFile = tempDir.resolve("transcript.jsonl");
+
+      // Write status invocation, then 15 filler lines to push it out of the 10-line window
+      // The status line itself is ~105 chars; 15 filler lines are ~90 chars each = ~1455 total
+      StringBuilder sb = new StringBuilder(1600);
+      sb.append("{\"type\":\"user\",\"message\":{\"content\":[{\"type\":\"text\",\"text\":" +
+        "\"<command-name>cat:status</command-name>\"}]}}\n");
+      for (int i = 0; i < 15; ++i)
+      {
+        String fillerLine = "{\"type\":\"user\",\"message\":{\"content\":[{\"type\":\"text\",\"text\":\"filler " +
+          i + "\"}]}}\n";
+        sb.append(fillerLine);
+      }
+      Files.writeString(transcriptFile, sb.toString());
+
+      HookOutput hookOutput = new HookOutput(scope);
+      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, hookOutput);
+
+      requireThat(result.strip(), "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that an empty transcript file causes the hook to return empty (no enforcement triggered).
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void emptyTranscriptFile() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path transcriptFile = tempDir.resolve("transcript.jsonl");
+      Files.writeString(transcriptFile, "");
+
+      HookOutput hookOutput = new HookOutput(scope);
+      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, hookOutput);
+
+      requireThat(result.strip(), "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a malformed JSON line in the transcript does not prevent the hook from detecting
+   * both the status invocation and the box output on surrounding valid lines.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void malformedJsonInTranscript() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path transcriptFile = tempDir.resolve("transcript.jsonl");
+
+      String userLine = "{\"type\":\"user\",\"message\":{\"content\":[{\"type\":\"text\",\"text\":" +
+        "\"<command-name>cat:status</command-name>\"}]}}";
+      String malformedLine = "this is not valid json {{{";
+      String assistantLine = "{\"type\":\"assistant\",\"message\":{\"content\":[{\"type\":\"text\"," +
+        "\"text\":\"╭── Status ──╮\\n│ v2.1       │\\n╰────────────╯\"}]}}";
+      Files.writeString(transcriptFile, userLine + "\n" + malformedLine + "\n" + assistantLine + "\n");
+
+      HookOutput hookOutput = new HookOutput(scope);
+      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, hookOutput);
+
+      // Status was invoked and box was present, so hook should allow through
+      requireThat(result.strip(), "result").isEqualTo("{}");
     }
     finally
     {
