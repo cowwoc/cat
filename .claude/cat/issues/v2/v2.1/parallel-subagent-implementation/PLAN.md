@@ -116,38 +116,34 @@ The proposal enables:
 - [ ] All dependent issues are closed
 - [ ] PLAN.md template supports optional grouping annotations
 
-## Execution Steps
+## Execution Waves
 
-1. **Extend add/SKILL.md and AddWizard.java** to support optional grouping in planning questions
-   - Files: `plugin/skills/add/SKILL.md`, `client/src/main/java/io/github/cowwoc/cat/skills/add/AddWizard.java`
+### Wave 1
+- Remove wave-annotation parsing from WorkPrepare.java (STEP_NUMBER_PATTERN, WAVE_ANNOTATION_PATTERN, readExecutionWavesFromPlan method)
+- Remove "waves" field from READY JSON output
+- Add EXECUTION_WAVES_PATTERN to match ## Execution Waves sections in PLAN.md
+- Update token estimation to count wave items (top-level bullets in ### Wave N sections)
 
-2. **Update WorkWithIssue.java** to parse PLAN.md groups and spawn multiple subagents
-   - Files: `client/src/main/java/io/github/cowwoc/cat/skills/work/WorkWithIssue.java`
-   - Spawn one subagent per group with group assignment binding
+### Wave 2
+- Update work-with-issue skill first-use.md to detect parallel execution from PLAN.md directly (not READY JSON)
+- Update add skill first-use.md to document ## Execution Waves / ### Wave N syntax
+- Update work-merge skill first-use.md references (groups → waves)
 
-3. **Update WorkPrepare.java** to detect subagent context and create isolated worktree
-   - Files: `client/src/main/java/io/github/cowwoc/cat/skills/work/WorkPrepare.java`
-   - Check for group assignment, create worktree with naming scheme
+### Wave 3
+- Rewrite parallel-execution.md with new wave-section syntax
+- Update issue-plan.md template to use ## Execution Waves format
+- Update existing test file to test new wave-section token estimation
 
-4. **Update WorkMerge.java** to collect and merge multi-subagent commits
-   - Files: `client/src/main/java/io/github/cowwoc/cat/skills/work/WorkMerge.java`
-   - Detect multiple subagent work branches, collect commits, squash
-
-5. **Create tests** in ParallelSubagentTest.java
-   - Files: `client/src/test/java/io/github/cowwoc/cat/skills/work/ParallelSubagentTest.java`
-
-6. **Create documentation** explaining parallel execution
-   - Files: `plugin/concepts/parallel-execution.md`, `plugin/skills/add/first-use.md`
-
-7. **Run full test suite** to ensure no regressions
-   - Command: `mvn -f client/pom.xml verify`
+### Wave 4
+- Run full test suite to ensure no regressions
+  - Command: `mvn -f client/pom.xml verify`
 
 ## Post-conditions
 
-- [ ] Planning agent can optionally specify execution groups in PLAN.md
-- [ ] `/cat:work` detects groups and spawns multiple subagents (one per group)
+- [ ] Planning agent can optionally specify execution waves in PLAN.md
+- [ ] `/cat:work` detects waves and spawns multiple subagents (one per wave)
 - [ ] Each subagent runs only its assigned execution steps
-- [ ] Each subagent works in isolated worktree named `{parent-worktree}-{agent-id}`
+- [ ] All subagents share the issue worktree and serialize git operations via pull --rebase
 - [ ] All subagents operate on the same issue branch
 - [ ] Multiple subagent commits are collected and squashed into single unified commit
 - [ ] Parallel execution is transparent to user (same review/merge workflow)
