@@ -9,7 +9,7 @@ See LICENSE.md in the project root for license terms.
 
 Change `cat-base` from storing a branch name to storing the fork-point commit hash. All downstream git operations
 (diff, checkout, rebase, squash verification) use this immutable commit instead of re-resolving a branch name that may
-have advanced.
+have advanced. Remove race-condition mitigations that become redundant.
 
 ## Satisfies
 
@@ -25,7 +25,8 @@ point must either:
 This caused a real bug: `git checkout v2.1 -- <path>` imported files added to v2.1 after the worktree was created,
 contaminating the squashed commit tree.
 
-Recording the fork commit once at worktree creation eliminates the entire class of race conditions.
+Recording the fork commit once at worktree creation eliminates the entire class of race conditions, making several
+existing mitigations redundant.
 
 ## Risk Assessment
 
@@ -67,6 +68,29 @@ Recording the fork commit once at worktree creation eliminates the entire class 
 | `cleanup/first-use.md` | `branch --merged` check | Read `cat-base` as commit hash (works for `--merged`) |
 | `learn/phase-prevent.md` | Metadata display | Display commit hash |
 
+## Audit: Race-Condition Mitigations (Remove or Simplify)
+
+With `cat-base` storing an immutable fork-point commit, the following mitigations become redundant:
+
+### Remove
+
+| Component | Location | Current purpose | Why redundant |
+|-----------|----------|-----------------|---------------|
+| Patch-diff verification | `GitRebaseSafe.java:156-192` | Computes old-base via `merge-base backup base`, compares patches before/after rebase to detect false positives from base advancement | With immutable fork commit, simple `git diff --quiet backup HEAD` suffices — base can't advance |
+| Pin-once guidance | `git-squash/first-use.md:306-318` | "MANDATORY: Pin base branch reference before rebase" | `cat-base` IS the pinned commit — no per-skill pinning needed |
+| `git merge-base` calls in skills | Various skill files | Compute fork point at runtime | `cat-base` provides the fork point directly |
+| "Never Restore Files Using checkout" rule | `git-squash/first-use.md` | Warns against `git checkout <base-branch> -- <path>` | `cat-base` is a commit hash, not a branch name — checkout with it is safe |
+| "Use Merge-Base Diff" rule | `git-squash/first-use.md` | Warns against `git diff <base-branch>..HEAD` | `git diff $(cat cat-base)..HEAD` is correct because `cat-base` is the fork commit |
+
+### Keep (orthogonal to base reference format)
+
+| Component | Location | Why keep |
+|-----------|----------|----------|
+| Commit-tree approach | `GitSquash.java:115-191` | Prevents working directory contamination — unrelated to base reference |
+| Reset-soft blocker | `RemindGitSquash.java:22-54` | Blocks dangerous anti-pattern — unrelated to base reference |
+| Backup-verify-cleanup | `GitSquash.java`, skill docs | General safety pattern, not race-condition specific |
+| Post-squash working tree check | `git-squash/first-use.md:162-176` | Verifies working tree matches HEAD — always needed |
+
 ## Pre-conditions
 
 - [ ] All dependent issues are closed
@@ -79,7 +103,14 @@ Recording the fork commit once at worktree creation eliminates the entire class 
      `commitHash = GitCommands.runGit(projectDir, "rev-parse", "HEAD")`
    - Update tests
 
-2. **Step 2:** Update `MergeAndCleanup` to accept base branch as CLI argument
+2. **Step 2:** Simplify `GitRebaseSafe.java` verification
+   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/GitRebaseSafe.java`
+   - Remove patch-diff comparison logic (lines 156-192)
+   - Replace with simple `git diff --quiet backup HEAD` tree-state comparison
+   - The old patch-diff approach was needed because base could advance; with immutable fork commit this is unnecessary
+   - Update tests
+
+3. **Step 3:** Update `MergeAndCleanup` to accept base branch as CLI argument
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/MergeAndCleanup.java`
    - Add `baseBranch` parameter to `execute()` and CLI `main()`
    - Remove `getBaseBranch()` method that reads `cat-base`
@@ -87,21 +118,25 @@ Recording the fork commit once at worktree creation eliminates the entire class 
    - Still read `cat-base` for fork-point commit in diff/verification operations
    - Update tests
 
-3. **Step 3:** Update `work-merge` skill to pass base branch to `merge-and-cleanup`
+4. **Step 4:** Update `work-merge` skill to pass base branch to `merge-and-cleanup`
    - Files: `plugin/skills/work-merge/first-use.md`
    - Add `${BASE_BRANCH}` argument to the `merge-and-cleanup` invocation
 
-4. **Step 4:** Update skill files to treat `cat-base` as commit hash
-   - Files: `stakeholder-review/first-use.md`, `work-with-issue/first-use.md`, `git-squash/first-use.md`
+5. **Step 5:** Simplify skill files — remove redundant race-condition mitigations
+   - Files: `git-squash/first-use.md`, `stakeholder-review/first-use.md`, `work-with-issue/first-use.md`
+   - Remove "Pin Base Branch Reference" critical rule section
+   - Remove "Never Restore Files Using checkout" section (checkout with commit hash is safe)
+   - Remove "Use Merge-Base Diff" section (diff with `cat-base` commit hash is already correct)
    - Replace pin-once patterns (`BASE=$(git rev-parse $(cat cat-base))`) with direct read (`BASE=$(cat cat-base)`)
-   - Remove redundant `git merge-base` computations where `cat-base` now provides the fork commit directly
+   - Remove redundant `git merge-base` computations
 
-5. **Step 5:** Update worktree isolation tests
+6. **Step 6:** Update worktree isolation tests
    - Files: `tests/worktree-isolation.bats`
    - Add test: `cat-base` contains a commit hash, not a branch name
    - Add test: `cat-base` value doesn't change when base branch advances
+   - Remove or simplify tests that documented the now-impossible branch-name race condition
 
-6. **Step 6:** Run full test suite
+7. **Step 7:** Run full test suite
    - `mvn -f client/pom.xml test`
    - `bats tests/worktree-isolation.bats`
 
@@ -110,6 +145,8 @@ Recording the fork commit once at worktree creation eliminates the entire class 
 - [ ] `WorkPrepare` writes the fork-point commit hash to `cat-base`
 - [ ] All diff/verification operations use `cat-base` directly as a commit hash
 - [ ] `MergeAndCleanup` receives the base branch name as a CLI argument for `git fetch`
-- [ ] Per-skill pin-once patterns simplified (no `git rev-parse` needed — `cat-base` IS the pinned commit)
+- [ ] `GitRebaseSafe` uses simple tree-state comparison instead of patch-diff
+- [ ] Per-skill pin-once patterns removed (`cat-base` IS the pinned commit)
+- [ ] Race-condition documentation sections removed from `git-squash/first-use.md`
 - [ ] All existing tests pass with no regressions
 - [ ] Bats tests verify `cat-base` contains a commit hash and is immutable
