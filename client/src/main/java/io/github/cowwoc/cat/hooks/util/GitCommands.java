@@ -6,6 +6,8 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -16,6 +18,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Utility class for executing Git commands.
@@ -247,8 +250,68 @@ public final class GitCommands
     String[] command = new String[args.length + 1];
     command[0] = "git";
     System.arraycopy(args, 0, command, 1, args.length);
+    return buildAndRunSingleLine(Map.of(), command);
+  }
+
+  /**
+   * Runs a git command in a specific directory and returns only the first line of output.
+   *
+   * @param directory the directory to run git in
+   * @param args the git command arguments
+   * @return the first line of output trimmed
+   * @throws IOException if the git command fails, is interrupted, or returns no output
+   */
+  public static String runGitCommandSingleLineInDirectory(String directory, String... args) throws IOException
+  {
+    String[] dirArgs = new String[args.length + 2];
+    dirArgs[0] = "-C";
+    dirArgs[1] = directory;
+    System.arraycopy(args, 0, dirArgs, 2, args.length);
+    return runGitCommandSingleLine(dirArgs);
+  }
+
+  /**
+   * Runs a git command in a specific directory with additional environment variables and returns only the
+   * first line of output.
+   * <p>
+   * The extra environment variables are layered on top of the inherited process environment.
+   *
+   * @param directory the directory to run git in
+   * @param extraEnv additional environment variables to set for the git process
+   * @param args the git command arguments
+   * @return the first line of output trimmed
+   * @throws NullPointerException if {@code extraEnv} is null
+   * @throws IOException if the git command fails, is interrupted, or returns no output
+   */
+  public static String runGitCommandSingleLineInDirectory(String directory, Map<String, String> extraEnv,
+    String... args) throws IOException
+  {
+    requireThat(extraEnv, "extraEnv").isNotNull();
+    String[] command = new String[args.length + 3];
+    command[0] = "git";
+    command[1] = "-C";
+    command[2] = directory;
+    System.arraycopy(args, 0, command, 3, args.length);
+    return buildAndRunSingleLine(extraEnv, command);
+  }
+
+  /**
+   * Builds and runs the given command, with optional additional environment variables, and returns only the
+   * first line of output.
+   * <p>
+   * The extra environment variables are layered on top of the inherited process environment.
+   *
+   * @param extraEnv additional environment variables to set for the process, or an empty map for none
+   * @param command the full command and arguments (including the executable name)
+   * @return the first line of output trimmed
+   * @throws IOException if the command fails, is interrupted, or returns no output
+   */
+  private static String buildAndRunSingleLine(Map<String, String> extraEnv, String... command) throws IOException
+  {
     ProcessBuilder pb = new ProcessBuilder(command);
     pb.redirectErrorStream(true);
+    if (!extraEnv.isEmpty())
+      pb.environment().putAll(extraEnv);
     Process process = pb.start();
     String line;
     try (BufferedReader reader = new BufferedReader(
@@ -276,23 +339,6 @@ public final class GitCommands
     if (line == null || line.isEmpty())
       throw new IOException("git command returned no output: " + String.join(" ", command));
     return line.strip();
-  }
-
-  /**
-   * Runs a git command in a specific directory and returns only the first line of output.
-   *
-   * @param directory the directory to run git in
-   * @param args the git command arguments
-   * @return the first line of output trimmed
-   * @throws IOException if the git command fails, is interrupted, or returns no output
-   */
-  public static String runGitCommandSingleLineInDirectory(String directory, String... args) throws IOException
-  {
-    String[] dirArgs = new String[args.length + 2];
-    dirArgs[0] = "-C";
-    dirArgs[1] = directory;
-    System.arraycopy(args, 0, dirArgs, 2, args.length);
-    return runGitCommandSingleLine(dirArgs);
   }
 
   /**
