@@ -44,7 +44,7 @@ public final class BlockWorktreeIsolationViolationTest
     Path lockDir = projectDir.resolve(".claude").resolve("cat").resolve("locks");
     Files.createDirectories(lockDir);
     String content = """
-      {"session_id": "%s", "created_at": 1000000, "worktree": "", "created_iso": "2026-01-01T00:00:00Z"}
+      {"session_id": "%s", "worktrees": {}, "created_at": 1000000, "created_iso": "2026-01-01T00:00:00Z"}
       """.formatted(sessionId);
     Files.writeString(lockDir.resolve(issueId + ".lock"), content);
   }
