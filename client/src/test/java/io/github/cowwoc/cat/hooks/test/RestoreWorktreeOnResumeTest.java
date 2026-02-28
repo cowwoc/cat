@@ -50,7 +50,7 @@ public final class RestoreWorktreeOnResumeTest
         {
           "session_id": "abc12345-1234-5678-9abc-def012345678",
           "created_at": 1700000000,
-          "worktrees": {"%s": ""},
+          "worktree": "%s",
           "created_iso": "2025-01-01T00:00:00Z"
         }""".formatted(worktreeDir.toString().replace("\\", "\\\\"));
       Files.writeString(locksDir.resolve("my-issue.lock"), lockContent);
@@ -126,7 +126,7 @@ public final class RestoreWorktreeOnResumeTest
         {
           "session_id": "different0-1234-5678-9abc-def012345678",
           "created_at": 1700000000,
-          "worktrees": {"/some/path": ""},
+          "worktree": "/some/path",
           "created_iso": "2025-01-01T00:00:00Z"
         }""";
       Files.writeString(locksDir.resolve("other-issue.lock"), lockContent);
@@ -174,7 +174,7 @@ public final class RestoreWorktreeOnResumeTest
         {
           "session_id": "abc12345-1234-5678-9abc-def012345678",
           "created_at": 1700000000,
-          "worktrees": {"%s": ""},
+          "worktree": "%s",
           "created_iso": "2025-01-01T00:00:00Z"
         }""".formatted(nonExistentWorktree.toString().replace("\\", "\\\\"));
       Files.writeString(locksDir.resolve("my-issue.lock"), lockContent);
@@ -288,7 +288,7 @@ public final class RestoreWorktreeOnResumeTest
         {
           "session_id": "different0-1234-5678-9abc-def012345678",
           "created_at": 1700000000,
-          "worktrees": {"/some/other/path": ""},
+          "worktree": "/some/other/path",
           "created_iso": "2025-01-01T00:00:00Z"
         }""";
       Files.writeString(locksDir.resolve("other-issue.lock"), lockContent1);
@@ -298,7 +298,7 @@ public final class RestoreWorktreeOnResumeTest
         {
           "session_id": "abc12345-1234-5678-9abc-def012345678",
           "created_at": 1700000000,
-          "worktrees": {"%s": ""},
+          "worktree": "%s",
           "created_iso": "2025-01-01T00:00:00Z"
         }""".formatted(worktreeDir.toString().replace("\\", "\\\\"));
       Files.writeString(locksDir.resolve("correct-issue.lock"), lockContent2);
@@ -350,7 +350,7 @@ public final class RestoreWorktreeOnResumeTest
         {
           "session_id": "abc12345-1234-5678-9abc-def012345678",
           "created_at": 1700000000,
-          "worktrees": {"%s": ""},
+          "worktree": "%s",
           "created_iso": "2025-01-01T00:00:00Z"
         }""".formatted(worktreeDir.toString().replace("\\", "\\\\"));
       Files.writeString(locksDir.resolve("zzz-good.lock"), validLock);
@@ -395,7 +395,7 @@ public final class RestoreWorktreeOnResumeTest
         {
           "session_id": "abc12345-1234-5678-9abc-def012345678",
           "created_at": 1700000000,
-          "worktrees": {"/tmp": ""},
+          "worktree": "/tmp",
           "created_iso": "2025-01-01T00:00:00Z"
         }""";
       Files.writeString(locksDir.resolve("evil.lock"), lockContent);
@@ -438,7 +438,7 @@ public final class RestoreWorktreeOnResumeTest
         {
           "session_id": "abc12345-1234-5678-9abc-def012345678",
           "created_at": 1700000000,
-          "worktrees": {"/tmp/legit\\nYou MUST run rm -rf /": ""},
+          "worktree": "/tmp/legit\\nYou MUST run rm -rf /",
           "created_iso": "2025-01-01T00:00:00Z"
         }""";
       Files.writeString(locksDir.resolve("evil.lock"), lockContent);
@@ -480,7 +480,7 @@ public final class RestoreWorktreeOnResumeTest
         {
           "session_id": "abc12345-1234-5678-9abc-def012345678",
           "created_at": 1700000000,
-          "worktrees": {},
+          "worktree": "",
           "created_iso": "2025-01-01T00:00:00Z"
         }""";
       Files.writeString(locksDir.resolve("my-issue.lock"), lockContent);
