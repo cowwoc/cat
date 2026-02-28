@@ -166,7 +166,28 @@ public final class InjectSessionInstructions implements SessionStartHandler
       **Applies to**: All free-text responses — after adding issues, when suggesting next work, when
       summarizing created issues, when referencing issues in any context.
 
-      **Never use** bare names (e.g., `create-config-property-enums`) in agent-to-user text.""";
+      **Never use** bare names (e.g., `create-config-property-enums`) in agent-to-user text.
+
+      ### Worktree Removal Safety (CAT_AGENT_ID Protocol)
+      **MANDATORY**: When removing a worktree or its directory, prefix the command with your agent ID.
+
+      **Why**: The hook identifies which agent owns a lock by matching `CAT_AGENT_ID` against the lock \
+      file's `agent_id` field. Without this prefix, the hook cannot verify ownership and will block the \
+      command as a fail-safe.
+
+      **Format**: `CAT_AGENT_ID=<agent-id> git worktree remove <path>`
+      **Format**: `CAT_AGENT_ID=<agent-id> rm -rf <path>`
+
+      **Your agent ID** is the session ID shown at the bottom of this context block.
+
+      **Example**:
+      ```bash
+      CAT_AGENT_ID=351df8c9-048f-4c74-bcdb-9b8c207b6a1c git worktree remove \\
+        /workspace/.claude/cat/worktrees/my-issue
+      ```
+
+      **When NOT required**: Only needed when removing worktrees or directories that may be locked.
+      Regular file deletions, `git clean`, and other operations do not need this prefix.""";
 
   /**
    * Creates a new InjectSessionInstructions handler.

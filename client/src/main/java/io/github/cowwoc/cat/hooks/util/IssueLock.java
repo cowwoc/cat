@@ -8,6 +8,8 @@ package io.github.cowwoc.cat.hooks.util;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
@@ -15,6 +17,8 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -23,6 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -33,8 +38,11 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * Locks never expire automatically - user must explicitly release or force-release.
  * Prevents multiple Claude instances from executing the same issue simultaneously.
  * <p>
- * Lock files are stored in .claude/cat/locks/&lt;issue-id&gt;.lock with JSON format:
- * {@code {"session_id": "uuid", "created_at": epochSeconds, "worktree": "path", "created_iso": "ISO-8601"}}
+ * Lock files are stored in {@code .claude/cat/locks/<issue-id>.lock} with JSON format:
+ * {@code {"session_id": "uuid", "worktrees": {"/path": "sessionId"}, "created_at": epochSeconds,}
+ * {@code "created_iso": "ISO-8601"}}
+ * <p>
+ * The {@code worktrees} map keys are absolute worktree paths; values are session IDs.
  * <p>
  * Lock operations return sealed {@link LockResult} subtypes:
  * <ul>
@@ -54,6 +62,7 @@ public final class IssueLock
   private static final DateTimeFormatter ISO_FORMATTER =
     DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC);
   private static final int MAX_LOCK_FILES = 1000;
+  private static final Duration STALE_LOCK_THRESHOLD = Duration.ofHours(4);
 
   private final JvmScope scope;
   private final Path lockDir;
@@ -387,7 +396,7 @@ public final class IssueLock
    * @param sessionId the Claude session UUID
    * @param worktree the worktree path (may be empty)
    * @return the lock result
-   * @throws IllegalArgumentException if sessionId is not a valid UUID
+   * @throws IllegalArgumentException if {@code sessionId} is not a valid UUID
    * @throws IOException if file operations fail
    */
   public LockResult acquire(String issueId, String sessionId, String worktree) throws IOException
@@ -406,11 +415,28 @@ public final class IssueLock
       String content = Files.readString(lockFile);
       @SuppressWarnings("unchecked")
       Map<String, Object> lockData = scope.getJsonMapper().readValue(content, Map.class);
+
+      // Check worktrees map for session ownership
+      Object worktreesObj = lockData.get("worktrees");
+      if (worktreesObj == null)
+      {
+        throw new IOException("Lock file for issue '" + issueId + "' is missing the 'worktrees' field: " +
+          lockFile + ". Delete the lock file or run /cat:cleanup.");
+      }
+      @SuppressWarnings("unchecked")
+      Map<String, String> existingWorktrees = (Map<String, String>) worktreesObj;
+      if (existingWorktrees.isEmpty())
+      {
+        throw new IOException("Lock file for issue '" + issueId + "' has an empty worktrees map: " +
+          lockFile + ". Delete the lock file or run /cat:cleanup.");
+      }
+      for (String lockSessionId : existingWorktrees.values())
+      {
+        if (lockSessionId.equals(sessionId))
+          return new LockResult.Acquired("acquired", "Lock already held by this session");
+      }
+      // Worktrees are registered but none match this session — lock is taken by someone else
       String existingSession = lockData.get("session_id").toString();
-
-      if (existingSession.equals(sessionId))
-        return new LockResult.Acquired("acquired", "Lock already held by this session");
-
       return new LockResult.Locked("locked", "Issue locked by another session", existingSession,
         "FIND_ANOTHER_ISSUE",
         "Do NOT investigate, remove, or question this lock. Execute a different issue instead. " +
@@ -420,11 +446,14 @@ public final class IssueLock
     long now = Instant.now().getEpochSecond();
     String createdIso = ISO_FORMATTER.format(Instant.now());
 
-    Map<String, Object> lockData = Map.of(
-      "session_id", sessionId,
-      "created_at", now,
-      "worktree", worktree,
-      "created_iso", createdIso);
+    Map<String, String> worktrees = new LinkedHashMap<>();
+    if (!worktree.isBlank())
+      worktrees.put(worktree, sessionId);
+    Map<String, Object> lockData = new LinkedHashMap<>();
+    lockData.put("session_id", sessionId);
+    lockData.put("worktrees", worktrees);
+    lockData.put("created_at", now);
+    lockData.put("created_iso", createdIso);
 
     Path tempFile = lockDir.resolve(sanitizeIssueId(issueId) + ".lock." + ProcessHandle.current().pid());
     Files.writeString(tempFile, scope.getJsonMapper().writeValueAsString(lockData));
@@ -491,12 +520,16 @@ public final class IssueLock
 
     long createdAt = ((Number) lockData.get("created_at")).longValue();
     String createdIso = lockData.getOrDefault("created_iso", "").toString();
+    @SuppressWarnings("unchecked")
+    Map<String, String> updatedWorktrees = new LinkedHashMap<>(
+      (Map<String, String>) lockData.getOrDefault("worktrees", Map.of()));
+    updatedWorktrees.put(worktree, "");
 
-    Map<String, Object> updatedData = Map.of(
-      "session_id", sessionId,
-      "created_at", createdAt,
-      "worktree", worktree,
-      "created_iso", createdIso);
+    Map<String, Object> updatedData = new LinkedHashMap<>();
+    updatedData.put("session_id", sessionId);
+    updatedData.put("worktrees", updatedWorktrees);
+    updatedData.put("created_at", createdAt);
+    updatedData.put("created_iso", createdIso);
 
     Path tempFile = lockDir.resolve(sanitizeIssueId(issueId) + ".lock." + ProcessHandle.current().pid());
     Files.writeString(tempFile, scope.getJsonMapper().writeValueAsString(updatedData));
@@ -589,7 +622,13 @@ public final class IssueLock
 
     String sessionId = lockData.get("session_id").toString();
     long createdAt = ((Number) lockData.get("created_at")).longValue();
-    String worktree = lockData.getOrDefault("worktree", "").toString();
+    @SuppressWarnings("unchecked")
+    Map<String, Object> worktreesMap = (Map<String, Object>) lockData.getOrDefault("worktrees", Map.of());
+    String worktree;
+    if (worktreesMap.isEmpty())
+      worktree = "";
+    else
+      worktree = worktreesMap.keySet().iterator().next();
 
     long now = Instant.now().getEpochSecond();
     long age = now - createdAt;
@@ -612,37 +651,40 @@ public final class IssueLock
 
     List<LockListEntry> locks = new ArrayList<>();
     long now = Instant.now().getEpochSecond();
-    int[] count = {0};
 
-    Files.list(lockDir).
-      filter(path -> path.toString().endsWith(".lock")).
-      forEach(lockFile ->
+    List<Path> lockFiles;
+    try (Stream<Path> stream = Files.list(lockDir))
+    {
+      lockFiles = stream.filter(path -> path.toString().endsWith(".lock")).toList();
+    }
+
+    for (Path lockFile : lockFiles)
+    {
+      if (locks.size() >= MAX_LOCK_FILES)
       {
-        if (count[0] >= MAX_LOCK_FILES)
-        {
-          System.err.println("WARNING: More than " + MAX_LOCK_FILES +
-            " lock files found in " + lockDir + ". Only the first " + MAX_LOCK_FILES + " are listed.");
-          return;
-        }
-        try
-        {
-          String issueId = lockFile.getFileName().toString().replace(".lock", "");
-          String content = Files.readString(lockFile);
-          @SuppressWarnings("unchecked")
-          Map<String, Object> lockData = scope.getJsonMapper().readValue(content, Map.class);
+        System.err.println("WARNING: More than " + MAX_LOCK_FILES +
+          " lock files found in " + lockDir + ". Only the first " + MAX_LOCK_FILES + " are listed.");
+        break;
+      }
+      try
+      {
+        String fileName = lockFile.getFileName().toString();
+        String issueId = fileName.substring(0, fileName.length() - ".lock".length());
+        String content = Files.readString(lockFile);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> lockData = scope.getJsonMapper().readValue(content, Map.class);
 
-          String sessionId = lockData.get("session_id").toString();
-          long createdAt = ((Number) lockData.get("created_at")).longValue();
-          long age = now - createdAt;
+        String sessionId = lockData.get("session_id").toString();
+        long createdAt = ((Number) lockData.get("created_at")).longValue();
+        long age = now - createdAt;
 
-          locks.add(new LockListEntry(issueId, sessionId, age));
-          ++count[0];
-        }
-        catch (Exception e)
-        {
-          System.err.println("WARNING: Skipping malformed lock file " + lockFile + ": " + e.getMessage());
-        }
-      });
+        locks.add(new LockListEntry(issueId, sessionId, age));
+      }
+      catch (IOException | JacksonException e)
+      {
+        System.err.println("WARNING: Skipping malformed lock file " + lockFile + ": " + e.getMessage());
+      }
+    }
 
     return locks;
   }
@@ -688,6 +730,82 @@ public final class IssueLock
       throw new IllegalArgumentException("Invalid session_id format: '" + sessionId +
         "'. Expected UUID. Did you swap issue_id and session_id arguments?");
     }
+  }
+
+  /**
+   * Reads and parses a lock file as JSON.
+   *
+   * @param lockFile the lock file to parse
+   * @param jsonMapper the JSON mapper for parsing
+   * @return the parsed JSON node, or null if the file cannot be parsed
+   * @throws NullPointerException if {@code lockFile} or {@code jsonMapper} are null
+   */
+  public static JsonNode parseLockFile(Path lockFile, JsonMapper jsonMapper)
+  {
+    requireThat(lockFile, "lockFile").isNotNull();
+    requireThat(jsonMapper, "jsonMapper").isNotNull();
+    try
+    {
+      String content = Files.readString(lockFile);
+      return jsonMapper.readTree(content);
+    }
+    catch (IOException _)
+    {
+      return null;
+    }
+  }
+
+  /**
+   * Reads and parses a lock file as JSON.
+   *
+   * @param lockFile the lock file to parse
+   * @return the parsed JSON node, or null if the file cannot be parsed
+   */
+  public JsonNode parseLockFile(Path lockFile)
+  {
+    return parseLockFile(lockFile, scope.getJsonMapper());
+  }
+
+  /**
+   * Checks if a lock file is stale (older than the staleness threshold).
+   * Uses the provided clock to determine staleness.
+   *
+   * @param lockFile the lock file path
+   * @param checkClock the clock to use for determining staleness
+   * @param jsonMapper the JSON mapper for parsing lock files
+   * @return true if the lock is stale and should not be treated as active protection
+   * @throws NullPointerException if {@code lockFile}, {@code checkClock}, or {@code jsonMapper} are null
+   */
+  public static boolean isStale(Path lockFile, Clock checkClock, JsonMapper jsonMapper)
+  {
+    requireThat(lockFile, "lockFile").isNotNull();
+    requireThat(checkClock, "checkClock").isNotNull();
+    requireThat(jsonMapper, "jsonMapper").isNotNull();
+    JsonNode lock = parseLockFile(lockFile, jsonMapper);
+    if (lock == null)
+      return false;
+    JsonNode createdAtNode = lock.get("created_at");
+    if (createdAtNode == null || !createdAtNode.isNumber())
+      return false;
+    long createdAtEpoch = createdAtNode.asLong();
+    if (createdAtEpoch <= 0)
+      return false;
+    Instant createdAt = Instant.ofEpochSecond(createdAtEpoch);
+    Duration age = Duration.between(createdAt, checkClock.instant());
+    return age.compareTo(STALE_LOCK_THRESHOLD) > 0;
+  }
+
+  /**
+   * Checks if a lock file is stale (older than the staleness threshold).
+   * Uses the provided clock to determine staleness.
+   *
+   * @param lockFile the lock file path
+   * @param checkClock the clock to use for determining staleness
+   * @return true if the lock is stale and should not be treated as active protection
+   */
+  public boolean isStale(Path lockFile, Clock checkClock)
+  {
+    return isStale(lockFile, checkClock, scope.getJsonMapper());
   }
 
   /**

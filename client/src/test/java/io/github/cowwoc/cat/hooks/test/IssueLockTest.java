@@ -860,6 +860,72 @@ public class IssueLockTest
   }
 
   /**
+   * Verifies that acquire stores the session ID in the worktrees map of the lock file.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquireStoresSessionIdInLockFile() throws IOException
+  {
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+
+        lock.acquire("test-issue", sessionId, "/path/to/worktree");
+
+        Path lockDir = tempDir.resolve(".claude").resolve("cat").resolve("locks");
+        Path lockFile = lockDir.resolve("test-issue.lock");
+        String content = Files.readString(lockFile);
+
+        requireThat(content, "content").contains("\"worktrees\"");
+        requireThat(content, "content").contains("\"session_id\"");
+        requireThat(content, "content").contains(sessionId);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that update() adds the new worktree path to the worktrees map in the lock file.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void updateAddsWorktreeToLockFile() throws IOException
+  {
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+
+        lock.acquire("test-issue", sessionId, "/path/to/worktree");
+        lock.update("test-issue", sessionId, "/new/path/to/worktree");
+
+        Path lockDir = tempDir.resolve(".claude").resolve("cat").resolve("locks");
+        Path lockFile = lockDir.resolve("test-issue.lock");
+        String content = Files.readString(lockFile);
+
+        requireThat(content, "content").contains("\"worktrees\"");
+        requireThat(content, "content").contains("/new/path/to/worktree");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
    * Creates a temporary CAT project directory for test isolation.
    *
    * @return the path to the created temporary directory

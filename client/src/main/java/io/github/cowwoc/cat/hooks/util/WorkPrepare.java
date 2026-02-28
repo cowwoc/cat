@@ -149,8 +149,8 @@ public final class WorkPrepare
      * @param issueId specific issue ID to select, or empty string for priority-based selection
      * @param trustLevel the trust level for execution
      * @throws IllegalArgumentException if {@code sessionId} is blank
-     * @throws NullPointerException if {@code excludePattern}, {@code issueId}, or {@code trustLevel}
-     *                              are null
+     * @throws NullPointerException if {@code excludePattern}, {@code issueId}, or
+     *   {@code trustLevel} are null
      */
     public PrepareInput
     {

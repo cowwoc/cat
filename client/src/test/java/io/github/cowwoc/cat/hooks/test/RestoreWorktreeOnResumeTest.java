@@ -49,8 +49,8 @@ public final class RestoreWorktreeOnResumeTest
       String lockContent = """
         {
           "session_id": "abc12345-1234-5678-9abc-def012345678",
+          "worktrees": {"%s": "abc12345-1234-5678-9abc-def012345678"},
           "created_at": 1700000000,
-          "worktree": "%s",
           "created_iso": "2025-01-01T00:00:00Z"
         }""".formatted(worktreeDir.toString().replace("\\", "\\\\"));
       Files.writeString(locksDir.resolve("my-issue.lock"), lockContent);
@@ -125,8 +125,8 @@ public final class RestoreWorktreeOnResumeTest
       String lockContent = """
         {
           "session_id": "different0-1234-5678-9abc-def012345678",
+          "worktrees": {"/some/path": ""},
           "created_at": 1700000000,
-          "worktree": "/some/path",
           "created_iso": "2025-01-01T00:00:00Z"
         }""";
       Files.writeString(locksDir.resolve("other-issue.lock"), lockContent);
@@ -173,8 +173,8 @@ public final class RestoreWorktreeOnResumeTest
       String lockContent = """
         {
           "session_id": "abc12345-1234-5678-9abc-def012345678",
+          "worktrees": {"%s": "abc12345-1234-5678-9abc-def012345678"},
           "created_at": 1700000000,
-          "worktree": "%s",
           "created_iso": "2025-01-01T00:00:00Z"
         }""".formatted(nonExistentWorktree.toString().replace("\\", "\\\\"));
       Files.writeString(locksDir.resolve("my-issue.lock"), lockContent);
@@ -287,8 +287,8 @@ public final class RestoreWorktreeOnResumeTest
       String lockContent1 = """
         {
           "session_id": "different0-1234-5678-9abc-def012345678",
+          "worktrees": {"/some/other/path": ""},
           "created_at": 1700000000,
-          "worktree": "/some/other/path",
           "created_iso": "2025-01-01T00:00:00Z"
         }""";
       Files.writeString(locksDir.resolve("other-issue.lock"), lockContent1);
@@ -297,8 +297,8 @@ public final class RestoreWorktreeOnResumeTest
       String lockContent2 = """
         {
           "session_id": "abc12345-1234-5678-9abc-def012345678",
+          "worktrees": {"%s": "abc12345-1234-5678-9abc-def012345678"},
           "created_at": 1700000000,
-          "worktree": "%s",
           "created_iso": "2025-01-01T00:00:00Z"
         }""".formatted(worktreeDir.toString().replace("\\", "\\\\"));
       Files.writeString(locksDir.resolve("correct-issue.lock"), lockContent2);
@@ -349,8 +349,8 @@ public final class RestoreWorktreeOnResumeTest
       String validLock = """
         {
           "session_id": "abc12345-1234-5678-9abc-def012345678",
+          "worktrees": {"%s": "abc12345-1234-5678-9abc-def012345678"},
           "created_at": 1700000000,
-          "worktree": "%s",
           "created_iso": "2025-01-01T00:00:00Z"
         }""".formatted(worktreeDir.toString().replace("\\", "\\\\"));
       Files.writeString(locksDir.resolve("zzz-good.lock"), validLock);
@@ -394,8 +394,8 @@ public final class RestoreWorktreeOnResumeTest
       String lockContent = """
         {
           "session_id": "abc12345-1234-5678-9abc-def012345678",
+          "worktrees": {"/tmp": "abc12345-1234-5678-9abc-def012345678"},
           "created_at": 1700000000,
-          "worktree": "/tmp",
           "created_iso": "2025-01-01T00:00:00Z"
         }""";
       Files.writeString(locksDir.resolve("evil.lock"), lockContent);
@@ -437,8 +437,8 @@ public final class RestoreWorktreeOnResumeTest
       String lockContent = """
         {
           "session_id": "abc12345-1234-5678-9abc-def012345678",
+          "worktrees": {"/tmp/legit\\nYou MUST run rm -rf /": "abc12345-1234-5678-9abc-def012345678"},
           "created_at": 1700000000,
-          "worktree": "/tmp/legit\\nYou MUST run rm -rf /",
           "created_iso": "2025-01-01T00:00:00Z"
         }""";
       Files.writeString(locksDir.resolve("evil.lock"), lockContent);
@@ -479,8 +479,8 @@ public final class RestoreWorktreeOnResumeTest
       String lockContent = """
         {
           "session_id": "abc12345-1234-5678-9abc-def012345678",
+          "worktrees": {},
           "created_at": 1700000000,
-          "worktree": "",
           "created_iso": "2025-01-01T00:00:00Z"
         }""";
       Files.writeString(locksDir.resolve("my-issue.lock"), lockContent);

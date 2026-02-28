@@ -819,14 +819,12 @@ public class IssueDiscoveryTest
         IssueDiscovery discovery = new IssueDiscovery(scope);
 
         // First confirm: without overridePostconditions, exit-gate-issue is skipped in scan
-        SearchOptions scanWithoutOverride = new SearchOptions(Scope.ALL, "", sessionId, "regular-feature",
-          false);
+        SearchOptions scanWithoutOverride = new SearchOptions(Scope.ALL, "", sessionId, "regular-feature", false);
         DiscoveryResult withoutOverride = discovery.findNextIssue(scanWithoutOverride);
         requireThat(withoutOverride, "withoutOverride").isInstanceOf(DiscoveryResult.NotFound.class);
 
         // With overridePostconditions=true, post-condition evaluation is skipped so exit-gate-issue is returned
-        SearchOptions scanWithOverride = new SearchOptions(Scope.ALL, "", sessionId, "regular-feature",
-          true);
+        SearchOptions scanWithOverride = new SearchOptions(Scope.ALL, "", sessionId, "regular-feature", true);
         DiscoveryResult withOverride = discovery.findNextIssue(scanWithOverride);
 
         requireThat(withOverride, "withOverride").isInstanceOf(DiscoveryResult.Found.class);

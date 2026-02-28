@@ -15,6 +15,7 @@ import io.github.cowwoc.cat.hooks.util.SkillDiscovery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -113,6 +114,14 @@ public final class SubagentStartHook implements HookHandler
       combinedContext.append(catRules);
     }
 
+    String worktreeRemovalInstructions = getWorktreeRemovalInstructions(input);
+    if (!worktreeRemovalInstructions.isEmpty())
+    {
+      if (!combinedContext.isEmpty())
+        combinedContext.append("\n\n");
+      combinedContext.append(worktreeRemovalInstructions);
+    }
+
     if (combinedContext.isEmpty())
       return new HookResult(output.empty(), warnings);
     return new HookResult(output.additionalContext("SubagentStart",
@@ -141,5 +150,50 @@ public final class SubagentStartHook implements HookHandler
     return RulesDiscovery.getCatRulesForAudience(rulesDir, scope.getYamlMapper(),
       (rules, activeFiles) -> RulesDiscovery.filterForSubagent(rules, subagentType, activeFiles),
       List.of());
+  }
+
+  /**
+   * Returns worktree removal safety instructions for this subagent.
+   * <p>
+   * Subagents need to know to prefix `git worktree remove` and `rm -rf` commands with
+   * their CAT agent ID (in the format `{sessionId}/subagents/{id}`).
+   * <p>
+   * Only injects instructions when the project is a valid CAT project (has `.claude/cat` directory),
+   * since the worktree removal safety only applies in CAT project contexts.
+   *
+   * @param input the hook input containing the agent_id field from Claude
+   * @return the worktree removal safety instructions
+   */
+  private String getWorktreeRemovalInstructions(HookInput input)
+  {
+    String agentId = input.getString("agent_id", "");
+    if (agentId.isBlank())
+      return "";
+
+    // Only inject if this is a valid CAT project
+    Path catDir = scope.getClaudeProjectDir().resolve(".claude").resolve("cat");
+    if (!Files.isDirectory(catDir))
+      return "";  // Not a CAT project, skip safety instructions
+
+    return "## Worktree Removal Safety (CAT_AGENT_ID Protocol)\n" +
+      "**MANDATORY**: When removing a worktree or its directory, prefix the command with your CAT agent ID.\n" +
+      "\n" +
+      "**Why**: The hook identifies which agent owns a lock by matching `CAT_AGENT_ID` against the lock \n" +
+      "file's `worktrees` map values. Without this prefix, the hook cannot verify ownership and will block the \n" +
+      "command as a fail-safe.\n" +
+      "\n" +
+      "**Format**: `CAT_AGENT_ID=<your-cat-agent-id> git worktree remove <path>`\n" +
+      "**Format**: `CAT_AGENT_ID=<your-cat-agent-id> rm -rf <path>`\n" +
+      "\n" +
+      "**Your CAT agent ID**: " + agentId + "\n" +
+      "\n" +
+      "**Example**:\n" +
+      "```bash\n" +
+      "CAT_AGENT_ID=" + agentId + " git worktree remove \\\n" +
+      "  /workspace/.claude/cat/worktrees/my-issue\n" +
+      "```\n" +
+      "\n" +
+      "**When NOT required**: Only needed when removing worktrees or directories that may be locked.\n" +
+      "Regular file deletions, `git clean`, and other operations do not need this prefix.";
   }
 }
