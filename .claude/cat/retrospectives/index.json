@@ -4,8 +4,8 @@
     "mistake_count_threshold": 10,
     "trigger_interval_days": 7
   },
-  "last_retrospective": "2026-02-27T10:36:10-05:00",
-  "mistake_count_since_last": 17,
+  "last_retrospective": "2026-02-28T16:57:40-05:00",
+  "mistake_count_since_last": 0,
   "files": {
     "mistakes": [
       "mistakes-2026-01.json",
@@ -66,16 +66,17 @@
       "pattern_id": "PATTERN-003",
       "pattern": "path_config_assumption",
       "occurrences_total": 3,
-      "occurrences_after_fix": 4,
+      "occurrences_after_fix": 5,
       "first_seen": "2026-01-26T18:00:00Z",
-      "last_seen": "2026-01-27T09:00:00Z",
+      "last_seen": "2026-02-28T00:00:00Z",
       "last_action_date": null,
       "status": "recurring",
       "effectiveness": "pending",
       "preventions": [
         "M266",
         "M267",
-        "M268"
+        "M268",
+        "M436"
       ],
       "related_action_items": [
         "A003"
@@ -336,10 +337,10 @@
     {
       "pattern_id": "PATTERN-016",
       "pattern": "squash_commit_corruption",
-      "occurrences_total": 11,
-      "occurrences_after_fix": 9,
+      "occurrences_total": 12,
+      "occurrences_after_fix": 10,
       "first_seen": "2026-02-06T12:54:53Z",
-      "last_seen": "2026-02-22T17:00:00Z",
+      "last_seen": "2026-02-27T11:17:24Z",
       "last_action_date": null,
       "status": "recurring",
       "effectiveness": "pending",
@@ -352,7 +353,8 @@
         "M503",
         "M379",
         "M385",
-        "M386"
+        "M386",
+        "M417"
       ],
       "related_action_items": [
         "A018"
@@ -362,17 +364,18 @@
     {
       "pattern_id": "PATTERN-017",
       "pattern": "approval_gate_bypass",
-      "occurrences_total": 3,
-      "occurrences_after_fix": 0,
+      "occurrences_total": 4,
+      "occurrences_after_fix": 1,
       "first_seen": "2026-02-08T14:00:00Z",
-      "last_seen": "2026-02-10T12:00:00Z",
+      "last_seen": "2026-02-28T00:00:00Z",
       "last_action_date": null,
       "status": "new",
       "effectiveness": "pending",
       "preventions": [
         "M479",
         "M480",
-        "M489"
+        "M489",
+        "M437"
       ],
       "related_action_items": [
         "A020"
@@ -438,6 +441,45 @@
         "A024"
       ],
       "note": "Agents ask user permission before mandatory workflow steps or skip them entirely. Examples: asking permission for stakeholder review (mandatory in work-with-issue), skipping skill-builder review before approval gate. Agents cannot distinguish mandatory from optional workflow steps when skill documentation does not explicitly mark steps as MANDATORY."
+    },
+    {
+      "pattern_id": "PATTERN-021",
+      "pattern": "skill_output_re_presentation",
+      "occurrences_total": 2,
+      "occurrences_after_fix": 0,
+      "first_seen": "2026-02-27T15:42:38Z",
+      "last_seen": "2026-02-27T15:48:36Z",
+      "last_action_date": null,
+      "status": "new",
+      "effectiveness": "pending",
+      "preventions": [
+        "M419",
+        "M420"
+      ],
+      "related_action_items": [
+        "A025"
+      ],
+      "note": "Agent invokes a skill that produces interactive wizard output (AskUserQuestion) but then re-renders the output as markdown prose or responds conversationally instead of letting the skill's wizard drive the interaction. Specific to skills like /cat:config that use AskUserQuestion."
+    },
+    {
+      "pattern_id": "PATTERN-022",
+      "pattern": "workflow_rejection_handling",
+      "occurrences_total": 3,
+      "occurrences_after_fix": 0,
+      "first_seen": "2026-02-27T23:25:50Z",
+      "last_seen": "2026-02-28T00:00:00Z",
+      "last_action_date": null,
+      "status": "new",
+      "effectiveness": "pending",
+      "preventions": [
+        "M433",
+        "M434",
+        "M435"
+      ],
+      "related_action_items": [
+        "A026"
+      ],
+      "note": "Agent fails to handle rejected or partial workflow states correctly: (1) proceeds to next phase when verify returns PARTIAL, (2) asks user 'what should I do?' after rejected stakeholder review instead of entering auto-fix loop, (3) skips re-presenting approval gate after user rejects it mid-workflow. Agent treats rejections as terminal instead of triggering the prescribed remediation."
     }
   ],
   "action_items": [
@@ -903,10 +945,10 @@
       "escalation": {
         "id": "ESCALATE-A018",
         "escalated_date": "2026-02-20T06:19:02-05:00",
-        "last_reviewed": "2026-02-23T10:22:49Z",
+        "last_reviewed": "2026-02-28T16:57:40-05:00",
         "reason": "Squash workflow continues to fail despite A018. 4 post-fix mistakes (M484, M488, M500, M503). M503 added RemindGitSquash hook blocking git reset --soft, but underlying issue is worktree staleness and manual squash bypass.",
         "escalation_level": "partial_implementation",
-        "analysis": "R022 update: 3 new squash-related failures in current period: M379 (GitSquash.java leaves orphaned backup branch - never deletes on success), M385 (5 unsquashed commits at approval gate - recurs M362, skill gate bypassed again), M386 (fastForwardMerge uses pointer-only git push refspec, does not sync working tree - recurs M369). PATTERN-016 now has 11 total occurrences, 9 after first fix attempt. Three distinct sub-issues identified: (1) backup cleanup, (2) pre-gate squash enforcement, (3) working tree sync. All three have code-level fixes pending implementation (not yet verified). RemindGitSquash hook blocks direct reset alternatives but cannot prevent agent skipping squash step or the working-tree-pointer-divergence issue in MergeAndCleanup.",
+        "analysis": "R022 update: 3 new squash-related failures in current period: M379 (GitSquash.java leaves orphaned backup branch - never deletes on success), M385 (5 unsquashed commits at approval gate - recurs M362, skill gate bypassed again), M386 (fastForwardMerge uses pointer-only git push refspec, does not sync working tree - recurs M369). PATTERN-016 now has 11 total occurrences, 9 after first fix attempt. Three distinct sub-issues identified: (1) backup cleanup, (2) pre-gate squash enforcement, (3) working tree sync. All three have code-level fixes pending implementation (not yet verified). RemindGitSquash hook blocks direct reset alternatives but cannot prevent agent skipping squash step or the working-tree-pointer-divergence issue in MergeAndCleanup. R025 update: M417 adds another PATTERN-016 occurrence (interactive rebase dropped STATE.md changes from pre-squash-range commit). Total now 12 occurrences, 10 post-fix. Three structural code fixes (GitSquash backup cleanup, pre-gate commit count check, working-tree sync after fastForward) remain pending implementation.",
         "proposed_solution": "Three distinct code fixes required (all identified, not yet verified): (1) GitSquash.java: delete backup branch before returning OK JSON response (M379). (2) work-with-issue Step 7: COMMIT_COUNT == 1 gate before entering approval gate (M385). (3) MergeAndCleanup.java: call syncMainWorkingTree() running git reset hard HEAD after fastForwardMerge() (M386). Items (1) and (3) require Java code changes. Item (2) requires skill update. Monitor after all three are verified. Current escalation level: partial_implementation. R022: All three preventions recorded in mistakes file but none yet implemented in codebase.",
         "status": "open"
       }
@@ -1014,6 +1056,47 @@
         "M388"
       ],
       "effectiveness_check": null
+    },
+    {
+      "id": "A025",
+      "priority": "low",
+      "description": "Document skill output forwarding protocol: when a skill produces AskUserQuestion wizard output, the invoking agent must call AskUserQuestion directly (not render it as prose). Add to wizard-based skills (config, etc.) explicit note: 'After invoking this skill, forward the AskUserQuestion tool call verbatim \u2014 do not respond conversationally.'",
+      "category": "protocol_violation",
+      "pattern_id": "PATTERN-021",
+      "status": "open",
+      "created_date": "2026-02-28T16:57:40-05:00",
+      "completed_date": null,
+      "related_mistakes": [
+        "M419",
+        "M420"
+      ],
+      "effectiveness_check": {
+        "mistakes_before": 2,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
+    },
+    {
+      "id": "A026",
+      "priority": "medium",
+      "description": "Add explicit rejection-state handling to work-with-issue: (1) PARTIAL verify result = STOP, do NOT proceed to stakeholder review \u2014 fix unmet conditions first; (2) Rejected stakeholder review = automatically enter re-work loop (fix issues, re-run review) without asking user permission; (3) User rejects AskUserQuestion approval gate mid-workflow = re-present the gate in the NEXT response, do not skip it. Add 'REJECTION HANDLING' section to work-with-issue/first-use.md covering all three cases.",
+      "category": "protocol_violation",
+      "pattern_id": "PATTERN-022",
+      "status": "open",
+      "created_date": "2026-02-28T16:57:40-05:00",
+      "completed_date": null,
+      "related_mistakes": [
+        "M433",
+        "M434",
+        "M435"
+      ],
+      "effectiveness_check": {
+        "mistakes_before": 3,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
     }
   ]
 }
