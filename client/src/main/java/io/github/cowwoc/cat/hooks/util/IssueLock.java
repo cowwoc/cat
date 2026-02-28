@@ -34,8 +34,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * Prevents multiple Claude instances from executing the same issue simultaneously.
  * <p>
  * Lock files are stored in .claude/cat/locks/&lt;issue-id&gt;.lock with JSON format:
- * {@code {"session_id": "uuid", "worktrees": {"path": "agent-id"}, "created_at": epochSeconds,
- * "created_iso": "ISO-8601"}}
+ * {@code {"session_id": "uuid", "created_at": epochSeconds, "worktree": "path", "created_iso": "ISO-8601"}}
  * <p>
  * Lock operations return sealed {@link LockResult} subtypes:
  * <ul>
@@ -421,13 +420,10 @@ public final class IssueLock
     long now = Instant.now().getEpochSecond();
     String createdIso = ISO_FORMATTER.format(Instant.now());
 
-    Map<String, Object> worktrees = new LinkedHashMap<>();
-    if (!worktree.isEmpty())
-      worktrees.put(worktree, "");
     Map<String, Object> lockData = Map.of(
       "session_id", sessionId,
-      "worktrees", worktrees,
       "created_at", now,
+      "worktree", worktree,
       "created_iso", createdIso);
 
     Path tempFile = lockDir.resolve(sanitizeIssueId(issueId) + ".lock." + ProcessHandle.current().pid());
@@ -496,16 +492,10 @@ public final class IssueLock
     long createdAt = ((Number) lockData.get("created_at")).longValue();
     String createdIso = lockData.getOrDefault("created_iso", "").toString();
 
-    @SuppressWarnings("unchecked")
-    Map<String, Object> existingWorktrees = (Map<String, Object>) lockData.getOrDefault("worktrees",
-      new LinkedHashMap<>());
-    Map<String, Object> updatedWorktrees = new LinkedHashMap<>(existingWorktrees);
-    updatedWorktrees.put(worktree, "");
-
     Map<String, Object> updatedData = Map.of(
       "session_id", sessionId,
-      "worktrees", updatedWorktrees,
       "created_at", createdAt,
+      "worktree", worktree,
       "created_iso", createdIso);
 
     Path tempFile = lockDir.resolve(sanitizeIssueId(issueId) + ".lock." + ProcessHandle.current().pid());
@@ -599,14 +589,7 @@ public final class IssueLock
 
     String sessionId = lockData.get("session_id").toString();
     long createdAt = ((Number) lockData.get("created_at")).longValue();
-
-    @SuppressWarnings("unchecked")
-    Map<String, Object> worktrees = (Map<String, Object>) lockData.getOrDefault("worktrees", Map.of());
-    String worktree;
-    if (worktrees.isEmpty())
-      worktree = "";
-    else
-      worktree = worktrees.keySet().iterator().next();
+    String worktree = lockData.getOrDefault("worktree", "").toString();
 
     long now = Instant.now().getEpochSecond();
     long age = now - createdAt;
