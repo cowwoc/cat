@@ -124,10 +124,10 @@ public final class SubagentStartHookTest
   // --- SubagentStartHook tests ---
 
   /**
-   * Verifies that SubagentStartHook returns empty output when no skills are discoverable.
+   * Verifies that SubagentStartHook injects agent ID context even when no skills are discoverable.
    * <p>
    * In a test environment with empty temp dirs, SkillDiscovery finds no installed plugins,
-   * no project commands, and no user skills, so the result should be an empty JSON object.
+   * no project commands, and no user skills. The agent ID context is always injected.
    */
   @Test
   public void subagentStartHookReturnsEmptyWhenNoSkills() throws IOException
@@ -137,11 +137,13 @@ public final class SubagentStartHookTest
     try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{\"agent_id\": \"agent-1\", \"agent_type\": \"task\"}");
+      HookInput input = createInput(mapper,
+        "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"agent_type\": \"task\"}");
       HookOutput output = new HookOutput(scope);
       HookResult result = new SubagentStartHook(scope).run(input, output);
 
-      requireThat(result.output(), "output").isEqualTo("{}");
+      requireThat(result.output(), "output").contains("Your CAT agent ID is:");
+      requireThat(result.output(), "output").contains("test-session/subagents/agent-1");
       requireThat(result.warnings(), "warnings").isEmpty();
     }
     finally
@@ -170,7 +172,8 @@ public final class SubagentStartHookTest
       try (JvmScope scope = new TestJvmScope(configDir, pluginRoot))
       {
         JsonMapper mapper = scope.getJsonMapper();
-        HookInput input = createInput(mapper, "{\"agent_id\": \"agent-1\", \"agent_type\": \"task\"}");
+        HookInput input = createInput(mapper,
+          "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"agent_type\": \"task\"}");
         HookOutput output = new HookOutput(scope);
         HookResult result = new SubagentStartHook(scope).run(input, output);
 
@@ -204,7 +207,8 @@ public final class SubagentStartHookTest
       try (JvmScope scope = new TestJvmScope(configDir, pluginRoot))
       {
         JsonMapper mapper = scope.getJsonMapper();
-        HookInput input = createInput(mapper, "{}");
+        HookInput input = createInput(mapper,
+          "{\"session_id\": \"test-session\", \"agent_id\": \"sample-agent\"}");
         HookOutput output = new HookOutput(scope);
         HookResult result = new SubagentStartHook(scope).run(input, output);
 
@@ -357,7 +361,8 @@ public final class SubagentStartHookTest
         """);
 
       JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{\"session_id\": \"test-session\"}");
+      HookInput input = createInput(mapper,
+        "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\"}");
       HookOutput output = new HookOutput(scope);
       HookResult result = new SubagentStartHook(scope).run(input, output);
 
@@ -397,7 +402,7 @@ public final class SubagentStartHookTest
 
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
-        "{\"session_id\": \"test-session\", \"subagent_type\": \"cat:work-execute\"}");
+        "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"subagent_type\": \"cat:work-execute\"}");
       HookOutput output = new HookOutput(scope);
       HookResult result = new SubagentStartHook(scope).run(input, output);
 
@@ -438,12 +443,108 @@ public final class SubagentStartHookTest
       JsonMapper mapper = scope.getJsonMapper();
       // Different subagent type — rule should not match
       HookInput input = createInput(mapper,
-        "{\"session_id\": \"test-session\", \"subagent_type\": \"Explore\"}");
+        "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"subagent_type\": \"Explore\"}");
       HookOutput output = new HookOutput(scope);
       HookResult result = new SubagentStartHook(scope).run(input, output);
 
       requireThat(result.output(), "output").doesNotContain("Work execute only content");
       requireThat(result.output(), "output").doesNotContain("Should not appear for Explore.");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  // ---- getAgentIdContext behavior ----
+
+  /**
+   * Verifies that the agent ID context appears in run() output when both agent_id and session_id
+   * are present and non-blank.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void getAgentIdContextIncludedWhenAgentIdAndSessionIdPresent() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("cat-test-agent-id-present-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"session_id\": \"test-session-abc\", \"agent_id\": \"subagent-xyz\"}");
+      HookOutput output = new HookOutput(scope);
+      HookResult result = new SubagentStartHook(scope).run(input, output);
+
+      requireThat(result.output(), "output").contains("Your CAT agent ID is:");
+      requireThat(result.output(), "output").contains("test-session-abc/subagents/subagent-xyz");
+      requireThat(result.output(), "output").contains("You MUST pass this as the first argument");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that run() throws IllegalArgumentException when agent_id is blank.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void getAgentIdContextAbsentWhenAgentIdBlank() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("cat-test-agent-id-blank-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"session_id\": \"test-session-abc\", \"agent_id\": \"\"}");
+      HookOutput output = new HookOutput(scope);
+      try
+      {
+        new SubagentStartHook(scope).run(input, output);
+      }
+      catch (IllegalArgumentException e)
+      {
+        requireThat(e.getMessage(), "message").contains("agent_id");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that run() throws IllegalArgumentException when session_id is blank.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void getAgentIdContextAbsentWhenSessionIdBlank() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("cat-test-session-id-blank-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"session_id\": \"\", \"agent_id\": \"subagent-xyz\"}");
+      HookOutput output = new HookOutput(scope);
+      try
+      {
+        new SubagentStartHook(scope).run(input, output);
+      }
+      catch (IllegalArgumentException e)
+      {
+        requireThat(e.getMessage(), "message").contains("session_id");
+      }
     }
     finally
     {
