@@ -2,7 +2,7 @@
 
 - **Dependencies:** []
 - **Blocks:** []
-- **Last Updated:** 2026-02-24
+- **Last Updated:** 2026-02-28
 
 
 # v2.6 State
@@ -16,6 +16,7 @@ Future work items.
 
 ## Issues Pending
 - detect-duplicate-functionality
+- fix-cleanup-merged-check-with-commit-hash
 
 ## Issues Completed
 (None)
