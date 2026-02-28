@@ -48,7 +48,8 @@ public class IssueLockCliTest
         PrintStream err = new PrintStream(errBytes, true, StandardCharsets.UTF_8);
 
         String sessionId = UUID.randomUUID().toString();
-        boolean success = IssueLock.run(new String[]{"acquire", "test-issue", sessionId}, scope, out, err);
+        boolean success = IssueLock.run(new String[]{"acquire", "test-issue", sessionId},
+          scope, out, err);
 
         requireThat(success, "success").isTrue();
         String output = outBytes.toString(StandardCharsets.UTF_8);
@@ -114,8 +115,8 @@ public class IssueLockCliTest
         PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
         PrintStream err = new PrintStream(errBytes, true, StandardCharsets.UTF_8);
 
-        boolean success = IssueLock.run(new String[]{"acquire", "test-issue", "not-a-uuid"}, scope, out,
-          err);
+        boolean success = IssueLock.run(new String[]{"acquire", "test-issue", "not-a-uuid"},
+          scope, out, err);
 
         requireThat(success, "success").isFalse();
         String errOutput = errBytes.toString(StandardCharsets.UTF_8);

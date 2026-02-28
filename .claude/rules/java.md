@@ -582,6 +582,26 @@ String suffix = input.stripTrailing();
 String clean = input.trim();
 ```
 
+### Prefer isBlank() Over isEmpty() for External Strings
+When checking whether a string from an external source (JSON fields, environment variables, CLI arguments, hook input)
+is "empty", use `isBlank()` instead of `isEmpty()`. A whitespace-only string is semantically empty but `isEmpty()`
+would miss it.
+
+```java
+// Good - catches "", " ", "\t" from external input
+if (agentId.isBlank())
+  return "";
+
+// Avoid - misses whitespace-only strings from external sources
+if (agentId.isEmpty())
+  return "";
+```
+
+**Use `isEmpty()` only when:**
+- You control the string's construction (e.g., `StringBuilder`, string concatenation)
+- Whitespace-only is a valid, meaningful value
+- Checking collection/map emptiness (`Map.isEmpty()`, `List.isEmpty()`)
+
 ### No Null Strings
 Use `""` (empty string) instead of `null` for String values - both for return values and parameters:
 
