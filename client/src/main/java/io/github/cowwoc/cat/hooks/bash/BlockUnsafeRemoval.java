@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -332,23 +333,29 @@ public final class BlockUnsafeRemoval implements BashHandler
         {
           for (Path lockFile : stream)
           {
+            JsonNode lock = parseLockFile(lockFile);
+            if (lock == null)
+              continue;
+
             // Skip worktrees owned by the current session
-            if (isOwnedBySession(lockFile, sessionId))
+            if (isOwnedBySession(lock, sessionId))
               continue;
 
             // Skip stale locks (older than 4 hours) - they are from dead sessions
-            if (isStale(lockFile))
+            if (isStale(lock))
               continue;
 
-            // Lock file name = {issue-id}.lock
-            // Worktree path = {mainWorktree}/.claude/cat/worktrees/{issue-id}
-            String fileName = lockFile.getFileName().toString();
-            String issueId = fileName.substring(0, fileName.length() - ".lock".length());
-            if (issueId.contains("/") || issueId.contains("\\") || issueId.contains(".."))
-              continue;
-            Path worktreePath = mainWorktree.resolve(".claude/cat/worktrees/" + issueId);
-            if (Files.isDirectory(worktreePath))
-              paths.add(worktreePath.toRealPath());
+            // Read worktree paths from worktrees map
+            JsonNode worktreesNode = lock.get("worktrees");
+            if (worktreesNode != null && worktreesNode.isObject())
+            {
+              for (Map.Entry<String, JsonNode> entry : worktreesNode.properties())
+              {
+                Path worktreePath = Paths.get(entry.getKey());
+                if (Files.isDirectory(worktreePath))
+                  paths.add(worktreePath.toRealPath());
+              }
+            }
           }
         }
       }
@@ -382,18 +389,15 @@ public final class BlockUnsafeRemoval implements BashHandler
   }
 
   /**
-   * Checks if a lock file is owned by the given session.
+   * Checks if a parsed lock is owned by the given session.
    *
-   * @param lockFile the lock file path
+   * @param lock the parsed lock JSON node
    * @param sessionId the session ID to check against
    * @return true if the lock is owned by the given session
    */
-  private boolean isOwnedBySession(Path lockFile, String sessionId)
+  private boolean isOwnedBySession(JsonNode lock, String sessionId)
   {
     if (sessionId.isEmpty())
-      return false;
-    JsonNode lock = parseLockFile(lockFile);
-    if (lock == null)
       return false;
     JsonNode lockSessionNode = lock.get("session_id");
     if (lockSessionNode == null || !lockSessionNode.isString())
@@ -402,16 +406,13 @@ public final class BlockUnsafeRemoval implements BashHandler
   }
 
   /**
-   * Checks if a lock file is stale (older than the staleness threshold).
+   * Checks if a parsed lock is stale (older than the staleness threshold).
    *
-   * @param lockFile the lock file path
+   * @param lock the parsed lock JSON node
    * @return true if the lock is stale and should not be treated as active protection
    */
-  private boolean isStale(Path lockFile)
+  private boolean isStale(JsonNode lock)
   {
-    JsonNode lock = parseLockFile(lockFile);
-    if (lock == null)
-      return false;
     JsonNode createdAtNode = lock.get("created_at");
     if (createdAtNode == null || !createdAtNode.isNumber())
       return false;

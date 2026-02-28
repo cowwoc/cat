@@ -148,9 +148,10 @@ public final class RestoreWorktreeOnResume implements SessionStartHandler
           Object lockSessionId = lockData.get("session_id");
           if (lockSessionId != null && lockSessionId.toString().equals(sessionId))
           {
-            Object worktree = lockData.get("worktree");
-            if (worktree != null)
-              return worktree.toString();
+            @SuppressWarnings("unchecked")
+            Map<String, Object> worktrees = (Map<String, Object>) lockData.get("worktrees");
+            if (worktrees != null && !worktrees.isEmpty())
+              return worktrees.keySet().iterator().next();
             return "";
           }
         }
