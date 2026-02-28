@@ -2674,8 +2674,7 @@
         "catches_variations": false
       },
       "correct_behavior": "Hook must detect 'fast-track', 'final review result', 'let me fast-track', 'token usage' (not just 'token budget') patterns as constraint-rationalization giving-up indicators"
-    }
- ,
+    },
     {
       "id": "M439",
       "timestamp": "2026-02-28T00:00:00Z",
@@ -2686,7 +2685,11 @@
       "rca_method_name": "causal-barrier",
       "prevention_type": "documentation",
       "prevention_path": "${CLAUDE_PROJECT_DIR}/.claude/rules/common.md",
-      "pattern_keywords": ["retrospective_commentary", "javadoc", "historical_context"],
+      "pattern_keywords": [
+        "retrospective_commentary",
+        "javadoc",
+        "historical_context"
+      ],
       "prevention_implemented": true,
       "prevention_verified": true,
       "recurrence_of": null,
@@ -2696,6 +2699,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Describe current behavior in Javadoc and comments, not historical context. Use 'deleted when found' instead of 'cleaned up for migration'. This applies to all file types including Java Javadoc."
+    },
+    {
+      "id": "M440",
+      "timestamp": "2026-02-28T21:53:01Z",
+      "category": "protocol_violation",
+      "description": "work-merge closed issue STATE.md without setting Resolution field",
+      "root_cause": "merge-and-cleanup.md Step 6 omitted Resolution from STATE.md closure fields, leaving subagent without guidance to set Resolution: implemented",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/merge-and-cleanup.md",
+      "pattern_keywords": [
+        "state_md",
+        "resolution_field",
+        "issue_closure",
+        "work_merge"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Set Status: closed, Progress: 100%, Resolution: implemented, and Completed: {date} together in STATE.md when closing an issue via work-merge"
     }
   ]
 }

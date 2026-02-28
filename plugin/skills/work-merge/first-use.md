@@ -201,6 +201,10 @@ for parent_dir in "$VERSION_DIR"/*/; do
       parent_name=$(basename "$parent_dir")
       sed -i 's/\*\*Status:\*\* .*/\*\*Status:\*\* closed/' "$parent_state"
       sed -i 's/\*\*Progress:\*\* .*/\*\*Progress:\*\* 100%/' "$parent_state"
+      # Add Resolution if not already present (required for all closed issues)
+      if ! grep -q '^\*\*Resolution:\*\*' "$parent_state"; then
+        sed -i '/\*\*Progress:\*\* 100%/a - **Resolution:** implemented' "$parent_state"
+      fi
       git -C "${WORKTREE_PATH}" add "${parent_state#${WORKTREE_PATH}/}"
       echo "Auto-closed decomposed parent: $parent_name"
     fi
