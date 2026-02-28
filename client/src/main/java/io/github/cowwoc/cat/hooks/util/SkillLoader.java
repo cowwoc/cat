@@ -820,8 +820,9 @@ public final class SkillLoader
 
     try (JvmScope scope = new MainJvmScope())
     {
-      // When $0 is absent or blank, fall back to CLAUDE_SESSION_ID from the environment
-      if (skillArgs.isEmpty() || skillArgs.get(0).isBlank())
+      // When $0 is blank (user invoked slash command directly), fall back to CLAUDE_SESSION_ID.
+      // If skillArgs is empty, the SKILL.md is misconfigured (missing "$0") — let constructor fail fast.
+      if (!skillArgs.isEmpty() && skillArgs.get(0).isBlank())
       {
         List<String> resolved = new ArrayList<>();
         resolved.add(scope.getClaudeSessionId());
