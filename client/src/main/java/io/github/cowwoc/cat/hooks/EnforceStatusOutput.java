@@ -58,33 +58,9 @@ public final class EnforceStatusOutput
       try
       {
         HookInput input = HookInput.readFromStdin(mapper);
-
         String transcriptPath = input.getString("transcript_path");
-
         boolean stopHookActive = input.getBoolean("stop_hook_active", false);
-        if (stopHookActive)
-        {
-          output = hookOutput.empty();
-          System.out.println(output);
-          return;
-        }
-
-        CheckResult result = checkTranscriptForStatusSkill(mapper, transcriptPath);
-
-        if (result.statusInvoked && !result.hasBoxOutput)
-        {
-          String reason =
-            "M402 ENFORCEMENT: /cat:status was invoked but you did NOT output the status box. " +
-            "The skill's MANDATORY OUTPUT REQUIREMENT states: Copy-paste ALL content between " +
-            "the START and END markers. You summarized instead of copy-pasting. " +
-            "OUTPUT THE COMPLETE STATUS BOX NOW - including the ╭── border, all issue lines, " +
-            "the NEXT STEPS table, and the Legend. Do NOT summarize or interpret.";
-          output = hookOutput.block(reason);
-        }
-        else
-        {
-          output = hookOutput.empty();
-        }
+        output = check(mapper, transcriptPath, stopHookActive, hookOutput);
       }
       catch (Exception e)
       {
@@ -102,6 +78,55 @@ public final class EnforceStatusOutput
       log.error("Unexpected error", e);
       throw e;
     }
+  }
+
+  /**
+   * Checks the transcript and returns the hook decision.
+   * <p>
+   * When {@code stopHookActive} is {@code true} (second attempt after a prior block), the hook
+   * re-checks the transcript: if the status box is now present it allows the response through;
+   * if the box is still missing it blocks with a fail-fast error telling the user to retry
+   * {@code /cat:status} manually.
+   * <p>
+   * When {@code stopHookActive} is {@code false} (first attempt), the hook applies the standard
+   * enforcement: block if status was invoked but the box is absent.
+   *
+   * @param mapper the JSON mapper to use for parsing
+   * @param transcriptPath path to the transcript JSONL file, or empty string if unavailable
+   * @param stopHookActive whether Claude Code set {@code stop_hook_active=true} on this invocation
+   * @param hookOutput the hook output builder
+   * @return JSON string representing the hook decision
+   * @throws IOException if the transcript file cannot be read
+   */
+  public static String check(JsonMapper mapper, String transcriptPath, boolean stopHookActive,
+    HookOutput hookOutput) throws IOException
+  {
+    CheckResult result = checkTranscriptForStatusSkill(mapper, transcriptPath);
+
+    if (stopHookActive)
+    {
+      if (result.statusInvoked && !result.hasBoxOutput)
+      {
+        String reason =
+          "ENFORCEMENT FAILED: /cat:status was invoked but the status box was not output on " +
+          "two consecutive attempts. The model has been blocked twice and is still not complying. " +
+          "Please retry /cat:status manually to get the status box.";
+        return hookOutput.block(reason);
+      }
+      return hookOutput.empty();
+    }
+
+    if (result.statusInvoked && !result.hasBoxOutput)
+    {
+      String reason =
+        "M402 ENFORCEMENT: /cat:status was invoked but you did NOT output the status box. " +
+        "The skill's MANDATORY OUTPUT REQUIREMENT states: Copy-paste ALL content between " +
+        "the START and END markers. You summarized instead of copy-pasting. " +
+        "OUTPUT THE COMPLETE STATUS BOX NOW - including the ╭── border, all issue lines, " +
+        "the NEXT STEPS table, and the Legend. Do NOT summarize or interpret.";
+      return hookOutput.block(reason);
+    }
+    return hookOutput.empty();
   }
 
   /**
