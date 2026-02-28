@@ -140,7 +140,7 @@
       "timestamp": "2026-02-18T19:30:42Z",
       "category": "protocol_violation",
       "description": "merge-and-cleanup.sh did not delete backup-before-squash-* branches left by git-squash-quick.sh after successful merge",
-      "root_cause": "work-with-issue Step 6 runs git-squash-quick.sh before each approval gate presentation. When the workflow loops (user rejects, more work done, loop back to Step 6), each squash iteration creates a new uniquely-timestamped backup branch. git-squash-quick.sh only deletes the backup it JUST created on success \u2014 it cannot know about backups from previous loop iterations. merge-and-cleanup.sh, which runs after the final successful merge, had no logic to delete these orphaned backup branches.",
+      "root_cause": "work-with-issue Step 6 runs git-squash-quick.sh before each approval gate presentation. When the workflow loops (user rejects, more work done, loop back to Step 6), each squash iteration creates a new uniquely-timestamped backup branch. git-squash-quick.sh only deletes the backup it JUST created on success — it cannot know about backups from previous loop iterations. merge-and-cleanup.sh, which runs after the final successful merge, had no logic to delete these orphaned backup branches.",
       "rca_method": "A",
       "rca_method_name": "5-whys",
       "prevention_type": "code_fix",
@@ -342,7 +342,7 @@
       "id": "M355",
       "timestamp": "2026-02-19T11:24:00Z",
       "category": "protocol_violation",
-      "description": "Agent corrupted verbatim status box output by inserting horizontal rule characters (\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500) between sections that were not in the original output",
+      "description": "Agent corrupted verbatim status box output by inserting horizontal rule characters (────────────────) between sections that were not in the original output",
       "root_cause": "REFLECTION failure: Agent read the verbatim instruction but its helpful-synthesis training overrode it by adding structural separators it perceived as clarifying. The instruction 'copy the contents verbatim' does not explicitly forbid adding characters, leaving room for the agent to 'enhance' the output while believing it complied. Third recurrence of verbatim output failure for status skill (M353, M354, M355).",
       "rca_method": "B",
       "rca_method_name": "taxonomy",
@@ -572,7 +572,7 @@
       "id": "M363",
       "timestamp": "2026-02-20T14:19:18.468Z",
       "category": "environment_state_mismatch",
-      "description": "Worktree captured stale STATE.md for another issue (closed\u2192open regression) during implementation commit",
+      "description": "Worktree captured stale STATE.md for another issue (closed→open regression) during implementation commit",
       "root_cause": "Worktree was branched from v2.1 before fix-status-instruction-ordering was merged. Implementation commit included the stale open STATE.md for that issue. No validation existed to detect STATE.md regressions for other issues before squashing.",
       "rca_method": "A",
       "rca_method_name": "5-whys",
@@ -711,7 +711,7 @@
       "timestamp": "2026-02-21T00:37:27Z",
       "category": "prompt_engineering",
       "description": "Stakeholder reviewer subagents read base-branch files instead of worktree files because main agent simplified re-run prompts by dropping embedded FILE_CONTENTS",
-      "root_cause": "The spawn_reviewers step requires embedding FILE_CONTENTS in every reviewer prompt, but the main agent progressively simplified prompts across review rounds \u2014 replacing embedded file content with instructions like \"Read InjectEnv.java and verify\". Subagents with simplified prompts fell back to reading from their default cwd (/workspace/), which contains base-branch code not worktree code, causing false-positive rejections.",
+      "root_cause": "The spawn_reviewers step requires embedding FILE_CONTENTS in every reviewer prompt, but the main agent progressively simplified prompts across review rounds — replacing embedded file content with instructions like \"Read InjectEnv.java and verify\". Subagents with simplified prompts fell back to reading from their default cwd (/workspace/), which contains base-branch code not worktree code, causing false-positive rejections.",
       "rca_method": "C",
       "rca_method_name": "causal-barrier",
       "prevention_type": "skill",
@@ -877,7 +877,7 @@
       "timestamp": "2026-02-22T12:00:00Z",
       "category": "assumption_without_verification",
       "description": "E2E testing substituted static file checks (grep/cat) for runtime skill invocation, failing to verify actual skill behavior",
-      "root_cause": "E2E instructions require invoking load-skill.sh at runtime, but static file inspection (grep patterns, cat file) feels sufficient after confirming correct content is present \u2014 completion bias causes agent to treat content verification as equivalent to runtime verification",
+      "root_cause": "E2E instructions require invoking load-skill.sh at runtime, but static file inspection (grep patterns, cat file) feels sufficient after confirming correct content is present — completion bias causes agent to treat content verification as equivalent to runtime verification",
       "rca_method": "C",
       "rca_method_name": "causal-barrier",
       "prevention_type": "skill",
@@ -897,14 +897,14 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "For skill changes, invoke load-skill.sh from the worktree with realistic arguments and verify the output. Running the artifact is the only valid E2E test \u2014 reading its contents is not."
+      "correct_behavior": "For skill changes, invoke load-skill.sh from the worktree with realistic arguments and verify the output. Running the artifact is the only valid E2E test — reading its contents is not."
     },
     {
       "id": "M375",
       "timestamp": "2026-02-22T08:40:00Z",
       "category": "tool_misuse",
       "description": "Design stakeholder missed cross-file method duplication (tokenize, resolvePath) between BlockWorktreeIsolationViolation and BlockUnsafeRemoval because it only reviewed changed files (git diff) without searching unchanged sibling files for identical methods",
-      "root_cause": "The design stakeholder's duplication check instruction said 'MANDATORY: search for new utility classes, inner classes, or helper methods' \u2014 triggering on CLASS type rather than METHOD name. BlockWorktreeIsolationViolation is a concrete handler class (not a utility/inner class), so the Grep search was never triggered. Identical private methods (tokenize, resolvePath) in unchanged sibling file BlockUnsafeRemoval were invisible in FILE_CONTENTS which only contained changed files.",
+      "root_cause": "The design stakeholder's duplication check instruction said 'MANDATORY: search for new utility classes, inner classes, or helper methods' — triggering on CLASS type rather than METHOD name. BlockWorktreeIsolationViolation is a concrete handler class (not a utility/inner class), so the Grep search was never triggered. Identical private methods (tokenize, resolvePath) in unchanged sibling file BlockUnsafeRemoval were invisible in FILE_CONTENTS which only contained changed files.",
       "rca_method": "C",
       "rca_method_name": "causal-barrier",
       "prevention_type": "skill",
@@ -1337,7 +1337,7 @@
       "timestamp": "2026-02-23T08:08:05Z",
       "category": "protocol_violation",
       "description": "learn skill subagent committed retrospective metadata to main workspace instead of active issue worktree, splitting a single learn session across two git trees",
-      "root_cause": "phase-record.md protocol said 'Retrospective metadata always goes to the main workspace' regardless of active worktree, causing the learn session output to be split: prevention to worktree, metadata to main workspace \u2014 violating worktree isolation and the single-commit rule",
+      "root_cause": "phase-record.md protocol said 'Retrospective metadata always goes to the main workspace' regardless of active worktree, causing the learn session output to be split: prevention to worktree, metadata to main workspace — violating worktree isolation and the single-commit rule",
       "rca_method": "A",
       "rca_method_name": "5-whys",
       "prevention_type": "skill",
@@ -1412,7 +1412,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "When a decomposed parent issue is selected (all sub-issues closed), verify all PLAN.md acceptance criteria are satisfied before offering to close the parent. The sequence is: children closed \u2192 criteria verified \u2192 offer closure."
+      "correct_behavior": "When a decomposed parent issue is selected (all sub-issues closed), verify all PLAN.md acceptance criteria are satisfied before offering to close the parent. The sequence is: children closed → criteria verified → offer closure."
     },
     {
       "id": "M393",
@@ -1663,7 +1663,7 @@
       "id": "M402",
       "timestamp": "2026-02-24T17:26:24Z",
       "category": "protocol_violation",
-      "description": "Backup branch left behind after failed rebase \u2014 merge subagent never cleaned it up",
+      "description": "Backup branch left behind after failed rebase — merge subagent never cleaned it up",
       "root_cause": "git-rebase skill ERROR recovery table said 'restore from backup if needed' but gave no instruction to delete backup after handling. Agent completed error recovery via alternative approach but skipped backup cleanup because no guidance existed.",
       "rca_method": "A",
       "rca_method_name": "5-whys",
@@ -1710,7 +1710,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Compute SELECTED_COUNT and SKIPPED_LIST as positional values before invoking cat:stakeholder-selection-box. Use args: \"<selected_count> 10 <running_list> <skipped_list>\" \u2014 never pass a JSON object as the args field."
+      "correct_behavior": "Compute SELECTED_COUNT and SKIPPED_LIST as positional values before invoking cat:stakeholder-selection-box. Use args: \"<selected_count> 10 <running_list> <skipped_list>\" — never pass a JSON object as the args field."
     },
     {
       "id": "M404",
@@ -1764,7 +1764,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Before questioning whether frontmatter is used in plugin/agents/*.md files, read plugin/agents/README.md which documents all frontmatter fields and their effects. Claude Code parses agent frontmatter for name, description, model, tools, skills, permissionMode, and other fields \u2014 all are active configuration, not dead documentation."
+      "correct_behavior": "Before questioning whether frontmatter is used in plugin/agents/*.md files, read plugin/agents/README.md which documents all frontmatter fields and their effects. Claude Code parses agent frontmatter for name, description, model, tools, skills, permissionMode, and other fields — all are active configuration, not dead documentation."
     },
     {
       "id": "M406",
@@ -1791,7 +1791,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Files injected into agent/subagent context as prompts are exempt from license headers \u2014 this includes both SKILL.md files under plugin/skills/ AND .md files under plugin/agents/. License headers in prompt files waste tokens in every invocation without providing legal value. CLAUDE.md now explicitly documents both exemptions."
+      "correct_behavior": "Files injected into agent/subagent context as prompts are exempt from license headers — this includes both SKILL.md files under plugin/skills/ AND .md files under plugin/agents/. License headers in prompt files waste tokens in every invocation without providing legal value. CLAUDE.md now explicitly documents both exemptions."
     },
     {
       "id": "M407",
@@ -1871,7 +1871,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Build the entire REVIEWER_STATUS_LIST as a single comma-separated string before invoking cat:stakeholder-review-box. Pass it as one arg: args: \"${ISSUE_ID} ${REVIEWER_STATUS_LIST} ${REVIEW_RESULT} ${REVIEW_SUMMARY}\" \u2014 never expand reviewers as space-separated args."
+      "correct_behavior": "Build the entire REVIEWER_STATUS_LIST as a single comma-separated string before invoking cat:stakeholder-review-box. Pass it as one arg: args: \"${ISSUE_ID} ${REVIEWER_STATUS_LIST} ${REVIEW_RESULT} ${REVIEW_SUMMARY}\" — never expand reviewers as space-separated args."
     },
     {
       "id": "M410",
@@ -1927,7 +1927,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "During rebase conflict resolution, use git checkout HEAD -- <file> to take the target branch version (unambiguous). Never use --ours/--theirs during rebase \u2014 their meaning is inverted compared to merge."
+      "correct_behavior": "During rebase conflict resolution, use git checkout HEAD -- <file> to take the target branch version (unambiguous). Never use --ours/--theirs during rebase — their meaning is inverted compared to merge."
     },
     {
       "id": "M412",
@@ -2042,8 +2042,8 @@
       "id": "M416",
       "timestamp": "2026-02-26T18:30:00Z",
       "category": "protocol_violation",
-      "description": "Analyze phase subagent cited recurrence chain (M341 \u2192 M353 \u2192 M354 \u2192 M355 \u2192 M372 \u2192 M415) as root cause without conducting independent RCA from fresh evidence, violating the recurring_pattern rule in phase-analyze.md Step 4b",
-      "root_cause": "phase-analyze.md Step 4b embedded the independence requirement (if_yes_multiple, if_3_plus_recurrences) as passive YAML comments inside a template block \u2014 not as a blocking gate. Step 4d appeared immediately after and provided tooling (jq command) and an example recurrence chain template, priming the agent to jump from recurrence detection directly to Step 4d and build its conclusion from past entries rather than fresh evidence. No structural barrier existed between the recurring_pattern check and the Step 4d recurrence tooling.",
+      "description": "Analyze phase subagent cited recurrence chain (M341 → M353 → M354 → M355 → M372 → M415) as root cause without conducting independent RCA from fresh evidence, violating the recurring_pattern rule in phase-analyze.md Step 4b",
+      "root_cause": "phase-analyze.md Step 4b embedded the independence requirement (if_yes_multiple, if_3_plus_recurrences) as passive YAML comments inside a template block — not as a blocking gate. Step 4d appeared immediately after and provided tooling (jq command) and an example recurrence chain template, priming the agent to jump from recurrence detection directly to Step 4d and build its conclusion from past entries rather than fresh evidence. No structural barrier existed between the recurring_pattern check and the Step 4d recurrence tooling.",
       "rca_method": "C",
       "rca_method_name": "causal-barrier",
       "prevention_type": "skill",
@@ -2500,7 +2500,7 @@
       "correct_behavior": "git worktree remove targeting a specific path should be allowed when CWD is not inside the target, regardless of which session owns the lock. Lock-based protection is appropriate for rm -rf on parent directories but not for explicit git worktree remove commands targeting the locked path directly.",
       "issue_creation_info": {
         "suggested_title": "Fix BlockUnsafeRemoval false positive for git worktree remove across sessions",
-        "suggested_description": "BlockUnsafeRemoval.getProtectedPaths() adds a worktree to protectedPaths when the lock file's session_id does not match the current session. This causes a false positive when a worktree is created in one Claude Code session and cleaned up in another \u2014 the owning session has ended, so the lock file's session_id will never match the cleanup session. Fix: for git worktree remove (as opposed to rm -rf), skip lock-based protection when the target is the explicit target of the worktree remove command. Lock protection is appropriate for rm -rf sweeping parent directories but not for an explicit targeted worktree remove. File to modify: client/src/main/java/io/github/cowwoc/cat/hooks/bash/BlockUnsafeRemoval.java. Add a test: worktreeRemoveAllowsWhenDifferentSessionLockButCwdOutsideTarget.",
+        "suggested_description": "BlockUnsafeRemoval.getProtectedPaths() adds a worktree to protectedPaths when the lock file's session_id does not match the current session. This causes a false positive when a worktree is created in one Claude Code session and cleaned up in another — the owning session has ended, so the lock file's session_id will never match the cleanup session. Fix: for git worktree remove (as opposed to rm -rf), skip lock-based protection when the target is the explicit target of the worktree remove command. Lock protection is appropriate for rm -rf sweeping parent directories but not for an explicit targeted worktree remove. File to modify: client/src/main/java/io/github/cowwoc/cat/hooks/bash/BlockUnsafeRemoval.java. Add a test: worktreeRemoveAllowsWhenDifferentSessionLockButCwdOutsideTarget.",
         "suggested_acceptance_criteria": [
           "git worktree remove <path> is allowed when CWD is not inside <path>, even if the lock file for <path> was created by a different session",
           "rm -rf <path> is still blocked when <path> is locked by another fresh session",
@@ -2563,6 +2563,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When AskUserQuestion is rejected (user invokes another skill), return to Step 8 and re-present the approval gate after the interrupting skill completes; never merge, release lock, or invoke work-complete without explicit user selection"
+    },
+    {
+      "id": "M435",
+      "timestamp": "2026-02-28T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "Agent stopped and asked user what to do after REJECTED stakeholder review instead of running auto-fix loop automatically",
+      "root_cause": "The auto-fix loop section lacked an explicit instruction to proceed automatically. The Proceed automatically instruction applied only to invoking the review, not to the post-review loop, leaving agents to interpret REJECTED as a terminal state requiring user input",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue/first-use.md",
+      "pattern_keywords": [
+        "stakeholder_review",
+        "REJECTED",
+        "auto_fix_loop",
+        "protocol_violation",
+        "ask_user_when_should_proceed"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When stakeholder review returns REJECTED or CONCERNS_FOUND, immediately enter the auto-fix loop: spawn a planning subagent to analyze concerns, spawn an implementation subagent to fix them, re-run stakeholder review, and iterate up to 3 times — all without asking the user"
     }
   ]
 }
