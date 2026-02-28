@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks.bash;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
+import io.github.cowwoc.cat.hooks.CatMetadata;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 import tools.jackson.databind.JsonNode;
 
@@ -122,7 +123,7 @@ public final class VerifyStateInCommit implements BashHandler
   /**
    * Checks whether the working directory is inside a CAT worktree.
    * <p>
-   * Only the {@code cat-base} file inside the git directory is a reliable worktree marker. The
+   * Only the {@code cat-branch-point} file inside the git directory is a reliable worktree marker. The
    * {@code .claude/cat} directory exists in the main workspace too, so it cannot be used to detect
    * worktrees.
    *
@@ -133,11 +134,11 @@ public final class VerifyStateInCommit implements BashHandler
   {
     Path workDir = Path.of(workingDirectory);
 
-    // Check for .git/cat-base file (worktree marker).
+    // Check for .git/cat-branch-point file (worktree marker).
     // This file is written by /cat:work when creating a worktree and is the only reliable indicator
     // that we are operating inside a CAT worktree rather than the main workspace.
-    Path gitCatBase = workDir.resolve(".git").resolve("cat-base");
-    return Files.exists(gitCatBase);
+    Path gitCatBranchPoint = workDir.resolve(".git").resolve(CatMetadata.BRANCH_POINT_FILE);
+    return Files.exists(gitCatBranchPoint);
   }
 
   /**

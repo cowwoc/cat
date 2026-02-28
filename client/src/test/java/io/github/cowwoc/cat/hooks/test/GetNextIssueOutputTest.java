@@ -260,7 +260,7 @@ public class GetNextIssueOutputTest
   }
 
   /**
-   * Verifies that getNextIssueBox throws for null baseBranch.
+   * Verifies that getNextIssueBox throws for null targetBranch.
    */
   @Test(expectedExceptions = NullPointerException.class)
   public void getNextIssueBoxThrowsOnNullBaseBranch() throws IOException
@@ -273,7 +273,7 @@ public class GetNextIssueOutputTest
   }
 
   /**
-   * Verifies that getNextIssueBox throws for blank baseBranch.
+   * Verifies that getNextIssueBox throws for blank targetBranch.
    */
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void getNextIssueBoxThrowsOnBlankBaseBranch() throws IOException
@@ -377,7 +377,7 @@ public class GetNextIssueOutputTest
       GetNextIssueOutput output = new GetNextIssueOutput(scope);
       String[] args = {
         "--completed-issue", "2.1-test-issue",
-        "--base-branch", "v2.1",
+        "--target-branch", "v2.1",
         "--session-id", "test-session-123",
         "--project-dir", "/tmp"
       };
@@ -418,7 +418,7 @@ public class GetNextIssueOutputTest
       String jsonValue = "{\"key\":\"value\"}";
       String[] args = {
         "--completed-issue", "2.1-test-issue",
-        "--base-branch", "v2.1",
+        "--target-branch", "v2.1",
         "--session-id", "test-session-123",
         "--project-dir", "/tmp",
         "--exclude-pattern", jsonValue
@@ -457,7 +457,7 @@ public class GetNextIssueOutputTest
       // Omit --session-id and --project-dir; scope provides defaults
       String[] args = {
         "--completed-issue", "2.1-test-issue",
-        "--base-branch", "v2.1"
+        "--target-branch", "v2.1"
       };
       String result = output.getOutput(args);
       requireThat(result, "result").isNotEmpty();

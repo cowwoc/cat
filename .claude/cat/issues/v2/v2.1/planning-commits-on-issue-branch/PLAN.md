@@ -20,7 +20,7 @@ None (workflow improvement)
 - **Risk Level:** MEDIUM
 - **Concerns:** Must handle the case where no issue branch exists (fall back to base branch);
   planning commits on issue branches get squashed or need special handling during merge
-- **Mitigation:** Only change behavior when an active issue worktree is detected (cat-base file
+- **Mitigation:** Only change behavior when an active issue worktree is detected (cat-branch-point file
   exists); planning commits are excluded from squash since they're a different topic
 
 ## Files to Modify
@@ -33,7 +33,7 @@ None (workflow improvement)
 ## Post-conditions
 
 - [ ] `/cat:add` creates planning commits on the current issue branch when inside an active
-  worktree (cat-base file exists)
+  worktree (cat-branch-point file exists)
 - [ ] `/cat:add` falls back to base branch when no issue worktree is active
 - [ ] Planning commits on issue branches are preserved as separate commits during squash-by-topic
 - [ ] New issues created mid-work are visible in the issue branch history
@@ -41,7 +41,7 @@ None (workflow improvement)
 
 ## Execution Steps
 
-1. **Detect active worktree in /cat:add:** Check for `.git/cat-base` file to determine if
+1. **Detect active worktree in /cat:add:** Check for `.git/cat-branch-point` file to determine if
    running inside an issue worktree. If so, commit planning files to the current branch.
    - Files: `plugin/skills/add/first-use.md`
 

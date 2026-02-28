@@ -12,7 +12,6 @@ import io.github.cowwoc.cat.hooks.JvmScope;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.nio.file.Path;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -24,101 +23,95 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public class GitMergeLinearTest
 {
   /**
-   * Verifies that execute rejects null taskBranch.
+   * Verifies that execute rejects null sourceBranch.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeRejectsNullTaskBranch() throws IOException
+  public void executeRejectsNullSourceBranch() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    GitMergeLinear cmd = new GitMergeLinear(scope, ".");
+      GitMergeLinear cmd = new GitMergeLinear(scope, ".");
 
-    try
-    {
-      cmd.execute(null, "main", false);
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("taskBranch");
-    }
-    }
-  }
-
-  /**
-   * Verifies that execute rejects blank taskBranch.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void executeRejectsBlankTaskBranch() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-    GitMergeLinear cmd = new GitMergeLinear(scope, ".");
-
-    try
-    {
-      cmd.execute("", "main", false);
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("taskBranch");
-    }
-    }
-  }
-
-  /**
-   * Verifies that execute rejects null baseBranch.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void executeRejectsNullBaseBranch() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-    GitMergeLinear cmd = new GitMergeLinear(scope, ".");
-
-    try
-    {
-      cmd.execute("task-branch", null, false);
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("baseBranch");
-    }
-    }
-  }
-
-  /**
-   * Verifies that execute accepts empty baseBranch for auto-detect.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void executeAcceptsEmptyBaseBranch() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      Path tempDir = TestUtils.createTempGitRepo("main");
       try
       {
-        GitMergeLinear cmd = new GitMergeLinear(scope, tempDir.toString());
-
-        try
-        {
-          cmd.execute("task-branch", "", false);
-        }
-        catch (IOException e)
-        {
-          requireThat(e.getMessage(), "message").isNotNull();
-        }
+        cmd.execute(null, "main");
       }
-      finally
+      catch (NullPointerException e)
       {
-        TestUtils.deleteDirectoryRecursively(tempDir);
+        requireThat(e.getMessage(), "message").contains("sourceBranch");
+      }
+    }
+  }
+
+  /**
+   * Verifies that execute rejects blank sourceBranch.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeRejectsBlankSourceBranch() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GitMergeLinear cmd = new GitMergeLinear(scope, ".");
+
+      try
+      {
+        cmd.execute("", "main");
+      }
+      catch (IllegalArgumentException e)
+      {
+        requireThat(e.getMessage(), "message").contains("sourceBranch");
+      }
+    }
+  }
+
+  /**
+   * Verifies that execute rejects null targetBranch.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeRejectsNullTargetBranch() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GitMergeLinear cmd = new GitMergeLinear(scope, ".");
+
+      try
+      {
+        cmd.execute("task-branch", null);
+      }
+      catch (NullPointerException e)
+      {
+        requireThat(e.getMessage(), "message").contains("targetBranch");
+      }
+    }
+  }
+
+  /**
+   * Verifies that execute rejects blank targetBranch.
+   * <p>
+   * The target branch is required — there is no auto-detect fallback.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeRejectsBlankTargetBranch() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GitMergeLinear cmd = new GitMergeLinear(scope, ".");
+
+      try
+      {
+        cmd.execute("task-branch", "");
+      }
+      catch (IllegalArgumentException e)
+      {
+        requireThat(e.getMessage(), "message").contains("targetBranch");
       }
     }
   }

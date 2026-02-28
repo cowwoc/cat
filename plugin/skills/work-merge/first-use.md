@@ -18,8 +18,8 @@ The main agent provides:
   "issue_id": "2.1-issue-name",
   "issue_path": "/workspace/.claude/cat/issues/v2/v2.1/issue-name",
   "worktree_path": "/workspace/.claude/cat/worktrees/2.1-issue-name",
-  "branch": "2.1-issue-name",
-  "base_branch": "v2.1",
+  "issue_branch": "2.1-issue-name",
+  "target_branch": "v2.1",
   "commits": [
     {"hash": "abc123", "message": "feature: add parser", "type": "feature"},
     {"hash": "def456", "message": "test: add parser tests", "type": "test"}
@@ -217,7 +217,7 @@ If minor version is now complete, update CHANGELOG.md inside the worktree and co
 
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/client/bin/merge-and-cleanup" \
-  "${CLAUDE_PROJECT_DIR}" "${ISSUE_ID}" "${SESSION_ID}" --worktree "${WORKTREE_PATH}"
+  "${CLAUDE_PROJECT_DIR}" "${ISSUE_ID}" "${SESSION_ID}" "${BASE_BRANCH}" --worktree "${WORKTREE_PATH}"
 ```
 
 The Java tool handles: fast-forward merge, worktree removal, branch deletion, backup branch cleanup,
@@ -230,13 +230,13 @@ exits with code 1.
 
 | Output | Meaning | Agent Recovery Action |
 |--------|---------|----------------------|
-| `"status": "success"` (stdout JSON) | Merge and cleanup completed | Report `commit_sha` and `base_branch`, continue to Step 8 |
+| `"status": "success"` (stdout JSON) | Merge and cleanup completed | Report `merged_commit` and `target_branch`, continue to Step 8 |
 | `"status": "error"`: Not a CAT project | Missing `.claude/cat` directory | Verify `CLAUDE_PROJECT_DIR` is correct |
 | `"status": "error"`: Worktree not found | No worktree for issue branch | Check worktree exists with `git worktree list` |
 | `"status": "error"`: Worktree has uncommitted changes | Dirty worktree | Commit or stash changes in worktree first |
 | `"status": "error"`: Base branch has diverged | Base has commits not in HEAD | Rebase onto base branch before merging |
 | `"status": "error"`: Fast-forward merge not possible | History diverged | Rebase issue branch onto base first |
-| `"status": "error"`: cat-base file missing | Cannot determine base branch | Recreate worktree with `/cat:work` |
+| `"status": "error"`: base-branch not provided | Missing base branch argument | Ensure BASE_BRANCH is set in skill input |
 | `"status": "error"`: Failed to release lock | Lock tool failed | Manually release with `issue-lock force-release` |
 
 ### Step 8: Return Result

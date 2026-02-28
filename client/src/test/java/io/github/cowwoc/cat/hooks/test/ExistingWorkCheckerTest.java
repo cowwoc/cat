@@ -304,7 +304,7 @@ public class ExistingWorkCheckerTest
   }
 
   /**
-   * Verifies that run() with valid --worktree and --base-branch writes JSON output and returns true.
+   * Verifies that run() with valid --worktree and --target-branch writes JSON output and returns true.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -326,7 +326,7 @@ public class ExistingWorkCheckerTest
         PrintStream err = new PrintStream(errBytes, true, StandardCharsets.UTF_8);
 
         boolean success = ExistingWorkChecker.run(
-          new String[]{"--worktree", tempDir.toString(), "--base-branch", "base-branch"},
+          new String[]{"--worktree", tempDir.toString(), "--target-branch", "base-branch"},
           scope, out, err);
 
         requireThat(success, "success").isTrue();
@@ -359,7 +359,7 @@ public class ExistingWorkCheckerTest
       PrintStream err = new PrintStream(errBytes, true, StandardCharsets.UTF_8);
 
       boolean success = ExistingWorkChecker.run(
-        new String[]{"--base-branch", "main"},
+        new String[]{"--target-branch", "main"},
         scope, out, err);
 
       requireThat(success, "success").isFalse();
@@ -370,7 +370,7 @@ public class ExistingWorkCheckerTest
   }
 
   /**
-   * Verifies that run() with missing --base-branch writes error to stderr and returns false.
+   * Verifies that run() with missing --target-branch writes error to stderr and returns false.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -393,7 +393,7 @@ public class ExistingWorkCheckerTest
 
         requireThat(success, "success").isFalse();
         String errOutput = errBytes.toString(StandardCharsets.UTF_8);
-        requireThat(errOutput, "errOutput").contains("--base-branch");
+        requireThat(errOutput, "errOutput").contains("--target-branch");
         requireThat(errOutput, "errOutput").contains("required");
       }
       finally

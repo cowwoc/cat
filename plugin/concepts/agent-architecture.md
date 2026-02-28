@@ -388,7 +388,7 @@ When working in a worktree (e.g., `/workspace/.claude/cat/worktrees/issue-name/`
 | ${CLAUDE_PROJECT_DIR} | `${CLAUDE_PROJECT_DIR}/plugin/` | Points to main workspace |
 
 **Verification checklist:**
-1. Check if cwd is a worktree: `[ -f ".git/cat-base" ]`
+1. Check if cwd is a worktree: `[ -f ".git/cat-branch-point" ]`
 2. If in worktree, use relative paths for file creation/editing
 3. Use absolute paths only for reading config from main workspace
 

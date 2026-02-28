@@ -67,7 +67,7 @@ All of these are deterministic operations that don't require LLM judgment.
    perform ff merge (git push . HEAD:base fallback to git merge --ff-only from main repo), cd to project dir,
    remove worktree, delete branch, release lock, clean up squash backups. Use ProcessRunner for git commands.
 2. **Create MergeAndCleanupTest.java:** Test key scenarios: successful merge, diverged base, dirty worktree,
-   missing cat-base, suspicious deletions
+   missing cat-branch-point, suspicious deletions
 3. **Update skill files:** Replace bash script invocations with Java CLI invocations in work-merge, git-merge-linear,
    and skill-builder skills
 4. **Delete bash scripts:** Remove the three replaced scripts
