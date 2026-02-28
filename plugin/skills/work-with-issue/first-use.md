@@ -207,8 +207,16 @@ Task tool:
     ## Pre-Invoked Skill Results
     [If skills were pre-invoked above, include their output here]
 
+    ## First Action (MANDATORY)
+    Your working directory defaults to /workspace (main worktree). Before doing ANYTHING else:
+    ```bash
+    cd ${WORKTREE_PATH}
+    git branch --show-current  # Must output: ${BRANCH}
+    ```
+    If the branch does not match ${BRANCH}, STOP and return BLOCKED immediately.
+
     ## Critical Requirements
-    - Work ONLY in the worktree at ${WORKTREE_PATH}
+    - Work ONLY in the worktree at ${WORKTREE_PATH} — cd there as your FIRST action (see above)
     - Verify you are on branch ${BRANCH} before making changes
     - Follow execution steps from PLAN.md EXACTLY
     - If steps say to invoke a skill that was pre-invoked above, use the provided results
