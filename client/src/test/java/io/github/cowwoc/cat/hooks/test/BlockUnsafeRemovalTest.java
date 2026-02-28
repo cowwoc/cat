@@ -207,8 +207,9 @@ public final class BlockUnsafeRemovalTest
     Files.writeString(lockFile, """
       {
         "session_id": "other-session",
-        "created_at": %d
-      }""".formatted(lockCreatedAt));
+        "created_at": %d,
+        "worktrees": {"%s": ""}
+      }""".formatted(lockCreatedAt, worktreePath.toString()));
 
     try (JvmScope scope = new TestJvmScope())
     {
@@ -252,8 +253,9 @@ public final class BlockUnsafeRemovalTest
     Files.writeString(lockFile, """
       {
         "session_id": "my-session",
-        "created_at": 1771266833
-      }""");
+        "created_at": 1771266833,
+        "worktrees": {"%s": ""}
+      }""".formatted(worktreePath.toString()));
 
     try (JvmScope scope = new TestJvmScope())
     {
@@ -296,8 +298,9 @@ public final class BlockUnsafeRemovalTest
     Files.writeString(lockFile, """
       {
         "session_id": "other-session",
-        "created_at": %d
-      }""".formatted(lockCreatedAt));
+        "created_at": %d,
+        "worktrees": {"%s": ""}
+      }""".formatted(lockCreatedAt, worktreePath.toString()));
 
     try (JvmScope scope = new TestJvmScope())
     {
@@ -371,8 +374,9 @@ public final class BlockUnsafeRemovalTest
     Files.writeString(lockFile, """
       {
         "session_id": "other-session",
-        "created_at": %d
-      }""".formatted(lockCreatedAt));
+        "created_at": %d,
+        "worktrees": {"%s": ""}
+      }""".formatted(lockCreatedAt, worktreePath.toString()));
 
     try (JvmScope scope = new TestJvmScope())
     {
@@ -416,8 +420,9 @@ public final class BlockUnsafeRemovalTest
     Files.writeString(lockFile, """
       {
         "session_id": "other-session",
-        "created_at": %d
-      }""".formatted(lockCreatedAt));
+        "created_at": %d,
+        "worktrees": {"%s": ""}
+      }""".formatted(lockCreatedAt, worktreePath.toString()));
 
     try (JvmScope scope = new TestJvmScope())
     {
@@ -464,8 +469,9 @@ public final class BlockUnsafeRemovalTest
     Files.writeString(lockFile, """
       {
         "session_id": "my-session",
-        "created_at": %d
-      }""".formatted(lockCreatedAt));
+        "created_at": %d,
+        "worktrees": {"%s": ""}
+      }""".formatted(lockCreatedAt, worktreePath.toString()));
 
     try (JvmScope scope = new TestJvmScope())
     {
@@ -669,8 +675,9 @@ public final class BlockUnsafeRemovalTest
     Files.writeString(lockFile, """
       {
         "session_id": "other-session",
-        "created_at": %d
-      }""".formatted(lockCreatedAt));
+        "created_at": %d,
+        "worktrees": {"%s": ""}
+      }""".formatted(lockCreatedAt, worktreePath.toString()));
 
     try (JvmScope scope = new TestJvmScope())
     {
@@ -714,8 +721,9 @@ public final class BlockUnsafeRemovalTest
     Files.writeString(lockFile, """
       {
         "session_id": "other-session",
-        "created_at": %d
-      }""".formatted(lockCreatedAt));
+        "created_at": %d,
+        "worktrees": {"%s": ""}
+      }""".formatted(lockCreatedAt, worktreePath.toString()));
 
     try (JvmScope scope = new TestJvmScope())
     {
@@ -759,8 +767,9 @@ public final class BlockUnsafeRemovalTest
     Files.writeString(lockFile, """
       {
         "session_id": "other-session",
-        "created_at": %d
-      }""".formatted(lockCreatedAt));
+        "created_at": %d,
+        "worktrees": {"%s": ""}
+      }""".formatted(lockCreatedAt, worktreePath.toString()));
 
     try (JvmScope scope = new TestJvmScope())
     {
@@ -803,8 +812,9 @@ public final class BlockUnsafeRemovalTest
     Path lockFile = locksDir.resolve("no-created-at-task.lock");
     Files.writeString(lockFile, """
       {
-        "session_id": "other-session"
-      }""");
+        "session_id": "other-session",
+        "worktrees": {"%s": ""}
+      }""".formatted(worktreePath.toString()));
 
     try (JvmScope scope = new TestJvmScope())
     {
@@ -847,8 +857,9 @@ public final class BlockUnsafeRemovalTest
     Path lockFile = locksDir.resolve("no-session-id-task.lock");
     Files.writeString(lockFile, """
       {
-        "created_at": %d
-      }""".formatted(lockCreatedAt));
+        "created_at": %d,
+        "worktrees": {"%s": ""}
+      }""".formatted(lockCreatedAt, worktreePath.toString()));
 
     try (JvmScope scope = new TestJvmScope())
     {
