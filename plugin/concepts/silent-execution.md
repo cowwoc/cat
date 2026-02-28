@@ -63,20 +63,20 @@ Skill B's preprocessor runs the command invisibly using the passed arguments.
 ┌──────────────────────────────────────────────────────┐
 │ Skill A (orchestrator)                               │
 │                                                      │
-│   1. Agent determines issue_id, base_branch, etc.    │
-│   2. Invokes: /cat:skill-b issue_id base_branch      │
+│   1. Agent determines issue_id, target_branch, etc.    │
+│   2. Invokes: /cat:skill-b issue_id target_branch      │
 └──────────────────┬───────────────────────────────────┘
                    │
                    ▼
 ┌──────────────────────────────────────────────────────┐
 │ Skill B (silent executor)                            │
 │                                                      │
-│ arguments: [completedIssue, baseBranch]              │
+│ arguments: [completedIssue, targetBranch]              │
 │                                                      │
 │ Preprocessing (invisible to user):                   │
 │   $completedIssue → "2.1-fix-bug"                    │
-│   $baseBranch → "v2.1"                               │
-│   !`launcher $completedIssue $baseBranch` → output   │
+│   $targetBranch → "v2.1"                               │
+│   !`launcher $completedIssue $targetBranch` → output   │
 │                                                      │
 │ Agent receives: command output as skill content      │
 └──────────────────────────────────────────────────────┘
@@ -99,14 +99,14 @@ Agent makes a visible Bash tool call. User sees the command.
 ---
 arguments:
   - completedIssue
-  - baseBranch
+  - targetBranch
 ---
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-next-issue-box" $completedIssue $baseBranch`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-next-issue-box" $completedIssue $targetBranch`
 ```
 
 When `/cat:work-complete 2.1-fix-bug v2.1` is invoked:
 
-1. `$completedIssue` → `2.1-fix-bug`, `$baseBranch` → `v2.1`
+1. `$completedIssue` → `2.1-fix-bug`, `$targetBranch` → `v2.1`
 2. `${CLAUDE_PLUGIN_ROOT}` → `/path/to/plugin`
 3. Command executes: `get-next-issue-box 2.1-fix-bug v2.1`
 4. Output (Issue Complete box) replaces the directive

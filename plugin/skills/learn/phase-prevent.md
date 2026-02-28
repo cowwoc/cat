@@ -385,8 +385,8 @@ skill-builder bypasses the backward-reasoning decomposition that ensures the cha
 Before implementing prevention, check if you are in an issue worktree:
 
 ```bash
-CAT_BASE_FILE="$(git rev-parse --git-dir)/cat-base"
-IN_ISSUE_WORKTREE=$([[ -f "$CAT_BASE_FILE" ]] && echo "true" || echo "false")
+CAT_BRANCH_POINT_FILE="$(git rev-parse --git-dir)/cat-branch-point"
+IN_ISSUE_WORKTREE=$([[ -f "$CAT_BRANCH_POINT_FILE" ]] && echo "true" || echo "false")
 ```
 
 **If NOT in an issue worktree** (`IN_ISSUE_WORKTREE` is `false`) **AND prevention_type is `code_fix` or `hook`**:

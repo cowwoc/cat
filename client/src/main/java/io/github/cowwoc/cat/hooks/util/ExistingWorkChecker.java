@@ -25,7 +25,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * This is a deterministic check that does not require LLM decision-making.
  * It should be called after worktree creation to detect if previous work exists on the branch.
  * <p>
- * Compares worktree HEAD against base branch using git rev-list to count commits ahead.
+ * Compares worktree HEAD against target branch using git rev-list to count commits ahead.
  * <p>
  * This class is static-only because it is a stateless utility - all state is provided via method parameters.
  * The nested {@link CheckResult} record is the only result type and is therefore appropriately nested.
@@ -35,7 +35,7 @@ public final class ExistingWorkChecker
   /**
    * Result of checking for existing work.
    *
-   * @param hasExistingWork whether the worktree has commits ahead of the base branch
+   * @param hasExistingWork whether the worktree has commits ahead of the target branch
    * @param existingCommits the number of commits ahead
    * @param commitSummary the summary of commits (up to 5 commits, pipe-separated)
    */
@@ -44,7 +44,7 @@ public final class ExistingWorkChecker
     /**
      * Creates a new check result.
      *
-     * @param hasExistingWork whether the worktree has commits ahead of the base branch
+     * @param hasExistingWork whether the worktree has commits ahead of the target branch
      * @param existingCommits the number of commits ahead
      * @param commitSummary the summary of commits
      * @throws NullPointerException if commitSummary is null
@@ -85,7 +85,7 @@ public final class ExistingWorkChecker
    * Arguments:
    * <ul>
    *   <li>{@code --worktree PATH} — path to the worktree</li>
-   *   <li>{@code --base-branch BRANCH} — base branch to compare against</li>
+   *   <li>{@code --target-branch BRANCH} — base branch to compare against</li>
    * </ul>
    * <p>
    * Output is JSON to stdout.
@@ -119,7 +119,7 @@ public final class ExistingWorkChecker
   public static boolean run(String[] args, JvmScope scope, PrintStream out, PrintStream err) throws IOException
   {
     String worktreePath = "";
-    String baseBranch = "";
+    String targetBranch = "";
     JsonMapper mapper = scope.getJsonMapper();
 
     for (int i = 0; i < args.length - 1; ++i)
@@ -131,10 +131,10 @@ public final class ExistingWorkChecker
           ++i;
           worktreePath = args[i];
         }
-        case "--base-branch" ->
+        case "--target-branch" ->
         {
           ++i;
-          baseBranch = args[i];
+          targetBranch = args[i];
         }
         default ->
         {
@@ -151,15 +151,15 @@ public final class ExistingWorkChecker
       return false;
     }
 
-    if (baseBranch.isEmpty())
+    if (targetBranch.isEmpty())
     {
-      err.println(mapper.writeValueAsString(Map.of("error", "--base-branch is required")));
+      err.println(mapper.writeValueAsString(Map.of("error", "--target-branch is required")));
       return false;
     }
 
     try
     {
-      CheckResult result = check(worktreePath, baseBranch);
+      CheckResult result = check(worktreePath, targetBranch);
       out.println(result.toJson(mapper));
       return true;
     }
@@ -171,25 +171,25 @@ public final class ExistingWorkChecker
   }
 
   /**
-   * Checks if a worktree has existing commits compared to the base branch.
+   * Checks if a worktree has existing commits compared to the target branch.
    *
    * @param worktreePath the path to the worktree
-   * @param baseBranch the base branch name
+   * @param targetBranch the target branch name
    * @return the check result
    * @throws IllegalArgumentException if worktreePath does not exist or is not a directory
    * @throws IOException if git operations fail
    */
-  public static CheckResult check(String worktreePath, String baseBranch) throws IOException
+  public static CheckResult check(String worktreePath, String targetBranch) throws IOException
   {
     requireThat(worktreePath, "worktreePath").isNotBlank();
-    requireThat(baseBranch, "baseBranch").isNotBlank();
+    requireThat(targetBranch, "targetBranch").isNotBlank();
 
     Path worktree = Path.of(worktreePath);
     if (!Files.isDirectory(worktree))
       throw new IllegalArgumentException("Cannot access worktree: " + worktreePath);
 
     String countOutput = GitCommands.runGit(Path.of(worktreePath),
-      "rev-list", "--count", baseBranch + "..HEAD");
+      "rev-list", "--count", targetBranch + "..HEAD");
     int commitCount;
     try
     {
@@ -203,7 +203,7 @@ public final class ExistingWorkChecker
     if (commitCount > 0)
     {
       String logOutput = GitCommands.runGit(Path.of(worktreePath),
-        "log", "--oneline", baseBranch + "..HEAD", "-5");
+        "log", "--oneline", targetBranch + "..HEAD", "-5");
 
       String[] lines = logOutput.split("\n");
       int lineCount = Math.min(lines.length, 5);
