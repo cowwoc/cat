@@ -5,10 +5,8 @@ See LICENSE.md in the project root for license terms.
 -->
 # State
 
-- **Status:** closed
-- **Progress:** 100%
-- **Completed:** 2026-02-28
-- **Resolution:** implemented
+- **Status:** open
+- **Progress:** 0%
 - **Dependencies:** []
 - **Blocks:** []
 - **Last Updated:** 2026-02-28
