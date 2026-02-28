@@ -518,7 +518,7 @@ public class WorkPrepareTest
         {
           "session_id": "%s",
           "created_at": 1700000000,
-          "worktree": "",
+          "worktrees": {},
           "created_iso": "2026-02-01T00:00:00Z"
         }""".formatted(UUID.randomUUID().toString());
       Files.writeString(locksDir.resolve("2.1-locked-feature.lock"), lockContent);
