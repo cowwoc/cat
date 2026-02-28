@@ -23,7 +23,7 @@ skill invocation at the main agent level.
 The main `/cat:work` skill invokes this with positional space-separated arguments:
 
 ```
-<issue_id> <issue_path> <worktree_path> <branch> <base_branch> <estimated_tokens> <trust> <verify>
+<issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <estimated_tokens> <trust> <verify>
 ```
 
 | Position | Name | Example |
@@ -31,8 +31,8 @@ The main `/cat:work` skill invokes this with positional space-separated argument
 | 1 | issue_id | `2.1-issue-name` |
 | 2 | issue_path | `/workspace/.claude/cat/issues/v2/v2.1/issue-name` |
 | 3 | worktree_path | `/workspace/.claude/cat/worktrees/2.1-issue-name` |
-| 4 | branch | `2.1-issue-name` |
-| 5 | base_branch | `v2.1` |
+| 4 | issue_branch | `2.1-issue-name` |
+| 5 | target_branch | `v2.1` |
 | 6 | estimated_tokens | `45000` |
 | 7 | trust | `medium` |
 | 8 | verify | `changed` |
@@ -1044,7 +1044,7 @@ each modified skill or command file before presenting the approval gate.
 
 ```bash
 # Check whether any skill or command files were modified
-git diff --name-only "$(cat "$(git rev-parse --git-dir)/cat-base")..HEAD" | grep -E '^plugin/(skills|commands)/'
+git diff --name-only "$(cat "$(git rev-parse --git-dir)/cat-branch-point")..HEAD" | grep -E '^plugin/(skills|commands)/'
 ```
 
 **If skill or command files were modified:** Invoke `/cat:skill-builder` with the path to each modified skill or

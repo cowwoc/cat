@@ -38,7 +38,7 @@ squashing before the approval gate, making the worktree check redundant.
 
 ## Execution Steps
 
-1. **Simplify WarnUnsquashedApproval worktree check:** When `cat-base` exists (worktree context),
+1. **Simplify WarnUnsquashedApproval worktree check:** When `cat-branch-point` exists (worktree context),
    return `Result.allow()` immediately. Remove `checkWorktreeCommits` method entirely.
    Orchestrator (work-with-issue Step 6) enforces squashing before approval gate.
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/ask/WarnUnsquashedApproval.java`

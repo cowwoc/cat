@@ -163,7 +163,7 @@ The sequence is always: children closed → criteria verified → offer closure.
 Offering closure without criteria verification is a protocol violation.
 
 **Store phase 1 results:**
-- `issue_id`, `issue_path`, `worktree_path`, `branch`, `base_branch`
+- `issue_id`, `issue_path`, `worktree_path`, `issue_branch`, `target_branch`
 - `estimated_tokens`
 
 ## Phase 2-4: Delegate to work-with-issue
@@ -180,7 +180,7 @@ Use the Skill tool to invoke `/cat:work-with-issue` with positional space-separa
 ```
 Skill tool:
   skill: "cat:work-with-issue"
-  args: "${issue_id} ${issue_path} ${worktree_path} ${branch} ${base_branch} ${estimated_tokens} ${TRUST} ${VERIFY}"
+  args: "${issue_id} ${issue_path} ${worktree_path} ${issue_branch} ${target_branch} ${estimated_tokens} ${TRUST} ${VERIFY}"
 ```
 
 The skill will:
@@ -211,7 +211,7 @@ The skill will:
 After successful merge, invoke `/cat:work-complete` with positional arguments:
 
 ```
-/cat:work-complete ${issue_id} ${base_branch}
+/cat:work-complete ${issue_id} ${target_branch}
 ```
 
 Output the skill result verbatim.

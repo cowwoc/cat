@@ -53,24 +53,24 @@ public class MergeAndCleanupTest
     Path pluginRoot = Files.createTempDirectory("test-plugin");
     try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
-    Path tempDir = createTempDir();
-    try
-    {
-      MergeAndCleanup cmd = new MergeAndCleanup(scope);
-
+      Path tempDir = createTempDir();
       try
       {
-        cmd.execute(null, "issue-id", "session-id", "", tempDir.toString());
+        MergeAndCleanup cmd = new MergeAndCleanup(scope);
+
+        try
+        {
+          cmd.execute(null, "issue-id", "session-id", "v2.1", "", tempDir.toString());
+        }
+        catch (NullPointerException e)
+        {
+          requireThat(e.getMessage(), "message").contains("projectDir");
+        }
       }
-      catch (NullPointerException e)
+      finally
       {
-        requireThat(e.getMessage(), "message").contains("projectDir");
+        TestUtils.deleteDirectoryRecursively(tempDir);
       }
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
     }
   }
 
@@ -86,24 +86,24 @@ public class MergeAndCleanupTest
     Path pluginRoot = Files.createTempDirectory("test-plugin");
     try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
-    Path tempDir = createTempDir();
-    try
-    {
-      MergeAndCleanup cmd = new MergeAndCleanup(scope);
-
+      Path tempDir = createTempDir();
       try
       {
-        cmd.execute("", "issue-id", "session-id", "", tempDir.toString());
+        MergeAndCleanup cmd = new MergeAndCleanup(scope);
+
+        try
+        {
+          cmd.execute("", "issue-id", "session-id", "v2.1", "", tempDir.toString());
+        }
+        catch (IllegalArgumentException e)
+        {
+          requireThat(e.getMessage(), "message").contains("projectDir");
+        }
       }
-      catch (IllegalArgumentException e)
+      finally
       {
-        requireThat(e.getMessage(), "message").contains("projectDir");
+        TestUtils.deleteDirectoryRecursively(tempDir);
       }
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
     }
   }
 
@@ -119,24 +119,24 @@ public class MergeAndCleanupTest
     Path pluginRoot = Files.createTempDirectory("test-plugin");
     try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
-    Path tempDir = createTempDir();
-    try
-    {
-      MergeAndCleanup cmd = new MergeAndCleanup(scope);
-
+      Path tempDir = createTempDir();
       try
       {
-        cmd.execute(tempDir.toString(), null, "session-id", "", tempDir.toString());
+        MergeAndCleanup cmd = new MergeAndCleanup(scope);
+
+        try
+        {
+          cmd.execute(tempDir.toString(), null, "session-id", "v2.1", "", tempDir.toString());
+        }
+        catch (NullPointerException e)
+        {
+          requireThat(e.getMessage(), "message").contains("issueId");
+        }
       }
-      catch (NullPointerException e)
+      finally
       {
-        requireThat(e.getMessage(), "message").contains("issueId");
+        TestUtils.deleteDirectoryRecursively(tempDir);
       }
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
     }
   }
 
@@ -152,25 +152,25 @@ public class MergeAndCleanupTest
     Path pluginRoot = Files.createTempDirectory("test-plugin");
     try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
-    Path tempDir = createTempDir();
-    try
-    {
-      MergeAndCleanup cmd = new MergeAndCleanup(scope);
-
+      Path tempDir = createTempDir();
       try
       {
-        cmd.execute(tempDir.toString(), "issue-id", "session-id", "",
-          tempDir.toString());
+        MergeAndCleanup cmd = new MergeAndCleanup(scope);
+
+        try
+        {
+          cmd.execute(tempDir.toString(), "issue-id", "session-id", "v2.1", "",
+            tempDir.toString());
+        }
+        catch (IOException e)
+        {
+          requireThat(e.getMessage(), "message").contains("Not a CAT project");
+        }
       }
-      catch (IOException e)
+      finally
       {
-        requireThat(e.getMessage(), "message").contains("Not a CAT project");
+        TestUtils.deleteDirectoryRecursively(tempDir);
       }
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
     }
   }
 
@@ -186,28 +186,28 @@ public class MergeAndCleanupTest
     Path pluginRoot = Files.createTempDirectory("test-plugin");
     try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
-    Path tempDir = createTempDir();
-    try
-    {
-      Path catDir = tempDir.resolve(".claude/cat");
-      Files.createDirectories(catDir);
-
-      MergeAndCleanup cmd = new MergeAndCleanup(scope);
-
+      Path tempDir = createTempDir();
       try
       {
-        cmd.execute(tempDir.toString(), "issue-id", "session-id", "",
-          tempDir.toString());
+        Path catDir = tempDir.resolve(".claude/cat");
+        Files.createDirectories(catDir);
+
+        MergeAndCleanup cmd = new MergeAndCleanup(scope);
+
+        try
+        {
+          cmd.execute(tempDir.toString(), "issue-id", "session-id", "v2.1", "",
+            tempDir.toString());
+        }
+        catch (IOException _)
+        {
+          // Expected - worktree not found
+        }
       }
-      catch (IOException _)
+      finally
       {
-        // Expected - worktree not found
+        TestUtils.deleteDirectoryRecursively(tempDir);
       }
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
     }
   }
 
@@ -280,12 +280,6 @@ public class MergeAndCleanupTest
       Path catDir = localRepo.resolve(".claude/cat");
       Files.createDirectories(catDir);
 
-      // Create the cat-base file for the worktree
-      String gitDir = TestUtils.runGitCommandWithOutput(localRepo, "rev-parse", "--absolute-git-dir");
-      Path catBasePath = Path.of(gitDir).resolve("worktrees").resolve(issueBranch).resolve("cat-base");
-      Files.createDirectories(catBasePath.getParent());
-      Files.writeString(catBasePath, "v2.1");
-
       try (JvmScope scope = new TestJvmScope(localRepo, pluginRoot))
       {
         MergeAndCleanup cmd = new MergeAndCleanup(scope);
@@ -294,7 +288,7 @@ public class MergeAndCleanupTest
         String preLog = TestUtils.runGitCommandWithOutput(localRepo, "log", "--oneline", "v2.1");
         requireThat(preLog, "preLog").doesNotContain("Origin advance commit");
 
-        String result = cmd.execute(localRepo.toString(), issueBranch, "test-session",
+        String result = cmd.execute(localRepo.toString(), issueBranch, "test-session", "v2.1",
           issueWorktree.toString(), pluginRoot.toString());
 
         requireThat(result, "result").contains("\"status\" : \"success\"");
@@ -387,19 +381,13 @@ public class MergeAndCleanupTest
       Path catDir = localRepo.resolve(".claude/cat");
       Files.createDirectories(catDir);
 
-      // Create the cat-base file
-      String gitDir = TestUtils.runGitCommandWithOutput(localRepo, "rev-parse", "--absolute-git-dir");
-      Path catBasePath = Path.of(gitDir).resolve("worktrees").resolve(issueBranch).resolve("cat-base");
-      Files.createDirectories(catBasePath.getParent());
-      Files.writeString(catBasePath, "v2.1");
-
       try (JvmScope scope = new TestJvmScope(localRepo, pluginRoot))
       {
         MergeAndCleanup cmd = new MergeAndCleanup(scope);
 
         try
         {
-          cmd.execute(localRepo.toString(), issueBranch, "test-session",
+          cmd.execute(localRepo.toString(), issueBranch, "test-session", "v2.1",
             issueWorktree.toString(), pluginRoot.toString());
         }
         catch (IOException e)
@@ -463,19 +451,13 @@ public class MergeAndCleanupTest
       Path catDir = localRepo.resolve(".claude/cat");
       Files.createDirectories(catDir);
 
-      // Create the cat-base file
-      String gitDir = TestUtils.runGitCommandWithOutput(localRepo, "rev-parse", "--absolute-git-dir");
-      Path catBasePath = Path.of(gitDir).resolve("worktrees").resolve(issueBranch).resolve("cat-base");
-      Files.createDirectories(catBasePath.getParent());
-      Files.writeString(catBasePath, "v2.1");
-
       try (JvmScope scope = new TestJvmScope(localRepo, pluginRoot))
       {
         MergeAndCleanup cmd = new MergeAndCleanup(scope);
 
         try
         {
-          cmd.execute(localRepo.toString(), issueBranch, "test-session",
+          cmd.execute(localRepo.toString(), issueBranch, "test-session", "v2.1",
             issueWorktree.toString(), pluginRoot.toString());
         }
         catch (IOException e)
@@ -552,13 +534,6 @@ public class MergeAndCleanupTest
       Path catDir = mainRepo.resolve(".claude/cat");
       Files.createDirectories(catDir);
 
-      // Create the cat-base file for the worktree so getBaseBranch() works
-      // git rev-parse --git-dir returns an absolute path for the main repo
-      String gitDir = TestUtils.runGitCommandWithOutput(mainRepo, "rev-parse", "--absolute-git-dir");
-      Path catBasePath = Path.of(gitDir).resolve("worktrees").resolve(issueBranch).resolve("cat-base");
-      Files.createDirectories(catBasePath.getParent());
-      Files.writeString(catBasePath, "v2.1");
-
       // Verify divergence exists before the call
       String divergeCount = TestUtils.runGitCommandWithOutput(issueWorktree, "rev-list", "--count",
         "HEAD..v2.1");
@@ -567,7 +542,7 @@ public class MergeAndCleanupTest
       try (JvmScope scope = new TestJvmScope(mainRepo, pluginRoot))
       {
         MergeAndCleanup cmd = new MergeAndCleanup(scope);
-        String result = cmd.execute(mainRepo.toString(), issueBranch, "test-session",
+        String result = cmd.execute(mainRepo.toString(), issueBranch, "test-session", "v2.1",
           issueWorktree.toString(), pluginRoot.toString());
 
         requireThat(result, "result").contains("\"status\" : \"success\"");
@@ -637,12 +612,6 @@ public class MergeAndCleanupTest
       Path catDir = mainRepo.resolve(".claude/cat");
       Files.createDirectories(catDir);
 
-      // Create the cat-base file
-      String gitDir = TestUtils.runGitCommandWithOutput(mainRepo, "rev-parse", "--absolute-git-dir");
-      Path catBasePath = Path.of(gitDir).resolve("worktrees").resolve(issueBranch).resolve("cat-base");
-      Files.createDirectories(catBasePath.getParent());
-      Files.writeString(catBasePath, "v2.1");
-
       // Verify precondition: new-feature.txt does NOT exist in main working tree
       requireThat(Files.exists(mainRepo.resolve("new-feature.txt")),
         "fileExistsBeforeMerge").isFalse();
@@ -650,7 +619,7 @@ public class MergeAndCleanupTest
       try (JvmScope scope = new TestJvmScope(mainRepo, pluginRoot))
       {
         MergeAndCleanup cmd = new MergeAndCleanup(scope);
-        String result = cmd.execute(mainRepo.toString(), issueBranch, "test-session",
+        String result = cmd.execute(mainRepo.toString(), issueBranch, "test-session", "v2.1",
           issueWorktree.toString(), pluginRoot.toString());
 
         requireThat(result, "result").contains("\"status\" : \"success\"");

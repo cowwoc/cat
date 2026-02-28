@@ -991,7 +991,7 @@ public class GitSquashTest
       JsonNode json = scope.getJsonMapper().readTree(result);
       requireThat(json.get("status").asString(), "status").isEqualTo("OK");
 
-      String commitFull = json.get("commit_full").asString();
+      String commitFull = json.get("squashed_commit_full").asString();
       String actualHead = TestUtils.runGitCommandWithOutput(tempDir, "rev-parse", "HEAD").strip();
       requireThat(actualHead, "actualHead").isEqualTo(commitFull);
     }

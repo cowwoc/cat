@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks.test;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
+import io.github.cowwoc.cat.hooks.CatMetadata;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.bash.VerifyStateInCommit;
 import org.testng.annotations.Test;
@@ -112,9 +113,9 @@ public final class VerifyStateInCommitTest
     {
       JsonMapper mapper = scope.getJsonMapper();
 
-      // Create .git/cat-base to mark as CAT worktree
+      // Create .git/cat-branch-point to mark as CAT worktree
       Path gitDir = tempDir.resolve(".git");
-      Files.writeString(gitDir.resolve("cat-base"), "v2.1");
+      Files.writeString(gitDir.resolve(CatMetadata.BRANCH_POINT_FILE), "v2.1");
 
       // Stage a file that is NOT STATE.md
       Files.writeString(tempDir.resolve("some-file.java"), "class Foo {}");
@@ -147,9 +148,9 @@ public final class VerifyStateInCommitTest
     {
       JsonMapper mapper = scope.getJsonMapper();
 
-      // Create .git/cat-base to mark as CAT worktree
+      // Create .git/cat-branch-point to mark as CAT worktree
       Path gitDir = tempDir.resolve(".git");
-      Files.writeString(gitDir.resolve("cat-base"), "v2.1");
+      Files.writeString(gitDir.resolve(CatMetadata.BRANCH_POINT_FILE), "v2.1");
 
       // Create and stage STATE.md with "in-progress" status
       Path issueDir = tempDir.resolve(".claude").resolve("cat").resolve("issues").resolve("test-issue");
@@ -186,15 +187,15 @@ public final class VerifyStateInCommitTest
   {
     // mainRepo is a regular non-worktree directory (session's working directory)
     Path mainRepo = TestUtils.createTempGitRepo("test-branch");
-    // worktreeDir is a separate CAT worktree with .git/cat-base marker
+    // worktreeDir is a separate CAT worktree with .git/cat-branch-point marker
     Path worktreeDir = TestUtils.createTempGitRepo("worktree-branch");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
       JsonMapper mapper = scope.getJsonMapper();
 
-      // Set up worktreeDir as a CAT worktree by adding .git/cat-base
+      // Set up worktreeDir as a CAT worktree by adding .git/cat-branch-point
       Path gitDir = worktreeDir.resolve(".git");
-      Files.writeString(gitDir.resolve("cat-base"), "v2.1");
+      Files.writeString(gitDir.resolve(CatMetadata.BRANCH_POINT_FILE), "v2.1");
 
       // Stage a file in worktreeDir that is NOT STATE.md
       Files.writeString(worktreeDir.resolve("some-file.java"), "class Foo {}");
@@ -235,7 +236,7 @@ public final class VerifyStateInCommitTest
 
       // Set up firstDir as a CAT worktree
       Path firstGitDir = firstDir.resolve(".git");
-      Files.writeString(firstGitDir.resolve("cat-base"), "v2.1");
+      Files.writeString(firstGitDir.resolve(CatMetadata.BRANCH_POINT_FILE), "v2.1");
 
       VerifyStateInCommit handler = new VerifyStateInCommit();
       JsonNode toolInput = mapper.readTree("{}");
@@ -267,7 +268,7 @@ public final class VerifyStateInCommitTest
     {
       JsonMapper mapper = scope.getJsonMapper();
 
-      // No .git/cat-base → not a CAT worktree → should allow
+      // No .git/cat-branch-point → not a CAT worktree → should allow
       VerifyStateInCommit handler = new VerifyStateInCommit();
       JsonNode toolInput = mapper.readTree("{}");
 
@@ -285,7 +286,7 @@ public final class VerifyStateInCommitTest
   }
 
   /**
-   * Verifies that commits in the main workspace (which has a .claude/cat directory but no .git/cat-base)
+   * Verifies that commits in the main workspace (which has a .claude/cat directory but no .git/cat-branch-point)
    * are not blocked by the STATE.md check.
    */
   @Test
@@ -296,7 +297,7 @@ public final class VerifyStateInCommitTest
     {
       JsonMapper mapper = scope.getJsonMapper();
 
-      // Create .claude/cat directory (present in main workspace) but NOT .git/cat-base
+      // Create .claude/cat directory (present in main workspace) but NOT .git/cat-branch-point
       // The main workspace has .claude/cat for retrospectives/issues but is not a worktree
       Path claudeCat = tempDir.resolve(".claude").resolve("cat");
       Files.createDirectories(claudeCat);
@@ -331,7 +332,7 @@ public final class VerifyStateInCommitTest
     {
       JsonMapper mapper = scope.getJsonMapper();
 
-      // No .git/cat-base means not a CAT worktree
+      // No .git/cat-branch-point means not a CAT worktree
       Files.writeString(tempDir.resolve("Foo.java"), "class Foo {}");
       TestUtils.runGit(tempDir, "add", "Foo.java");
 
