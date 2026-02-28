@@ -57,8 +57,8 @@ fi
   "$ISSUE_BRANCH" --base "$BASE_BRANCH"
 ```
 
-The Java tool implements all steps: detect base branch, check divergence, check suspicious deletions, verify
-merge-base, fast-forward merge, cleanup (optional). Outputs JSON on success.
+The Java tool implements all steps: check divergence, check suspicious deletions, verify
+merge-base, fast-forward merge. Outputs JSON on success.
 
 ## Result Handling
 
@@ -67,14 +67,14 @@ to stderr (exit code 1) with `"status": "error"` and a `"message"` field contain
 
 | Output | Meaning | Agent Recovery Action |
 |--------|---------|----------------------|
-| `"status": "success"` (stdout) | Merge completed successfully | Report `commit_sha` and `issue_branch`, continue |
-| `"status": "error"`: Must be on {base} branch | Wrong branch checked out | `git checkout {base_branch}` first |
+| `"status": "success"` (stdout) | Merge completed successfully | Report `merged_commit` and `source_branch`, continue |
+| `"status": "error"`: Must be on {target} branch | Wrong branch checked out | `git checkout {target_branch}` first |
 | `"status": "error"`: Working directory is not clean | Uncommitted changes | Commit or stash changes before merging |
-| `"status": "error"`: Issue branch must have exactly 1 commit | Multiple commits | Squash commits first |
-| `"status": "error"`: Issue branch is behind {base} | Base has commits not in issue branch | Rebase onto base before merging |
-| `"status": "error"`: Fast-forward merge failed | History diverged | Rebase issue branch onto base first |
+| `"status": "error"`: Source branch must have exactly 1 commit | Multiple commits | Squash commits first |
+| `"status": "error"`: Source branch is behind {target} | Target has commits not in source branch | Rebase onto target before merging |
+| `"status": "error"`: Fast-forward merge failed | History diverged | Rebase source branch onto target first |
 | `"status": "error"`: Merge commit detected | Non-linear history after merge | Investigate merge state, should not occur with ff-only |
-| `"status": "error"`: cat-base file not found | Cannot auto-detect base branch | Pass `--base {branch}` explicitly or recreate worktree |
+| `"status": "error"`: Missing required argument: --base | Base branch not provided | Pass `--base {branch}` explicitly |
 
 ## Common Issues
 
@@ -91,17 +91,11 @@ git -C "$WORKTREE_PATH" rebase "origin/$BASE_BRANCH"
 **Cause**: Branch name has special characters or doesn't exist
 **Solution**: Verify branch name with `git branch -a`
 
-### Issue 3: Worktree removal fails
-**Cause**: Uncommitted changes or process using directory
-**Solution**: Use `--force` flag or manually clean up
-
-### Issue 4: Wrong base branch detected
+### Issue 3: Wrong base branch detected
 **Cause**: Base branch detection failed (worktree metadata missing)
-**Solution**: Set explicitly with `echo "<base-branch>" > "$(git rev-parse --git-dir)/cat-base"`
+**Solution**: Pass `--base <branch>` explicitly to the git-merge-linear command
 
 ## Success Criteria
 
 - [ ] Base branch points to issue commit
 - [ ] Linear history maintained (no merge commits)
-- [ ] Issue worktree removed
-- [ ] Issue branch deleted

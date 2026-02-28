@@ -40,7 +40,7 @@ For deterministic execution with automatic backup and conflict detection:
 "${CLAUDE_PLUGIN_ROOT}/client/bin/git-rebase-safe" "$WORKTREE_PATH" "$BASE_BRANCH"
 ```
 
-If BASE_BRANCH not provided, the tool reads from the cat-base file. The tool outputs JSON.
+If BASE_BRANCH not provided, the tool reads from the cat-branch-point file. The tool outputs JSON.
 
 #### Result Handling
 

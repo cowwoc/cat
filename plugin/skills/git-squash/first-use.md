@@ -233,8 +233,8 @@ After dropping unwanted commits, NOW use the Interactive Rebase Workflow below t
 ### Interactive Rebase Steps
 
 ```bash
-# 1. Pin base branch reference to prevent race conditions
-BASE=$(git rev-parse <base-branch>)
+# 1. Read fork-point commit hash from cat-branch-point
+BASE=$(cat "$(git rev-parse --git-dir)/cat-branch-point")
 
 # 2. Create backup of current branch
 BACKUP="backup-before-squash-$(date +%Y%m%d-%H%M%S)"
@@ -269,7 +269,6 @@ chmod +x /tmp/msg-editor.sh
 
 # 7. Run interactive rebase
 # NOTE: Use GIT_EDITOR (not EDITOR) - git uses GIT_EDITOR for commit messages during rebase
-# Use pinned base ref to ensure consistency
 BASE_COMMIT=$(git rev-parse $BASE^)  # Parent of base for rebase
 GIT_SEQUENCE_EDITOR=/tmp/squash-editor.sh GIT_EDITOR=/tmp/msg-editor.sh git rebase -i $BASE_COMMIT
 
@@ -302,20 +301,6 @@ Complex squash operations include:
 - Quick workflow with commits already at branch tip
 
 ## Critical Rules
-
-### Pin Base Branch Reference (Race Condition Prevention)
-
-**MANDATORY: Pin base branch reference before rebase. Do NOT call git rev-parse on the base branch separately for
-rebase and commit-tree.**
-
-The base branch can advance between operations, causing race conditions. Always pin once at the start and use the
-pinned variable throughout:
-```bash
-BASE=$(git rev-parse <base-branch>)  # Pin once
-git rebase $BASE                      # Use pinned ref
-# ... later ...
-git commit-tree "$TREE" -p $BASE -m "$MESSAGE"  # Use same pinned ref
-```
 
 ### Preserve Commit Type Boundaries When Squashing
 

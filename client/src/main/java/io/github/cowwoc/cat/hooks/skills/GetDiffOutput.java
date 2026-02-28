@@ -109,22 +109,22 @@ public final class GetDiffOutput implements SkillOutput
     }
 
     /**
-     * Gets the list of changed files between base and HEAD.
+     * Gets the list of changed files between target and HEAD.
      *
      * @param projectRoot the project root path
-     * @param baseBranch the base branch for comparison
+     * @param targetBranch the target branch for comparison
      * @return the list of changed file paths
-     * @throws NullPointerException if {@code projectRoot} or {@code baseBranch} are null
+     * @throws NullPointerException if {@code projectRoot} or {@code targetBranch} are null
      */
-    static List<String> getChangedFiles(Path projectRoot, String baseBranch)
+    static List<String> getChangedFiles(Path projectRoot, String targetBranch)
     {
       requireThat(projectRoot, "projectRoot").isNotNull();
-      requireThat(baseBranch, "baseBranch").isNotNull();
+      requireThat(targetBranch, "targetBranch").isNotNull();
 
       try
       {
         String output = GitCommands.runGit(projectRoot, "diff", "--name-only",
-          baseBranch + "..HEAD");
+          targetBranch + "..HEAD");
         List<String> result = new ArrayList<>();
         for (String line : output.split("\n"))
         {
@@ -140,17 +140,17 @@ public final class GetDiffOutput implements SkillOutput
     }
 
     /**
-     * Gets diff statistics between base and HEAD.
+     * Gets diff statistics between target and HEAD.
      *
      * @param projectRoot the project root path
-     * @param baseBranch the base branch for comparison
+     * @param targetBranch the target branch for comparison
      * @return the diff statistics
-     * @throws NullPointerException if {@code projectRoot} or {@code baseBranch} are null
+     * @throws NullPointerException if {@code projectRoot} or {@code targetBranch} are null
      */
-    static DiffStats getDiffStats(Path projectRoot, String baseBranch)
+    static DiffStats getDiffStats(Path projectRoot, String targetBranch)
     {
       requireThat(projectRoot, "projectRoot").isNotNull();
-      requireThat(baseBranch, "baseBranch").isNotNull();
+      requireThat(targetBranch, "targetBranch").isNotNull();
 
       int filesChanged = 0;
       int insertions = 0;
@@ -159,7 +159,7 @@ public final class GetDiffOutput implements SkillOutput
       try
       {
         String output = GitCommands.runGit(projectRoot, "diff", "--stat",
-          baseBranch + "..HEAD");
+          targetBranch + "..HEAD");
         if (!output.isEmpty())
         {
           String[] lines = output.split("\n");
@@ -234,18 +234,18 @@ public final class GetDiffOutput implements SkillOutput
      * Gets the raw diff output between base and HEAD.
      *
      * @param projectRoot the project root path
-     * @param baseBranch the base branch for comparison
+     * @param targetBranch the base branch for comparison
      * @return the raw diff output, or null on error
-     * @throws NullPointerException if {@code projectRoot} or {@code baseBranch} are null
+     * @throws NullPointerException if {@code projectRoot} or {@code targetBranch} are null
      */
-    static String getRawDiff(Path projectRoot, String baseBranch)
+    static String getRawDiff(Path projectRoot, String targetBranch)
     {
       requireThat(projectRoot, "projectRoot").isNotNull();
-      requireThat(baseBranch, "baseBranch").isNotNull();
+      requireThat(targetBranch, "targetBranch").isNotNull();
 
       try
       {
-        return GitCommands.runGit(projectRoot, "diff", baseBranch + "..HEAD");
+        return GitCommands.runGit(projectRoot, "diff", targetBranch + "..HEAD");
       }
       catch (IOException _)
       {
@@ -255,9 +255,9 @@ public final class GetDiffOutput implements SkillOutput
   }
 
   /**
-   * Handles base branch detection logic.
+   * Handles target branch detection logic.
    */
-  private static final class BaseBranchDetector
+  private static final class TargetBranchDetector
   {
     private static final Pattern VERSION_PATTERN = Pattern.compile("^(\\d+\\.\\d+)-");
     private static final Pattern VERSION_BRANCH_PATTERN = Pattern.compile("^v\\d+\\.\\d+$");
@@ -269,7 +269,7 @@ public final class GetDiffOutput implements SkillOutput
      * @return the base branch name, or null if not detected
      * @throws NullPointerException if {@code projectRoot} is null
      */
-    static String detectBaseBranch(Path projectRoot)
+    static String detectTargetBranch(Path projectRoot)
     {
       requireThat(projectRoot, "projectRoot").isNotNull();
 
@@ -297,7 +297,7 @@ public final class GetDiffOutput implements SkillOutput
     }
 
     /**
-     * Detects base branch from worktree directory path.
+     * Detects target branch from worktree directory path.
      *
      * @return the base branch name, or null if not in a worktree
      */
@@ -316,7 +316,7 @@ public final class GetDiffOutput implements SkillOutput
     }
 
     /**
-     * Detects base branch from current branch name.
+     * Detects target branch from current branch name.
      *
      * @param projectRoot the project root path
      * @return the base branch name, or null if not detected
@@ -340,7 +340,7 @@ public final class GetDiffOutput implements SkillOutput
     }
 
     /**
-     * Detects base branch from upstream tracking branch.
+     * Detects target branch from upstream tracking branch.
      *
      * @param projectRoot the project root path
      * @return the base branch name, or null if not detected
@@ -409,27 +409,27 @@ public final class GetDiffOutput implements SkillOutput
     Config config = Config.load(scope.getJsonMapper(), projectRoot);
     int terminalWidth = config.getInt("terminalWidth", 50);
 
-    // Detect base branch
-    String baseBranch = BaseBranchDetector.detectBaseBranch(projectRoot);
-    if (baseBranch == null)
-      return "Base branch could not be detected from current directory or branch name.";
+    // Detect target branch
+    String targetBranch = TargetBranchDetector.detectTargetBranch(projectRoot);
+    if (targetBranch == null)
+      return "Target branch could not be detected from current directory or branch name.";
 
     // Check if base branch exists
-    if (!GitHelper.branchExists(projectRoot, baseBranch))
+    if (!GitHelper.branchExists(projectRoot, targetBranch))
     {
       // Try with origin/ prefix
-      baseBranch = "origin/" + baseBranch;
-      if (!GitHelper.branchExists(projectRoot, baseBranch))
-        return "Base branch not found in repository (tried local and origin/ prefix).";
+      targetBranch = "origin/" + targetBranch;
+      if (!GitHelper.branchExists(projectRoot, targetBranch))
+        return "Target branch not found in repository (tried local and origin/ prefix).";
     }
 
     // Get changed files list
-    List<String> changedFiles = GitHelper.getChangedFiles(projectRoot, baseBranch);
+    List<String> changedFiles = GitHelper.getChangedFiles(projectRoot, targetBranch);
     if (changedFiles.isEmpty())
-      return "No changes detected between " + baseBranch + " and HEAD.";
+      return "No changes detected between " + targetBranch + " and HEAD.";
 
     // Get diff stats
-    DiffStats stats = GitHelper.getDiffStats(projectRoot, baseBranch);
+    DiffStats stats = GitHelper.getDiffStats(projectRoot, targetBranch);
 
     // Guard against excessively large diffs that would cause OutOfMemoryError
     int totalChanges = stats.insertions() + stats.deletions();
@@ -438,12 +438,12 @@ public final class GetDiffOutput implements SkillOutput
       return "The diff is too large to render inline (" + stats.filesChanged() + " files changed, +" +
         stats.insertions() + " insertions, -" + stats.deletions() + " deletions = " + totalChanges +
         " total changes, threshold is " + MAX_TOTAL_CHANGES + ").\n\n" +
-        "Use `git diff " + baseBranch + "..HEAD --stat` to see a summary of changes, or " +
-        "`git diff " + baseBranch + "..HEAD -- <file>` to inspect individual files.";
+        "Use `git diff " + targetBranch + "..HEAD --stat` to see a summary of changes, or " +
+        "`git diff " + targetBranch + "..HEAD -- <file>` to inspect individual files.";
     }
 
     // Get raw diff output
-    String rawDiff = GitHelper.getRawDiff(projectRoot, baseBranch);
+    String rawDiff = GitHelper.getRawDiff(projectRoot, targetBranch);
     if (rawDiff == null || rawDiff.isEmpty())
       return "No diff output available (git diff command failed or returned empty).";
 
@@ -459,7 +459,7 @@ public final class GetDiffOutput implements SkillOutput
     String rendered = renderer.render(diff);
 
     String fileList = buildFileSummary(changedFiles);
-    return buildOutputString(baseBranch, stats, rendered, fileList);
+    return buildOutputString(targetBranch, stats, rendered, fileList);
   }
 
   /**
@@ -490,16 +490,16 @@ public final class GetDiffOutput implements SkillOutput
   /**
    * Builds the final output string with summary, file list, and rendered diff.
    *
-   * @param baseBranch the base branch name
+   * @param targetBranch the target branch name
    * @param stats the diff statistics
    * @param rendered the rendered diff content
    * @param fileList the formatted file list
    * @return the complete output string
    */
-  private String buildOutputString(String baseBranch, DiffStats stats, String rendered, String fileList)
+  private String buildOutputString(String targetBranch, DiffStats stats, String rendered, String fileList)
   {
     return "## Diff Summary\n" +
-           "- **Base branch:** " + baseBranch + "\n" +
+           "- **Target branch:** " + targetBranch + "\n" +
            "- **Files changed:** " + stats.filesChanged + "\n" +
            "- **Insertions:** +" + stats.insertions + "\n" +
            "- **Deletions:** -" + stats.deletions + "\n" +

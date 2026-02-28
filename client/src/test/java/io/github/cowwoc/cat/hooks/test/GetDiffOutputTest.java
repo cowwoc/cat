@@ -87,7 +87,7 @@ public class GetDiffOutputTest
         String result = handler.getOutput(tempDir);
 
         // Non-git directory should return error message (git commands fail)
-        requireThat(result, "result").contains("Base branch");
+        requireThat(result, "result").contains("Target branch");
       }
       finally
       {
@@ -774,7 +774,7 @@ public class GetDiffOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void baseBranchDetectionInNonWorktreeDirectory() throws IOException
+  public void targetBranchDetectionInNonWorktreeDirectory() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
@@ -801,22 +801,22 @@ public class GetDiffOutputTest
   /**
    * Sets up a test git repository with specified branch structure and file changes.
    * <p>
-   * Creates: baseBranch -> versionBranch (if needed) -> featureBranch with changes
+   * Creates: targetBranch -> versionBranch (if needed) -> featureBranch with changes
    *
    * @param tempDir the temporary directory for the repo
-   * @param baseBranch the base branch name (e.g., "main")
+   * @param targetBranch the base branch name (e.g., "main")
    * @param featureBranch the feature branch name (e.g., "2.0-my-feature" or "v2.0")
    * @param fileName the file to create and modify
    * @param initialContent the initial file content
    * @param modifiedContent the modified file content
    * @throws IOException if an I/O error occurs
    */
-  private void setupTestRepo(Path tempDir, String baseBranch, String featureBranch,
+  private void setupTestRepo(Path tempDir, String targetBranch, String featureBranch,
     String fileName, String initialContent, String modifiedContent) throws IOException
   {
     // Initialize git repo
     runGit(tempDir, "init");
-    runGit(tempDir, "checkout", "-b", baseBranch);
+    runGit(tempDir, "checkout", "-b", targetBranch);
 
     // Create cat-config
     Path catDir = tempDir.resolve(".claude").resolve("cat");
@@ -834,7 +834,7 @@ public class GetDiffOutputTest
       String versionPart = featureBranch.substring(0, featureBranch.indexOf('-'));
       String versionBranch = "v" + versionPart;
       runGit(tempDir, "checkout", "-b", versionBranch);
-      runGit(tempDir, "checkout", baseBranch);
+      runGit(tempDir, "checkout", targetBranch);
       runGit(tempDir, "checkout", versionBranch);
     }
 
@@ -936,8 +936,8 @@ public class GetDiffOutputTest
       String result = handler.getOutput(new String[0]);
 
       // TestJvmScope provides a temp dir that is not a git repo,
-      // so getOutput(new String[0]) returns an error about base branch not found
-      requireThat(result, "result").contains("Base branch not found");
+      // so getOutput(new String[0]) returns an error about target branch not found
+      requireThat(result, "result").contains("Target branch not found");
     }
   }
 

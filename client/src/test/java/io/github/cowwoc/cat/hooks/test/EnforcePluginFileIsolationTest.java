@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
+import io.github.cowwoc.cat.hooks.CatMetadata;
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.write.EnforcePluginFileIsolation;
@@ -24,7 +25,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * Tests for EnforcePluginFileIsolation hook.
  * <p>
  * Tests verify that plugin/ and client/ source files are properly blocked outside of issue worktrees
- * and allowed inside issue worktrees (identified by the presence of a cat-base file).
+ * and allowed inside issue worktrees (identified by the presence of a cat-branch-point file).
  * <p>
  * Tests are designed for parallel execution - each test is self-contained
  * with no shared state.
@@ -51,7 +52,7 @@ public class EnforcePluginFileIsolationTest
   }
 
   /**
-   * Verifies that plugin files in a repo without cat-base (e.g., on main) are blocked.
+   * Verifies that plugin files in a repo without cat-branch-point (e.g., on main) are blocked.
    */
   @Test
   public void pluginFilesBlockedOnMain() throws IOException
@@ -76,7 +77,7 @@ public class EnforcePluginFileIsolationTest
   }
 
   /**
-   * Verifies that plugin files in a repo without cat-base (e.g., on v2.1) are blocked.
+   * Verifies that plugin files in a repo without cat-branch-point (e.g., on v2.1) are blocked.
    */
   @Test
   public void pluginFilesBlockedOnV21() throws IOException
@@ -101,7 +102,7 @@ public class EnforcePluginFileIsolationTest
   }
 
   /**
-   * Verifies that plugin files in a repo without cat-base (e.g., on version branch v1.0) are blocked.
+   * Verifies that plugin files in a repo without cat-branch-point (e.g., on version branch v1.0) are blocked.
    */
   @Test
   public void pluginFilesBlockedOnVersionBranch() throws IOException
@@ -126,7 +127,7 @@ public class EnforcePluginFileIsolationTest
   }
 
   /**
-   * Verifies that plugin files in an issue worktree (with cat-base) are allowed.
+   * Verifies that plugin files in an issue worktree (with cat-branch-point) are allowed.
    */
   @Test
   public void pluginFilesAllowedOnTaskBranch() throws IOException
@@ -134,7 +135,7 @@ public class EnforcePluginFileIsolationTest
     Path tempDir = TestUtils.createTempGitRepo("v2.1-fix-bug");
     try
     {
-      createCatBaseFile(tempDir);
+      createCatBranchPointFile(tempDir);
       try (JvmScope scope = new TestJvmScope())
       {
         EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
@@ -154,9 +155,9 @@ public class EnforcePluginFileIsolationTest
   }
 
   /**
-   * Verifies that plugin files in a worktree directory with cat-base are allowed.
+   * Verifies that plugin files in a worktree directory with cat-branch-point are allowed.
    * <p>
-   * This tests the core use case: worktrees created by /cat:work have a cat-base file
+   * This tests the core use case: worktrees created by /cat:work have a cat-branch-point file
    * in their git directory and edits in them must be permitted.
    */
   @Test
@@ -171,7 +172,7 @@ public class EnforcePluginFileIsolationTest
       Path worktreeDir = TestUtils.createWorktree(mainDir, worktreesDir, "2.1-test-task");
       try
       {
-        createCatBaseFile(worktreeDir);
+        createCatBranchPointFile(worktreeDir);
         try (JvmScope scope = new TestJvmScope())
         {
           EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
@@ -257,7 +258,7 @@ public class EnforcePluginFileIsolationTest
   }
 
   /**
-   * Verifies that client files in a repo without cat-base (e.g., on main) are blocked.
+   * Verifies that client files in a repo without cat-branch-point (e.g., on main) are blocked.
    */
   @Test
   public void clientFilesBlockedOnMain() throws IOException
@@ -282,7 +283,7 @@ public class EnforcePluginFileIsolationTest
   }
 
   /**
-   * Verifies that client files in a repo without cat-base (e.g., on v2.1) are blocked.
+   * Verifies that client files in a repo without cat-branch-point (e.g., on v2.1) are blocked.
    */
   @Test
   public void clientFilesBlockedOnV21() throws IOException
@@ -307,7 +308,7 @@ public class EnforcePluginFileIsolationTest
   }
 
   /**
-   * Verifies that client files in an issue worktree (with cat-base) are allowed.
+   * Verifies that client files in an issue worktree (with cat-branch-point) are allowed.
    */
   @Test
   public void clientFilesAllowedOnTaskBranch() throws IOException
@@ -315,7 +316,7 @@ public class EnforcePluginFileIsolationTest
     Path tempDir = TestUtils.createTempGitRepo("v2.1-fix-bug");
     try
     {
-      createCatBaseFile(tempDir);
+      createCatBranchPointFile(tempDir);
       try (JvmScope scope = new TestJvmScope())
       {
         EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
@@ -361,7 +362,7 @@ public class EnforcePluginFileIsolationTest
   }
 
   /**
-   * Creates a {@code cat-base} file in the git directory of the given repository.
+   * Creates a {@code cat-branch-point} file in the git directory of the given repository.
    * <p>
    * This simulates an issue worktree created by {@code /cat:work}. The file content is
    * the base branch name (e.g., "v2.1").
@@ -369,7 +370,7 @@ public class EnforcePluginFileIsolationTest
    * @param repoDir the repository directory
    * @throws IOException if the git command fails or file creation fails
    */
-  private void createCatBaseFile(Path repoDir) throws IOException
+  private void createCatBranchPointFile(Path repoDir) throws IOException
   {
     String gitDirPath = TestUtils.runGitCommandWithOutput(repoDir, "rev-parse", "--git-dir");
     Path gitDir;
@@ -377,6 +378,6 @@ public class EnforcePluginFileIsolationTest
       gitDir = Paths.get(gitDirPath);
     else
       gitDir = repoDir.resolve(gitDirPath);
-    Files.writeString(gitDir.resolve("cat-base"), "v2.1");
+    Files.writeString(gitDir.resolve(CatMetadata.BRANCH_POINT_FILE), "v2.1");
   }
 }

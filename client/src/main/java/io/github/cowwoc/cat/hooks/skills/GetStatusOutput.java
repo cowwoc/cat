@@ -758,18 +758,18 @@ public final class GetStatusOutput implements SkillOutput
   {
     Map<String, String> statusMap = new HashMap<>();
 
-    String baseBranch = getBaseBranch(projectDir);
-    if (baseBranch.isEmpty())
+    String targetBranch = getBaseBranch(projectDir);
+    if (targetBranch.isEmpty())
       return Map.of();
 
     List<String> branches = getAllBranches(projectDir);
 
     for (String branch : branches)
     {
-      if (branch.equals(baseBranch))
+      if (branch.equals(targetBranch))
         continue;
 
-      List<String> changedStateFiles = getChangedStateFiles(projectDir, baseBranch, branch);
+      List<String> changedStateFiles = getChangedStateFiles(projectDir, targetBranch, branch);
 
       for (String stateFilePath : changedStateFiles)
       {
@@ -847,16 +847,16 @@ public final class GetStatusOutput implements SkillOutput
    * and do not contain path traversal sequences.
    *
    * @param projectDir the project root directory
-   * @param baseBranch the base branch name
+   * @param targetBranch the base branch name
    * @param branch the branch to compare
    * @return list of valid changed STATE.md file paths relative to project root
    * @throws IOException if git command fails
    */
-  private List<String> getChangedStateFiles(Path projectDir, String baseBranch, String branch)
+  private List<String> getChangedStateFiles(Path projectDir, String targetBranch, String branch)
     throws IOException
   {
     List<String> lines = executeGitCommand(projectDir, "git", "diff", "--name-only",
-      baseBranch + "..." + branch, "--", ".claude/cat/issues/**/STATE.md");
+      targetBranch + "..." + branch, "--", ".claude/cat/issues/**/STATE.md");
 
     List<String> changedFiles = new ArrayList<>();
     for (String line : lines)

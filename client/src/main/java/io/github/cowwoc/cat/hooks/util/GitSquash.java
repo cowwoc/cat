@@ -66,29 +66,29 @@ public final class GitSquash
    * The process:
    * <ol>
    *   <li>Validate commit message format</li>
-   *   <li>Pin base branch reference to prevent race conditions</li>
+   *   <li>Pin target branch reference to prevent race conditions</li>
    *   <li>Compute merge-base for concurrent modification detection</li>
-   *   <li>Rebase onto pinned base (handle failures gracefully)</li>
+   *   <li>Rebase onto pinned target (handle failures gracefully)</li>
    *   <li>Detect concurrent modifications (files modified on both branches)</li>
    *   <li>Create timestamped backup branch</li>
    *   <li>Verify clean working directory</li>
    *   <li>Create squashed commit via commit-tree</li>
    *   <li>Move branch to new commit</li>
    *   <li>Verify diff with backup is empty</li>
-   *   <li>Verify exactly 1 commit from base</li>
+   *   <li>Verify exactly 1 commit from target</li>
    *   <li>Delete backup branch after successful verification</li>
    * </ol>
    *
-   * @param baseBranch    the base branch to squash onto
+   * @param targetBranch  the target branch to squash onto
    * @param commitMessage the commit message for the squashed commit
    * @return JSON string with operation result
-   * @throws IllegalArgumentException if {@code baseBranch} is blank, or {@code commitMessage} is blank
+   * @throws IllegalArgumentException if {@code targetBranch} is blank, or {@code commitMessage} is blank
    *                                  or has an invalid format
    * @throws IOException              if the operation fails
    */
-  public String execute(String baseBranch, String commitMessage) throws IOException
+  public String execute(String targetBranch, String commitMessage) throws IOException
   {
-    requireThat(baseBranch, "baseBranch").isNotBlank();
+    requireThat(targetBranch, "targetBranch").isNotBlank();
     requireThat(commitMessage, "commitMessage").isNotBlank();
 
     // Step 1: Validate commit message format
@@ -112,8 +112,8 @@ public final class GitSquash
         Example: feature: add user authentication""".formatted(commitMessage));
     }
 
-    // Step 2: Pin base branch reference BEFORE rebase to prevent race conditions
-    String base = runGitCommandSingleLineInDirectory(directory, "rev-parse", baseBranch);
+    // Step 2: Pin target branch reference BEFORE rebase to prevent race conditions
+    String base = runGitCommandSingleLineInDirectory(directory, "rev-parse", targetBranch);
 
     // Step 3: Save pre-rebase state for concurrent modification detection
     String mergeBase = runGitCommandSingleLineInDirectory(directory, "merge-base", "HEAD", base);
@@ -304,8 +304,8 @@ public final class GitSquash
   {
     ObjectNode json = scope.getJsonMapper().createObjectNode();
     json.put("status", "OK");
-    json.put("commit", shortCommit);
-    json.put("commit_full", fullCommit);
+    json.put("squashed_commit", shortCommit);
+    json.put("squashed_commit_full", fullCommit);
     json.put("backup_verified", true);
 
     if (!concurrentMods.isEmpty())
@@ -327,7 +327,7 @@ public final class GitSquash
   /**
    * Main method for command-line execution.
    *
-   * @param args command-line arguments: BASE_BRANCH COMMIT_MESSAGE [WORKTREE_PATH]
+   * @param args command-line arguments: TARGET_BRANCH COMMIT_MESSAGE [WORKTREE_PATH]
    * @throws IOException if the operation fails
    */
   public static void main(String[] args) throws IOException
@@ -337,12 +337,12 @@ public final class GitSquash
       System.err.println("""
         {
           "status": "error",
-          "message": "Usage: git-squash <BASE_BRANCH> <COMMIT_MESSAGE> [WORKTREE_PATH]"
+          "message": "Usage: git-squash <TARGET_BRANCH> <COMMIT_MESSAGE> [WORKTREE_PATH]"
         }""");
       System.exit(1);
     }
 
-    String baseBranch = args[0];
+    String targetBranch = args[0];
     String commitMessage = args[1];
     String directory;
     if (args.length > 2)
@@ -355,7 +355,7 @@ public final class GitSquash
       GitSquash cmd = new GitSquash(scope, directory);
       try
       {
-        String result = cmd.execute(baseBranch, commitMessage);
+        String result = cmd.execute(targetBranch, commitMessage);
         System.out.println(result);
       }
       catch (IllegalArgumentException e)

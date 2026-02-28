@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks.ask;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.AskHandler;
+import io.github.cowwoc.cat.hooks.CatMetadata;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 import io.github.cowwoc.cat.hooks.util.ProcessRunner;
 import tools.jackson.databind.JsonNode;
@@ -55,10 +56,10 @@ public final class WarnUnsquashedApproval implements AskHandler
       return Result.withContext("Failed to determine git directory for unsquashed commit check.");
     }
 
-    // cat-base is created by /cat:work when setting up an issue worktree.
+    // cat-branch-point is created by /cat:work when setting up an issue worktree.
     // Its presence means we're on an issue branch where the orchestrator enforces squashing.
-    Path catBaseFile = gitDir.resolve("cat-base");
-    if (Files.exists(catBaseFile))
+    Path catBranchPointFile = gitDir.resolve(CatMetadata.BRANCH_POINT_FILE);
+    if (Files.exists(catBranchPointFile))
       return Result.allow();
 
     return checkMainWorkspaceCommits();

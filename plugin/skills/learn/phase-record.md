@@ -228,7 +228,7 @@ in a SINGLE commit. Never split a learn session across two separate commits or t
 
 ```bash
 # Determine commit location: worktree if active, otherwise main workspace
-if [[ -f "$(git rev-parse --git-common-dir)/worktrees/$(basename "$PWD")/cat-base" ]]; then
+if [[ -f "$(git rev-parse --git-common-dir)/worktrees/$(basename "$PWD")/cat-branch-point" ]]; then
   COMMIT_DIR="$PWD"  # Already in a worktree
   IN_WORKTREE=true
 else

@@ -49,7 +49,7 @@ public final class GetIssueCompleteOutput implements SkillOutput
    * <p>
    * Routes to getIssueCompleteBox() or getScopeCompleteBox() based on available arguments.
    *
-   * @param args the arguments from the dispatcher: [issueName, nextIssue, nextGoal, baseBranch] for
+   * @param args the arguments from the dispatcher: [issueName, nextIssue, nextGoal, targetBranch] for
    *             issue-complete, or [scopeName] for scope-complete
    * @return the formatted issue or scope complete box
    * @throws NullPointerException     if {@code args} is null
@@ -67,7 +67,7 @@ public final class GetIssueCompleteOutput implements SkillOutput
     // Determine routing based on arg count and content
     if (args.length >= 4)
     {
-      // Issue complete: issueName, nextIssue, nextGoal, baseBranch
+      // Issue complete: issueName, nextIssue, nextGoal, targetBranch
       return getIssueCompleteBox(args[0], args[1], args[2], args[3]);
     }
     if (args.length == 1)
@@ -90,7 +90,7 @@ public final class GetIssueCompleteOutput implements SkillOutput
       String issueName = "";
       String nextIssue = "";
       String nextGoal = "";
-      String baseBranch = "main";
+      String targetBranch = "main";
       String scopeComplete = "";
 
       for (int i = 0; i + 1 < args.length; i += 2)
@@ -100,7 +100,7 @@ public final class GetIssueCompleteOutput implements SkillOutput
           case "--issue-name" -> issueName = args[i + 1];
           case "--next-issue" -> nextIssue = args[i + 1];
           case "--next-goal" -> nextGoal = args[i + 1];
-          case "--base-branch" -> baseBranch = args[i + 1];
+          case "--target-branch" -> targetBranch = args[i + 1];
           case "--scope-complete" -> scopeComplete = args[i + 1];
           default ->
           {
@@ -125,7 +125,7 @@ public final class GetIssueCompleteOutput implements SkillOutput
               "unless --scope-complete is used");
             System.exit(1);
           }
-          String box = output.getIssueCompleteBox(issueName, nextIssue, nextGoal, baseBranch);
+          String box = output.getIssueCompleteBox(issueName, nextIssue, nextGoal, targetBranch);
           System.out.println(box);
         }
       }
@@ -149,24 +149,24 @@ public final class GetIssueCompleteOutput implements SkillOutput
    * @param issueName the completed issue name
    * @param nextIssue the next issue name
    * @param nextGoal the goal of the next issue
-   * @param baseBranch the base branch that was merged to
+   * @param targetBranch the target branch that was merged to
    * @return the formatted box
    * @throws NullPointerException if any parameter is null
    * @throws IllegalArgumentException if any parameter is blank
    */
-  public String getIssueCompleteBox(String issueName, String nextIssue, String nextGoal, String baseBranch)
+  public String getIssueCompleteBox(String issueName, String nextIssue, String nextGoal, String targetBranch)
   {
     requireThat(issueName, "issueName").isNotBlank();
     requireThat(nextIssue, "nextIssue").isNotBlank();
     requireThat(nextGoal, "nextGoal").isNotBlank();
-    requireThat(baseBranch, "baseBranch").isNotBlank();
+    requireThat(targetBranch, "targetBranch").isNotBlank();
 
     DisplayUtils display = scope.getDisplayUtils();
     String header = "✓ Issue Complete";
 
     List<String> content = List.of(
       "",
-      issueName + " merged to " + baseBranch + ".",
+      issueName + " merged to " + targetBranch + ".",
       "");
 
     List<String> sep = List.of(

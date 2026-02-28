@@ -163,7 +163,7 @@ public final class WriteAndCommit
     json.put("file_path", filePath);
     json.put("executable", executable);
     json.put("file_existed", fileExisted);
-    json.put("commit_sha", commitSha);
+    json.put("commit", commitSha);
     json.put("working_directory", workingDir);
     json.put("timestamp", Instant.now().toString());
 

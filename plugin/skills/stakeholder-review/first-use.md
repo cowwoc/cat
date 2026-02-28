@@ -280,15 +280,15 @@ SELECTED=$(echo "$SELECTED" | tr ' ' '
 
 ```bash
 # Get changed files from base branch to HEAD (captures all commits since worktree creation)
-# Read base branch from cat-base metadata (fail-fast if missing - stakeholder-review always runs in worktrees)
+# Read base branch from cat-branch-point metadata (fail-fast if missing - stakeholder-review always runs in worktrees)
 WORKTREE_NAME=$(basename "$PWD" 2>/dev/null)
-CAT_BASE_FILE="$(git rev-parse --git-common-dir)/worktrees/${WORKTREE_NAME}/cat-base"
-if [[ ! -f "$CAT_BASE_FILE" ]]; then
-    echo "ERROR: cat-base metadata not found: $CAT_BASE_FILE" >&2
+CAT_BRANCH_POINT_FILE="$(git rev-parse --git-common-dir)/worktrees/${WORKTREE_NAME}/cat-branch-point"
+if [[ ! -f "$CAT_BRANCH_POINT_FILE" ]]; then
+    echo "ERROR: cat-branch-point metadata not found: $CAT_BRANCH_POINT_FILE" >&2
     echo "Stakeholder review requires worktree context. Run via /cat:work." >&2
     exit 1
 fi
-BASE_BRANCH=$(cat "$CAT_BASE_FILE")
+BASE_BRANCH=$(cat "$CAT_BRANCH_POINT_FILE")
 
 CHANGED_FILES=$(git diff --name-only "${BASE_BRANCH}..HEAD" 2>/dev/null || git diff --name-only --cached)
 
@@ -426,13 +426,13 @@ fi
 # Chain these independent operations in a single Bash call to reduce round-trips.
 
 WORKTREE_NAME=$(basename "$PWD" 2>/dev/null)
-CAT_BASE_FILE="$(git rev-parse --git-common-dir)/worktrees/${WORKTREE_NAME}/cat-base"
-if [[ ! -f "$CAT_BASE_FILE" ]]; then
-    echo "ERROR: cat-base metadata not found: $CAT_BASE_FILE" >&2
+CAT_BRANCH_POINT_FILE="$(git rev-parse --git-common-dir)/worktrees/${WORKTREE_NAME}/cat-branch-point"
+if [[ ! -f "$CAT_BRANCH_POINT_FILE" ]]; then
+    echo "ERROR: cat-branch-point metadata not found: $CAT_BRANCH_POINT_FILE" >&2
     echo "Stakeholder review requires worktree context. Run via /cat:work." >&2
     exit 1
 fi
-BASE_BRANCH=$(cat "$CAT_BASE_FILE") && \
+BASE_BRANCH=$(cat "$CAT_BRANCH_POINT_FILE") && \
 CHANGED_FILES=$(git diff --name-only "${BASE_BRANCH}..HEAD" 2>/dev/null || git diff --name-only --cached) && \
 DIFF_SUMMARY=$(git diff "${BASE_BRANCH}..HEAD" -U3 2>/dev/null || git diff --cached -U3) && \
 PRIMARY_LANG=$(echo "$CHANGED_FILES" | grep -oE '\.[a-z]+$' | sort | uniq -c | sort -rn | head -1 | awk '{print $2}' | tr -d '.') && \

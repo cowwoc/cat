@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
+import io.github.cowwoc.cat.hooks.CatMetadata;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import tools.jackson.core.type.TypeReference;
@@ -235,7 +236,7 @@ public final class WorkPrepare
     Path issuePath = Path.of(found.issuePath());
 
     // Get base branch (current branch in project dir)
-    String baseBranch = GitCommands.getCurrentBranch(projectDir.toString());
+    String targetBranch = GitCommands.getCurrentBranch(projectDir.toString());
 
     // Step 4: Estimate tokens
     Path planPath = issuePath.resolve("PLAN.md");
@@ -255,7 +256,7 @@ public final class WorkPrepare
     // Steps 5-10: Create worktree and build READY result
     String issueBranch = buildIssueBranch(major, minor, found.patch(), issueName);
     return executeWithLock(input, projectDir, mapper, issueId, major, minor, issueName,
-      issuePath, baseBranch, planPath, estimatedTokens, issueBranch);
+      issuePath, targetBranch, planPath, estimatedTokens, issueBranch);
   }
 
   /**
@@ -372,7 +373,7 @@ public final class WorkPrepare
    * @param minor the minor version number
    * @param issueName the bare issue name
    * @param issuePath the path to the issue directory
-   * @param baseBranch the base branch name
+   * @param targetBranch the target branch name
    * @param planPath the path to PLAN.md
    * @param estimatedTokens the estimated token count
    * @param issueBranch the issue branch name
@@ -381,14 +382,14 @@ public final class WorkPrepare
    */
   private String executeWithLock(PrepareInput input, Path projectDir, JsonMapper mapper,
     String issueId, String major, String minor,
-    String issueName, Path issuePath, String baseBranch, Path planPath, int estimatedTokens,
+    String issueName, Path issuePath, String targetBranch, Path planPath, int estimatedTokens,
     String issueBranch) throws IOException
   {
     // Step 5: Create worktree
     Path worktreePath;
     try
     {
-      worktreePath = createWorktree(projectDir, issueBranch, baseBranch);
+      worktreePath = createWorktree(projectDir, issueBranch);
     }
     catch (IOException e)
     {
@@ -439,7 +440,7 @@ public final class WorkPrepare
     ExistingWorkChecker.CheckResult existingWork;
     try
     {
-      existingWork = ExistingWorkChecker.check(worktreePath.toString(), baseBranch);
+      existingWork = ExistingWorkChecker.check(worktreePath.toString(), targetBranch);
     }
     catch (IOException e)
     {
@@ -451,7 +452,7 @@ public final class WorkPrepare
     }
 
     // Step 8: Check base branch for suspicious commits
-    String suspiciousCommits = checkBaseBranchCommits(projectDir, baseBranch, issueName, planPath);
+    String suspiciousCommits = checkBaseBranchCommits(projectDir, targetBranch, issueName, planPath);
 
     // Step 9: Update STATE.md in worktree
     try
@@ -494,8 +495,8 @@ public final class WorkPrepare
     result.put("issue_name", issueName);
     result.put("issue_path", issuePath.toString());
     result.put("worktree_path", worktreePath.toString());
-    result.put("branch", issueBranch);
-    result.put("base_branch", baseBranch);
+    result.put("issue_branch", issueBranch);
+    result.put("target_branch", targetBranch);
     result.put("estimated_tokens", estimatedTokens);
     result.put("percent_of_threshold", (int) ((estimatedTokens / (double) TOKEN_LIMIT) * 100));
     result.put("goal", goal);
@@ -1120,15 +1121,14 @@ public final class WorkPrepare
    * Creates a git worktree for the issue branch.
    * <p>
    * If the branch already exists (stale from a previous session), it is deleted first.
-   * Also writes the {@code cat-base} file recording the base branch for merge operations.
+   * Also writes the {@code cat-branch-point} file recording the fork-point commit hash for merge operations.
    *
    * @param projectDir the project root directory
    * @param issueBranch the branch name for the issue
-   * @param baseBranch the base branch to branch from
    * @return the path to the created worktree
    * @throws IOException if worktree creation fails
    */
-  private Path createWorktree(Path projectDir, String issueBranch, String baseBranch) throws IOException
+  private Path createWorktree(Path projectDir, String issueBranch) throws IOException
   {
     Path worktreePath = projectDir.resolve(".claude").resolve("cat").resolve("worktrees").
       resolve(issueBranch);
@@ -1145,16 +1145,19 @@ public final class WorkPrepare
       // Branch does not exist - that is fine
     }
 
+    // Capture the fork-point commit hash before creating the worktree to avoid TOCTOU
+    String commitHash = GitCommands.runGit(projectDir, "rev-parse", "HEAD");
+
     // Create worktree
     GitCommands.runGit(projectDir, "worktree", "add", "-b", issueBranch, worktreePath.toString(),
       "HEAD");
 
-    // Write cat-base file
+    // Write cat-branch-point file with fork-point commit hash
     String gitCommonDir = GitCommands.runGit(projectDir, "rev-parse", "--git-common-dir");
-    Path catBaseFile = projectDir.resolve(gitCommonDir).resolve("worktrees").
-      resolve(issueBranch).resolve("cat-base");
-    Files.createDirectories(catBaseFile.getParent());
-    Files.writeString(catBaseFile, baseBranch);
+    Path catBranchPointFile = projectDir.resolve(gitCommonDir).resolve("worktrees").
+      resolve(issueBranch).resolve(CatMetadata.BRANCH_POINT_FILE);
+    Files.createDirectories(catBranchPointFile.getParent());
+    Files.writeString(catBranchPointFile, commitHash);
 
     return worktreePath;
   }
@@ -1171,12 +1174,12 @@ public final class WorkPrepare
    * Planning commits (e.g., {@code planning: add issue ...}) are filtered out as false positives.
    *
    * @param projectDir the project root directory
-   * @param baseBranch the base branch to search
+   * @param targetBranch the target branch to search
    * @param issueName the issue name to search for in commit messages
    * @param planPath the path to PLAN.md, used to extract planned files for overlap detection
    * @return a newline-separated list of suspicious commit lines, or empty string if none found
    */
-  private String checkBaseBranchCommits(Path projectDir, String baseBranch, String issueName,
+  private String checkBaseBranchCommits(Path projectDir, String targetBranch, String issueName,
     Path planPath)
   {
     List<String> planningPrefixes = List.of(
@@ -1189,7 +1192,7 @@ public final class WorkPrepare
     try
     {
       String logOutput = GitCommands.runGit(projectDir, "log", "--oneline",
-        "--grep=" + issueName, baseBranch, "-5");
+        "--grep=" + issueName, targetBranch, "-5");
 
       for (String line : logOutput.split("\n"))
       {
@@ -1236,7 +1239,7 @@ public final class WorkPrepare
       try
       {
         // Get the last 20 commits on base to check for file overlap
-        String logOutput = GitCommands.runGit(projectDir, "log", "--oneline", baseBranch, "-20");
+        String logOutput = GitCommands.runGit(projectDir, "log", "--oneline", targetBranch, "-20");
         for (String line : logOutput.split("\n"))
         {
           if (line.isBlank())
