@@ -199,6 +199,17 @@ adding a field that already exists).
 - What was removed or refactored
 - Historical context of modifications
 
+This applies to all file types, including Java Javadoc, inline comments, and Markdown documentation.
+
+**Example:**
+```java
+// Bad - describes what was done historically
+* <li>{@code {sessionDir}/skills-loaded-*} — legacy flat-file markers (cleaned up for migration)</li>
+
+// Good - describes current behavior
+* <li>{@code {sessionDir}/skills-loaded-*} — legacy flat-file markers (deleted when found)</li>
+```
+
 **Exception:** Files specifically designed for history tracking (e.g., `CHANGELOG.md`).
 
 **Rationale:** Code and documentation should describe current state and intent, not narrate their own evolution. Git
