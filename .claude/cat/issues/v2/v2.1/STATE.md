@@ -2,7 +2,7 @@
 
 - **Dependencies:** []
 - **Blocks:** []
-- **Last Updated:** 2026-02-27
+- **Last Updated:** 2026-02-28
 
 
 # v2.1 State: Pre-Demo Polish
@@ -44,6 +44,10 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-cleanup-survey-missing-worktrees
 - fix-block-unsafe-removal-cross-session
 - drop-review-threshold
+- label-mandatory-workflow-steps
+- add-rejection-state-handling
+- add-line-length-verification-reminder
+- document-skill-output-forwarding-protocol
 
 
 ## Issues Completed
