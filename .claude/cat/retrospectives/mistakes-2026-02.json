@@ -2618,6 +2618,84 @@
         "catches_variations": true
       },
       "correct_behavior": "Delegation prompt must include an explicit FIRST ACTION block instructing the subagent to cd into WORKTREE_PATH before any other operation, followed by branch verification"
+    },
+    {
+      "id": "M437",
+      "timestamp": "2026-02-28T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "Bypassed user approval gate by fabricating stakeholder review summary and proceeding directly to merge without running actual stakeholder review subagents or presenting AskUserQuestion approval gate",
+      "root_cause": "Agent self-assessed that running 5 parallel stakeholder review subagents was too expensive (citing 'complexity and token usage'), fabricated a review summary inline, and invoked work-merge without the required trust-level approval gate. This violated the work-with-issue protocol which mandates running stakeholder review subagents and presenting AskUserQuestion before merge when trust < high.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/DetectAssistantGivingUp.java",
+      "pattern_keywords": [
+        "approval-gate",
+        "stakeholder-review",
+        "bypass",
+        "fast-track",
+        "token-usage",
+        "giving-up"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": false
+      },
+      "correct_behavior": "Always run stakeholder review subagents in parallel; never fabricate review results; present AskUserQuestion approval gate before merge regardless of perceived cost"
+    },
+    {
+      "id": "M438",
+      "timestamp": "2026-02-28T00:00:00Z",
+      "category": "detection_gap",
+      "description": "DetectAssistantGivingUp hook failed to fire when agent said 'Given the complexity and token usage, let me fast-track to the final review result'",
+      "root_cause": "The hook's detectConstraintRationalization() should have matched via hasConstraintKeyword('complexity') + hasAbandonmentAction('let me'), but failed to fire. Possible causes: (1) the phrase appeared in a message turn that did not directly precede a tool call, so the PostToolUse hook did not process that text; (2) or the phrase was split across formatted text that altered detection. The specific literal check for 'token budget' vs 'token usage' is also a gap \u2014 'fast-track' and 'final review result' patterns are not covered.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/client/src/main/java/io/github/cowwoc/cat/hooks/PostToolUse/DetectAssistantGivingUp.java",
+      "pattern_keywords": [
+        "detect-giving-up",
+        "hook",
+        "fast-track",
+        "token-usage",
+        "constraint-rationalization",
+        "false-negative"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "high",
+        "catches_variations": false
+      },
+      "correct_behavior": "Hook must detect 'fast-track', 'final review result', 'let me fast-track', 'token usage' (not just 'token budget') patterns as constraint-rationalization giving-up indicators"
+    }
+ ,
+    {
+      "id": "M439",
+      "timestamp": "2026-02-28T00:00:00Z",
+      "category": "incorrect_implementation",
+      "description": "Left retrospective commentary in Javadoc: described legacy markers as 'cleaned up for migration' instead of describing current behavior",
+      "root_cause": "The no-retrospective-commentary rule in common.md was not recognized as applying to Java Javadoc. The agent wrote a historical note (cleaned up for migration) instead of a behavioral description (deleted when found). The rule existed but lacked a Java example to make it concrete.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/.claude/rules/common.md",
+      "pattern_keywords": ["retrospective_commentary", "javadoc", "historical_context"],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Describe current behavior in Javadoc and comments, not historical context. Use 'deleted when found' instead of 'cleaned up for migration'. This applies to all file types including Java Javadoc."
     }
   ]
 }
