@@ -823,8 +823,9 @@ Use appropriate template format:
 
 Use appropriate template (Feature, Bugfix, or Refactor) from issue-plan.md reference.
 
-**CRITICAL:** Follow template guidance to separate Execution Steps (actions only) from Success Criteria (measurable
-outcomes). Do NOT include expected values like "score = 1.0" in Execution Steps as this primes subagents to fabricate
+**CRITICAL:** Follow template guidance to separate Execution Waves/Steps (actions only) from Success Criteria
+(measurable outcomes). Do NOT include expected values like "score = 1.0" in Execution sections as this primes subagents
+to fabricate
 results.
 
 **PLAN.md Comprehensiveness:** The PLAN.md must be comprehensive enough for a haiku-level
@@ -858,6 +859,36 @@ Apply the following depth to PLAN.md content based on `$EFFORT`:
    ..."
 
 This ensures batch tasks leverage parallel execution rather than sequential processing.
+
+**Execution Waves for Parallel Execution:** When the issue has clearly independent work that can run simultaneously,
+use `## Execution Waves` with `### Wave N` sections to enable parallel subagent spawning. Use sparingly — only when
+items genuinely don't depend on each other and won't modify the same files.
+
+Rules for execution waves:
+- Create `## Execution Waves` section (replaces `## Execution Steps`)
+- Each `### Wave N` subsection contains bullet items for parallel execution
+- Waves execute sequentially (Wave 1 completes before Wave 2 starts)
+- All items within a wave run in parallel
+- Waves must not modify the same files (to avoid merge conflicts)
+- The last wave is responsible for updating STATE.md
+
+Example valid wave structure (independent modules):
+
+```markdown
+## Execution Waves
+
+### Wave 1
+- Implement parser module
+- Add parser tests
+
+### Wave 2
+- Implement formatter module
+- Add formatter tests
+- Run full test suite
+```
+
+Do NOT use multiple waves if items share files or if the sequential dependency is unclear. In such cases, use a single
+`## Execution Waves` / `### Wave 1` section or revert to `## Execution Steps` for sequential execution.
 
 **If RESEARCH_FINDINGS exists:**
 
