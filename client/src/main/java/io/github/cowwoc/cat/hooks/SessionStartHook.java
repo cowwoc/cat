@@ -11,8 +11,9 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import io.github.cowwoc.cat.hooks.session.CheckRetrospectiveDue;
 import io.github.cowwoc.cat.hooks.session.CheckUpdateAvailable;
 import io.github.cowwoc.cat.hooks.session.CheckDataMigration;
-import io.github.cowwoc.cat.hooks.session.ClearSkillMarkers;
+import io.github.cowwoc.cat.hooks.session.ClearSkillMarker;
 import io.github.cowwoc.cat.hooks.session.EchoSessionId;
+import io.github.cowwoc.cat.hooks.session.InjectCatAgentId;
 import io.github.cowwoc.cat.hooks.session.InjectCatRules;
 import io.github.cowwoc.cat.hooks.session.InjectCriticalThinking;
 import io.github.cowwoc.cat.hooks.session.InjectEnv;
@@ -34,6 +35,7 @@ import java.util.List;
  */
 public final class SessionStartHook implements HookHandler
 {
+  private final JvmScope scope;
   private final List<SessionStartHandler> handlers;
 
   /**
@@ -44,7 +46,7 @@ public final class SessionStartHook implements HookHandler
    */
   public SessionStartHook(JvmScope scope)
   {
-    this(List.of(
+    this(scope, List.of(
       new CheckDataMigration(scope),
       new CheckUpdateAvailable(scope),
       new WarnUnknownTerminal(scope),
@@ -53,7 +55,6 @@ public final class SessionStartHook implements HookHandler
       new InjectSessionInstructions(),
       new InjectCatRules(scope),
       new InjectSkillListing(scope),
-      new ClearSkillMarkers(scope),
       new InjectCriticalThinking(),
       new InjectEnv(scope),
       new RestoreWorktreeOnResume(scope)));
@@ -62,12 +63,15 @@ public final class SessionStartHook implements HookHandler
   /**
    * Creates a new SessionStartHook with custom handlers (for testing).
    *
+   * @param scope    the JVM scope providing environment configuration
    * @param handlers the handlers to run
-   * @throws NullPointerException if {@code handlers} is null
+   * @throws NullPointerException if {@code scope} or {@code handlers} are null
    */
-  public SessionStartHook(List<SessionStartHandler> handlers)
+  public SessionStartHook(JvmScope scope, List<SessionStartHandler> handlers)
   {
+    requireThat(scope, "scope").isNotNull();
     requireThat(handlers, "handlers").isNotNull();
+    this.scope = scope;
     this.handlers = handlers;
   }
 
@@ -98,6 +102,20 @@ public final class SessionStartHook implements HookHandler
     StringBuilder combinedContext = new StringBuilder(256);
     List<String> errors = new ArrayList<>();
     List<String> warnings = new ArrayList<>();
+
+    String sessionId = input.getSessionId();
+    if (sessionId.isBlank())
+    {
+      throw new IllegalArgumentException(
+        "session_id is blank. SessionStart hook requires a valid session ID.");
+    }
+
+    String clearWarning = new ClearSkillMarker(scope).clearMainAgentMarker(sessionId);
+    if (!clearWarning.isEmpty())
+      warnings.add(clearWarning);
+
+    String catAgentIdContext = InjectCatAgentId.getMainAgentContext(sessionId);
+    combinedContext.append(catAgentIdContext);
 
     for (SessionStartHandler handler : handlers)
     {

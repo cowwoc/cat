@@ -4,4 +4,4 @@ model: haiku
 user-invocable: false
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" collect-results "${CLAUDE_SESSION_ID}" "${CLAUDE_PROJECT_DIR}"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" collect-results "${CLAUDE_PROJECT_DIR}" "$0"`

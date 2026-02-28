@@ -36,7 +36,7 @@ public class SkillLoaderTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      new SkillLoader(scope, null, "session123", "/project");
+      new SkillLoader(scope, null, "/project", List.of("session123"));
     }
     finally
     {
@@ -55,7 +55,7 @@ public class SkillLoaderTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      new SkillLoader(scope, "", "session123", "/project");
+      new SkillLoader(scope, "", "/project", List.of("session123"));
     }
     finally
     {
@@ -64,36 +64,55 @@ public class SkillLoaderTest
   }
 
   /**
-   * Verifies that constructor rejects null CAT agent ID.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test(expectedExceptions = NullPointerException.class)
-  public void constructorRejectsNullCatAgentId() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      new SkillLoader(scope, "/plugin", null, "/project");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that constructor rejects empty CAT agent ID.
+   * Verifies that constructor rejects empty skill args (no agent ID provided).
    *
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = IllegalArgumentException.class)
-  public void constructorRejectsEmptyCatAgentId() throws IOException
+  public void constructorRejectsEmptySkillArgs() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      new SkillLoader(scope, "/plugin", "", "/project");
+      new SkillLoader(scope, "/plugin", "/project", List.of());
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that constructor rejects blank agent ID (blank first skill arg).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void constructorRejectsBlankAgentId() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      new SkillLoader(scope, "/plugin", "/project", List.of(""));
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that constructor rejects a whitespace-only agent ID.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void constructorRejectsWhitespaceOnlyAgentId() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      new SkillLoader(scope, "/plugin", "/project", List.of("   "));
     }
     finally
     {
@@ -112,7 +131,7 @@ public class SkillLoaderTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      new SkillLoader(scope, "/plugin", "session123", null);
+      new SkillLoader(scope, "/plugin", null, List.of("session123"));
     }
     finally
     {
@@ -131,7 +150,7 @@ public class SkillLoaderTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      new SkillLoader(scope, "/plugin", "session123", "");
+      new SkillLoader(scope, "/plugin", "", List.of("session123"));
     }
     finally
     {
@@ -156,8 +175,8 @@ public class SkillLoaderTest
 Path: ${CLAUDE_PLUGIN_ROOT}/file.txt
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -187,11 +206,12 @@ Path: ${CLAUDE_PLUGIN_ROOT}/file.txt
 Session: ${CLAUDE_SESSION_ID}
 """);
 
-      String uniqueCatAgentId = "agent-" + System.nanoTime();
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), uniqueCatAgentId, "/project");
+      String uniqueAgentId = "agent-" + System.nanoTime();
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of(uniqueAgentId));
       String result = loader.load("test-skill");
 
-      // CLAUDE_SESSION_ID is resolved from scope.getClaudeSessionId(), not from catAgentId
+      // CLAUDE_SESSION_ID is resolved from scope.getClaudeSessionId(), not from agentId
       requireThat(result, "result").
         contains("Session: " + scope.getClaudeSessionId()).
         doesNotContain("${CLAUDE_SESSION_ID}");
@@ -219,8 +239,8 @@ Session: ${CLAUDE_SESSION_ID}
 Project: ${CLAUDE_PROJECT_DIR}/data
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/workspace");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/workspace",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -250,8 +270,8 @@ Project: ${CLAUDE_PROJECT_DIR}/data
 Full skill content here
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").contains("Full skill content here");
@@ -279,8 +299,8 @@ Full skill content here
 Full skill content
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
 
       String firstResult = loader.load("test-skill");
       requireThat(firstResult, "firstResult").contains("Full skill content");
@@ -311,8 +331,8 @@ Full skill content
       Path skillDir = tempPluginRoot.resolve("skills/empty-skill");
       Files.createDirectories(skillDir);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("empty-skill");
 
       requireThat(result, "result").isEmpty();
@@ -334,8 +354,8 @@ Full skill content
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       loader.load(null);
     }
     finally
@@ -355,8 +375,8 @@ Full skill content
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       loader.load("");
     }
     finally
@@ -383,8 +403,8 @@ Path: ${CLAUDE_PLUGIN_ROOT}/contains_${CLAUDE_SESSION_ID}
 Project: ${CLAUDE_PROJECT_DIR}/session_${CLAUDE_SESSION_ID}
 """);
 
-      String uniqueCatAgentId = "agent-" + System.nanoTime();
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), uniqueCatAgentId, "/workspace");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/workspace",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -418,8 +438,8 @@ Project: ${CLAUDE_PROJECT_DIR}/session_${CLAUDE_SESSION_ID}
 Value: ${UNDEFINED_VAR}
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").contains("Value: ${UNDEFINED_VAR}");
@@ -448,8 +468,8 @@ Root: ${CLAUDE_PLUGIN_ROOT}
 Session: ${CLAUDE_SESSION_ID}
 """);
 
-      String uniqueCatAgentId = "agent-" + System.nanoTime();
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), uniqueCatAgentId, "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -487,8 +507,8 @@ Context file content
 # Main Content
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -526,8 +546,8 @@ Root: ${CLAUDE_PLUGIN_ROOT}
 # Main
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -558,8 +578,8 @@ Root: ${CLAUDE_PLUGIN_ROOT}
 # Main
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       loader.load("test-skill");
     }
     finally
@@ -589,8 +609,8 @@ Root: ${CLAUDE_PLUGIN_ROOT}
 # Main
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       try
       {
         loader.load("test-skill");
@@ -626,8 +646,8 @@ Email: user@example.com
 # Main
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -670,8 +690,8 @@ Content B
 @concepts/file-a.md
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
 
       try
       {
@@ -721,8 +741,8 @@ Conclusion section
 # Footer
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -773,8 +793,8 @@ Plain text content
 @config/notes.txt
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -814,8 +834,8 @@ Content with spaces in filename
 @concepts/my notes.md
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -852,8 +872,8 @@ This should not be included
 See @concepts/note.md for details
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -888,8 +908,8 @@ See @concepts/note.md for details
 Next line
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -924,8 +944,8 @@ Other: ${SOME_UNKNOWN}
 Root: ${CLAUDE_PLUGIN_ROOT}
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -966,8 +986,8 @@ git checkout ${BASE}
 # Main
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -999,8 +1019,8 @@ git checkout ${BASE}
         "---\n" +
         "# Skill Content\n");
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1031,8 +1051,8 @@ git checkout ${BASE}
 Regular content here
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1063,8 +1083,8 @@ Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/nonexistent-launcher"`
 Done
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1095,8 +1115,8 @@ Root: ${CLAUDE_PLUGIN_ROOT}
 Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1134,8 +1154,8 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
         Done
         """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1175,8 +1195,8 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
         Done
         """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       loader.load("test-skill");
     }
     finally
@@ -1210,8 +1230,8 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
         Done
         """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1250,8 +1270,8 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
         Done
         """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1290,8 +1310,8 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
         Done
         """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1341,8 +1361,8 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
 
       // Note: concepts/some-file.md does NOT exist.
       // If @path inside code block is expanded, this would throw IOException.
-      String uniqueSessionId = "code-block-test-" + System.nanoTime();
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), uniqueSessionId, "/workspace");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/workspace",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       // The @path inside the code block should be preserved as-is
@@ -1432,8 +1452,8 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
         Done
         """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       try
       {
         loader.load("test-skill");
@@ -1476,8 +1496,8 @@ Output content here.
 </output>
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1524,8 +1544,8 @@ Dynamic output.
 </output>
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
 
       String firstResult = loader.load("test-skill");
       requireThat(firstResult, "firstResult").
@@ -1575,8 +1595,8 @@ user-invocable: false
 Skill body without output.
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1615,8 +1635,8 @@ Output content.
 </output>
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1659,8 +1679,8 @@ Output content.
         Done
         """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1701,8 +1721,8 @@ Dynamic output with attribute.
 </output>
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
 
       String result = loader.load("test-skill");
       requireThat(result, "result").
@@ -1746,8 +1766,8 @@ Dynamic output with multiple attributes.
 </output>
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
 
       String result = loader.load("test-skill");
       requireThat(result, "result").
@@ -1791,8 +1811,8 @@ Dynamic output with attribute.
 </output>
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
 
       String firstResult = loader.load("test-skill");
       requireThat(firstResult, "firstResult").
@@ -1820,6 +1840,8 @@ Dynamic output with attribute.
 
   /**
    * Verifies that positional arguments are resolved from the args array.
+   * <p>
+   * $0 is the agent ID; skill-specific args start at $1.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -1832,16 +1854,16 @@ Dynamic output with attribute.
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
       Files.writeString(companionDir.resolve("first-use.md"),
-        "Count: $0, Label: $1\n");
+        "Count: $1, Label: $2\n");
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project", List.of("42", "hello"));
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime(), "42", "hello"));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
         contains("Count: 42, Label: hello").
-        doesNotContain("$0").
-        doesNotContain("$1");
+        doesNotContain("$1").
+        doesNotContain("$2");
     }
     finally
     {
@@ -1851,6 +1873,8 @@ Dynamic output with attribute.
 
   /**
    * Verifies that missing positional args are passed through as literals.
+   * <p>
+   * $0 is the agent ID. When only two args are provided (agentId + one skill arg), $2 is unresolved.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -1863,15 +1887,15 @@ Dynamic output with attribute.
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
       Files.writeString(companionDir.resolve("first-use.md"),
-        "First: $0, Second: $1\n");
+        "First: $1, Second: $2\n");
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project", List.of("value1"));
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime(), "value1"));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
         contains("First: value1").
-        contains("Second: $1");
+        contains("Second: $2");
     }
     finally
     {
@@ -1881,6 +1905,8 @@ Dynamic output with attribute.
 
   /**
    * Verifies that extra positional args beyond referenced indices are ignored.
+   * <p>
+   * $0 is the agent ID; $1 is the first skill-specific arg. Args at $2 and beyond are not referenced.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -1893,10 +1919,10 @@ Dynamic output with attribute.
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
       Files.writeString(companionDir.resolve("first-use.md"),
-        "Name: $0\n");
+        "Name: $1\n");
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project", List.of("Alice", "Bob", "Charlie"));
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime(), "Alice", "Bob", "Charlie"));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1911,12 +1937,14 @@ Dynamic output with attribute.
   }
 
   /**
-   * Verifies that empty args leave positional references unresolved (passed through as literals).
+   * Verifies that unreferenced positional indices are passed through as literals.
+   * <p>
+   * When only the agent ID arg ($0) is provided, references to $1 and beyond remain unresolved.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void emptyArgsLeavePositionalRefsUnresolved() throws IOException
+  public void missingSkillArgLeavesPositionalRefUnresolved() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
@@ -1924,13 +1952,13 @@ Dynamic output with attribute.
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
       Files.writeString(companionDir.resolve("first-use.md"),
-        "Count: $0\n");
+        "Count: $1\n");
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
-      requireThat(result, "result").contains("Count: $0");
+      requireThat(result, "result").contains("Count: $1");
     }
     finally
     {
@@ -1939,10 +1967,9 @@ Dynamic output with attribute.
   }
 
   /**
-   * Verifies that whitespace-only args are preserved as argument values.
+   * Verifies that whitespace-only skill args are preserved as argument values.
    * <p>
-   * With the new variadic constructor, passing "   " (whitespace-only string) as a single
-   * argument means we have one argument with that value, so $0 is replaced with that whitespace.
+   * $0 is the agent ID (non-blank); $1 is the skill arg which may be whitespace-only.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -1955,13 +1982,13 @@ Dynamic output with attribute.
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
       Files.writeString(companionDir.resolve("first-use.md"),
-        "Count: $0\n");
+        "Count: $1\n");
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project", List.of("   "));
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime(), "   "));
       String result = loader.load("test-skill");
 
-      // The whitespace-only arg is preserved as the value of $0
+      // The whitespace-only skill arg is preserved as the value of $1
       requireThat(result, "result").contains("Count:    ");
     }
     finally
@@ -2003,8 +2030,8 @@ Read the `<output skill="test-skill">` tag below and echo it verbatim.
 </output>
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       // The instructions must include the text about reading the <output> tag
@@ -2047,8 +2074,8 @@ status data here
 </output>
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       // Instructions must contain the backtick reference and NOT be split at it
@@ -2094,8 +2121,8 @@ some `code` here
 </output>
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -2148,8 +2175,8 @@ actual preprocessor content
 </output>
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       // The real tag (outside code block) should be used; instructions should include code block content
@@ -2201,8 +2228,8 @@ Example:
 More documentation text.
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       // No real output tag — content should be returned as non-tagged skill content (no wrapping).
@@ -2259,8 +2286,8 @@ status output here
 </output>
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("status");
 
       // All instruction text (including table) must be in the instructions block
@@ -2298,8 +2325,8 @@ status output here
 Prefixed skill content
 """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       // Load with prefixed name (as SubagentStartHook lists it)
       String result = loader.load("cat:test-skill");
 
@@ -2345,8 +2372,8 @@ Prefixed skill content
         Done
         """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       // The argument "/some/path" must arrive without surrounding quotes
@@ -2389,8 +2416,8 @@ Prefixed skill content
         Done
         """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       // The path with spaces must arrive as a single argument
@@ -2431,8 +2458,8 @@ Prefixed skill content
         Done
         """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       // The path with single-quoted spaces must arrive as a single argument
@@ -2473,8 +2500,8 @@ Prefixed skill content
         Done
         """);
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
       String result = loader.load("test-skill");
 
       // All arguments must be correctly parsed: --verbose, /home/user/workspace, --mode, read-write
@@ -2489,8 +2516,8 @@ Prefixed skill content
   /**
    * Verifies that positional arguments with spaces are preserved when passed as separate array elements.
    * <p>
-   * This test verifies that the new variadic constructor correctly handles arguments containing
-   * spaces (e.g., "hello world", "foo bar") without splitting them on whitespace.
+   * $0 is the agent ID; skill-specific args with spaces start at $1. The constructor must preserve
+   * arguments containing spaces (e.g., "hello world", "foo bar") without splitting on whitespace.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -2503,16 +2530,130 @@ Prefixed skill content
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
       Files.writeString(companionDir.resolve("first-use.md"),
-        "First: $0, Second: $1\n");
+        "First: $1, Second: $2\n");
 
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "/project", List.of("hello world", "foo bar"));
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime(), "hello world", "foo bar"));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
         contains("First: hello world, Second: foo bar").
-        doesNotContain("$0").
-        doesNotContain("$1");
+        doesNotContain("$1").
+        doesNotContain("$2");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that constructor rejects agentId containing path traversal sequences (../).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void constructorRejectsAgentIdWithPathTraversal() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      new SkillLoader(scope, "/plugin", "/project", List.of("../../../etc/passwd"));
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that constructor rejects agentId starting with absolute path (/).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void constructorRejectsAgentIdWithAbsolutePath() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      new SkillLoader(scope, "/plugin", "/project", List.of("/etc/passwd"));
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that two different agents with the same plugin/project dirs maintain independent marker files.
+   * <p>
+   * This test creates two SkillLoader instances with different agentIds but same plugin/project directories.
+   * It loads the same skill on both agents, then verifies:
+   * - Both agents see full content on first load
+   * - Marker files are stored at physically different paths
+   * - Each agent's marker file is independent
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void twoAgentsWithSameDirectoriesMaintainIndependentMarkers() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      Files.writeString(companionDir.resolve("first-use.md"), """
+Full skill content for agent test
+""");
+
+      String agentId1 = "agent-1-" + System.nanoTime();
+      String agentId2 = "agent-2-" + System.nanoTime();
+
+      // Create two loaders with different agent IDs but same plugin/project dirs
+      SkillLoader loader1 = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of(agentId1));
+      SkillLoader loader2 = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of(agentId2));
+
+      // Load the skill on both agents
+      String result1First = loader1.load("test-skill");
+      String result2First = loader2.load("test-skill");
+
+      // Both should see full content on first load
+      requireThat(result1First, "result1First").contains("Full skill content for agent test");
+      requireThat(result2First, "result2First").contains("Full skill content for agent test");
+
+      // Create a second loader instance for agent1 (simulating a second skill invocation in the same
+      // session)
+      SkillLoader loader1Second = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of(agentId1));
+
+      // Agent1 should see the reference (cached), not full content
+      String result1Second = loader1Second.load("test-skill");
+      requireThat(result1Second, "result1Second").
+        contains("skill instructions were already loaded").
+        doesNotContain("Full skill content for agent test");
+
+      // Create a second loader for agent2 (simulating a second skill invocation)
+      SkillLoader loader2Second = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of(agentId2));
+
+      // Agent2 should also see the reference (independent cache), not full content
+      String result2Second = loader2Second.load("test-skill");
+      requireThat(result2Second, "result2Second").
+        contains("skill instructions were already loaded").
+        doesNotContain("Full skill content for agent test");
+
+      // Verify that marker files are at different paths for different agents
+      Path configDir = scope.getClaudeConfigDir();
+      Path marker1 = configDir.resolve(SkillLoader.PROJECTS_DIR + "/" + agentId1 + "/skills-loaded");
+      Path marker2 = configDir.resolve(SkillLoader.PROJECTS_DIR + "/" + agentId2 + "/skills-loaded");
+
+      requireThat(Files.exists(marker1), "marker1Exists").isTrue();
+      requireThat(Files.exists(marker2), "marker2Exists").isTrue();
+      requireThat(marker1.toString(), "marker1Path").isNotEqualTo(marker2.toString());
     }
     finally
     {

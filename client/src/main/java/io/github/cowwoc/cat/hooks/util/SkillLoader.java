@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 /**
  * Loads skill content from a plugin's skill directory structure.
  * <p>
@@ -61,8 +62,9 @@ import org.slf4j.LoggerFactory;
  * </ul>
  * <p>
  * <b>Positional arguments:</b> Skills reference pre-tokenized arguments as {@code $0}, {@code $1},
- * etc. Arguments with spaces are preserved in the substitution. Use the {@code argument-hint} frontmatter
- * field to document expected arguments.
+ * etc. The first positional argument ({@code $0}) is the agent ID, which identifies the agent instance
+ * and is used to determine the per-agent marker file path. Arguments with spaces are preserved in the
+ * substitution. Use the {@code argument-hint} frontmatter field to document expected arguments.
  * <p>
  * Undefined variables are passed through unchanged, matching Claude Code's native behavior.
  * <p>
@@ -71,10 +73,19 @@ import org.slf4j.LoggerFactory;
  * lookup directory, instantiates the class as a {@link SkillOutput} and calls
  * {@link SkillOutput#getOutput(String[])} to replace the directive with the output.
  *
- * @see io.github.cowwoc.cat.hooks.session.ClearSkillMarkers
+ * @see io.github.cowwoc.cat.hooks.session.ClearSkillMarker
  */
 public final class SkillLoader
 {
+  /**
+   * Standard directory for storing per-session marker files and related agent state.
+   */
+  public static final String PROJECTS_DIR = "projects/-workspace";
+  /**
+   * Standard subdirectory within a session directory for storing per-subagent marker files.
+   */
+  public static final String SUBAGENTS_DIR = "subagents";
+
   private static final Pattern VAR_PATTERN = Pattern.compile("\\$\\{([^}]+)}");
   private static final Pattern PATH_PATTERN = Pattern.compile("^@(.+/.+)$", Pattern.MULTILINE);
   private static final Pattern PREPROCESSOR_DIRECTIVE_PATTERN = Pattern.compile(
@@ -121,53 +132,50 @@ public final class SkillLoader
   private final Set<String> loadedSkills;
 
   /**
-   * Creates a new SkillLoader instance with no skill arguments.
-   *
-   * @param scope the JVM scope for accessing shared services
-   * @param pluginRoot the Claude plugin root directory
-   * @param catAgentId the CAT agent identifier (unique per agent instance within the session)
-   * @param projectDir the Claude project directory
-   * @throws NullPointerException if {@code scope}, {@code pluginRoot}, {@code catAgentId}, or {@code projectDir}
-   *   are null
-   * @throws IllegalArgumentException if {@code pluginRoot}, {@code catAgentId}, or {@code projectDir} are blank
-   * @throws IOException if the agent marker file cannot be read
-   */
-  public SkillLoader(JvmScope scope, String pluginRoot, String catAgentId, String projectDir) throws IOException
-  {
-    this(scope, pluginRoot, catAgentId, projectDir, List.of());
-  }
-
-  /**
    * Creates a new SkillLoader instance.
+   * <p>
+   * The CAT agent ID is derived from the first positional skill argument ({@code skillArgs.get(0)}). It must
+   * be present and non-blank; the constructor fails fast if it is absent or blank.
    *
    * @param scope the JVM scope for accessing shared services
    * @param pluginRoot the Claude plugin root directory
-   * @param catAgentId the CAT agent identifier (unique per agent instance within the session)
    * @param projectDir the Claude project directory
-   * @param skillArgs pre-tokenized positional arguments to map to named parameters
-   * @throws NullPointerException if {@code scope}, {@code pluginRoot}, {@code catAgentId},
-   *   {@code projectDir}, or {@code skillArgs} are null
-   * @throws IllegalArgumentException if {@code pluginRoot}, {@code catAgentId}, or {@code projectDir} are blank
+   * @param skillArgs pre-tokenized positional arguments; the first element ({@code $0}) is the CAT agent ID
+   * @throws NullPointerException if {@code scope}, {@code pluginRoot}, {@code projectDir}, or
+   *   {@code skillArgs} are null
+   * @throws IllegalArgumentException if {@code pluginRoot} or {@code projectDir} are blank, or if
+   *   {@code skillArgs} is empty or the first element (catAgentId) is blank
    * @throws IOException if the agent marker file cannot be read
    */
-  public SkillLoader(JvmScope scope, String pluginRoot, String catAgentId, String projectDir,
+  public SkillLoader(JvmScope scope, String pluginRoot, String projectDir,
     List<String> skillArgs) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(pluginRoot, "pluginRoot").isNotBlank();
-    requireThat(catAgentId, "catAgentId").isNotBlank();
     requireThat(projectDir, "projectDir").isNotBlank();
     requireThat(skillArgs, "skillArgs").isNotNull();
+
+    if (skillArgs.isEmpty() || skillArgs.get(0).isBlank())
+    {
+      throw new IllegalArgumentException(
+        "catAgentId is required as the first skill argument ($0) but was not provided. " +
+          "Main agents must pass their session ID (${CLAUDE_SESSION_ID}); " +
+          "subagents must pass the value injected by SubagentStartHook " +
+          "(e.g., {sessionId}/subagents/{agent_id}).");
+    }
+    String catAgentId = skillArgs.get(0);
 
     this.scope = scope;
     this.pluginRoot = Paths.get(pluginRoot);
     this.projectDir = projectDir;
     this.argTokens = List.copyOf(skillArgs);
 
-    String sessionId = scope.getClaudeSessionId();
-    Path sessionDir = scope.getClaudeConfigDir().resolve("projects/-workspace/" + sessionId);
-    Files.createDirectories(sessionDir);
-    this.agentMarkerFile = sessionDir.resolve("skills-loaded-" + catAgentId);
+    Path baseDir = scope.getClaudeConfigDir().resolve(PROJECTS_DIR).toAbsolutePath().normalize();
+    Path agentDir = resolveAndValidateContainment(baseDir, catAgentId,
+      "catAgentId");
+    this.agentMarkerFile = agentDir.resolve("skills-loaded");
+
+    Files.createDirectories(agentMarkerFile.getParent());
     this.loadedSkills = new HashSet<>();
 
     if (Files.exists(agentMarkerFile))
@@ -756,32 +764,61 @@ public final class SkillLoader
   }
 
   /**
+   * Resolves a relative path against the projects base directory and validates that the result does not escape
+   * the base directory via path traversal.
+   *
+   * @param baseDir the base directory (must already be absolute and normalized)
+   * @param relativePath the relative path to resolve
+   * @param parameterDescription a description of the parameter(s) for use in error messages
+   * @return the resolved and normalized path
+   * @throws NullPointerException if any argument is null
+   * @throws IllegalArgumentException if the resolved path escapes {@code baseDir}
+   */
+  public static Path resolveAndValidateContainment(Path baseDir, String relativePath,
+    String parameterDescription)
+  {
+    requireThat(baseDir, "baseDir").isNotNull();
+    requireThat(relativePath, "relativePath").isNotNull();
+    requireThat(parameterDescription, "parameterDescription").isNotNull();
+
+    Path resolved = baseDir.resolve(relativePath).toAbsolutePath().normalize();
+    if (!resolved.startsWith(baseDir))
+    {
+      throw new IllegalArgumentException(parameterDescription + " contains path traversal: '" +
+        relativePath + "'. Expected path under: " + baseDir);
+    }
+    return resolved;
+  }
+
+  /**
    * Main method for command-line execution.
    * <p>
    * Provides CLI entry point to replace the original load-skill script.
    * Invoked as: java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.util.SkillLoader
-   * plugin-root skill-name cat-agent-id project-dir [skill-args...]
+   * plugin-root skill-name project-dir [skill-args...]
+   * <p>
+   * The agent ID is passed as the first skill argument ({@code skill-args[0]}, i.e., {@code $0}).
+   * It is required; the constructor fails fast if absent or blank.
    *
-   * @param args command-line arguments: plugin-root skill-name cat-agent-id project-dir [skill-args...]
+   * @param args command-line arguments: plugin-root skill-name project-dir [skill-args...]
    */
   public static void main(String[] args)
   {
-    if (args.length < 4)
+    if (args.length < 3)
     {
       System.err.println(
-        "Usage: load-skill <plugin-root> <skill-name> <cat-agent-id> <project-dir> [skill-args...]");
+        "Usage: load-skill <plugin-root> <skill-name> <project-dir> [skill-args...]");
       System.exit(1);
     }
 
     String pluginRoot = args[0];
     String skillName = args[1];
-    String catAgentId = args[2];
-    String projectDir = args[3];
-    List<String> skillArgs = List.of(args).subList(4, args.length);
+    String projectDir = args[2];
+    List<String> skillArgs = List.of(args).subList(3, args.length);
 
     try (JvmScope scope = new MainJvmScope())
     {
-      SkillLoader loader = new SkillLoader(scope, pluginRoot, catAgentId, projectDir, skillArgs);
+      SkillLoader loader = new SkillLoader(scope, pluginRoot, projectDir, skillArgs);
       String result = loader.load(skillName);
       System.out.print(result);
     }

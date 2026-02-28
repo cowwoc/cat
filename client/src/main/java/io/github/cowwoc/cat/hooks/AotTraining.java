@@ -25,6 +25,8 @@ import io.github.cowwoc.cat.hooks.util.SessionAnalyzer;
 import io.github.cowwoc.cat.hooks.util.SkillLoader;
 import io.github.cowwoc.cat.hooks.util.StatusAlignmentValidator;
 import io.github.cowwoc.cat.hooks.util.WorkPrepare;
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import tools.jackson.databind.json.JsonMapper;
@@ -75,8 +77,15 @@ public final class AotTraining
       new PreWriteHook(scope).run(input, output);
       new PreIssueHook(scope).run(input, output);
       new SessionEndHook(scope).run(input, output);
-      new SessionStartHook(scope).run(input, output);
-      new SubagentStartHook(scope).run(input, output);
+
+      HookInput sessionInput = HookInput.readFrom(mapper, new ByteArrayInputStream(
+        "{\"session_id\": \"aot-training-session\"}".getBytes(StandardCharsets.UTF_8)));
+      new SessionStartHook(scope).run(sessionInput, output);
+
+      HookInput subagentInput = HookInput.readFrom(mapper, new ByteArrayInputStream(
+        "{\"session_id\": \"aot-training-session\", \"agent_id\": \"aot-training-agent\"}".getBytes(
+          StandardCharsets.UTF_8)));
+      new SubagentStartHook(scope).run(subagentInput, output);
 
       // Skill handlers - construct to load class graphs.
       // Calling getOutput() would read the filesystem, which is unnecessary for training.
