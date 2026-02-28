@@ -14,7 +14,7 @@ Every subagent prompt MUST include these items based on past mistakes:
 ```
 STATE.md UPDATE (required in SAME commit as implementation):
 - Path: .claude/cat/issues/v{major}/v{major}.{minor}/{issue-name}/STATE.md
-- Set: Status: completed
+- Set: Status: closed
 - Set: Progress: 100%
 - Set: Resolution: implemented (MANDATORY - not optional)
 - Set: Completed: {YYYY-MM-DD HH:MM}
