@@ -114,7 +114,7 @@ Tool returns JSON:
   "duration_seconds": 2,
   "file_path": "path/to/file.txt",
   "executable": false,
-  "commit_sha": "abc123def456",
+  "commit": "abc123def456",
   "working_directory": "/path/to/project",
   "timestamp": "2025-11-08T00:15:30-05:00"
 }
@@ -154,7 +154,7 @@ MSG
 ```json
 {
   "status": "success",
-  "commit_sha": "3f8a920",
+  "commit": "3f8a920",
   "duration_seconds": 2,
   ...
 }

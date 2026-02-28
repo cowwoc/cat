@@ -10,10 +10,6 @@ See LICENSE.md in the project root for license terms.
 This document describes the preparation phase algorithm for `/cat:work`. The actual implementation
 is a deterministic Java launcher that performs all steps without LLM decision-making.
 
-Historical context: This was originally a subagent skill that spawned an LLM to execute these steps.
-The skill has been replaced with the `work-prepare` Java launcher for performance (4s vs 50s), but
-this documentation is retained as algorithm reference.
-
 ## Input
 
 The main agent provides:
@@ -40,8 +36,8 @@ Return JSON on success:
   "issue_name": "issue-name",
   "issue_path": "/workspace/.claude/cat/issues/v2/v2.1/issue-name",
   "worktree_path": "/workspace/.claude/cat/worktrees/2.1-issue-name",
-  "branch": "2.1-issue-name",
-  "base_branch": "v2.1",
+  "issue_branch": "2.1-issue-name",
+  "target_branch": "v2.1",
   "estimated_tokens": 45000,
   "percent_of_threshold": 56,
   "goal": "Brief goal from PLAN.md",
@@ -269,8 +265,9 @@ ISSUE_BRANCH="${MAJOR}.${MINOR}-${ISSUE_NAME}"
 BASE_BRANCH=$(git branch --show-current)
 WORKTREE_PATH="${CLAUDE_PROJECT_DIR}/.claude/cat/worktrees/${ISSUE_BRANCH}"
 
+FORK_COMMIT=$(git rev-parse HEAD)
 git worktree add -b "${ISSUE_BRANCH}" "${WORKTREE_PATH}" HEAD
-echo "${BASE_BRANCH}" > "$(git rev-parse --git-common-dir)/worktrees/${ISSUE_BRANCH}/cat-base"
+printf '%s' "$FORK_COMMIT" > "$(git rev-parse --git-common-dir)/worktrees/${ISSUE_BRANCH}/cat-branch-point"
 ```
 
 ### Step 5: Verify Worktree Branch
@@ -300,7 +297,7 @@ with full test coverage.
 ```bash
 EXISTING_WORK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/client/bin/check-existing-work" \
   --worktree "${WORKTREE_PATH}" \
-  --base-branch "${BASE_BRANCH}")
+  --target-branch "${BASE_BRANCH}")
 ```
 
 Parse the JSON result and include in output:

@@ -127,15 +127,14 @@ public final class InjectSessionInstructions implements SessionStartHandler
       - Clear separation: main agent = brain, subagent = hands
 
       ### Worktree Isolation
-      **CRITICAL**: NEVER work on tasks in the main worktree. ALWAYS use isolated worktrees.
+      **CRITICAL**: NEVER work on issues in the main worktree. ALWAYS use isolated worktrees.
       *(Enforced by hook - Edit/Write blocked on protected branches for plugin/ files)*
 
       **Correct flow**: `/cat:add` -> `/cat:work` (creates worktree) -> delegate to subagent -> merge back
 
       **Violation indicators**:
-      - Working directly on v2.1 or main branch
-      - No `.git/cat-base` file in current directory (not a task worktree)
-      - Making task-related edits without first running `/cat:work`
+      - No `cat-branch-point` file in current git dir (not an issue worktree)
+      - Making issue-related edits without first running `/cat:work`
 
       **Why isolation matters**:
       - Failed work doesn't pollute main branch

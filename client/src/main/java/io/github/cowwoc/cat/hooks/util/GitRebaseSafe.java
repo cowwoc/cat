@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
+import io.github.cowwoc.cat.hooks.CatMetadata;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import org.slf4j.Logger;
@@ -26,30 +27,31 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 /**
  * Safe git rebase with backup creation, conflict detection, and content verification.
  * <p>
- * Implements: pin target ref, create backup, attempt rebase, verify no content changes,
- * count commits rebased, clean up backup. Equivalent to git-rebase-safe.sh.
+ * Reads the target from {@code cat-branch-point} (a 40-character commit hash) when no target is provided,
+ * creates a timestamped backup branch, attempts the rebase, verifies no content changes, counts
+ * commits rebased, and cleans up the backup.
  */
 public final class GitRebaseSafe
 {
   private static final DateTimeFormatter BACKUP_TIMESTAMP_FORMATTER =
     DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
   private final JvmScope scope;
-  private final String directory;
+  private final String sourceBranch;
 
   /**
    * Creates a new GitRebaseSafe instance.
    *
-   * @param scope     the JVM scope providing JSON mapper
-   * @param directory the working directory for git commands
+   * @param scope        the JVM scope providing JSON mapper
+   * @param sourceBranch the working directory or worktree path for git commands
    * @throws NullPointerException     if {@code scope} is null
-   * @throws IllegalArgumentException if {@code directory} is blank
+   * @throws IllegalArgumentException if {@code sourceBranch} is blank
    */
-  public GitRebaseSafe(JvmScope scope, String directory)
+  public GitRebaseSafe(JvmScope scope, String sourceBranch)
   {
     requireThat(scope, "scope").isNotNull();
-    requireThat(directory, "directory").isNotBlank();
+    requireThat(sourceBranch, "sourceBranch").isNotBlank();
     this.scope = scope;
-    this.directory = directory;
+    this.sourceBranch = sourceBranch;
   }
 
   /**
@@ -57,12 +59,11 @@ public final class GitRebaseSafe
    * <p>
    * The process:
    * <ol>
-   *   <li>If target branch not provided, read from cat-base file</li>
-   *   <li>Pin target ref to prevent race conditions</li>
+   *   <li>If target not provided, read commit hash from cat-branch-point file</li>
    *   <li>Create timestamped backup branch</li>
    *   <li>Attempt rebase</li>
    *   <li>On conflict: collect conflicting files, abort rebase, return CONFLICT JSON</li>
-   *   <li>On success: verify no content changes using patch-diff comparison</li>
+   *   <li>On success: verify backup and HEAD have the same tree state</li>
    *   <li>Count commits rebased</li>
    *   <li>Clean up backup</li>
    *   <li>Return OK JSON</li>
@@ -70,7 +71,7 @@ public final class GitRebaseSafe
    * <p>
    * Success JSON is written to stdout; error/conflict JSON to stderr.
    *
-   * @param targetBranch the branch to rebase onto, or empty string to read from cat-base file
+   * @param targetBranch the branch or commit hash to rebase onto, or empty string to read from cat-branch-point file
    * @return JSON string with operation result
    * @throws NullPointerException if {@code targetBranch} is null
    * @throws IOException          if the operation fails
@@ -79,14 +80,14 @@ public final class GitRebaseSafe
   {
     requireThat(targetBranch, "targetBranch").isNotNull();
 
-    // Step 1: If target branch not provided, read from cat-base file
+    // Step 1: If target branch not provided, read from cat-branch-point file
     String resolvedTarget = targetBranch;
     if (resolvedTarget.isEmpty())
     {
       String gitDirStr;
       try
       {
-        gitDirStr = runGitCommandSingleLineInDirectory(directory, "rev-parse", "--git-dir");
+        gitDirStr = runGitCommandSingleLineInDirectory(sourceBranch, "rev-parse", "--git-dir");
       }
       catch (IOException e)
       {
@@ -95,117 +96,82 @@ public final class GitRebaseSafe
 
       Path gitDir = Path.of(gitDirStr);
       if (!gitDir.isAbsolute())
-        gitDir = Path.of(directory).resolve(gitDir);
+        gitDir = Path.of(sourceBranch).resolve(gitDir);
 
-      Path catBaseFile = gitDir.resolve("cat-base");
-      if (!Files.exists(catBaseFile))
+      Path catBranchPointFile = gitDir.resolve(CatMetadata.BRANCH_POINT_FILE);
+      if (!Files.exists(catBranchPointFile))
       {
         return buildErrorJson(
-          "cat-base file not found: " + catBaseFile + ". Recreate worktree with /cat:work.", null, null);
+          CatMetadata.BRANCH_POINT_FILE + " file not found: " + catBranchPointFile +
+            ". Recreate worktree with /cat:work.", null, null);
       }
-      resolvedTarget = Files.readString(catBaseFile).strip();
+      resolvedTarget = Files.readString(catBranchPointFile).strip();
     }
 
-    // Step 2: Pin target ref to prevent race conditions
-    String base;
-    try
-    {
-      base = runGitCommandSingleLineInDirectory(directory, "rev-parse", resolvedTarget);
-    }
-    catch (IOException _)
-    {
-      return buildErrorJson(
-        "Failed to resolve target branch: " + resolvedTarget, null, null);
-    }
-
-    // Step 3: Create timestamped backup branch
+    // Step 2: Create timestamped backup branch
     String backup = "backup-before-rebase-" + LocalDateTime.now().format(BACKUP_TIMESTAMP_FORMATTER);
     ProcessRunner.Result branchResult = ProcessRunner.run(
-      "git", "-C", directory, "branch", backup);
+      "git", "-C", sourceBranch, "branch", backup);
     if (branchResult.exitCode() != 0)
       return buildErrorJson("Failed to create backup branch: " + branchResult.stdout().strip(), null, null);
 
     // Verify backup was created (fail-fast)
     ProcessRunner.Result verifyResult = ProcessRunner.run(
-      "git", "-C", directory, "show-ref", "--verify", "--quiet", "refs/heads/" + backup);
+      "git", "-C", sourceBranch, "show-ref", "--verify", "--quiet", "refs/heads/" + backup);
     if (verifyResult.exitCode() != 0)
     {
       return buildErrorJson(
         "Backup branch '" + backup + "' was not created. Do NOT proceed with rebase without backup.", null, null);
     }
 
-    // Step 4: Attempt rebase
+    // Step 3: Attempt rebase
     ProcessRunner.Result rebaseResult = ProcessRunner.run(
-      "git", "-C", directory, "rebase", base);
+      "git", "-C", sourceBranch, "rebase", resolvedTarget);
 
     if (rebaseResult.exitCode() != 0)
     {
       // Rebase failed — check if it's a conflict
       ProcessRunner.Result conflictResult = ProcessRunner.run(
-        "git", "-C", directory, "diff", "--name-only", "--diff-filter=U");
+        "git", "-C", sourceBranch, "diff", "--name-only", "--diff-filter=U");
       String conflictingFiles = conflictResult.stdout().strip();
 
       // Abort rebase to return to clean state
-      ProcessRunner.run("git", "-C", directory, "rebase", "--abort");
+      ProcessRunner.run("git", "-C", sourceBranch, "rebase", "--abort");
 
       if (!conflictingFiles.isEmpty())
-        return buildConflictJson(base, backup, conflictingFiles);
-      return buildErrorJson("Rebase failed: " + rebaseResult.stdout().strip(), base, backup);
+        return buildConflictJson(resolvedTarget, backup, conflictingFiles);
+      return buildErrorJson("Rebase failed: " + rebaseResult.stdout().strip(), resolvedTarget, backup);
     }
 
-    // Step 5: Rebase succeeded — verify no content changes using patch-diff comparison
-    // Compare what the issue branch contributes relative to its original base vs new base.
-    // This avoids false positives when base branch advances with unrelated commits.
-    ProcessRunner.Result mergeBaseResult = ProcessRunner.run(
-      "git", "-C", directory, "merge-base", backup, base);
-    String oldBase;
-    if (mergeBaseResult.exitCode() == 0)
-      oldBase = mergeBaseResult.stdout().strip();
-    else
-      oldBase = "";
-
-    ProcessRunner.Result oldPatchResult = ProcessRunner.run(
-      "git", "-C", directory, "diff", oldBase, backup);
-    ProcessRunner.Result newPatchResult = ProcessRunner.run(
-      "git", "-C", directory, "diff", base, "HEAD");
-
-    String oldPatch;
-    if (oldPatchResult.exitCode() == 0)
-      oldPatch = oldPatchResult.stdout();
-    else
-      oldPatch = "";
-    String newPatch;
-    if (newPatchResult.exitCode() == 0)
-      newPatch = newPatchResult.stdout();
-    else
-      newPatch = "";
-
-    if (!oldPatch.equals(newPatch))
+    // Step 4: Rebase succeeded — verify backup and HEAD have same tree state
+    ProcessRunner.Result treeResult = ProcessRunner.run(
+      "git", "-C", sourceBranch, "diff", "--quiet", backup, "HEAD");
+    if (treeResult.exitCode() != 0)
     {
-      // Patch content differs — get stat for error message
+      // Tree state differs — get stat for error message
       ProcessRunner.Result diffStatResult = ProcessRunner.run(
-        "git", "-C", directory, "diff", backup, "--stat");
+        "git", "-C", sourceBranch, "diff", backup, "--stat");
       String diffStat = "";
       if (diffStatResult.exitCode() == 0)
         diffStat = diffStatResult.stdout().strip();
-      return buildContentChangedErrorJson(base, backup, diffStat);
+      return buildContentChangedErrorJson(resolvedTarget, backup, diffStat);
     }
 
-    // Step 6: Count commits rebased
-    String countStr = runGitCommandSingleLineInDirectory(directory, "rev-list", "--count",
-      base + "..HEAD");
+    // Step 5: Count commits rebased
+    String countStr = runGitCommandSingleLineInDirectory(sourceBranch, "rev-list", "--count",
+      resolvedTarget + "..HEAD");
     int commitsRebased = Integer.parseInt(countStr);
 
-    // Step 7: Delete backup
-    ProcessRunner.run("git", "-C", directory, "branch", "-D", backup);
+    // Step 6: Delete backup
+    ProcessRunner.run("git", "-C", sourceBranch, "branch", "-D", backup);
 
-    return buildOkJson(base, commitsRebased);
+    return buildOkJson(resolvedTarget, commitsRebased);
   }
 
   /**
    * Builds an OK JSON response.
    *
-   * @param target          the pinned target commit hash
+   * @param target          the target commit hash
    * @param commitsRebased  the number of commits rebased
    * @return JSON string with OK status
    * @throws IOException if JSON serialization fails
@@ -214,7 +180,7 @@ public final class GitRebaseSafe
   {
     ObjectNode json = scope.getJsonMapper().createObjectNode();
     json.put("status", "OK");
-    json.put("target", target);
+    json.put("target_branch", target);
     json.put("commits_rebased", commitsRebased);
     json.put("backup_cleaned", true);
     return scope.getJsonMapper().writeValueAsString(json);
@@ -223,7 +189,7 @@ public final class GitRebaseSafe
   /**
    * Builds a CONFLICT JSON response.
    *
-   * @param target          the pinned target commit hash
+   * @param target          the target commit hash
    * @param backupBranch    the backup branch name
    * @param conflictingFiles newline-separated list of conflicting file paths
    * @return JSON string with CONFLICT status
@@ -234,7 +200,7 @@ public final class GitRebaseSafe
   {
     ObjectNode json = scope.getJsonMapper().createObjectNode();
     json.put("status", "CONFLICT");
-    json.put("target", target);
+    json.put("target_branch", target);
     json.put("backup_branch", backupBranch);
     ArrayNode filesArray = json.putArray("conflicting_files");
     for (String file : conflictingFiles.split("\n"))
@@ -261,7 +227,7 @@ public final class GitRebaseSafe
     ObjectNode json = scope.getJsonMapper().createObjectNode();
     json.put("status", "ERROR");
     if (target != null)
-      json.put("target", target);
+      json.put("target_branch", target);
     if (backupBranch != null)
       json.put("backup_branch", backupBranch);
     else
@@ -284,7 +250,7 @@ public final class GitRebaseSafe
   {
     ObjectNode json = scope.getJsonMapper().createObjectNode();
     json.put("status", "ERROR");
-    json.put("target", target);
+    json.put("target_branch", target);
     json.put("backup_branch", backupBranch);
     json.put("message", "Content changed during rebase - backup preserved for investigation");
     json.put("diff_stat", diffStat);
@@ -294,9 +260,9 @@ public final class GitRebaseSafe
   /**
    * Main method for command-line execution.
    * <p>
-   * Usage: git-rebase-safe WORKTREE_PATH [TARGET_BRANCH]
+   * Usage: git-rebase-safe SOURCE_BRANCH [TARGET_BRANCH]
    * <p>
-   * If TARGET_BRANCH is not provided, reads from the cat-base file in the git directory.
+   * If TARGET_BRANCH is not provided, reads from the cat-branch-point file in the git directory.
    * Outputs JSON to stdout on success (OK).
    * Outputs JSON to stderr on failure (CONFLICT, ERROR).
    * Exit code 0 for success, 1 for errors.
@@ -311,20 +277,20 @@ public final class GitRebaseSafe
       System.err.println("""
         {
           "status": "ERROR",
-          "message": "Usage: git-rebase-safe <WORKTREE_PATH> [TARGET_BRANCH]",
+          "message": "Usage: git-rebase-safe <SOURCE_BRANCH> [TARGET_BRANCH]",
           "backup_branch": null
         }""");
       System.exit(1);
     }
 
-    String worktreePath = args[0];
+    String sourceBranch = args[0];
     String targetBranch = "";
     if (args.length > 1)
       targetBranch = args[1];
 
     try (JvmScope scope = new MainJvmScope())
     {
-      GitRebaseSafe cmd = new GitRebaseSafe(scope, worktreePath);
+      GitRebaseSafe cmd = new GitRebaseSafe(scope, sourceBranch);
       try
       {
         String result = cmd.execute(targetBranch);

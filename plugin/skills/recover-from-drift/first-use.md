@@ -21,7 +21,7 @@ Determine which issue is currently being worked on by checking for worktree cont
 1. Check if you're in a worktree by examining the current working directory
 2. If in a worktree path like `/workspace/.claude/cat/worktrees/<issue-id>/`, the issue path is
    `.claude/cat/issues/v*/v*.*/<issue-name>/PLAN.md`
-3. If not in a worktree, look for `.git/cat-base` to identify the current issue
+3. If not in a worktree, look for `.git/cat-branch-point` to identify the current issue
 4. Read the PLAN.md file
 
 **Error handling:** If you cannot locate PLAN.md, output:

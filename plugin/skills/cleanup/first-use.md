@@ -119,7 +119,7 @@ If output is non-empty, there is uncommitted work.
 
 ```bash
 BRANCH_NAME="<branch-from-survey>"
-BASE_BRANCH=$(cat "$(git -C "$WORKTREE_PATH" rev-parse --git-dir)/cat-base" 2>/dev/null || echo "main")
+BASE_BRANCH=$(cat "$(git -C "$WORKTREE_PATH" rev-parse --git-dir)/cat-branch-point" 2>/dev/null || echo "main")
 MERGED=$(git -C "$WORKTREE_PATH" branch --merged "$BASE_BRANCH" | grep -q "^[* ]*${BRANCH_NAME}$" && echo "yes" || echo "no")
 ```
 

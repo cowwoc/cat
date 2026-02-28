@@ -36,7 +36,7 @@ None - infrastructure improvement
 1. **Step 1:** Create plugin/skills/recover-from-drift/SKILL.md with the drift detection skill
    - Files: plugin/skills/recover-from-drift/SKILL.md
    - Skill process:
-     a. Read the current issue PLAN.md (locate via .git/cat-base or worktree context)
+     a. Read the current issue PLAN.md (locate via .git/cat-branch-point or worktree context)
      b. Identify which execution step is currently active (from progress tracking or user context)
      c. Analyze the recent failure(s) - what tool failed, what was attempted
      d. Compare failing action against plan step: Is this action part of the current step?

@@ -7,9 +7,9 @@ See LICENSE.md in the project root for license terms.
 
 ## Problem
 
-`plugin/skills/cleanup/first-use.md:122-123` reads `cat-base` into `BASE_BRANCH` then runs
+`plugin/skills/cleanup/first-use.md:122-123` reads `cat-branch-point` into `BASE_BRANCH` then runs
 `git branch --merged "$BASE_BRANCH"`. Since issue `2.1-record-fork-commit-at-worktree-creation`,
-`cat-base` stores a fork-point commit hash (40-char hex) instead of a branch name. The `--merged`
+`cat-branch-point` stores a fork-point commit hash (40-char hex) instead of a branch name. The `--merged`
 check now tests ancestry to the fork-point commit rather than the current branch tip. Branches
 merged into the base branch after the fork-point incorrectly report as NOT merged, producing false
 high-risk warnings during cleanup.
@@ -20,7 +20,7 @@ None (infrastructure bugfix)
 
 ## Reproduction
 
-1. Create a worktree for any issue (cat-base stores fork-point commit hash)
+1. Create a worktree for any issue (cat-branch-point stores fork-point commit hash)
 2. Merge additional commits into the base branch after the worktree was created
 3. Run `/cat:cleanup` on the worktree
 4. Observe: cleanup warns the branch is not merged even though it has been merged
@@ -41,31 +41,31 @@ None (infrastructure bugfix)
 ## Files to Modify
 
 - `client/src/main/java/io/github/cowwoc/cat/hooks/util/WorkPrepare.java` — write `cat-branch`
-  file alongside `cat-base` at worktree creation
-- `plugin/skills/work-prepare/first-use.md` — write `cat-branch` alongside `cat-base`
-- `plugin/skills/cleanup/first-use.md:122-123` — read `cat-branch` instead of `cat-base` for
+  file alongside `cat-branch-point` at worktree creation
+- `plugin/skills/work-prepare/first-use.md` — write `cat-branch` alongside `cat-branch-point`
+- `plugin/skills/cleanup/first-use.md:122-123` — read `cat-branch` instead of `cat-branch-point` for
   `--merged` check
 
 ## Pre-conditions
 
-- [ ] Issue `2.1-record-fork-commit-at-worktree-creation` is closed (defines cat-base format)
+- [ ] Issue `2.1-record-fork-commit-at-worktree-creation` is closed (defines cat-branch-point format)
 
 ## Execution Steps
 
-1. **Step 1:** In `WorkPrepare.java`, after writing `cat-base`, write `cat-branch` file
+1. **Step 1:** In `WorkPrepare.java`, after writing `cat-branch-point`, write `cat-branch` file
    - File: `client/src/main/java/io/github/cowwoc/cat/hooks/util/WorkPrepare.java`
-   - After `Files.writeString(catBaseFile, commitHash)`, add:
+   - After `Files.writeString(catBranchPointFile, commitHash)`, add:
      `Path catBranchFile = gitCommonDir.resolve("worktrees").resolve(branch).resolve("cat-branch");`
      `Files.writeString(catBranchFile, baseBranch);`
 
-2. **Step 2:** In `work-prepare/first-use.md`, write `cat-branch` alongside `cat-base`
+2. **Step 2:** In `work-prepare/first-use.md`, write `cat-branch` alongside `cat-branch-point`
    - File: `plugin/skills/work-prepare/first-use.md`
-   - After the line that writes `cat-base`, add a line writing `cat-branch`:
+   - After the line that writes `cat-branch-point`, add a line writing `cat-branch`:
      `echo "${BASE_BRANCH}" > "$(git rev-parse --git-common-dir)/worktrees/${BRANCH}/cat-branch"`
 
-3. **Step 3:** In `cleanup/first-use.md`, replace `cat-base` with `cat-branch` for `--merged` check
+3. **Step 3:** In `cleanup/first-use.md`, replace `cat-branch-point` with `cat-branch` for `--merged` check
    - File: `plugin/skills/cleanup/first-use.md:122-123`
-   - Replace: `BASE_BRANCH=$(cat "$(git rev-parse --git-dir)/cat-base")`
+   - Replace: `BASE_BRANCH=$(cat "$(git rev-parse --git-dir)/cat-branch-point")`
    - With: `BASE_BRANCH=$(cat "$(git rev-parse --git-dir)/cat-branch")`
    - Add fail-fast error block if `cat-branch` file is missing
 

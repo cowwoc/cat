@@ -156,8 +156,8 @@ public class WorkPrepareTest
       requireThat(node.path("major").asString(), "major").isEqualTo("2");
       requireThat(node.path("minor").asString(), "minor").isEqualTo("1");
       requireThat(node.path("issue_name").asString(), "issueName").isEqualTo("my-feature");
-      requireThat(node.path("branch").asString(), "branch").isEqualTo("2.1-my-feature");
-      requireThat(node.path("base_branch").asString(), "baseBranch").isEqualTo("v2.1");
+      requireThat(node.path("issue_branch").asString(), "issueBranch").isEqualTo("2.1-my-feature");
+      requireThat(node.path("target_branch").asString(), "targetBranch").isEqualTo("v2.1");
       requireThat(node.path("lock_acquired").asBoolean(), "lockAcquired").isTrue();
       requireThat(node.path("estimated_tokens").asInt(), "estimatedTokens").isGreaterThan(0);
       requireThat(node.path("worktree_path").isMissingNode(), "hasWorktreePath").isFalse();

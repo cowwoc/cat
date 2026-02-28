@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.hooks.write;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.CatMetadata;
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 import tools.jackson.databind.JsonNode;
@@ -223,8 +224,8 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
   private static boolean isInTaskWorktree() throws IOException
   {
     Path gitDir = GitCommands.getGitDir();
-    Path catBaseFile = gitDir.resolve("cat-base");
-    return Files.exists(catBaseFile);
+    Path catBranchPointFile = gitDir.resolve(CatMetadata.BRANCH_POINT_FILE);
+    return Files.exists(catBranchPointFile);
   }
 
   /**

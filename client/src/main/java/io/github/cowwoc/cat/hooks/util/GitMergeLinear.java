@@ -17,9 +17,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Instant;
 
 import org.slf4j.Logger;
@@ -27,7 +25,9 @@ import org.slf4j.LoggerFactory;
 /**
  * Linear git merge operation with backup and safety checks.
  * <p>
- * Merges task branch to base branch with linear history (86% faster than manual workflow).
+ * Merges source branch to target branch with linear history. After the merge, the source branch
+ * still exists as a git ref but its commits are reachable from the target branch. Callers are
+ * responsible for deleting the source branch and removing any associated worktree.
  */
 public final class GitMergeLinear
 {
@@ -53,80 +53,46 @@ public final class GitMergeLinear
   /**
    * Executes the linear merge operation.
    *
-   * @param taskBranch the issue branch to merge
-   * @param baseBranch the target branch to merge into (empty string for auto-detect)
-   * @param cleanup whether to delete branch and worktree after merge
+   * @param sourceBranch the issue branch to merge
+   * @param targetBranch the branch to merge into
    * @return JSON string with operation result
    * @throws IOException if the operation fails
    */
-  public String execute(String taskBranch, String baseBranch, boolean cleanup) throws IOException
+  public String execute(String sourceBranch, String targetBranch) throws IOException
   {
-    requireThat(taskBranch, "taskBranch").isNotBlank();
-    requireThat(baseBranch, "baseBranch").isNotNull();
+    requireThat(sourceBranch, "sourceBranch").isNotBlank();
+    requireThat(targetBranch, "targetBranch").isNotBlank();
 
     long startTime = System.currentTimeMillis();
 
-    if (baseBranch.isEmpty())
-      baseBranch = detectBaseBranch(taskBranch);
-
     String currentBranch = getCurrentBranch();
-    if (!currentBranch.equals(baseBranch))
-      throw new IOException("Must be on " + baseBranch + " branch. Currently on: " + currentBranch);
+    if (!currentBranch.equals(targetBranch))
+      throw new IOException("Must be on " + targetBranch + " branch. Currently on: " + currentBranch);
 
-    runGitCommandSingleLineInDirectory(directory,"rev-parse", "--verify", taskBranch);
+    runGitCommandSingleLineInDirectory(directory,"rev-parse", "--verify", sourceBranch);
 
     if (!isWorkingDirectoryClean())
       throw new IOException("Working directory is not clean. Commit or stash changes first.");
 
-    int commitCount = getCommitCount(baseBranch, taskBranch);
+    int commitCount = getCommitCount(targetBranch, sourceBranch);
     if (commitCount != 1)
-      throw new IOException("Task branch must have exactly 1 commit. Found: " + commitCount +
+      throw new IOException("Source branch must have exactly 1 commit. Found: " + commitCount +
         ". Squash commits first.");
 
-    checkFastForwardPossible(baseBranch, taskBranch);
+    checkFastForwardPossible(targetBranch, sourceBranch);
 
-    String commitMsg = getCommitMessage(taskBranch);
+    String commitMsg = getCommitMessage(sourceBranch);
 
-    fastForwardMerge(taskBranch);
+    fastForwardMerge(sourceBranch);
 
     verifyLinearHistory();
 
     String commitShaAfter = getCommitSha("HEAD");
 
-    if (cleanup)
-    {
-      String worktreePath = findWorktreeForBranch(taskBranch);
-      if (!worktreePath.isEmpty() && Files.isDirectory(Paths.get(worktreePath)))
-        removeWorktree(worktreePath);
-      deleteBranch(taskBranch);
-    }
-
     long endTime = System.currentTimeMillis();
     long duration = (endTime - startTime) / 1000;
 
-    return buildSuccessJson(taskBranch, commitShaAfter, commitMsg, commitCount,
-      cleanup, duration);
-  }
-
-  /**
-   * Detects the base branch from worktree metadata.
-   *
-   * @param taskBranch the task branch name
-   * @return the base branch name
-   * @throws IOException if detection fails
-   */
-  private String detectBaseBranch(String taskBranch) throws IOException
-  {
-    String gitDir = runGitCommandSingleLineInDirectory(directory,"rev-parse", "--git-dir");
-    Path catBasePath = Paths.get(gitDir, "worktrees", taskBranch, "cat-base");
-
-    if (!Files.exists(catBasePath))
-    {
-      throw new IOException("cat-base file not found: " + catBasePath +
-        ". Recreate worktree with /cat:work.");
-    }
-
-    return Files.readString(catBasePath, StandardCharsets.UTF_8).trim();
+    return buildSuccessJson(sourceBranch, commitShaAfter, commitMsg, commitCount, duration);
   }
 
   /**
@@ -189,7 +155,7 @@ public final class GitMergeLinear
         int behindCount = getCommitCount(task, base);
         if (behindCount > 0)
         {
-          throw new IOException("Task branch is behind " + base + " by " + behindCount +
+          throw new IOException("Source branch is behind " + base + " by " + behindCount +
             " commits. Rebase required: git checkout " + task + " && git rebase " + base);
         }
       }
@@ -273,90 +239,34 @@ public final class GitMergeLinear
   private void verifyLinearHistory() throws IOException
   {
     String parents = runGitCommandSingleLineInDirectory(directory,"log", "-1", "--format=%p", "HEAD");
-    String[] parentArray = parents.trim().split("\\s+");
+    String[] parentArray = parents.strip().split("\\s+");
     if (parentArray.length > 1)
       throw new IOException("Merge commit detected! History is not linear.");
   }
 
   /**
-   * Finds the worktree path for a branch.
-   *
-   * @param branch the branch name
-   * @return the worktree path, or empty string if not found
-   * @throws IOException if the operation fails
-   */
-  private String findWorktreeForBranch(String branch) throws IOException
-  {
-    String output = runGit(Path.of(directory),"worktree", "list", "--porcelain");
-    String[] lines = output.split("\n");
-
-    String currentWorktree = "";
-    for (String line : lines)
-    {
-      if (line.startsWith("worktree "))
-        currentWorktree = line.substring("worktree ".length());
-      else if (line.equals("branch refs/heads/" + branch))
-        return currentWorktree;
-    }
-
-    return "";
-  }
-
-  /**
-   * Removes a worktree.
-   *
-   * @param path the worktree path
-   * @throws IOException if the operation fails
-   */
-  private void removeWorktree(String path) throws IOException
-  {
-    runGit(Path.of(directory),"worktree", "remove", path);
-  }
-
-  /**
-   * Deletes a branch.
-   *
-   * @param branch the branch name
-   * @return true if deleted successfully
-   */
-  private boolean deleteBranch(String branch)
-  {
-    try
-    {
-      runGit(Path.of(directory),"branch", "-d", branch);
-      return true;
-    }
-    catch (IOException _)
-    {
-      return false;
-    }
-  }
-
-  /**
    * Builds the success JSON response.
    *
-   * @param taskBranch the task branch name
+   * @param sourceBranch the source branch name
    * @param commitSha the commit SHA
    * @param commitMessage the commit message
    * @param commitCount the number of commits merged
-   * @param cleanup whether cleanup was requested
    * @param duration the operation duration in seconds
    * @return JSON string
    * @throws IOException if JSON creation fails
    */
-  private String buildSuccessJson(String taskBranch, String commitSha, String commitMessage,
-    int commitCount, boolean cleanup, long duration)
+  private String buildSuccessJson(String sourceBranch, String commitSha, String commitMessage,
+    int commitCount, long duration)
     throws IOException
   {
     ObjectNode json = scope.getJsonMapper().createObjectNode();
     json.put("status", "success");
     json.put("message", "Linear merge completed successfully");
     json.put("duration_seconds", duration);
-    json.put("issue_branch", taskBranch);
-    json.put("commit_sha", commitSha);
-    json.put("commit_message", commitMessage);
-    json.put("commit_count", commitCount);
-    json.put("cleanup", cleanup);
+    json.put("source_branch", sourceBranch);
+    json.put("merged_commit", commitSha);
+    json.put("merged_commit_message", commitMessage);
+    json.put("commits_merged", commitCount);
     json.put("timestamp", Instant.now().toString());
 
     return scope.getJsonMapper().writerWithDefaultPrettyPrinter().writeValueAsString(json);
@@ -375,29 +285,20 @@ public final class GitMergeLinear
       System.err.println("""
         {
           "status": "error",
-          "message": "Usage: git-merge-linear <issue-branch> [--base <branch>] [--cleanup|--no-cleanup]"
+          "message": "Usage: git-merge-linear <issue-branch> --base <branch>"
         }""");
       System.exit(1);
     }
 
-    String taskBranch = args[0];
-    String baseBranch = "";
-    boolean cleanup = false;
+    String sourceBranch = args[0];
+    String targetBranch = "";
 
     for (int i = 1; i < args.length; ++i)
     {
       if (args[i].equals("--base") && i + 1 < args.length)
       {
-        baseBranch = args[i + 1];
+        targetBranch = args[i + 1];
         ++i;
-      }
-      else if (args[i].equals("--cleanup"))
-      {
-        cleanup = true;
-      }
-      else if (args[i].equals("--no-cleanup"))
-      {
-        cleanup = false;
       }
       else
       {
@@ -410,12 +311,23 @@ public final class GitMergeLinear
       }
     }
 
+    if (targetBranch.isEmpty())
+    {
+      System.err.println("""
+        {
+          "status": "error",
+          "message": "Missing required argument: --base <branch>. \
+Usage: git-merge-linear <issue-branch> --base <branch>"
+        }""");
+      System.exit(1);
+    }
+
     try (JvmScope scope = new MainJvmScope())
     {
       GitMergeLinear cmd = new GitMergeLinear(scope, ".");
       try
       {
-        String result = cmd.execute(taskBranch, baseBranch, cleanup);
+        String result = cmd.execute(sourceBranch, targetBranch);
         System.out.println(result);
       }
       catch (IOException e)
