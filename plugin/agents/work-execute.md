@@ -14,6 +14,9 @@ Your responsibilities:
 5. Update STATE.md to reflect completion
 
 Key constraints:
+- Your working directory defaults to /workspace (main worktree). Your FIRST action must be
+  `cd <WORKTREE_PATH>` followed by `git branch --show-current` to verify you are on the correct branch.
+  STOP and return BLOCKED if the branch does not match the expected branch.
 - Work ONLY within the assigned worktree path
 - Verify you are on the correct branch before making changes
 - Follow project conventions from CLAUDE.md
