@@ -270,11 +270,11 @@ mkdir -p ".claude/cat/issues/v{major}/v{major}.{minor}/{issue-name}"
 *Imported from: {source}*
 ```
 
-**STATE.md** (completed issues):
+**STATE.md** (closed issues):
 ```markdown
 # Issue State: {issue-name}
 ## Status
-- **Status:** completed
+- **Status:** closed
 - **Progress:** 100%
 - **Started:** DATE
 - **Completed:** DATE
