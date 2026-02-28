@@ -18,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -798,7 +799,8 @@ public final class SkillLoader
    * plugin-root skill-name project-dir [skill-args...]
    * <p>
    * The agent ID is passed as the first skill argument ({@code skill-args[0]}, i.e., {@code $0}).
-   * It is required; the constructor fails fast if absent or blank.
+   * If {@code $0} is absent or blank (e.g., when the user invokes a slash command directly without
+   * passing args), the session ID from {@code CLAUDE_SESSION_ID} is used as the fallback agent ID.
    *
    * @param args command-line arguments: plugin-root skill-name project-dir [skill-args...]
    */
@@ -818,6 +820,15 @@ public final class SkillLoader
 
     try (JvmScope scope = new MainJvmScope())
     {
+      // When $0 is absent or blank, fall back to CLAUDE_SESSION_ID from the environment
+      if (skillArgs.isEmpty() || skillArgs.get(0).isBlank())
+      {
+        List<String> resolved = new ArrayList<>();
+        resolved.add(scope.getClaudeSessionId());
+        for (int i = 1; i < skillArgs.size(); ++i)
+          resolved.add(skillArgs.get(i));
+        skillArgs = resolved;
+      }
       SkillLoader loader = new SkillLoader(scope, pluginRoot, projectDir, skillArgs);
       String result = loader.load(skillName);
       System.out.print(result);
