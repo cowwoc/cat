@@ -43,6 +43,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - refactor-config-skill-lazy-screens
 - fix-cleanup-survey-missing-worktrees
 - fix-block-unsafe-removal-cross-session
+- drop-review-threshold
 
 
 ## Issues Completed
