@@ -633,7 +633,7 @@ TOTAL_MINORS=$(grep -c "^- v$MAJOR\." "$PARENT_STATE" 2>/dev/null || echo 0)
 COMPLETED_MINORS=0
 for minor_entry in $(grep "^- v$MAJOR\." "$PARENT_STATE" | sed 's/- v//'); do
   MINOR_STATE=".claude/cat/issues/v$MAJOR/v$minor_entry/STATE.md"
-  if [ -f "$MINOR_STATE" ] && grep -q "\*\*Status:\*\*.*completed" "$MINOR_STATE"; then
+  if [ -f "$MINOR_STATE" ] && grep -q "\*\*Status:\*\*.*closed" "$MINOR_STATE"; then
     COMPLETED_MINORS=$((COMPLETED_MINORS + 1))
   fi
 done
