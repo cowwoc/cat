@@ -86,7 +86,7 @@ public final class PostToolUseHook implements HookHandler
     List<PostToolHandler> handlers = List.of(
       new ResetFailureCounter(sessionDirectory),
       new AutoLearnMistakes(),
-      new DetectAssistantGivingUp(claudeConfigDir),
+      new DetectAssistantGivingUp(scope),
       new DetectTokenThreshold(claudeConfigDir),
       new RemindRestartAfterSkillModification());
 

@@ -38,7 +38,7 @@ public final class DetectAssistantGivingUpTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       Clock clock = Clock.systemUTC();
-      DetectAssistantGivingUp handler = new DetectAssistantGivingUp(clock, tempDir);
+      DetectAssistantGivingUp handler = new DetectAssistantGivingUp(clock, scope);
 
       String hookDataJson = """
         {
@@ -77,7 +77,7 @@ public final class DetectAssistantGivingUpTest
         """);
 
       Clock clock = Clock.systemUTC();
-      DetectAssistantGivingUp handler = new DetectAssistantGivingUp(clock, tempDir);
+      DetectAssistantGivingUp handler = new DetectAssistantGivingUp(clock, scope);
 
       String hookDataJson = """
         {
@@ -118,7 +118,7 @@ public final class DetectAssistantGivingUpTest
         """);
 
       Clock clock = Clock.systemUTC();
-      DetectAssistantGivingUp handler = new DetectAssistantGivingUp(clock, tempDir);
+      DetectAssistantGivingUp handler = new DetectAssistantGivingUp(clock, scope);
 
       String hookDataJson = """
         {
@@ -161,7 +161,7 @@ public final class DetectAssistantGivingUpTest
 
       Instant baseTime = Instant.parse("2025-01-01T00:00:00Z");
       Clock clock1 = Clock.fixed(baseTime, ZoneOffset.UTC);
-      DetectAssistantGivingUp handler1 = new DetectAssistantGivingUp(clock1, tempDir);
+      DetectAssistantGivingUp handler1 = new DetectAssistantGivingUp(clock1, scope);
 
       String hookDataJson = """
         {
@@ -176,13 +176,13 @@ public final class DetectAssistantGivingUpTest
       requireThat(result1.additionalContext(), "firstCheck").contains("TOKEN POLICY VIOLATION");
 
       Clock clock2 = Clock.fixed(baseTime.plusSeconds(30), ZoneOffset.UTC);
-      DetectAssistantGivingUp handler2 = new DetectAssistantGivingUp(clock2, tempDir);
+      DetectAssistantGivingUp handler2 = new DetectAssistantGivingUp(clock2, scope);
 
       PostToolHandler.Result result2 = handler2.check("Bash", toolResult, sessionId, hookData);
       requireThat(result2.additionalContext(), "secondCheck").isEmpty();
 
       Clock clock3 = Clock.fixed(baseTime.plusSeconds(61), ZoneOffset.UTC);
-      DetectAssistantGivingUp handler3 = new DetectAssistantGivingUp(clock3, tempDir);
+      DetectAssistantGivingUp handler3 = new DetectAssistantGivingUp(clock3, scope);
 
       PostToolHandler.Result result3 = handler3.check("Bash", toolResult, sessionId, hookData);
       requireThat(result3.additionalContext(), "thirdCheck").contains("TOKEN POLICY VIOLATION");
@@ -228,7 +228,7 @@ public final class DetectAssistantGivingUpTest
 
         Instant checkTime = baseTime.plusSeconds(i * 100);
         Clock clock = Clock.fixed(checkTime, ZoneOffset.UTC);
-        DetectAssistantGivingUp handler = new DetectAssistantGivingUp(clock, tempDir);
+        DetectAssistantGivingUp handler = new DetectAssistantGivingUp(clock, scope);
 
         String hookDataJson = """
           {
@@ -245,6 +245,80 @@ public final class DetectAssistantGivingUpTest
 
         Files.deleteIfExists(conversationLog);
       }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that keywords split across separate messages do not trigger a false positive.
+   * <p>
+   * When "given" appears in one message, "token usage" in another, and "let me" in a third,
+   * the hook must not fire — only a single message containing all keywords should trigger.
+   */
+  @Test
+  public void keywordsSplitAcrossMessagesShouldNotTrigger() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      String sessionId = "test-cross-message-fp";
+      createConversationLog(tempDir, sessionId, """
+          {"role":"assistant","content":"given the retrospective analysis above"}
+          {"role":"assistant","content":"our token usage is high today"}
+          {"role":"assistant","content":"let me proceed with implementing the fix"}
+          """);
+
+      Clock clock = Clock.systemUTC();
+      DetectAssistantGivingUp handler = new DetectAssistantGivingUp(clock, scope);
+
+      String hookDataJson = """
+          {"tool_input":{},"tool_result":{},"session_id":"%s"}""".formatted(sessionId);
+      JsonNode hookData = mapper.readTree(hookDataJson);
+      JsonNode toolResult = mapper.readTree("{}");
+
+      PostToolHandler.Result result = handler.check("Bash", toolResult, sessionId, hookData);
+
+      requireThat(result.additionalContext(), "additionalContext").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that keywords in a tool_use input block do not trigger a false positive.
+   * <p>
+   * Even if all keywords appear in a tool_use block's input, the hook must not fire —
+   * only text-type content blocks from the assistant should be scanned.
+   */
+  @Test
+  public void keywordsInToolUseInputShouldNotTrigger() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      String sessionId = "test-tool-use-fp";
+      String toolUseJson = "{\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"name\":\"Skill\"," +
+        "\"input\":{\"args\":\"given token usage let me fix this false positive\"}}]}";
+      createConversationLog(tempDir, sessionId, toolUseJson);
+
+      Clock clock = Clock.systemUTC();
+      DetectAssistantGivingUp handler = new DetectAssistantGivingUp(clock, scope);
+
+      String hookDataJson = """
+          {"tool_input":{},"tool_result":{},"session_id":"%s"}""".formatted(sessionId);
+      JsonNode hookData = mapper.readTree(hookDataJson);
+      JsonNode toolResult = mapper.readTree("{}");
+
+      PostToolHandler.Result result = handler.check("Bash", toolResult, sessionId, hookData);
+
+      requireThat(result.additionalContext(), "additionalContext").isEmpty();
     }
     finally
     {
