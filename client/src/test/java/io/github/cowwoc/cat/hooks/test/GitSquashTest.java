@@ -1003,6 +1003,80 @@ public class GitSquashTest
   }
 
   // ============================================================================
+  // Timestamp preservation tests
+  // ============================================================================
+
+  /**
+   * Verifies that after a successful squash, the squashed commit's author date matches the base commit's
+   * author date.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void squashedCommitPreservesBaseAuthorDate() throws IOException
+  {
+    Path tempDir = TestUtils.createTempGitRepo("main");
+    Path pluginRoot = Files.createTempDirectory("plugin-root-");
+    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    {
+      // Record the base (main) commit's author date before squash
+      String baseAuthorDate = TestUtils.runGitCommandWithOutput(tempDir,
+        "log", "-1", "--format=%aI", "main").strip();
+
+      createTestBranch(tempDir, "test-branch", 3);
+      GitSquash cmd = new GitSquash(scope, tempDir.toString());
+      String result = cmd.execute("main", "feature: add user authentication");
+      JsonNode json = scope.getJsonMapper().readTree(result);
+      requireThat(json.get("status").asString(), "status").isEqualTo("OK");
+
+      // The squashed commit's author date must match the base commit's author date
+      String squashedAuthorDate = TestUtils.runGitCommandWithOutput(tempDir,
+        "log", "-1", "--format=%aI", "HEAD").strip();
+      requireThat(squashedAuthorDate, "squashedAuthorDate").isEqualTo(baseAuthorDate);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that after a successful squash, the squashed commit's committer date matches the base commit's
+   * committer date.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void squashedCommitPreservesBaseCommitterDate() throws IOException
+  {
+    Path tempDir = TestUtils.createTempGitRepo("main");
+    Path pluginRoot = Files.createTempDirectory("plugin-root-");
+    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    {
+      // Record the base (main) commit's committer date before squash
+      String baseCommitterDate = TestUtils.runGitCommandWithOutput(tempDir,
+        "log", "-1", "--format=%cI", "main").strip();
+
+      createTestBranch(tempDir, "test-branch", 3);
+      GitSquash cmd = new GitSquash(scope, tempDir.toString());
+      String result = cmd.execute("main", "feature: add user authentication");
+      JsonNode json = scope.getJsonMapper().readTree(result);
+      requireThat(json.get("status").asString(), "status").isEqualTo("OK");
+
+      // The squashed commit's committer date must match the base commit's committer date
+      String squashedCommitterDate = TestUtils.runGitCommandWithOutput(tempDir,
+        "log", "-1", "--format=%cI", "HEAD").strip();
+      requireThat(squashedCommitterDate, "squashedCommitterDate").isEqualTo(baseCommitterDate);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  // ============================================================================
   // Helper methods
   // ============================================================================
 

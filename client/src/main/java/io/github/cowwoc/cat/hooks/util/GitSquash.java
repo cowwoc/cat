@@ -7,8 +7,6 @@
 package io.github.cowwoc.cat.hooks.util;
 
 import static io.github.cowwoc.cat.hooks.util.GitCommands.runGit;
-
-import java.nio.file.Path;
 import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandSingleLineInDirectory;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -19,10 +17,12 @@ import org.slf4j.LoggerFactory;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -143,9 +143,14 @@ public final class GitSquash
     if (!status.isEmpty())
       throw new IOException("Working directory is not clean");
 
-    // Step 8: Create squashed commit using commit-tree
+    // Step 8: Create squashed commit using commit-tree, preserving base commit's timestamps
+    String baseAuthorDate = runGitCommandSingleLineInDirectory(directory, "log", "-1", "--format=%aI", base);
+    String baseCommitterDate = runGitCommandSingleLineInDirectory(directory, "log", "-1", "--format=%cI", base);
+    Map<String, String> dateEnv = Map.of(
+      "GIT_AUTHOR_DATE", baseAuthorDate,
+      "GIT_COMMITTER_DATE", baseCommitterDate);
     String tree = runGitCommandSingleLineInDirectory(directory, "rev-parse", "HEAD^{tree}");
-    String newCommit = runGitCommandSingleLineInDirectory(directory,
+    String newCommit = runGitCommandSingleLineInDirectory(directory, dateEnv,
       "commit-tree", tree, "-p", base, "-m", commitMessage);
 
     // Step 9: Move branch to new squashed commit
