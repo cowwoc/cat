@@ -10,4 +10,4 @@ allowed-tools:
   - AskUserQuestion
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" research "${CLAUDE_SESSION_ID}" "${CLAUDE_PROJECT_DIR}"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" research "${CLAUDE_PROJECT_DIR}" "$0"`
