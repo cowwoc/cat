@@ -1423,7 +1423,8 @@ if TRUST != "high":
     # If user selects "Abort", return ABORTED status (same as Step 8 abort handling)
 ```
 
-Spawn a merge subagent:
+Spawn a merge subagent using the **Task tool** (NOT the Skill tool — the Skill tool only loads skill
+content and does NOT execute the merge):
 
 ```
 Task tool:
@@ -1450,9 +1451,30 @@ Task tool:
 
 Parse merge result:
 
-- **MERGED**: Continue to Step 10
+- **MERGED**: Continue to post-merge verification below
 - **CONFLICT**: Return FAILED with conflict details
 - **ERROR**: Return FAILED with error
+
+### Post-Merge Verification (BLOCKING — M447)
+
+Before proceeding to Step 10, verify the merge actually occurred by checking that `TARGET_BRANCH`
+now contains the squashed commit:
+
+```bash
+# Verify the merge commit is reachable from TARGET_BRANCH
+SQUASH_HASH=$(git -C "${CLAUDE_PROJECT_DIR}" rev-parse HEAD 2>/dev/null)
+MERGED=$(git -C "${CLAUDE_PROJECT_DIR}" branch --contains "${SQUASH_HASH}" 2>/dev/null \
+  | grep -c "${TARGET_BRANCH}" || true)
+if [[ "${MERGED}" -eq 0 ]]; then
+  echo "ERROR: Merge not confirmed — ${SQUASH_HASH} is not reachable from ${TARGET_BRANCH}."
+  echo "The merge phase may have failed silently. Do NOT invoke work-complete."
+  echo "Re-run Step 9 using the Task tool."
+  exit 1
+fi
+```
+
+If verification fails: STOP — do NOT invoke `work-complete`. The merge did not happen.
+Re-spawn the merge subagent using the Task tool.
 
 ## Step 10: Return Success
 

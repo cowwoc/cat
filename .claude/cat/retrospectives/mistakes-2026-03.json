@@ -55,6 +55,33 @@
         "catches_variations": true
       },
       "correct_behavior": "After completing the auto-fix loop, execute Steps 6, 7, and 8 in sequence. Step 8 (Approval Gate) MUST present AskUserQuestion to user when trust != \"high\". Hook enforcement now covers Task tool, Skill tool, and direct Bash invocation of merge-and-cleanup."
+    },
+    {
+      "id": "M447",
+      "timestamp": "2026-03-01T22:38:49Z",
+      "category": "tool_misuse",
+      "description": "Agent invoked cat:work-merge via the Skill tool instead of the Task tool, causing the merge phase to be skipped entirely while the agent proceeded to call work-complete and report success",
+      "root_cause": "The work-with-issue skill instructs Step 9 to spawn a merge subagent using the Task tool with subagent_type: cat:work-merge. The main agent used the Skill tool instead, which only loads skill content and returns 'Launching skill: cat:work-merge' without executing any merge operations. The agent mistook the Skill tool's success: true response for a completed merge and proceeded to work-complete without verifying the branch moved.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue/first-use.md",
+      "pattern_keywords": [
+        "skill_tool_instead_of_task_tool",
+        "merge_not_verified",
+        "false_success_report",
+        "work_merge_bypass",
+        "work_complete_premature"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use Task tool (subagent_type: cat:work-merge) to spawn the merge subagent. After the Task tool returns, verify the merge happened by checking that TARGET_BRANCH now contains the squashed commit before invoking work-complete."
     }
   ]
 }
