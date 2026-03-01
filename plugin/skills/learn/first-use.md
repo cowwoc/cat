@@ -3,14 +3,14 @@ Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
-# Learn From Mistakes: Tiered Orchestrator
+# Learn From Mistakes: Orchestrator
 
 Analyze mistakes using 5-whys with CAT-specific consideration of conversation length and context
 degradation. Integrates token tracking to identify context-related failures and recommend preventive
 measures including earlier decomposition.
 
-**Architecture:** Main agent classifies mistake into tier (quick/deep), spawns single subagent that
-loads appropriate phase files and executes all phases in one context.
+**Architecture:** Main agent spawns single subagent that loads all phase files (investigate, analyze, prevent,
+record) and executes them in one context.
 
 ## Purpose
 
@@ -27,76 +27,7 @@ measures including earlier decomposition.
 - Repeated attempts at same operation
 - Quality degradation over time
 
-## Step 1: Classify Mistake Tier
-
-Determine whether this is a quick-tier or deep-tier mistake.
-
-**Classification Logic:**
-
-| Tier | Criteria | Phases to Run | Rationale |
-|------|----------|---------------|-----------|
-| **Quick** | Agent can describe event sequence without JSONL investigation; no novel patterns | Analyze, Prevent, Record (skip Investigate) | Sufficient context available from description alone |
-| **Deep** | Event sequence unclear, novel patterns, or documentation priming suspected | Investigate, Analyze, Prevent, Record (all 4) | Requires JSONL analysis to establish root cause |
-
-**How to determine:**
-
-1. Read the mistake description provided
-2. Ask yourself: Can the event sequence be established clearly WITHOUT reading JSONL? If yes → Quick tier. If no → Deep tier.
-3. If unsure, default to deep-tier (safer - all phases give better RCA)
-
-**Store tier decision:**
-- `tier: "quick" | "deep"`
-- `phases_to_run: ["analyze", "prevent", "record"] | ["investigate", "analyze", "prevent", "record"]`
-
-## Step 2: Spawn Single Tiered Subagent
-
-Delegate to general-purpose subagent using the Task tool with these JSON parameters:
-
-- **description:** `"Learn ({tier} tier): Execute all phases for mistake analysis"`
-- **subagent_type:** `"general-purpose"`
-- **model:** `"sonnet"`
-- **prompt:** The prompt below (substitute variables with actual values)
-
-**Prompt for quick-tier subagent:**
-
-> Execute the learn skill phases for a quick-tier mistake.
->
-> SESSION_ID: ${CLAUDE_SESSION_ID}
-> PROJECT_DIR: ${CLAUDE_PROJECT_DIR}
-> TIER: quick
->
-> **Your task:** Execute phases in sequence: Analyze → Prevent → Record
->
-> For each phase:
-> 1. Use the Read tool to load the phase file from ${CLAUDE_PLUGIN_ROOT}/skills/learn/
-> 2. Follow the instructions in that phase file
-> 3. Generate a user_summary (1-3 sentences) of what you found/did
-> 4. Include the phase result in your final JSON output
->
-> **Phase files to load:**
-> - Phase 2 (Analyze): ${CLAUDE_PLUGIN_ROOT}/skills/learn/phase-analyze.md
-> - Phase 3 (Prevent): ${CLAUDE_PLUGIN_ROOT}/skills/learn/phase-prevent.md
-> - Phase 4 (Record): ${CLAUDE_PLUGIN_ROOT}/skills/learn/phase-record.md
->
-> **Your FINAL message must be ONLY the JSON result object below — no surrounding text, no explanation.**
-> This is critical because the parent agent parses your response as JSON.
->
-> ```json
-> {
->   "tier": "quick",
->   "phases_executed": ["analyze", "prevent", "record"],
->   "phase_summaries": {
->     "analyze": "1-3 sentence summary for user",
->     "prevent": "1-3 sentence summary for user",
->     "record": "1-3 sentence summary for user"
->   },
->   "analyze": { ...phase 2 output fields... },
->   "prevent": { ...phase 3 output fields... },
->   "record": { ...phase 4 output fields... }
-> }
-> ```
-
-**Before spawning the deep-tier subagent, extract investigation context silently:**
+## Step 1: Extract Investigation Context
 
 Derive keywords from the mistake description (e.g., command names, file names, skill names mentioned in the mistake).
 Then invoke the extraction skill with those keywords:
@@ -110,13 +41,21 @@ Skill tool:
 The skill runs the extractor invisibly via preprocessing and returns the pre-extracted JSON. Capture this output as
 `PRE_EXTRACTED_CONTEXT`.
 
-**Prompt for deep-tier subagent:**
+## Step 2: Spawn Subagent
 
-> Execute the learn skill phases for a deep-tier mistake.
+Delegate to general-purpose subagent using the Task tool with these JSON parameters:
+
+- **description:** `"Learn: Execute all phases for mistake analysis"`
+- **subagent_type:** `"general-purpose"`
+- **model:** `"sonnet"`
+- **prompt:** The prompt below (substitute variables with actual values)
+
+**Subagent prompt:**
+
+> Execute the learn skill phases for mistake analysis.
 >
 > SESSION_ID: ${CLAUDE_SESSION_ID}
 > PROJECT_DIR: ${CLAUDE_PROJECT_DIR}
-> TIER: deep
 >
 > **Your task:** Execute phases in sequence: Investigate → Analyze → Prevent → Record
 >
@@ -144,7 +83,6 @@ The skill runs the extractor invisibly via preprocessing and returns the pre-ext
 >
 > ```json
 > {
->   "tier": "deep",
 >   "phases_executed": ["investigate", "analyze", "prevent", "record"],
 >   "phase_summaries": {
 >     "investigate": "1-3 sentence summary for user",
@@ -229,11 +167,10 @@ requires source code changes. Create a CAT issue from the issue_creation_info:
 
 ## Step 4: Display Final Summary
 
-After all phases complete, display a summary showing tier used and results:
+After all phases complete, display a summary of results:
 
 ```
 Learning recorded: {learning_id}
-Tier: {tier} ({phases_skipped} if quick tier)
 
 Category: {category}
 Root Cause: {root_cause}
@@ -246,8 +183,6 @@ Prevention:
 
 Commit: {commit_hash}
 {retrospective_status}
-
-Token Efficiency: {tier}-tier analysis (skipped {N} phase(s))
 ```
 
 If `retrospective_triggered` is true, use AskUserQuestion to offer user choice:
