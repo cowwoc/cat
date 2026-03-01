@@ -11,28 +11,20 @@ This phase documents the mistake, gathers context metrics, performs root cause a
 
 Complete the analysis phase for the learn skill.
 
-**IMPORTANT - Quick-Tier Note:** If you are analyzing a quick-tier mistake, you will not have Phase 1 investigation
-results. You will have the mistake description from the main agent. Use that description as your source of truth, not
-Phase 1 output.
-
-**Deep-Tier:** You will receive investigation results from Phase 1 as input.
+**IMPORTANT:** You will receive investigation results from Phase 1 as input.
 
 Your final message must be ONLY the JSON result object with no surrounding text or explanation. The parent agent parses
 your response as JSON.
 
 ## Input
 
-**For Deep-Tier:** You will receive a JSON object with investigation results containing:
+You will receive a JSON object with investigation results containing:
 - Event sequence and timeline
 - Documents the agent read
 - Priming analysis results
 - Session ID
 
-**For Quick-Tier:** You receive the mistake description from the main agent directly.
-
-## Step 2: Document the Mistake
-
-**(Note: Step 1 = Phase 1: Investigate, executed for deep-tier only. Quick-tier analysis begins here at Step 2.)**
+## Step 1: Document the Mistake
 
 ```yaml
 mistake:
@@ -44,17 +36,14 @@ mistake:
     {impact of the mistake}
 ```
 
-## Step 3: Gather Context Metrics
+## Step 2: Gather Context Metrics
 
 **CAT-specific: Always collect token data from investigation output**
 
-If you completed Phase 1 (Investigation), use the context metrics that Phase 1 already gathered from the session. Phase 1
-investigation includes token tracking as part of event sequence verification. Reference those values directly.
+Use the context metrics that Phase 1 (Investigation) already gathered from the session. Phase 1 investigation includes
+token tracking as part of event sequence verification. Reference those values directly.
 
-For quick-tier analysis (no Phase 1): You have pre-extracted context available including session metadata. Use
-`context_degradation_analysis` block in Phase 3 (Prevent) to structure the findings you do have.
-
-## Step 4: Perform Root Cause Analysis
+## Step 3: Perform Root Cause Analysis
 
 **Reference:** See [rca-methods.md](rca-methods.md) for detailed method specifications.
 
@@ -91,11 +80,11 @@ For quick-tier analysis (no Phase 1): You have pre-extracted context available i
 }
 ```
 
-## Step 4b: RCA Depth Verification (BLOCKING GATE - M299)
+## Step 3b: RCA Depth Verification (BLOCKING GATE - M299)
 
 **MANDATORY: Verify RCA reached actual cause before proceeding.**
 
-After completing Step 4, answer these questions:
+After completing Step 3, answer these questions:
 
 ```yaml
 rca_depth_check:
@@ -120,7 +109,7 @@ rca_depth_check:
     your_answer: "_______________"
 ```
 
-### Step 4b-R: Recurrence Independence Gate (BLOCKING GATE - M416)
+### Step 3b-R: Recurrence Independence Gate (BLOCKING GATE - M416)
 
 **MANDATORY: Complete this gate to verify your RCA is independent before checking recurrence history.**
 
@@ -139,7 +128,6 @@ recurrence_independence_gate:
   step_2:
     action: "Only after step_1 is complete: Compare against Phase 1 investigation output"
     purpose: "Did Phase 1 identify the same root cause as your independent analysis?"
-    note: "If deep-tier, compare your finding against Phase 1 investigation output. If quick-tier, skip this step and proceed to step_3."
     questions:
       - "Does your finding match what Phase 1 discovered?"
       - "If they match: confirms the pattern is consistent"
@@ -159,10 +147,10 @@ RCA is complete.
 
 **BLOCKING CONDITION:** Do NOT proceed to Question 5 below until:
 1. `step_1.your_independent_root_cause` is filled in with a cause based on reading source code ONLY
-2. `step_3.your_answer` is filled in with recurrence information checked AFTER steps 1 and 2 are
-   complete (never before)
+2. `step_3.your_answer` is filled in with recurrence information checked AFTER steps 1 and 2 are complete
+   (never before)
 
-### Continuing Step 4b After Recurrence Gate
+### Continuing Step 3b After Recurrence Gate
 
 Proceed to Question 5 (Prevention vs Detection) after all steps 1-3 of the independence gate are complete.
 
@@ -205,17 +193,17 @@ If ANY answer is blank or says "agent should have...":
 Stopping at "agent did X wrong" is describing the SYMPTOM, not the CAUSE.
 The cause is always in the system that allowed or encouraged the wrong action.
 
-## Step 4c: Multiple Independent Mistakes
+## Step 3c: Multiple Independent Mistakes
 
 **If investigation reveals multiple independent mistakes:** Read `MULTIPLE-MISTAKES.md` and follow its workflow.
 
 Each independent mistake gets its own `/cat:learn` invocation with full RCA and prevention implementation.
 
-## Step 4d: Architectural Root Cause Analysis
+## Step 3d: Architectural Root Cause Analysis
 
 **CRITICAL: Check for recurring patterns that indicate architectural flaws.**
 
-When a mistake has recurrences (use `recurrence_of` from Step 4b-R step_3 output), independently verify the root cause.
+When a mistake has recurrences (use `recurrence_of` from Step 3b-R step_3 output), independently verify the root cause.
 Do NOT assume past analyses were correct -- they may have had wrong conclusions that cascaded.
 
 **Recurrence Chain Check:**
@@ -283,7 +271,7 @@ minimal - remove all explanatory content that could prime analytical thinking.
 }
 ```
 
-## Step 4e: Investigate Hook Workarounds
+## Step 3e: Investigate Hook Workarounds
 
 **If mistake involves bypassing a hook:** Read `HOOK-WORKAROUNDS.md` and follow its investigation checklist.
 
