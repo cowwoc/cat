@@ -4,13 +4,13 @@
  * Licensed under the CAT Commercial License.
  * See LICENSE.md in the project root for license terms.
  */
-package io.github.cowwoc.cat.hooks.task;
+package io.github.cowwoc.cat.hooks.bash;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.TaskHandler;
 import io.github.cowwoc.cat.hooks.util.SessionFileUtils;
 import io.github.cowwoc.cat.hooks.util.TrustLevel;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
@@ -27,18 +27,14 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 /**
- * Block work-merge invocations when trust=medium/low without explicit user approval.
+ * Block direct invocations of the merge-and-cleanup binary when trust=medium/low without explicit
+ * user approval.
  * <p>
- * This handler enforces the trust-based approval requirement:
- * <ul>
- *   <li>trust=high: No approval needed (skip this check)</li>
- *   <li>trust=medium/low: MUST have explicit user approval before merge</li>
- * </ul>
- * <p>
- * Prevention: Blocks Task tool (subagent_type=cat:work-merge) and Skill tool (skill=cat:work-merge)
- * invocations without prior approval.
+ * Agents that skip the work-with-issue approval gate (Step 8) and invoke the merge-and-cleanup binary
+ * directly via Bash tool bypass the Task-tool-level enforcement in EnforceApprovalBeforeMerge. This
+ * handler closes that bypass route by enforcing the same approval check at the Bash tool level.
  */
-public final class EnforceApprovalBeforeMerge implements TaskHandler
+public final class BlockUnauthorizedMergeCleanup implements BashHandler
 {
   /**
    * Number of recent JSONL lines to scan for approval messages. 75 lines covers approximately
@@ -62,40 +58,25 @@ public final class EnforceApprovalBeforeMerge implements TaskHandler
   private final JvmScope scope;
 
   /**
-   * Creates a new EnforceApprovalBeforeMerge handler.
+   * Creates a new handler for blocking unauthorized merge-and-cleanup invocations.
    *
    * @param scope the JVM scope
    * @throws NullPointerException if {@code scope} is null
    */
-  public EnforceApprovalBeforeMerge(JvmScope scope)
+  public BlockUnauthorizedMergeCleanup(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
   }
 
   @Override
-  public Result check(JsonNode toolInput, String sessionId, String cwd)
+  public Result check(String command, String workingDirectory, JsonNode toolInput, JsonNode toolResult,
+    String sessionId)
   {
-    requireThat(toolInput, "toolInput").isNotNull();
-    requireThat(sessionId, "sessionId").isNotBlank();
-    requireThat(cwd, "cwd").isNotNull();
+    requireThat(command, "command").isNotNull();
 
-    // Detect work-merge via Task tool (subagent_type) or Skill tool (skill)
-    JsonNode subagentTypeNode = toolInput.get("subagent_type");
-    String subagentType;
-    if (subagentTypeNode != null)
-      subagentType = subagentTypeNode.asString();
-    else
-      subagentType = "";
-
-    JsonNode skillNode = toolInput.get("skill");
-    String skill;
-    if (skillNode != null)
-      skill = skillNode.asString();
-    else
-      skill = "";
-
-    if (!subagentType.equals("cat:work-merge") && !skill.equals("cat:work-merge"))
+    // Only intercept commands that invoke the merge-and-cleanup binary
+    if (!command.contains("merge-and-cleanup"))
       return Result.allow();
 
     TrustLevel trust;
@@ -111,50 +92,46 @@ public final class EnforceApprovalBeforeMerge implements TaskHandler
     if (trust == TrustLevel.HIGH)
       return Result.allow();
 
-    if (sessionId.isEmpty())
+    if (sessionId == null || sessionId.isBlank())
     {
-      String reason = "FAIL: Cannot verify user approval - session ID not available.\n" +
-                      "\n" +
-                      "Trust level is \"" + trust + "\" which requires explicit approval before merge.\n" +
-                      "\n" +
-                      "BLOCKING: This merge attempt is blocked until user approval can be verified.";
-      return Result.block(reason);
+      return Result.block("""
+        FAIL: Cannot verify user approval - session ID not available.
+
+        Trust level requires explicit approval before merge.
+
+        BLOCKING: This merge attempt is blocked until user approval can be verified.""");
     }
 
     Path sessionFile = scope.getSessionBasePath().resolve(sessionId + ".jsonl");
 
     if (!Files.exists(sessionFile))
     {
-      String reason = "FAIL: Cannot verify user approval - session file not found.\n" +
-                      "\n" +
-                      "Trust level is \"" + trust + "\" which requires explicit approval before merge.\n" +
-                      "\n" +
-                      "BLOCKING: This merge attempt is blocked until user approval can be verified.";
-      return Result.block(reason);
+      return Result.block("""
+        FAIL: Cannot verify user approval - session file not found.
+
+        Trust level requires explicit approval before merge.
+
+        BLOCKING: This merge attempt is blocked until user approval can be verified.""");
     }
 
     if (checkApprovalInSession(sessionFile))
       return Result.allow();
 
-    String reason = "FAIL: Explicit user approval required before merge\n" +
-                    "\n" +
-                    "Trust level: " + trust + "\n" +
-                    "Requirement: Explicit user approval via AskUserQuestion or direct message\n" +
-                    "\n" +
-                    "BLOCKING: No approval detected in session history.\n" +
-                    "\n" +
-                    "Approval can be given in two ways:\n" +
-                    "1. AskUserQuestion wizard: Select \"Approve and merge\" from the approval gate options\n" +
-                    "2. Direct message: Type \"approve and merge\" (or \"approve merge\") in the chat\n" +
-                    "\n" +
-                    "Do NOT proceed to merge based on:\n" +
-                    "- Silence or lack of objection\n" +
-                    "- System reminders or notifications\n" +
-                    "- Assumed approval\n" +
-                    "\n" +
-                    "Fail-fast principle: Unknown consent = No consent = STOP";
+    return Result.block("""
+      FAIL: Explicit user approval required before merge
 
-    return Result.block(reason);
+      Invoking merge-and-cleanup directly bypasses the Step 8 Approval Gate in work-with-issue.
+
+      BLOCKING: No approval detected in session history.
+
+      The correct merge path is:
+      1. Complete Step 8 (Approval Gate) in work-with-issue - present AskUserQuestion to the user
+      2. After user selects "Approve and merge", invoke merge via Task tool (subagent_type: cat:work-merge)
+         or Skill tool (skill: cat:work-merge)
+
+      Do NOT invoke merge-and-cleanup directly via Bash - this bypasses the approval gate.
+
+      Fail-fast principle: Unknown consent = No consent = STOP""");
   }
 
   /**

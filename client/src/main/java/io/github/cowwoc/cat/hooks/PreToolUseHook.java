@@ -10,6 +10,7 @@ import static io.github.cowwoc.cat.hooks.Strings.equalsIgnoreCase;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.bash.BlockLockManipulation;
+import io.github.cowwoc.cat.hooks.bash.BlockUnauthorizedMergeCleanup;
 import io.github.cowwoc.cat.hooks.bash.BlockWorktreeIsolationViolation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,9 @@ import java.util.List;
  * <p>
  * TRIGGER: PreToolUse (matcher: Bash)
  * <p>
- * Consolidates all Bash command validation hooks into a single Java dispatcher.
+ * Consolidates all Bash command validation hooks into a single Java dispatcher. Includes
+ * {@link BlockUnauthorizedMergeCleanup} to prevent agents from invoking the merge-and-cleanup binary
+ * directly via Bash — a bypass route that circumvents the Task-tool-level approval enforcement.
  * <p>
  * Handlers can:
  * <ul>
@@ -63,6 +66,7 @@ public final class PreToolUseHook implements HookHandler
       new BlockMergeCommits(),
       new BlockReflogDestruction(),
       new BlockUnsafeRemoval(scope),
+      new BlockUnauthorizedMergeCleanup(scope),
       new BlockWorktreeIsolationViolation(scope),
       new ComputeBoxLines(scope),
       new RemindGitSquash(),

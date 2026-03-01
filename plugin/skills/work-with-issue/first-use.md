@@ -775,12 +775,16 @@ fi
 
 **Auto-fix loop for concerns (based on configured autofix threshold):**
 
-**Proceed automatically without asking the user.** When stakeholder review returns REJECTED, always enter the
-auto-fix loop — CRITICAL concerns must be fixed before merge. When review returns CONCERNS_FOUND, concerns flow
-through the pipeline: `minSeverity` filter (silently drops concerns below threshold) → patience cost/benefit matrix
-(marks each surviving concern as FIX or DEFER) → only FIX-marked concerns at or above `AUTOFIX_THRESHOLD` enter
-the auto-fix loop. In all cases, do NOT present options to the user or ask what to do — spawn fix subagents and
-continue. The user already approved the workflow by invoking `/cat:work`.
+**Spawn fix subagents without asking the user during the auto-fix loop.** When stakeholder review returns
+REJECTED, always enter the auto-fix loop — CRITICAL concerns must be fixed before merge. When review returns
+CONCERNS_FOUND, concerns flow through the pipeline: `minSeverity` filter (silently drops concerns below
+threshold) → patience cost/benefit matrix (marks each surviving concern as FIX or DEFER) → only FIX-marked
+concerns at or above `AUTOFIX_THRESHOLD` enter the auto-fix loop. In all cases, do NOT present options to the
+user or ask what to do during this fix loop — spawn fix subagents and continue.
+
+**CRITICAL: The auto-fix loop applies ONLY to spawning fix subagents. Steps 6, 7, and 8 (Deferred Concern
+Review, Rebase and Squash, and Approval Gate) MUST still be executed after the loop completes. The user
+must explicitly approve the merge via Step 8 when trust != "high".**
 
 Initialize loop counter: `AUTOFIX_ITERATION=0`
 
