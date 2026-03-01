@@ -19,6 +19,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.UUID;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -511,17 +512,18 @@ public class WorkPrepareTest
       GitCommands.runGit(projectDir, "add", ".");
       GitCommands.runGit(projectDir, "commit", "-m", "Add issue");
 
-      // Create a lock file owned by a different session
+      // Create a lock file owned by a different session with recent timestamp (non-stale)
       Path locksDir = projectDir.resolve(".claude").resolve("cat").resolve("locks");
       Files.createDirectories(locksDir);
       String otherSession = UUID.randomUUID().toString();
+      long recentTimestamp = Instant.now().getEpochSecond();
       String lockContent = """
         {
           "session_id": "%s",
           "worktrees": {"/some/worktree": "%s"},
-          "created_at": 1700000000,
-          "created_iso": "2026-02-01T00:00:00Z"
-        }""".formatted(otherSession, otherSession);
+          "created_at": %d,
+          "created_iso": "2026-03-01T23:00:00Z"
+        }""".formatted(otherSession, otherSession, recentTimestamp);
       Files.writeString(locksDir.resolve("2.1-locked-feature.lock"), lockContent);
 
       WorkPrepare prepare = new WorkPrepare(scope);
