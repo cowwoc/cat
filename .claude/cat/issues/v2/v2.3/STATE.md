@@ -33,6 +33,7 @@ Abstract storage layer to support multiple issue tracking backends.
 - compress-skills-md
 - compress-stakeholders-md
 - compress-templates-md
+- add-backlog-support
 
 ## Issues Completed
 - compress-commands-md
