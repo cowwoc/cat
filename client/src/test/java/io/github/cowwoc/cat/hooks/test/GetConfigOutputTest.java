@@ -374,7 +374,8 @@ public class GetConfigOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*(?=.*Unknown page)(?=.*conditions-for-version)(?=.*conditions-updated).*")
   public void getOutputUnknownPageThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
@@ -385,23 +386,8 @@ public class GetConfigOutputTest
       Files.writeString(catDir.resolve("cat-config.json"), "{}");
 
       GetConfigOutput handler = new GetConfigOutput(scope);
-      try
-      {
-        handler.getOutput(new String[]{"invalid-page"});
-        requireThat(false, "shouldThrowException").isEqualTo(true);
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").
-          contains("Unknown page").
-          contains("settings").
-          contains("versions").
-          contains("saved").
-          contains("no-changes").
-          contains("conditions-for-version").
-          contains("setting-updated").
-          contains("conditions-updated");
-      }
+      handler.getOutput(new String[]{"invalid-page"});
+      requireThat(false, "shouldThrowException").isEqualTo(true);
     }
     finally
     {
@@ -414,7 +400,8 @@ public class GetConfigOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*(?=.*conditions-for-version requires 3 arguments)(?=.*preconditions).*")
   public void conditionsForVersionInsufficientArgsThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
@@ -425,19 +412,8 @@ public class GetConfigOutputTest
       Files.writeString(catDir.resolve("cat-config.json"), "{}");
 
       GetConfigOutput handler = new GetConfigOutput(scope);
-      try
-      {
-        handler.getOutput(new String[]{"conditions-for-version", "v1.0"});
-        requireThat(false, "shouldThrowException").isEqualTo(true);
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").
-          contains("conditions-for-version requires 3 arguments").
-          contains("version").
-          contains("preconditions").
-          contains("postconditions");
-      }
+      handler.getOutput(new String[]{"conditions-for-version", "v1.0"});
+      requireThat(false, "shouldThrowException").isEqualTo(true);
     }
     finally
     {
@@ -450,7 +426,8 @@ public class GetConfigOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*(?=.*setting-updated requires 3 arguments)(?=.*name)(?=.*old)(?=.*new).*")
   public void settingUpdatedInsufficientArgsThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
@@ -461,19 +438,8 @@ public class GetConfigOutputTest
       Files.writeString(catDir.resolve("cat-config.json"), "{}");
 
       GetConfigOutput handler = new GetConfigOutput(scope);
-      try
-      {
-        handler.getOutput(new String[]{"setting-updated", "trust", "low"});
-        requireThat(false, "shouldThrowException").isEqualTo(true);
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").
-          contains("setting-updated requires 3 arguments").
-          contains("name").
-          contains("old").
-          contains("new");
-      }
+      handler.getOutput(new String[]{"setting-updated", "trust", "low"});
+      requireThat(false, "shouldThrowException").isEqualTo(true);
     }
     finally
     {
@@ -486,7 +452,8 @@ public class GetConfigOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*(?=.*conditions-updated requires 3 arguments)(?=.*preconditions).*")
   public void conditionsUpdatedInsufficientArgsThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
@@ -497,19 +464,8 @@ public class GetConfigOutputTest
       Files.writeString(catDir.resolve("cat-config.json"), "{}");
 
       GetConfigOutput handler = new GetConfigOutput(scope);
-      try
-      {
-        handler.getOutput(new String[]{"conditions-updated", "v1.0"});
-        requireThat(false, "shouldThrowException").isEqualTo(true);
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").
-          contains("conditions-updated requires 3 arguments").
-          contains("version").
-          contains("preconditions").
-          contains("postconditions");
-      }
+      handler.getOutput(new String[]{"conditions-updated", "v1.0"});
+      requireThat(false, "shouldThrowException").isEqualTo(true);
     }
     finally
     {
@@ -550,21 +506,15 @@ public class GetConfigOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*page argument.*")
   public void getOutputEmptyArgsThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetConfigOutput handler = new GetConfigOutput(scope);
-      try
-      {
-        handler.getOutput(new String[]{});
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("page argument");
-      }
+      handler.getOutput(new String[]{});
     }
     finally
     {

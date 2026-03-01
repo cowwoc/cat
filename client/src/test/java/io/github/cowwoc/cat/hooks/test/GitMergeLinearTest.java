@@ -13,7 +13,6 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 
-import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
  * Tests for GitMergeLinear validation and error handling.
@@ -27,21 +26,15 @@ public class GitMergeLinearTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*sourceBranch.*")
   public void executeRejectsNullSourceBranch() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GitMergeLinear cmd = new GitMergeLinear(scope, ".");
 
-      try
-      {
-        cmd.execute(null, "main");
-      }
-      catch (NullPointerException e)
-      {
-        requireThat(e.getMessage(), "message").contains("sourceBranch");
-      }
+      cmd.execute(null, "main");
     }
   }
 
@@ -50,21 +43,15 @@ public class GitMergeLinearTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*sourceBranch.*")
   public void executeRejectsBlankSourceBranch() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GitMergeLinear cmd = new GitMergeLinear(scope, ".");
 
-      try
-      {
-        cmd.execute("", "main");
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("sourceBranch");
-      }
+      cmd.execute("", "main");
     }
   }
 
@@ -73,21 +60,15 @@ public class GitMergeLinearTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*targetBranch.*")
   public void executeRejectsNullTargetBranch() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GitMergeLinear cmd = new GitMergeLinear(scope, ".");
 
-      try
-      {
-        cmd.execute("task-branch", null);
-      }
-      catch (NullPointerException e)
-      {
-        requireThat(e.getMessage(), "message").contains("targetBranch");
-      }
+      cmd.execute("task-branch", null);
     }
   }
 
@@ -98,21 +79,15 @@ public class GitMergeLinearTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*targetBranch.*")
   public void executeRejectsBlankTargetBranch() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GitMergeLinear cmd = new GitMergeLinear(scope, ".");
 
-      try
-      {
-        cmd.execute("task-branch", "");
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("targetBranch");
-      }
+      cmd.execute("task-branch", "");
     }
   }
 }

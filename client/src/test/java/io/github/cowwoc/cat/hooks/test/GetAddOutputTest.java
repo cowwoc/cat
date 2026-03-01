@@ -229,21 +229,15 @@ public class GetAddOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*itemType.*")
   public void getOutputRejectsNullItemType() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetAddOutput output = new GetAddOutput(scope);
-      try
-      {
-        output.getOutput(null, List.of("test-issue"), "1.0", IssueType.FEATURE, List.of(), "", "");
-      }
-      catch (NullPointerException e)
-      {
-        requireThat(e.getMessage(), "message").contains("itemType");
-      }
+      output.getOutput(null, List.of("test-issue"), "1.0", IssueType.FEATURE, List.of(), "", "");
     }
     finally
     {
@@ -256,21 +250,15 @@ public class GetAddOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*itemNames.*")
   public void getOutputRejectsEmptyItemNames() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetAddOutput output = new GetAddOutput(scope);
-      try
-      {
-        output.getOutput(ItemType.ISSUE, List.of(), "1.0", IssueType.FEATURE, List.of(), "", "");
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("itemNames");
-      }
+      output.getOutput(ItemType.ISSUE, List.of(), "1.0", IssueType.FEATURE, List.of(), "", "");
     }
     finally
     {
@@ -283,21 +271,15 @@ public class GetAddOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*version.*")
   public void getOutputRejectsBlankVersion() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetAddOutput output = new GetAddOutput(scope);
-      try
-      {
-        output.getOutput(ItemType.ISSUE, List.of("test-issue"), "", IssueType.FEATURE, List.of(), "", "");
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("version");
-      }
+      output.getOutput(ItemType.ISSUE, List.of("test-issue"), "", IssueType.FEATURE, List.of(), "", "");
     }
     finally
     {
@@ -310,21 +292,15 @@ public class GetAddOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*dependencies.*")
   public void getOutputRejectsNullDependencies() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetAddOutput output = new GetAddOutput(scope);
-      try
-      {
-        output.getOutput(ItemType.ISSUE, List.of("test-issue"), "1.0", IssueType.FEATURE, null, "", "");
-      }
-      catch (NullPointerException e)
-      {
-        requireThat(e.getMessage(), "message").contains("dependencies");
-      }
+      output.getOutput(ItemType.ISSUE, List.of("test-issue"), "1.0", IssueType.FEATURE, null, "", "");
     }
     finally
     {
@@ -337,21 +313,15 @@ public class GetAddOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Unknown argument.*")
   public void getOutputRejectsUnknownArgument() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetAddOutput output = new GetAddOutput(scope);
-      try
-      {
-        output.getOutput(new String[]{"--unknown", "value"});
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("Unknown argument");
-      }
+      output.getOutput(new String[]{"--unknown", "value"});
     }
     finally
     {
@@ -364,21 +334,15 @@ public class GetAddOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Missing PATH.*")
   public void getOutputRejectsMissingProjectDirValue() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetAddOutput output = new GetAddOutput(scope);
-      try
-      {
-        output.getOutput(new String[]{"--project-dir"});
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("Missing PATH");
-      }
+      output.getOutput(new String[]{"--project-dir"});
     }
     finally
     {
@@ -391,21 +355,15 @@ public class GetAddOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*itemNames.*")
   public void getOutputRejectsNullItemNames() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetAddOutput output = new GetAddOutput(scope);
-      try
-      {
-        output.getOutput(ItemType.ISSUE, null, "1.0", IssueType.FEATURE, List.of(), "", "");
-      }
-      catch (NullPointerException e)
-      {
-        requireThat(e.getMessage(), "message").contains("itemNames");
-      }
+      output.getOutput(ItemType.ISSUE, null, "1.0", IssueType.FEATURE, List.of(), "", "");
     }
     finally
     {
@@ -418,21 +376,15 @@ public class GetAddOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*version.*")
   public void getOutputRejectsWhitespaceOnlyVersion() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetAddOutput output = new GetAddOutput(scope);
-      try
-      {
-        output.getOutput(ItemType.ISSUE, List.of("test"), "   ", IssueType.FEATURE, List.of(), "", "");
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("version");
-      }
+      output.getOutput(ItemType.ISSUE, List.of("test"), "   ", IssueType.FEATURE, List.of(), "", "");
     }
     finally
     {

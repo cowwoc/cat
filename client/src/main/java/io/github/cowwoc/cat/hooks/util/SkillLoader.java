@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
  *       first-use.md            — Skill content with optional {@code <output>} tag
  * </pre>
  * <p>
- * <b>Tag-based content:</b> The SKILL.md file may contain an optional {@code <output>} tag that separates
+ * <b>Tag-based content:</b> The first-use.md file may contain an optional {@code <output>} tag that separates
  * static instructions from dynamic preprocessor content. Everything before the last {@code <output>} tag
  * is treated as skill instructions. On first use, instructions are wrapped in
  * {@code <instructions skill="X">} tags and followed by an execution trigger. On subsequent uses, only
@@ -220,6 +220,10 @@ public final class SkillLoader
   /**
    * Processes loaded skill content by applying the first-use/reference logic and variable substitution.
    * <p>
+   * Variable substitution and preprocessor directive expansion run first, so that dynamically
+   * generated {@code <output>} tags (produced by preprocessor directives) are visible to
+   * {@code parseContent()}.
+   * <p>
    * For skills with {@code <output>} tags: on first use, wraps instructions in
    * {@code <instructions skill="X">} tags followed by an execution trigger. On subsequent uses,
    * only the execution trigger is emitted. The {@code <output>} section is always appended.
@@ -231,7 +235,8 @@ public final class SkillLoader
    */
   private String processContent(String skillName, String content) throws IOException
   {
-    ParsedContent parsed = parseContent(content);
+    String expanded = substituteVars(content);
+    ParsedContent parsed = parseContent(expanded);
 
     if (parsed != null)
     {
@@ -246,21 +251,20 @@ public final class SkillLoader
       else
       {
         output.append("<instructions skill=\"").append(skillName).append("\">\n").
-          append(substituteVars(parsed.instructions())).
+          append(parsed.instructions()).
           append("\n</instructions>\n\n").
           append(executeRef);
         markSkillLoaded(skillName);
       }
       if (!parsed.outputBody().isEmpty())
       {
-        String processedOutput = substituteVars(parsed.outputBody());
         output.append("\n\n<output skill=\"").append(skillName).append("\">\n").
-          append(processedOutput).append("\n</output>");
+          append(parsed.outputBody()).append("\n</output>");
       }
       return output.toString();
     }
 
-    // Content without tags — apply variable substitution
+    // Content without tags — variable substitution already applied
     StringBuilder output = new StringBuilder(4096);
     if (loadedSkills.contains(skillName))
     {
@@ -272,7 +276,7 @@ public final class SkillLoader
     }
     else
     {
-      output.append(substituteVars(content));
+      output.append(expanded);
       markSkillLoaded(skillName);
     }
     return output.toString();

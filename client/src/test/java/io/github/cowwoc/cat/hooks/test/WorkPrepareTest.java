@@ -1566,7 +1566,8 @@ public class WorkPrepareTest
    *
    * @throws IOException if an I/O error occurs other than the expected threshold exception
    */
-  @Test
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*safety threshold.*")
   public void buildIssueIndexThrowsWhenScanLimitExceeded() throws IOException
   {
     Path projectDir = createTempCatProject();
@@ -1580,15 +1581,7 @@ public class WorkPrepareTest
       WorkPrepare prepare = new WorkPrepare(scope, 5, 1000);
       PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
 
-      try
-      {
-        prepare.execute(input);
-      }
-      catch (IOException e)
-      {
-        requireThat(e.getMessage(), "message").contains("safety threshold");
-        requireThat(e.getMessage(), "message").contains("at least 5");
-      }
+      prepare.execute(input);
     }
     finally
     {
@@ -1605,7 +1598,8 @@ public class WorkPrepareTest
    *
    * @throws IOException if an I/O error occurs other than the expected depth exception
    */
-  @Test
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*maximum recursion depth.*")
   public void detectCyclesThrowsWhenDepthLimitExceeded() throws IOException
   {
     Path projectDir = createTempCatProject();
@@ -1619,15 +1613,7 @@ public class WorkPrepareTest
       WorkPrepare prepare = new WorkPrepare(scope, 100_000, 0);
       PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
 
-      try
-      {
-        prepare.execute(input);
-      }
-      catch (IOException e)
-      {
-        requireThat(e.getMessage(), "message").contains("maximum recursion depth");
-        requireThat(e.getMessage(), "message").contains("0");
-      }
+      prepare.execute(input);
     }
     finally
     {

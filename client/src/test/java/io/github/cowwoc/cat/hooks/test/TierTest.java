@@ -56,64 +56,40 @@ public final class TierTest
   /**
    * Verifies that fromString("indie") throws IllegalArgumentException (old name rejected).
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*indie.*")
   public void fromStringIndieThrowsIllegalArgument()
   {
-    try
-    {
-      Tier.fromString("indie");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("indie");
-    }
+    Tier.fromString("indie");
   }
 
   /**
    * Verifies that fromString("team") throws IllegalArgumentException (old name rejected).
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*team.*")
   public void fromStringTeamThrowsIllegalArgument()
   {
-    try
-    {
-      Tier.fromString("team");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("team");
-    }
+    Tier.fromString("team");
   }
 
   /**
    * Verifies that fromString throws IllegalArgumentException for blank input.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".+")
   public void fromStringBlankThrowsIllegalArgument()
   {
-    try
-    {
-      Tier.fromString("");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").isNotEmpty();
-    }
+    Tier.fromString("");
   }
 
   /**
    * Verifies that fromString throws NullPointerException for null input.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*name.*")
   public void fromStringNullThrowsNullPointerException()
   {
-    try
-    {
-      Tier.fromString(null);
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("name");
-    }
+    Tier.fromString(null);
   }
 }

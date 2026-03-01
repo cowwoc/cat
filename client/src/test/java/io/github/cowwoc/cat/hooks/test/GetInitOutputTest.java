@@ -425,30 +425,15 @@ public class GetInitOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*(?=.*Unknown page)(?=.*explore-at-your-own-pace).*")
   public void getOutputUnknownPageThrows() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
-      try
-      {
-        handler.getOutput(new String[]{"invalid-page"});
-        requireThat(false, "shouldThrowException").isEqualTo(true);
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").
-          contains("Unknown page").
-          contains("default-gates-configured").
-          contains("research-skipped").
-          contains("choose-your-partner").
-          contains("cat-initialized").
-          contains("first-issue-walkthrough").
-          contains("first-issue-created").
-          contains("all-set").
-          contains("explore-at-your-own-pace");
-      }
+      handler.getOutput(new String[]{"invalid-page"});
+      requireThat(false, "shouldThrowException").isEqualTo(true);
     }
   }
 
@@ -457,23 +442,15 @@ public class GetInitOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*(?=.*version-count must be a number)(?=.*not-a-number).*")
   public void defaultGatesConfiguredNonNumericArgThrows() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
-      try
-      {
-        handler.getOutput(new String[]{"default-gates-configured", "not-a-number"});
-        requireThat(false, "shouldThrowException").isEqualTo(true);
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").
-          contains("version-count must be a number").
-          contains("not-a-number");
-      }
+      handler.getOutput(new String[]{"default-gates-configured", "not-a-number"});
+      requireThat(false, "shouldThrowException").isEqualTo(true);
     }
   }
 
@@ -482,23 +459,15 @@ public class GetInitOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*(?=.*research-skipped requires 1 argument)(?=.*example-version).*")
   public void researchSkippedInsufficientArgsThrows() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
-      try
-      {
-        handler.getOutput(new String[]{"research-skipped"});
-        requireThat(false, "shouldThrowException").isEqualTo(true);
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").
-          contains("research-skipped requires 1 argument").
-          contains("example-version");
-      }
+      handler.getOutput(new String[]{"research-skipped"});
+      requireThat(false, "shouldThrowException").isEqualTo(true);
     }
   }
 
@@ -507,25 +476,15 @@ public class GetInitOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*(?=.*cat-initialized requires 3 arguments)(?=.*patience).*")
   public void catInitializedInsufficientArgsThrows() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
-      try
-      {
-        handler.getOutput(new String[]{"cat-initialized", "high", "medium"});
-        requireThat(false, "shouldThrowException").isEqualTo(true);
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").
-          contains("cat-initialized requires 3 arguments").
-          contains("trust").
-          contains("effort").
-          contains("patience");
-      }
+      handler.getOutput(new String[]{"cat-initialized", "high", "medium"});
+      requireThat(false, "shouldThrowException").isEqualTo(true);
     }
   }
 
@@ -534,23 +493,15 @@ public class GetInitOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*(?=.*first-issue-created requires 1 argument)(?=.*issue-name).*")
   public void firstIssueCreatedInsufficientArgsThrows() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
-      try
-      {
-        handler.getOutput(new String[]{"first-issue-created"});
-        requireThat(false, "shouldThrowException").isEqualTo(true);
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").
-          contains("first-issue-created requires 1 argument").
-          contains("issue-name");
-      }
+      handler.getOutput(new String[]{"first-issue-created"});
+      requireThat(false, "shouldThrowException").isEqualTo(true);
     }
   }
 

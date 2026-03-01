@@ -242,7 +242,8 @@ public final class EntitlementsTest
    *
    * @throws IOException if test setup fails
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Unknown tier.*")
   public void unknownTierThrowsException() throws IOException
   {
     Path tempDir = createTempTiersConfig("""
@@ -261,14 +262,7 @@ public final class EntitlementsTest
       {
         Entitlements entitlements = new Entitlements(scope);
 
-        try
-        {
-          entitlements.getTierFeatures(Tier.PRO);
-        }
-        catch (IllegalArgumentException e)
-        {
-          requireThat(e.getMessage(), "message").contains("Unknown tier");
-        }
+        entitlements.getTierFeatures(Tier.PRO);
       }
       finally
       {

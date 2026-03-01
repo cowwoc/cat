@@ -28,74 +28,43 @@ public class BatchReaderTest
   /**
    * Verifies that Config validates null pattern.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*pattern.*")
   public void configValidatesNullPattern()
   {
-    try
-    {
-      new Config(null, 5, 100, "");
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("pattern");
-    }
+    new Config(null, 5, 100, "");
   }
 
   /**
    * Verifies that Config validates non-positive maxFiles.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*maxFiles.*")
   public void configValidatesNonPositiveMaxFiles()
   {
-    try
-    {
-      new Config("pattern", 0, 100, "");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("maxFiles");
-    }
+    new Config("pattern", 0, 100, "");
 
-    try
-    {
-      new Config("pattern", -1, 100, "");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("maxFiles");
-    }
+    new Config("pattern", -1, 100, "");
   }
 
   /**
    * Verifies that Config validates negative contextLines.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*contextLines.*")
   public void configValidatesNegativeContextLines()
   {
-    try
-    {
-      new Config("pattern", 5, -1, "");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("contextLines");
-    }
+    new Config("pattern", 5, -1, "");
   }
 
   /**
    * Verifies that Config validates null fileType.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*fileType.*")
   public void configValidatesNullFileType()
   {
-    try
-    {
-      new Config("pattern", 5, 100, null);
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("fileType");
-    }
+    new Config("pattern", 5, 100, null);
   }
 
   /**
@@ -150,145 +119,91 @@ public class BatchReaderTest
   /**
    * Verifies that Result validates null status.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*status.*")
   public void resultValidatesNullStatus()
   {
-    try
-    {
-      new Result(null, "msg", 0L, "pattern", 0, 0, "", "/dir", "2024-01-01T00:00:00Z");
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("status");
-    }
+    new Result(null, "msg", 0L, "pattern", 0, 0, "", "/dir", "2024-01-01T00:00:00Z");
   }
 
   /**
    * Verifies that Result validates null message.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*message.*")
   public void resultValidatesNullMessage()
   {
-    try
-    {
-      new Result(OperationStatus.SUCCESS, null, 0L, "pattern", 0, 0, "", "/dir", "2024-01-01T00:00:00Z");
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("message");
-    }
+    new Result(OperationStatus.SUCCESS, null, 0L, "pattern", 0, 0, "", "/dir", "2024-01-01T00:00:00Z");
   }
 
   /**
    * Verifies that Result validates negative durationSeconds.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*durationSeconds.*")
   public void resultValidatesNegativeDurationSeconds()
   {
-    try
-    {
-      new Result(OperationStatus.SUCCESS, "msg", -1L, "pattern", 0, 0, "", "/dir", "2024-01-01T00:00:00Z");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("durationSeconds");
-    }
+    new Result(OperationStatus.SUCCESS, "msg", -1L, "pattern", 0, 0, "", "/dir", "2024-01-01T00:00:00Z");
   }
 
   /**
    * Verifies that Result validates null pattern.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*pattern.*")
   public void resultValidatesNullPattern()
   {
-    try
-    {
-      new Result(OperationStatus.SUCCESS, "msg", 0L, null, 0, 0, "", "/dir", "2024-01-01T00:00:00Z");
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("pattern");
-    }
+    new Result(OperationStatus.SUCCESS, "msg", 0L, null, 0, 0, "", "/dir", "2024-01-01T00:00:00Z");
   }
 
   /**
    * Verifies that Result validates negative filesFound.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*filesFound.*")
   public void resultValidatesNegativeFilesFound()
   {
-    try
-    {
-      new Result(OperationStatus.SUCCESS, "msg", 0L, "pattern", -1, 0, "", "/dir", "2024-01-01T00:00:00Z");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("filesFound");
-    }
+    new Result(OperationStatus.SUCCESS, "msg", 0L, "pattern", -1, 0, "", "/dir", "2024-01-01T00:00:00Z");
   }
 
   /**
    * Verifies that Result validates negative filesRead.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*filesRead.*")
   public void resultValidatesNegativeFilesRead()
   {
-    try
-    {
-      new Result(OperationStatus.SUCCESS, "msg", 0L, "pattern", 0, -1, "", "/dir", "2024-01-01T00:00:00Z");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("filesRead");
-    }
+    new Result(OperationStatus.SUCCESS, "msg", 0L, "pattern", 0, -1, "", "/dir", "2024-01-01T00:00:00Z");
   }
 
   /**
    * Verifies that Result validates null outputContent.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*outputContent.*")
   public void resultValidatesNullOutputContent()
   {
-    try
-    {
-      new Result(OperationStatus.SUCCESS, "msg", 0L, "pattern", 0, 0, null, "/dir", "2024-01-01T00:00:00Z");
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("outputContent");
-    }
+    new Result(OperationStatus.SUCCESS, "msg", 0L, "pattern", 0, 0, null, "/dir", "2024-01-01T00:00:00Z");
   }
 
   /**
    * Verifies that Result validates null workingDirectory.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*workingDirectory.*")
   public void resultValidatesNullWorkingDirectory()
   {
-    try
-    {
-      new Result(OperationStatus.SUCCESS, "msg", 0L, "pattern", 0, 0, "", null, "2024-01-01T00:00:00Z");
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("workingDirectory");
-    }
+    new Result(OperationStatus.SUCCESS, "msg", 0L, "pattern", 0, 0, "", null, "2024-01-01T00:00:00Z");
   }
 
   /**
    * Verifies that Result validates null timestamp.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*timestamp.*")
   public void resultValidatesNullTimestamp()
   {
-    try
-    {
-      new Result(OperationStatus.SUCCESS, "msg", 0L, "pattern", 0, 0, "", "/dir", null);
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("timestamp");
-    }
+    new Result(OperationStatus.SUCCESS, "msg", 0L, "pattern", 0, 0, "", "/dir", null);
   }
 
   /**
@@ -358,17 +273,10 @@ public class BatchReaderTest
   /**
    * Verifies that parseIntFlag throws IllegalArgumentException for non-integer input.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*--max-files.*")
   public void parseIntFlagThrowsForNonIntegerValue()
   {
-    try
-    {
-      BatchReader.parseIntFlag("--max-files", "not-a-number");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("--max-files");
-      requireThat(e.getMessage(), "message").contains("not-a-number");
-    }
+    BatchReader.parseIntFlag("--max-files", "not-a-number");
   }
 }

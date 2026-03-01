@@ -494,7 +494,8 @@ public final class SubagentStartHookTest
    *
    * @throws IOException if file operations fail
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*agent_id.*")
   public void getAgentIdContextAbsentWhenAgentIdBlank() throws IOException
   {
     Path projectDir = Files.createTempDirectory("cat-test-agent-id-blank-");
@@ -505,14 +506,7 @@ public final class SubagentStartHookTest
       HookInput input = createInput(mapper,
         "{\"session_id\": \"test-session-abc\", \"agent_id\": \"\"}");
       HookOutput output = new HookOutput(scope);
-      try
-      {
-        new SubagentStartHook(scope).run(input, output);
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("agent_id");
-      }
+      new SubagentStartHook(scope).run(input, output);
     }
     finally
     {
@@ -526,7 +520,8 @@ public final class SubagentStartHookTest
    *
    * @throws IOException if file operations fail
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*session_id.*")
   public void getAgentIdContextAbsentWhenSessionIdBlank() throws IOException
   {
     Path projectDir = Files.createTempDirectory("cat-test-session-id-blank-");
@@ -537,14 +532,7 @@ public final class SubagentStartHookTest
       HookInput input = createInput(mapper,
         "{\"session_id\": \"\", \"agent_id\": \"subagent-xyz\"}");
       HookOutput output = new HookOutput(scope);
-      try
-      {
-        new SubagentStartHook(scope).run(input, output);
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("session_id");
-      }
+      new SubagentStartHook(scope).run(input, output);
     }
     finally
     {
