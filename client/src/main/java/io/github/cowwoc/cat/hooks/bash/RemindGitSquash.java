@@ -20,7 +20,7 @@ public final class RemindGitSquash implements BashHandler
   private static final Pattern INTERACTIVE_REBASE_PATTERN =
     Pattern.compile("git\\s+rebase\\s+.*-i");
   private static final Pattern GIT_RESET_SOFT_PATTERN =
-    Pattern.compile("git\\s+reset\\s+--soft");
+    Pattern.compile("reset\\s+--soft");
 
   /**
    * Creates a new handler for reminding about git squash skill.
