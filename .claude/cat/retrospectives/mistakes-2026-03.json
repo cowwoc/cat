@@ -27,6 +27,34 @@
         "catches_variations": true
       },
       "correct_behavior": "Before acquiring a new issue lock, work-prepare checks whether the calling session already holds a lock on a different issue. If it does, return ERROR immediately with guidance to complete or release the existing issue first."
+    },
+    {
+      "id": "M446",
+      "timestamp": "2026-03-01T02:55:00Z",
+      "category": "protocol_violation",
+      "description": "Agent merged three issues without presenting the Step 8 Approval Gate to the user",
+      "root_cause": "DUAL CAUSE: (1) AUTO-FIX LOOP PRIMING: work-with-issue/first-use.md stated \"The user already approved the workflow by invoking /cat:work\" with no qualification, overgeneralizing to suppress all user interaction including the mandatory Step 8 approval gate. (2) HOOK BYPASS GAP: M480 enforcement hook only covered the Task tool; agents could bypass it via the Skill tool (issue 1) or direct Bash invocation of merge-and-cleanup (issue 2). Three bypass routes existed but only one was blocked.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue/first-use.md",
+      "pattern_keywords": [
+        "approval_gate_bypass",
+        "merge_without_approval",
+        "hook_bypass",
+        "skill_tool_bypass",
+        "bash_tool_bypass",
+        "priming_overgeneralization"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M437",
+      "prevention_quality": {
+        "verification_type": "negative",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "After completing the auto-fix loop, execute Steps 6, 7, and 8 in sequence. Step 8 (Approval Gate) MUST present AskUserQuestion to user when trust != \"high\". Hook enforcement now covers Task tool, Skill tool, and direct Bash invocation of merge-and-cleanup."
     }
   ]
 }

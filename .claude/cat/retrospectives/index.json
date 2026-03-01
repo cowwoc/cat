@@ -5,7 +5,7 @@
     "trigger_interval_days": 7
   },
   "last_retrospective": "2026-02-28T16:57:40-05:00",
-  "mistake_count_since_last": 5,
+  "mistake_count_since_last": 6,
   "files": {
     "mistakes": [
       "mistakes-2026-01.json",
@@ -913,7 +913,7 @@
         "post_fix_mistakes": [],
         "verdict": "pending"
       },
-      "implementation": "Root cause was incorrect quoting, not a bash limitation. jq filters in double quotes expose != to zsh history expansion; single quotes prevent this. Variable interpolation should use jq --arg instead of shell interpolation. No hook needed — the fix is proper quoting discipline, not banning bash comparisons. No recurrences since 2026-02-06."
+      "implementation": "Root cause was incorrect quoting, not a bash limitation. jq filters in double quotes expose != to zsh history expansion; single quotes prevent this. Variable interpolation should use jq --arg instead of shell interpolation. No hook needed \u2014 the fix is proper quoting discipline, not banning bash comparisons. No recurrences since 2026-02-06."
     },
     {
       "id": "A018",
@@ -1061,7 +1061,7 @@
     {
       "id": "A025",
       "priority": "low",
-      "description": "Document skill output forwarding protocol: when a skill produces AskUserQuestion wizard output, the invoking agent must call AskUserQuestion directly (not render it as prose). Add to wizard-based skills (config, etc.) explicit note: 'After invoking this skill, forward the AskUserQuestion tool call verbatim — do not respond conversationally.'",
+      "description": "Document skill output forwarding protocol: when a skill produces AskUserQuestion wizard output, the invoking agent must call AskUserQuestion directly (not render it as prose). Add to wizard-based skills (config, etc.) explicit note: 'After invoking this skill, forward the AskUserQuestion tool call verbatim \u2014 do not respond conversationally.'",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-021",
       "status": "open",
@@ -1081,7 +1081,7 @@
     {
       "id": "A026",
       "priority": "medium",
-      "description": "Add explicit rejection-state handling to work-with-issue: (1) PARTIAL verify result = STOP, do NOT proceed to stakeholder review — fix unmet conditions first; (2) Rejected stakeholder review = automatically enter re-work loop (fix issues, re-run review) without asking user permission; (3) User rejects AskUserQuestion approval gate mid-workflow = re-present the gate in the NEXT response, do not skip it. Add 'REJECTION HANDLING' section to work-with-issue/first-use.md covering all three cases.",
+      "description": "Add explicit rejection-state handling to work-with-issue: (1) PARTIAL verify result = STOP, do NOT proceed to stakeholder review \u2014 fix unmet conditions first; (2) Rejected stakeholder review = automatically enter re-work loop (fix issues, re-run review) without asking user permission; (3) User rejects AskUserQuestion approval gate mid-workflow = re-present the gate in the NEXT response, do not skip it. Add 'REJECTION HANDLING' section to work-with-issue/first-use.md covering all three cases.",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-022",
       "status": "open",

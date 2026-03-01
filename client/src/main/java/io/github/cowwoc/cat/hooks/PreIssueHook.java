@@ -17,11 +17,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Unified PreToolUse hook for Task operations.
+ * Unified PreToolUse hook for Task and Skill operations.
  * <p>
- * TRIGGER: PreToolUse (matcher: Task)
+ * TRIGGER: PreToolUse (matcher: Task|Skill)
  * <p>
- * Consolidates all Task validation hooks into a single Java dispatcher.
+ * Consolidates all Task and Skill validation hooks into a single Java dispatcher. Handling both tools
+ * together ensures that approval gate enforcement covers all paths to spawn the work-merge workflow —
+ * whether via Task (subagent spawn) or via Skill (direct skill invocation).
  * <p>
  * Handlers can:
  * <ul>
@@ -83,7 +85,9 @@ public final class PreIssueHook implements HookHandler
     requireThat(output, "output").isNotNull();
 
     String toolName = input.getToolName();
-    if (!equalsIgnoreCase(toolName, "Task"))
+    boolean isTask = equalsIgnoreCase(toolName, "Task");
+    boolean isSkill = equalsIgnoreCase(toolName, "Skill");
+    if (!isTask && !isSkill)
       return HookResult.withoutWarnings(output.empty());
 
     JsonNode toolInput = input.getToolInput();
