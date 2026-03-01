@@ -130,6 +130,25 @@ Temporary mutations that rely on cleanup code are unsafe because:
 [ ! -f .claude/cat/cat-config.json ] && echo '{"status":"ERROR","message":"No cat-config.json"}' && exit 1
 ```
 
+**Detect existing session lock before acquiring a new one.** Acquiring a second lock in the same session
+creates a deadlock: the worktree isolation hook registers only the first worktree and blocks file edits
+in any subsequently acquired worktree.
+
+```bash
+LOCKS_DIR="${CLAUDE_PROJECT_DIR}/.claude/cat/locks"
+if [[ -d "$LOCKS_DIR" ]]; then
+  EXISTING_LOCK=$(grep -rl "\"session_id\" : \"${SESSION_ID}\"" "$LOCKS_DIR" 2>/dev/null | head -1)
+  if [[ -n "$EXISTING_LOCK" ]]; then
+    LOCKED_ISSUE=$(basename "$EXISTING_LOCK" .lock)
+    echo "{\"status\":\"ERROR\",\"message\":\"Session ${SESSION_ID} already holds a lock on" \
+         "${LOCKED_ISSUE}. Complete or release that issue before starting a new one.\"," \
+         "\"suggestion\":\"Resume ${LOCKED_ISSUE} with /cat:work, or run /cat:cleanup to release" \
+         "the stale lock if the worktree was abandoned.\"}"
+    exit 1
+  fi
+fi
+```
+
 ### Step 2: Find Available Issue
 
 Use the `work-prepare` Java launcher with `--exclude-pattern` when arguments contain a filter:
