@@ -573,8 +573,9 @@ Parse the compact JSON returned by the verify subagent. Do NOT read the detail f
 - Continue to Step 5
 
 **If status is PARTIAL:**
-- Note partial status in metrics
-- Continue to Step 5
+- STOP — do not proceed to stakeholder review
+- Re-enter the INCOMPLETE fix loop below to address unmet post-conditions before review
+- See also: [PARTIAL Verification Result](#partial-verification-result-step-4) in Rejection Handling
 
 **If status is INCOMPLETE (Missing criteria or E2E failed):**
 
@@ -1463,6 +1464,53 @@ Return summary to the main `/cat:work` skill:
   "merged": true
 }
 ```
+
+## Rejection Handling
+
+The workflow has three distinct rejection states that can interrupt mid-workflow execution (Steps 4, 5, and 8).
+Each requires a specific response. Steps 4 and 5 reference this section for full handling rules.
+
+### PARTIAL Verification Result (Step 4)
+
+When the verify subagent returns `"status": "PARTIAL"`, some post-conditions are unmet but none are
+fully missing. STOP — do not proceed to Step 5 (stakeholder review). Re-enter the INCOMPLETE fix loop
+(described in Step 4) to address unmet post-conditions first.
+
+Do NOT carry partially-met post-conditions into the review phase — the stakeholder review assumes the
+implementation is complete.
+
+### Rejected Stakeholder Review (Step 5)
+
+When the stakeholder review returns `REVIEW_STATUS == "CONCERNS_FOUND"` with concerns at or above the
+auto-fix threshold, **automatically enter the re-work loop without asking the user**.
+
+The user approved the workflow when they invoked `/cat:work`. The re-work loop is a mandatory quality
+gate, not an optional step. Do NOT:
+- Ask "should I fix these concerns?"
+- Present the concerns and wait for guidance
+- Skip to the approval gate without fixing
+
+Always proceed directly into the auto-fix loop (Step 5), fix concerns, re-run the review, and continue
+until either all threshold-level concerns are resolved or the iteration limit is reached.
+
+### User Rejects Approval Gate (Step 8)
+
+When the user rejects the AskUserQuestion tool call — for example, by invoking `/cat:learn`, asking a
+question, or requesting changes without selecting an option — the approval gate was **NOT answered**.
+
+**Required response:** Re-present the full approval gate in the NEXT response after any interrupting
+action completes. This includes:
+1. Re-running `cat:get-diff` to display current changes
+2. Re-displaying the commit summary, issue goal, execution summary, E2E summary, and review results
+3. Re-invoking AskUserQuestion with the same options
+
+Do NOT:
+- Proceed to merge after an unanswered gate
+- Release the lock or remove the worktree
+- Invoke `work-complete` without explicit user selection
+- Skip the gate because "the user probably meant to approve"
+
+Fail-fast principle: Unknown consent = No consent = STOP and re-present.
 
 ## Error Handling
 
