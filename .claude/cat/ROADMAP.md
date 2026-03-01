@@ -33,6 +33,7 @@ Project roadmap with version summaries. Minor versions group related tasks (2-8 
   - storage-abstraction-design
   - local-file-backend
   - github-issues-backend
+  - add-backlog-support
 - **2.4:** Mobile Review UX (PENDING)
   - add-mobile-diff-viewer
 - **2.5:** Input Validation (PENDING)
