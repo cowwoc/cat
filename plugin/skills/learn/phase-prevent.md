@@ -138,7 +138,9 @@ prevention_quality_check:
 
 **Decision gate:** If fragility is HIGH, redesign the prevention before implementing.
 
-**General vs Specific Prevention Gate:** If prevention addresses only one symptom of a broader root cause, explore whether a general solution is achievable (e.g., process change, root cause elimination) before implementing the specific check.
+**General vs Specific Prevention Gate:** If prevention addresses only one symptom of a broader root cause, explore
+whether a general solution is achievable (e.g., process change, root cause elimination) before implementing the
+specific check.
 
 ## Step 7b: Replay Scenario Verification (BLOCKING GATE - M305)
 
@@ -314,8 +316,8 @@ action: |
 |-----------|-------------|-----------------|
 | Similar documentation already exists | Documentation already failed | Escalate to hook or code_fix |
 | Mistake category is `protocol_violation` | Protocol was documented but violated | Escalate to hook enforcement |
-| This is a recurrence (`recurrence_of` is set) | Verify that previous prevention addressed the correct root cause before escalating | Re-examine root cause from fresh evidence first |
-| prevention_type would be `documentation` (level 7) | Weakest level, often ineffective | Consider hook (level 2) or validation (level 3) |
+| Recurrence (`recurrence_of` set) | Previous prevention may have missed root cause | Re-examine from fresh evidence |
+| `prevention_type` is `documentation` (level 7) | Weakest level, often ineffective | Use hook or validation instead |
 
 **Self-check before recording prevention_type: documentation:**
 
@@ -421,11 +423,20 @@ Do not proceed to the blocking gate below until you have:
 
 If the file content does NOT contain your change, the edit failed - you MUST retry the edit.
 
-**Follow project documentation style when editing Markdown files.**
+**Line-Length Verification (MANDATORY after editing any Markdown or Java file):**
 
-Check your project context (CLAUDE.md, `.claude/rules/`) for a line length convention.
-If one exists, apply it to every line you add or modify — including lines inside fenced
-code blocks and indented template sections. Measure actual line lengths before finalizing.
+After every Edit or Write tool call on a `.md` or `.java` file, verify that every line you added or
+modified is at most 120 characters (per `common.md` § Documentation Style). Wrap any line that exceeds
+the limit before proceeding to the next step.
+
+```yaml
+line_length_check:
+  limit: 120
+  applies_to: [".md", ".java"]
+  trigger: "after every Edit or Write tool call"
+  action: "Wrap any added/modified line that exceeds 120 characters"
+  source_rule: "common.md § Documentation Style"
+```
 
 **Escalation and Layered Prevention:**
 
