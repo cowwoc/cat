@@ -27,6 +27,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - port-infra-scripts-to-java
 - port-statusline-scripts-to-java
 - port-workflow-scripts-to-java
+- remove-learn-quick-tier
 - remove-unused-scripts
 - remove-userinputprotocol-from-config
 - rename-task-to-issue-phase2
@@ -145,6 +146,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-scope-complete-box-alignment
 - fix-skill-arguments-pattern
 - fix-skill-loader-dotall-regex
+- fix-preprocessor-output-tag-detection
 - fix-skill-output-framing
 - fix-skill-preprocessor-args
 - fix-skillloader-unknown-vars
