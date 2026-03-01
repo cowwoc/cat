@@ -83,7 +83,7 @@ public class GetOutputTest
   }
 
   /**
-   * Verifies that output is wrapped with correct type attribute.
+   * Verifies that output is prefixed with an echo instruction and wrapped with correct type attribute.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -97,7 +97,8 @@ public class GetOutputTest
       String result = handler.getOutput(new String[]{"config.no-changes"});
 
       requireThat(result, "result").
-        startsWith("<output type=\"config.no-changes\">").
+        startsWith("Echo the content of the `<output>` tag below verbatim.").
+        contains("<output type=\"config.no-changes\">").
         endsWith("</output>");
     }
     finally
@@ -111,24 +112,15 @@ public class GetOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*(?=.*Unknown skill)(?=.*status)(?=.*config).*")
   public void unknownSkillTypeThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetOutput handler = new GetOutput(scope);
-      try
-      {
-        handler.getOutput(new String[]{"invalid-skill"});
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").
-          contains("Unknown skill").
-          contains("status").
-          contains("config");
-      }
+      handler.getOutput(new String[]{"invalid-skill"});
     }
     finally
     {
@@ -141,23 +133,15 @@ public class GetOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*(?=.*get-output requires a type argument)(?=.*Usage).*")
   public void missingTypeArgumentThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetOutput handler = new GetOutput(scope);
-      try
-      {
-        handler.getOutput(new String[]{});
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").
-          contains("get-output requires a type argument").
-          contains("Usage");
-      }
+      handler.getOutput(new String[]{});
     }
     finally
     {

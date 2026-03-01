@@ -6,8 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
-
 import io.github.cowwoc.cat.hooks.JvmScope;
 import org.testng.annotations.Test;
 
@@ -26,7 +24,8 @@ public final class TestJvmScopeTest
    * @throws IOException if temporary directory creation fails
    */
   @SuppressWarnings("try")
-  @Test
+  @Test(expectedExceptions = IllegalStateException.class,
+    expectedExceptionsMessageRegExp = ".*closed.*")
   public void getJsonMapperThrowsAfterClose() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
@@ -34,14 +33,7 @@ public final class TestJvmScopeTest
     {
       scope.close();
 
-      try
-      {
-        scope.getJsonMapper();
-      }
-      catch (IllegalStateException e)
-      {
-        requireThat(e.getMessage(), "message").contains("closed");
-      }
+      scope.getJsonMapper();
     }
     finally
     {
@@ -55,7 +47,8 @@ public final class TestJvmScopeTest
    * @throws IOException if temporary directory creation fails
    */
   @SuppressWarnings("try")
-  @Test
+  @Test(expectedExceptions = IllegalStateException.class,
+    expectedExceptionsMessageRegExp = ".*closed.*")
   public void getDisplayUtilsThrowsAfterClose() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
@@ -63,14 +56,7 @@ public final class TestJvmScopeTest
     {
       scope.close();
 
-      try
-      {
-        scope.getDisplayUtils();
-      }
-      catch (IllegalStateException e)
-      {
-        requireThat(e.getMessage(), "message").contains("closed");
-      }
+      scope.getDisplayUtils();
     }
     finally
     {
@@ -84,7 +70,8 @@ public final class TestJvmScopeTest
    * @throws IOException if temporary directory creation fails
    */
   @SuppressWarnings("try")
-  @Test
+  @Test(expectedExceptions = IllegalStateException.class,
+    expectedExceptionsMessageRegExp = ".*closed.*")
   public void getClaudeProjectDirThrowsAfterClose() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
@@ -92,14 +79,7 @@ public final class TestJvmScopeTest
     {
       scope.close();
 
-      try
-      {
-        scope.getClaudeProjectDir();
-      }
-      catch (IllegalStateException e)
-      {
-        requireThat(e.getMessage(), "message").contains("closed");
-      }
+      scope.getClaudeProjectDir();
     }
     finally
     {
@@ -110,34 +90,22 @@ public final class TestJvmScopeTest
   /**
    * Verifies that constructor rejects null claudeProjectDir.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*claudeProjectDir.*")
   public void constructorRejectsNullClaudeProjectDir()
   {
     Path validPath = Path.of("/tmp");
-    try
-    {
-      new TestJvmScope(null, validPath);
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("claudeProjectDir");
-    }
+    new TestJvmScope(null, validPath);
   }
 
   /**
    * Verifies that constructor rejects null claudePluginRoot.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*claudePluginRoot.*")
   public void constructorRejectsNullClaudePluginRoot()
   {
     Path validPath = Path.of("/tmp");
-    try
-    {
-      new TestJvmScope(validPath, null);
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("claudePluginRoot");
-    }
+    new TestJvmScope(validPath, null);
   }
 }

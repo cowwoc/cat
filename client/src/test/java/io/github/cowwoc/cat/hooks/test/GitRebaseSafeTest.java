@@ -28,36 +28,24 @@ public class GitRebaseSafeTest
   /**
    * Verifies that constructing with a null scope throws NullPointerException.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = "(?s).*")
   public void constructorRejectsNullScope()
   {
-    try
-    {
-      new GitRebaseSafe(null, ".");
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").isNotNull();
-    }
+    new GitRebaseSafe(null, ".");
   }
 
   /**
    * Verifies that constructing with a blank source branch throws IllegalArgumentException.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = "(?s).*")
   public void constructorRejectsBlankSourceBranch() throws IOException
   {
     Path tempDir = Files.createTempDirectory("git-rebase-test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      try
-      {
-        new GitRebaseSafe(scope, "");
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").isNotNull();
-      }
+      new GitRebaseSafe(scope, "");
     }
     finally
     {

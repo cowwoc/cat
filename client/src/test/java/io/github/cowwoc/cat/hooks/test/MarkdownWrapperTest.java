@@ -249,49 +249,31 @@ public final class MarkdownWrapperTest
   /**
    * Verifies that null content is rejected.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*content.*")
   public void wrapMarkdownRejectsNullContent()
   {
-    try
-    {
-      MarkdownWrapper.wrapMarkdown(null, 120);
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("content");
-    }
+    MarkdownWrapper.wrapMarkdown(null, 120);
   }
 
   /**
    * Verifies that zero width is rejected.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*maxWidth.*")
   public void wrapMarkdownRejectsZeroWidth()
   {
-    try
-    {
-      MarkdownWrapper.wrapMarkdown("content", 0);
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("maxWidth");
-    }
+    MarkdownWrapper.wrapMarkdown("content", 0);
   }
 
   /**
    * Verifies that negative width is rejected.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*maxWidth.*")
   public void wrapMarkdownRejectsNegativeWidth()
   {
-    try
-    {
-      MarkdownWrapper.wrapMarkdown("content", -1);
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("maxWidth");
-    }
+    MarkdownWrapper.wrapMarkdown("content", -1);
   }
 
   /**
@@ -414,17 +396,10 @@ public final class MarkdownWrapperTest
   /**
    * Verifies that parseWidthArg throws IllegalArgumentException for non-integer input.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*--width.*")
   public void parseWidthArgThrowsForNonIntegerValue()
   {
-    try
-    {
-      MarkdownWrapper.parseWidthArg("not-a-number");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("--width");
-      requireThat(e.getMessage(), "message").contains("not-a-number");
-    }
+    MarkdownWrapper.parseWidthArg("not-a-number");
   }
 }

@@ -32,33 +32,21 @@ public class InjectCatAgentIdTest
   /**
    * Verifies that getMainAgentContext() throws when the session ID is blank.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*sessionId.*")
   public void getMainAgentContextRejectsBlankSessionId()
   {
-    try
-    {
-      InjectCatAgentId.getMainAgentContext("");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("sessionId");
-    }
+    InjectCatAgentId.getMainAgentContext("");
   }
 
   /**
    * Verifies that getMainAgentContext() throws when the session ID is null.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*sessionId.*")
   public void getMainAgentContextRejectsNullSessionId()
   {
-    try
-    {
-      InjectCatAgentId.getMainAgentContext(null);
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("sessionId");
-    }
+    InjectCatAgentId.getMainAgentContext(null);
   }
 
   /**
@@ -77,32 +65,20 @@ public class InjectCatAgentIdTest
   /**
    * Verifies that getSubagentContext() throws when the session ID is blank.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*sessionId.*")
   public void getSubagentContextRejectsBlankSessionId()
   {
-    try
-    {
-      InjectCatAgentId.getSubagentContext("", "agent-456");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("sessionId");
-    }
+    InjectCatAgentId.getSubagentContext("", "agent-456");
   }
 
   /**
    * Verifies that getSubagentContext() throws when the agent ID is blank.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*agentId.*")
   public void getSubagentContextRejectsBlankAgentId()
   {
-    try
-    {
-      InjectCatAgentId.getSubagentContext("session-123", "");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("agentId");
-    }
+    InjectCatAgentId.getSubagentContext("session-123", "");
   }
 }

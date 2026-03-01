@@ -223,7 +223,8 @@ public final class EmpiricalTestRunnerTest
   /**
    * Verifies that fromRawList rejects tool_use messages missing the 'tool' field.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*(?=.*tool)(?=.*priming_messages\\[0\\]).*")
   public void fromRawListRejectsMissingToolField()
   {
     Map<String, Object> toolUseMsg = new HashMap<>();
@@ -234,20 +235,14 @@ public final class EmpiricalTestRunnerTest
     List<Object> raw = new ArrayList<>();
     raw.add(toolUseMsg);
 
-    try
-    {
-      PrimingMessage.fromRawList(raw);
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("tool").contains("priming_messages[0]");
-    }
+    PrimingMessage.fromRawList(raw);
   }
 
   /**
    * Verifies that fromRawList rejects tool_use messages missing the 'input' field.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*(?=.*input)(?=.*priming_messages\\[0\\]).*")
   public void fromRawListRejectsMissingInputField()
   {
     Map<String, Object> toolUseMsg = new HashMap<>();
@@ -258,20 +253,14 @@ public final class EmpiricalTestRunnerTest
     List<Object> raw = new ArrayList<>();
     raw.add(toolUseMsg);
 
-    try
-    {
-      PrimingMessage.fromRawList(raw);
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("input").contains("priming_messages[0]");
-    }
+    PrimingMessage.fromRawList(raw);
   }
 
   /**
    * Verifies that fromRawList rejects tool_use messages missing the 'output' field.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*(?=.*output)(?=.*priming_messages\\[0\\]).*")
   public void fromRawListRejectsMissingOutputField()
   {
     Map<String, Object> toolUseMsg = new HashMap<>();
@@ -282,56 +271,37 @@ public final class EmpiricalTestRunnerTest
     List<Object> raw = new ArrayList<>();
     raw.add(toolUseMsg);
 
-    try
-    {
-      PrimingMessage.fromRawList(raw);
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("output").contains("priming_messages[0]");
-    }
+    PrimingMessage.fromRawList(raw);
   }
 
   /**
    * Verifies that fromRawList rejects null rawMessages parameter.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*rawMessages.*")
   public void fromRawListRejectsNullRawMessages()
   {
-    try
-    {
-      PrimingMessage.fromRawList(null);
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("rawMessages");
-    }
+    PrimingMessage.fromRawList(null);
   }
 
   /**
    * Verifies that fromRawList rejects unsupported message types like Integer.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*(?=.*unsupported message type)(?=.*priming_messages\\[0\\]).*")
   public void fromRawListRejectsUnsupportedMessageType()
   {
     List<Object> raw = new ArrayList<>();
     raw.add(42);
 
-    try
-    {
-      PrimingMessage.fromRawList(raw);
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("unsupported message type").
-        contains("priming_messages[0]");
-    }
+    PrimingMessage.fromRawList(raw);
   }
 
   /**
    * Verifies that fromRawList rejects a Map with a type value other than "tool_use".
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*(?=.*unsupported type)(?=.*'invalid').*")
   public void fromRawListRejectsWrongTypeValue()
   {
     Map<String, Object> msg = new HashMap<>();
@@ -343,14 +313,7 @@ public final class EmpiricalTestRunnerTest
     List<Object> raw = new ArrayList<>();
     raw.add(msg);
 
-    try
-    {
-      PrimingMessage.fromRawList(raw);
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("unsupported type").contains("'invalid'");
-    }
+    PrimingMessage.fromRawList(raw);
   }
 
   /**
@@ -1112,23 +1075,18 @@ public final class EmpiricalTestRunnerTest
   /**
    * Verifies that the constructor rejects null scope.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*scope.*")
   public void constructorRejectsNullScope()
   {
-    try
-    {
-      new EmpiricalTestRunner(null);
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("scope");
-    }
+    new EmpiricalTestRunner(null);
   }
 
   /**
    * Verifies that buildInput rejects null primingMessages.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*primingMessages.*")
   public void buildInputRejectsNullPrimingMessages() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -1137,14 +1095,7 @@ public final class EmpiricalTestRunnerTest
       envFile, TerminalType.WINDOWS_TERMINAL))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
-      try
-      {
-        runner.buildInput(null, List.of(new TestMessage("prompt", Map.of())), List.of());
-      }
-      catch (NullPointerException e)
-      {
-        requireThat(e.getMessage(), "message").contains("primingMessages");
-      }
+      runner.buildInput(null, List.of(new TestMessage("prompt", Map.of())), List.of());
     }
     finally
     {
@@ -1155,7 +1106,8 @@ public final class EmpiricalTestRunnerTest
   /**
    * Verifies that buildInput rejects null messages list.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*messages.*")
   public void buildInputRejectsNullMessages() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -1164,14 +1116,7 @@ public final class EmpiricalTestRunnerTest
       envFile, TerminalType.WINDOWS_TERMINAL))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
-      try
-      {
-        runner.buildInput(List.of(), null, List.of());
-      }
-      catch (NullPointerException e)
-      {
-        requireThat(e.getMessage(), "message").contains("messages");
-      }
+      runner.buildInput(List.of(), null, List.of());
     }
     finally
     {
@@ -1182,7 +1127,8 @@ public final class EmpiricalTestRunnerTest
   /**
    * Verifies that parseOutput rejects null output.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*output.*")
   public void parseOutputRejectsNullOutput() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -1191,14 +1137,7 @@ public final class EmpiricalTestRunnerTest
       envFile, TerminalType.WINDOWS_TERMINAL))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
-      try
-      {
-        runner.parseOutput(null);
-      }
-      catch (NullPointerException e)
-      {
-        requireThat(e.getMessage(), "message").contains("output");
-      }
+      runner.parseOutput(null);
     }
     finally
     {
@@ -1209,7 +1148,8 @@ public final class EmpiricalTestRunnerTest
   /**
    * Verifies that evaluateOutput rejects null texts.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*texts.*")
   public void evaluateOutputRejectsNullTexts() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -1218,14 +1158,7 @@ public final class EmpiricalTestRunnerTest
       envFile, TerminalType.WINDOWS_TERMINAL))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
-      try
-      {
-        runner.evaluateOutput(null, List.of(), Map.of());
-      }
-      catch (NullPointerException e)
-      {
-        requireThat(e.getMessage(), "message").contains("texts");
-      }
+      runner.evaluateOutput(null, List.of(), Map.of());
     }
     finally
     {
@@ -1236,7 +1169,8 @@ public final class EmpiricalTestRunnerTest
   /**
    * Verifies that evaluateOutput rejects null toolUses.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*toolUses.*")
   public void evaluateOutputRejectsNullToolUses() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -1245,14 +1179,7 @@ public final class EmpiricalTestRunnerTest
       envFile, TerminalType.WINDOWS_TERMINAL))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
-      try
-      {
-        runner.evaluateOutput(List.of(), null, Map.of());
-      }
-      catch (NullPointerException e)
-      {
-        requireThat(e.getMessage(), "message").contains("toolUses");
-      }
+      runner.evaluateOutput(List.of(), null, Map.of());
     }
     finally
     {
@@ -1263,7 +1190,8 @@ public final class EmpiricalTestRunnerTest
   /**
    * Verifies that evaluateOutput rejects null criteria.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*criteria.*")
   public void evaluateOutputRejectsNullCriteria() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -1272,14 +1200,7 @@ public final class EmpiricalTestRunnerTest
       envFile, TerminalType.WINDOWS_TERMINAL))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
-      try
-      {
-        runner.evaluateOutput(List.of(), List.of(), null);
-      }
-      catch (NullPointerException e)
-      {
-        requireThat(e.getMessage(), "message").contains("criteria");
-      }
+      runner.evaluateOutput(List.of(), List.of(), null);
     }
     finally
     {
@@ -1290,85 +1211,55 @@ public final class EmpiricalTestRunnerTest
   /**
    * Verifies that fromRawList rejects a list containing null elements.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*rawMessages.*")
   public void fromRawListRejectsNullElements()
   {
     List<Object> raw = new ArrayList<>();
     raw.add("valid message");
     raw.add(null);
 
-    try
-    {
-      PrimingMessage.fromRawList(raw);
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("rawMessages");
-    }
+    PrimingMessage.fromRawList(raw);
   }
 
   /**
    * Verifies that UserMessage rejects null text.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*text.*")
   public void userMessageRejectsNullText()
   {
-    try
-    {
-      new PrimingMessage.UserMessage(null);
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("text");
-    }
+    new PrimingMessage.UserMessage(null);
   }
 
   /**
    * Verifies that ToolUse rejects null tool.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*tool.*")
   public void toolUseRejectsNullTool()
   {
-    try
-    {
-      new PrimingMessage.ToolUse(null, Map.of(), "out");
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("tool");
-    }
+    new PrimingMessage.ToolUse(null, Map.of(), "out");
   }
 
   /**
    * Verifies that ToolUse rejects null input.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*input.*")
   public void toolUseRejectsNullInput()
   {
-    try
-    {
-      new PrimingMessage.ToolUse("Bash", null, "out");
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("input");
-    }
+    new PrimingMessage.ToolUse("Bash", null, "out");
   }
 
   /**
    * Verifies that ToolUse rejects null output.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*output.*")
   public void toolUseRejectsNullOutput()
   {
-    try
-    {
-      new PrimingMessage.ToolUse("Bash", Map.of(), null);
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("output");
-    }
+    new PrimingMessage.ToolUse("Bash", Map.of(), null);
   }
 
   /**

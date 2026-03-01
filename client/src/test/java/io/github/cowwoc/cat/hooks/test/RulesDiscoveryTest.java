@@ -1023,7 +1023,8 @@ public final class RulesDiscoveryTest
    *
    * @throws IOException if file operations fail
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*misquote\\.md.*")
   public void malformedYamlThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("rules-test-misquote-");
@@ -1039,14 +1040,7 @@ public final class RulesDiscoveryTest
         # Misquote rule
         """);
 
-      try
-      {
-        new RulesDiscovery(rulesDir, YAML_MAPPER).discoverAll();
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("misquote.md");
-      }
+      new RulesDiscovery(rulesDir, YAML_MAPPER).discoverAll();
     }
     finally
     {
