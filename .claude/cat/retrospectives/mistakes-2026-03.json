@@ -1,0 +1,32 @@
+{
+  "period": "2026-03",
+  "mistakes": [
+    {
+      "id": "M445",
+      "timestamp": "2026-03-01T03:00:00Z",
+      "category": "architecture_issue",
+      "description": "Session acquired a second issue lock while still holding a lock on a different issue, causing a deadlock where the worktree isolation hook blocked all file edits",
+      "root_cause": "SYSTEM: work-prepare had no check for an existing session lock before acquiring a new one. A session holding lock A could invoke /cat:work again and acquire lock B, but the worktree isolation hook only registers the first worktree (A), blocking all edits in the second worktree (B). The resulting deadlock left the agent unable to work on either issue.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-prepare/first-use.md",
+      "pattern_keywords": [
+        "dual_lock",
+        "session_lock",
+        "worktree_isolation",
+        "deadlock",
+        "concurrent_session"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Before acquiring a new issue lock, work-prepare checks whether the calling session already holds a lock on a different issue. If it does, return ERROR immediately with guidance to complete or release the existing issue first."
+    }
+  ]
+}
