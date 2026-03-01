@@ -11,11 +11,15 @@ import io.github.cowwoc.cat.hooks.SharedSecrets;
 import io.github.cowwoc.cat.hooks.IssueStatus;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -1592,7 +1596,8 @@ public final class IssueDiscovery
   }
 
   /**
-   * Lists issue directories (non-version directories) under a minor version directory, sorted by name.
+   * Lists issue directories (non-version directories) under a minor version directory, sorted by creation
+   * time (oldest first), with alphabetical ordering as a tiebreaker.
    *
    * @param minorDir the minor version directory
    * @return sorted list of issue directories, empty if none found
@@ -1607,8 +1612,47 @@ public final class IssueDiscovery
       return stream.
         filter(Files::isDirectory).
         filter(d -> !VERSION_DIR_PATTERN.matcher(d.getFileName().toString()).matches()).
-        sorted().
+        sorted(Comparator.comparingLong(this::getIssueCreationTime).thenComparing(Comparator.naturalOrder())).
         toList();
+    }
+  }
+
+  /**
+   * Returns the Unix timestamp (seconds since epoch) of the first git commit that added the issue's
+   * {@code STATE.md} file.
+   * <p>
+   * This is used to sort issues by creation time so that the oldest issue is selected first.
+   *
+   * @param issueDir the issue directory
+   * @return the Unix timestamp of the first commit that added {@code STATE.md}, or {@code Long.MAX_VALUE}
+   *   if the timestamp cannot be determined (command failure, no output, or non-numeric output)
+   */
+  private long getIssueCreationTime(Path issueDir)
+  {
+    Path statePath = issueDir.resolve("STATE.md");
+    Path relativePath = projectDir.relativize(statePath);
+    try
+    {
+      ProcessBuilder pb = new ProcessBuilder("git", "-C", projectDir.toString(),
+        "log", "--diff-filter=A", "--format=%at", "--", relativePath.toString());
+      pb.redirectErrorStream(true);
+      Process process = pb.start();
+
+      String firstLine;
+      try (BufferedReader reader = new BufferedReader(
+        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
+      {
+        firstLine = reader.readLine();
+      }
+
+      int exitCode = process.waitFor();
+      if (exitCode != 0 || firstLine == null || firstLine.isBlank())
+        return Long.MAX_VALUE;
+      return Long.parseLong(firstLine.strip());
+    }
+    catch (IOException | InterruptedException | NumberFormatException _)
+    {
+      return Long.MAX_VALUE;
     }
   }
 }
