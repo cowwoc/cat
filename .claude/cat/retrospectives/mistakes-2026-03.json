@@ -83,5 +83,33 @@
       },
       "correct_behavior": "Use Task tool (subagent_type: cat:work-merge) to spawn the merge subagent. After the Task tool returns, verify the merge happened by checking that TARGET_BRANCH now contains the squashed commit before invoking work-complete."
     }
+    ,
+    {
+      "id": "M448",
+      "timestamp": "2026-03-01T22:42:43Z",
+      "category": "protocol_violation",
+      "description": "Agent manually squashed commits using git -C <path> reset --soft instead of delegating to cat:git-squash (Step 7), bypassing the hook that was intended to block this pattern",
+      "root_cause": "HOOK REGEX GAP: RemindGitSquash.java used pattern 'git\\s+reset\\s+--soft' which only matches when 'reset' immediately follows 'git'. The command 'git -C <path> reset --soft' has '-C <path>' between 'git' and 'reset', so the pattern did not match and the hook allowed the prohibited operation through. No test existed for this variant, so the gap was never detected.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/client/src/main/java/io/github/cowwoc/cat/hooks/bash/RemindGitSquash.java",
+      "pattern_keywords": [
+        "git_reset_soft",
+        "hook_regex_gap",
+        "manual_squash_bypass",
+        "git_C_path",
+        "remind_git_squash"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use /cat:git-squash (Step 7) to squash commits. The RemindGitSquash hook now matches 'reset --soft' anywhere in the command, blocking both 'git reset --soft' and 'git -C <path> reset --soft' forms."
+    }
   ]
 }
