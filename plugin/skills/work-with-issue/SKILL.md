@@ -1,5 +1,8 @@
 ---
-description: Internal orchestration (invoked by /cat:work) - runs implement, confirm, review, and merge phases
+description: >
+  Internal orchestration (invoked by /cat:work) - runs implement, confirm, review, and merge phases.
+  IMPORTANT: After invoking this skill, forward the AskUserQuestion tool call verbatim — do not respond
+  conversationally.
 model: sonnet
 user-invocable: false
 argument-hint: "<issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <estimated_tokens> <trust> <verify>"
