@@ -219,7 +219,8 @@ public final class DetectRepeatedFailuresTest
    * Format validation for path traversal characters is centralized in HookInput.getSessionId().
    * The handler's own contract requires a non-blank sessionId.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*sessionId.*")
   public void blankSessionIdThrows() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
@@ -230,14 +231,7 @@ public final class DetectRepeatedFailuresTest
       JsonNode hookData = mapper.createObjectNode();
       DetectRepeatedFailures handler = new DetectRepeatedFailures(Clock.systemUTC(), trackingDirectory);
 
-      try
-      {
-        handler.check("Bash", toolResult, "", hookData);
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("sessionId");
-      }
+      handler.check("Bash", toolResult, "", hookData);
     }
     finally
     {

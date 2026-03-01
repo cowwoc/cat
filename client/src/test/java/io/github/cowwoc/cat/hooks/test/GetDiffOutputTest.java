@@ -32,37 +32,25 @@ public class GetDiffOutputTest
   /**
    * Verifies that getOutput throws NullPointerException for null projectRoot.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*projectRoot.*")
   public void nullProjectRootThrowsException() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GetDiffOutput handler = new GetDiffOutput(scope);
-      try
-      {
-        handler.getOutput((Path) null);
-      }
-      catch (NullPointerException e)
-      {
-        requireThat(e.getMessage(), "message").contains("projectRoot");
-      }
+      handler.getOutput((Path) null);
     }
   }
 
   /**
    * Verifies that constructor throws NullPointerException for null scope.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*scope.*")
   public void nullScopeThrowsException()
   {
-    try
-    {
-      new GetDiffOutput(null);
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("scope");
-    }
+    new GetDiffOutput(null);
   }
 
   /**

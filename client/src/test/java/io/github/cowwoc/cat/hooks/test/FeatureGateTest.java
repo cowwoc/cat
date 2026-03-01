@@ -147,7 +147,8 @@ public final class FeatureGateTest
    *
    * @throws IOException if test setup fails
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*feature.*")
   public void nullFeatureThrowsException() throws IOException
   {
     Path pluginRoot = createTempPluginRoot();
@@ -159,14 +160,7 @@ public final class FeatureGateTest
       {
         FeatureGate gate = FeatureGate.create(scope);
 
-        try
-        {
-          gate.check(projectDir, null);
-        }
-        catch (NullPointerException e)
-        {
-          requireThat(e.getMessage(), "message").contains("feature");
-        }
+        gate.check(projectDir, null);
       }
       finally
       {

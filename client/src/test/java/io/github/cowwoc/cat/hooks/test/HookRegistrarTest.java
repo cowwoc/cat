@@ -32,65 +32,41 @@ public class HookRegistrarTest
   /**
    * Verifies that Config validates null name.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*name.*")
   public void configValidatesNullName()
   {
-    try
-    {
-      new Config(null, HookTrigger.PRE_TOOL_USE, "Bash", false, "#!/bin/bash\necho test");
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("name");
-    }
+    new Config(null, HookTrigger.PRE_TOOL_USE, "Bash", false, "#!/bin/bash\necho test");
   }
 
   /**
    * Verifies that Config validates null trigger.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*trigger.*")
   public void configValidatesNullTrigger()
   {
-    try
-    {
-      new Config("test-hook", null, "Bash", false, "#!/bin/bash\necho test");
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("trigger");
-    }
+    new Config("test-hook", null, "Bash", false, "#!/bin/bash\necho test");
   }
 
   /**
    * Verifies that Config validates null matcher.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*matcher.*")
   public void configValidatesNullMatcher()
   {
-    try
-    {
-      new Config("test-hook", HookTrigger.PRE_TOOL_USE, null, false, "#!/bin/bash\necho test");
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("matcher");
-    }
+    new Config("test-hook", HookTrigger.PRE_TOOL_USE, null, false, "#!/bin/bash\necho test");
   }
 
   /**
    * Verifies that Config validates null scriptContent.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*scriptContent.*")
   public void configValidatesNullScriptContent()
   {
-    try
-    {
-      new Config("test-hook", HookTrigger.PRE_TOOL_USE, "Bash", false, null);
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("scriptContent");
-    }
+    new Config("test-hook", HookTrigger.PRE_TOOL_USE, "Bash", false, null);
   }
 
   /**
@@ -331,73 +307,49 @@ public class HookRegistrarTest
   /**
    * Verifies that Result validates null status.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*status.*")
   public void resultValidatesNullStatus()
   {
-    try
-    {
-      new Result(
-        null, "msg", "hook", "/path", HookTrigger.PRE_TOOL_USE, "", false, false, false, "cmd",
-        "2024-01-01T00:00:00Z");
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("status");
-    }
+    new Result(
+      null, "msg", "hook", "/path", HookTrigger.PRE_TOOL_USE, "", false, false, false, "cmd",
+      "2024-01-01T00:00:00Z");
   }
 
   /**
    * Verifies that Result validates null message.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*message.*")
   public void resultValidatesNullMessage()
   {
-    try
-    {
-      new Result(
-        OperationStatus.SUCCESS, null, "hook", "/path", HookTrigger.PRE_TOOL_USE, "", false, false, false, "cmd",
-        "2024-01-01T00:00:00Z");
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("message");
-    }
+    new Result(
+      OperationStatus.SUCCESS, null, "hook", "/path", HookTrigger.PRE_TOOL_USE, "", false, false, false, "cmd",
+      "2024-01-01T00:00:00Z");
   }
 
   /**
    * Verifies that Result validates null hookName.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*hookName.*")
   public void resultValidatesNullHookName()
   {
-    try
-    {
-      new Result(
-        OperationStatus.SUCCESS, "msg", null, "/path", HookTrigger.PRE_TOOL_USE, "", false, false, false, "cmd",
-        "2024-01-01T00:00:00Z");
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("hookName");
-    }
+    new Result(
+      OperationStatus.SUCCESS, "msg", null, "/path", HookTrigger.PRE_TOOL_USE, "", false, false, false, "cmd",
+      "2024-01-01T00:00:00Z");
   }
 
   /**
    * Verifies that Result validates null matcher.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*matcher.*")
   public void resultValidatesNullMatcher()
   {
-    try
-    {
-      new Result(
-        OperationStatus.SUCCESS, "msg", "hook", "/path", HookTrigger.PRE_TOOL_USE, null, false, false, false, "cmd",
-        "2024-01-01T00:00:00Z");
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("matcher");
-    }
+    new Result(
+      OperationStatus.SUCCESS, "msg", "hook", "/path", HookTrigger.PRE_TOOL_USE, null, false, false, false, "cmd",
+      "2024-01-01T00:00:00Z");
   }
 
   /**

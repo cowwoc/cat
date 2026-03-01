@@ -83,34 +83,22 @@ public final class PatienceLevelTest
   /**
    * Verifies that fromString throws IllegalArgumentException for an unrecognized value.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*UNKNOWN.*")
   public void fromStringInvalidThrowsIllegalArgument()
   {
-    try
-    {
-      PatienceLevel.fromString("unknown");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("UNKNOWN");
-    }
+    PatienceLevel.fromString("unknown");
   }
 
   /**
    * Verifies that fromString throws IllegalArgumentException for blank input, with a message referencing
    * the parameter name.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*value.*")
   public void fromStringBlankThrowsIllegalArgument()
   {
-    try
-    {
-      PatienceLevel.fromString("");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("value");
-    }
+    PatienceLevel.fromString("");
   }
 
   /**
@@ -118,32 +106,20 @@ public final class PatienceLevelTest
    * <p>
    * The implementation does not strip whitespace before matching, so " low " is not a valid patience level.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".* LOW .*")
   public void fromStringWhitespacePaddedThrowsIllegalArgument()
   {
-    try
-    {
-      PatienceLevel.fromString(" low ");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains(" LOW ");
-    }
+    PatienceLevel.fromString(" low ");
   }
 
   /**
    * Verifies that fromString throws NullPointerException for null input.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*value.*")
   public void fromStringNullThrowsNullPointerException()
   {
-    try
-    {
-      PatienceLevel.fromString(null);
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("value");
-    }
+    PatienceLevel.fromString(null);
   }
 }
