@@ -65,6 +65,7 @@ public final class IssueLock
   private static final Duration STALE_LOCK_THRESHOLD = Duration.ofHours(4);
 
   private final JvmScope scope;
+  private final Clock clock;
   private final Path lockDir;
 
   /**
@@ -76,8 +77,23 @@ public final class IssueLock
    */
   public IssueLock(JvmScope scope)
   {
+    this(scope, Clock.systemUTC());
+  }
+
+  /**
+   * Creates a new issue lock manager with injectable clock.
+   *
+   * @param scope the JVM scope providing JSON mapper and project directory
+   * @param clock the clock to use for determining lock staleness
+   * @throws NullPointerException if {@code scope} or {@code clock} are null
+   * @throws IllegalArgumentException if the project directory is not a valid CAT project
+   */
+  public IssueLock(JvmScope scope, Clock clock)
+  {
     requireThat(scope, "scope").isNotNull();
+    requireThat(clock, "clock").isNotNull();
     this.scope = scope;
+    this.clock = clock;
     Path projectDir = scope.getClaudeProjectDir();
     Path catDir = projectDir.resolve(".claude").resolve("cat");
     if (!Files.isDirectory(catDir))
@@ -390,7 +406,8 @@ public final class IssueLock
    * Acquires a lock for an issue.
    * <p>
    * If the lock already exists and is owned by a different session, returns a locked status
-   * with guidance. If owned by the same session, returns success (idempotent).
+   * with guidance. If the lock is stale (>4 hours old) from a different session, overwrites it
+   * with a fresh lock. If owned by the same session, returns success (idempotent).
    *
    * @param issueId the issue identifier
    * @param sessionId the Claude session UUID
@@ -435,28 +452,22 @@ public final class IssueLock
         if (lockSessionId.equals(sessionId))
           return new LockResult.Acquired("acquired", "Lock already held by this session");
       }
-      // Worktrees are registered but none match this session — lock is taken by someone else
+      // Worktrees are registered but none match this session — check if lock is stale
       String existingSession = lockData.get("session_id").toString();
+      long existingCreatedAt = ((Number) lockData.get("created_at")).longValue();
+      if (!existingSession.equals(sessionId) && isStale(lockFile, clock))
+      {
+        // Stale lock from dead session — overwrite with fresh lock
+        return overwriteWithFreshLock(issueId, sessionId, worktree, lockFile, existingSession, existingCreatedAt);
+      }
+      // Lock is non-stale from another session — reject
       return new LockResult.Locked("locked", "Issue locked by another session", existingSession,
         "FIND_ANOTHER_ISSUE",
         "Do NOT investigate, remove, or question this lock. Execute a different issue instead. " +
         "If you believe this is a stale lock from a crashed session, ask the USER to run /cat:cleanup.");
     }
 
-    long now = Instant.now().getEpochSecond();
-    String createdIso = ISO_FORMATTER.format(Instant.now());
-
-    Map<String, String> worktrees = new LinkedHashMap<>();
-    if (!worktree.isBlank())
-      worktrees.put(worktree, sessionId);
-    Map<String, Object> lockData = new LinkedHashMap<>();
-    lockData.put("session_id", sessionId);
-    lockData.put("worktrees", worktrees);
-    lockData.put("created_at", now);
-    lockData.put("created_iso", createdIso);
-
-    Path tempFile = lockDir.resolve(sanitizeIssueId(issueId) + ".lock." + ProcessHandle.current().pid());
-    Files.writeString(tempFile, scope.getJsonMapper().writeValueAsString(lockData));
+    Path tempFile = writeLockToTempFile(issueId, sessionId, worktree);
 
     try
     {
@@ -483,6 +494,99 @@ public final class IssueLock
         return new LockResult.Error("error", "Race condition: could not read lock owner: " + readEx.getMessage());
       }
     }
+  }
+
+  /**
+   * Overwrites a stale lock file with a fresh lock for the current session.
+   * <p>
+   * Called when an existing lock is from a different session and is stale (>4 hours old).
+   * Re-reads the lock file to confirm it is still stale before overwriting. If a concurrent
+   * session refreshed the lock between the initial stale check and this call, returns
+   * {@link LockResult.Locked} instead of overwriting.
+   *
+   * @param issueId the issue identifier
+   * @param sessionId the Claude session UUID for the new lock
+   * @param worktree the worktree path (may be empty)
+   * @param lockFile the path to the existing lock file to overwrite
+   * @param staleLockSessionId the session ID read from the stale lock during the initial check
+   * @param staleLockCreatedAt the created_at epoch second read from the stale lock during the initial check
+   * @return the lock result
+   * @throws IOException if file operations fail
+   */
+  private LockResult overwriteWithFreshLock(String issueId, String sessionId, String worktree, Path lockFile,
+    String staleLockSessionId, long staleLockCreatedAt) throws IOException
+  {
+    // Re-read the lock to confirm it's still the same stale lock. A concurrent session may have
+    // refreshed or replaced it between the initial stale check and now.
+    if (Files.exists(lockFile))
+    {
+      try
+      {
+        String currentContent = Files.readString(lockFile);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> currentLock = scope.getJsonMapper().readValue(currentContent, Map.class);
+        String currentSessionId = currentLock.get("session_id").toString();
+        long currentCreatedAt = ((Number) currentLock.get("created_at")).longValue();
+        if (!currentSessionId.equals(staleLockSessionId) || currentCreatedAt != staleLockCreatedAt)
+        {
+          // The lock changed — a concurrent session refreshed or replaced it
+          return new LockResult.Locked("locked", "Issue locked by another session", currentSessionId,
+            "FIND_ANOTHER_ISSUE",
+            "Do NOT investigate, remove, or question this lock. Execute a different issue instead. " +
+            "If you believe this is a stale lock from a crashed session, ask the USER to run /cat:cleanup.");
+        }
+      }
+      catch (IOException e)
+      {
+        return new LockResult.Error("error",
+          "Failed to re-read lock file before overwrite: " + lockFile + ": " + e.getMessage());
+      }
+    }
+
+    Path tempFile = writeLockToTempFile(issueId, sessionId, worktree);
+
+    try
+    {
+      Files.move(tempFile, lockFile, StandardCopyOption.ATOMIC_MOVE);
+      return new LockResult.Acquired("acquired", "Lock acquired successfully");
+    }
+    catch (IOException _)
+    {
+      Files.deleteIfExists(tempFile);
+      return new LockResult.Error("error", "Failed to overwrite stale lock");
+    }
+  }
+
+  /**
+   * Writes a new lock file to a temporary file and returns its path.
+   * <p>
+   * The temporary file is named {@code <issueId>.lock.<pid>} and contains a fresh lock JSON
+   * for the given session and worktree. The caller is responsible for atomically moving the
+   * temporary file to the final lock file path.
+   *
+   * @param issueId the issue identifier
+   * @param sessionId the Claude session UUID
+   * @param worktree the worktree path (may be empty)
+   * @return the path to the written temporary file
+   * @throws IOException if the file cannot be written
+   */
+  private Path writeLockToTempFile(String issueId, String sessionId, String worktree) throws IOException
+  {
+    long now = clock.instant().getEpochSecond();
+    String createdIso = ISO_FORMATTER.format(clock.instant());
+
+    Map<String, String> worktrees = new LinkedHashMap<>();
+    if (!worktree.isBlank())
+      worktrees.put(worktree, sessionId);
+    Map<String, Object> newLockData = new LinkedHashMap<>();
+    newLockData.put("session_id", sessionId);
+    newLockData.put("worktrees", worktrees);
+    newLockData.put("created_at", now);
+    newLockData.put("created_iso", createdIso);
+
+    Path tempFile = lockDir.resolve(sanitizeIssueId(issueId) + ".lock." + ProcessHandle.current().pid());
+    Files.writeString(tempFile, scope.getJsonMapper().writeValueAsString(newLockData));
+    return tempFile;
   }
 
   /**
@@ -523,7 +627,7 @@ public final class IssueLock
     @SuppressWarnings("unchecked")
     Map<String, String> updatedWorktrees = new LinkedHashMap<>(
       (Map<String, String>) lockData.getOrDefault("worktrees", Map.of()));
-    updatedWorktrees.put(worktree, "");
+    updatedWorktrees.put(worktree, sessionId);
 
     Map<String, Object> updatedData = new LinkedHashMap<>();
     updatedData.put("session_id", sessionId);
@@ -533,7 +637,7 @@ public final class IssueLock
 
     Path tempFile = lockDir.resolve(sanitizeIssueId(issueId) + ".lock." + ProcessHandle.current().pid());
     Files.writeString(tempFile, scope.getJsonMapper().writeValueAsString(updatedData));
-    Files.move(tempFile, lockFile, StandardCopyOption.REPLACE_EXISTING);
+    Files.move(tempFile, lockFile, StandardCopyOption.ATOMIC_MOVE);
 
     return new LockResult.Updated("updated", "Lock updated with worktree", worktree);
   }
@@ -630,7 +734,7 @@ public final class IssueLock
     else
       worktree = worktreesMap.keySet().iterator().next();
 
-    long now = Instant.now().getEpochSecond();
+    long now = clock.instant().getEpochSecond();
     long age = now - createdAt;
 
     return new LockResult.CheckLocked(true, sessionId, age, worktree);
@@ -650,7 +754,7 @@ public final class IssueLock
     Files.createDirectories(lockDir);
 
     List<LockListEntry> locks = new ArrayList<>();
-    long now = Instant.now().getEpochSecond();
+    long now = clock.instant().getEpochSecond();
 
     List<Path> lockFiles;
     try (Stream<Path> stream = Files.list(lockDir))

@@ -17,7 +17,11 @@ import tools.jackson.databind.json.JsonMapper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -741,7 +745,7 @@ public class IssueLockTest
   }
 
   /**
-   * Verifies that update preserves created_at timestamp.
+   * Verifies that update preserves the created_at timestamp from the original acquire.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -757,19 +761,25 @@ public class IssueLockTest
         String sessionId = UUID.randomUUID().toString();
 
         lock.acquire("test-issue", sessionId, "/initial/worktree");
-        Thread.sleep(100);
-        lock.update("test-issue", sessionId, "/updated/worktree");
 
         Path lockFile = tempDir.resolve(".claude").resolve("cat").resolve("locks").
           resolve("test-issue.lock");
-        String content = Files.readString(lockFile);
+        String beforeContent = Files.readString(lockFile);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> beforeData = scope.getJsonMapper().readValue(beforeContent, Map.class);
+        long createdAtBefore = ((Number) beforeData.get("created_at")).longValue();
+        String createdIsoBefore = beforeData.get("created_iso").toString();
 
-        requireThat(content, "content").contains("created_at");
-        requireThat(content, "content").contains("created_iso");
-      }
-      catch (InterruptedException e)
-      {
-        throw WrappedCheckedException.wrap(e);
+        lock.update("test-issue", sessionId, "/updated/worktree");
+
+        String afterContent = Files.readString(lockFile);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> afterData = scope.getJsonMapper().readValue(afterContent, Map.class);
+        long createdAtAfter = ((Number) afterData.get("created_at")).longValue();
+        String createdIsoAfter = afterData.get("created_iso").toString();
+
+        requireThat(createdAtAfter, "createdAtAfter").isEqualTo(createdAtBefore);
+        requireThat(createdIsoAfter, "createdIsoAfter").isEqualTo(createdIsoBefore);
       }
       finally
       {
@@ -905,6 +915,104 @@ public class IssueLockTest
   }
 
   /**
+   * Verifies that update() stores the session ID (not empty string) as the worktree map value.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void updateStoresSessionIdInWorktreesMap() throws IOException
+  {
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+
+        lock.acquire("test-issue", sessionId, "");
+        lock.update("test-issue", sessionId, "/new/worktree");
+
+        Path lockFile = tempDir.resolve(".claude").resolve("cat").resolve("locks").
+          resolve("test-issue.lock");
+        String content = Files.readString(lockFile);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> lockData = scope.getJsonMapper().readValue(content, Map.class);
+        @SuppressWarnings("unchecked")
+        Map<String, String> worktrees = (Map<String, String>) lockData.get("worktrees");
+
+        requireThat(worktrees.get("/new/worktree"), "worktreeValue").isEqualTo(sessionId);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that acquire returns Locked when the stale lock has been replaced by a concurrent session
+   * between the initial staleness check and the overwrite attempt.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquireRejectsLockRefreshedByConcurrentSession() throws IOException
+  {
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      try
+      {
+        // Create a stale lock from an old session
+        String oldSessionId = UUID.randomUUID().toString();
+        Instant now = Instant.parse("2025-06-01T12:00:00Z");
+        Instant staleLockTime = now.minusSeconds(4 * 3600 + 1);
+
+        JsonMapper mapper = scope.getJsonMapper();
+        Path lockDirPath = tempDir.resolve(".claude").resolve("cat").resolve("locks");
+        Files.createDirectories(lockDirPath);
+        Path lockFile = lockDirPath.resolve("test-issue.lock");
+
+        Map<String, Object> staleLockData = Map.of(
+          "session_id", oldSessionId,
+          "worktrees", Map.of("/old/worktree", oldSessionId),
+          "created_at", staleLockTime.getEpochSecond(),
+          "created_iso", "2025-06-01T08:00:00Z");
+        Files.writeString(lockFile, mapper.writeValueAsString(staleLockData));
+
+        // Simulate a concurrent session refreshing the lock (different session_id)
+        String concurrentSessionId = UUID.randomUUID().toString();
+        Map<String, Object> refreshedLockData = Map.of(
+          "session_id", concurrentSessionId,
+          "worktrees", Map.of("/concurrent/worktree", concurrentSessionId),
+          "created_at", now.getEpochSecond(),
+          "created_iso", "2025-06-01T12:00:00Z");
+        Files.writeString(lockFile, mapper.writeValueAsString(refreshedLockData));
+
+        // Now try to acquire with a new session using a clock fixed at 'now'
+        // The initial stale check data (oldSessionId, staleLockTime) no longer matches the file
+        // so overwriteWithFreshLock should detect the change and return Locked
+        String newSessionId = UUID.randomUUID().toString();
+        Clock fixedClock = Clock.fixed(now, ZoneOffset.UTC);
+        IssueLock lock = new IssueLock(scope, fixedClock);
+
+        // The lock file now contains concurrentSessionId (not oldSessionId),
+        // so acquire() will read it as a non-stale active lock and return Locked
+        LockResult result = lock.acquire("test-issue", newSessionId, "/new/worktree");
+
+        requireThat(result, "result").isInstanceOf(LockResult.Locked.class);
+        LockResult.Locked locked = (LockResult.Locked) result;
+        requireThat(locked.owner(), "owner").isEqualTo(concurrentSessionId);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
    * Creates a temporary CAT project directory for test isolation.
    *
    * @return the path to the created temporary directory
@@ -938,6 +1046,121 @@ public class IssueLockTest
     catch (IOException e)
     {
       throw WrappedCheckedException.wrap(e);
+    }
+  }
+
+  /**
+   * Verifies that acquire overwrites a stale lock from a different session.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquireOverwritesStaleLockFromDifferentSession() throws IOException
+  {
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      try
+      {
+        // Set up a stale lock from a different session (>4 hours old)
+        String oldSessionId = UUID.randomUUID().toString();
+        Instant now = Instant.parse("2025-01-01T12:00:00Z");
+        Instant staleLockTime = now.minusSeconds(4 * 3600 + 1);  // 4 hours + 1 second old
+
+        JsonMapper mapper = scope.getJsonMapper();
+        Path lockDir = tempDir.resolve(".claude").resolve("cat").resolve("locks");
+        Files.createDirectories(lockDir);
+        Path lockFile = lockDir.resolve("test-issue.lock");
+
+        Map<String, Object> staleLockData = Map.of(
+          "session_id", oldSessionId,
+          "worktrees", Map.of("/old/worktree", oldSessionId),
+          "created_at", staleLockTime.getEpochSecond(),
+          "created_iso", "2025-01-01T08:00:00Z");
+
+        Files.writeString(lockFile, mapper.writeValueAsString(staleLockData));
+
+        // Verify the stale lock was created
+        requireThat(Files.exists(lockFile), "staleLockExists").isTrue();
+
+        // Acquire with a fixed clock at 'now' and new session ID
+        String newSessionId = UUID.randomUUID().toString();
+        Clock fixedClock = Clock.fixed(now, ZoneOffset.UTC);
+        IssueLock lock = new IssueLock(scope, fixedClock);
+
+        LockResult result = lock.acquire("test-issue", newSessionId, "/new/worktree");
+
+        // Verify the stale lock was overwritten (result should be Acquired)
+        requireThat(result, "result").isInstanceOf(LockResult.Acquired.class);
+        LockResult.Acquired acquired = (LockResult.Acquired) result;
+        requireThat(acquired.status(), "status").isEqualTo("acquired");
+
+        // Verify the lock file contains the new session ID and recent timestamp
+        String content = Files.readString(lockFile);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> updatedLockData = mapper.readValue(content, Map.class);
+        requireThat(updatedLockData.get("session_id"), "sessionId").isEqualTo(newSessionId);
+        long createdAtValue = ((Number) updatedLockData.get("created_at")).longValue();
+        requireThat(createdAtValue, "createdAt").isEqualTo(now.getEpochSecond());
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that acquire rejects a non-stale lock from a different session.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquireRejectsNonStaleLockFromDifferentSession() throws IOException
+  {
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      try
+      {
+        // Set up a non-stale lock from a different session (<4 hours old)
+        String otherSessionId = UUID.randomUUID().toString();
+        Instant now = Instant.parse("2025-01-01T12:00:00Z");
+        Instant recentLockTime = now.minusSeconds(3600);  // 1 hour old (non-stale)
+
+        JsonMapper mapper = scope.getJsonMapper();
+        Path lockDir = tempDir.resolve(".claude").resolve("cat").resolve("locks");
+        Files.createDirectories(lockDir);
+        Path lockFile = lockDir.resolve("test-issue.lock");
+
+        Map<String, Object> recentLockData = Map.of(
+          "session_id", otherSessionId,
+          "worktrees", Map.of("/other/worktree", otherSessionId),
+          "created_at", recentLockTime.getEpochSecond(),
+          "created_iso", "2025-01-01T11:00:00Z");
+
+        Files.writeString(lockFile, mapper.writeValueAsString(recentLockData));
+
+        // Verify the non-stale lock was created
+        requireThat(Files.exists(lockFile), "lockExists").isTrue();
+
+        // Try to acquire with a fixed clock at 'now' and different session ID
+        String newSessionId = UUID.randomUUID().toString();
+        Clock fixedClock = Clock.fixed(now, ZoneOffset.UTC);
+        IssueLock lock = new IssueLock(scope, fixedClock);
+
+        LockResult result = lock.acquire("test-issue", newSessionId, "/new/worktree");
+
+        // Verify the non-stale lock was NOT overwritten (result should be Locked)
+        requireThat(result, "result").isInstanceOf(LockResult.Locked.class);
+        LockResult.Locked locked = (LockResult.Locked) result;
+        requireThat(locked.status(), "status").isEqualTo("locked");
+        requireThat(locked.owner(), "owner").isEqualTo(otherSessionId);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
     }
   }
 }
