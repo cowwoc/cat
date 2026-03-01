@@ -49,6 +49,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - add-line-length-verification-reminder
 - document-skill-output-forwarding-protocol
 - rename-run-retrospective-skill
+- work-select-oldest-first
 
 
 ## Issues Completed
