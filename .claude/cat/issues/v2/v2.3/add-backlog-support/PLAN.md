@@ -11,7 +11,7 @@ None (infrastructure improvement)
 - **Option C chosen:** Dedicated `backlog/` directory at the same level as version directories, not a special version
   number or issue tags.
 - **Planning-only:** Backlog items cannot be worked (`/cat:work`) until graduated to a version.
-- **Graduation via `/cat:graduate`:** A new skill moves backlog items into a chosen version.
+- **Reschedule via `/cat:reschedule`:** A new skill moves issues between versions or from backlog into a version.
 
 ## Structure
 
@@ -28,7 +28,7 @@ None (infrastructure improvement)
 ## Risk Assessment
 - **Risk Level:** MEDIUM
 - **Concerns:** Path detection logic assumes all issues live under versioned directories; backlog items break that
-  assumption. Multiple skills (add, work, status, graduate) need updates.
+  assumption. Multiple skills (add, work, status, reschedule) need updates.
 - **Mitigation:** Incremental implementation by wave; test each component before proceeding.
 
 ## Files to Modify
@@ -37,8 +37,8 @@ None (infrastructure improvement)
 - `plugin/skills/add/SKILL.md` - Add "Backlog" option to add wizard
 - `plugin/skills/status/SKILL.md` - Display backlog items in status output
 - `client/src/main/java/` - Java handlers for backlog path detection, status display
-- New: `plugin/skills/graduate/SKILL.md` - Graduation skill
-- New: `plugin/skills/graduate/first-use.md` - First-use guidance
+- New: `plugin/skills/reschedule/SKILL.md` - Reschedule skill (move issues between versions or from backlog)
+- New: `plugin/skills/reschedule/first-use.md` - First-use guidance
 
 ## Pre-conditions
 - [ ] All dependent issues are closed
@@ -60,22 +60,22 @@ None (infrastructure improvement)
 - Show count and list of backlog items
   - Files: `plugin/skills/status/SKILL.md`, Java status display
 
-### Wave 4: `/cat:graduate` skill
-- New skill to move a backlog item into a chosen version
-- Moves directory from `backlog/<name>/` to `issues/v.../v.../<name>/`
-- Updates target version's STATE.md with the new issue
+### Wave 4: `/cat:reschedule` skill
+- New skill to move issues between versions or from backlog into a version
+- Moves directory from source (backlog or version) to target version
+- Updates source and target STATE.md files
 - Commits the move
-  - Files: New `plugin/skills/graduate/SKILL.md`, `plugin/skills/graduate/first-use.md`
+  - Files: New `plugin/skills/reschedule/SKILL.md`, `plugin/skills/reschedule/first-use.md`
 
 ### Wave 5: `/cat:work` guard
-- Ensure `/cat:work` rejects backlog items with a clear error message directing the user to graduate first
+- Ensure `/cat:work` rejects backlog items with a clear error message directing the user to reschedule first
   - Files: `plugin/skills/work/` (handler or SKILL.md)
 
 ## Post-conditions
 - [ ] `backlog/` directory is recognized by path detection and does not interfere with version resolution
 - [ ] `/cat:add` allows creating issues directly in the backlog
 - [ ] `/cat:status` displays backlog items in a dedicated section
-- [ ] `/cat:graduate` moves a backlog item into a chosen version and updates STATE.md
+- [ ] `/cat:reschedule` moves issues between versions (or from backlog to a version) and updates STATE.md
 - [ ] `/cat:work` rejects backlog items with a clear error message
-- [ ] E2E: Create a backlog item via `/cat:add`, verify it appears in `/cat:status`, graduate it to a version via
-  `/cat:graduate`, then verify it appears under the version in `/cat:status`
+- [ ] E2E: Create a backlog item via `/cat:add`, verify it appears in `/cat:status`, reschedule it to a version via
+  `/cat:reschedule`, then verify it appears under the version in `/cat:status`
