@@ -1096,7 +1096,8 @@ public class SessionStartHookTest
   /**
    * Verifies that SessionStartHook.run() throws IllegalArgumentException when session_id is blank.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*session_id.*")
   public void dispatcherThrowsWhenSessionIdIsBlank() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -1106,14 +1107,7 @@ public class SessionStartHookTest
 
       HookInput input = createInput(mapper, "{\"session_id\": \"\"}");
       HookOutput output = new HookOutput(scope);
-      try
-      {
-        dispatcher.run(input, output);
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("session_id");
-      }
+      dispatcher.run(input, output);
     }
   }
 

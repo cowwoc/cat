@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.SkillLoader;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -595,7 +596,8 @@ Root: ${CLAUDE_PLUGIN_ROOT}
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*resolves outside the plugin root.*")
   public void loadRejectsPathTraversalOutsidePluginRoot() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
@@ -611,14 +613,8 @@ Root: ${CLAUDE_PLUGIN_ROOT}
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
         List.of("agent-" + System.nanoTime()));
-      try
-      {
-        loader.load("test-skill");
-      }
-      catch (IOException e)
-      {
-        requireThat(e.getMessage(), "message").contains("resolves outside the plugin root");
-      }
+      loader.load("test-skill");
+      Assert.fail("Expected IOException to be thrown");
     }
     finally
     {
@@ -667,7 +663,8 @@ Email: user@example.com
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*Circular @path reference.*")
   public void loadRejectsCircularPathReferences() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
@@ -693,14 +690,8 @@ Content B
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
         List.of("agent-" + System.nanoTime()));
 
-      try
-      {
-        loader.load("test-skill");
-      }
-      catch (IOException e)
-      {
-        requireThat(e.getMessage(), "message").contains("Circular @path reference");
-      }
+      loader.load("test-skill");
+      Assert.fail("Expected IOException to be thrown");
     }
     finally
     {
@@ -1431,7 +1422,8 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*Failed to extract class name from launcher.*")
   public void loadThrowsWhenClassExtractionFails() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
@@ -1454,14 +1446,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
         List.of("agent-" + System.nanoTime()));
-      try
-      {
-        loader.load("test-skill");
-      }
-      catch (IOException e)
-      {
-        requireThat(e.getMessage(), "message").contains("Failed to extract class name from launcher");
-      }
+      loader.load("test-skill");
     }
     finally
     {
@@ -2654,6 +2639,303 @@ Full skill content for agent test
       requireThat(Files.exists(marker1), "marker1Exists").isTrue();
       requireThat(Files.exists(marker2), "marker2Exists").isTrue();
       requireThat(marker1.toString(), "marker1Path").isNotEqualTo(marker2.toString());
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that a preprocessor directive generating an {@code <output>} tag is detected correctly
+   * on the first invocation, wrapping the skill instructions in an {@code <instructions>} block.
+   * <p>
+   * Skills like {@code status/first-use.md} use {@code !get-output status} to generate
+   * {@code <output>} tags dynamically. The {@code <output>} tag is produced by the preprocessor
+   * directive at runtime and must be detected after expansion, not before.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void preprocessorGeneratedOutputTagWrapsInstructionsOnFirstInvocation() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output-with-tag"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutputWithTag "$@"
+        """);
+
+      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(firstUseDir);
+      Files.writeString(firstUseDir.resolve("first-use.md"), """
+---
+description: "Test skill"
+user-invocable: false
+---
+
+Skill instructions here.
+
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output-with-tag"`
+""");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").
+        contains("<instructions skill=\"test-skill\">").
+        contains("Skill instructions here.").
+        contains("</instructions>").
+        contains("Execute the <instructions skill=\"test-skill\"> block from earlier in this conversation,").
+        contains("<output skill=\"test-skill\">").
+        contains("preprocessor-generated content").
+        contains("</output>");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that a preprocessor directive generating an {@code <output>} tag returns fresh output
+   * on subsequent invocations (execute-ref only, no repeated instructions).
+   * <p>
+   * On the second invocation, the skill should emit only the execution trigger and the fresh
+   * {@code <output>} tag content — not the full instructions again. Without the fix, the second
+   * invocation returns a generic "already loaded" message because the {@code <output>} tag is not
+   * detected in the raw pre-expansion content, causing the skill to fall into the non-tagged path.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void preprocessorGeneratedOutputTagReturnsFreshOutputOnSubsequentInvocation() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output-with-tag"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutputWithTag "$@"
+        """);
+
+      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(firstUseDir);
+      Files.writeString(firstUseDir.resolve("first-use.md"), """
+---
+description: "Test skill"
+user-invocable: false
+---
+
+Skill instructions here.
+
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output-with-tag"`
+""");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
+
+      String firstResult = loader.load("test-skill");
+      requireThat(firstResult, "firstResult").
+        contains("<instructions skill=\"test-skill\">").
+        contains("Skill instructions here.").
+        contains("</instructions>").
+        contains("<output skill=\"test-skill\">").
+        contains("preprocessor-generated content").
+        contains("</output>");
+
+      String secondResult = loader.load("test-skill");
+      requireThat(secondResult, "secondResult").
+        contains("Execute the <instructions skill=\"test-skill\"> block from earlier in this conversation," +
+          " using the updated <output skill=\"test-skill\"> tag below.").
+        contains("<output skill=\"test-skill\">").
+        contains("preprocessor-generated content").
+        contains("</output>").
+        doesNotContain("Skill instructions here.").
+        doesNotContain("skill instructions were already loaded");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that instructions before a preprocessor directive are correctly captured when the
+   * directive appears in the middle of the content.
+   * <p>
+   * The preprocessor directive expands to an {@code <output>} tag. Everything before the last
+   * {@code <output>} tag in the expanded content is treated as instructions. Instructions written
+   * before the directive line are captured in the {@code <instructions>} block.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void preprocessorDirectiveInMiddleOfContentCapturesInstructionsBefore() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output-with-tag"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutputWithTag "$@"
+        """);
+
+      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(firstUseDir);
+      // The preprocessor directive is between two instruction paragraphs.
+      // After expansion, the content BEFORE the <output> tag becomes the instructions block.
+      // Content AFTER the <output> tag (the trailing paragraph) is not included in instructions
+      // since parseContent() uses the last <output> tag as the delimiter.
+      Files.writeString(firstUseDir.resolve("first-use.md"), """
+---
+description: "Test skill"
+user-invocable: false
+---
+
+Instructions before the directive.
+
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output-with-tag"`
+
+Instructions after the directive.
+""");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
+      String result = loader.load("test-skill");
+
+      // Instructions before the directive are captured in the <instructions> block
+      requireThat(result, "result").
+        contains("<instructions skill=\"test-skill\">").
+        contains("Instructions before the directive.").
+        contains("</instructions>").
+        contains("<output skill=\"test-skill\">").
+        contains("preprocessor-generated content").
+        contains("</output>");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that when a preprocessor directive returns plain text without an {@code <output>} tag,
+   * the skill falls into the "content without tags" path and all content is treated as instructions.
+   * <p>
+   * When the preprocessor generates content without a wrapping {@code <output>} tag, the entire
+   * expanded content (including the preprocessor output) is treated as non-tagged and returned
+   * directly without wrapping in {@code <instructions>} or {@code <output>} blocks.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void preprocessorDirectiveWithNoOutputTagFallsIntoNonTaggedPath() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output-no-tag"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutputNoTag "$@"
+        """);
+
+      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(firstUseDir);
+      Files.writeString(firstUseDir.resolve("first-use.md"), """
+---
+description: "Test skill"
+user-invocable: false
+---
+
+Skill instructions here.
+
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output-no-tag"`
+""");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").
+        contains("Skill instructions here.").
+        contains("plain-text-no-output-tag").
+        doesNotContain("<instructions skill=").
+        doesNotContain("<output skill=");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that when first-use.md contains both a static {@code <output>} tag AND a preprocessor
+   * directive that generates another {@code <output>} tag, the preprocessor-generated tag (which
+   * appears last after expansion) takes precedence.
+   * <p>
+   * The parseContent() logic uses the LAST {@code <output>} tag found in the expanded content.
+   * When a preprocessor directive replaces its line with an {@code <output>} tag that appears after
+   * the static {@code <output>} tag, the preprocessor-generated tag is the one used for the output
+   * section.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void mixedStaticAndDynamicOutputTagsUsesLastTag() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output-with-tag"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutputWithTag "$@"
+        """);
+
+      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(firstUseDir);
+      // Static <output> tag comes first, then a preprocessor directive generating another <output> tag
+      Files.writeString(firstUseDir.resolve("first-use.md"), """
+---
+description: "Test skill"
+user-invocable: false
+---
+
+Skill instructions here.
+
+<output type="static">static content</output>
+
+More instructions after static tag.
+
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output-with-tag"`
+""");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "/project",
+        List.of("agent-" + System.nanoTime()));
+      String result = loader.load("test-skill");
+
+      // The preprocessor-generated tag (last) must be used for the output section,
+      // not the static tag (first)
+      requireThat(result, "result").
+        contains("<instructions skill=\"test-skill\">").
+        contains("Skill instructions here.").
+        contains("More instructions after static tag.").
+        contains("</instructions>").
+        contains("<output skill=\"test-skill\">").
+        contains("preprocessor-generated content").
+        contains("</output>");
     }
     finally
     {

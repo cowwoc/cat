@@ -545,19 +545,13 @@ public class IssueDiscoveryTest
   /**
    * Verifies that constructor throws on invalid project directory.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Not a CAT project.*")
   public void constructorThrowsOnInvalidProjectDirectory()
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      try
-      {
-        new IssueDiscovery(scope);
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("Not a CAT project");
-      }
+      new IssueDiscovery(scope);
     }
   }
 
@@ -895,19 +889,14 @@ public class IssueDiscoveryTest
    * @param status the non-canonical status alias
    * @throws IOException if an I/O error occurs
    */
-  @Test(dataProvider = "nonCanonicalStatusProvider")
+  @Test(dataProvider = "nonCanonicalStatusProvider",
+    expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*Unknown status.*")
   public void nonCanonicalStatusIsRejected(String status) throws IOException
   {
     List<String> lines = List.of("- **Status:** " + status);
     Path fakePath = Path.of("fake/STATE.md");
-    try
-    {
-      SharedSecrets.getIssueStatus(lines, fakePath);
-    }
-    catch (IOException e)
-    {
-      requireThat(e.getMessage(), "message").contains("Unknown status");
-    }
+    SharedSecrets.getIssueStatus(lines, fakePath);
   }
 
   /**

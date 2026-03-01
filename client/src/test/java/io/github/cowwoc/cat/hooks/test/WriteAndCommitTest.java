@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
  * Tests for WriteAndCommit validation and error handling.
@@ -47,7 +46,8 @@ public class WriteAndCommitTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*filePath.*")
   public void executeRejectsNullFilePath() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -62,14 +62,7 @@ public class WriteAndCommitTest
 
       WriteAndCommit cmd = new WriteAndCommit(scope);
 
-      try
-      {
-        cmd.execute(null, contentFile.toString(), commitMsgFile.toString(), false);
-      }
-      catch (NullPointerException e)
-      {
-        requireThat(e.getMessage(), "message").contains("filePath");
-      }
+      cmd.execute(null, contentFile.toString(), commitMsgFile.toString(), false);
     }
     finally
     {
@@ -83,7 +76,8 @@ public class WriteAndCommitTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*filePath.*")
   public void executeRejectsBlankFilePath() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -98,14 +92,7 @@ public class WriteAndCommitTest
 
       WriteAndCommit cmd = new WriteAndCommit(scope);
 
-      try
-      {
-        cmd.execute("", contentFile.toString(), commitMsgFile.toString(), false);
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("filePath");
-      }
+      cmd.execute("", contentFile.toString(), commitMsgFile.toString(), false);
     }
     finally
     {
@@ -119,7 +106,8 @@ public class WriteAndCommitTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*Content file not found.*")
   public void executeRejectsMissingContentFile() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -132,15 +120,8 @@ public class WriteAndCommitTest
 
       WriteAndCommit cmd = new WriteAndCommit(scope);
 
-      try
-      {
-        cmd.execute("test.txt", tempDir.resolve("missing.txt").toString(),
-          commitMsgFile.toString(), false);
-      }
-      catch (IOException e)
-      {
-        requireThat(e.getMessage(), "message").contains("Content file not found");
-      }
+      cmd.execute("test.txt", tempDir.resolve("missing.txt").toString(),
+        commitMsgFile.toString(), false);
     }
     finally
     {
@@ -154,7 +135,8 @@ public class WriteAndCommitTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*Commit message file not found.*")
   public void executeRejectsMissingCommitMsgFile() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -167,15 +149,8 @@ public class WriteAndCommitTest
 
       WriteAndCommit cmd = new WriteAndCommit(scope);
 
-      try
-      {
-        cmd.execute("test.txt", contentFile.toString(),
-          tempDir.resolve("missing.txt").toString(), false);
-      }
-      catch (IOException e)
-      {
-        requireThat(e.getMessage(), "message").contains("Commit message file not found");
-      }
+      cmd.execute("test.txt", contentFile.toString(),
+        tempDir.resolve("missing.txt").toString(), false);
     }
     finally
     {

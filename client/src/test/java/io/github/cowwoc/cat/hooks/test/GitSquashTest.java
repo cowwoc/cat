@@ -235,140 +235,98 @@ public class GitSquashTest
   /**
    * Verifies that a generic 'squash commit' message is rejected.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid commit message format.*")
   public void rejectsGenericSquashCommitMessage() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GitSquash cmd = new GitSquash(scope, ".");
-      try
-      {
-        cmd.execute("main", "squash commit");
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("Invalid commit message format");
-      }
+      cmd.execute("main", "squash commit");
     }
   }
 
   /**
    * Verifies that a generic 'fix typo' message is rejected.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid commit message format.*")
   public void rejectsGenericFixTypoMessage() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GitSquash cmd = new GitSquash(scope, ".");
-      try
-      {
-        cmd.execute("main", "fix typo");
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("Invalid commit message format");
-      }
+      cmd.execute("main", "fix typo");
     }
   }
 
   /**
    * Verifies that a message with missing space after colon is rejected.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid commit message format.*")
   public void rejectsMissingSpaceAfterColonFeature() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GitSquash cmd = new GitSquash(scope, ".");
-      try
-      {
-        cmd.execute("main", "feature:nodescription");
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("Invalid commit message format");
-      }
+      cmd.execute("main", "feature:nodescription");
     }
   }
 
   /**
    * Verifies that a bugfix message with missing space after colon is rejected.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid commit message format.*")
   public void rejectsMissingSpaceAfterColonBugfix() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GitSquash cmd = new GitSquash(scope, ".");
-      try
-      {
-        cmd.execute("main", "bugfix:fix");
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("Invalid commit message format");
-      }
+      cmd.execute("main", "bugfix:fix");
     }
   }
 
   /**
    * Verifies that a message with only colon and space (empty description) is rejected.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid commit message format.*")
   public void rejectsEmptyDescription() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GitSquash cmd = new GitSquash(scope, ".");
-      try
-      {
-        cmd.execute("main", "feature: ");
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("Invalid commit message format");
-      }
+      cmd.execute("main", "feature: ");
     }
   }
 
   /**
    * Verifies that an uppercase type prefix is rejected.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid commit message format.*")
   public void rejectsUppercaseTypePrefix() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GitSquash cmd = new GitSquash(scope, ".");
-      try
-      {
-        cmd.execute("main", "Feature: add auth");
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("Invalid commit message format");
-      }
+      cmd.execute("main", "Feature: add auth");
     }
   }
 
   /**
    * Verifies that a mixed case type prefix is rejected.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid commit message format.*")
   public void rejectsMixedCaseTypePrefix() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GitSquash cmd = new GitSquash(scope, ".");
-      try
-      {
-        cmd.execute("main", "Bugfix: fix crash");
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("Invalid commit message format");
-      }
+      cmd.execute("main", "Bugfix: fix crash");
     }
   }
 
@@ -395,60 +353,42 @@ public class GitSquashTest
   /**
    * Verifies that an invalid type prefix like 'chore' is rejected.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid commit message format.*")
   public void rejectsInvalidTypePrefix() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GitSquash cmd = new GitSquash(scope, ".");
-      try
-      {
-        cmd.execute("main", "chore: update dependencies");
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("Invalid commit message format");
-      }
+      cmd.execute("main", "chore: update dependencies");
     }
   }
 
   /**
    * Verifies that a message with only whitespace after type and colon is rejected.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid commit message format.*")
   public void rejectsWhitespaceOnlyDescription() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GitSquash cmd = new GitSquash(scope, ".");
-      try
-      {
-        cmd.execute("main", "feature:   ");
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("Invalid commit message format");
-      }
+      cmd.execute("main", "feature:   ");
     }
   }
 
   /**
    * Verifies that a generic 'add parser' message is rejected.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid commit message format.*")
   public void rejectsGenericAddParserMessage() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GitSquash cmd = new GitSquash(scope, ".");
-      try
-      {
-        cmd.execute("main", "add parser");
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("Invalid commit message format");
-      }
+      cmd.execute("main", "add parser");
     }
   }
 
@@ -459,43 +399,28 @@ public class GitSquashTest
   /**
    * Verifies that the error message shows the received message.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Received: invalid message.*")
   public void errorMessageShowsReceivedMessage() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GitSquash cmd = new GitSquash(scope, ".");
-      try
-      {
-        cmd.execute("main", "invalid message");
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("Received: invalid message");
-      }
+      cmd.execute("main", "invalid message");
     }
   }
 
   /**
    * Verifies that the error message shows valid type prefixes.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = "(?s).*(?=.*feature:)(?=.*bugfix:)(?=.*docs:).*")
   public void errorMessageShowsValidTypePrefixes() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GitSquash cmd = new GitSquash(scope, ".");
-      try
-      {
-        cmd.execute("main", "invalid: message");
-      }
-      catch (IllegalArgumentException e)
-      {
-        String msg = e.getMessage();
-        requireThat(msg, "message").contains("feature:");
-        requireThat(msg, "message").contains("bugfix:");
-        requireThat(msg, "message").contains("docs:");
-      }
+      cmd.execute("main", "invalid: message");
     }
   }
 

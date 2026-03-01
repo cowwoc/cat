@@ -621,7 +621,8 @@ public final class VerifyAuditTest
    *
    * @throws IOException if JSON parsing fails
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*issue_id.*")
   public void prepareRejectsMissingIssueId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-audit-test-");
@@ -636,14 +637,7 @@ public final class VerifyAuditTest
         }
         """;
 
-      try
-      {
-        audit.prepare(json);
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("issue_id");
-      }
+      audit.prepare(json);
     }
     finally
     {
@@ -656,7 +650,8 @@ public final class VerifyAuditTest
    *
    * @throws IOException if file operations fail
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*PLAN\\.md.*")
   public void prepareRejectsMissingPlanMd() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-audit-test-");
@@ -675,14 +670,7 @@ public final class VerifyAuditTest
         }
         """.formatted(issueDir.toString());
 
-      try
-      {
-        audit.prepare(json);
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").contains("PLAN.md");
-      }
+      audit.prepare(json);
     }
     finally
     {

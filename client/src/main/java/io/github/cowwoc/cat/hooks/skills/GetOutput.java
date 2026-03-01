@@ -121,7 +121,12 @@ public final class GetOutput implements SkillOutput
     if (content == null)
       return null;
     String sanitizedType = escapeXmlAttribute(type);
-    return "<output type=\"" + sanitizedType + "\">\n" + content + "\n</output>";
+    return """
+      Echo the content of the `<output>` tag below verbatim.
+
+      <output type="%s">
+      %s
+      </output>""".formatted(sanitizedType, content);
   }
 
   /**

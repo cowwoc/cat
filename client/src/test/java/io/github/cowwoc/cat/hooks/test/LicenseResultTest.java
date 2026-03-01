@@ -55,48 +55,30 @@ public final class LicenseResultTest
   /**
    * Verifies that constructor rejects null tier.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*tier.*")
   public void constructorRejectsNullTier()
   {
-    try
-    {
-      new LicenseResult(true, null, false, false, 0, "", "");
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("tier");
-    }
+    new LicenseResult(true, null, false, false, 0, "", "");
   }
 
   /**
    * Verifies that constructor rejects null error.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*error.*")
   public void constructorRejectsNullError()
   {
-    try
-    {
-      new LicenseResult(true, Tier.PRO, false, false, 0, null, "");
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("error");
-    }
+    new LicenseResult(true, Tier.PRO, false, false, 0, null, "");
   }
 
   /**
    * Verifies that constructor rejects null warning.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*warning.*")
   public void constructorRejectsNullWarning()
   {
-    try
-    {
-      new LicenseResult(true, Tier.PRO, false, false, 0, "", null);
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("warning");
-    }
+    new LicenseResult(true, Tier.PRO, false, false, 0, "", null);
   }
 }

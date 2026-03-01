@@ -152,17 +152,11 @@ public class ExistingWorkCheckerTest
   /**
    * Verifies that check throws on non-existent worktree path.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Cannot access worktree.*")
   public void checkThrowsOnNonExistentWorktreePath() throws IOException
   {
-    try
-    {
-      ExistingWorkChecker.check("/nonexistent/path", "base-branch");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("Cannot access worktree");
-    }
+    ExistingWorkChecker.check("/nonexistent/path", "base-branch");
   }
 
   /**
@@ -170,7 +164,8 @@ public class ExistingWorkCheckerTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = "(?s).*")
   public void checkThrowsOnEmptyRepository() throws IOException
   {
     Path tempDir = Files.createTempDirectory("empty-repo-test");
@@ -180,14 +175,7 @@ public class ExistingWorkCheckerTest
       GitCommands.runGit(tempDir, "config", "user.name", "Test User");
       GitCommands.runGit(tempDir, "config", "user.email", "test@example.com");
 
-      try
-      {
-        ExistingWorkChecker.check(tempDir.toString(), "main");
-      }
-      catch (IOException e)
-      {
-        requireThat(e.getMessage(), "message").isNotNull();
-      }
+      ExistingWorkChecker.check(tempDir.toString(), "main");
     }
     finally
     {
@@ -200,7 +188,8 @@ public class ExistingWorkCheckerTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = "(?s).*")
   public void checkThrowsOnNonExistentBaseBranch() throws IOException
   {
     Path tempDir = createTempGitRepo();
@@ -209,14 +198,7 @@ public class ExistingWorkCheckerTest
       GitCommands.runGit(tempDir, "checkout", "-b", "real-branch");
       createCommit(tempDir, "Initial commit");
 
-      try
-      {
-        ExistingWorkChecker.check(tempDir.toString(), "nonexistent-branch");
-      }
-      catch (IOException e)
-      {
-        requireThat(e.getMessage(), "message").isNotNull();
-      }
+      ExistingWorkChecker.check(tempDir.toString(), "nonexistent-branch");
     }
     finally
     {

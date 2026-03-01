@@ -27,20 +27,14 @@ public final class RootCauseAnalyzerTest
    *
    * @throws IOException if test setup fails
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*projectRoot.*")
   public void constructorRejectsNullProjectRoot() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-rca-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      try
-      {
-        new RootCauseAnalyzer(null, scope);
-      }
-      catch (NullPointerException e)
-      {
-        requireThat(e.getMessage(), "message").contains("projectRoot");
-      }
+      new RootCauseAnalyzer(null, scope);
     }
     finally
     {
@@ -53,17 +47,14 @@ public final class RootCauseAnalyzerTest
    *
    * @throws IOException if test setup fails
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*scope.*")
   public void constructorRejectsNullScope() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-rca-");
     try
     {
       new RootCauseAnalyzer(tempDir, null);
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("scope");
     }
     finally
     {
@@ -408,32 +399,20 @@ public final class RootCauseAnalyzerTest
   /**
    * Verifies that parseStartId rejects invalid --start-id value.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid start-id value.*")
   public void parseStartIdRejectsInvalidValue()
   {
-    try
-    {
-      RootCauseAnalyzer.parseStartId(new String[]{"--start-id", "not-a-number"});
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("Invalid start-id value");
-    }
+    RootCauseAnalyzer.parseStartId(new String[]{"--start-id", "not-a-number"});
   }
 
   /**
    * Verifies that parseStartId rejects missing --start-id value.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*--start-id requires a value.*")
   public void parseStartIdRejectsMissingValue()
   {
-    try
-    {
-      RootCauseAnalyzer.parseStartId(new String[]{"--start-id"});
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("--start-id requires a value");
-    }
+    RootCauseAnalyzer.parseStartId(new String[]{"--start-id"});
   }
 }

@@ -131,7 +131,8 @@ public class IssueLockTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid session_id format.*")
   public void acquireRejectsInvalidSessionId() throws IOException
   {
     Path tempDir = createTempProject();
@@ -141,15 +142,7 @@ public class IssueLockTest
       {
         IssueLock lock = new IssueLock(scope);
 
-        try
-        {
-          lock.acquire("test-issue", "not-a-uuid", "/path/to/worktree");
-        }
-        catch (IllegalArgumentException e)
-        {
-          requireThat(e.getMessage(), "message").contains("Invalid session_id format");
-          requireThat(e.getMessage(), "message").contains("Did you swap");
-        }
+        lock.acquire("test-issue", "not-a-uuid", "/path/to/worktree");
       }
       finally
       {
@@ -583,7 +576,7 @@ public class IssueLockTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class)
   public void checkHandlesMissingCreatedAtField() throws IOException
   {
     Path tempDir = createTempProject();
@@ -599,15 +592,7 @@ public class IssueLockTest
         Files.writeString(lockFile, invalidLock);
 
         IssueLock lock = new IssueLock(scope);
-
-        try
-        {
-          lock.check("test-issue");
-        }
-        catch (NullPointerException e)
-        {
-          requireThat(e.getMessage(), "message").isNotNull();
-        }
+        lock.check("test-issue");
       }
       finally
       {
@@ -737,7 +722,8 @@ public class IssueLockTest
   /**
    * Verifies that constructor throws on invalid project directory.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Not a CAT project.*")
   public void constructorThrowsOnInvalidProjectDirectory() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -745,14 +731,7 @@ public class IssueLockTest
       Path tempDir = createTempDir();
       try
       {
-        try
-        {
-          new IssueLock(scope);
-        }
-        catch (IllegalArgumentException e)
-        {
-          requireThat(e.getMessage(), "message").contains("Not a CAT project");
-        }
+        new IssueLock(scope);
       }
       finally
       {

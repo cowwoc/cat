@@ -243,32 +243,20 @@ public final class StatusAlignmentValidatorTest
   /**
    * Verifies that null input is rejected by validate().
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*input.*")
   public void validateRejectsNullInput()
   {
-    try
-    {
-      StatusAlignmentValidator.validate(null);
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("input");
-    }
+    StatusAlignmentValidator.validate(null);
   }
 
   /**
    * Verifies that null input is rejected by validateAndFormat().
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*input.*")
   public void validateAndFormatRejectsNullInput()
   {
-    try
-    {
-      StatusAlignmentValidator.validateAndFormat(null);
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("input");
-    }
+    StatusAlignmentValidator.validateAndFormat(null);
   }
 }

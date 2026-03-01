@@ -26,36 +26,24 @@ public class GitAmendSafeTest
   /**
    * Verifies that executing with a null scope throws NullPointerException.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = "(?s).*")
   public void constructorRejectsNullScope()
   {
-    try
-    {
-      new GitAmendSafe(null, ".");
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").isNotNull();
-    }
+    new GitAmendSafe(null, ".");
   }
 
   /**
    * Verifies that executing with a blank directory throws IllegalArgumentException.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = "(?s).*")
   public void constructorRejectsBlankDirectory() throws IOException
   {
     Path tempDir = Files.createTempDirectory("git-amend-test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      try
-      {
-        new GitAmendSafe(scope, "");
-      }
-      catch (IllegalArgumentException e)
-      {
-        requireThat(e.getMessage(), "message").isNotNull();
-      }
+      new GitAmendSafe(scope, "");
     }
     finally
     {
@@ -187,7 +175,8 @@ public class GitAmendSafeTest
   /**
    * Verifies that executing with a null message throws NullPointerException.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = "(?s).*")
   public void executeRejectsNullMessage() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
@@ -196,14 +185,7 @@ public class GitAmendSafeTest
       try
       {
         GitAmendSafe cmd = new GitAmendSafe(scope, repoDir.toString());
-        try
-        {
-          cmd.execute(null, false);
-        }
-        catch (NullPointerException e)
-        {
-          requireThat(e.getMessage(), "message").isNotNull();
-        }
+        cmd.execute(null, false);
       }
       finally
       {

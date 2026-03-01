@@ -520,35 +520,22 @@ public class GetStakeholderOutputTest
   /**
    * Verifies that parseReviewers rejects entries missing the colon separator.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*(?=.*malformed-entry)(?=.*missing colon separator).*")
   public void parseReviewersRejectsEntryMissingColon()
   {
-    try
-    {
-      GetStakeholderReviewBox.parseReviewers(
-        "design:APPROVED,malformed-entry,testing:CONCERNS");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("malformed-entry").
-        contains("missing colon separator");
-    }
+    GetStakeholderReviewBox.parseReviewers(
+      "design:APPROVED,malformed-entry,testing:CONCERNS");
   }
 
   /**
    * Verifies that parseReviewers rejects entries with empty stakeholder names.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Empty stakeholder name.*")
   public void parseReviewersRejectsEmptyStakeholderName()
   {
-    try
-    {
-      GetStakeholderReviewBox.parseReviewers(":APPROVED,design:CONCERNS");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("Empty stakeholder name");
-    }
+    GetStakeholderReviewBox.parseReviewers(":APPROVED,design:CONCERNS");
   }
 
   /**
@@ -581,16 +568,10 @@ public class GetStakeholderOutputTest
   /**
    * Verifies that parseReviewers rejects entries where status is empty after the colon.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Empty status.*")
   public void parseReviewersRejectsEntryWithEmptyStatus()
   {
-    try
-    {
-      GetStakeholderReviewBox.parseReviewers("design:,testing:CONCERNS");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("Empty status");
-    }
+    GetStakeholderReviewBox.parseReviewers("design:,testing:CONCERNS");
   }
 }

@@ -46,7 +46,8 @@ public class MergeAndCleanupTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*projectDir.*")
   public void executeRejectsNullProjectDir() throws IOException
   {
     Path projectDir = Files.createTempDirectory("test-project");
@@ -58,14 +59,7 @@ public class MergeAndCleanupTest
       {
         MergeAndCleanup cmd = new MergeAndCleanup(scope);
 
-        try
-        {
-          cmd.execute(null, "issue-id", "session-id", "v2.1", "", tempDir.toString());
-        }
-        catch (NullPointerException e)
-        {
-          requireThat(e.getMessage(), "message").contains("projectDir");
-        }
+        cmd.execute(null, "issue-id", "session-id", "v2.1", "", tempDir.toString());
       }
       finally
       {
@@ -79,7 +73,8 @@ public class MergeAndCleanupTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*projectDir.*")
   public void executeRejectsBlankProjectDir() throws IOException
   {
     Path projectDir = Files.createTempDirectory("test-project");
@@ -91,14 +86,7 @@ public class MergeAndCleanupTest
       {
         MergeAndCleanup cmd = new MergeAndCleanup(scope);
 
-        try
-        {
-          cmd.execute("", "issue-id", "session-id", "v2.1", "", tempDir.toString());
-        }
-        catch (IllegalArgumentException e)
-        {
-          requireThat(e.getMessage(), "message").contains("projectDir");
-        }
+        cmd.execute("", "issue-id", "session-id", "v2.1", "", tempDir.toString());
       }
       finally
       {
@@ -112,7 +100,8 @@ public class MergeAndCleanupTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*issueId.*")
   public void executeRejectsNullIssueId() throws IOException
   {
     Path projectDir = Files.createTempDirectory("test-project");
@@ -124,14 +113,7 @@ public class MergeAndCleanupTest
       {
         MergeAndCleanup cmd = new MergeAndCleanup(scope);
 
-        try
-        {
-          cmd.execute(tempDir.toString(), null, "session-id", "v2.1", "", tempDir.toString());
-        }
-        catch (NullPointerException e)
-        {
-          requireThat(e.getMessage(), "message").contains("issueId");
-        }
+        cmd.execute(tempDir.toString(), null, "session-id", "v2.1", "", tempDir.toString());
       }
       finally
       {
@@ -145,7 +127,8 @@ public class MergeAndCleanupTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*Not a CAT project.*")
   public void executeRejectsNonCatProject() throws IOException
   {
     Path projectDir = Files.createTempDirectory("test-project");
@@ -157,15 +140,8 @@ public class MergeAndCleanupTest
       {
         MergeAndCleanup cmd = new MergeAndCleanup(scope);
 
-        try
-        {
-          cmd.execute(tempDir.toString(), "issue-id", "session-id", "v2.1", "",
-            tempDir.toString());
-        }
-        catch (IOException e)
-        {
-          requireThat(e.getMessage(), "message").contains("Not a CAT project");
-        }
+        cmd.execute(tempDir.toString(), "issue-id", "session-id", "v2.1", "",
+          tempDir.toString());
       }
       finally
       {
@@ -316,7 +292,8 @@ public class MergeAndCleanupTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*diverged.*")
   public void executeThrowsWhenLocalBaseBranchDivergedFromOrigin() throws IOException
   {
     // Create a bare "origin" repo
@@ -385,16 +362,8 @@ public class MergeAndCleanupTest
       {
         MergeAndCleanup cmd = new MergeAndCleanup(scope);
 
-        try
-        {
-          cmd.execute(localRepo.toString(), issueBranch, "test-session", "v2.1",
-            issueWorktree.toString(), pluginRoot.toString());
-        }
-        catch (IOException e)
-        {
-          requireThat(e.getMessage(), "message").contains("diverged");
-          requireThat(e.getMessage(), "message").contains("v2.1");
-        }
+        cmd.execute(localRepo.toString(), issueBranch, "test-session", "v2.1",
+          issueWorktree.toString(), pluginRoot.toString());
       }
     }
     finally
@@ -414,7 +383,8 @@ public class MergeAndCleanupTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*origin.*")
   public void executeThrowsWhenFetchFailsDueToInvalidRemote() throws IOException
   {
     Path localRepo = Files.createTempDirectory("local-repo-");
@@ -455,16 +425,8 @@ public class MergeAndCleanupTest
       {
         MergeAndCleanup cmd = new MergeAndCleanup(scope);
 
-        try
-        {
-          cmd.execute(localRepo.toString(), issueBranch, "test-session", "v2.1",
-            issueWorktree.toString(), pluginRoot.toString());
-        }
-        catch (IOException e)
-        {
-          requireThat(e.getMessage(), "message").contains("origin");
-          requireThat(e.getMessage(), "message").contains("v2.1");
-        }
+        cmd.execute(localRepo.toString(), issueBranch, "test-session", "v2.1",
+          issueWorktree.toString(), pluginRoot.toString());
       }
     }
     finally

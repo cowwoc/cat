@@ -217,119 +217,53 @@ public class GetSubagentStatusOutputTest
   /**
    * Verifies that SubagentInfo validates required fields.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*id.*")
   public void subagentInfoValidatesRequiredFields()
   {
-    try
-    {
-      new SubagentInfo(null, "task", SubagentStatus.RUNNING, 0, 0, "/path");
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("id");
-    }
+    new SubagentInfo(null, "task", SubagentStatus.RUNNING, 0, 0, "/path");
 
-    try
-    {
-      new SubagentInfo("abc123", null, SubagentStatus.RUNNING, 0, 0, "/path");
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("task");
-    }
+    new SubagentInfo("abc123", null, SubagentStatus.RUNNING, 0, 0, "/path");
 
-    try
-    {
-      new SubagentInfo("abc123", "task", null, 0, 0, "/path");
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("status");
-    }
+    new SubagentInfo("abc123", "task", null, 0, 0, "/path");
 
-    try
-    {
-      new SubagentInfo("abc123", "task", SubagentStatus.RUNNING, 0, 0, null);
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("worktree");
-    }
+    new SubagentInfo("abc123", "task", SubagentStatus.RUNNING, 0, 0, null);
   }
 
   /**
    * Verifies that SubagentInfo validates non-negative token count.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*tokens.*")
   public void subagentInfoValidatesNonNegativeTokens()
   {
-    try
-    {
-      new SubagentInfo("abc123", "task", SubagentStatus.RUNNING, -1, 0, "/path");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("tokens");
-    }
+    new SubagentInfo("abc123", "task", SubagentStatus.RUNNING, -1, 0, "/path");
   }
 
   /**
    * Verifies that SubagentInfo validates non-negative compaction count.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*compactions.*")
   public void subagentInfoValidatesNonNegativeCompactions()
   {
-    try
-    {
-      new SubagentInfo("abc123", "task", SubagentStatus.RUNNING, 0, -1, "/path");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("compactions");
-    }
+    new SubagentInfo("abc123", "task", SubagentStatus.RUNNING, 0, -1, "/path");
   }
 
   /**
    * Verifies that Summary validates non-negative counts.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*total.*")
   public void summaryValidatesNonNegativeCounts()
   {
-    try
-    {
-      new GetSubagentStatusOutput.Summary(-1, 0, 0, 0);
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("total");
-    }
+    new GetSubagentStatusOutput.Summary(-1, 0, 0, 0);
 
-    try
-    {
-      new GetSubagentStatusOutput.Summary(0, -1, 0, 0);
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("running");
-    }
+    new GetSubagentStatusOutput.Summary(0, -1, 0, 0);
 
-    try
-    {
-      new GetSubagentStatusOutput.Summary(0, 0, -1, 0);
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("complete");
-    }
+    new GetSubagentStatusOutput.Summary(0, 0, -1, 0);
 
-    try
-    {
-      new GetSubagentStatusOutput.Summary(0, 0, 0, -1);
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("warning");
-    }
+    new GetSubagentStatusOutput.Summary(0, 0, 0, -1);
   }
 
   /**
@@ -376,33 +310,21 @@ public class GetSubagentStatusOutputTest
   /**
    * Verifies that StatusResult validates null subagents list.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*subagents.*")
   public void monitorResultValidatesNullSubagents()
   {
-    try
-    {
-      new StatusResult(null, new GetSubagentStatusOutput.Summary(0, 0, 0, 0));
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("subagents");
-    }
+    new StatusResult(null, new GetSubagentStatusOutput.Summary(0, 0, 0, 0));
   }
 
   /**
    * Verifies that StatusResult validates null summary.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*summary.*")
   public void monitorResultValidatesNullSummary()
   {
-    try
-    {
-      new StatusResult(java.util.List.of(), null);
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("summary");
-    }
+    new StatusResult(java.util.List.of(), null);
   }
 
   /**

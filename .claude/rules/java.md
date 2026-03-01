@@ -1087,18 +1087,30 @@ unchecked wrapper types (`UncheckedIOException`, custom wrappers, etc.).
 
 ## Testing
 
-### Minimal Exception Testing
-TestNG already fails tests that throw unexpected exceptions. Keep exception tests minimal:
-
-1. **No sentinel lines** — do not add `requireThat(false, ...).isTrue()` or
-   `throw new AssertionError("Expected X was not thrown")` after the method call. If the method must throw, the catch
-   block handles it. If it doesn't throw, the test passes (which is correct for "accepts" tests, and for "rejects"
-   tests the catch assertion simply doesn't run).
-2. **No catch blocks for unexpected exceptions** — let them propagate to TestNG.
+### Exception Testing
+Use `@Test(expectedExceptions, expectedExceptionsMessageRegExp)` to declare both the expected exception type and message
+pattern. No try/catch needed:
 
 ```java
-// Good - catch only the expected exception; no sentinel, no extra catch blocks
-@Test
+// Good - TestNG validates both exception type and message; no try/catch needed
+@Test(expectedExceptions = NullPointerException.class,
+  expectedExceptionsMessageRegExp = ".*input.*")
+public void executeRejectsNullInput() throws IOException
+{
+  cmd.execute(null, "value");
+  // IOException propagates naturally → TestNG fails the test
+}
+
+// Good - multiple substrings: use regex lookahead
+@Test(expectedExceptions = IllegalArgumentException.class,
+  expectedExceptionsMessageRegExp = ".*(?=.*branch)(?=.*blank).*")
+public void rejectsBlankBranch() throws IOException
+{
+  cmd.execute("", "value");
+}
+
+// Avoid - try/catch to validate message (unnecessary with expectedExceptionsMessageRegExp)
+@Test(expectedExceptions = NullPointerException.class)
 public void executeRejectsNullInput() throws IOException
 {
   try
@@ -1108,30 +1120,14 @@ public void executeRejectsNullInput() throws IOException
   catch (NullPointerException e)
   {
     requireThat(e.getMessage(), "message").contains("input");
-  }
-  // IOException propagates naturally → TestNG fails the test
-}
-
-// Avoid - sentinel line and redundant catch block
-@Test
-public void executeRejectsNullInput()
-{
-  try
-  {
-    cmd.execute(null, "value");
-    requireThat(false, "execute").isEqualTo(true);  // sentinel - don't do this
-    // also wrong: throw new AssertionError("Expected NullPointerException was not thrown");
-  }
-  catch (NullPointerException e)
-  {
-    requireThat(e.getMessage(), "message").contains("input");
-  }
-  catch (IOException _)
-  {
-    requireThat(false, "shouldThrowNullPointerException").isEqualTo(true);
+    throw e;
   }
 }
 ```
+
+**Pattern syntax:** `expectedExceptionsMessageRegExp` uses `Pattern.matches()` which matches the **entire** string.
+Wrap substrings in `.*` to match: `".*substring.*"`. For multiline messages, prefix with `(?s)` to make `.` match
+newlines: `"(?s).*substring.*"`.
 
 **For "accepts" tests** (verifying no validation exception is thrown):
 

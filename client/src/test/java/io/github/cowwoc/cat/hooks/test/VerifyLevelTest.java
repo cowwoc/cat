@@ -83,34 +83,22 @@ public final class VerifyLevelTest
   /**
    * Verifies that fromString throws IllegalArgumentException for an unrecognized value.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*UNKNOWN.*")
   public void fromStringInvalidThrowsIllegalArgument()
   {
-    try
-    {
-      VerifyLevel.fromString("unknown");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("UNKNOWN");
-    }
+    VerifyLevel.fromString("unknown");
   }
 
   /**
    * Verifies that fromString throws IllegalArgumentException for blank input, with a message referencing
    * the parameter name.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*value.*")
   public void fromStringBlankThrowsIllegalArgument()
   {
-    try
-    {
-      VerifyLevel.fromString("");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("value");
-    }
+    VerifyLevel.fromString("");
   }
 
   /**
@@ -118,32 +106,20 @@ public final class VerifyLevelTest
    * <p>
    * The implementation does not strip whitespace before matching, so " none " is not a valid verify level.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".* NONE .*")
   public void fromStringWhitespacePaddedThrowsIllegalArgument()
   {
-    try
-    {
-      VerifyLevel.fromString(" none ");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains(" NONE ");
-    }
+    VerifyLevel.fromString(" none ");
   }
 
   /**
    * Verifies that fromString throws NullPointerException for null input.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*value.*")
   public void fromStringNullThrowsNullPointerException()
   {
-    try
-    {
-      VerifyLevel.fromString(null);
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("value");
-    }
+    VerifyLevel.fromString(null);
   }
 }

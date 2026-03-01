@@ -34,19 +34,13 @@ public final class ClaudeEnvTest
   /**
    * Verifies that getClaudeSessionId() throws AssertionError when CLAUDE_SESSION_ID is not set.
    */
-  @Test
+  @Test(expectedExceptions = AssertionError.class,
+    expectedExceptionsMessageRegExp = ".*CLAUDE_SESSION_ID.*")
   public void missingSessionIdThrowsAssertionError()
   {
     Map<String, String> env = Map.of();
     ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(env);
-    try
-    {
-      claudeEnv.getClaudeSessionId();
-    }
-    catch (AssertionError e)
-    {
-      requireThat(e.getMessage(), "message").contains("CLAUDE_SESSION_ID");
-    }
+    claudeEnv.getClaudeSessionId();
   }
 
   /**
@@ -63,19 +57,13 @@ public final class ClaudeEnvTest
   /**
    * Verifies that getClaudeProjectDir() throws AssertionError when CLAUDE_PROJECT_DIR is not set.
    */
-  @Test
+  @Test(expectedExceptions = AssertionError.class,
+    expectedExceptionsMessageRegExp = ".*CLAUDE_PROJECT_DIR.*")
   public void missingProjectDirThrowsAssertionError()
   {
     Map<String, String> env = Map.of();
     ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(env);
-    try
-    {
-      claudeEnv.getClaudeProjectDir();
-    }
-    catch (AssertionError e)
-    {
-      requireThat(e.getMessage(), "message").contains("CLAUDE_PROJECT_DIR");
-    }
+    claudeEnv.getClaudeProjectDir();
   }
 
   /**
@@ -92,19 +80,13 @@ public final class ClaudeEnvTest
   /**
    * Verifies that getClaudePluginRoot() throws AssertionError when CLAUDE_PLUGIN_ROOT is not set.
    */
-  @Test
+  @Test(expectedExceptions = AssertionError.class,
+    expectedExceptionsMessageRegExp = ".*CLAUDE_PLUGIN_ROOT.*")
   public void missingPluginRootThrowsAssertionError()
   {
     Map<String, String> env = Map.of();
     ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(env);
-    try
-    {
-      claudeEnv.getClaudePluginRoot();
-    }
-    catch (AssertionError e)
-    {
-      requireThat(e.getMessage(), "message").contains("CLAUDE_PLUGIN_ROOT");
-    }
+    claudeEnv.getClaudePluginRoot();
   }
 
   /**
@@ -121,19 +103,13 @@ public final class ClaudeEnvTest
   /**
    * Verifies that getClaudeEnvFile() throws AssertionError when CLAUDE_ENV_FILE is not set.
    */
-  @Test
+  @Test(expectedExceptions = AssertionError.class,
+    expectedExceptionsMessageRegExp = ".*CLAUDE_ENV_FILE.*")
   public void missingEnvFileThrowsAssertionError()
   {
     Map<String, String> env = Map.of();
     ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(env);
-    try
-    {
-      claudeEnv.getClaudeEnvFile();
-    }
-    catch (AssertionError e)
-    {
-      requireThat(e.getMessage(), "message").contains("CLAUDE_ENV_FILE");
-    }
+    claudeEnv.getClaudeEnvFile();
   }
 
   /**

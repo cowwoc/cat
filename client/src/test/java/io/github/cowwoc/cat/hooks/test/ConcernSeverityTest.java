@@ -104,49 +104,31 @@ public final class ConcernSeverityTest
   /**
    * Verifies that fromString throws IllegalArgumentException for an unrecognized value.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*UNKNOWN.*")
   public void fromStringInvalidThrowsIllegalArgument()
   {
-    try
-    {
-      ConcernSeverity.fromString("unknown");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("UNKNOWN");
-    }
+    ConcernSeverity.fromString("unknown");
   }
 
   /**
    * Verifies that fromString throws IllegalArgumentException for blank input.
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*value.*")
   public void fromStringBlankThrowsIllegalArgument()
   {
-    try
-    {
-      ConcernSeverity.fromString("");
-    }
-    catch (IllegalArgumentException e)
-    {
-      requireThat(e.getMessage(), "message").contains("value");
-    }
+    ConcernSeverity.fromString("");
   }
 
   /**
    * Verifies that fromString throws NullPointerException for null input.
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*value.*")
   public void fromStringNullThrowsNullPointerException()
   {
-    try
-    {
-      ConcernSeverity.fromString(null);
-    }
-    catch (NullPointerException e)
-    {
-      requireThat(e.getMessage(), "message").contains("value");
-    }
+    ConcernSeverity.fromString(null);
   }
 
   /**
