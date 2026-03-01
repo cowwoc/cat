@@ -575,4 +575,102 @@ public final class EnforceApprovalBeforeMergeTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that a Skill tool invocation of cat:work-merge is blocked without approval.
+   * <p>
+   * Agents can bypass Task-tool enforcement by invoking cat:work-merge via the Skill tool directly.
+   * The handler must detect the Skill tool path (using the "skill" field instead of "subagent_type").
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void skillToolInvocationWithoutApprovalBlocks() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("enforce-approval-test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      writeCatConfig(tempDir, "medium");
+      writeSessionFile(tempDir, SESSION_ID, """
+        {"type":"user","message":{"content":[{"type":"text","text":"looks good"}]}}
+        """);
+
+      EnforceApprovalBeforeMerge handler = new EnforceApprovalBeforeMerge(scope);
+      JsonNode toolInput = mapper.readTree("""
+        {"skill": "cat:work-merge", "args": "session-id issue-id"}""");
+
+      TaskHandler.Result result = handler.check(toolInput, SESSION_ID, "");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a Skill tool invocation of cat:work-merge is allowed when approval was given.
+   * <p>
+   * The handler must allow the merge when explicit user approval is present in the session history,
+   * regardless of whether the invocation uses the Task or Skill tool.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void skillToolInvocationWithApprovalAllows() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("enforce-approval-test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      writeCatConfig(tempDir, "medium");
+      writeSessionFile(tempDir, SESSION_ID, """
+        {"type":"user","message":{"content":[{"type":"text","text":"approve and merge"}]}}
+        """);
+
+      EnforceApprovalBeforeMerge handler = new EnforceApprovalBeforeMerge(scope);
+      JsonNode toolInput = mapper.readTree("""
+        {"skill": "cat:work-merge", "args": "session-id issue-id"}""");
+
+      TaskHandler.Result result = handler.check(toolInput, SESSION_ID, "");
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that Skill tool invocations of other skills are not affected.
+   * <p>
+   * The handler must only intercept cat:work-merge skill invocations, not other skills.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void skillToolNonMergeSkillAllows() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("enforce-approval-test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      writeCatConfig(tempDir, "medium");
+
+      EnforceApprovalBeforeMerge handler = new EnforceApprovalBeforeMerge(scope);
+      JsonNode toolInput = mapper.readTree("""
+        {"skill": "cat:stakeholder-review", "args": "session-id issue-id"}""");
+
+      TaskHandler.Result result = handler.check(toolInput, SESSION_ID, "");
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }
