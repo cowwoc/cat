@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,17 +34,6 @@ import tools.jackson.databind.json.JsonMapper;
  */
 public final class Config
 {
-  /**
-   * Default autofix threshold for the stakeholder review loop.
-   * <p>
-   * Controls which concern severity levels trigger automatic fix attempts before presenting results to the
-   * user. {@code "low"} means all concerns (CRITICAL, HIGH, MEDIUM, and LOW) are auto-fixed before
-   * presenting results to the user approval gate.
-   *
-   * @see #getAutofixThreshold()
-   */
-  public static final String DEFAULT_AUTOFIX_THRESHOLD = "low";
-
   // Type reference for JSON deserialization (avoids unchecked cast)
   private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>()
   {
@@ -60,8 +51,8 @@ public final class Config
     defaults.put("patience", "high");
     defaults.put("terminalWidth", 120);
     defaults.put("completionWorkflow", "merge");
-    defaults.put("reviewThreshold", DEFAULT_AUTOFIX_THRESHOLD);
     defaults.put("minSeverity", "low");
+    defaults.put("license", "");
     DEFAULTS = Map.copyOf(defaults);
   }
 
@@ -92,6 +83,7 @@ public final class Config
    * @return the loaded configuration
    * @throws IOException if a config file exists but cannot be read or contains invalid JSON
    * @throws NullPointerException if {@code mapper} or {@code projectDir} are null
+   * @throws IllegalArgumentException if the configuration contains unknown keys
    */
   public static Config load(JsonMapper mapper, Path projectDir) throws IOException
   {
@@ -104,6 +96,11 @@ public final class Config
     if (Files.exists(baseConfigPath))
     {
       Map<String, Object> baseConfig = loadJsonFile(mapper, baseConfigPath);
+      if (baseConfig.containsKey("license"))
+      {
+        throw new IllegalArgumentException(
+          "\"license\" is a user-specific value. Move it to cat-config.local.json instead.");
+      }
       merged.putAll(baseConfig);
     }
 
@@ -113,6 +110,19 @@ public final class Config
     {
       Map<String, Object> localConfig = loadJsonFile(mapper, localConfigPath);
       merged.putAll(localConfig);
+    }
+
+    // Validate that no unknown keys exist in merged configuration.
+    Set<String> unknownKeys = new HashSet<>(merged.keySet());
+    unknownKeys.removeAll(DEFAULTS.keySet());
+
+    if (!unknownKeys.isEmpty())
+    {
+      List<String> sortedUnknown = unknownKeys.stream().sorted().toList();
+      List<String> sortedKnown = DEFAULTS.keySet().stream().sorted().toList();
+      throw new IllegalArgumentException("Unknown configuration keys found: " +
+        String.join(", ", sortedUnknown) +
+        ". Known keys are: " + String.join(", ", sortedKnown));
     }
 
     return new Config(merged);
@@ -294,37 +304,6 @@ public final class Config
     return ConcernSeverity.fromString(getString("minSeverity", "low"));
   }
 
-  /**
-   * Get the autofix threshold from review thresholds.
-   * <p>
-   * Controls the minimum severity level that triggers automatic fix loops. The value is the minimum severity
-   * at which the agent will automatically iterate to fix concerns:
-   * <ul>
-   * <li>{@code "low"} — fix all concerns (CRITICAL, HIGH, MEDIUM, and LOW) before presenting to user (default)</li>
-   * <li>{@code "medium"} — fix CRITICAL, HIGH, and MEDIUM; present LOW to user</li>
-   * <li>{@code "high"} — fix CRITICAL and HIGH; present MEDIUM and LOW to user</li>
-   * <li>{@code "critical"} — fix CRITICAL only; present HIGH, MEDIUM, and LOW to user</li>
-   * </ul>
-   *
-   * @return the autofix threshold (defaults to "low" if not configured)
-   * @throws IllegalArgumentException if the configured value is not a recognized severity level
-   */
-  public String getAutofixThreshold()
-  {
-    Object value = values.get("reviewThreshold");
-    String level;
-    if (value instanceof String s)
-      level = s;
-    else
-      level = DEFAULT_AUTOFIX_THRESHOLD;
-    Set<String> allowed = Set.of("low", "medium", "high", "critical");
-    if (!allowed.contains(level))
-    {
-      throw new IllegalArgumentException("Invalid autofix threshold: '" + level +
-        "'. Expected one of: " + allowed);
-    }
-    return level;
-  }
 
   /**
    * Get the entire configuration as a map.

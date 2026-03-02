@@ -59,8 +59,6 @@ Show current values in descriptions using data from read-config step.
     description: "Currently: {terminalWidth || 120} characters"
   - label: "🔀 Completion Workflow"
     description: "Currently: {completionWorkflow || 'merge'}"
-  - label: "🔍 Review Thresholds"
-    description: "Currently: autofix={reviewThreshold || 'low'}"
   - label: "📈 Min Severity"
     description: "Currently: {minSeverity || 'low'}"
   - label: "📊 Version Conditions"
@@ -266,53 +264,6 @@ Example: if the current config has `{"trust": "medium"}` and the user selected "
 {
   "trust": "medium",
   "completionWorkflow": "pr"
-}
-```
-
-Do NOT use `python3`, `jq`, or any external tool. Use the Write tool directly.
-
-</step>
-
-<step name="review-thresholds">
-
-**🔍 Review Thresholds configuration:**
-
-Review thresholds control the minimum severity at which the agent automatically loops back to fix concerns before
-presenting results to the user.
-
-AskUserQuestion:
-- header: "Review Thresholds — Auto-fix"
-- question: "Minimum severity to auto-fix before presenting to user? (Current: {reviewThreshold || 'low'})"
-- options:
-  - label: "LOW (Recommended)"
-    description: "Auto-fix all concerns (CRITICAL, HIGH, MEDIUM, and LOW) before presenting to user"
-  - label: "MEDIUM"
-    description: "Auto-fix CRITICAL, HIGH, and MEDIUM; present LOW to user"
-  - label: "HIGH"
-    description: "Auto-fix CRITICAL and HIGH; present MEDIUM and LOW to user"
-  - label: "CRITICAL"
-    description: "Auto-fix CRITICAL only; present HIGH, MEDIUM, and LOW to user"
-  - label: "← Back"
-    description: "Return to main menu"
-
-Map selections:
-- LOW → `reviewThreshold: "low"`
-- MEDIUM → `reviewThreshold: "medium"`
-- HIGH → `reviewThreshold: "high"`
-- CRITICAL → `reviewThreshold: "critical"`
-
-**Update config using the Write tool:**
-
-1. Read the current `.claude/cat/cat-config.json` content using the Read tool.
-2. Merge the new `reviewThreshold` string value into the existing config object (update or add the key).
-3. Write the complete updated JSON back using the Write tool.
-
-Example: if the current config has `{"trust": "medium"}` and the user selected "HIGH", write:
-
-```json
-{
-  "trust": "medium",
-  "reviewThreshold": "high"
 }
 ```
 
@@ -542,7 +493,6 @@ INVOKE: Skill("cat:get-output", args="config.no-changes")
 | `effort` | string | "medium" | Exploration beyond immediate issue |
 | `patience` | string | "high" | When to act on discoveries |
 | `completionWorkflow` | string | "merge" | Issue completion behavior (merge or PR) |
-| `reviewThreshold` | string | "low" | Minimum severity to auto-fix before presenting to user |
 | `minSeverity` | string | "low" | Minimum severity level for concerns to be visible at all |
 
 **Context Limits:** Fixed values, not configurable. See agent-architecture.md § Context Limit Constants.
@@ -571,12 +521,6 @@ INVOKE: Skill("cat:get-output", args="config.no-changes")
 - `merge` — Merge issue branch directly to base branch after approval (default).
 - `pr` — Create a pull request instead of merging directly.
 
-### Review Thresholds Values
-- `low` — Auto-fix all concerns (CRITICAL, HIGH, MEDIUM, and LOW) before presenting to user (default).
-- `medium` — Auto-fix CRITICAL, HIGH, and MEDIUM; present LOW to user.
-- `high` — Auto-fix CRITICAL and HIGH; present MEDIUM and LOW to user.
-- `critical` — Auto-fix CRITICAL only; present HIGH, MEDIUM, and LOW to user.
-
 ### Min Severity Values
 - `low` — All concerns visible (CRITICAL, HIGH, MEDIUM, and LOW) (default).
 - `medium` — MEDIUM, HIGH, and CRITICAL concerns visible; LOW are ignored.
@@ -590,7 +534,6 @@ INVOKE: Skill("cat:get-output", args="config.no-changes")
 - [ ] Current configuration displayed
 - [ ] User navigated wizard successfully
 - [ ] Settings updated in cat-config.json using Write tool
-- [ ] Review thresholds configurable via wizard
 - [ ] Version conditions viewable and editable via wizard
 - [ ] Gate changes saved to version PLAN.md files
 - [ ] Changes confirmed with before/after values

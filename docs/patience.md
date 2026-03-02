@@ -47,15 +47,20 @@ Decision rule: fix inline if `benefit >= cost × patience_multiplier`
 `patience` operates on concerns that have already passed the `minSeverity` filter. The full concern pipeline is:
 
 ```
-concern raised → minSeverity filter → patience fix/defer decision → reviewThreshold auto-fix loop
+concern raised → minSeverity filter → patience fix/defer decision
 ```
 
 - **`minSeverity`** — a hard floor: concerns below this threshold are silently ignored. They never reach the
   patience decision. See [severity.md](severity.md) for details.
 - **`patience`** — a cost/benefit analysis: for concerns that pass `minSeverity`, determines whether to fix now
   (inline) or defer to a future issue.
-- **`reviewThreshold`** — controls auto-fix iteration: determines which severity levels trigger automatic fix
-  loops before presenting results to the user approval gate.
+
+## FIX vs DEFER Outcomes
+
+- **FIX** — The concern should be addressed immediately. FIX concerns enter the auto-fix loop without waiting for
+  user approval.
+- **DEFER** — The concern should be tracked for a future version. DEFER concerns are created as follow-up issues
+  instead of being fixed inline.
 
 Configure `patience` in `.claude/cat/cat-config.json`:
 
