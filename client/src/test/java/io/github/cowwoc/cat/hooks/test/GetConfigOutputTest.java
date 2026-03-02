@@ -19,9 +19,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 /**
  * Tests for GetConfigOutput.getCurrentSettings().
  * <p>
- * Tests verify that the CURRENT SETTINGS box includes all three new settings:
- * completionWorkflow, reviewThreshold, and minSeverity.
- * <p>
  * Tests are designed for parallel execution - each test is self-contained
  * with no shared state.
  */
@@ -80,57 +77,6 @@ public class GetConfigOutputTest
     }
   }
 
-  /**
-   * Verifies that getCurrentSettings includes reviewThreshold with default value in correct format.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void getCurrentSettingsIncludesReviewThreshold() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-config-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
-      Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), "{}");
-
-      GetConfigOutput handler = new GetConfigOutput(scope);
-      String result = handler.getCurrentSettings(tempDir);
-
-      requireThat(result, "result").contains("🔍 Review: low");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that getCurrentSettings shows the reviewThreshold value in correct format.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void getCurrentSettingsShowsReviewThresholdValue() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-config-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
-      Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), "{\"reviewThreshold\": \"high\"}");
-
-      GetConfigOutput handler = new GetConfigOutput(scope);
-      String result = handler.getCurrentSettings(tempDir);
-
-      requireThat(result, "result").contains("🔍 Review: high");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
 
   /**
    * Verifies that getCurrentSettings includes minSeverity with default value in correct format.
@@ -353,14 +299,13 @@ public class GetConfigOutputTest
       Path catDir = tempDir.resolve(".claude").resolve("cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"),
-        "{\"completionWorkflow\": \"pr\", \"reviewThreshold\": \"high\", \"minSeverity\": \"medium\"}");
+        "{\"completionWorkflow\": \"pr\", \"minSeverity\": \"medium\"}");
 
       GetConfigOutput handler = new GetConfigOutput(scope);
       String result = handler.getCurrentSettings(tempDir);
 
       requireThat(result, "result").
         contains("🔀 Completion: pr").
-        contains("🔍 Review: high").
         contains("📈 Min Severity: medium");
     }
     finally
@@ -474,7 +419,7 @@ public class GetConfigOutputTest
   }
 
   /**
-   * Verifies that getOutput settings page returns current settings.
+   * Verifies that getOutput settings page returns current settings with correct default values.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -493,7 +438,8 @@ public class GetConfigOutputTest
 
       requireThat(result, "result").
         contains("CURRENT SETTINGS").
-        contains("🔀 Completion");
+        contains("🔀 Completion: merge").
+        contains("📈 Min Severity: low");
     }
     finally
     {
