@@ -55,8 +55,7 @@ Return JSON on conflict:
 {
   "status": "CONFLICT",
   "conflicting_files": ["src/Parser.java", "src/Lexer.java"],
-  "message": "Merge conflict - manual resolution required",
-  "resolution_options": ["accept_ours", "accept_theirs", "manual"]
+  "message": "Rebase conflict — manual resolution required"
 }
 ```
 
@@ -150,10 +149,10 @@ rebase is required here.
 
 ### Step 4: Handle Rebase Conflicts (if any)
 
-If rebase fails with conflicts:
-1. Count conflicting files
-2. If > 3 files: Return CONFLICT, require manual intervention
-3. If <= 3 files: Attempt resolution (prefer issue branch changes), then `git rebase --continue`
+If rebase fails with any conflicts:
+1. Collect the list of conflicting files
+2. Return CONFLICT status with conflicting_files list and message "Rebase conflict — manual resolution required"
+3. STOP — do not attempt auto-resolution
 
 **NEVER fall back to merge commit.** Linear history is mandatory.
 
@@ -254,7 +253,7 @@ Output the JSON result with all cleanup status.
 
 ## Fail-Fast Conditions
 
-- Merge conflict with > 3 files: Return CONFLICT
+- Rebase conflict (any number of files): Return CONFLICT
 - Worktree removal fails: Log warning, continue
 - Lock release fails: Log warning, continue
 
