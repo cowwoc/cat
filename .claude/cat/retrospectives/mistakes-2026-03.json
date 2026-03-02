@@ -82,8 +82,7 @@
         "catches_variations": true
       },
       "correct_behavior": "Use Task tool (subagent_type: cat:work-merge) to spawn the merge subagent. After the Task tool returns, verify the merge happened by checking that TARGET_BRANCH now contains the squashed commit before invoking work-complete."
-    }
-    ,
+    },
     {
       "id": "M448",
       "timestamp": "2026-03-01T22:42:43Z",
@@ -110,6 +109,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Use /cat:git-squash (Step 7) to squash commits. The RemindGitSquash hook now matches 'reset --soft' anywhere in the command, blocking both 'git reset --soft' and 'git -C <path> reset --soft' forms."
+    },
+    {
+      "id": "M449",
+      "timestamp": "2026-03-02T02:10:03Z",
+      "category": "misleading_documentation",
+      "description": "Agent squashed 9 implementation commits into 2 separate commits (feature: + test:) instead of one, because the git-squash skill's default topic grouping contradicted commit-types.md which defines feature:/test:/refactor:/docs: as ONE implementation commit category",
+      "root_cause": "DOCUMENTATION CONTRADICTION: The git-squash skill Critical Rules listed 'feature: vs docs: -> keep separate' but commit-types.md defines all implementation types (feature:, bugfix:, test:, refactor:, docs:) as ONE implementation squash category. The agent correctly followed the skill topic-grouping guidance, which conflicted with commit-types.md doctrine that test commits covering issue implementation belong in the same commit as the implementation code.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/git-squash/first-use.md",
+      "pattern_keywords": [
+        "squash_by_topic",
+        "implementation_commit_category",
+        "test_commit_grouping",
+        "commit_types_contradiction",
+        "feature_test_separate"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "All implementation-type commits (feature:, bugfix:, test:, refactor:, docs:) for the same issue belong in ONE implementation commit. Test commits that verify the issue implementation are part of the implementation, not separate topics. Only split implementation from config/infrastructure (config: for general dependencies/tooling)."
     }
   ]
 }
