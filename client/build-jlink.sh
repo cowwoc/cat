@@ -47,9 +47,9 @@ readonly -a HANDLERS=(
   "enforce-status:EnforceStatusOutput"
   "pre-ask:PreAskHook"
   "pre-write:PreWriteHook"
-
   "subagent-start:SubagentStartHook"
   "pre-issue:PreIssueHook"
+  "pre-compact:PreCompactHook"
   "session-end:SessionEndHook"
   "get-checkpoint-box:skills.GetCheckpointOutput"
   "get-issue-complete-box:skills.GetIssueCompleteOutput"
@@ -72,7 +72,6 @@ readonly -a HANDLERS=(
   "git-amend-safe:util.GitAmendSafe"
   "git-rebase-safe:util.GitRebaseSafe"
   "post-tool-use-failure:PostToolUseFailureHook"
-
   "work-prepare:util.WorkPrepare"
   "issue-lock:util.IssueLock"
   "check-existing-work:util.ExistingWorkChecker"

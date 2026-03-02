@@ -432,6 +432,24 @@ must contain `<p>` — never leave a bare `*` line between paragraphs:
  */
 ```
 
+### Imports for Javadoc References
+Always add an `import` for classes referenced via `{@link}` or `{@linkplain}` in Javadoc, even if the class is not used
+in executable code. Use the simple class name in the Javadoc tag:
+
+```java
+// Good - import added, simple name in {@link}
+import io.github.cowwoc.cat.hooks.session.RestoreCwdAfterCompaction;
+
+/**
+ * This file is consumed by {@link RestoreCwdAfterCompaction}.
+ */
+
+// Avoid - fully qualified name in {@link}
+/**
+ * This file is consumed by {@link io.github.cowwoc.cat.hooks.session.RestoreCwdAfterCompaction}.
+ */
+```
+
 ### Javadoc Requirements
 - **All classes and records must have Javadoc** (public and non-public)
 - **All methods must have Javadoc** (including interface methods and private methods)
