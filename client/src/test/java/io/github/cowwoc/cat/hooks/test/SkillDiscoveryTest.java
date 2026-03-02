@@ -38,33 +38,53 @@ public final class SkillDiscoveryTest
   }
 
   /**
-   * Verifies isModelInvocableFalse returns true when model-invocable: false is present.
+   * Verifies isModelInvocable returns false when disable-model-invocation: true is present.
    */
   @Test
-  public void isModelInvocableFalseReturnsTrueWhenFalse()
+  public void isModelInvocableReturnsFalseWhenDisabled()
   {
-    String frontmatter = "description: Some skill\nmodel-invocable: false\n";
-    requireThat(SkillDiscovery.isModelInvocableFalse(frontmatter), "result").isTrue();
+    String frontmatter = "description: Some skill\ndisable-model-invocation: true\n";
+    requireThat(SkillDiscovery.isModelInvocable(frontmatter), "result").isFalse();
   }
 
   /**
-   * Verifies isModelInvocableFalse returns false when model-invocable: true is present.
+   * Verifies isModelInvocable returns true when disable-model-invocation is absent.
    */
   @Test
-  public void isModelInvocableFalseReturnsFalseWhenTrue()
-  {
-    String frontmatter = "description: Some skill\nmodel-invocable: true\n";
-    requireThat(SkillDiscovery.isModelInvocableFalse(frontmatter), "result").isFalse();
-  }
-
-  /**
-   * Verifies isModelInvocableFalse returns false when model-invocable is absent.
-   */
-  @Test
-  public void isModelInvocableFalseReturnsFalseWhenAbsent()
+  public void isModelInvocableReturnsTrueWhenAbsent()
   {
     String frontmatter = "description: Some skill\n";
-    requireThat(SkillDiscovery.isModelInvocableFalse(frontmatter), "result").isFalse();
+    requireThat(SkillDiscovery.isModelInvocable(frontmatter), "result").isTrue();
+  }
+
+  /**
+   * Verifies isModelInvocable handles extra whitespace around the colon.
+   */
+  @Test
+  public void isModelInvocableHandlesExtraWhitespace()
+  {
+    String frontmatter = "description: Some skill\ndisable-model-invocation:  true\n";
+    requireThat(SkillDiscovery.isModelInvocable(frontmatter), "result").isFalse();
+  }
+
+  /**
+   * Verifies isModelInvocable handles uppercase True.
+   */
+  @Test
+  public void isModelInvocableHandlesUppercaseTrue()
+  {
+    String frontmatter = "description: Some skill\ndisable-model-invocation: True\n";
+    requireThat(SkillDiscovery.isModelInvocable(frontmatter), "result").isFalse();
+  }
+
+  /**
+   * Verifies isModelInvocable ignores trailing YAML comments.
+   */
+  @Test
+  public void isModelInvocableIgnoresTrailingComment()
+  {
+    String frontmatter = "description: Some skill\ndisable-model-invocation: true # user-only skill\n";
+    requireThat(SkillDiscovery.isModelInvocable(frontmatter), "result").isFalse();
   }
 
   /**

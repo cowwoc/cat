@@ -1,11 +1,12 @@
 ---
-description: Use when actions keep failing or progress has stalled - detects goal drift by comparing actions against PLAN.md
+description: Detect and recover from goal drift when actions repeatedly fail or progress stalls.
 model: haiku
 allowed-tools:
   - Read
   - Bash
   - Glob
   - Grep
+disable-model-invocation: true
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" recover-from-drift "${CLAUDE_PROJECT_DIR}" "$0"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" recover-from-drift "${CLAUDE_PROJECT_DIR}" "${CLAUDE_SESSION_ID}"`

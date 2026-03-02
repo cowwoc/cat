@@ -336,7 +336,7 @@ For each minor version PLAN.md, add:
 
 After applying defaults:
 
-INVOKE: Skill("cat:get-output", args="init.default-gates-configured {N}")
+INVOKE: Skill("cat:get-output-agent", args="init.default-gates-configured {N}")
 
 Replace `{N}` with the version count.
 
@@ -396,7 +396,7 @@ Use AskUserQuestion:
 **If "Yes, research all pending":**
 
 For each pending version in PENDING_VERSIONS:
-- Invoke `/cat:research {version}`
+- Invoke `/cat:research-agent {version}`
 - This spawns 8 stakeholder agents in parallel
 - Results are stored in the version's PLAN.md Research section
 
@@ -416,7 +416,7 @@ Note in PROJECT.md:
 - Research not run during init. Use `/cat:research {version}` for pending versions.
 ```
 
-INVOKE: Skill("cat:get-output", args="init.research-skipped {PENDING_VERSION}")
+INVOKE: Skill("cat:get-output-agent", args="init.research-skipped {PENDING_VERSION}")
 
 Replace `{PENDING_VERSION}` with an example pending version for the help text.
 
@@ -428,7 +428,7 @@ Replace `{PENDING_VERSION}` with an example pending version for the help text.
 
 **Choose Your Partner - Capture development style preferences**
 
-INVOKE: Skill("cat:get-output", args="init.choose-your-partner")
+INVOKE: Skill("cat:get-output-agent", args="init.choose-your-partner")
 
 AskUserQuestion: header="Trust", question="How do you prefer to work together?", options=[
   "🛡️ Hands-On - check in often, verify each move",
@@ -850,7 +850,7 @@ git commit -m "docs: initialize CAT planning structure"
 
 <step name="done">
 
-INVOKE: Skill("cat:get-output", args="init.cat-initialized {trust} {effort} {patience}")
+INVOKE: Skill("cat:get-output-agent", args="init.cat-initialized {trust} {effort} {patience}")
 
 Replace `{trust}`, `{effort}`, `{patience}` with actual preference values.
 
@@ -882,7 +882,7 @@ options=[
 
 **If "Yes, guide me":**
 
-INVOKE: Skill("cat:get-output", args="init.first-issue-walkthrough")
+INVOKE: Skill("cat:get-output-agent", args="init.first-issue-walkthrough")
 
 1. AskUserQuestion: header="First Goal", question="What's the first thing you want to accomplish?", options=[
    "[Let user describe in their own words]" - FREEFORM
@@ -936,7 +936,7 @@ git add ".claude/cat/"
 git commit -m "docs: add first issue - ${ISSUE_NAME}"
 ```
 
-7. INVOKE: Skill("cat:get-output", args="init.first-issue-created {ISSUE_NAME}")
+7. INVOKE: Skill("cat:get-output-agent", args="init.first-issue-created {ISSUE_NAME}")
 
    Replace `{ISSUE_NAME}` with the actual sanitized issue name.
 
@@ -946,15 +946,15 @@ AskUserQuestion: header="Start Work", question="Ready to start working on this i
 ]
 
 **If "Yes, let's go!":**
-- Invoke `/cat:work` skill to begin issue execution
+- Invoke `/cat:work-agent` skill to begin issue execution
 
 **If "No, I'll start later":**
 
-INVOKE: Skill("cat:get-output", args="init.all-set")
+INVOKE: Skill("cat:get-output-agent", args="init.all-set")
 
 **If "No, I'll explore" (from initial question):**
 
-INVOKE: Skill("cat:get-output", args="init.explore-at-your-own-pace")
+INVOKE: Skill("cat:get-output-agent", args="init.explore-at-your-own-pace")
 
 </step>
 

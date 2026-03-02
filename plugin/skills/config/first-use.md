@@ -34,7 +34,7 @@ If file doesn't exist, inform user to run `/cat:init` first.
 
 BLOCKING REQUIREMENT: You MUST output a visual display box BEFORE calling AskUserQuestion.
 
-INVOKE: Skill("cat:get-output", args="config.settings")
+INVOKE: Skill("cat:get-output-agent", args="config.settings")
 
 The user wants an interactive wizard — go directly to the main-menu.
 
@@ -77,7 +77,7 @@ If user selects "Other" and types "done", "exit", or "back", proceed to exit ste
 
 **MANDATORY - Display behavior summary BEFORE prompting:**
 
-INVOKE: Skill("cat:get-output", args="config.settings")
+INVOKE: Skill("cat:get-output-agent", args="config.settings")
 
 Then AskUserQuestion:
 - header: "Behavior"
@@ -322,7 +322,7 @@ Do NOT use `python3`, `jq`, or any external tool. Use the Write tool directly.
 
 **📊 Version Conditions configuration:**
 
-INVOKE: Skill("cat:get-output", args="config.versions")
+INVOKE: Skill("cat:get-output-agent", args="config.versions")
 
 **Step 1: Select version to configure**
 
@@ -362,7 +362,7 @@ cat .claude/cat/issues/v{major}/PLAN.md 2>/dev/null
 
 Extract the `## Pre-conditions` and `## Post-conditions` sections.
 
-INVOKE: Skill("cat:get-output", args="config.conditions-for-version {version} {preconditions} {postconditions}")
+INVOKE: Skill("cat:get-output-agent", args="config.conditions-for-version {version} {preconditions} {postconditions}")
 
 Replace `{version}`, `{preconditions}`, and `{postconditions}` with actual values extracted from PLAN.md.
 Empty conditions should be represented as "(none)".
@@ -435,7 +435,7 @@ Write the updated PLAN.md using the Write tool.
 
 **Step 6: Confirm and loop**
 
-INVOKE: Skill("cat:get-output", args="config.conditions-updated {version} {new-preconditions} {new-postconditions}")
+INVOKE: Skill("cat:get-output-agent", args="config.conditions-updated {version} {new-preconditions} {new-postconditions}")
 
 Replace `{version}`, `{new-preconditions}`, `{new-postconditions}` with actual values.
 
@@ -456,7 +456,7 @@ write the updated JSON back to the same path.
 
 **Confirm change and return to parent menu:**
 
-INVOKE: Skill("cat:get-output", args="config.setting-updated {setting-name} {old-value} {new-value}")
+INVOKE: Skill("cat:get-output-agent", args="config.setting-updated {setting-name} {old-value} {new-value}")
 
 Replace `{setting-name}`, `{old-value}`, `{new-value}` with actual values.
 
@@ -474,11 +474,11 @@ Examples:
 
 If changes were made:
 
-INVOKE: Skill("cat:get-output", args="config.saved")
+INVOKE: Skill("cat:get-output-agent", args="config.saved")
 
 If no changes:
 
-INVOKE: Skill("cat:get-output", args="config.no-changes")
+INVOKE: Skill("cat:get-output-agent", args="config.no-changes")
 
 </step>
 

@@ -51,7 +51,7 @@ public final class SubagentStartHookTest
    * @param prefix      the plugin prefix (e.g. "fake" → skill name "fake:skill-name")
    * @param skillName   the skill directory name
    * @param description the skill description in SKILL.md frontmatter
-   * @param modelInvocable whether the skill is model-invocable (false excludes it)
+   * @param modelInvocable whether the model may invoke this skill (false adds disable-model-invocation: true)
    * @return the fake plugin root path
    * @throws IOException if directory creation fails
    */
@@ -80,7 +80,7 @@ public final class SubagentStartHookTest
       frontmatter = """
         ---
         description: %s
-        model-invocable: false
+        disable-model-invocation: true
         ---
         # %s
         """.formatted(description, skillName);
@@ -278,7 +278,7 @@ public final class SubagentStartHookTest
   }
 
   /**
-   * Verifies that SkillDiscovery.getMainAgentSkillListing excludes skills with model-invocable: false.
+   * Verifies that SkillDiscovery.getMainAgentSkillListing excludes skills with disable-model-invocation: true.
    */
   @Test
   public void getMainAgentSkillListingExcludesNonModelInvocableSkills() throws IOException
@@ -305,7 +305,7 @@ public final class SubagentStartHookTest
       Files.writeString(excludedDir.resolve("SKILL.md"), """
         ---
         description: This skill should not appear.
-        model-invocable: false
+        disable-model-invocation: true
         ---
         # Excluded Skill
         """);

@@ -144,14 +144,14 @@ requires source code changes. Create a CAT issue from the issue_creation_info:
 2. Display to user: "Prevention requires code changes that cannot be committed on protected branch. Creating
    follow-up issue."
 
-3. Invoke `/cat:add suggested_title` where `suggested_title` is the one-line summary of the prevention needed
-   (e.g., "Fix SkillLoader to look up launchers in client/bin"). This becomes the issue's name. When cat:add
+3. Invoke `/cat:add-agent suggested_title` where `suggested_title` is the one-line summary of the prevention needed
+   (e.g., "Fix SkillLoader to look up launchers in client/bin"). This becomes the issue's name. When cat:add-agent
    prompts for more detail, provide `suggested_description` as the description and
    `suggested_acceptance_criteria` as the acceptance criteria.
 
-   If `cat:add` fails or returns an error, display:
+   If `cat:add-agent` fails or returns an error, display:
    ```
-   Error: Failed to create follow-up issue via cat:add.
+   Error: Failed to create follow-up issue via cat:add-agent.
    You can create the issue manually using /cat:add with the following values:
    Title: {suggested_title}
    Description: {suggested_description}
@@ -195,7 +195,7 @@ If `retrospective_triggered` is true, use AskUserQuestion to offer user choice:
 question: "Retrospective threshold exceeded. Run retrospective now?"
 options:
   - label: "Run now"
-    action: "Invoke /cat:retrospective immediately"
+    action: "Invoke /cat:retrospective-agent immediately"
   - label: "Later"
     action: "Inform user to run /cat:retrospective when ready"
   - label: "Skip this cycle"

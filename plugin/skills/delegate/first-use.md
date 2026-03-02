@@ -833,7 +833,7 @@ wave_2: [1.2b]        # Depends on 1.2a
 "Compress the file using shrink-doc's principles: reduce size while maintaining equivalence..."
 
 # ✅ CORRECT - Tells subagent to invoke the skill
-"Invoke /cat:shrink-doc {file} and report the validation score."
+"Invoke /cat:shrink-doc-agent {file} and report the validation score."
 ```
 
 ### Require postcondition reporting

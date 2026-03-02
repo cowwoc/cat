@@ -60,10 +60,10 @@ public final class InjectSessionInstructions implements SessionStartHandler
 
       **Mistakes include**: Protocol violations, rework, build failures, tool misuse, logical errors
 
-      **Invocation**: `/cat:learn` with description of the mistake
+      **Invocation**: `/cat:learn-agent` with description of the mistake
 
       **Trigger phrase recognition**: When user says "Learn from mistakes: [description]":
-      1. INVOKE `/cat:learn` skill FIRST (do not just fix the problem)
+      1. INVOKE `/cat:learn-agent` skill FIRST (do not just fix the problem)
       2. Complete the full RCA workflow
       3. THEN address the immediate issue
 
@@ -159,7 +159,7 @@ public final class InjectSessionInstructions implements SessionStartHandler
 
       ### Verbatim Output Skills
       The centralized skill for all display box generation:
-      `/cat:get-output`
+      `/cat:get-output-agent`
 
       ### Qualified Issue Names
       **MANDATORY**: Always use fully-qualified issue names when referencing issues in responses.
