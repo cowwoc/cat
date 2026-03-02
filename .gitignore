@@ -14,6 +14,7 @@ cat-config.local.json
 
 # Local directories not tracked in git
 demo-recording/
+.clone/
 
 # Compiled code
 plugin/runtime/
