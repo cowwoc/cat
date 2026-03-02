@@ -330,7 +330,7 @@ you can call directly:
 `spawn-subagent` · `get-subagent-status` · `collect-results` · `merge-subagent` · `parallel-execute`
 
 ### Quality & Learning
-`stakeholder-review` · `learn-from-mistakes` · `run-retrospective` · `decompose-task`
+`stakeholder-review` · `learn-from-mistakes` · `retrospective` · `decompose-task`
 
 ---
 

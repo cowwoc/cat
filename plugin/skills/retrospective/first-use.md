@@ -14,13 +14,13 @@ Implements the full workflow defined in `retrospectives.json`.
 ## When to Use
 
 - Automatically triggered by `learn` when thresholds met
-- Manually invoked with `/cat:run-retrospective`
+- Manually invoked with `/cat:retrospective`
 - After significant project milestones
 - When pattern recurrence is suspected
 
 ## Skill Output Analysis
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" run-retrospective`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" retrospective`
 
 The result is one of three types:
 
@@ -284,7 +284,7 @@ trigger_check:
     THRESHOLD=$(jq '.config.mistake_count_threshold' "$INDEX_FILE")
     if [[ $MISTAKES -ge $THRESHOLD ]]; then
       echo "RETROSPECTIVE THRESHOLD REACHED ($MISTAKES >= $THRESHOLD)"
-      echo "Run: /cat:run-retrospective"
+      echo "Run: /cat:retrospective"
     fi
 ```
 

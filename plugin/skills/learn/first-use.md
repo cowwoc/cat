@@ -195,9 +195,9 @@ If `retrospective_triggered` is true, use AskUserQuestion to offer user choice:
 question: "Retrospective threshold exceeded. Run retrospective now?"
 options:
   - label: "Run now"
-    action: "Invoke /cat:run-retrospective immediately"
+    action: "Invoke /cat:retrospective immediately"
   - label: "Later"
-    action: "Inform user to run /cat:run-retrospective when ready"
+    action: "Inform user to run /cat:retrospective when ready"
   - label: "Skip this cycle"
     action: "Reset counter without running"
 ```
@@ -218,7 +218,7 @@ Key anti-patterns to avoid:
 
 ## Related Skills
 
-- `cat:run-retrospective` - Aggregate analysis triggered by this skill
+- `cat:retrospective` - Aggregate analysis triggered by this skill
 - `cat:token-report` - Provides data for context analysis
 - `cat:decompose-issue` - Implements earlier decomposition
 - `cat:get-subagent-status` - Catches context issues early
