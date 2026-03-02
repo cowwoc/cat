@@ -22,3 +22,4 @@ See `plugin/concepts/rules-audience.md` for full documentation of the two-tier r
 | Rule File | Audience | Paths | Purpose |
 |-----------|----------|-------|---------|
 | [hooks.md](hooks.md) | main agent only | always | Hook registration and approval gate protocol |
+| [convention-locations.md](convention-locations.md) | main agent only | always | Where to put end-user vs plugin-dev conventions |
