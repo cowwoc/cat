@@ -103,6 +103,7 @@ public final class SessionEndHook implements HookHandler
       {
         cleanTaskLocks(projectPath, sessionId, messages);
         cleanLegacyWorktreeLocks(projectPath, sessionId, messages);
+        cleanSessionCwdFile(projectPath, sessionId, messages);
       }
 
       cleanStaleLocks(projectPath, messages);
@@ -162,6 +163,30 @@ public final class SessionEndHook implements HookHandler
   {
     cleanLocksInDirectory(projectPath.resolve(".claude/cat/worktree-locks"), sessionId, messages,
       "Worktree lock released");
+  }
+
+  /**
+   * Removes the session CWD tracking file for the current session.
+   *
+   * @param projectPath the project directory
+   * @param sessionId the session ID
+   * @param messages list to collect status messages
+   */
+  private void cleanSessionCwdFile(Path projectPath, String sessionId, List<String> messages)
+  {
+    Path cwdFile = projectPath.resolve(".claude/cat/sessions/" + sessionId + ".cwd");
+    if (Files.exists(cwdFile))
+    {
+      try
+      {
+        Files.delete(cwdFile);
+        messages.add("Session CWD file cleaned: " + cwdFile);
+      }
+      catch (IOException e)
+      {
+        messages.add("Failed to delete session CWD file " + cwdFile + ": " + e.getMessage());
+      }
+    }
   }
 
   /**
