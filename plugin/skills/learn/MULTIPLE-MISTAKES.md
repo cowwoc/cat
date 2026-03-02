@@ -17,22 +17,22 @@ of one mistake, but genuinely separate mistakes that each warrant their own RCA 
 ```yaml
 multiple_mistakes_check:
   question: "Are these separate issues that could occur independently?"
-  if_yes: "Invoke /cat:learn separately for EACH mistake"
-  if_no: "Continue with single /cat:learn for the one mistake"
+  if_yes: "Invoke /cat:learn-agent separately for EACH mistake"
+  if_no: "Continue with single /cat:learn-agent for the one mistake"
 ```
 
 ## Workflow
 
-1. **Complete the current `/cat:learn`** for the first mistake you identified
+1. **Complete the current `/cat:learn-agent`** for the first mistake you identified
    - Full RCA (Steps 1-4)
    - Implement prevention (Step 9) - **actually edit files**
    - Record learning (Step 11)
    - Commit changes (Step 12)
-2. **Invoke `/cat:learn` again** for each additional independent mistake
+2. **Invoke `/cat:learn-agent` again** for each additional independent mistake
    - Each invocation runs the FULL workflow: research → RCA → **implement fix** → record → commit
 3. **Each gets its own M-number**, RCA, and prevention
 
-**CRITICAL: Each /cat:learn invocation must IMPLEMENT prevention, not just record the mistake.**
+**CRITICAL: Each /cat:learn-agent invocation must IMPLEMENT prevention, not just record the mistake.**
 
 ## Example
 
@@ -42,11 +42,11 @@ multiple_mistakes_check:
 
 mistake_1:
   description: "Handler didn't exist for /cat:delegate preprocessing"
-  action: "Complete /cat:learn -> M377"
+  action: "Complete /cat:learn-agent -> M377"
 
 mistake_2:
   description: "Agent didn't acknowledge user message mid-operation"
-  action: "Invoke /cat:learn again -> M378"
+  action: "Invoke /cat:learn-agent again -> M378"
 ```
 
 ## Why Separate Invocations Matter

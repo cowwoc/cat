@@ -178,7 +178,7 @@ public final class SkillDiscovery
    * <p>
    * Skills are included if:
    * <ul>
-   *   <li>The SKILL.md frontmatter does not have {@code model-invocable: false}</li>
+   *   <li>The SKILL.md frontmatter does not have {@code disable-model-invocation: true}</li>
    *   <li>A {@code description:} field is present in the frontmatter</li>
    * </ul>
    *
@@ -274,7 +274,7 @@ public final class SkillDiscovery
    * Discovers model-invocable user skills with descriptions.
    * <p>
    * Scans directories under {@code ${configDir}/skills/} for {@code SKILL.md} files. Skills are
-   * included if they do not have {@code model-invocable: false}.
+   * included if they do not have {@code disable-model-invocation: true}.
    *
    * @param configDir the Claude config directory containing the {@code skills/} subdirectory
    * @return list of discovered skill entries
@@ -290,7 +290,7 @@ public final class SkillDiscovery
    * Discovers model-invocable skills from a directory of skill subdirectories.
    * <p>
    * Iterates subdirectories in the given directory, reads each {@code SKILL.md} file, checks
-   * frontmatter for {@code model-invocable: false}, and extracts the description. Skills without
+   * frontmatter for {@code disable-model-invocation: true}, and extracts the description. Skills without
    * a description or marked as not model-invocable are excluded.
    *
    * @param skillsDir the directory containing skill subdirectories
@@ -319,7 +319,7 @@ public final class SkillDiscovery
         String frontmatter = extractFrontmatter(content);
         if (frontmatter == null)
           continue;
-        if (isModelInvocableFalse(frontmatter))
+        if (!isModelInvocable(frontmatter))
           continue;
         String description = extractDescription(frontmatter);
         if (description == null || description.isBlank())
@@ -347,20 +347,33 @@ public final class SkillDiscovery
   }
 
   /**
-   * Returns true if the frontmatter contains {@code model-invocable: false}.
+   * Returns whether the model may invoke the skill.
+   * <p>
+   * A skill is excluded from the model-invocable listing if the frontmatter contains
+   * {@code disable-model-invocation: true}.
    *
    * @param frontmatter the YAML frontmatter text
-   * @return true if the skill is not model-invocable
+   * @return false if the frontmatter has {@code disable-model-invocation: true}, true otherwise
    */
-  public static boolean isModelInvocableFalse(String frontmatter)
+  public static boolean isModelInvocable(String frontmatter)
   {
     for (String line : frontmatter.split("\n"))
     {
       String stripped = line.strip();
-      if (stripped.equals("model-invocable: false"))
-        return true;
+      int colon = stripped.indexOf(':');
+      if (colon < 0)
+        continue;
+      String key = stripped.substring(0, colon).strip();
+      if (!key.equals("disable-model-invocation"))
+        continue;
+      String value = stripped.substring(colon + 1).strip();
+      int comment = value.indexOf('#');
+      if (comment >= 0)
+        value = value.substring(0, comment).strip();
+      if (value.equalsIgnoreCase("true"))
+        return false;
     }
-    return false;
+    return true;
   }
 
   /**

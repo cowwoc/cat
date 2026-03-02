@@ -1,11 +1,8 @@
 ---
-description: >
-  Run retrospective analysis on recorded learnings and derive action items from patterns.
-  Trigger words: "run retrospective", "analyze patterns", "learning session", "retrospective on learnings", "patterns from".
-  Analyzes patterns across multiple learning entries, not individual mistakes.
-  MANDATORY after learn threshold is reached.
+description: Analyze patterns across recorded learnings and derive action items.
 model: sonnet
 user-invocable: true
+disable-model-invocation: true
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" retrospective "${CLAUDE_PROJECT_DIR}" "$0"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" retrospective "${CLAUDE_PROJECT_DIR}" "${CLAUDE_SESSION_ID}"`

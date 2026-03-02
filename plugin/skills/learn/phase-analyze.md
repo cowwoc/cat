@@ -197,7 +197,7 @@ The cause is always in the system that allowed or encouraged the wrong action.
 
 **If investigation reveals multiple independent mistakes:** Read `MULTIPLE-MISTAKES.md` and follow its workflow.
 
-Each independent mistake gets its own `/cat:learn` invocation with full RCA and prevention implementation.
+Each independent mistake gets its own `/cat:learn-agent` invocation with full RCA and prevention implementation.
 
 ## Step 3d: Architectural Root Cause Analysis
 
