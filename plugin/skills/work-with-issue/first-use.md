@@ -244,7 +244,7 @@ Task tool:
     [If skills were pre-invoked above, include their output here]
 
     ## First Action (MANDATORY)
-    Your working directory defaults to /workspace (main worktree). Before doing ANYTHING else:
+    Before doing ANYTHING else, navigate to the worktree and verify the branch:
     ```bash
     cd ${WORKTREE_PATH}
     git branch --show-current  # Must output: ${BRANCH}
@@ -338,7 +338,7 @@ Task tool:
     [If skills were pre-invoked above, include their output here]
 
     ## First Action (MANDATORY)
-    Your working directory defaults to /workspace (main worktree). Before doing ANYTHING else:
+    Before doing ANYTHING else, navigate to the worktree and verify the branch:
     ```bash
     cd ${WORKTREE_PATH}
     git branch --show-current  # Must output: ${BRANCH}
