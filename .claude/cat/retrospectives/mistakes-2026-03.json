@@ -136,6 +136,33 @@
         "catches_variations": true
       },
       "correct_behavior": "All implementation-type commits (feature:, bugfix:, test:, refactor:, docs:) for the same issue belong in ONE implementation commit. Test commits that verify the issue implementation are part of the implementation, not separate topics. Only split implementation from config/infrastructure (config: for general dependencies/tooling)."
+    },
+    {
+      "id": "M450",
+      "timestamp": "2026-03-02T14:16:52Z",
+      "category": "missing_documentation",
+      "description": "Main agent triggered cat:learn for CONCURRENT_MODIFICATION warnings after git-squash returned OK, because the skill documentation did not explain that these warnings are informational and expected when the base branch has advanced since branch creation.",
+      "root_cause": "MISSING DOCUMENTATION: The git-squash SKILL.md Result Handling section documented status codes (OK, REBASE_CONFLICT, VERIFY_FAILED, ERROR) but did not document the CONCURRENT_MODIFICATION warning type. Agents receiving an OK response with warnings had no guidance on whether this was expected, what it meant, or whether to escalate to cat:learn. The absence of documentation caused the agent to treat normal informational warnings as a mistake requiring learn.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/git-squash/first-use.md",
+      "pattern_keywords": [
+        "concurrent_modification",
+        "git_squash_warning",
+        "missing_warning_documentation",
+        "false_positive_learn",
+        "rebase_auto_resolve"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "CONCURRENT_MODIFICATION warnings in an OK git-squash response are informational. They indicate files were modified on both branches and rebase auto-resolved them. Verify working tree is clean, verify auto-resolution is correct for each flagged file, then proceed normally. Do NOT trigger cat:learn for correctly auto-resolved concurrent modifications."
     }
   ]
 }

@@ -160,6 +160,24 @@ The script implements: rebase onto base, backup, commit-tree squash, verify, cle
 | `VERIFY_FAILED` | Content changed during squash | Restore from backup branch, investigate diff_stat. Delete backup after investigation. |
 | `ERROR` | Rebase or squash failed | Check backup_branch and error message for details. Delete backup after the error is handled. |
 
+### CONCURRENT_MODIFICATION Warnings
+
+When the `OK` response includes a `warnings` array with `type: "CONCURRENT_MODIFICATION"`, it means the listed files
+were modified on both the issue branch and the base branch. The rebase auto-resolved the changes. **This is expected
+normal behavior when the base branch advanced since the worktree was created.**
+
+**Correct response to CONCURRENT_MODIFICATION:**
+1. Complete the standard Post-Squash Working Tree Verification below
+2. For each flagged file, confirm the final content is correct by reviewing what both branches changed:
+   - Issue branch change: what the issue was implementing (e.g., removing a feature)
+   - Base branch change: what was committed to the base since the worktree was created
+   - Verify the rebase preserved both changes correctly (e.g., issue deletions are present, base additions are present)
+3. If auto-resolution is correct, proceed normally — no learn session required
+4. If auto-resolution is incorrect, restore from backup and resolve the conflict manually
+
+**Do NOT trigger `cat:learn` for CONCURRENT_MODIFICATION warnings that were auto-resolved correctly.** These warnings
+are informational — they signal that manual verification is needed, not that a mistake occurred.
+
 ### Post-Squash Working Tree Verification (MANDATORY on `OK`)
 
 After receiving `OK`, verify the working tree in the worktree is clean and the branch points to the squashed commit:
