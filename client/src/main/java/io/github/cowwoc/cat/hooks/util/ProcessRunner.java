@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.StringJoiner;
 
 /**
  * Utility class for running external processes and capturing output.
@@ -51,70 +52,6 @@ public final class ProcessRunner
   }
 
   /**
-   * Runs a command and captures all output as a single string.
-   *
-   * @param command the command and arguments to run
-   * @return the output trimmed, or null on error or non-zero exit code
-   */
-  public static String runAndCapture(List<String> command)
-  {
-    try
-    {
-      ProcessBuilder pb = new ProcessBuilder(command);
-      pb.redirectErrorStream(true);
-      Process process = pb.start();
-
-      StringBuilder output = new StringBuilder();
-      try (BufferedReader reader = new BufferedReader(
-        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
-      {
-        readAllLines(reader, output);
-      }
-
-      int exitCode = process.waitFor();
-      if (exitCode != 0)
-        return null;
-      return output.toString();
-    }
-    catch (IOException | InterruptedException _)
-    {
-      // Return null - process execution failures are expected in some contexts
-      return null;
-    }
-  }
-
-  /**
-   * Runs a command and captures all output as a single string, ignoring exit code.
-   *
-   * @param command the command and arguments to run
-   * @return the output trimmed, or empty string on error
-   */
-  public static String runAndCaptureIgnoreExit(List<String> command)
-  {
-    try
-    {
-      ProcessBuilder pb = new ProcessBuilder(command);
-      pb.redirectErrorStream(true);
-      Process process = pb.start();
-
-      StringBuilder output = new StringBuilder();
-      try (BufferedReader reader = new BufferedReader(
-        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
-      {
-        readAllLines(reader, output);
-      }
-
-      process.waitFor();
-      return output.toString();
-    }
-    catch (IOException | InterruptedException _)
-    {
-      // Return empty string - process execution failures are expected in some contexts
-      return "";
-    }
-  }
-
-  /**
    * Runs a command and returns the exit code and stdout.
    *
    * @param command the command and arguments to run
@@ -128,15 +65,15 @@ public final class ProcessRunner
       pb.redirectErrorStream(true);
       Process process = pb.start();
 
-      StringBuilder output = new StringBuilder();
+      String output;
       try (BufferedReader reader = new BufferedReader(
         new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
       {
-        readAllLines(reader, output);
+        output = readAllLines(reader);
       }
 
       int exitCode = process.waitFor();
-      return new Result(exitCode, output.toString());
+      return new Result(exitCode, output);
     }
     catch (IOException | InterruptedException _)
     {
@@ -145,21 +82,65 @@ public final class ProcessRunner
   }
 
   /**
-   * Reads all lines from a reader into a StringBuilder.
+   * Runs a command and returns the first line of output, or {@code null} on error or non-zero exit code.
+   * <p>
+   * Use this when only the first line of output is needed, to avoid reading unnecessary data.
+   *
+   * @param command the command and arguments to run
+   * @return the first line of output, or {@code null} if the command fails, exits non-zero, or produces no
+   *   output
+   */
+  public static String runAndCaptureFirstLine(List<String> command)
+  {
+    Process process = null;
+    try
+    {
+      ProcessBuilder pb = new ProcessBuilder(command);
+      pb.redirectErrorStream(true);
+      process = pb.start();
+
+      String firstLine;
+      try (BufferedReader reader = new BufferedReader(
+        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
+      {
+        firstLine = reader.readLine();
+      }
+
+      int exitCode = process.waitFor();
+      if (exitCode != 0)
+        return null;
+      return firstLine;
+    }
+    catch (InterruptedException _)
+    {
+      if (process != null)
+        process.destroyForcibly();
+      Thread.currentThread().interrupt();
+      return null;
+    }
+    catch (IOException _)
+    {
+      return null;
+    }
+  }
+
+  /**
+   * Reads all lines from a reader and returns them joined by newlines.
    *
    * @param reader the reader to read from
-   * @param output the StringBuilder to append to
+   * @return the lines joined by newlines, or an empty string if no lines were read
+   * @throws NullPointerException if {@code reader} is null
    * @throws IOException if reading fails
    */
-  private static void readAllLines(BufferedReader reader, StringBuilder output) throws IOException
+  public static String readAllLines(BufferedReader reader) throws IOException
   {
+    StringJoiner joiner = new StringJoiner("\n");
     String line = reader.readLine();
     while (line != null)
     {
-      if (output.length() > 0)
-        output.append('\n');
-      output.append(line);
+      joiner.add(line);
       line = reader.readLine();
     }
+    return joiner.toString();
   }
 }
