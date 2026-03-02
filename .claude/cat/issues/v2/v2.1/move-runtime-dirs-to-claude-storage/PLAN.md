@@ -113,6 +113,52 @@ Where:
 - Remove `.claude/cat/verify/` and `.claude/cat/e2e-config-test/` directories from the repo if they exist
   - Files: `.gitignore`
 
+### Wave 5: Fix remaining old-path usages in core lock/worktree classes (iteration 1)
+
+#### Step 5.1: Fix `IssueLock.java` — lock directory resolution
+- In `IssueLock(JvmScope, Clock)` constructor, replace the `catDir.resolve("locks")` assignment with
+  `scope.getProjectCatDir().resolve("locks")`.
+- Remove the `catDir` local variable and the `Files.isDirectory(catDir)` guard if it is only used to build
+  `lockDir`; keep or relocate the CAT-project validation check if it is needed for another purpose.
+- Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/IssueLock.java`
+
+#### Step 5.2: Fix `WorkPrepare.java` — `findLockedIssues()` lock directory
+- In `findLockedIssues(Path projectDir)`, replace
+  `projectDir.resolve(".claude").resolve("cat").resolve("locks")` with
+  `scope.getProjectCatDir().resolve("locks")`.
+- Remove the `projectDir` parameter if `scope` is already available at the call site and no other use of
+  `projectDir` remains in the method.
+- Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/WorkPrepare.java`
+
+#### Step 5.3: Fix `WorkPrepare.java` — `createWorktree()` worktree directory
+- In `createWorktree(Path projectDir, String issueBranch)`, replace
+  `projectDir.resolve(".claude").resolve("cat").resolve("worktrees").resolve(issueBranch)` with
+  `scope.getProjectCatDir().resolve("worktrees").resolve(issueBranch)`.
+- Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/WorkPrepare.java`
+
+#### Step 5.4: Fix `IssueDiscovery.java` — `getWorktreePath()` worktree directory
+- In `getWorktreePath(String issueId)`, replace
+  `projectDir.resolve(".claude").resolve("cat").resolve("worktrees").resolve(issueId)` with a call that uses
+  `scope.getProjectCatDir().resolve("worktrees").resolve(issueId)`.
+- This requires either storing `scope` as a field (preferred) or passing the worktrees path at construction
+  time.
+- Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/IssueDiscovery.java`
+
+#### Step 5.5: Fix `RestoreWorktreeOnResume.java` — lock directory resolution
+- In the `handle()` method, replace
+  `projectDir.resolve(".claude").resolve("cat").resolve("locks")` with
+  `scope.getProjectCatDir().resolve("locks")`.
+- Files: `client/src/main/java/io/github/cowwoc/cat/hooks/session/RestoreWorktreeOnResume.java`
+
+#### Step 5.6: Update `RestoreWorktreeOnResumeTest.java` — test lock directory
+- Replace all occurrences of `tempDir.resolve(".claude").resolve("cat").resolve("locks")` with the new
+  external path `configDir.resolve("projects").resolve(encodedProjectDir).resolve("cat").resolve("locks")`,
+  using a `TestJvmScope` configured to point to the temp directories.
+- Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/RestoreWorktreeOnResumeTest.java`
+
+#### Step 5.7: Run all tests and confirm exit 0
+- Run `mvn -f client/pom.xml test` and confirm BUILD SUCCESS with zero failures.
+
 ## Post-conditions
 - [ ] No references to `.claude/cat/locks/`, `.claude/cat/worktrees/`, `.claude/cat/verify/`, or
   `.claude/cat/e2e-config-test/` remain in plugin/ or client/src/ (except planning artifacts)
