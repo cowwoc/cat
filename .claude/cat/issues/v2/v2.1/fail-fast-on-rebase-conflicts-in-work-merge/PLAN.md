@@ -54,6 +54,25 @@ them manually.
 
 2. **Run tests:** `mvn -f client/pom.xml test` — all tests must pass.
 
+3. **Create E2E test for rebase conflict scenarios:**
+
+   Add TestNG test method(s) to verify work-merge skill behavior when rebase conflicts occur:
+
+   - Create a test that sets up a scenario where rebase will conflict (e.g., both feature branch
+     and base branch modify the same file in incompatible ways)
+   - Invoke the work-merge merge step (or equivalent command that triggers Step 4 rebase logic)
+   - Verify that it returns CONFLICT status (not attempting any auto-resolution)
+   - Verify that conflicting_files list is present in the response
+   - Verify that the message indicates manual resolution is required
+   - Ensure the test isolates its changes to a temporary worktree/repo (no side effects on main repo)
+
+   The test should cover at minimum:
+   - Single conflicting file scenario
+   - Multiple conflicting files scenario (to ensure no "3-file threshold" logic remains)
+
+4. **Run all tests including E2E:** `mvn -f client/pom.xml test` — all tests including the new E2E
+   test must pass.
+
 ## Post-conditions
 
 - [ ] Step 4 no longer contains any auto-resolution logic

@@ -684,6 +684,59 @@ public class GitSquashTest
     }
   }
 
+  /**
+   * Verifies that a rebase conflict with multiple conflicting files returns REBASE_CONFLICT status.
+   * <p>
+   * Regression guard for the removed 3-file threshold: any number of conflicting files must
+   * immediately return REBASE_CONFLICT without attempting auto-resolution.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void multipleConflictingFilesReturnRebaseConflictStatus() throws IOException
+  {
+    Path tempDir = TestUtils.createTempGitRepo("main");
+    Path pluginRoot = Files.createTempDirectory("plugin-root-");
+    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    {
+      // Create an issue branch that modifies multiple files
+      TestUtils.runGit(tempDir, "checkout", "-b", "multi-conflict-branch");
+      Files.writeString(tempDir.resolve("alpha.txt"), "issue branch alpha");
+      Files.writeString(tempDir.resolve("beta.txt"), "issue branch beta");
+      Files.writeString(tempDir.resolve("gamma.txt"), "issue branch gamma");
+      TestUtils.runGit(tempDir, "add", "alpha.txt", "beta.txt", "gamma.txt");
+      TestUtils.runGit(tempDir, "commit", "-m", "feature: modify three files");
+
+      // Advance main with conflicting changes to all three files
+      TestUtils.runGit(tempDir, "checkout", "main");
+      Files.writeString(tempDir.resolve("alpha.txt"), "main branch alpha");
+      Files.writeString(tempDir.resolve("beta.txt"), "main branch beta");
+      Files.writeString(tempDir.resolve("gamma.txt"), "main branch gamma");
+      TestUtils.runGit(tempDir, "add", "alpha.txt", "beta.txt", "gamma.txt");
+      TestUtils.runGit(tempDir, "commit", "-m", "conflicting changes on main");
+
+      TestUtils.runGit(tempDir, "checkout", "multi-conflict-branch");
+
+      GitSquash cmd = new GitSquash(scope, tempDir.toString());
+      String result = cmd.execute("main", "feature: modify three files");
+      JsonNode json = scope.getJsonMapper().readTree(result);
+
+      // Must return REBASE_CONFLICT immediately — no auto-resolution attempt
+      requireThat(json.get("status").asString(), "status").isEqualTo("REBASE_CONFLICT");
+      requireThat(json.has("conflicting_files"), "hasConflictingFiles").isTrue();
+
+      // Working tree must be clean — rebase was aborted, not partially resolved
+      String statusOutput = TestUtils.runGitCommandWithOutput(tempDir, "status", "--porcelain");
+      requireThat(statusOutput.isBlank(), "isClean").isTrue();
+      requireThat(Files.exists(tempDir.resolve(".git/rebase-merge")), "rebaseInProgress").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
   // ============================================================================
   // Concurrent modification detection tests
   // ============================================================================
