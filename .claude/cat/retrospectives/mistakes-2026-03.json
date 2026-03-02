@@ -163,6 +163,34 @@
         "catches_variations": true
       },
       "correct_behavior": "CONCURRENT_MODIFICATION warnings in an OK git-squash response are informational. They indicate files were modified on both branches and rebase auto-resolved them. Verify working tree is clean, verify auto-resolution is correct for each flagged file, then proceed normally. Do NOT trigger cat:learn for correctly auto-resolved concurrent modifications."
+    },
+    {
+      "id": "M451",
+      "timestamp": "2026-03-02T00:00:00Z",
+      "category": "assumption_without_verification",
+      "description": "Subagent investigated wrong failure event - focused on isModelInvocable robustness instead of agent's skill execution model misconception",
+      "root_cause": "Missing documentation explaining that Skill tool execution is synchronous (loads content into context in same turn). Agent incorrectly assumed Skill tool spawns async subprocess and waited for background completion that never occurred.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/skill-loading.md",
+      "pattern_keywords": [
+        "skill",
+        "async",
+        "execution",
+        "waiting",
+        "subprocess",
+        "misconception"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Skill tool loads content synchronously into agent context in same conversation turn. After receiving skill content, agent immediately executes skill steps within conversation flow - no waiting for background processes."
     }
   ]
 }
