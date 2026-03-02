@@ -957,7 +957,10 @@ defer it.
 **Step 1: Read the list of files changed by this issue:**
 
 ```bash
-git -C "${WORKTREE_PATH}" diff --name-only "${TARGET_BRANCH}..HEAD"
+# Compare against branch point (what the issue changed), not target branch head
+# Target branch may have new files added after the worktree was created
+BRANCH_POINT=$(cat "$(git -C "${WORKTREE_PATH}" rev-parse --git-dir)/cat-branch-point")
+git -C "${WORKTREE_PATH}" diff --name-only "${BRANCH_POINT}..HEAD"
 ```
 
 **Step 2: For each remaining concern, calculate benefit and cost:**
