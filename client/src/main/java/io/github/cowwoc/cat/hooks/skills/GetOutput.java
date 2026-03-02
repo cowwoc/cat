@@ -107,14 +107,14 @@ public final class GetOutput implements SkillOutput
       case "token-report" -> new GetTokenReportOutput(scope).getOutput(handlerArgs);
       case "get-diff" -> new GetDiffOutput(scope).getOutput(handlerArgs);
       case "cleanup" -> new GetCleanupOutput(scope).getOutput(handlerArgs);
-      case "run-retrospective" -> new GetRetrospectiveOutput(scope).getOutput(handlerArgs);
+      case "retrospective" -> new GetRetrospectiveOutput(scope).getOutput(handlerArgs);
       case "config" -> new GetConfigOutput(scope).getOutput(handlerArgs);
       case "init" -> new GetInitOutput(scope).getOutput(handlerArgs);
       case "work-complete" -> new GetIssueCompleteOutput(scope).getOutput(handlerArgs);
       case "statusline" -> new GetStatuslineOutput(scope).getOutput(handlerArgs);
       case "get-subagent-status" -> new GetSubagentStatusOutput(scope).getOutput(handlerArgs);
       default -> throw new IllegalArgumentException("Unknown skill: '" + skill +
-        "'. Valid skills: status, token-report, get-diff, cleanup, run-retrospective, " +
+        "'. Valid skills: status, token-report, get-diff, cleanup, retrospective, " +
         "config, init, work-complete, statusline, get-subagent-status");
     };
 

@@ -8,4 +8,4 @@ model: sonnet
 user-invocable: true
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" run-retrospective "${CLAUDE_PROJECT_DIR}" "$0"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" retrospective "${CLAUDE_PROJECT_DIR}" "$0"`
