@@ -59,6 +59,10 @@ Delegate to general-purpose subagent using the Task tool with these JSON paramet
 >
 > **Your task:** Execute phases in sequence: Investigate → Analyze → Prevent → Record
 >
+> **CRITICAL:** You MUST read and execute each phase file below. Do NOT summarize prior conversation
+> history or reuse results from earlier sessions. Each phase file contains instructions you must follow
+> step by step. Start by reading Phase 1's file with the Read tool.
+>
 > For each phase:
 > 1. Use the Read tool to load the phase file from ${CLAUDE_PLUGIN_ROOT}/skills/learn/
 > 2. Follow the instructions in that phase file
