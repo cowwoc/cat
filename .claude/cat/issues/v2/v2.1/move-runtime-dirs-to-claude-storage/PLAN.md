@@ -1,4 +1,4 @@
-# Plan: add-cat-temp-directory
+# Plan: move-runtime-dirs-to-claude-storage
 
 ## Goal
 Move CAT runtime directories out of the repository into Claude Code's native storage layout: cross-session project
