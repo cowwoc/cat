@@ -83,7 +83,6 @@ public final class GetConfigOutput implements SkillOutput
     String effort = config.getEffort().toString();
     String patience = config.getPatience().toString();
     String completionWorkflow = config.getString("completionWorkflow");
-    String reviewThreshold = config.getAutofixThreshold();
     String minSeverity = config.getMinSeverity().toString();
 
     return buildSimpleHeaderBox(
@@ -96,7 +95,6 @@ public final class GetConfigOutput implements SkillOutput
         "  💪 Effort: " + effort,
         "  ⏳ Patience: " + patience,
         "  🔀 Completion: " + completionWorkflow,
-        "  🔍 Review: " + reviewThreshold,
         "  📈 Min Severity: " + minSeverity,
         ""));
   }

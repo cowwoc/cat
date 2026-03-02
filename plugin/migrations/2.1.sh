@@ -564,5 +564,73 @@ else
     log_migration "Phase 7 complete: $phase7_migrated files migrated"
 fi
 
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase 8: Remove reviewThreshold from cat-config.json
+# ──────────────────────────────────────────────────────────────────────────────
+
+log_migration "Phase 8: Remove reviewThreshold from cat-config.json"
+
+config_file=".claude/cat/cat-config.json"
+
+if [[ ! -f "$config_file" ]]; then
+    log_migration "No config file found - skipping phase 8"
+else
+    if grep -q '"reviewThreshold"' "$config_file" 2>/dev/null; then
+        log_migration "Found reviewThreshold key - removing"
+
+        # Remove "reviewThreshold": "value" with various formatting.
+        # Four cases (processed in order by a single awk pass):
+        #   1. Sole field on its own line:      "reviewThreshold": "value"
+        #   2. First/middle field (followed by trailing comma on same line):
+        #                                       "reviewThreshold": "value",
+        #   3. Last field (preceded by comma on a previous line): drop the line entirely
+        #      and remove the trailing comma from the preceding field line.
+        #   4. First field with comma on next line: handled by blank-line cleanup below.
+        tmp_file="${config_file}.tmp"
+        awk '
+        {
+            # Case 2 & 1: field followed by comma on same line, or sole field
+            if (/[[:space:]]*"reviewThreshold"[[:space:]]*:[[:space:]]*"[^"]*"[[:space:]]*,?[[:space:]]*$/) {
+                next
+            }
+            print
+        }
+        ' "$config_file" > "$tmp_file"
+
+        # Case 3: after removing a last field, the preceding line may have a trailing comma.
+        # Remove trailing commas before closing brace (handles ", \n }" -> "\n }").
+        awk '
+        {
+            lines[NR] = $0
+        }
+        END {
+            for (i = 1; i <= NR; i++) {
+                line = lines[i]
+                # Remove trailing comma if next non-empty line is a closing brace
+                if (line ~ /,[[:space:]]*$/) {
+                    j = i + 1
+                    while (j <= NR && lines[j] ~ /^[[:space:]]*$/) j++
+                    if (j <= NR && lines[j] ~ /^[[:space:]]*\}[[:space:]]*$/) {
+                        sub(/,[[:space:]]*$/, "", line)
+                    }
+                }
+                print line
+            }
+        }
+        ' "$tmp_file" > "${tmp_file}.2"
+        mv "${tmp_file}.2" "$config_file"
+        rm -f "$tmp_file"
+
+        # Post-removal validation: verify reviewThreshold is gone
+        if grep -q '"reviewThreshold"' "$config_file" 2>/dev/null; then
+            log_migration "WARNING: reviewThreshold still present after removal attempt"
+        else
+            log_migration "Phase 8 complete: removed reviewThreshold from config"
+        fi
+    else
+        log_migration "No reviewThreshold key found - skipping phase 8"
+    fi
+fi
+
 log_success "Migration to 2.1 completed"
 exit 0
