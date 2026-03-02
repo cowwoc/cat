@@ -1,8 +1,5 @@
 ---
-description: >
-  Use when user wants to customize CAT settings, change configuration, or set up preferences - interactive wizard.
-  IMPORTANT: After invoking this skill, forward the AskUserQuestion tool call verbatim — do not respond
-  conversationally.
+description: Customize CAT settings and preferences with an interactive wizard.
 model: haiku
 context: fork
 allowed-tools:
@@ -10,6 +7,7 @@ allowed-tools:
   - Read
   - Write
   - AskUserQuestion
+disable-model-invocation: true
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" config "${CLAUDE_PROJECT_DIR}" "$0"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" config "${CLAUDE_PROJECT_DIR}" "${CLAUDE_SESSION_ID}"`

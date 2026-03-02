@@ -1,8 +1,5 @@
 ---
-description: >
-  Use when user wants to delete, remove, or drop an issue or version from the project.
-  IMPORTANT: After invoking this skill, forward the AskUserQuestion tool call verbatim — do not respond
-  conversationally.
+description: Delete an issue or version from the project.
 model: haiku
 context: fork
 allowed-tools:
@@ -11,6 +8,7 @@ allowed-tools:
   - Bash
   - Glob
   - AskUserQuestion
+disable-model-invocation: true
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" remove "${CLAUDE_PROJECT_DIR}" "$0"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" remove "${CLAUDE_PROJECT_DIR}" "${CLAUDE_SESSION_ID}"`

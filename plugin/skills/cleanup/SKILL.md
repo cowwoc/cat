@@ -1,10 +1,11 @@
 ---
-description: Use when session crashed or locks blocking - cleans abandoned worktrees, lock files, and orphaned branches
+description: Clean up abandoned worktrees, lock files, and orphaned branches after a session crash or stale lock.
 model: haiku
 context: fork
 allowed-tools:
   - Bash
   - Read
+disable-model-invocation: true
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" cleanup "${CLAUDE_PROJECT_DIR}" "$0"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" cleanup "${CLAUDE_PROJECT_DIR}" "${CLAUDE_SESSION_ID}"`

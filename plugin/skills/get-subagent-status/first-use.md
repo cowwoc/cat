@@ -82,7 +82,7 @@ For accurate token metrics on completed subagents, use `/cat:token-report` which
 "${CLAUDE_PLUGIN_ROOT}/client/bin/get-subagent-status"
 
 # ✅ Use get-output skill
-# INVOKE: Skill("cat:get-output", args="get-subagent-status")
+# INVOKE: Skill("cat:get-output-agent", args="get-subagent-status")
 ```
 
 ### Treat compaction as intervention signal

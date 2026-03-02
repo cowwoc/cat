@@ -244,6 +244,47 @@ prompt: |
   subagent doesn't need the skill for every execution path.
 - **Skill tool**: content loaded only when needed. But requires an extra tool call round-trip.
 
+### User-Facing vs Agent-Facing Skill Variants
+
+Skills that can be invoked by both users and the model exist as paired directories:
+
+| Directory | Audience | Frontmatter flag | catAgentId source |
+|-----------|----------|-----------------|------------------|
+| `{skill-name}/` | Users (slash command) | `disable-model-invocation: true` | `${CLAUDE_SESSION_ID}` |
+| `{skill-name}-agent/` | Model (Skill tool) | `user-invocable: false` | `$0` (caller-supplied) |
+
+**Why the split is necessary:** Skills that use a catAgentId to locate per-agent state (skill markers, subagent
+context) must receive the correct ID for the caller. When a user invokes a skill, `${CLAUDE_SESSION_ID}` always
+identifies the main session correctly. When the model invokes a skill — especially from a subagent — it must pass
+its own agent ID via `$0`. Using `${CLAUDE_SESSION_ID}` in a subagent context writes to the wrong marker file,
+causing skills to misbehave (e.g., first-use check passes for the wrong agent).
+
+**Flags:**
+- `disable-model-invocation: true` — excludes the skill from the model's skill listing. Use on user-facing variants
+  so the model never attempts to invoke the user slash-command variant.
+- `user-invocable: false` — hides the skill from the slash command menu. Use on agent-facing variants so users
+  never see the `cat:{skill-name}-agent` command.
+
+**catAgentId in preprocessor commands:**
+```yaml
+# User-facing: always the main session
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" add \
+  "${CLAUDE_PROJECT_DIR}" "${CLAUDE_SESSION_ID}"`
+
+# Agent-facing: caller-supplied (may be subagent)
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" add \
+  "${CLAUDE_PROJECT_DIR}" "$0"`
+```
+
+**Descriptions:**
+- User-facing: describe what the skill does in plain language (e.g., "Add a new issue or version to the project").
+- Agent-facing: trigger-oriented — describe when the model should invoke it, including keyword triggers and usage
+  conditions (e.g., "Use when user says 'add an issue'. IMPORTANT: forward AskUserQuestion verbatim.").
+
+**When to create variants:** Create a paired `-agent` variant whenever the skill uses `catAgentId` to locate
+per-agent state. Skills that perform stateless operations (e.g., format a document) do not need variants — use
+`disable-model-invocation: true` or `user-invocable: false` alone based on the intended audience.
+
 ### Creating a New Plugin Skill
 
 1. Create directory: `plugin/skills/{skill-name}/`

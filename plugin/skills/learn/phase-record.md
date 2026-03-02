@@ -321,10 +321,10 @@ DAYS_SINCE=$(( (NOW_EPOCH - LAST_EPOCH) / 86400 ))
 # Check thresholds
 if [[ $MISTAKES -ge $THRESHOLD ]]; then
   echo "RETROSPECTIVE TRIGGERED: Mistake threshold reached ($MISTAKES >= $THRESHOLD)"
-  echo "Run: /cat:retrospective"
+  echo "Run: /cat:retrospective-agent"
 elif [[ $DAYS_SINCE -ge $INTERVAL ]]; then
   echo "RETROSPECTIVE TRIGGERED: Time threshold reached ($DAYS_SINCE days >= $INTERVAL)"
-  echo "Run: /cat:retrospective"
+  echo "Run: /cat:retrospective-agent"
 else
   echo "Retrospective status: $MISTAKES/$THRESHOLD mistakes, $DAYS_SINCE/$INTERVAL days"
 fi
@@ -339,7 +339,7 @@ retrospective_trigger:
   mandatory_prompt:
     question: "Retrospective threshold exceeded ({count}/{threshold}). Run retrospective now?"
     options:
-      - "Run now" - Invoke /cat:retrospective immediately
+      - "Run now" - Invoke /cat:retrospective-agent immediately
       - "Later" - Inform user to run /cat:retrospective when ready
       - "Skip this cycle" - Reset counter without running
 ```

@@ -742,10 +742,10 @@ Skip only when: fix is unique to one file (typo) or no similar files exist (veri
 Documentation changes for compliance failures require empirical verification — committing a skill edit without running
 `/cat:empirical-test` provides no feedback loop and allows the same failure to recur immediately.
 
-**Invoke `/cat:empirical-test` before recording the prevention as complete:**
+**Invoke `/cat:empirical-test-agent` before recording the prevention as complete:**
 
 ```
-/cat:empirical-test "[describe the compliance failure that was fixed]"
+/cat:empirical-test-agent "[describe the compliance failure that was fixed]"
 ```
 
 The empirical test must confirm the fixed skill content achieves ≥95% compliance before the prevention is considered

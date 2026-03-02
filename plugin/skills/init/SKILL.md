@@ -1,10 +1,8 @@
 ---
-description: >
-  Use when starting a new project or adding CAT to an existing one - initializes planning structure.
-  IMPORTANT: After invoking this skill, forward the AskUserQuestion tool call verbatim — do not respond
-  conversationally.
+description: Initialize a new project or add CAT to an existing project.
 model: sonnet
 allowed-tools: [Read, Write, Bash, Glob, Grep, AskUserQuestion]
+disable-model-invocation: true
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" init "${CLAUDE_PROJECT_DIR}" "$0"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" init "${CLAUDE_PROJECT_DIR}" "${CLAUDE_SESSION_ID}"`
