@@ -46,6 +46,13 @@ Skill tool:
 **This works in both main agent and subagents.** The Skill tool is available to all agent types, and
 SkillLoader runs correctly in subagent context.
 
+**CRITICAL: Skill tool execution is SYNCHRONOUS, not asynchronous.** The Skill tool loads the skill
+content into the agent's context in the SAME conversation turn. The skill content is returned immediately
+as part of the tool response. The agent must then execute the skill steps within this same conversation
+flow — there is no background subprocess spawning. After the Skill tool returns with content, the agent
+should immediately proceed with the skill's instructions rather than waiting for a background process to
+complete.
+
 ### Via `skills:` Frontmatter (agent definitions only)
 
 The `skills:` field in agent YAML frontmatter injects skill content into a subagent's context at spawn
