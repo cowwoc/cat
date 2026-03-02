@@ -27,12 +27,14 @@ import io.github.cowwoc.cat.hooks.IssueStatus;
 import io.github.cowwoc.cat.hooks.licensing.LicenseResult;
 import io.github.cowwoc.cat.hooks.licensing.LicenseValidator;
 import io.github.cowwoc.cat.hooks.licensing.Tier;
+import io.github.cowwoc.cat.hooks.util.IssueDiscovery;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 /**
  * Output generator for /cat:status skill.
  * <p>
@@ -121,6 +123,7 @@ public final class GetStatusOutput implements SkillOutput
       return data;
     }
 
+    IssueDiscovery issueDiscovery = new IssueDiscovery(scope);
     StatusData data = new StatusData();
 
     Path projectFile = catDir.resolve("PROJECT.md");
@@ -207,89 +210,83 @@ public final class GetStatusOutput implements SkillOutput
             List<IssueItem> issues = new ArrayList<>();
             Map<String, String> allIssueStatuses = new HashMap<>();
 
-            try (Stream<Path> issueStream = Files.list(minorDir))
+            List<Path> issueDirs = issueDiscovery.listIssueDirsByAge(minorDir);
+
+            // Two-pass loop is intentional for dependency resolution:
+            // Pass 1: Collect all issue statuses into allIssueStatuses map
+            // Pass 2: Build issue objects with blockedBy lists resolved from the map
+            // This ensures dependencies can reference issues defined later in the directory listing
+            for (Path issueDir : issueDirs)
             {
-              List<Path> issueDirs = issueStream.
-                filter(Files::isDirectory).
-                sorted().
-                toList();
+              String issueName = issueDir.getFileName().toString();
+              Path stateFile = issueDir.resolve("STATE.md");
+              Path planFile = issueDir.resolve("PLAN.md");
 
-              // Two-pass loop is intentional for dependency resolution:
-              // Pass 1: Collect all issue statuses into allIssueStatuses map
-              // Pass 2: Build issue objects with blockedBy lists resolved from the map
-              // This ensures dependencies can reference issues defined later in the directory listing
-              for (Path issueDir : issueDirs)
+              if (!Files.exists(stateFile) && !Files.exists(planFile))
+                continue;
+
+              String status = getIssueStatus(stateFile, catDir, minorNum, issueName, licenseResult);
+              allIssueStatuses.put(issueName, status);
+            }
+
+            IssueStats stats = buildMinorVersionIssues(issueDirs, catDir, minorNum, licenseResult,
+              allIssueStatuses, issues);
+            int localTotal = stats.total;
+            int localCompleted = stats.completed;
+            String localInprog = stats.inProgress;
+
+            String desc = "";
+            Pattern minorPattern = Pattern.compile(
+              "^- \\*\\*" + Pattern.quote(minorNum) + ":\\*\\*\\s+([^(]+)",
+              Pattern.MULTILINE);
+            Matcher minorMatcher = minorPattern.matcher(roadmapContent);
+            if (minorMatcher.find())
+              desc = minorMatcher.group(1).trim();
+
+            totalCompleted += localCompleted;
+            totalIssues += localTotal;
+
+            if (currentMinor.isEmpty())
+            {
+              if (!localInprog.isEmpty())
               {
-                String issueName = issueDir.getFileName().toString();
-                Path stateFile = issueDir.resolve("STATE.md");
-                Path planFile = issueDir.resolve("PLAN.md");
-
-                if (!Files.exists(stateFile) && !Files.exists(planFile))
-                  continue;
-
-                String status = getIssueStatus(stateFile, catDir, minorNum, issueName, licenseResult);
-                allIssueStatuses.put(issueName, status);
+                currentMinor = minorId;
+                inProgressIssue = localInprog;
               }
-
-              IssueStats stats = buildMinorVersionIssues(issueDirs, catDir, minorNum, licenseResult,
-                allIssueStatuses, issues);
-              int localTotal = stats.total;
-              int localCompleted = stats.completed;
-              String localInprog = stats.inProgress;
-
-              String desc = "";
-              Pattern minorPattern = Pattern.compile(
-                "^- \\*\\*" + Pattern.quote(minorNum) + ":\\*\\*\\s+([^(]+)",
-                Pattern.MULTILINE);
-              Matcher minorMatcher = minorPattern.matcher(roadmapContent);
-              if (minorMatcher.find())
-                desc = minorMatcher.group(1).trim();
-
-              totalCompleted += localCompleted;
-              totalIssues += localTotal;
-
-              if (currentMinor.isEmpty())
+              else if (localCompleted < localTotal)
               {
-                if (!localInprog.isEmpty())
+                currentMinor = minorId;
+                for (IssueItem issue : issues)
                 {
-                  currentMinor = minorId;
-                  inProgressIssue = localInprog;
+                  if (issue.status.equals("open") && issue.blockedBy.isEmpty())
+                  {
+                    nextIssue = issue.name;
+                    break;
+                  }
                 }
-                else if (localCompleted < localTotal)
+                if (nextIssue.isEmpty())
                 {
-                  currentMinor = minorId;
                   for (IssueItem issue : issues)
                   {
-                    if (issue.status.equals("open") && issue.blockedBy.isEmpty())
+                    if (issue.status.equals("open"))
                     {
                       nextIssue = issue.name;
                       break;
                     }
                   }
-                  if (nextIssue.isEmpty())
-                  {
-                    for (IssueItem issue : issues)
-                    {
-                      if (issue.status.equals("open"))
-                      {
-                        nextIssue = issue.name;
-                        break;
-                      }
-                    }
-                  }
                 }
               }
-
-              MinorVersion minor = new MinorVersion();
-              minor.id = minorId;
-              minor.major = majorId;
-              minor.description = desc;
-              minor.completed = localCompleted;
-              minor.total = localTotal;
-              minor.inProgress = localInprog;
-              minor.issues = issues;
-              data.minors.add(minor);
             }
+
+            MinorVersion minor = new MinorVersion();
+            minor.id = minorId;
+            minor.major = majorId;
+            minor.description = desc;
+            minor.completed = localCompleted;
+            minor.total = localTotal;
+            minor.inProgress = localInprog;
+            minor.issues = issues;
+            data.minors.add(minor);
           }
         }
       }

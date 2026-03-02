@@ -1207,4 +1207,121 @@ public class GetStatusOutputTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that issues within a minor version are listed in oldest-first order (by git creation
+   * time of STATE.md), not alphabetically.
+   * <p>
+   * Creates three issues with distinct commit timestamps in non-alphabetical order
+   * (task-c first/oldest, then task-a, then task-b last/newest) and verifies the status output
+   * shows them in commit-date order, not alphabetically.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void issuesAreSortedByGitCreationTimeOldestFirst() throws IOException
+  {
+    Path tempDir = TestUtils.createTempGitRepo("main");
+    try
+    {
+      Path catDir = tempDir.resolve(".claude/cat");
+      Path issuesDir = catDir.resolve("issues");
+      Path majorDir = issuesDir.resolve("v1");
+      Path minorDir = majorDir.resolve("v1.0");
+
+      // Create and commit task-c first (oldest) using explicit date to ensure distinct timestamps
+      Path taskCDir = minorDir.resolve("task-c");
+      Files.createDirectories(taskCDir);
+      Files.writeString(taskCDir.resolve("STATE.md"), "- **Status:** open\n");
+      TestUtils.runGit(tempDir, "add", "-A");
+      TestUtils.runGit(tempDir, "commit", "--date=2020-01-01T00:00:01", "-m", "add task-c");
+
+      // Create and commit task-a second
+      Path taskADir = minorDir.resolve("task-a");
+      Files.createDirectories(taskADir);
+      Files.writeString(taskADir.resolve("STATE.md"), "- **Status:** open\n");
+      TestUtils.runGit(tempDir, "add", "-A");
+      TestUtils.runGit(tempDir, "commit", "--date=2020-01-02T00:00:01", "-m", "add task-a");
+
+      // Create and commit task-b last (newest)
+      Path taskBDir = minorDir.resolve("task-b");
+      Files.createDirectories(taskBDir);
+      Files.writeString(taskBDir.resolve("STATE.md"), "- **Status:** open\n");
+      TestUtils.runGit(tempDir, "add", "-A");
+      TestUtils.runGit(tempDir, "commit", "--date=2020-01-03T00:00:01", "-m", "add task-b");
+
+      try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+      {
+        GetStatusOutput handler = new GetStatusOutput(scope);
+        String result = handler.getOutput(new String[0]);
+
+        int posC = result.indexOf("task-c");
+        int posA = result.indexOf("task-a");
+        int posB = result.indexOf("task-b");
+
+        requireThat(posC, "posC").isGreaterThanOrEqualTo(0);
+        requireThat(posA, "posA").isGreaterThanOrEqualTo(0);
+        requireThat(posB, "posB").isGreaterThanOrEqualTo(0);
+        // task-c was committed first (oldest date) so must appear before task-a and task-b
+        requireThat(posC, "posC").isLessThan(posA);
+        requireThat(posA, "posA").isLessThan(posB);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that issues with identical git commit timestamps are sorted alphabetically as a tiebreaker.
+   * <p>
+   * Creates two issues committed in the same second (identical timestamps) and verifies
+   * the status output shows them in alphabetical order.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void issuesWithIdenticalTimestampsAreSortedAlphabetically() throws IOException
+  {
+    Path tempDir = TestUtils.createTempGitRepo("main");
+    try
+    {
+      Path catDir = tempDir.resolve(".claude/cat");
+      Path issuesDir = catDir.resolve("issues");
+      Path majorDir = issuesDir.resolve("v1");
+      Path minorDir = majorDir.resolve("v1.0");
+
+      // Create and commit task-z before task-a, both with the same timestamp
+      Path taskZDir = minorDir.resolve("task-z");
+      Files.createDirectories(taskZDir);
+      Files.writeString(taskZDir.resolve("STATE.md"), "- **Status:** open\n");
+      TestUtils.runGit(tempDir, "add", "-A");
+      TestUtils.runGit(tempDir, "commit", "--date=2020-06-15T12:00:00", "-m", "add task-z");
+
+      Path taskADir = minorDir.resolve("task-a");
+      Files.createDirectories(taskADir);
+      Files.writeString(taskADir.resolve("STATE.md"), "- **Status:** open\n");
+      TestUtils.runGit(tempDir, "add", "-A");
+      TestUtils.runGit(tempDir, "commit", "--date=2020-06-15T12:00:00", "-m", "add task-a");
+
+      try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+      {
+        GetStatusOutput handler = new GetStatusOutput(scope);
+        String result = handler.getOutput(new String[0]);
+
+        int posZ = result.indexOf("task-z");
+        int posA = result.indexOf("task-a");
+
+        requireThat(posZ, "posZ").isGreaterThanOrEqualTo(0);
+        requireThat(posA, "posA").isGreaterThanOrEqualTo(0);
+        // Both have the same timestamp, so alphabetical order (task-a before task-z) is the tiebreaker
+        requireThat(posA, "posA").isLessThan(posZ);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }
