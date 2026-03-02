@@ -70,7 +70,9 @@ fi
 - Group related commits by their purpose/topic
 - Each topic becomes one squashed commit
 - Topic is primary — commits on the same topic combine even if they have different type prefixes
-- Preserve commit type boundaries only when topics are also different (e.g., `feature:` vs `docs:`)
+- All implementation types (`feature:`, `bugfix:`, `test:`, `refactor:`, `docs:`) for the same issue belong in
+  ONE implementation commit — squash them together, choosing the type that describes the primary change
+- Keep separate only when commits belong to different categories: implementation vs. config/infrastructure
 
 **Example:** If branch has these commits:
 ```
@@ -306,13 +308,24 @@ Complex squash operations include:
 
 **CRITICAL: Follow commit grouping rules from [commit-types.md](../../concepts/commit-types.md).**
 
-Key rules when squashing:
+**Squash categories (from commit-types.md):**
+
+| Category | Types | Squash to |
+|----------|-------|-----------|
+| Implementation | `feature:`, `bugfix:`, `test:`, `refactor:`, `docs:` | ONE commit |
+| Config/Infrastructure | `config:` | ONE commit (optional, only for general config) |
+| Planning | `planning:` | ONE commit (optional) |
+
+**Key rules when squashing:**
 - **Issue STATE.md** → same commit as implementation
+- **Test commits for the issue implementation** → same commit as implementation (tests verify the fix,
+  they are part of it)
 - **Same topic, different type prefixes** (`bugfix:` + `refactor:` on same code) → combine into one commit; choose
   the type that best describes the combined change
-- **Different topics AND different commit types** (`feature:` vs `docs:`) → keep separate
+- **Different implementation types on the same issue** (`feature:` + `test:` + `refactor:`) → combine into ONE
+  implementation commit; use the type that best describes the primary change
+- **Implementation vs general config** (`feature:` vs `config:` for a new dependency) → keep separate
 - **Related same-type commits** → can combine
-- **Implementation + refactor of same code** → combine into one commit
 
 ### Write Meaningful Commit Messages
 
