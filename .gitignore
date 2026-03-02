@@ -9,7 +9,7 @@ plugin/node_modules/
 *.tmp
 *.log
 
-# User-specific license configuration
+# User-specific configuration, kept local and not committed
 cat-config.local.json
 
 # Local directories not tracked in git
