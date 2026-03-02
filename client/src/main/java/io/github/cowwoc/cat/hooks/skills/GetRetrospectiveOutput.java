@@ -28,7 +28,7 @@ import java.util.Map;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Output generator for /cat:run-retrospective skill.
+ * Output generator for /cat:retrospective skill.
  * <p>
  * Analyzes accumulated mistakes and determines whether a retrospective should be triggered.
  * Supports three trigger conditions:
