@@ -18,6 +18,19 @@ directly orchestrates all phases:
 This eliminates nested subagent spawning (which is architecturally impossible) and enables proper
 skill invocation at the main agent level.
 
+## MANDATORY STEPS
+
+The following steps are **mandatory** and must not be skipped without explicit user permission. Mandatory steps do not
+require user permission to execute — they are pre-approved as part of the `/cat:work` workflow. Steps marked **BLOCKING**
+are additionally enforced by hooks or explicit STOP instructions that block progress mechanically if skipped.
+
+- **Step 5: Review Phase (Stakeholder Review)** — always invoke `cat:stakeholder-review` except for config-driven
+  exceptions (VERIFY=none or TRUST=high); do not skip based on perceived simplicity or short feedback cycles
+- **Step 7: Rebase and Squash Commits Before Review** — always squash before the approval gate; do not proceed to
+  Step 8 without completing this step
+- **Step 8 (pre-gate sub-step): Skill-Builder Review** — always invoke `cat:skill-builder` for modified skill or
+  command files before presenting the approval gate
+
 ## Arguments Format
 
 The main `/cat:work` skill invokes this with positional space-separated arguments:
@@ -675,7 +688,7 @@ Initialize loop: `VERIFY_ITERATION=0`
 - Note the remaining gaps in metrics
 - Continue to Step 5 with gaps noted in the approval gate summary
 
-## Step 5: Review Phase
+## Step 5: Review Phase (MANDATORY)
 
 Display the **Reviewing phase** banner by running:
 
@@ -1101,10 +1114,11 @@ Skip this step entirely and proceed to Step 7 if ANY of:
 - All deferred concerns are below `minSeverity` (they are silently ignored, not presented to the user)
 - `TRUST == "high"` (high-trust mode auto-creates issues per Step 5 and proceeds without user interaction)
 
-## Step 7: Rebase and Squash Commits Before Review
+## Step 7: Rebase and Squash Commits Before Review (MANDATORY)
 
-**MANDATORY: Delegate rebase, squash, and STATE.md closure verification to a squash subagent.** This keeps the parent
-agent context lean by offloading git operations to a dedicated haiku-model subagent.
+**MANDATORY: Delegate rebase, squash, and STATE.md closure verification to a squash subagent.** This step must not be
+skipped — the approval gate (Step 8) checks that squash was executed and blocks proceeding if it was not.
+This keeps the parent agent context lean by offloading git operations to a dedicated haiku-model subagent.
 
 Determine the primary commit message from the execution result (the most significant commit's message). If multiple
 topics exist, use the most significant commit's message. Do NOT use generic messages like "squash commit".
@@ -1150,7 +1164,7 @@ Parse the subagent result:
 - **FAILED** (phase: rebase): Return FAILED status with conflict details. Do NOT proceed.
 - **FAILED** (phase: squash or verify): Return FAILED status with error details. Do NOT proceed.
 
-## Step 8: Approval Gate
+## Step 8: Approval Gate (MANDATORY)
 
 **CRITICAL: This step is MANDATORY when trust != "high".**
 
@@ -1167,10 +1181,11 @@ determine completion. Instead, confirm that `/cat:git-squash` was invoked in Ste
 
 **If Step 7 was completed:** Proceed to approval gate below.
 
-### Pre-Gate Skill-Builder Review (BLOCKING)
+### Pre-Gate Skill-Builder Review (MANDATORY — BLOCKING)
 
-When the issue modifies files in `plugin/skills/` or `plugin/commands/`, invoke `/cat:skill-builder` to review
-each modified skill or command file before presenting the approval gate.
+**MANDATORY:** When the issue modifies files in `plugin/skills/` or `plugin/commands/`, invoke `/cat:skill-builder`
+to review each modified skill or command file before presenting the approval gate. This step must not be skipped —
+do not proceed to the approval gate without completing skill-builder review for all modified skill or command files.
 
 ```bash
 # Check whether any skill or command files were modified
