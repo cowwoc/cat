@@ -16,6 +16,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -107,6 +109,19 @@ public final class IssueDiscovery
   private final Path projectDir;
   private final Path issuesDir;
   private final IssueLock issueLock;
+  /**
+   * Cache mapping issue directory paths to their git creation timestamps (seconds since epoch).
+   * <p>
+   * Avoids redundant git subprocess calls when the same issue directory is queried multiple times.
+   */
+  private final Map<Path, Long> creationTimeCache = new HashMap<>();
+  /**
+   * Cache mapping version directory paths to their sorted issue directory listings.
+   * <p>
+   * Avoids redundant directory listings and git subprocess calls when the same version directory is
+   * searched multiple times during a single discovery operation.
+   */
+  private final Map<Path, List<Path>> sortedDirCache = new HashMap<>();
 
   /**
    * Creates a new issue discovery instance.
@@ -1010,7 +1025,7 @@ public final class IssueDiscovery
     else
       minorDir = searchDir.getParent();
 
-    for (Path issueDir : listIssueDirs(searchDir))
+    for (Path issueDir : listIssueDirsByAge(searchDir))
     {
       String issueName = issueDir.getFileName().toString();
       Path statePath = issueDir.resolve("STATE.md");
@@ -1592,17 +1607,20 @@ public final class IssueDiscovery
   }
 
   /**
-   * Lists issue directories (non-version directories) under a minor version directory, sorted by name.
+   * Lists issue directories (non-version directories) under a version directory, sorted alphabetically.
+   * <p>
+   * Use this variant when ordering by creation time is not needed (e.g., existence checks or iteration
+   * over all issues regardless of age).
    *
-   * @param minorDir the minor version directory
-   * @return sorted list of issue directories, empty if none found
+   * @param versionDir the version directory
+   * @return alphabetically sorted list of issue directories, empty if none found
    * @throws IOException if listing the directory fails
    */
-  private List<Path> listIssueDirs(Path minorDir) throws IOException
+  private List<Path> listIssueDirs(Path versionDir) throws IOException
   {
-    if (!Files.isDirectory(minorDir))
+    if (!Files.isDirectory(versionDir))
       return Collections.emptyList();
-    try (Stream<Path> stream = Files.list(minorDir))
+    try (Stream<Path> stream = Files.list(versionDir))
     {
       return stream.
         filter(Files::isDirectory).
@@ -1610,5 +1628,89 @@ public final class IssueDiscovery
         sorted().
         toList();
     }
+  }
+
+  /**
+   * Lists issue directories (non-version directories) under a version directory, sorted by creation
+   * time (oldest first), with alphabetical ordering as a tiebreaker.
+   * <p>
+   * Creation times are precomputed into a map before sorting to avoid O(N log N) subprocess calls.
+   * Results are cached per version directory so repeated calls with the same directory return immediately.
+   *
+   * @param versionDir the version directory
+   * @return sorted list of issue directories, empty if none found
+   * @throws IOException if listing the directory fails
+   */
+  private List<Path> listIssueDirsByAge(Path versionDir) throws IOException
+  {
+    List<Path> cached = sortedDirCache.get(versionDir);
+    if (cached != null)
+      return cached;
+    if (!Files.isDirectory(versionDir))
+    {
+      sortedDirCache.put(versionDir, Collections.emptyList());
+      return Collections.emptyList();
+    }
+    List<Path> dirs;
+    try (Stream<Path> stream = Files.list(versionDir))
+    {
+      dirs = stream.
+        filter(Files::isDirectory).
+        filter(d -> !VERSION_DIR_PATTERN.matcher(d.getFileName().toString()).matches()).
+        toList();
+    }
+    Map<Path, Long> creationTimes = new HashMap<>(dirs.size());
+    for (Path dir : dirs)
+      creationTimes.put(dir, getIssueCreationTime(dir));
+    Comparator<Path> byAge = Comparator.comparingLong(creationTimes::get);
+    List<Path> sorted = dirs.stream().
+      sorted(byAge.thenComparing(Comparator.naturalOrder())).
+      toList();
+    sortedDirCache.put(versionDir, sorted);
+    return sorted;
+  }
+
+  /**
+   * Returns the Unix timestamp (seconds since epoch) of the oldest git commit that added the issue's
+   * {@code STATE.md} file.
+   * <p>
+   * This is used to sort issues by creation time so that the oldest issue is selected first.
+   * The {@code --reverse} flag ensures git log output is in oldest-first order, so the first line
+   * is the original add commit.
+   * <p>
+   * Results are cached per issue directory to avoid redundant git subprocess calls.
+   *
+   * @param issueDir the issue directory
+   * @return the Unix timestamp of the first commit that added {@code STATE.md}, or {@code Long.MAX_VALUE}
+   *   if the timestamp cannot be determined (command failure, no output, non-git directory, or
+   *   non-numeric output)
+   */
+  private long getIssueCreationTime(Path issueDir)
+  {
+    Long cached = creationTimeCache.get(issueDir);
+    if (cached != null)
+      return cached;
+    Path statePath = issueDir.resolve("STATE.md");
+    Path relativePath = projectDir.relativize(statePath);
+    String firstLine = ProcessRunner.runAndCaptureFirstLine(List.of("git", "-C", projectDir.toString(),
+      "log", "--diff-filter=A", "--format=%at", "--reverse", "--", relativePath.toString()));
+    long timestamp;
+    if (firstLine == null || firstLine.isBlank())
+    {
+      timestamp = Long.MAX_VALUE;
+    }
+    else
+    {
+      try
+      {
+        timestamp = Long.parseLong(firstLine.strip());
+      }
+      catch (NumberFormatException _)
+      {
+        timestamp = Long.MAX_VALUE;
+      }
+    }
+    creationTimeCache.put(issueDir, timestamp);
+    return timestamp;
   }
 }

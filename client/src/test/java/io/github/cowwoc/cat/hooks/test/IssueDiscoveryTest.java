@@ -1621,4 +1621,195 @@ public class IssueDiscoveryTest
       }
     }
   }
+
+  /**
+   * Verifies that when multiple open issues exist, the one whose STATE.md was committed earliest is
+   * selected first, not the alphabetically first one.
+   * <p>
+   * issue-b is committed first (older), issue-a is committed second (newer but alphabetically first).
+   * Expects issue-b to be returned.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void selectsOldestIssueFirst() throws IOException
+  {
+    Path projectDir = TestUtils.createTempGitRepo("main");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      try
+      {
+        String sessionId = UUID.randomUUID().toString();
+
+        // Set up the .claude/cat/issues directory structure
+        Path issuesDir = projectDir.resolve(".claude").resolve("cat").resolve("issues");
+        Path minorDir = issuesDir.resolve("v2").resolve("v2.1");
+
+        // Create issue-b first (older commit date)
+        Path issueBDir = minorDir.resolve("issue-b");
+        Files.createDirectories(issueBDir);
+        String stateContent = """
+          # State
+
+          - **Status:** open
+          - **Progress:** 0%
+          - **Dependencies:** []
+          - **Blocks:** []
+          """;
+        Files.writeString(issueBDir.resolve("STATE.md"), stateContent);
+        TestUtils.runGit(projectDir, "add", ".claude/cat/issues/v2/v2.1/issue-b/STATE.md");
+        TestUtils.runGit(projectDir, "commit", "--date=2026-01-01T00:00:01Z",
+          "--author=Test User <test@example.com>", "-m", "Add issue-b");
+
+        // Create issue-a second (newer commit date, but alphabetically first)
+        Path issueADir = minorDir.resolve("issue-a");
+        Files.createDirectories(issueADir);
+        Files.writeString(issueADir.resolve("STATE.md"), stateContent);
+        TestUtils.runGit(projectDir, "add", ".claude/cat/issues/v2/v2.1/issue-a/STATE.md");
+        TestUtils.runGit(projectDir, "commit", "--date=2026-01-01T00:00:02Z",
+          "--author=Test User <test@example.com>", "-m", "Add issue-a");
+
+        IssueDiscovery discovery = new IssueDiscovery(scope);
+        SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
+        DiscoveryResult result = discovery.findNextIssue(options);
+
+        // issue-b was committed earlier so it should be selected first (not alphabetical issue-a)
+        requireThat(result, "result").isInstanceOf(DiscoveryResult.Found.class);
+        DiscoveryResult.Found found = (DiscoveryResult.Found) result;
+        requireThat(found.issueId(), "issueId").isEqualTo("2.1-issue-b");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that when issues are in a non-git directory (no git history), they fall back to
+   * {@code Long.MAX_VALUE} for creation time and are sorted alphabetically.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void nonGitEnvironmentFallsBackToAlphabeticalSort() throws IOException
+  {
+    Path projectDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      try
+      {
+        String sessionId = UUID.randomUUID().toString();
+        // Create two issues in a non-git directory; no git history available
+        createIssue(projectDir, "2", "1", "issue-b", "open");
+        createIssue(projectDir, "2", "1", "issue-a", "open");
+
+        IssueDiscovery discovery = new IssueDiscovery(scope);
+        SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
+        DiscoveryResult result = discovery.findNextIssue(options);
+
+        // Without git history, both issues get MAX_VALUE timestamp; alphabetical tiebreaker selects issue-a
+        requireThat(result, "result").isInstanceOf(DiscoveryResult.Found.class);
+        DiscoveryResult.Found found = (DiscoveryResult.Found) result;
+        requireThat(found.issueId(), "issueId").isEqualTo("2.1-issue-a");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that when two issues have identical commit timestamps, the alphabetically earlier name
+   * is selected first as the tiebreaker.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void tiedTimestampsUsesAlphabeticalTiebreaker() throws IOException
+  {
+    Path projectDir = TestUtils.createTempGitRepo("main");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      try
+      {
+        String sessionId = UUID.randomUUID().toString();
+
+        Path issuesDir = projectDir.resolve(".claude").resolve("cat").resolve("issues");
+        Path minorDir = issuesDir.resolve("v2").resolve("v2.1");
+
+        String stateContent = """
+          # State
+
+          - **Status:** open
+          - **Progress:** 0%
+          - **Dependencies:** []
+          - **Blocks:** []
+          """;
+
+        // Commit both issues with the same timestamp
+        Path issueBDir = minorDir.resolve("issue-b");
+        Files.createDirectories(issueBDir);
+        Files.writeString(issueBDir.resolve("STATE.md"), stateContent);
+
+        Path issueADir = minorDir.resolve("issue-a");
+        Files.createDirectories(issueADir);
+        Files.writeString(issueADir.resolve("STATE.md"), stateContent);
+
+        TestUtils.runGit(projectDir, "add", ".");
+        TestUtils.runGit(projectDir, "commit", "--date=2026-01-01T00:00:01Z",
+          "--author=Test User <test@example.com>", "-m", "Add both issues");
+
+        IssueDiscovery discovery = new IssueDiscovery(scope);
+        SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
+        DiscoveryResult result = discovery.findNextIssue(options);
+
+        // Identical timestamps — alphabetical tiebreaker selects issue-a before issue-b
+        requireThat(result, "result").isInstanceOf(DiscoveryResult.Found.class);
+        DiscoveryResult.Found found = (DiscoveryResult.Found) result;
+        requireThat(found.issueId(), "issueId").isEqualTo("2.1-issue-a");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that when the git log command fails (e.g., STATE.md not yet committed),
+   * the issue creation time falls back to {@code Long.MAX_VALUE}, and alphabetical order determines
+   * the result.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void gitCommandFailureFallsBackToAlphabeticalSort() throws IOException
+  {
+    Path projectDir = TestUtils.createTempGitRepo("main");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      try
+      {
+        String sessionId = UUID.randomUUID().toString();
+        // Create issues but do NOT commit them — git log will return empty output
+        createIssue(projectDir, "2", "1", "issue-b", "open");
+        createIssue(projectDir, "2", "1", "issue-a", "open");
+
+        IssueDiscovery discovery = new IssueDiscovery(scope);
+        SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
+        DiscoveryResult result = discovery.findNextIssue(options);
+
+        // No git history for these files — both fall back to MAX_VALUE; alphabetical selects issue-a
+        requireThat(result, "result").isInstanceOf(DiscoveryResult.Found.class);
+        DiscoveryResult.Found found = (DiscoveryResult.Found) result;
+        requireThat(found.issueId(), "issueId").isEqualTo("2.1-issue-a");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+      }
+    }
+  }
 }
