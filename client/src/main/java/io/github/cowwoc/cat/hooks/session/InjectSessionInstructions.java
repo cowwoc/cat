@@ -132,6 +132,9 @@ public final class InjectSessionInstructions implements SessionStartHandler
 
       **Correct flow**: `/cat:add` -> `/cat:work` (creates worktree) -> delegate to subagent -> merge back
 
+      **Working in worktrees**: `cd` into the worktree directory instead of using `git -C` from outside. \
+      This ensures all file operations target the worktree, not the main workspace.
+
       **Violation indicators**:
       - No `cat-branch-point` file in current git dir (not an issue worktree)
       - Making issue-related edits without first running `/cat:work`
