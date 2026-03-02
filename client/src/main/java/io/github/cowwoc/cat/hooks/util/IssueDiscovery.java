@@ -920,7 +920,7 @@ public final class IssueDiscovery
   private boolean hasOpenIssues(Path minorDir) throws IOException
   {
     // Check direct issue dirs
-    for (Path issueDir : listIssueDirs(minorDir))
+    for (Path issueDir : listIssueDirsByAge(minorDir))
     {
       Path statePath = issueDir.resolve("STATE.md");
       if (!Files.isRegularFile(statePath))
@@ -940,7 +940,7 @@ public final class IssueDiscovery
     // Check patch subdirs
     for (Path patchDir : listPatchDirs(minorDir))
     {
-      for (Path issueDir : listIssueDirs(patchDir))
+      for (Path issueDir : listIssueDirsByAge(patchDir))
       {
         Path statePath = issueDir.resolve("STATE.md");
         if (!Files.isRegularFile(statePath))
@@ -1423,7 +1423,7 @@ public final class IssueDiscovery
     List<String> postconditionIssues = parsePostconditionIssues(minorDir);
 
     // Check all non-post-condition issues in the version
-    for (Path issueDir : listIssueDirs(minorDir))
+    for (Path issueDir : listIssueDirsByAge(minorDir))
     {
       String dirName = issueDir.getFileName().toString();
       // Skip post-condition issues
@@ -1607,30 +1607,6 @@ public final class IssueDiscovery
   }
 
   /**
-   * Lists issue directories (non-version directories) under a version directory, sorted alphabetically.
-   * <p>
-   * Use this variant when ordering by creation time is not needed (e.g., existence checks or iteration
-   * over all issues regardless of age).
-   *
-   * @param versionDir the version directory
-   * @return alphabetically sorted list of issue directories, empty if none found
-   * @throws IOException if listing the directory fails
-   */
-  private List<Path> listIssueDirs(Path versionDir) throws IOException
-  {
-    if (!Files.isDirectory(versionDir))
-      return Collections.emptyList();
-    try (Stream<Path> stream = Files.list(versionDir))
-    {
-      return stream.
-        filter(Files::isDirectory).
-        filter(d -> !VERSION_DIR_PATTERN.matcher(d.getFileName().toString()).matches()).
-        sorted().
-        toList();
-    }
-  }
-
-  /**
    * Lists issue directories (non-version directories) under a version directory, sorted by creation
    * time (oldest first), with alphabetical ordering as a tiebreaker.
    * <p>
@@ -1641,7 +1617,7 @@ public final class IssueDiscovery
    * @return sorted list of issue directories, empty if none found
    * @throws IOException if listing the directory fails
    */
-  private List<Path> listIssueDirsByAge(Path versionDir) throws IOException
+  public List<Path> listIssueDirsByAge(Path versionDir) throws IOException
   {
     List<Path> cached = sortedDirCache.get(versionDir);
     if (cached != null)
@@ -1674,7 +1650,6 @@ public final class IssueDiscovery
    * Returns the Unix timestamp (seconds since epoch) of the oldest git commit that added the issue's
    * {@code STATE.md} file.
    * <p>
-   * This is used to sort issues by creation time so that the oldest issue is selected first.
    * The {@code --reverse} flag ensures git log output is in oldest-first order, so the first line
    * is the original add commit.
    * <p>
@@ -1684,6 +1659,7 @@ public final class IssueDiscovery
    * @return the Unix timestamp of the first commit that added {@code STATE.md}, or {@code Long.MAX_VALUE}
    *   if the timestamp cannot be determined (command failure, no output, non-git directory, or
    *   non-numeric output)
+   * @throws NullPointerException if {@code issueDir} is null
    */
   private long getIssueCreationTime(Path issueDir)
   {
