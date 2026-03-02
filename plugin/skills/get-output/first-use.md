@@ -13,8 +13,8 @@ The type uses dot-notation: `skill[.page]`.
 ARGUMENTS: type [extra-args...]
 
 Examples:
-- `Skill("cat:get-output", args="status")` — generates the status box
-- `Skill("cat:get-output", args="config.settings")` — generates the config settings page
+- `Skill("cat:get-output-agent", args="status")` — generates the status box
+- `Skill("cat:get-output-agent", args="config.settings")` — generates the config settings page
 
 The output is wrapped in `<output type="...">` tags. Echo it exactly as returned. Do not summarize, interpret, or add
 commentary.

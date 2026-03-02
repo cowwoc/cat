@@ -238,7 +238,7 @@ Ready to continue to next issue. Use /cat:work to continue, or /cat:status to re
 
 **Auto-continue (trust >= medium):**
 
-Invoke the Skill tool again with `/cat:work ${next_issue_id}` to continue to the next issue.
+Invoke the Skill tool again with `/cat:work-agent ${next_issue_id}` to continue to the next issue.
 No delay needed - the work skill handles its own orchestration.
 
 ## Error Handling

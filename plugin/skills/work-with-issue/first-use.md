@@ -163,7 +163,7 @@ Example: If PLAN.md says "Step 1: Invoke /cat:shrink-doc on file.md", then:
 
 ```
 Skill tool:
-  skill: "cat:shrink-doc"
+  skill: "cat:shrink-doc-agent"
   args: "path/to/file.md"
 ```
 
@@ -1080,7 +1080,7 @@ AskUserQuestion tool:
 ```
 
 3. If user selects **"Reschedule one or more concerns"**: use AskUserQuestion to ask which ones to reschedule and
-   what version to target, then invoke the appropriate `/cat:add` with the corrected version args. Replace the
+   what version to target, then invoke the appropriate `/cat:add-agent` with the corrected version args. Replace the
    originally created issue(s) if possible, or note that the original issue(s) should be manually removed.
 
 4. If user selects **"Other"**: pause and let the user provide freeform instructions, then act on them.
@@ -1111,7 +1111,7 @@ AskUserQuestion tool:
 ```
 
 3. If user selects **"Create issues for selected concerns"**: use AskUserQuestion with multiSelect to let the user
-   pick which concerns to track, then invoke `/cat:add` for each selected concern. Use the same severity × patience
+   pick which concerns to track, then invoke `/cat:add-agent` for each selected concern. Use the same severity × patience
    matrix from Step 5 to determine the target version for each selected concern.
 
 4. If user selects **"Skip all"**: proceed without creating issues for these concerns.

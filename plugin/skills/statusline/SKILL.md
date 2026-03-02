@@ -1,8 +1,5 @@
 ---
-description: >
-  Use when user wants to set up or customize the Claude Code statusline to show CAT project context.
-  IMPORTANT: After invoking this skill, forward the AskUserQuestion tool call verbatim — do not respond
-  conversationally.
+description: Set up or customize the Claude Code statusline to show CAT project context.
 model: haiku
 allowed-tools:
   - Read
@@ -10,6 +7,7 @@ allowed-tools:
   - Edit
   - Bash
   - AskUserQuestion
+disable-model-invocation: true
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" statusline "${CLAUDE_PROJECT_DIR}" "$0"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" statusline "${CLAUDE_PROJECT_DIR}" "${CLAUDE_SESSION_ID}"`
