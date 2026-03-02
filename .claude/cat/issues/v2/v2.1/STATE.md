@@ -51,6 +51,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - document-skill-output-forwarding-protocol
 - rename-run-retrospective-skill
 - work-select-oldest-first
+- fail-fast-on-rebase-conflicts-in-work-merge
 
 
 ## Issues Completed
