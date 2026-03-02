@@ -15,6 +15,7 @@
 Record demo videos showcasing CAT features for marketing and documentation.
 
 ## Issues Pending
+- add-monthly-winner-program
 - simplify-readme
 - task-management-demo
 - git-safety-demo
