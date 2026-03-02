@@ -52,6 +52,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - rename-run-retrospective-skill
 - work-select-oldest-first
 - fail-fast-on-rebase-conflicts-in-work-merge
+- split-user-agent-skill-variants
 
 
 ## Issues Completed
