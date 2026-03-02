@@ -1,0 +1,7 @@
+# State
+
+- **Status:** open
+- **Progress:** 0%
+- **Dependencies:** []
+- **Blocks:** []
+- **Last Updated:** 2026-03-02T17:12:50Z
