@@ -847,8 +847,8 @@ User approval is a separate gate that follows stakeholder review.
 | HIGH_COUNT > 0 | CONCERNS - Document but proceed to user approval |
 | Otherwise | REVIEW_PASSED - Proceed to user approval |
 
-The calling skill (work-with-issue) reads the reviewThreshold config and decides whether to trigger the auto-fix loop
-and when to stop, based on the configured AUTOFIX_THRESHOLD severity threshold.
+The calling skill (work-with-issue) routes FIX concerns to the auto-fix loop and DEFER concerns to follow-up issues.
+The patience matrix decision (FIX vs DEFER) alone determines which concerns are auto-fixed immediately.
 
 </step>
 
@@ -907,9 +907,8 @@ The review box and concern boxes rendered in the `report` step are the complete 
 output or JSON is needed after the boxes are displayed.
 
 When invoked via `work-with-issue`, the caller reads the aggregated result from the internal state to drive auto-fix
-iteration and user approval gates. When invoked standalone, read `reviewThreshold` from `.claude/cat/cat-config.json`
-(default `"low"`) and offer to address concerns at or above that threshold without the auto-fix loop — the review
-boxes already provide the full picture for the user.
+iteration (for FIX-marked concerns) and user approval gates. The review boxes already provide the full picture for
+the user.
 
 **Concern coverage by status:**
 - REJECTED: full concern details (CRITICAL, HIGH, MEDIUM, LOW at or above minSeverity)
@@ -978,7 +977,12 @@ Review triggering depends on verify level (NOT trust level):
 | `all` | Run stakeholder reviews |
 
 ```bash
-VERIFY_LEVEL=$(jq -r '.verify // "changed"' .claude/cat/cat-config.json)
+config_file=".claude/cat/cat-config.json"
+if [[ -f "$config_file" ]]; then
+  VERIFY_LEVEL=$(grep -o '"verify"[[:space:]]*:[[:space:]]*"[^"]*"' "$config_file" | \
+    sed 's/.*:[[:space:]]*"\([^"]*\)"/\1/')
+fi
+VERIFY_LEVEL="${VERIFY_LEVEL:-changed}"
 if [[ "$VERIFY_LEVEL" == "none" ]]; then
   # Skip stakeholder review entirely
 fi

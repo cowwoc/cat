@@ -121,7 +121,7 @@ review's perspective.
 This is distinct from `patience` (see [patience.md](patience.md)), which controls whether an acknowledged concern is
 fixed now or deferred to a future issue.
 
-**Concern pipeline:** `minSeverity` filter → `patience` fix/defer decision → `reviewThreshold` auto-fix loop
+**Concern pipeline:** `minSeverity` filter → `patience` fix/defer decision (FIX → auto-fix now, DEFER → follow-up issue)
 
 ### minSeverity vs patience: a concrete example
 

@@ -8,10 +8,14 @@ package io.github.cowwoc.cat.hooks.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.Config;
+import io.github.cowwoc.cat.hooks.JvmScope;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.testng.annotations.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Tests the VERSION file behavior for CAT migration version tracking.
@@ -143,6 +147,146 @@ public final class CheckDataMigrationTest
       Files.writeString(versionFile, "2.4" + "\n");
       String content = Files.readString(versionFile);
       requireThat(content.strip(), "version").isEqualTo("2.4");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that Config.load() succeeds after migration removes the reviewThreshold key.
+   * <p>
+   * Simulates Phase 8 of the 2.1 migration: removes reviewThreshold from a config file,
+   * then verifies Config.load() accepts the migrated file and preserves valid keys.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void configWithReviewThresholdCanBeValidated() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("migration-test-");
+    Path catDir = tempDir.resolve(".claude/cat");
+    Files.createDirectories(catDir);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+
+      // Create a config with reviewThreshold (simulating pre-migration state)
+      Path configFile = catDir.resolve("cat-config.json");
+      Files.writeString(configFile, """
+        {
+          "trust": "medium",
+          "reviewThreshold": "medium",
+          "verify": "changed"
+        }
+        """);
+
+      // Simulate Phase 8 migration: remove reviewThreshold
+      String content = Files.readString(configFile);
+      String migratedContent = content.
+        replaceAll("\"reviewThreshold\"[\\s]*:[\\s]*\"[^\"]*\"[\\s]*,?[\\s]*", "").
+        replaceAll(",[\\s]*}", "}");
+      Files.writeString(configFile, migratedContent);
+
+      // Verify the migration removed reviewThreshold
+      String afterMigration = Files.readString(configFile);
+      requireThat(afterMigration.contains("reviewThreshold"), "hasReviewThreshold").isFalse();
+      requireThat(afterMigration.contains("trust"), "hasTrust").isTrue();
+      requireThat(afterMigration.contains("verify"), "hasVerify").isTrue();
+
+      // Config.load() must succeed after migration — verifies the migrated JSON is valid
+      Config config = Config.load(mapper, tempDir);
+      requireThat(config.getString("trust"), "trust").isEqualTo("medium");
+      requireThat(config.getString("verify"), "verify").isEqualTo("changed");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that Config.load() throws IllegalArgumentException when reviewThreshold is present,
+   * and succeeds after its removal — demonstrating the complete migration flow.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void migrationFlowConfigLoadFailsThenSucceeds() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("migration-test-");
+    Path catDir = tempDir.resolve(".claude/cat");
+    Files.createDirectories(catDir);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path configFile = catDir.resolve("cat-config.json");
+
+      // Pre-migration: config with reviewThreshold
+      Files.writeString(configFile, """
+        {
+          "trust": "medium",
+          "reviewThreshold": "medium",
+          "verify": "changed"
+        }
+        """);
+
+      // Config.load() must throw before migration
+      boolean threwBeforeMigration = false;
+      try
+      {
+        Config.load(mapper, tempDir);
+      }
+      catch (IllegalArgumentException _)
+      {
+        threwBeforeMigration = true;
+      }
+      requireThat(threwBeforeMigration, "threwBeforeMigration").isTrue();
+
+      // Simulate Phase 8 migration: remove reviewThreshold
+      String content = Files.readString(configFile);
+      String migratedContent = content.
+        replaceAll("\"reviewThreshold\"[\\s]*:[\\s]*\"[^\"]*\"[\\s]*,?[\\s]*", "").
+        replaceAll(",[\\s]*}", "}");
+      Files.writeString(configFile, migratedContent);
+
+      // Post-migration: Config.load() must succeed
+      Config config = Config.load(mapper, tempDir);
+      requireThat(config.getString("trust"), "trust").isEqualTo("medium");
+      requireThat(config.getString("verify"), "verify").isEqualTo("changed");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that Config.load() throws IllegalArgumentException when reviewThreshold is present,
+   * confirming the negative case — configs with deprecated keys are rejected.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*reviewThreshold.*")
+  public void configLoadRejectsReviewThreshold() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("migration-test-");
+    Path catDir = tempDir.resolve(".claude/cat");
+    Files.createDirectories(catDir);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path configFile = catDir.resolve("cat-config.json");
+      Files.writeString(configFile, """
+        {
+          "trust": "medium",
+          "reviewThreshold": "medium"
+        }
+        """);
+
+      Config.load(mapper, tempDir);
     }
     finally
     {

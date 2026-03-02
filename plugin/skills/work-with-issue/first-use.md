@@ -753,24 +753,15 @@ The `cat:stakeholder-review` skill returns a JSON object. Extract the following 
 Store `ALL_CONCERNS` for use in the auto-fix loop and the approval gate. Each concern object has fields:
 `severity`, `stakeholder`, `location`, `explanation`, `recommendation`, and optionally `detail_file`.
 
-**Read auto-fix level and patience from config:**
+**Read patience from config:**
 
 ```bash
-# Read reviewThreshold and patience from .claude/cat/cat-config.json
-# Default is "low" (fix all concerns automatically) if config is missing or field is absent
-AUTOFIX_THRESHOLD="low"
+# Read patience from .claude/cat/cat-config.json
 # Default is "medium" if config is missing or field is absent
 PATIENCE_LEVEL="medium"
 
 CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json"
 if [[ -f "$CONFIG_FILE" ]]; then
-    # Extract reviewThreshold simple string value using grep/sed (no jq available)
-    AUTOFIX_RAW=$(grep -o '"reviewThreshold"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" | head -1 | \
-        sed 's/.*"reviewThreshold"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
-    if [[ -n "$AUTOFIX_RAW" ]]; then
-        AUTOFIX_THRESHOLD="$AUTOFIX_RAW"
-    fi
-
     # Extract patience simple string value using grep/sed (no jq available)
     PATIENCE_RAW=$(grep -o '"patience"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" | head -1 | \
         sed 's/.*"patience"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
@@ -778,22 +769,48 @@ if [[ -f "$CONFIG_FILE" ]]; then
         PATIENCE_LEVEL="$PATIENCE_RAW"
     fi
 fi
-
-# Determine minimum severity to auto-fix based on AUTOFIX_THRESHOLD:
-# "low"      -> auto-fix CRITICAL, HIGH, MEDIUM, and LOW (default)
-# "medium"   -> auto-fix CRITICAL, HIGH, and MEDIUM
-# "high"     -> auto-fix CRITICAL and HIGH
-# "critical" -> auto-fix CRITICAL only
 ```
 
-**Auto-fix loop for concerns (based on configured autofix threshold):**
+**Concern Decision Gate (trust=low only):**
+
+When `TRUST == "low"`, present the patience matrix FIX/DEFER decisions to the user for confirmation before the auto-fix
+loop runs. When `TRUST != "low"` (medium or high), skip this gate entirely and proceed directly to the auto-fix loop.
+
+**Gate procedure (trust=low only):**
+
+1. Build a formatted summary of all concerns that survived the `minSeverity` filter, showing for each concern:
+   - Severity and brief description
+   - Stakeholder and location
+   - Decision: **FIX** or **DEFER**
+   - Reasoning: benefit (severity weight), cost (scope estimate), threshold (`benefit >= cost × patience_multiplier`)
+
+   Format each concern as:
+   ```
+   N. [FIX/DEFER] SEVERITY - brief description
+      Stakeholder: [stakeholder] | Location: [location]
+      Benefit: [weight] | Cost: [cost] | Threshold: benefit >= cost × [multiplier] = [result]
+   ```
+
+2. Present the summary to the user via `AskUserQuestion` with these options:
+   - **"Proceed with these decisions (Recommended)"** — continue to the auto-fix loop with the current FIX/DEFER
+     assignments unchanged
+   - **"Let me change decisions"** — the user specifies which concerns to flip between FIX and DEFER. After receiving
+     the user's modifications, update the FIX/DEFER assignments accordingly and proceed to the auto-fix loop with the
+     revised assignments
+
+3. After the user confirms (or modifies and confirms), proceed to the auto-fix loop below with the final FIX/DEFER
+   assignments.
+
+**Auto-fix loop for concerns marked as FIX:**
 
 **Spawn fix subagents without asking the user during the auto-fix loop.** When stakeholder review returns
 REJECTED, always enter the auto-fix loop — CRITICAL concerns must be fixed before merge. When review returns
 CONCERNS_FOUND, concerns flow through the pipeline: `minSeverity` filter (silently drops concerns below
-threshold) → patience cost/benefit matrix (marks each surviving concern as FIX or DEFER) → only FIX-marked
-concerns at or above `AUTOFIX_THRESHOLD` enter the auto-fix loop. In all cases, do NOT present options to the
-user or ask what to do during this fix loop — spawn fix subagents and continue.
+threshold) → patience cost/benefit matrix (marks each surviving concern as FIX or DEFER) → concern decision gate
+(trust=low only: user confirms/modifies FIX/DEFER assignments). FIX-marked concerns enter the auto-fix loop. For
+trust >= "medium", the concern decision gate is skipped and FIX/DEFER assignments from the patience matrix are used
+directly. In all cases, do NOT present options to the user or ask what to do during the auto-fix loop itself — spawn
+fix subagents and continue.
 
 **CRITICAL: The auto-fix loop applies ONLY to spawning fix subagents. Steps 6, 7, and 8 (Deferred Concern
 Review, Rebase and Squash, and Approval Gate) MUST still be executed after the loop completes. The user
@@ -801,16 +818,10 @@ must explicitly approve the merge via Step 8 when trust != "high".**
 
 Initialize loop counter: `AUTOFIX_ITERATION=0`
 
-**While concerns exist at or above the configured auto-fix threshold and AUTOFIX_ITERATION < 3:**
-
-The auto-fix threshold is determined by `AUTOFIX_THRESHOLD`:
-- `"low"`: loop while CRITICAL, HIGH, MEDIUM, or LOW concerns exist (default)
-- `"medium"`: loop while CRITICAL, HIGH, or MEDIUM concerns exist
-- `"high"`: loop while CRITICAL or HIGH concerns exist
-- `"critical"`: loop while CRITICAL concerns exist
+**While FIX-marked concerns exist and AUTOFIX_ITERATION < 3:**
 
 1. Increment iteration counter: `AUTOFIX_ITERATION++`
-2. Extract concerns at or above the auto-fix threshold from `ALL_CONCERNS` and construct the following variables:
+2. Extract FIX-marked concerns from `ALL_CONCERNS` (after patience matrix evaluation) and construct the following variables:
 
    **`concerns_formatted`** — a numbered Markdown list, one entry per filtered concern. For each concern, use the
    format:
@@ -924,14 +935,14 @@ The auto-fix threshold is determined by `AUTOFIX_THRESHOLD`:
      args: "${ISSUE_ID} ${WORKTREE_PATH} ${VERIFY} ${ALL_COMMITS_COMPACT}"
    ```
 6. Parse new review result
-7. If concerns at or above the configured auto-fix threshold remain, continue loop (if under iteration limit)
+7. If FIX-marked concerns remain, continue loop (if under iteration limit)
 
-**If concerns at or above the threshold persist after 3 iterations:**
+**If FIX-marked concerns persist after 3 iterations:**
 - Note that auto-fix reached iteration limit
 - Store all remaining concerns for display at approval gate
 - Continue to out-of-scope classification below
 
-**If no concerns remain at or above the threshold (or no concerns at all):**
+**If no FIX-marked concerns remain (or no concerns at all):**
 - Store concerns for display at approval gate
 - Continue to out-of-scope classification below
 
@@ -1522,8 +1533,8 @@ implementation is complete.
 
 ### Rejected Stakeholder Review (Step 5)
 
-When the stakeholder review returns `REVIEW_STATUS == "CONCERNS_FOUND"` with concerns at or above the
-auto-fix threshold, **automatically enter the re-work loop without asking the user**.
+When the stakeholder review returns `REVIEW_STATUS == "CONCERNS_FOUND"` with FIX-marked concerns,
+**automatically enter the re-work loop without asking the user**.
 
 The user approved the workflow when they invoked `/cat:work`. The re-work loop is a mandatory quality
 gate, not an optional step. Do NOT:
@@ -1532,7 +1543,7 @@ gate, not an optional step. Do NOT:
 - Skip to the approval gate without fixing
 
 Always proceed directly into the auto-fix loop (Step 5), fix concerns, re-run the review, and continue
-until either all threshold-level concerns are resolved or the iteration limit is reached.
+until either all FIX-marked concerns are resolved or the iteration limit is reached.
 
 ### User Rejects Approval Gate (Step 8)
 

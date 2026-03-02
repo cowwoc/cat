@@ -25,7 +25,7 @@
     {
       "version": "2.1",
       "script": "2.1.sh",
-      "description": "Merge In Progress into Pending sections, rename status values, move version tracking to VERSION file"
+      "description": "Merge In Progress into Pending sections, rename status values, move version tracking to VERSION file, remove reviewThreshold config key (breaking change: configs with reviewThreshold are rejected)"
     }
   ]
 }
