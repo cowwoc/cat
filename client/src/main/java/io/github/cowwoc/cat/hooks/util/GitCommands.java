@@ -195,11 +195,11 @@ public final class GitCommands
     ProcessBuilder pb = new ProcessBuilder(command);
     pb.redirectErrorStream(true);
     Process process = pb.start();
-    StringBuilder output = new StringBuilder();
+    String output;
     try (BufferedReader reader = new BufferedReader(
       new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
     {
-      readAllLines(reader, output);
+      output = ProcessRunner.readAllLines(reader);
     }
     int exitCode;
     try
@@ -218,7 +218,7 @@ public final class GitCommands
       throw new IOException("git command failed with exit code " + exitCode + ": " +
         String.join(" ", command));
     }
-    return output.toString().strip();
+    return output.strip();
   }
 
   /**
@@ -339,25 +339,6 @@ public final class GitCommands
     if (line == null || line.isEmpty())
       throw new IOException("git command returned no output: " + String.join(" ", command));
     return line.strip();
-  }
-
-  /**
-   * Reads all lines from a reader into a StringBuilder.
-   *
-   * @param reader the reader to read from
-   * @param output the StringBuilder to append to
-   * @throws IOException if reading fails
-   */
-  private static void readAllLines(BufferedReader reader, StringBuilder output) throws IOException
-  {
-    String line = reader.readLine();
-    while (line != null)
-    {
-      if (output.length() > 0)
-        output.append('\n');
-      output.append(line);
-      line = reader.readLine();
-    }
   }
 
   /**
