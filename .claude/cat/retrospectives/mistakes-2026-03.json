@@ -191,6 +191,34 @@
         "catches_variations": true
       },
       "correct_behavior": "Skill tool loads content synchronously into agent context in same conversation turn. After receiving skill content, agent immediately executes skill steps within conversation flow - no waiting for background processes."
+    },
+    {
+      "id": "M452",
+      "timestamp": "2026-03-02T19:21:58Z",
+      "category": "misleading_documentation",
+      "description": "Learn subagent reported priming_found: false for a mistake where priming WAS present — the phrase 'Your working directory defaults to /workspace (main worktree)' in work-with-issue/first-use.md anchored /workspace as the cognitive default, causing a fix subagent to fall back to /workspace when its worktree path became unavailable",
+      "root_cause": "DOCUMENTATION PRIMING: work-with-issue/first-use.md delegation prompts at lines 247 and 341 stated 'Your working directory defaults to /workspace (main worktree)' before instructing the subagent to cd to WORKTREE_PATH. This established /workspace as the named default CWD in the subagent's context. When the worktree path became unavailable, the subagent fell back to the primed default /workspace — which felt 'correct' because it was explicitly named as the default. The learn subagent's superficial investigation failed to connect the priming language to the fallback behavior.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue/first-use.md",
+      "pattern_keywords": [
+        "priming",
+        "working_directory",
+        "worktree_fallback",
+        "cognitive_anchor",
+        "workspace_default",
+        "navigation_failure"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Delegation prompts must not name /workspace as the default CWD. The correct framing is action-oriented: 'Before doing ANYTHING else, navigate to the worktree and verify the branch: cd ${WORKTREE_PATH}'. No default CWD should be named, preventing cognitive anchoring on /workspace as a fallback."
     }
   ]
 }
