@@ -4,12 +4,15 @@
 
 Naming, argument-forwarding, and consistency fixes:
 
-1. Rename `SkillLoader` class to `LoadSkill` to match the binary name
-2. Update its usage documentation to clarify that `catAgentId` is mandatory
-3. Fix `work/SKILL.md` to forward `$ARGUMENTS` to load-skill
-4. Add `-agent` suffix to all 36 agent-invoked skills that currently lack it
-5. Audit every skill's argument pipeline end-to-end: verify that `argument-hint` args are
-   forwarded correctly from SKILL.md → load-skill → first-use.md → subsequent INVOKE calls
+1. Rename binary script `load-skill` to `skill-loader` (keep Java class named `SkillLoader`)
+2. Simplify skill-loader CLI: read `CLAUDE_PLUGIN_ROOT` and `CLAUDE_PROJECT_DIR` from JvmScope
+   (environment variables) instead of requiring them as CLI arguments. New CLI:
+   `skill-loader <skill-name> <catAgentId> [skill-args...]`
+3. Update its usage documentation to clarify that `catAgentId` is mandatory
+4. Fix `work/SKILL.md` to forward `$ARGUMENTS` to skill-loader
+5. Add `-agent` suffix to all 36 agent-invoked skills that currently lack it
+6. Audit every skill's argument pipeline end-to-end: verify that `argument-hint` args are
+   forwarded correctly from SKILL.md → skill-loader → first-use.md → subsequent INVOKE calls
 
 ## Satisfies
 
@@ -37,27 +40,23 @@ None
 
 ## Files to Modify
 
-### Java class rename
+### Binary rename + CLI simplification
 
-- `client/src/main/java/io/github/cowwoc/cat/hooks/util/SkillLoader.java` — rename class and
-  file to `LoadSkill.java`; update usage Javadoc to:
-  `Usage: load-skill <plugin-root> <skill-name> <project-dir> <catAgentId> [skill-args...]`
-- `client/src/test/java/io/github/cowwoc/cat/hooks/test/SkillLoaderTest.java` — rename to
-  `LoadSkillTest.java`
-- `ClearSkillMarker.java`, `AotTraining.java`, `TestSkillOutputNoTag.java`,
-  `TestSkillOutputWithTag.java`, `InjectCatAgentId.java` — update imports
-
-### Plugin doc references to SkillLoader
-
-- `plugin/skills/git-squash/first-use.md`, `plugin/skills/skill-builder/first-use.md`,
-  `plugin/skills/learn/first-use.md`, `plugin/concepts/skill-loading.md`,
-  `plugin/hooks/README.md` — update `SkillLoader` → `LoadSkill`
+- Rename binary `load-skill` to `skill-loader` in `client/build-jlink.sh` HANDLERS array
+- Simplify `SkillLoader.main()`: read `pluginRoot` and `projectDir` from `JvmScope` (which reads
+  `CLAUDE_PLUGIN_ROOT` and `CLAUDE_PROJECT_DIR` env vars) instead of CLI args
+- New CLI: `skill-loader <skill-name> <catAgentId> [skill-args...]` (was 5+ args, now 2+)
+- Update all SKILL.md preprocessor directives to remove `"${CLAUDE_PLUGIN_ROOT}"` and
+  `"${CLAUDE_PROJECT_DIR}"` args: `!skill-loader <skill-name> "$0"` (or `"${CLAUDE_SESSION_ID}"`)
+- Update all plugin doc references from `load-skill` to `skill-loader`
+- Java class remains `SkillLoader`; usage Javadoc updated to:
+  `Usage: skill-loader <skill-name> <catAgentId> [skill-args...]`
 
 ### Argument pipeline audit and fixes
 
 For every skill with an `argument-hint`, verify the full argument chain:
 
-1. **SKILL.md**: Does the `!`` preprocessor invocation forward `$ARGUMENTS` to load-skill?
+1. **SKILL.md**: Does the `!`` preprocessor invocation forward `$ARGUMENTS` to skill-loader?
    - User-invocable skills: must use `"${CLAUDE_SESSION_ID}" $ARGUMENTS`
    - Agent-invoked skills: must use `$ARGUMENTS` (which already includes catAgentId)
    - Skills that redundantly pass `"$0" $ARGUMENTS` must drop `"$0"`
@@ -89,19 +88,19 @@ Known issues:
 
 ## Execution Waves
 
-### Wave 1: Java class rename + arg forwarding
+### Wave 1: Binary rename + arg forwarding
 
-- Rename `SkillLoader.java` → `LoadSkill.java`; update class name, self-references, Javadoc
-- Rename `SkillLoaderTest.java` → `LoadSkillTest.java`
-- Update all Java imports from `SkillLoader` to `LoadSkill`
-- Update plugin doc references from `SkillLoader` to `LoadSkill`
+- Rename binary `load-skill` → `skill-loader` in `client/build-jlink.sh`
+- Update all SKILL.md preprocessor directives: `client/bin/load-skill` → `client/bin/skill-loader`
+- Update SkillLoader Javadoc to reference `skill-loader` binary name
+- Update plugin doc references from `load-skill` to `skill-loader`
 - Fix `plugin/skills/work/SKILL.md`: append `$ARGUMENTS`
 - Run `mvn -f client/pom.xml test`
 
 ### Wave 2: Argument pipeline audit
 
 - For each skill with `argument-hint` in its SKILL.md frontmatter, verify the argument chain:
-  SKILL.md → load-skill → first-use.md positional variables → INVOKE directives
+  SKILL.md → skill-loader → first-use.md positional variables → INVOKE directives
 - Fix any broken or redundant argument forwarding
 - Run `mvn -f client/pom.xml test`
 
@@ -113,14 +112,19 @@ Known issues:
 
 ## Post-conditions
 
-- [ ] No remaining references to `SkillLoader` in `client/src/` or `plugin/`
+- [ ] Binary renamed to `skill-loader`; Java class remains `SkillLoader`
+- [ ] `SkillLoader.main()` reads `pluginRoot` and `projectDir` from `JvmScope` env vars
+- [ ] New CLI: `skill-loader <skill-name> <catAgentId> [skill-args...]`
 - [ ] Usage Javadoc reads:
-  `Usage: load-skill <plugin-root> <skill-name> <project-dir> <catAgentId> [skill-args...]`
-- [ ] `plugin/skills/work/SKILL.md` load-skill invocation ends with
+  `Usage: skill-loader <skill-name> <catAgentId> [skill-args...]`
+- [ ] All SKILL.md preprocessor directives use simplified invocation (no `${CLAUDE_PLUGIN_ROOT}`
+  or `${CLAUDE_PROJECT_DIR}` args)
+- [ ] `plugin/skills/work/SKILL.md` skill-loader invocation ends with
   `"${CLAUDE_SESSION_ID}" $ARGUMENTS`
 - [ ] Every skill with `argument-hint` correctly forwards args through the full pipeline:
-  SKILL.md → load-skill → first-use.md → INVOKE directives
+  SKILL.md → skill-loader → first-use.md → INVOKE directives
 - [ ] No skill uses `"$0" $ARGUMENTS` (redundant catAgentId duplication)
 - [ ] All `user-invocable: false` skills have `-agent` suffix in their directory name
 - [ ] No remaining references to old skill names without `-agent` suffix (verified with grep)
+- [ ] No remaining references to `load-skill` binary in plugin/ or client/
 - [ ] All Maven tests pass

@@ -8,4 +8,4 @@ allowed-tools: [Read, Write, Bash, Glob, Grep, AskUserQuestion]
 user-invocable: false
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" init "${CLAUDE_PROJECT_DIR}" "$0"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" init-agent "$0"`

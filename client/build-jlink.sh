@@ -80,7 +80,7 @@ readonly -a HANDLERS=(
   "register-hook:util.HookRegistrar"
   "root-cause-analyzer:util.RootCauseAnalyzer"
   "validate-status-alignment:util.StatusAlignmentValidator"
-  "load-skill:util.SkillLoader"
+  "skill-loader:util.SkillLoader"
   "feedback:util.Feedback"
   "get-add-output:skills.GetAddOutput"
   "statusline-command:util.StatuslineCommand"
