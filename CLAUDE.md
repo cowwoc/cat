@@ -23,6 +23,8 @@ mistake IDs. See `common.md` § "No retrospective commentary".
 - **Convention changes belong with their application (M352):** When adding a new convention to a language or style file (e.g., `java.md`) AND applying it across files in the same session, include the convention file change in the SAME commit as the files that apply it. Group by topic (establish + apply = one unit), not by file location.
 - **STATE.md belongs with implementation (M487):** When closing an issue, STATE.md updates belong in the SAME commit as the implementation work, using the implementation's commit type (feature:/bugfix:/docs:/etc), NOT in a separate planning: commit
 - If a commit would touch both docs and non-docs files, split it into separate commits
+- **Do not update closed issue files:** Never modify PLAN.md or STATE.md of closed issues unless the user explicitly
+  instructs you to. Closed issues are historical records.
 
 ## Plugin Development
 
