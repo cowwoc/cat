@@ -33,13 +33,13 @@ public final class StateSchemaValidator implements FileWriteHandler
   private static final Pattern KEY_VALUE_PATTERN =
     Pattern.compile("^- \\*\\*([^:]+):\\*\\* (.+)$", Pattern.MULTILINE);
   private static final Pattern PROGRESS_FORMAT = Pattern.compile("^(\\d+)%$");
-  private static final Pattern DATE_FORMAT = Pattern.compile("^\\d{4}-\\d{2}-\\d{2}$");
   private static final Pattern ISSUE_SLUG_FORMAT = Pattern.compile("^[a-z0-9][a-z0-9.-]*$");
   private static final Set<String> VALID_RESOLUTION_PREFIXES =
     Set.of("implemented", "duplicate", "obsolete", "won't-fix", "not-applicable");
   private static final Set<String> MANDATORY_KEYS =
-    Set.of("Status", "Progress", "Dependencies", "Blocks", "Last Updated");
+    Set.of("Status", "Progress", "Dependencies", "Blocks");
   private static final Set<String> OPTIONAL_KEYS = Set.of("Resolution", "Parent");
+  private static final Set<String> DEPRECATED_KEYS = Set.of("Last Updated", "Completed");
   private static final Set<String> ALL_VALID_KEYS;
 
   static
@@ -54,6 +54,16 @@ public final class StateSchemaValidator implements FileWriteHandler
    */
   public StateSchemaValidator()
   {
+  }
+
+  /**
+   * Returns the set of deprecated keys that must not appear in STATE.md files.
+   *
+   * @return the deprecated keys
+   */
+  static Set<String> getDeprecatedKeys()
+  {
+    return DEPRECATED_KEYS;
   }
 
   /**
@@ -117,7 +127,11 @@ public final class StateSchemaValidator implements FileWriteHandler
    */
   private FileWriteHandler.Result validateSchema(Map<String, String> fields)
   {
-    FileWriteHandler.Result result = validateMandatoryKeys(fields);
+    FileWriteHandler.Result result = validateNoDeprecatedKeys(fields);
+    if (result.blocked())
+      return result;
+
+    result = validateMandatoryKeys(fields);
     if (result.blocked())
       return result;
 
@@ -151,11 +165,6 @@ public final class StateSchemaValidator implements FileWriteHandler
         return result;
     }
 
-    String lastUpdated = fields.get("Last Updated");
-    result = validateLastUpdated(lastUpdated);
-    if (result.blocked())
-      return result;
-
     result = validateClosedResolution(status, fields);
     if (result.blocked())
       return result;
@@ -165,6 +174,28 @@ public final class StateSchemaValidator implements FileWriteHandler
     if (result.blocked())
       return result;
 
+    return FileWriteHandler.Result.allow();
+  }
+
+  /**
+   * Validate that no deprecated keys are present.
+   *
+   * @param fields the parsed fields
+   * @return validation result
+   */
+  private FileWriteHandler.Result validateNoDeprecatedKeys(Map<String, String> fields)
+  {
+    for (String key : DEPRECATED_KEYS)
+    {
+      if (fields.containsKey(key))
+      {
+        return FileWriteHandler.Result.block(
+          "STATE.md schema violation: Deprecated key '" + key + "' must be removed.\n" +
+          "\n" +
+          "The '" + key + "' field duplicates information available via 'git log'.\n" +
+          "Remove the '" + key + "' line from the file before writing.");
+      }
+    }
     return FileWriteHandler.Result.allow();
   }
 
@@ -183,7 +214,7 @@ public final class StateSchemaValidator implements FileWriteHandler
         return FileWriteHandler.Result.block(
           "STATE.md schema violation: Missing mandatory key '" + key + "'.\n" +
           "\n" +
-          "Mandatory keys: Status, Progress, Dependencies, Blocks, Last Updated\n" +
+          "Mandatory keys: Status, Progress, Dependencies, Blocks\n" +
           "Optional keys: Resolution (required for closed issues), Parent");
       }
     }
@@ -206,7 +237,7 @@ public final class StateSchemaValidator implements FileWriteHandler
           "STATE.md schema violation: Non-standard key '" + key + "'.\n" +
           "\n" +
           "Only these keys are allowed:\n" +
-          "  Mandatory: Status, Progress, Dependencies, Blocks, Last Updated\n" +
+          "  Mandatory: Status, Progress, Dependencies, Blocks\n" +
           "  Optional: Resolution, Parent");
       }
     }
@@ -259,24 +290,6 @@ public final class StateSchemaValidator implements FileWriteHandler
           "\n" +
           "Progress must be between 0 and 100");
       }
-    }
-    return FileWriteHandler.Result.allow();
-  }
-
-  /**
-   * Validate the Last Updated field format.
-   *
-   * @param lastUpdated the last updated value (may be null)
-   * @return validation result
-   */
-  private FileWriteHandler.Result validateLastUpdated(String lastUpdated)
-  {
-    if (lastUpdated != null && !DATE_FORMAT.matcher(lastUpdated).matches())
-    {
-      return FileWriteHandler.Result.block(
-        "STATE.md schema violation: Invalid 'Last Updated' format '" + lastUpdated + "'.\n" +
-        "\n" +
-        "Last Updated must be in YYYY-MM-DD format (e.g., '2026-02-12')");
     }
     return FileWriteHandler.Result.allow();
   }

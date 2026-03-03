@@ -15,7 +15,6 @@ import tools.jackson.databind.json.JsonMapper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -46,10 +45,6 @@ public final class WorkPrepare
    * Matches the progress line in STATE.md: {@code - **Progress:** 0%}.
    */
   private static final Pattern PROGRESS_PATTERN = Pattern.compile("\\*\\*Progress:\\*\\*\\s+\\d+%");
-  /**
-   * Matches the last-updated line in STATE.md: {@code - **Last Updated:** 2026-02-11}.
-   */
-  private static final Pattern LAST_UPDATED_PATTERN = Pattern.compile("\\*\\*Last Updated:\\*\\*\\s+.*");
   /**
    * Matches dependency entries in STATE.md: {@code - **Dependencies:** [dep1, dep2]}.
    */
@@ -1393,8 +1388,6 @@ public final class WorkPrepare
 
     content = STATUS_PATTERN.matcher(content).replaceAll("**Status:** in-progress");
     content = PROGRESS_PATTERN.matcher(content).replaceAll("**Progress:** 0%");
-    content = LAST_UPDATED_PATTERN.matcher(content).
-      replaceAll("**Last Updated:** " + LocalDate.now());
 
     Files.writeString(stateFile, content);
   }
