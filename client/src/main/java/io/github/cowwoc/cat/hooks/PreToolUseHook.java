@@ -24,6 +24,7 @@ import io.github.cowwoc.cat.hooks.bash.ValidateGitFilterBranch;
 import io.github.cowwoc.cat.hooks.bash.ValidateGitOperations;
 import io.github.cowwoc.cat.hooks.bash.VerifyStateInCommit;
 import io.github.cowwoc.cat.hooks.bash.WarnFileExtraction;
+import io.github.cowwoc.cat.hooks.bash.WarnMainWorkspaceCommit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
@@ -76,7 +77,8 @@ public final class PreToolUseHook implements HookHandler
       new ValidateGitFilterBranch(),
       new ValidateGitOperations(),
       new VerifyStateInCommit(),
-      new WarnFileExtraction());
+      new WarnFileExtraction(),
+      new WarnMainWorkspaceCommit(scope));
   }
 
   /**
