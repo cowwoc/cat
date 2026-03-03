@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.hooks.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.AbstractJvmScope;
 import io.github.cowwoc.cat.hooks.prompt.UserIssues;
 import io.github.cowwoc.cat.hooks.read.post.DetectSequentialTools;
 import io.github.cowwoc.cat.hooks.read.pre.PredictBatchOpportunity;
@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Accepts {@code claudeProjectDir} and {@code claudePluginRoot} as constructor parameters
  * so tests can point to temporary directories populated with test data.
  */
-public final class TestJvmScope implements JvmScope
+public final class TestJvmScope extends AbstractJvmScope
 {
   private final ConcurrentLazyReference<JsonMapper> jsonMapper = ConcurrentLazyReference.create(() ->
     JsonMapper.builder().

@@ -7,8 +7,11 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.bash.BlockLockManipulation;
 import org.testng.annotations.Test;
+
+import java.io.IOException;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -19,63 +22,87 @@ public final class BlockLockManipulationTest
 {
   /**
    * Verifies that rm targeting a lock file is blocked and the error message mentions issue-lock.
+   *
+   * @throws IOException if an I/O error occurs creating the test scope
    */
   @Test
-  public void rmLockFileIsBlockedWithIssueLockReference()
+  public void rmLockFileIsBlockedWithIssueLockReference() throws IOException
   {
-    BlockLockManipulation handler = new BlockLockManipulation();
-    String command = "rm -f .claude/cat/locks/task-123.lock";
+    try (JvmScope scope = new TestJvmScope())
+    {
+      BlockLockManipulation handler = new BlockLockManipulation();
+      String locksPath = scope.getProjectCatDir().resolve("locks").resolve("task-123.lock").toString();
+      String command = "rm -f " + locksPath;
 
-    BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
+      BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
 
-    requireThat(result.blocked(), "blocked").isTrue();
-    requireThat(result.reason(), "reason").contains("issue-lock force-release");
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("issue-lock force-release");
+    }
   }
 
   /**
    * Verifies that rm targeting a lock file is blocked and the error message mentions /cat:cleanup for users.
+   *
+   * @throws IOException if an I/O error occurs creating the test scope
    */
   @Test
-  public void rmLockFileErrorMentionsCleanupForUsers()
+  public void rmLockFileErrorMentionsCleanupForUsers() throws IOException
   {
-    BlockLockManipulation handler = new BlockLockManipulation();
-    String command = "rm .claude/cat/locks/my-issue.lock";
+    try (JvmScope scope = new TestJvmScope())
+    {
+      BlockLockManipulation handler = new BlockLockManipulation();
+      String locksPath = scope.getProjectCatDir().resolve("locks").resolve("my-issue.lock").toString();
+      String command = "rm " + locksPath;
 
-    BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
+      BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
 
-    requireThat(result.blocked(), "blocked").isTrue();
-    requireThat(result.reason(), "reason").contains("/cat:cleanup");
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("/cat:cleanup");
+    }
   }
 
   /**
    * Verifies that rm targeting the locks directory is blocked and the error message mentions issue-lock.
+   *
+   * @throws IOException if an I/O error occurs creating the test scope
    */
   @Test
-  public void rmLocksDirIsBlockedWithIssueLockReference()
+  public void rmLocksDirIsBlockedWithIssueLockReference() throws IOException
   {
-    BlockLockManipulation handler = new BlockLockManipulation();
-    String command = "rm -rf .claude/cat/locks/";
+    try (JvmScope scope = new TestJvmScope())
+    {
+      BlockLockManipulation handler = new BlockLockManipulation();
+      String locksDir = scope.getProjectCatDir().resolve("locks").toString() + "/";
+      String command = "rm -rf " + locksDir;
 
-    BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
+      BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
 
-    requireThat(result.blocked(), "blocked").isTrue();
-    requireThat(result.reason(), "reason").contains("issue-lock force-release");
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("issue-lock force-release");
+    }
   }
 
   /**
    * Verifies that rm targeting the locks directory is blocked and the error message mentions /cat:cleanup
    * for users.
+   *
+   * @throws IOException if an I/O error occurs creating the test scope
    */
   @Test
-  public void rmLocksDirErrorMentionsCleanupForUsers()
+  public void rmLocksDirErrorMentionsCleanupForUsers() throws IOException
   {
-    BlockLockManipulation handler = new BlockLockManipulation();
-    String command = "rm -rf .claude/cat/locks/";
+    try (JvmScope scope = new TestJvmScope())
+    {
+      BlockLockManipulation handler = new BlockLockManipulation();
+      String locksDir = scope.getProjectCatDir().resolve("locks").toString() + "/";
+      String command = "rm -rf " + locksDir;
 
-    BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
+      BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
 
-    requireThat(result.blocked(), "blocked").isTrue();
-    requireThat(result.reason(), "reason").contains("/cat:cleanup");
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("/cat:cleanup");
+    }
   }
 
   /**
@@ -94,32 +121,86 @@ public final class BlockLockManipulationTest
 
   /**
    * Verifies that rm targeting lock files with force flag is blocked.
+   *
+   * @throws IOException if an I/O error occurs creating the test scope
    */
   @Test
-  public void rmWithForceFlagOnLockFileIsBlocked()
+  public void rmWithForceFlagOnLockFileIsBlocked() throws IOException
   {
-    BlockLockManipulation handler = new BlockLockManipulation();
-    String command = "rm -rf .claude/cat/locks/task-456.lock";
+    try (JvmScope scope = new TestJvmScope())
+    {
+      BlockLockManipulation handler = new BlockLockManipulation();
+      String locksPath = scope.getProjectCatDir().resolve("locks").resolve("task-456.lock").toString();
+      String command = "rm -rf " + locksPath;
 
-    BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
+      BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
 
-    requireThat(result.blocked(), "blocked").isTrue();
-    requireThat(result.reason(), "reason").contains("issue-lock force-release");
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("issue-lock force-release");
+    }
   }
 
   /**
    * Verifies that the locks directory block distinguishes skill-internal vs user-facing actions.
+   *
+   * @throws IOException if an I/O error occurs creating the test scope
    */
   @Test
-  public void locksDirBlockDistinguishesSkillInternalFromUserFacing()
+  public void locksDirBlockDistinguishesSkillInternalFromUserFacing() throws IOException
   {
-    BlockLockManipulation handler = new BlockLockManipulation();
-    String command = "rm -r .claude/cat/locks";
+    try (JvmScope scope = new TestJvmScope())
+    {
+      BlockLockManipulation handler = new BlockLockManipulation();
+      String locksDir = scope.getProjectCatDir().resolve("locks").toString();
+      String command = "rm -r " + locksDir;
 
-    BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
+      BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
 
-    requireThat(result.blocked(), "blocked").isTrue();
-    requireThat(result.reason(), "reason").contains("issue-lock force-release");
-    requireThat(result.reason(), "reason").contains("/cat:cleanup");
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("issue-lock force-release");
+      requireThat(result.reason(), "reason").contains("/cat:cleanup");
+    }
+  }
+
+  /**
+   * Verifies that rm targeting a lock file in the external CAT storage path is blocked.
+   *
+   * @throws IOException if an I/O error occurs creating the test scope
+   */
+  @Test
+  public void rmLockFileInExternalStorageIsBlocked() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      BlockLockManipulation handler = new BlockLockManipulation();
+      String locksPath = scope.getProjectCatDir().resolve("locks").resolve("task-123.lock").toString();
+      String command = "rm -f " + locksPath;
+
+      BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("issue-lock force-release");
+    }
+  }
+
+  /**
+   * Verifies that rm targeting the locks directory in the external CAT storage path is blocked.
+   *
+   * @throws IOException if an I/O error occurs creating the test scope
+   */
+  @Test
+  public void rmLocksDirInExternalStorageIsBlocked() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      BlockLockManipulation handler = new BlockLockManipulation();
+      String locksDir = scope.getProjectCatDir().resolve("locks").toString() + "/";
+      String command = "rm -rf " + locksDir;
+
+      BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("issue-lock force-release");
+    }
   }
 }

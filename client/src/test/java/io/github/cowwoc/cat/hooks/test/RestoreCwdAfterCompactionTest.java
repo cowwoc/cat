@@ -54,7 +54,7 @@ public final class RestoreCwdAfterCompactionTest
       String sessionId = "test-session-compact";
 
       // Create the .cwd file pointing to an existing directory
-      Path sessionsDir = tempDir.resolve(".claude/cat/sessions");
+      Path sessionsDir = scope.getProjectCatDir().resolve("sessions");
       Files.createDirectories(sessionsDir);
       Path savedDir = tempDir.resolve("worktrees/my-issue");
       Files.createDirectories(savedDir);
@@ -116,7 +116,7 @@ public final class RestoreCwdAfterCompactionTest
       String sessionId = "test-session-startup";
 
       // Even with a .cwd file present, startup should not inject
-      Path sessionsDir = tempDir.resolve(".claude/cat/sessions");
+      Path sessionsDir = scope.getProjectCatDir().resolve("sessions");
       Files.createDirectories(sessionsDir);
       Path savedDir = tempDir.resolve("some/dir");
       Files.createDirectories(savedDir);
@@ -150,7 +150,7 @@ public final class RestoreCwdAfterCompactionTest
       String sessionId = "test-session-resume";
 
       // Even with a .cwd file present, resume should not inject
-      Path sessionsDir = tempDir.resolve(".claude/cat/sessions");
+      Path sessionsDir = scope.getProjectCatDir().resolve("sessions");
       Files.createDirectories(sessionsDir);
       Path savedDir = tempDir.resolve("some/dir");
       Files.createDirectories(savedDir);
@@ -185,7 +185,7 @@ public final class RestoreCwdAfterCompactionTest
       String sessionId = "test-session-missing";
 
       // Write a .cwd file pointing to a path that does not exist
-      Path sessionsDir = tempDir.resolve(".claude/cat/sessions");
+      Path sessionsDir = scope.getProjectCatDir().resolve("sessions");
       Files.createDirectories(sessionsDir);
       Path nonExistentDir = tempDir.resolve("does/not/exist");
       Files.writeString(sessionsDir.resolve(sessionId + ".cwd"), nonExistentDir.toString());

@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks.session;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.HookInput;
+import io.github.cowwoc.cat.hooks.JvmScope;
 
 /**
  * Injects critical session instructions into Claude's context.
@@ -186,7 +187,7 @@ public final class InjectSessionInstructions implements SessionStartHandler
       **Example**:
       ```bash
       CAT_AGENT_ID=351df8c9-048f-4c74-bcdb-9b8c207b6a1c git worktree remove \\
-        /workspace/.claude/cat/worktrees/my-issue
+        {worktreeExamplePath}/my-issue
       ```
 
       **When NOT required**: Only needed when removing worktrees or directories that may be locked.
@@ -206,11 +207,18 @@ public final class InjectSessionInstructions implements SessionStartHandler
       `git diff --stat`) with `&&` in a single Bash call instead of issuing separate tool calls. This \
       reduces round-trips.""";
 
+  private final JvmScope scope;
+
   /**
    * Creates a new InjectSessionInstructions handler.
+   *
+   * @param scope the JVM scope providing project directory configuration
+   * @throws NullPointerException if {@code scope} is null
    */
-  public InjectSessionInstructions()
+  public InjectSessionInstructions(JvmScope scope)
   {
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
   }
 
   /**
@@ -227,7 +235,9 @@ public final class InjectSessionInstructions implements SessionStartHandler
     String sessionId = input.getSessionId();
     if (sessionId.isEmpty())
       sessionId = "unknown";
-    return Result.context(INSTRUCTIONS + "\n" +
+    String worktreesPath = scope.getProjectCatDir().resolve("worktrees").toString();
+    String instructions = INSTRUCTIONS.replace("{worktreeExamplePath}", worktreesPath);
+    return Result.context(instructions + "\n" +
       "Session ID: " + sessionId);
   }
 }

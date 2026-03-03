@@ -156,16 +156,16 @@ argument to the binary.
 SkillLoader tracks which skills have been loaded via **per-agent** marker files:
 
 ```
-~/.config/claude/projects/-workspace/{sessionId}/skills-loaded               ← main agent
-~/.config/claude/projects/-workspace/{sessionId}/subagents/{agent_id}/skills-loaded  ← subagent
+${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/{sessionId}/skills-loaded               ← main agent
+${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/{sessionId}/subagents/{agent_id}/skills-loaded  ← subagent
 ```
 
-The `catAgentId` encodes the full relative path from `projects/-workspace/`:
+The `catAgentId` encodes the full relative path from `projects/${ENCODED_PROJECT_DIR}/`:
 
 | Agent | catAgentId value | Resolved marker path |
 |-------|------------------|----------------------|
-| Main agent | `{sessionId}` | `${CLAUDE_CONFIG_DIR}/projects/-workspace/{sessionId}/skills-loaded` |
-| Subagent | `{sessionId}/subagents/{agent_id}` | `${CLAUDE_CONFIG_DIR}/projects/-workspace/{sessionId}/subagents/{agent_id}/skills-loaded` |
+| Main agent | `{sessionId}` | `${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/{sessionId}/skills-loaded` |
+| Subagent | `{sessionId}/subagents/{agent_id}` | `${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/{sessionId}/subagents/{agent_id}/skills-loaded` |
 
 Each agent instance (main agent, each subagent) has its own marker file. Parent and subagents track
 skill loading independently — a skill invoked by the parent does not affect a subagent's first-use

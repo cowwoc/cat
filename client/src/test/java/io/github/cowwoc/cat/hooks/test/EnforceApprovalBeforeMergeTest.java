@@ -48,15 +48,15 @@ public final class EnforceApprovalBeforeMergeTest
   /**
    * Writes a session JSONL file with the given content.
    *
-   * @param projectDir the project root directory (also the config dir in TestJvmScope)
+   * @param scope the JVM scope providing the session base path
    * @param sessionId the session ID
    * @param content the JSONL content to write
    * @throws IOException if the session file cannot be written
    */
-  private static void writeSessionFile(Path projectDir, String sessionId, String content)
+  private static void writeSessionFile(JvmScope scope, String sessionId, String content)
     throws IOException
   {
-    Path sessionDir = projectDir.resolve("projects").resolve("-workspace");
+    Path sessionDir = scope.getSessionBasePath();
     Files.createDirectories(sessionDir);
     Files.writeString(sessionDir.resolve(sessionId + ".jsonl"), content);
   }
@@ -90,7 +90,7 @@ public final class EnforceApprovalBeforeMergeTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
-      writeSessionFile(tempDir, SESSION_ID, """
+      writeSessionFile(scope, SESSION_ID, """
         {"type":"user","message":{"content":[{"type":"text","text":"approve and merge"}]}}
         """);
 
@@ -122,7 +122,7 @@ public final class EnforceApprovalBeforeMergeTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
-      writeSessionFile(tempDir, SESSION_ID, """
+      writeSessionFile(scope, SESSION_ID, """
         {"type":"user","message":{"content":[{"type":"text","text":"approved merge"}]}}
         """);
 
@@ -154,7 +154,7 @@ public final class EnforceApprovalBeforeMergeTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
-      writeSessionFile(tempDir, SESSION_ID, """
+      writeSessionFile(scope, SESSION_ID, """
         {"type":"user","message":{"content":[{"type":"text","text":"I approve the design"}]}}
         """);
 
@@ -186,7 +186,7 @@ public final class EnforceApprovalBeforeMergeTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
-      writeSessionFile(tempDir, SESSION_ID, """
+      writeSessionFile(scope, SESSION_ID, """
         {"type":"assistant","message":{"content":[{"type":"text","text":"approve and merge"}]}}
         """);
 
@@ -218,7 +218,7 @@ public final class EnforceApprovalBeforeMergeTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
-      writeSessionFile(tempDir, SESSION_ID, """
+      writeSessionFile(scope, SESSION_ID, """
         {"type":"assistant","content":"askuserquestion approve and merge options"}
         {"type":"assistant","content":"user_approval confirmed"}
         """);
@@ -304,7 +304,7 @@ public final class EnforceApprovalBeforeMergeTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
-      writeSessionFile(tempDir, SESSION_ID, """
+      writeSessionFile(scope, SESSION_ID, """
         {"type":"user","message":{"content":[{"type":"text","text":"approve merge"}]}}
         """);
 
@@ -362,7 +362,7 @@ public final class EnforceApprovalBeforeMergeTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "low");
-      writeSessionFile(tempDir, SESSION_ID, """
+      writeSessionFile(scope, SESSION_ID, """
         {"type":"user","message":{"content":[{"type":"text","text":"looks good to me"}]}}
         """);
 
@@ -392,7 +392,7 @@ public final class EnforceApprovalBeforeMergeTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
-      writeSessionFile(tempDir, SESSION_ID, """
+      writeSessionFile(scope, SESSION_ID, """
         {"type":"user","message":{"content":[{"type":"text","text":"merge and approve"}]}}
         """);
 
@@ -424,7 +424,7 @@ public final class EnforceApprovalBeforeMergeTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
-      writeSessionFile(tempDir, SESSION_ID, """
+      writeSessionFile(scope, SESSION_ID, """
         {"type":"user","message":{"content":[{"type":"text","text":"don't approve the merge yet"}]}}
         """);
 
@@ -456,7 +456,7 @@ public final class EnforceApprovalBeforeMergeTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
-      writeSessionFile(tempDir, SESSION_ID, """
+      writeSessionFile(scope, SESSION_ID, """
         {"type":"user","message":{"content":[{"type":"text","text":"Can you approve the merge request on GitHub?"}]}}
         """);
 
@@ -486,7 +486,7 @@ public final class EnforceApprovalBeforeMergeTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
-      writeSessionFile(tempDir, SESSION_ID, """
+      writeSessionFile(scope, SESSION_ID, """
         {"type":"user","message":{"content":[{"type":"text","text":"Approve and merge"}]}}
         """);
 
@@ -517,7 +517,7 @@ public final class EnforceApprovalBeforeMergeTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
-      writeSessionFile(tempDir, SESSION_ID, """
+      writeSessionFile(scope, SESSION_ID, """
         {"type":"user","message":{"role":"user","content":"approve and merge"}}
         """);
 
@@ -561,7 +561,7 @@ public final class EnforceApprovalBeforeMergeTest
         "{\"type\":\"user\",\"message\":{\"role\":\"user\",\"content\":" +
         "[{\"type\":\"tool_result\",\"tool_use_id\":\"tu1\"," +
         "\"content\":\"User answered: Approve and merge\"}]}}";
-      writeSessionFile(tempDir, SESSION_ID, assistantLine + "\n" + userLine + "\n");
+      writeSessionFile(scope, SESSION_ID, assistantLine + "\n" + userLine + "\n");
 
       EnforceApprovalBeforeMerge handler = new EnforceApprovalBeforeMerge(scope);
       JsonNode toolInput = createMergeToolInput(mapper);
@@ -592,7 +592,7 @@ public final class EnforceApprovalBeforeMergeTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
-      writeSessionFile(tempDir, SESSION_ID, """
+      writeSessionFile(scope, SESSION_ID, """
         {"type":"user","message":{"content":[{"type":"text","text":"looks good"}]}}
         """);
 
@@ -626,7 +626,7 @@ public final class EnforceApprovalBeforeMergeTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
-      writeSessionFile(tempDir, SESSION_ID, """
+      writeSessionFile(scope, SESSION_ID, """
         {"type":"user","message":{"content":[{"type":"text","text":"approve and merge"}]}}
         """);
 
