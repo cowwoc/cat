@@ -1430,9 +1430,7 @@ Do NOT skip the banner or continue without it.
 **Exit the worktree directory before spawning the merge subagent:**
 
 ```bash
-# Move to /workspace before spawning merge subagent
-# Prevents parent shell corruption when the subagent removes the worktree
-cd /workspace
+cd "${CLAUDE_PROJECT_DIR}"
 ```
 
 **Pre-merge approval verification (when trust != "high"):**
@@ -1575,8 +1573,9 @@ Fail-fast principle: Unknown consent = No consent = STOP and re-present.
 If any phase fails:
 
 1. Capture error message and phase name
-2. Attempt lock release: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${ISSUE_ID}" "$CLAUDE_SESSION_ID"`
-3. Return FAILED status with actual error details
+2. Restore working directory: `cd "${CLAUDE_PROJECT_DIR}"`
+3. Attempt lock release: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${ISSUE_ID}" "$CLAUDE_SESSION_ID"`
+4. Return FAILED status with actual error details
 
 ```json
 {
