@@ -272,8 +272,7 @@
         "catches_variations": true
       },
       "correct_behavior": "When DetectFailures detects a bash command failure matching the FAILURE_PATTERN, the hook warning must use mandatory language: 'MANDATORY: Invoke cat:learn-agent to record this mistake and implement prevention. Do NOT continue to the next step without invoking learn first.' This removes ambiguity and requires the agent to invoke learn before proceeding."
-    }
-    ,
+    },
     {
       "id": "M455",
       "timestamp": "2026-03-03T13:11:02Z",
@@ -299,7 +298,46 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "When a user message arrives mid-operation (detected via queue-operation enqueue in JSONL), call TaskCreate immediately in the next tool call for any request that is a feature, change, fix, or complex instruction — before continuing the workflow. A PostToolUse hook should detect unacknowledged user input in session JSONL and inject a reminder."
+      "correct_behavior": "When a user message arrives mid-operation (detected via queue-operation enqueue in JSONL), call TaskCreate immediately in the next tool call for any request that is a feature, change, fix, or complex instruction \u2014 before continuing the workflow. A PostToolUse hook should detect unacknowledged user input in session JSONL and inject a reminder."
+    },
+    {
+      "id": "M457",
+      "timestamp": "2026-03-03T17:53:16.250Z",
+      "category": "protocol_violation",
+      "description": "Agent invoked cat:work-merge via Skill tool instead of Task tool, then described merge as executing when nothing was running",
+      "root_cause": "RECURRENCE OF M451: Agent used Skill tool (loads instructions only) instead of Task tool (spawns subagent) for cat:work-merge. The work-with-issue skill clearly documented NOT the Skill tool but agent violated the protocol. Documentation-level prevention failed twice (M451 added skill-loading.md docs, work-with-issue.md already had the warning).",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue/first-use.md",
+      "pattern_keywords": [
+        "work-merge",
+        "skill-tool",
+        "async",
+        "executing",
+        "task-tool",
+        "synchronous"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": "M451",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use Task tool with subagent_type: cat:work-merge to spawn a merge subagent. The Skill tool only loads instructions into context \u2014 it does NOT spawn a subprocess or execute merge operations.",
+      "issue_creation_needed": {
+        "suggested_title": "Block Skill tool invocation of cat:work-merge in EnforceApprovalBeforeMerge hook",
+        "suggested_description": "EnforceApprovalBeforeMerge currently allows Skill tool invocations of cat:work-merge after approval. It should instead BLOCK Skill tool invocations entirely, allowing ONLY Task tool (subagent_type: cat:work-merge) for actual merge execution. This prevents the recurrence pattern (M451, M457) where agents use the Skill tool and then describe the merge as executing when nothing is running.",
+        "suggested_acceptance_criteria": [
+          "EnforceApprovalBeforeMerge blocks Skill tool invocations of cat:work-merge with a clear error",
+          "Error message explains: Skill tool only loads instructions, use Task tool instead",
+          "Task tool invocations of cat:work-merge still allowed (after approval check passes)",
+          "Tests verify Skill tool is blocked and Task tool is allowed",
+          "work-with-issue first-use.md updated to use BLOCKING framing for this requirement"
+        ]
+      }
     }
   ]
 }
