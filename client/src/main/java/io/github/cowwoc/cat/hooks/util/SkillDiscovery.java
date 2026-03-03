@@ -172,7 +172,7 @@ public final class SkillDiscovery
   /**
    * Discovers model-invocable skills with descriptions from all installed plugins.
    * <p>
-   * Reads {@code ${configDir}/plugins/installed_plugins.json} and for each plugin entry,
+   * Reads {@code ${CLAUDE_CONFIG_DIR}/plugins/installed_plugins.json} and for each plugin entry,
    * scans the plugin's {@code skills/} directory. The skill prefix is derived from the plugin
    * key (the part before {@code @}), e.g. {@code cat@cat} → prefix {@code cat:}.
    * <p>
@@ -273,7 +273,7 @@ public final class SkillDiscovery
   /**
    * Discovers model-invocable user skills with descriptions.
    * <p>
-   * Scans directories under {@code ${configDir}/skills/} for {@code SKILL.md} files. Skills are
+   * Scans directories under {@code ${CLAUDE_CONFIG_DIR}/skills/} for {@code SKILL.md} files. Skills are
    * included if they do not have {@code disable-model-invocation: true}.
    *
    * @param configDir the Claude config directory containing the {@code skills/} subdirectory
