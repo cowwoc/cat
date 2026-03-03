@@ -80,7 +80,7 @@ public interface JvmScope extends AutoCloseable
   /**
    * Returns the directory for the current session's tracking files.
    * <p>
-   * Located at {@code {configDir}/projects/-workspace/{sessionId}/}.
+   * Located at {@code ${CLAUDE_CONFIG_DIR}/projects/-workspace/{sessionId}/}.
    *
    * @return the session directory path
    * @throws IllegalStateException if this scope is closed

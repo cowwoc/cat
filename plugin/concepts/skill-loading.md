@@ -164,8 +164,8 @@ The `catAgentId` encodes the full relative path from `projects/-workspace/`:
 
 | Agent | catAgentId value | Resolved marker path |
 |-------|------------------|----------------------|
-| Main agent | `{sessionId}` | `{configDir}/projects/-workspace/{sessionId}/skills-loaded` |
-| Subagent | `{sessionId}/subagents/{agent_id}` | `{configDir}/projects/-workspace/{sessionId}/subagents/{agent_id}/skills-loaded` |
+| Main agent | `{sessionId}` | `${CLAUDE_CONFIG_DIR}/projects/-workspace/{sessionId}/skills-loaded` |
+| Subagent | `{sessionId}/subagents/{agent_id}` | `${CLAUDE_CONFIG_DIR}/projects/-workspace/{sessionId}/subagents/{agent_id}/skills-loaded` |
 
 Each agent instance (main agent, each subagent) has its own marker file. Parent and subagents track
 skill loading independently — a skill invoked by the parent does not affect a subagent's first-use

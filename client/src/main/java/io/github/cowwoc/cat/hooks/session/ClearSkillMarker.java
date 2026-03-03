@@ -21,8 +21,8 @@ import java.nio.file.Path;
  * Marker files track which skills have been loaded by each agent. Deleting a marker forces a fresh
  * skill load on the next invocation. Marker paths:
  * <ul>
- *   <li>Main agent: {@code {configDir}/projects/-workspace/{sessionId}/skills-loaded}</li>
- *   <li>Subagent: {@code {configDir}/projects/-workspace/{sessionId}/subagents/{agentId}/skills-loaded}</li>
+ *   <li>Main agent: {@code ${CLAUDE_CONFIG_DIR}/projects/-workspace/{sessionId}/skills-loaded}</li>
+ *   <li>Subagent: {@code ${CLAUDE_CONFIG_DIR}/projects/-workspace/{sessionId}/subagents/{agentId}/skills-loaded}</li>
  * </ul>
  * <p>
  * Called by {@code SessionStartHook} for the main agent (on session startup and after context
