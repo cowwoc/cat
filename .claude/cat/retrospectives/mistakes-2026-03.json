@@ -246,5 +246,33 @@
       },
       "correct_behavior": "Java source code comments and Javadoc must describe current behavior only. (Mxxx) provenance labels belong exclusively in CLAUDE.md rule annotations, not in source code. When reading (Mxxx) labels in CLAUDE.md, do not infer they are a general-purpose notation for Java files."
     }
+    ,
+    {
+      "id": "M455",
+      "timestamp": "2026-03-03T13:11:02Z",
+      "category": "protocol_violation",
+      "description": "Agent continued mid-operation squash/rebase workflow without using TaskCreate for two user messages",
+      "root_cause": "RECURRENCE OF M337: The InjectSessionInstructions documentation says 'ADD the user's request to TaskList' and marks it MANDATORY, but the agent deferred both user messages until after the entire squash/rebase workflow completed without creating TaskCreate entries. The agent treated the workflow boundary (merge complete) as the trigger to address user messages, not the next tool call boundary as documented. Documentation-level prevention cannot override completion bias when the agent judges that the workflow is nearly done.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/client/src/main/java/io/github/cowwoc/cat/hooks/PostToolUseHook.java",
+      "pattern_keywords": [
+        "TaskCreate",
+        "mid-operation",
+        "user-input",
+        "acknowledge",
+        "completion-bias"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": "M337",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When a user message arrives mid-operation (detected via queue-operation enqueue in JSONL), call TaskCreate immediately in the next tool call for any request that is a feature, change, fix, or complex instruction — before continuing the workflow. A PostToolUse hook should detect unacknowledged user input in session JSONL and inject a reminder."
+    }
   ]
 }
