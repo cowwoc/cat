@@ -8,19 +8,26 @@ package io.github.cowwoc.cat.hooks.skills;
 
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.util.IssueDiscovery;
+import io.github.cowwoc.cat.hooks.util.IssueDiscovery.DiscoveryResult;
+import io.github.cowwoc.cat.hooks.util.IssueDiscovery.Scope;
+import io.github.cowwoc.cat.hooks.util.IssueDiscovery.SearchOptions;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
 /**
  * Output generator for issue complete boxes.
- *
+ * <p>
  * Generates issue complete and scope complete boxes for completion notifications.
  */
 public final class GetIssueCompleteOutput implements SkillOutput
@@ -48,9 +55,12 @@ public final class GetIssueCompleteOutput implements SkillOutput
    * Generates the output for this skill.
    * <p>
    * Routes to getIssueCompleteBox() or getScopeCompleteBox() based on available arguments.
+   * With 2 arguments (issueName, targetBranch), discovers the next available issue internally using
+   * IssueDiscovery and renders the appropriate box. With 1 argument (scopeName), renders the scope
+   * complete box directly.
    *
-   * @param args the arguments from the dispatcher: [issueName, nextIssue, nextGoal, targetBranch] for
-   *             issue-complete, or [scopeName] for scope-complete
+   * @param args the arguments from the dispatcher: [issueName, targetBranch] for issue-complete with
+   *             internal discovery, or [scopeName] for scope-complete
    * @return the formatted issue or scope complete box
    * @throws NullPointerException     if {@code args} is null
    * @throws IllegalArgumentException if insufficient arguments provided
@@ -64,22 +74,129 @@ public final class GetIssueCompleteOutput implements SkillOutput
     if (args.length == 0)
       return "";
 
-    // Determine routing based on arg count and content
-    if (args.length >= 4)
+    if (args.length == 2)
     {
-      // Issue complete: issueName, nextIssue, nextGoal, targetBranch
-      return getIssueCompleteBox(args[0], args[1], args[2], args[3]);
+      // Issue complete: issueName, targetBranch — discover next issue internally
+      String issueName = args[0];
+      String targetBranch = args[1];
+      return discoverAndRender(issueName, targetBranch);
     }
     if (args.length == 1)
       // Scope complete: scopeName
       return getScopeCompleteBox(args[0]);
     throw new IllegalArgumentException(
-      "Expected 1 or 4+ arguments (scope-name OR issue-name next-issue next-goal target-branch), got " +
-      args.length);
+      "Expected 1 or 2 arguments (scope-name OR issue-name target-branch), got " + args.length);
+  }
+
+  /**
+   * Discovers the next available issue and renders the appropriate completion box.
+   * <p>
+   * Extracts the minor version from {@code issueName} (e.g., {@code 2.1} from {@code 2.1-fix-bug}),
+   * searches for the next open issue in that minor version using IssueDiscovery with no lock acquisition,
+   * and renders either the issue-complete box (if a next issue is found) or the scope-complete box.
+   *
+   * @param issueName    the completed issue name (e.g., {@code 2.1-fix-bug})
+   * @param targetBranch the target branch that was merged to
+   * @return the formatted issue or scope complete box
+   * @throws NullPointerException     if any parameter is null
+   * @throws IllegalArgumentException if any parameter is blank
+   * @throws IOException              if an I/O error occurs
+   */
+  public String discoverAndRender(String issueName, String targetBranch) throws IOException
+  {
+    requireThat(issueName, "issueName").isNotBlank();
+    requireThat(targetBranch, "targetBranch").isNotBlank();
+
+    // Extract "major.minor" from issueName like "2.1-fix-bug"
+    int dashIndex = issueName.indexOf('-');
+    if (dashIndex < 0)
+    {
+      // Cannot determine minor version; fall back to scope-complete
+      return getScopeCompleteBox("v" + issueName);
+    }
+    String minorVersion = issueName.substring(0, dashIndex);
+
+    IssueDiscovery discovery = new IssueDiscovery(scope);
+    SearchOptions options = new SearchOptions(Scope.MINOR, minorVersion, "", "", false);
+    DiscoveryResult result = discovery.findNextIssue(options);
+
+    if (result instanceof DiscoveryResult.Found found)
+    {
+      Path planPath = Path.of(found.issuePath()).resolve("PLAN.md");
+      String nextGoal = readGoalFromPlan(planPath);
+      return getIssueCompleteBox(issueName, found.issueId(), nextGoal, targetBranch);
+    }
+    // No next issue found — scope is complete
+    return getScopeCompleteBox("v" + minorVersion);
+  }
+
+  /**
+   * Reads the goal from PLAN.md.
+   * <p>
+   * Extracts the first paragraph of text under the {@code ## Goal} heading.
+   *
+   * @param planPath the path to PLAN.md
+   * @return the goal text, or "No goal found" if absent
+   */
+  public static String readGoalFromPlan(Path planPath)
+  {
+    if (!Files.isRegularFile(planPath))
+      return "No goal found";
+
+    List<String> lines;
+    try
+    {
+      lines = Files.readAllLines(planPath);
+    }
+    catch (IOException _)
+    {
+      return "No goal found";
+    }
+
+    // Find ## Goal heading
+    int goalStart = -1;
+    for (int i = 0; i < lines.size(); ++i)
+    {
+      if (lines.get(i).strip().startsWith("## Goal"))
+      {
+        goalStart = i + 1;
+        break;
+      }
+    }
+
+    if (goalStart < 0)
+      return "No goal found";
+
+    // Extract text until next ## heading or end of file
+    List<String> goalLines = new ArrayList<>();
+    for (int i = goalStart; i < lines.size(); ++i)
+    {
+      String line = lines.get(i);
+      if (line.strip().startsWith("##"))
+        break;
+      goalLines.add(line.stripTrailing());
+    }
+
+    String goal = String.join("\n", goalLines).strip();
+
+    // Return first paragraph
+    int blankIndex = goal.indexOf("\n\n");
+    if (blankIndex >= 0)
+      return goal.substring(0, blankIndex).strip();
+    if (goal.isEmpty())
+      return "No goal found";
+    return goal;
   }
 
   /**
    * CLI entry point for generating issue complete boxes.
+   * <p>
+   * Usage:
+   * <ul>
+   *   <li>{@code --issue-name <name> --target-branch <branch>} — issue complete with internal next-issue
+   *       discovery</li>
+   *   <li>{@code --scope-complete <scope>} — scope complete box</li>
+   * </ul>
    *
    * @param args command line arguments
    */
@@ -88,8 +205,6 @@ public final class GetIssueCompleteOutput implements SkillOutput
     try
     {
       String issueName = "";
-      String nextIssue = "";
-      String nextGoal = "";
       String targetBranch = "main";
       String scopeComplete = "";
 
@@ -98,8 +213,6 @@ public final class GetIssueCompleteOutput implements SkillOutput
         switch (args[i])
         {
           case "--issue-name" -> issueName = args[i + 1];
-          case "--next-issue" -> nextIssue = args[i + 1];
-          case "--next-goal" -> nextGoal = args[i + 1];
           case "--target-branch" -> targetBranch = args[i + 1];
           case "--scope-complete" -> scopeComplete = args[i + 1];
           default ->
@@ -119,13 +232,12 @@ public final class GetIssueCompleteOutput implements SkillOutput
         }
         else
         {
-          if (issueName.isEmpty() || nextIssue.isEmpty() || nextGoal.isEmpty())
+          if (issueName.isEmpty())
           {
-            System.err.println("--issue-name, --next-issue, and --next-goal are required " +
-              "unless --scope-complete is used");
+            System.err.println("--issue-name is required unless --scope-complete is used");
             System.exit(1);
           }
-          String box = output.getIssueCompleteBox(issueName, nextIssue, nextGoal, targetBranch);
+          String box = output.discoverAndRender(issueName, targetBranch);
           System.out.println(box);
         }
       }
@@ -146,15 +258,16 @@ public final class GetIssueCompleteOutput implements SkillOutput
   /**
    * Builds the issue complete box with next task information.
    *
-   * @param issueName the completed issue name
-   * @param nextIssue the next issue name
-   * @param nextGoal the goal of the next issue
+   * @param issueName    the completed issue name
+   * @param nextIssue    the next issue name
+   * @param nextGoal     the goal of the next issue
    * @param targetBranch the target branch that was merged to
    * @return the formatted box
-   * @throws NullPointerException if any parameter is null
+   * @throws NullPointerException     if any parameter is null
    * @throws IllegalArgumentException if any parameter is blank
    */
-  public String getIssueCompleteBox(String issueName, String nextIssue, String nextGoal, String targetBranch)
+  public String getIssueCompleteBox(String issueName, String nextIssue, String nextGoal,
+    String targetBranch)
   {
     requireThat(issueName, "issueName").isNotBlank();
     requireThat(nextIssue, "nextIssue").isNotBlank();
@@ -170,7 +283,7 @@ public final class GetIssueCompleteOutput implements SkillOutput
       "");
 
     List<String> sep = List.of(
-      "Next: " + nextIssue,
+      "**Next:** " + nextIssue,
       nextGoal,
       "",
       "Continuing to next issue...",
@@ -249,8 +362,8 @@ public final class GetIssueCompleteOutput implements SkillOutput
   /**
    * Builds a top border with embedded header text.
    *
-   * @param display the display utilities
-   * @param header the header text
+   * @param display  the display utilities
+   * @param header   the header text
    * @param maxWidth the maximum content width
    * @return the formatted header top line
    */
