@@ -5,8 +5,8 @@ See LICENSE.md in the project root for license terms.
 -->
 # Git Linear Merge Skill
 
-Merge issue branch to its base branch using WORKTREE_PATH parameter. Uses `git -C` for all operations to avoid cd into
-worktree. Fast-forwards base branch without checking out.
+Merge issue branch to its target branch using WORKTREE_PATH parameter. Uses `git -C` for all operations to avoid cd into
+worktree. Fast-forwards target branch without checking out.
 
 ## Step 0: Read Git Workflow Preferences
 
@@ -41,7 +41,7 @@ fi
 ## When to Use
 
 - After issue branch has passed review and user approval
-- When merging completed issue to base branch (main, v1.10, etc.)
+- When merging completed issue to target branch (main, v1.10, etc.)
 - To maintain clean, linear git history
 
 ## Prerequisites
@@ -54,7 +54,7 @@ fi
 
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/client/bin/git-merge-linear" \
-  "$ISSUE_BRANCH" --base "$BASE_BRANCH"
+  "$ISSUE_BRANCH" --target "$TARGET_BRANCH"
 ```
 
 The Java tool implements all steps: check divergence, check suspicious deletions, verify
@@ -74,16 +74,16 @@ to stderr (exit code 1) with `"status": "error"` and a `"message"` field contain
 | `"status": "error"`: Source branch is behind {target} | Target has commits not in source branch | Rebase onto target before merging |
 | `"status": "error"`: Fast-forward merge failed | History diverged | Rebase source branch onto target first |
 | `"status": "error"`: Merge commit detected | Non-linear history after merge | Investigate merge state, should not occur with ff-only |
-| `"status": "error"`: Missing required argument: --base | Base branch not provided | Pass `--base {branch}` explicitly |
+| `"status": "error"`: Missing required argument: --target | Target branch not provided | Pass `--target {branch}` explicitly |
 
 ## Common Issues
 
 ### Issue 1: "failed to push some refs"
-**Cause**: Base branch has moved ahead since issue branch was created
-**Solution**: Rebase issue branch onto base first:
+**Cause**: Target branch has moved ahead since issue branch was created
+**Solution**: Rebase issue branch onto target first:
 ```bash
-git -C "$WORKTREE_PATH" fetch origin "$BASE_BRANCH"
-git -C "$WORKTREE_PATH" rebase "origin/$BASE_BRANCH"
+git -C "$WORKTREE_PATH" fetch origin "$TARGET_BRANCH"
+git -C "$WORKTREE_PATH" rebase "origin/$TARGET_BRANCH"
 # Then retry merge script
 ```
 
@@ -91,11 +91,11 @@ git -C "$WORKTREE_PATH" rebase "origin/$BASE_BRANCH"
 **Cause**: Branch name has special characters or doesn't exist
 **Solution**: Verify branch name with `git branch -a`
 
-### Issue 3: Wrong base branch detected
-**Cause**: Base branch detection failed (worktree metadata missing)
-**Solution**: Pass `--base <branch>` explicitly to the git-merge-linear command
+### Issue 3: Wrong target branch detected
+**Cause**: Target branch detection failed (worktree metadata missing)
+**Solution**: Pass `--target <branch>` explicitly to the git-merge-linear command
 
 ## Success Criteria
 
-- [ ] Base branch points to issue commit
+- [ ] Target branch points to issue commit
 - [ ] Linear history maintained (no merge commits)

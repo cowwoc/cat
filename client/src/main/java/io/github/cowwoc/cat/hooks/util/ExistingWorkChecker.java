@@ -85,7 +85,7 @@ public final class ExistingWorkChecker
    * Arguments:
    * <ul>
    *   <li>{@code --worktree PATH} — path to the worktree</li>
-   *   <li>{@code --target-branch BRANCH} — base branch to compare against</li>
+   *   <li>{@code --target-branch BRANCH} — target branch to compare against</li>
    * </ul>
    * <p>
    * Output is JSON to stdout.

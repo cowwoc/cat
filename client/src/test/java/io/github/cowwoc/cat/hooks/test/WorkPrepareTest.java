@@ -545,13 +545,13 @@ public class WorkPrepareTest
   }
 
   /**
-   * Verifies that execute detects suspicious commits on the base branch and populates
+   * Verifies that execute detects suspicious commits on the target branch and populates
    * potentially_complete and suspicious_commits fields in the READY result.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeDetectsSuspiciousCommitsOnBaseBranch() throws IOException
+  public void executeDetectsSuspiciousCommitsOnTargetBranch() throws IOException
   {
     Path projectDir = createTempGitCatProject("v2.1");
     Path worktreePath = null;
@@ -561,7 +561,7 @@ public class WorkPrepareTest
       GitCommands.runGit(projectDir, "add", ".");
       GitCommands.runGit(projectDir, "commit", "-m", "Add suspicious-feature issue");
 
-      // Create a non-planning commit on the base branch that mentions the issue name
+      // Create a non-planning commit on the target branch that mentions the issue name
       Files.writeString(projectDir.resolve("impl.txt"), "implementation work");
       GitCommands.runGit(projectDir, "add", "impl.txt");
       GitCommands.runGit(projectDir, "commit", "-m",

@@ -27,7 +27,7 @@ import java.nio.file.Paths;
  * Merge issue branch and clean up worktree, branch, and lock.
  * <p>
  * Handles the happy path of the merging phase for CAT's /cat:work command:
- * 1. Fast-forward merge issue branch to base branch in the main worktree
+ * 1. Fast-forward merge issue branch to target branch in the main worktree
  * 2. Remove the issue worktree
  * 3. Delete the issue branch
  * 4. Release the issue lock
@@ -91,7 +91,7 @@ public final class MergeAndCleanup
         ". Commit or stash changes first.");
     }
 
-    syncBaseBranchWithOrigin(projectDir, targetBranch);
+    syncTargetBranchWithOrigin(projectDir, targetBranch);
 
     int diverged = getDivergenceCount(worktreePath, targetBranch);
     if (diverged > 0)
@@ -175,7 +175,7 @@ public final class MergeAndCleanup
    * @throws IOException if fetch fails (network/remote unavailable) or fast-forward fails
    *   (local branch has diverged from origin)
    */
-  private void syncBaseBranchWithOrigin(String projectDir, String targetBranch) throws IOException
+  private void syncTargetBranchWithOrigin(String projectDir, String targetBranch) throws IOException
   {
     try
     {
@@ -282,7 +282,7 @@ public final class MergeAndCleanup
   }
 
   /**
-   * Fast-forward merges the issue branch into the base branch using {@code git merge --ff-only}.
+   * Fast-forward merges the issue branch into the target branch using {@code git merge --ff-only}.
    * <p>
    * This is run in the main worktree ({@code projectDir}), which atomically updates the ref,
    * index, and working tree. Retries up to 3 times on index.lock contention.
@@ -295,7 +295,7 @@ public final class MergeAndCleanup
   {
     mergeWithRetry(projectDir, issueBranch,
       "Fast-forward merge of " + issueBranch + " failed in directory: " + projectDir +
-        ". The base branch may have diverged.");
+        ". The target branch may have diverged.");
   }
 
   /**
