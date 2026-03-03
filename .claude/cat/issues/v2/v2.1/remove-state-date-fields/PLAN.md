@@ -32,27 +32,18 @@ STATE.md schema contains no date fields. `StateSchemaValidator` rejects files th
 
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
 
-1. **Step 1:** Read `StateSchemaValidator.java`, `ValidateStateMdFormat.java`, and `StateSchemaValidatorTest.java` to
-   understand current validation logic for `Last Updated`.
-2. **Step 2:** Update `StateSchemaValidator.java`:
-   - Remove `Last Updated` from the mandatory fields set
-   - Remove `Last Updated` date-format validation method and its call
-   - Add validation that rejects any field named `Last Updated` or `Completed` with a clear error message directing
-     user to run `plugin/migrations/2.1.sh`
-3. **Step 3:** Update `ValidateStateMdFormat.java` to remove `Last Updated` from the example/guidance text.
-4. **Step 4:** Update `StateSchemaValidatorTest.java`:
-   - Remove tests that require `Last Updated` to be present
-   - Add tests that verify `Last Updated` and `Completed` are rejected with appropriate error messages
-   - Remove `Last Updated` from all test STATE.md fixtures
-5. **Step 5:** Run `mvn -f client/pom.xml test` — all tests must pass.
-6. **Step 6:** Add Phase 7 to `plugin/migrations/2.1.sh` that removes `Last Updated` and `Completed` lines from all
-   issue-level STATE.md files under `.claude/cat/issues/`. Must be idempotent (skip files that don't have the fields).
-7. **Step 7:** Run the migration script against the workspace to update all existing STATE.md files.
-8. **Step 8:** Update `plugin/concepts/templates/state.md` — remove `Last Updated` and `Completed` from the schema
-   table, mandatory header fields table, and resolution pattern examples.
-9. **Step 9:** Commit all changes.
+### Wave 1
+- **Step 1:** Read `StateSchemaValidator.java`, `ValidateStateMdFormat.java`, and `StateSchemaValidatorTest.java` to
+- **Step 2:** Update `StateSchemaValidator.java`:
+- **Step 3:** Update `ValidateStateMdFormat.java` to remove `Last Updated` from the example/guidance text.
+- **Step 4:** Update `StateSchemaValidatorTest.java`:
+- **Step 5:** Run `mvn -f client/pom.xml test` — all tests must pass.
+- **Step 6:** Add Phase 7 to `plugin/migrations/2.1.sh` that removes `Last Updated` and `Completed` lines from all
+- **Step 7:** Run the migration script against the workspace to update all existing STATE.md files.
+- **Step 8:** Update `plugin/concepts/templates/state.md` — remove `Last Updated` and `Completed` from the schema
+- **Step 9:** Commit all changes.
 
 ## Post-conditions
 

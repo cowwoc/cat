@@ -43,7 +43,6 @@ public final class StateSchemaValidatorTest
         - **Progress:** 0%
         - **Dependencies:** []
         - **Blocks:** []
-        - **Last Updated:** 2026-02-12
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
@@ -80,7 +79,6 @@ public final class StateSchemaValidatorTest
         - **Progress:** 50%
         - **Dependencies:** []
         - **Blocks:** [v2.1-other-issue]
-        - **Last Updated:** 2026-02-12
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
@@ -117,7 +115,6 @@ public final class StateSchemaValidatorTest
         - **Progress:** 25%
         - **Dependencies:** [v2.1-other-issue]
         - **Blocks:** []
-        - **Last Updated:** 2026-02-12
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
@@ -155,7 +152,6 @@ public final class StateSchemaValidatorTest
         - **Resolution:** implemented
         - **Dependencies:** []
         - **Blocks:** []
-        - **Last Updated:** 2026-02-12
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
@@ -193,7 +189,6 @@ public final class StateSchemaValidatorTest
         - **Resolution:** duplicate (v2.1-other-issue)
         - **Dependencies:** []
         - **Blocks:** []
-        - **Last Updated:** 2026-02-12
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
@@ -231,7 +226,6 @@ public final class StateSchemaValidatorTest
         - **Parent:** v2.1-parent-issue
         - **Dependencies:** []
         - **Blocks:** []
-        - **Last Updated:** 2026-02-12
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
@@ -268,7 +262,6 @@ public final class StateSchemaValidatorTest
         - **Progress:** 0%
         - **Dependencies:** [v2.1-dep1, v2.1-dep2]
         - **Blocks:** []
-        - **Last Updated:** 2026-02-12
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
@@ -304,7 +297,6 @@ public final class StateSchemaValidatorTest
         - **Progress:** 0%
         - **Dependencies:** []
         - **Blocks:** []
-        - **Last Updated:** 2026-02-12
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
@@ -340,7 +332,6 @@ public final class StateSchemaValidatorTest
         - **Status:** open
         - **Dependencies:** []
         - **Blocks:** []
-        - **Last Updated:** 2026-02-12
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
@@ -376,7 +367,6 @@ public final class StateSchemaValidatorTest
         - **Status:** open
         - **Progress:** 0%
         - **Blocks:** []
-        - **Last Updated:** 2026-02-12
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
@@ -412,7 +402,6 @@ public final class StateSchemaValidatorTest
         - **Status:** open
         - **Progress:** 0%
         - **Dependencies:** []
-        - **Last Updated:** 2026-02-12
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
@@ -423,42 +412,6 @@ public final class StateSchemaValidatorTest
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Missing mandatory key 'Blocks'");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that missing Last Updated key is rejected.
-   */
-  @Test
-  public void missingLastUpdatedKeyIsRejected() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 0%
-        - **Dependencies:** []
-        - **Blocks:** []
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Missing mandatory key 'Last Updated'");
     }
     finally
     {
@@ -485,7 +438,6 @@ public final class StateSchemaValidatorTest
         - **Progress:** 0%
         - **Dependencies:** []
         - **Blocks:** []
-        - **Last Updated:** 2026-02-12
         - **CustomField:** some value
         """;
 
@@ -523,7 +475,6 @@ public final class StateSchemaValidatorTest
         - **Progress:** 0%
         - **Dependencies:** []
         - **Blocks:** []
-        - **Last Updated:** 2026-02-12
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
@@ -560,7 +511,6 @@ public final class StateSchemaValidatorTest
         - **Progress:** 50 percent
         - **Dependencies:** []
         - **Blocks:** []
-        - **Last Updated:** 2026-02-12
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
@@ -597,7 +547,6 @@ public final class StateSchemaValidatorTest
         - **Progress:** 150%
         - **Dependencies:** []
         - **Blocks:** []
-        - **Last Updated:** 2026-02-12
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
@@ -634,7 +583,6 @@ public final class StateSchemaValidatorTest
         - **Progress:** 0%
         - **Dependencies:** none
         - **Blocks:** []
-        - **Last Updated:** 2026-02-12
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
@@ -671,7 +619,6 @@ public final class StateSchemaValidatorTest
         - **Progress:** 0%
         - **Dependencies:** []
         - **Blocks:** none
-        - **Last Updated:** 2026-02-12
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
@@ -682,43 +629,6 @@ public final class StateSchemaValidatorTest
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Invalid Blocks format");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that invalid Last Updated format is rejected.
-   */
-  @Test
-  public void invalidLastUpdatedFormatIsRejected() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 0%
-        - **Dependencies:** []
-        - **Blocks:** []
-        - **Last Updated:** 02/12/2026
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Invalid 'Last Updated' format");
     }
     finally
     {
@@ -745,7 +655,6 @@ public final class StateSchemaValidatorTest
         - **Progress:** 100%
         - **Dependencies:** []
         - **Blocks:** []
-        - **Last Updated:** 2026-02-12
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
@@ -783,7 +692,6 @@ public final class StateSchemaValidatorTest
         - **Resolution:** completed
         - **Dependencies:** []
         - **Blocks:** []
-        - **Last Updated:** 2026-02-12
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
@@ -821,7 +729,6 @@ public final class StateSchemaValidatorTest
         - **Parent:** Invalid_Parent_Name
         - **Dependencies:** []
         - **Blocks:** []
-        - **Last Updated:** 2026-02-12
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
@@ -944,7 +851,6 @@ public final class StateSchemaValidatorTest
         - **Resolution:** obsolete (feature was removed in v3.0)
         - **Dependencies:** []
         - **Blocks:** []
-        - **Last Updated:** 2026-02-12
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
@@ -982,7 +888,6 @@ public final class StateSchemaValidatorTest
         - **Resolution:** won't-fix (out of scope for v2.1)
         - **Dependencies:** []
         - **Blocks:** []
-        - **Last Updated:** 2026-02-12
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
@@ -1020,7 +925,6 @@ public final class StateSchemaValidatorTest
         - **Resolution:** not-applicable (requirements changed)
         - **Dependencies:** []
         - **Blocks:** []
-        - **Last Updated:** 2026-02-12
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
@@ -1057,7 +961,6 @@ public final class StateSchemaValidatorTest
         - **Progress:** -5%
         - **Dependencies:** []
         - **Blocks:** []
-        - **Last Updated:** 2026-02-12
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
@@ -1093,7 +996,6 @@ public final class StateSchemaValidatorTest
         - **Progress:** 150%
         - **Dependencies:** []
         - **Blocks:** []
-        - **Last Updated:** 2026-02-12
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
@@ -1131,7 +1033,6 @@ public final class StateSchemaValidatorTest
         - **Resolution:** implemented
         - **Dependencies:** []
         - **Blocks:** []
-        - **Last Updated:** 2026-02-12
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
@@ -1142,6 +1043,81 @@ public final class StateSchemaValidatorTest
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a STATE.md file containing the deprecated 'Last Updated' field is rejected.
+   */
+  @Test
+  public void lastUpdatedFieldIsRejected() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String content = """
+        # State
+
+        - **Status:** open
+        - **Progress:** 0%
+        - **Dependencies:** []
+        - **Blocks:** []
+        - **Last Updated:** 2026-02-12
+        """;
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("content", content);
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Deprecated key 'Last Updated' must be removed");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a STATE.md file containing the deprecated 'Completed' field is rejected.
+   */
+  @Test
+  public void completedFieldIsRejected() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String content = """
+        # State
+
+        - **Status:** closed
+        - **Progress:** 100%
+        - **Resolution:** implemented
+        - **Dependencies:** []
+        - **Blocks:** []
+        - **Completed:** 2026-02-12
+        """;
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("content", content);
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Deprecated key 'Completed' must be removed");
     }
     finally
     {

@@ -816,7 +816,6 @@ Use appropriate template format:
 - **Progress:** 0%
 - **Dependencies:** [{dep1}, {dep2}] or []
 - **Blocks:** []
-- **Last Updated:** {timestamp}
 ```
 
 **Generate PLAN.md content based on issue type:**
