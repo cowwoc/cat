@@ -393,6 +393,35 @@
         "catches_variations": true
       },
       "correct_behavior": "After invoking AskUserQuestion, inspect toolUseResult.answers. If answers is empty {}, treat as no consent and re-present the approval gate. Only proceed when answers contains a non-empty selection."
+    },
+    {
+      "id": "M460",
+      "timestamp": "2026-03-03T21:20:18Z",
+      "category": "misleading_documentation",
+      "description": "work-complete/first-use.md INVOKE passed $0 (session_id) instead of $1 (completedIssue) and $2 (targetBranch) to get-output-agent, causing GetIssueCompleteOutput to receive 2 session_id args and throw 'Expected 1 or 2 arguments, got 2'",
+      "root_cause": "The work-complete/first-use.md INVOKE line used wrong positional variable references: 'args=\"work-complete $0 $1\"' where $0=session_id and $1=session_id (both resolve to catAgentId). The correct references are $1=completedIssue and $2=targetBranch per the argument-hint '<completedIssue> <targetBranch>' in SKILL.md. The documentation taught the wrong arg indices, causing the agent to pass catAgentId twice as handler args.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-complete/first-use.md",
+      "pattern_keywords": [
+        "work_complete",
+        "get_output_agent",
+        "positional_variable",
+        "arg_index",
+        "session_id",
+        "catAgentId",
+        "GetIssueCompleteOutput"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "In first-use.md, $0 is the catAgentId (session_id), $1 is the first positional arg (completedIssue), and $2 is the second positional arg (targetBranch). INVOKE must use 'args=\"work-complete $1 $2\"' to pass the issue name and target branch as handler args."
     }
   ]
 }
