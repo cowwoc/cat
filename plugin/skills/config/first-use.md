@@ -284,7 +284,7 @@ AskUserQuestion:
 - question: "How should completed issues be integrated? (Current: {completionWorkflow || 'merge'})"
 - options:
   - label: "🔀 Merge (Recommended)"
-    description: "Merge issue branch directly to base branch after approval"
+    description: "Merge source branch directly to target branch after approval"
   - label: "📝 Pull Request"
     description: "Create a PR instead of merging directly"
   - label: "← Back"
@@ -560,7 +560,7 @@ INVOKE: Skill("cat:get-output-agent", args="config.no-changes")
 - `high` — Defer by priority to future versions.
 
 ### Completion Workflow Values
-- `merge` — Merge issue branch directly to base branch after approval (default).
+- `merge` — Merge source branch directly to target branch after approval (default).
 - `pr` — Create a pull request instead of merging directly.
 
 ### Min Severity Values

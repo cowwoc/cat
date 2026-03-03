@@ -183,7 +183,7 @@ When a worktree exists for the target issue but no lock file is present:
 1. **Check merge status first.** Determine whether the branch's commits are already merged into base:
 
    ```bash
-   UNMERGED=$(git -C "${CLAUDE_PROJECT_DIR}" log --oneline "${BASE_BRANCH}..${ISSUE_BRANCH}" 2>/dev/null)
+   UNMERGED=$(git -C "${CLAUDE_PROJECT_DIR}" log --oneline "${TARGET_BRANCH}..${ISSUE_BRANCH}" 2>/dev/null)
    ```
 
 2. **If already merged** (`UNMERGED` is empty): The work was completed in a prior session and merged. Clean up:
@@ -281,7 +281,7 @@ If exceeds hard limit: Return status `OVERSIZED` with decomposition recommendati
 
 ```bash
 ISSUE_BRANCH="${MAJOR}.${MINOR}-${ISSUE_NAME}"
-BASE_BRANCH=$(git branch --show-current)
+TARGET_BRANCH=$(git branch --show-current)
 WORKTREE_PATH="${PROJECT_CAT_DIR}/worktrees/${ISSUE_BRANCH}"
 
 FORK_COMMIT=$(git rev-parse HEAD)
@@ -316,7 +316,7 @@ with full test coverage.
 ```bash
 EXISTING_WORK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/client/bin/check-existing-work" \
   --worktree "${WORKTREE_PATH}" \
-  --target-branch "${BASE_BRANCH}")
+  --target-branch "${TARGET_BRANCH}")
 ```
 
 Parse the JSON result and include in output:
@@ -339,7 +339,7 @@ returns JSON. Using a Java tool instead of inline LLM instructions ensures:
 
 ### Step 6b: Check for Work Merged to Base
 
-**MANDATORY: Check if issue was already implemented on base branch.**
+**MANDATORY: Check if issue was already implemented on target branch.**
 
 The `check-existing-work` Java tool only detects commits on the issue branch. If work was
 implemented directly on base (bypassing the issue workflow), STATE.md won't reflect completion.
@@ -350,7 +350,7 @@ Two complementary strategies are used to detect suspicious commits:
 
 ```bash
 ISSUE_COMMITS=$(git -C "${CLAUDE_PROJECT_DIR}" log --oneline \
-  --grep="${ISSUE_NAME}" "${BASE_BRANCH}" -5 2>/dev/null)
+  --grep="${ISSUE_NAME}" "${TARGET_BRANCH}" -5 2>/dev/null)
 ```
 
 **Strategy 2 — file-overlap search:** Find recent commits that modified files listed in PLAN.md's
@@ -360,7 +360,7 @@ use descriptive language instead of referencing the issue name.
 ```bash
 # Extract planned files from PLAN.md backtick-quoted paths in file list sections
 # Check last 20 commits on base for file overlap
-git -C "${CLAUDE_PROJECT_DIR}" log --oneline "${BASE_BRANCH}" -20 | while read -r hash msg; do
+git -C "${CLAUDE_PROJECT_DIR}" log --oneline "${TARGET_BRANCH}" -20 | while read -r hash msg; do
   git -C "${CLAUDE_PROJECT_DIR}" diff-tree --no-commit-id -r --name-only "$hash" | \
     while read -r changed_file; do
       # If changed_file matches any planned file (exact or glob), flag as suspicious
@@ -372,7 +372,7 @@ done
 Both strategies filter out planning commits (`planning:`, `config: add issue`, etc.) as false
 positives.
 
-**Why this matters:** Work may be implemented directly on the base branch without using
+**Why this matters:** Work may be implemented directly on the target branch without using
 the issue workflow (e.g., previous session implemented work but didn't update STATE.md, or
 manual work outside `/cat:work`). Commit messages often use descriptive language that does not
 reference the issue ID — message-only search misses these cases. When suspicious commits are found:
@@ -382,7 +382,7 @@ reference the issue ID — message-only search misses these cases. When suspicio
 3. The orchestrator should prompt user to verify before proceeding
 
 **This prevents duplicate work** when STATE.md shows `in-progress` but the actual implementation
-already exists on the base branch.
+already exists on the target branch.
 
 ### Step 7: Update STATE.md
 

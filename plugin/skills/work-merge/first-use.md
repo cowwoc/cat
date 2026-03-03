@@ -135,12 +135,12 @@ if [[ "$REGRESSIONS" -gt 0 ]]; then
   echo "WARNING: Found STATE.md regressions (closed→open) vs ${TARGET_BRANCH}:"
   git -C "${WORKTREE_PATH}" diff "${TARGET_BRANCH}..HEAD" -- \
     '.claude/cat/issues/**/*.md' | grep -B2 "^-.*Status.*closed"
-  echo "Restore the correct state from base branch before squashing:"
+  echo "Restore the correct state from target branch before squashing:"
   echo "  git checkout ${TARGET_BRANCH} -- .claude/cat/issues/v*/v*/<issue-name>/STATE.md"
 fi
 ```
 
-### Step 3: Rebase issue branch onto base
+### Step 3: Rebase issue branch onto target branch
 
 The `merge-and-cleanup` tool in Step 7 handles origin sync and rebasing atomically. No manual
 rebase is required here.
@@ -242,9 +242,9 @@ exits with code 1.
 | `"status": "error"`: Not a CAT project | Missing `.claude/cat` directory | Verify `CLAUDE_PROJECT_DIR` is correct |
 | `"status": "error"`: Worktree not found | No worktree for issue branch | Check worktree exists with `git worktree list` |
 | `"status": "error"`: Worktree has uncommitted changes | Dirty worktree | Commit or stash changes in worktree first |
-| `"status": "error"`: Base branch has diverged | Base has commits not in HEAD | Rebase onto base branch before merging |
-| `"status": "error"`: Fast-forward merge not possible | History diverged | Rebase issue branch onto base first |
-| `"status": "error"`: base-branch not provided | Missing base branch argument | Ensure TARGET_BRANCH is set in skill input |
+| `"status": "error"`: Target branch has diverged | Target has commits not in HEAD | Rebase onto target branch before merging |
+| `"status": "error"`: Fast-forward merge not possible | History diverged | Rebase issue branch onto target branch first |
+| `"status": "error"`: target-branch not provided | Missing target branch argument | Ensure TARGET_BRANCH is set in skill input |
 | `"status": "error"`: Failed to release lock | Lock tool failed | Manually release with `issue-lock force-release` |
 
 ### Step 8: Return Result

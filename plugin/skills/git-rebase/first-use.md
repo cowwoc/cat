@@ -32,15 +32,15 @@ fi
 
 ## Common Operations
 
-### Rebase onto base branch (Deterministic Script)
+### Rebase onto target branch (Deterministic Script)
 
 For deterministic execution with automatic backup and conflict detection:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/git-rebase-safe" "$WORKTREE_PATH" "$BASE_BRANCH"
+"${CLAUDE_PLUGIN_ROOT}/client/bin/git-rebase-safe" "$WORKTREE_PATH" "$TARGET_BRANCH"
 ```
 
-If BASE_BRANCH not provided, the tool reads from the cat-branch-point file. The tool outputs JSON.
+If TARGET_BRANCH not provided, the tool reads from the cat-branch-point file. The tool outputs JSON.
 
 #### Result Handling
 
@@ -113,7 +113,7 @@ your commits on top. This **inverts** the meaning of `--ours` and `--theirs` com
 | Context | `--ours` | `--theirs` |
 |---------|----------|------------|
 | `git merge` | Current branch | Branch being merged in |
-| `git rebase` | Target branch (e.g., v2.1) | Commit being replayed (your branch) |
+| `git rebase` | Target branch (e.g., v2.1) | Commit being replayed (source branch) |
 
 This inversion is a common source of bugs — the agent intends to take the target branch's version but `--theirs`
 gives the opposite.
