@@ -921,9 +921,9 @@
       "description": "Fix squash workflow to require rebase-before-squash and clarify STATE.md grouping with implementation files, not as separate config commit.",
       "category": "incorrect_implementation",
       "pattern_id": "PATTERN-016",
-      "status": "escalated",
+      "status": "implemented",
       "created_date": "2026-02-06T19:00:00Z",
-      "completed_date": null,
+      "completed_date": "2026-03-03",
       "related_mistakes": [
         "M450",
         "M451",
@@ -932,6 +932,7 @@
         "M500",
         "M503"
       ],
+      "implementation": "Three code fixes verified as implemented: (1) GitSquash.java line 190 deletes backup branch on success. (2) MergeAndCleanup.java uses git merge --ff-only which atomically updates ref, index, and working tree. (3) work-with-issue delegates squash to work-squash subagent which consolidates all commits. Additionally: delegate-squash-to-subagent (closed 2026-02-25), cleanup-squash-backups-in-merge (closed 2026-02-20), fix-squash-workflow (closed), delegate-squash-to-subagent (closed) all address sub-issues.",
       "effectiveness_check": {
         "mistakes_before": 2,
         "mistakes_after": 4,
@@ -941,17 +942,17 @@
           "M500",
           "M503"
         ],
-        "verdict": "ineffective"
+        "verdict": "pending"
       },
       "escalation": {
         "id": "ESCALATE-A018",
         "escalated_date": "2026-02-20T06:19:02-05:00",
-        "last_reviewed": "2026-02-28T16:57:40-05:00",
+        "last_reviewed": "2026-03-03",
         "reason": "Squash workflow continues to fail despite A018. 4 post-fix mistakes (M484, M488, M500, M503). M503 added RemindGitSquash hook blocking git reset --soft, but underlying issue is worktree staleness and manual squash bypass.",
         "escalation_level": "partial_implementation",
-        "analysis": "R022 update: 3 new squash-related failures in current period: M379 (GitSquash.java leaves orphaned backup branch - never deletes on success), M385 (5 unsquashed commits at approval gate - recurs M362, skill gate bypassed again), M386 (fastForwardMerge uses pointer-only git push refspec, does not sync working tree - recurs M369). PATTERN-016 now has 11 total occurrences, 9 after first fix attempt. Three distinct sub-issues identified: (1) backup cleanup, (2) pre-gate squash enforcement, (3) working tree sync. All three have code-level fixes pending implementation (not yet verified). RemindGitSquash hook blocks direct reset alternatives but cannot prevent agent skipping squash step or the working-tree-pointer-divergence issue in MergeAndCleanup. R025 update: M417 adds another PATTERN-016 occurrence (interactive rebase dropped STATE.md changes from pre-squash-range commit). Total now 12 occurrences, 10 post-fix. Three structural code fixes (GitSquash backup cleanup, pre-gate commit count check, working-tree sync after fastForward) remain pending implementation.",
-        "proposed_solution": "Three distinct code fixes required (all identified, not yet verified): (1) GitSquash.java: delete backup branch before returning OK JSON response (M379). (2) work-with-issue Step 7: COMMIT_COUNT == 1 gate before entering approval gate (M385). (3) MergeAndCleanup.java: call syncMainWorkingTree() running git reset hard HEAD after fastForwardMerge() (M386). Items (1) and (3) require Java code changes. Item (2) requires skill update. Monitor after all three are verified. Current escalation level: partial_implementation. R022: All three preventions recorded in mistakes file but none yet implemented in codebase.",
-        "status": "open"
+        "analysis": "2026-03-03 update: All three proposed code fixes verified as implemented in codebase. GitSquash.java deletes backup on success (line 190). MergeAndCleanup uses git merge --ff-only (atomically syncs working tree). work-with-issue delegates to work-squash subagent. Escalation closed pending effectiveness measurement.",
+        "proposed_solution": "Implemented. Monitor for recurrences.",
+        "status": "closed"
       }
     },
     {
@@ -1002,16 +1003,22 @@
       "description": "Require stakeholder reviewers to diff against base branch and read all modified files before reviewing. Add mandatory file-reading evidence to review format.",
       "category": "stakeholder_review_quality",
       "pattern_id": "PATTERN-018",
-      "status": "open",
+      "status": "implemented",
       "created_date": "2026-02-20T06:19:02-05:00",
-      "completed_date": null,
+      "completed_date": "2026-02-22",
       "related_mistakes": [
         "M478",
         "M496",
         "M498",
         "M499"
       ],
-      "effectiveness_check": null
+      "implementation": "Implemented in v2.1-require-reviewer-file-evidence (closed 2026-02-22). Added mandatory Evidence section to stakeholder reviewer JSON output and diff-analysis-first requirement to all 10 stakeholder agent definitions.",
+      "effectiveness_check": {
+        "mistakes_before": 4,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
     },
     {
       "id": "A022",
@@ -1034,14 +1041,20 @@
       "description": "Add active line-length verification reminder to phase-prevent.md: after editing any Markdown or Java file, verify all added lines comply with the 120-character limit (common.md). Include in phase-prevent Step 4 a checkstep: count characters in each added line and wrap any that exceed 120.",
       "category": "formatting_violation",
       "pattern_id": "PATTERN-019",
-      "status": "open",
+      "status": "implemented",
       "created_date": "2026-02-23T10:22:49Z",
-      "completed_date": null,
+      "completed_date": "2026-03-01",
       "related_mistakes": [
         "M380",
         "M382"
       ],
-      "effectiveness_check": null
+      "implementation": "Implemented in v2.1-add-line-length-verification-reminder (closed 2026-03-01). Added line-length check-step to phase-prevent.md Step 4.",
+      "effectiveness_check": {
+        "mistakes_before": 2,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
     },
     {
       "id": "A024",
@@ -1049,14 +1062,20 @@
       "description": "Explicitly label all mandatory workflow steps as MANDATORY in work-with-issue and other orchestration skills. Add explicit instruction that mandatory steps do not require user permission and must not be skipped. Affected steps: stakeholder-review (Step 5), skill-builder review before approval gate, squash before approval gate (Step 6). Add a MANDATORY STEPS checklist at the top of work-with-issue/first-use.md.",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-020",
-      "status": "open",
+      "status": "implemented",
       "created_date": "2026-02-23T10:22:49Z",
-      "completed_date": null,
+      "completed_date": "2026-03-02",
       "related_mistakes": [
         "M384",
         "M388"
       ],
-      "effectiveness_check": null
+      "implementation": "Implemented in v2.1-label-mandatory-workflow-steps (closed 2026-03-02). Added MANDATORY STEPS checklist to work-with-issue/first-use.md and labeled stakeholder-review, skill-builder review, and squash steps as MANDATORY.",
+      "effectiveness_check": {
+        "mistakes_before": 2,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
     },
     {
       "id": "A025",
@@ -1064,13 +1083,14 @@
       "description": "Document skill output forwarding protocol: when a skill produces AskUserQuestion wizard output, the invoking agent must call AskUserQuestion directly (not render it as prose). Add to wizard-based skills (config, etc.) explicit note: 'After invoking this skill, forward the AskUserQuestion tool call verbatim \u2014 do not respond conversationally.'",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-021",
-      "status": "open",
+      "status": "implemented",
       "created_date": "2026-02-28T16:57:40-05:00",
-      "completed_date": null,
+      "completed_date": "2026-03-01",
       "related_mistakes": [
         "M419",
         "M420"
       ],
+      "implementation": "Implemented in v2.1-document-skill-output-forwarding-protocol (closed 2026-03-01). Added forwarding note to wizard-based skills instructing invoking agents to forward AskUserQuestion calls verbatim.",
       "effectiveness_check": {
         "mistakes_before": 2,
         "mistakes_after": null,
@@ -1084,14 +1104,15 @@
       "description": "Add explicit rejection-state handling to work-with-issue: (1) PARTIAL verify result = STOP, do NOT proceed to stakeholder review \u2014 fix unmet conditions first; (2) Rejected stakeholder review = automatically enter re-work loop (fix issues, re-run review) without asking user permission; (3) User rejects AskUserQuestion approval gate mid-workflow = re-present the gate in the NEXT response, do not skip it. Add 'REJECTION HANDLING' section to work-with-issue/first-use.md covering all three cases.",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-022",
-      "status": "open",
+      "status": "implemented",
       "created_date": "2026-02-28T16:57:40-05:00",
-      "completed_date": null,
+      "completed_date": "2026-03-01",
       "related_mistakes": [
         "M433",
         "M434",
         "M435"
       ],
+      "implementation": "Implemented in v2.1-add-rejection-state-handling (closed 2026-03-01). Added REJECTION HANDLING section to work-with-issue/first-use.md covering all three rejection cases.",
       "effectiveness_check": {
         "mistakes_before": 3,
         "mistakes_after": null,
