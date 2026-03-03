@@ -109,10 +109,10 @@ Fallback to `message` field if extended fields are absent:
 
 **Potentially Complete Handling:**
 
-When prepare returns READY with `potentially_complete: true`, work may already exist on the base branch
+When prepare returns READY with `potentially_complete: true`, work may already exist on the target branch
 with STATE.md not reflecting completion (e.g., stale merge overwrote status).
 
-1. Read the diff for each commit in `suspicious_commits` using `git show --stat <hash>` (run in the base branch's
+1. Read the diff for each commit in `suspicious_commits` using `git show --stat <hash>` (run in the target branch's
    working tree, not the new worktree).
 2. Read the issue's goal from its PLAN.md.
 3. Analyze whether the suspicious commits implement the issue's goal:
