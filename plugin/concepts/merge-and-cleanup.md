@@ -60,7 +60,7 @@ Group and squash commits by conventional commit type:
 Use `/cat:git-squash` skill which uses `commit-tree` for safe squashing.
 
 **NEVER use `git rebase -i`** (requires interactive input) or manual `git reset --soft`
-(captures stale working directory state, can revert fixes from base branch — see M385).
+(captures stale working directory state, can revert fixes from target branch — see M385).
 
 Target result:
 ```
@@ -123,34 +123,34 @@ fast-forward-only merge:
 
 **Linear history is mandatory.** Merge commits are prohibited. The `merge-and-cleanup` tool
 enforces fast-forward-only merging. If fast-forward is not possible, rebase the issue branch
-onto the base branch first (see Step 3 of work-merge-first-use skill).
+onto the target branch first (see Step 3 of work-merge-first-use skill).
 
-#### Merging When Base Branch Is Checked Out in Main Workspace
+#### Merging When Target Branch Is Checked Out in Main Workspace
 
-**Special case:** When working from a worktree and the base branch is already checked out in the main workspace.
+**Special case:** When working from a worktree and the target branch is already checked out in the main workspace.
 
 **Don't attempt checkout:**
 - M205 blocks checkouts in main worktree to prevent accidental branch switches
-- Main workspace maintains base branch (e.g., v2.1) for parallel work coordination
+- Main workspace maintains target branch (e.g., v2.1) for parallel work coordination
 
 **Correct pattern:**
 ```bash
-# Work from main workspace directly (base branch already checked out)
+# Work from main workspace directly (target branch already checked out)
 cd /workspace
 
-# Verify you're on the base branch
-git branch --show-current  # Should show base branch (e.g., v2.1)
+# Verify you're on the target branch
+git branch --show-current  # Should show target branch (e.g., v2.1)
 
-# Merge issue branch using fast-forward only (enforces linear history)
-git merge --ff-only {issue-branch}
-# If fast-forward not possible, rebase the issue branch first:
+# Merge source branch using fast-forward only (enforces linear history)
+git merge --ff-only {source-branch}
+# If fast-forward not possible, rebase the source branch first:
 #   git rebase v2.1  (in the worktree), then retry --ff-only
 ```
 
 **Why this works:**
-- Main workspace stays on base branch for stability
+- Main workspace stays on target branch for stability
 - Worktrees are for issue branches
-- No checkout needed when base is already active
+- No checkout needed when target branch is already active
 
 ### 8. Worktree Cleanup
 
@@ -176,15 +176,15 @@ git worktree remove --force ${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}
 
 ### 9. Branch Cleanup
 
-Move HEAD's symbolic ref to the base branch before deleting the issue branch. `git reset --hard` and
+Move HEAD's symbolic ref to the target branch before deleting the source branch. `git reset --hard` and
 `git update-ref` move branch pointers but do NOT update the symbolic ref (HEAD). If HEAD still points to
-the issue branch, `git branch -d` will fail with "Cannot delete branch X checked out".
+the source branch, `git branch -d` will fail with "Cannot delete branch X checked out".
 
 ```bash
-# Move HEAD's symbolic ref to the base branch first
-git symbolic-ref HEAD refs/heads/{base-branch}
+# Move HEAD's symbolic ref to the target branch first
+git symbolic-ref HEAD refs/heads/{target-branch}
 
-# Delete issue branch
+# Delete source branch
 git branch -d {major}.{minor}-{issue-name}
 
 # Delete all subagent branches for this issue

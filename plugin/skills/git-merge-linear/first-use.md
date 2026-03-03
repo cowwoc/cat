@@ -5,7 +5,7 @@ See LICENSE.md in the project root for license terms.
 -->
 # Git Linear Merge Skill
 
-Merge issue branch to its target branch using WORKTREE_PATH parameter. Uses `git -C` for all operations to avoid cd into
+Merge source branch to its target branch using WORKTREE_PATH parameter. Uses `git -C` for all operations to avoid cd into
 worktree. Fast-forwards target branch without checking out.
 
 ## Step 0: Read Git Workflow Preferences
@@ -40,21 +40,21 @@ fi
 
 ## When to Use
 
-- After issue branch has passed review and user approval
-- When merging completed issue to target branch (main, v1.10, etc.)
+- After source branch has passed review and user approval
+- When merging completed work to target branch (main, v1.10, etc.)
 - To maintain clean, linear git history
 
 ## Prerequisites
 
 - [ ] User approval obtained
 - [ ] Working directory is clean (commit or stash changes)
-- [ ] WORKTREE_PATH is set to the issue worktree path
+- [ ] WORKTREE_PATH is set to the source worktree path
 
 ## Script Invocation
 
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/client/bin/git-merge-linear" \
-  "$ISSUE_BRANCH" --target "$TARGET_BRANCH"
+  "$SOURCE_BRANCH" --target "$TARGET_BRANCH"
 ```
 
 The Java tool implements all steps: check divergence, check suspicious deletions, verify
@@ -71,7 +71,7 @@ to stderr (exit code 1) with `"status": "error"` and a `"message"` field contain
 | `"status": "error"`: Must be on {target} branch | Wrong branch checked out | `git checkout {target_branch}` first |
 | `"status": "error"`: Working directory is not clean | Uncommitted changes | Commit or stash changes before merging |
 | `"status": "error"`: Source branch must have exactly 1 commit | Multiple commits | Squash commits first |
-| `"status": "error"`: Source branch is behind {target} | Target has commits not in source branch | Rebase onto target before merging |
+| `"status": "error"`: Source branch is behind {target} | Target has commits not in source branch | Rebase source branch onto target before merging |
 | `"status": "error"`: Fast-forward merge failed | History diverged | Rebase source branch onto target first |
 | `"status": "error"`: Merge commit detected | Non-linear history after merge | Investigate merge state, should not occur with ff-only |
 | `"status": "error"`: Missing required argument: --target | Target branch not provided | Pass `--target {branch}` explicitly |
@@ -97,5 +97,5 @@ git -C "$WORKTREE_PATH" rebase "origin/$TARGET_BRANCH"
 
 ## Success Criteria
 
-- [ ] Target branch points to issue commit
+- [ ] Target branch points to source commit
 - [ ] Linear history maintained (no merge commits)

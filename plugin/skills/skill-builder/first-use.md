@@ -890,7 +890,7 @@ Skills should include a table mapping script JSON status codes to agent actions:
 |--------|---------|----------------------|
 | OK | Operation succeeded | Continue workflow |
 | CONFLICT | Merge/rebase conflict | Examine files, decide resolution strategy |
-| DIVERGED | Base branch advanced | Rebase onto base, retry |
+| DIVERGED | Target branch advanced | Rebase onto target branch, retry |
 | ERROR | Unexpected failure | Read message, report to user |
 ```
 
@@ -900,7 +900,7 @@ Skills should include a table mapping script JSON status codes to agent actions:
 ```markdown
 ### Step 2: Check for Divergence
 \```bash
-BASE=$(git rev-parse "$BASE_BRANCH")
+BASE=$(git rev-parse "$TARGET_BRANCH")
 DIVERGED=$(git rev-list --count "HEAD..$BASE")
 if [[ "$DIVERGED" -gt 0 ]]; then
   echo "ERROR: ..."
@@ -927,7 +927,7 @@ DELETED=$(git diff --name-status "$BASE..HEAD" | grep "^D")
 | JSON status | Meaning | Recovery |
 |-------------|---------|----------|
 | success | Merged | Done |
-| IOException: Base branch has diverged | Base advanced | Rebase, retry |
+| IOException: Target branch has diverged | Target advanced | Rebase, retry |
 | IOException: Fast-forward merge not possible | Diverged | Rebase, retry |
 | IOException: Suspicious deletions | Infrastructure files deleted | Investigate resolution |
 ```

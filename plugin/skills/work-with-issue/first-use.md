@@ -733,11 +733,11 @@ The stakeholder-review skill will spawn its own reviewer subagents and return ag
 
 ### Handle Review Result
 
-Parse review result and filter false positives (concerns from reviewers that read base branch instead of worktree).
+Parse review result and filter false positives (concerns from reviewers that read target branch instead of worktree).
 
 **False Positive Classification:**
 
-A false positive is a concern raised because the reviewer read the wrong branch (base branch vs worktree). Stakeholder
+A false positive is a concern raised because the reviewer read the wrong branch (target branch vs worktree). Stakeholder
 reviewers run inside the worktree with pre-fetched file content, so false positives should be rare and only occur when
 a reviewer ignores the provided file contents and reads from its default working directory.
 
@@ -1251,7 +1251,7 @@ about what they are approving.
      skill: "cat:get-diff"
    ```
 
-2. **Display commit summary** — list commits since base branch:
+2. **Display commit summary** — list commits since target branch:
    ```bash
    git -C ${WORKTREE_PATH} log --oneline ${TARGET_BRANCH}..HEAD
    ```

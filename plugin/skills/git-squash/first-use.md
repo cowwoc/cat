@@ -20,7 +20,7 @@ protocol violation. These operations require the full `work-with-issue` approval
 **NEVER manually run `git reset --soft` for squashing.** Always use this skill.
 
 Manual `git reset --soft` captures working directory state, which may contain stale files if the worktree diverged from
-its base branch. This skill uses `commit-tree` which creates commits from committed tree objects, ignoring working
+its target branch. This skill uses `commit-tree` which creates commits from committed tree objects, ignoring working
 directory entirely.
 
 **What goes wrong with manual reset:**
@@ -146,10 +146,10 @@ fi
 ### Script Invocation
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/git-squash" "<base-branch>" "$MESSAGE" "$WORKTREE_PATH"
+"${CLAUDE_PLUGIN_ROOT}/client/bin/git-squash" "<target-branch>" "$MESSAGE" "$WORKTREE_PATH"
 ```
 
-The script implements: rebase onto base, backup, commit-tree squash, verify, cleanup. Outputs JSON on success.
+The script implements: rebase onto target, backup, commit-tree squash, verify, cleanup. Outputs JSON on success.
 
 ### Result Handling
 
@@ -163,14 +163,14 @@ The script implements: rebase onto base, backup, commit-tree squash, verify, cle
 ### CONCURRENT_MODIFICATION Warnings
 
 When the `OK` response includes a `warnings` array with `type: "CONCURRENT_MODIFICATION"`, it means the listed files
-were modified on both the issue branch and the base branch. The rebase auto-resolved the changes. **This is expected
-normal behavior when the base branch advanced since the worktree was created.**
+were modified on both the source branch and the target branch. The rebase auto-resolved the changes. **This is expected
+normal behavior when the target branch advanced since the worktree was created.**
 
 **Correct response to CONCURRENT_MODIFICATION:**
 1. Complete the standard Post-Squash Working Tree Verification below
 2. For each flagged file, confirm the final content is correct by reviewing what both branches changed:
    - Issue branch change: what the issue was implementing (e.g., removing a feature)
-   - Base branch change: what was committed to the base since the worktree was created
+   - Target branch change: what was committed to the target since the worktree was created
    - Verify the rebase preserved both changes correctly (e.g., issue deletions are present, base additions are present)
 3. If auto-resolution is correct, proceed normally — no learn session required
 4. If auto-resolution is incorrect, restore from backup and resolve the conflict manually
@@ -183,7 +183,7 @@ are informational — they signal that manual verification is needed, not that a
 After receiving `OK`, verify the working tree in the worktree is clean and the branch points to the squashed commit:
 
 ```bash
-# Confirm the worktree branch is at the squashed commit
+# Confirm the source branch is at the squashed commit
 git -C "$WORKTREE_PATH" log --oneline -1
 # Output must show the squashed commit hash from the OK response
 
@@ -217,7 +217,7 @@ Why: Complex interactive rebases that both drop and squash commits can silently 
 # First, remove commits you don't want using a simple rebase
 # This is a straightforward operation with minimal risk
 COMMITS_TO_DROP="ccfd263f 06635253"  # List the commits to remove
-BASE=$(git rev-parse main)  # or your base branch
+BASE=$(git rev-parse main)  # or your target branch
 
 # Create backup
 BACKUP="backup-before-drop-$(date +%Y%m%d-%H%M%S)"

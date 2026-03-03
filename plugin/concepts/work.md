@@ -103,15 +103,15 @@ those criteria, it must be fixed — regardless of when it was introduced.
 +-- parser/src/...             <- NEVER edit these files during issue execution
 ```
 
-**Keep the issue branch isolated until the merge phase.** Do NOT merge the issue branch into the base branch before
+**Keep the source branch isolated until the merge phase.** Do NOT merge the source branch into the target branch before
 the full merge phase (squash + approval gate) completes. Stakeholder review concerns and their fixes must be committed
-to the issue branch in the worktree. Fast-forwarding the issue branch to the base branch before review completes
-bypasses isolation and causes subsequent fixes to land directly on the base branch.
+to the source branch in the worktree. Fast-forwarding the source branch to the target branch before review completes
+bypasses isolation and causes subsequent fixes to land directly on the target branch.
 
-**Planning commits created mid-implementation belong on the issue branch.** When `/cat:add` is invoked during
+**Planning commits created mid-implementation belong on the source branch.** When `/cat:add` is invoked during
 implementation (e.g., to track a newly discovered issue), the resulting `planning:` commit lands on the current
-branch — the issue branch. This is correct behavior. Do NOT treat such a commit as a mistake or attempt to move it to
-the base branch. The planning commit will flow through the normal squash+merge process along with the implementation
+branch — the source branch. This is correct behavior. Do NOT treat such a commit as a mistake or attempt to move it to
+the target branch. The planning commit will flow through the normal squash+merge process along with the implementation
 commits.
 
 ## CRITICAL: Commit Before Stopping in Worktrees

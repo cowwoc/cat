@@ -116,18 +116,18 @@ implementing that issue and belong in the same commit as the code changes.
 
 **Convention/Infrastructure Updates:**
 
-Convention updates discovered during issue work belong on the **base branch**, not the issue branch:
+Convention updates discovered during issue work belong on the **target branch**, not the source branch:
 
 | Change Type | Where to Commit | Why |
 |-------------|-----------------|-----|
-| Issue implementation | Issue branch | Direct issue deliverable |
-| Convention updates (java.md, style rules) | Base branch first | Enables multiple issues |
-| Tooling config (checkstyle, pmd rules) | Base branch first | Project-wide infrastructure |
-| Skill/workflow improvements | Base branch first | Benefits all future work |
+| Issue implementation | Source branch | Direct issue deliverable |
+| Convention updates (java.md, style rules) | Target branch first | Enables multiple issues |
+| Tooling config (checkstyle, pmd rules) | Target branch first | Project-wide infrastructure |
+| Skill/workflow improvements | Target branch first | Benefits all future work |
 
 **Workflow when conventions need updating:**
 1. Stash or set aside issue work
-2. Switch to base branch
+2. Switch to target branch
 3. Commit convention/infrastructure updates
 4. Return to issue branch and rebase
 5. Continue issue implementation

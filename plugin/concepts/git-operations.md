@@ -87,14 +87,14 @@ remote.
 
 ## Linear History Workflow
 
-To merge an issue branch to its base branch with linear history:
+To merge an source branch to its target branch with linear history:
 
 ```bash
-# 1. Rebase issue branch onto base (from issue worktree)
-git rebase {base-branch}
+# 1. Rebase source branch onto target (from source worktree)
+git rebase {target-branch}
 
-# 2. Fast-forward base branch (from issue worktree, no checkout needed)
-git push . HEAD:{base-branch}
+# 2. Fast-forward target branch (from source worktree, no checkout needed)
+git push . HEAD:{target-branch}
 
 # 3. Cleanup worktree and branch
 ```

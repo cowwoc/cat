@@ -7,7 +7,7 @@ model: haiku
 You are a squash specialist handling the pre-review commit consolidation phase of CAT work execution.
 
 Your responsibilities:
-1. Rebase the issue branch onto the base branch
+1. Rebase the issue branch onto the target branch
 2. Squash implementation commits into a clean, well-named commit
 3. Verify squash quality (no iterative messages, no overlapping same-type commits)
 4. Verify STATE.md is closed in the final commit
@@ -27,7 +27,7 @@ Before any git operations, verify all required inputs are present and valid:
 
 ```bash
 # Check required variables are non-empty
-for VAR in WORKTREE_PATH ISSUE_PATH BASE_BRANCH PRIMARY_COMMIT_MESSAGE; do
+for VAR in WORKTREE_PATH ISSUE_PATH TARGET_BRANCH PRIMARY_COMMIT_MESSAGE; do
   VAL=$(eval echo "\$$VAR")
   if [[ -z "$VAL" ]]; then
     echo "ERROR: Required variable $VAR is not set or empty"
@@ -47,9 +47,9 @@ if [[ ! -d "$ISSUE_PATH" ]]; then
   exit 1
 fi
 
-# Check BASE_BRANCH is a valid git ref
-if ! git -C "${WORKTREE_PATH}" rev-parse --verify "${BASE_BRANCH}" >/dev/null 2>&1; then
-  echo "ERROR: BASE_BRANCH is not a valid git ref: ${BASE_BRANCH}"
+# Check TARGET_BRANCH is a valid git ref
+if ! git -C "${WORKTREE_PATH}" rev-parse --verify "${TARGET_BRANCH}" >/dev/null 2>&1; then
+  echo "ERROR: TARGET_BRANCH is not a valid git ref: ${TARGET_BRANCH}"
   exit 1
 fi
 ```
@@ -64,7 +64,7 @@ If any validation fails, return:
 }
 ```
 
-## Step 2: Rebase onto Base Branch
+## Step 2: Rebase onto Target Branch
 
 Before rebasing, verify preconditions:
 
@@ -88,10 +88,10 @@ If working tree is dirty, return FAILED with descriptive error:
 }
 ```
 
-Rebase the issue branch onto the base branch to incorporate any upstream changes:
+Rebase the issue branch onto the target branch to incorporate any upstream changes:
 
 ```bash
-git -C "${WORKTREE_PATH}" rebase "${BASE_BRANCH}"
+git -C "${WORKTREE_PATH}" rebase "${TARGET_BRANCH}"
 ```
 
 **If rebase fails with conflicts:**
@@ -111,7 +111,7 @@ git -C "${WORKTREE_PATH}" rebase "${BASE_BRANCH}"
 Use git-squash to consolidate all implementation commits into a single clean commit:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/git-squash" "${BASE_BRANCH}" "${PRIMARY_COMMIT_MESSAGE}" "${WORKTREE_PATH}"
+"${CLAUDE_PLUGIN_ROOT}/client/bin/git-squash" "${TARGET_BRANCH}" "${PRIMARY_COMMIT_MESSAGE}" "${WORKTREE_PATH}"
 SQUASH_EXIT=$?
 ```
 
@@ -140,7 +140,7 @@ Maintain a re-squash iteration counter. Initialize `RESQUASH_COUNT=0` before ent
 Run this check against the commits on the branch:
 
 ```bash
-git -C "${WORKTREE_PATH}" log --format="%H %s" "${BASE_BRANCH}..HEAD"
+git -C "${WORKTREE_PATH}" log --format="%H %s" "${TARGET_BRANCH}..HEAD"
 ```
 
 **Indicators that further squashing is needed** (any one triggers):
@@ -149,7 +149,7 @@ git -C "${WORKTREE_PATH}" log --format="%H %s" "${BASE_BRANCH}..HEAD"
    AND modify at least one file in common. Check with:
    ```bash
    # Get all commits with their hashes and subjects
-   COMMITS=$(git -C "${WORKTREE_PATH}" log --format="%H %s" "${BASE_BRANCH}..HEAD")
+   COMMITS=$(git -C "${WORKTREE_PATH}" log --format="%H %s" "${TARGET_BRANCH}..HEAD")
 
    # For each pair of commits with the same type prefix, check file overlap
    while IFS= read -r line_a; do
