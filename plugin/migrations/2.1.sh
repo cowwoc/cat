@@ -23,8 +23,11 @@ set -euo pipefail
 # 5. Rename "curiosity" config key to "effort" in existing cat-config.json files
 # 6. Create .claude/cat/.gitignore with patterns for local config files if missing;
 #    if it exists, add any missing patterns and remove stale ones (/worktrees/, /locks/, /verify/)
+#    including their associated comment and blank lines
 # 7. Migrate ## Execution Steps → ## Execution Waves in PLAN.md files
 #    (numbered steps become bullet items under ### Wave 1)
+# 10. Migrate cross-session dirs (locks/, worktrees/) to external storage; delete stale
+#     session-scoped dirs (sessions/, verify/, e2e-config-test/)
 
 trap 'echo "ERROR in 2.1.sh at line $LINENO: $BASH_COMMAND" >&2; exit 1' ERR
 
@@ -474,9 +477,6 @@ if [[ ! -f "$gitignore_template" ]]; then
     exit 1
 fi
 
-# Remove stale patterns for directories that moved to external storage
-stale_patterns=("/worktrees/" "/locks/" "/verify/")
-
 if [[ ! -f "$gitignore_file" ]]; then
     log_migration "No .gitignore found - copying template"
     cp "$gitignore_template" "$gitignore_file"
@@ -485,15 +485,81 @@ else
     log_migration ".gitignore exists - checking for missing/stale patterns"
     phase6_changed=0
 
-    # Remove stale patterns (directories moved to external storage)
+    # Remove stale patterns and their associated comment+blank lines above them.
+    # We build a set of stale pattern strings, then use awk to walk the file once:
+    #   - Buffer each comment line (lines starting with #) and blank lines
+    #   - When a stale pattern line is found, discard the buffer (comment block) and the pattern line
+    #   - When a non-stale non-comment non-blank line is found, flush the buffer before printing it
+    stale_patterns=("/worktrees/" "/locks/" "/verify/")
+    stale_comments=(
+        "# Temporary worktrees created for issue isolation"
+        "# Lock files used to prevent concurrent access"
+        "# Verification output from audit and verify commands"
+    )
+    stale_set=""
     for stale in "${stale_patterns[@]}"; do
         if grep -qF "$stale" "$gitignore_file" 2>/dev/null; then
-            # Remove the pattern line and any comment line immediately above it
-            sed -i "/${stale//\//\\/}/d" "$gitignore_file"
-            log_migration "  Removed stale pattern: $stale"
+            stale_set="${stale_set}${stale}\n"
             ((phase6_changed++)) || true
         fi
     done
+
+    if [[ -n "$stale_set" ]]; then
+        awk -v stale_set="$stale_set" '
+            BEGIN {
+                n = split(stale_set, stale_arr, "\n")
+                for (i = 1; i <= n; i++) {
+                    if (stale_arr[i] != "") stale_map[stale_arr[i]] = 1
+                }
+                buf_len = 0
+            }
+            # Lines that begin with # or are blank go into a lookahead buffer
+            /^[[:space:]]*#/ || /^[[:space:]]*$/ {
+                buf[buf_len++] = $0
+                next
+            }
+            # Non-comment, non-blank line: check if it is a stale pattern
+            {
+                is_stale = 0
+                for (p in stale_map) {
+                    if (index($0, p) > 0) { is_stale = 1; break }
+                }
+                if (is_stale) {
+                    # Discard the buffered comment/blank block and the pattern line itself
+                    buf_len = 0
+                } else {
+                    # Flush the buffer, then print the current line
+                    for (i = 0; i < buf_len; i++) print buf[i]
+                    buf_len = 0
+                    print
+                }
+            }
+            END {
+                # Flush any trailing comments/blanks
+                for (i = 0; i < buf_len; i++) print buf[i]
+            }
+        ' "$gitignore_file" > "${gitignore_file}.tmp" && mv "${gitignore_file}.tmp" "$gitignore_file"
+        log_migration "  Removed stale patterns and associated comments: $(printf '%s' "$stale_set" | tr '\n' ' ')"
+    fi
+
+    # Remove orphaned stale comment lines that remain when patterns were already removed
+    # by a prior migration run (awk above only removes comments paired with their pattern).
+    for stale_comment in "${stale_comments[@]}"; do
+        if grep -qF "$stale_comment" "$gitignore_file" 2>/dev/null; then
+            grep -vF "$stale_comment" "$gitignore_file" > "${gitignore_file}.tmp" \
+                && mv "${gitignore_file}.tmp" "$gitignore_file"
+            log_migration "  Removed orphaned stale comment: $stale_comment"
+            ((phase6_changed++)) || true
+        fi
+    done
+
+    # Collapse consecutive blank lines and strip leading/trailing blank lines
+    # left behind after comment removal.
+    awk '
+        /^[[:space:]]*$/ { blank++; next }
+        { if (blank > 0 && NR > 1 && printed > 0) print ""; blank = 0; print; printed++ }
+        END { if (printed == 0 && blank > 0) { /* file was all blanks - emit nothing */ } }
+    ' "$gitignore_file" > "${gitignore_file}.tmp" && mv "${gitignore_file}.tmp" "$gitignore_file"
 
     # Add any missing patterns from template
     patterns=$(grep -v '^#' "$gitignore_template" | grep -v '^[[:space:]]*$' | sed 's/#.*//' | sed 's/[[:space:]]*$//')
@@ -670,6 +736,46 @@ else
 fi
 
 log_migration "Phase 9 complete: legacy worktree-locks cleanup done"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase 10: Migrate or remove directories that moved to external storage
+# ──────────────────────────────────────────────────────────────────────────────
+
+log_migration "Phase 10: Migrate cross-session directories and delete stale session-scoped dirs"
+
+config_dir="${CLAUDE_CONFIG_DIR:-${HOME}/.config/claude}"
+encoded_project=$(echo "${CLAUDE_PROJECT_DIR:-$(pwd)}" | sed 's/[\/.]/-/g')
+project_cat_dir="${config_dir}/projects/${encoded_project}/cat"
+
+# Move cross-session directories to external storage
+for dir_name in locks worktrees; do
+    src_dir=".claude/cat/${dir_name}"
+    dst_dir="${project_cat_dir}/${dir_name}"
+
+    if [[ -d "$src_dir" ]]; then
+        log_migration "  Moving ${src_dir} → ${dst_dir}"
+        mkdir -p "$dst_dir"
+        # Move all contents including dotfiles; find does nothing if directory is empty
+        find "$src_dir" -maxdepth 1 -mindepth 1 -exec mv -t "$dst_dir/" {} +
+        rm -rf "$src_dir"
+        log_migration "  Done: ${dir_name} moved to external storage"
+    else
+        log_migration "  ${src_dir} not present - skipping"
+    fi
+done
+
+# Delete session-scoped directories (always stale after migration)
+for dir_name in sessions verify e2e-config-test; do
+    src_dir=".claude/cat/${dir_name}"
+    if [[ -d "$src_dir" ]]; then
+        rm -rf "$src_dir"
+        log_migration "  Deleted stale session-scoped dir: ${src_dir}"
+    else
+        log_migration "  ${src_dir} not present - skipping"
+    fi
+done
+
+log_migration "Phase 10 complete"
 
 log_success "Migration to 2.1 completed"
 exit 0
