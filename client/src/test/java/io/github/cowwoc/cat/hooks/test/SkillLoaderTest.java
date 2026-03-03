@@ -2632,9 +2632,8 @@ Full skill content for agent test
         doesNotContain("Full skill content for agent test");
 
       // Verify that marker files are at different paths for different agents
-      Path configDir = scope.getClaudeConfigDir();
-      Path marker1 = configDir.resolve(SkillLoader.PROJECTS_DIR + "/" + agentId1 + "/skills-loaded");
-      Path marker2 = configDir.resolve(SkillLoader.PROJECTS_DIR + "/" + agentId2 + "/skills-loaded");
+      Path marker1 = scope.getSessionBasePath().resolve(agentId1 + "/skills-loaded");
+      Path marker2 = scope.getSessionBasePath().resolve(agentId2 + "/skills-loaded");
 
       requireThat(Files.exists(marker1), "marker1Exists").isTrue();
       requireThat(Files.exists(marker2), "marker2Exists").isTrue();

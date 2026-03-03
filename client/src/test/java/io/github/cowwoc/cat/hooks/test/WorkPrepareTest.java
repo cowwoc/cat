@@ -513,7 +513,7 @@ public class WorkPrepareTest
       GitCommands.runGit(projectDir, "commit", "-m", "Add issue");
 
       // Create a lock file owned by a different session with recent timestamp (non-stale)
-      Path locksDir = projectDir.resolve(".claude").resolve("cat").resolve("locks");
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
       Files.createDirectories(locksDir);
       String otherSession = UUID.randomUUID().toString();
       long recentTimestamp = Instant.now().getEpochSecond();
@@ -1260,7 +1260,7 @@ public class WorkPrepareTest
         worktreePath1 = null;
       }
       // Clean up the lock file for the bare name issue
-      Path locksDir = projectDir.resolve(".claude").resolve("cat").resolve("locks");
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
       Path lockFile = locksDir.resolve("2.1-fix-bug.lock");
       if (Files.exists(lockFile))
         Files.delete(lockFile);

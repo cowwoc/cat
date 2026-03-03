@@ -57,12 +57,25 @@ public interface JvmScope extends AutoCloseable
   String getClaudeSessionId();
 
   /**
-   * Returns the Claude config directory (typically {@code ~/.claude}).
+   * Returns the Claude config directory.
+   * <p>
+   * Reads the {@code CLAUDE_CONFIG_DIR} environment variable; defaults to {@code ~/.claude} if unset.
    *
    * @return the config directory path
    * @throws IllegalStateException if this scope is closed
    */
   Path getClaudeConfigDir();
+
+  /**
+   * Returns the encoded project directory name.
+   * <p>
+   * Applies the Claude Code project directory encoding: replaces {@code /} and {@code .} with {@code -}.
+   * For example, {@code /workspace} encodes to {@code -workspace}.
+   *
+   * @return the encoded project directory name
+   * @throws IllegalStateException if this scope is closed
+   */
+  String getEncodedProjectDir();
 
   /**
    * Returns the base directory for session JSONL files.
@@ -72,23 +85,43 @@ public interface JvmScope extends AutoCloseable
    * @return the session base directory path
    * @throws IllegalStateException if this scope is closed
    */
-  default Path getSessionBasePath()
-  {
-    return getClaudeConfigDir().resolve("projects/-workspace");
-  }
+  Path getSessionBasePath();
 
   /**
    * Returns the directory for the current session's tracking files.
    * <p>
-   * Located at {@code ${CLAUDE_CONFIG_DIR}/projects/-workspace/{sessionId}/}.
+   * Located at {@code {claudeConfigDir}/projects/{encodedProjectDir}/{sessionId}/}.
    *
    * @return the session directory path
    * @throws IllegalStateException if this scope is closed
    */
-  default Path getSessionDirectory()
-  {
-    return getSessionBasePath().resolve(getClaudeSessionId());
-  }
+  Path getSessionDirectory();
+
+  /**
+   * Returns the cross-session project CAT directory.
+   * <p>
+   * Located at {@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/}, where {@code {encodedProjectDir}} is the
+   * project directory path with {@code /} and {@code .} replaced by {@code -}.
+   * <p>
+   * This directory stores cross-session files such as {@code locks/} and {@code worktrees/}.
+   *
+   * @return the project CAT directory path
+   * @throws IllegalStateException if this scope is closed
+   */
+  Path getProjectCatDir();
+
+  /**
+   * Returns the per-session CAT directory.
+   * <p>
+   * Located at {@code {claudeConfigDir}/projects/{encodedProjectDir}/{sessionId}/cat/}, where
+   * {@code {encodedProjectDir}} is the project directory path with {@code /} and {@code .} replaced by {@code -}.
+   * <p>
+   * This directory stores session-scoped files such as {@code verify/} and {@code e2e-config-test/}.
+   *
+   * @return the session CAT directory path
+   * @throws IllegalStateException if this scope is closed
+   */
+  Path getSessionCatDir();
 
   /**
    * Returns the path to the Claude environment file.
@@ -169,11 +202,7 @@ public interface JvmScope extends AutoCloseable
    *
    * @throws IllegalStateException if this scope is closed
    */
-  default void ensureOpen()
-  {
-    if (isClosed())
-      throw new IllegalStateException("this scope is closed");
-  }
+  void ensureOpen();
 
   /**
    * Closes this scope and releases any resources.

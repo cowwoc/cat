@@ -233,7 +233,8 @@ if [[ -f "$(git rev-parse --git-common-dir)/worktrees/$(basename "$PWD")/cat-bra
   IN_WORKTREE=true
 else
   # Check for active worktrees
-  ACTIVE_WORKTREE=$(find "${CLAUDE_PROJECT_DIR}/.claude/cat/worktrees" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | head -1)
+  source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
+  ACTIVE_WORKTREE=$(find "${WORKTREES_DIR}" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | head -1)
   if [[ -n "$ACTIVE_WORKTREE" ]]; then
     COMMIT_DIR="$ACTIVE_WORKTREE"
     IN_WORKTREE=true

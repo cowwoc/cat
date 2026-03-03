@@ -35,6 +35,11 @@ Java source code (`src/main/java/`) — there are no compiled binaries in `/work
 relative paths like `plugin/skills/` instead of absolute paths like `/workspace/plugin/`. Absolute paths to
 `/workspace/` bypass worktree isolation and modify the main workspace instead.
 
+**All code changes require a worktree (M453):** Any modification to `plugin/` or `client/` source files — including
+user-requested "direct fix" changes — must be made inside an issue worktree, never directly in the main workspace.
+When a user asks for a "direct fix", create a minimal single-commit worktree branch rather than editing `/workspace/`
+directly. The `EnforceWorktreePathIsolation` hook blocks edits to the main workspace when an active worktree exists.
+
 ## Skill Loading
 
 Before creating, modifying, or debugging skills or agent `skills:` frontmatter, read `plugin/concepts/skill-loading.md`.

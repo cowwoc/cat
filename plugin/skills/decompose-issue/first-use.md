@@ -53,9 +53,10 @@ cat "${ISSUE_DIR}/PLAN.md"
 cat "${ISSUE_DIR}/STATE.md"
 
 # If subagent exists, check its progress
-if [ -d ".claude/cat/worktrees/${ISSUE}-sub-${UUID}" ]; then
+source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
+if [ -d "${WORKTREES_DIR}/${ISSUE}-sub-${UUID}" ]; then
   # Review commits made
-  git -C ".claude/cat/worktrees/${ISSUE}-sub-${UUID}" log --oneline origin/HEAD..HEAD
+  git -C "${WORKTREES_DIR}/${ISSUE}-sub-${UUID}" log --oneline origin/HEAD..HEAD
 fi
 ```
 

@@ -62,7 +62,7 @@ public final class PreToolUseHook implements HookHandler
     requireThat(scope, "scope").isNotNull();
     this.handlers = List.of(
       new BlockLockManipulation(),
-      new BlockMainRebase(),
+      new BlockMainRebase(scope),
       new BlockMergeCommits(),
       new BlockReflogDestruction(),
       new BlockUnsafeRemoval(scope),

@@ -166,15 +166,15 @@ public class EnforcePluginFileIsolationTest
     Path mainDir = TestUtils.createTempGitRepo("v2.1");
     try
     {
-      Path worktreesDir = mainDir.resolve(".claude/cat/worktrees");
-      Files.createDirectories(worktreesDir);
-
-      Path worktreeDir = TestUtils.createWorktree(mainDir, worktreesDir, "2.1-test-task");
-      try
+      try (JvmScope scope = new TestJvmScope(mainDir, mainDir))
       {
-        createCatBranchPointFile(worktreeDir);
-        try (JvmScope scope = new TestJvmScope())
+        Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+        Files.createDirectories(worktreesDir);
+
+        Path worktreeDir = TestUtils.createWorktree(mainDir, worktreesDir, "2.1-test-task");
+        try
         {
+          createCatBranchPointFile(worktreeDir);
           EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
           JsonMapper mapper = scope.getJsonMapper();
           ObjectNode input = mapper.createObjectNode();
@@ -184,11 +184,11 @@ public class EnforcePluginFileIsolationTest
 
           requireThat(result.blocked(), "blocked").isFalse();
         }
-      }
-      finally
-      {
-        TestUtils.runGit(mainDir, "worktree", "remove", "--force", worktreeDir.toString());
-        TestUtils.deleteDirectoryRecursively(worktreeDir);
+        finally
+        {
+          TestUtils.runGit(mainDir, "worktree", "remove", "--force", worktreeDir.toString());
+          TestUtils.deleteDirectoryRecursively(worktreeDir);
+        }
       }
     }
     finally

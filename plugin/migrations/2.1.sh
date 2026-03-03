@@ -21,8 +21,8 @@ set -euo pipefail
 #    "## Entry Gate" / "## Exit Gate" → "## Pre-conditions" / "## Post-conditions"
 #    "## Exit Gate Tasks" → "## Post-conditions"
 # 5. Rename "curiosity" config key to "effort" in existing cat-config.json files
-# 6. Create .claude/cat/.gitignore with patterns for temporary files if missing;
-#    if it exists, add any missing patterns (/worktrees/, /locks/, /verify/)
+# 6. Create .claude/cat/.gitignore with patterns for local config files if missing;
+#    if it exists, add any missing patterns and remove stale ones (/worktrees/, /locks/, /verify/)
 # 7. Migrate ## Execution Steps → ## Execution Waves in PLAN.md files
 #    (numbered steps become bullet items under ### Wave 1)
 
@@ -460,7 +460,7 @@ else
 fi
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Phase 6: Create or update .claude/cat/.gitignore with patterns for temp files
+# Phase 6: Create or update .claude/cat/.gitignore with patterns for local config
 # ──────────────────────────────────────────────────────────────────────────────
 
 log_migration "Phase 6: Create or update .claude/cat/.gitignore"
@@ -474,15 +474,28 @@ if [[ ! -f "$gitignore_template" ]]; then
     exit 1
 fi
 
+# Remove stale patterns for directories that moved to external storage
+stale_patterns=("/worktrees/" "/locks/" "/verify/")
+
 if [[ ! -f "$gitignore_file" ]]; then
     log_migration "No .gitignore found - copying template"
     cp "$gitignore_template" "$gitignore_file"
-    log_migration "Phase 5 complete: created $gitignore_file"
+    log_migration "Phase 6 complete: created $gitignore_file"
 else
-    log_migration ".gitignore exists - checking for missing patterns"
+    log_migration ".gitignore exists - checking for missing/stale patterns"
     phase6_changed=0
 
-    # Extract patterns from template (non-comment, non-empty lines)
+    # Remove stale patterns (directories moved to external storage)
+    for stale in "${stale_patterns[@]}"; do
+        if grep -qF "$stale" "$gitignore_file" 2>/dev/null; then
+            # Remove the pattern line and any comment line immediately above it
+            sed -i "/${stale//\//\\/}/d" "$gitignore_file"
+            log_migration "  Removed stale pattern: $stale"
+            ((phase6_changed++)) || true
+        fi
+    done
+
+    # Add any missing patterns from template
     patterns=$(grep -v '^#' "$gitignore_template" | grep -v '^[[:space:]]*$' | sed 's/#.*//' | sed 's/[[:space:]]*$//')
 
     while IFS= read -r pattern; do
@@ -495,9 +508,9 @@ else
     done <<< "$patterns"
 
     if [[ "$phase6_changed" -eq 0 ]]; then
-        log_migration "Phase 6 complete: all patterns already present"
+        log_migration "Phase 6 complete: all patterns up to date"
     else
-        log_migration "Phase 6 complete: added $phase6_changed missing patterns"
+        log_migration "Phase 6 complete: updated $phase6_changed patterns"
     fi
 fi
 
@@ -631,6 +644,37 @@ else
         log_migration "No reviewThreshold key found - skipping phase 8"
     fi
 fi
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase 9: Remove legacy worktree-locks directory
+# ──────────────────────────────────────────────────────────────────────────────
+
+log_migration "Phase 9: Remove legacy worktree-locks directory"
+
+# Old in-project location
+old_wt_locks=".claude/cat/worktree-locks"
+if [[ -d "$old_wt_locks" ]]; then
+    rm -rf "$old_wt_locks"
+    log_migration "  Removed legacy worktree-locks from: $old_wt_locks"
+else
+    log_migration "  No legacy worktree-locks at: $old_wt_locks"
+fi
+
+# External storage location
+if [[ -z "${CLAUDE_CONFIG_DIR:-}" ]]; then
+    log_migration "  CLAUDE_CONFIG_DIR not set - skipping external storage cleanup"
+else
+    encoded_project=$(pwd | sed 's/[\/.]/-/g')
+    ext_wt_locks="${CLAUDE_CONFIG_DIR}/projects/${encoded_project}/cat/worktree-locks"
+    if [[ -d "$ext_wt_locks" ]]; then
+        rm -rf "$ext_wt_locks"
+        log_migration "  Removed legacy worktree-locks from external storage: $ext_wt_locks"
+    else
+        log_migration "  No legacy worktree-locks in external storage"
+    fi
+fi
+
+log_migration "Phase 9 complete: legacy worktree-locks cleanup done"
 
 log_success "Migration to 2.1 completed"
 exit 0

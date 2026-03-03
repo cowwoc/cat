@@ -166,19 +166,22 @@ if (!SESSION_ID_PATTERN.matcher(value).matches()) {
 - Security settings (wrong default = vulnerability)
 - Any value that affects data integrity
 
-## Data Migrations
+## No Backwards Compatibility
 
-**Policy:** We do NOT maintain backward compatibility when a migration script updates the data structure.
+**Policy:** Code in terms of the latest design. Do NOT add backwards-compatibility shims, legacy fallbacks, or
+dual-format support. When a data structure, file layout, or API changes, add migration logic to `plugin/migrations/`
+and write all code against the new design only.
 
 **Rationale:**
 - Backward compatibility code adds complexity and maintenance burden
 - CAT is a developer tool where users can re-run migrations easily
 - Stale data from old formats should be cleaned up, not silently supported forever
+- Legacy support obscures the current design and makes future changes harder
 
 **Migration pattern:**
-1. Update all writers to use the new format
-2. Update all readers to expect ONLY the new format
-3. Provide a migration script to convert existing data
+1. Add a migration script to `plugin/migrations/` that converts old data to the new format
+2. Update all writers to use the new format
+3. Update all readers to expect ONLY the new format
 4. Document the change in the issue's PLAN.md
 
 **Idempotency:** Migration scripts MUST be idempotent. Running a migration consecutively must be a no-op on the 2nd+
@@ -189,6 +192,8 @@ adding a field that already exists).
 - Add "legacy format" branches in readers
 - Keep old writers alongside new writers
 - Silently fall back to parsing old formats
+- Support old file paths or directory structures alongside new ones
+- Add compatibility layers that translate between old and new APIs
 
 ## Documentation Style
 

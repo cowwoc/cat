@@ -193,22 +193,21 @@
       "correct_behavior": "Skill tool loads content synchronously into agent context in same conversation turn. After receiving skill content, agent immediately executes skill steps within conversation flow - no waiting for background processes."
     },
     {
-      "id": "M452",
-      "timestamp": "2026-03-02T19:21:58Z",
-      "category": "misleading_documentation",
-      "description": "Learn subagent reported priming_found: false for a mistake where priming WAS present — the phrase 'Your working directory defaults to /workspace (main worktree)' in work-with-issue/first-use.md anchored /workspace as the cognitive default, causing a fix subagent to fall back to /workspace when its worktree path became unavailable",
-      "root_cause": "DOCUMENTATION PRIMING: work-with-issue/first-use.md delegation prompts at lines 247 and 341 stated 'Your working directory defaults to /workspace (main worktree)' before instructing the subagent to cd to WORKTREE_PATH. This established /workspace as the named default CWD in the subagent's context. When the worktree path became unavailable, the subagent fell back to the primed default /workspace — which felt 'correct' because it was explicitly named as the default. The learn subagent's superficial investigation failed to connect the priming language to the fallback behavior.",
-      "rca_method": "C",
-      "rca_method_name": "causal-barrier",
-      "prevention_type": "skill",
-      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue/first-use.md",
+      "id": "M453",
+      "timestamp": "2026-03-02T22:10:00Z",
+      "category": "detection_gap",
+      "description": "Agent edited client/ source files directly in the main workspace (/workspace) instead of the issue worktree, because the user said 'direct fix' and the EnforceWorktreePathIsolation hook only blocks edits when the current session holds a lock — it did not block edits from a session that had no lock but an active worktree existed",
+      "root_cause": "HOOK GAP: EnforceWorktreePathIsolation.check() returned allow() when WorktreeContext.forSession() returned null (no lock for the current session). The hook was designed for the normal case where the editing session holds a lock, but did not handle the case where a separate session starts a 'direct fix' in the same project while a worktree is active. The lock file contained the session ID of the session that created the worktree, not the current session's ID, so the check found no context and allowed the edit.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/client/src/main/java/io/github/cowwoc/cat/hooks/write/EnforceWorktreePathIsolation.java",
       "pattern_keywords": [
-        "priming",
-        "working_directory",
-        "worktree_fallback",
-        "cognitive_anchor",
-        "workspace_default",
-        "navigation_failure"
+        "direct_fix",
+        "worktree_isolation",
+        "hook_gap",
+        "main_workspace_edit",
+        "session_lock_mismatch"
       ],
       "prevention_implemented": true,
       "prevention_verified": true,
@@ -218,7 +217,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Delegation prompts must not name /workspace as the default CWD. The correct framing is action-oriented: 'Before doing ANYTHING else, navigate to the worktree and verify the branch: cd ${WORKTREE_PATH}'. No default CWD should be named, preventing cognitive anchoring on /workspace as a fallback."
+      "correct_behavior": "All plugin/ and client/ code changes — including user-requested 'direct fix' changes — must be made in an issue worktree. The EnforceWorktreePathIsolation hook now falls back to scanning all active worktrees when no session lock exists, blocking edits to paths that any active worktree covers."
     }
   ]
 }

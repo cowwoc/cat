@@ -63,14 +63,13 @@ public final class CheckUpdateAvailable implements SessionStartHandler
   public Result handle(HookInput input)
   {
     requireThat(input, "input").isNotNull();
-    Path projectDir = scope.getClaudeProjectDir();
     Path pluginRoot = scope.getClaudePluginRoot();
 
     try
     {
       String currentVersion = VersionUtils.getPluginVersion(pluginRoot);
 
-      Path cacheDir = projectDir.resolve(".claude/cat/backups/update-check");
+      Path cacheDir = scope.getProjectCatDir().resolve("cache/update-check");
       Path cacheFile = cacheDir.resolve("latest_version.json");
 
       String latestVersion = getLatestVersion(cacheFile, cacheDir);

@@ -7,6 +7,10 @@
 # Common CAT environment setup.
 # Source this script to get validated CAT directory variables.
 #
+# Requires:
+#   CLAUDE_CONFIG_DIR  - Claude's config directory
+#   CLAUDE_PROJECT_DIR - the project directory
+#
 # Provides:
 #   ENCODED_PROJECT_DIR - project path with / and . replaced by -
 #   PROJECT_CAT_DIR     - external CAT storage path for this project

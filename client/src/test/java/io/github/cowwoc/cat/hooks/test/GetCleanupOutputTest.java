@@ -1120,19 +1120,20 @@ public class GetCleanupOutputTest
     try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
+      String worktreePath = scope.getProjectCatDir().resolve("worktrees").resolve("2.1-issue-name").toString();
       String json = """
         {
           "handler": "cleanup",
           "context": {
             "phase": "plan",
             "locks_to_remove": ["2.1-issue-name"],
-            "worktrees_to_remove": [{"path": "/workspace/.claude/cat/worktrees/2.1-issue-name",
+            "worktrees_to_remove": [{"path": "%s",
               "branch": "2.1-issue-name"}],
             "branches_to_remove": ["2.1-issue-name"],
             "stale_remotes": []
           }
         }
-        """;
+        """.formatted(worktreePath);
 
       String result = handler.formatPlanFromJson(json);
 

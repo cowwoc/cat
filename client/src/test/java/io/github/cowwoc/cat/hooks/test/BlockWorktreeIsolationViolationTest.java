@@ -24,6 +24,9 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * the project directory but outside the active worktree, while allowing writes to paths
  * inside the worktree, outside the project directory, or when no session lock exists.
  * <p>
+ * Lock and worktree files are created via {@link JvmScope#getProjectCatDir()} to match
+ * the external CAT storage location used by the production code.
+ * <p>
  * Each test is self-contained with its own temporary directory structure.
  */
 public final class BlockWorktreeIsolationViolationTest
@@ -32,16 +35,17 @@ public final class BlockWorktreeIsolationViolationTest
   private static final String ISSUE_ID = "2.1-test-task";
 
   /**
-   * Creates a lock file associating {@code sessionId} with {@code issueId} under {@code projectDir}.
+   * Creates a lock file associating {@code sessionId} with {@code issueId} using the scope's
+   * project CAT directory.
    *
-   * @param projectDir the project root directory
+   * @param scope the JVM scope providing the lock directory path
    * @param issueId the issue identifier (becomes the lock filename stem)
    * @param sessionId the session ID to embed in the lock content
    * @throws IOException if the lock file cannot be written
    */
-  private static void writeLockFile(Path projectDir, String issueId, String sessionId) throws IOException
+  private static void writeLockFile(JvmScope scope, String issueId, String sessionId) throws IOException
   {
-    Path lockDir = projectDir.resolve(".claude").resolve("cat").resolve("locks");
+    Path lockDir = scope.getProjectCatDir().resolve("locks");
     Files.createDirectories(lockDir);
     String content = """
       {"session_id": "%s", "worktrees": {}, "created_at": 1000000, "created_iso": "2026-01-01T00:00:00Z"}
@@ -50,16 +54,16 @@ public final class BlockWorktreeIsolationViolationTest
   }
 
   /**
-   * Creates the worktree directory for the given issue ID under {@code projectDir}.
+   * Creates the worktree directory for the given issue ID using the scope's project CAT directory.
    *
-   * @param projectDir the project root directory
+   * @param scope the JVM scope providing the worktree base path
    * @param issueId the issue identifier
    * @return the created worktree directory path
    * @throws IOException if the directory cannot be created
    */
-  private static Path createWorktreeDir(Path projectDir, String issueId) throws IOException
+  private static Path createWorktreeDir(JvmScope scope, String issueId) throws IOException
   {
-    Path worktreeDir = projectDir.resolve(".claude").resolve("cat").resolve("worktrees").resolve(issueId);
+    Path worktreeDir = scope.getProjectCatDir().resolve("worktrees").resolve(issueId);
     Files.createDirectories(worktreeDir);
     return worktreeDir;
   }
@@ -104,7 +108,7 @@ public final class BlockWorktreeIsolationViolationTest
     Path projectDir = Files.createTempDirectory("bwiv-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       String outsidePath = projectDir.resolve("plugin/file.txt").toString();
       String command = "echo \"text\" > " + outsidePath;
@@ -130,8 +134,8 @@ public final class BlockWorktreeIsolationViolationTest
     Path projectDir = Files.createTempDirectory("bwiv-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
-      Path worktreeDir = createWorktreeDir(projectDir, ISSUE_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      Path worktreeDir = createWorktreeDir(scope, ISSUE_ID);
       String insidePath = worktreeDir.resolve("plugin/file.txt").toString();
       String command = "echo \"text\" > " + insidePath;
 
@@ -160,8 +164,8 @@ public final class BlockWorktreeIsolationViolationTest
     Path projectDir = Files.createTempDirectory("bwiv-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
-      Path worktreeDir = createWorktreeDir(projectDir, ISSUE_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      Path worktreeDir = createWorktreeDir(scope, ISSUE_ID);
       Path outsidePath = projectDir.resolve("plugin/file.txt");
       String command = "echo \"text\" > " + outsidePath;
 
@@ -190,8 +194,8 @@ public final class BlockWorktreeIsolationViolationTest
     Path projectDir = Files.createTempDirectory("bwiv-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
-      createWorktreeDir(projectDir, ISSUE_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      createWorktreeDir(scope, ISSUE_ID);
       Path outsidePath = projectDir.resolve("plugin/file.txt");
       String command = "echo \"text\" >> " + outsidePath;
 
@@ -218,8 +222,8 @@ public final class BlockWorktreeIsolationViolationTest
     Path projectDir = Files.createTempDirectory("bwiv-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
-      createWorktreeDir(projectDir, ISSUE_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      createWorktreeDir(scope, ISSUE_ID);
       Path outsidePath = projectDir.resolve("plugin/file.txt");
       String command = "cat source.txt | tee " + outsidePath;
 
@@ -246,8 +250,8 @@ public final class BlockWorktreeIsolationViolationTest
     Path projectDir = Files.createTempDirectory("bwiv-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
-      createWorktreeDir(projectDir, ISSUE_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      createWorktreeDir(scope, ISSUE_ID);
       Path outsidePath = projectDir.resolve("plugin/file.txt");
       String command = "echo \"text\" | tee -a " + outsidePath;
 
@@ -274,8 +278,8 @@ public final class BlockWorktreeIsolationViolationTest
     Path projectDir = Files.createTempDirectory("bwiv-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
-      Path worktreeDir = createWorktreeDir(projectDir, ISSUE_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      Path worktreeDir = createWorktreeDir(scope, ISSUE_ID);
       String insidePath = worktreeDir.resolve("plugin/file.txt").toString();
       String command = "cat source.txt | tee " + insidePath;
 
@@ -301,8 +305,8 @@ public final class BlockWorktreeIsolationViolationTest
     Path projectDir = Files.createTempDirectory("bwiv-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
-      createWorktreeDir(projectDir, ISSUE_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      createWorktreeDir(scope, ISSUE_ID);
       Path sourcePath = Path.of("/tmp/source.txt");
       Path destPath = projectDir.resolve("plugin/file.txt");
       String command = "cp " + sourcePath + " " + destPath;
@@ -330,8 +334,8 @@ public final class BlockWorktreeIsolationViolationTest
     Path projectDir = Files.createTempDirectory("bwiv-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
-      Path worktreeDir = createWorktreeDir(projectDir, ISSUE_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      Path worktreeDir = createWorktreeDir(scope, ISSUE_ID);
       Path sourcePath = Path.of("/tmp/source.txt");
       Path destPath = worktreeDir.resolve("plugin/file.txt");
       String command = "cp " + sourcePath + " " + destPath;
@@ -358,8 +362,8 @@ public final class BlockWorktreeIsolationViolationTest
     Path projectDir = Files.createTempDirectory("bwiv-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
-      createWorktreeDir(projectDir, ISSUE_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      createWorktreeDir(scope, ISSUE_ID);
       Path sourcePath = Path.of("/tmp/source.txt");
       Path destPath = projectDir.resolve("plugin/file.txt");
       String command = "mv " + sourcePath + " " + destPath;
@@ -387,8 +391,8 @@ public final class BlockWorktreeIsolationViolationTest
     Path projectDir = Files.createTempDirectory("bwiv-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
-      Path worktreeDir = createWorktreeDir(projectDir, ISSUE_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      Path worktreeDir = createWorktreeDir(scope, ISSUE_ID);
       Path sourcePath = Path.of("/tmp/source.txt");
       Path destPath = worktreeDir.resolve("plugin/file.txt");
       String command = "mv " + sourcePath + " " + destPath;
@@ -418,8 +422,8 @@ public final class BlockWorktreeIsolationViolationTest
     Path projectDir = Files.createTempDirectory("bwiv-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
-      createWorktreeDir(projectDir, ISSUE_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      createWorktreeDir(scope, ISSUE_ID);
       String command = "echo \"text\" > /tmp/output.txt";
 
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
@@ -448,8 +452,8 @@ public final class BlockWorktreeIsolationViolationTest
     Path projectDir = Files.createTempDirectory("bwiv-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
-      createWorktreeDir(projectDir, ISSUE_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      createWorktreeDir(scope, ISSUE_ID);
       // Working directory is projectDir; relative path resolves to projectDir/plugin/file.txt
       String command = "echo \"text\" > plugin/file.txt";
 
@@ -476,8 +480,8 @@ public final class BlockWorktreeIsolationViolationTest
     Path projectDir = Files.createTempDirectory("bwiv-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
-      createWorktreeDir(projectDir, ISSUE_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      createWorktreeDir(scope, ISSUE_ID);
       Path outsidePath = projectDir.resolve("plugin/file.txt");
       String command = "echo \"text\" | tee --append " + outsidePath;
 
@@ -506,8 +510,8 @@ public final class BlockWorktreeIsolationViolationTest
     Path projectDir = Files.createTempDirectory("bwiv-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
-      Path worktreeDir = createWorktreeDir(projectDir, ISSUE_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      Path worktreeDir = createWorktreeDir(scope, ISSUE_ID);
       String insidePath = worktreeDir.resolve("plugin/file1.txt").toString();
       Path outsidePath = projectDir.resolve("plugin/file2.txt");
       String command = "echo x | tee " + insidePath + " " + outsidePath;
@@ -535,8 +539,8 @@ public final class BlockWorktreeIsolationViolationTest
     Path projectDir = Files.createTempDirectory("bwiv-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
-      Path worktreeDir = createWorktreeDir(projectDir, ISSUE_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      Path worktreeDir = createWorktreeDir(scope, ISSUE_ID);
       String insidePath1 = worktreeDir.resolve("plugin/file1.txt").toString();
       String insidePath2 = worktreeDir.resolve("plugin/file2.txt").toString();
       String command = "echo x | tee " + insidePath1 + " " + insidePath2;
@@ -565,12 +569,11 @@ public final class BlockWorktreeIsolationViolationTest
     Path projectDir = Files.createTempDirectory("bwiv-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
-      createWorktreeDir(projectDir, ISSUE_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      Path worktreeDir = createWorktreeDir(scope, ISSUE_ID);
       String command = "echo \"text\" > $CLAUDE_PROJECT_DIR/plugin/file.txt";
 
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
-      Path worktreeDir = projectDir.resolve(".claude").resolve("cat").resolve("worktrees").resolve(ISSUE_ID);
       BashHandler.Result result = handler.check(command, projectDir.toString(), null, null, SESSION_ID);
 
       requireThat(result.blocked(), "blocked").isTrue();
@@ -597,12 +600,11 @@ public final class BlockWorktreeIsolationViolationTest
     Path projectDir = Files.createTempDirectory("bwiv-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
-      createWorktreeDir(projectDir, ISSUE_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      Path worktreeDir = createWorktreeDir(scope, ISSUE_ID);
       String command = "echo \"text\" > `echo /some/path`";
 
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
-      Path worktreeDir = projectDir.resolve(".claude").resolve("cat").resolve("worktrees").resolve(ISSUE_ID);
       BashHandler.Result result = handler.check(command, projectDir.toString(), null, null, SESSION_ID);
 
       requireThat(result.blocked(), "blocked").isTrue();
@@ -629,8 +631,8 @@ public final class BlockWorktreeIsolationViolationTest
     Path projectDir = Files.createTempDirectory("bwiv-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
-      createWorktreeDir(projectDir, ISSUE_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      createWorktreeDir(scope, ISSUE_ID);
       Path outsidePath = projectDir.resolve("plugin/path with spaces/file.txt");
       String command = "echo \"text\" > \"" + outsidePath + "\"";
 
@@ -659,8 +661,8 @@ public final class BlockWorktreeIsolationViolationTest
     Path projectDir = Files.createTempDirectory("bwiv-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
-      createWorktreeDir(projectDir, ISSUE_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      createWorktreeDir(scope, ISSUE_ID);
       String command = "cat " + projectDir.resolve("plugin/file.txt") + " | grep pattern";
 
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
@@ -688,8 +690,8 @@ public final class BlockWorktreeIsolationViolationTest
     Path projectDir = Files.createTempDirectory("bwiv-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
-      Path worktreeDir = createWorktreeDir(projectDir, ISSUE_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      Path worktreeDir = createWorktreeDir(scope, ISSUE_ID);
       Path outsidePath = projectDir.resolve("plugin/file.txt");
       String command = "echo \"text\" > " + outsidePath;
 

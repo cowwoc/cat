@@ -106,6 +106,7 @@ public final class IssueDiscovery
    */
   private static final Pattern EXIT_ISSUE_PATTERN = Pattern.compile("^- \\[issue\\] (.+)$");
 
+  private final JvmScope scope;
   private final Path projectDir;
   private final Path issuesDir;
   private final IssueLock issueLock;
@@ -127,12 +128,11 @@ public final class IssueDiscovery
    * Creates a new issue discovery instance.
    *
    * @param scope the JVM scope providing configuration and services
-   * @throws NullPointerException if {@code scope} is null
    * @throws IllegalArgumentException if the project directory is not a valid CAT project
    */
   public IssueDiscovery(JvmScope scope)
   {
-    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
     this.projectDir = scope.getClaudeProjectDir();
     Path catDir = projectDir.resolve(".claude").resolve("cat");
     if (!Files.isDirectory(catDir))
@@ -1517,7 +1517,7 @@ public final class IssueDiscovery
    */
   private Path getWorktreePath(String issueId)
   {
-    return projectDir.resolve(".claude").resolve("cat").resolve("worktrees").resolve(issueId);
+    return scope.getProjectCatDir().resolve("worktrees").resolve(issueId);
   }
 
   /**

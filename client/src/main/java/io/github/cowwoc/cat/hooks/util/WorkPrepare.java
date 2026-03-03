@@ -562,7 +562,7 @@ public final class WorkPrepare
         ++closedCount;
     }
 
-    List<Map<String, Object>> lockedIssues = findLockedIssues(projectDir);
+    List<Map<String, Object>> lockedIssues = findLockedIssues();
 
     return new DiagnosticInfo(blockedIssues, lockedIssues, closedCount, totalCount, circularDependencies);
   }
@@ -992,14 +992,13 @@ public final class WorkPrepare
   /**
    * Finds locked issues by scanning the locks directory.
    *
-   * @param projectDir the project root directory
    * @return a list of locked issue maps with issue_id and locked_by fields
    * @throws IOException if file operations fail
    */
-  private List<Map<String, Object>> findLockedIssues(Path projectDir) throws IOException
+  private List<Map<String, Object>> findLockedIssues() throws IOException
   {
     List<Map<String, Object>> lockedIssues = new ArrayList<>();
-    Path locksDir = projectDir.resolve(".claude").resolve("cat").resolve("locks");
+    Path locksDir = scope.getProjectCatDir().resolve("locks");
 
     if (!Files.isDirectory(locksDir))
       return lockedIssues;
@@ -1134,8 +1133,7 @@ public final class WorkPrepare
    */
   private Path createWorktree(Path projectDir, String issueBranch) throws IOException
   {
-    Path worktreePath = projectDir.resolve(".claude").resolve("cat").resolve("worktrees").
-      resolve(issueBranch);
+    Path worktreePath = scope.getProjectCatDir().resolve("worktrees").resolve(issueBranch);
 
     // Check if branch already exists (stale from previous session)
     try

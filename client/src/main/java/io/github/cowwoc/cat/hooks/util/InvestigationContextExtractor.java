@@ -59,28 +59,22 @@ public final class InvestigationContextExtractor
   /**
    * Main method for command-line execution.
    * <p>
-   * Extracts investigation context from a session JSONL file and prints the JSON result to stdout.
+   * Resolves the session file path from the scope and extracts investigation context, printing the JSON result
+   * to stdout. All command-line arguments are treated as keywords for filtering Bash commands.
    *
-   * @param args command-line arguments: {@code <session-file> [keyword1 keyword2 ...]}
+   * @param args optional keyword arguments to filter Bash commands
    * @throws IOException if the operation fails
    */
   public static void main(String[] args) throws IOException
   {
-    if (args.length < 1)
-    {
-      System.err.println("""
-        {
-          "error": "Usage: extract-investigation-context <session-file> [keyword1 keyword2 ...]"
-        }""");
-      System.exit(1);
-    }
     try (MainJvmScope scope = new MainJvmScope())
     {
       InvestigationContextExtractor extractor = new InvestigationContextExtractor(scope);
+      Path sessionFile = scope.getSessionBasePath().resolve(scope.getClaudeSessionId() + ".jsonl");
       List<String> keywords = new ArrayList<>();
-      for (int i = 1; i < args.length; ++i)
-        keywords.add(args[i]);
-      JsonNode result = extractor.extract(Path.of(args[0]), keywords);
+      for (String arg : args)
+        keywords.add(arg);
+      JsonNode result = extractor.extract(sessionFile, keywords);
       System.out.println(scope.getJsonMapper().writeValueAsString(result));
     }
     catch (RuntimeException | AssertionError e)
