@@ -84,6 +84,8 @@ public final class GetConfigOutput implements SkillOutput
     String patience = config.getPatience().toString();
     String completionWorkflow = config.getString("completionWorkflow");
     String minSeverity = config.getMinSeverity().toString();
+    int fileWidth = config.getInt("fileWidth", 120);
+    int displayWidth = config.getInt("displayWidth", 120);
 
     return buildSimpleHeaderBox(
       "⚙️",
@@ -96,6 +98,8 @@ public final class GetConfigOutput implements SkillOutput
         "  ⏳ Patience: " + patience,
         "  🔀 Completion: " + completionWorkflow,
         "  📈 Min Severity: " + minSeverity,
+        "  📄 File Width: " + fileWidth,
+        "  🖥️ Display Width: " + displayWidth,
         ""));
   }
 
