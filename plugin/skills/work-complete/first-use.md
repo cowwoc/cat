@@ -11,4 +11,4 @@ Generate the Issue Complete box after a successful merge, discovering the next a
 - If output contains "**Next:**" followed by an issue ID → next issue found
 - If output contains "Scope Complete" → no next issue
 
-INVOKE: Skill("cat:get-output-agent", args="work-complete $0 $1")
+INVOKE: Skill("cat:get-output-agent", args="work-complete $1 $2")
