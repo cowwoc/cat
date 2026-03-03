@@ -1161,15 +1161,17 @@ public class HookEntryPointTest
   /**
    * Verifies that WriteEditHook uses case-insensitive matching for tool names.
    * <p>
-   * Uses a file path inside the current working directory so worktree isolation does not block it.
+   * Uses a temp directory path to avoid triggering EnforcePluginFileIsolation (which blocks
+   * paths containing "plugin" or "client").
    */
   @Test
   public void getWriteEditPretoolUsesCaseInsensitiveMatching() throws IOException
   {
+    Path tempDir = Files.createTempDirectory("test-write-hook-");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      String filePath = Path.of("").toAbsolutePath().resolve("test.txt").toString().
+      String filePath = tempDir.resolve("test.txt").toString().
         replace("\\", "\\\\");
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"write\", \"tool_input\": {\"file_path\": \"" + filePath + "\"}, " +
@@ -1183,20 +1185,26 @@ public class HookEntryPointTest
         doesNotContain("\"decision\" : \"block\"").
         doesNotContain("\"reason\"");
     }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
    * Verifies that WriteEditHook accepts Edit tool_name.
    * <p>
-   * Uses a file path inside the current working directory so worktree isolation does not block it.
+   * Uses a temp directory path to avoid triggering EnforcePluginFileIsolation (which blocks
+   * paths containing "plugin" or "client").
    */
   @Test
   public void getWriteEditPretoolAcceptsEditToolName() throws IOException
   {
+    Path tempDir = Files.createTempDirectory("test-write-hook-");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      String filePath = Path.of("").toAbsolutePath().resolve("test.txt").toString().
+      String filePath = tempDir.resolve("test.txt").toString().
         replace("\\", "\\\\");
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"" + filePath + "\", " +
@@ -1209,6 +1217,10 @@ public class HookEntryPointTest
       requireThat(result, "result").
         doesNotContain("\"decision\" : \"block\"").
         doesNotContain("\"reason\"");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -1309,18 +1321,20 @@ public class HookEntryPointTest
   /**
    * Verifies that WriteEditHook allows non-plugin file with warning.
    * <p>
-   * Test that non-plugin, non-allowed files on v2.1 produce non-blocking output from dispatcher
+   * Test that non-plugin, non-allowed files produce non-blocking output from dispatcher
    * (warning goes to stderr).
    * <p>
-   * Uses a file path inside the current working directory so worktree isolation does not block it.
+   * Uses a temp directory path to avoid triggering EnforcePluginFileIsolation (which blocks
+   * paths containing "plugin" or "client").
    */
   @Test
   public void getWriteEditPretoolAllowsNonPluginFileWithWarning() throws IOException
   {
+    Path tempDir = Files.createTempDirectory("test-write-hook-");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      String filePath = Path.of("").toAbsolutePath().resolve("some-new-source.java").toString().
+      String filePath = tempDir.resolve("some-new-source.java").toString().
         replace("\\", "\\\\");
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Write\", \"tool_input\": {\"file_path\": \"" + filePath + "\"}, " +
@@ -1333,6 +1347,10 @@ public class HookEntryPointTest
       requireThat(result, "result").
         doesNotContain("\"decision\" : \"block\"").
         doesNotContain("\"reason\"");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
