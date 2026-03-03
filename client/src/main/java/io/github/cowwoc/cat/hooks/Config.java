@@ -49,7 +49,8 @@ public final class Config
     defaults.put("verify", "changed");
     defaults.put("effort", "medium");
     defaults.put("patience", "high");
-    defaults.put("terminalWidth", 120);
+    defaults.put("fileWidth", 120);
+    defaults.put("displayWidth", 120);
     defaults.put("completionWorkflow", "merge");
     defaults.put("minSeverity", "low");
     defaults.put("license", "");

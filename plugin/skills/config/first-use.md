@@ -55,8 +55,8 @@ Show current values in descriptions using data from read-config step.
 - options:
   - label: "🐱 CAT Behavior"
     description: "Currently: {trust} · {verify} · {effort} · {patience}"
-  - label: "📏 Display Width"
-    description: "Currently: {terminalWidth || 120} characters"
+  - label: "📏 Width Settings"
+    description: "Currently: file={fileWidth || 120} · display={displayWidth || 120} characters"
   - label: "🔀 Completion Workflow"
     description: "Currently: {completionWorkflow || 'merge'}"
   - label: "📈 Min Severity"
@@ -185,9 +185,39 @@ Map: Low → `patience: "low"`, Medium → `patience: "medium"`, High → `patie
 
 </step>
 
-<step name="terminal-width">
+<step name="width-settings">
 
-**📏 Display Width selection:**
+**📏 Width Settings:**
+
+AskUserQuestion:
+- header: "Width Settings"
+- question: "Which width would you like to configure?"
+- options:
+  - label: "📄 File Width"
+    description: "Currently: {fileWidth || 120} — wrapping for content written to files (e.g., markdown docs)"
+  - label: "🖥️ Display Width"
+    description: "Currently: {displayWidth || 120} — wrapping for terminal rendering (e.g., diffs, status boxes)"
+  - label: "← Back"
+    description: "Return to main menu"
+
+**If File Width selected:**
+
+AskUserQuestion:
+- header: "File Width"
+- question: "What device are you primarily writing files on?"
+- options:
+  - label: "🖥️ Desktop/Laptop (Recommended)"
+    description: "120 characters - standard for wide monitors and markdown editors"
+  - label: "⚙️ Custom value"
+    description: "Enter a specific width (40-200)"
+  - label: "← Back"
+    description: "Return to width menu"
+
+Map selections:
+- Desktop/Laptop → `fileWidth: 120`
+- Custom → prompt for value, validate 40-200
+
+**If Display Width selected:**
 
 AskUserQuestion:
 - header: "Display Width"
@@ -200,18 +230,18 @@ AskUserQuestion:
   - label: "⚙️ Custom value"
     description: "Enter a specific width (40-200)"
   - label: "← Back"
-    description: "Return to main menu"
+    description: "Return to width menu"
 
-**Map selections:**
-- Desktop/Laptop → `terminalWidth: 120`
-- Mobile → `terminalWidth: 50`
+Map selections:
+- Desktop/Laptop → `displayWidth: 120`
+- Mobile → `displayWidth: 50`
 - Custom → prompt for value, validate 40-200
 
-**If Custom value selected:**
+**If Custom value selected (for either):**
 
 AskUserQuestion:
 - header: "Custom Width"
-- question: "Enter terminal width (40-200):"
+- question: "Enter width (40-200):"
 - options: ["← Back"]
 
 Validate input is a number between 40-200. If invalid, show error and re-prompt.
@@ -219,15 +249,25 @@ Validate input is a number between 40-200. If invalid, show error and re-prompt.
 **Update config using the Write tool:**
 
 1. Read the current `.claude/cat/cat-config.json` content using the Read tool.
-2. Merge the new `terminalWidth` integer value into the existing config object (update or add the key).
+2. Merge the new `fileWidth` or `displayWidth` integer value into the existing config object (update or add the key).
 3. Write the complete updated JSON back using the Write tool.
 
-Example: if the current config has `{"trust": "medium"}` and the user selected "Custom" with value 100, write:
+Example: if the current config has `{"trust": "medium"}` and the user set displayWidth to 100, write:
 
 ```json
 {
   "trust": "medium",
-  "terminalWidth": 100
+  "displayWidth": 100
+}
+```
+
+Example: if the user also set fileWidth to 120, write:
+
+```json
+{
+  "trust": "medium",
+  "displayWidth": 100,
+  "fileWidth": 120
 }
 ```
 
@@ -494,6 +534,8 @@ INVOKE: Skill("cat:get-output-agent", args="config.no-changes")
 | `patience` | string | "high" | When to act on discoveries |
 | `completionWorkflow` | string | "merge" | Issue completion behavior (merge or PR) |
 | `minSeverity` | string | "low" | Minimum severity level for concerns to be visible at all |
+| `fileWidth` | integer | 120 | Line width for content written to files (e.g., markdown docs) |
+| `displayWidth` | integer | 120 | Line width for terminal rendering (e.g., diffs, status boxes) |
 
 **Context Limits:** Fixed values, not configurable. See agent-architecture.md § Context Limit Constants.
 

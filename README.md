@@ -258,7 +258,8 @@ Your CAT settings live in `.claude/cat/cat-config.json`:
   "verify": "changed",
   "effort": "medium",
   "patience": "high",
-  "terminalWidth": 120
+  "fileWidth": 120,
+  "displayWidth": 120
 }
 ```
 
@@ -270,7 +271,8 @@ Your CAT settings live in `.claude/cat/cat-config.json`:
 | `verify` | string | `changed` | What verification runs before checkpoints |
 | `effort` | string | `medium` | How thoroughly CAT investigates during planning and review |
 | `patience` | string | `high` | When CAT acts on discovered opportunities |
-| `terminalWidth` | number | `120` | Display width in characters for output formatting |
+| `fileWidth` | number | `120` | Width in characters for content written to files |
+| `displayWidth` | number | `120` | Width in characters for content displayed in the terminal |
 
 **trust** — How much trust you place in CAT to make decisions:
 - `low` — CAT presents options frequently; you guide most decisions
@@ -295,7 +297,12 @@ each concern's severity against the cost of fixing it, then decides whether to f
 
 See [patience details](docs/patience.md) for the full cost/benefit framework and decision matrix.
 
-**terminalWidth** — Display width in characters for output formatting:
+**fileWidth** — Width in characters for content written to files:
+- `120` — Desktop/Laptop (Recommended). Optimized for wide monitors
+- `50` — Mobile. Optimized for phones and narrow screens
+- `40-200` — Custom. Any value in this range is valid
+
+**displayWidth** — Width in characters for content displayed in the terminal:
 - `120` — Desktop/Laptop (Recommended). Optimized for wide monitors
 - `50` — Mobile. Optimized for phones and narrow screens
 - `40-200` — Custom. Any value in this range is valid

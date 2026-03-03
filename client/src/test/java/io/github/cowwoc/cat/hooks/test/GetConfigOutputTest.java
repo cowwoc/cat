@@ -467,4 +467,136 @@ public class GetConfigOutputTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that getCurrentSettings includes fileWidth with default value in correct format.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getCurrentSettingsIncludesFileWidth() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-config-output-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), "{}");
+
+      GetConfigOutput handler = new GetConfigOutput(scope);
+      String result = handler.getCurrentSettings(tempDir);
+
+      requireThat(result, "result").contains("📄 File Width: 120");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getCurrentSettings shows the fileWidth value when configured.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getCurrentSettingsShowsFileWidthValue() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-config-output-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), "{\"fileWidth\": 80}");
+
+      GetConfigOutput handler = new GetConfigOutput(scope);
+      String result = handler.getCurrentSettings(tempDir);
+
+      requireThat(result, "result").contains("📄 File Width: 80");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getCurrentSettings includes displayWidth with default value in correct format.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getCurrentSettingsIncludesDisplayWidth() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-config-output-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), "{}");
+
+      GetConfigOutput handler = new GetConfigOutput(scope);
+      String result = handler.getCurrentSettings(tempDir);
+
+      requireThat(result, "result").contains("🖥️ Display Width: 120");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getCurrentSettings shows the displayWidth value when configured.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getCurrentSettingsShowsDisplayWidthValue() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-config-output-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 50}");
+
+      GetConfigOutput handler = new GetConfigOutput(scope);
+      String result = handler.getCurrentSettings(tempDir);
+
+      requireThat(result, "result").contains("🖥️ Display Width: 50");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that fileWidth and displayWidth can be configured independently.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getCurrentSettingsFileAndDisplayWidthAreIndependent() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-config-output-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), "{\"fileWidth\": 100, \"displayWidth\": 60}");
+
+      GetConfigOutput handler = new GetConfigOutput(scope);
+      String result = handler.getCurrentSettings(tempDir);
+
+      requireThat(result, "result").
+        contains("📄 File Width: 100").
+        contains("🖥️ Display Width: 60");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }

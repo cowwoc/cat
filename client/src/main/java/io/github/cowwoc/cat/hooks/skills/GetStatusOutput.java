@@ -489,9 +489,9 @@ public final class GetStatusOutput implements SkillOutput
   {
     Path projectDir = catDir.getParent().getParent();
     Config config = Config.load(scope.getJsonMapper(), projectDir);
-    // terminalWidth is the total terminal columns; box borders add 2 chars (│ on each side)
-    int terminalWidth = config.getInt("terminalWidth", 120);
-    int maxBoxContentWidth = terminalWidth - 2;
+    // displayWidth is the total terminal columns; box borders add 2 chars (│ on each side)
+    int displayWidth = config.getInt("displayWidth", 120);
+    int maxBoxContentWidth = displayWidth - 2;
     // Inner boxes have their own borders: "│ " prefix + " │" suffix = 4 additional chars
     int maxInnerBoxContentWidth = maxBoxContentWidth - 4;
 
