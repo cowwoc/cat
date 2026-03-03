@@ -405,9 +405,9 @@ public final class GetDiffOutput implements SkillOutput
   {
     requireThat(projectRoot, "projectRoot").isNotNull();
 
-    // Load config for terminal width
+    // Load config for display width
     Config config = Config.load(scope.getJsonMapper(), projectRoot);
-    int terminalWidth = config.getInt("terminalWidth", 50);
+    int displayWidth = config.getInt("displayWidth", 120);
 
     // Detect target branch
     String targetBranch = TargetBranchDetector.detectTargetBranch(projectRoot);
@@ -455,7 +455,7 @@ public final class GetDiffOutput implements SkillOutput
     if (diff.hunks.isEmpty() && diff.binaryFiles.isEmpty() && diff.renamedFiles.isEmpty())
       return "No parseable changes found.";
 
-    DiffRenderer renderer = new DiffRenderer(terminalWidth, scope.getDisplayUtils());
+    DiffRenderer renderer = new DiffRenderer(displayWidth, scope.getDisplayUtils());
     String rendered = renderer.render(diff);
 
     String fileList = buildFileSummary(changedFiles);

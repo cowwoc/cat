@@ -69,7 +69,7 @@ public class GetDiffOutputTest
         // Create a minimal cat-config.json so Config.load doesn't fail
         Path catDir = tempDir.resolve(".claude").resolve("cat");
         Files.createDirectories(catDir);
-        Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 80}");
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
@@ -104,7 +104,7 @@ public class GetDiffOutputTest
         // Create a cat-config
         Path catDir = tempDir.resolve(".claude").resolve("cat");
         Files.createDirectories(catDir);
-        Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 80}");
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
         // Create an initial commit
         Files.writeString(tempDir.resolve("file.txt"), "initial content");
@@ -236,7 +236,7 @@ public class GetDiffOutputTest
         // Create cat-config
         Path catDir = tempDir.resolve(".claude").resolve("cat");
         Files.createDirectories(catDir);
-        Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 80}");
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
         // Initial commit
         Files.writeString(tempDir.resolve("alpha.txt"), "hello\n");
@@ -285,7 +285,7 @@ public class GetDiffOutputTest
         // Create cat-config
         Path catDir = tempDir.resolve(".claude").resolve("cat");
         Files.createDirectories(catDir);
-        Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 80}");
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
         // Create a file with 1000+ lines for high line numbers
         StringBuilder content = new StringBuilder(50_000);
@@ -336,7 +336,7 @@ public class GetDiffOutputTest
         // Create cat-config with small width to force wrapping
         Path catDir = tempDir.resolve(".claude").resolve("cat");
         Files.createDirectories(catDir);
-        Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 50}");
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 50}");
 
         // Create file with very long line
         String longLine = "This is a very long line that will definitely need to be wrapped " +
@@ -388,7 +388,7 @@ public class GetDiffOutputTest
         // Create cat-config
         Path catDir = tempDir.resolve(".claude").resolve("cat");
         Files.createDirectories(catDir);
-        Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 80}");
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
         // Create file with spaces
         Files.writeString(tempDir.resolve("spaces.txt"), "hello world\n");
@@ -436,7 +436,7 @@ public class GetDiffOutputTest
         // Create cat-config
         Path catDir = tempDir.resolve(".claude").resolve("cat");
         Files.createDirectories(catDir);
-        Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 80}");
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
         // Create a binary file (simulate with null bytes)
         byte[] binaryData = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
@@ -485,7 +485,7 @@ public class GetDiffOutputTest
         // Create cat-config
         Path catDir = tempDir.resolve(".claude").resolve("cat");
         Files.createDirectories(catDir);
-        Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 80}");
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
         // Create a file
         Files.writeString(tempDir.resolve("old-name.txt"), "content\n");
@@ -533,7 +533,7 @@ public class GetDiffOutputTest
         // Create cat-config
         Path catDir = tempDir.resolve(".claude").resolve("cat");
         Files.createDirectories(catDir);
-        Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 80}");
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
         // Create a file with separated sections
         StringBuilder content = new StringBuilder(500);
@@ -592,7 +592,7 @@ public class GetDiffOutputTest
         // Create cat-config
         Path catDir = tempDir.resolve(".claude").resolve("cat");
         Files.createDirectories(catDir);
-        Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 80}");
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
         // Create file with very long name
         String longName = "this-is-a-very-long-filename-that-should-be-truncated-when-displayed.txt";
@@ -640,7 +640,7 @@ public class GetDiffOutputTest
         // Create cat-config
         Path catDir = tempDir.resolve(".claude").resolve("cat");
         Files.createDirectories(catDir);
-        Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 80}");
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
         // Create initial commit
         Files.writeString(tempDir.resolve("file.txt"), "content\n");
@@ -684,7 +684,7 @@ public class GetDiffOutputTest
         // Create cat-config
         Path catDir = tempDir.resolve(".claude").resolve("cat");
         Files.createDirectories(catDir);
-        Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 80}");
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
         // Create initial commit with multiple files
         Files.writeString(tempDir.resolve("file1.txt"), "line1\nline2\nline3\n");
@@ -732,7 +732,7 @@ public class GetDiffOutputTest
         // Create cat-config
         Path catDir = tempDir.resolve(".claude").resolve("cat");
         Files.createDirectories(catDir);
-        Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 80}");
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
         // Create initial commit
         Files.writeString(tempDir.resolve("file.txt"), "content\n");
@@ -809,7 +809,7 @@ public class GetDiffOutputTest
     // Create cat-config
     Path catDir = tempDir.resolve(".claude").resolve("cat");
     Files.createDirectories(catDir);
-    Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 80}");
+    Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
     // Create initial commit on base branch
     Files.writeString(tempDir.resolve(fileName), initialContent);
@@ -883,7 +883,7 @@ public class GetDiffOutputTest
         // Create cat-config
         Path catDir = tempDir.resolve(".claude").resolve("cat");
         Files.createDirectories(catDir);
-        Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 80}");
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
         // Create initial commit on main
         Files.writeString(tempDir.resolve("file.txt"), "initial\n");
@@ -949,7 +949,7 @@ public class GetDiffOutputTest
         // Create cat-config
         Path catDir = tempDir.resolve(".claude").resolve("cat");
         Files.createDirectories(catDir);
-        Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 80}");
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
         // Create file
         Files.writeString(tempDir.resolve("old.txt"), "content\n");
@@ -998,7 +998,7 @@ public class GetDiffOutputTest
         // Create cat-config
         Path catDir = tempDir.resolve(".claude").resolve("cat");
         Files.createDirectories(catDir);
-        Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 80}");
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
         // Create file with multiple lines
         Files.writeString(tempDir.resolve("multi.txt"), "line1\nline2\nline3\n");
@@ -1047,7 +1047,7 @@ public class GetDiffOutputTest
         // Create cat-config
         Path catDir = tempDir.resolve(".claude").resolve("cat");
         Files.createDirectories(catDir);
-        Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 80}");
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
         // Create initial commit
         Files.writeString(tempDir.resolve("file.txt"), "content\n");
@@ -1125,7 +1125,7 @@ public class GetDiffOutputTest
         // Create cat-config
         Path catDir = tempDir.resolve(".claude").resolve("cat");
         Files.createDirectories(catDir);
-        Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 80}");
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
         // Create initial commit on main
         Files.writeString(tempDir.resolve("file.txt"), "initial\n");
@@ -1251,7 +1251,7 @@ public class GetDiffOutputTest
 
         Path catDir = tempDir.resolve(".claude").resolve("cat");
         Files.createDirectories(catDir);
-        Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 80}");
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
         // Initial file with two lines
         Files.writeString(tempDir.resolve("lines.txt"), "line one\nline two\n");
@@ -1362,7 +1362,7 @@ public class GetDiffOutputTest
 
         Path catDir = tempDir.resolve(".claude").resolve("cat");
         Files.createDirectories(catDir);
-        Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 80}");
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
         // File with spaces between words
         Files.writeString(tempDir.resolve("ws.txt"), "hello world\n");
@@ -1461,7 +1461,7 @@ public class GetDiffOutputTest
 
         Path catDir = tempDir.resolve(".claude").resolve("cat");
         Files.createDirectories(catDir);
-        Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 220}");
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 220}");
 
         // Build a line with > 500 tokens.
         // The tokenizer splits on word/whitespace boundaries: each "word N" = 1 word + 1 space = 2 tokens,
@@ -1524,7 +1524,7 @@ public class GetDiffOutputTest
         // Create cat-config
         Path catDir = tempDir.resolve(".claude").resolve("cat");
         Files.createDirectories(catDir);
-        Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 80}");
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
         // Create initial commit with no files
         Files.writeString(tempDir.resolve("README.md"), "initial");

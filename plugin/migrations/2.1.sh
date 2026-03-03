@@ -26,8 +26,11 @@ set -euo pipefail
 #    including their associated comment and blank lines
 # 7. Migrate ## Execution Steps → ## Execution Waves in PLAN.md files
 #    (numbered steps become bullet items under ### Wave 1)
+# 8. Remove reviewThreshold from cat-config.json
+# 9. Remove legacy worktree-locks directory
 # 10. Migrate cross-session dirs (locks/, worktrees/) to external storage; delete stale
 #     session-scoped dirs (sessions/, verify/, e2e-config-test/)
+# 11. Migrate terminalWidth to fileWidth + displayWidth in cat-config.json
 
 trap 'echo "ERROR in 2.1.sh at line $LINENO: $BASH_COMMAND" >&2; exit 1' ERR
 
@@ -776,6 +779,96 @@ for dir_name in sessions verify e2e-config-test; do
 done
 
 log_migration "Phase 10 complete"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase 11: Migrate terminalWidth to fileWidth + displayWidth in cat-config.json
+# ──────────────────────────────────────────────────────────────────────────────
+
+log_migration "Phase 11: Migrate terminalWidth to fileWidth + displayWidth in cat-config.json"
+
+config_file=".claude/cat/cat-config.json"
+
+if [[ ! -f "$config_file" ]]; then
+    log_migration "No config file found - skipping phase 11"
+else
+    if ! grep -q '"terminalWidth"' "$config_file" 2>/dev/null; then
+        log_migration "No terminalWidth key found - skipping phase 11 (already migrated or not set)"
+    else
+        log_migration "Found terminalWidth key - migrating to fileWidth and displayWidth"
+
+        # Read the terminalWidth value
+        terminal_width=$(sed -n 's/.*"terminalWidth"[[:space:]]*:[[:space:]]*\([0-9]*\).*/\1/p' "$config_file" | head -1)
+
+        if [[ -z "$terminal_width" ]]; then
+            log_migration "WARNING: Could not extract terminalWidth value - skipping phase 11"
+        else
+            log_migration "  terminalWidth value: $terminal_width"
+
+            # Add fileWidth and displayWidth with the same value as terminalWidth.
+            # Insert them before the terminalWidth line, then remove terminalWidth.
+            tmp_file="${config_file}.tmp"
+            awk -v width="$terminal_width" '
+            {
+                # Before removing terminalWidth line, insert fileWidth and displayWidth if not present
+                if (/[[:space:]]*"terminalWidth"[[:space:]]*:/) {
+                    # Insert fileWidth and displayWidth entries with trailing comma to maintain valid JSON
+                    print "  \"fileWidth\": " width ","
+                    print "  \"displayWidth\": " width ","
+                    # Skip the terminalWidth line itself
+                    next
+                }
+                print
+            }
+            ' "$config_file" > "$tmp_file"
+
+            # Remove trailing commas before closing brace (handles last-field case)
+            awk '
+            {
+                lines[NR] = $0
+            }
+            END {
+                for (i = 1; i <= NR; i++) {
+                    line = lines[i]
+                    if (line ~ /,[[:space:]]*$/) {
+                        j = i + 1
+                        while (j <= NR && lines[j] ~ /^[[:space:]]*$/) j++
+                        if (j <= NR && lines[j] ~ /^[[:space:]]*\}[[:space:]]*$/) {
+                            sub(/,[[:space:]]*$/, "", line)
+                        }
+                    }
+                    print line
+                }
+            }
+            ' "$tmp_file" > "${tmp_file}.2"
+            mv "${tmp_file}.2" "$config_file"
+            rm -f "$tmp_file"
+
+            log_migration "  Wrote fileWidth: $terminal_width and displayWidth: $terminal_width"
+            log_migration "  Removed terminalWidth"
+
+            # Post-migration validation
+            if grep -q '"terminalWidth"' "$config_file" 2>/dev/null; then
+                log_migration "WARNING: terminalWidth still present after migration"
+            else
+                log_migration "  Verified: terminalWidth absent"
+            fi
+
+            if grep -q '"fileWidth"' "$config_file" 2>/dev/null; then
+                log_migration "  Verified: fileWidth present"
+            else
+                log_migration "WARNING: fileWidth not found after migration"
+            fi
+
+            if grep -q '"displayWidth"' "$config_file" 2>/dev/null; then
+                log_migration "  Verified: displayWidth present"
+            else
+                log_migration "WARNING: displayWidth not found after migration"
+            fi
+
+            log_migration "Phase 11 complete: migrated terminalWidth to fileWidth and displayWidth"
+        fi
+    fi
+fi
 
 log_success "Migration to 2.1 completed"
 exit 0

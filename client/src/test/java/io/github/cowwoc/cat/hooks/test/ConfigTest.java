@@ -186,7 +186,8 @@ public class ConfigTest
       requireThat(values.get("verify"), "verify").isEqualTo("changed");
       requireThat(values.get("effort"), "effort").isEqualTo("medium");
       requireThat(values.get("patience"), "patience").isEqualTo("high");
-      requireThat(values.get("terminalWidth"), "terminalWidth").isEqualTo(120);
+      requireThat(values.get("fileWidth"), "fileWidth").isEqualTo(120);
+      requireThat(values.get("displayWidth"), "displayWidth").isEqualTo(120);
       requireThat(values.get("completionWorkflow"), "completionWorkflow").isEqualTo("merge");
       requireThat(values.get("minSeverity"), "minSeverity").isEqualTo("low");
     }
