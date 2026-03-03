@@ -563,7 +563,7 @@ else
     awk '
         /^[[:space:]]*$/ { blank++; next }
         { if (blank > 0 && NR > 1 && printed > 0) print ""; blank = 0; print; printed++ }
-        END { if (printed == 0 && blank > 0) { /* file was all blanks - emit nothing */ } }
+        END { if (printed == 0 && blank > 0) { } }
     ' "$gitignore_file" > "${gitignore_file}.tmp" && mv "${gitignore_file}.tmp" "$gitignore_file"
 
     # Add any missing patterns from template
@@ -783,7 +783,6 @@ done
 log_migration "Phase 10 complete"
 
 # ──────────────────────────────────────────────────────────────────────────────
-<<<<<<< HEAD
 # Phase 11: Migrate terminalWidth to fileWidth + displayWidth in cat-config.json
 # ──────────────────────────────────────────────────────────────────────────────
 
