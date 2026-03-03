@@ -37,12 +37,12 @@ Use AskUserQuestion:
 - header: "Token Warning"
 - question: "Issue triggered context compaction. Decomposition is strongly recommended:"
 - options:
-  - "Decompose" - Split into smaller issues via /cat:decompose-issue (Recommended)
+  - "Decompose" - Split into smaller issues via /cat:decompose-issue-agent (Recommended)
   - "Continue anyway" - Accept potential quality impact
   - "Abort" - Stop and review work quality
 
 **If "Decompose":**
-Invoke `/cat:decompose-issue` to split remaining similar work.
+Invoke `/cat:decompose-issue-agent` to split remaining similar work.
 
 **If "Continue anyway":**
 Proceed but note in STATE.md that compaction occurred.

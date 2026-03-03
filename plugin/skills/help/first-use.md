@@ -53,10 +53,10 @@ Power user features for complex workflows:
 | `/cat:research` | Run stakeholder research on pending versions |
 | `/cat:cleanup` | Clean up abandoned worktrees and stale locks |
 | `/cat:get-subagent-status` | Check status of running subagents |
-| `/cat:collect-results` | Gather results from completed subagents |
-| `/cat:merge-subagent` | Merge subagent branch into issue branch |
-| `/cat:token-report` | Generate token usage report |
-| `/cat:decompose-issue` | Split oversized issue into smaller issues |
+| `/cat:collect-results-agent` | Gather results from completed subagents |
+| `/cat:merge-subagent-agent` | Merge subagent branch into issue branch |
+| `/cat:token-report-agent` | Generate token usage report |
+| `/cat:decompose-issue-agent` | Split oversized issue into smaller issues |
 
 ---
 

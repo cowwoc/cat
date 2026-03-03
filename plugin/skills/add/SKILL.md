@@ -12,4 +12,4 @@ argument-hint: "[description]"
 disable-model-invocation: true
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" add "${CLAUDE_PROJECT_DIR}" "${CLAUDE_SESSION_ID}"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" add "${CLAUDE_SESSION_ID}" $ARGUMENTS`

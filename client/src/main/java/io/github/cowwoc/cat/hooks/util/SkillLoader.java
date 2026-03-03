@@ -73,6 +73,12 @@ import org.slf4j.LoggerFactory;
  * after variable substitution. When the path's filename matches a launcher in the {@code client/bin/}
  * lookup directory, instantiates the class as a {@link SkillOutput} and calls
  * {@link SkillOutput#getOutput(String[])} to replace the directive with the output.
+ * <p>
+ * <b>Usage:</b> {@code skill-loader <skill-name> <catAgentId> [skill-args...]}
+ * <br>
+ * The {@code catAgentId} argument is mandatory. Main agents pass {@code ${CLAUDE_SESSION_ID}};
+ * subagents pass the value injected by SubagentStartHook (e.g., {@code {sessionId}/subagents/{agent_id}}).
+ * The {@code pluginRoot} and {@code projectDir} are read from the JVM environment via {@link JvmScope}.
  *
  * @see io.github.cowwoc.cat.hooks.session.ClearSkillMarker
  */
@@ -124,35 +130,35 @@ public final class SkillLoader
   private final JvmScope scope;
   private final Path pluginRoot;
   private final String projectDir;
-  private final List<String> argTokens;
+  private final List<String> skillArgs;
   private final Path agentMarkerFile;
   private final Set<String> loadedSkills;
 
   /**
    * Creates a new SkillLoader instance.
    * <p>
-   * The CAT agent ID is derived from the first positional skill argument ({@code skillArgs.get(0)}). It must
-   * be present and non-blank; the constructor fails fast if it is absent or blank.
+   * The CAT agent ID is derived from the first positional skill argument ({@code skillArgs.get(0)}). If
+   * {@code skillArgs} is non-empty but the first element is blank (e.g., when the user invokes a slash
+   * command directly without passing args), the session ID from {@code CLAUDE_SESSION_ID} is used as the
+   * fallback agent ID. If {@code skillArgs} is empty, the SKILL.md is misconfigured (missing
+   * {@code "$0"}) and the constructor fails fast.
+   * <p>
+   * The plugin root and project directory are read from {@code scope} via
+   * {@link JvmScope#getClaudePluginRoot()} and {@link JvmScope#getClaudeProjectDir()}.
    *
-   * @param scope the JVM scope for accessing shared services
-   * @param pluginRoot the Claude plugin root directory
-   * @param projectDir the Claude project directory
+   * @param scope the JVM scope for accessing shared services and environment paths
    * @param skillArgs pre-tokenized positional arguments; the first element ({@code $0}) is the CAT agent ID
-   * @throws NullPointerException if {@code scope}, {@code pluginRoot}, {@code projectDir}, or
-   *   {@code skillArgs} are null
-   * @throws IllegalArgumentException if {@code pluginRoot} or {@code projectDir} are blank, or if
-   *   {@code skillArgs} is empty or the first element (catAgentId) is blank
-   * @throws IOException if the agent marker file cannot be read
+   * @throws NullPointerException if {@code scope} or {@code skillArgs} are null
+   * @throws IllegalArgumentException if {@code skillArgs} is empty, or if the first element (catAgentId)
+   *   is blank and {@code CLAUDE_SESSION_ID} is also unavailable
+   * @throws IOException if the plugin root directory does not exist, or if the agent marker file cannot be read
    */
-  public SkillLoader(JvmScope scope, String pluginRoot, String projectDir,
-    List<String> skillArgs) throws IOException
+  public SkillLoader(JvmScope scope, List<String> skillArgs) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
-    requireThat(pluginRoot, "pluginRoot").isNotBlank();
-    requireThat(projectDir, "projectDir").isNotBlank();
     requireThat(skillArgs, "skillArgs").isNotNull();
 
-    if (skillArgs.isEmpty() || skillArgs.get(0).isBlank())
+    if (skillArgs.isEmpty())
     {
       throw new IllegalArgumentException(
         "catAgentId is required as the first skill argument ($0) but was not provided. " +
@@ -160,12 +166,27 @@ public final class SkillLoader
           "subagents must pass the value injected by SubagentStartHook " +
           "(e.g., {sessionId}/subagents/{agent_id}).");
     }
-    String catAgentId = skillArgs.get(0);
+
+    // When $0 is blank (user invoked slash command directly), fall back to CLAUDE_SESSION_ID.
+    String catAgentId;
+    if (skillArgs.getFirst().isBlank())
+      catAgentId = scope.getClaudeSessionId();
+    else
+      catAgentId = skillArgs.getFirst();
+
+    List<String> tokens = new ArrayList<>(skillArgs);
+    tokens.set(0, catAgentId);
 
     this.scope = scope;
-    this.pluginRoot = Paths.get(pluginRoot);
-    this.projectDir = projectDir;
-    this.argTokens = List.copyOf(skillArgs);
+    this.pluginRoot = scope.getClaudePluginRoot();
+    if (!Files.isDirectory(pluginRoot))
+    {
+      throw new IOException(
+        "Plugin root directory does not exist or is not a directory: " + pluginRoot + ". " +
+          "Ensure CLAUDE_PLUGIN_ROOT points to a valid plugin installation directory.");
+    }
+    this.projectDir = scope.getClaudeProjectDir().toString();
+    this.skillArgs = List.copyOf(tokens);
 
     Path baseDir = scope.getSessionBasePath().toAbsolutePath().normalize();
     Path agentDir = resolveAndValidateContainment(baseDir, catAgentId,
@@ -552,8 +573,8 @@ public final class SkillLoader
     {
       argResult.append(afterVars, lastEnd, argMatcher.start());
       int index = Integer.parseInt(argMatcher.group(1));
-      if (index >= 0 && index < argTokens.size())
-        argResult.append(argTokens.get(index));
+      if (index >= 0 && index < skillArgs.size())
+        argResult.append(skillArgs.get(index));
       else
         argResult.append(argMatcher.group(0));
       lastEnd = argMatcher.end();
@@ -739,15 +760,14 @@ public final class SkillLoader
    */
   private String resolveVariable(String varName)
   {
-    if (varName.equals("CLAUDE_PLUGIN_ROOT"))
-      return pluginRoot.toString();
-    if (varName.equals("CLAUDE_SESSION_ID"))
-      return scope.getClaudeSessionId();
-    if (varName.equals("CLAUDE_PROJECT_DIR"))
-      return projectDir;
-
-    // Pass through unknown variables unchanged (matches Claude Code's native behavior)
-    return "${" + varName + "}";
+    return switch (varName)
+    {
+      case "CLAUDE_PLUGIN_ROOT" -> pluginRoot.toString();
+      case "CLAUDE_SESSION_ID" -> scope.getClaudeSessionId();
+      case "CLAUDE_PROJECT_DIR" -> projectDir;
+      // Pass through unknown variables unchanged (matches Claude Code's native behavior)
+      default -> "${" + varName + "}";
+    };
   }
 
   /**
@@ -794,43 +814,30 @@ public final class SkillLoader
   /**
    * Main method for command-line execution.
    * <p>
-   * Provides CLI entry point to replace the original load-skill script.
    * Invoked as: java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.util.SkillLoader
-   * plugin-root skill-name project-dir [skill-args...]
+   * skill-name catAgentId [skill-args...]
    * <p>
+   * The plugin root and project directory are read from the JVM environment via {@link MainJvmScope}.
    * The agent ID is passed as the first skill argument ({@code skill-args[0]}, i.e., {@code $0}).
-   * If {@code $0} is absent or blank (e.g., when the user invokes a slash command directly without
-   * passing args), the session ID from {@code CLAUDE_SESSION_ID} is used as the fallback agent ID.
+   * Blank-agent-ID fallback is handled by the constructor.
    *
-   * @param args command-line arguments: plugin-root skill-name project-dir [skill-args...]
+   * @param args command-line arguments: skill-name catAgentId [skill-args...]
    */
   public static void main(String[] args)
   {
-    if (args.length < 3)
+    if (args.length < 1)
     {
       System.err.println(
-        "Usage: load-skill <plugin-root> <skill-name> <project-dir> [skill-args...]");
+        "Usage: skill-loader <skill-name> <catAgentId> [skill-args...]");
       System.exit(1);
     }
 
-    String pluginRoot = args[0];
-    String skillName = args[1];
-    String projectDir = args[2];
-    List<String> skillArgs = List.of(args).subList(3, args.length);
+    String skillName = args[0];
+    List<String> skillArgs = List.of(args).subList(1, args.length);
 
     try (JvmScope scope = new MainJvmScope())
     {
-      // When $0 is blank (user invoked slash command directly), fall back to CLAUDE_SESSION_ID.
-      // If skillArgs is empty, the SKILL.md is misconfigured (missing "$0") — let constructor fail fast.
-      if (!skillArgs.isEmpty() && skillArgs.get(0).isBlank())
-      {
-        List<String> resolved = new ArrayList<>();
-        resolved.add(scope.getClaudeSessionId());
-        for (int i = 1; i < skillArgs.size(); ++i)
-          resolved.add(skillArgs.get(i));
-        skillArgs = resolved;
-      }
-      SkillLoader loader = new SkillLoader(scope, pluginRoot, projectDir, skillArgs);
+      SkillLoader loader = new SkillLoader(scope, skillArgs);
       String result = loader.load(skillName);
       System.out.print(result);
     }

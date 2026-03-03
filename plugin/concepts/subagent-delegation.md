@@ -28,7 +28,7 @@ orchestrating agent needs to know the exact blocker to adjust its delegation str
 
 **General-purpose subagents have access to ALL tools**, including Task and Skill.
 
-If a PLAN.md or delegation prompt specifies using a skill (e.g., `/cat:shrink-doc`), invoke it directly via the Skill
+If a PLAN.md or delegation prompt specifies using a skill (e.g., `/cat:shrink-doc-agent`), invoke it directly via the Skill
 tool. Do not assume tool limitations exist - subagents have full tool access.
 
 ## Spawning Subagents: Task vs TaskCreate

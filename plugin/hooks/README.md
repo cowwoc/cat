@@ -130,7 +130,7 @@ plugin-root/
   skills/
     reference.md              — Reload text returned on 2nd+ invocations of any skill
     {skill-name}/
-      SKILL.md                — Main skill entry point (preprocessor directive calls SkillLoader)
+      SKILL.md                — Main skill entry point (preprocessor directive calls LoadSkill)
     {skill-name}-first-use/
       SKILL.md                — Skill content with optional <skill> and <output> tags
 ```

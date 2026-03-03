@@ -5,4 +5,4 @@ allowed-tools: [Read, Write, Bash, Glob, Grep, AskUserQuestion]
 disable-model-invocation: true
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" init "${CLAUDE_PROJECT_DIR}" "${CLAUDE_SESSION_ID}"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" init "${CLAUDE_SESSION_ID}"`

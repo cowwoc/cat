@@ -30,7 +30,7 @@ Then invoke the extraction skill with those keywords:
 
 ```
 Skill tool:
-  skill: "cat:extract-investigation-context"
+  skill: "cat:extract-investigation-context-agent"
   args: "keyword1 keyword2 keyword3"
 ```
 
@@ -236,10 +236,10 @@ Key anti-patterns to avoid:
 ## Related Skills
 
 - `cat:retrospective` - Aggregate analysis triggered by this skill
-- `cat:token-report` - Provides data for context analysis
-- `cat:decompose-issue` - Implements earlier decomposition
+- `cat:token-report-agent` - Provides data for context analysis
+- `cat:decompose-issue-agent` - Implements earlier decomposition
 - `cat:get-subagent-status` - Catches context issues early
-- `cat:collect-results` - Preserves progress before intervention
+- `cat:collect-results-agent` - Preserves progress before intervention
 
 ## A/B Test: RCA Method Comparison
 

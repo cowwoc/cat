@@ -95,14 +95,14 @@ priming_sequence:
 4. Write compressed version
 
 ## Procedure
-Step 1: Invoke /cat:shrink-doc...
+Step 1: Invoke /cat:shrink-doc-agent...
 ```
 
 **Fix**: Move algorithm to internal-only document
 
 ```markdown
 ## Procedure
-Step 1: Invoke /cat:shrink-doc (handles compression internally)
+Step 1: Invoke /cat:shrink-doc-agent (handles compression internally)
 Step 2: Verify postcondition (score = 1.0)
 ```
 

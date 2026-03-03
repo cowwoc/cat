@@ -10,4 +10,4 @@ allowed-tools:
 disable-model-invocation: true
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" work "${CLAUDE_PROJECT_DIR}" "${CLAUDE_SESSION_ID}"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" work "${CLAUDE_SESSION_ID}" $ARGUMENTS`

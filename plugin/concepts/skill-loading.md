@@ -11,7 +11,7 @@ How to register, invoke, and reference skills for main agents and subagents in C
 
 | Type | Location | Name Format | Example |
 |------|----------|-------------|---------|
-| Plugin skill | `plugin/skills/{name}/` | `cat:{name}` | `cat:git-squash` |
+| Plugin skill | `plugin/skills/{name}/` | `cat:{name}` | `cat:git-squash-agent` |
 | Project skill | `.claude/skills/{name}/` | `{name}` | `my-validator` |
 | User skill | `~/.config/claude/skills/{name}/` | `{name}` | `code-review` |
 
@@ -32,14 +32,14 @@ How to register, invoke, and reference skills for main agents and subagents in C
 The Skill tool triggers the full SkillLoader pipeline:
 
 1. Claude Code routes to the skill's SKILL.md
-2. SKILL.md preprocessor directive (`!` backtick) calls `load-skill`
-3. `load-skill` invokes `SkillLoader.java`
+2. SKILL.md preprocessor directive (`!` backtick) calls `skill-loader`
+3. `skill-loader` invokes `SkillLoader.java`
 4. SkillLoader checks per-agent marker file, returns full content or a short reference
 5. Variable substitution and `@path` expansion run on the returned content
 
 ```
 Skill tool:
-  skill: "cat:git-squash"
+  skill: "cat:git-squash-agent"
   args: "optional arguments"
 ```
 
@@ -149,7 +149,7 @@ argument to the binary.
 |-------------|-------------|----------------------|
 | Main agent via Skill tool | `cat:{skill-name}` | Yes — per-agent marker file |
 | Subagent via `skills:` frontmatter | `cat:{skill-name}` | Yes — subagent's own marker file |
-| Subagent via SubagentStartHook | skill listing injected at spawn | On-demand via `load-skill` |
+| Subagent via SubagentStartHook | skill listing injected at spawn | On-demand via `skill-loader` |
 
 ## Session Markers (First-Use vs Reference)
 
@@ -215,8 +215,8 @@ A.name === query || A.userFacingName() === query || A.aliases?.includes(query)
 
 | Query | Matches Plugin Skill? | Notes |
 |-------|----------------------|-------|
-| `cat:git-squash` | Yes | Matches `userFacingName()` |
-| `git-squash` | Maybe | May match `name` property (depends on internal registration) |
+| `cat:git-squash-agent` | Yes | Matches `userFacingName()` |
+| `git-squash-agent` | Maybe | May match `name` property (depends on internal registration) |
 
 **Best practice:** Always use the `cat:` prefix when referencing plugin skills in agent frontmatter or
 Skill tool invocations to ensure reliable resolution.
@@ -231,12 +231,12 @@ Skill tool invocations to ensure reliable resolution.
 # ✅ Frontmatter: content injected at spawn (preprocessor runs)
 ---
 skills:
-  - cat:git-merge-linear
+  - cat:git-merge-linear-agent
 ---
 
 # ✅ Skill tool: content loaded on demand during execution
 prompt: |
-  Invoke /cat:git-merge-linear via the Skill tool before merging.
+  Invoke /cat:git-merge-linear-agent via the Skill tool before merging.
 ```
 
 **Trade-offs:**
@@ -268,12 +268,10 @@ causing skills to misbehave (e.g., first-use check passes for the wrong agent).
 **catAgentId in preprocessor commands:**
 ```yaml
 # User-facing: always the main session
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" add \
-  "${CLAUDE_PROJECT_DIR}" "${CLAUDE_SESSION_ID}"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" add-agent "${CLAUDE_SESSION_ID}"`
 
 # Agent-facing: caller-supplied (may be subagent)
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" add \
-  "${CLAUDE_PROJECT_DIR}" "$0"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" add-agent "$0"`
 ```
 
 **Descriptions:**
@@ -291,7 +289,7 @@ per-agent state. Skills that perform stateless operations (e.g., format a docume
 2. Create `SKILL.md` with frontmatter and preprocessor directive
 3. Create `plugin/skills/{skill-name}/first-use.md` with full skill content
 4. If the skill dispatches to a Java handler: register the handler in `client/build-jlink.sh`
-   and invoke the binary launcher in `SKILL.md` (not `load-skill`)
+   and invoke the binary launcher in `SKILL.md` (not `skill-loader`)
 5. The skill is automatically available as `cat:{skill-name}`
 
 **Java handler registration (step 4):** Skills that execute Java code must have two things:
@@ -300,19 +298,18 @@ per-agent state. Skills that perform stateless operations (e.g., format a docume
   ```
   "get-output:skills.GetOutput"
   ```
-- A `SKILL.md` preprocessor that calls the binary launcher — NOT `load-skill`:
+- A `SKILL.md` preprocessor that calls the binary launcher — NOT `skill-loader`:
   ```
   # CORRECT: calls the Java binary launcher directly
   !`"${CLAUDE_PLUGIN_ROOT}/client/target/jlink/bin/get-output" "${CLAUDE_PLUGIN_ROOT}" \
     "${CLAUDE_PROJECT_DIR}" "$0" $ARGUMENTS`
 
-  # WRONG: calls load-skill, which loads skill content but does NOT invoke Java handlers
-  !`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" get-output \
-    "${CLAUDE_PROJECT_DIR}" "$0" $ARGUMENTS`
+  # WRONG: calls skill-loader, which loads skill content but does NOT invoke Java handlers
+  !`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" get-output "$0" $ARGUMENTS`
   ```
 
-`load-skill` (SkillLoader) reads and returns skill content from `first-use.md`. It does not route to
-Java handlers. Using `load-skill` when the intent is to invoke a Java handler produces empty or
+`skill-loader` (SkillLoader) reads and returns skill content from `first-use.md`. It does not route to
+Java handlers. Using `skill-loader` when the intent is to invoke a Java handler produces empty or
 incorrect output — the skill appears to work (no error) but generates no computed output.
 
 ### Creating a New Project Skill

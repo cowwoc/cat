@@ -198,7 +198,7 @@ Use AskUserQuestion:
   - "View status first" - Show /cat:status before deciding
 
 **If "Run stakeholder review":**
-Invoke `/cat:stakeholder-review .claude/cat/issues/v{major}/v{major}.{minor}`
+Invoke `/cat:stakeholder-review-agent .claude/cat/issues/v{major}/v{major}.{minor}`
 
 **If "Skip review":**
 Continue with next steps.

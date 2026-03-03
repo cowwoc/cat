@@ -4,4 +4,4 @@ model: haiku
 user-invocable: false
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" status "${CLAUDE_PROJECT_DIR}" "$0"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" status-agent "$0"`

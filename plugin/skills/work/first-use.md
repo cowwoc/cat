@@ -41,7 +41,7 @@ Filters are interpreted by the prepare phase subagent using natural language und
 NOT inside the worktree directory. If a shell is inside a directory when it's deleted, the shell
 session becomes corrupted (all commands fail with exit code 1).
 
-**Use `/cat:safe-rm`** before removing worktrees to verify no shells are inside the target directory.
+**Use `/cat:safe-rm-agent`** before removing worktrees to verify no shells are inside the target directory.
 
 ## Configuration
 
@@ -73,7 +73,7 @@ Run `"${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --arguments "${ARGUMENTS}"`
 | READY + `potentially_complete: true` | Ask user to verify (see below), then skip or continue |
 | NO_ISSUES | Display extended diagnostics (see below), stop |
 | LOCKED | Display lock message, try next issue |
-| OVERSIZED | Invoke /cat:decompose-issue, then retry |
+| OVERSIZED | Invoke /cat:decompose-issue-agent, then retry |
 | ERROR | Display error, stop |
 | No JSON / empty | Subagent failed to produce output - display error, release lock if acquired, stop |
 
@@ -183,11 +183,11 @@ render progress banners automatically for all 4 phases.
 
 **Invoke the work-with-issue skill:**
 
-Use the Skill tool to invoke `/cat:work-with-issue` with positional space-separated arguments:
+Use the Skill tool to invoke `/cat:work-with-issue-agent` with positional space-separated arguments:
 
 ```
 Skill tool:
-  skill: "cat:work-with-issue"
+  skill: "cat:work-with-issue-agent"
   args: "${issue_id} ${issue_path} ${worktree_path} ${issue_branch} ${target_branch} ${estimated_tokens} ${TRUST} ${VERIFY}"
 ```
 
@@ -216,10 +216,10 @@ The skill will:
 
 ## Next Issue
 
-After successful merge, invoke `/cat:work-complete` with positional arguments:
+After successful merge, invoke `/cat:work-complete-agent` with positional arguments:
 
 ```
-/cat:work-complete ${issue_id} ${target_branch}
+/cat:work-complete-agent ${issue_id} ${target_branch}
 ```
 
 Output the skill result verbatim.

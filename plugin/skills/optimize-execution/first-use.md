@@ -336,8 +336,8 @@ Generate a comprehensive analysis report with specific recommendations for:
 belongs in external script files. Skills contain only: when to use, script invocation, result handling,
 and judgment-dependent guidance.
 
-This principle is enforced by `/cat:skill-builder`. When optimize-execution detects skill files with
-inline bash, recommend running `/cat:skill-builder` on the skill to extract deterministic operations
+This principle is enforced by `/cat:skill-builder-agent`. When optimize-execution detects skill files with
+inline bash, recommend running `/cat:skill-builder-agent` on the skill to extract deterministic operations
 into scripts.
 
 **Detection**: Any skill file containing bash code blocks with deterministic operations (no judgment
@@ -346,7 +346,7 @@ branching, no user interaction) is a candidate for script extraction.
 **Impact**: High — reduces token consumption (Claude doesn't read/reason about implementation), ensures
 deterministic execution, and produces fewer tool call round-trips.
 
-See `/cat:skill-builder` for the full script extraction architecture and hybrid workflow pattern.
+See `/cat:skill-builder-agent` for the full script extraction architecture and hybrid workflow pattern.
 
 ### Step 6: Present Results
 

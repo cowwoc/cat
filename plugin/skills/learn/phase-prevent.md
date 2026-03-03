@@ -347,7 +347,7 @@ action: "STOP. Escalate to hook, validation, or code_fix instead."
 If the mistake involves a **skill file**, use skill-builder's Priming Prevention Checklist to analyze it:
 
 ```
-/cat:skill-builder analyze {path-to-skill}
+/cat:skill-builder-agent analyze {path-to-skill}
 ```
 
 The checklist covers:
@@ -365,21 +365,21 @@ The checklist covers:
 | Are there "for reference only" sections? | Move to preprocessing |
 | Could agent do the task after reading this doc? | Too much exposed |
 
-**Reference:** See `/cat:skill-builder` § "Priming Prevention Checklist" for detailed patterns.
+**Reference:** See `/cat:skill-builder-agent` § "Priming Prevention Checklist" for detailed patterns.
 
 ## Step 9: Implement Prevention
 
 ### Skill-Builder Gate
 
-**MANDATORY: Invoke `/cat:skill-builder` before editing any skill or command file.**
+**MANDATORY: Invoke `/cat:skill-builder-agent` before editing any skill or command file.**
 
 If `prevention_type` is `skill` and the fix involves editing a skill or command file:
 
-1. Invoke `/cat:skill-builder` with the target file path before making any edits
+1. Invoke `/cat:skill-builder-agent` with the target file path before making any edits
 2. Follow skill-builder's backward reasoning to decompose the change into forward steps
 3. Only proceed to edit the file after skill-builder has been invoked
 
-**BLOCKING CONDITION:** Do NOT edit a skill or command file without first invoking `/cat:skill-builder`. Skipping
+**BLOCKING CONDITION:** Do NOT edit a skill or command file without first invoking `/cat:skill-builder-agent`. Skipping
 skill-builder bypasses the backward-reasoning decomposition that ensures the change is correct and complete.
 
 ### Issue Worktree Gate

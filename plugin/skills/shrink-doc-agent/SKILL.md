@@ -8,4 +8,4 @@ model: sonnet
 user-invocable: false
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" shrink-doc "${CLAUDE_PROJECT_DIR}" "$0"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" shrink-doc-agent "$0"`

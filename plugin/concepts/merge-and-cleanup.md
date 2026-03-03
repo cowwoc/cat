@@ -57,7 +57,7 @@ If verification fails:
 
 Group and squash commits by conventional commit type:
 
-Use `/cat:git-squash` skill which uses `commit-tree` for safe squashing.
+Use `/cat:git-squash-agent` skill which uses `commit-tree` for safe squashing.
 
 **NEVER use `git rebase -i`** (requires interactive input) or manual `git reset --soft`
 (captures stale working directory state, can revert fixes from target branch — see M385).
