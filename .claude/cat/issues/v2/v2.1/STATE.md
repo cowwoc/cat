@@ -15,6 +15,7 @@
 Finalize naming conventions and UI polish before recording demo videos.
 
 ## Issues Pending
+- fix-migration-21-execution-steps-detail-loss
 - fix-migration-21-gitignore-and-dir-move
 - centralize-verbatim-output-skill
 - add-java-build-to-ci
