@@ -16,7 +16,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 
 ## Issues Pending
 - fix-migration-21-execution-steps-detail-loss
-- fix-migration-21-gitignore-and-dir-move
+- fix-cwd-file-storage-location
 - centralize-verbatim-output-skill
 - add-java-build-to-ci
 - audience-aware-rules-injection
@@ -331,3 +331,4 @@ Finalize naming conventions and UI polish before recording demo videos.
 - rename-task-to-issue-terminology
 - fix-work-prepare-diagnostic-scan-limit
 - guard-get-diff-against-large-diffs
+- fix-migration-21-gitignore-and-dir-move
