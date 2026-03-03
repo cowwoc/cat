@@ -362,8 +362,10 @@ public final class GetDiffOutput implements SkillOutput
   /**
    * Generates the diff output for this skill.
    * <p>
-   * Parses {@code --project-dir PATH} from {@code args} if present; otherwise falls back to
-   * {@code scope.getClaudeProjectDir()}.
+   * Parses {@code --project-dir PATH} from {@code args} if present; otherwise uses
+   * {@code Path.of(System.getProperty("user.dir"))} (the JVM's current working directory). This
+   * ensures that when invoked from a worktree directory, git commands run against the worktree
+   * rather than the main workspace.
    *
    * @param args the arguments from the preprocessor directive
    * @return the formatted diff display
@@ -389,7 +391,7 @@ public final class GetDiffOutput implements SkillOutput
         throw new IllegalArgumentException("Unknown argument: " + args[i]);
     }
     if (projectDir == null)
-      projectDir = scope.getClaudeProjectDir();
+      projectDir = Path.of(System.getProperty("user.dir"));
     return getOutput(projectDir);
   }
 
