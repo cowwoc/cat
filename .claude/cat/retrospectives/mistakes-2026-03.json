@@ -366,6 +366,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When git-squash returns REBASE_CONFLICT, immediately delete the backup_branch from the response JSON before returning CONFLICT status. The backup branch is a pre-squash safety snapshot that serves no purpose once squash is abandoned or retried successfully."
+    },
+    {
+      "id": "M459",
+      "timestamp": "2026-03-03T21:10:38Z",
+      "category": "protocol_violation",
+      "description": "Agent proceeded to merge after AskUserQuestion returned empty answers object, assuming approval without verified user selection",
+      "root_cause": "Missing guidance in work-with-issue/first-use.md Step 8 for the case where AskUserQuestion toolUseResult.answers is an empty object {}. The skill said \"wait for explicit user selection\" but did not specify how to detect or handle an empty/unrecorded answer. The agent saw the success message \"User has answered your questions: .\" (with nothing after the colon), recognized uncertainty, but defaulted to approval assumption instead of STOP.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue/first-use.md",
+      "pattern_keywords": [
+        "AskUserQuestion",
+        "approval_gate",
+        "empty_answers",
+        "assumed_approval",
+        "merge_without_verified_consent"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": "M446",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "After invoking AskUserQuestion, inspect toolUseResult.answers. If answers is empty {}, treat as no consent and re-present the approval gate. Only proceed when answers contains a non-empty selection."
     }
   ]
 }
