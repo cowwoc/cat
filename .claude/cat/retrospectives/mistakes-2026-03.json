@@ -298,7 +298,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "When a user message arrives mid-operation (detected via queue-operation enqueue in JSONL), call TaskCreate immediately in the next tool call for any request that is a feature, change, fix, or complex instruction — before continuing the workflow. A PostToolUse hook should detect unacknowledged user input in session JSONL and inject a reminder."
+      "correct_behavior": "When a user message arrives mid-operation (detected via queue-operation enqueue in JSONL), call TaskCreate immediately in the next tool call for any request that is a feature, change, fix, or complex instruction \u2014 before continuing the workflow. A PostToolUse hook should detect unacknowledged user input in session JSONL and inject a reminder."
     },
     {
       "id": "M457",
@@ -327,7 +327,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Use Task tool with subagent_type: cat:work-merge to spawn a merge subagent. The Skill tool only loads instructions into context — it does NOT spawn a subprocess or execute merge operations. EnforceApprovalBeforeMerge should BLOCK Skill tool invocations of cat:work-merge with a clear error directing use of Task tool instead.",
+      "correct_behavior": "Use Task tool with subagent_type: cat:work-merge to spawn a merge subagent. The Skill tool only loads instructions into context \u2014 it does NOT spawn a subprocess or execute merge operations. EnforceApprovalBeforeMerge should BLOCK Skill tool invocations of cat:work-merge with a clear error directing use of Task tool instead.",
       "issue_creation_needed": {
         "suggested_title": "Block Skill tool invocation of cat:work-merge via EnforceApprovalBeforeMerge",
         "suggested_description": "EnforceApprovalBeforeMerge currently allows Skill tool invocations of cat:work-merge after approval. It should instead BLOCK Skill tool invocations entirely (allowing only Task tool). This prevents the M451/M457 recurrence where agents use the Skill tool and describe the merge as executing when nothing runs.",
@@ -338,6 +338,34 @@
           "work-with-issue first-use.md uses BLOCKING framing for the Task-tool-only requirement"
         ]
       }
+    },
+    {
+      "id": "M458",
+      "timestamp": "2026-03-03T19:11:12Z",
+      "category": "protocol_violation",
+      "description": "Merge subagent resolved REBASE_CONFLICT manually (violating Step 4 STOP rule) and left orphaned backup branch after successful retry",
+      "root_cause": "The work-merge skill Step 1 REBASE_CONFLICT handler specifies no cleanup of the backup_branch returned in the JSON response. When git-squash returns REBASE_CONFLICT, it creates a backup branch for safety; the skill only says to return CONFLICT status and STOP, but gives no instruction to delete the backup branch. When an agent ignores the STOP instruction and resolves manually, the backup branch is never cleaned up \u2014 but even if STOP is followed, the backup branch remains orphaned.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-merge/first-use.md",
+      "pattern_keywords": [
+        "backup_branch",
+        "rebase_conflict",
+        "git_squash",
+        "orphaned_branch",
+        "work_merge",
+        "cleanup"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When git-squash returns REBASE_CONFLICT, immediately delete the backup_branch from the response JSON before returning CONFLICT status. The backup branch is a pre-squash safety snapshot that serves no purpose once squash is abandoned or retried successfully."
     }
   ]
 }
