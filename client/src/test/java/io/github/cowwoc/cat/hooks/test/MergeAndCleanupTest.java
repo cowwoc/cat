@@ -188,15 +188,15 @@ public class MergeAndCleanupTest
   }
 
   /**
-   * Verifies that execute fast-forwards the local base branch when it is behind origin.
+   * Verifies that execute fast-forwards the local target branch when it is behind origin.
    * <p>
-   * When the local base branch is behind origin (origin has new commits), the merge should
-   * fetch and fast-forward the local base branch before proceeding.
+   * When the local target branch is behind origin (origin has new commits), the merge should
+   * fetch and fast-forward the local target branch before proceeding.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeUpdatesLocalBaseBranchWhenBehindOrigin() throws IOException
+  public void executeUpdatesLocalTargetBranchWhenBehindOrigin() throws IOException
   {
     // Create a bare "origin" repo
     Path originRepo = Files.createTempDirectory("origin-repo-");
@@ -285,16 +285,16 @@ public class MergeAndCleanupTest
   }
 
   /**
-   * Verifies that execute throws a clear error when the local base branch has diverged from origin.
+   * Verifies that execute throws a clear error when the local target branch has diverged from origin.
    * <p>
-   * When the local base branch has commits not in origin, the fast-forward update fails and
+   * When the local target branch has commits not in origin, the fast-forward update fails and
    * execute must throw an IOException with a message explaining the divergence.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = IOException.class,
     expectedExceptionsMessageRegExp = ".*diverged.*")
-  public void executeThrowsWhenLocalBaseBranchDivergedFromOrigin() throws IOException
+  public void executeThrowsWhenLocalTargetBranchDivergedFromOrigin() throws IOException
   {
     // Create a bare "origin" repo
     Path originRepo = Files.createTempDirectory("origin-repo-");
@@ -438,16 +438,16 @@ public class MergeAndCleanupTest
   }
 
   /**
-   * Verifies that execute auto-rebases when base branch has diverged from the issue branch.
+   * Verifies that execute auto-rebases when target branch has diverged from the issue branch.
    * <p>
-   * When the base branch has new commits not in the issue branch, the merge should
+   * When the target branch has new commits not in the issue branch, the merge should
    * automatically run {@code git rebase --onto} to replay the issue-specific commits
-   * on top of the current base, then proceed with the fast-forward merge.
+   * on top of the current target, then proceed with the fast-forward merge.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeAutoRebasesWhenBaseBranchDiverged() throws IOException
+  public void executeAutoRebasesWhenTargetBranchDiverged() throws IOException
   {
     Path originRepo = Files.createTempDirectory("origin-repo-");
     Path mainRepo = Files.createTempDirectory("main-repo-");
@@ -484,12 +484,12 @@ public class MergeAndCleanupTest
       TestUtils.runGit(issueWorktree, "add", "issue-work.txt");
       TestUtils.runGit(issueWorktree, "commit", "-m", "Issue commit");
 
-      // Now advance the base branch (v2.1) with a new commit, causing divergence
-      Files.writeString(mainRepo.resolve("base-advance.txt"), "base branch advance");
-      TestUtils.runGit(mainRepo, "add", "base-advance.txt");
-      TestUtils.runGit(mainRepo, "commit", "-m", "Base branch advance commit");
+      // Now advance the target branch (v2.1) with a new commit, causing divergence
+      Files.writeString(mainRepo.resolve("target-advance.txt"), "target branch advance");
+      TestUtils.runGit(mainRepo, "add", "target-advance.txt");
+      TestUtils.runGit(mainRepo, "commit", "-m", "Target branch advance commit");
 
-      // Also push this advance to origin so syncBaseBranchWithOrigin doesn't fail
+      // Also push this advance to origin so syncTargetBranchWithOrigin doesn't fail
       TestUtils.runGit(mainRepo, "push", "origin", "v2.1");
 
       // Set up .claude/cat structure in main repo
@@ -513,7 +513,7 @@ public class MergeAndCleanupTest
         // Verify v2.1 now contains the issue commit
         String v21Log = TestUtils.runGitCommandWithOutput(mainRepo, "log", "--oneline", "v2.1");
         requireThat(v21Log, "v21Log").contains("Issue commit");
-        requireThat(v21Log, "v21Log").contains("Base branch advance commit");
+        requireThat(v21Log, "v21Log").contains("Target branch advance commit");
       }
     }
     finally

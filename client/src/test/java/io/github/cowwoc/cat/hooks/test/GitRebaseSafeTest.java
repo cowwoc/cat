@@ -224,7 +224,7 @@ public class GitRebaseSafeTest
    * Verifies that tree-state comparison correctly detects when rebase changes content.
    * <p>
    * This test ensures that after rebase, if the tree differs from the backup, an error is reported.
-   * Note: With immutable fork commit in cat-branch-point, base branches cannot advance during rebase,
+   * Note: With immutable fork commit in cat-branch-point, target branches cannot advance during rebase,
    * so this test verifies the tree comparison with a single fixed base.
    */
   @Test
@@ -268,7 +268,7 @@ public class GitRebaseSafeTest
    * Verifies that tree-state comparison correctly validates rebase success.
    * <p>
    * With immutable fork commit in cat-branch-point, we always rebase onto the exact commit stored
-   * at worktree creation time, regardless of whether the base branch has advanced.
+   * at worktree creation time, regardless of whether the target branch has advanced.
    * This test verifies the tree state check with a simple, clean rebase scenario.
    */
   @Test

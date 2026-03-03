@@ -85,7 +85,7 @@ public class GetDiffOutputTest
   }
 
   /**
-   * Verifies that getOutput reports no changes when HEAD matches base branch.
+   * Verifies that getOutput reports no changes when HEAD matches target branch.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -757,7 +757,7 @@ public class GetDiffOutputTest
   }
 
   /**
-   * Verifies that base branch detection works from non-worktree directory.
+   * Verifies that target branch detection works from non-worktree directory.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -775,7 +775,7 @@ public class GetDiffOutputTest
         GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
-        // Should detect base branch from branch name pattern
+        // Should detect target branch from branch name pattern
         requireThat(result, "result").contains("Diff Summary");
         requireThat(result, "result").contains("main");
       }
@@ -792,7 +792,7 @@ public class GetDiffOutputTest
    * Creates: targetBranch -> versionBranch (if needed) -> featureBranch with changes
    *
    * @param tempDir the temporary directory for the repo
-   * @param targetBranch the base branch name (e.g., "main")
+   * @param targetBranch the target branch name (e.g., "main")
    * @param featureBranch the feature branch name (e.g., "2.0-my-feature" or "v2.0")
    * @param fileName the file to create and modify
    * @param initialContent the initial file content
@@ -811,7 +811,7 @@ public class GetDiffOutputTest
     Files.createDirectories(catDir);
     Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
-    // Create initial commit on base branch
+    // Create initial commit on target branch
     Files.writeString(tempDir.resolve(fileName), initialContent);
     runGit(tempDir, "add", ".");
     runGit(tempDir, "commit", "-m", "initial commit");
@@ -834,12 +834,12 @@ public class GetDiffOutputTest
   }
 
   /**
-   * Verifies that base branch detection works from branch name pattern.
+   * Verifies that target branch detection works from branch name pattern.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void detectBaseBranchFromBranchNamePattern() throws IOException
+  public void detectTargetBranchFromBranchNamePattern() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
@@ -1517,7 +1517,7 @@ public class GetDiffOutputTest
       Path tempDir = Files.createTempDirectory("render-diff-large-test");
       try
       {
-        // Initialize git repo with a base branch
+        // Initialize git repo with a target branch
         runGit(tempDir, "init");
         runGit(tempDir, "checkout", "-b", "main");
 
