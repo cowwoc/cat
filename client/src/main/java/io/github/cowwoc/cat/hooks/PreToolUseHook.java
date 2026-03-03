@@ -10,14 +10,13 @@ import static io.github.cowwoc.cat.hooks.Strings.equalsIgnoreCase;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.bash.BlockLockManipulation;
-import io.github.cowwoc.cat.hooks.bash.BlockUnauthorizedMergeCleanup;
-import io.github.cowwoc.cat.hooks.bash.BlockWorktreeIsolationViolation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import io.github.cowwoc.cat.hooks.bash.BlockMainRebase;
 import io.github.cowwoc.cat.hooks.bash.BlockMergeCommits;
 import io.github.cowwoc.cat.hooks.bash.BlockReflogDestruction;
+import io.github.cowwoc.cat.hooks.bash.BlockUnauthorizedMergeCleanup;
 import io.github.cowwoc.cat.hooks.bash.BlockUnsafeRemoval;
+import io.github.cowwoc.cat.hooks.bash.BlockWorktreeIsolationViolation;
+import io.github.cowwoc.cat.hooks.bash.BlockWrongBranchCommit;
 import io.github.cowwoc.cat.hooks.bash.ComputeBoxLines;
 import io.github.cowwoc.cat.hooks.bash.RemindGitSquash;
 import io.github.cowwoc.cat.hooks.bash.ValidateCommitType;
@@ -25,6 +24,8 @@ import io.github.cowwoc.cat.hooks.bash.ValidateGitFilterBranch;
 import io.github.cowwoc.cat.hooks.bash.ValidateGitOperations;
 import io.github.cowwoc.cat.hooks.bash.VerifyStateInCommit;
 import io.github.cowwoc.cat.hooks.bash.WarnFileExtraction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
@@ -68,6 +69,7 @@ public final class PreToolUseHook implements HookHandler
       new BlockUnsafeRemoval(scope),
       new BlockUnauthorizedMergeCleanup(scope),
       new BlockWorktreeIsolationViolation(scope),
+      new BlockWrongBranchCommit(),
       new ComputeBoxLines(scope),
       new RemindGitSquash(),
       new ValidateCommitType(),
