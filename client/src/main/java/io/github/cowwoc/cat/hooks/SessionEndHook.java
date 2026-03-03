@@ -28,7 +28,6 @@ import java.util.List;
  *   <li>Project lock file</li>
  *   <li>Task locks owned by the current session</li>
  *   <li>Stale locks older than 24 hours</li>
- *   <li>Session CWD tracking file from the external CAT storage location</li>
  * </ul>
  */
 public final class SessionEndHook implements HookHandler
@@ -105,7 +104,6 @@ public final class SessionEndHook implements HookHandler
       if (!sessionId.isBlank())
       {
         cleanTaskLocks(sessionId, messages);
-        cleanSessionCwdFile(sessionId, messages);
       }
 
       cleanStaleLocks(messages);
@@ -152,29 +150,6 @@ public final class SessionEndHook implements HookHandler
   {
     Path lockDir = scope.getProjectCatDir().resolve("locks");
     cleanLocksInDirectory(lockDir, sessionId, messages, "Task lock released");
-  }
-
-  /**
-   * Removes the session CWD tracking file for the current session from the external CAT storage location.
-   *
-   * @param sessionId the session ID
-   * @param messages list to collect status messages
-   */
-  private void cleanSessionCwdFile(String sessionId, List<String> messages)
-  {
-    Path cwdFile = scope.getProjectCatDir().resolve("sessions/" + sessionId + ".cwd");
-    if (Files.exists(cwdFile))
-    {
-      try
-      {
-        Files.delete(cwdFile);
-        messages.add("Session CWD file cleaned: " + cwdFile);
-      }
-      catch (IOException e)
-      {
-        messages.add("Failed to delete session CWD file " + cwdFile + ": " + e.getMessage());
-      }
-    }
   }
 
   /**

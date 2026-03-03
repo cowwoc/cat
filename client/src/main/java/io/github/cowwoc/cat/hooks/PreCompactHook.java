@@ -21,8 +21,8 @@ import java.nio.file.Path;
  * <p>
  * TRIGGER: PreCompact
  * <p>
- * Reads the {@code cwd} field from the hook input and writes it to the external CAT storage location
- * ({@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/sessions/{session_id}.cwd}), but only when the path
+ * Reads the {@code cwd} field from the hook input and writes it to the session CAT storage location
+ * ({@code {claudeConfigDir}/projects/{encodedProjectDir}/{sessionId}/cat/session.cwd}), but only when the path
  * is non-blank and differs from the project root. This file is consumed by
  * {@link RestoreCwdAfterCompaction} to restore the working directory after context compaction.
  */
@@ -82,12 +82,12 @@ public final class PreCompactHook implements HookHandler
     if (normalizedCwd.equals(normalizedProjectRoot))
       return HookResult.withoutWarnings(output.empty());
 
-    Path sessionsDir = scope.getProjectCatDir().resolve("sessions");
-    Path cwdFile = sessionsDir.resolve(sessionId + ".cwd");
+    Path sessionCatDir = scope.getSessionCatDir();
+    Path cwdFile = sessionCatDir.resolve("session.cwd");
 
     try
     {
-      Files.createDirectories(sessionsDir);
+      Files.createDirectories(sessionCatDir);
       Files.writeString(cwdFile, cwd);
     }
     catch (IOException e)
