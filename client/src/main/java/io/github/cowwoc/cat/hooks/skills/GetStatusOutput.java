@@ -744,7 +744,7 @@ public final class GetStatusOutput implements SkillOutput
   /**
    * Loads the status of issues from git branches by scanning for STATE.md changes.
    * <p>
-   * For each branch, finds STATE.md files that differ from the base branch,
+   * For each branch, finds STATE.md files that differ from the target branch,
    * reads their status, and builds a map of issue path to status.
    *
    * @param projectDir the project root directory
@@ -755,7 +755,7 @@ public final class GetStatusOutput implements SkillOutput
   {
     Map<String, String> statusMap = new HashMap<>();
 
-    String targetBranch = getBaseBranch(projectDir);
+    String targetBranch = getTargetBranch(projectDir);
     if (targetBranch.isEmpty())
       return Map.of();
 
@@ -792,13 +792,13 @@ public final class GetStatusOutput implements SkillOutput
   }
 
   /**
-   * Gets the base branch for the current repository.
+   * Gets the target branch for the current repository.
    *
    * @param projectDir the project root directory
-   * @return the base branch name, or empty string if not found
+   * @return the target branch name, or empty string if not found
    * @throws IOException if git command fails
    */
-  private String getBaseBranch(Path projectDir) throws IOException
+  private String getTargetBranch(Path projectDir) throws IOException
   {
     List<String> lines = executeGitCommand(projectDir, "git", "rev-parse", "--abbrev-ref", "HEAD");
     if (lines.isEmpty())
@@ -838,13 +838,13 @@ public final class GetStatusOutput implements SkillOutput
   }
 
   /**
-   * Gets the list of STATE.md files that changed between base branch and the given branch.
+   * Gets the list of STATE.md files that changed between target branch and the given branch.
    * <p>
    * File paths are validated to ensure they are within the expected directory
    * and do not contain path traversal sequences.
    *
    * @param projectDir the project root directory
-   * @param targetBranch the base branch name
+   * @param targetBranch the target branch name
    * @param branch the branch to compare
    * @return list of valid changed STATE.md file paths relative to project root
    * @throws IOException if git command fails
