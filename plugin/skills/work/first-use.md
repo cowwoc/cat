@@ -170,6 +170,14 @@ Offering closure without criteria verification is a protocol violation.
 
 After Phase 1 returns READY, delegate remaining phases to the work-with-issue skill.
 
+**Change directory into the worktree:**
+
+```bash
+cd "${worktree_path}"
+```
+
+This ensures subsequent shell commands run inside the isolated worktree context.
+
 This skill receives the issue ID and metadata, allowing its exclamation-backtick preprocessing to
 render progress banners automatically for all 4 phases.
 
@@ -246,9 +254,10 @@ No delay needed - the work skill handles its own orchestration.
 If any phase subagent fails unexpectedly:
 
 1. Capture error message
-2. Run `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"` to release the lock.
-3. Display error to user
-4. Offer: Retry, Abort, or Manual cleanup
+2. Run `cd "${CLAUDE_PROJECT_DIR}"` to restore working directory to the project root before releasing the lock.
+3. Run `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"` to release the lock.
+4. Display error to user
+5. Offer: Retry, Abort, or Manual cleanup
 
 ## Success Criteria
 
