@@ -29,6 +29,9 @@ import java.time.temporal.ChronoUnit;
  * Lock files are stored in the external CAT storage location:
  * {@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/locks/}.
  * Tests use {@link JvmScope#getProjectCatDir()} to resolve this path correctly.
+ * <p>
+ * Session-scoped files (such as {@code session.cwd}) are managed independently by the broader
+ * session cleanup pipeline and are not cleaned up by this hook.
  */
 public final class SessionEndHookTest
 {

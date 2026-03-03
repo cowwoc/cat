@@ -54,11 +54,11 @@ public final class RestoreCwdAfterCompactionTest
       String sessionId = "test-session-compact";
 
       // Create the .cwd file pointing to an existing directory
-      Path sessionsDir = scope.getProjectCatDir().resolve("sessions");
-      Files.createDirectories(sessionsDir);
+      Path sessionCatDir = scope.getSessionCatDir();
+      Files.createDirectories(sessionCatDir);
       Path savedDir = tempDir.resolve("worktrees/my-issue");
       Files.createDirectories(savedDir);
-      Files.writeString(sessionsDir.resolve(sessionId + ".cwd"), savedDir.toString());
+      Files.writeString(sessionCatDir.resolve("session.cwd"), savedDir.toString());
 
       RestoreCwdAfterCompaction handler = new RestoreCwdAfterCompaction(scope);
       HookInput input = createInput(mapper,
@@ -116,11 +116,11 @@ public final class RestoreCwdAfterCompactionTest
       String sessionId = "test-session-startup";
 
       // Even with a .cwd file present, startup should not inject
-      Path sessionsDir = scope.getProjectCatDir().resolve("sessions");
-      Files.createDirectories(sessionsDir);
+      Path sessionCatDir = scope.getSessionCatDir();
+      Files.createDirectories(sessionCatDir);
       Path savedDir = tempDir.resolve("some/dir");
       Files.createDirectories(savedDir);
-      Files.writeString(sessionsDir.resolve(sessionId + ".cwd"), savedDir.toString());
+      Files.writeString(sessionCatDir.resolve("session.cwd"), savedDir.toString());
 
       RestoreCwdAfterCompaction handler = new RestoreCwdAfterCompaction(scope);
       HookInput input = createInput(mapper,
@@ -150,11 +150,11 @@ public final class RestoreCwdAfterCompactionTest
       String sessionId = "test-session-resume";
 
       // Even with a .cwd file present, resume should not inject
-      Path sessionsDir = scope.getProjectCatDir().resolve("sessions");
-      Files.createDirectories(sessionsDir);
+      Path sessionCatDir = scope.getSessionCatDir();
+      Files.createDirectories(sessionCatDir);
       Path savedDir = tempDir.resolve("some/dir");
       Files.createDirectories(savedDir);
-      Files.writeString(sessionsDir.resolve(sessionId + ".cwd"), savedDir.toString());
+      Files.writeString(sessionCatDir.resolve("session.cwd"), savedDir.toString());
 
       RestoreCwdAfterCompaction handler = new RestoreCwdAfterCompaction(scope);
       HookInput input = createInput(mapper,
@@ -185,10 +185,10 @@ public final class RestoreCwdAfterCompactionTest
       String sessionId = "test-session-missing";
 
       // Write a .cwd file pointing to a path that does not exist
-      Path sessionsDir = scope.getProjectCatDir().resolve("sessions");
-      Files.createDirectories(sessionsDir);
+      Path sessionCatDir = scope.getSessionCatDir();
+      Files.createDirectories(sessionCatDir);
       Path nonExistentDir = tempDir.resolve("does/not/exist");
-      Files.writeString(sessionsDir.resolve(sessionId + ".cwd"), nonExistentDir.toString());
+      Files.writeString(sessionCatDir.resolve("session.cwd"), nonExistentDir.toString());
 
       RestoreCwdAfterCompaction handler = new RestoreCwdAfterCompaction(scope);
       HookInput input = createInput(mapper,
@@ -196,6 +196,144 @@ public final class RestoreCwdAfterCompactionTest
 
       SessionStartHandler.Result result = handler.handle(input);
 
+      requireThat(result.additionalContext(), "additionalContext").isEmpty();
+      requireThat(result.stderr(), "stderr").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that handle() returns empty when source is "compact" but session_id is blank.
+   */
+  @Test
+  public void blankSessionIdReturnsEmpty() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-restore-cwd-blank-session-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+
+      // Write a .cwd file with valid content
+      Path sessionCatDir = scope.getSessionCatDir();
+      Files.createDirectories(sessionCatDir);
+      Path savedDir = tempDir.resolve("some/dir");
+      Files.createDirectories(savedDir);
+      Files.writeString(sessionCatDir.resolve("session.cwd"), savedDir.toString());
+
+      RestoreCwdAfterCompaction handler = new RestoreCwdAfterCompaction(scope);
+      HookInput input = createInput(mapper,
+        "{\"source\": \"compact\", \"session_id\": \"\"}");
+
+      SessionStartHandler.Result result = handler.handle(input);
+
+      requireThat(result.additionalContext(), "additionalContext").isEmpty();
+      requireThat(result.stderr(), "stderr").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that handle() returns empty when source is "compact" but .cwd file contains only whitespace.
+   */
+  @Test
+  public void compactSourceWithBlankPathContentReturnsEmpty() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-restore-cwd-blank-content-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      String sessionId = "test-session-blank-content";
+
+      // Write .cwd file with only whitespace
+      Path sessionCatDir = scope.getSessionCatDir();
+      Files.createDirectories(sessionCatDir);
+      Files.writeString(sessionCatDir.resolve("session.cwd"), "   \n  ");
+
+      RestoreCwdAfterCompaction handler = new RestoreCwdAfterCompaction(scope);
+      HookInput input = createInput(mapper,
+        "{\"source\": \"compact\", \"session_id\": \"" + sessionId + "\"}");
+
+      SessionStartHandler.Result result = handler.handle(input);
+
+      requireThat(result.additionalContext(), "additionalContext").isEmpty();
+      requireThat(result.stderr(), "stderr").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that handle() returns empty and handles IOException gracefully when reading .cwd file.
+   */
+  @Test
+  public void ioErrorReadingCwdFileHandledGracefully() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-restore-cwd-io-error-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      String sessionId = "test-session-io-error";
+
+      // Create .cwd as a directory (not a file) so readString throws IOException
+      Path sessionCatDir = scope.getSessionCatDir();
+      Files.createDirectories(sessionCatDir);
+      Path cwdAsDir = sessionCatDir.resolve("session.cwd");
+      Files.createDirectory(cwdAsDir);
+
+      RestoreCwdAfterCompaction handler = new RestoreCwdAfterCompaction(scope);
+      HookInput input = createInput(mapper,
+        "{\"source\": \"compact\", \"session_id\": \"" + sessionId + "\"}");
+
+      SessionStartHandler.Result result = handler.handle(input);
+
+      requireThat(result.additionalContext(), "additionalContext").isEmpty();
+      requireThat(result.stderr(), "stderr").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that handle() returns empty when .cwd file contains a symlink path.
+   * NOFOLLOW_LINKS returns false for symlinks.
+   */
+  @Test
+  public void compactSourceWithSymlinkPathReturnsEmpty() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-restore-cwd-symlink-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      String sessionId = "test-session-symlink";
+
+      // Create a real directory and a symlink pointing to it
+      Path sessionCatDir = scope.getSessionCatDir();
+      Files.createDirectories(sessionCatDir);
+      Path realDir = tempDir.resolve("real-dir");
+      Files.createDirectory(realDir);
+      Path symlinkPath = tempDir.resolve("symlink-to-dir");
+      Files.createSymbolicLink(symlinkPath, realDir);
+
+      // Write the symlink path to .cwd file
+      Files.writeString(sessionCatDir.resolve("session.cwd"), symlinkPath.toString());
+
+      RestoreCwdAfterCompaction handler = new RestoreCwdAfterCompaction(scope);
+      HookInput input = createInput(mapper,
+        "{\"source\": \"compact\", \"session_id\": \"" + sessionId + "\"}");
+
+      SessionStartHandler.Result result = handler.handle(input);
+
+      // NOFOLLOW_LINKS returns false for symlinks, so result should be empty
       requireThat(result.additionalContext(), "additionalContext").isEmpty();
       requireThat(result.stderr(), "stderr").isEmpty();
     }
