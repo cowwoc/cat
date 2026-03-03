@@ -5,10 +5,6 @@ See LICENSE.md in the project root for license terms.
 -->
 # Learn From Mistakes: Orchestrator
 
-Analyze mistakes using 5-whys with CAT-specific consideration of conversation length and context
-degradation. Integrates token tracking to identify context-related failures and recommend preventive
-measures including earlier decomposition.
-
 **Architecture:** Main agent spawns single subagent that loads all phase files (investigate, analyze, prevent,
 record) and executes them in one context.
 
@@ -41,7 +37,24 @@ Skill tool:
 The skill runs the extractor invisibly via preprocessing and returns the pre-extracted JSON. Capture this output as
 `PRE_EXTRACTED_CONTEXT`.
 
-## Step 2: Spawn Subagent
+## Step 2: Decide Foreground vs Background
+
+Determine execution mode before spawning the subagent:
+
+- **BACKGROUND:** Learn was triggered mid-operation (while working on an issue via `/cat:work`) AND the learn results
+  (recording to mistakes JSON, updating counter, committing prevention) do not affect the current issue's remaining git
+  operations. Since prevention commits go to the cat fork point branch (not the issue worktree), background is always safe
+  mid-operation.
+- **FOREGROUND:** Learn was explicitly invoked standalone (no issue work in progress).
+
+**Default:** Use background when mid-operation. Use foreground when standalone.
+
+## Step 3: Spawn Subagent
+
+**Background mode:** When background mode was selected in Step 2, inform the user before spawning:
+"Running learn analysis in background — will notify when complete."
+Then spawn the subagent with `run_in_background: true` (see Task tool parameters below). Control returns immediately
+to the caller.
 
 Delegate to general-purpose subagent using the Task tool with these JSON parameters:
 
@@ -49,6 +62,7 @@ Delegate to general-purpose subagent using the Task tool with these JSON paramet
 - **subagent_type:** `"general-purpose"`
 - **model:** `"sonnet"`
 - **prompt:** The prompt below (substitute variables with actual values)
+- **run_in_background:** `true` if background mode was selected in Step 2, omit otherwise
 
 **Subagent prompt:**
 
@@ -101,7 +115,10 @@ Delegate to general-purpose subagent using the Task tool with these JSON paramet
 > }
 > ```
 
-## Step 3: Display Phase Summaries
+## Step 4: Display Phase Summaries
+
+**Note:** If the subagent was spawned in background (Step 2), this step executes when the background task
+notification arrives, not immediately after Step 3.
 
 After the subagent completes, parse the result JSON and display each phase summary to the user:
 
@@ -139,7 +156,7 @@ requires source code changes. Create a CAT issue from the issue_creation_info:
    Suggested description: {suggested_description or "(not provided)"}
    Suggested acceptance criteria: {suggested_acceptance_criteria or "(not provided)"}
    ```
-   Then skip to Step 4.
+   Then skip to Step 5.
 
 2. Display to user: "Prevention requires code changes that cannot be committed on protected branch. Creating
    follow-up issue."
@@ -157,9 +174,9 @@ requires source code changes. Create a CAT issue from the issue_creation_info:
    Description: {suggested_description}
    Acceptance criteria: {suggested_acceptance_criteria}
    ```
-   Then continue to Step 4.
+   Then continue to Step 5.
 
-4. Continue to Step 4 (Display Final Summary) - note that prevention_implemented is false in the summary
+4. Continue to Step 5 (Display Final Summary) - note that prevention_implemented is false in the summary
 
 **Error handling:**
 
@@ -169,7 +186,7 @@ requires source code changes. Create a CAT issue from the issue_creation_info:
 | JSON missing required fields | Display error with details, stop |
 | Phase status is ERROR | Display error from that phase, stop |
 
-## Step 4: Display Final Summary
+## Step 5: Display Final Summary
 
 After all phases complete, display a summary of results:
 

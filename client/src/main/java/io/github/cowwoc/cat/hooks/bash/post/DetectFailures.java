@@ -77,12 +77,14 @@ public final class DetectFailures implements BashHandler
         Failure detected (exit code: %d)
         ----------------------------------------
 
-        Consider:
-        1. Fix the immediate issue
-        2. If this could recur, use learn skill
-           to implement prevention
+        MANDATORY: Invoke cat:learn-agent to record this mistake and implement prevention.
+        Do NOT continue to the next step without invoking learn first.
 
-        See: .claude/skills/learn/SKILL.md""", exitCode));
+        Steps:
+        1. Fix the immediate issue
+        2. Invoke cat:learn-agent to record the mistake and prevent recurrence
+
+        See: /cat:learn-agent""", exitCode));
     }
 
     return Result.allow();

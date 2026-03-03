@@ -96,6 +96,47 @@ public final class EnforceWorktreePathIsolation implements FileWriteHandler
   }
 
   /**
+   * Scans all active lock files to find a worktree that covers the given file path.
+   * <p>
+   * Returns the first {@link WorktreeContext} whose worktree directory is an ancestor of
+   * {@code absoluteFilePath}, or {@code null} if no active worktree covers the path.
+   *
+   * @param absoluteFilePath the absolute normalized path of the file being edited
+   * @return a matching worktree context, or {@code null} if none found
+   */
+  private WorktreeContext findCoveringWorktree(Path absoluteFilePath)
+  {
+    Path lockDir = scope.getProjectCatDir().resolve("locks");
+    if (!Files.isDirectory(lockDir))
+      return null;
+
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(lockDir, "*.lock"))
+    {
+      for (Path lockFile : stream)
+      {
+        String filename = lockFile.getFileName().toString();
+        String issueId = filename.substring(0, filename.length() - ".lock".length());
+        Path worktreePath = scope.getProjectCatDir().resolve("worktrees").resolve(issueId);
+        if (!Files.isDirectory(worktreePath))
+          continue;
+
+        Path absoluteWorktreePath = worktreePath.toAbsolutePath().normalize();
+        if (absoluteFilePath.startsWith(absoluteWorktreePath))
+        {
+          Path absoluteProjectDirectory = projectDir.toAbsolutePath().normalize();
+          return new WorktreeContext(absoluteWorktreePath, absoluteProjectDirectory);
+        }
+      }
+    }
+    catch (IOException e)
+    {
+      throw WrappedCheckedException.wrap(e);
+    }
+
+    return null;
+  }
+
+  /**
    * Returns a block result if {@code absoluteFilePath} is not inside {@code context}'s worktree,
    * or an allow result if it is.
    *

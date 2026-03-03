@@ -245,6 +245,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Java source code comments and Javadoc must describe current behavior only. (Mxxx) provenance labels belong exclusively in CLAUDE.md rule annotations, not in source code. When reading (Mxxx) labels in CLAUDE.md, do not infer they are a general-purpose notation for Java files."
+    },
+    {
+      "id": "M456",
+      "timestamp": "2026-03-03T14:00:00Z",
+      "category": "protocol_violation",
+      "description": "Agent did not invoke cat:learn-agent after load-skill failed with 'catAgentId is required' error; DetectFailures hook warning used advisory language ('Consider') instead of mandatory language, allowing the agent to skip learn invocation",
+      "root_cause": "The DetectFailures PostToolUse hook correctly detected the failure (exit code non-zero, output matched FAILURE_PATTERN containing 'Exception') and emitted a warning. However, the warning used advisory language: 'Consider: 1. Fix the immediate issue 2. If this could recur, use learn skill to implement prevention'. The agent interpreted this as optional and continued without invoking learn. The hook was designed to suggest rather than mandate, so no enforcement mechanism existed to require learn invocation after tool failures.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/client/src/main/java/io/github/cowwoc/cat/hooks/bash/post/DetectFailures.java",
+      "pattern_keywords": [
+        "learn_invocation",
+        "advisory_language",
+        "detect_failures",
+        "hook_enforcement",
+        "completion_bias"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When DetectFailures detects a bash command failure matching the FAILURE_PATTERN, the hook warning must use mandatory language: 'MANDATORY: Invoke cat:learn-agent to record this mistake and implement prevention. Do NOT continue to the next step without invoking learn first.' This removes ambiguity and requires the agent to invoke learn before proceeding."
     }
     ,
     {
