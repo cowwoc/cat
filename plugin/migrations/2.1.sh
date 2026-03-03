@@ -542,32 +542,27 @@ else
 
         log_migration "  Migrating: $plan_file"
 
-        # Extract the content before and after the Execution Steps section
-        before_steps=$(sed -n '1,/^## Execution Steps/p' "$plan_file" | head -n -1)
-        after_steps=$(sed -n '/^## Execution Steps/,$ p' "$plan_file" | sed -n '/^## [^E]/,$ p')
-
-        # Extract numbered steps and convert to bullet points
-        steps_content=$(sed -n '/^## Execution Steps/,/^## /p' "$plan_file" | tail -n +2 | \
-            grep -v "^## " | sed 's/^[[:space:]]*[0-9]\+\.[[:space:]]\(.*\)$/- \1/' | \
-            grep "^- " || true)
-
-        # Build new file content
-        {
-            echo "$before_steps"
-            echo ""
-            echo "## Execution Waves"
-            echo ""
-            echo "### Wave 1"
-            if [[ -n "$steps_content" ]]; then
-                echo "$steps_content"
-            else
-                echo "- [migrated from Execution Steps - review and update]"
-            fi
-            if [[ -n "$after_steps" ]]; then
-                echo ""
-                echo "$after_steps"
-            fi
-        } > "$plan_file"
+        # Use awk to preserve all content while renaming the section heading and inserting Wave 1
+        # The awk command:
+        # 1. Matches "^## Execution Steps" and replaces with "## Execution Waves\n\n### Wave 1"
+        # 2. Preserves all subsequent lines unchanged until EOF or next "^## " heading
+        # 3. Passes through lines before the section unchanged
+        awk '
+        /^## Execution Steps/ {
+            print "## Execution Waves"
+            print ""
+            print "### Wave 1"
+            in_section = 1
+            next
+        }
+        in_section && /^## / {
+            in_section = 0
+            print ""
+            print
+            next
+        }
+        { print }
+        ' "$plan_file" > "${plan_file}.tmp" && mv "${plan_file}.tmp" "$plan_file"
 
         ((phase7_migrated++)) || true
         log_migration "    Done: $plan_file"
