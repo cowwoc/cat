@@ -57,6 +57,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - split-user-agent-skill-variants
 - untrack-cat-config-local
 - split-width-config-options
+- fix-worktree-path-suggestion
 
 
 ## Issues Completed
