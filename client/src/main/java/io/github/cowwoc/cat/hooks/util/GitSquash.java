@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 /**
  * Deterministic git squash via commit-tree with race condition prevention.
  * <p>
- * Implements the commit-tree approach: pin base branch reference, rebase onto base,
+ * Implements the commit-tree approach: pin target branch reference, rebase onto target,
  * detect concurrent modifications, create backup, squash via commit-tree, and verify.
  * <p>
  * This replaces the prohibited soft-reset approach. The commit-tree method creates
@@ -243,7 +243,7 @@ public final class GitSquash
   }
 
   /**
-   * Detects files modified on both the base branch and the issue branch.
+   * Detects files modified on both the target branch and the issue branch.
    * <p>
    * These were auto-resolved by rebase, but the resolution should be verified by the caller.
    *
@@ -255,7 +255,7 @@ public final class GitSquash
   {
     Set<String> result = new LinkedHashSet<>();
 
-    // Files modified on base branch since the worktree branched
+    // Files modified on target branch since the worktree branched
     ProcessRunner.Result baseChangedResult = ProcessRunner.run(
       "git", "-C", directory, "diff", "--name-only", mergeBase + ".." + base);
     String baseOutput = baseChangedResult.stdout().strip();

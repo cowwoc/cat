@@ -97,10 +97,10 @@ public class GetIssueCompleteOutputTest
   }
 
   /**
-   * Verifies that getIssueCompleteBox output contains base branch.
+   * Verifies that getIssueCompleteBox output contains target branch.
    */
   @Test
-  public void getIssueCompleteBoxContainsBaseBranch() throws IOException
+  public void getIssueCompleteBoxContainsTargetBranch() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {

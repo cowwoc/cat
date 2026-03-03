@@ -74,7 +74,7 @@ public final class GetIssueCompleteOutput implements SkillOutput
       // Scope complete: scopeName
       return getScopeCompleteBox(args[0]);
     throw new IllegalArgumentException(
-      "Expected 1 or 4+ arguments (scope-name OR issue-name next-issue next-goal base-branch), got " +
+      "Expected 1 or 4+ arguments (scope-name OR issue-name next-issue next-goal target-branch), got " +
       args.length);
   }
 

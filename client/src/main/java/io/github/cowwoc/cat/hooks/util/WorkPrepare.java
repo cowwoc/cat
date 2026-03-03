@@ -236,7 +236,7 @@ public final class WorkPrepare
     String issueName = found.issueName();
     Path issuePath = Path.of(found.issuePath());
 
-    // Get base branch (current branch in project dir)
+    // Get target branch (current branch in project dir)
     String targetBranch = GitCommands.getCurrentBranch(projectDir.toString());
 
     // Step 4: Estimate tokens
@@ -452,8 +452,8 @@ public final class WorkPrepare
         "message", "Failed to check existing work: " + e.getMessage()));
     }
 
-    // Step 8: Check base branch for suspicious commits
-    String suspiciousCommits = checkBaseBranchCommits(projectDir, targetBranch, issueName, planPath);
+    // Step 8: Check target branch for suspicious commits
+    String suspiciousCommits = checkTargetBranchCommits(projectDir, targetBranch, issueName, planPath);
 
     // Step 9: Update STATE.md in worktree
     try
@@ -1165,7 +1165,7 @@ public final class WorkPrepare
   }
 
   /**
-   * Checks the base branch for suspicious commits that may have already implemented this issue.
+   * Checks the target branch for suspicious commits that may have already implemented this issue.
    * <p>
    * Uses two complementary strategies:
    * <ol>
@@ -1181,7 +1181,7 @@ public final class WorkPrepare
    * @param planPath the path to PLAN.md, used to extract planned files for overlap detection
    * @return a newline-separated list of suspicious commit lines, or empty string if none found
    */
-  private String checkBaseBranchCommits(Path projectDir, String targetBranch, String issueName,
+  private String checkTargetBranchCommits(Path projectDir, String targetBranch, String issueName,
     Path planPath)
   {
     List<String> planningPrefixes = List.of(

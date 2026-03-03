@@ -263,7 +263,7 @@ public class GetNextIssueOutputTest
    * Verifies that getNextIssueBox throws for null targetBranch.
    */
   @Test(expectedExceptions = NullPointerException.class)
-  public void getNextIssueBoxThrowsOnNullBaseBranch() throws IOException
+  public void getNextIssueBoxThrowsOnNullTargetBranch() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
@@ -276,7 +276,7 @@ public class GetNextIssueOutputTest
    * Verifies that getNextIssueBox throws for blank targetBranch.
    */
   @Test(expectedExceptions = IllegalArgumentException.class)
-  public void getNextIssueBoxThrowsOnBlankBaseBranch() throws IOException
+  public void getNextIssueBoxThrowsOnBlankTargetBranch() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {

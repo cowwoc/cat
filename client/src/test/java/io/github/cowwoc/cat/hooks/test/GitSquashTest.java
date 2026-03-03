@@ -743,7 +743,7 @@ public class GitSquashTest
 
   /**
    * Verifies that a concurrent modification warning is emitted when a file is modified
-   * on both the base branch and the issue branch.
+   * on both the target branch and the issue branch.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -867,7 +867,7 @@ public class GitSquashTest
   }
 
   /**
-   * Verifies that no warnings are emitted when the base branch has no new commits.
+   * Verifies that no warnings are emitted when the target branch has no new commits.
    *
    * @throws IOException if an I/O error occurs
    */

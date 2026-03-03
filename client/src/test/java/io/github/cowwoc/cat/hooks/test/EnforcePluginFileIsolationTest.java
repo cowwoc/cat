@@ -365,7 +365,7 @@ public class EnforcePluginFileIsolationTest
    * Creates a {@code cat-branch-point} file in the git directory of the given repository.
    * <p>
    * This simulates an issue worktree created by {@code /cat:work}. The file content is
-   * the base branch name (e.g., "v2.1").
+   * the target branch name (e.g., "v2.1").
    *
    * @param repoDir the repository directory
    * @throws IOException if the git command fails or file creation fails

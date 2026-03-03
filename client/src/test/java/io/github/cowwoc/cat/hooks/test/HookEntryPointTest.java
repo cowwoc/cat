@@ -1227,13 +1227,13 @@ public class HookEntryPointTest
   // --- WarnBaseBranchEdit handler tests (using real git state) ---
 
   /**
-   * Verifies that WarnBaseBranchEdit warns on base branch for non-allowed files.
+   * Verifies that WarnBaseBranchEdit warns on target branch for non-allowed files.
    * <p>
    * Creates a temp git repo on branch 'main' and uses a file path within it
    * so that branch detection derives from the file path, not the process CWD.
    */
   @Test
-  public void warnBaseBranchEditWarnsOnBaseBranch() throws IOException
+  public void warnBaseBranchEditWarnsOnTargetBranch() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {

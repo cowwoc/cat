@@ -26,28 +26,28 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 /**
  * Tests for ExistingWorkChecker.
  * <p>
- * Tests verify checking for existing commits in a worktree compared to a base branch.
+ * Tests verify checking for existing commits in a source branch compared to a target branch.
  * Each test is self-contained with temporary git repositories to support parallel execution.
  */
 public class ExistingWorkCheckerTest
 {
   /**
-   * Verifies that check returns no existing work when worktree is at base branch.
+   * Verifies that check returns no existing work when source branch is at target branch.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void checkReturnsNoExistingWorkWhenAtBaseBranch() throws IOException
+  public void checkReturnsNoExistingWorkWhenAtTargetBranch() throws IOException
   {
     Path tempDir = createTempGitRepo();
     try
     {
-      GitCommands.runGit(tempDir, "checkout", "-b", "base-branch");
+      GitCommands.runGit(tempDir, "checkout", "-b", "target-branch");
       createCommit(tempDir, "Initial commit");
 
-      GitCommands.runGit(tempDir, "checkout", "-b", "task-branch");
+      GitCommands.runGit(tempDir, "checkout", "-b", "source-branch");
 
-      CheckResult result = ExistingWorkChecker.check(tempDir.toString(), "base-branch");
+      CheckResult result = ExistingWorkChecker.check(tempDir.toString(), "target-branch");
 
       requireThat(result.hasExistingWork(), "hasExistingWork").isFalse();
       requireThat(result.existingCommits(), "existingCommits").isEqualTo(0);
@@ -60,7 +60,7 @@ public class ExistingWorkCheckerTest
   }
 
   /**
-   * Verifies that check returns existing work when worktree has commits ahead of base.
+   * Verifies that check returns existing work when source branch has commits ahead of target.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -70,14 +70,14 @@ public class ExistingWorkCheckerTest
     Path tempDir = createTempGitRepo();
     try
     {
-      GitCommands.runGit(tempDir, "checkout", "-b", "base-branch");
+      GitCommands.runGit(tempDir, "checkout", "-b", "target-branch");
       createCommit(tempDir, "Initial commit");
 
-      GitCommands.runGit(tempDir, "checkout", "-b", "task-branch");
+      GitCommands.runGit(tempDir, "checkout", "-b", "source-branch");
       createCommit(tempDir, "Work in progress 1");
       createCommit(tempDir, "Work in progress 2");
 
-      CheckResult result = ExistingWorkChecker.check(tempDir.toString(), "base-branch");
+      CheckResult result = ExistingWorkChecker.check(tempDir.toString(), "target-branch");
 
       requireThat(result.hasExistingWork(), "hasExistingWork").isTrue();
       requireThat(result.existingCommits(), "existingCommits").isEqualTo(2);
@@ -100,14 +100,14 @@ public class ExistingWorkCheckerTest
     Path tempDir = createTempGitRepo();
     try
     {
-      GitCommands.runGit(tempDir, "checkout", "-b", "base-branch");
+      GitCommands.runGit(tempDir, "checkout", "-b", "target-branch");
       createCommit(tempDir, "Initial commit");
 
-      GitCommands.runGit(tempDir, "checkout", "-b", "task-branch");
+      GitCommands.runGit(tempDir, "checkout", "-b", "source-branch");
       for (int i = 1; i <= 7; ++i)
         createCommit(tempDir, "Commit " + i);
 
-      CheckResult result = ExistingWorkChecker.check(tempDir.toString(), "base-branch");
+      CheckResult result = ExistingWorkChecker.check(tempDir.toString(), "target-branch");
 
       requireThat(result.hasExistingWork(), "hasExistingWork").isTrue();
       requireThat(result.existingCommits(), "existingCommits").isEqualTo(7);
@@ -132,14 +132,14 @@ public class ExistingWorkCheckerTest
     Path tempDir = createTempGitRepo();
     try
     {
-      GitCommands.runGit(tempDir, "checkout", "-b", "base-branch");
+      GitCommands.runGit(tempDir, "checkout", "-b", "target-branch");
       createCommit(tempDir, "Initial commit");
 
-      GitCommands.runGit(tempDir, "checkout", "-b", "task-branch");
+      GitCommands.runGit(tempDir, "checkout", "-b", "source-branch");
       createCommit(tempDir, "First work");
       createCommit(tempDir, "Second work");
 
-      CheckResult result = ExistingWorkChecker.check(tempDir.toString(), "base-branch");
+      CheckResult result = ExistingWorkChecker.check(tempDir.toString(), "target-branch");
 
       requireThat(result.commitSummary(), "commitSummary").contains("|");
     }
@@ -150,13 +150,13 @@ public class ExistingWorkCheckerTest
   }
 
   /**
-   * Verifies that check throws on non-existent worktree path.
+   * Verifies that check throws on non-existent source path.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Cannot access worktree.*")
   public void checkThrowsOnNonExistentWorktreePath() throws IOException
   {
-    ExistingWorkChecker.check("/nonexistent/path", "base-branch");
+    ExistingWorkChecker.check("/nonexistent/path", "target-branch");
   }
 
   /**
@@ -184,13 +184,13 @@ public class ExistingWorkCheckerTest
   }
 
   /**
-   * Verifies that check throws IOException on non-existent base branch.
+   * Verifies that check throws IOException on non-existent target branch.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = IOException.class,
     expectedExceptionsMessageRegExp = "(?s).*")
-  public void checkThrowsOnNonExistentBaseBranch() throws IOException
+  public void checkThrowsOnNonExistentTargetBranch() throws IOException
   {
     Path tempDir = createTempGitRepo();
     try
@@ -217,14 +217,14 @@ public class ExistingWorkCheckerTest
     Path tempDir = createTempGitRepo();
     try
     {
-      GitCommands.runGit(tempDir, "checkout", "-b", "base-branch");
+      GitCommands.runGit(tempDir, "checkout", "-b", "target-branch");
       createCommit(tempDir, "Initial commit");
 
-      GitCommands.runGit(tempDir, "checkout", "-b", "task-branch");
+      GitCommands.runGit(tempDir, "checkout", "-b", "source-branch");
       for (int i = 1; i <= 5; ++i)
         createCommit(tempDir, "Commit " + i);
 
-      CheckResult result = ExistingWorkChecker.check(tempDir.toString(), "base-branch");
+      CheckResult result = ExistingWorkChecker.check(tempDir.toString(), "target-branch");
 
       requireThat(result.hasExistingWork(), "hasExistingWork").isTrue();
       requireThat(result.existingCommits(), "existingCommits").isEqualTo(5);
@@ -298,9 +298,9 @@ public class ExistingWorkCheckerTest
     {
       try
       {
-        GitCommands.runGit(tempDir, "checkout", "-b", "base-branch");
+        GitCommands.runGit(tempDir, "checkout", "-b", "target-branch");
         createCommit(tempDir, "Initial commit");
-        GitCommands.runGit(tempDir, "checkout", "-b", "task-branch");
+        GitCommands.runGit(tempDir, "checkout", "-b", "source-branch");
 
         ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
         ByteArrayOutputStream errBytes = new ByteArrayOutputStream();
@@ -308,7 +308,7 @@ public class ExistingWorkCheckerTest
         PrintStream err = new PrintStream(errBytes, true, StandardCharsets.UTF_8);
 
         boolean success = ExistingWorkChecker.run(
-          new String[]{"--worktree", tempDir.toString(), "--target-branch", "base-branch"},
+          new String[]{"--worktree", tempDir.toString(), "--target-branch", "target-branch"},
           scope, out, err);
 
         requireThat(success, "success").isTrue();
@@ -357,7 +357,7 @@ public class ExistingWorkCheckerTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void runWithMissingBaseBranchWritesErrorToStderr() throws IOException
+  public void runWithMissingTargetBranchWritesErrorToStderr() throws IOException
   {
     Path tempDir = createTempGitRepo();
     try (JvmScope scope = new TestJvmScope())

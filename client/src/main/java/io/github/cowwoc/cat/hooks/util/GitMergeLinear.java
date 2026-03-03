@@ -122,29 +122,30 @@ public final class GitMergeLinear
   /**
    * Gets the commit count between two branches.
    *
-   * @param base the base branch
-   * @param task the task branch
+   * @param targetBranch the target branch
+   * @param sourceBranch the source branch
    * @return the commit count
    * @throws IOException if the operation fails
    */
-  private int getCommitCount(String base, String task) throws IOException
+  private int getCommitCount(String targetBranch, String sourceBranch) throws IOException
   {
-    String count = runGitCommandSingleLineInDirectory(directory,"rev-list", "--count", base + ".." + task);
+    String count = runGitCommandSingleLineInDirectory(directory, "rev-list", "--count",
+      targetBranch + ".." + sourceBranch);
     return Integer.parseInt(count);
   }
 
   /**
    * Checks if fast-forward merge is possible.
    *
-   * @param base the base branch
-   * @param task the task branch
+   * @param targetBranch the target branch
+   * @param sourceBranch the source branch
    * @throws IOException if fast-forward is not possible
    */
-  private void checkFastForwardPossible(String base, String task) throws IOException
+  private void checkFastForwardPossible(String targetBranch, String sourceBranch) throws IOException
   {
     try
     {
-      ProcessBuilder pb = new ProcessBuilder("git", "merge-base", "--is-ancestor", base, task);
+      ProcessBuilder pb = new ProcessBuilder("git", "merge-base", "--is-ancestor", targetBranch, sourceBranch);
       pb.directory(Path.of(directory).toFile());
       pb.redirectErrorStream(true);
       Process process = pb.start();
@@ -152,11 +153,11 @@ public final class GitMergeLinear
 
       if (exitCode != 0)
       {
-        int behindCount = getCommitCount(task, base);
+        int behindCount = getCommitCount(sourceBranch, targetBranch);
         if (behindCount > 0)
         {
-          throw new IOException("Source branch is behind " + base + " by " + behindCount +
-            " commits. Rebase required: git checkout " + task + " && git rebase " + base);
+          throw new IOException("Source branch is behind " + targetBranch + " by " + behindCount +
+            " commits. Rebase required: git checkout " + sourceBranch + " && git rebase " + targetBranch);
         }
       }
     }
@@ -285,7 +286,7 @@ public final class GitMergeLinear
       System.err.println("""
         {
           "status": "error",
-          "message": "Usage: git-merge-linear <issue-branch> --base <branch>"
+          "message": "Usage: git-merge-linear <issue-branch> --target <branch>"
         }""");
       System.exit(1);
     }
@@ -295,7 +296,7 @@ public final class GitMergeLinear
 
     for (int i = 1; i < args.length; ++i)
     {
-      if (args[i].equals("--base") && i + 1 < args.length)
+      if (args[i].equals("--target") && i + 1 < args.length)
       {
         targetBranch = args[i + 1];
         ++i;
@@ -316,8 +317,8 @@ public final class GitMergeLinear
       System.err.println("""
         {
           "status": "error",
-          "message": "Missing required argument: --base <branch>. \
-Usage: git-merge-linear <issue-branch> --base <branch>"
+          "message": "Missing required argument: --target <branch>. \
+Usage: git-merge-linear <issue-branch> --target <branch>"
         }""");
       System.exit(1);
     }

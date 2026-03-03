@@ -234,7 +234,7 @@ public final class GetDiffOutput implements SkillOutput
      * Gets the raw diff output between base and HEAD.
      *
      * @param projectRoot the project root path
-     * @param targetBranch the base branch for comparison
+     * @param targetBranch the target branch for comparison
      * @return the raw diff output, or null on error
      * @throws NullPointerException if {@code projectRoot} or {@code targetBranch} are null
      */
@@ -263,10 +263,10 @@ public final class GetDiffOutput implements SkillOutput
     private static final Pattern VERSION_BRANCH_PATTERN = Pattern.compile("^v\\d+\\.\\d+$");
 
     /**
-     * Detects the base branch for diff comparison.
+     * Detects the target branch for diff comparison.
      *
      * @param projectRoot the project root path
-     * @return the base branch name, or null if not detected
+     * @return the target branch name, or null if not detected
      * @throws NullPointerException if {@code projectRoot} is null
      */
     static String detectTargetBranch(Path projectRoot)
@@ -290,7 +290,7 @@ public final class GetDiffOutput implements SkillOutput
       }
       catch (Exception e)
       {
-        log.debug("Failed to detect base branch", e);
+        log.debug("Failed to detect target branch", e);
       }
 
       return "main";
@@ -299,7 +299,7 @@ public final class GetDiffOutput implements SkillOutput
     /**
      * Detects target branch from worktree directory path.
      *
-     * @return the base branch name, or null if not in a worktree
+     * @return the target branch name, or null if not in a worktree
      */
     private static String detectFromWorktreePath()
     {
@@ -319,7 +319,7 @@ public final class GetDiffOutput implements SkillOutput
      * Detects target branch from current branch name.
      *
      * @param projectRoot the project root path
-     * @return the base branch name, or null if not detected
+     * @return the target branch name, or null if not detected
      * @throws NullPointerException if {@code projectRoot} is null
      */
     private static String detectFromBranchName(Path projectRoot)
@@ -343,7 +343,7 @@ public final class GetDiffOutput implements SkillOutput
      * Detects target branch from upstream tracking branch.
      *
      * @param projectRoot the project root path
-     * @return the base branch name, or null if not detected
+     * @return the target branch name, or null if not detected
      * @throws NullPointerException if {@code projectRoot} is null
      */
     private static String detectFromUpstream(Path projectRoot)
@@ -414,7 +414,7 @@ public final class GetDiffOutput implements SkillOutput
     if (targetBranch == null)
       return "Target branch could not be detected from current directory or branch name.";
 
-    // Check if base branch exists
+    // Check if target branch exists
     if (!GitHelper.branchExists(projectRoot, targetBranch))
     {
       // Try with origin/ prefix
