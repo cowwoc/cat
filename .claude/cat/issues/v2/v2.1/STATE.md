@@ -15,6 +15,7 @@
 Finalize naming conventions and UI polish before recording demo videos.
 
 ## Issues Pending
+- fix-migration-21-awk-syntax-error
 - fix-migration-21-execution-steps-detail-loss
 - fix-cwd-file-storage-location
 - centralize-verbatim-output-skill
