@@ -51,7 +51,7 @@ Report "No active subagents found."
 
 **If status = "warning":**
 - Subagent approaching context limits (>= 80K tokens)
-- For accurate current metrics, run `/cat:token-report`
+- For accurate current metrics, run `/cat:token-report-agent`
 - Consider collecting partial results with `collect-results`
 - May need to decompose remaining work
 
@@ -70,7 +70,7 @@ The `tokens` field in monitor output comes from:
 1. `.completion.json` if subagent has completed (preferred)
 2. Session file parsing for running subagents
 
-For accurate token metrics on completed subagents, use `/cat:token-report` which extracts
+For accurate token metrics on completed subagents, use `/cat:token-report-agent` which extracts
 `totalTokens` from Task tool completions.
 
 ## Anti-Patterns
@@ -108,6 +108,6 @@ ACTIVE_COUNT=$(git worktree list | grep -c "-sub-")
 ## Related Skills
 
 - `cat:spawn-subagent` - Launch new subagents
-- `cat:collect-results` - Gather completed subagent work
-- `cat:token-report` - Detailed token analysis
+- `cat:collect-results-agent` - Gather completed subagent work
+- `cat:token-report-agent` - Detailed token analysis
 - `cat:parallel-execute` - Orchestrate multiple subagents

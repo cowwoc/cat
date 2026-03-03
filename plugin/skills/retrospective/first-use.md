@@ -305,5 +305,5 @@ Before completing retrospective:
 ## Related Skills
 
 - `cat:learn` - Records individual mistakes, triggers this skill
-- `cat:token-report` - Provides context metrics for analysis
+- `cat:token-report-agent` - Provides context metrics for analysis
 - `cat:work` - Can be used to implement action items

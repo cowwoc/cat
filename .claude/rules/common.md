@@ -195,6 +195,18 @@ adding a field that already exists).
 - Support old file paths or directory structures alongside new ones
 - Add compatibility layers that translate between old and new APIs
 
+## MEMORY.md vs Project Conventions
+
+**MEMORY.md is for short-term fixes only** — technical discoveries, workarounds, and session-specific knowledge that
+hasn't yet been formalized. When a rule should persist as a project or plugin convention, add it to the appropriate
+convention file (see CLAUDE.md § "Convention File Locations"), not MEMORY.md.
+
+| Content Type | Location |
+|---|---|
+| Short-term workarounds, discoveries | `MEMORY.md` |
+| Project development conventions | `.claude/rules/` |
+| End-user behavioral rules | `InjectSessionInstructions.java`, `plugin/` files |
+
 ## Documentation Style
 
 **Line wrapping:** Markdown files should wrap at 120 characters.
@@ -230,6 +242,15 @@ problem violates those criteria, it must be fixed — regardless of when it was 
 
 **Example:** If an issue's goal is "remove all Python from the project" and pre-existing shell scripts contain inline
 `python3` calls, those must be addressed. The fact that they existed before the issue started is irrelevant.
+
+## Recurring Problems After Closed Issues
+
+If a problem recurs after a closed issue was supposed to fix it, the fix was insufficient. Create a new issue to address
+the gap — do NOT dismiss it as "already covered" by the closed issue.
+
+**Rationale:** A closed issue means the fix was attempted, not that it succeeded. Recurrence is evidence that the
+original fix had an incomplete scope, missed an edge case, or addressed symptoms rather than root cause. The new issue
+should reference the closed one and identify what the original fix missed.
 
 ## Shell Efficiency
 

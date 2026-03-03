@@ -244,13 +244,13 @@ After agent completes:
      echo "⚠️ WARNING: YAML frontmatter missing!"
    ```
 
-4. **Run validation via /cat:delegate**:
+4. **Run validation via /cat:delegate-agent**:
 
-   Use `/cat:delegate` for ALL validation (single or multiple files). The compare-docs skill
+   Use `/cat:delegate-agent` for ALL validation (single or multiple files). The compare-docs skill
    handles extraction, comparison, and report generation.
 
    ```bash
-   /cat:delegate --skill compare-docs /tmp/original-{{filename}} /tmp/compressed-{{filename}}-v${VERSION}.md
+   /cat:delegate-agent --skill compare-docs-agent /tmp/original-{{filename}} /tmp/compressed-{{filename}}-v${VERSION}.md
    ```
 
    **Why delegate**: Delegate handles:
@@ -464,12 +464,12 @@ No exceptions. Status is ONLY valid if it comes from /compare-docs output.
 
 ---
 
-## Multiple Files: Use /cat:delegate
+## Multiple Files: Use /cat:delegate-agent
 
-**For compressing multiple files**, use `/cat:delegate`:
+**For compressing multiple files**, use `/cat:delegate-agent`:
 
 ```bash
-/cat:delegate --skill shrink-doc file1.md file2.md file3.md
+/cat:delegate-agent --skill shrink-doc-agent file1.md file2.md file3.md
 ```
 
 Delegate handles:
@@ -497,7 +497,7 @@ Each shrink-doc subagent spawns SEPARATE validation subagents per Step 4.
 
 **Agent Type**: MUST use `subagent_type: "general-purpose"`
 
-**Validation Tool**: Use `/cat:delegate --skill compare-docs` - delegate handles subagent
+**Validation Tool**: Use `/cat:delegate-agent --skill compare-docs-agent` - delegate handles subagent
 spawning and result collection.
 
 **Validation Baseline**: On first invocation, save original document to

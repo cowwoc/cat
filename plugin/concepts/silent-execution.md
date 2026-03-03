@@ -104,7 +104,7 @@ arguments:
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-next-issue-box" $completedIssue $targetBranch`
 ```
 
-When `/cat:work-complete 2.1-fix-bug v2.1` is invoked:
+When `/cat:work-complete-agent 2.1-fix-bug v2.1` is invoked:
 
 1. `$completedIssue` → `2.1-fix-bug`, `$targetBranch` → `v2.1`
 2. `${CLAUDE_PLUGIN_ROOT}` → `/path/to/plugin`
