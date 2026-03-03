@@ -78,9 +78,9 @@ report BLOCKED with search attempts. Do NOT guess or make assumptions.
 Operations requiring specific environment state must verify before proceeding.
 
 ```bash
-# Detect base branch from worktree metadata (fail-fast if missing)
-BASE_BRANCH=$(cat .git/cat-branch-point 2>/dev/null)
-if [[ -z "$BASE_BRANCH" ]]; then
+# Detect target branch from worktree metadata (fail-fast if missing)
+TARGET_BRANCH=$(cat .git/cat-branch-point 2>/dev/null)
+if [[ -z "$TARGET_BRANCH" ]]; then
     echo "ERROR: No cat-branch-point file found. Not in a CAT worktree."
     exit 1
 fi

@@ -16,7 +16,7 @@ Your responsibilities:
 ## Input
 
 You receive a prompt containing:
-- Issue metadata (ISSUE_ID, ISSUE_PATH, WORKTREE_PATH, BRANCH, BASE_BRANCH)
+- Issue metadata (ISSUE_ID, ISSUE_PATH, WORKTREE_PATH, BRANCH, TARGET_BRANCH)
 - Execution result (commits, files_changed)
 - PLAN.md content (goal and post-conditions)
 

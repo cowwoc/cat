@@ -47,7 +47,7 @@ git log --oneline -- ".claude/cat/issues/*/v*/$ISSUE_NAME/" -5
 | Partial commits | Check commit content, may be partial completion |
 
 **Why this matters:** An issue may show `in-progress` with 0% because STATE.md wasn't updated after
-work was completed on the base branch. Resetting to `pending` causes duplicate work.
+work was completed on the target branch. Resetting to `pending` causes duplicate work.
 
 ---
 
@@ -115,17 +115,17 @@ git -C "$WORKTREE_PATH" status --porcelain
 
 If output is non-empty, there is uncommitted work.
 
-**Before assessing risk, check if the worktree branch is already merged:**
+**Before assessing risk, check if the source branch is already merged:**
 
 ```bash
 BRANCH_NAME="<branch-from-survey>"
-BASE_BRANCH=$(cat "$(git -C "$WORKTREE_PATH" rev-parse --git-dir)/cat-branch-point" 2>/dev/null || echo "main")
-MERGED=$(git -C "$WORKTREE_PATH" branch --merged "$BASE_BRANCH" | grep -q "^[* ]*${BRANCH_NAME}$" && echo "yes" || echo "no")
+TARGET_BRANCH=$(cat "$(git -C "$WORKTREE_PATH" rev-parse --git-dir)/cat-branch-point" 2>/dev/null || echo "main")
+MERGED=$(git -C "$WORKTREE_PATH" branch --merged "$TARGET_BRANCH" | grep -q "^[* ]*${BRANCH_NAME}$" && echo "yes" || echo "no")
 ```
 
 | Merge Status | Risk Assessment |
 |---|---|
-| Branch is merged into base | Low risk — branch commits are safe on base; only uncommitted modifications would be lost |
+| Branch is merged into target | Low risk — branch commits are safe on target; only uncommitted modifications would be lost |
 | Branch is NOT merged | High risk — discarding uncommitted work may also represent the only copy of work in progress |
 
 Present findings:
@@ -135,14 +135,14 @@ Present findings:
 
 ### <worktree-path>
 Status: CLEAN | HAS UNCOMMITTED WORK
-Branch merge status: MERGED into <base-branch> | NOT MERGED
+Branch merge status: MERGED into <target-branch> | NOT MERGED
 
 If uncommitted:
   Modified files:
   - <file1>
   - <file2>
 
-  Note: Branch commits are safe on <base-branch>. Only the uncommitted file modifications would be lost.
+  Note: Branch commits are safe on <target-branch>. Only the uncommitted file modifications would be lost.
   (Include this note only when branch is merged — omit when not merged.)
 
   Options:

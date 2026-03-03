@@ -279,8 +279,8 @@ SELECTED=$(echo "$SELECTED" | tr ' ' '
 ### File-Based Override Logic (Review Mode)
 
 ```bash
-# Get changed files from base branch to HEAD (captures all commits since worktree creation)
-# Read base branch from cat-branch-point metadata (fail-fast if missing - stakeholder-review always runs in worktrees)
+# Get changed files from target branch to HEAD (captures all commits since worktree creation)
+# Read target branch from cat-branch-point metadata (fail-fast if missing - stakeholder-review always runs in worktrees)
 WORKTREE_NAME=$(basename "$PWD" 2>/dev/null)
 CAT_BRANCH_POINT_FILE="$(git rev-parse --git-common-dir)/worktrees/${WORKTREE_NAME}/cat-branch-point"
 if [[ ! -f "$CAT_BRANCH_POINT_FILE" ]]; then
@@ -288,9 +288,9 @@ if [[ ! -f "$CAT_BRANCH_POINT_FILE" ]]; then
     echo "Stakeholder review requires worktree context. Run via /cat:work." >&2
     exit 1
 fi
-BASE_BRANCH=$(cat "$CAT_BRANCH_POINT_FILE")
+TARGET_BRANCH=$(cat "$CAT_BRANCH_POINT_FILE")
 
-CHANGED_FILES=$(git diff --name-only "${BASE_BRANCH}..HEAD" 2>/dev/null || git diff --name-only --cached)
+CHANGED_FILES=$(git diff --name-only "${TARGET_BRANCH}..HEAD" 2>/dev/null || git diff --name-only --cached)
 
 # Check for file-based overrides
 if echo "$CHANGED_FILES" | grep -qE '(ui/|frontend/|\.tsx$|\.vue$)'; then
@@ -411,8 +411,8 @@ the space-separated list of stakeholders to run.
 
 **Worktree Isolation:** When reviewing work done in a worktree, ALL git commands and file reads
 MUST execute from within the worktree directory. The `WORKTREE_PATH` from the skill arguments
-specifies the correct location. Running git commands from `/workspace/` reads the base branch
-(pre-implementation state), not the worktree branch (post-implementation state).
+specifies the correct location. Running git commands from `/workspace/` reads the target branch
+(pre-implementation state), not the source branch (post-implementation state).
 
 ```bash
 # CRITICAL: Set working directory to worktree if provided in arguments
@@ -433,9 +433,9 @@ if [[ ! -f "$CAT_BRANCH_POINT_FILE" ]]; then
     echo "Stakeholder review requires worktree context. Run via /cat:work." >&2
     exit 1
 fi
-BASE_BRANCH=$(cat "$CAT_BRANCH_POINT_FILE") && \
-CHANGED_FILES=$(git diff --name-only "${BASE_BRANCH}..HEAD" 2>/dev/null || git diff --name-only --cached) && \
-DIFF_SUMMARY=$(git diff "${BASE_BRANCH}..HEAD" -U3 2>/dev/null || git diff --cached -U3) && \
+TARGET_BRANCH=$(cat "$CAT_BRANCH_POINT_FILE") && \
+CHANGED_FILES=$(git diff --name-only "${TARGET_BRANCH}..HEAD" 2>/dev/null || git diff --name-only --cached) && \
+DIFF_SUMMARY=$(git diff "${TARGET_BRANCH}..HEAD" -U3 2>/dev/null || git diff --cached -U3) && \
 PRIMARY_LANG=$(echo "$CHANGED_FILES" | grep -oE '\.[a-z]+$' | sort | uniq -c | sort -rn | head -1 | awk '{print $2}' | tr -d '.') && \
 SOURCE_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(java|py|ts|js|go|rs|c|cpp|cs)$' || true) && \
 TEST_FILES=$(echo "$CHANGED_FILES" | grep -E '(Test|Spec|_test|_spec)\.' || true) && \
@@ -563,7 +563,7 @@ $(cat "$file")
 #### Changes (with 100 lines context):
 \`\`\`diff
 "
-            FILE_CONTENTS="${FILE_CONTENTS}$(git diff "${BASE_BRANCH}..HEAD" -U100 -- "$file" 2>/dev/null)
+            FILE_CONTENTS="${FILE_CONTENTS}$(git diff "${TARGET_BRANCH}..HEAD" -U100 -- "$file" 2>/dev/null)
 \`\`\`
 "
         fi
@@ -607,7 +607,7 @@ Every reviewer prompt MUST include the complete set of sections below — includ
 (Full Content)` with the actual `FILE_CONTENTS` embedded. Do NOT simplify prompts in subsequent
 rounds by replacing file content with instructions like "Read InjectEnv.java and verify". Subagents
 receiving simplified prompts will read from their default working directory (`/workspace/`), which
-contains the base-branch code, not the worktree's implementation — producing false-positive rejections.
+contains the target-branch code, not the source's implementation — producing false-positive rejections.
 
 For each relevant stakeholder, spawn a subagent with:
 
