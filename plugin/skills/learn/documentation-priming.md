@@ -52,6 +52,8 @@ priming_check:
     - "Does section ordering prime the agent for manual approach?"
     - "Is there a detailed algorithm before the 'invoke skill' instruction?"
     - "Are there example outputs that could be fabricated without validation?"
+    - "Does this document name a specific default location that the agent might fall back to when its primary path
+      becomes unavailable?"
 
   red_flags:
     - "Agent Prompt Template" or similar internal prompts exposed
@@ -129,6 +131,28 @@ For batch operations, this can be costly.
 
 **Fix**: Remove cost concerns that might encourage shortcuts
 
+### Pattern 4: Cognitive Anchoring (Default/Fallback)
+
+**Problem**: Documentation establishes a named default value or path, creating a cognitive anchor the agent falls back
+to when its primary path becomes unavailable.
+
+```markdown
+## Working Directory
+Your working directory defaults to /workspace (main worktree).
+```
+
+**Why it primes**: When the primary path (e.g., worktree) disappears, the agent silently uses the named default
+instead of failing with an error. The agent was never instructed to verify the path — it just recalls the stated
+default and uses it. This priming only manifests under failure conditions, making it invisible during normal operation.
+
+**Fix**: Replace named defaults with action-oriented framing that requires active verification rather than passive
+fallback:
+
+```markdown
+## Working Directory
+Navigate to the worktree and verify the branch before running any commands.
+```
+
 ## Remediation Approaches
 
 | Priming Type | Remediation |
@@ -138,6 +162,9 @@ For batch operations, this can be costly.
 | Cost concerns | Remove cost language, emphasize correctness |
 | Section ordering | Move "invoke skill" instruction to top |
 | Example outputs | Move to internal doc or validation output |
+| Cognitive anchor | Replace named defaults with action-oriented verification steps |
+| Impossible instruction | Revise to specify realistic constraints or remove contradictory requirements |
+| Missing skill preload | Add prerequisite skill invocation or delegation guidance |
 
 ## Prevention Principle
 

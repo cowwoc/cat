@@ -153,6 +153,11 @@ After JSONL examination, use source files for comparison only. Source files are 
 | Output format with values | "validation_score: 1.0 (required)" | Agent fabricates output |
 | Cost/efficiency language | "This spawns 2 subagents..." | Agent takes shortcuts |
 | Conflicting general guidance | "Be concise" + "copy verbatim" | General overrides specific |
+| Cognitive anchor (default/fallback) | "defaults to /workspace" | Agent falls back to named default when primary path fails |
+
+Also check the content of expanded skill files (from `skill_invocations`): review the delegation prompts and skill
+content that subagents received for any of the above patterns, especially cognitive anchors establishing default paths
+or values.
 
 **SKILL EXECUTION FAILURES - Use skill-builder:**
 
@@ -237,7 +242,7 @@ The fix must address BOTH:
 documentation_priming:
   document: "{path to document OR 'Issue prompt'}"
   misleading_section: "{section name and line numbers OR 'OUTPUT FORMAT section'}"
-  priming_type: "algorithm_exposure | output_format | cost_concern | internal_prompt | expected_value"
+  priming_type: "algorithm_exposure | output_format | cost_concern | conflicting_guidance | cognitive_anchor | impossible_instruction | missing_skill_preload"
   how_it_misled: "Agent learned X, then applied it directly instead of invoking Y"
   fix_required: "Move content to internal-only document / Remove section / Restructure"
 ```
@@ -249,7 +254,7 @@ documentation_priming:
 Your final message MUST be ONLY this JSON (no other text):
 
 Valid `priming_type` values: `algorithm_exposure`, `output_format`, `cost_concern`, `conflicting_guidance`,
-`impossible_instruction`, `missing_skill_preload`.
+`cognitive_anchor`, `impossible_instruction`, `missing_skill_preload`.
 
 ```json
 {
