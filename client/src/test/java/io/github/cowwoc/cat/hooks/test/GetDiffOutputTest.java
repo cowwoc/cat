@@ -911,21 +911,51 @@ public class GetDiffOutputTest
   }
 
   /**
-   * Verifies that getOutput without args works when env is set.
+   * Verifies that --project-dir flag correctly overrides fallback directory selection.
+   * <p>
+   * When --project-dir is specified, git operations use that directory rather than
+   * falling back to scope.getClaudeProjectDir() or user.dir.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getOutputWithoutArgsReturnsErrorForNonGitDir() throws IOException
+  public void projectDirFlagIsUsedForGitOperations() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("project-dir-git-repo");
+    try
     {
-      GetDiffOutput handler = new GetDiffOutput(scope);
-      String result = handler.getOutput(new String[0]);
+      // Set up tempDir as a git repo with version branches
+      runGit(tempDir, "init");
+      runGit(tempDir, "checkout", "-b", "main");
+      Files.writeString(tempDir.resolve("file1.txt"), "initial\n");
+      runGit(tempDir, "add", ".");
+      runGit(tempDir, "commit", "-m", "initial");
 
-      // TestJvmScope provides a temp dir that is not a git repo,
-      // so getOutput(new String[0]) returns an error about target branch not found
-      requireThat(result, "result").contains("Target branch not found");
+      // Create version branch and feature branch
+      runGit(tempDir, "checkout", "-b", "v2.0");
+      runGit(tempDir, "checkout", "-b", "2.0-feature");
+      Files.writeString(tempDir.resolve("file1.txt"), "modified\n");
+      runGit(tempDir, "add", ".");
+      runGit(tempDir, "commit", "-m", "feature changes");
+
+      // Create cat-config in the repo
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
+
+      try (JvmScope scope = new TestJvmScope())
+      {
+        GetDiffOutput handler = new GetDiffOutput(scope);
+        String result = handler.getOutput(new String[]{"--project-dir", tempDir.toString()});
+
+        // --project-dir should be used for git operations, so we expect to see diff summary
+        // with the v2.0 branch detected from 2.0-feature branch name
+        requireThat(result, "result").contains("Diff Summary").contains("v2.0");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
