@@ -30,7 +30,7 @@ import java.nio.file.Path;
  * <li>If no session lock exists (e.g., during a "direct fix" in a session that did not start the
  *     worktree), any active worktree in the project that covers the target file is used to redirect
  *     the edit. This prevents accidental modifications to the main workspace when a worktree
- *     already owns that file path (M453).</li>
+ *     already owns that file path.</li>
  * </ol>
  * <p>
  * Uses session ID to find the matching lock file in the external CAT storage location
@@ -86,7 +86,7 @@ public final class EnforceWorktreePathIsolation implements FileWriteHandler
     if (context != null)
       return checkAgainstContext(context, absoluteFilePath);
 
-    // No session lock: fall back to checking if any active worktree covers the target file (M453).
+    // No session lock: fall back to checking if any active worktree covers the target file.
     // This catches "direct fix" edits made in a session that did not start the worktree.
     WorktreeContext anyContext = findCoveringWorktree(absoluteFilePath);
     if (anyContext != null)

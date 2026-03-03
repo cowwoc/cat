@@ -9,6 +9,11 @@
 | `.claude/**` (other), `CLAUDE.md` | `config:` | Project configuration |
 | `**/README.md`, `docs/` | `docs:` | User-facing documentation |
 
+**Note on (Mxxx) labels:** Some rules below include a parenthetical like `(M352)` indicating which mistake prompted
+the rule. These labels are provenance markers for CLAUDE.md rules only — do NOT copy this pattern into Java source
+code, Javadoc, or plugin Markdown files. Source code comments must describe current behavior, not reference historical
+mistake IDs. See `common.md` § "No retrospective commentary".
+
 **Rules:**
 - `plugin/` files use semantic types: `feature:` (new capability), `refactor:` (restructure), `bugfix:` (fix), `test:` (tests), `performance:` (optimization)
 - `.claude/cat/issues/` files use `planning:`
