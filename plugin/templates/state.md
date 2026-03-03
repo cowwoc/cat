@@ -3,20 +3,18 @@
 - **Status:** open
 - **Progress:** 0%
 - **Dependencies:** []
-- **Last Updated:** {{TIMESTAMP}}
+- **Blocks:** []
 
 ## Mandatory Header Fields
 
 | Field | When Required | Description |
 |-------|---------------|-------------|
-| `Status` | Always | `open`, `in_progress`, or `closed` |
+| `Status` | Always | `open`, `in-progress`, `blocked`, or `closed` |
 | `Progress` | Always | `0%` for open, `100%` for closed |
 | `Dependencies` | Always | Issue names this depends on; use `[]` if none. When decomposed, include all sub-issues |
-| `Last Updated` | Open only | Date of last state change |
-| `Resolution` | Closed only | `implemented`, `duplicate`, `obsolete`, or `won't-fix` |
-| `Completed` | Closed only | Completion date |
-| `Duplicate Of` | Duplicate only | Issue ID that implemented the fix |
-| `Reason` | Resolution is non-implemented | Why the resolution was chosen (not used with `Decomposed`) |
+| `Blocks` | Always | Issue names this blocks; use `[]` if none |
+| `Resolution` | Closed only | `implemented`, `duplicate`, `obsolete`, `won't-fix`, or `not-applicable` |
+| `Parent` | Sub-issues only | Parent issue slug |
 
 ## Resolution Patterns
 
@@ -26,7 +24,7 @@
 - **Progress:** 100%
 - **Resolution:** implemented
 - **Dependencies:** [prerequisite-issue]
-- **Completed:** {{TIMESTAMP}}
+- **Blocks:** []
 
 ## Implementation
 
@@ -39,11 +37,9 @@ git log --oneline -- .claude/cat/issues/v{X}/v{X}.{Y}/{issue-name}/STATE.md
 ```yaml
 - **Status:** closed
 - **Progress:** 100%
-- **Resolution:** duplicate
-- **Duplicate Of:** v{major}.{minor}-{original-issue-name}
-- **Reason:** {why this is a duplicate - what investigation revealed}
+- **Resolution:** duplicate (v{major}.{minor}-{original-issue-name})
 - **Dependencies:** [shared-dependency]
-- **Completed:** {{TIMESTAMP}}
+- **Blocks:** []
 
 ## Reason
 
@@ -60,9 +56,9 @@ List scenarios tested to confirm the duplicate issue's fix covers this case:
 ```yaml
 - **Status:** closed
 - **Progress:** 100%
-- **Resolution:** obsolete
-- **Reason:** {why issue is no longer needed}
-- **Completed:** {{TIMESTAMP}}
+- **Resolution:** obsolete ({why issue is no longer needed})
+- **Dependencies:** []
+- **Blocks:** []
 ```
 
 ### No Code Changes Needed
@@ -70,7 +66,8 @@ List scenarios tested to confirm the duplicate issue's fix covers this case:
 - **Status:** closed
 - **Progress:** 100%
 - **Resolution:** implemented
-- **Completed:** {{TIMESTAMP}}
+- **Dependencies:** []
+- **Blocks:** []
 
 ## Resolution
 

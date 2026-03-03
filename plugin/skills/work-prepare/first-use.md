@@ -403,7 +403,6 @@ Set issue status to `in-progress`:
 ```yaml
 - **Status:** in-progress
 - **Progress:** 0%
-- **Last Updated:** {date}
 ```
 
 **Do NOT modify any files in `${CLAUDE_PROJECT_DIR}` directly.** All file modifications

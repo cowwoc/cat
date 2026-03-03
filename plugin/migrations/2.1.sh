@@ -31,6 +31,8 @@ set -euo pipefail
 # 10. Migrate cross-session dirs (locks/, worktrees/) to external storage; delete stale
 #     session-scoped dirs (sessions/, verify/, e2e-config-test/)
 # 11. Migrate terminalWidth to fileWidth + displayWidth in cat-config.json
+# 12. Remove deprecated Last Updated and Completed fields from open issue-level STATE.md files
+#     (closed issues are not modified)
 
 trap 'echo "ERROR in 2.1.sh at line $LINENO: $BASH_COMMAND" >&2; exit 1' ERR
 
@@ -781,6 +783,7 @@ done
 log_migration "Phase 10 complete"
 
 # ──────────────────────────────────────────────────────────────────────────────
+<<<<<<< HEAD
 # Phase 11: Migrate terminalWidth to fileWidth + displayWidth in cat-config.json
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -868,6 +871,56 @@ else
             log_migration "Phase 11 complete: migrated terminalWidth to fileWidth and displayWidth"
         fi
     fi
+fi
+
+# Phase 12: Remove deprecated Last Updated and Completed fields from open issue-level STATE.md
+# ──────────────────────────────────────────────────────────────────────────────
+
+log_migration "Phase 12: Remove deprecated Last Updated and Completed fields from open issue-level STATE.md"
+
+# Issue-level STATE.md files live at .claude/cat/issues/v*/v*.*/issue-name/STATE.md (depth 5 from issues/).
+issue_state_files=$(find .claude/cat/issues -path "*v*.*/*" -name "STATE.md" -mindepth 5 -maxdepth 5 -type f \
+    2>/dev/null || true)
+
+if [[ -z "$issue_state_files" ]]; then
+    log_migration "No issue-level STATE.md files found - skipping phase 12"
+else
+    total_count=$(echo "$issue_state_files" | wc -l | tr -d ' ')
+    log_migration "Found $total_count issue-level STATE.md files to check"
+
+    phase12_changed=0
+    phase12_skipped=0
+
+    while IFS= read -r state_file; do
+        [[ -z "$state_file" ]] && continue
+
+        # Skip closed issues
+        if grep -q '^\*\*Status:\*\* closed' "$state_file" 2>/dev/null || \
+           grep -q '^- \*\*Status:\*\* closed' "$state_file" 2>/dev/null; then
+            ((phase12_skipped++)) || true
+            continue
+        fi
+
+        changed=false
+
+        if grep -q '^- \*\*Last Updated:\*\*' "$state_file" 2>/dev/null; then
+            sed -i '/^- \*\*Last Updated:\*\*/d' "$state_file"
+            changed=true
+        fi
+
+        if grep -q '^- \*\*Completed:\*\*' "$state_file" 2>/dev/null; then
+            sed -i '/^- \*\*Completed:\*\*/d' "$state_file"
+            changed=true
+        fi
+
+        if [[ "$changed" == "true" ]]; then
+            ((phase12_changed++)) || true
+            log_migration "  Updated: $state_file"
+        fi
+
+    done <<< "$issue_state_files"
+
+    log_migration "Phase 12 complete: $phase12_changed files changed, $phase12_skipped closed issues skipped"
 fi
 
 log_success "Migration to 2.1 completed"

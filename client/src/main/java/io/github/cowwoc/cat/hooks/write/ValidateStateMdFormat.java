@@ -69,10 +69,10 @@ public final class ValidateStateMdFormat implements FileWriteHandler
         "STATE.md format violation: Missing '- **Status:** value' line.\n" +
         "\n" +
         "STATE.md files must use bullet-point format:\n" +
-        "  - **Status:** pending\n" +
+        "  - **Status:** open\n" +
         "  - **Progress:** 0%\n" +
         "  - **Dependencies:** []\n" +
-        "  - **Last Updated:** YYYY-MM-DD\n" +
+        "  - **Blocks:** []\n" +
         "\n" +
         "Use /cat:add to create tasks with correct format, or fix the content to match the template.");
     }
