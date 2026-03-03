@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * for thread-safe initialization. Reads {@code CLAUDE_PROJECT_DIR} and
  * {@code CLAUDE_PLUGIN_ROOT} from the process environment.
  */
-public final class MainJvmScope implements JvmScope
+public final class MainJvmScope extends AbstractJvmScope
 {
   private final ConcurrentLazyReference<JsonMapper> jsonMapper = ConcurrentLazyReference.create(() ->
     JsonMapper.builder().

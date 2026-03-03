@@ -28,7 +28,8 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
  * Restores the agent's working directory to the active worktree on session resume.
  * <p>
  * When a session is resumed ({@code source} is {@code "resume"}), this handler scans lock files
- * in {@code .claude/cat/locks/} for one matching the current session ID. If a matching lock is found
+ * in {@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/locks/} for one matching the current session ID.
+ * If a matching lock is found
  * and its worktree directory still exists on disk, additional context is injected instructing the agent
  * to {@code cd} into that worktree.
  */
@@ -65,8 +66,7 @@ public final class RestoreWorktreeOnResume implements SessionStartHandler
     if (sessionId.isEmpty())
       return Result.empty();
 
-    Path projectDir = scope.getClaudeProjectDir();
-    Path locksDir = projectDir.resolve(".claude").resolve("cat").resolve("locks");
+    Path locksDir = scope.getProjectCatDir().resolve("locks");
     if (!Files.isDirectory(locksDir))
       return Result.empty();
 
@@ -74,7 +74,7 @@ public final class RestoreWorktreeOnResume implements SessionStartHandler
     if (worktreePath.isEmpty())
       return Result.empty();
 
-    if (!isValidWorktreePath(worktreePath, projectDir))
+    if (!isValidWorktreePath(worktreePath, scope.getProjectCatDir()))
     {
       log.debug("Rejected invalid worktree path: {}", worktreePath);
       return Result.empty();
@@ -96,16 +96,16 @@ public final class RestoreWorktreeOnResume implements SessionStartHandler
    * Validates that a worktree path is safe to use.
    * <p>
    * Rejects paths that contain path traversal sequences, control characters, tilde expansion,
-   * or that resolve outside the project directory.
+   * or that resolve outside the project CAT directory.
    *
    * @param path the worktree path to validate
-   * @param projectDir the project directory that the worktree must reside within
+   * @param catProjectDir the project CAT directory that the worktree must reside within
    * @return {@code true} if the path is valid, {@code false} otherwise
    */
-  private boolean isValidWorktreePath(String path, Path projectDir)
+  private boolean isValidWorktreePath(String path, Path catProjectDir)
   {
     assert that(path, "path").isNotNull().elseThrow();
-    assert that(projectDir, "projectDir").isNotNull().elseThrow();
+    assert that(catProjectDir, "catProjectDir").isNotNull().elseThrow();
 
     if (path.isBlank() || path.contains("..") || path.contains("~"))
       return false;
@@ -117,10 +117,10 @@ public final class RestoreWorktreeOnResume implements SessionStartHandler
         return false;
     }
 
-    // Verify the normalized path starts with the project directory
+    // Verify the normalized path starts with the project CAT directory
     Path normalized = Path.of(path).normalize();
-    Path normalizedProject = projectDir.normalize();
-    return normalized.startsWith(normalizedProject);
+    Path normalizedCatDir = catProjectDir.normalize();
+    return normalized.startsWith(normalizedCatDir);
   }
 
   /**

@@ -670,6 +670,29 @@ public String process(String input)
 ### Constructor Validation
 **Always validate constructor arguments** using requirements.java. This applies to both classes and records.
 
+**Skip `isNotNull()` when the next statement would NPE anyway.** If a parameter is immediately dereferenced (method
+call, field access), the null check adds no value — the NPE from dereferencing already surfaces the bug at the same
+location. Only use `requireThat(x, "x").isNotNull()` when the parameter is stored without being dereferenced, or when
+the dereferencing happens much later (making the NPE harder to trace).
+
+```java
+// Good - no explicit null check needed; scope.getClaudeProjectDir() would NPE on null
+public BlockMainRebase(JvmScope scope)
+{
+  this.scope = scope;
+  this.projectDir = scope.getClaudeProjectDir();
+}
+
+// Good - explicit null check needed; name is stored without dereferencing
+public Config(String name, int timeout)
+{
+  requireThat(name, "name").isNotBlank();
+  requireThat(timeout, "timeout").isPositive();
+  this.name = name;
+  this.timeout = timeout;
+}
+```
+
 **Records MUST have compact constructors** with validation when parameters need validation. Do not declare a compact
 constructor for records whose constructor does not read or write the record parameters (e.g., boolean-only or
 primitive-only records with no constraints).
@@ -821,6 +844,52 @@ public String getConfig(String key)
 See `plugin/concepts/requirements-api.md` for full API conventions.
 
 ## Class Design
+
+### Interface vs Abstract Class
+Prefer an abstract superclass over `default` or `static` methods on an interface. Interfaces define contracts (abstract
+methods); implementation logic — even derived convenience methods — belongs in an abstract class.
+
+```java
+// Good - interface defines contract, abstract class provides derived methods
+public interface JvmScope extends AutoCloseable
+{
+  Path getClaudeConfigDir();
+  Path getClaudeProjectDir();
+}
+
+public abstract class AbstractJvmScope implements JvmScope
+{
+  public Path getProjectCatDir()
+  {
+    return getClaudeConfigDir().resolve("projects").resolve(getEncodedProjectDir()).resolve("cat");
+  }
+
+  public static String encodeProjectPath(String projectPath)
+  {
+    return projectPath.replace("/", "-").replace(".", "-");
+  }
+}
+
+// Avoid - implementation logic in the interface
+public interface JvmScope extends AutoCloseable
+{
+  Path getClaudeConfigDir();
+
+  default Path getProjectCatDir()  // implementation in interface
+  {
+    return getClaudeConfigDir().resolve("...");
+  }
+
+  static String encodeProjectPath(String path)  // utility in interface
+  {
+    return path.replace("/", "-");
+  }
+}
+```
+
+**When `default` methods ARE acceptable:**
+- Backward-compatible additions to a widely-implemented interface
+- Methods that truly have only one correct implementation and no state dependency
 
 ### Thread Safety Documentation
 Only document classes that **are** thread-safe. Classes without thread-safety documentation are assumed to be

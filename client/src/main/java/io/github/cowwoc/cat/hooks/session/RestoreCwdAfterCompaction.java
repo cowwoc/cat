@@ -23,7 +23,8 @@ import java.nio.file.Path;
  * Restores the agent's working directory after context compaction.
  * <p>
  * When a session is compacted ({@code source} is {@code "compact"}), this handler reads the
- * session's {@code .claude/cat/sessions/{session_id}.cwd} file written by
+ * session's CWD file from the external CAT storage location
+ * ({@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/sessions/{session_id}.cwd}) written by
  * {@link PreCompactHook}. If the file exists and the recorded path is still a live directory,
  * additional context is injected instructing the agent to {@code cd} back into that path.
  */
@@ -57,8 +58,7 @@ public final class RestoreCwdAfterCompaction implements SessionStartHandler
     if (sessionId.isBlank())
       return Result.empty();
 
-    Path projectDir = scope.getClaudeProjectDir();
-    Path cwdFile = projectDir.resolve(".claude/cat/sessions/" + sessionId + ".cwd");
+    Path cwdFile = scope.getProjectCatDir().resolve("sessions/" + sessionId + ".cwd");
 
     if (!Files.exists(cwdFile))
       return Result.empty();

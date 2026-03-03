@@ -354,7 +354,7 @@ is tool misuse.
 
 ```bash
 # Quick verification
-pwd  # Should show /workspace/.claude/cat/worktrees/<issue-name>, NOT /workspace
+pwd  # Should show ${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/<issue-name>, NOT /workspace
 git branch --show-current  # Should show issue branch, NOT main
 ```
 

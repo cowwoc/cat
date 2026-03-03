@@ -44,26 +44,29 @@ public record WorktreeContext(Path absoluteWorktreePath, Path absoluteProjectDir
    * Returns {@code null} if no active worktree is found for the session (no lock file or
    * worktree directory does not exist).
    *
+   * @param projectCatDir the project CAT directory ({@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/})
    * @param projectDir the project root directory
    * @param mapper the JSON mapper for reading lock files
    * @param sessionId the session ID to look up
    * @return the resolved worktree context, or {@code null} if no active worktree exists
-   * @throws NullPointerException if {@code projectDir}, {@code mapper}, or {@code sessionId} are null
+   * @throws NullPointerException if any parameter is null
    * @throws IllegalArgumentException if {@code sessionId} is blank
    */
-  public static WorktreeContext forSession(Path projectDir, JsonMapper mapper, String sessionId)
+  public static WorktreeContext forSession(Path projectCatDir, Path projectDir, JsonMapper mapper,
+    String sessionId)
   {
+    requireThat(projectCatDir, "projectCatDir").isNotNull();
     requireThat(projectDir, "projectDir").isNotNull();
     requireThat(mapper, "mapper").isNotNull();
     requireThat(sessionId, "sessionId").isNotBlank();
 
     try
     {
-      String issueId = WorktreeLock.findIssueIdForSession(projectDir, mapper, sessionId);
+      String issueId = WorktreeLock.findIssueIdForSession(projectCatDir, mapper, sessionId);
       if (issueId == null)
         return null;
 
-      Path worktreePath = projectDir.resolve(".claude").resolve("cat").resolve("worktrees").resolve(issueId);
+      Path worktreePath = projectCatDir.resolve("worktrees").resolve(issueId);
       if (!Files.isDirectory(worktreePath))
         return null;
 

@@ -166,7 +166,7 @@ echo '{
   "context": {
     "phase": "plan",
     "locks_to_remove": ["2.1-issue-name"],
-    "worktrees_to_remove": [{"path": "/workspace/.claude/cat/worktrees/2.1-issue-name", "branch": "2.1-issue-name"}],
+    "worktrees_to_remove": [{"path": "${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/2.1-issue-name", "branch": "2.1-issue-name"}],
     "branches_to_remove": ["2.1-issue-name"],
     "stale_remotes": []
   }
@@ -247,8 +247,9 @@ echo "Remaining CAT branches:"
 git branch -a | grep -E '(release/|worktree|[0-9]+\.[0-9]+-)' || echo "None"
 
 echo "Remaining locks:"
-if [[ -d .claude/cat/locks ]]; then
-  ls .claude/cat/locks/*.lock 2>/dev/null || echo "None"
+source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
+if [[ -d "${LOCKS_DIR}" ]]; then
+  ls "${LOCKS_DIR}"/*.lock 2>/dev/null || echo "None"
 else
   echo "None"
 fi

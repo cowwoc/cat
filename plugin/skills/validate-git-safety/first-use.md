@@ -69,10 +69,11 @@ git branch -f v21 <new-commit>
 
 ```bash
 # Before ANY git operation in a CAT issue, verify location:
+source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
 CURRENT_DIR=$(pwd)
-if [[ "$CURRENT_DIR" == "/workspace" ]] && [[ -d "/workspace/.claude/cat/worktrees" ]]; then
+if [[ "$CURRENT_DIR" == "/workspace" ]] && [[ -d "${WORKTREES_DIR}" ]]; then
   echo "BLOCKED: Currently in main worktree while issue worktrees exist"
-  echo "Expected: /workspace/.claude/cat/worktrees/<issue-name>"
+  echo "Expected: ${WORKTREES_DIR}/<issue-name>"
   echo "Current:  $CURRENT_DIR"
   exit 1
 fi
@@ -81,11 +82,11 @@ fi
 **Check for active issue worktrees:**
 ```bash
 # If any worktrees exist, you should be in one of them (not main)
-if ls -d /workspace/.claude/cat/worktrees/*/ 2>/dev/null | head -1 | grep -q .; then
+if ls -d "${WORKTREES_DIR}"/*/ 2>/dev/null | head -1 | grep -q .; then
   # Worktrees exist - verify we're in one
   if [[ "$(pwd)" == "/workspace" ]]; then
     echo "ERROR: Issue worktrees exist but operating on main"
-    ls /workspace/.claude/cat/worktrees/
+    ls "${WORKTREES_DIR}/"
     exit 1
   fi
 fi

@@ -7,8 +7,11 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.bash.RemindGitSquash;
 import org.testng.annotations.Test;
+
+import java.io.IOException;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -35,17 +38,23 @@ public final class RemindGitSquashTest
   /**
    * Verifies that {@code git -C <path> reset --soft} with a path argument is blocked.
    * This form was previously not caught because the regex required "git" to immediately precede "reset".
+   *
+   * @throws IOException if an I/O error occurs creating the test scope
    */
   @Test
-  public void gitResetSoftWithPathArgumentIsBlocked()
+  public void gitResetSoftWithPathArgumentIsBlocked() throws IOException
   {
-    RemindGitSquash handler = new RemindGitSquash();
-    String command = "git -C /workspace/.claude/cat/worktrees/2.1-my-issue reset --soft v2.1";
+    try (JvmScope scope = new TestJvmScope())
+    {
+      RemindGitSquash handler = new RemindGitSquash();
+      String worktreePath = scope.getProjectCatDir().resolve("worktrees").resolve("2.1-my-issue").toString();
+      String command = "git -C " + worktreePath + " reset --soft v2.1";
 
-    BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
+      BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
 
-    requireThat(result.blocked(), "blocked").isTrue();
-    requireThat(result.reason(), "reason").contains("/cat:git-squash");
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("/cat:git-squash");
+    }
   }
 
   /**

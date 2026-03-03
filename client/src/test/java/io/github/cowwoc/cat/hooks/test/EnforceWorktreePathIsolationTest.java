@@ -26,9 +26,13 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * edit is permitted. When no lock file matches the session, all edits are allowed. When a lock
  * file matches and the worktree directory exists, only edits within the worktree are allowed.
  * <p>
- * Tests create temp directories mimicking the lock/worktree structure:
- * {@code tempDir/.claude/cat/locks/{issue_id}.lock} and
- * {@code tempDir/.claude/cat/worktrees/{issue_id}/}.
+ * Tests create temp directories mimicking the external CAT storage structure:
+ * {@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/locks/{issue_id}.lock} and
+ * {@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/worktrees/{issue_id}/}.
+ * <p>
+ * The {@code TestJvmScope(projectDir, projectDir)} constructor sets {@code configDir = projectDir},
+ * so external paths resolve relative to {@code projectDir}. Lock and worktree files are created
+ * via {@link JvmScope#getProjectCatDir()} to stay consistent with what the production code looks up.
  * <p>
  * Tests are designed for parallel execution - each test is self-contained
  * with no shared state.
@@ -39,16 +43,16 @@ public class EnforceWorktreePathIsolationTest
   private static final String ISSUE_ID = "2.1-test-task";
 
   /**
-   * Writes a lock file for the given session and issue ID under {@code projectDir}.
+   * Writes a lock file for the given session and issue ID using the scope's project CAT directory.
    *
-   * @param projectDir the project root
+   * @param scope the JVM scope providing the lock directory path
    * @param issueId the issue identifier (becomes the lock filename stem)
    * @param sessionId the session ID to embed in the lock content
    * @throws IOException if the lock file cannot be written
    */
-  private static void writeLockFile(Path projectDir, String issueId, String sessionId) throws IOException
+  private static void writeLockFile(JvmScope scope, String issueId, String sessionId) throws IOException
   {
-    Path lockDir = projectDir.resolve(".claude").resolve("cat").resolve("locks");
+    Path lockDir = scope.getProjectCatDir().resolve("locks");
     Files.createDirectories(lockDir);
     String content = """
       {"session_id": "%s", "worktrees": {}, "created_at": 1000000, "created_iso": "2026-01-01T00:00:00Z"}
@@ -57,16 +61,16 @@ public class EnforceWorktreePathIsolationTest
   }
 
   /**
-   * Creates the worktree directory for the given issue ID under {@code projectDir}.
+   * Creates the worktree directory for the given issue ID using the scope's project CAT directory.
    *
-   * @param projectDir the project root
+   * @param scope the JVM scope providing the worktree base path
    * @param issueId the issue identifier
    * @return the created worktree directory path
    * @throws IOException if the directory cannot be created
    */
-  private static Path createWorktreeDir(Path projectDir, String issueId) throws IOException
+  private static Path createWorktreeDir(JvmScope scope, String issueId) throws IOException
   {
-    Path worktreeDir = projectDir.resolve(".claude").resolve("cat").resolve("worktrees").resolve(issueId);
+    Path worktreeDir = scope.getProjectCatDir().resolve("worktrees").resolve(issueId);
     Files.createDirectories(worktreeDir);
     return worktreeDir;
   }
@@ -108,7 +112,7 @@ public class EnforceWorktreePathIsolationTest
     Path projectDir = Files.createTempDirectory("ewpi-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
 
       EnforceWorktreePathIsolation handler = new EnforceWorktreePathIsolation(scope);
       JsonMapper mapper = scope.getJsonMapper();
@@ -136,8 +140,8 @@ public class EnforceWorktreePathIsolationTest
     Path projectDir = Files.createTempDirectory("ewpi-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
-      Path worktreeDir = createWorktreeDir(projectDir, ISSUE_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      Path worktreeDir = createWorktreeDir(scope, ISSUE_ID);
 
       EnforceWorktreePathIsolation handler = new EnforceWorktreePathIsolation(scope);
       JsonMapper mapper = scope.getJsonMapper();
@@ -166,8 +170,8 @@ public class EnforceWorktreePathIsolationTest
     Path projectDir = Files.createTempDirectory("ewpi-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
-      Path worktreeDir = createWorktreeDir(projectDir, ISSUE_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      Path worktreeDir = createWorktreeDir(scope, ISSUE_ID);
       Path offendingFile = projectDir.resolve("plugin/test.py");
 
       EnforceWorktreePathIsolation handler = new EnforceWorktreePathIsolation(scope);
@@ -199,8 +203,8 @@ public class EnforceWorktreePathIsolationTest
     Path projectDir = Files.createTempDirectory("ewpi-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
-      createWorktreeDir(projectDir, ISSUE_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      createWorktreeDir(scope, ISSUE_ID);
 
       EnforceWorktreePathIsolation handler = new EnforceWorktreePathIsolation(scope);
       JsonMapper mapper = scope.getJsonMapper();
@@ -228,8 +232,8 @@ public class EnforceWorktreePathIsolationTest
     Path projectDir = Files.createTempDirectory("ewpi-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
-      createWorktreeDir(projectDir, ISSUE_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      createWorktreeDir(scope, ISSUE_ID);
 
       EnforceWorktreePathIsolation handler = new EnforceWorktreePathIsolation(scope);
       JsonMapper mapper = scope.getJsonMapper();
@@ -259,8 +263,8 @@ public class EnforceWorktreePathIsolationTest
     Path projectDir = Files.createTempDirectory("ewpi-test-");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      writeLockFile(projectDir, ISSUE_ID, SESSION_ID);
-      Path worktreeDir = createWorktreeDir(projectDir, ISSUE_ID);
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      Path worktreeDir = createWorktreeDir(scope, ISSUE_ID);
       Path mainWorkspaceFile = projectDir.resolve("plugin/important.py");
 
       EnforceWorktreePathIsolation handler = new EnforceWorktreePathIsolation(scope);

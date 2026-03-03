@@ -35,7 +35,7 @@ Return JSON on success:
   "minor": "1",
   "issue_name": "issue-name",
   "issue_path": "/workspace/.claude/cat/issues/v2/v2.1/issue-name",
-  "worktree_path": "/workspace/.claude/cat/worktrees/2.1-issue-name",
+  "worktree_path": "${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/2.1-issue-name",
   "issue_branch": "2.1-issue-name",
   "target_branch": "v2.1",
   "estimated_tokens": 45000,
@@ -135,7 +135,7 @@ creates a deadlock: the worktree isolation hook registers only the first worktre
 in any subsequently acquired worktree.
 
 ```bash
-LOCKS_DIR="${CLAUDE_PROJECT_DIR}/.claude/cat/locks"
+source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
 if [[ -d "$LOCKS_DIR" ]]; then
   EXISTING_LOCK=$(grep -rl "\"session_id\" : \"${SESSION_ID}\"" "$LOCKS_DIR" 2>/dev/null | head -1)
   if [[ -n "$EXISTING_LOCK" ]]; then
@@ -282,7 +282,7 @@ If exceeds hard limit: Return status `OVERSIZED` with decomposition recommendati
 ```bash
 ISSUE_BRANCH="${MAJOR}.${MINOR}-${ISSUE_NAME}"
 BASE_BRANCH=$(git branch --show-current)
-WORKTREE_PATH="${CLAUDE_PROJECT_DIR}/.claude/cat/worktrees/${ISSUE_BRANCH}"
+WORKTREE_PATH="${PROJECT_CAT_DIR}/worktrees/${ISSUE_BRANCH}"
 
 FORK_COMMIT=$(git rev-parse HEAD)
 git worktree add -b "${ISSUE_BRANCH}" "${WORKTREE_PATH}" HEAD

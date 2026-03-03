@@ -79,10 +79,6 @@ import org.slf4j.LoggerFactory;
 public final class SkillLoader
 {
   /**
-   * Standard directory for storing per-session marker files and related agent state.
-   */
-  public static final String PROJECTS_DIR = "projects/-workspace";
-  /**
    * Standard subdirectory within a session directory for storing per-subagent marker files.
    */
   public static final String SUBAGENTS_DIR = "subagents";
@@ -171,7 +167,7 @@ public final class SkillLoader
     this.projectDir = projectDir;
     this.argTokens = List.copyOf(skillArgs);
 
-    Path baseDir = scope.getClaudeConfigDir().resolve(PROJECTS_DIR).toAbsolutePath().normalize();
+    Path baseDir = scope.getSessionBasePath().toAbsolutePath().normalize();
     Path agentDir = resolveAndValidateContainment(baseDir, catAgentId,
       "catAgentId");
     this.agentMarkerFile = agentDir.resolve("skills-loaded");

@@ -19,7 +19,7 @@ See LICENSE.md in the project root for license terms.
 ## How Session IDs Work
 
 Claude Code assigns a unique session ID (UUID v4) to each conversation session. This ID is used for:
-- Naming conversation history files: `/home/node/.config/projects/-workspace/{session-id}.jsonl`
+- Naming conversation history files: `${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/{sessionId}.jsonl`
 - Session-specific TODO list tracking
 - Hook coordination across tools
 - Issue ownership in multi-instance scenarios
@@ -29,8 +29,9 @@ Claude Code assigns a unique session ID (UUID v4) to each conversation session. 
 In skill and command markdown files, use `${CLAUDE_SESSION_ID}` directly:
 
 ```bash
+source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
 # This gets auto-substituted when the skill loads
-SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl"
+SESSION_FILE="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}.jsonl"
 cat "$SESSION_FILE" | jq -s 'length'
 ```
 
@@ -39,12 +40,13 @@ cat "$SESSION_FILE" | jq -s 'length'
 Bash hooks receive the session ID via stdin JSON:
 
 ```bash
+source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
 # Read stdin JSON and extract session_id
 INPUT=$(cat)
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
 
 # Use for session-specific operations
-SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
+SESSION_FILE="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${SESSION_ID}.jsonl"
 ```
 
 ## User Visibility
@@ -63,16 +65,18 @@ Session ID: b6933609-ab67-467e-af26-e48c3c8c129e
 ### Example 1: In Skill Templates
 
 ```bash
+source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
 # Session ID is auto-substituted - no manual lookup needed
-cat /home/node/.config/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl | jq -s 'length'
+cat "${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}.jsonl" | jq -s 'length'
 ```
 
 ### Example 2: Access Session History
 
 ```bash
+source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
 # The session ID is already substituted when this runs
 jq -s '[.[] | select(.type == "message")]' \
-  "/home/node/.config/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl"
+  "${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}.jsonl"
 ```
 
 ### Example 3: In Hook Scripts (stdin JSON)

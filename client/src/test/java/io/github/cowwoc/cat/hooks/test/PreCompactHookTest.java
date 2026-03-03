@@ -54,7 +54,7 @@ public final class PreCompactHookTest
 
       requireThat(result, "result").isNotNull();
 
-      Path cwdFile = tempDir.resolve(".claude/cat/sessions/" + sessionId + ".cwd");
+      Path cwdFile = scope.getProjectCatDir().resolve("sessions/" + sessionId + ".cwd");
       requireThat(Files.exists(cwdFile), "cwdFileExists").isTrue();
       String cwdContent = Files.readString(cwdFile);
       requireThat(cwdContent.strip(), "cwdContent").isEqualTo(subDir.toString());
@@ -88,7 +88,7 @@ public final class PreCompactHookTest
 
       new PreCompactHook(scope).run(input, output);
 
-      Path cwdFile = tempDir.resolve(".claude/cat/sessions/" + sessionId + ".cwd");
+      Path cwdFile = scope.getProjectCatDir().resolve("sessions/" + sessionId + ".cwd");
       requireThat(Files.exists(cwdFile), "cwdFileExists").isFalse();
     }
     finally
@@ -120,7 +120,7 @@ public final class PreCompactHookTest
 
       new PreCompactHook(scope).run(input, output);
 
-      Path cwdFile = tempDir.resolve(".claude/cat/sessions/" + sessionId + ".cwd");
+      Path cwdFile = scope.getProjectCatDir().resolve("sessions/" + sessionId + ".cwd");
       requireThat(Files.exists(cwdFile), "cwdFileExists").isFalse();
     }
     finally

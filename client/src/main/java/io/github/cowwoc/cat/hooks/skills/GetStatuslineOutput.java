@@ -35,11 +35,9 @@ public final class GetStatuslineOutput implements SkillOutput
    * Creates a GetStatuslineOutput instance.
    *
    * @param scope the JVM scope for accessing shared services
-   * @throws NullPointerException if {@code scope} is null
    */
   public GetStatuslineOutput(JvmScope scope)
   {
-    requireThat(scope, "scope").isNotNull();
     this.projectDir = scope.getClaudeProjectDir();
     this.mapper = scope.getJsonMapper();
   }

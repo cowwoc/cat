@@ -43,15 +43,15 @@ public final class BlockUnauthorizedMergeCleanupTest
   /**
    * Writes a session JSONL file with the given content.
    *
-   * @param projectDir the project root directory (also the config dir in TestJvmScope)
+   * @param scope the JVM scope providing the session base path
    * @param sessionId the session ID
    * @param content the JSONL content to write
    * @throws IOException if the session file cannot be written
    */
-  private static void writeSessionFile(Path projectDir, String sessionId, String content)
+  private static void writeSessionFile(JvmScope scope, String sessionId, String content)
     throws IOException
   {
-    Path sessionDir = projectDir.resolve("projects").resolve("-workspace");
+    Path sessionDir = scope.getSessionBasePath();
     Files.createDirectories(sessionDir);
     Files.writeString(sessionDir.resolve(sessionId + ".jsonl"), content);
   }
@@ -117,7 +117,7 @@ public final class BlockUnauthorizedMergeCleanupTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       writeCatConfig(tempDir, "medium");
-      writeSessionFile(tempDir, SESSION_ID, """
+      writeSessionFile(scope, SESSION_ID, """
         {"type":"user","message":{"content":[{"type":"text","text":"looks good"}]}}
         """);
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
@@ -145,7 +145,7 @@ public final class BlockUnauthorizedMergeCleanupTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       writeCatConfig(tempDir, "medium");
-      writeSessionFile(tempDir, SESSION_ID, """
+      writeSessionFile(scope, SESSION_ID, """
         {"type":"user","message":{"content":[{"type":"text","text":"approve and merge"}]}}
         """);
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
@@ -173,7 +173,7 @@ public final class BlockUnauthorizedMergeCleanupTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       writeCatConfig(tempDir, "low");
-      writeSessionFile(tempDir, SESSION_ID, """
+      writeSessionFile(scope, SESSION_ID, """
         {"type":"user","message":{"content":[{"type":"text","text":"looks good"}]}}
         """);
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
@@ -212,7 +212,7 @@ public final class BlockUnauthorizedMergeCleanupTest
         "{\"type\":\"user\",\"message\":{\"role\":\"user\",\"content\":" +
         "[{\"type\":\"tool_result\",\"tool_use_id\":\"tu1\"," +
         "\"content\":\"User answered: Approve and merge\"}]}}";
-      writeSessionFile(tempDir, SESSION_ID, assistantLine + "\n" + userLine + "\n");
+      writeSessionFile(scope, SESSION_ID, assistantLine + "\n" + userLine + "\n");
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
       String command = "merge-and-cleanup session-id issue-id";
 
@@ -240,7 +240,7 @@ public final class BlockUnauthorizedMergeCleanupTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       writeCatConfig(tempDir, "medium");
-      writeSessionFile(tempDir, SESSION_ID, """
+      writeSessionFile(scope, SESSION_ID, """
         {"type":"user","message":{"content":[{"type":"text","text":"looks good"}]}}
         """);
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);

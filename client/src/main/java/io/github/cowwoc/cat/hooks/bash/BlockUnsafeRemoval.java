@@ -456,7 +456,7 @@ public final class BlockUnsafeRemoval implements BashHandler
     if (mainWorktree == null)
       return "(unknown)";
 
-    Path locksDir = mainWorktree.resolve(".claude/cat/locks");
+    Path locksDir = scope.getProjectCatDir().resolve("locks");
     // The lock file name is the issue ID: derive from worktree path's last segment
     String issueId = getIssueIdFromWorktreePath(protectedPath);
     if (issueId.isBlank())
@@ -547,7 +547,7 @@ public final class BlockUnsafeRemoval implements BashHandler
       paths.put(mainWorktree.toRealPath(), ProtectionReason.MAIN_WORKTREE);
 
       // 3. Locked worktrees owned by OTHER agents
-      Path locksDir = mainWorktree.resolve(".claude/cat/locks");
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
       if (Files.isDirectory(locksDir))
       {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(locksDir, "*.lock"))

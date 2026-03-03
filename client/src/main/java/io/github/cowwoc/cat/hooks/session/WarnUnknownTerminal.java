@@ -64,7 +64,7 @@ public final class WarnUnknownTerminal implements SessionStartHandler
     if (sessionId.isEmpty())
       return Result.empty();
 
-    Path sessionDir = scope.getClaudeConfigDir().resolve("projects/-workspace/" + sessionId);
+    Path sessionDir = scope.getSessionDirectory();
     Path markerFile = sessionDir.resolve(MARKER_FILE);
     if (Files.exists(markerFile))
       return Result.empty();

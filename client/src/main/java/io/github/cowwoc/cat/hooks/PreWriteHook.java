@@ -10,6 +10,7 @@ import static io.github.cowwoc.cat.hooks.Strings.equalsIgnoreCase;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.edit.EnforceWorkflowCompletion;
+import io.github.cowwoc.cat.hooks.write.EnforcePluginFileIsolation;
 import io.github.cowwoc.cat.hooks.write.EnforceWorktreePathIsolation;
 import io.github.cowwoc.cat.hooks.write.StateSchemaValidator;
 import io.github.cowwoc.cat.hooks.write.ValidateStateMdFormat;
@@ -44,7 +45,7 @@ public final class PreWriteHook implements HookHandler
    * <p>
    * Handlers are checked in order. EnforceWorkflowCompletion warns first, then WarnBaseBranchEdit
    * warns (non-blocking), followed by blocking handlers (ValidateStateMdFormat, StateSchemaValidator,
-   * EnforceWorktreePathIsolation).
+   * EnforcePluginFileIsolation, EnforceWorktreePathIsolation).
    *
    * @param scope the JVM scope providing project directory and shared services
    * @throws NullPointerException if {@code scope} is null
@@ -54,9 +55,10 @@ public final class PreWriteHook implements HookHandler
     requireThat(scope, "scope").isNotNull();
     this.handlers = List.of(
       new EnforceWorkflowCompletion(),
-      new WarnBaseBranchEdit(),
+      new WarnBaseBranchEdit(scope),
       new ValidateStateMdFormat(),
       new StateSchemaValidator(),
+      new EnforcePluginFileIsolation(),
       new EnforceWorktreePathIsolation(scope));
   }
 

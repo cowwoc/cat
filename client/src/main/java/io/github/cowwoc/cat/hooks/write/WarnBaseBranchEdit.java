@@ -10,6 +10,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.CatMetadata;
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 import tools.jackson.databind.JsonNode;
 
@@ -61,11 +62,18 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
     "retrospectives-",
     "index.json");
 
+  private final JvmScope scope;
+
   /**
    * Creates a new WarnBaseBranchEdit instance.
+   *
+   * @param scope the JVM scope providing project directory configuration
+   * @throws NullPointerException if {@code scope} is null
    */
-  public WarnBaseBranchEdit()
+  public WarnBaseBranchEdit(JvmScope scope)
   {
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
   }
 
   /**
@@ -132,7 +140,9 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
                        "\n" +
                        "If working on an issue:\n" +
                        "1. Run /cat:work to create a worktree\n" +
-                       "2. Or manually: git worktree add .claude/cat/worktrees/issue-name -b issue-branch\n" +
+                       "2. Or manually: git worktree add " +
+                       scope.getProjectCatDir().resolve("worktrees").resolve("issue-name") +
+                       " -b issue-branch\n" +
                        "\n" +
                        "If this is intentional infrastructure work (not a task), proceed.\n" +
                        "\n" +

@@ -43,7 +43,7 @@ The main `/cat:work` skill invokes this with positional space-separated argument
 |----------|------|---------|
 | 1 | issue_id | `2.1-issue-name` |
 | 2 | issue_path | `/workspace/.claude/cat/issues/v2/v2.1/issue-name` |
-| 3 | worktree_path | `/workspace/.claude/cat/worktrees/2.1-issue-name` |
+| 3 | worktree_path | `${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/2.1-issue-name` |
 | 4 | issue_branch | `2.1-issue-name` |
 | 5 | target_branch | `v2.1` |
 | 6 | estimated_tokens | `45000` |
@@ -98,7 +98,8 @@ This indicates Phase 1 (prepare) has completed and work phases are starting.
 **Before any execution, verify the lock for this issue belongs to the current session.**
 
 ```bash
-LOCK_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/locks/${ISSUE_ID}.lock"
+source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
+LOCK_FILE="${LOCKS_DIR}/${ISSUE_ID}.lock"
 
 if [[ -z "${CLAUDE_SESSION_ID:-}" ]]; then
   echo "ERROR: CLAUDE_SESSION_ID environment variable is not set"
@@ -546,10 +547,12 @@ Task tool:
        - Runtime invocation required — do NOT substitute file inspection for running the artifact
     3. Create the verify output directory and write detailed analysis files:
        ```bash
-       mkdir -p "${WORKTREE_PATH}/.claude/cat/verify"
+       source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
+       VERIFY_DIR="${PROJECT_CAT_DIR}/${CLAUDE_SESSION_ID}/cat/verify"
+       mkdir -p "${VERIFY_DIR}"
        ```
-       - Write criterion-level details to: ${WORKTREE_PATH}/.claude/cat/verify/criteria-analysis.json
-       - Write E2E test output/evidence to: ${WORKTREE_PATH}/.claude/cat/verify/e2e-test-output.json
+       - Write criterion-level details to: ${VERIFY_DIR}/criteria-analysis.json
+       - Write E2E test output/evidence to: ${VERIFY_DIR}/e2e-test-output.json
     4. Return compact JSON only — do NOT include build logs or file contents in your response
 
     ## Return Format
@@ -561,13 +564,13 @@ Task tool:
           "name": "criterion text from PLAN.md",
           "status": "Done|Partial|Missing",
           "explanation": "brief one-line explanation",
-          "detail_file": ".claude/cat/verify/criteria-analysis.json"
+          "detail_file": "${VERIFY_DIR}/criteria-analysis.json"
         }
       ],
       "e2e": {
         "status": "PASSED|FAILED|SKIPPED",
         "explanation": "brief one-line explanation",
-        "detail_file": ".claude/cat/verify/e2e-test-output.json"
+        "detail_file": "${VERIFY_DIR}/e2e-test-output.json"
       }
     }
     ```

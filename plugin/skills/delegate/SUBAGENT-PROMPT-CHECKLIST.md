@@ -70,7 +70,7 @@ if `benefit >= cost × patience_multiplier`; otherwise it is deferred.
 ```
 TOKEN MEASUREMENT (required):
 Session ID: {paste actual session ID from your CAT SESSION INSTRUCTIONS}
-Session file: /home/node/.config/claude/projects/-workspace/{SESSION_ID}.jsonl
+Session file: ${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/{SESSION_ID}.jsonl
 
 On completion, measure tokens:
 TOKENS=$(jq -s '[.[] | select(.type == "assistant") | .message.usage |

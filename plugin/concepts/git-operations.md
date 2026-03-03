@@ -52,7 +52,7 @@ When executing an issue, run git commands from inside the issue worktree — not
 
 ```bash
 # Correct: cd into worktree, then run git commands normally
-cd /workspace/.claude/cat/worktrees/2.1-issue-name
+cd ${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/2.1-issue-name
 git log --oneline -3
 git add file.txt && git commit -m "feature: add thing"
 
@@ -74,7 +74,7 @@ You may `cd` into worktrees to work. However, before removing a directory (via `
 ```bash
 # Safe pattern when removing a worktree:
 cd /workspace  # Exit the worktree first
-git worktree remove /workspace/.claude/cat/worktrees/issue
+git worktree remove ${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/issue
 ```
 
 See `/cat:safe-rm` for detailed guidance on safe directory removal.

@@ -7,7 +7,7 @@ See LICENSE.md in the project root for license terms.
 
 **Purpose**: Access raw conversation history for debugging and analysis.
 
-**Location**: `/home/node/.config/claude/projects/-workspace/*.jsonl`
+**Location**: `${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/*.jsonl`
 
 **Session ID**: Available as `${CLAUDE_SESSION_ID}`.
 

@@ -190,7 +190,7 @@ public final class SubagentStartHook implements HookHandler
       "**Example**:\n" +
       "```bash\n" +
       "CAT_AGENT_ID=" + agentId + " git worktree remove \\\n" +
-      "  /workspace/.claude/cat/worktrees/my-issue\n" +
+      "  " + scope.getProjectCatDir().resolve("worktrees").resolve("my-issue") + "\n" +
       "```\n" +
       "\n" +
       "**When NOT required**: Only needed when removing worktrees or directories that may be locked.\n" +

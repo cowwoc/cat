@@ -204,8 +204,9 @@ their worktree association (recorded in the lock file).
 After any lock acquisition attempt, verify ownership by reading the actual lock file:
 
 ```bash
+source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
 ISSUE_ID="${MAJOR}.${MINOR}-${ISSUE_NAME}"
-LOCK_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/locks/${ISSUE_ID}.lock"
+LOCK_FILE="${LOCKS_DIR}/${ISSUE_ID}.lock"
 
 # Verify lock file exists and we own it
 if [[ ! -f "$LOCK_FILE" ]]; then
@@ -227,7 +228,7 @@ echo "Lock verified: $LOCK_FILE owned by current session"
 ```
 
 **Anti-pattern:** Trusting lock script return value without verifying the actual lock file.
-Lock directory must be `.claude/cat/locks/` (NOT `/tmp/cat-locks/` or other paths).
+Lock directory must be in `${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/locks/` (NOT the project directory or `/tmp/`).
 
 **After session restart:** Re-run lock verification commands. Always re-verify state after
 restart - the filesystem may have changed while the session was inactive.
@@ -465,11 +466,17 @@ fi
 ### 4. Generate Subagent Identifiers
 
 ```bash
+if [[ -z "${CLAUDE_CONFIG_DIR:-}" ]]; then
+  echo "ERROR: CLAUDE_CONFIG_DIR is not set." >&2
+  exit 1
+fi
+
 for item in "${ITEMS[@]}"; do
   UUID=$(uuidgen | cut -c1-8)
   WORKTREE_NAME="${item}-sub-${UUID}"
   BRANCH_NAME="${item}-sub-${UUID}"
-  WORKTREE_PATH=".claude/cat/worktrees/${WORKTREE_NAME}"
+  source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
+  WORKTREE_PATH="${WORKTREES_DIR}/${WORKTREE_NAME}"
 
   # Create worktree
   git worktree add -b "${BRANCH_NAME}" "${WORKTREE_PATH}" HEAD
@@ -875,7 +882,7 @@ The exploration subagent handles three phases internally:
   "preparation": {
     "estimatedTokens": 45000,
     "percentOfThreshold": 56,
-    "worktreePath": "/workspace/.claude/cat/worktrees/1.0-issue",
+    "worktreePath": "${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/1.0-issue",
     "branch": "1.0-issue"
   },
   "findings": {

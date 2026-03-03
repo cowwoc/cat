@@ -58,24 +58,33 @@ version_compare() {
     fi
 }
 
-# Create a backup of the .claude/cat/ directory
+# Create a backup of the .claude/cat/ directory in external CAT storage
 # Usage: backup_cat_dir "pre-migration-2.0"
 backup_cat_dir() {
     local reason="${1:-backup}"
+
+    if [[ -z "${CLAUDE_CONFIG_DIR:-}" ]]; then
+        echo "ERROR: CLAUDE_CONFIG_DIR is not set" >&2
+        exit 1
+    fi
+    if [[ -z "${CLAUDE_PROJECT_DIR:-}" ]]; then
+        echo "ERROR: CLAUDE_PROJECT_DIR is not set" >&2
+        exit 1
+    fi
+
     local timestamp
     timestamp=$(date +%Y%m%d-%H%M%S)
-    local backup_dir=".claude/cat/backups/${timestamp}-${reason}"
+    local encoded_project
+    encoded_project=$(echo "${CLAUDE_PROJECT_DIR}" | tr '/.' '-')
+    local backup_dir="${CLAUDE_CONFIG_DIR}/projects/${encoded_project}/cat/backups/${timestamp}-${reason}"
 
     if [[ ! -d ".claude/cat" ]]; then
         log_migration "No .claude/cat directory to backup"
         return 0
     fi
 
-    mkdir -p ".claude/cat/backups"
-
-    # Copy everything except the backups directory itself
     mkdir -p "$backup_dir"
-    find .claude/cat -maxdepth 1 -mindepth 1 ! -name "backups" -exec cp -r {} "$backup_dir/" \;
+    find .claude/cat -maxdepth 1 -mindepth 1 -exec cp -r {} "$backup_dir/" \;
 
     log_migration "Backup created: $backup_dir"
     echo "$backup_dir"

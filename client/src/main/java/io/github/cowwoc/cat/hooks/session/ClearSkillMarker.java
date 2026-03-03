@@ -21,8 +21,8 @@ import java.nio.file.Path;
  * Marker files track which skills have been loaded by each agent. Deleting a marker forces a fresh
  * skill load on the next invocation. Marker paths:
  * <ul>
- *   <li>Main agent: {@code ${CLAUDE_CONFIG_DIR}/projects/-workspace/{sessionId}/skills-loaded}</li>
- *   <li>Subagent: {@code ${CLAUDE_CONFIG_DIR}/projects/-workspace/{sessionId}/subagents/{agentId}/skills-loaded}</li>
+ *   <li>Main agent: {@code {sessionBasePath}/{sessionId}/skills-loaded}</li>
+ *   <li>Subagent: {@code {sessionBasePath}/{sessionId}/subagents/{agentId}/skills-loaded}</li>
  * </ul>
  * <p>
  * Called by {@code SessionStartHook} for the main agent (on session startup and after context
@@ -37,7 +37,7 @@ public final class ClearSkillMarker
   /**
    * Creates a new ClearSkillMarker.
    *
-   * @param scope the JVM scope providing the config directory path
+   * @param scope the JVM scope providing the session base path
    * @throws NullPointerException if {@code scope} is null
    */
   public ClearSkillMarker(JvmScope scope)
@@ -57,7 +57,7 @@ public final class ClearSkillMarker
   public String clearMainAgentMarker(String sessionId)
   {
     requireThat(sessionId, "sessionId").isNotBlank();
-    Path baseDir = scope.getClaudeConfigDir().resolve(SkillLoader.PROJECTS_DIR).toAbsolutePath().normalize();
+    Path baseDir = scope.getSessionBasePath().toAbsolutePath().normalize();
     Path sessionDir = SkillLoader.resolveAndValidateContainment(baseDir, sessionId, "sessionId");
     if (!Files.isDirectory(sessionDir))
       return "";
@@ -77,7 +77,7 @@ public final class ClearSkillMarker
   {
     requireThat(sessionId, "sessionId").isNotBlank();
     requireThat(agentId, "agentId").isNotBlank();
-    Path baseDir = scope.getClaudeConfigDir().resolve(SkillLoader.PROJECTS_DIR).toAbsolutePath().normalize();
+    Path baseDir = scope.getSessionBasePath().toAbsolutePath().normalize();
     String subagentPath = sessionId + "/" + SkillLoader.SUBAGENTS_DIR + "/" + agentId;
     Path markerFile = SkillLoader.resolveAndValidateContainment(baseDir, subagentPath,
       "sessionId or agentId").resolve("skills-loaded");

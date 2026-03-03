@@ -226,28 +226,28 @@ public final class BlockUnsafeRemovalTest
   public void rmBlocksWhenDeletingLockedWorktree() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    Path gitDir = tempDir.resolve(".git");
-    Files.createDirectory(gitDir);
-    Path locksDir = tempDir.resolve(".claude/cat/locks");
-    Files.createDirectories(locksDir);
-    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
-    Files.createDirectories(worktreesDir);
-    Path worktreePath = worktreesDir.resolve("task-123");
-    Files.createDirectories(worktreePath);
-
-    // Create lock file owned by a different session
-    // Use a clock fixed 1 hour after lock creation so the lock appears fresh
-    long lockCreatedAt = 1_771_266_833L;
-    Path lockFile = locksDir.resolve("task-123.lock");
-    Files.writeString(lockFile, """
-      {
-        "session_id": "other-session",
-        "worktrees": {"%s": ""},
-        "created_at": %d
-      }""".formatted(worktreePath.toString(), lockCreatedAt));
-
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
+      Path gitDir = tempDir.resolve(".git");
+      Files.createDirectory(gitDir);
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Files.createDirectories(locksDir);
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+      Path worktreePath = worktreesDir.resolve("task-123");
+      Files.createDirectories(worktreePath);
+
+      // Create lock file owned by a different session
+      // Use a clock fixed 1 hour after lock creation so the lock appears fresh
+      long lockCreatedAt = 1_771_266_833L;
+      Path lockFile = locksDir.resolve("task-123.lock");
+      Files.writeString(lockFile, """
+        {
+          "session_id": "other-session",
+          "worktrees": {"%s": ""},
+          "created_at": %d
+        }""".formatted(worktreePath.toString(), lockCreatedAt));
+
       Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)), ZoneOffset.UTC);
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
       String workingDirectory = tempDir.toString();
@@ -274,26 +274,26 @@ public final class BlockUnsafeRemovalTest
   public void owningSessionCanRemoveLockedWorktree() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    Path gitDir = tempDir.resolve(".git");
-    Files.createDirectory(gitDir);
-    Path locksDir = tempDir.resolve(".claude/cat/locks");
-    Files.createDirectories(locksDir);
-    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
-    Files.createDirectories(worktreesDir);
-    Path worktreePath = worktreesDir.resolve("task-456");
-    Files.createDirectories(worktreePath);
-
-    // Create lock file owned by the SAME session
-    Path lockFile = locksDir.resolve("task-456.lock");
-    Files.writeString(lockFile, """
-      {
-        "session_id": "my-session",
-        "worktrees": {"%s": ""},
-        "created_at": 1771266833
-      }""".formatted(worktreePath.toString()));
-
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
+      Path gitDir = tempDir.resolve(".git");
+      Files.createDirectory(gitDir);
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Files.createDirectories(locksDir);
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+      Path worktreePath = worktreesDir.resolve("task-456");
+      Files.createDirectories(worktreePath);
+
+      // Create lock file owned by the SAME session
+      Path lockFile = locksDir.resolve("task-456.lock");
+      Files.writeString(lockFile, """
+        {
+          "session_id": "my-session",
+          "worktrees": {"%s": ""},
+          "created_at": 1771266833
+        }""".formatted(worktreePath.toString()));
+
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
       String workingDirectory = tempDir.toString();
       String command = "git worktree remove " + worktreePath + " --force";
@@ -317,28 +317,28 @@ public final class BlockUnsafeRemovalTest
   public void differentSessionCannotRemoveLockedWorktree() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    Path gitDir = tempDir.resolve(".git");
-    Files.createDirectory(gitDir);
-    Path locksDir = tempDir.resolve(".claude/cat/locks");
-    Files.createDirectories(locksDir);
-    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
-    Files.createDirectories(worktreesDir);
-    Path worktreePath = worktreesDir.resolve("task-789");
-    Files.createDirectories(worktreePath);
-
-    // Create lock file owned by a different session
-    // Use a clock fixed 1 hour after lock creation so the lock appears fresh
-    long lockCreatedAt = 1_771_266_833L;
-    Path lockFile = locksDir.resolve("task-789.lock");
-    Files.writeString(lockFile, """
-      {
-        "session_id": "other-session",
-        "worktrees": {"%s": ""},
-        "created_at": %d
-      }""".formatted(worktreePath.toString(), lockCreatedAt));
-
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
+      Path gitDir = tempDir.resolve(".git");
+      Files.createDirectory(gitDir);
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Files.createDirectories(locksDir);
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+      Path worktreePath = worktreesDir.resolve("task-789");
+      Files.createDirectories(worktreePath);
+
+      // Create lock file owned by a different session
+      // Use a clock fixed 1 hour after lock creation so the lock appears fresh
+      long lockCreatedAt = 1_771_266_833L;
+      Path lockFile = locksDir.resolve("task-789.lock");
+      Files.writeString(lockFile, """
+        {
+          "session_id": "other-session",
+          "worktrees": {"%s": ""},
+          "created_at": %d
+        }""".formatted(worktreePath.toString(), lockCreatedAt));
+
       Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)), ZoneOffset.UTC);
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
       String workingDirectory = tempDir.toString();
@@ -394,27 +394,27 @@ public final class BlockUnsafeRemovalTest
   public void staleLockFromOtherSessionAllowsRemoval() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    Path gitDir = tempDir.resolve(".git");
-    Files.createDirectory(gitDir);
-    Path locksDir = tempDir.resolve(".claude/cat/locks");
-    Files.createDirectories(locksDir);
-    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
-    Files.createDirectories(worktreesDir);
-    Path worktreePath = worktreesDir.resolve("stale-task");
-    Files.createDirectories(worktreePath);
-
-    // Create lock file owned by a different session with created_at in the past
-    long lockCreatedAt = 1_771_266_833L;
-    Path lockFile = locksDir.resolve("stale-task.lock");
-    Files.writeString(lockFile, """
-      {
-        "session_id": "other-session",
-        "worktrees": {"%s": ""},
-        "created_at": %d
-      }""".formatted(worktreePath.toString(), lockCreatedAt));
-
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
+      Path gitDir = tempDir.resolve(".git");
+      Files.createDirectory(gitDir);
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Files.createDirectories(locksDir);
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+      Path worktreePath = worktreesDir.resolve("stale-task");
+      Files.createDirectories(worktreePath);
+
+      // Create lock file owned by a different session with created_at in the past
+      long lockCreatedAt = 1_771_266_833L;
+      Path lockFile = locksDir.resolve("stale-task.lock");
+      Files.writeString(lockFile, """
+        {
+          "session_id": "other-session",
+          "worktrees": {"%s": ""},
+          "created_at": %d
+        }""".formatted(worktreePath.toString(), lockCreatedAt));
+
       // Clock is fixed 5 hours after lock creation, making the lock stale
       Clock staleClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(5)), ZoneOffset.UTC);
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, staleClock);
@@ -440,27 +440,27 @@ public final class BlockUnsafeRemovalTest
   public void freshLockFromOtherSessionBlocksRemoval() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    Path gitDir = tempDir.resolve(".git");
-    Files.createDirectory(gitDir);
-    Path locksDir = tempDir.resolve(".claude/cat/locks");
-    Files.createDirectories(locksDir);
-    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
-    Files.createDirectories(worktreesDir);
-    Path worktreePath = worktreesDir.resolve("fresh-task");
-    Files.createDirectories(worktreePath);
-
-    // Create lock file owned by a different session
-    long lockCreatedAt = 1_771_266_833L;
-    Path lockFile = locksDir.resolve("fresh-task.lock");
-    Files.writeString(lockFile, """
-      {
-        "session_id": "other-session",
-        "worktrees": {"%s": ""},
-        "created_at": %d
-      }""".formatted(worktreePath.toString(), lockCreatedAt));
-
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
+      Path gitDir = tempDir.resolve(".git");
+      Files.createDirectory(gitDir);
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Files.createDirectories(locksDir);
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+      Path worktreePath = worktreesDir.resolve("fresh-task");
+      Files.createDirectories(worktreePath);
+
+      // Create lock file owned by a different session
+      long lockCreatedAt = 1_771_266_833L;
+      Path lockFile = locksDir.resolve("fresh-task.lock");
+      Files.writeString(lockFile, """
+        {
+          "session_id": "other-session",
+          "worktrees": {"%s": ""},
+          "created_at": %d
+        }""".formatted(worktreePath.toString(), lockCreatedAt));
+
       // Clock is fixed 1 hour after lock creation, making the lock fresh (< 4 hours old)
       Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)), ZoneOffset.UTC);
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
@@ -489,27 +489,27 @@ public final class BlockUnsafeRemovalTest
   public void staleLockFromCurrentSessionAllowsRemoval() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    Path gitDir = tempDir.resolve(".git");
-    Files.createDirectory(gitDir);
-    Path locksDir = tempDir.resolve(".claude/cat/locks");
-    Files.createDirectories(locksDir);
-    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
-    Files.createDirectories(worktreesDir);
-    Path worktreePath = worktreesDir.resolve("my-stale-task");
-    Files.createDirectories(worktreePath);
-
-    // Create lock file owned by the SAME session with a stale timestamp
-    long lockCreatedAt = 1_771_266_833L;
-    Path lockFile = locksDir.resolve("my-stale-task.lock");
-    Files.writeString(lockFile, """
-      {
-        "session_id": "my-session",
-        "worktrees": {"%s": ""},
-        "created_at": %d
-      }""".formatted(worktreePath.toString(), lockCreatedAt));
-
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
+      Path gitDir = tempDir.resolve(".git");
+      Files.createDirectory(gitDir);
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Files.createDirectories(locksDir);
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+      Path worktreePath = worktreesDir.resolve("my-stale-task");
+      Files.createDirectories(worktreePath);
+
+      // Create lock file owned by the SAME session with a stale timestamp
+      long lockCreatedAt = 1_771_266_833L;
+      Path lockFile = locksDir.resolve("my-stale-task.lock");
+      Files.writeString(lockFile, """
+        {
+          "session_id": "my-session",
+          "worktrees": {"%s": ""},
+          "created_at": %d
+        }""".formatted(worktreePath.toString(), lockCreatedAt));
+
       // Clock is fixed 5 hours after lock creation (stale), but session matches so already excluded
       Clock staleClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(5)), ZoneOffset.UTC);
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, staleClock);
@@ -696,26 +696,26 @@ public final class BlockUnsafeRemovalTest
   public void lockAtExactly4HoursIsNotStale() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    Path gitDir = tempDir.resolve(".git");
-    Files.createDirectory(gitDir);
-    Path locksDir = tempDir.resolve(".claude/cat/locks");
-    Files.createDirectories(locksDir);
-    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
-    Files.createDirectories(worktreesDir);
-    Path worktreePath = worktreesDir.resolve("boundary-task");
-    Files.createDirectories(worktreePath);
-
-    long lockCreatedAt = 1_771_266_833L;
-    Path lockFile = locksDir.resolve("boundary-task.lock");
-    Files.writeString(lockFile, """
-      {
-        "session_id": "other-session",
-        "worktrees": {"%s": ""},
-        "created_at": %d
-      }""".formatted(worktreePath.toString(), lockCreatedAt));
-
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
+      Path gitDir = tempDir.resolve(".git");
+      Files.createDirectory(gitDir);
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Files.createDirectories(locksDir);
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+      Path worktreePath = worktreesDir.resolve("boundary-task");
+      Files.createDirectories(worktreePath);
+
+      long lockCreatedAt = 1_771_266_833L;
+      Path lockFile = locksDir.resolve("boundary-task.lock");
+      Files.writeString(lockFile, """
+        {
+          "session_id": "other-session",
+          "worktrees": {"%s": ""},
+          "created_at": %d
+        }""".formatted(worktreePath.toString(), lockCreatedAt));
+
       // Clock is fixed exactly 14400 seconds (4 hours) after lock creation
       // age.compareTo(threshold) == 0, so isStale() returns false → lock is protected
       Clock boundaryClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(4)), ZoneOffset.UTC);
@@ -742,26 +742,26 @@ public final class BlockUnsafeRemovalTest
   public void lockAtJustUnder4HoursIsFresh() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    Path gitDir = tempDir.resolve(".git");
-    Files.createDirectory(gitDir);
-    Path locksDir = tempDir.resolve(".claude/cat/locks");
-    Files.createDirectories(locksDir);
-    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
-    Files.createDirectories(worktreesDir);
-    Path worktreePath = worktreesDir.resolve("fresh-boundary-task");
-    Files.createDirectories(worktreePath);
-
-    long lockCreatedAt = 1_771_266_833L;
-    Path lockFile = locksDir.resolve("fresh-boundary-task.lock");
-    Files.writeString(lockFile, """
-      {
-        "session_id": "other-session",
-        "worktrees": {"%s": ""},
-        "created_at": %d
-      }""".formatted(worktreePath.toString(), lockCreatedAt));
-
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
+      Path gitDir = tempDir.resolve(".git");
+      Files.createDirectory(gitDir);
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Files.createDirectories(locksDir);
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+      Path worktreePath = worktreesDir.resolve("fresh-boundary-task");
+      Files.createDirectories(worktreePath);
+
+      long lockCreatedAt = 1_771_266_833L;
+      Path lockFile = locksDir.resolve("fresh-boundary-task.lock");
+      Files.writeString(lockFile, """
+        {
+          "session_id": "other-session",
+          "worktrees": {"%s": ""},
+          "created_at": %d
+        }""".formatted(worktreePath.toString(), lockCreatedAt));
+
       // Clock is fixed 14399 seconds (4 hours minus 1 second) after lock creation
       Instant boundaryInstant = Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(4)).minusSeconds(1);
       Clock boundaryClock = Clock.fixed(boundaryInstant, ZoneOffset.UTC);
@@ -788,26 +788,26 @@ public final class BlockUnsafeRemovalTest
   public void lockAtJustOver4HoursIsStale() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    Path gitDir = tempDir.resolve(".git");
-    Files.createDirectory(gitDir);
-    Path locksDir = tempDir.resolve(".claude/cat/locks");
-    Files.createDirectories(locksDir);
-    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
-    Files.createDirectories(worktreesDir);
-    Path worktreePath = worktreesDir.resolve("stale-boundary-task");
-    Files.createDirectories(worktreePath);
-
-    long lockCreatedAt = 1_771_266_833L;
-    Path lockFile = locksDir.resolve("stale-boundary-task.lock");
-    Files.writeString(lockFile, """
-      {
-        "session_id": "other-session",
-        "worktrees": {"%s": ""},
-        "created_at": %d
-      }""".formatted(worktreePath.toString(), lockCreatedAt));
-
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
+      Path gitDir = tempDir.resolve(".git");
+      Files.createDirectory(gitDir);
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Files.createDirectories(locksDir);
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+      Path worktreePath = worktreesDir.resolve("stale-boundary-task");
+      Files.createDirectories(worktreePath);
+
+      long lockCreatedAt = 1_771_266_833L;
+      Path lockFile = locksDir.resolve("stale-boundary-task.lock");
+      Files.writeString(lockFile, """
+        {
+          "session_id": "other-session",
+          "worktrees": {"%s": ""},
+          "created_at": %d
+        }""".formatted(worktreePath.toString(), lockCreatedAt));
+
       // Clock is fixed 14401 seconds (4 hours plus 1 second) after lock creation
       Instant boundaryInstant = Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(4)).plusSeconds(1);
       Clock boundaryClock = Clock.fixed(boundaryInstant, ZoneOffset.UTC);
@@ -834,25 +834,25 @@ public final class BlockUnsafeRemovalTest
   public void staleLockWithMissingCreatedAtIsProtected() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    Path gitDir = tempDir.resolve(".git");
-    Files.createDirectory(gitDir);
-    Path locksDir = tempDir.resolve(".claude/cat/locks");
-    Files.createDirectories(locksDir);
-    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
-    Files.createDirectories(worktreesDir);
-    Path worktreePath = worktreesDir.resolve("no-created-at-task");
-    Files.createDirectories(worktreePath);
-
-    // Lock file without created_at field
-    Path lockFile = locksDir.resolve("no-created-at-task.lock");
-    Files.writeString(lockFile, """
-      {
-        "session_id": "other-session",
-        "worktrees": {"%s": ""}
-      }""".formatted(worktreePath.toString()));
-
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
+      Path gitDir = tempDir.resolve(".git");
+      Files.createDirectory(gitDir);
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Files.createDirectories(locksDir);
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+      Path worktreePath = worktreesDir.resolve("no-created-at-task");
+      Files.createDirectories(worktreePath);
+
+      // Lock file without created_at field
+      Path lockFile = locksDir.resolve("no-created-at-task.lock");
+      Files.writeString(lockFile, """
+        {
+          "session_id": "other-session",
+          "worktrees": {"%s": ""}
+        }""".formatted(worktreePath.toString()));
+
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
       String workingDirectory = tempDir.toString();
       String command = "rm -rf " + worktreePath;
@@ -878,26 +878,26 @@ public final class BlockUnsafeRemovalTest
   public void lockWithMissingSessionIdFromOtherSessionBlocks() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    Path gitDir = tempDir.resolve(".git");
-    Files.createDirectory(gitDir);
-    Path locksDir = tempDir.resolve(".claude/cat/locks");
-    Files.createDirectories(locksDir);
-    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
-    Files.createDirectories(worktreesDir);
-    Path worktreePath = worktreesDir.resolve("no-session-id-task");
-    Files.createDirectories(worktreePath);
-
-    // Lock file without session_id (only has created_at with a fresh timestamp)
-    long lockCreatedAt = 1_771_266_833L;
-    Path lockFile = locksDir.resolve("no-session-id-task.lock");
-    Files.writeString(lockFile, """
-      {
-        "worktrees": {"%s": ""},
-        "created_at": %d
-      }""".formatted(worktreePath.toString(), lockCreatedAt));
-
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
+      Path gitDir = tempDir.resolve(".git");
+      Files.createDirectory(gitDir);
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Files.createDirectories(locksDir);
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+      Path worktreePath = worktreesDir.resolve("no-session-id-task");
+      Files.createDirectories(worktreePath);
+
+      // Lock file without session_id (only has created_at with a fresh timestamp)
+      long lockCreatedAt = 1_771_266_833L;
+      Path lockFile = locksDir.resolve("no-session-id-task.lock");
+      Files.writeString(lockFile, """
+        {
+          "worktrees": {"%s": ""},
+          "created_at": %d
+        }""".formatted(worktreePath.toString(), lockCreatedAt));
+
       // Clock is fixed 1 hour after lock creation so the lock appears fresh (< 4 hours old)
       Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)), ZoneOffset.UTC);
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
@@ -1062,26 +1062,26 @@ public final class BlockUnsafeRemovalTest
   public void worktreeRemoveBlockedWhenNoAgentId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    Path gitDir = tempDir.resolve(".git");
-    Files.createDirectory(gitDir);
-    Path locksDir = tempDir.resolve(".claude/cat/locks");
-    Files.createDirectories(locksDir);
-    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
-    Files.createDirectories(worktreesDir);
-    Path worktreePath = worktreesDir.resolve("task-agentA");
-    Files.createDirectories(worktreePath);
-
-    long lockCreatedAt = 1_771_266_833L;
-    Path lockFile = locksDir.resolve("task-agentA.lock");
-    Files.writeString(lockFile, """
-      {
-        "session_id": "aaaaaaaa-0000-0000-0000-000000000001",
-        "worktrees": {"%s": "aaaaaaaa-0000-0000-0000-000000000001/subagents/xyz"},
-        "created_at": %d
-      }""".formatted(worktreePath.toString(), lockCreatedAt));
-
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
+      Path gitDir = tempDir.resolve(".git");
+      Files.createDirectory(gitDir);
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Files.createDirectories(locksDir);
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+      Path worktreePath = worktreesDir.resolve("task-agentA");
+      Files.createDirectories(worktreePath);
+
+      long lockCreatedAt = 1_771_266_833L;
+      Path lockFile = locksDir.resolve("task-agentA.lock");
+      Files.writeString(lockFile, """
+        {
+          "session_id": "aaaaaaaa-0000-0000-0000-000000000001",
+          "worktrees": {"%s": "aaaaaaaa-0000-0000-0000-000000000001/subagents/xyz"},
+          "created_at": %d
+        }""".formatted(worktreePath.toString(), lockCreatedAt));
+
       Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)),
         ZoneOffset.UTC);
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
@@ -1112,27 +1112,27 @@ public final class BlockUnsafeRemovalTest
   public void worktreeRemoveAllowedWhenAgentIdMatchesLock() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    Path gitDir = tempDir.resolve(".git");
-    Files.createDirectory(gitDir);
-    Path locksDir = tempDir.resolve(".claude/cat/locks");
-    Files.createDirectories(locksDir);
-    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
-    Files.createDirectories(worktreesDir);
-    Path worktreePath = worktreesDir.resolve("task-agentB");
-    Files.createDirectories(worktreePath);
-
-    long lockCreatedAt = 1_771_266_833L;
-    String ownerAgentId = "aaaaaaaa-0000-0000-0000-000000000001/subagents/abc123";
-    Path lockFile = locksDir.resolve("task-agentB.lock");
-    Files.writeString(lockFile, """
-      {
-        "session_id": "aaaaaaaa-0000-0000-0000-000000000001",
-        "worktrees": {"%s": "%s"},
-        "created_at": %d
-      }""".formatted(worktreePath.toString(), ownerAgentId, lockCreatedAt));
-
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
+      Path gitDir = tempDir.resolve(".git");
+      Files.createDirectory(gitDir);
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Files.createDirectories(locksDir);
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+      Path worktreePath = worktreesDir.resolve("task-agentB");
+      Files.createDirectories(worktreePath);
+
+      long lockCreatedAt = 1_771_266_833L;
+      String ownerAgentId = "aaaaaaaa-0000-0000-0000-000000000001/subagents/abc123";
+      Path lockFile = locksDir.resolve("task-agentB.lock");
+      Files.writeString(lockFile, """
+        {
+          "session_id": "aaaaaaaa-0000-0000-0000-000000000001",
+          "worktrees": {"%s": "%s"},
+          "created_at": %d
+        }""".formatted(worktreePath.toString(), ownerAgentId, lockCreatedAt));
+
       Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)),
         ZoneOffset.UTC);
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
@@ -1161,28 +1161,28 @@ public final class BlockUnsafeRemovalTest
   public void worktreeRemoveBlockedWhenAgentIdMismatch() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    Path gitDir = tempDir.resolve(".git");
-    Files.createDirectory(gitDir);
-    Path locksDir = tempDir.resolve(".claude/cat/locks");
-    Files.createDirectories(locksDir);
-    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
-    Files.createDirectories(worktreesDir);
-    Path worktreePath = worktreesDir.resolve("task-agentC");
-    Files.createDirectories(worktreePath);
-
-    long lockCreatedAt = 1_771_266_833L;
-    String lockOwnerAgentId = "aaaaaaaa-0000-0000-0000-000000000001/subagents/ownerX";
-    String commandAgentId = "aaaaaaaa-0000-0000-0000-000000000001/subagents/siblingY";
-    Path lockFile = locksDir.resolve("task-agentC.lock");
-    Files.writeString(lockFile, """
-      {
-        "session_id": "aaaaaaaa-0000-0000-0000-000000000001",
-        "worktrees": {"%s": "%s"},
-        "created_at": %d
-      }""".formatted(worktreePath.toString(), lockOwnerAgentId, lockCreatedAt));
-
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
+      Path gitDir = tempDir.resolve(".git");
+      Files.createDirectory(gitDir);
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Files.createDirectories(locksDir);
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+      Path worktreePath = worktreesDir.resolve("task-agentC");
+      Files.createDirectories(worktreePath);
+
+      long lockCreatedAt = 1_771_266_833L;
+      String lockOwnerAgentId = "aaaaaaaa-0000-0000-0000-000000000001/subagents/ownerX";
+      String commandAgentId = "aaaaaaaa-0000-0000-0000-000000000001/subagents/siblingY";
+      Path lockFile = locksDir.resolve("task-agentC.lock");
+      Files.writeString(lockFile, """
+        {
+          "session_id": "aaaaaaaa-0000-0000-0000-000000000001",
+          "worktrees": {"%s": "%s"},
+          "created_at": %d
+        }""".formatted(worktreePath.toString(), lockOwnerAgentId, lockCreatedAt));
+
       Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)),
         ZoneOffset.UTC);
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
@@ -1211,15 +1211,15 @@ public final class BlockUnsafeRemovalTest
   public void worktreeRemoveAllowedWhenNoLock() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    Path gitDir = tempDir.resolve(".git");
-    Files.createDirectory(gitDir);
-    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
-    Files.createDirectories(worktreesDir);
-    Path worktreePath = worktreesDir.resolve("task-agentD");
-    Files.createDirectories(worktreePath);
-
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
+      Path gitDir = tempDir.resolve(".git");
+      Files.createDirectory(gitDir);
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+      Path worktreePath = worktreesDir.resolve("task-agentD");
+      Files.createDirectories(worktreePath);
+
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
       String workingDirectory = tempDir.toString();
       // No lock file, no CAT_AGENT_ID
@@ -1244,27 +1244,27 @@ public final class BlockUnsafeRemovalTest
   public void worktreeRemoveBlockedByCwdShowsCwdMessage() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    Path gitDir = tempDir.resolve(".git");
-    Files.createDirectory(gitDir);
-    Path locksDir = tempDir.resolve(".claude/cat/locks");
-    Files.createDirectories(locksDir);
-    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
-    Files.createDirectories(worktreesDir);
-    Path worktreePath = worktreesDir.resolve("task-agentE");
-    Files.createDirectories(worktreePath);
-
-    long lockCreatedAt = 1_771_266_833L;
-    String ownerAgentId = "aaaaaaaa-0000-0000-0000-000000000001/subagents/abc";
-    Path lockFile = locksDir.resolve("task-agentE.lock");
-    Files.writeString(lockFile, """
-      {
-        "session_id": "aaaaaaaa-0000-0000-0000-000000000001",
-        "worktrees": {"%s": "%s"},
-        "created_at": %d
-      }""".formatted(worktreePath.toString(), ownerAgentId, lockCreatedAt));
-
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
+      Path gitDir = tempDir.resolve(".git");
+      Files.createDirectory(gitDir);
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Files.createDirectories(locksDir);
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+      Path worktreePath = worktreesDir.resolve("task-agentE");
+      Files.createDirectories(worktreePath);
+
+      long lockCreatedAt = 1_771_266_833L;
+      String ownerAgentId = "aaaaaaaa-0000-0000-0000-000000000001/subagents/abc";
+      Path lockFile = locksDir.resolve("task-agentE.lock");
+      Files.writeString(lockFile, """
+        {
+          "session_id": "aaaaaaaa-0000-0000-0000-000000000001",
+          "worktrees": {"%s": "%s"},
+          "created_at": %d
+        }""".formatted(worktreePath.toString(), ownerAgentId, lockCreatedAt));
+
       Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)),
         ZoneOffset.UTC);
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
@@ -1299,28 +1299,28 @@ public final class BlockUnsafeRemovalTest
   public void worktreeRemoveFallsBackToSessionIdForLegacyLock() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    Path gitDir = tempDir.resolve(".git");
-    Files.createDirectory(gitDir);
-    Path locksDir = tempDir.resolve(".claude/cat/locks");
-    Files.createDirectories(locksDir);
-    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
-    Files.createDirectories(worktreesDir);
-    Path worktreePath = worktreesDir.resolve("task-agentF");
-    Files.createDirectories(worktreePath);
-
-    long lockCreatedAt = 1_771_266_833L;
-    String mySessionId = "bbbbbbbb-0000-0000-0000-000000000002";
-    Path lockFile = locksDir.resolve("task-agentF.lock");
-    // Lock with worktrees map but no agent IDs: falls back to session_id comparison
-    Files.writeString(lockFile, """
-      {
-        "session_id": "%s",
-        "worktrees": {"%s": ""},
-        "created_at": %d
-      }""".formatted(mySessionId, worktreePath.toString(), lockCreatedAt));
-
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
+      Path gitDir = tempDir.resolve(".git");
+      Files.createDirectory(gitDir);
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Files.createDirectories(locksDir);
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+      Path worktreePath = worktreesDir.resolve("task-agentF");
+      Files.createDirectories(worktreePath);
+
+      long lockCreatedAt = 1_771_266_833L;
+      String mySessionId = "bbbbbbbb-0000-0000-0000-000000000002";
+      Path lockFile = locksDir.resolve("task-agentF.lock");
+      // Lock with worktrees map but no agent IDs: falls back to session_id comparison
+      Files.writeString(lockFile, """
+        {
+          "session_id": "%s",
+          "worktrees": {"%s": ""},
+          "created_at": %d
+        }""".formatted(mySessionId, worktreePath.toString(), lockCreatedAt));
+
       Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)),
         ZoneOffset.UTC);
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
@@ -1348,27 +1348,27 @@ public final class BlockUnsafeRemovalTest
   public void lockBlockedShowsLockMessage() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    Path gitDir = tempDir.resolve(".git");
-    Files.createDirectory(gitDir);
-    Path locksDir = tempDir.resolve(".claude/cat/locks");
-    Files.createDirectories(locksDir);
-    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
-    Files.createDirectories(worktreesDir);
-    Path worktreePath = worktreesDir.resolve("task-agentG");
-    Files.createDirectories(worktreePath);
-
-    long lockCreatedAt = 1_771_266_833L;
-    String lockOwnerAgentId = "aaaaaaaa-0000-0000-0000-000000000001/subagents/owner";
-    Path lockFile = locksDir.resolve("task-agentG.lock");
-    Files.writeString(lockFile, """
-      {
-        "session_id": "aaaaaaaa-0000-0000-0000-000000000001",
-        "worktrees": {"%s": "%s"},
-        "created_at": %d
-      }""".formatted(worktreePath.toString(), lockOwnerAgentId, lockCreatedAt));
-
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
+      Path gitDir = tempDir.resolve(".git");
+      Files.createDirectory(gitDir);
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Files.createDirectories(locksDir);
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+      Path worktreePath = worktreesDir.resolve("task-agentG");
+      Files.createDirectories(worktreePath);
+
+      long lockCreatedAt = 1_771_266_833L;
+      String lockOwnerAgentId = "aaaaaaaa-0000-0000-0000-000000000001/subagents/owner";
+      Path lockFile = locksDir.resolve("task-agentG.lock");
+      Files.writeString(lockFile, """
+        {
+          "session_id": "aaaaaaaa-0000-0000-0000-000000000001",
+          "worktrees": {"%s": "%s"},
+          "created_at": %d
+        }""".formatted(worktreePath.toString(), lockOwnerAgentId, lockCreatedAt));
+
       Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)),
         ZoneOffset.UTC);
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
@@ -1401,28 +1401,28 @@ public final class BlockUnsafeRemovalTest
   public void legacyLockFromDifferentSessionBlocks() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    Path gitDir = tempDir.resolve(".git");
-    Files.createDirectory(gitDir);
-    Path locksDir = tempDir.resolve(".claude/cat/locks");
-    Files.createDirectories(locksDir);
-    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
-    Files.createDirectories(worktreesDir);
-    Path worktreePath = worktreesDir.resolve("task-agentH");
-    Files.createDirectories(worktreePath);
-
-    long lockCreatedAt = 1_771_266_833L;
-    String lockSessionId = "aaaaaaaa-0000-0000-0000-000000000001";
-    Path lockFile = locksDir.resolve("task-agentH.lock");
-    // Lock with no agent IDs in worktrees map: falls back to session_id comparison
-    Files.writeString(lockFile, """
-      {
-        "session_id": "%s",
-        "worktrees": {"%s": ""},
-        "created_at": %d
-      }""".formatted(lockSessionId, worktreePath.toString(), lockCreatedAt));
-
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
+      Path gitDir = tempDir.resolve(".git");
+      Files.createDirectory(gitDir);
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Files.createDirectories(locksDir);
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+      Path worktreePath = worktreesDir.resolve("task-agentH");
+      Files.createDirectories(worktreePath);
+
+      long lockCreatedAt = 1_771_266_833L;
+      String lockSessionId = "aaaaaaaa-0000-0000-0000-000000000001";
+      Path lockFile = locksDir.resolve("task-agentH.lock");
+      // Lock with no agent IDs in worktrees map: falls back to session_id comparison
+      Files.writeString(lockFile, """
+        {
+          "session_id": "%s",
+          "worktrees": {"%s": ""},
+          "created_at": %d
+        }""".formatted(lockSessionId, worktreePath.toString(), lockCreatedAt));
+
       Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)),
         ZoneOffset.UTC);
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);

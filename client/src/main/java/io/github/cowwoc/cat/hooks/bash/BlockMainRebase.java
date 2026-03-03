@@ -7,10 +7,12 @@
 package io.github.cowwoc.cat.hooks.bash;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 import tools.jackson.databind.JsonNode;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -23,8 +25,6 @@ public final class BlockMainRebase implements BashHandler
 {
   private static final Pattern CHECKOUT_PATTERN =
     Pattern.compile("(^|[;&|])\\s*git\\s+(checkout|switch)\\s+", Pattern.CASE_INSENSITIVE);
-  private static final Pattern CD_WORKSPACE_PATTERN =
-    Pattern.compile("cd\\s+(/workspace|['\"]*/workspace['\"]*)([\\s]|&&|;|$)");
   private static final Pattern CHECKOUT_TARGET_PATTERN =
     Pattern.compile("git\\s+(?:checkout|switch)\\s+([^\\s;&|]+)");
   private static final Pattern REBASE_PATTERN =
@@ -32,12 +32,23 @@ public final class BlockMainRebase implements BashHandler
   private static final Pattern CD_TARGET_PATTERN =
     Pattern.compile("^cd\\s+['\"]?([^'\";&|]+)['\"]?");
 
+  private final JvmScope scope;
+  private final Path projectDir;
+  private final Pattern cdProjectPattern;
+
   /**
    * Creates a new handler for blocking main branch rebase.
+   *
+   * @param scope the JVM scope providing access to shared resources
+   * @throws NullPointerException if {@code scope} is null
    */
-  public BlockMainRebase()
+  public BlockMainRebase(JvmScope scope)
   {
-    // Handler class
+    this.scope = scope;
+    this.projectDir = scope.getClaudeProjectDir();
+    String escaped = Pattern.quote(projectDir.toString());
+    this.cdProjectPattern =
+      Pattern.compile("cd\\s+(" + escaped + "|['\"]+" + escaped + "['\"]*)([\\s]|&&|;|$)");
   }
 
   @Override
@@ -69,7 +80,8 @@ public final class BlockMainRebase implements BashHandler
     }
     if (currentBranch.equals("main"))
     {
-      return Result.block("""
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      return Result.block(String.format("""
         REBASE ON MAIN BLOCKED
 
         Attempted: git rebase on main branch
@@ -83,8 +95,8 @@ public final class BlockMainRebase implements BashHandler
         TO REBASE AN ISSUE BRANCH ONTO MAIN:
         Run from your issue's worktree, not main:
 
-          cd /workspace/.claude/cat/worktrees/<issue-branch>
-          git rebase main""");
+          cd %s/<issue-branch>
+          git rebase main""", worktreesDir));
     }
 
     return Result.allow();
@@ -98,12 +110,13 @@ public final class BlockMainRebase implements BashHandler
    */
   private Result checkCheckoutInMainWorktree(String command)
   {
-    // Check if command cd's to /workspace
-    if (CD_WORKSPACE_PATTERN.matcher(command).find())
+    // Check if command cd's to the project directory
+    if (cdProjectPattern.matcher(command).find())
     {
       String target = extractCheckoutTarget(command);
       if (!isCheckoutFlag(target))
       {
+        Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
         return Result.block(String.format("""
           GIT CHECKOUT IN MAIN WORKTREE BLOCKED
 
@@ -111,19 +124,20 @@ public final class BlockMainRebase implements BashHandler
           Correct:   Use task worktrees - never change main worktree's branch
 
           WHY THIS IS BLOCKED:
-          - The main worktree (/workspace) should keep its current branch
+          - The main worktree (%s) should keep its current branch
           - Issue worktrees exist precisely to avoid touching main workspace state
           - Changing main worktree's branch disrupts operations
 
           WHAT TO DO INSTEAD:
-          - For issue work: Use the issue worktree at /workspace/.claude/cat/worktrees/<branch>
-          - For cleanup: Delete the worktree directory, don't checkout in main""", target));
+          - For issue work: Use the issue worktree at %s/<branch>
+          - For cleanup: Delete the worktree directory, don't checkout in main""",
+          target, projectDir, worktreesDir));
       }
     }
 
-    // Check if currently in /workspace (main worktree)
+    // Check if currently in the project directory (main worktree)
     String cwd = System.getProperty("user.dir");
-    if ("/workspace".equals(cwd))
+    if (projectDir.toString().equals(cwd))
     {
       boolean mainWorktree;
       try
@@ -184,8 +198,8 @@ public final class BlockMainRebase implements BashHandler
    */
   private String getCurrentBranch(String command)
   {
-    // Check if command cd's to /workspace
-    if (CD_WORKSPACE_PATTERN.matcher(command).find())
+    // Check if command cd's to the project directory
+    if (cdProjectPattern.matcher(command).find())
       return "main";
 
     // Check if command cd's elsewhere

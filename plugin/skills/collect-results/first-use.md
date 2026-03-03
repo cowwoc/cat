@@ -52,7 +52,8 @@ Steps: Verify completion, Extract commits, Parse metrics, Extract issues, Report
 Check for completion marker file (fast path, no session parsing):
 
 ```bash
-WORKTREE=".claude/cat/worktrees/${ISSUE}-sub-${UUID}"
+source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
+WORKTREE="${WORKTREES_DIR}/${ISSUE}-sub-${UUID}"
 COMPLETION_FILE="${WORKTREE}/.completion.json"
 
 # Check for completion marker (preferred - lightweight)

@@ -1,11 +1,2 @@
-# Temporary worktrees created for issue isolation
-/worktrees/
-
-# Lock files used to prevent concurrent access
-/locks/
-
 # User-specific configuration, kept local and not committed
 cat-config.local.json
-
-# Verification output from audit and verify commands
-/verify/

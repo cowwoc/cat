@@ -22,12 +22,13 @@ import java.util.List;
  * <p>
  * TRIGGER: SessionEnd
  * <p>
- * Handles session cleanup operations including lock removal:
+ * Handles session cleanup operations including lock removal from the external CAT storage location
+ * ({@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/locks/}):
  * <ul>
- *   <li>Project lock file (.claude/cat/locks/${PROJECT_NAME}.lock)</li>
+ *   <li>Project lock file</li>
  *   <li>Task locks owned by the current session</li>
- *   <li>Legacy worktree locks owned by the current session</li>
  *   <li>Stale locks older than 24 hours</li>
+ *   <li>Session CWD tracking file from the external CAT storage location</li>
  * </ul>
  */
 public final class SessionEndHook implements HookHandler
@@ -76,11 +77,13 @@ public final class SessionEndHook implements HookHandler
   /**
    * Processes hook input and releases locks for a specific project directory.
    * <p>
-   * This method is public for testing purposes.
+   * This method is public for testing purposes. The lock directory is resolved from the scope's
+   * config directory using the encoded project path.
    *
    * @param input the hook input to process
    * @param output the hook output builder for creating responses
-   * @param projectPath the project directory path
+   * @param projectPath the project directory path (used only to derive the project name for
+   *   the main project lock file filename)
    * @return the hook result containing JSON output and warnings
    * @throws NullPointerException if {@code input}, {@code output}, or {@code projectPath} are null
    */
@@ -97,16 +100,15 @@ public final class SessionEndHook implements HookHandler
 
       List<String> messages = new ArrayList<>();
 
-      removeProjectLock(projectPath, projectName, messages);
+      removeProjectLock(projectName, messages);
 
       if (!sessionId.isBlank())
       {
-        cleanTaskLocks(projectPath, sessionId, messages);
-        cleanLegacyWorktreeLocks(projectPath, sessionId, messages);
-        cleanSessionCwdFile(projectPath, sessionId, messages);
+        cleanTaskLocks(sessionId, messages);
+        cleanSessionCwdFile(sessionId, messages);
       }
 
-      cleanStaleLocks(projectPath, messages);
+      cleanStaleLocks(messages);
 
       return new HookResult(output.empty(), messages);
     }
@@ -119,13 +121,13 @@ public final class SessionEndHook implements HookHandler
   /**
    * Removes the project lock file.
    *
-   * @param projectPath the project directory
    * @param projectName the project name
    * @param messages list to collect status messages
    */
-  private void removeProjectLock(Path projectPath, String projectName, List<String> messages)
+  private void removeProjectLock(String projectName, List<String> messages)
   {
-    Path lockFile = projectPath.resolve(".claude/cat/locks").resolve(projectName + ".lock");
+    Path lockDir = scope.getProjectCatDir().resolve("locks");
+    Path lockFile = lockDir.resolve(projectName + ".lock");
     if (Files.exists(lockFile))
     {
       try
@@ -143,38 +145,24 @@ public final class SessionEndHook implements HookHandler
   /**
    * Removes task locks owned by the current session.
    *
-   * @param projectPath the project directory
    * @param sessionId the session ID
    * @param messages list to collect status messages
    */
-  private void cleanTaskLocks(Path projectPath, String sessionId, List<String> messages)
+  private void cleanTaskLocks(String sessionId, List<String> messages)
   {
-    cleanLocksInDirectory(projectPath.resolve(".claude/cat/locks"), sessionId, messages, "Task lock released");
+    Path lockDir = scope.getProjectCatDir().resolve("locks");
+    cleanLocksInDirectory(lockDir, sessionId, messages, "Task lock released");
   }
 
   /**
-   * Removes legacy worktree locks owned by the current session.
+   * Removes the session CWD tracking file for the current session from the external CAT storage location.
    *
-   * @param projectPath the project directory
    * @param sessionId the session ID
    * @param messages list to collect status messages
    */
-  private void cleanLegacyWorktreeLocks(Path projectPath, String sessionId, List<String> messages)
+  private void cleanSessionCwdFile(String sessionId, List<String> messages)
   {
-    cleanLocksInDirectory(projectPath.resolve(".claude/cat/worktree-locks"), sessionId, messages,
-      "Worktree lock released");
-  }
-
-  /**
-   * Removes the session CWD tracking file for the current session.
-   *
-   * @param projectPath the project directory
-   * @param sessionId the session ID
-   * @param messages list to collect status messages
-   */
-  private void cleanSessionCwdFile(Path projectPath, String sessionId, List<String> messages)
-  {
-    Path cwdFile = projectPath.resolve(".claude/cat/sessions/" + sessionId + ".cwd");
+    Path cwdFile = scope.getProjectCatDir().resolve("sessions/" + sessionId + ".cwd");
     if (Files.exists(cwdFile))
     {
       try
@@ -250,12 +238,11 @@ public final class SessionEndHook implements HookHandler
   /**
    * Removes stale lock files older than 24 hours.
    *
-   * @param projectPath the project directory
    * @param messages list to collect status messages
    */
-  private void cleanStaleLocks(Path projectPath, List<String> messages)
+  private void cleanStaleLocks(List<String> messages)
   {
-    Path lockDir = projectPath.resolve(".claude/cat/locks");
+    Path lockDir = scope.getProjectCatDir().resolve("locks");
     if (!Files.isDirectory(lockDir))
       return;
 

@@ -279,7 +279,7 @@ public final class CheckDataMigration implements SessionStartHandler
   }
 
   /**
-   * Creates a backup of the .claude/cat directory.
+   * Creates a backup of the .claude/cat directory in external CAT storage.
    *
    * @param projectDir the project root directory
    * @param reason the backup reason (used in directory name)
@@ -289,7 +289,7 @@ public final class CheckDataMigration implements SessionStartHandler
   private String backupCatDir(Path projectDir, String reason) throws IOException
   {
     String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
-    Path backupDir = projectDir.resolve(".claude/cat/backups/" + timestamp + "-" +
+    Path backupDir = scope.getProjectCatDir().resolve("backups/" + timestamp + "-" +
       sanitizeDirectoryName(reason));
     Path catDir = projectDir.resolve(".claude/cat");
 
@@ -298,8 +298,6 @@ public final class CheckDataMigration implements SessionStartHandler
     {
       for (Path entry : stream)
       {
-        if (entry.getFileName().toString().equals("backups"))
-          continue;
         Path target = backupDir.resolve(entry.getFileName());
         copyRecursively(entry, target);
       }

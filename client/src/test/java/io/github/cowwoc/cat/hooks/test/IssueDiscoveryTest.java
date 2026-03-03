@@ -665,7 +665,7 @@ public class IssueDiscoveryTest
         createIssue(projectDir, "2", "1", "other-feature", "open");
 
         // Create a fake worktree for my-feature
-        Path worktreesDir = projectDir.resolve(".claude").resolve("cat").resolve("worktrees");
+        Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
         Files.createDirectories(worktreesDir.resolve("2.1-my-feature"));
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
@@ -701,7 +701,7 @@ public class IssueDiscoveryTest
         createIssue(projectDir, "2", "1", "my-feature", "open");
 
         // Create a fake worktree
-        Path worktreesDir = projectDir.resolve(".claude").resolve("cat").resolve("worktrees");
+        Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
         Files.createDirectories(worktreesDir.resolve("2.1-my-feature"));
 
         IssueDiscovery discovery = new IssueDiscovery(scope);

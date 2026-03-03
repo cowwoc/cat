@@ -755,7 +755,7 @@ public class HookEntryPointTest
       EnforceWorktreeSafetyBeforeMerge handler =
         new EnforceWorktreeSafetyBeforeMerge();
       TaskHandler.Result result = handler.check(toolInput, "test-session",
-        "/workspace/.claude/cat/worktrees/2.1-my-task");
+        scope.getProjectCatDir().resolve("worktrees").resolve("2.1-my-task").toString());
       requireThat(result.blocked(), "blocked").isFalse();
     }
   }
@@ -772,11 +772,12 @@ public class HookEntryPointTest
       JsonNode toolInput = mapper.readTree("{\"subagent_type\": \"cat:work-merge\"}");
       EnforceWorktreeSafetyBeforeMerge handler =
         new EnforceWorktreeSafetyBeforeMerge();
-      TaskHandler.Result result = handler.check(toolInput, "test-session",
-        "/workspace/.claude/cat/worktrees/2.1-my-task");
+      String worktreePath =
+        scope.getProjectCatDir().resolve("worktrees").resolve("2.1-my-task").toString();
+      TaskHandler.Result result = handler.check(toolInput, "test-session", worktreePath);
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("BLOCKED");
-      requireThat(result.reason(), "reason").contains("/workspace/.claude/cat/worktrees/2.1-my-task");
+      requireThat(result.reason(), "reason").contains(worktreePath);
     }
   }
 
@@ -826,8 +827,9 @@ public class HookEntryPointTest
       JsonNode toolInput = mapper.readTree("{\"subagent_type\": \"cat:work-merge\"}");
       EnforceWorktreeSafetyBeforeMerge handler =
         new EnforceWorktreeSafetyBeforeMerge();
-      TaskHandler.Result result = handler.check(toolInput, "test-session",
-        "/workspace/.claude/cat/worktrees/2.1-my-task/src/main/java");
+      String subdirPath =
+        scope.getProjectCatDir().resolve("worktrees").resolve("2.1-my-task").resolve("src/main/java").toString();
+      TaskHandler.Result result = handler.check(toolInput, "test-session", subdirPath);
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("BLOCKED");
     }
@@ -1092,7 +1094,7 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree("{}");
-      FileWriteHandler.Result result = new WarnBaseBranchEdit().check(toolInput, "test");
+      FileWriteHandler.Result result = new WarnBaseBranchEdit(scope).check(toolInput, "test");
       requireThat(result.blocked(), "blocked").isFalse();
     }
   }
@@ -1108,7 +1110,7 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree(
         "{\"file_path\": \"/workspace/.claude/settings.json\"}");
-      FileWriteHandler.Result result = new WarnBaseBranchEdit().check(toolInput, "test");
+      FileWriteHandler.Result result = new WarnBaseBranchEdit(scope).check(toolInput, "test");
       requireThat(result.blocked(), "blocked").isFalse();
     }
   }
@@ -1230,7 +1232,7 @@ public class HookEntryPointTest
         String filePath = tempDir.resolve("hooks/src/main/java/SomeNewFile.java").toString();
         JsonNode toolInput = mapper.readTree(
           "{\"file_path\": \"" + filePath.replace("\\", "\\\\") + "\"}");
-        FileWriteHandler.Result result = new WarnBaseBranchEdit().check(toolInput, "test");
+        FileWriteHandler.Result result = new WarnBaseBranchEdit(scope).check(toolInput, "test");
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").contains("BASE BRANCH EDIT DETECTED");
       }
@@ -1256,7 +1258,7 @@ public class HookEntryPointTest
       Path enginePom = Path.of("pom.xml").toAbsolutePath();
       String toolInputJson = String.format("{\"file_path\": \"%s\"}", enginePom.toString().replace("\\", "\\\\"));
       JsonNode toolInput = mapper.readTree(toolInputJson);
-      FileWriteHandler.Result result = new WarnBaseBranchEdit().check(toolInput, "test");
+      FileWriteHandler.Result result = new WarnBaseBranchEdit(scope).check(toolInput, "test");
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
     }
