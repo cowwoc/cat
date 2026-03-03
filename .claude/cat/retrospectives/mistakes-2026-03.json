@@ -422,6 +422,46 @@
         "catches_variations": true
       },
       "correct_behavior": "In first-use.md, $0 is the catAgentId (session_id), $1 is the first positional arg (completedIssue), and $2 is the second positional arg (targetBranch). INVOKE must use 'args=\"work-complete $1 $2\"' to pass the issue name and target branch as handler args."
+    },
+    {
+      "id": "M461",
+      "timestamp": "2026-03-03T21:00:00Z",
+      "category": "detection_gap",
+      "description": "AutoLearnMistakes Pattern 11 false-positive: 'critical issues' in stakeholder-review severity table matched 'CRITICAL ISSUE' regex (case-insensitive), triggering spurious learn-agent invocations during normal Bash cat of skill documentation",
+      "root_cause": "Pattern 11 in AutoLearnMistakes.java used CASE_INSENSITIVE matching for 'CRITICAL (DISASTER|MISTAKE|ERROR|FAILURE|BUG|PROBLEM|ISSUE)' without requiring first-person/self-referential context. The stakeholder-review SKILL.md severity table contains 'Must fix critical issues' and calibration rules using 'critical issues', 'critical error' as domain vocabulary. When agents cat this file, the output passes through filterGitNoise (which does not filter skill documentation lines) and the severity-table content matches the self-acknowledgment pattern, causing spurious mistake detection.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/client/src/main/java/io/github/cowwoc/cat/hooks/tool/post/AutoLearnMistakes.java",
+      "pattern_keywords": [
+        "critical_self_acknowledgment",
+        "false_positive",
+        "severity_table",
+        "stakeholder_review",
+        "case_insensitive",
+        "auto_learn_mistakes",
+        "pattern_11"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Pattern 11 must require first-person/self-referential framing before triggering critical_self_acknowledgment. Match phrases like 'I made a CRITICAL error' or 'this was a CRITICAL MISTAKE', not bare severity-table vocabulary like 'critical issues' or 'Must fix critical issues'.",
+      "issue_creation_needed": {
+        "suggested_title": "Fix AutoLearnMistakes Pattern 11 false-positive on severity vocabulary",
+        "suggested_description": "AutoLearnMistakes.java Pattern 11 uses case-insensitive regex 'CRITICAL (DISASTER|MISTAKE|ERROR|FAILURE|BUG|PROBLEM|ISSUE)' which matches severity-table vocabulary like 'critical issues' in stakeholder-review/SKILL.md.",
+        "suggested_acceptance_criteria": [
+          "Pattern 11 does NOT trigger on 'Must fix critical issues' or 'critical error' in severity tables",
+          "Pattern 11 DOES trigger on 'I made a critical error' or 'I caused a critical mistake'",
+          "Pattern 11 DOES trigger on 'this was a catastrophic mistake'",
+          "Tests in AutoLearnMistakesTest verify all false-positive and true-positive cases",
+          "No regression in other AutoLearnMistakes patterns"
+        ]
+      }
     }
   ]
 }
