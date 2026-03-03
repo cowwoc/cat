@@ -88,6 +88,14 @@ tune wrapping for file output (e.g., markdown docs) vs. terminal rendering (e.g.
   - Files: `plugin/migrations/2.1.sh`
 - Run `mvn -f client/pom.xml test` and verify all tests pass
 
+### Wave 4
+- Update `README.md` to document both `fileWidth` and `displayWidth` config options where
+  `terminalWidth` was previously referenced (if any), or add them to the configuration section
+  - Files: `README.md`
+- Update `/cat:config` skill output to display both `fileWidth` and `displayWidth` current values
+  in the config display (e.g., `GetConfigOutput.java` if it renders width info)
+  - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetConfigOutput.java` (if applicable)
+
 ## Post-conditions
 - [ ] `Config.java` has `fileWidth: 120` and `displayWidth: 120` defaults; no `terminalWidth`
 - [ ] `GetDiffOutput.java` reads `displayWidth` from config (not `terminalWidth`)
@@ -95,5 +103,7 @@ tune wrapping for file output (e.g., markdown docs) vs. terminal rendering (e.g.
 - [ ] `GetDiffOutputTest.java` uses `displayWidth` in all JSON fixtures; no `terminalWidth` remaining
 - [ ] `plugin/skills/config/first-use.md` documents `fileWidth` and `displayWidth`; no `terminalWidth`
 - [ ] `plugin/migrations/2.1.sh` Phase 9 migrates `terminalWidth` to both new keys idempotently
+- [ ] `README.md` documents both `fileWidth` and `displayWidth` config options
+- [ ] `/cat:config` displays both `fileWidth` and `displayWidth` current values
 - [ ] `mvn -f client/pom.xml test` passes with exit code 0
 - [ ] E2E: set `displayWidth: 60` in `cat-config.json`, run `get-diff`, verify diff renders at 60 cols
