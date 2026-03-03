@@ -12,6 +12,7 @@ import io.github.cowwoc.cat.hooks.failure.ResetFailureCounter;
 import io.github.cowwoc.cat.hooks.tool.post.AutoLearnMistakes;
 import io.github.cowwoc.cat.hooks.tool.post.DetectAssistantGivingUp;
 import io.github.cowwoc.cat.hooks.tool.post.DetectTokenThreshold;
+import io.github.cowwoc.cat.hooks.tool.post.DetectValidationWithoutEvidence;
 import io.github.cowwoc.cat.hooks.tool.post.RemindRestartAfterSkillModification;
 import tools.jackson.databind.JsonNode;
 
@@ -87,6 +88,7 @@ public final class PostToolUseHook implements HookHandler
       new ResetFailureCounter(sessionDirectory),
       new AutoLearnMistakes(),
       new DetectAssistantGivingUp(scope),
+      new DetectValidationWithoutEvidence(scope),
       new DetectTokenThreshold(claudeConfigDir),
       new RemindRestartAfterSkillModification());
 

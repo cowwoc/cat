@@ -18,9 +18,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
+import java.util.UUID;
 
 /**
  * Tests for DetectAssistantGivingUp.
@@ -37,19 +35,19 @@ public final class DetectAssistantGivingUpTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Clock clock = Clock.systemUTC();
-      DetectAssistantGivingUp handler = new DetectAssistantGivingUp(clock, scope);
+      DetectAssistantGivingUp handler = new DetectAssistantGivingUp(scope);
 
+      String sessionId = "test-" + UUID.randomUUID();
       String hookDataJson = """
         {
           "tool_input": {},
           "tool_result": {},
-          "session_id": "nonexistent-session"
-        }""";
+          "session_id": "%s"
+        }""".formatted(sessionId);
       JsonNode hookData = mapper.readTree(hookDataJson);
       JsonNode toolResult = mapper.readTree("{}");
 
-      PostToolHandler.Result result = handler.check("Bash", toolResult, "nonexistent-session", hookData);
+      PostToolHandler.Result result = handler.check("Bash", toolResult, sessionId, hookData);
 
       requireThat(result.warning(), "warning").isEmpty();
       requireThat(result.additionalContext(), "additionalContext").isEmpty();
@@ -70,14 +68,13 @@ public final class DetectAssistantGivingUpTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      String sessionId = "test-session-clean";
-      Path conversationLog = createConversationLog(tempDir, sessionId, """
+      String sessionId = "test-" + UUID.randomUUID();
+      Path conversationLog = createConversationLog(scope, sessionId, """
         {"role":"assistant","content":"I'll complete all the files."}
         {"role":"assistant","content":"Working on the next file now."}
         """);
 
-      Clock clock = Clock.systemUTC();
-      DetectAssistantGivingUp handler = new DetectAssistantGivingUp(clock, scope);
+      DetectAssistantGivingUp handler = new DetectAssistantGivingUp(scope);
 
       String hookDataJson = """
         {
@@ -111,14 +108,13 @@ public final class DetectAssistantGivingUpTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      String sessionId = "test-session-violation";
-      Path conversationLog = createConversationLog(tempDir, sessionId,
+      String sessionId = "test-" + UUID.randomUUID();
+      Path conversationLog = createConversationLog(scope, sessionId,
         """
         {"role":"assistant","content":"Given our token usage (139k/200k), let me complete a few more."}
         """);
 
-      Clock clock = Clock.systemUTC();
-      DetectAssistantGivingUp handler = new DetectAssistantGivingUp(clock, scope);
+      DetectAssistantGivingUp handler = new DetectAssistantGivingUp(scope);
 
       String hookDataJson = """
         {
@@ -144,58 +140,6 @@ public final class DetectAssistantGivingUpTest
   }
 
   /**
-   * Verifies that rate limiting prevents repeated checks within 60 seconds.
-   */
-  @Test
-  public void rateLimitingPreventsRepeatedChecks() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      String sessionId = "test-session-ratelimit";
-      Path conversationLog = createConversationLog(tempDir, sessionId,
-        """
-        {"role":"assistant","content":"Given our token usage (139k/200k), let me complete a few more."}
-        """);
-
-      Instant baseTime = Instant.parse("2025-01-01T00:00:00Z");
-      Clock clock1 = Clock.fixed(baseTime, ZoneOffset.UTC);
-      DetectAssistantGivingUp handler1 = new DetectAssistantGivingUp(clock1, scope);
-
-      String hookDataJson = """
-        {
-          "tool_input": {},
-          "tool_result": {},
-          "session_id": "%s"
-        }""".formatted(sessionId);
-      JsonNode hookData = mapper.readTree(hookDataJson);
-      JsonNode toolResult = mapper.readTree("{}");
-
-      PostToolHandler.Result result1 = handler1.check("Bash", toolResult, sessionId, hookData);
-      requireThat(result1.additionalContext(), "firstCheck").contains("TOKEN POLICY VIOLATION");
-
-      Clock clock2 = Clock.fixed(baseTime.plusSeconds(30), ZoneOffset.UTC);
-      DetectAssistantGivingUp handler2 = new DetectAssistantGivingUp(clock2, scope);
-
-      PostToolHandler.Result result2 = handler2.check("Bash", toolResult, sessionId, hookData);
-      requireThat(result2.additionalContext(), "secondCheck").isEmpty();
-
-      Clock clock3 = Clock.fixed(baseTime.plusSeconds(61), ZoneOffset.UTC);
-      DetectAssistantGivingUp handler3 = new DetectAssistantGivingUp(clock3, scope);
-
-      PostToolHandler.Result result3 = handler3.check("Bash", toolResult, sessionId, hookData);
-      requireThat(result3.additionalContext(), "thirdCheck").contains("TOKEN POLICY VIOLATION");
-
-      Files.deleteIfExists(conversationLog);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
    * Verifies that multiple giving-up patterns are detected.
    */
   @Test
@@ -205,7 +149,7 @@ public final class DetectAssistantGivingUpTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      String sessionId = "test-session-multipattern";
+      String baseSessionId = "test-" + UUID.randomUUID();
 
       String[] patterns = {
         "given our token usage, let me continue",
@@ -217,18 +161,14 @@ public final class DetectAssistantGivingUpTest
         "i've optimized some, let me do more then proceed"
       };
 
-      Instant baseTime = Instant.parse("2025-01-01T00:00:00Z");
-
       for (int i = 0; i < patterns.length; ++i)
       {
         String pattern = patterns[i];
-        String uniqueSessionId = sessionId + "-" + i;
-        Path conversationLog = createConversationLog(tempDir, uniqueSessionId,
+        String uniqueSessionId = baseSessionId + "-" + i;
+        Path conversationLog = createConversationLog(scope, uniqueSessionId,
           "{\"role\":\"assistant\",\"content\":\"" + pattern + "\"}");
 
-        Instant checkTime = baseTime.plusSeconds(i * 100);
-        Clock clock = Clock.fixed(checkTime, ZoneOffset.UTC);
-        DetectAssistantGivingUp handler = new DetectAssistantGivingUp(clock, scope);
+        DetectAssistantGivingUp handler = new DetectAssistantGivingUp(scope);
 
         String hookDataJson = """
           {
@@ -265,15 +205,14 @@ public final class DetectAssistantGivingUpTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      String sessionId = "test-cross-message-fp";
-      createConversationLog(tempDir, sessionId, """
+      String sessionId = "test-" + UUID.randomUUID();
+      createConversationLog(scope, sessionId, """
           {"role":"assistant","content":"given the retrospective analysis above"}
           {"role":"assistant","content":"our token usage is high today"}
           {"role":"assistant","content":"let me proceed with implementing the fix"}
           """);
 
-      Clock clock = Clock.systemUTC();
-      DetectAssistantGivingUp handler = new DetectAssistantGivingUp(clock, scope);
+      DetectAssistantGivingUp handler = new DetectAssistantGivingUp(scope);
 
       String hookDataJson = """
           {"tool_input":{},"tool_result":{},"session_id":"%s"}""".formatted(sessionId);
@@ -303,13 +242,12 @@ public final class DetectAssistantGivingUpTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      String sessionId = "test-tool-use-fp";
+      String sessionId = "test-" + UUID.randomUUID();
       String toolUseJson = "{\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"name\":\"Skill\"," +
         "\"input\":{\"args\":\"given token usage let me fix this false positive\"}}]}";
-      createConversationLog(tempDir, sessionId, toolUseJson);
+      createConversationLog(scope, sessionId, toolUseJson);
 
-      Clock clock = Clock.systemUTC();
-      DetectAssistantGivingUp handler = new DetectAssistantGivingUp(clock, scope);
+      DetectAssistantGivingUp handler = new DetectAssistantGivingUp(scope);
 
       String hookDataJson = """
           {"tool_input":{},"tool_result":{},"session_id":"%s"}""".formatted(sessionId);
@@ -327,19 +265,19 @@ public final class DetectAssistantGivingUpTest
   }
 
   /**
-   * Creates a conversation log file for testing.
+   * Creates a conversation log file for testing, using the scope's session base path.
    *
-   * @param tempDir the temporary directory (used as claudeConfigDir)
+   * @param scope     the JVM scope providing the session base path
    * @param sessionId the session ID
-   * @param content the JSONL content
+   * @param content   the JSONL content
    * @return the path to the created log file
    * @throws IOException if file creation fails
    */
-  private Path createConversationLog(Path tempDir, String sessionId, String content) throws IOException
+  private Path createConversationLog(JvmScope scope, String sessionId, String content) throws IOException
   {
-    Path projectsDir = tempDir.resolve("projects").resolve("-workspace");
-    Files.createDirectories(projectsDir);
-    Path logFile = projectsDir.resolve(sessionId + ".jsonl");
+    Path sessionBasePath = scope.getSessionBasePath();
+    Files.createDirectories(sessionBasePath);
+    Path logFile = sessionBasePath.resolve(sessionId + ".jsonl");
     Files.writeString(logFile, content);
     return logFile;
   }
