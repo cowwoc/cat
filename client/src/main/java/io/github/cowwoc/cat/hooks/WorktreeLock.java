@@ -21,7 +21,8 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * Utility for looking up the worktree lock associated with a session.
  * <p>
- * Scans the lock files under {@code {projectDir}/.claude/cat/locks/} to find which
+ * Scans the lock files under the external CAT storage location
+ * ({@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/locks/}) to find which
  * issue ID (if any) is currently checked out for a given session.
  */
 public final class WorktreeLock
@@ -42,18 +43,18 @@ public final class WorktreeLock
    * <p>
    * Returns {@code null} if no matching lock file is found.
    *
-   * @param projectDir the project root directory
+   * @param projectCatDir the project CAT directory ({@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/})
    * @param jsonMapper the JSON mapper for reading lock files
    * @param sessionId the session ID to search for
    * @return the issue ID extracted from the lock filename, or {@code null} if not found
-   * @throws NullPointerException if {@code projectDir}, {@code jsonMapper}, or {@code sessionId} are null
+   * @throws NullPointerException if {@code projectCatDir}, {@code jsonMapper}, or {@code sessionId} are null
    * @throws IllegalArgumentException if {@code sessionId} is blank
    * @throws IOException if an I/O error occurs while reading lock files
    */
-  public static String findIssueIdForSession(Path projectDir, JsonMapper jsonMapper, String sessionId)
+  public static String findIssueIdForSession(Path projectCatDir, JsonMapper jsonMapper, String sessionId)
     throws IOException
   {
-    requireThat(projectDir, "projectDir").isNotNull();
+    requireThat(projectCatDir, "projectCatDir").isNotNull();
     requireThat(jsonMapper, "jsonMapper").isNotNull();
     requireThat(sessionId, "sessionId").isNotBlank();
 
@@ -65,7 +66,7 @@ public final class WorktreeLock
       return cached;
     }
 
-    Path lockDir = projectDir.resolve(".claude").resolve("cat").resolve("locks");
+    Path lockDir = projectCatDir.resolve("locks");
     if (!Files.isDirectory(lockDir))
     {
       cacheResult(sessionId, "");

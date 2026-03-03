@@ -153,7 +153,7 @@ See `spawn-subagent` skill → "Expanded Exploration Subagent" for full details.
 
 Subagents read session file:
 ```
-/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl
+${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/{CLAUDE_SESSION_ID}.jsonl
 ```
 
 Collect:
@@ -176,7 +176,12 @@ Collect:
 
 **How to calculate**:
 ```bash
-SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl"
+if [[ -z "${CLAUDE_CONFIG_DIR:-}" ]]; then
+  echo "ERROR: CLAUDE_CONFIG_DIR is not set." >&2
+  exit 1
+fi
+
+SESSION_FILE="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}.jsonl"
 
 # Total tokens
 TOTAL=$(jq -s '[.[] | select(.type == "assistant") | .message.usage |
@@ -379,13 +384,17 @@ When a subagent exceeds the hard limit:
 
 ### Worktree Path Handling
 
-When working in a worktree (e.g., `/workspace/.claude/cat/worktrees/issue-name/`):
+When working in a worktree (e.g., `${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/issue-name/`):
 
 | Path Type | Example | Risk |
 |-----------|---------|------|
 | Absolute to /workspace/ | `/workspace/plugin/skills/` | Bypasses worktree isolation |
 | Relative from cwd | `plugin/skills/` | Correct - stays in worktree |
 | ${CLAUDE_PROJECT_DIR} | `${CLAUDE_PROJECT_DIR}/plugin/` | Points to main workspace |
+
+**Worktree directory location:** Worktrees are stored in external CAT storage, not inside the project directory.
+The path is `${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/{issue-branch}` where `${ENCODED_PROJECT_DIR}`
+replaces `/` and `.` with `-` in the project directory path.
 
 **Verification checklist:**
 1. Check if cwd is a worktree: `[ -f ".git/cat-branch-point" ]`

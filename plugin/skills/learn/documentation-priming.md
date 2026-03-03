@@ -28,7 +28,8 @@ Include this analysis when:
 Use get-history to identify all documents the agent read:
 
 ```bash
-SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
+source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
+SESSION_FILE="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${SESSION_ID}.jsonl"
 
 # Find all Read tool invocations
 jq -r 'select(.type == "tool_use" and .name == "Read") | .input.file_path' "$SESSION_FILE" | sort -u

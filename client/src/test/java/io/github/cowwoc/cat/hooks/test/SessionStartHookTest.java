@@ -100,7 +100,7 @@ public class SessionStartHookTest
     try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       String sessionId = "test-session-" + System.nanoTime();
-      Path sessionDir = scope.getClaudeConfigDir().resolve("projects/-workspace/" + sessionId);
+      Path sessionDir = scope.getSessionBasePath().resolve(sessionId);
       Files.createDirectories(sessionDir);
       Path markerFile = sessionDir.resolve("skills-loaded");
       Files.writeString(markerFile, "loaded");
@@ -127,8 +127,7 @@ public class SessionStartHookTest
     try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       String sessionId = "test-session-" + System.nanoTime();
-      Path markerDir = scope.getClaudeConfigDir().resolve(
-        "projects/-workspace/" + sessionId + "/subagents/agent-1");
+      Path markerDir = scope.getSessionBasePath().resolve(sessionId + "/subagents/agent-1");
       Files.createDirectories(markerDir);
       Path markerFile = markerDir.resolve("skills-loaded");
       Files.writeString(markerFile, "loaded");
@@ -156,7 +155,7 @@ public class SessionStartHookTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"my-session\"}");
-      SessionStartHandler.Result result = new InjectSessionInstructions().handle(input);
+      SessionStartHandler.Result result = new InjectSessionInstructions(scope).handle(input);
       requireThat(result.additionalContext(), "additionalContext").contains("CAT SESSION INSTRUCTIONS");
       requireThat(result.additionalContext(), "additionalContext").contains("Session ID: my-session");
       requireThat(result.stderr(), "stderr").isEmpty();
@@ -173,7 +172,7 @@ public class SessionStartHookTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{}");
-      SessionStartHandler.Result result = new InjectSessionInstructions().handle(input);
+      SessionStartHandler.Result result = new InjectSessionInstructions(scope).handle(input);
       requireThat(result.additionalContext(), "additionalContext").contains("Session ID: unknown");
     }
   }
@@ -188,7 +187,7 @@ public class SessionStartHookTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"test\"}");
-      SessionStartHandler.Result result = new InjectSessionInstructions().handle(input);
+      SessionStartHandler.Result result = new InjectSessionInstructions(scope).handle(input);
       String context = result.additionalContext();
       requireThat(context, "context").contains("User Input Handling");
       requireThat(context, "context").contains("Mandatory Mistake Handling");

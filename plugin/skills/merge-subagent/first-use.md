@@ -28,11 +28,12 @@ This skill operates under the issue lock held by `/cat:work`. The issue lock is 
 ### 1. Verify Prerequisites
 
 ```bash
+source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
 SUBAGENT_ID="a1b2c3d4"
 ISSUE="1.2-implement-parser"
 SUBAGENT_BRANCH="${ISSUE}-sub-${SUBAGENT_ID}"
 ISSUE_BRANCH="${ISSUE}"
-WORKTREE=".claude/cat/worktrees/${SUBAGENT_BRANCH}"
+WORKTREE="${WORKTREES_DIR}/${SUBAGENT_BRANCH}"
 
 # Verify subagent results collected
 # Check parent STATE.md for ready_for_merge: true
@@ -172,7 +173,7 @@ subagents:
 git checkout 1.2-implement-parser
 git merge 1.2-implement-parser-sub-a1b2c3d4 -m "Merge subagent a1b2c3d4"
 git branch -d 1.2-implement-parser-sub-a1b2c3d4
-git worktree remove .claude/cat/worktrees/1.2-implement-parser-sub-a1b2c3d4
+git worktree remove ${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/1.2-implement-parser-sub-a1b2c3d4
 
 # Result: Clean linear history with merge commit
 ```
@@ -191,7 +192,7 @@ git add src/Parser.java
 # Complete
 git commit -m "Merge subagent a1b2c3d4, resolved Parser.java conflict"
 git branch -d 1.2-implement-parser-sub-a1b2c3d4
-git worktree remove .claude/cat/worktrees/1.2-implement-parser-sub-a1b2c3d4
+git worktree remove ${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/1.2-implement-parser-sub-a1b2c3d4
 ```
 
 ### Merge Multiple Subagents

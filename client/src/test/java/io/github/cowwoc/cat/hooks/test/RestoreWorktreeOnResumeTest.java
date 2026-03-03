@@ -37,12 +37,12 @@ public final class RestoreWorktreeOnResumeTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      // Create .claude/cat/locks directory and a lock file
-      Path locksDir = tempDir.resolve(".claude").resolve("cat").resolve("locks");
+      // Create locks directory and a lock file
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
       Files.createDirectories(locksDir);
 
       // Create a worktree directory that exists
-      Path worktreeDir = tempDir.resolve("worktrees").resolve("my-issue");
+      Path worktreeDir = scope.getProjectCatDir().resolve("worktrees").resolve("my-issue");
       Files.createDirectories(worktreeDir);
 
       // Write lock file with matching session_id and worktree path
@@ -118,8 +118,8 @@ public final class RestoreWorktreeOnResumeTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      // Create .claude/cat/locks directory with a lock for a different session
-      Path locksDir = tempDir.resolve(".claude").resolve("cat").resolve("locks");
+      // Create locks directory with a lock for a different session
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
       Files.createDirectories(locksDir);
 
       String lockContent = """
@@ -163,12 +163,12 @@ public final class RestoreWorktreeOnResumeTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      // Create .claude/cat/locks directory
-      Path locksDir = tempDir.resolve(".claude").resolve("cat").resolve("locks");
+      // Create locks directory
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
       Files.createDirectories(locksDir);
 
       // Worktree path that does NOT exist
-      Path nonExistentWorktree = tempDir.resolve("worktrees").resolve("deleted-issue");
+      Path nonExistentWorktree = scope.getProjectCatDir().resolve("worktrees").resolve("deleted-issue");
 
       String lockContent = """
         {
@@ -210,9 +210,7 @@ public final class RestoreWorktreeOnResumeTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      // Create .claude/cat but no locks subdirectory
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
-      Files.createDirectories(catDir);
+      // No locks directory exists - getProjectCatDir().resolve("locks") will not be a directory
 
       JsonMapper mapper = scope.getJsonMapper();
       RestoreWorktreeOnResume handler = new RestoreWorktreeOnResume(scope);
@@ -276,11 +274,11 @@ public final class RestoreWorktreeOnResumeTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path locksDir = tempDir.resolve(".claude").resolve("cat").resolve("locks");
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
       Files.createDirectories(locksDir);
 
       // Create worktree directory
-      Path worktreeDir = tempDir.resolve("worktrees").resolve("correct-issue");
+      Path worktreeDir = scope.getProjectCatDir().resolve("worktrees").resolve("correct-issue");
       Files.createDirectories(worktreeDir);
 
       // Write first lock file with different session_id
@@ -335,11 +333,11 @@ public final class RestoreWorktreeOnResumeTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path locksDir = tempDir.resolve(".claude").resolve("cat").resolve("locks");
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
       Files.createDirectories(locksDir);
 
       // Create worktree directory
-      Path worktreeDir = tempDir.resolve("worktrees").resolve("good-issue");
+      Path worktreeDir = scope.getProjectCatDir().resolve("worktrees").resolve("good-issue");
       Files.createDirectories(worktreeDir);
 
       // Write malformed lock file first
@@ -387,7 +385,7 @@ public final class RestoreWorktreeOnResumeTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path locksDir = tempDir.resolve(".claude").resolve("cat").resolve("locks");
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
       Files.createDirectories(locksDir);
 
       // Use /tmp which exists but is outside the project directory (tempDir)
@@ -430,7 +428,7 @@ public final class RestoreWorktreeOnResumeTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path locksDir = tempDir.resolve(".claude").resolve("cat").resolve("locks");
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
       Files.createDirectories(locksDir);
 
       // Write lock file with newline injection in worktree
@@ -473,7 +471,7 @@ public final class RestoreWorktreeOnResumeTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path locksDir = tempDir.resolve(".claude").resolve("cat").resolve("locks");
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
       Files.createDirectories(locksDir);
 
       String lockContent = """

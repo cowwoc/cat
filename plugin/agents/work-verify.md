@@ -22,9 +22,14 @@ You receive a prompt containing:
 
 ## Output Contract
 
-Write detailed analysis to files:
-- Criterion-level verification details: `${WORKTREE_PATH}/.claude/cat/verify/criteria-analysis.json`
-- E2E test output and evidence: `${WORKTREE_PATH}/.claude/cat/verify/e2e-test-output.json`
+Write detailed analysis to files in the external session-scoped CAT directory:
+```bash
+source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
+VERIFY_DIR="${PROJECT_CAT_DIR}/${CLAUDE_SESSION_ID}/cat/verify"
+mkdir -p "${VERIFY_DIR}"
+```
+- Criterion-level verification details: `${VERIFY_DIR}/criteria-analysis.json`
+- E2E test output and evidence: `${VERIFY_DIR}/e2e-test-output.json`
 
 Return compact JSON only — no verbose output, no file contents, no build logs:
 
@@ -36,13 +41,13 @@ Return compact JSON only — no verbose output, no file contents, no build logs:
       "name": "criterion text from PLAN.md",
       "status": "Done|Partial|Missing",
       "explanation": "brief one-line explanation",
-      "detail_file": ".claude/cat/verify/criteria-analysis.json"
+      "detail_file": "${VERIFY_DIR}/criteria-analysis.json"
     }
   ],
   "e2e": {
     "status": "PASSED|FAILED|SKIPPED",
     "explanation": "brief one-line explanation",
-    "detail_file": ".claude/cat/verify/e2e-test-output.json"
+    "detail_file": "${VERIFY_DIR}/e2e-test-output.json"
   }
 }
 ```

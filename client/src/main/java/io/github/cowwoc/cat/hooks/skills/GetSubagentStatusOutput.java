@@ -288,7 +288,7 @@ public final class GetSubagentStatusOutput implements SkillOutput
   /**
    * Reports the status of all subagent worktrees.
    *
-   * @param sessionBase the session files base directory (e.g., "/home/node/.config/claude/projects/-workspace")
+   * @param sessionBase the session files base directory (e.g., "{claudeConfigDir}/projects/{encodedProjectDir}")
    * @param mapper the JSON mapper to use for parsing completion files
    * @return the monitoring result
    * @throws NullPointerException if {@code sessionBase} or {@code mapper} is null

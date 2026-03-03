@@ -321,7 +321,7 @@ public final class GetCleanupOutput implements SkillOutput
   }
 
   /**
-   * Gathers lock information from .claude/cat/locks/ directory.
+   * Gathers lock information from the external CAT locks directory.
    * <p>
    * Reads JSON lock files and calculates age in seconds.
    *
