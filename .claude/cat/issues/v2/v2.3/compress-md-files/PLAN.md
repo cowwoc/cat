@@ -31,7 +31,9 @@ None - infrastructure/optimization task
 - [ ] Execution equivalence verified (all files score 1.0 on /compare-docs)
 - [ ] No functionality regression (skills and commands work correctly)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Process by category** (largest files first within each):
    - Skills (34 files)
    - Commands (10 files)

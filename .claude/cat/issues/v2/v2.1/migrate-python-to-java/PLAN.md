@@ -73,7 +73,9 @@ None - infrastructure/setup task
 ## Dependencies to Add
 - `com.knuddels:jtokkit:1.1.0` - Java tokenizer library (tiktoken equivalent)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 ### Step 1: Wire up 6 existing Java entry points (one at a time)
 - Edit `plugin/hooks/hooks.json` to replace Python entry point with java.sh call
@@ -109,6 +111,7 @@ None - infrastructure/setup task
 - Update `compare-docs/SKILL.md` to use Java command
 - Test token counting on sample files
 - Verify: Token counts match Python tiktoken (±1% tolerance)
+
 
 ## Post-conditions
 - [ ] All 7 entry point hooks use Java (via java.sh in hooks.json)

@@ -37,7 +37,9 @@ None - workflow improvement
 - [ ] Gate offers option to exit work loop
 - [ ] Behavior unchanged when staying within same version
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Identify where version boundary is detected in work.md
    - Files: plugin/commands/work.md
    - Verify: Understand current task selection flow

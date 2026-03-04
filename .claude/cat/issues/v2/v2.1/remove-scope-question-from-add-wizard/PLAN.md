@@ -33,7 +33,9 @@ None - UX improvement
 - [ ] Large-scope issues (6+ files) still trigger the split suggestion
 - [ ] All tests pass
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Step 1:** Edit `plugin/skills/add/SKILL.md` step `task_discuss`
    - Remove the "Scope question (always ask)" section (substep 3) including the AskUserQuestion

@@ -64,7 +64,9 @@ Add `minSeverity` to `cat-config.json`:
 
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Create ConcernSeverity enum**
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/ConcernSeverity.java`
@@ -139,6 +141,7 @@ Add `minSeverity` to `cat-config.json`:
    - Files: `docs/patience.md`
    - Add cross-reference to `docs/severity.md` for minSeverity details
    - Add section explaining the concern pipeline: minSeverity → patience → reviewThreshold
+
 
 ## Post-conditions
 

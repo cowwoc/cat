@@ -48,7 +48,9 @@ already contains `module-info.class`, it is a named module regardless of what `j
 - [ ] jlink image builds successfully
 - [ ] All launchers work
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Modify `is_automatic_module` in `hooks/build-jlink.sh`
    - Files: `hooks/build-jlink.sh`
    - Add a check at the beginning of the function: use `jar --list --file="$jar" 2>/dev/null | grep -q
@@ -57,6 +59,7 @@ already contains `module-info.class`, it is a named module regardless of what `j
    - Keep the existing `jar --describe-module` logic as a secondary check for remaining JARs
 2. **Step 2:** Run `mvn -f hooks/pom.xml verify` and verify no jdeps warnings for modular JARs
 3. **Step 3:** Verify jlink image builds and launchers work
+
 
 ## Post-conditions
 - [ ] `mvn -f hooks/pom.xml verify` produces no "is a modular JAR file" jdeps errors

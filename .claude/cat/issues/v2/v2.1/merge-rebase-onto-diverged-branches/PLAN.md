@@ -28,7 +28,9 @@ None (infrastructure improvement)
 - [ ] `mvn -f client/pom.xml test` passes with exit code 0
 - [ ] Diverged branch scenario results in successful merge (not error)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** In MergeAndCleanup.java, replace the divergence error throw (lines 94-99) with a `rebaseOnto` method
    that runs `git rebase --onto <baseBranch> <merge-base> HEAD` in the worktree
    - Files: MergeAndCleanup.java

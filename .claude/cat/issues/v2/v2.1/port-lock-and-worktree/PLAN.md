@@ -34,7 +34,9 @@ Parent: 2.1-port-workflow-scripts (sub-issue 1 of 4)
 ## Files to Modify
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/module-info.java` - if new exports needed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. Read `issue-lock.sh` thoroughly - understand all 6 commands and JSON output format
 2. Read `check-existing-work.sh` - understand worktree commit detection logic
 3. Implement `IssueLock.java` with all commands (acquire, update, release, force-release, check, list)
@@ -42,6 +44,7 @@ Parent: 2.1-port-workflow-scripts (sub-issue 1 of 4)
 5. Write tests for both classes verifying JSON output contracts
 6. Run `mvn -f hooks/pom.xml verify`
 7. Update STATE.md (status: closed, progress: 100%)
+
 
 ## Post-conditions
 - [ ] IssueLock produces identical JSON output for all 6 commands

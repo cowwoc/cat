@@ -52,7 +52,9 @@ None - cleanup task
 ## Dependencies
 - migrate-python-tests (all tests must be migrated to Java first)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Verify Java tests pass** - `mvn test` must succeed before any deletion
 2. **Remove Python entry point scripts** - `plugin/hooks/get-*.py`, `enforce-*.py`, `invoke-handler.py`
 3. **Remove Python handler directories** - All handler subdirectories under `plugin/hooks/`
@@ -61,6 +63,7 @@ None - cleanup task
 6. **Remove run_tests.py** - Python test runner no longer needed
 7. **Verify no Python references remain** in hooks.json
 8. **Run `mvn test`** to verify Java tests still pass after cleanup
+
 
 ## Post-conditions
 - [ ] No Python `.py` files remain in `plugin/hooks/` (except standalone shell-helper scripts)

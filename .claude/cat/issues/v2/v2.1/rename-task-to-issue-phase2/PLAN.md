@@ -100,7 +100,9 @@ None (terminology consistency)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Rename Java classes and binaries:** Rename `PreTaskHook` → `PreIssueHook`, `GetNextTaskOutput` →
    `GetNextIssueOutput`, `pre-task` → `pre-issue`, `get-next-task-box` → `get-next-issue-box`. Update hooks.json and
    README.md references.
@@ -113,6 +115,7 @@ None (terminology consistency)
 6. **Update bash script comments:** Fix remaining "task" references in comments across bash scripts.
 7. **Update test files:** Rename test methods and string references.
 8. **Run tests:** Verify all tests pass after changes.
+
 
 ## Post-conditions
 - [ ] No CAT-specific "task" terminology remains in plugin files (excluding Claude built-in tool names and generic

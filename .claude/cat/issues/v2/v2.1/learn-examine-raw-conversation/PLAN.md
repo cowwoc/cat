@@ -49,7 +49,9 @@ None (infrastructure improvement)
 - [ ] Running `/cat:learn` on a skill preprocessing failure correctly identifies "preprocessor corruption" as root cause
 - [ ] Running `/cat:empirical-test` on a skill with broken preprocessing detects the content mismatch
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Read current phase-investigate.md:** Understand the existing investigation flow and where the new step fits
    - Files: `plugin/skills/learn/phase-investigate.md`
 2. **Add preprocessor comparison step to phase-investigate.md:** After the existing evidence gathering, add a step that:

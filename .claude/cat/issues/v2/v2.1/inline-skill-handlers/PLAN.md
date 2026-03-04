@@ -69,7 +69,9 @@ implementing `SkillOutput`. The class must have a public constructor accepting `
 - `plugin/skills/status/bindings.json` — New file mapping variables to SkillOutput classes
 - `plugin/hooks/README.md` — Update skill directory structure documentation
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. Create `SkillOutput` interface with `getOutput()` method and JvmScope constructor contract
 2. Update `GetStatusOutput` to implement `SkillOutput`, inline getOutput logic using `scope.getClaudeProjectDir()`
@@ -80,6 +82,7 @@ implementing `SkillOutput`. The class must have a public constructor accepting `
 6. Update `content.md` to use `${CAT_SKILL_OUTPUT}` where handler output was previously prepended
 7. Update `plugin/hooks/README.md` to document `bindings.json` mechanism
 8. Run `mvn -f hooks/pom.xml verify`
+
 
 ## Post-conditions
 

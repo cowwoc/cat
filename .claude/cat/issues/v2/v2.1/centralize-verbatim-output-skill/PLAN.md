@@ -91,7 +91,9 @@ After migration: these skills have no `<output>` tag. Each step that needs a box
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Create `GetOutput.java` dispatcher that accepts `skill` and optional `page`
    arguments, validates them, and delegates to the appropriate existing `SkillOutput` handler.
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetOutput.java`
@@ -118,6 +120,7 @@ After migration: these skills have no `<output>` tag. Each step that needs a box
 
 7. **Step 7:** Empirical test: verify `/cat:status` echoes output correctly via `cat:get-output`
    (≥95% compliance on haiku). Verify `/cat:config` wizard uses AskUserQuestion (≥95%).
+
 
 ## Post-conditions
 - [ ] `/cat:get-output` skill exists and dispatches to all existing `SkillOutput` handlers

@@ -29,7 +29,9 @@ None (infrastructure/tooling improvement)
 - [ ] Running `--output /tmp/test.json` produces valid JSON with full trial responses
 - [ ] Skill document includes response investigation step
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Make ConfigResult and TrialResult records public (or add Jackson module opens) in
    EmpiricalTestRunner.java so `--output` serialization succeeds
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/skills/EmpiricalTestRunner.java`

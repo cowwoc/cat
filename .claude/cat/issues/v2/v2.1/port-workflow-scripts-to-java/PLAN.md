@@ -35,7 +35,9 @@ None (infrastructure/tech debt)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Read `issue-lock.sh` and document all subcommands, flags, and exit codes
    - Files: `plugin/scripts/issue-lock.sh`
 2. **Step 2:** Write Java implementation for issue-lock with all subcommands
@@ -60,6 +62,7 @@ None (infrastructure/tech debt)
     - Files: all affected skills
 12. **Step 12:** Remove the original bash scripts
 13. **Step 13:** Run full test suite to verify no regressions
+
 
 ## Post-conditions
 - [ ] User-visible behavior unchanged

@@ -59,7 +59,9 @@ None — infrastructure terminology cleanup.
 
 - [ ] Parent issue `2.1-rename-branch-terminology` exists
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Rename variables in plugin agent files** — Update `BASE_BRANCH` → `TARGET_BRANCH` in work-merge.md,
    work-squash.md, work-verify.md. Update natural language "base branch" → "target branch" and "worktree branch"
@@ -68,6 +70,7 @@ None — infrastructure terminology cleanup.
    SKILL.md files. Update natural language references throughout.
 3. **Rename variables in plugin concept files** — Update all concept documentation. Update natural language
    "base branch" → "target branch" and "worktree branch" → "source branch" where contextually appropriate.
+
 
 ## Post-conditions
 

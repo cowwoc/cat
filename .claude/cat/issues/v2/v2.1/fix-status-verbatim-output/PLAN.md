@@ -65,7 +65,9 @@ Empirical testing (5 rounds, 80+ trials across haiku and sonnet) identified two 
 - [ ] SkillLoader correctly parses new tag names
 - [ ] Other skills using `<output>` pattern still work
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Read Java conventions file, then update SkillLoader.java tag patterns and output wrapping
    - Change `OUTPUT_TAG_PATTERN` from `<output>` to `<verbatim-response>`
    - Change `SKILL_TAG_PATTERN` from `<skill>` to `<response-instructions>`
@@ -93,6 +95,7 @@ Empirical testing (5 rounds, 80+ trials across haiku and sonnet) identified two 
 6. **Step 6:** Run empirical validation tests
    - Single invocation with production content (target: 90%+)
    - Multi-invocation with 2 priming messages (measure improvement)
+
 
 ## Post-conditions
 - [ ] Single invocation pass rate >= 90% on haiku with production-sized content

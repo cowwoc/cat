@@ -48,7 +48,9 @@ output but does NOT check `exit_code != 0`. Compare with Pattern 13 (line 195-20
 - [ ] No false positives for intentional path handling with exit_code=0
 - [ ] Real path errors (exit_code != 0) still detected
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Edit `plugin/hooks/posttool_handlers/auto_learn.py`
    - Add `exit_code != 0 and` guard to the Pattern 12c condition at line 188
    - Change from: `if tool_name == "Bash" and re.search(`

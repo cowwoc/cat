@@ -41,7 +41,9 @@ These semantics should extend to out-of-scope review concerns.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Update SUBAGENT-PROMPT-CHECKLIST.md patience table:** Change "high" description from "FUTURE version backlog" to
    "LATER version backlog" and add a section explaining patience also applies to out-of-scope review concerns.
 2. **Add out-of-scope concern classification to work-with-issue:** After the auto-fix loop in the "Handle Review
@@ -55,6 +57,7 @@ These semantics should extend to out-of-scope review concerns.
    users can see what was acted on vs deferred.
 5. **Update README.md patience documentation:** Add review concern handling to the patience level descriptions and
    correct "high" from "next version" to "later version".
+
 
 ## Post-conditions
 - [ ] The `patience` config value is read from `cat-config.json` in the work-with-issue workflow

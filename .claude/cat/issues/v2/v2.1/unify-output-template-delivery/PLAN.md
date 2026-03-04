@@ -22,7 +22,9 @@ None - infrastructure improvement
 - [ ] Tests written and passing - test coverage for PostToolUse handler
 - [ ] No regressions - existing UserPromptSubmit path still works
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Audit skill handlers:** Identify all handlers that generate output templates
    - Files: `plugin/hooks/skill_handlers/`
    - Verify: List handlers with `handle()` methods returning content

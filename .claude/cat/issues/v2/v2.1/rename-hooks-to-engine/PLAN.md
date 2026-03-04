@@ -39,7 +39,9 @@ None — infrastructure refactoring.
 - The concept of "hooks" when referring to Claude Code hook events (PreToolUse, PostToolUse, etc.)
 - Retrospective/mistake JSON files (historical records)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 ### Step 1: Rename directory
 
@@ -129,6 +131,7 @@ grep -r "mvn -f hooks/" /workspace/CLAUDE.md /workspace/.claude/
 ```
 
 All should return 0 results (excluding git history and completed issue files).
+
 
 ## Post-conditions
 

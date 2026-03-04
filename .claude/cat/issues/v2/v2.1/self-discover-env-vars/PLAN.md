@@ -46,7 +46,9 @@ boundary.
 - [ ] Regression test added - tests prevent this bug from recurring
 - [ ] Root cause addressed - hybrid approach handles all three variables appropriately
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Add self-discovery functions** to get-available-issues.sh
    - Derive CLAUDE_PLUGIN_ROOT from script location
    - Find CLAUDE_PROJECT_DIR by walking up to `.claude/cat/`

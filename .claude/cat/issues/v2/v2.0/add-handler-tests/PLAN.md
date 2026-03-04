@@ -22,7 +22,9 @@ None (infrastructure task)
 - [ ] All handler scripts have test coverage
 - [ ] Tests pass in CI
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Identify all handler scripts and their use-cases
    - Files: plugin/hooks/skill_handlers/*.py
    - Verify: List of handlers and use-cases documented

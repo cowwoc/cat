@@ -21,7 +21,9 @@ None - action item A024 from retrospective (PATTERN-020)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Read work-with-issue/first-use.md:** Examine current step structure and identify the steps that
    must be labeled MANDATORY
    - Files: `plugin/skills/work-with-issue/first-use.md`
@@ -36,6 +38,7 @@ None - action item A024 from retrospective (PATTERN-020)
    - Files: None (validation step)
 5. **Commit:** Commit the changes
    - Files: `plugin/skills/work-with-issue/first-use.md`
+
 
 ## Post-conditions
 - [ ] `work-with-issue/first-use.md` contains a MANDATORY STEPS checklist near the top

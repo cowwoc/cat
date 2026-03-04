@@ -38,13 +38,16 @@ None - efficiency optimization
 - `plugin/skills/add/SKILL.md` - Update Bash code blocks in steps: task_validate_name, task_discuss,
   task_create, task_update_parent, task_commit to chain related operations
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Read `plugin/skills/add/SKILL.md` and identify all Bash code blocks in the issue creation workflow
    (steps task_validate_name through task_commit)
 2. **Step 2:** Combine the two validation Bash blocks in task_validate_name into a single `&&`-chained call
 3. **Step 3:** Combine the existing issues count check from task_discuss with any preceding setup commands
 4. **Step 4:** Combine the STATE.md update and verification grep in task_update_parent into a single call
 5. **Step 5:** Run `python3 /workspace/run_tests.py` to verify no regressions
+
 
 ## Post-conditions
 - [ ] Issue creation workflow uses fewer Bash calls (target: ~5 instead of ~10)

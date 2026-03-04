@@ -36,7 +36,9 @@ outside the worktree.
 - [ ] No false positives for legitimate Bash operations
 - [ ] All tests pass
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Create `BlockWorktreeIsolationViolation` BashHandler that checks for file-writing bash patterns targeting
    paths outside the active worktree
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/bash/BlockWorktreeIsolationViolation.java`

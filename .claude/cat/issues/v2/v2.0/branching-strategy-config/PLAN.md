@@ -45,7 +45,9 @@ Agent MUST ask follow-up questions when:
 - plugin/skills/git-rebase/SKILL.md - Read PROJECT.md, warn on preference conflicts
 - plugin/templates/project.md - Add Git Workflow section template
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 ### Phase 1: Wizard Implementation
 
@@ -133,6 +135,7 @@ Agent MUST ask follow-up questions when:
     - Read branching strategy from PROJECT.md
     - Create branches following documented naming pattern
     - Verify: Task branches created according to documented strategy
+
 
 ## Example PROJECT.md Output
 

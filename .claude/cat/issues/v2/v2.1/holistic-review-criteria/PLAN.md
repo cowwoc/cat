@@ -30,7 +30,9 @@ None - process improvement
 - [ ] Criteria explicitly require evaluating impact on entire project
 - [ ] Anti-accumulation checks prevent death by a thousand cuts
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Define holistic template:** Create standard holistic review section for all stakeholders
    - Verify: Template includes project-wide evaluation guidance
 2. **Update technical stakeholders:** Add holistic criteria to architect, design, security, testing, performance

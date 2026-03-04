@@ -50,7 +50,9 @@ checks already validate parameter counts.
 - `plugin/scripts/get-work-boxes.sh`
 - `plugin/scripts/validate-status-alignment.sh`
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 ### Step 1: Add parameter count validation to each script
 

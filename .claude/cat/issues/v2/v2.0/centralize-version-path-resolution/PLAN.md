@@ -23,7 +23,9 @@ None - infrastructure/refactor improvement
 - plugin/.claude/cat/workflows/work.md - Replace 2 hardcoded paths
 - plugin/hooks/skill_handlers/status_handler.py - Replace 2 hardcoded paths
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Create version-paths.md reference
    - Files: plugin/concepts/version-paths.md (NEW)
    - Define path resolution functions that handle:
@@ -58,6 +60,7 @@ None - infrastructure/refactor improvement
    - Files: status_handler.py
    - Add path resolution logic or reference shared constants
    - Verify: All 84 tests still pass
+
 
 ## Post-conditions
 - [ ] Centralized version-paths.md reference created

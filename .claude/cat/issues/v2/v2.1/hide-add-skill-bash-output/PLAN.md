@@ -46,7 +46,9 @@ None - UX polish
 - [ ] All create-issue.py tests pass
 - [ ] Existing add_handler display tests still pass
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Step 1:** Extend `add_handler.py` to pre-load version data
    - File: `plugin/hooks/skill_handlers/add_handler.py`

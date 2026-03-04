@@ -35,7 +35,9 @@ Split into 6 sub-issues by hook type:
 - [ ] All existing tests pass
 - [ ] New Java handler tests cover migrated logic
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. Complete all 6 sub-issues
 2. Verify no remaining bash/python hook scripts
 3. Verify hooks.json consolidation

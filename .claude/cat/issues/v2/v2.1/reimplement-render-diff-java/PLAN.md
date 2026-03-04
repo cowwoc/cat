@@ -42,7 +42,9 @@ None
 - [ ] Java output matches Python output format on sample diffs
 - [ ] render-diff.py no longer exists in the repository
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Read Python render-diff.py** to understand the 2-column format implementation details
    - Files: `plugin/scripts/render-diff.py`
 2. **Read Java GetRenderDiffOutput.java** to understand the existing DiffRenderer structure

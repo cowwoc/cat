@@ -33,7 +33,9 @@ This calls the no-argument variant which defaults to the current working directo
 - [ ] `mvn -f hooks/pom.xml verify` exits 0
 - [ ] Hook correctly resolves worktree branch from file path
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Read the current hook** at `hooks/src/main/java/io/github/cowwoc/cat/hooks/write/EnforcePluginFileIsolation.java`
 2. **Fix branch detection:** Change line 55 from `GitCommands.getCurrentBranch()` to
    `GitCommands.getCurrentBranch(Paths.get(filePath).getParent().toString())`

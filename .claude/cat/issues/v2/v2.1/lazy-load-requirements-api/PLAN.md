@@ -22,7 +22,9 @@ None - infrastructure optimization
 - `CLAUDE.md` - Update the convention table to reference `plugin/concepts/requirements-api.md` instead of
   `.claude/rules/requirements-api.md`
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Copy `.claude/rules/requirements-api.md` to `plugin/concepts/requirements-api.md`
 2. **Step 2:** Delete `.claude/rules/requirements-api.md`
 3. **Step 3:** Update the Language Conventions table in `CLAUDE.md` to change the Convention File column for `*.java`
@@ -30,6 +32,7 @@ None - infrastructure optimization
    or update the existing reference path. Verify the "Read Before Editing" instruction still points agents to read the
    requirements API conventions before editing Java files.
 4. **Step 4:** Run `python3 /workspace/run_tests.py` to verify no regressions
+
 
 ## Post-conditions
 - [ ] `requirements-api.md` no longer exists in `.claude/rules/`

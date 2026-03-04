@@ -27,7 +27,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Search codebase for all occurrences of `cat:run-retrospective` and `run-retrospective` to build a
    complete list of files requiring changes
    - Files: `plugin/`, `docs/`, `.claude/`
@@ -43,6 +45,7 @@ None
    - Files: `docs/`, `.claude/`, any other discovered files
 6. **Step 6:** Run all tests to verify no regressions
    - Command: `mvn -f client/pom.xml test`
+
 
 ## Post-conditions
 - [ ] `cat:retrospective` successfully invokes the retrospective workflow (E2E: invoke the skill and confirm it runs)

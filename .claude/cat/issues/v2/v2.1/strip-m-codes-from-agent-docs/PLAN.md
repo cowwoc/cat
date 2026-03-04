@@ -33,7 +33,9 @@ None (infrastructure cleanup / token optimization)
   "### M-Code References"
 - [ ] Tests passing
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Strip all parenthesized M-code references from plugin/skills/**/*.md files.
    Pattern: remove ` (M###)` — the space before the opening paren plus the parenthesized code.
    Clean up any resulting double-spaces or trailing whitespace.

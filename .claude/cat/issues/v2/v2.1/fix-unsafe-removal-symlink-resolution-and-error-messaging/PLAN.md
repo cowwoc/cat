@@ -39,12 +39,15 @@ change directories.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. Fix symlink resolution in `checkProtectedPaths()`: attempt `toRealPath()` on target path when possible, fall back
    to normalized path if target doesn't exist
 2. Update error message format in `checkProtectedPaths()` to include `CWD: <workingDirectory>`
 3. Add test cases for symlink resolution and CWD error message content
 4. Run `mvn -f client/pom.xml verify`
+
 
 ## Post-conditions
 - [ ] Symlink paths correctly matched against protected paths (no bypass via symlink)

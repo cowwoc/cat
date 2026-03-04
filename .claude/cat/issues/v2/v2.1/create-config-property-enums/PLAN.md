@@ -28,7 +28,9 @@ string comparisons throughout the codebase.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Create TrustLevel enum:** Extract `WorkPrepare.TrustLevel` to a top-level
    `client/src/main/java/io/github/cowwoc/cat/hooks/util/TrustLevel.java` with values `LOW`, `MEDIUM`, `HIGH` and a
    `fromString()` method
@@ -42,6 +44,7 @@ string comparisons throughout the codebase.
 8. **Update GetConfigOutput:** Use typed getters where applicable
 9. **Write tests:** Unit tests for each enum's `fromString()`, including invalid input handling
 10. **Run all tests:** `mvn -f client/pom.xml test` must pass
+
 
 ## Post-conditions
 - [ ] Four enum classes exist: TrustLevel, VerifyLevel, CuriosityLevel, PatienceLevel

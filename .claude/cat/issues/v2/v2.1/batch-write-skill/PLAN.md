@@ -20,7 +20,9 @@ None (infrastructure/optimization issue)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Create skill directory** `plugin/skills/batch-write/`
 2. **Create SKILL.md** with frontmatter (user-invocable: false, allowed-tools: Write, Edit, Bash) and preprocessor
    directive matching the batch-read pattern
@@ -36,6 +38,7 @@ None (infrastructure/optimization issue)
    - Error handling: if one file fails, others in the batch still succeed (tool calls are independent)
    - Limitations: files with dependencies (file B imports from file A) should NOT be batched
    - Performance characteristics table matching batch-read format
+
 
 ## Post-conditions
 - [ ] `plugin/skills/batch-write/SKILL.md` exists with correct frontmatter and preprocessor directive

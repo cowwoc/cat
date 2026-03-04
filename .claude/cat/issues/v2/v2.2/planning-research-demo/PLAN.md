@@ -24,7 +24,9 @@ None - marketing/documentation task
 - [ ] Each feature has 2-3 sentence description explaining value
 - [ ] Videos demonstrate the planning workflow end-to-end
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Write feature descriptions for planning commands
    - Files: demo page content
    - Verify: Descriptions explain planning value

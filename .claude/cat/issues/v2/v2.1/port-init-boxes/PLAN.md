@@ -25,7 +25,9 @@ Parent: 2.1-port-display-scripts
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/skills/GetInitOutput.java` - New or update existing
 - Update init handler to call Java class instead of Python script
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Read `build-init-boxes.py`** to understand exact output format and logic
 2. **Check if `GetInitOutput.java` already exists** and what it contains
 3. **Read `.claude/cat/conventions/java.md`** for coding conventions
@@ -34,6 +36,7 @@ Parent: 2.1-port-display-scripts
 6. **Update init handler** to call Java class instead of Python script
 7. **Remove `get-init-boxes.sh`** bash wrapper
 8. **Run tests:** `mvn -f hooks/pom.xml test`
+
 
 ## Post-conditions
 - [ ] Java class created matching exact Python output

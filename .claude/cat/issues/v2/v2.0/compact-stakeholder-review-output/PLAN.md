@@ -69,7 +69,9 @@ Details: Run with --verbose for full recommendations
 - [ ] Output fits in 80-column terminal without wrapping
 - [ ] Video-ready: can be recorded and understood in 10 seconds
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Update SKILL.md output format**
    - Define new compact output structure
    - Add --verbose flag handling

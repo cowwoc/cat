@@ -24,7 +24,9 @@ skills (e.g., `get-render-diff.sh`).
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Rename skill directory:** `mv plugin/skills/render-diff plugin/skills/get-diff`
    - Files: `plugin/skills/render-diff/`
 2. **Update SKILL.md:** Replace all `render-diff` references with `get-diff` inside the renamed skill
@@ -40,6 +42,7 @@ skills (e.g., `get-render-diff.sh`).
 7. **Search for remaining references:** Grep the full `plugin/` tree for any remaining `render-diff` references and
    update them
 8. **Run tests:** `mvn -f client/pom.xml test` to verify no regressions
+
 
 ## Post-conditions
 - [ ] `plugin/skills/render-diff/` directory no longer exists

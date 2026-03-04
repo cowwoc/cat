@@ -72,6 +72,8 @@ file inside the bundle directory.
 **Developer automation** - Provide a way for plugin developers to rebuild the jlink bundle locally when Java source
 files change. This is the local development workflow counterpart to the CI build.
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 See individual sub-issue PLAN.md files for detailed execution steps.
 

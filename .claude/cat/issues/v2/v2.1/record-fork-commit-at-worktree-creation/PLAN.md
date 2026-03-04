@@ -95,7 +95,9 @@ With `cat-branch-point` storing an immutable fork-point commit, the following mi
 
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Step 1:** Change `WorkPrepare.java` to write commit hash
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/WorkPrepare.java`
@@ -168,6 +170,7 @@ With `cat-branch-point` storing an immutable fork-point commit, the following mi
     - Add test: `cat-branch-point` file content matches a 40-character hex commit hash (not a branch name)
     - Add test: `cat-branch-point` value is unchanged after the base branch advances by one commit
     - Follow test isolation rules: use temporary git repos, never operate against the real project repo
+
 
 ## Post-conditions
 

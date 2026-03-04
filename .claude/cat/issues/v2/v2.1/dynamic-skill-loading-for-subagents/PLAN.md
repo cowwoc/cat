@@ -90,7 +90,9 @@ Hook event behavior (verified from Claude Code source):
 - [ ] Subagent can load a skill via load-skill.sh when it identifies one from the listing
 - [ ] All tests pass
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Rename ForcedEvalSkills → ConsiderSkills, then remove from UserPromptSubmit
 2. **Step 2:** Delete WarnSkillEditWithoutBuilder, remove from PreEditHook handler list
 3. **Step 3:** Rename GetEditOutput → PreEditHook, GetWriteEditOutput → WriteEditHook

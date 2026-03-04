@@ -31,7 +31,9 @@ The template was written before flexible versioning was added.
 - [ ] Template says "parent version" not "parent minor version"
 - [ ] add.md task workflow is version-agnostic
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Update task-plan.md template**
    - Change: "from parent minor version PLAN.md" → "from parent version PLAN.md"
    - Verify: grep confirms change

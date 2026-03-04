@@ -61,7 +61,9 @@ This issue requires research before implementation. Key questions:
 - [ ] Word-level changes are visually distinct in Claude Code terminal output
 - [ ] No regression in line-level diff rendering
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Research:** Run `/cat:research` to investigate formatting options and test what renders in Claude Code
 2. **Prototype:** Implement the chosen approach in the Java diff renderer
 3. **Test:** Validate with real diffs from recent issues

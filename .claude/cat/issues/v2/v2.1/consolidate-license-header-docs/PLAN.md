@@ -18,10 +18,13 @@ which is the authoritative source for license header formats, rules, and exempti
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Consolidate CLAUDE.md license section:** Replace the full license header text, year rules, formatting rules, and
    exemption list with a brief "MANDATORY: All new source files must include a license header" note that references
    `plugin/concepts/license-header.md` for all details.
+
 
 ## Post-conditions
 - CLAUDE.md license section contains only a brief MANDATORY note and a reference to license-header.md

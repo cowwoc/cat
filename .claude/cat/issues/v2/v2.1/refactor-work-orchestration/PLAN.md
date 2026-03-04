@@ -124,7 +124,9 @@ work → work-with-issue (main agent orchestrates directly)
 - [ ] work-batch-executor, work-review, work-execute deleted
 - [ ] No references to deleted skills remain
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 ### Step 1: Update work-with-issue to orchestrate execute phase
 - Add PLAN.md parsing to identify skill invocations

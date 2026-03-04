@@ -39,7 +39,9 @@ None - bug fix
 - [x] All tests still pass
 - [x] Args included in user_prompt for skill handlers
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Step 1:** Add args extraction and inclusion in skill_preprocessor_output.py
 2. **Step 2:** Run tests

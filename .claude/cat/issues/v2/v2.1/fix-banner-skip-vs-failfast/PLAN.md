@@ -35,7 +35,9 @@ principle enforced by the step-level checks. The step-level checks are authorita
 - `plugin/skills/work-with-issue/content.md` - Replace the skip guidance (line 39-40) with fail-fast guidance matching
   the step-level checks
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 ### Step 1: Replace the skip guidance with fail-fast
 
@@ -66,6 +68,7 @@ If found, apply the same fix: replace skip guidance with fail-fast.
 ### Step 3: Verify consistency
 
 Confirm that all "not found" checks in the modified file(s) consistently say FAIL/STOP, with no remaining skip guidance.
+
 
 ## Post-conditions
 - [ ] No "skip banner output" guidance remains in work-with-issue/content.md

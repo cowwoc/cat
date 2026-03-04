@@ -35,7 +35,9 @@ Document content ordering in SKILL.md: instruction → NEXT STEPS table → `<ou
 - [ ] SKILL.md content order: instruction → `<output>` tag → NEXT STEPS table
 - [ ] Haiku model echoes status box verbatim when given the restructured skill
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Restructure SKILL.md:** Reorder the file so the instruction references numbered steps, the `<output skill="status">` tag comes next, and the NEXT STEPS table comes last. The instruction should say: echo the contents of the `<output>` tag verbatim, then append the NEXT STEPS table below.
    - Files: `plugin/skills/status-first-use/SKILL.md`
 

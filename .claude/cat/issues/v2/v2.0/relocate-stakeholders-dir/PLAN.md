@@ -24,7 +24,9 @@ None - infrastructure/cleanup task
 - [ ] All tests still pass
 - [ ] References updated - all file references point to new location
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Create `plugin/stakeholders/` directory
    - Files: plugin/stakeholders/
    - Verify: `ls plugin/stakeholders/`

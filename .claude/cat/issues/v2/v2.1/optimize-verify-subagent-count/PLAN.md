@@ -26,7 +26,9 @@ None - infrastructure optimization
 - [ ] For an issue with criteria touching 3 different files, up to 3 subagents are spawned
 - [ ] Report format is identical to current output
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Read current verify-implementation skill definition
    - Files: `plugin/skills/verify-implementation/first-use.md`
 2. **Step 2:** Modify the spawn_verifiers step:

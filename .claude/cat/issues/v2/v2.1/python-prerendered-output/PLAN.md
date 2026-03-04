@@ -27,7 +27,9 @@ established in the Java handlers.
 - [ ] Python handlers use pre-rendered output pattern
 - [ ] No "OUTPUT TEMPLATE" references remain in handler output
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Update token_report_handler.py**
    - Replace "OUTPUT TEMPLATE TOKEN REPORT" with direct output
    - Verify: python3 run_tests.py

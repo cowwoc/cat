@@ -72,7 +72,9 @@ None
 - `hooks/src/test/resources/logback-test.xml` - create, set level to ERROR (silent tests)
 - `hooks/src/main/resources/logback.xml` - update pattern to `%msg%n` (bare messages, no timestamp)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Create logback-test.xml** in `src/test/resources/` with root level ERROR
 2. **Update logback.xml** pattern from `%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n` to `%msg%n`
@@ -87,6 +89,7 @@ None
    - Remove all `System.setErr()` / `System.setOut()` usage
    - Assert on warning data returned by `run()` methods instead
 6. **Run `mvn -f hooks/pom.xml verify`** to confirm all tests pass with zero console output
+
 
 ## Post-conditions
 

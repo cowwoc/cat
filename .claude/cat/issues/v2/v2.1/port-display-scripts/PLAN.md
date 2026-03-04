@@ -43,7 +43,9 @@ None - infrastructure/tech debt
 - `plugin/scripts/` - Remove ported scripts
 - `plugin/skills/*/SKILL.md` - Update script invocation paths
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Port Python display scripts to Java:** For each Python script, create corresponding Java class
    in the hooks module matching the exact output format
 2. **Update skill handlers:** Modify Java handlers to call display classes directly instead of
@@ -51,6 +53,7 @@ None - infrastructure/tech debt
 3. **Remove bash wrappers:** Delete thin bash wrappers that only called the ported Python scripts
 4. **Verify output parity:** Run before/after comparison for each ported script
 5. **Run tests:** Execute `mvn -f hooks/pom.xml test` to verify no regressions
+
 
 ## Post-conditions
 - [ ] All 10 Python display scripts have Java equivalents

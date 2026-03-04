@@ -20,7 +20,9 @@ To be determined through automated iteration of compress -> validate -> learn cy
 - `scripts/compress-validate-loop.py` - New orchestration script (create)
 - `plugin/skills/learn/learn.md` - Potential improvements based on findings
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Create Python orchestration script** that:
    - Manages two external Claude processes via FIFO
    - Handles plugin reinstall (`claude plugin uninstall/install cat@cat`)
@@ -35,6 +37,7 @@ To be determined through automated iteration of compress -> validate -> learn cy
 2. **Run the loop** to identify compression/validation issues
 
 3. **Update /cat:learn** based on any deficiencies found in step 9 evaluation
+
 
 ## Test Cases
 - [ ] Script successfully manages FIFO-based Claude process interaction

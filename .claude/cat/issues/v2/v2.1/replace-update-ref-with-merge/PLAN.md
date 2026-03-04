@@ -32,7 +32,9 @@ None (infrastructure refactor)
 
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Add `mergeWithRetry` private method to MergeAndCleanup**
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/MergeAndCleanup.java`
@@ -71,6 +73,7 @@ None (infrastructure refactor)
 
 6. **Run tests**
    - `mvn -f client/pom.xml test`
+
 
 ## Post-conditions
 

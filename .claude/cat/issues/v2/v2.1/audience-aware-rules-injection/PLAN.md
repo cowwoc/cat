@@ -118,7 +118,9 @@ Modify `SessionStartHook` and `SubagentStartHook` to:
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Audit content**: Review `.claude/rules/common.md`, `.claude/rules/hooks.md`, and `CLAUDE.md` to classify each
    section by audience
 2. **Rename directory**: Rename `.claude/cat/conventions/` to `.claude/cat/rules/`, update all references
@@ -136,6 +138,7 @@ Modify `SessionStartHook` and `SubagentStartHook` to:
    `plugin/concepts/rules-audience.md`), explaining when to use `.claude/rules/` vs `.claude/cat/rules/`, and the
    `mainAgent`, `subAgents`, and `paths` frontmatter properties
 10. **Write tests**: Test frontmatter parsing, audience filtering, `paths` matching, and injection for both hooks
+
 
 ## Post-conditions
 - [ ] `.claude/cat/conventions/` no longer exists; replaced by `.claude/cat/rules/`

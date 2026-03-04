@@ -36,7 +36,9 @@ Combine questions where they are independent and can be answered together:
 - Combine scope + dependencies + blocks (already done in task_discuss)
 - Consider combining version selection with name suggestions where feasible
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Analyze which questions can be combined
    - Review current question flow
    - Identify independent questions that can be batched

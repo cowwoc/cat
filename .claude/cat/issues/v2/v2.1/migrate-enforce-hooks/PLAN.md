@@ -29,7 +29,9 @@ None - infrastructure/setup task
 ## Dependencies
 - java-core-hooks (entry points and core infrastructure must be wired up)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Read enforce-worktree-isolation.py** - Understand the logic (checks if Write/Edit targets base branch)
 2. **Create EnforceWorktreeIsolation.java** - Port the Python logic to Java
 3. **Wire up in hooks.json** - Replace `python3 .../enforce-worktree-isolation.py` with `java.sh EnforceWorktreeIsolation`
@@ -39,6 +41,7 @@ None - infrastructure/setup task
 7. **Wire up in hooks.json** - Replace `python3 .../enforce-status-output.py` with `java.sh EnforceStatusOutput`
 8. **Test status output** - Verify output identical to Python version
 9. **Run test suite** - `python3 /workspace/run_tests.py`
+
 
 ## Post-conditions
 - [ ] EnforceWorktreeIsolation.java blocks Write/Edit on base branch correctly

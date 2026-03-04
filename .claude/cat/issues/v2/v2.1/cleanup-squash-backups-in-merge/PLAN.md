@@ -31,7 +31,9 @@ None (infrastructure fix from M348/M349)
 - [ ] After merge with multiple approval gate retries, no orphaned backups remain
 - [ ] Parallel instance's in-progress backup is not deleted
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Fix dead code in git-squash-quick.sh:** Replace the unreachable rebase conflict handling (lines 54-93) with
    `set -e` compatible error capture. Use `if ! REBASE_OUTPUT=$(git ... rebase ... 2>&1); then` pattern to capture
    both output and exit code without triggering `set -e`. Remove unreachable `REBASE_EXIT=$?` and associated dead

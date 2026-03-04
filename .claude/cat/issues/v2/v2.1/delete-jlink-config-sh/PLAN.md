@@ -31,7 +31,9 @@ None (cleanup)
 - [ ] Issue PLANs updated to remove stale jlink-config.sh references
 - [ ] E2E: `grep -r 'jlink-config' plugin/` returns no results
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Delete jlink-config.sh**
    - Files: `plugin/hooks/jlink-config.sh`

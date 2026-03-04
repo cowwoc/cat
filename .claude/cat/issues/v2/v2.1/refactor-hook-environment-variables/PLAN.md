@@ -35,7 +35,9 @@ None - Tech debt / architectural improvement
 - [x] Environment logging added to hook launcher scripts (evidence collected)
 - [x] Hook documentation reviewed (https://code.claude.com/docs/en/hooks#json-output)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Create ClaudeEnv class for environment variable access**
    - New file: `client/src/main/java/io/github/cowwoc/cat/hooks/ClaudeEnv.java`
@@ -78,6 +80,7 @@ None - Tech debt / architectural improvement
    - Integration tests for each hook type
    - Verify hooks return exit code 0 with proper JSON output
    - Files: All *Test.java files
+
 
 ## Post-conditions
 - [ ] All Java hooks read session-specific data from HookInput, not environment

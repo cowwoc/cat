@@ -59,13 +59,16 @@ None (infrastructure improvement)
 
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. Find and update lock file creation to populate the `worktree` field with the worktree path
 2. Create `RestoreWorktreeOnResume.java` SessionStartHandler
 3. Register the handler in `SessionStartHook.java`
 4. Create tests in `RestoreWorktreeOnResumeTest.java`
 5. Run `mvn -f client/pom.xml verify` to ensure all tests pass
+
 
 ## Post-conditions
 

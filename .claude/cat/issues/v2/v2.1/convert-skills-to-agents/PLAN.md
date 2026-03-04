@@ -111,7 +111,9 @@ These remain as skills but are now preloaded into agents:
 - [ ] No manual duplication of git instructions in agent prompts
 - [ ] Clean separation: agents in plugin/agents/, skills in plugin/skills/
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Step 1:** Create work-merge agent with skills preloading
    - Create `plugin/agents/work-merge.md`
@@ -151,6 +153,7 @@ These remain as skills but are now preloaded into agents:
 
 8. **Step 8:** Commit changes
    - Commit type: `config:` (Claude-facing agent definitions)
+
 
 ## Implementation Notes
 

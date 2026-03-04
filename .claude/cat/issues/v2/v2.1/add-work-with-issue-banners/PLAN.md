@@ -60,7 +60,9 @@ instructions.
 - [ ] work-with-issue skill no longer references pre-rendered banner sections
 - [ ] `mvn -f hooks/pom.xml verify` passes with exit code 0
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Step 1:** Read Java conventions from `.claude/cat/conventions/java.md`
    - Files: `.claude/cat/conventions/java.md`

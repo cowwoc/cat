@@ -16,7 +16,7 @@ the mistake's analysis and prevention don't affect the current issue's remaining
 - **In scope:** Update `plugin/skills/learn-agent/SKILL.md` to add background execution decision logic
 - **Out of scope:** Changing the learn phase files themselves, the subagent's behavior, or the recording process
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] `learn-agent/SKILL.md` documents a decision step before spawning the subagent:
   - If invoked mid-operation AND learn results won't block remaining work → spawn subagent with

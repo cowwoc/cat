@@ -30,7 +30,9 @@ User request: reduce unnecessary prompts when potentially_complete is a false po
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 ### Step 1: Update the Potentially Complete Handling section
 In `plugin/skills/work/first-use.md`, replace the current "Potentially Complete Handling" section (lines 103-118) with
@@ -46,6 +48,7 @@ the new logic:
 
 The key instruction should be concise since this is agent-executed logic, not a script. The agent reads the diffs,
 reads the goal, and makes a judgment call.
+
 
 ## Post-conditions
 - [ ] The "Potentially Complete Handling" section in `first-use.md` instructs the agent to analyze suspicious commits

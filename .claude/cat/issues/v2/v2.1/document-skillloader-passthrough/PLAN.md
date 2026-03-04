@@ -10,7 +10,9 @@ behavior). This behavior should be documented.
 
 None - documentation
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Edit `plugin/hooks/README.md`** — Add a section documenting SkillLoader's variable resolution behavior:
    - Known built-in variables (`CLAUDE_PLUGIN_ROOT`, `CLAUDE_SESSION_ID`, `CLAUDE_PROJECT_DIR`) are resolved
@@ -22,6 +24,7 @@ None - documentation
 | File | Action | Description |
 |------|--------|-------------|
 | `plugin/hooks/README.md` | Modify | Document SkillLoader variable pass-through behavior |
+
 
 ## Post-conditions
 

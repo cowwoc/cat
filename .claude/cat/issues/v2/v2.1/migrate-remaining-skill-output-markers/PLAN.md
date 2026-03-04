@@ -49,7 +49,9 @@ None
 - [ ] All migrated skills produce correct output when invoked
 - [ ] No regressions in existing functionality
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Audit each skill**: For each of the 6 skills, identify all files that reference SKILL OUTPUT markers and check
    Java handlers for corresponding output format
 2. **Migrate help skill**: Replace SKILL OUTPUT HELP DISPLAY with output tag pattern

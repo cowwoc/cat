@@ -27,7 +27,9 @@ Documentation-level prevention relies on behavioral compliance, which fails unde
 - [ ] Does NOT trigger for non-question system-reminders
 - [ ] Does NOT trigger when question is already acknowledged
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Create `user_question_reminder.py` handler
    - Pattern: Detect `system-reminder` containing user question indicators
    - Output: Return additionalContext with acknowledgment reminder

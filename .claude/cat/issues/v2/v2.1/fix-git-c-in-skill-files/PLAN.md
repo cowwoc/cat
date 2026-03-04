@@ -38,7 +38,9 @@ None — internal tooling cleanup.
 
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Audit all skill files for `git -C` usage** — for each occurrence, determine whether it can be replaced
    with a `cd` pattern or must remain (e.g., `git worktree remove` and `git branch -D` that run from the
@@ -58,6 +60,7 @@ None — internal tooling cleanup.
    it cannot use `cd` instead.
 
 5. **Run grep to verify** — confirm no unintended `git -C` patterns remain in skill/agent files.
+
 
 ## Post-conditions
 

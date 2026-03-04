@@ -75,7 +75,9 @@ calls the Skill tool. The `get-output` SKILL.md must call the launcher directly 
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Step 1:** Add `"get-output:skills.GetOutput"` to `client/build-jlink.sh` HANDLERS array.
    Remove individual output launcher entries (`get-status-output`, `get-cleanup-output`,
@@ -105,6 +107,7 @@ calls the Skill tool. The `get-output` SKILL.md must call the launcher directly 
 
 7. **Step 7:** Empirical test — verify dynamic-output skills produce computed output via `INVOKE:`
    (≥95% on haiku): `/cat:config` settings page.
+
 
 ## Post-conditions
 - [ ] `get-output` entry exists in `client/build-jlink.sh`; individual output launchers removed (except

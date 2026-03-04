@@ -39,7 +39,9 @@ Parent: 2.1-port-workflow-scripts (sub-issue 2 of 4)
 ## Files to Modify
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/module-info.java` - if new exports needed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. Read `create-issue.py` - understand directory creation and commit logic
 2. Read `load-skill.sh` - understand env var substitution patterns
 3. Read `get-progress-banner.sh` - understand banner rendering with box drawing
@@ -49,6 +51,7 @@ Parent: 2.1-port-workflow-scripts (sub-issue 2 of 4)
 7. Write tests for all classes
 8. Run `mvn -f hooks/pom.xml verify`
 9. Update STATE.md (status: closed, progress: 100%)
+
 
 ## Post-conditions
 - [ ] IssueCreator produces identical JSON output and directory structure

@@ -57,7 +57,9 @@ None - infrastructure cleanup
 - `.claude/cat/conventions/state-schema.md` (new - documents the schema)
 - STATE.md template in skill add (references in create-issue.py)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Create `.claude/cat/conventions/state-schema.md` documenting the standardized schema
    - Files: `.claude/cat/conventions/state-schema.md`
 2. **Step 2:** Write a Python migration script that processes all issue STATE.md files:
@@ -76,6 +78,7 @@ None - infrastructure cleanup
    - Files: plugin scripts that generate STATE.md
 5. **Step 5:** Verify migration results - spot check 10+ files across different categories
 6. **Step 6:** Commit all changes
+
 
 ## Post-conditions
 - [ ] All issue STATE.md files have exactly the mandatory keys

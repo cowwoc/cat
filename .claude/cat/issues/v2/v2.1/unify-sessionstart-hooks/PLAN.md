@@ -77,7 +77,9 @@ Dispatcher collects all non-null results and combines into single additionalCont
 - clear_skill_markers.py uses glob - use java.nio.file.Files.newDirectoryStream with glob pattern
 - inject-env.sh writes to file - use Files.write
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. Create SessionStartHandler interface and GetSessionStartOutput dispatcher
 2. Implement each handler class with equivalent logic
 3. Write tests for each handler

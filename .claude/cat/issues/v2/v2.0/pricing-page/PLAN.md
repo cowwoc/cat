@@ -48,7 +48,9 @@ review, this task implements a unified pricing strategy.
 - [ ] All pricing links point to consistent destination
 - [ ] Feature comparison table visible on pricing page
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Simplify README.md pricing section**
    - Replace multi-line pricing with: "**Free for solo developers.** See [pricing](docs/PRICING.md) for team and

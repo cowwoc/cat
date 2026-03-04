@@ -42,7 +42,9 @@ These files contain `hooks/` paths. Update to `hooks/`:
 - `.claude/cat/issues/v2/v2.1/migrate-python-to-java/PLAN.md`
 - `.claude/cat/issues/v2/v2.1/mavenize-java-hooks/PLAN.md`
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Step 1: Move Java project directory**
    - Run: `git mv plugin/hooks/java hooks`
@@ -60,6 +62,7 @@ These files contain `hooks/` paths. Update to `hooks/`:
 4. **Step 4: Run tests**
    - `mvn -f hooks/pom.xml verify`
    - All tests must pass
+
 
 ## Post-conditions
 - [ ] `hooks/` directory no longer exists

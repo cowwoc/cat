@@ -54,7 +54,9 @@ argument-hint: "<severity> <stakeholder> <description> <location>"
 - [ ] Both skills have argument-hint in frontmatter
 - [ ] Neither skill references ${ARGUMENTS} or $ARGUMENTS
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Update `plugin/skills/stakeholder-review-box/SKILL.md`
    - Add `argument-hint: "<issue> <reviewers> <result> <summary>"` to frontmatter
    - Replace `${ARGUMENTS}` with `"$0" "$1" "$2" "$3"` in the preprocessor command
@@ -72,6 +74,7 @@ argument-hint: "<severity> <stakeholder> <description> <location>"
 
 4. **Step 4:** Run tests
    - Run `mvn -f client/pom.xml test`
+
 
 ## Post-conditions
 - [ ] All test cases pass

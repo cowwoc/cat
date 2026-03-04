@@ -24,7 +24,9 @@ in URLs, domains, and user input prompts. Inspired by Tirith's terminal security
 - [ ] Documentation updated
 - [ ] No regressions
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Research Unicode confusable characters and build detection logic
    - Files: new detection module
    - Verify: unit tests pass for known homograph examples

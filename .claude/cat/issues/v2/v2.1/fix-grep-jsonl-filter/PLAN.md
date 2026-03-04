@@ -33,7 +33,9 @@ This fails for grep output format `123:{"type":...}` because the line starts wit
 - [ ] Legitimate test failures still detected
 - [ ] Edge cases: multiple colons in line, non-numeric prefixes
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Update `_filter_json_content()` to handle grep's `line_number:json` format
    - Strip the `line_number:` prefix before checking for JSON markers
    - Use regex: `re.match(r'^\d+:\s*', stripped)` to detect and strip prefix
@@ -43,6 +45,7 @@ This fails for grep output format `123:{"type":...}` because the line starts wit
    - Test input: grep output containing session history JSONL
    - Expected: No false positive detected
    - Verify: `python3 /workspace/run_tests.py`
+
 
 ## Post-conditions
 - [ ] Bug no longer reproducible

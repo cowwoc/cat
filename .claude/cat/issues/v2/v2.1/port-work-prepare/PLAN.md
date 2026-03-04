@@ -34,7 +34,9 @@ Parent: 2.1-port-workflow-scripts (sub-issue 4 of 4)
 ## Files to Modify
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/module-info.java` - if new exports needed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. Read `work-prepare.py` thoroughly - understand full orchestration flow
 2. Map Python subprocess calls to Java method calls on ported classes
 3. Implement `WorkPrepare.java` integrating IssueLock, ExistingWorkChecker, IssueDiscovery
@@ -43,6 +45,7 @@ Parent: 2.1-port-workflow-scripts (sub-issue 4 of 4)
 6. Write integration tests verifying JSON output contracts
 7. Run `mvn -f hooks/pom.xml verify`
 8. Update STATE.md (status: closed, progress: 100%)
+
 
 ## Post-conditions
 - [ ] WorkPrepare produces identical JSON output for all status codes (READY, NO_TASKS, LOCKED, OVERSIZED, ERROR)

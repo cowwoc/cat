@@ -64,7 +64,9 @@ and when to use main agent vs subagent execution.
 - [ ] Restriction text is consistent across all files
 - [ ] No functional changes to skill logic
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 ### Step 1: Add restriction to shrink-doc
 - Add invocation restriction section after any existing frontmatter

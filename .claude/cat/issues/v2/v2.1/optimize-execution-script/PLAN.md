@@ -22,7 +22,9 @@ None
 - `plugin/scripts/analyze-session.py` - New Python script for mechanical data extraction
 - `plugin/skills/optimize-execution/SKILL.md` - Simplify to run script + interpret results
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Create `plugin/scripts/analyze-session.py`:**
    - Accept session file path as argument
    - Implement all Step 1-3 analysis: tool frequency, token usage, output sizes,
@@ -35,6 +37,7 @@ None
    - Replace with single instruction to run the Python script
    - Keep Steps 4-5 (UX categorization, recommendations) as LLM-interpreted guidance
    - Keep output format and example sections unchanged
+
 
 ## Post-conditions
 - [ ] Python script runs successfully against a real session JSONL file

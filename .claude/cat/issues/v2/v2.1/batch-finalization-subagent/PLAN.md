@@ -40,7 +40,9 @@ None - UX improvement / architecture consistency task
 - [ ] `next_task` step remains separate (user interaction)
 - [ ] Concept work.md "Batched into Finalization subagent" remains accurate
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Step 1:** Create new finalization step structure
    - Replace `<step name="merge">` through `<step name="update_changelogs">` with single `<step name="finalization">`

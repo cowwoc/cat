@@ -39,7 +39,9 @@ None - infrastructure improvement
 - [ ] Banner patterns show 5 phases
 - [ ] All existing tests pass with no regressions
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Rename plugin/skills/audit-plan to plugin/skills/verify-implementation
    - Use: git mv plugin/skills/audit-plan plugin/skills/verify-implementation
    - Update SKILL.md to reference verify-implementation instead of audit-plan

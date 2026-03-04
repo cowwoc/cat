@@ -58,7 +58,9 @@ None - infrastructure improvement
 - [ ] Applicability constraints clearly documented
 - [ ] All existing tests pass with no regressions
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Add pipelining pattern to optimize-execution analysis categories
    - File: plugin/skills/optimize-execution/content.md
    - Find the section that defines analysis categories (batch_candidates, parallel_candidates, cache_candidates)

@@ -32,6 +32,8 @@ None - sub-issue of parent
 - [ ] All files score 1.0 on /compare-docs validation
 - [ ] No functionality regression
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. For each file in scope: Run /cat:shrink-doc
 2. Commit changes with message: "config: compress skills batch 2 (get-history through grep-and-read)"

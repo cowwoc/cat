@@ -117,7 +117,9 @@ Add `cat-config.local.json` to prevent accidental commit.
 - [ ] Feature gate allows team features for team tier
 - [ ] Upgrade message shown when blocked
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Create validate-license.py**
    - Implement Ed25519 signature verification
@@ -142,6 +144,7 @@ Add `cat-config.local.json` to prevent accidental commit.
    - SessionStart: validate and cache tier
    - PreToolUse: gate parallel operations
    - Skill/command gating
+
 
 ## Verification
 

@@ -51,13 +51,16 @@ Post-tool handlers at `plugin/hooks/src/io/github/cowwoc/cat/hooks/bash/post/`:
 | `bash_handlers/validate_plan_md.py` | `ValidatePlanMd.java` | `plugin/hooks/src/io/github/cowwoc/cat/hooks/bash/` |
 | `bash_handlers/validate_worktree_remove.py` | `ValidateWorktreeRemove.java` | `plugin/hooks/src/io/github/cowwoc/cat/hooks/bash/` |
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Create DetectShellOperators.java** - Port logic from `detect_shell_operators.py`
 2. **Create ValidatePlanMd.java** - Port logic from `validate_plan_md.py`
 3. **Create ValidateWorktreeRemove.java** - Port logic from `validate_worktree_remove.py`
 4. **Register new handlers** in `BashHandler.java` dispatcher
 5. **Verify all 17 handlers** produce identical output to Python equivalents
 6. **Run test suite** - `python3 /workspace/run_tests.py` to verify no regressions
+
 
 ## Post-conditions
 - [ ] 3 new Java bash handlers created and registered

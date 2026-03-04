@@ -67,7 +67,9 @@ None (infrastructure issue - filling a gap where handler was never implemented)
 - [ ] Tests cover: trigger not met, time-based trigger, count-based trigger, first retrospective (no last_retro)
 - [ ] Tests cover: effectiveness reporting, missing index.json error, empty patterns/action items arrays
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Read Java conventions:** Read `.claude/cat/conventions/java.md` for code style requirements
 2. **Create GetRetrospectiveOutput.java:** Implement `SkillOutput` following the same patterns as

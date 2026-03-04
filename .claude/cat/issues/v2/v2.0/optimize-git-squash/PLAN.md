@@ -21,7 +21,9 @@ None - infrastructure/performance improvement
 - [ ] Automatically preserve final STATE.md when squashing planning commits
 - [ ] Pre-compute potential content conflicts for non-adjacent commits
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Add parallel initial investigation
    - Files: `plugin/skills/git-squash/SKILL.md`
    - Verify: Skill documents parallel git commands at start

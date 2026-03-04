@@ -24,7 +24,9 @@ None - infrastructure/tech debt (completes port-display-scripts parent issue)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Add multi-issue support to GetAddOutput.java:** The Python script handles comma-separated issue
    names (lines 102-112). Port this logic to the Java class's `buildIssueDisplay` method.
 2. **Add CLI main method to GetAddOutput.java:** Add `public static void main(String[])` that parses
@@ -36,6 +38,7 @@ None - infrastructure/tech debt (completes port-display-scripts parent issue)
    1437) with equivalent calls to `"${CLAUDE_PLUGIN_ROOT}/client/bin/get-add-output"`.
 5. **Delete render-add-complete.sh:** Remove `plugin/scripts/render-add-complete.sh`.
 6. **Run tests:** Execute `mvn -f client/pom.xml test` to verify no regressions.
+
 
 ## Post-conditions
 - [ ] `plugin/scripts/render-add-complete.sh` does not exist

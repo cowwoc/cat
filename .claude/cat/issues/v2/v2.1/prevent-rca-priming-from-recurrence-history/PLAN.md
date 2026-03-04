@@ -29,7 +29,9 @@ primes the RCA toward the historical narrative before the Step 4b-R independence
 
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Read current files**:
    - `plugin/skills/learn/SKILL.md` (Step 1 and Step 2 prompt templates)
@@ -49,6 +51,7 @@ primes the RCA toward the historical narrative before the Step 4b-R independence
 
 4. **Commit** with message:
    `refactor: defer recurrence lookup in /cat:learn until after independent RCA`
+
 
 ## Post-conditions
 

@@ -26,7 +26,9 @@ settings box, and the skill has no wizard step for `minSeverity`.
 
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Read existing files** to understand current rendering and step structure:
    - `GetConfigOutput.java` (full render logic)
@@ -52,6 +54,7 @@ settings box, and the skill has no wizard step for `minSeverity`.
 
 5. **Commit** with message:
    `feature: add completionWorkflow, reviewThreshold, and minSeverity to /cat:config`
+
 
 ## Post-conditions
 

@@ -49,7 +49,9 @@ This is equivalent to `git update-ref` or `git branch -f`. The working tree must
 - [ ] syncMainWorkingTree() runs successfully in projectDir
 - [ ] Existing MergeAndCleanup tests still pass
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Add syncMainWorkingTree method to MergeAndCleanup**
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/MergeAndCleanup.java`
@@ -60,6 +62,7 @@ This is equivalent to `git update-ref` or `git branch -f`. The working tree must
    - Add test that verifies `git status --porcelain` returns empty after execute()
 3. **Run tests**
    - `mvn -f client/pom.xml test`
+
 
 ## Post-conditions
 

@@ -19,13 +19,16 @@ Ensure bare issue names (e.g., 'fix-bug') correctly detect as Scope.BARE_NAME an
 
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Write failing test** - Create a test that verifies bare name 'fix-bug' produces Scope.BARE_NAME
 2. **Verify test fails** - Confirm the test currently fails, proving it catches the bug
 3. **Fix the code** - Update WorkPrepare.java scope detection if needed
 4. **Verify test passes** - Run the test to confirm the fix works
 5. **Run full test suite** - Ensure no regressions
+
 
 ## Post-conditions
 

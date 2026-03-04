@@ -30,7 +30,9 @@ None - infrastructure/maintenance task
 - [ ] run-retrospective skill aggregates across split files
 - [ ] Existing data preserved and accessible
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Design split strategy** - Decide on time granularity (monthly vs quarterly)
 2. **Create migration script** - Split existing data into time-based files
 3. **Update skills** - Modify skills to handle split files

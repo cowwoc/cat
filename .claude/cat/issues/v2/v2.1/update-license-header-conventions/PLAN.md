@@ -4,7 +4,9 @@
 Correct and consolidate license header conventions: move the authoritative documentation into project conventions,
 fix exemptions, add headers to `first-use.md` files, and scrub existing headers from exempt locations.
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Move license-header.md to project conventions**
    - Move `plugin/concepts/license-header.md` to `.claude/rules/license-header.md`
@@ -22,6 +24,7 @@ fix exemptions, add headers to `first-use.md` files, and scrub existing headers 
    - Scan `.claude/cat/**` for files containing `Copyright (c) 2026` and remove the header block
    - Scan `plugin/skills/**/SKILL.md` for any headers and remove them
    - Scan `plugin/agents/**/*.md` for any headers and remove them
+
 
 ## Post-conditions
 

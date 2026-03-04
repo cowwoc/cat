@@ -42,7 +42,9 @@ The skill orchestrates the empirical testing methodology proven in M507/fix-verb
 - [ ] Test runner reliably executes trials and collects statistics
 - [ ] Results are actionable (clear identification of which variable causes failure)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Create the test runner script (`plugin/scripts/empirical-test-runner.py`)
    - Accept test configs as JSON input (each config has a name, prompt content, and success criteria)
    - Execute each config N times using claude CLI with stream-json

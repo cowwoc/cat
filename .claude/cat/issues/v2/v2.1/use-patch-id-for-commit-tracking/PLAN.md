@@ -49,7 +49,9 @@ None - infrastructure/architectural improvement
 - [ ] Documentation shows how to find commits via git log
 - [ ] STATE.md uses simple "Resolution: implemented" (no hash)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Update commit-types.md
    - Files: plugin/concepts/commit-types.md
    - Remove Issue ID footer documentation

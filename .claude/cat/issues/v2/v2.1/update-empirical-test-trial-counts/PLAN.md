@@ -23,7 +23,9 @@ ambiguous results.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Read `plugin/skills/empirical-test/first-use.md`** to identify all `--trials` occurrences
    - Files: `plugin/skills/empirical-test/first-use.md`
 2. **Update Step 3 (Baseline)** to use `--trials 1` instead of `--trials 5`
@@ -36,6 +38,7 @@ ambiguous results.
    - Files: `plugin/skills/empirical-test/first-use.md`
 6. **Update Tips section** to reflect new default progression (1 ��� 5 ��� 10)
    - Files: `plugin/skills/empirical-test/first-use.md`
+
 
 ## Post-conditions
 - [ ] All `--trials` values in the skill reflect the 1 ��� 5 ��� 10 progression

@@ -36,7 +36,9 @@ squashing before the approval gate, making the worktree check redundant.
 - [ ] Tests pass regardless of the worktree's actual commit count
 - [ ] Uses "issue" terminology consistently (not "task")
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Simplify WarnUnsquashedApproval worktree check:** When `cat-branch-point` exists (worktree context),
    return `Result.allow()` immediately. Remove `checkWorktreeCommits` method entirely.

@@ -16,7 +16,9 @@ The `maven-surefire-plugin` configuration in `hooks/pom.xml` lacks an `<argLine>
 `-Dstdout.encoding=UTF-8`. The forked JVM inherits the container's POSIX locale, causing `stdout.encoding` to default
 to `ANSI_X3.4-1968` (ASCII).
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Edit `hooks/pom.xml`** — Add `<argLine>-Dstdout.encoding=UTF-8</argLine>` to the `maven-surefire-plugin`
    `<configuration>` section (around line 134).
@@ -28,6 +30,7 @@ to `ANSI_X3.4-1968` (ASCII).
 | File | Action | Description |
 |------|--------|-------------|
 | `hooks/pom.xml` | Modify | Add `-Dstdout.encoding=UTF-8` argLine to surefire configuration |
+
 
 ## Post-conditions
 

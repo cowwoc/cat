@@ -26,7 +26,9 @@ None (infrastructure/tech debt)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Read `git-amend-safe.sh` and document all behaviors, flags, and exit codes
    - Files: `plugin/scripts/git-amend-safe.sh`
 2. **Step 2:** Write Java implementation for git-amend-safe with equivalent behavior
@@ -44,6 +46,7 @@ None (infrastructure/tech debt)
 8. **Step 8:** Remove the original bash scripts
    - Files: `plugin/scripts/git-amend-safe.sh`, `plugin/scripts/git-rebase-safe.sh`
 9. **Step 9:** Run full test suite to verify no regressions
+
 
 ## Post-conditions
 - [ ] User-visible behavior unchanged (same output, same exit codes)

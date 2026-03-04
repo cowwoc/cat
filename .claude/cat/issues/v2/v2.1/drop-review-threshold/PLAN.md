@@ -67,7 +67,9 @@ automatically removes the key at SessionStart before validation runs.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Step 1:** Update `Config.java` — remove `DEFAULT_AUTOFIX_THRESHOLD` constant, remove `reviewThreshold` from
    the defaults map (`defaults.put("reviewThreshold", ...)`), remove `getAutofixThreshold()` method entirely.
@@ -134,6 +136,7 @@ automatically removes the key at SessionStart before validation runs.
     - Message: `refactor: update docs to reflect simplified concern pipeline (no reviewThreshold)`
 
 14. **Step 14:** Run `mvn -f client/pom.xml verify` and confirm all tests pass.
+
 
 ## Post-conditions
 

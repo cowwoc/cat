@@ -36,7 +36,9 @@ None (bugfix for regression)
 
 - `plugin/hooks/skill_handlers/status_handler.py` - Add `StatusHandler` class that calls `get-status-display.py` and wraps output as "SCRIPT OUTPUT STATUS DISPLAY", register it
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Add StatusHandler class** to `plugin/hooks/skill_handlers/status_handler.py`
    - Import `register_handler` from `. import register_handler`
@@ -49,6 +51,7 @@ None (bugfix for regression)
 
 2. **Run tests** to verify no regressions
    - Files: `run_tests.py`
+
 
 ## Post-conditions
 

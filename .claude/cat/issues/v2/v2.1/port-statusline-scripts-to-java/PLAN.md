@@ -26,7 +26,9 @@ None (infrastructure/tech debt)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Read `statusline-command.sh` and document output format and behavior
    - Files: `plugin/scripts/statusline-command.sh`
 2. **Step 2:** Write Java implementation for statusline-command
@@ -43,6 +45,7 @@ None (infrastructure/tech debt)
    - Files: `plugin/skills/statusline/first-use.md`
 8. **Step 8:** Remove the original bash scripts
 9. **Step 9:** Run full test suite to verify no regressions
+
 
 ## Post-conditions
 - [ ] User-visible behavior unchanged (statusline displays same content)

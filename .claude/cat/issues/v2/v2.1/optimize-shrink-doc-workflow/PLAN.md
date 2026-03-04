@@ -23,7 +23,9 @@ None - internal optimization
 - [ ] All tests still pass
 - [ ] Code quality improved (fewer round-trips)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Modify Step 2 to combine baseline + version check into single parallel Bash
    - Files: plugin/skills/shrink-doc/SKILL.md
    - Verify: Skill still works correctly

@@ -33,7 +33,9 @@ Blog post analysis (adriangalilea.com/claude-code-permission-bypass) identified 
 | `git stash drop --all` | Not covered |
 | All handlers | No git global flag normalization (`-C`, `--git-dir`, `--work-tree`) |
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 ### Step 1: Create GitCommandNormalizer utility class
 
@@ -119,6 +121,7 @@ cd hooks && mvn verify
 ```
 
 All tests must pass. No checkstyle or PMD violations.
+
 
 ## Post-conditions
 

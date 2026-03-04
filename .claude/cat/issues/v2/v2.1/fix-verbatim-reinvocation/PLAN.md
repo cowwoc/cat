@@ -35,7 +35,9 @@ The `reference.md` file (used for subsequent invocations) says "scroll up and RE
 - [ ] reference.md explicitly warns against manual output reconstruction
 - [ ] All 4 verbatim skills (status, help, token-report, render-diff) load reference.md on subsequent invocation (existing behavior, verify not broken)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Update `plugin/skills/reference.md` to add explicit re-invocation guidance
    - Add instruction: "Use the Skill tool to invoke this skill again. Do NOT manually reconstruct or edit previous output."
    - Add warning against manual reconstruction
@@ -45,6 +47,7 @@ The `reference.md` file (used for subsequent invocations) says "scroll up and RE
 2. **Step 2:** Verify all 4 verbatim skills still load correctly
    - Run load-skill.sh for each skill to confirm no breakage
    - Files: `plugin/scripts/load-skill.sh`
+
 
 ## Post-conditions
 - [ ] reference.md contains explicit "use Skill tool" instruction

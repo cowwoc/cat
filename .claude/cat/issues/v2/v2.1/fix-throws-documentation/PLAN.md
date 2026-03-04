@@ -32,7 +32,9 @@ None (convention compliance fix)
 - [ ] No incorrect `@throws` annotations (e.g., documenting wrong exception type)
 - [ ] Tests pass
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Fix ProcessRunner.java Result record:** Update @throws to document NullPointerException for isNotNull() calls
 2. **Fix TokenCounter.java:** Add @throws NullPointerException to the 2 methods with requireThat() calls
 3. **Run tests:** Verify no regressions

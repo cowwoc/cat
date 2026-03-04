@@ -40,11 +40,14 @@ Replace "task" terminology with "issue" in all skill files.
 - plugin/skills/config/SKILL.md (from merged rename-task-in-commands)
 - plugin/skills/research/SKILL.md (from merged rename-task-in-commands)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. Replace "task" with "issue" in all skill files
 2. Update references to old script names (find-task.sh → get-available-issues.sh, etc.)
 3. Update directory name: decompose-task → decompose-issue
 4. Verify no "task" references remain (except changelogs)
+
 
 ## Post-conditions
 - [ ] All skill files updated

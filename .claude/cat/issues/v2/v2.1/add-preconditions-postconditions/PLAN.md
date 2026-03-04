@@ -52,7 +52,9 @@ None - workflow infrastructure improvement
 ## Pre-conditions
 - [ ] All dependencies closed (default)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 ### Step 1: Update issue-level PLAN.md templates
 1. In `plugin/templates/issue-plan.md`:
@@ -120,6 +122,7 @@ Run `mvn -f client/pom.xml test` and confirm all tests pass.
 
 ### Step 12: Smoke test
 Run at least one jlink binary (e.g., `verify-audit`, `get-config-output`) and confirm it produces reasonable output.
+
 
 ## Post-conditions
 - [ ] Issue PLAN.md template has `## Pre-conditions` and `## Post-conditions` sections (no more Acceptance/Success Criteria)

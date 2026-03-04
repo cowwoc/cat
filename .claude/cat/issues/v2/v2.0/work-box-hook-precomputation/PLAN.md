@@ -42,7 +42,9 @@ at skill invocation, and the LLM outputs them verbatim.
 - [ ] Low-trust Task Complete box renders with aligned borders
 - [ ] Handler gracefully handles missing task info
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Create work_handler.py**
    - Files: plugin/hooks/skill_handlers/work_handler.py
    - Verify: Handler registered and returns PRE-COMPUTED WORK BOXES in additionalContext

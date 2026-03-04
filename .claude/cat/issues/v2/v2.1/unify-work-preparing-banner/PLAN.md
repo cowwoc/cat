@@ -35,7 +35,9 @@ None (UX polish)
 - [ ] Banner matches the visual style of the implementing/confirming/reviewing/merging banners
 - [ ] `/cat:work-with-issue` still shows its own preparing banner with the issue ID once known
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Update work skill Progress Display section:** Replace the simple banner reference with a Bash command to call
    `"${CLAUDE_PLUGIN_ROOT}/hooks/bin/progress-banner" --phase preparing` (no issue ID argument)

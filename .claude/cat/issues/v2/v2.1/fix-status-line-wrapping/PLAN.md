@@ -47,7 +47,9 @@ The M376 fix (commit daa321ca) already caps `maxContentWidth` to `terminalWidth 
 - [ ] Lines 1 character over terminal width do wrap
 - [ ] Empty blocked-by list still works
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Read `.claude/cat/conventions/java.md` for code style conventions
 2. **Step 2:** Add `wrapLine(String line, int maxWidth, int indentWidth)` method to `DisplayUtils.java` that:
    - Returns the original line unchanged if `displayWidth(line) <= maxWidth`
@@ -60,6 +62,7 @@ The M376 fix (commit daa321ca) already caps `maxContentWidth` to `terminalWidth 
 5. **Step 5:** After building `contentItems` and capping `maxContentWidth`, iterate and replace any line exceeding `maxBoxContentWidth` with its wrapped version
 6. **Step 6:** Add unit tests for `wrapLine()` covering the test cases above
 7. **Step 7:** Run `mvn -f client/pom.xml test` to verify all tests pass
+
 
 ## Post-conditions
 - [ ] All test cases pass

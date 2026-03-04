@@ -19,7 +19,9 @@ None - infrastructure improvement
 - [ ] Documentation explains when to use each location
 - [ ] conventions.md in .claude/rules/ points to on-demand conventions
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. Update mkdir commands to create both directories
 2. Update documentation section to explain the distinction
 3. Update success criteria table

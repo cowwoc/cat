@@ -71,10 +71,13 @@ None - infrastructure improvement for cost optimization and consistent behavior
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. For each skill in the haiku list, add `model: haiku` to the SKILL.md frontmatter
 2. For each skill in the sonnet list, add `model: sonnet` to the SKILL.md frontmatter
 3. Run `mvn -f client/pom.xml verify` to ensure no build regressions
+
 
 ## Post-conditions
 - [ ] All 44 skills have `model:` specified in frontmatter

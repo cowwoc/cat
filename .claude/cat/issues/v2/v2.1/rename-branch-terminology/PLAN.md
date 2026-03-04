@@ -88,7 +88,9 @@ None — infrastructure terminology cleanup.
 
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Rename variables in plugin agent files** — Update `BASE_BRANCH` → `TARGET_BRANCH` in work-merge.md,
    work-squash.md, work-verify.md
@@ -100,6 +102,7 @@ None — infrastructure terminology cleanup.
    parameters, Javadoc, and error messages in client source
 5. **Update Java test files** — Rename variables, branch name strings, and comments in test classes
 6. **Run all tests** — `mvn -f client/pom.xml test` to verify no regressions
+
 
 ## Post-conditions
 

@@ -28,7 +28,9 @@ None - infrastructure/retrospective action item
 - [ ] No false positives for script file execution
 - [ ] All existing tests continue to pass
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Create PreToolUse bash handler that inspects Bash command input for problematic operators
    - Files: plugin/hooks/bash_handlers/detect_shell_operators.py
 2. **Step 2:** Register handler in plugin/hooks/hooks.json

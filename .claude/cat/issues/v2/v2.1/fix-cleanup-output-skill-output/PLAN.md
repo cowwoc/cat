@@ -34,7 +34,9 @@ which requires the `SkillOutput` interface.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Add `implements SkillOutput`** to `GetCleanupOutput` class declaration
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetCleanupOutput.java`
 2. **Add `getOutput(String[] args)` method** that delegates to `gatherAndFormatSurveyOutput()` using `--project-dir`
@@ -44,6 +46,7 @@ which requires the `SkillOutput` interface.
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetCleanupOutput.java`
 4. **Run tests** to verify no regressions
 5. **Build jlink bundle** and verify `/cat:cleanup` works
+
 
 ## Post-conditions
 - [ ] `GetCleanupOutput` implements `SkillOutput`

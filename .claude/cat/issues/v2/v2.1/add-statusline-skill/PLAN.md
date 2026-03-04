@@ -36,7 +36,9 @@ None (UX enhancement)
 - [ ] After invocation, `.claude/settings.json` contains correct `statusLine` JSON structure
 - [ ] Installed script is executable and produces colored output when fed sample JSON on stdin
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Create statusline script:** Copy the statusline-command.sh into `plugin/scripts/statusline-command.sh`
    - Files: `plugin/scripts/statusline-command.sh`
 2. **Create skill definition:** Create SKILL.md with appropriate tools (Read, Write, Edit, Bash, AskUserQuestion)

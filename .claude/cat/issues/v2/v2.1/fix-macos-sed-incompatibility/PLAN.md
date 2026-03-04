@@ -34,7 +34,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** In `client/build-jlink.sh`, replace line 351:
    ```bash
    # Before:
@@ -45,6 +47,7 @@ None
    Files: `client/build-jlink.sh`
 2. **Step 2:** Run `mvn -f client/pom.xml test` and verify all tests pass.
 3. **Step 3:** Commit with message `bugfix: fix macOS BSD sed incompatibility in build-jlink.sh launcher generation`
+
 
 ## Post-conditions
 - [ ] `client/build-jlink.sh` generates launcher scripts correctly on macOS (no sed error)

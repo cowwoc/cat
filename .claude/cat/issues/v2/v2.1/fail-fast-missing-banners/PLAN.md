@@ -27,7 +27,9 @@ None - infrastructure/retrospective action item
 - [ ] No manual box/banner construction instructions remain
 - [ ] All tests pass
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Grep all skills for SCRIPT OUTPUT references to identify affected files
 2. **Step 2:** For each affected skill, add fail-fast instruction with script re-invocation command
    - Pattern: "If SCRIPT OUTPUT section not found: FAIL. Run: [script path] [args]"

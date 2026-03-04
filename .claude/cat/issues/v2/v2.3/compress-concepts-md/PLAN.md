@@ -25,7 +25,9 @@ None - infrastructure/optimization sub-issue
 - [ ] Execution equivalence verified (all files score 1.0 on /compare-docs)
 - [ ] No functionality regression
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. List all MD files in `plugin/concepts/`
 2. For each file: Run /cat:shrink-doc
 3. Commit changes with appropriate message

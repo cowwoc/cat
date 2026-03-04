@@ -55,7 +55,9 @@ None (quality assurance / infrastructure)
 - [ ] Zero false positives on negative test prompts
 - [ ] Eval harness is reproducible (documented setup, deterministic test cases)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Inventory user-invocable skills:** List all CAT skills that users can trigger, extract their descriptions
    and trigger patterns
    - Files: `plugin/skills/*/SKILL.md`
@@ -77,6 +79,7 @@ None (quality assurance / infrastructure)
    activation with zero false positives. Reference:
    https://scottspence.com/posts/measuring-claude-code-skill-activation-with-sandboxed-evals
    - Files: `.claude/settings.json` (hook registration), `plugin/hooks/` (hook handler)
+
 
 ## Reference
 - [Measuring Claude Code Skill Activation with Sandboxed Evals](https://scottspence.com/posts/measuring-claude-code-skill-activation-with-sandboxed-evals)

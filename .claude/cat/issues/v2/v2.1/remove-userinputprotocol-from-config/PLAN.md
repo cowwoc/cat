@@ -19,9 +19,12 @@ configuration — it is not consumed by any code and duplicates protocol already
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Remove userInputProtocol:** Delete the `userInputProtocol` key and its value from `.claude/cat/cat-config.json`
 2. **Verify no references:** Grep codebase for `userInputProtocol` to confirm no code depends on it
+
 
 ## Post-conditions
 - [ ] `userInputProtocol` does not appear in `cat-config.json`

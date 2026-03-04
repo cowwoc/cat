@@ -38,7 +38,9 @@ None
 ## Files to Create
 - `hooks/src/test/java/.../test/EnforceJvmScopeEnvAccessTest.java` - Test that scans source for System.getenv outside MainJvmScope
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. Add `getClaudeSessionId()` and `getClaudeEnvFile()` to `JvmScope` interface
 2. Add `getTerminalType()` to `JvmScope` interface (wraps TerminalType detection)
 3. Implement new accessors in `MainJvmScope` with `ConcurrentLazyReference`
@@ -47,6 +49,7 @@ None
 6. For `main()` entry points (MergeAndCleanup, RunGetStatusOutput), create `MainJvmScope` at entry and pass through
 7. Create `EnforceJvmScopeEnvAccessTest` that scans all `.java` source files for `System.getenv` and fails if found outside `MainJvmScope.java`
 8. Run `mvn -f hooks/pom.xml test` to verify all tests pass
+
 
 ## Post-conditions
 - [ ] No Java file except `MainJvmScope.java` contains `System.getenv()`

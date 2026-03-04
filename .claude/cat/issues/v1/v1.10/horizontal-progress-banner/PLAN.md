@@ -172,7 +172,9 @@ Implementation should choose one that renders well across terminals.
 - [ ] Final success shows `✓` in header
 - [ ] Final failure shows `✗` in header
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Update work-progress.sh to render horizontal layout
    - Files: plugin/scripts/work-progress.sh
    - Verify: Script outputs horizontal format when invoked

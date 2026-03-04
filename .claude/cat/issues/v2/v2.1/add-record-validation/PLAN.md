@@ -34,7 +34,9 @@ None
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/util/SubagentMonitor.java` - `TokenCounts(int tokens, int compactions)`: add compact constructor (primitives only, validate non-negative)
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/EnforceStatusOutput.java` - `CheckResult(boolean statusInvoked, boolean hasBoxOutput)`: add compact constructor (booleans only, no validation needed but add Javadoc)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **For each record with empty compact constructor**, replace the comment body with `assert that()` validation:
    - String parameters: `assert that(param, "param").isNotBlank().elseThrow()`
@@ -43,6 +45,7 @@ None
 2. **For records missing compact constructors**, add a compact constructor with Javadoc and validation
 3. **For CheckResult** (boolean-only record): add compact constructor with Javadoc only (no validation needed for primitives with no constraints)
 4. **Run `mvn -f hooks/pom.xml verify`** to confirm all tests pass
+
 
 ## Post-conditions
 

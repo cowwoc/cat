@@ -40,7 +40,9 @@ The flexible-version-schema task focused on infrastructure (parsing) but skipped
 - [ ] Status command displays patch versions
 - [ ] README.md documents flexible MAJOR[.MINOR[.PATCH]] versioning
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Add "Patch version" option to add.md select_type**
    - Add option: "Patch version" - Add a patch version to an existing minor
    - Verify: grep shows 4 options (Task, Minor, Major, Patch)

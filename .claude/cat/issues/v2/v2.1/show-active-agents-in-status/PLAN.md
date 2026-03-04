@@ -22,7 +22,9 @@ None - UI enhancement
 - [ ] Documentation updated
 - [ ] No regressions
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Research how active sessions are tracked
    - Files: .worktrees/, lock files, cat-config.json
    - Verify: Identify mechanism for detecting active work

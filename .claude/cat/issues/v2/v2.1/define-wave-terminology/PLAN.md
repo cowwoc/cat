@@ -59,7 +59,9 @@ None - terminology and documentation
 - [ ] delegate/SKILL.md contains formal wave definition and respects wave ordering
 - [ ] All tests pass
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Add terminology definitions section to README.md
    - Files: README.md
    - Define issue, sub-issue, wave with wave matching migrate-python-to-java's usage

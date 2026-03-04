@@ -31,7 +31,9 @@ None (infrastructure/tech debt)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Read `load-skill.sh` and document the full preprocessor pipeline
    - Files: `plugin/scripts/load-skill.sh`
 2. **Step 2:** Write Java implementation for load-skill preprocessor
@@ -54,6 +56,7 @@ None (infrastructure/tech debt)
     - Files: `plugin/skills/delegate/first-use.md`, `plugin/skills/feedback/first-use.md`
 11. **Step 11:** Remove the original bash scripts
 12. **Step 12:** Run full test suite to verify no regressions
+
 
 ## Post-conditions
 - [ ] User-visible behavior unchanged

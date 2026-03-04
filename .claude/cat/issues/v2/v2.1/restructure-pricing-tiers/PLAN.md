@@ -32,7 +32,9 @@ None - strategic pricing restructure
 - [ ] No remaining references to "Indie" tier
 - [ ] Free tier defined as closed feature set, not persona-based
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Update tiers.json:** Rename indie→core, add pro tier with features moved from indie and new team features, keep enterprise unchanged
 2. **Update PRICING-STRATEGY.md:** Rewrite tier overview table, feature breakdown tables, support obligations, target market sections. Add 14-day Pro trial strategy. Remove all "full individual productivity" and "solo developer" scoping language.
 3. **Update PRICING.md:** Rewrite tier sections (Core/Pro/Enterprise), update feature tables, FAQ, messaging

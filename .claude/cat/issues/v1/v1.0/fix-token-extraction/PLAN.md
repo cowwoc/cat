@@ -54,7 +54,9 @@ data properly from the session file. The workflow should reference these skills 
 - [ ] Formal "Subagent Execution Report" format is presented
 - [ ] Pre-execution estimates are NOT used when actual metrics are available
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Update work.md M146 section**
    - Replace "extract from summary line" with "invoke `/cat:token-report`"

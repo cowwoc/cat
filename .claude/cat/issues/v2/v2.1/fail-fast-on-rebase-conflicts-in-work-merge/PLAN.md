@@ -38,7 +38,9 @@ them manually.
 
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Modify Step 4 in work-merge/first-use.md:**
 
@@ -72,6 +74,7 @@ them manually.
 
 4. **Run all tests including E2E:** `mvn -f client/pom.xml test` — all tests including the new E2E
    test must pass.
+
 
 ## Post-conditions
 

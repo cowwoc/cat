@@ -43,7 +43,9 @@ None (tech debt / compliance fix)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Update `GetConfigOutput.java` to accept an optional `page` argument and return only
    the box for that page. When no page is specified (or page is unrecognized), return all boxes
    for backward compatibility during development.
@@ -66,6 +68,7 @@ None (tech debt / compliance fix)
 
 5. **Step 5:** Run empirical test to verify `/cat:config` wizard compliance ≥95% (must use
    AskUserQuestion, not summarize conversationally).
+
 
 ## Post-conditions
 - [ ] `/cat:config` SKILL.md has no `<output>` preprocessor directive

@@ -15,7 +15,9 @@ None - workflow improvement
 ## Files to Modify
 - plugin/skills/add.md - Main /cat:add skill definition
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Add clarifying questions for vague requirements
    - Files: plugin/skills/add.md
    - Verify: Wizard asks follow-up questions when description is vague
@@ -35,6 +37,7 @@ None - workflow improvement
 5. **Step 5:** Generate more comprehensive PLAN.md from gathered info
    - Files: plugin/skills/add.md
    - Verify: Created PLAN.md includes research findings
+
 
 ## Post-conditions
 - [ ] /cat:add asks clarifying questions for vague requirements

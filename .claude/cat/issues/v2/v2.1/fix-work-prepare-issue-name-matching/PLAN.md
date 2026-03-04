@@ -39,7 +39,9 @@ names fall through to the else branch which treats them as filter patterns (or i
 - [ ] Unrecognized arguments produce a warning instead of silent fallthrough
 - [ ] When a bare name matches multiple versions, the script selects from the current branch's version
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. Update the argument regex in `plugin/skills/work/SKILL.md` to match bare issue names
 2. Update `get-available-issues.sh` to accept bare issue names and resolve them to full issue IDs
 3. Add a fallback warning when no pattern matches

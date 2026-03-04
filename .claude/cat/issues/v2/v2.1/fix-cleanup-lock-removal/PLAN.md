@@ -47,7 +47,9 @@ The `BlockLockManipulation` hook error message does not include information abou
 - [ ] Test suite passes with exit code 0
 - [ ] No regressions in existing BlockLockManipulation blocking behavior
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Update BlockLockManipulation.java error messages:** In the first `Result.block()` call (LOCK_FILE_PATTERN match), add a section about the authorized alternative for skill-internal use. In the second `Result.block()` call (LOCKS_DIR_PATTERN match), add the same reference.
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/bash/BlockLockManipulation.java`

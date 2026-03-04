@@ -30,7 +30,9 @@ tags — both of which affect agent behavior. Without these, compliance tests gi
 - [ ] Existing tests still pass
 - [ ] New unit tests cover: system_prompt passed to CLI, system_reminders injected into messages, both combined
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Add system_prompt support to EmpiricalTestRunner:** Read `system_prompt` from config, append
    `--append-system-prompt` flag to the claude CLI command when present.
    - Files: `EmpiricalTestRunner.java`

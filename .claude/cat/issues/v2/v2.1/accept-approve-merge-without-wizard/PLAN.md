@@ -26,7 +26,9 @@ None (usability improvement)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Update EnforceApprovalBeforeMerge.java** to accept direct user approval messages:
    - Add a `checkDirectApprovalMessage()` method that scans recent user messages for phrases like
      "approve and merge", "approve merge", or "approved"
@@ -46,6 +48,7 @@ None (usability improvement)
    - Test that "approve" alone without "merge" is not accepted
    - Test that approval keywords in non-user messages (assistant, system) are not accepted
    - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/EnforceApprovalBeforeMergeTest.java`
+
 
 ## Post-conditions
 - [ ] `EnforceApprovalBeforeMerge` accepts direct user messages containing "approve and merge"

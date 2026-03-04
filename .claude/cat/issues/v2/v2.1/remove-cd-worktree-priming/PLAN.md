@@ -34,7 +34,9 @@ Documentation-level prevention is the only effective approach for subagent behav
 - [ ] Non-git commands that needed cwd use explicit path arguments instead of cd
 - [ ] All existing tests pass
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Replace all `cd "${WORKTREE}"` in collect-results/content.md with `git -C "${WORKTREE}"` equivalents
    - Files: `plugin/skills/collect-results/content.md`
 2. **Step 2:** Replace recovery `cd` in merge-and-cleanup.md with `git -C` pattern

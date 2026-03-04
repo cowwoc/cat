@@ -42,7 +42,9 @@ on sub-issues instead.
 - [ ] Sub-issues are discovered when their dependencies are satisfied
 - [ ] No regressions in existing task discovery behavior
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Add decomposed parent check in find_issue_in_minor():**
    - After status check, before dependency check
    - Check if STATE.md contains `## Decomposed Into`

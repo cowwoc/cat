@@ -22,12 +22,15 @@ None (first in sequence)
 - plugin/scripts/monitor-subagents.sh (if references task-lock.sh)
 - plugin/scripts/merge-and-cleanup.sh (if references task-lock.sh)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. Rename find-task.sh to get-available-issues.sh
 2. Update internal references (variables, comments) in get-available-issues.sh
 3. Rename task-lock.sh to issue-lock.sh
 4. Update internal references in issue-lock.sh
 5. Update any other scripts referencing old filenames
+
 
 ## Post-conditions
 - [ ] Scripts renamed successfully

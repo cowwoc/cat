@@ -63,7 +63,9 @@ lock and protect the worktree.
 
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Step 1 (TDD - write failing tests first):** Add test methods to `IssueLockTest.java`:
 
@@ -93,6 +95,7 @@ lock and protect the worktree.
    mvn -f client/pom.xml test
    ```
    All tests must pass (exit code 0). Both new tests should now pass (green).
+
 
 ## Post-conditions
 

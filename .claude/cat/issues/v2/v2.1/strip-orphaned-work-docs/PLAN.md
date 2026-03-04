@@ -30,7 +30,9 @@ None (infrastructure cleanup)
 - [ ] deviation-rules.md contains only Deviation Rules and Plan Change Checkpoint
 - [ ] No grep hits for removed section headers in active skill files
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Edit `plugin/skills/work/anti-patterns.md` - remove Background Task Behavior section (lines 9-24), Config settings list (lines 66-70), entire Anti-Pattern Index section (lines 94-166). Update title/header to reflect remaining content (Main Agent Boundaries).
    - Files: `plugin/skills/work/anti-patterns.md`
 2. **Step 2:** Edit `plugin/skills/work/commit-rules.md` - remove Per-Step Commits section (lines 11-25), keep only Enhanced Commit Message Format section and example.

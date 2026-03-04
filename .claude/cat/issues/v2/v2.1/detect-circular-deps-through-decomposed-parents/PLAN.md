@@ -75,7 +75,9 @@ A→B→(implicit sub-issue C)→A is never detected.
 
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Step 1:** Write failing tests for cycle detection through decomposed parents
    - Files: `WorkPrepareTest.java`
@@ -84,6 +86,7 @@ A→B→(implicit sub-issue C)→A is never detected.
    - Files: `WorkPrepare.java`
 3. **Step 3:** Run all tests to verify fix and no regressions
 4. **Step 4:** Rebuild jlink bundle and verify work-prepare output includes circular_dependencies
+
 
 ## Post-conditions
 

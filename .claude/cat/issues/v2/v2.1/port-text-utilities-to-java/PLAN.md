@@ -34,7 +34,9 @@ Parent: port-utility-scripts
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/module-info.java` - If needed
 - `plugin/scripts/get-render-diff.sh` - Update to call Java instead of Python
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. Read wrap-markdown.py to understand preservation rules and wrapping logic
 2. Create `MarkdownWrapper` class implementing wrapping with all preservation rules
 3. Read validate-status-alignment.sh to understand consistency checks
@@ -42,6 +44,7 @@ Parent: port-utility-scripts
 5. Update get-render-diff.sh to invoke Java GetRenderDiffOutput instead of Python
 6. Write tests for MarkdownWrapper and StatusAlignmentValidator
 7. Run `mvn verify` to confirm all tests pass
+
 
 ## Post-conditions
 - [ ] wrap-markdown.py fully replaced by MarkdownWrapper.java

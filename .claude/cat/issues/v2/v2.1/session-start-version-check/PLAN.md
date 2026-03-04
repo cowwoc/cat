@@ -31,7 +31,9 @@ None - infrastructure sub-issue of add-java-build-to-ci
 - [ ] Downloaded bundle passes functionality check
 - [ ] API failures produce clear warning without blocking session
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Add version reading logic to session_start.sh**
    - Files: `plugin/hooks/session_start.sh`
    - Read plugin version: `jq -r .version "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json"`

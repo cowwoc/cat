@@ -27,7 +27,9 @@ None - context optimization
 ## Files to Modify
 - `plugin/skills/add/SKILL.md` - Add continuation prompt in task_done step
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Read the task_done step in `plugin/skills/add/SKILL.md`
 2. **Step 2:** After the render-add-complete.sh output, add an AskUserQuestion:
    - header: "Continue?"
@@ -37,6 +39,7 @@ None - context optimization
    from the current invocation is preserved in conversation memory.
 4. **Step 4:** If "No", display the existing completion message and end normally.
 5. **Step 5:** Run `python3 /workspace/run_tests.py` to verify no regressions
+
 
 ## Post-conditions
 - [ ] After creating an issue, user is offered option to create another without re-invoking the skill
