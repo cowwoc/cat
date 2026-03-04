@@ -61,6 +61,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - split-width-config-options
 - fix-worktree-path-suggestion
 - adopt-skill-creator-eval-framework
+- enhance-empirical-test-agent
 
 
 ## Issues Completed
