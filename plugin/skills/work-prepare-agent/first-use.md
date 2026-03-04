@@ -183,12 +183,15 @@ When a worktree exists for the target issue but no lock file is present:
 1. **Check merge status first.** Determine whether the branch's commits are already merged into base:
 
    ```bash
+   # git -C is intentional: no worktree exists yet, so we operate from the project root.
    UNMERGED=$(git -C "${CLAUDE_PROJECT_DIR}" log --oneline "${TARGET_BRANCH}..${ISSUE_BRANCH}" 2>/dev/null)
    ```
 
 2. **If already merged** (`UNMERGED` is empty): The work was completed in a prior session and merged. Clean up:
 
    ```bash
+   # git -C is intentional: worktree removal and branch deletion must run from the project root,
+   # not from inside the worktree being removed.
    git -C "${CLAUDE_PROJECT_DIR}" worktree remove "${WORKTREE_PATH}" --force
    git -C "${CLAUDE_PROJECT_DIR}" branch -D "${ISSUE_BRANCH}" 2>/dev/null || true
    ```
@@ -294,7 +297,8 @@ printf '%s' "$FORK_COMMIT" > "$(git rev-parse --git-common-dir)/worktrees/${ISSU
 **MANDATORY: Verify the worktree is on the correct branch before proceeding.**
 
 ```bash
-ACTUAL_BRANCH=$(git -C "${WORKTREE_PATH}" branch --show-current)
+cd "${WORKTREE_PATH}"
+ACTUAL_BRANCH=$(git branch --show-current)
 
 if [[ "$ACTUAL_BRANCH" != "$ISSUE_BRANCH" ]]; then
   echo "ERROR: Worktree created on wrong branch. Expected: $ISSUE_BRANCH, Got: $ACTUAL_BRANCH"
@@ -349,6 +353,8 @@ Two complementary strategies are used to detect suspicious commits:
 **Strategy 1 — message search:** Find commits whose message contains the issue name.
 
 ```bash
+# git -C is intentional: querying commit history on the target branch in the main repo,
+# not inside an issue worktree.
 ISSUE_COMMITS=$(git -C "${CLAUDE_PROJECT_DIR}" log --oneline \
   --grep="${ISSUE_NAME}" "${TARGET_BRANCH}" -5 2>/dev/null)
 ```
@@ -360,6 +366,7 @@ use descriptive language instead of referencing the issue name.
 ```bash
 # Extract planned files from PLAN.md backtick-quoted paths in file list sections
 # Check last 20 commits on base for file overlap
+# git -C is intentional: querying the target branch commit history in the main repo.
 git -C "${CLAUDE_PROJECT_DIR}" log --oneline "${TARGET_BRANCH}" -20 | while read -r hash msg; do
   git -C "${CLAUDE_PROJECT_DIR}" diff-tree --no-commit-id -r --name-only "$hash" | \
     while read -r changed_file; do
