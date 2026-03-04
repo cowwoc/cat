@@ -62,6 +62,8 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-worktree-path-suggestion
 - adopt-skill-creator-eval-framework
 - enhance-empirical-test-agent
+- enhance-compare-docs-grading
+- enhance-shrink-doc-iteration
 
 
 ## Issues Completed
