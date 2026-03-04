@@ -1031,6 +1031,107 @@ public class ConfigTest
     }
   }
 
+
+  /**
+   * Verifies that getEffectiveConfig returns JSON with all defaults when no config file exists.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getEffectiveConfigReturnsAllDefaults() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetConfigOutput handler = new GetConfigOutput(scope);
+      String result = handler.getEffectiveConfig(tempDir);
+
+      requireThat(result, "result").isNotNull();
+      JsonMapper mapper = scope.getJsonMapper();
+      Map<String, Object> parsed = mapper.readValue(result,
+        new tools.jackson.core.type.TypeReference<>()
+        {
+        });
+      requireThat(parsed.get("trust"), "trust").isEqualTo("medium");
+      requireThat(parsed.get("verify"), "verify").isEqualTo("changed");
+      requireThat(parsed.get("effort"), "effort").isEqualTo("medium");
+      requireThat(parsed.get("patience"), "patience").isEqualTo("high");
+      requireThat(parsed.get("fileWidth"), "fileWidth").isEqualTo(120);
+      requireThat(parsed.get("displayWidth"), "displayWidth").isEqualTo(120);
+      requireThat(parsed.get("completionWorkflow"), "completionWorkflow").isEqualTo("merge");
+      requireThat(parsed.get("minSeverity"), "minSeverity").isEqualTo("low");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getEffectiveConfig merges file values with defaults for missing keys.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getEffectiveConfigMergesFileWithDefaults() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), """
+        {
+          "trust": "high",
+          "verify": "all"
+        }
+        """);
+
+      GetConfigOutput handler = new GetConfigOutput(scope);
+      String result = handler.getEffectiveConfig(tempDir);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      Map<String, Object> parsed = mapper.readValue(result,
+        new tools.jackson.core.type.TypeReference<>()
+        {
+        });
+      // Overridden values
+      requireThat(parsed.get("trust"), "trust").isEqualTo("high");
+      requireThat(parsed.get("verify"), "verify").isEqualTo("all");
+      // Defaults for missing keys
+      requireThat(parsed.get("effort"), "effort").isEqualTo("medium");
+      requireThat(parsed.get("patience"), "patience").isEqualTo("high");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getOutput with "effective" page returns valid JSON config.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getOutputEffectiveReturnsJson() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetConfigOutput handler = new GetConfigOutput(scope);
+      String result = handler.getOutput(new String[]{"effective"});
+
+      requireThat(result, "result").isNotNull();
+      requireThat(result, "result").contains("trust");
+      requireThat(result, "result").contains("verify");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
   /**
    * Creates a temporary directory for test isolation.
    *
