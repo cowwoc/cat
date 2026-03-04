@@ -153,7 +153,7 @@ public final class GetRetrospectiveOutputTest
   }
 
   /**
-   * Verifies that time-based trigger produces analysis.
+   * Verifies that time-based trigger produces a display box with analysis.
    */
   @Test
   public void timeBasedTrigger() throws IOException
@@ -188,9 +188,10 @@ public final class GetRetrospectiveOutputTest
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").startsWith("RETROSPECTIVE ANALYSIS:");
+      requireThat(output, "output").contains("╭");
+      requireThat(output, "output").contains("RETROSPECTIVE ANALYSIS");
       requireThat(output, "output").contains("Trigger: 8 days since last retrospective (threshold: 7)");
-      requireThat(output, "output").contains("Period analyzed:");
+      requireThat(output, "output").contains("Period:");
       requireThat(output, "output").contains("Mistakes analyzed: 0");
     }
     finally
@@ -200,7 +201,7 @@ public final class GetRetrospectiveOutputTest
   }
 
   /**
-   * Verifies that count-based trigger produces analysis.
+   * Verifies that count-based trigger produces a display box with analysis.
    */
   @Test
   public void countBasedTrigger() throws IOException
@@ -235,7 +236,8 @@ public final class GetRetrospectiveOutputTest
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").startsWith("RETROSPECTIVE ANALYSIS:");
+      requireThat(output, "output").contains("╭");
+      requireThat(output, "output").contains("RETROSPECTIVE ANALYSIS");
       requireThat(output, "output").contains("Trigger: 12 mistakes accumulated (threshold: 10)");
       requireThat(output, "output").contains("Mistakes analyzed: 0");
     }
@@ -297,7 +299,8 @@ public final class GetRetrospectiveOutputTest
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").startsWith("RETROSPECTIVE ANALYSIS:");
+      requireThat(output, "output").contains("╭");
+      requireThat(output, "output").contains("RETROSPECTIVE ANALYSIS");
       requireThat(output, "output").contains("Trigger: First retrospective with 1 logged mistakes");
     }
     finally
@@ -307,7 +310,7 @@ public final class GetRetrospectiveOutputTest
   }
 
   /**
-   * Verifies effectiveness reporting from index.json.
+   * Verifies effectiveness reporting from index.json appears in a display box.
    */
   @Test
   public void effectivenessReporting() throws IOException
@@ -361,7 +364,7 @@ public final class GetRetrospectiveOutputTest
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").contains("Action item effectiveness:");
+      requireThat(output, "output").contains("Action Item Effectiveness:");
       requireThat(output, "output").contains("A001: effective");
       requireThat(output, "output").contains("A002: ineffective");
     }
@@ -372,7 +375,7 @@ public final class GetRetrospectiveOutputTest
   }
 
   /**
-   * Verifies pattern status with empty patterns array.
+   * Verifies pattern status with empty patterns array appears in a display box.
    */
   @Test
   public void emptyPatternsArray() throws IOException
@@ -407,7 +410,7 @@ public final class GetRetrospectiveOutputTest
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").contains("Pattern status:");
+      requireThat(output, "output").contains("Pattern Status:");
       requireThat(output, "output").contains("(no patterns)");
     }
     finally
@@ -417,7 +420,7 @@ public final class GetRetrospectiveOutputTest
   }
 
   /**
-   * Verifies open action items with empty action_items array.
+   * Verifies open action items with empty action_items array appears in a display box.
    */
   @Test
   public void emptyActionItemsArray() throws IOException
@@ -452,8 +455,8 @@ public final class GetRetrospectiveOutputTest
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").contains("Open action items:");
-      requireThat(output, "output").contains("(no action items)");
+      requireThat(output, "output").contains("Open Action Items:");
+      requireThat(output, "output").contains("(no open action items)");
     }
     finally
     {
@@ -683,7 +686,7 @@ public final class GetRetrospectiveOutputTest
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").contains("Open action items:");
+      requireThat(output, "output").contains("Open Action Items:");
       requireThat(output, "output").doesNotContain("A005");
 
       // Verify ordering: high items first, then medium, then low
@@ -706,7 +709,7 @@ public final class GetRetrospectiveOutputTest
   }
 
   /**
-   * Verifies category breakdown with mistakes.
+   * Verifies category breakdown with mistakes appears in a display box.
    */
   @Test
   public void categoryBreakdownWithMistakes() throws IOException
@@ -773,7 +776,7 @@ public final class GetRetrospectiveOutputTest
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").contains("Category breakdown:");
+      requireThat(output, "output").contains("Category Breakdown:");
       requireThat(output, "output").contains("protocol_violation: 2");
       requireThat(output, "output").contains("test_failure: 1");
     }
@@ -843,7 +846,8 @@ public final class GetRetrospectiveOutputTest
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").startsWith("RETROSPECTIVE ANALYSIS:");
+      requireThat(output, "output").contains("╭");
+      requireThat(output, "output").contains("RETROSPECTIVE ANALYSIS");
       requireThat(output, "output").contains("Mistakes analyzed: 1");
       requireThat(output, "output").contains("valid_category: 1");
       requireThat(output, "output").doesNotContain("bad_timestamp");
@@ -1188,7 +1192,8 @@ public final class GetRetrospectiveOutputTest
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").startsWith("RETROSPECTIVE ANALYSIS:");
+      requireThat(output, "output").contains("╭");
+      requireThat(output, "output").contains("RETROSPECTIVE ANALYSIS");
       requireThat(output, "output").contains("First retrospective with 1 logged mistakes");
     }
     finally

@@ -97,27 +97,16 @@ public final class GetRetrospectiveOutput implements SkillOutput
 
     int triggerDays = DEFAULT_TRIGGER_DAYS;
     int mistakeThreshold = DEFAULT_MISTAKE_THRESHOLD;
-    String lastRetro = "";
-    int mistakeCount = 0;
 
     JsonNode config = root.get("config");
     if (config != null)
     {
-      JsonNode triggerNode = config.get("trigger_interval_days");
-      if (triggerNode != null && triggerNode.isNumber())
-        triggerDays = triggerNode.asInt();
-      JsonNode thresholdNode = config.get("mistake_count_threshold");
-      if (thresholdNode != null && thresholdNode.isNumber())
-        mistakeThreshold = thresholdNode.asInt();
+      triggerDays = extractInt(config, "trigger_interval_days", DEFAULT_TRIGGER_DAYS);
+      mistakeThreshold = extractInt(config, "mistake_count_threshold", DEFAULT_MISTAKE_THRESHOLD);
     }
 
-    JsonNode lastRetroNode = root.get("last_retrospective");
-    if (lastRetroNode != null && lastRetroNode.isString())
-      lastRetro = lastRetroNode.asString();
-
-    JsonNode mistakeCountNode = root.get("mistake_count_since_last");
-    if (mistakeCountNode != null && mistakeCountNode.isNumber())
-      mistakeCount = mistakeCountNode.asInt();
+    String lastRetro = extractString(root, "last_retrospective", "");
+    int mistakeCount = extractInt(root, "mistake_count_since_last", 0);
 
     String triggerReason = checkTrigger(lastRetro, mistakeCount, triggerDays, mistakeThreshold,
       retroDir, mapper);
@@ -175,14 +164,14 @@ public final class GetRetrospectiveOutput implements SkillOutput
   }
 
   /**
-   * Generates the full retrospective analysis output.
+   * Generates the full retrospective analysis output as a display box.
    *
    * @param retroDir the retrospectives directory
    * @param index the index.json root node
    * @param lastRetro the last retrospective timestamp
    * @param triggerReason the reason for triggering
    * @param mapper the JSON mapper
-   * @return the analysis output
+   * @return the analysis output rendered as a display box
    * @throws IOException if an I/O error occurs
    */
   private String generateAnalysis(Path retroDir, JsonNode index, String lastRetro, String triggerReason,
@@ -194,24 +183,45 @@ public final class GetRetrospectiveOutput implements SkillOutput
     else
       lastRetroTime = Instant.parse(lastRetro);
 
-    Instant now = Instant.now();
-    String periodAnalyzed;
-    if (lastRetroTime.equals(Instant.EPOCH))
-      periodAnalyzed = "Beginning to " + now;
-    else
-      periodAnalyzed = lastRetro + " to " + now;
+    String period = formatPeriod(lastRetroTime);
 
     List<JsonNode> mistakes = loadMistakesSince(retroDir, index, lastRetroTime, mapper);
     int mistakesAnalyzed = mistakes.size();
 
-    return "RETROSPECTIVE ANALYSIS:\n\n" +
-      "Trigger: " + triggerReason + "\n" +
-      "Period analyzed: " + periodAnalyzed + "\n" +
-      "Mistakes analyzed: " + mistakesAnalyzed + "\n\n" +
-      "Category breakdown:\n" + generateCategoryBreakdown(mistakes) + "\n" +
-      "Action item effectiveness:\n" + generateEffectivenessReport(index) + "\n" +
-      "Pattern status:\n" + generatePatternStatus(index) + "\n" +
-      "Open action items:\n" + generateOpenActionItems(index);
+    DisplayUtils display = scope.getDisplayUtils();
+
+    List<String> contentLines = new ArrayList<>();
+
+    // Subtitle rows: trigger, period, mistakes analyzed
+    contentLines.add("Trigger: " + triggerReason);
+    contentLines.add("Period: " + period);
+    contentLines.add("Mistakes analyzed: " + mistakesAnalyzed);
+
+    // Category Breakdown section
+    contentLines.add("");
+    contentLines.add("Category Breakdown:");
+    for (String line : generateCategoryBreakdownLines(mistakes))
+      contentLines.add("  " + line);
+
+    // Action Item Effectiveness section
+    contentLines.add("");
+    contentLines.add("Action Item Effectiveness:");
+    for (String line : generateEffectivenessLines(index))
+      contentLines.add("  " + line);
+
+    // Pattern Status section
+    contentLines.add("");
+    contentLines.add("Pattern Status:");
+    for (String line : generatePatternStatusLines(index))
+      contentLines.add("  " + line);
+
+    // Open Action Items section
+    contentLines.add("");
+    contentLines.add("Open Action Items:");
+    for (String line : generateOpenActionItemLines(index))
+      contentLines.add("  " + line);
+
+    return display.buildHeaderBox("RETROSPECTIVE ANALYSIS", contentLines);
   }
 
   /**
@@ -279,143 +289,115 @@ public final class GetRetrospectiveOutput implements SkillOutput
   }
 
   /**
-   * Generates category breakdown from mistakes.
+   * Generates category breakdown lines from mistakes.
    *
    * @param mistakes the list of mistake nodes
-   * @return the category breakdown string
+   * @return the category breakdown lines
    */
-  private String generateCategoryBreakdown(List<JsonNode> mistakes)
+  private List<String> generateCategoryBreakdownLines(List<JsonNode> mistakes)
   {
     if (mistakes.isEmpty())
-      return "(no mistakes in period)\n";
+      return List.of("(no mistakes in period)");
 
     Map<String, Integer> categoryCount = new HashMap<>();
     for (JsonNode mistake : mistakes)
     {
-      JsonNode categoryNode = mistake.get("category");
-      if (categoryNode != null && categoryNode.isString())
-      {
-        String category = categoryNode.asString();
+      String category = extractString(mistake, "category", "");
+      if (!category.isEmpty())
         categoryCount.put(category, categoryCount.getOrDefault(category, 0) + 1);
-      }
     }
 
     List<String> categories = new ArrayList<>(categoryCount.keySet());
     categories.sort(String::compareTo);
-    StringBuilder sb = new StringBuilder();
+    List<String> lines = new ArrayList<>();
     for (String category : categories)
-      sb.append("%s: %d\n".formatted(category, categoryCount.get(category)));
+      lines.add("%s: %d".formatted(category, categoryCount.get(category)));
 
-    return sb.toString();
+    return lines;
   }
 
   /**
-   * Generates action item effectiveness report.
+   * Generates action item effectiveness report lines.
    *
    * @param index the index.json root node
-   * @return the effectiveness report string
+   * @return the effectiveness report lines
    */
-  private String generateEffectivenessReport(JsonNode index)
+  private List<String> generateEffectivenessLines(JsonNode index)
   {
     JsonNode actionItems = index.get("action_items");
     if (actionItems == null || !actionItems.isArray() || actionItems.isEmpty())
-      return "(no action items)\n";
+      return List.of("(no action items)");
 
-    StringBuilder sb = new StringBuilder();
+    List<String> lines = new ArrayList<>();
     for (JsonNode item : actionItems)
     {
-      JsonNode idNode = item.get("id");
-      if (idNode == null || !idNode.isString())
+      String id = extractString(item, "id", "");
+      if (id.isEmpty())
         continue;
 
-      String id = idNode.asString();
       JsonNode effectivenessCheck = item.get("effectiveness_check");
       if (effectivenessCheck == null)
         continue;
 
-      JsonNode verdictNode = effectivenessCheck.get("verdict");
-      if (verdictNode != null && verdictNode.isString())
-      {
-        String verdict = verdictNode.asString();
-        sb.append("%s: %s\n".formatted(id, verdict));
-      }
+      String verdict = extractString(effectivenessCheck, "verdict", "");
+      if (!verdict.isEmpty())
+        lines.add("%s: %s".formatted(id, verdict));
     }
 
-    if (sb.length() == 0)
-      return "(no effectiveness checks)\n";
-    return sb.toString();
+    if (lines.isEmpty())
+      return List.of("(no effectiveness checks)");
+    return lines;
   }
 
   /**
-   * Generates pattern status summary.
+   * Generates pattern status summary lines.
    *
    * @param index the index.json root node
-   * @return the pattern status string
+   * @return the pattern status lines
    */
-  private String generatePatternStatus(JsonNode index)
+  private List<String> generatePatternStatusLines(JsonNode index)
   {
     JsonNode patterns = index.get("patterns");
     if (patterns == null || !patterns.isArray() || patterns.isEmpty())
-      return "(no patterns)\n";
+      return List.of("(no patterns)");
 
-    StringBuilder sb = new StringBuilder(64);
+    List<String> lines = new ArrayList<>();
     for (JsonNode pattern : patterns)
     {
-      JsonNode statusNode = pattern.get("status");
-      if (statusNode == null || !statusNode.isString())
+      String status = extractString(pattern, "status", "");
+      if (status.isEmpty() || status.equals("addressed"))
         continue;
 
-      String status = statusNode.asString();
-      if (status.equals("addressed"))
+      String id = extractString(pattern, "pattern_id", "");
+      if (id.isEmpty())
         continue;
 
-      JsonNode idNode = pattern.get("pattern_id");
-      JsonNode occurrencesTotalNode = pattern.get("occurrences_total");
-      JsonNode occurrencesAfterNode = pattern.get("occurrences_after_fix");
-
-      if (idNode != null && idNode.isString())
-      {
-        String id = idNode.asString();
-        int total;
-        if (occurrencesTotalNode != null && occurrencesTotalNode.isNumber())
-          total = occurrencesTotalNode.asInt();
-        else
-          total = 0;
-        int after;
-        if (occurrencesAfterNode != null && occurrencesAfterNode.isNumber())
-          after = occurrencesAfterNode.asInt();
-        else
-          after = 0;
-
-        sb.append("%s: %s (occurrences: %d/%d)\n".formatted(id, status, total, after));
-      }
+      int total = extractInt(pattern, "occurrences_total", 0);
+      int after = extractInt(pattern, "occurrences_after_fix", 0);
+      lines.add("%s: %s (occurrences: %d/%d)".formatted(id, status, total, after));
     }
 
-    if (sb.length() == 0)
-      return "(all patterns addressed)\n";
-    return sb.toString();
+    if (lines.isEmpty())
+      return List.of("(all patterns addressed)");
+    return lines;
   }
 
   /**
-   * Generates open action items list.
+   * Generates open action item lines.
    *
    * @param index the index.json root node
-   * @return the open action items string
+   * @return the open action item lines
    */
-  private String generateOpenActionItems(JsonNode index)
+  private List<String> generateOpenActionItemLines(JsonNode index)
   {
     JsonNode actionItems = index.get("action_items");
     if (actionItems == null || !actionItems.isArray() || actionItems.isEmpty())
-      return "(no action items)\n";
+      return List.of("(no open action items)");
 
     List<ActionItemSummary> openItems = new ArrayList<>();
     for (JsonNode item : actionItems)
     {
-      JsonNode statusNode = item.get("status");
-      if (statusNode == null || !statusNode.isString())
-        continue;
-
-      String status = statusNode.asString();
+      String status = extractString(item, "status", "");
       if (!status.equals("open") && !status.equals("escalated"))
         continue;
 
@@ -425,7 +407,7 @@ public final class GetRetrospectiveOutput implements SkillOutput
     }
 
     if (openItems.isEmpty())
-      return "(no open action items)\n";
+      return List.of("(no open action items)");
 
     openItems.sort((a, b) ->
     {
@@ -435,14 +417,12 @@ public final class GetRetrospectiveOutput implements SkillOutput
       return a.id().compareTo(b.id());
     });
 
-    StringBuilder sb = new StringBuilder(128);
+    List<String> lines = new ArrayList<>();
     for (ActionItemSummary item : openItems)
-    {
-      sb.append("%s (%s): %s\n".formatted(item.id(),
+      lines.add("%s (%s): %s".formatted(item.id(),
         item.priority().name().toLowerCase(Locale.ROOT), item.description()));
-    }
 
-    return sb.toString();
+    return lines;
   }
 
   /**
@@ -453,17 +433,11 @@ public final class GetRetrospectiveOutput implements SkillOutput
    */
   private ActionItemSummary parseActionItem(JsonNode item)
   {
-    JsonNode idNode = item.get("id");
-    if (idNode == null || !idNode.isString())
+    String id = extractString(item, "id", "");
+    if (id.isEmpty())
       return null;
 
-    String id = idNode.asString();
-    JsonNode priorityNode = item.get("priority");
-    String priorityText;
-    if (priorityNode != null && priorityNode.isString())
-      priorityText = priorityNode.asString();
-    else
-      priorityText = "medium";
+    String priorityText = extractString(item, "priority", "medium");
     Priority priority;
     try
     {
@@ -474,13 +448,7 @@ public final class GetRetrospectiveOutput implements SkillOutput
       priority = Priority.MEDIUM;
     }
 
-    JsonNode descNode = item.get("description");
-    String description;
-    if (descNode != null && descNode.isString())
-      description = descNode.asString();
-    else
-      description = "";
-
+    String description = extractString(item, "description", "");
     return new ActionItemSummary(id, priority, description);
   }
 
@@ -519,6 +487,52 @@ public final class GetRetrospectiveOutput implements SkillOutput
     Instant lastDate = Instant.parse(dateString);
     Instant now = Instant.now();
     return ChronoUnit.DAYS.between(lastDate, now);
+  }
+
+  /**
+   * Formats the retrospective period as a human-readable string.
+   *
+   * @param lastRetroTime the time of the last retrospective, or {@link Instant#EPOCH} if none
+   * @return the formatted period string
+   */
+  private static String formatPeriod(Instant lastRetroTime)
+  {
+    Instant now = Instant.now();
+    if (lastRetroTime.equals(Instant.EPOCH))
+      return "Beginning to " + now;
+    return lastRetroTime + " to " + now;
+  }
+
+  /**
+   * Extracts a string field from a JSON node, returning a default value if absent or not a string.
+   *
+   * @param node the JSON object node to read from
+   * @param key the field name to extract
+   * @param defaultValue the value to return when the field is absent or not a string
+   * @return the string value, or {@code defaultValue}
+   */
+  private static String extractString(JsonNode node, String key, String defaultValue)
+  {
+    JsonNode child = node.get(key);
+    if (child != null && child.isString())
+      return child.asString();
+    return defaultValue;
+  }
+
+  /**
+   * Extracts an integer field from a JSON node, returning a default value if absent or not a number.
+   *
+   * @param node the JSON object node to read from
+   * @param key the field name to extract
+   * @param defaultValue the value to return when the field is absent or not a number
+   * @return the integer value, or {@code defaultValue}
+   */
+  private static int extractInt(JsonNode node, String key, int defaultValue)
+  {
+    JsonNode child = node.get(key);
+    if (child != null && child.isNumber())
+      return child.asInt();
+    return defaultValue;
   }
 
   /**
