@@ -41,7 +41,9 @@ workspace take precedence.
 - [ ] `mvn -f hooks/pom.xml test` passes
 - [ ] Manual verification: issue with active lock file shows 🔄 in status output
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Add lock file detection:** In `getTaskStatus()`, after reading STATE.md, if status is `open`, check if a lock file
    exists at `.claude/cat/locks/{version}-{issue-name}.lock`. If it does, return `in-progress`.
    - Files: `hooks/src/main/java/io/github/cowwoc/cat/hooks/skills/GetStatusOutput.java`

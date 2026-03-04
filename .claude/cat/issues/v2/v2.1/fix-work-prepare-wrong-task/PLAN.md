@@ -38,7 +38,9 @@ The missing link is argument parsing in the skill content that detects task ID p
 - [ ] `/cat:work` with no arguments still selects by priority (existing behavior)
 - [ ] `/cat:work 2.1` passes version filter correctly
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Read `plugin/skills/work/content.md` and locate the Phase 1 prepare section (around lines 62-84)
    - Files: `plugin/skills/work/content.md`
 2. **Step 2:** Add argument parsing logic before the prepare script call that:
@@ -48,6 +50,7 @@ The missing link is argument parsing in the skill content that detects task ID p
    - Else: fall through to existing exclusion pattern handling
 3. **Step 3:** Update the python3 invocation to include `${ISSUE_ID_ARG}` parameter
 4. **Step 4:** Verify by reading the modified file that the argument flow is correct
+
 
 ## Post-conditions
 - [ ] Bug fixed: task ID arguments are forwarded to work-prepare.py

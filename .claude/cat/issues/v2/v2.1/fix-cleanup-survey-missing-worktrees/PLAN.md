@@ -21,13 +21,16 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Reproduce the bug - run /cat:cleanup and observe the survey output shows "0 worktrees found"
    even when git worktree list returns worktrees
 2. **Step 2:** Locate the source code for the cleanup survey handler that generates the worktree list section
 3. **Step 3:** Write a failing test that verifies the handler correctly enumerates worktrees
 4. **Step 4:** Fix the worktree enumeration logic
 5. **Step 5:** Verify the test passes and the survey now shows correct worktree count
+
 
 ## Post-conditions
 - [ ] /cat:cleanup survey correctly reports all worktrees registered with git worktree list

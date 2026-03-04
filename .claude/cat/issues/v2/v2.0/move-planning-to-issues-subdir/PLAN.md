@@ -24,7 +24,9 @@ None - infrastructure/maintenance task
 - [ ] No broken path references remain
 - [ ] CAT commands still work after move
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Find all external references:**
    - Grep for `.claude/cat/v` patterns outside of `.claude/cat/`
    - Verify: List of files to update

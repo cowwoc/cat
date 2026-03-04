@@ -89,7 +89,9 @@ Parent: optimize-hook-json-parser (core API migration)
 - [ ] HookInput uses jackson-core JsonParser internally
 - [ ] All handler interfaces use Map<String, Object>
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Add jackson-core to pom.xml** alongside jackson-databind and add `requires tools.jackson.core` to module-info
 2. **Redesign HookInput:** Replace JsonMapper/JsonNode internals with JsonParser from jackson-core. Parse stdin
    JSON into `Map<String, Object>` where values are String for scalars, `Map<String, Object>` for nested objects,

@@ -40,7 +40,9 @@ Note: issue_suggest_version cannot be batched with issue_suggest_names because n
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 ### Step 1: Modify issue_ask_type_and_criteria step
 Update the step to also include name suggestions when the conversation context makes the type predictable. Add conditional logic: if the description clearly indicates a type (e.g., contains "refactor", "fix", "add"), batch type confirmation + post-conditions + name selection into one call.
@@ -53,6 +55,7 @@ Add a note in the skill that the agent should prefer combining questions when co
 
 ### Step 4: Test the workflow
 Run `/cat:add` with a description argument and verify the reduced number of wizard interactions.
+
 
 ## Post-conditions
 - [ ] User-visible behavior unchanged (same questions asked, same information gathered)

@@ -35,7 +35,9 @@ None - infrastructure improvement
 - [ ] All 10 files updated with consistent header format
 - [ ] All existing tests pass with no regressions
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Add headers to XML-tagged skills (5 files)
    - Files: plugin/skills/add/content.md, config/content.md, init/content.md, remove/content.md, research/content.md
    - Pattern: Add `# Skill Name\n\nBrief description.\n\n` before the existing `<objective>` tag

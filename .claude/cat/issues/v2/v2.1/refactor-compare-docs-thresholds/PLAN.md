@@ -25,7 +25,9 @@ None - internal architecture improvement
 - [ ] All tests still pass
 - [ ] Code quality improved (clear separation of concerns)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Remove threshold tables and context detection from compare-docs
    - Files: plugin/skills/compare-docs/SKILL.md
    - Verify: Skill returns score without PASS/FAIL judgment

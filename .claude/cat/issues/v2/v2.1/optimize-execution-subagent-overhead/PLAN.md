@@ -65,7 +65,9 @@ turn typically shows high `cache_read_input_tokens` (shared system prompt, tool 
 `cache_creation_input_tokens` only for subagent-unique content (task prompt, agent instructions, injected skill
 listings).
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Add Subagent Delegation Analysis section** to `plugin/skills/optimize-execution/first-use.md`
    - Files: `plugin/skills/optimize-execution/first-use.md`
@@ -259,6 +261,7 @@ listings).
      - `estimated_savings_tokens`: predicted raw savings
      - `estimated_savings_percent`: predicted percentage savings
      - `recommendation`: "delegate" | "keep_inline" | "marginal"
+
 
 ## Post-conditions
 

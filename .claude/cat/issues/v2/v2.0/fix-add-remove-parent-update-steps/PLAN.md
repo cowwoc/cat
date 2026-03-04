@@ -38,7 +38,9 @@ All parent update steps have explicit bash commands showing:
 - [ ] Edge cases handled (missing sections create them)
 - [ ] Consistent with task_update_parent fix already applied
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Fix add.md minor_update_parent**
    - Add bash to append minor version to "## Minor Versions" section
    - Verify: grep confirms minor added

@@ -61,7 +61,9 @@ All of these are deterministic operations that don't require LLM judgment.
 - [ ] No hook-blocked failures during merge (Java bypasses per-command hooks)
 - [ ] All existing merge functionality preserved (divergence check, suspicious deletion, backup cleanup)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Create MergeAndCleanup.java:** Implement CLI tool with subcommands mirroring the consolidated workflow:
    validate args, detect worktree/base branch, check divergence, check suspicious deletions, verify ff-eligible,
    perform ff merge (git push . HEAD:base fallback to git merge --ff-only from main repo), cd to project dir,

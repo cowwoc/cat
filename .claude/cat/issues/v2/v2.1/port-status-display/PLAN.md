@@ -26,7 +26,9 @@ Parent: 2.1-port-display-scripts
 - Update status handler to call Java class instead of Python script
 - Remove `get-status-display.sh` bash wrapper
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Read `get-status-display.py`** thoroughly to understand all rendering sections
 2. **Check if `GetStatusOutput.java` already exists** and what it contains
 3. **Read `.claude/cat/conventions/java.md`** for coding conventions
@@ -38,6 +40,7 @@ Parent: 2.1-port-display-scripts
 9. **Remove `get-status-display.sh`** bash wrapper
 10. **Verify output parity** with diff-based comparison
 11. **Run tests:** `mvn -f hooks/pom.xml test`
+
 
 ## Post-conditions
 - [ ] Java class created matching exact Python output

@@ -28,7 +28,9 @@ Remove the `autoRemoveWorktrees` configuration option entirely. Hard-code the au
 
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Find all usages** of `autoRemoveWorktrees` and `getAutoRemoveWorktrees`:
    ```bash
@@ -58,6 +60,7 @@ Remove the `autoRemoveWorktrees` configuration option entirely. Hard-code the au
 
 9. **Commit** with message:
    `refactor: remove autoRemoveWorktrees config option and hard-code auto-remove behavior`
+
 
 ## Post-conditions
 

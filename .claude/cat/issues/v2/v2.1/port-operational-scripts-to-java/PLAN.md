@@ -31,7 +31,9 @@ Parent: port-utility-scripts
 - `hooks/src/test/java/io/github/cowwoc/cat/hooks/test/SubagentMonitorTest.java`
 - `hooks/src/test/java/io/github/cowwoc/cat/hooks/test/BatchReaderTest.java`
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. Read monitor-subagents.sh to understand worktree parsing, session file reading, token counting
 2. Create `SubagentMonitor` class with JSON output
 3. Read batch-read.sh to understand grep + read pattern
@@ -40,6 +42,7 @@ Parent: port-utility-scripts
 6. Create `HookRegistrar` class implementing hook registration logic
 7. Write tests for SubagentMonitor and BatchReader
 8. Run `mvn verify` to confirm all tests pass
+
 
 ## Post-conditions
 - [ ] All three operational scripts have Java equivalents

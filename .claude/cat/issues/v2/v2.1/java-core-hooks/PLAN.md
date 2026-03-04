@@ -49,13 +49,16 @@ Core infrastructure (already implemented):
 ## Files to Modify
 - `plugin/hooks/hooks.json` - Replace 5 Python commands with java.sh calls
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Wire up GetSkillOutput** - Edit hooks.json line ~50, test by invoking a skill
 2. **Wire up GetReadPretoolOutput** - Edit hooks.json line ~96, test by reading a file
 3. **Wire up GetPosttoolOutput** - Edit hooks.json lines ~142 and ~178, test by running any tool
 4. **Wire up GetBashPosttoolOutput** - Edit hooks.json line ~159, test by running a bash command
 5. **Wire up GetReadPosttoolOutput** - Edit hooks.json line ~186, test by reading a file
 6. **Run full test suite** - `python3 /workspace/run_tests.py` to verify no regressions
+
 
 ## Post-conditions
 - [ ] All 5 remaining entry points wired to Java in hooks.json

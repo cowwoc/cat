@@ -80,7 +80,9 @@ model: haiku
 - [ ] `grep -r 'stakeholders/' plugin/` returns no results
 - [ ] Stakeholder-based skills (stakeholder-review, research) still function
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Step 1:** Convert each stakeholder file to agent format
    - Add YAML frontmatter block at top of file

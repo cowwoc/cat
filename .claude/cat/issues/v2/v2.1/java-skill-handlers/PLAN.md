@@ -48,7 +48,9 @@ Supporting utility classes (already exist):
 | `skill_handlers/status_handler.py` | `GetStatusOutput.java` | `plugin/hooks/src/io/github/cowwoc/cat/hooks/skills/` |
 | `skill_handlers/work_with_issue_handler.py` | `GetWorkWithIssueOutput.java` | `plugin/hooks/src/io/github/cowwoc/cat/hooks/skills/` |
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Create GetDelegateOutput.java** - Port logic from `delegate_handler.py`
 2. **Create GetMonitorSubagentsOutput.java** - Port logic from `monitor_subagents_handler.py`
 3. **Create GetRunRetrospectiveOutput.java** - Port logic from `run_retrospective_handler.py`
@@ -58,6 +60,7 @@ Supporting utility classes (already exist):
 7. **Verify all 16 handlers** produce identical output to Python equivalents
 8. **Verify box characters** (special chars render correctly in Java)
 9. **Run test suite** - `python3 /workspace/run_tests.py` to verify no regressions
+
 
 ## Post-conditions
 - [ ] 5 new Java skill handlers created and registered

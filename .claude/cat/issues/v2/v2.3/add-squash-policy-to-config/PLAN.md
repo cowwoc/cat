@@ -47,7 +47,9 @@ The selected policy is written to the `### Squash Policy` section in PROJECT.md.
 - [ ] Setting policy via wizard produces correct PROJECT.md section
 - [ ] git-squash skill honors the wizard-configured policy
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Step 1:** Add squash policy question to `/cat:config` wizard
    - Files: plugin/skills/config/SKILL.md

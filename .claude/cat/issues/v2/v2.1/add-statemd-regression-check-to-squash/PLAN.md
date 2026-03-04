@@ -40,7 +40,9 @@ None (infrastructure/prevention from M363)
 - [x] Skill SKILL.md files updated to reference Java launcher
 - [x] Bash script and bats tests deleted
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Rewrite GitSquash.java:** Replace prohibited soft-reset approach with commit-tree approach. Add concurrent
    modification detection after rebase, comparing files modified on base branch (merge-base..base) with files modified

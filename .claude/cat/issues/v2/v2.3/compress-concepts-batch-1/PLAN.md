@@ -19,6 +19,8 @@ compress-concepts-md (decomposed)
 - [ ] All files score 1.0 on /compare-docs validation
 - [ ] Tests pass
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. For each file: Invoke /cat:shrink-doc
 2. Commit with message: "config: compress agent-related concepts"

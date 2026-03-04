@@ -33,7 +33,9 @@ None - performance optimization
   plan to an implementation subagent. Fix subagents read detail files directly.
 - [ ] Parent agent context consumed by Phases 3a+3b is reduced by at least 50% compared to current baseline
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Measure current baseline**
    - Record average parent-agent input tokens consumed by Phases 3a+3b across 3+ sessions
 
@@ -81,6 +83,7 @@ None - performance optimization
 
 5. **Measure post-change context usage**
    - Compare parent-agent token consumption for Phases 3a+3b against baseline
+
 
 ## Post-conditions
 - [ ] Phases 3a+3b parent-agent context usage reduced by >= 50%

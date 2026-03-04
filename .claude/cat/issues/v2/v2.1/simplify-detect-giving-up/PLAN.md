@@ -48,7 +48,9 @@ state, cleanupStaleSessionDirs() is also unnecessary.
 - [ ] Full prompt scanned (no truncation) - pattern at end of long prompt detected
 - [ ] No /tmp directories created during tests
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Read java.md conventions before editing
 2. **Step 2:** Modify DetectGivingUp.java:
    - Remove fields: MAX_PROMPT_LENGTH, RATE_LIMIT_SECONDS, SESSION_DIR_TTL_DAYS, SESSION_DIR_PREFIX,
@@ -73,6 +75,7 @@ state, cleanupStaleSessionDirs() is also unnecessary.
 4. **Step 4:** Update test module-info.java: Remove the `opens` clause added for TestNG if no longer needed
    (tests no longer use /tmp or file-based cleanup)
 5. **Step 5:** Run `mvn -f hooks/pom.xml verify` to confirm all tests pass
+
 
 ## Post-conditions
 - [ ] All tests pass with `mvn -f hooks/pom.xml verify`

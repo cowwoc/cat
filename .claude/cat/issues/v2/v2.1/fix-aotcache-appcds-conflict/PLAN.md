@@ -29,7 +29,9 @@ is dead weight when AOTCache exists.
 - [ ] build-jlink.sh completes without AppCDS step
 - [ ] No references to appcds or SharedArchiveFile remain in modified files
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Edit `plugin/hooks/hook.sh`:** Remove lines 67-69 (the `appcds` variable and its `[[ -f ]]` conditional). Keep only
    the AOTCache check on lines 66 and 68. Remove "AppCDS" from the comment on line 65. Result should be:
    ```bash
@@ -55,6 +57,7 @@ is dead weight when AOTCache exists.
 4. **Run `mvn -f /workspace/hooks/pom.xml verify`** to ensure the build still passes
 5. **Update STATE.md** to status: closed, progress: 100% in the same commit as implementation
 6. **Commit all changes** with message: `bugfix: remove AppCDS and use only AOTCache for hook JVM startup`
+
 
 ## Post-conditions
 - [ ] No references to appcds, AppCDS, or SharedArchiveFile in hook.sh

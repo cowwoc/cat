@@ -31,7 +31,9 @@ automatically iterate to fix concerns. Default is LOW (fix all concerns automati
 
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Update Config.java:**
    - Remove `DEFAULT_PROCEED_LIMITS` constant
@@ -80,6 +82,7 @@ automatically iterate to fix concerns. Default is LOW (fix all concerns automati
 
 6. **Run tests to verify:**
    - `mvn -f client/pom.xml test`
+
 
 ## Post-conditions
 

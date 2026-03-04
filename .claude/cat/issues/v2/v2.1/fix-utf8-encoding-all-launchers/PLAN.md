@@ -22,7 +22,9 @@ None - bugfix + cleanup
 1. `load-skill.sh` invokes java without `-Dstdout.encoding=UTF-8`, so `SkillLoader` outputs ASCII-encoded text.
 2. The jlink launcher template only sets `stdout.encoding`, missing `stdin` and `stderr`.
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Edit `plugin/scripts/load-skill.sh`** — Add all three encoding flags to the java invocation:
    ```sh
@@ -65,6 +67,7 @@ None - bugfix + cleanup
 | `hooks/build-jlink.sh` | Modify | Add stdin/stderr encoding flags to launcher template; update HANDLERS entry |
 | `hooks/src/main/java/.../skills/GetStatusOutput.java` | Modify | Add `main()` method from RunGetStatusOutput |
 | `hooks/src/main/java/.../skills/RunGetStatusOutput.java` | Delete | Merged into GetStatusOutput |
+
 
 ## Post-conditions
 

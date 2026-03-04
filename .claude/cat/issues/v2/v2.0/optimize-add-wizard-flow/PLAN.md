@@ -20,7 +20,9 @@ None - infrastructure/performance task
 - [ ] Conditional flows still work (e.g., "Yes, select dependencies" still shows task list)
 - [ ] Wizard completes with fewer user interactions
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Identify combinable questions in add.md
    - Questions that are independent and don't need conditional follow-ups
    - Verify: List questions that can be combined

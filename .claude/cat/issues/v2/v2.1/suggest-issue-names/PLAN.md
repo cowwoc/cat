@@ -15,7 +15,9 @@ None - workflow improvement
 ## Files to Modify
 - plugin/skills/add.md - Main /cat:add skill definition
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Analyze task description to generate name suggestions
    - Files: plugin/skills/add.md
    - Verify: Names derived from key terms in description
@@ -31,6 +33,7 @@ None - workflow improvement
 4. **Step 4:** Validate name format and uniqueness before accepting
    - Files: plugin/skills/add.md
    - Verify: Invalid/duplicate names rejected with clear error
+
 
 ## Post-conditions
 - [ ] Suggested names based on task description

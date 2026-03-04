@@ -28,7 +28,9 @@ Parent: optimize-hook-json-parser (acceptance criteria 1, 5 + conventions update
 - [ ] jlink image size < 75MB
 - [ ] Startup time ≤ 55ms with AOTCache
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Update build-jlink.sh:** Review and update any jackson-databind-specific module references. The jlink
    `--add-modules` should now only pull in jackson-core transitively.
 2. **Update java.md conventions:** Change "JSON Library" from `JsonMapper` to `JsonParser/JsonGenerator

@@ -31,7 +31,9 @@ None - infrastructure/tech debt
 - [ ] All JSON output is pretty-printed
 - [ ] All tests pass
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. Add `getJsonMapper()` to `JvmScope` interface
 2. Implement in `MainJvmScope` with `SerializationFeature.INDENT_OUTPUT` enabled
 3. Update all 23 files to use the shared mapper from JvmScope (or accept it as a constructor/method parameter)

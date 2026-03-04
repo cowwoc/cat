@@ -28,7 +28,9 @@ None - infrastructure/tech debt
 - `plugin/scripts/` - Remove ported scripts
 - `plugin/skills/*/SKILL.md` - Update script invocation paths
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Port write-and-commit.sh:** Simplest script - atomic write + commit in Java
 2. **Port git-merge-linear-optimized.sh:** Linear merge with backup branch creation
 3. **Port git-squash-optimized.sh:** Commit squashing with type-based grouping
@@ -36,6 +38,7 @@ None - infrastructure/tech debt
 5. **Update skill references:** Modify skills that invoke these scripts
 6. **Test with real git operations:** Verify merge, squash, and cleanup in test repos
 7. **Run tests:** Execute `mvn -f hooks/pom.xml test`
+
 
 ## Post-conditions
 - [ ] All 4 git operation scripts have Java equivalents

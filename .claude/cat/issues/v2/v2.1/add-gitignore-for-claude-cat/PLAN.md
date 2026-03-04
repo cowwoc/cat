@@ -21,7 +21,9 @@ None - Infrastructure/maintenance issue
 - [ ] CAT init and migration scripts are established
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Create .gitignore template**
    - New file: `plugin/concepts/.gitignore-template`
@@ -36,6 +38,7 @@ None - Infrastructure/maintenance issue
    - Create `.gitignore` if missing, or update existing `.gitignore` for existing installations
    - Add lines: /worktrees/, /locks/, /verify/ only if not already present (idempotent)
    - Files: plugin/migrations/v2.1-migration.sh
+
 
 ## Post-conditions
 - [ ] `.gitignore` created in new CAT installations via `/cat:init`

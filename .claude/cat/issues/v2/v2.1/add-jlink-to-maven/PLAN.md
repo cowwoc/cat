@@ -29,7 +29,9 @@ None - infrastructure improvement
 - [ ] session_start.sh debug trace shows JDK runtime verified
 - [ ] All 318+ tests still pass
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Step 1: Add maven-dependency-plugin to stage Jackson JARs**
    - File: `hooks/pom.xml`

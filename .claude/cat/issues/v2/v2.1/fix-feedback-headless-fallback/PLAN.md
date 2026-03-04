@@ -28,7 +28,9 @@ None - infrastructure/reliability fix
 - [ ] `openIssue()` returns valid JSON with `url` field in both browser-available and browser-unavailable paths
 - [ ] Feedback skill instructions handle `url_only` status
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Modify `openIssue()` in GitHubFeedback.java:** Catch `IOException` from `openInBrowser()`. On failure, build
    JSON response with `{"status": "url_only", "url": "...", "message": "Browser unavailable: ..."}` instead of
    propagating the exception. On success, include `{"status": "opened", "url": "..."}`.

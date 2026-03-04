@@ -22,7 +22,9 @@ None - infrastructure/workflow improvement task
 - [ ] No regressions - existing release workflow continues to work
 - [ ] All past release versions contain a comprehensive CHANGELOG.md file
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Read current release-plugin SKILL.md to understand existing structure
    - Files: `.claude/commands/release-plugin/SKILL.md`
    - Verify: File read successfully

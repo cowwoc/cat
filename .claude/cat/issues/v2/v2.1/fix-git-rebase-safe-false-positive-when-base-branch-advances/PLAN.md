@@ -63,7 +63,9 @@ The fix is patch-diff comparison: compare issue branch content relative to its b
 
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Step 1 (TDD - write failing tests first):** Add two test methods to
    `client/src/test/java/io/github/cowwoc/cat/hooks/test/GitRebaseSafeTest.java`:
@@ -157,6 +159,7 @@ The fix is patch-diff comparison: compare issue branch content relative to its b
 
    Run: `mvn -f client/pom.xml test -Dtest=GitRebaseSafeTest#verifyPatchDiffWhenBaseAdvances` — test must
    pass (green).
+
 
 ## Post-conditions
 

@@ -32,7 +32,7 @@ the worktree path.
 - **Out of scope:** Other `Get*Output` classes (they use `CLAUDE_PROJECT_DIR` for file operations on project-level
   files, which is correct)
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] When `GetDiffOutput` is invoked from a worktree, git commands run against the worktree (not `/workspace`)
 - [ ] When `GetDiffOutput` is invoked from the main workspace, behavior is unchanged

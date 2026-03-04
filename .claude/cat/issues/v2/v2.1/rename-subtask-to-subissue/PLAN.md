@@ -103,7 +103,9 @@ None - terminology consistency
 - [ ] All tests pass after rename
 - [ ] Grep for subtask/sub-task/sub_task returns only the v1.10 historical issue
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Rename function and variables in `plugin/scripts/get-available-issues.sh`
    - Files: `plugin/scripts/get-available-issues.sh`
    - Apply all identifier renames from mapping table

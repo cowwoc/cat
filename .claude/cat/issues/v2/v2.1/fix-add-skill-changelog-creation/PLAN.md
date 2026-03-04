@@ -47,7 +47,9 @@ instructions without corresponding bash scripts.
 - [ ] CHANGELOG.md follows template format
 - [ ] Existing patch version creation still works
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Add CHANGELOG.md creation for major versions:**
    - After major STATE.md creation, add bash to create CHANGELOG.md

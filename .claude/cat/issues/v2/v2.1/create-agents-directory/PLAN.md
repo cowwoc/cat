@@ -76,7 +76,9 @@ You are a senior code reviewer ensuring high standards of code quality and secur
 - [ ] Directory structure created
 - [ ] README.md is comprehensive enough to guide subsequent migration issues
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Step 1:** Create `plugin/agents/` directory
    - Files: `plugin/agents/.gitkeep` (placeholder until agents added)

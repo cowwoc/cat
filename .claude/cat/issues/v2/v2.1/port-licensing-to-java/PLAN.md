@@ -33,7 +33,9 @@ Parent: port-utility-scripts
 ## Files to Modify
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/module-info.java` - Export licensing package
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. Read all three scripts to understand inputs, outputs, and logic
 2. Create `LicenseResult` record for validation output
 3. Create `LicenseValidator` class porting validate-license.py logic (Ed25519 via java.security)
@@ -42,6 +44,7 @@ Parent: port-utility-scripts
 6. Update module-info.java to export licensing package
 7. Write tests for each class
 8. Run `mvn verify` to confirm all tests pass
+
 
 ## Post-conditions
 - [ ] All three licensing scripts have Java equivalents

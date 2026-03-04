@@ -52,7 +52,9 @@ Read handlers:
 | `posttool_handlers/user_input_reminder.py` | `UserInputReminder.java` | `plugin/hooks/src/io/github/cowwoc/cat/hooks/tool/post/` |
 | `posttool_handlers/validate_state_status.py` | `ValidateStateStatus.java` | `plugin/hooks/src/io/github/cowwoc/cat/hooks/tool/post/` |
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Create AbortClarification.java** - Port logic from `abort_clarification.py`
 2. **Create DetectManualBoxes.java** - Port logic from `detect_manual_boxes.py`
 3. **Create DetectValidationFabrication.java** - Port logic from `detect_validation_fabrication.py`
@@ -62,6 +64,7 @@ Read handlers:
 7. **Register new handlers** in appropriate dispatchers (`PromptHandler.java`, `PosttoolHandler.java`)
 8. **Verify all handlers** produce identical output to Python equivalents
 9. **Run test suite** - `python3 /workspace/run_tests.py` to verify no regressions
+
 
 ## Post-conditions
 - [ ] 6 new Java handlers created and registered

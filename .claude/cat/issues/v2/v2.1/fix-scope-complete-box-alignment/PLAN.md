@@ -44,7 +44,9 @@ Compare with `build_issue_complete_box()` (line 74) which correctly uses plain t
 - [ ] Existing tests still pass
 - [ ] No new issues introduced
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Edit `plugin/scripts/get-issue-complete-box.py`
    - Change line 114 from: `f"**{scope}** - all issues complete!"`
    - Change line 114 to: `f"{scope} - all issues complete!"`

@@ -29,7 +29,9 @@ None (user onboarding improvement)
 - [ ] All detail pages linked from README
 - [ ] No content lost, only reorganized
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Create docs/ directory structure**
    - Files: docs/*.md
    - Verify: All files exist

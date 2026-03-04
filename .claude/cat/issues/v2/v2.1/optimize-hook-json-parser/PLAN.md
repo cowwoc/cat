@@ -77,7 +77,9 @@ simultaneously when both files exist. These are mutually exclusive JVM flags. AO
 - [ ] jlink image size < 75MB (down from ~92MB)
 - [ ] hook.sh uses elif for AOTCache/SharedArchiveFile flags
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Fix hook.sh mutual exclusivity bug:** Change the two independent `[[ -f ]]` checks on lines 68-69 to an
    if/elif so AOTCache takes priority when both files exist
    - Files: `plugin/hooks/hook.sh`

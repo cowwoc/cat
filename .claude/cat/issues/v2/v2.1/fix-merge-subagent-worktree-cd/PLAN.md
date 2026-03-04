@@ -37,7 +37,9 @@ None - M465 prevention
 - [ ] git-merge-linear works when invoked from any directory
 - [ ] All tests pass
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Read current git-merge-linear/SKILL.md and work-merge/SKILL.md
    - Files: plugin/skills/git-merge-linear/SKILL.md, plugin/skills/work-merge/SKILL.md, plugin/agents/work-merge.md
 2. **Step 2:** Refactor git-merge-linear to accept WORKTREE_PATH as parameter instead of using pwd
