@@ -65,6 +65,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - enhance-compare-docs-grading
 - enhance-optimize-doc-iteration
 - rename-shrink-doc-to-optimize-doc
+- consolidate-scattered-documentation
 
 
 ## Issues Completed
