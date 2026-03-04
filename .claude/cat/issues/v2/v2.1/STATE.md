@@ -63,7 +63,8 @@ Finalize naming conventions and UI polish before recording demo videos.
 - adopt-skill-creator-eval-framework
 - enhance-empirical-test-agent
 - enhance-compare-docs-grading
-- enhance-shrink-doc-iteration
+- enhance-optimize-doc-iteration
+- rename-shrink-doc-to-optimize-doc
 
 
 ## Issues Completed
