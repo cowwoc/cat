@@ -723,4 +723,177 @@ public final class InvestigationContextExtractorTest
       Files.deleteIfExists(tempFile);
     }
   }
+
+  /**
+   * Verifies that tool_call_sequences is null when no keywords are provided.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void toolCallSequencesIsNullWhenNoKeywords() throws IOException
+  {
+    Path tempFile = Files.createTempFile("extract-", ".jsonl");
+    try
+    {
+      Files.writeString(tempFile, "");
+
+      InvestigationContextExtractor extractor =
+        new InvestigationContextExtractor(new TestJvmScope());
+      JsonNode result = extractor.extract(tempFile, List.of());
+
+      requireThat(result.path("tool_call_sequences").isNull(),
+        "toolCallSequencesIsNull").isTrue();
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that mistake_timeline is an array in the output when the session file exists.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void mistakeTimelineIsArrayWhenSessionFileExists() throws IOException
+  {
+    Path tempFile = Files.createTempFile("extract-", ".jsonl");
+    try
+    {
+      Files.writeString(tempFile, "");
+
+      InvestigationContextExtractor extractor =
+        new InvestigationContextExtractor(new TestJvmScope());
+      JsonNode result = extractor.extract(tempFile, List.of());
+
+      JsonNode mistakeTimeline = result.path("mistake_timeline");
+      requireThat(mistakeTimeline.isArray(), "mistakeTimelineIsArray").isTrue();
+      requireThat(mistakeTimeline.size(), "mistakeTimelineSize").isEqualTo(0);
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that tool_call_sequences is an object keyed by keyword when keywords are provided.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void toolCallSequencesIsObjectKeyedByKeywordWhenKeywordsProvided() throws IOException
+  {
+    Path tempFile = Files.createTempFile("extract-", ".jsonl");
+    try
+    {
+      Files.writeString(tempFile, "");
+
+      InvestigationContextExtractor extractor =
+        new InvestigationContextExtractor(new TestJvmScope());
+      JsonNode result = extractor.extract(tempFile, List.of("squash", "rebase"));
+
+      JsonNode sequences = result.path("tool_call_sequences");
+      requireThat(sequences.isObject(), "toolCallSequencesIsObject").isTrue();
+      requireThat(sequences.has("squash"), "hasSquashKey").isTrue();
+      requireThat(sequences.has("rebase"), "hasRebaseKey").isTrue();
+      requireThat(sequences.path("squash").isArray(), "squashIsArray").isTrue();
+      requireThat(sequences.path("rebase").isArray(), "rebaseIsArray").isTrue();
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that tool_call_sequences matches per keyword are capped at MAX_TOOL_CALL_SEQUENCE_MATCHES (3).
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void toolCallSequencesCapsMatchesAtDefault() throws IOException
+  {
+    Path tempFile = Files.createTempFile("extract-", ".jsonl");
+    try
+    {
+      // Build a session JSONL with many Bash tool pairs containing "squash" in the result
+      StringBuilder jsonl = new StringBuilder(4096);
+      for (int i = 0; i < 10; ++i)
+      {
+        jsonl.append(assistantLine("t" + i, "Bash", "\"command\":\"git squash HEAD~" + i + "\"",
+            "2026-01-11T00:0" + i + ":00Z")).
+          append('\n').
+          append(toolResultLine("t" + i, "squash result " + i)).
+          append('\n');
+      }
+      Files.writeString(tempFile, jsonl.toString());
+
+      InvestigationContextExtractor extractor =
+        new InvestigationContextExtractor(new TestJvmScope());
+      JsonNode result = extractor.extract(tempFile, List.of("squash"));
+
+      JsonNode sequences = result.path("tool_call_sequences");
+      requireThat(sequences.isObject(), "toolCallSequencesIsObject").isTrue();
+      JsonNode squashMatches = sequences.path("squash");
+      requireThat(squashMatches.isArray(), "squashIsArray").isTrue();
+      // All 10 pairs match "squash"; MAX_TOOL_CALL_SEQUENCE_MATCHES=3 should cap to exactly 3
+      requireThat(squashMatches.size(), "squashMatchesSize").isEqualTo(3);
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that mistake_timeline events are capped at MAX_MISTAKE_TIMELINE_EVENTS (50).
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void mistakeTimelineCapsEventsAtDefault() throws IOException
+  {
+    Path tempFile = Files.createTempFile("extract-", ".jsonl");
+    try
+    {
+      // Build a session JSONL that would produce a large timeline:
+      // user message, many tool pairs, then an error
+      StringBuilder jsonl = new StringBuilder(16_384);
+      jsonl.append("{\"type\":\"user\",\"message\":{\"content\":[{\"type\":\"text\"," +
+        "\"text\":\"do work\"}]}}\n");
+      // 60 Read tool pairs (each produces 2 timeline events: tool_use + tool_result)
+      for (int i = 0; i < 60; ++i)
+      {
+        String resultLine = "{\"type\":\"tool\",\"content\":[{\"type\":\"tool_result\"," +
+          "\"tool_use_id\":\"t" + i + "\",\"content\":\"content " + i + "\"}]}\n";
+        jsonl.append(assistantLine("t" + i, "Read", "\"file_path\":\"/file" + i + ".txt\"",
+            "2026-01-12T00:00:00Z")).
+          append('\n').
+          append(resultLine);
+      }
+      // Add error pair at the end
+      String errorResultLine = "{\"type\":\"tool\",\"content\":[{\"type\":\"tool_result\"," +
+        "\"tool_use_id\":\"tErr\",\"content\":\"BUILD FAILED: error\"}]}\n";
+      jsonl.append(assistantLine("tErr", "Bash", "\"command\":\"fail\"", "2026-01-12T01:00:00Z")).
+        append('\n').
+        append(errorResultLine);
+      Files.writeString(tempFile, jsonl.toString());
+
+      InvestigationContextExtractor extractor =
+        new InvestigationContextExtractor(new TestJvmScope());
+      JsonNode result = extractor.extract(tempFile, List.of());
+
+      JsonNode mistakeTimeline = result.path("mistake_timeline");
+      requireThat(mistakeTimeline.isArray(), "mistakeTimelineIsArray").isTrue();
+      // 60 Read pairs + 1 error Bash pair generate 122+ events; MAX_MISTAKE_TIMELINE_EVENTS=50 should cap to exactly 50
+      requireThat(mistakeTimeline.size(), "mistakeTimelineSize").isGreaterThan(0);
+      requireThat(mistakeTimeline.size(), "mistakeTimelineSize").isEqualTo(50);
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
 }
