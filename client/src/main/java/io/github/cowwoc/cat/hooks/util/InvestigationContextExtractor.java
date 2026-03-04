@@ -30,8 +30,8 @@ import java.util.Map;
 /**
  * Extracts investigation context from a Claude session JSONL file for the learn skill.
  * <p>
- * Performs a single-pass extraction of all tool calls relevant to mistake investigation,
- * eliminating the need for the investigation subagent to re-parse the session file.
+ * Extracts all tool calls relevant to mistake investigation, eliminating the need for the
+ * investigation subagent to re-parse the session file.
  * <p>
  * The extractor collects documents read (Read/Glob tools), skill invocations (Skill tool),
  * and Bash commands with optional keyword filtering. Tool results are correlated with Bash
@@ -42,7 +42,23 @@ public final class InvestigationContextExtractor
   private static final int MAX_RESULT_LENGTH = 2000;
   private static final int MAX_TIMELINE_EVENTS = 200;
   private static final int MAX_PARSE_ERROR_PREVIEW = 100;
+  private static final int TOOL_SEQUENCE_CONTEXT_WINDOW = 5;
+  /**
+   * Maximum number of matches per keyword in {@code tool_call_sequences}. Caps output to stay within the 8K
+   * token budget target for the learn skill.
+   */
+  private static final int MAX_TOOL_CALL_SEQUENCE_MATCHES = 3;
+  /**
+   * Maximum number of events in {@code mistake_timeline}. Caps output to stay within the 8K token budget
+   * target for the learn skill.
+   */
+  private static final int MAX_MISTAKE_TIMELINE_EVENTS = 50;
+  /**
+   * Maximum number of characters to include in a Bash command preview in the timeline.
+   */
+  private static final int MAX_COMMAND_PREVIEW_LENGTH = 120;
   private final JvmScope scope;
+  private final SessionAnalyzer sessionAnalyzer;
 
   /**
    * Creates a new investigation context extractor.
@@ -54,6 +70,7 @@ public final class InvestigationContextExtractor
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
+    this.sessionAnalyzer = new SessionAnalyzer(scope);
   }
 
   /**
@@ -88,8 +105,7 @@ public final class InvestigationContextExtractor
   /**
    * Extracts investigation context from a session JSONL file.
    * <p>
-   * Performs a single-pass extraction, correlating tool results with Bash commands using
-   * a HashMap for O(1) lookup by tool_use_id.
+   * Correlates tool results with Bash commands using a HashMap for O(1) lookup by tool_use_id.
    *
    * @param sessionFile the path to the session JSONL file
    * @param keywords    optional keywords to filter Bash commands; empty list includes all commands
@@ -98,9 +114,15 @@ public final class InvestigationContextExtractor
    *   malformed line, and a {@code parse_errors_skipped} count equal to the size of that array. Each entry in
    *   {@code bash_commands} includes a {@code line_number} field (1-based JSONL line where the Bash tool_use appeared)
    *   and a {@code result_truncated} boolean flag indicating whether the result was truncated to
-   *   {@value MAX_RESULT_LENGTH} characters.
-   * @throws NullPointerException if {@code sessionFile} or {@code keywords} are null
-   * @throws IOException          if reading the session file fails
+   *   {@value MAX_RESULT_LENGTH} characters. Also includes {@code tool_call_sequences} (keyed by keyword, showing tool
+   *   pairs surrounding each keyword match with a context window of {@value TOOL_SEQUENCE_CONTEXT_WINDOW}, capped at
+   *   {@value MAX_TOOL_CALL_SEQUENCE_MATCHES} matches per keyword) and {@code mistake_timeline} (sequence of assistant
+   *   turns and tool calls from the last user message to the first error, capped at
+   *   {@value MAX_MISTAKE_TIMELINE_EVENTS} events). {@code tool_call_sequences} is {@code null} when no keywords are
+   *   provided.
+   * @throws NullPointerException     if {@code sessionFile} or {@code keywords} are null
+   * @throws java.io.FileNotFoundException if {@code sessionFile} does not exist
+   * @throws IOException              if reading the session file fails
    */
   public JsonNode extract(Path sessionFile, List<String> keywords) throws IOException
   {
@@ -108,6 +130,7 @@ public final class InvestigationContextExtractor
     requireThat(keywords, "keywords").isNotNull();
 
     ExtractionState state = new ExtractionState(keywords, scope);
+    List<JsonNode> entries = new ArrayList<>();
 
     try (BufferedReader reader = Files.newBufferedReader(sessionFile))
     {
@@ -143,6 +166,7 @@ public final class InvestigationContextExtractor
           continue;
         }
 
+        entries.add(entry);
         ++state.totalMessages;
         String timestamp = getStringOrDefault(entry, "timestamp", "");
         String entryType = getStringOrDefault(entry, "type", "");
@@ -162,6 +186,12 @@ public final class InvestigationContextExtractor
     for (String kw : keywords)
       keywordsArray.add(kw);
 
+    JsonNode toolCallSequencesNode = null;
+    if (!keywords.isEmpty())
+      toolCallSequencesNode = sessionAnalyzer.toolCallSequences(entries, keywords,
+        TOOL_SEQUENCE_CONTEXT_WINDOW, MAX_TOOL_CALL_SEQUENCE_MATCHES);
+    JsonNode mistakeTimelineNode = sessionAnalyzer.mistakeTimeline(entries, MAX_MISTAKE_TIMELINE_EVENTS);
+
     ObjectNode output = scope.getJsonMapper().createObjectNode();
     output.put("session_file", sessionFile.toString());
     output.set("keywords", keywordsArray);
@@ -174,6 +204,14 @@ public final class InvestigationContextExtractor
     output.set("parse_errors", state.parseErrors);
     output.put("parse_errors_skipped", state.parseErrors.size());
     output.put("timezone_context", "TZ=" + scope.getTimezone());
+    if (toolCallSequencesNode != null)
+      output.set("tool_call_sequences", toolCallSequencesNode.path("tool_call_sequences"));
+    else
+      output.putNull("tool_call_sequences");
+    if (mistakeTimelineNode != null)
+      output.set("mistake_timeline", mistakeTimelineNode.path("mistake_timeline"));
+    else
+      output.putNull("mistake_timeline");
 
     return output;
   }
@@ -344,8 +382,8 @@ public final class InvestigationContextExtractor
       else
       {
         String preview;
-        if (command.length() > 120)
-          preview = command.substring(0, 120) + " [truncated]";
+        if (command.length() > MAX_COMMAND_PREVIEW_LENGTH)
+          preview = command.substring(0, MAX_COMMAND_PREVIEW_LENGTH) + " [truncated]";
         else
           preview = command;
         state.timelineEvents.add("[" + timestamp + "] Bash: " + preview);

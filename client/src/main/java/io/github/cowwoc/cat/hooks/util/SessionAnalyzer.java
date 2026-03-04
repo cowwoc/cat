@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Locale;
 import java.util.SequencedSet;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +48,7 @@ public final class SessionAnalyzer
   private static final Pattern ERROR_PATTERN = Pattern.compile(
     "build failed|failed|error:|exception|fatal:",
     Pattern.CASE_INSENSITIVE);
+  private final Logger log = LoggerFactory.getLogger(SessionAnalyzer.class);
   private final JvmScope scope;
 
   /**
@@ -83,6 +85,412 @@ public final class SessionAnalyzer
         "\nSession ID: " + sessionId);
     }
     return resolved;
+  }
+
+  /**
+   * Extracts tool call sequences around keyword matches.
+   * <p>
+   * For each keyword, finds all tool_use/tool_result pairs that match the keyword,
+   * and includes N tool pairs before and after each match for context.
+   *
+   * @param filePath      path to the session JSONL file
+   * @param keywords      list of keywords to search for in tool results
+   * @param contextWindow number of tool pairs to include before/after each match
+   * @return JSON object with a "tool_call_sequences" property; keyed by keyword, values are arrays of matches
+   * @throws NullPointerException if filePath or keywords are null
+   * @throws IOException          if file reading fails
+   */
+  public JsonNode toolCallSequences(Path filePath, List<String> keywords, int contextWindow)
+    throws IOException
+  {
+    return toolCallSequences(filePath, keywords, contextWindow, Integer.MAX_VALUE);
+  }
+
+  /**
+   * Extracts tool call sequences around keyword matches, capped at {@code maxMatches} per keyword.
+   * <p>
+   * For each keyword, finds tool_use/tool_result pairs that match the keyword (up to {@code maxMatches}),
+   * and includes N tool pairs before and after each match for context.
+   *
+   * @param filePath      path to the session JSONL file
+   * @param keywords      list of keywords to search for in tool results
+   * @param contextWindow number of tool pairs to include before/after each match
+   * @param maxMatches    maximum number of matches to include per keyword; use {@link Integer#MAX_VALUE} for unlimited
+   * @return JSON object with a "tool_call_sequences" property; keyed by keyword, values are arrays of matches
+   * @throws NullPointerException if filePath or keywords are null
+   * @throws IOException          if file reading fails
+   */
+  public JsonNode toolCallSequences(Path filePath, List<String> keywords, int contextWindow,
+    int maxMatches) throws IOException
+  {
+    requireThat(filePath, "filePath").isNotNull();
+    requireThat(keywords, "keywords").isNotNull();
+
+    List<JsonNode> entries = parseJsonl(filePath);
+    return toolCallSequences(entries, keywords, contextWindow, maxMatches);
+  }
+
+  /**
+   * Extracts tool call sequences around keyword matches, capped at {@code maxMatches} per keyword.
+   * <p>
+   * Accepts a pre-parsed list of entries to avoid re-reading the file when the caller already holds the entries.
+   *
+   * @param entries       list of pre-parsed JSONL entries
+   * @param keywords      list of keywords to search for in tool results
+   * @param contextWindow number of tool pairs to include before/after each match
+   * @param maxMatches    maximum number of matches to include per keyword; use {@link Integer#MAX_VALUE} for unlimited
+   * @return JSON object with a "tool_call_sequences" property; keyed by keyword, values are arrays of matches
+   * @throws NullPointerException if entries or keywords are null
+   */
+  JsonNode toolCallSequences(List<JsonNode> entries, List<String> keywords, int contextWindow,
+    int maxMatches)
+  {
+    requireThat(entries, "entries").isNotNull();
+    requireThat(keywords, "keywords").isNotNull();
+
+    // Build a list of all tool use/result pairs with their indices
+    List<ToolPair> toolPairs = extractToolPairs(entries);
+
+    // For each keyword, find matches and extract context
+    ObjectNode sequences = scope.getJsonMapper().createObjectNode();
+
+    for (String keyword : keywords)
+    {
+      ArrayNode matches = scope.getJsonMapper().createArrayNode();
+
+      for (int i = 0; i < toolPairs.size(); ++i)
+      {
+        if (matches.size() >= maxMatches)
+          break;
+
+        ToolPair pair = toolPairs.get(i);
+        String resultText = contentToString(pair.toolResult.path("content"));
+
+        if (resultText.toLowerCase(Locale.ROOT).contains(keyword.toLowerCase(Locale.ROOT)))
+        {
+          // Found a match — extract context before and after
+          ObjectNode match = scope.getJsonMapper().createObjectNode();
+          match.put("match_index", i);
+
+          // Context before
+          ArrayNode contextBefore = scope.getJsonMapper().createArrayNode();
+          int startContext = Math.max(0, i - contextWindow);
+          for (int j = startContext; j < i; ++j)
+          {
+            contextBefore.add(toolPairToJson(toolPairs.get(j)));
+          }
+          match.set("context_before", contextBefore);
+
+          // Matched pair
+          match.set("matched_pair", toolPairToJson(pair));
+
+          // Context after
+          ArrayNode contextAfter = scope.getJsonMapper().createArrayNode();
+          int endContext = Math.min(toolPairs.size(), i + contextWindow + 1);
+          for (int j = i + 1; j < endContext; ++j)
+          {
+            contextAfter.add(toolPairToJson(toolPairs.get(j)));
+          }
+          match.set("context_after", contextAfter);
+
+          matches.add(match);
+        }
+      }
+
+      sequences.set(keyword, matches);
+    }
+
+    ObjectNode result = scope.getJsonMapper().createObjectNode();
+    result.set("tool_call_sequences", sequences);
+    result.put("context_window", contextWindow);
+    result.put("total_tool_pairs", toolPairs.size());
+    return result;
+  }
+
+  /**
+   * Extracts the mistake timeline — the sequence of assistant turns and tool calls
+   * from the last user message to the first error point.
+   *
+   * @param filePath path to the session JSONL file
+   * @return JSON object with "mistake_timeline" array and metadata
+   * @throws NullPointerException if filePath is null
+   * @throws IOException          if file reading fails
+   */
+  public JsonNode mistakeTimeline(Path filePath) throws IOException
+  {
+    return mistakeTimeline(filePath, Integer.MAX_VALUE);
+  }
+
+  /**
+   * Extracts the mistake timeline — the sequence of assistant turns and tool calls
+   * from the last user message to the first error point, capped at {@code maxEvents} entries.
+   *
+   * @param filePath  path to the session JSONL file
+   * @param maxEvents maximum number of timeline events to include; use {@link Integer#MAX_VALUE} for unlimited
+   * @return JSON object with "mistake_timeline" array and metadata
+   * @throws NullPointerException if filePath is null
+   * @throws IOException          if file reading fails
+   */
+  public JsonNode mistakeTimeline(Path filePath, int maxEvents) throws IOException
+  {
+    requireThat(filePath, "filePath").isNotNull();
+
+    List<JsonNode> entries = parseJsonl(filePath);
+    return mistakeTimeline(entries, maxEvents);
+  }
+
+  /**
+   * Extracts the mistake timeline from a pre-parsed list of entries, capped at {@code maxEvents} entries.
+   * <p>
+   * Accepts a pre-parsed list of entries to avoid re-reading the file when the caller already holds the entries.
+   *
+   * @param entries   list of pre-parsed JSONL entries
+   * @param maxEvents maximum number of timeline events to include; use {@link Integer#MAX_VALUE} for unlimited
+   * @return JSON object with "mistake_timeline" array and metadata
+   * @throws NullPointerException if entries is null
+   */
+  JsonNode mistakeTimeline(List<JsonNode> entries, int maxEvents)
+  {
+    requireThat(entries, "entries").isNotNull();
+
+    // Find the last user message
+    int lastUserMessageIndex = -1;
+    for (int i = entries.size() - 1; i >= 0; --i)
+    {
+      if ("user".equals(getStringOrDefault(entries.get(i), "type", "")))
+      {
+        lastUserMessageIndex = i;
+        break;
+      }
+    }
+
+    // Find the first error after the last user message
+    int errorIndex = -1;
+    if (lastUserMessageIndex >= 0)
+    {
+      outer:
+      for (int i = lastUserMessageIndex + 1; i < entries.size(); ++i)
+      {
+        for (JsonNode resultItem : extractToolResults(entries.get(i)))
+        {
+          String content = contentToString(resultItem.path("content"));
+          if (isErrorContent(content))
+          {
+            errorIndex = i;
+            break outer;
+          }
+        }
+      }
+    }
+
+    // Extract timeline from last user message to error (or empty if no error)
+    ArrayNode timeline = scope.getJsonMapper().createArrayNode();
+
+    if (lastUserMessageIndex >= 0 && errorIndex > lastUserMessageIndex)
+    {
+      for (int i = lastUserMessageIndex + 1; i <= errorIndex && timeline.size() < maxEvents; ++i)
+      {
+        JsonNode entry = entries.get(i);
+        String entryType = getStringOrDefault(entry, "type", "");
+
+        if ("assistant".equals(entryType))
+        {
+          // Extract tool_use entries from assistant messages
+          JsonNode message = entry.path("message");
+          JsonNode content = message.path("content");
+          if (content.isArray())
+          {
+            for (JsonNode item : content)
+            {
+              if (timeline.size() >= maxEvents)
+                break;
+              if ("tool_use".equals(getStringOrDefault(item, "type", "")))
+              {
+                ObjectNode toolUseEvent = scope.getJsonMapper().createObjectNode();
+                toolUseEvent.put("type", "tool_use");
+                toolUseEvent.put("name", getStringOrDefault(item, "name", ""));
+                toolUseEvent.put("id", getStringOrDefault(item, "id", ""));
+                toolUseEvent.set("input", item.path("input"));
+                timeline.add(toolUseEvent);
+              }
+              else if ("text".equals(getStringOrDefault(item, "type", "")))
+              {
+                ObjectNode textEvent = scope.getJsonMapper().createObjectNode();
+                textEvent.put("type", "assistant_text");
+                textEvent.put("text", getStringOrDefault(item, "text", ""));
+                timeline.add(textEvent);
+              }
+            }
+          }
+        }
+        else if ("tool".equals(entryType))
+        {
+          // Include tool results (wrapped inside {type:"tool", content:[{type:"tool_result",...}]})
+          for (JsonNode resultItem : extractToolResults(entry))
+          {
+            if (timeline.size() >= maxEvents)
+              break;
+            ObjectNode resultEvent = scope.getJsonMapper().createObjectNode();
+            resultEvent.put("type", "tool_result");
+            resultEvent.put("tool_use_id", getStringOrDefault(resultItem, "tool_use_id", ""));
+            String resultContent = contentToString(resultItem.path("content"));
+            resultEvent.put("content", resultContent);
+            timeline.add(resultEvent);
+          }
+        }
+      }
+    }
+
+    ObjectNode result = scope.getJsonMapper().createObjectNode();
+    result.set("mistake_timeline", timeline);
+    if (lastUserMessageIndex >= 0)
+      result.put("last_user_message_index", lastUserMessageIndex);
+    if (errorIndex >= 0)
+      result.put("error_entry_index", errorIndex);
+    result.put("total_entries_scanned", entries.size());
+
+    return result;
+  }
+
+  /**
+   * Converts a tool pair to JSON representation.
+   *
+   * @param pair the tool pair
+   * @return JSON object with tool_use and tool_result
+   */
+  private ObjectNode toolPairToJson(ToolPair pair)
+  {
+    ObjectNode node = scope.getJsonMapper().createObjectNode();
+    ObjectNode toolUseNode = scope.getJsonMapper().createObjectNode();
+    toolUseNode.put("id", pair.toolId);
+    toolUseNode.put("name", pair.name);
+    toolUseNode.set("input", pair.toolInput);
+    node.set("tool_use", toolUseNode);
+
+    ObjectNode toolResultNode = scope.getJsonMapper().createObjectNode();
+    toolResultNode.put("tool_use_id", pair.toolId);
+    String resultContent = contentToString(pair.toolResult.path("content"));
+    toolResultNode.put("content", resultContent);
+    node.set("tool_result", toolResultNode);
+
+    return node;
+  }
+
+  /**
+   * Extracts all tool use/result pairs from entries.
+   *
+   * @param entries list of JSONL entries
+   * @return list of ToolPair objects
+   */
+  private List<ToolPair> extractToolPairs(List<JsonNode> entries)
+  {
+    // Build a map of tool_use_id -> tool_use info
+    Map<String, ToolUseInfo> toolUses = new HashMap<>();
+    for (JsonNode entry : entries)
+    {
+      if (!"assistant".equals(getStringOrDefault(entry, "type", "")))
+        continue;
+
+      JsonNode message = entry.path("message");
+      JsonNode content = message.path("content");
+      if (!content.isArray())
+        continue;
+
+      for (JsonNode item : content)
+      {
+        if ("tool_use".equals(getStringOrDefault(item, "type", "")))
+        {
+          String toolId = getStringOrDefault(item, "id", "");
+          String toolName = getStringOrDefault(item, "name", "");
+          JsonNode input = item.path("input");
+          toolUses.put(toolId, new ToolUseInfo(toolId, toolName, input));
+        }
+      }
+    }
+
+    // Build pairs from tool_result entries (wrapped inside {type:"tool", content:[...]})
+    List<ToolPair> pairs = new ArrayList<>();
+    for (JsonNode entry : entries)
+    {
+      for (JsonNode resultItem : extractToolResults(entry))
+      {
+        String toolUseId = getStringOrDefault(resultItem, "tool_use_id", "");
+        ToolUseInfo toolUse = toolUses.get(toolUseId);
+        if (toolUse != null)
+        {
+          pairs.add(new ToolPair(toolUseId, toolUse.name, toolUse.input, resultItem));
+        }
+      }
+    }
+
+    return pairs;
+  }
+
+  /**
+   * Checks if content represents an error.
+   *
+   * @param content the content string
+   * @return true if the content contains error indicators
+   */
+  private boolean isErrorContent(String content)
+  {
+    if (content.isEmpty())
+      return false;
+
+    // Check for JSON exit_code (both escaped and unescaped forms)
+    if (content.contains("exit_code") || content.contains("exitCode"))
+    {
+      try
+      {
+        JsonNode json = scope.getJsonMapper().readTree(content);
+        int exitCode = json.path("exit_code").asInt(json.path("exitCode").asInt(0));
+        if (exitCode != 0)
+          return true;
+      }
+      catch (JacksonException _)
+      {
+        // Not JSON, check pattern
+      }
+    }
+
+    // Check for error patterns
+    return ERROR_PATTERN.matcher(content).find();
+  }
+
+  /**
+   * Represents a tool use/result pair.
+   *
+   * @param toolId the tool use ID
+   * @param name the tool name
+   * @param toolInput the tool input parameters
+   * @param toolResult the tool result entry
+   */
+  private record ToolPair(String toolId, String name, JsonNode toolInput, JsonNode toolResult)
+  {
+    private ToolPair
+    {
+      requireThat(toolId, "toolId").isNotNull();
+      requireThat(name, "name").isNotNull();
+      requireThat(toolInput, "toolInput").isNotNull();
+      requireThat(toolResult, "toolResult").isNotNull();
+    }
+  }
+
+  /**
+   * Represents tool use information.
+   *
+   * @param toolId the tool use ID
+   * @param name the tool name
+   * @param input the tool input parameters
+   */
+  private record ToolUseInfo(String toolId, String name, JsonNode input)
+  {
+    private ToolUseInfo
+    {
+      requireThat(toolId, "toolId").isNotNull();
+      requireThat(name, "name").isNotNull();
+      requireThat(input, "input").isNotNull();
+    }
   }
 
   /**
@@ -183,8 +591,7 @@ public final class SessionAnalyzer
     }
     catch (RuntimeException | AssertionError e)
     {
-      Logger log = LoggerFactory.getLogger(SessionAnalyzer.class);
-      log.error("Unexpected error", e);
+      LoggerFactory.getLogger(SessionAnalyzer.class).error("Unexpected error", e);
       throw e;
     }
   }
@@ -299,7 +706,6 @@ public final class SessionAnalyzer
     requireThat(filePath, "filePath").isNotNull();
 
     List<JsonNode> entries = new ArrayList<>();
-    List<String> parseWarnings = new ArrayList<>();
     try (BufferedReader reader = Files.newBufferedReader(filePath))
     {
       String line;
@@ -320,7 +726,7 @@ public final class SessionAnalyzer
         }
         catch (JacksonException e)
         {
-          parseWarnings.add("Warning: Skipping malformed line " + lineNum + ": " + e.getMessage());
+          log.warn("Skipping malformed line {} in {}: {}", lineNum, filePath, e.getMessage());
         }
       }
     }
@@ -495,6 +901,37 @@ public final class SessionAnalyzer
   }
 
   /**
+   * Extracts tool_result items from a session entry.
+   * <p>
+   * Real Claude JSONL wraps tool results as: {@code {type:"tool", content:[{type:"tool_result",...}]}}.
+   * Returns the inner {@code tool_result} items from such entries, or an empty list if the entry is not a
+   * {@code tool} entry.
+   *
+   * @param entry a JSONL entry
+   * @return list of tool_result inner nodes; empty if the entry is not a tool entry or has no tool_result items
+   * @throws NullPointerException if {@code entry} is null
+   */
+  private static List<JsonNode> extractToolResults(JsonNode entry)
+  {
+    requireThat(entry, "entry").isNotNull();
+
+    if (!"tool".equals(getStringOrDefault(entry, "type", "")))
+      return List.of();
+
+    List<JsonNode> results = new ArrayList<>();
+    JsonNode content = entry.path("content");
+    if (content.isArray())
+    {
+      for (JsonNode item : content)
+      {
+        if ("tool_result".equals(getStringOrDefault(item, "type", "")))
+          results.add(item);
+      }
+    }
+    return results;
+  }
+
+  /**
    * Extracts output sizes from tool_result entries.
    *
    * @param entries list of session entries
@@ -508,15 +945,14 @@ public final class SessionAnalyzer
     List<OutputSize> sizes = new ArrayList<>();
     for (JsonNode entry : entries)
     {
-      if (!"tool_result".equals(getStringOrDefault(entry, "type", "")))
-        continue;
-
-      JsonNode content = entry.path("content");
-      String contentStr = contentToString(content);
-
-      sizes.add(new OutputSize(
-        getStringOrDefault(entry, "tool_use_id", ""),
-        contentStr.length()));
+      for (JsonNode resultItem : extractToolResults(entry))
+      {
+        JsonNode content = resultItem.path("content");
+        String contentStr = contentToString(content);
+        sizes.add(new OutputSize(
+          getStringOrDefault(resultItem, "tool_use_id", ""),
+          contentStr.length()));
+      }
     }
 
     sizes.sort((a, b) -> Integer.compare(b.length(), a.length()));
@@ -731,18 +1167,18 @@ public final class SessionAnalyzer
 
     for (JsonNode entry : entries)
     {
-      if (!"tool_result".equals(getStringOrDefault(entry, "type", "")))
-        continue;
-
-      JsonNode content = entry.path("content");
-      String contentStr = contentToString(content);
-
-      if (contentStr.contains("\"agentId\":"))
+      for (JsonNode resultItem : extractToolResults(entry))
       {
-        Matcher matcher = AGENT_ID_PATTERN.matcher(contentStr);
-        while (matcher.find())
+        JsonNode content = resultItem.path("content");
+        String contentStr = contentToString(content);
+
+        if (contentStr.contains("\"agentId\":"))
         {
-          agentIds.add(matcher.group(1));
+          Matcher matcher = AGENT_ID_PATTERN.matcher(contentStr);
+          while (matcher.find())
+          {
+            agentIds.add(matcher.group(1));
+          }
         }
       }
     }
@@ -776,7 +1212,7 @@ public final class SessionAnalyzer
     requireThat(analyses, "analyses").isNotNull();
 
     Map<String, Integer> toolFrequency = new HashMap<>();
-    Map<String, CombinedTokenStats> tokenUsage = new HashMap<>();
+    Map<String, TokenStats> tokenUsage = new HashMap<>();
     Map<String, CacheOccurrence> cacheOps = new LinkedHashMap<>();
     int totalToolCalls = 0;
     int totalEntries = 0;
@@ -798,7 +1234,7 @@ public final class SessionAnalyzer
         int outputTokens = item.path("total_output_tokens").asInt(0);
         int count = item.path("count").asInt(0);
 
-        CombinedTokenStats stats = tokenUsage.computeIfAbsent(tool, k -> new CombinedTokenStats());
+        TokenStats stats = tokenUsage.computeIfAbsent(tool, k -> new TokenStats());
         stats.inputTokens += inputTokens;
         stats.outputTokens += outputTokens;
         stats.count += count;
@@ -973,24 +1409,12 @@ public final class SessionAnalyzer
       else if (content.isString())
         sb.append(content.asString()).append('\n');
     }
-    // For tool_result entries, extract content
-    JsonNode content = entry.path("content");
-    if (!content.isMissingNode())
+    // For tool entries, extract content from wrapped tool_result items
+    for (JsonNode resultItem : extractToolResults(entry))
     {
-      if (content.isArray())
-      {
-        for (JsonNode item : content)
-        {
-          if (item.isObject())
-            sb.append(getStringOrDefault(item, "text", "")).append('\n');
-          else
-            sb.append(item.asString()).append('\n');
-        }
-      }
-      else if (content.isString())
-        sb.append(content.asString()).append('\n');
-      else if (!content.isMissingNode())
-        sb.append(content.toString()).append('\n');
+      String resultText = contentToString(resultItem.path("content"));
+      if (!resultText.isEmpty())
+        sb.append(resultText).append('\n');
     }
     // Fall back to full entry string if nothing extracted
     if (sb.isEmpty())
@@ -1020,64 +1444,64 @@ public final class SessionAnalyzer
     for (int entryIndex = 0; entryIndex < entries.size(); ++entryIndex)
     {
       JsonNode entry = entries.get(entryIndex);
-      if (!"tool_result".equals(getStringOrDefault(entry, "type", "")))
-        continue;
-
-      String toolUseId = getStringOrDefault(entry, "tool_use_id", "");
-      JsonNode content = entry.path("content");
-      String contentStr = contentToString(content);
-
-      int exitCode = 0;
-      String errorOutput = "";
-      boolean isError = false;
-
-      // Try to parse content as JSON to extract exit code — only when content looks like JSON
-      if (contentStr.contains("exit_code") || contentStr.contains("exitCode"))
-      try
+      for (JsonNode resultItem : extractToolResults(entry))
       {
-        JsonNode contentJson = scope.getJsonMapper().readTree(contentStr);
-        JsonNode exitCodeNode = contentJson.path("exit_code");
-        if (!exitCodeNode.isMissingNode())
-          exitCode = exitCodeNode.asInt(0);
-        JsonNode exitCodeCamel = contentJson.path("exitCode");
-        if (!exitCodeCamel.isMissingNode() && exitCode == 0)
-          exitCode = exitCodeCamel.asInt(0);
+        String toolUseId = getStringOrDefault(resultItem, "tool_use_id", "");
+        JsonNode content = resultItem.path("content");
+        String contentStr = contentToString(content);
 
-        if (exitCode != 0)
+        int exitCode = 0;
+        String errorOutput = "";
+        boolean isError = false;
+
+        // Try to parse content as JSON to extract exit code — only when content looks like JSON
+        if (contentStr.contains("exit_code") || contentStr.contains("exitCode"))
+        try
+        {
+          JsonNode contentJson = scope.getJsonMapper().readTree(contentStr);
+          JsonNode exitCodeNode = contentJson.path("exit_code");
+          if (!exitCodeNode.isMissingNode())
+            exitCode = exitCodeNode.asInt(0);
+          JsonNode exitCodeCamel = contentJson.path("exitCode");
+          if (!exitCodeCamel.isMissingNode() && exitCode == 0)
+            exitCode = exitCodeCamel.asInt(0);
+
+          if (exitCode != 0)
+          {
+            isError = true;
+            String stderr = getStringOrDefault(contentJson, "stderr", "");
+            String stdout = getStringOrDefault(contentJson, "stdout", "");
+            if (stderr.isEmpty())
+              errorOutput = stdout;
+            else
+              errorOutput = stderr;
+          }
+        }
+        catch (JacksonException _)
+        {
+          // Content is not JSON — check for error patterns in raw text
+        }
+
+        if (!isError && ERROR_PATTERN.matcher(contentStr).find())
         {
           isError = true;
-          String stderr = getStringOrDefault(contentJson, "stderr", "");
-          String stdout = getStringOrDefault(contentJson, "stdout", "");
-          if (stderr.isEmpty())
-            errorOutput = stdout;
-          else
-            errorOutput = stderr;
+          errorOutput = contentStr;
         }
-      }
-      catch (JacksonException _)
-      {
-        // Content is not JSON — check for error patterns in raw text
-      }
 
-      if (!isError && ERROR_PATTERN.matcher(contentStr).find())
-      {
-        isError = true;
-        errorOutput = contentStr;
-      }
-
-      if (isError)
-      {
-        ObjectNode errorNode = scope.getJsonMapper().createObjectNode();
-        errorNode.put("tool_use_id", toolUseId);
-        errorNode.put("exit_code", exitCode);
-        String effectiveErrorOutput;
-        if (errorOutput.isEmpty())
-          effectiveErrorOutput = contentStr;
-        else
-          effectiveErrorOutput = errorOutput;
-        errorNode.put("error_output", effectiveErrorOutput);
-        errorNode.put("entry_index", entryIndex);
-        errors.add(errorNode);
+        if (isError)
+        {
+          ObjectNode errorNode = scope.getJsonMapper().createObjectNode();
+          errorNode.put("tool_use_id", toolUseId);
+          errorNode.put("exit_code", exitCode);
+          String effectiveErrorOutput;
+          if (errorOutput.isEmpty())
+            effectiveErrorOutput = contentStr;
+          else
+            effectiveErrorOutput = errorOutput;
+          errorNode.put("error_output", effectiveErrorOutput);
+          errorNode.put("entry_index", entryIndex);
+          errors.add(errorNode);
+        }
       }
     }
 
@@ -1290,16 +1714,6 @@ public final class SessionAnalyzer
    * Tracks token usage statistics for a tool.
    */
   private static final class TokenStats
-  {
-    private int inputTokens;
-    private int outputTokens;
-    private int count;
-  }
-
-  /**
-   * Tracks combined token usage statistics across multiple agents.
-   */
-  private static final class CombinedTokenStats
   {
     private int inputTokens;
     private int outputTokens;

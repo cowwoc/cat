@@ -14,12 +14,10 @@ surrounding text or explanation. The parent agent parses your response as JSON.
 
 ## Pre-Extracted Investigation Context
 
-**CRITICAL: Raw JSONL is the authoritative source for what the agent actually received.** Source files show what
-*should* have been delivered; JSONL shows what *was* delivered. Any corruption, transformation, or injection invisible
-in source files is visible in JSONL.
+**IMPORTANT: Pre-computed context is the PRIMARY evidence source.** Use it first. Fall back to raw JSONL only when
+pre-computed context is insufficient or when verifying a specific claim about exact content delivery.
 
-The learn skill's preprocessing provides pre-extracted investigation context as a convenience layer. The pre-extracted
-data contains:
+The learn skill's preprocessing provides pre-extracted investigation context. The pre-extracted data contains:
 
 - `documents_read`: All files the agent Read during the session (path, tool, timestamp)
 - `skill_invocations`: All skills invoked (skill name, args, timestamp)
@@ -28,27 +26,34 @@ data contains:
   at 2000 characters — use the line number to retrieve the full entry from the session file if needed)
 - `timeline_events`: Chronological list of significant events
 - `timezone_context`: Container timezone (e.g., `TZ=UTC`)
+- `tool_call_sequences`: Tool use/result pairs surrounding keyword matches — PRIMARY evidence for "what tools were
+  invoked around the mistake". For each keyword, provides context pairs before and after the match.
+- `mistake_timeline`: Sequence of assistant turns and tool calls from the last user message to the first error point —
+  PRIMARY evidence for "what happened before the error".
 
-**When using pre-extracted context:**
+**How to use pre-extracted context:**
 
-1. Use `documents_read` as an index to identify which documents to examine in JSONL (not as confirmation that delivery
-   was correct)
-2. Use `skill_invocations` as an index to identify which skills to examine in JSONL
-3. Use `bash_commands` to find the failing commands and their outputs — no grep/jq needed
-4. Use `timeline_events` as a starting-point reconstruction — verify critical events against JSONL
+1. Use `mistake_timeline` as primary evidence for establishing the error sequence — no JSONL search needed when
+   the timeline is complete
+2. Use `tool_call_sequences` as primary evidence for identifying which tools were involved — treat each entry as
+   confirmed evidence of what ran and what it returned
+3. Use `documents_read` and `skill_invocations` as a reference index — combine with `tool_call_sequences` before
+   falling back to JSONL
+4. Use `bash_commands` to find the failing commands and their outputs — no grep/jq needed
 5. Use `timezone_context` to interpret timestamps — skip timezone investigation
-6. Use session-analyzer on the raw JSONL to verify the actual content the agent received, especially for documents
-   relevant to the mistake (see Step 2)
+6. **FALLBACK/VERIFICATION only:** Use session-analyzer on raw JSONL when pre-computed context is incomplete,
+   ambiguous, or when verifying whether content was actually delivered vs. just referenced
 
-**CRITICAL: Pre-extracted context is a starting-point index, not evidence itself.** JSONL is authoritative. Count only
-direct JSONL confirmations toward your investigation completeness.
+**When pre-computed context is sufficient, do NOT search JSONL.** If `tool_call_sequences` and `mistake_timeline`
+together provide a clear picture of what ran, what failed, and in what order, proceed directly to root cause analysis.
 
-**Early termination rule:** Stop searching for evidence once you have established the timeline via JSONL. You need:
-- Timeline verified against JSONL (not just pre-extracted index)
-- Root cause document identified and content verified in JSONL
-- Priming pathway confirmed in JSONL (showing what agent actually received)
+**Early termination rule:** Stop searching for evidence once you have established the timeline. You need:
+- Error sequence established (via `mistake_timeline` or JSONL)
+- Relevant tool interactions identified (via `tool_call_sequences` or JSONL)
+- Root cause document identified (use `documents_read` as index, verify content only if needed)
 
-Do NOT count pre-extracted context entries as evidence — they are pointers to where evidence is located in JSONL.
+**When JSONL is required:** Use raw JSONL when you need to verify exact content delivery — e.g., confirming a skill's
+content matched the source file, detecting injection or truncation, or examining a subagent's full conversation.
 
 **Parallel reference file reads:** If you need to read reference files (scripts, skill files, agent definitions),
 read all of them in a single parallel batch at the start of this phase rather than reading them one at a time as
@@ -70,11 +75,14 @@ Memory is unreliable for causation, timing, attribution.
 
 **If get-history unavailable:** Document analysis based on current context only, may be incomplete.
 
-## Step 2: Examine Raw JSONL and Analyze Documentation Path
+## Step 2: Examine Documentation Path (JSONL as Fallback)
 
-**CRITICAL: ALWAYS examine raw JSONL FIRST. Source files show what *should* be delivered; JSONL shows what
-*was* delivered. Any corruption, transformation, or injection that happens between source files and agent delivery
-is invisible when only reading source files.**
+**Start with pre-computed context** (`tool_call_sequences`, `mistake_timeline`). Use raw JSONL only when the
+pre-computed context does not provide enough detail — for example, when verifying exact content delivery, detecting
+injection or truncation, or investigating a subagent whose conversation is not captured in pre-computed context.
+
+**NOTE on raw JSONL:** Source files show what *should* be delivered; JSONL shows what *was* delivered. When you DO
+need to verify content delivery, JSONL is authoritative over source files.
 
 **NOTE:** `CLAUDE_SESSION_ID` is available in skill preprocessing but NOT exported to bash.
 You must substitute the actual session ID value in bash commands, not use the variable reference.
