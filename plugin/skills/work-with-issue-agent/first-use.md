@@ -1337,6 +1337,10 @@ AskUserQuestion:
 
 Fail-fast principle: Unknown consent = No consent = STOP.
 
+**Empty answers detection:** If `toolUseResult.answers` is an empty object `{}`, no selection was recorded. The
+visible signal is "User has answered your questions: ." with nothing after the colon. Treat this identically to no
+response — re-present the approval gate. Unknown consent = No consent = STOP.
+
 **If the user rejects the AskUserQuestion tool call** (e.g., to invoke `/cat:learn` or another skill), the approval
 gate was NOT answered. After any interrupting skill completes, return to Step 8 and re-present the approval gate. Do
 NOT proceed to merge, release the lock, remove the worktree, or invoke work-complete without explicit user selection.
