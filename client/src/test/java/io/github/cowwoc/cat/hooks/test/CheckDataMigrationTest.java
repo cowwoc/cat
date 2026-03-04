@@ -11,7 +11,10 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.JvmScope;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.testng.annotations.Test;
@@ -22,6 +25,28 @@ import tools.jackson.databind.json.JsonMapper;
  */
 public final class CheckDataMigrationTest
 {
+  /**
+   * The Phase 7 awk script as a constant for use across multiple tests.
+   * Mirrors the awk command in plugin/migrations/2.1.sh Phase 7.
+   */
+  private static final String PHASE7_AWK = """
+    /^## Execution Steps/ {
+        print "## Execution Waves"
+        print ""
+        print "### Wave 1"
+        in_section = 1
+        last_blank=0
+        next
+    }
+    in_section && /^## / {
+        in_section=0
+        if (!last_blank) print ""
+        print
+        next
+    }
+    { print; last_blank=($0 == "") }
+    """;
+
   /**
    * Verifies that reading a VERSION file that does not exist returns the default version "0.0.0".
    *
@@ -292,5 +317,209 @@ public final class CheckDataMigrationTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // Phase 7 tests: Migrate ## Execution Steps to ## Execution Waves
+  // ──────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Runs the Phase 7 awk command against {@code input} and returns the resulting string.
+   *
+   * @param input the content to process
+   * @return the output produced by the awk command
+   * @throws IOException          if file I/O or process execution fails
+   * @throws InterruptedException if the process is interrupted
+   */
+  private static String runPhase7Awk(String input) throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("phase7-awk-test-");
+    try
+    {
+      Path planFile = tempDir.resolve("PLAN.md");
+      Files.writeString(planFile, input);
+
+      ProcessBuilder pb = new ProcessBuilder("awk", PHASE7_AWK, planFile.toString());
+      pb.redirectErrorStream(true);
+      Process process = pb.start();
+
+      StringBuilder output = new StringBuilder();
+      try (BufferedReader reader = new BufferedReader(
+        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
+      {
+        String line = reader.readLine();
+        while (line != null)
+        {
+          output.append(line).append('\n');
+          line = reader.readLine();
+        }
+      }
+
+      int exitCode = process.waitFor();
+      if (exitCode != 0)
+        throw new IOException("awk command failed with exit code " + exitCode);
+
+      return output.toString();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that Phase 7 renames {@code ## Execution Steps} to {@code ## Execution Waves} and inserts
+   * {@code ### Wave 1} immediately after it.
+   *
+   * @throws IOException          if file I/O fails
+   * @throws InterruptedException if the process is interrupted
+   */
+  @Test
+  public void phase7MigratesExecutionStepsToExecutionWaves() throws IOException, InterruptedException
+  {
+    String input = """
+      ## Execution Steps
+
+      - Step A
+      - Step B
+      """;
+
+    String output = runPhase7Awk(input);
+
+    requireThat(output, "output").contains("## Execution Waves");
+    requireThat(output, "output").contains("### Wave 1");
+    requireThat(output, "output").doesNotContain("## Execution Steps");
+    // Wave 1 heading must appear after Execution Waves heading
+    int wavesIdx = output.indexOf("## Execution Waves");
+    int wave1Idx = output.indexOf("### Wave 1");
+    requireThat(wave1Idx > wavesIdx, "wave1AfterWaves").isTrue();
+  }
+
+  /**
+   * Verifies that Phase 7 produces exactly one blank line between the migrated Execution Waves content and
+   * the next {@code ## } heading, even when the original content already ends with a blank line.
+   * <p>
+   * This is the specific bug fix: a trailing blank line in the Execution Steps content followed by a
+   * {@code ## } heading must not produce two consecutive blank lines after migration.
+   *
+   * @throws IOException          if file I/O fails
+   * @throws InterruptedException if the process is interrupted
+   */
+  @Test
+  public void phase7AvoidsDoubleBlankLineBeforeNextSection() throws IOException, InterruptedException
+  {
+    // The Execution Steps content ends with a blank line before the next ## heading.
+    // Without the fix, awk would emit an extra blank line, producing two consecutive blank lines.
+    String input = """
+      ## Execution Steps
+
+      - Step A
+
+      ## Next Section
+
+      Some content.
+      """;
+
+    String output = runPhase7Awk(input);
+
+    // Must not contain two consecutive blank lines anywhere
+    requireThat(output.contains("\n\n\n"), "hasDoubleBlankLine").isFalse();
+    // Next Section heading must still be present
+    requireThat(output, "output").contains("## Next Section");
+  }
+
+  /**
+   * Verifies that Phase 7 is idempotent: files that already contain {@code ## Execution Waves} are passed
+   * through unchanged by the awk script itself (the outer script skips them, but the awk transform must also
+   * be safe to apply twice).
+   *
+   * @throws IOException          if file I/O fails
+   * @throws InterruptedException if the process is interrupted
+   */
+  @Test
+  public void phase7SkipsAlreadyMigratedFiles() throws IOException, InterruptedException
+  {
+    // Input already uses the new heading — no ## Execution Steps present
+    String input = """
+      ## Execution Waves
+
+      ### Wave 1
+
+      - Step A
+
+      ## Next Section
+
+      Some content.
+      """;
+
+    String output = runPhase7Awk(input);
+
+    // Output must be identical to input (awk passes through unchanged)
+    requireThat(output, "output").isEqualTo(input);
+  }
+
+  /**
+   * Verifies that content before and after the {@code ## Execution Steps} section is preserved unchanged
+   * after Phase 7 migration.
+   *
+   * @throws IOException          if file I/O fails
+   * @throws InterruptedException if the process is interrupted
+   */
+  @Test
+  public void phase7PreservesContentBeforeAndAfterSection() throws IOException, InterruptedException
+  {
+    String input = """
+      # Title
+
+      ## Goal
+
+      Do something useful.
+
+      ## Execution Steps
+
+      - Step A
+      - Step B
+
+      ## Acceptance Criteria
+
+      - Criteria 1
+      """;
+
+    String output = runPhase7Awk(input);
+
+    requireThat(output, "output").contains("# Title");
+    requireThat(output, "output").contains("## Goal");
+    requireThat(output, "output").contains("Do something useful.");
+    requireThat(output, "output").contains("## Acceptance Criteria");
+    requireThat(output, "output").contains("- Criteria 1");
+    requireThat(output, "output").contains("## Execution Waves");
+    requireThat(output, "output").contains("### Wave 1");
+    requireThat(output, "output").doesNotContain("## Execution Steps");
+  }
+
+  /**
+   * Verifies that Phase 7 correctly migrates {@code ## Execution Steps} when it is the last section in the
+   * file (no subsequent {@code ## } heading follows).
+   *
+   * @throws IOException          if file I/O fails
+   * @throws InterruptedException if the process is interrupted
+   */
+  @Test
+  public void phase7HandlesExecutionStepsAtEndOfFile() throws IOException, InterruptedException
+  {
+    String input = """
+      ## Execution Steps
+
+      - Step A
+      - Step B
+      """;
+
+    String output = runPhase7Awk(input);
+
+    requireThat(output, "output").contains("## Execution Waves");
+    requireThat(output, "output").contains("### Wave 1");
+    requireThat(output, "output").contains("- Step A");
+    requireThat(output, "output").contains("- Step B");
+    requireThat(output, "output").doesNotContain("## Execution Steps");
   }
 }
