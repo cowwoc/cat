@@ -27,7 +27,7 @@ None
   classification logic and binary verdict derivation (if Java handler exists; otherwise test via empirical-test)
 
 ## Pre-conditions
-- [ ] All dependent issues are closed
+None
 
 ## Execution Waves
 

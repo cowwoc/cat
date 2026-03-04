@@ -52,7 +52,7 @@ None
 - `client/src/main/java/.../InjectSessionInstructions.java` — update if it references shrink-doc
 
 ## Pre-conditions
-- [ ] All dependent issues are closed
+None
 
 ## Execution Waves
 

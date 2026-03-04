@@ -26,7 +26,7 @@ None
   methodology, post-hoc root cause analysis patterns
 
 ## Pre-conditions
-- [ ] All dependent issues are closed
+None
 
 ## Execution Waves
 

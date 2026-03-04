@@ -37,7 +37,7 @@ None
 - `plugin/concepts/eval-patterns.md` - concept documentation for post-hoc comparison methodology
 
 ## Pre-conditions
-- [ ] All dependent issues are closed
+None
 
 ## Execution Waves
 
