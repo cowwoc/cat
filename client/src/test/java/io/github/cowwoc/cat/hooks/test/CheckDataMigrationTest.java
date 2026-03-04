@@ -17,6 +17,8 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import org.testng.annotations.Test;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -521,5 +523,230 @@ public final class CheckDataMigrationTest
     requireThat(output, "output").contains("- Step A");
     requireThat(output, "output").contains("- Step B");
     requireThat(output, "output").doesNotContain("## Execution Steps");
+  }
+
+  /**
+   * Applies the Phase 7 migration transformation to the given content.
+   * <p>
+   * Mirrors the awk logic in {@code plugin/migrations/2.1.sh} Phase 7:
+   * <ul>
+   *   <li>If {@code ## Execution Waves} is already present, returns the content unchanged.</li>
+   *   <li>If {@code ## Execution Steps} is present, replaces it with {@code ## Execution Waves} followed
+   *       by {@code ### Wave 1}, and passes all subsequent lines through unchanged.</li>
+   *   <li>If neither heading is present, returns the content unchanged.</li>
+   * </ul>
+   *
+   * @param content the PLAN.md file content to transform
+   * @return the transformed content, or the original content if no transformation is needed
+   */
+  private static String applyPhase7Migration(String content)
+  {
+    if (content.contains("\n## Execution Waves\n") || content.startsWith("## Execution Waves\n"))
+      return content;
+    if (!content.contains("\n## Execution Steps\n") && !content.startsWith("## Execution Steps\n"))
+      return content;
+
+    List<String> inputLines = new ArrayList<>(List.of(content.split("\n", -1)));
+    List<String> outputLines = new ArrayList<>();
+    boolean inSection = false;
+
+    for (String line : inputLines)
+    {
+      if (line.equals("## Execution Steps"))
+      {
+        outputLines.add("## Execution Waves");
+        outputLines.add("");
+        outputLines.add("### Wave 1");
+        inSection = true;
+        continue;
+      }
+      if (inSection && line.startsWith("## "))
+      {
+        inSection = false;
+        outputLines.add("");
+        outputLines.add(line);
+        continue;
+      }
+      outputLines.add(line);
+    }
+
+    return String.join("\n", outputLines);
+  }
+
+  /**
+   * Verifies Phase 7: simple numbered steps are preserved verbatim under Wave 1.
+   */
+  @Test
+  public void phase7SimpleStepsPreservedVerbatim()
+  {
+    String input = """
+      ## Goal
+      Do something useful.
+
+      ## Execution Steps
+
+      1. First step
+      2. Second step
+      3. Third step
+
+      ## Post-conditions
+      - All steps complete
+      """;
+
+    String result = applyPhase7Migration(input);
+
+    requireThat(result.contains("## Execution Waves"), "hasExecutionWaves").isTrue();
+    requireThat(result.contains("### Wave 1"), "hasWave1").isTrue();
+    requireThat(result.contains("## Execution Steps"), "hasOldHeading").isFalse();
+    requireThat(result.contains("1. First step"), "hasStep1").isTrue();
+    requireThat(result.contains("2. Second step"), "hasStep2").isTrue();
+    requireThat(result.contains("3. Third step"), "hasStep3").isTrue();
+  }
+
+  /**
+   * Verifies Phase 7: sub-bullets, file lists, code blocks, and inner headings are preserved.
+   */
+  @Test
+  public void phase7SubContentPreserved()
+  {
+    String input = """
+      ## Goal
+      Complex issue.
+
+      ## Execution Steps
+
+      - Implement the feature
+        - Files: `plugin/skills/my-skill.md`
+        - Replace the current implementation
+        - Verify with:
+          ```bash
+          mvn test
+          ```
+      - Add documentation
+
+      ## Post-conditions
+      - Feature works
+      """;
+
+    String result = applyPhase7Migration(input);
+
+    requireThat(result.contains("## Execution Waves"), "hasExecutionWaves").isTrue();
+    requireThat(result.contains("### Wave 1"), "hasWave1").isTrue();
+    requireThat(result.contains("## Execution Steps"), "hasOldHeading").isFalse();
+    requireThat(result.contains("- Implement the feature"), "hasTopLevel").isTrue();
+    requireThat(result.contains("  - Files: `plugin/skills/my-skill.md`"), "hasFilesLine").isTrue();
+    requireThat(result.contains("    ```bash"), "hasCodeBlock").isTrue();
+    requireThat(result.contains("    mvn test"), "hasCodeContent").isTrue();
+    requireThat(result.contains("- Add documentation"), "hasSecondBullet").isTrue();
+    requireThat(result.contains("## Post-conditions"), "hasPostConditions").isTrue();
+  }
+
+  /**
+   * Verifies Phase 7: section boundary is respected when another top-level heading follows.
+   */
+  @Test
+  public void phase7SectionBoundaryRespected()
+  {
+    String input = """
+      ## Goal
+      Some goal.
+
+      ## Execution Steps
+
+      - Step 1
+      - Step 2
+
+      ## Post-conditions
+      - Done
+      """;
+
+    String result = applyPhase7Migration(input);
+
+    int wavesPos = result.indexOf("## Execution Waves");
+    int postCondPos = result.indexOf("## Post-conditions");
+
+    requireThat(result.contains("## Execution Waves"), "hasExecutionWaves").isTrue();
+    requireThat(result.contains("## Post-conditions"), "hasPostConditions").isTrue();
+    requireThat(wavesPos < postCondPos, "wavesBeforePostCond").isTrue();
+    requireThat(result.contains("- Step 1"), "hasStep1").isTrue();
+    requireThat(result.contains("- Step 2"), "hasStep2").isTrue();
+  }
+
+  /**
+   * Verifies Phase 7: content is fully preserved when Execution Steps is the last section.
+   */
+  @Test
+  public void phase7LastSectionFullyPreserved()
+  {
+    String input = """
+      ## Goal
+      Some goal.
+
+      ## Execution Steps
+
+      - Step A
+      - Step B with
+        multi-line content
+      """;
+
+    String result = applyPhase7Migration(input);
+
+    requireThat(result.contains("## Execution Waves"), "hasExecutionWaves").isTrue();
+    requireThat(result.contains("### Wave 1"), "hasWave1").isTrue();
+    requireThat(result.contains("## Execution Steps"), "hasOldHeading").isFalse();
+    requireThat(result.contains("- Step A"), "hasStepA").isTrue();
+    requireThat(result.contains("- Step B with"), "hasStepB").isTrue();
+    requireThat(result.contains("  multi-line content"), "hasMultiLine").isTrue();
+  }
+
+  /**
+   * Verifies Phase 7: already-migrated files (with Execution Waves) are skipped (idempotent).
+   */
+  @Test
+  public void phase7AlreadyMigratedSkipped()
+  {
+    String input = """
+      ## Goal
+      Some goal.
+
+      ## Execution Waves
+
+      ### Wave 1
+      - Step 1
+      - Step 2
+
+      ## Post-conditions
+      - Done
+      """;
+
+    String result = applyPhase7Migration(input);
+
+    requireThat(result, "result").isEqualTo(input);
+    requireThat(result.contains("## Execution Waves"), "hasExecutionWaves").isTrue();
+    requireThat(result.contains("## Execution Steps"), "hasOldHeading").isFalse();
+  }
+
+  /**
+   * Verifies Phase 7: files without Execution Steps are left unchanged.
+   */
+  @Test
+  public void phase7NoExecutionStepsUnchanged()
+  {
+    String input = """
+      ## Goal
+      Some goal.
+
+      ## Pre-conditions
+      - Ready
+
+      ## Post-conditions
+      - Done
+      """;
+
+    String result = applyPhase7Migration(input);
+
+    requireThat(result, "result").isEqualTo(input);
+    requireThat(result.contains("## Execution Waves"), "hasExecutionWaves").isFalse();
+    requireThat(result.contains("## Execution Steps"), "hasOldHeading").isFalse();
   }
 }
