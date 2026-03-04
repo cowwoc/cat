@@ -91,9 +91,15 @@ public final class GetIssueCompleteOutput implements SkillOutput
   /**
    * Discovers the next available issue and renders the appropriate completion box.
    * <p>
-   * Extracts the minor version from {@code issueName} (e.g., {@code 2.1} from {@code 2.1-fix-bug}),
-   * searches for the next open issue in that minor version using IssueDiscovery with no lock acquisition,
+   * Extracts the version prefix from {@code issueName} (e.g., {@code 2.1} from {@code 2.1-fix-bug},
+   * {@code 2.1.3} from {@code 2.1.3-fix-bug}, or {@code 2} from {@code 2-fix-bug}), searches for
+   * the next open issue in that version scope using IssueDiscovery with no lock acquisition,
    * and renders either the issue-complete box (if a next issue is found) or the scope-complete box.
+   * <p>
+   * Determines the appropriate {@link IssueDiscovery.Scope} from the version format:
+   * uses {@code Scope.VERSION} which handles all version formats. Compare with
+   * {@link GetNextIssueOutput}'s discovery, which uses {@code Scope.ALL} to find the globally next
+   * issue for the banner display.
    *
    * @param issueName    the completed issue name (e.g., {@code 2.1-fix-bug})
    * @param targetBranch the target branch that was merged to
@@ -107,17 +113,18 @@ public final class GetIssueCompleteOutput implements SkillOutput
     requireThat(issueName, "issueName").isNotBlank();
     requireThat(targetBranch, "targetBranch").isNotBlank();
 
-    // Extract "major.minor" from issueName like "2.1-fix-bug"
+    // Extract version prefix from issueName (e.g., "2.1" from "2.1-fix-bug",
+    // "2.1.3" from "2.1.3-fix-bug", or "2" from "2-fix-bug")
     int dashIndex = issueName.indexOf('-');
     if (dashIndex < 0)
     {
-      // Cannot determine minor version; fall back to scope-complete
+      // Cannot determine version; fall back to scope-complete
       return getScopeCompleteBox("v" + issueName);
     }
-    String minorVersion = issueName.substring(0, dashIndex);
+    String version = issueName.substring(0, dashIndex);
 
     IssueDiscovery discovery = new IssueDiscovery(scope);
-    SearchOptions options = new SearchOptions(Scope.MINOR, minorVersion, "", "", false);
+    SearchOptions options = new SearchOptions(Scope.VERSION, version, "", "", false);
     DiscoveryResult result = discovery.findNextIssue(options);
 
     if (result instanceof DiscoveryResult.Found found)
@@ -127,7 +134,7 @@ public final class GetIssueCompleteOutput implements SkillOutput
       return getIssueCompleteBox(issueName, found.issueId(), nextGoal, targetBranch);
     }
     // No next issue found — scope is complete
-    return getScopeCompleteBox("v" + minorVersion);
+    return getScopeCompleteBox("v" + version);
   }
 
   /**

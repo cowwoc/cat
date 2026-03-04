@@ -193,12 +193,17 @@ public final class GetStatusOutput implements SkillOutput
         {
           List<Path> minorDirs = minorStream.
             filter(Files::isDirectory).
-            filter(p -> p.getFileName().toString().matches("v[0-9]+\\.[0-9]+")).
+            filter(p -> p.getFileName().toString().matches("v[0-9]+(\\.[0-9]+){1,2}")).
             sorted(Comparator.comparing(p ->
             {
               String name = p.getFileName().toString().substring(1);
               String[] parts = name.split("\\.");
-              return Integer.parseInt(parts[0]) * 1000 + Integer.parseInt(parts[1]);
+              int sortKey = Integer.parseInt(parts[0]) * 1_000_000;
+              if (parts.length > 1)
+                sortKey += Integer.parseInt(parts[1]) * 1000;
+              if (parts.length > 2)
+                sortKey += Integer.parseInt(parts[2]);
+              return sortKey;
             })).
             toList();
 
@@ -728,7 +733,12 @@ public final class GetStatusOutput implements SkillOutput
     {
       String name = m.id.substring(1);
       String[] parts = name.split("\\.");
-      return Integer.parseInt(parts[0]) * 1000 + Integer.parseInt(parts[1]);
+      int sortKey = Integer.parseInt(parts[0]) * 1_000_000;
+      if (parts.length > 1)
+        sortKey += Integer.parseInt(parts[1]) * 1000;
+      if (parts.length > 2)
+        sortKey += Integer.parseInt(parts[2]);
+      return sortKey;
     }));
 
     String first = sorted.get(0).id;
@@ -805,7 +815,7 @@ public final class GetStatusOutput implements SkillOutput
       return "";
 
     String branch = lines.get(0).strip();
-    if (branch.matches("v[0-9]+\\.[0-9]+"))
+    if (branch.matches("v[0-9]+(\\.[0-9]+){1,2}"))
       return branch;
 
     return "";
