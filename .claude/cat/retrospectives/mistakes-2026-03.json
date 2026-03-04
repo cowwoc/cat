@@ -502,6 +502,44 @@
           "Empirical test confirms agent does NOT proceed with empty answers"
         ]
       }
+    },
+    {
+      "id": "M463",
+      "timestamp": "2026-03-04T23:00:16Z",
+      "category": "protocol_violation",
+      "description": "Haiku subagent assumed user approval when AskUserQuestion returned empty answer string, proceeding with merge without explicit user consent",
+      "root_cause": "MISSING GUIDANCE: work-with-issue/first-use.md Step 8 instructs agent to wait for explicit user selection and states 'Unknown consent = No consent = STOP', but does not define how to detect an empty/ambiguous AskUserQuestion response. When the tool returned 'User has answered your questions: .' with no selection text, the haiku subagent applied completion bias and assumed approval. Third recurrence of the same structural gap (M446 → M459 → M462 → M463).",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue-agent/first-use.md",
+      "pattern_keywords": [
+        "AskUserQuestion",
+        "approval_gate",
+        "empty_answers",
+        "assumed_approval",
+        "merge_without_verified_consent",
+        "toolUseResult_answers"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": "M462",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "After AskUserQuestion returns, inspect the answer text. If the response contains no selection (answer is blank after 'User has answered your questions:'), treat as no consent and re-present the approval gate. Only proceed when the answer contains a non-empty selection matching one of the presented options.",
+      "issue_creation_info": {
+        "suggested_title": "fix-approval-gate-empty-answers-handling (existing issue)",
+        "suggested_description": "Issue fix-approval-gate-empty-answers-handling already exists and is open. This is the 3rd recurrence (M446 → M459 → M462 → M463). The fix requires adding explicit answers-inspection protocol to work-with-issue/first-use.md Step 8.",
+        "suggested_acceptance_criteria": [
+          "Step 8 specifies that AskUserQuestion response must contain a non-empty selection",
+          "Step 8 specifies that blank/empty answer = no consent = re-present the gate",
+          "Empirical test confirms agent re-presents gate when answer is empty",
+          "Empirical test confirms agent does NOT proceed with empty answer"
+        ]
+      }
     }
   ]
 }
