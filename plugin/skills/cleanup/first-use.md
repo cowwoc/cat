@@ -110,7 +110,8 @@ For each worktree identified as abandoned:
 
 ```bash
 WORKTREE_PATH="<path-from-survey>"
-git -C "$WORKTREE_PATH" status --porcelain
+cd "$WORKTREE_PATH"
+git status --porcelain
 ```
 
 If output is non-empty, there is uncommitted work.
@@ -119,8 +120,9 @@ If output is non-empty, there is uncommitted work.
 
 ```bash
 BRANCH_NAME="<branch-from-survey>"
-TARGET_BRANCH=$(cat "$(git -C "$WORKTREE_PATH" rev-parse --git-dir)/cat-branch-point" 2>/dev/null || echo "main")
-MERGED=$(git -C "$WORKTREE_PATH" branch --merged "$TARGET_BRANCH" | grep -q "^[* ]*${BRANCH_NAME}$" && echo "yes" || echo "no")
+cd "$WORKTREE_PATH"
+TARGET_BRANCH=$(cat "$(git rev-parse --git-dir)/cat-branch-point" 2>/dev/null || echo "main")
+MERGED=$(git branch --merged "$TARGET_BRANCH" | grep -q "^[* ]*${BRANCH_NAME}$" && echo "yes" || echo "no")
 ```
 
 | Merge Status | Risk Assessment |
@@ -147,8 +149,8 @@ If uncommitted:
 
   Options:
   1. Commit changes first
-  2. Stash: git -C <path> stash
-  3. Discard the uncommitted modifications: git -C <path> checkout -- .
+  2. Stash: cd <path> && git stash
+  3. Discard the uncommitted modifications: cd <path> && git checkout -- .
   4. Skip this worktree
 ```
 

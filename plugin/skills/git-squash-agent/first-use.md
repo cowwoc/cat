@@ -183,16 +183,17 @@ are informational — they signal that manual verification is needed, not that a
 After receiving `OK`, verify the working tree in the worktree is clean and the branch points to the squashed commit:
 
 ```bash
+cd "$WORKTREE_PATH"
 # Confirm the source branch is at the squashed commit
-git -C "$WORKTREE_PATH" log --oneline -1
+git log --oneline -1
 # Output must show the squashed commit hash from the OK response
 
 # Confirm the working tree is clean (no diverged state)
-git -C "$WORKTREE_PATH" status --porcelain
+git status --porcelain
 # Output must be empty — any output indicates a diverged working tree
 
 # If working tree shows diverged state (output not empty):
-git -C "$WORKTREE_PATH" reset --hard HEAD
+git reset --hard HEAD
 ```
 
 **Why this check is required:** `backup_verified: true` in the OK response confirms content correctness but does
