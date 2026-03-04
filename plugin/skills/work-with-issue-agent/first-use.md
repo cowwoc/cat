@@ -351,7 +351,7 @@ Task tool:
     - Verify you are on branch ${BRANCH} before making changes
     - Execute ONLY the items assigned to your wave (ASSIGNED_ITEMS above)
     - Do NOT execute items from other waves
-    - After committing your work, run: git -C ${WORKTREE_PATH} pull --rebase origin ${BRANCH} (if remote exists)
+    - After committing your work, run: cd ${WORKTREE_PATH} && git pull --rebase origin ${BRANCH} (if remote exists)
     - **STATE.md ownership:** You are [DETERMINED AUTOMATICALLY: if wave is the last one, "the STATE.md owner" else "NOT the STATE.md owner"]. [If owner: "Update STATE.md in your final commit: status: closed, progress: 100%." Else: "Do NOT modify STATE.md in any commit."]
     - Run tests if applicable
     - Commit your changes using the commit type from PLAN.md (e.g., `feature:`, `bugfix:`, `docs:`). The commit message must follow the format: `<type>: <descriptive summary>`. Do NOT use generic messages.
@@ -420,7 +420,8 @@ what the orchestrator instructed for that specific deliverable.
 **Get actual commit messages from git:**
 
 ```bash
-git -C ${WORKTREE_PATH} log --format="%H %s" ${TARGET_BRANCH}..HEAD
+cd ${WORKTREE_PATH}
+git log --format="%H %s" ${TARGET_BRANCH}..HEAD
 ```
 
 This returns lines of: `<commit-hash> <commit-subject>`.
@@ -451,7 +452,8 @@ When a mismatch is detected, the orchestrator MUST amend the commit(s) to use th
 
 For single commit:
 ```bash
-git -C ${WORKTREE_PATH} commit --amend -m "<correct message>"
+cd ${WORKTREE_PATH}
+git commit --amend -m "<correct message>"
 ```
 
 For multiple commits: Use interactive rebase or sequential amend from oldest to newest to fix each incorrect message.
@@ -962,8 +964,9 @@ defer it.
 ```bash
 # Compare against branch point (what the issue changed), not target branch head
 # Target branch may have new files added after the worktree was created
-BRANCH_POINT=$(cat "$(git -C "${WORKTREE_PATH}" rev-parse --git-dir)/cat-branch-point")
-git -C "${WORKTREE_PATH}" diff --name-only "${BRANCH_POINT}..HEAD"
+cd "${WORKTREE_PATH}"
+BRANCH_POINT=$(cat "$(git rev-parse --git-dir)/cat-branch-point")
+git diff --name-only "${BRANCH_POINT}..HEAD"
 ```
 
 **Step 2: For each remaining concern, calculate benefit and cost:**
@@ -1253,7 +1256,8 @@ about what they are approving.
 
 2. **Display commit summary** — list commits since target branch:
    ```bash
-   git -C ${WORKTREE_PATH} log --oneline ${TARGET_BRANCH}..HEAD
+   cd ${WORKTREE_PATH}
+   git log --oneline ${TARGET_BRANCH}..HEAD
    ```
 
 3. **Display issue goal** (from PLAN.md)
@@ -1492,6 +1496,8 @@ now contains the squashed commit:
 
 ```bash
 # Verify the merge commit is reachable from TARGET_BRANCH
+# git -C is intentional here: the worktree is already removed at this point,
+# so we must run from the main project directory.
 SQUASH_HASH=$(git -C "${CLAUDE_PROJECT_DIR}" rev-parse HEAD 2>/dev/null)
 MERGED=$(git -C "${CLAUDE_PROJECT_DIR}" branch --contains "${SQUASH_HASH}" 2>/dev/null \
   | grep -c "${TARGET_BRANCH}" || true)

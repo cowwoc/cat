@@ -48,7 +48,8 @@ if [[ ! -d "$ISSUE_PATH" ]]; then
 fi
 
 # Check TARGET_BRANCH is a valid git ref
-if ! git -C "${WORKTREE_PATH}" rev-parse --verify "${TARGET_BRANCH}" >/dev/null 2>&1; then
+cd "${WORKTREE_PATH}"
+if ! git rev-parse --verify "${TARGET_BRANCH}" >/dev/null 2>&1; then
   echo "ERROR: TARGET_BRANCH is not a valid git ref: ${TARGET_BRANCH}"
   exit 1
 fi
@@ -70,7 +71,8 @@ Before rebasing, verify preconditions:
 
 ```bash
 # Verify working tree is clean
-DIRTY=$(git -C "${WORKTREE_PATH}" status --porcelain)
+cd "${WORKTREE_PATH}"
+DIRTY=$(git status --porcelain)
 if [[ -n "$DIRTY" ]]; then
   echo "ERROR: Working tree has uncommitted changes in ${WORKTREE_PATH}:"
   echo "$DIRTY"
@@ -91,7 +93,8 @@ If working tree is dirty, return FAILED with descriptive error:
 Rebase the issue branch onto the target branch to incorporate any upstream changes:
 
 ```bash
-git -C "${WORKTREE_PATH}" rebase "${TARGET_BRANCH}"
+cd "${WORKTREE_PATH}"
+git rebase "${TARGET_BRANCH}"
 ```
 
 **If rebase fails with conflicts:**
@@ -140,7 +143,8 @@ Maintain a re-squash iteration counter. Initialize `RESQUASH_COUNT=0` before ent
 Run this check against the commits on the branch:
 
 ```bash
-git -C "${WORKTREE_PATH}" log --format="%H %s" "${TARGET_BRANCH}..HEAD"
+cd "${WORKTREE_PATH}"
+git log --format="%H %s" "${TARGET_BRANCH}..HEAD"
 ```
 
 **Indicators that further squashing is needed** (any one triggers):
@@ -149,7 +153,8 @@ git -C "${WORKTREE_PATH}" log --format="%H %s" "${TARGET_BRANCH}..HEAD"
    AND modify at least one file in common. Check with:
    ```bash
    # Get all commits with their hashes and subjects
-   COMMITS=$(git -C "${WORKTREE_PATH}" log --format="%H %s" "${TARGET_BRANCH}..HEAD")
+   cd "${WORKTREE_PATH}"
+   COMMITS=$(git log --format="%H %s" "${TARGET_BRANCH}..HEAD")
 
    # For each pair of commits with the same type prefix, check file overlap
    while IFS= read -r line_a; do
@@ -162,8 +167,8 @@ git -C "${WORKTREE_PATH}" log --format="%H %s" "${TARGET_BRANCH}..HEAD"
        prefix_b=$(echo "$line_b" | cut -d' ' -f2- | grep -oE '^[a-z]+:' || true)
        if [[ "$prefix_a" == "$prefix_b" ]]; then
          overlap=$(comm -12 \
-           <(git -C "${WORKTREE_PATH}" show --name-only --format="" "$hash_a" | sort) \
-           <(git -C "${WORKTREE_PATH}" show --name-only --format="" "$hash_b" | sort))
+           <(git show --name-only --format="" "$hash_a" | sort) \
+           <(git show --name-only --format="" "$hash_b" | sort))
          if [[ -n "$overlap" ]]; then
            echo "OVERLAP: $hash_a and $hash_b share files: $overlap"
          fi
@@ -189,14 +194,15 @@ Verify that STATE.md exists and is closed in the final commit:
 ```bash
 # Check STATE.md status in the HEAD commit
 STATE_RELATIVE=$(realpath --relative-to="${WORKTREE_PATH}" "${ISSUE_PATH}/STATE.md")
+cd "${WORKTREE_PATH}"
 
 # Verify STATE.md exists in HEAD commit
-if ! git -C "${WORKTREE_PATH}" show "HEAD:${STATE_RELATIVE}" >/dev/null 2>&1; then
+if ! git show "HEAD:${STATE_RELATIVE}" >/dev/null 2>&1; then
   echo "ERROR: STATE.md not found in HEAD commit at path: ${STATE_RELATIVE}"
   exit 1
 fi
 
-STATUS_IN_COMMIT=$(git -C "${WORKTREE_PATH}" show "HEAD:${STATE_RELATIVE}" | \
+STATUS_IN_COMMIT=$(git show "HEAD:${STATE_RELATIVE}" | \
   grep -i "^\*\*Status:\*\*\|^- \*\*Status:\*\*" | head -1)
 echo "STATE.md status in HEAD commit: ${STATUS_IN_COMMIT}"
 
@@ -211,8 +217,9 @@ fi
 1. Open `${ISSUE_PATH}/STATE.md` and set `Status: closed`, `Progress: 100%`
 2. Amend the most recent implementation commit to include the STATE.md change:
    ```bash
-   git -C "${WORKTREE_PATH}" add "${ISSUE_PATH}/STATE.md"
-   git -C "${WORKTREE_PATH}" commit --amend --no-edit
+   cd "${WORKTREE_PATH}"
+   git add "${ISSUE_PATH}/STATE.md"
+   git commit --amend --no-edit
    ```
 3. Re-run squash quality verification (Step 4)
 
