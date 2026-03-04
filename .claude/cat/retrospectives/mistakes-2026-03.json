@@ -462,6 +462,46 @@
           "No regression in other AutoLearnMistakes patterns"
         ]
       }
+    },
+    {
+      "id": "M462",
+      "timestamp": "2026-03-04T20:20:36Z",
+      "category": "protocol_violation",
+      "description": "Agent merged issue 2.1-add-backup-branch-cleanup-to-merge without verifying AskUserQuestion answers were non-empty, and skipped mandatory skill-builder review for modified skill file plugin/skills/work-merge-agent/first-use.md",
+      "root_cause": "MISSING GUIDANCE: work-with-issue/first-use.md Step 8 described 'wait for explicit user selection' and 'Unknown consent = No consent = STOP' but did not specify HOW to detect selection — the agent must inspect toolUseResult.answers and treat empty {} as no-consent. The structural gap (no inspection protocol) allowed the agent to proceed when answers={} by assuming approval from the success message 'User has answered your questions: .' Additionally, the skill-builder pre-gate check was documented but the agent skipped it for a modified skill file, violating the Step 8 pre-gate sub-step.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue-agent/first-use.md",
+      "pattern_keywords": [
+        "AskUserQuestion",
+        "approval_gate",
+        "empty_answers",
+        "assumed_approval",
+        "merge_without_verified_consent",
+        "skill_builder_skipped",
+        "toolUseResult_answers"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": "M459",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "After AskUserQuestion returns, inspect toolUseResult.answers. If answers is empty {}, treat as no consent and re-present the approval gate. Only proceed when answers contains a non-empty selection matching one of the presented options. Before presenting the approval gate, always check whether any skill/command files were modified and invoke cat:skill-builder for each one — this step is MANDATORY and BLOCKING.",
+      "issue_creation_info": {
+        "suggested_title": "Add answers-inspection protocol to work-with-issue Step 8 approval gate",
+        "suggested_description": "work-with-issue/first-use.md Step 8 must explicitly instruct the agent to inspect toolUseResult.answers after AskUserQuestion. If answers is an empty object {}, the agent must treat this as no consent and re-present the gate. The current text says 'Unknown consent = No consent = STOP' but does not specify how to detect unknown consent from the toolUseResult JSON. This is a recurrence of M459 (prevention_implemented: false) and M446.",
+        "suggested_acceptance_criteria": [
+          "Step 8 specifies that toolUseResult.answers must be inspected after AskUserQuestion",
+          "Step 8 specifies that empty answers {} = no consent = re-present the gate",
+          "Step 8 specifies the correct path: only proceed when answers contains a matching option label",
+          "Empirical test confirms agent inspects answers and re-presents gate when empty",
+          "Empirical test confirms agent does NOT proceed with empty answers"
+        ]
+      }
     }
   ]
 }
