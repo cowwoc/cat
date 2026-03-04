@@ -105,9 +105,23 @@ If validation passes, the tool returns JSON to stdout:
 | Status | Meaning | Agent Action |
 |--------|---------|--------------|
 | OK | Squash succeeded | Continue to Step 2 |
-| REBASE_CONFLICT | Conflict during pre-squash rebase | Return CONFLICT status with conflicting files from JSON |
+| REBASE_CONFLICT | Conflict during pre-squash rebase | Delete `backup_branch` from JSON, return CONFLICT status with conflicting files |
 | VERIFY_FAILED | Content changed during squash | Restore from backup branch in JSON, report ERROR |
 | ERROR | Rebase or other failure | Report error message from JSON, do not proceed |
+
+**REBASE_CONFLICT backup branch cleanup (mandatory):** When `git-squash` returns `REBASE_CONFLICT`, the JSON includes
+a `backup_branch` field. This branch must be deleted regardless of whether you STOP or proceed with manual conflict
+resolution — it is a temporary artifact and must not remain in the repository.
+
+```bash
+# Extract backup_branch from REBASE_CONFLICT JSON and delete it
+BACKUP_BRANCH=$(echo "$SQUASH_RESULT" | grep -o '"backup_branch"[[:space:]]*:[[:space:]]*"[^"]*"' | \
+  sed 's/"backup_branch"[[:space:]]*:[[:space:]]*"\(.*\)"/\1/')
+
+if [[ -n "$BACKUP_BRANCH" ]]; then
+  git -C "${WORKTREE_PATH}" branch -D "$BACKUP_BRANCH"
+fi
+```
 
 If work-with-issue already squashed commits in Step 5, skip this step entirely.
 
