@@ -284,4 +284,104 @@ public class EnforceWorktreePathIsolationTest
       TestUtils.deleteDirectoryRecursively(projectDir);
     }
   }
+
+  /**
+   * Verifies that writing to a path outside both the worktree and the main workspace (e.g., /tmp/)
+   * is allowed when a worktree context is active.
+   * <p>
+   * Agents may legitimately write to temporary files outside the project. The hook should only
+   * block writes to the main workspace, not all writes outside the worktree.
+   */
+  @Test
+  public void fileOutsideWorkspaceIsAllowed() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("ewpi-test-");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      createWorktreeDir(scope, ISSUE_ID);
+      Path tmpFile = Files.createTempDirectory("test-outside-").resolve("file.txt");
+
+      EnforceWorktreePathIsolation handler = new EnforceWorktreePathIsolation(scope);
+      JsonMapper mapper = scope.getJsonMapper();
+      ObjectNode input = mapper.createObjectNode();
+      input.put("file_path", tmpFile.toString());
+
+      FileWriteHandler.Result result = handler.check(input, SESSION_ID);
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that the error message for a blocked workspace file includes the corrected
+   * worktree path suggestion.
+   * <p>
+   * When a write targets the main workspace, the error must include a helpful suggestion
+   * for the corrected path inside the worktree.
+   */
+  @Test
+  public void fileInsideWorkspaceShowsCorrectedPathSuggestion() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("ewpi-test-");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      Path worktreeDir = createWorktreeDir(scope, ISSUE_ID);
+      Path mainWorkspaceFile = projectDir.resolve("plugin/important.py");
+
+      EnforceWorktreePathIsolation handler = new EnforceWorktreePathIsolation(scope);
+      JsonMapper mapper = scope.getJsonMapper();
+      ObjectNode input = mapper.createObjectNode();
+      input.put("file_path", mainWorkspaceFile.toString());
+
+      FileWriteHandler.Result result = handler.check(input, SESSION_ID);
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Use the corrected worktree path");
+      // The corrected path should be relative to the worktree and resolve to a valid path
+      requireThat(result.reason(), "reason").contains(worktreeDir.toAbsolutePath().normalize().toString());
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that paths with ".." components are normalized before checking against the
+   * workspace boundary, and writes outside the workspace are allowed.
+   * <p>
+   * A path like {@code projectDir + "/../tmp/file"} normalizes to outside the project,
+   * so the write should be allowed even when a worktree is active.
+   */
+  @Test
+  public void pathWithDotsNormalizedOutsideWorkspaceIsAllowed() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("ewpi-test-");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      createWorktreeDir(scope, ISSUE_ID);
+      // Create a path that looks like it goes outside: projectDir/../outside-tmp/file.txt
+      Path outsidePath = projectDir.resolve("..").resolve("outside-tmp-" + System.nanoTime()).resolve("file.txt");
+
+      EnforceWorktreePathIsolation handler = new EnforceWorktreePathIsolation(scope);
+      JsonMapper mapper = scope.getJsonMapper();
+      ObjectNode input = mapper.createObjectNode();
+      input.put("file_path", outsidePath.toString());
+
+      FileWriteHandler.Result result = handler.check(input, SESSION_ID);
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
 }

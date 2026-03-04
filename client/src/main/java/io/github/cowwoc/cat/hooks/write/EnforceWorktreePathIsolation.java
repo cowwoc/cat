@@ -137,8 +137,11 @@ public final class EnforceWorktreePathIsolation implements FileWriteHandler
   }
 
   /**
-   * Returns a block result if {@code absoluteFilePath} is not inside {@code context}'s worktree,
-   * or an allow result if it is.
+   * Returns a block result if {@code absoluteFilePath} is not inside {@code context}'s worktree
+   * but is inside the project directory, or an allow result otherwise.
+   * <p>
+   * Allows writes to paths outside both the worktree and the project directory (e.g., /tmp/).
+   * Only blocks writes targeting the main workspace when a worktree is active.
    *
    * @param context the resolved worktree context
    * @param absoluteFilePath the absolute normalized path of the file being edited
@@ -149,6 +152,11 @@ public final class EnforceWorktreePathIsolation implements FileWriteHandler
     if (absoluteFilePath.startsWith(context.absoluteWorktreePath()))
       return FileWriteHandler.Result.allow();
 
+    // Allow paths that are outside the project directory (e.g., /tmp/, /home/user/...)
+    if (!absoluteFilePath.startsWith(context.absoluteProjectDirectory()))
+      return FileWriteHandler.Result.allow();
+
+    // Block only paths inside the project directory but outside the worktree
     Path correctedPath = context.correctedPath(absoluteFilePath);
     String message = """
       ERROR: Worktree isolation violation
