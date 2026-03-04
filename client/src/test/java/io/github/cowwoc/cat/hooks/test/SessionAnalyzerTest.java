@@ -13,6 +13,7 @@ import io.github.cowwoc.cat.hooks.util.SessionAnalyzer;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import org.testng.annotations.Test;
 
 /**
@@ -94,7 +95,9 @@ public final class SessionAnalyzerTest
   }
 
   /**
-   * Builds a tool_result JSONL line.
+   * Builds a tool JSONL line wrapping a tool_result, matching the real Claude JSONL format.
+   * <p>
+   * Real Claude JSONL wraps tool results as: {@code {type:"tool", content:[{type:"tool_result",...}]}}.
    *
    * @param toolUseId the tool use ID
    * @param content the result content
@@ -102,9 +105,9 @@ public final class SessionAnalyzerTest
    */
   private static String toolResult(String toolUseId, String content)
   {
-    return "{\"type\":\"tool_result\"," +
+    return "{\"type\":\"tool\",\"content\":[{\"type\":\"tool_result\"," +
       "\"tool_use_id\":\"" + toolUseId + "\"," +
-      "\"content\":\"" + content + "\"}";
+      "\"content\":\"" + content + "\"}]}";
   }
 
   /**
@@ -286,11 +289,10 @@ public final class SessionAnalyzerTest
     Path tempFile = Files.createTempFile("session-", ".jsonl");
     try
     {
-      String jsonl = """
-        {"type":"tool_result","tool_use_id":"tool1","content":"short"}
-        {"type":"tool_result","tool_use_id":"tool2","content":"this is a much longer output with more content"}
-        {"type":"tool_result","tool_use_id":"tool3","content":"medium length output"}
-        """;
+      String jsonl =
+        toolResult("tool1", "short") + "\n" +
+        toolResult("tool2", "this is a much longer output with more content") + "\n" +
+        toolResult("tool3", "medium length output") + "\n";
       Files.writeString(tempFile, jsonl);
 
       SessionAnalyzer analyzer =
@@ -685,10 +687,10 @@ public final class SessionAnalyzerTest
     try
     {
       String jsonl =
-        "{\"type\":\"tool_result\"," +
+        "{\"type\":\"tool\",\"content\":[{\"type\":\"tool_result\"," +
         "\"tool_use_id\":\"tool1\"," +
         "\"content\":[{\"text\":\"first part\"}," +
-        "{\"text\":\"second part\"}]}\n";
+        "{\"text\":\"second part\"}]}]}\n";
       Files.writeString(tempFile, jsonl);
 
       SessionAnalyzer analyzer =
@@ -858,12 +860,12 @@ public final class SessionAnalyzerTest
     Path tempFile = Files.createTempFile("session-", ".jsonl");
     try
     {
-      String successResult = "{\"type\":\"tool_result\"," +
+      String successResult = "{\"type\":\"tool\",\"content\":[{\"type\":\"tool_result\"," +
         "\"tool_use_id\":\"tool1\"," +
-        "\"content\":\"{\\\"exit_code\\\":0,\\\"stdout\\\":\\\"success\\\"}\"}\n";
-      String errorResult = "{\"type\":\"tool_result\"," +
+        "\"content\":\"{\\\"exit_code\\\":0,\\\"stdout\\\":\\\"success\\\"}\"}]}\n";
+      String errorResult = "{\"type\":\"tool\",\"content\":[{\"type\":\"tool_result\"," +
         "\"tool_use_id\":\"tool2\"," +
-        "\"content\":\"{\\\"exit_code\\\":1,\\\"stderr\\\":\\\"ERROR: something failed\\\"}\"}\n";
+        "\"content\":\"{\\\"exit_code\\\":1,\\\"stderr\\\":\\\"ERROR: something failed\\\"}\"}]}\n";
       String bashToolUse = assistantMessage("msg1", "tool2", "Bash",
         "\"command\":\"some-command\"") + "\n";
       Files.writeString(tempFile, bashToolUse + successResult + errorResult);
@@ -899,15 +901,15 @@ public final class SessionAnalyzerTest
     Path tempFile = Files.createTempFile("session-", ".jsonl");
     try
     {
-      String buildFailedResult = "{\"type\":\"tool_result\"," +
+      String buildFailedResult = "{\"type\":\"tool\",\"content\":[{\"type\":\"tool_result\"," +
         "\"tool_use_id\":\"tool1\"," +
-        "\"content\":\"Compiling sources...\\nBUILD FAILED\\nTotal time: 2s\"}\n";
-      String errorColonResult = "{\"type\":\"tool_result\"," +
+        "\"content\":\"Compiling sources...\\nBUILD FAILED\\nTotal time: 2s\"}]}\n";
+      String errorColonResult = "{\"type\":\"tool\",\"content\":[{\"type\":\"tool_result\"," +
         "\"tool_use_id\":\"tool2\"," +
-        "\"content\":\"Processing...\\nERROR: file not found\\nAborted\"}\n";
-      String successResult = "{\"type\":\"tool_result\"," +
+        "\"content\":\"Processing...\\nERROR: file not found\\nAborted\"}]}\n";
+      String successResult = "{\"type\":\"tool\",\"content\":[{\"type\":\"tool_result\"," +
         "\"tool_use_id\":\"tool3\"," +
-        "\"content\":\"BUILD SUCCESS\\nTotal time: 1s\"}\n";
+        "\"content\":\"BUILD SUCCESS\\nTotal time: 1s\"}]}\n";
       Files.writeString(tempFile, buildFailedResult + errorColonResult + successResult);
 
       SessionAnalyzer analyzer =
@@ -938,9 +940,9 @@ public final class SessionAnalyzerTest
     Path tempFile = Files.createTempFile("session-", ".jsonl");
     try
     {
-      String successResult = "{\"type\":\"tool_result\"," +
+      String successResult = "{\"type\":\"tool\",\"content\":[{\"type\":\"tool_result\"," +
         "\"tool_use_id\":\"tool1\"," +
-        "\"content\":\"success output\"}\n";
+        "\"content\":\"success output\"}]}\n";
       Files.writeString(tempFile, successResult);
 
       SessionAnalyzer analyzer =
@@ -1097,6 +1099,543 @@ public final class SessionAnalyzerTest
         "second_tool").isEqualTo("Bash");
       requireThat(result.path("path_pattern").asString(),
         "path_pattern").isEqualTo("pom.xml");
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Builds a user message JSONL line.
+   *
+   * @param text the user message text
+   * @return a JSONL line
+   */
+  private static String userMessage(String text)
+  {
+    return "{\"type\":\"user\",\"message\":{\"content\":[{\"type\":\"text\",\"text\":\"" +
+      text + "\"}]}}";
+  }
+
+  /**
+   * Verifies that toolCallSequences returns tool call pairs that match a keyword.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void toolCallSequencesReturnsMatchingToolPairs() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      String jsonl =
+        assistantMessage("msg1", "tool1", "Read",
+          "\"file_path\":\"/workspace/config.json\"") + "\n" +
+        toolResult("tool1", "config content here") + "\n" +
+        assistantMessage("msg2", "tool2", "Bash",
+          "\"command\":\"mvn test\"") + "\n" +
+        toolResult("tool2", "BUILD FAILED: compilation error") + "\n" +
+        assistantMessage("msg3", "tool3", "Write",
+          "\"file_path\":\"/workspace/output.txt\",\"content\":\"data\"") + "\n" +
+        toolResult("tool3", "write success") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.toolCallSequences(tempFile, List.of("BUILD FAILED"), 2);
+
+      requireThat(result.has("tool_call_sequences"),
+        "has_tool_call_sequences").isTrue();
+      JsonNode sequences = result.path("tool_call_sequences");
+      requireThat(sequences.has("BUILD FAILED"),
+        "has_keyword_key").isTrue();
+      JsonNode matches = sequences.path("BUILD FAILED");
+      requireThat(matches.isArray(), "matches_is_array").isTrue();
+      requireThat(matches.size(), "matches_size").isGreaterThan(0);
+
+      // The match should contain the Bash tool use and its result
+      JsonNode firstMatch = matches.get(0);
+      requireThat(firstMatch.has("match_index"),
+        "has_match_index").isTrue();
+      requireThat(firstMatch.has("context_before"),
+        "has_context_before").isTrue();
+      requireThat(firstMatch.has("matched_pair"),
+        "has_matched_pair").isTrue();
+      requireThat(firstMatch.has("context_after"),
+        "has_context_after").isTrue();
+
+      // The matched_pair should contain both the tool_use and tool_result
+      JsonNode matchedPair = firstMatch.path("matched_pair");
+      requireThat(matchedPair.has("tool_use"), "has_tool_use").isTrue();
+      requireThat(matchedPair.has("tool_result"), "has_tool_result").isTrue();
+
+      // The matched tool should be the Bash command
+      requireThat(matchedPair.path("tool_use").path("name").asString(),
+        "tool_name").isEqualTo("Bash");
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that toolCallSequences includes context tool calls before and after the match.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void toolCallSequencesIncludesContextWindow() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      // Build: before1, before2, match (contains keyword), after1
+      String jsonl =
+        assistantMessage("msg1", "t1", "Read",
+          "\"file_path\":\"/before1.txt\"") + "\n" +
+        toolResult("t1", "before 1 content") + "\n" +
+        assistantMessage("msg2", "t2", "Read",
+          "\"file_path\":\"/before2.txt\"") + "\n" +
+        toolResult("t2", "before 2 content") + "\n" +
+        assistantMessage("msg3", "t3", "Bash",
+          "\"command\":\"run-failing-command\"") + "\n" +
+        toolResult("t3", "ERROR: command not found") + "\n" +
+        assistantMessage("msg4", "t4", "Write",
+          "\"file_path\":\"/after1.txt\",\"content\":\"x\"") + "\n" +
+        toolResult("t4", "after 1 content") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.toolCallSequences(tempFile, List.of("ERROR"), 2);
+
+      JsonNode matches = result.path("tool_call_sequences").path("ERROR");
+      requireThat(matches.size(), "matches_size").isGreaterThan(0);
+
+      JsonNode firstMatch = matches.get(0);
+      // context_before should contain up to 2 tool pairs before the match
+      JsonNode contextBefore = firstMatch.path("context_before");
+      requireThat(contextBefore.isArray(), "context_before_is_array").isTrue();
+      requireThat(contextBefore.size(), "context_before_size").isGreaterThan(0);
+
+      // context_after should contain up to 2 tool pairs after the match
+      JsonNode contextAfter = firstMatch.path("context_after");
+      requireThat(contextAfter.isArray(), "context_after_is_array").isTrue();
+      requireThat(contextAfter.size(), "context_after_size").isGreaterThan(0);
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that toolCallSequences returns empty sequences when no keyword matches.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void toolCallSequencesReturnsEmptyForNoMatch() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      String jsonl =
+        assistantMessage("msg1", "tool1", "Read",
+          "\"file_path\":\"/test.txt\"") + "\n" +
+        toolResult("tool1", "file contents") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.toolCallSequences(tempFile,
+        List.of("NONEXISTENT_KEYWORD_XYZ"), 2);
+
+      JsonNode sequences = result.path("tool_call_sequences");
+      requireThat(sequences.has("NONEXISTENT_KEYWORD_XYZ"),
+        "has_keyword_key").isTrue();
+      JsonNode matches = sequences.path("NONEXISTENT_KEYWORD_XYZ");
+      requireThat(matches.size(), "matches_size").isEqualTo(0);
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that toolCallSequences handles multiple keywords independently.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void toolCallSequencesHandlesMultipleKeywords() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      String jsonl =
+        assistantMessage("msg1", "t1", "Bash",
+          "\"command\":\"run-tests\"") + "\n" +
+        toolResult("t1", "BUILD FAILED: test error") + "\n" +
+        assistantMessage("msg2", "t2", "Bash",
+          "\"command\":\"another-command\"") + "\n" +
+        toolResult("t2", "ERROR: permission denied") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.toolCallSequences(tempFile,
+        List.of("BUILD FAILED", "permission"), 1);
+
+      JsonNode sequences = result.path("tool_call_sequences");
+      requireThat(sequences.has("BUILD FAILED"), "has_build_failed").isTrue();
+      requireThat(sequences.has("permission"), "has_permission").isTrue();
+      requireThat(sequences.path("BUILD FAILED").size(),
+        "build_failed_matches").isEqualTo(1);
+      requireThat(sequences.path("permission").size(),
+        "permission_matches").isEqualTo(1);
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that mistakeTimeline returns the assistant turns and tool calls
+   * from the last user message to the first error point.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void mistakeTimelineReturnsSequenceFromLastUserMessageToError()
+    throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      // Session: user message, then assistant actions, then an error
+      // Note: Using "BUILD FAILED" pattern match instead of relying on exit_code JSON parsing
+      String jsonl =
+        userMessage("fix the bug") + "\n" +
+        assistantMessage("msg1", "t1", "Read",
+          "\"file_path\":\"/src/Main.java\"") + "\n" +
+        toolResult("t1", "public class Main {}") + "\n" +
+        assistantMessage("msg2", "t2", "Bash",
+          "\"command\":\"mvn compile\"") + "\n" +
+        toolResult("t2", "Compiling sources...\\nBUILD FAILED\\nTotal time: 2s") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.mistakeTimeline(tempFile);
+
+      requireThat(result.has("mistake_timeline"),
+        "has_mistake_timeline").isTrue();
+      JsonNode timeline = result.path("mistake_timeline");
+      requireThat(timeline.isArray(), "timeline_is_array").isTrue();
+      requireThat(timeline.size(), "timeline_size").isGreaterThan(0);
+
+      // Timeline should contain entries of specific types
+      boolean hasToolUse = false;
+      boolean hasToolResult = false;
+      for (JsonNode event : timeline)
+      {
+        String eventType = event.path("type").asString();
+        if (eventType.equals("tool_use"))
+          hasToolUse = true;
+        if (eventType.equals("tool_result"))
+          hasToolResult = true;
+      }
+      // At minimum, we should have tool_use entries (Read and Bash)
+      requireThat(hasToolUse, "has_tool_use").isTrue();
+      requireThat(hasToolResult, "has_tool_result").isTrue();
+
+      requireThat(result.has("last_user_message_index"),
+        "has_last_user_message_index").isTrue();
+      requireThat(result.has("error_entry_index"),
+        "has_error_entry_index").isTrue();
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that mistakeTimeline returns empty timeline when there is no error in the session.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void mistakeTimelineReturnsEmptyWhenNoError() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      String jsonl =
+        userMessage("do some work") + "\n" +
+        assistantMessage("msg1", "t1", "Read",
+          "\"file_path\":\"/test.txt\"") + "\n" +
+        toolResult("t1", "success content") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.mistakeTimeline(tempFile);
+
+      requireThat(result.has("mistake_timeline"),
+        "has_mistake_timeline").isTrue();
+      JsonNode timeline = result.path("mistake_timeline");
+      requireThat(timeline.isArray(), "timeline_is_array").isTrue();
+      requireThat(timeline.size(), "timeline_size").isEqualTo(0);
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that mistakeTimeline captures only events after the last user message,
+   * ignoring earlier turns.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void mistakeTimelineCapturesOnlyEventsAfterLastUserMessage() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      // First interaction: user asks, assistant does some work successfully
+      // Second interaction: user asks again, assistant fails
+      String jsonl =
+        userMessage("first message") + "\n" +
+        assistantMessage("msg1", "t1", "Read",
+          "\"file_path\":\"/first.txt\"") + "\n" +
+        toolResult("t1", "first read success") + "\n" +
+        userMessage("second message - the one before mistake") + "\n" +
+        assistantMessage("msg2", "t2", "Bash",
+          "\"command\":\"failing-command\"") + "\n" +
+        toolResult("t2", "BUILD FAILED: something broke") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.mistakeTimeline(tempFile);
+
+      JsonNode timeline = result.path("mistake_timeline");
+
+      // Timeline should NOT include events from the first interaction (before "second message")
+      // It should only contain the Bash tool_use and the failed tool_result
+      boolean hasFirstRead = false;
+      for (JsonNode event : timeline)
+      {
+        JsonNode input = event.path("input");
+        if (!input.isMissingNode())
+        {
+          String filePath = input.path("file_path").asString();
+          if (filePath.equals("/first.txt"))
+            hasFirstRead = true;
+        }
+        // Also check tool_result content
+        String content = event.path("content").asString();
+        if (content.contains("first read success"))
+          hasFirstRead = true;
+      }
+      requireThat(hasFirstRead, "has_first_read").isFalse();
+
+      // The timeline should contain the Bash pair from the second interaction
+      requireThat(timeline.size(), "timeline_size").isGreaterThan(0);
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that toolCallSequences caps the number of matches per keyword at maxMatches.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void toolCallSequencesCapsMatchesPerKeyword() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      // Create 5 tool pairs that all match the keyword
+      StringBuilder jsonl = new StringBuilder(4096);
+      for (int i = 0; i < 5; ++i)
+      {
+        jsonl.append(assistantMessage("msg" + i, "t" + i, "Bash", "\"command\":\"run-tests\"")).
+          append('\n').
+          append(toolResult("t" + i, "BUILD FAILED: test " + i + " failed")).
+          append('\n');
+      }
+      Files.writeString(tempFile, jsonl.toString());
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      // Request with maxMatches=3 — should cap at 3 even though 5 match
+      JsonNode result = analyzer.toolCallSequences(tempFile, List.of("BUILD FAILED"), 1, 3);
+
+      JsonNode sequences = result.path("tool_call_sequences");
+      JsonNode matches = sequences.path("BUILD FAILED");
+      requireThat(matches.isArray(), "matches_is_array").isTrue();
+      // All 5 pairs match, but maxMatches=3 should cap to exactly 3
+      requireThat(matches.size(), "matches_size").isEqualTo(3);
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that mistakeTimeline caps the number of timeline events at maxEvents.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void mistakeTimelineCapsEventsAtMaxEvents() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      // Create a session with many tool pairs before the error
+      StringBuilder jsonl = new StringBuilder(4096);
+      jsonl.append(userMessage("do work")).append('\n');
+      // Add 10 successful tool pairs
+      for (int i = 0; i < 10; ++i)
+      {
+        jsonl.append(assistantMessage("msg" + i, "t" + i, "Read", "\"file_path\":\"/file" + i + ".txt\"")).
+          append('\n').
+          append(toolResult("t" + i, "content " + i)).
+          append('\n');
+      }
+      // Add a failing pair at the end
+      jsonl.append(assistantMessage("msgErr", "tErr", "Bash", "\"command\":\"failing-cmd\"")).
+        append('\n').
+        append(toolResult("tErr", "BUILD FAILED: error occurred")).
+        append('\n');
+      Files.writeString(tempFile, jsonl.toString());
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      // Cap at 5 events — should return at most 5 even though many more exist
+      JsonNode result = analyzer.mistakeTimeline(tempFile, 5);
+
+      JsonNode timeline = result.path("mistake_timeline");
+      requireThat(timeline.isArray(), "timeline_is_array").isTrue();
+      // 10 successful Read pairs + 1 failing pair generate many events, but cap=5 should yield exactly 5
+      requireThat(timeline.size(), "timeline_size").isGreaterThan(0);
+      requireThat(timeline.size(), "timeline_size").isEqualTo(5);
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that toolCallSequences throws NullPointerException when filePath is null.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test(expectedExceptions = NullPointerException.class)
+  public void toolCallSequencesThrowsNullPointerExceptionForNullFilePath() throws IOException
+  {
+    SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+    analyzer.toolCallSequences(null, List.of("keyword"), 2);
+  }
+
+  /**
+   * Verifies that mistakeTimeline returns an empty timeline when the session has no user messages.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void mistakeTimelineHandlesSessionWithNoUserMessages() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      // Session with only assistant messages and tool results but no user message
+      String jsonl =
+        assistantMessage("msg1", "t1", "Bash", "\"command\":\"run-something\"") + "\n" +
+        toolResult("t1", "BUILD FAILED: error") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.mistakeTimeline(tempFile);
+
+      JsonNode timeline = result.path("mistake_timeline");
+      requireThat(timeline.isArray(), "timeline_is_array").isTrue();
+      requireThat(timeline.size(), "timeline_size").isEqualTo(0);
+      requireThat(result.has("last_user_message_index"), "has_last_user_index").isFalse();
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that isErrorContent returns false for empty content strings.
+   * <p>
+   * An empty result is not an error even if it contains no exit code or error keyword.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void mistakeTimelineIgnoresEmptyToolResults() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      String jsonl =
+        userMessage("do work") + "\n" +
+        assistantMessage("msg1", "t1", "Bash", "\"command\":\"echo hello\"") + "\n" +
+        toolResult("t1", "") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.mistakeTimeline(tempFile);
+
+      // Empty content is not an error — timeline should be empty (no error found)
+      JsonNode timeline = result.path("mistake_timeline");
+      requireThat(timeline.isArray(), "timeline_is_array").isTrue();
+      requireThat(timeline.size(), "timeline_size").isEqualTo(0);
+      requireThat(result.has("error_entry_index"), "has_error_index").isFalse();
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that malformed exit_code JSON in tool result content is handled gracefully,
+   * falling back to pattern-based error detection.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void errorsHandlesMalformedExitCodeJson() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      // Content contains "exit_code" but is not valid JSON — should fall back to pattern check
+      String malformedJson = "{\"type\":\"tool\",\"content\":[{\"type\":\"tool_result\"," +
+        "\"tool_use_id\":\"tool1\"," +
+        "\"content\":\"exit_code=1 BUILD FAILED: something\"}]}\n";
+      Files.writeString(tempFile, malformedJson);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.errors(tempFile);
+
+      // "BUILD FAILED" pattern should be detected even though JSON parsing fails
+      requireThat(result.path("errors").size(), "errors_size").isEqualTo(1);
+      requireThat(result.path("errors").get(0).path("tool_use_id").asString(),
+        "tool_use_id").isEqualTo("tool1");
     }
     finally
     {
