@@ -27,7 +27,9 @@ None (infrastructure issue)
 
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Read existing jlink tool for reference pattern:**
    - Read `client/src/main/java/io/github/cowwoc/cat/hooks/util/SessionAnalyzer.java` to understand
@@ -78,6 +80,7 @@ None (infrastructure issue)
 
 7. **Rebuild jlink image:**
    - `mvn -f client/pom.xml verify`
+
 
 ## Post-conditions
 

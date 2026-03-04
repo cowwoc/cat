@@ -38,7 +38,9 @@ None - naming convention/refactoring
 - [ ] `render-output/SKILL.md` has `user-invocable: false` in frontmatter
 - [ ] All tests pass
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Step 1:** Rename skill directory
    - `git mv plugin/skills/script-output plugin/skills/render-output`

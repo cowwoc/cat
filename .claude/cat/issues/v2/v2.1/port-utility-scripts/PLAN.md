@@ -48,7 +48,9 @@ None - infrastructure/tech debt
 - `plugin/scripts/` - Remove ported scripts
 - `plugin/skills/*/SKILL.md` - Update script invocation paths
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Port licensing scripts:** feature-gate, entitlements, validate-license as unified Java class
 2. **Port render-diff.py:** Largest script - git diff table rendering
 3. **Port wrap-markdown.py:** Markdown formatting utility
@@ -58,6 +60,7 @@ None - infrastructure/tech debt
 7. **Port migration script:** migrate-retrospectives
 8. **Verify output parity:** Compare old vs new output for each script
 9. **Run tests:** Execute `mvn -f hooks/pom.xml test`
+
 
 ## Post-conditions
 - [ ] All 15 utility scripts have Java equivalents

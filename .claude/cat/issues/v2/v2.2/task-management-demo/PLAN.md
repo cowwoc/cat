@@ -24,7 +24,9 @@ None - marketing/documentation task
 - [ ] Each feature has 2-3 sentence description explaining value
 - [ ] Videos are short (30-60 seconds) and focused
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Write feature descriptions for task management commands
    - Files: demo page content
    - Verify: Descriptions are clear and concise

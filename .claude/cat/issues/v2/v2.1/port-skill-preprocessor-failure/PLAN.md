@@ -40,7 +40,9 @@ None (migration/cleanup)
 - [ ] E2E: `grep -r 'skill-preprocessor-failure' plugin/hooks/` returns no results (except README if applicable)
 - [ ] All tests pass (`mvn -f client/pom.xml test`)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Create DetectPreprocessorFailure handler:** Implement `PostToolHandler` in the `failure` package. In `check()`,
    extract the `error` field from hookData. If it contains `Bash command failed for pattern "!`, return

@@ -28,7 +28,9 @@ None (infrastructure improvement)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Modify `plugin/skills/learn/first-use.md` Step 1 tier classification table
    - Remove `recurrence_of is set` from Quick tier criteria
    - Quick tier should ONLY trigger for `protocol_violation` category
@@ -57,6 +59,7 @@ None (infrastructure improvement)
    - The recurrence_of field should trigger independent verification of whether the past prevention
      was actually addressing the correct root cause, not automatic escalation
    - Files: `plugin/skills/learn/phase-prevent.md`
+
 
 ## Post-conditions
 - [ ] Quick tier classification in first-use.md no longer treats `recurrence_of` as a shortcut trigger

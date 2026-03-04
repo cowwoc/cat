@@ -22,7 +22,9 @@ interface.
 - [ ] No changes to file structure (backwards compatible)
 - [ ] Existing skills migrated to use abstraction
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Implement LocalFileBackend**
    - Files: `plugin/storage/backends/local.py`
    - Verify: Implements full storage interface

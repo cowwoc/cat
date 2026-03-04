@@ -19,7 +19,9 @@ None - action item A026 from retrospective (PATTERN-022)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Read work-with-issue/first-use.md:** Examine current approval gate and review step structure
    - Files: `plugin/skills/work-with-issue/first-use.md`
 2. **Add REJECTION HANDLING section:** Insert a section covering all three rejection cases with
@@ -33,6 +35,7 @@ None - action item A026 from retrospective (PATTERN-022)
    - Files: None (validation step)
 4. **Commit:** Commit the changes
    - Files: `plugin/skills/work-with-issue/first-use.md`
+
 
 ## Post-conditions
 - [ ] `work-with-issue/first-use.md` contains a REJECTION HANDLING section

@@ -46,7 +46,9 @@ None - infrastructure bugfix
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Remove `DIAGNOSTIC_SCAN_LIMIT` constant from `WorkPrepare.java`. Replace
    `.limit(DIAGNOSTIC_SCAN_LIMIT)` in `buildIssueIndex` with logic that errors if the scan exceeds a safety threshold
    rather than silently truncating results.
@@ -62,6 +64,7 @@ None - infrastructure bugfix
    dependency detection (simple and complex cycles).
    - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/util/WorkPrepareTest.java`,
      `client/src/test/java/io/github/cowwoc/cat/hooks/util/IssueDiscoveryTest.java`
+
 
 ## Post-conditions
 - [ ] `buildIssueIndex` no longer silently truncates; returns error if scan limit exceeded

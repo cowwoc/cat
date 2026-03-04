@@ -36,13 +36,16 @@ None (tech debt cleanup)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Re-verify each script has no active references via grep
    - Files: all scripts listed above
 2. **Step 2:** Remove all unused scripts and `__pycache__` directories
 3. **Step 3:** Remove `scripts/tests/` directory if it only tests removed scripts
 4. **Step 4:** Verify no broken references remain (grep for removed filenames)
 5. **Step 5:** Run full test suite to verify no regressions
+
 
 ## Post-conditions
 - [ ] User-visible behavior unchanged

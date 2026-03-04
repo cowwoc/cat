@@ -39,7 +39,9 @@ None (workflow improvement)
 - [ ] New issues created mid-work are visible in the issue branch history
 - [ ] Merge to base branch includes the planning commits
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Detect active worktree in /cat:add:** Check for `.git/cat-branch-point` file to determine if
    running inside an issue worktree. If so, commit planning files to the current branch.

@@ -179,7 +179,9 @@ instructions over negative prohibitions when the positive form is equally clear.
 **Validation:**
 - [ ] No test regressions (python3 /workspace/run_tests.py passes)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 ### Extraction Agent (EXTRACTION-AGENT.md)
 

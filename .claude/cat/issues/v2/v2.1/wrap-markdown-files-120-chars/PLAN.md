@@ -45,7 +45,9 @@ Exclude: `.claude/cat/backups/`, `.worktrees/`, `node_modules/`, `.git/`
 - [ ] All existing tests pass
 - [ ] Code blocks, tables, and URLs are intact
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Step 1:** Create a Python script that reformats markdown files to 120 chars
    - Wrap prose lines at 120 characters using word boundaries

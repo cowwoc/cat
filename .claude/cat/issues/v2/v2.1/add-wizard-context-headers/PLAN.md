@@ -44,7 +44,9 @@ and skill-builder are workflow wizards without issue context - use workflow name
 - [ ] Users can identify which issue AND its goal when answering wizard questions
 - [ ] All existing tests pass with no regressions
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Audit each file in "Files to Modify" to identify AskUserQuestion instructions where the agent
    has access to ISSUE_ID and TASK_GOAL variables at runtime. List the exact AskUserQuestion calls to modify.
 2. **Step 2:** For each identified call, update the question text to include the issue ID and goal.

@@ -18,11 +18,14 @@ None - infrastructure reorganization
 - `.claude/skills/release-plugin/SKILL.md` - Create skill definition (migrated from command)
 - `.claude/commands/release-plugin/SKILL.md` - Delete old command location
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Create `.claude/skills/release-plugin/SKILL.md` with the release workflow
    - Files: `.claude/skills/release-plugin/SKILL.md`
 2. **Step 2:** Delete `.claude/commands/release-plugin/SKILL.md`
    - Files: `.claude/commands/release-plugin/SKILL.md`
+
 
 ## Post-conditions
 - [ ] Skill file exists at `.claude/skills/release-plugin/SKILL.md`

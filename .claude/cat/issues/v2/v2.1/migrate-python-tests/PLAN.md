@@ -51,13 +51,16 @@ Existing: `HookEntryPointTest.java` (11 tests)
 ## Dependencies
 - All handler sub-issues complete (handlers must work in Java before tests can validate them)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Read each Python test file** to understand test cases and assertions
 2. **Create equivalent Java TestNG tests** at target location
 3. **Migrate shared fixtures** from `conftest.py` to Java test utilities
 4. **Run `mvn test`** to verify all Java tests pass
 5. **Compare coverage** - ensure Java tests cover all Python test scenarios
 6. **Run `python3 /workspace/run_tests.py`** to verify Python tests still pass during transition
+
 
 ## Scope
 

@@ -25,7 +25,9 @@ None
 - plugin/skills/learn/phase-prevent.md - Add user_summary output requirement
 - plugin/skills/learn/phase-record.md - Add user_summary output requirement
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Read current SKILL.md and all 4 phase files** to understand current orchestration
 2. **Define tier classification logic** in SKILL.md:
    - Quick tier: protocol_violation category OR recurrence_of is set
@@ -43,6 +45,7 @@ None
    - Parse final JSON result
 5. **Add user_summary requirement** to each phase file output spec
 6. **Update SKILL.md summary display** to show tier used and token savings
+
 
 ## Post-conditions
 - [ ] Quick tier completes in single subagent invocation (~40K tokens)

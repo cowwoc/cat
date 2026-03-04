@@ -49,7 +49,9 @@ The field is NOT simply redundant - it tracks migration state. Removing it requi
 - `.claude/cat/cat-config.json` - Remove `version` field (via migration)
 - New migration script to rename/remove the field
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Decide approach** - Choose between (A) rename, (B) separate file, or (C) remove entirely
 2. **Update migrations/lib/utils.sh** - Modify version tracking functions per chosen approach
 3. **Update check-upgrade.sh** - Ensure upgrade detection still works
@@ -57,6 +59,7 @@ The field is NOT simply redundant - it tracks migration state. Removing it requi
 5. **Create migration script** - Migrate existing installations from old field to new mechanism
 6. **Update cat-config.json** - Remove or rename the version field
 7. **Run tests** - `python3 /workspace/run_tests.py`
+
 
 ## Post-conditions
 - [ ] All tests pass after refactoring

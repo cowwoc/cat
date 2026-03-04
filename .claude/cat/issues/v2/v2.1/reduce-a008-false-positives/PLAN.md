@@ -28,7 +28,9 @@ None - bugfix for existing A008 hook
 - `plugin/hooks/posttool_handlers/detect_manual_boxes.py` - Add logic to track recent script outputs
   containing box characters and suppress warnings when assistant output matches
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Read `plugin/hooks/posttool_handlers/detect_manual_boxes.py` to understand current detection logic
 2. **Step 2:** Add tracking of recent Bash tool results that contain box-drawing characters (e.g., via a session-scoped
    state file or by checking the hook_data for preceding tool results)
@@ -36,6 +38,7 @@ None - bugfix for existing A008 hook
    Bash tool result. If so, suppress the warning (the assistant correctly copied script output).
 4. **Step 4:** If no matching script output found, emit the warning as before (likely manual construction)
 5. **Step 5:** Run `python3 /workspace/run_tests.py` to verify no regressions
+
 
 ## Post-conditions
 - [ ] A008 hook no longer fires when assistant copies render-add-complete.sh output verbatim

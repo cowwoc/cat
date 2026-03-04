@@ -24,7 +24,9 @@ the first available terminal's widths and warning the user once per session (sup
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Modify `DisplayUtils`:** In `loadEmojiWidthsFromFile`, when terminal key not found, fall back to first
    terminal's widths. Add `usingFallbackWidths` and `detectedTerminalKey` fields + getters. Change return
    type to private `LoadResult` record.
@@ -34,6 +36,7 @@ the first available terminal's widths and warning the user once per session (sup
 3. **Register in `SessionStartHook`:** Add `new WarnUnknownTerminal(scope)` after `CheckUpdateAvailable`.
 4. **Write tests:** `WarnUnknownTerminalTest` with unknown/known terminal cases and marker dedup.
 5. **Run `mvn -f client/pom.xml verify`** — all tests pass.
+
 
 ## Post-conditions
 - [ ] `DisplayUtils` no longer throws when terminal type is not in `emoji-widths.json`

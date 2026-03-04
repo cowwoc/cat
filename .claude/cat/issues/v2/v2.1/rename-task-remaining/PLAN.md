@@ -25,12 +25,15 @@ Replace "task" terminology with "issue" in remaining files (templates, reference
 - plugin/hooks/bash_handlers/*.py
 - Any other files discovered with grep
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. Update template files
 2. Update Python handlers
 3. Run comprehensive grep to find any remaining "task" references
 4. Update any discovered files
 5. Verify changelogs still contain historical "task" references (preserve)
+
 
 ## Post-conditions
 - [ ] All template files updated

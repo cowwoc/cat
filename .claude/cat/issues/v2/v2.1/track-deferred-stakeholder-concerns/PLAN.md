@@ -21,7 +21,9 @@ None - process improvement
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Add deferred concern tracking to stakeholder-review skill**
    - Files: `plugin/skills/stakeholder-review/SKILL.md`
    - After the concern evaluation step (where PATIENCE threshold is applied), add instructions:
@@ -34,6 +36,7 @@ None - process improvement
    - Files: `plugin/skills/work-with-issue/first-use.md`
    - In the review phase documentation, note that deferred concerns above HIGH severity
      are automatically tracked as new issues
+
 
 ## Post-conditions
 - [ ] When a HIGH or CRITICAL concern is deferred due to PATIENCE, a new CAT issue is created to track it

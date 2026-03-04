@@ -61,7 +61,9 @@ Empirical testing (configs A-S, 100+ trials) identified:
 - [ ] silent-execution.md correctly documents `$ARGUMENTS` (no braces) as the working syntax
 - [ ] Work skill Next Task section invokes work-complete skill instead of inline Bash
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Update status-first-use/SKILL.md:**
    - Replace the entire instruction block with user-centric framing
    - Files: `plugin/skills/status-first-use/SKILL.md`

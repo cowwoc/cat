@@ -19,7 +19,9 @@ None - security hardening from stakeholder review of 2.1-session-start-version-c
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Add atomic locking to try_acquire_runtime**
    - Files: `plugin/hooks/session-start.sh`
    - Before calling `download_runtime`, acquire a lock using `mkdir "${jdk_path}.lock"` (atomic on POSIX)
@@ -33,6 +35,7 @@ None - security hardening from stakeholder review of 2.1-session-start-version-c
    - Test: lock acquisition succeeds when no lock exists
    - Test: stale lock is detected and removed
    - Test: lock is cleaned up on function exit (trap)
+
 
 ## Post-conditions
 - [ ] Concurrent sessions cannot simultaneously download to the same JDK directory

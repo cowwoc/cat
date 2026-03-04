@@ -75,7 +75,9 @@ None - infrastructure/code quality task
 - [ ] Existing tests pass (tests/handlers/test_display_utils.py)
 - [ ] Box alignment in /cat:status still renders correctly
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Update status_handler.py**
    - Remove WIDTH_2_EMOJIS, WIDTH_2_SINGLE, display_width()

@@ -21,7 +21,9 @@ None - terminology standardization
 - Reference documentation in .claude/cat/references/
 - Any Python/shell scripts referencing "task"
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Inventory all files containing "task" terminology
    - Files: plugin/, .claude/cat/
    - Verify: grep -r "task" shows complete list
@@ -43,6 +45,7 @@ None - terminology standardization
 
 5. **Step 5:** Verify changelogs preserved
    - Verify: Changelogs still contain historical "task" references
+
 
 ## Post-conditions
 - [ ] No mention of "task" in any file except changelogs

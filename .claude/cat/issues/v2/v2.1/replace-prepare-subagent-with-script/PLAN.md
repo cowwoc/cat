@@ -36,7 +36,9 @@ None - infrastructure/performance optimization
 - `plugin/skills/work-prepare/SKILL.md` - Add header note that logic is now implemented as work-prepare.py script;
   SKILL.md retained as algorithm documentation
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Create work-prepare.py script** that:
    - Accepts args: `--session-id`, `--project-dir`, `--exclude-pattern` (optional), `--trust-level`
    - Step 1: Verifies `.claude/cat/` structure exists
@@ -70,6 +72,7 @@ None - infrastructure/performance optimization
    - Test token estimation heuristic
    - Test error handling (missing structure, script failures)
    - Test JSON output contract matches expected format
+
 
 ## Post-conditions
 - [ ] Prepare phase completes in under 10 seconds (target: ~4s)

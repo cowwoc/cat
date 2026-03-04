@@ -36,8 +36,11 @@ Silent preprocessing treats newlines as command separators.
 - [ ] Original bug scenario: `--session-id` and value on same line — script receives all arguments correctly
 - [ ] Edge cases: Long session IDs, empty ARGUMENTS — still work
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Edit SKILL.md:** Join lines 40-41 so the entire `!` command is on a single line
+
 
 ## Post-conditions
 - [ ] The `!` silent preprocessing command is on a single line in SKILL.md

@@ -24,7 +24,9 @@ None (infrastructure improvement)
 - [ ] All callers pass project-dir
 - [ ] Tests pass
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Update SkillLoader.main():** Change arg count check from `< 3 || > 4` to `!= 4`, remove empty string fallback
 2. **Update SkillLoader constructor:** Add `requireThat(projectDir).isNotEmpty()` validation
 3. **Verify callers:** Check load-skill.sh passes `$CLAUDE_PROJECT_DIR` to SkillLoader

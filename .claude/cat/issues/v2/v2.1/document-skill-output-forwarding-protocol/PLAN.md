@@ -20,7 +20,9 @@ None - action item A025 from retrospective (PATTERN-021)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Audit wizard-based skills:** Search for skills that invoke AskUserQuestion or produce wizard
    output; identify all affected SKILL.md files
    - Files: `plugin/skills/*/SKILL.md`
@@ -34,6 +36,7 @@ None - action item A025 from retrospective (PATTERN-021)
    - Files: None (validation step)
 5. **Commit:** Commit the changes
    - Files: all modified SKILL.md files
+
 
 ## Post-conditions
 - [ ] `config/SKILL.md` contains the AskUserQuestion forwarding note

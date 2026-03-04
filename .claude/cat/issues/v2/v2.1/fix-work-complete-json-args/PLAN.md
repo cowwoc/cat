@@ -27,11 +27,14 @@ The curly braces in the JSON are interpreted by shell brace expansion before the
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Investigate the quoting pipeline:** Trace how arguments flow from Skill tool invocation through
    load-skill.sh and the skill preprocessor to identify where quoting is lost.
 2. **Fix the quoting:** Ensure JSON arguments are properly quoted/escaped through the entire pipeline.
 3. **Test:** Verify `/cat:work-complete` works with JSON arguments containing curly braces and arrays.
+
 
 ## Post-conditions
 - [ ] `/cat:work-complete` succeeds when invoked with JSON arguments containing `{}` and `[]`

@@ -22,7 +22,9 @@ Improve visual presentation, clarity, and commercial appeal.
 - [ ] Visual hierarchy improved for scannability
 - [ ] Consistent formatting throughout
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Audit current README for polish opportunities
    - Files: README.md
    - Verify: List of specific improvements identified

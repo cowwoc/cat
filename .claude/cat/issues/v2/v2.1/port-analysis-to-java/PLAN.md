@@ -28,13 +28,16 @@ Parent: port-utility-scripts
 - `hooks/src/test/java/io/github/cowwoc/cat/hooks/test/SessionAnalyzerTest.java`
 - `hooks/src/test/java/io/github/cowwoc/cat/hooks/test/RetrospectiveMigratorTest.java`
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. Read analyze-session.py to understand analysis logic, metrics, and output format
 2. Create `SessionAnalyzer` class porting all analysis logic
 3. Read migrate-retrospectives.py to understand migration transformations
 4. Create `RetrospectiveMigrator` class porting migration logic
 5. Write tests for both classes with sample data
 6. Run `mvn verify` to confirm all tests pass
+
 
 ## Post-conditions
 - [ ] analyze-session.py replaced by SessionAnalyzer.java

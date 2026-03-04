@@ -32,7 +32,9 @@ None
 - `hooks/src/main/java/.../MainJvmScope.java` - Production impl with lazy env var reading
 - `hooks/src/test/java/.../test/TestJvmScope.java` - Test impl with injectable paths
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. Add `getClaudeProjectDir()` and `getClaudePluginRoot()` to `JvmScope` interface
 2. Rename `DefaultJvmScope` to `MainJvmScope`, add `ConcurrentLazyReference` fields for env vars
 3. Create `TestJvmScope` in test module with constructor-injected paths
@@ -40,6 +42,7 @@ None
 5. Update `GetSessionStartOutput` to accept and pass `JvmScope`
 6. Bulk rename all `DefaultJvmScope` references to `MainJvmScope`
 7. Update 3 failing tests to create temp directories and use `TestJvmScope`
+
 
 ## Post-conditions
 - [x] `JvmScope` declares `getClaudeProjectDir()` and `getClaudePluginRoot()`

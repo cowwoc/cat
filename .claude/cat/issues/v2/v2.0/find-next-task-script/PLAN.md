@@ -23,7 +23,9 @@ None - infrastructure/performance improvement
 - [ ] Script returns appropriate exit codes (0=found, 1=none available)
 - [ ] Skill renders the output it receives from the script (no additional processing)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Create find-next-task.sh script
    - Files: plugin/scripts/find-next-task.sh
    - Verify: Script runs and outputs JSON with task path/version

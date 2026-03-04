@@ -103,7 +103,9 @@ None (infrastructure bugfix)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Extend lock file format:** Add `agent_id` parameter to `IssueLock.acquire()`. Store it in the
    lock JSON alongside `session_id`. The `agent_id` is the full agentId string (e.g.,
@@ -257,6 +259,7 @@ None (infrastructure bugfix)
     - Test 2: `CAT_AGENT_ID=wrong git worktree remove ...` → blocked (mismatch)
     - Test 3: `CAT_AGENT_ID=aaaa/subagents/xyz git worktree remove ...` → allowed (owner)
     - Clean up lock file and dummy dir
+
 
 ## Post-conditions
 - [ ] Lock files contain `agent_id` field when acquired with the new code

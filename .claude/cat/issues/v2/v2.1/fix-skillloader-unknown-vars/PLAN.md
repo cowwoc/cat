@@ -23,7 +23,9 @@ Test results (Claude Code native behavior):
 
 No code-fence awareness — Claude Code resolves known variables inside code fences too.
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Edit `hooks/src/main/java/.../util/SkillLoader.java`** — In the `resolveVariable()` method (line 330), replace
    the `throw new IOException("Undefined variable...")` at line 351 with returning the original `${varName}` literal:
@@ -45,6 +47,7 @@ No code-fence awareness — Claude Code resolves known variables inside code fen
 |------|--------|-------------|
 | `hooks/src/main/java/.../util/SkillLoader.java` | Modify | Return literal `${varName}` instead of throwing on unknowns |
 | `hooks/src/test/java/.../test/SkillLoaderTest.java` | Modify | Update/add tests for pass-through behavior |
+
 
 ## Post-conditions
 

@@ -23,7 +23,9 @@ None (infrastructure/UX improvement)
 - `plugin/hooks/skill_handlers/work_handler.py` — Add config reading in `handle()` method, inject values into output
 - `plugin/skills/work/SKILL.md` — Remove "Configuration" section (lines 71-79), reference pre-injected values
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Modify work_handler.py `handle()` method:**
    - Read `.claude/cat/cat-config.json` from the project directory
    - Extract `trust` (default "medium"), `verify` (default "changed"), `autoRemoveWorktrees` (default true)
@@ -50,6 +52,7 @@ None (infrastructure/UX improvement)
 3. **Update tests:**
    - Add test case in work_handler tests verifying config values appear in handler output
    - Test default values when cat-config.json doesn't exist
+
 
 ## Post-conditions
 - [ ] Running `/cat:work` no longer shows a Bash call to read cat-config.json

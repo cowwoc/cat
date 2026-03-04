@@ -35,7 +35,9 @@ None
 - [ ] M358 over-engineered changes reverted (no load-skill.sh routing for these skills)
 - [ ] All existing tests pass
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Add named parameter support to SkillLoader.java:**
    - Parse `parameters:` YAML frontmatter field (list of parameter names)
    - Accept args string from Skill tool invocation

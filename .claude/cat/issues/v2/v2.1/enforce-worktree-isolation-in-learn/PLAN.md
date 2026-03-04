@@ -40,7 +40,9 @@ None (infrastructure fix from M347 investigation)
 - [ ] `task_creation_info` is populated with enough detail to create a follow-up issue
 - [ ] Parent agent creates the CAT issue from `task_creation_info` when `prevention_implemented: false`
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Update phase-prevent.md Step 9:** Add gate before implementation: if prevention_type is code_fix or hook AND
    current branch is protected (v2.1, main), set prevention_implemented=false and populate task_creation_info
 2. **Update learn SKILL.md Step 3:** After subagent returns, if prevention_implemented is false, create a CAT issue

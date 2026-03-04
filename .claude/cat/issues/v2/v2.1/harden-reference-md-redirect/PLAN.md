@@ -30,7 +30,9 @@ require full re-execution of the original skill instructions.
 - [ ] reference.md explicitly requires full re-execution of the original skill instructions
 - [ ] No other files modified (single-file change)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Rewrite reference.md:** Replace the current 2-line generic redirect with stronger instructions that explicitly
    require re-execution and prohibit summarization.
    - Files: `plugin/skills/reference.md`

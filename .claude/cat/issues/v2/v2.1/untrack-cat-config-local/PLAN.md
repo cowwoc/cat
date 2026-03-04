@@ -19,7 +19,9 @@ None (housekeeping)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Step 1:** Update `v2.1/STATE.md` — add `untrack-cat-config-local` to the Issues Pending list.
    - Files: `.claude/cat/issues/v2/v2.1/STATE.md`
@@ -34,6 +36,7 @@ None (housekeeping)
 4. **Step 4:** Commit the removal.
    - Commit type: `config:`
    - Message: `config: untrack cat-config.local.json — keep as local-only file`
+
 
 ## Post-conditions
 - [ ] `git ls-files .claude/cat/cat-config.local.json` returns empty (file is untracked)

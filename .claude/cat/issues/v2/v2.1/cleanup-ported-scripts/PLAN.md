@@ -35,7 +35,9 @@ Parent: 2.1-port-display-scripts
 - `get-init-boxes.sh` (after port-init-boxes completes)
 - `render-add-complete.sh`
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 ### Step 1: Code Path Parity Analysis
 For each Python→Java pair listed below, perform a side-by-side review:
@@ -77,6 +79,7 @@ Run `mvn -f client/pom.xml test` and confirm all tests pass.
 ### Step 6: Smoke Test
 Run at least one jlink binary that replaced a deleted script (e.g., `client/bin/get-help-output`) and confirm it
 produces reasonable output without errors.
+
 
 ## Dependencies
 - 2.1-port-completion-boxes (for checkpoint/issue-complete/next-task scripts)

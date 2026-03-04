@@ -17,7 +17,9 @@ None - workflow enhancement
   to approval gate
 - `plugin/skills/stakeholder-review/content.md` - decide step: align with new auto-fix behavior
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 ### Step 1: Add auto-fix loop to work-with-issue Step 4 (Review Phase)
 
@@ -111,6 +113,7 @@ The stakeholder-review skill should:
 - NOT ask the user how to proceed (that is the approval gate responsibility)
 
 - Files: `plugin/skills/stakeholder-review/content.md`
+
 
 ## Post-conditions
 - [ ] HIGH+ concerns trigger automatic fix loop (up to 3 iterations) before reaching approval gate

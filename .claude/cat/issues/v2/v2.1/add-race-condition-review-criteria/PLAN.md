@@ -33,7 +33,9 @@ None - infrastructure improvement
 - [ ] Patterns are scoped appropriately (file-system, git, shared state - not general threading)
 - [ ] All existing tests pass with no regressions
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Add race condition criteria to security stakeholder
    - File: plugin/agents/stakeholder-security.md
    - Add new subsection under "### High Priority" (after Resource Exhaustion, before Medium Priority)

@@ -36,7 +36,9 @@ None - infrastructure improvement
 - [ ] Validation cross-checks against parent version REQ-xxx requirements
 - [ ] All existing tests pass with no regressions
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Add a new step `task_validate_criteria` to plugin/skills/add/content.md
    - Insert after `task_select_requirements` step and before `task_create`
    - This placement ensures all inputs are available: TASK_DESCRIPTION, TASK_TYPE, ACCEPTANCE_CRITERIA,
