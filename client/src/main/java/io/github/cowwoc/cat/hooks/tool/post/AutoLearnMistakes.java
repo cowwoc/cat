@@ -241,9 +241,13 @@ public final class AutoLearnMistakes implements PostToolHandler
         Pattern.CASE_INSENSITIVE).matcher(filtered).find())
       return new MistakeDetection("restore_from_backup", extractContext(filtered, "restore|reset|backup", 3));
 
-    // Pattern 11: Critical self-acknowledgments
-    if (Pattern.compile("CRITICAL (DISASTER|MISTAKE|ERROR|FAILURE|BUG|PROBLEM|ISSUE)|catastrophic|devastating",
-        Pattern.CASE_INSENSITIVE).matcher(gitFiltered).find())
+    // Pattern 11: Critical self-acknowledgments (requires first-person framing to avoid false positives
+    // from severity-table vocabulary like "critical issues" or "critical error in severity table")
+    String criticalSelfAckPattern =
+      "I (made|caused|introduced|created|committed) a CRITICAL" +
+      "|this (is|was) a CRITICAL (DISASTER|MISTAKE|ERROR|FAILURE|BUG|PROBLEM)" +
+      "|(catastrophic|devastating) (mistake|error|failure|bug)";
+    if (Pattern.compile(criticalSelfAckPattern, Pattern.CASE_INSENSITIVE).matcher(gitFiltered).find())
       return new MistakeDetection("critical_self_acknowledgment",
         extractContext(gitFiltered, "CRITICAL|catastrophic|devastating", 5));
 
