@@ -17,6 +17,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 ## Issues Pending
 - cd-into-worktree-after-creation
 - fix-migration-21-execution-steps-detail-loss
+- fix-migration-21-phase7-double-blank-line
 - fix-cwd-file-storage-location
 - centralize-verbatim-output-skill
 - add-java-build-to-ci
