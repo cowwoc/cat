@@ -45,7 +45,9 @@ None (infrastructure improvement)
 
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. Create `TrackWorkingDirectory` PostToolUse Bash handler that writes `workingDirectory` to
    `.claude/cat/sessions/{session_id}.cwd` when non-empty and not equal to the project root
@@ -58,6 +60,7 @@ None (infrastructure improvement)
 7. Write tests for `RestoreCwdAfterCompaction`: compact + file exists → inject; compact + no file → no inject;
    startup → no inject; resume → no inject (handled separately)
 8. Run `mvn -f client/pom.xml verify`
+
 
 ## Post-conditions
 

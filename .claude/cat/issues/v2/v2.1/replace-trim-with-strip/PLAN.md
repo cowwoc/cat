@@ -31,9 +31,12 @@ None - code quality / convention alignment
 - `hooks/src/test/java/io/github/cowwoc/cat/hooks/test/HookEntryPointTest.java`
 - `hooks/src/test/java/io/github/cowwoc/cat/hooks/test/EnforcePluginFileIsolationTest.java`
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. Replace all `.trim()` with `.strip()` across all 16 files
 2. Run `mvn -f hooks/pom.xml verify`
+
 
 ## Post-conditions
 - [ ] Zero occurrences of `.trim()` in `hooks/src/`

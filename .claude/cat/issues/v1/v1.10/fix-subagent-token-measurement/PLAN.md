@@ -58,7 +58,9 @@ subagent token usage is reported differently in the session file. Task tool comp
 - [ ] Error handling: session file path shown when file missing
 - [ ] "No subagent executions found" when no Task tools in session
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Update token-report skill extraction method**
    - Replace jq-based message token summing with toolUseResult extraction

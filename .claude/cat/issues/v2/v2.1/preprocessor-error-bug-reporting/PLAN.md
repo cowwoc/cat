@@ -34,7 +34,9 @@ None (infrastructure improvement)
 - [ ] Bug report skill successfully creates/finds GitHub issues via `gh` CLI
 - [ ] All existing SkillLoader tests pass with updated expectations
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Modify SkillLoader.java error handling to produce user-friendly error message instead of `<error>` XML
    tags
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/SkillLoader.java`

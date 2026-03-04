@@ -74,7 +74,9 @@ None
 - warn-base-branch-edit.sh: Complex allowlist with M442 narrowing - careful port of pattern matching
 - enforce-approval-before-merge.sh: Reads cat-config.json for trust level, searches session JSONL - use JsonMapper + Files
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. Create handler packages (ask/, edit/, task/)
 2. Port each bash script to its Java handler
 3. Create dispatchers (GetAskPretoolOutput, GetEditPretoolOutput, GetTaskPretoolOutput)

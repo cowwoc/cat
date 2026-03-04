@@ -128,7 +128,9 @@ Task tool:
 - [ ] No orchestration logic remains in skill
 - [ ] Main-agent-only restriction added (skill provides templates for spawning)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 ### Step 1: Analyze current research skill
 - Read current SKILL.md

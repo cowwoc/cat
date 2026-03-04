@@ -18,7 +18,9 @@ None - test coverage improvement from stakeholder review
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Add main() integration tests**
    - Files: `tests/hooks/session-start.bats`
    - Test: main() success path with matching VERSION and working java binary (mock Java dispatcher)
@@ -34,6 +36,7 @@ None - test coverage improvement from stakeholder review
 3. **Add VERSION file write test**
    - Files: `tests/hooks/session-start.bats`
    - Test: after successful download, VERSION file is written with correct content
+
 
 ## Post-conditions
 - [ ] main() success path (with mocked Java dispatcher) is tested end-to-end

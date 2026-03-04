@@ -40,7 +40,9 @@ None - infrastructure improvement
 - [ ] Parent agent successfully proposes task creation to user
 - [ ] All existing tests pass with no regressions
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Refactor plugin/skills/learn/phase-prevent.md
    - Keep Steps 5-8 (context degradation, prevention level, quality evaluation, existing check) as analysis-only
    - Remove Step 9 (Implement Prevention), Step 9b (Priming Verification), Step 9c (Related Files Check)

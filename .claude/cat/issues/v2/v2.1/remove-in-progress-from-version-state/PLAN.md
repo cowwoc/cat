@@ -22,7 +22,9 @@ reads those per-issue files as the source of truth.
 - [ ] Issues that were listed under In Progress are moved to Issues Pending
 - [ ] Migration script removes "## Issues In Progress" from any version STATE.md and merges entries into Issues Pending
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Edit version STATE.md:** Remove the "## Issues In Progress" heading and move all entries beneath it to the
    "## Issues Pending" section.
 2. **Update migration script:** Add a step to `plugin/migrations/2.1.sh` that finds version-level STATE.md files

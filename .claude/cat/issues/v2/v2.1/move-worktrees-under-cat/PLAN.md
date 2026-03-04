@@ -38,7 +38,9 @@ None - infrastructure cleanup
 - [ ] All tests pass
 - [ ] No hardcoded old paths remain in plugin directory
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Find all files referencing `.worktrees/` or `.worktrees` path pattern
    - Files: `plugin/` directory tree (scripts, skills, hooks, concepts)
 2. **Step 2:** Replace `.worktrees/` with `.claude/cat/worktrees/` in path construction sites

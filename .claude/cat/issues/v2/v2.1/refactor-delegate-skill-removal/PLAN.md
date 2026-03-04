@@ -80,7 +80,9 @@ Or use parallel Task tool invocations with skill instructions embedded in prompt
 - [ ] Search confirms no other files reference delegate --skill
 - [ ] Delegate still works correctly for --issues
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 ### Step 1: Search for --skill references
 ```bash

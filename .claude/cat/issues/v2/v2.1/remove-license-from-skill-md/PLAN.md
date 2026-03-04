@@ -20,7 +20,9 @@ None (token optimization)
 - [ ] No SKILL.md files under `plugin/skills/` contain the HTML license comment banner
 - [ ] CLAUDE.md license header rule updated to exempt SKILL.md files (or note the exemption)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Find all affected files:** Grep for license banners in `plugin/skills/**/SKILL.md`
 2. **Remove banners:** Delete the HTML comment block from each file
 3. **Verify:** Confirm no banners remain

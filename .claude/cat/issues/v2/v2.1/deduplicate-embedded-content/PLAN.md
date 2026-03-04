@@ -41,7 +41,9 @@ None - infrastructure/optimization task
 - [ ] All tests pass
 - [ ] Box output is identical before/after refactor
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Add `build_header_box()` to `status_handler.py`
    - Copy implementation from `stakeholder_handler.py`
    - Export in module

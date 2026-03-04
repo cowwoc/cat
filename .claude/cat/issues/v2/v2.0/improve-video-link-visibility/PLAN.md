@@ -25,7 +25,9 @@ clickable video link.
 - [ ] Video link still works correctly
 - [ ] Renders properly on GitHub
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Research GitHub-compatible methods for video thumbnail enhancement
    - Files: README.md
    - Verify: Identify viable approach (HTML img with overlay, or pre-rendered thumbnail with play button)

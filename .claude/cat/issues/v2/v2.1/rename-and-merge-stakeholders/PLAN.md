@@ -44,7 +44,9 @@ None (naming consistency and consolidation)
 - [ ] Tests pass
 - [ ] E2E: Invoke stakeholder-review skill selection and confirm new names appear correctly
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Rename architect agent:** Rename file, update frontmatter name field and heading
 2. **Create business agent:** Merge sales and marketing agent content into new `stakeholder-business.md`
 3. **Delete old agents:** Remove `stakeholder-sales.md` and `stakeholder-marketing.md`

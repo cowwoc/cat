@@ -55,13 +55,16 @@ None — infrastructure terminology cleanup.
 
 - [ ] Parent issue `2.1-rename-branch-terminology` exists
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Rename variables/comments in Java source files** — Update variable names (`baseBranch` → `targetBranch`,
    `worktreeBranch` → `sourceBranch`), method parameters, Javadoc, and error messages in client source files.
 2. **Update Java test files** — Rename variables, branch name strings, and comments in test classes to match new
    terminology.
 3. **Run all tests** — `mvn -f client/pom.xml test` to verify no regressions.
+
 
 ## Post-conditions
 

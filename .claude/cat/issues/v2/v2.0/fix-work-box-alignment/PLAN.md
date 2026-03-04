@@ -37,7 +37,9 @@ lengths cause the right border to shift.
 - [ ] All box corners align (╭╮╰╯)
 - [ ] Right border `│` aligns on all lines
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Identify box templates in work.md**
    - Files: plugin/skills/work/work.md
    - Verify: Locate "Task Complete" and related box templates

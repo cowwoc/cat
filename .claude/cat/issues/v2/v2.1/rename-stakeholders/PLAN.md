@@ -33,7 +33,9 @@ None - infrastructure/organization task
 - [ ] All references updated across all files
 - [ ] No broken references remain (grep verification)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Find all files referencing stakeholders path
    - Verify: `grep -r "references/stakeholders" plugin/`
 2. **Step 2:** Move directory to new location

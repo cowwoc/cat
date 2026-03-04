@@ -51,7 +51,9 @@ None - infrastructure optimization
 
 Existing auxiliary files remain unchanged - they're already separate and referenced by link.
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Read the full current `plugin/skills/learn/SKILL.md` to understand all sections
 2. **Step 2:** Create `plugin/skills/learn/phase-investigate.md` containing steps 1 through 1b (verify event sequence,
    analyze documentation path). Include all bash examples and anti-patterns for those steps. Define JSON output contract
@@ -76,6 +78,7 @@ Existing auxiliary files remain unchanged - they're already separate and referen
    - Orchestrator parses JSON results between phases
    - Includes error handling and phase routing
 7. **Step 7:** Run `python3 /workspace/run_tests.py` to verify no regressions
+
 
 ## Post-conditions
 - [ ] Learn skill SKILL.md reduced to ~200-250 lines (from 1,454)

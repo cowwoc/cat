@@ -49,7 +49,9 @@ None - convention update
 - [ ] All modified files reference safe-rm or the cwd-removal safety rule
 - [ ] All tests pass
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Update `.claude/rules/common.md` line 154
    - Old: `**Use \`git -C\`** instead of \`cd\` + \`git\` to operate on worktrees without changing directory.`
    - New: `**Worktree directory safety:** You may \`cd\` into worktrees to work. However, before removing a directory (via \`rm\`, \`git worktree remove\`, etc.), ensure your shell is NOT inside the directory being removed. See \`/cat:safe-rm\`.`

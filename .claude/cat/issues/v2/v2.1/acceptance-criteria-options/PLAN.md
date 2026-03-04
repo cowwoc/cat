@@ -15,7 +15,9 @@ None - workflow improvement
 ## Files to Modify
 - plugin/skills/add.md - Main /cat:add skill definition
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Define acceptance criteria option sets by task type
    - Files: plugin/skills/add.md
    - Verify: Feature/Bugfix/Refactor have distinct relevant options
@@ -31,6 +33,7 @@ None - workflow improvement
 4. **Step 4:** Add "Custom" option with freeform fallback
    - Files: plugin/skills/add.md
    - Verify: Selecting "Custom" prompts for text input
+
 
 ## Post-conditions
 - [ ] Options provided for all acceptance criteria questions

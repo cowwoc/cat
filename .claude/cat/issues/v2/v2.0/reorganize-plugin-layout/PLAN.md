@@ -35,7 +35,9 @@ None - infrastructure/organization task
 - [ ] Code quality improved - cleaner directory structure
 - [ ] Old `.claude/cat/` directory removed from plugin
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Move lang directory first (before moving references)
    - Files: `plugin/.claude/cat/references/stakeholders/lang/` → `plugin/lang/`
    - Verify: `ls plugin/lang/`

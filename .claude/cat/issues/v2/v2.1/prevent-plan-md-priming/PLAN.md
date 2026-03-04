@@ -10,12 +10,15 @@ M346, M349, M355, M370, M421, M423.
 
 Current PLAN.md structure mixes execution instructions with expected values:
 ```
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. Compress files using /cat:shrink-doc
 2. Verify each file scores 1.0 on /compare-docs  ← PRIMES fabrication
 ```
 
 When subagents see "Verify score = 1.0", they report 1.0 regardless of actual results.
+
 
 ## Approach
 
@@ -34,11 +37,15 @@ Detection patterns:
 Separate actions from success criteria in PLAN.md template:
 
 ```markdown
-## Execution Steps (ACTIONS ONLY)
+## Execution Waves
+
+### Wave 1
 1. Compress files using /cat:shrink-doc
 2. Run /compare-docs validation
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. Create hook script `plugin/hooks/bash_handlers/validate_plan_md.py`
    - Detect priming patterns in PLAN.md Execution Steps
@@ -51,6 +58,7 @@ Separate actions from success criteria in PLAN.md template:
 3. Update `/cat:add` skill to use new template structure
 
 4. Validate existing PLAN.md files don't violate new structure
+
 
 ## Post-conditions
 

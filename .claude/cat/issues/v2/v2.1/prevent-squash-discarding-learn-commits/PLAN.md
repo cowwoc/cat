@@ -71,7 +71,9 @@ modifications."
 - [ ] Simulated learn commit survives squash in worktree
 - [ ] Normal squash (no learn commits) behaves identically to current behavior
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Determine selected approach (from user choice or config alignment)
    - Files: N/A
 2. **Step 2:** Implement the marker mechanism in `/cat:learn` skill

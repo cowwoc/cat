@@ -33,7 +33,9 @@ returning exit code 1).
 - [ ] No `cd` commands that change into repo directories
 - [ ] All tests pass
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** In `plugin/skills/learn/phase-record.md`, find Step 12 (lines ~203-267) where git commands are used
 2. **Step 2:** Add worktree detection check before the git commit block:
    ```bash

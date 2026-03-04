@@ -20,7 +20,9 @@ and "The Compass: Your Preferences" becomes "Your Style".
 - [ ] "The Compass: Your Preferences" renamed to "Your Style"
 - [ ] Any internal anchor links updated if needed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Update section headings in README.md
    - Files: README.md
    - Verify: grep for old headings returns no matches

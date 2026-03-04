@@ -35,7 +35,9 @@ None - naming consistency cleanup
 - [ ] All tests pass with `mvn -f client/pom.xml test`
 - [ ] `grep -r "engine/" --include="*.java" --include="*.sh" --include="*.md" client/` returns no stale references
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** `git mv engine client`
 2. **Step 2:** Update all `engine/` references to `client/` in Java source files, shell scripts, CLAUDE.md, and
    active documentation

@@ -31,12 +31,15 @@ None (housekeeping / convention compliance)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** For each file listed in "Files to Modify", remove the HTML license comment block at the top (the `<!--
    ... -->` block containing the copyright notice). Do not modify any other content.
 2. **Step 2:** Run `grep -rl "Licensed under the CAT Commercial License" .claude/cat/ | grep -v /worktrees/` to verify
    zero matches.
 3. **Step 3:** Commit with message: `refactor: remove license headers from .claude/cat planning artifacts`
+
 
 ## Post-conditions
 - [ ] `grep -rl "Licensed under the CAT Commercial License" .claude/cat/ | grep -v /worktrees/` returns no output

@@ -24,7 +24,9 @@ None (infrastructure fix)
 - [ ] No remaining references to `hook.sh` as an executable invocation in plugin source files
 - [ ] `mvn -f hooks/pom.xml test` passes
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Add SessionAnalyzer to HANDLERS array:** In `hooks/build-jlink.sh`, add
    `"session-analyzer:util.SessionAnalyzer"` to the HANDLERS array
 2. **Update optimize-execution skill:** In `plugin/skills/optimize-execution/first-use.md` line 39, replace

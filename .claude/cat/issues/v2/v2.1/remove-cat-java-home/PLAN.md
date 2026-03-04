@@ -48,7 +48,9 @@ unnecessary.
 - [ ] `hook.sh` still works if `CAT_JAVA_HOME` happens to be set (no breakage)
 - [ ] `session_start.sh` no longer exports `CAT_JAVA_HOME`
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Step 1:** Update `plugin/hooks/hook.sh`
    - Add `SCRIPT_DIR` resolution at top of script: `readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"`
@@ -71,6 +73,7 @@ unnecessary.
    - Run: `echo '{}' | plugin/hooks/hook.sh GetSkillOutput` (without CAT_JAVA_HOME set)
    - Verify java binary is found and handler is invoked
    - Files: none (manual verification)
+
 
 ## Post-conditions
 

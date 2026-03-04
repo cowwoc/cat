@@ -61,7 +61,9 @@ But instead of applying fixes locally, package this as a GitHub issue.
 - [ ] Explicit permission required before posting
 - [ ] Uses `gh` CLI for GitHub integration
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Create skill structure**: Create `plugin/skills/feedback/` directory with skill definition
    - Verify: Skill files exist
 2. **Implement bug report flow**: Integrate with /cat:learn for RCA collection

@@ -23,7 +23,9 @@ None (infrastructure improvement)
 - [ ] Visual output improved for readability
 - [ ] Detailed stakeholder findings preserved below summary
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Read current research skill
    - Files: plugin/skills/research/SKILL.md
    - Verify: Understand current output structure

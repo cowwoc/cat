@@ -30,7 +30,9 @@ None - infrastructure sub-issue of add-java-build-to-ci
 - [ ] GitHub Actions workflow builds and publishes successfully
 - [x] ~~java.sh finds JAR from bundle location~~ (N/A - jlink module system handles this)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Modify build-jlink.sh to include cat-hooks.jar**
    - Files: `plugin/hooks/build-jlink.sh`
    - After building the jlink runtime, copy cat-hooks.jar and Jackson JARs into a `lib/` directory inside the bundle

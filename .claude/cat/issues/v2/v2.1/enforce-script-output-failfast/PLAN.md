@@ -36,7 +36,9 @@ None - infrastructure/optimization issue
 - [ ] "pre-rendered" renamed to "script output" throughout
 - [ ] No manual script execution instructions remain
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Audit each skill for manual script fallback patterns
    - Files: plugin/skills/*/SKILL.md
    - Identify: Instructions to run scripts manually if output missing

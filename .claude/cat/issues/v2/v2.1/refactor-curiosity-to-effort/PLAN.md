@@ -76,7 +76,9 @@ None (internal restructuring)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 ### Step 1: Rename Java enum and update all Java source
 - Rename `CuriosityLevel.java` to `EffortLevel.java`, update class name and all Javadoc
@@ -142,6 +144,7 @@ None (internal restructuring)
   - `medium`: Review changed lines + surrounding context
   - `high`: Review broader impact on surrounding code, flag pre-existing issues in reviewed files
 - This redirects the former curiosity behavior to the review phase where it is effective
+
 
 ## Post-conditions
 - [ ] No references to `curiosity` remain in Java source, tests, config, skills, or documentation (except CHANGELOG.md historical entries and v1.9 CHANGELOG.md)

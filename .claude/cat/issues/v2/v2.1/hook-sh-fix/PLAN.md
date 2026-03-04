@@ -23,7 +23,9 @@ Parent: optimize-hook-json-parser (acceptance criterion 4)
 
 - [ ] hook.sh uses elif for AOTCache/SharedArchiveFile flags
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Read hook.sh** and locate the two independent `[[ -f ]]` checks for AOTCache and SharedArchiveFile
 2. **Change to if/elif:** Make AOTCache the primary check, SharedArchiveFile the elif fallback
 3. **Verify** the script still works by examining the logic flow

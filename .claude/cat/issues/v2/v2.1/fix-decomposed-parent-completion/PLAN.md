@@ -48,7 +48,9 @@ Two locations in `get-available-issues.sh` skip decomposed parents without check
 - [ ] Targeted selection of completed decomposed parent — returns found, not decomposed
 - [ ] Targeted selection of incomplete decomposed parent — returns decomposed status
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Extract sub-issue-completion-check into a reusable function
    - Files: `plugin/scripts/get-available-issues.sh`
    - Create function `all_subissues_closed()` that takes a STATE.md path, reads the `## Decomposed Into` section,
@@ -69,6 +71,7 @@ Two locations in `get-available-issues.sh` skip decomposed parents without check
 
 5. **Step 5:** Run full test suite
    - Run: `python3 /workspace/run_tests.py`
+
 
 ## Post-conditions
 - [ ] All 5 test cases pass

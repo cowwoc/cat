@@ -32,7 +32,9 @@ None (infrastructure improvement)
 - [ ] skill-builder template updated to document the new pattern
 - [ ] Tests pass
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. Update `cleanup-first-use/SKILL.md` line 63
 2. Update `run-retrospective-first-use/SKILL.md` line 23

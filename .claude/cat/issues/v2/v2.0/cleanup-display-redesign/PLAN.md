@@ -23,7 +23,9 @@ confirmation, and completion verification.
 - [ ] Output uses same box-drawing style as /cat:status
 - [ ] Emoji alignment is correct (verified via hook preprocessor output)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Create cleanup_handler.py**
    - Files: plugin/hooks/skill_handlers/cleanup_handler.py
    - Verify: Handler registered and returns preprocessor output for each phase

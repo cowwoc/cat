@@ -61,7 +61,9 @@ own launcher scripts from the HANDLERS array using a simple template.
 - `plugin/skills/status/handler.sh` - Change from `hook.sh skills.RunGetStatusOutput` to `bin/get-status-output`
 - `plugin/scripts/get-render-diff.sh` - Change from `hook.sh` invocation to direct launcher call
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 ### Step 1: Replace `--launcher` and `--add-options` with `generate_launchers()`
 
@@ -144,6 +146,7 @@ rm -f /home/node/.config/claude/plugins/cache/cat/cat/2.1/hooks/hook.sh
 Test that status skill works: `CLAUDE_PROJECT_DIR=/workspace /home/node/.config/claude/plugins/cache/cat/cat/2.1/hooks/bin/get-status-output`
 
 Test a hooks.json entry works: `echo '{}' | /home/node/.config/claude/plugins/cache/cat/cat/2.1/hooks/bin/bash-pretool`
+
 
 ## Post-conditions
 - [ ] `bin/get-status-output` executes successfully and produces status output

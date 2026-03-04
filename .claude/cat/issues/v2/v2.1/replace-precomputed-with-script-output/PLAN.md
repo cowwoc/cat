@@ -28,7 +28,9 @@ None - terminology cleanup
 - [ ] All replacements are contextually appropriate
 - [ ] All tests pass
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Search all files for "pre-computed", "precomputed", "Pre-computed", "Precomputed" variations
 2. **Step 2:** Replace with "script output" or appropriate "script" terminology
    - Files: all matching files from Step 1

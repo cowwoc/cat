@@ -50,7 +50,9 @@ None (infrastructure bugfix)
 
 - [ ] Issue `2.1-record-fork-commit-at-worktree-creation` is closed (defines cat-branch-point format)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Step 1:** In `WorkPrepare.java`, after writing `cat-branch-point`, write `cat-branch` file
    - File: `client/src/main/java/io/github/cowwoc/cat/hooks/util/WorkPrepare.java`
@@ -76,6 +78,7 @@ None (infrastructure bugfix)
 5. **Step 5:** Run full test suite
    - `mvn -f client/pom.xml test`
    - `bats tests/worktree-isolation.bats`
+
 
 ## Post-conditions
 

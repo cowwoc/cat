@@ -45,11 +45,14 @@ None - follow-up to 2.1-port-git-scripts infrastructure work
 - `plugin/scripts/git-squash-optimized.sh`
 - `plugin/scripts/merge-and-cleanup.sh`
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Update each skill/concept** to reference Java class invocation instead of bash script
 2. **Update invocation patterns** from `bash script.sh args` to `java -cp hooks.jar ClassName args`
 3. **Remove the 4 bash scripts** from `plugin/scripts/`
 4. **Run tests:** `mvn -f hooks/pom.xml test`
+
 
 ## Dependencies
 - 2.1-port-git-scripts (must be merged first)

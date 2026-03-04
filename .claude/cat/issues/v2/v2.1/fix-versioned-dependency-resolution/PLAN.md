@@ -29,7 +29,9 @@ None (infrastructure bugfix)
 - [ ] Version-qualified names where the dependency is NOT closed still return `false`
 - [ ] E2E: `get-available-issues.sh` returns `found` for `2.1-port-issue-discovery` (currently returns `blocked`)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Update `is_dependency_satisfied()` in `get-available-issues.sh`:** When the initial `find` for the literal
    dependency name fails, check if the name matches the version-qualified format (`N.N-name`). If so, extract the

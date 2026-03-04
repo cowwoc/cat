@@ -45,7 +45,9 @@ lookahead after `merge` to exclude `merge-*` subcommands.
 - [ ] `git merge-file file1 file2 file3` - allowed
 - [ ] `cmd1 && git merge-base x y` - allowed (with preceding command)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Fix regex in `plugin/hooks/bash_handlers/block_merge_commits.py`
    - Files: `plugin/hooks/bash_handlers/block_merge_commits.py`
    - Change all three `re.search` patterns to add `(?!-)` negative lookahead after `merge`
@@ -57,6 +59,7 @@ lookahead after `merge` to exclude `merge-*` subcommands.
    - Apply identical negative lookahead pattern to Java regex
 3. **Step 3:** Run test suite
    - Command: `python3 /workspace/run_tests.py`
+
 
 ## Post-conditions
 - [ ] `git merge-base` no longer blocked by hook

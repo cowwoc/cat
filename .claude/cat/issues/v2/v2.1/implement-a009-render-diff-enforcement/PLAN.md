@@ -21,7 +21,9 @@ Add PreToolUse hook on AskUserQuestion to enforce render-diff usage at approval 
 - [ ] No false positives on non-approval questions
 - [ ] Tests pass
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. Check existing warn-approval-without-renderdiff.sh
 2. Enhance or create new handler
 3. Add tests

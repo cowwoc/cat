@@ -37,7 +37,9 @@ Ten distinct findings across five phase files, falling into three categories:
 
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Fix tier classification in `first-use.md`:**
    - Replace unconditional `protocol_violation → quick` rule with evidence-based criteria: quick tier
@@ -80,6 +82,7 @@ Ten distinct findings across five phase files, falling into three categories:
 
 7. **Run tests to verify no regressions:**
    - `mvn -f client/pom.xml test`
+
 
 ## Post-conditions
 

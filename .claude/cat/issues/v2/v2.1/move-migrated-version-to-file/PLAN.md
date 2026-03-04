@@ -31,7 +31,9 @@ None
 - [ ] Migration script moves value from old location to new file
 - [ ] Backward compatibility wrappers removed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Update `plugin/migrations/lib/utils.sh`:**
    - `get_last_migrated_version()`: Read from `.claude/cat/VERSION` file. Return "0.0.0" if file doesn't exist.
    - `set_last_migrated_version()`: Write version string to `.claude/cat/VERSION` file (plain text, no JSON).

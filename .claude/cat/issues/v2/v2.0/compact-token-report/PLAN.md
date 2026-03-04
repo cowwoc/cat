@@ -46,7 +46,9 @@ With optional --verbose for full breakdown.
 - [ ] --verbose flag available for full breakdown
 - [ ] Works when session file is unavailable (shows "Session data unavailable")
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Rewrite SKILL.md output format**
    - Define single-box compact format
    - Add status indicator logic (✓ healthy, ⚠ warning, ✗ critical)

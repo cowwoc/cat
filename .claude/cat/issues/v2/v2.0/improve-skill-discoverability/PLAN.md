@@ -77,7 +77,9 @@ Each skill should have:
 - [ ] All skills have "When to Use" section
 - [ ] git-rebase changes committed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Commit git-rebase update**
    - Already edited in session

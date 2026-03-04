@@ -133,7 +133,9 @@ as proof-of-concept, enabling future subagent preloading without additional refa
 - [ ] skill-loading.md updated with `-first-use` pattern
 - [ ] All tests pass (`mvn -f client/pom.xml verify`)
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 ### Phase 1 (done — commits 079c4e2a, c117a662, 98110a6f)
 1. ~~Wrap invokeSkillOutput return value in `<skill-output>` tags~~

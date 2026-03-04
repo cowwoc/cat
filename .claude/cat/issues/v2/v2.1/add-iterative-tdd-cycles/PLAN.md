@@ -27,7 +27,9 @@ with per-cycle commits squashed before review.
 - [ ] Bug-fix verification loop preserved in both files
 - [ ] E2E: Both files are internally consistent and cross-reference correctly
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Update state machine diagram** in `first-use.md`
    - Files: `plugin/skills/tdd-implementation/first-use.md`
    - Replace diagram with one showing feature iteration loop (REFACTOR → more behaviors? → RED) and bug verification

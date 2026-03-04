@@ -40,7 +40,9 @@ checks each dependency's STATE.md status before adding to BLOCKED_TASKS. The com
 - [ ] Open dependencies still correctly reported as blockers
 - [ ] Mixed dependencies (some closed, some open) correctly filtered
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Edit `plugin/skills/work-prepare/SKILL.md` lines 146-175
    - In the diagnostic gathering bash snippet, after extracting DEPS for an open/in-progress issue,
      iterate over each dependency and check its STATE.md status
@@ -50,6 +52,7 @@ checks each dependency's STATE.md status before adding to BLOCKED_TASKS. The com
 
 2. **Step 2:** Run existing tests to verify no regressions
    - Files: `run_tests.py`
+
 
 ## Post-conditions
 - [ ] Diagnostic snippet checks each dependency's STATE.md status before reporting as blocker

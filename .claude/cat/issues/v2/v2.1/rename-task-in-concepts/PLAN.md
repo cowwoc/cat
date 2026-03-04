@@ -32,12 +32,15 @@ Replace "task" terminology with "issue" in all concept documentation files.
 - plugin/concepts/duplicate-task.md → duplicate-issue.md
 - plugin/concepts/token-warning.md
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. Rename task-resolution.md to issue-resolution.md
 2. Rename duplicate-task.md to duplicate-issue.md
 3. Replace "task" with "issue" in all concept files
 4. Update references to old script names
 5. Update references to old file names
+
 
 ## Post-conditions
 - [ ] All concept files updated

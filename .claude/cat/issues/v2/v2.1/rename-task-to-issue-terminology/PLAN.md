@@ -49,7 +49,9 @@ None (terminology consistency)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. **Step 1:** Scan all files in `plugin/agents/`, `plugin/concepts/`, `plugin/skills/` for "task"
    used to mean CAT issue. Replace with "issue" while preserving legitimate uses.
    - Files: All files listed above
@@ -59,6 +61,7 @@ None (terminology consistency)
    determines which issues are available rather than directing the user to `/cat:status`.
 4. **Step 4:** Run `grep -ri '\btask\b' plugin/agents/ plugin/concepts/ plugin/skills/` and verify
    remaining hits are all legitimate (Task tool, TaskList, procedural "your task").
+
 
 ## Post-conditions
 - [ ] No agent-facing text in plugin/ uses "task" to mean CAT issue

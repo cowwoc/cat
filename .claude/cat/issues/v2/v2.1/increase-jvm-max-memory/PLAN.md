@@ -14,7 +14,9 @@ None - configuration improvement
 Conservative initial memory setting in `generate_launchers()` in `hooks/build-jlink.sh` and in
 `plugin/scripts/load-skill.sh`.
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. **Edit `hooks/build-jlink.sh`** — In `generate_launchers()`, change `-Xms16m -Xmx64m` to `-Xms16m -Xmx96m` (line
    301).
@@ -31,6 +33,7 @@ Conservative initial memory setting in `generate_launchers()` in `hooks/build-jl
 |------|--------|-------------|
 | `hooks/build-jlink.sh` | Modify | Change `-Xmx64m` to `-Xmx96m` in launcher template |
 | `plugin/scripts/load-skill.sh` | Modify | Change `-Xmx64m` to `-Xmx96m` in JVM invocation |
+
 
 ## Post-conditions
 

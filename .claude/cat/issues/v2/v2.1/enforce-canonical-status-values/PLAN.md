@@ -37,7 +37,9 @@ updates the data structure."
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 1. Remove backwards-compatibility aliases from `IssueDiscovery.getIssueStatus()` — reject non-canonical
    values with IOException instead of normalizing them
 2. Remove `"done"` alias checks from `GetStatusOutput.java`
@@ -46,6 +48,7 @@ updates the data structure."
 5. Create `IssueDiscoveryAccess` interface and register with `SharedSecrets` to enable cross-module testing
    of the private `getIssueStatus()` method
 6. Write tests verifying canonical statuses are accepted and non-canonical aliases are rejected
+
 
 ## Post-conditions
 - [ ] `IssueDiscovery.getIssueStatus()` throws IOException for any non-canonical status value
