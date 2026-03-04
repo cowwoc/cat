@@ -154,13 +154,9 @@ public final class IssueDiscovery
      */
     ALL,
     /**
-     * Search a specific major version.
+     * Search a specific version (major, major.minor, or major.minor.patch).
      */
-    MAJOR,
-    /**
-     * Search a specific minor version.
-     */
-    MINOR,
+    VERSION,
     /**
      * Search for a specific issue by fully-qualified ID.
      */
@@ -851,20 +847,14 @@ public final class IssueDiscovery
           return Collections.emptyList();
         }
       }
-      case MAJOR ->
+      case VERSION ->
       {
-        return List.of(issuesDir.resolve("v" + target));
-      }
-      case MINOR ->
-      {
-        // Target may be "major.minor" or "major.minor.patch"
         int firstDot = target.indexOf('.');
         if (firstDot < 0)
-          return Collections.emptyList();
+          return List.of(issuesDir.resolve("v" + target));
         int secondDot = target.indexOf('.', firstDot + 1);
         if (secondDot >= 0)
         {
-          // patch-qualified target: major.minor.patch
           String major = target.substring(0, firstDot);
           String minor = target.substring(firstDot + 1, secondDot);
           String patch = target.substring(secondDot + 1);
