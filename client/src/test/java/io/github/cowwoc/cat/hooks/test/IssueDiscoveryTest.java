@@ -469,7 +469,7 @@ public class IssueDiscoveryTest
         createIssue(projectDir, "2", "2", "v22-feature", "open");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
-        SearchOptions options = new SearchOptions(Scope.MINOR, "2.2", sessionId, "", false);
+        SearchOptions options = new SearchOptions(Scope.VERSION, "2.2", sessionId, "", false);
         DiscoveryResult result = discovery.findNextIssue(options);
 
         requireThat(result, "result").isInstanceOf(DiscoveryResult.Found.class);
@@ -775,7 +775,7 @@ public class IssueDiscoveryTest
         createIssue(projectDir, "3", "1", "v3-feature", "open");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
-        SearchOptions options = new SearchOptions(Scope.MAJOR, "3", sessionId, "", false);
+        SearchOptions options = new SearchOptions(Scope.VERSION, "3", sessionId, "", false);
         DiscoveryResult result = discovery.findNextIssue(options);
 
         requireThat(result, "result").isInstanceOf(DiscoveryResult.Found.class);

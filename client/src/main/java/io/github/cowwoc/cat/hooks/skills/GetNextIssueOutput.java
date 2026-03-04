@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -265,7 +264,12 @@ public final class GetNextIssueOutput implements SkillOutput
   }
 
   /**
-   * Finds the next available issue using IssueDiscovery.
+   * Finds the next available issue using IssueDiscovery with {@link IssueDiscovery.Scope#ALL}.
+   * <p>
+   * Uses {@code Scope.ALL} intentionally: the banner display must show the globally next issue
+   * across all versions, not just the current minor version. Compare with
+   * {@link GetIssueCompleteOutput#discoverAndRender}, which uses {@code Scope.VERSION} to find the
+   * next issue within the current minor version for the issue-complete box.
    *
    * @param sessionId the current session ID
    * @param excludePattern optional glob pattern to exclude issues (may be empty)
@@ -300,58 +304,24 @@ public final class GetNextIssueOutput implements SkillOutput
 
   /**
    * Reads the goal from PLAN.md in the issue directory.
+   * <p>
+   * Delegates to {@link GetIssueCompleteOutput#readGoalFromPlan(Path)}.
    *
    * @param issuePath the path to the issue directory
    * @return the goal text (first paragraph after Goal heading)
    */
   private String readIssueGoal(String issuePath)
   {
-    try
-    {
-      Path planPath = Path.of(issuePath, "PLAN.md");
-      if (!Files.exists(planPath))
-        return "No goal found";
-
-      List<String> lines = Files.readAllLines(planPath);
-
-      int goalStart = -1;
-      for (int i = 0; i < lines.size(); ++i)
-      {
-        String line = lines.get(i).trim();
-        if (line.startsWith("## Goal"))
-        {
-          goalStart = i + 1;
-          break;
-        }
-      }
-
-      if (goalStart == -1)
-        return "No goal found";
-
-      List<String> goalLines = new ArrayList<>();
-      for (int i = goalStart; i < lines.size(); ++i)
-      {
-        String line = lines.get(i);
-        if (line.trim().startsWith("##"))
-          break;
-        goalLines.add(line.stripTrailing());
-      }
-
-      String goal = String.join("\n", goalLines).trim();
-
-      String[] paragraphs = goal.split("\n\n");
-      if (paragraphs.length > 0)
-        return paragraphs[0].trim();
-      return goal;
-    }
-    catch (IOException _)
-    {
-      return "Goal unavailable";
-    }
+    Path planPath = Path.of(issuePath, "PLAN.md");
+    return GetIssueCompleteOutput.readGoalFromPlan(planPath);
   }
 
   /**
    * Extracts the scope from a completed issue ID.
+   * <p>
+   * Handles all version formats: major ({@code 2-xxx} -> {@code v2}),
+   * major.minor ({@code 2.1-xxx} -> {@code v2.1}), and
+   * major.minor.patch ({@code 2.1.3-xxx} -> {@code v2.1.3}).
    *
    * @param completedIssue the completed issue ID (e.g., "2.1-xxx")
    * @return the scope name (e.g., "v2.1")
