@@ -624,15 +624,16 @@ else
             print ""
             print "### Wave 1"
             in_section = 1
+            last_blank=0
             next
         }
         in_section && /^## / {
-            in_section = 0
-            print ""
+            in_section=0
+            if (!last_blank) print ""
             print
             next
         }
-        { print }
+        { print; last_blank=($0 == "") }
         ' "$plan_file" > "${plan_file}.tmp" && mv "${plan_file}.tmp" "$plan_file"
 
         ((phase7_migrated++)) || true
