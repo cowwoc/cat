@@ -56,7 +56,7 @@ cat "${ISSUE_DIR}/STATE.md"
 source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
 if [ -d "${WORKTREES_DIR}/${ISSUE}-sub-${UUID}" ]; then
   # Review commits made
-  git -C "${WORKTREES_DIR}/${ISSUE}-sub-${UUID}" log --oneline origin/HEAD..HEAD
+  (cd "${WORKTREES_DIR}/${ISSUE}-sub-${UUID}" && git log --oneline origin/HEAD..HEAD)
 fi
 ```
 

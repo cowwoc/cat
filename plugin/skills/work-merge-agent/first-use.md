@@ -141,13 +141,14 @@ before calling the `git-squash` tool:
 
 ```bash
 # Check for STATE.md regressions: other issues showing closed→open
-REGRESSIONS=$(git -C "${WORKTREE_PATH}" diff "${TARGET_BRANCH}..HEAD" -- \
+cd "${WORKTREE_PATH}"
+REGRESSIONS=$(git diff "${TARGET_BRANCH}..HEAD" -- \
   '.claude/cat/issues/**/*.md' 2>/dev/null | \
   grep -A5 "^---.*STATE.md" | grep "^-.*Status.*closed" | wc -l)
 
 if [[ "$REGRESSIONS" -gt 0 ]]; then
   echo "WARNING: Found STATE.md regressions (closed→open) vs ${TARGET_BRANCH}:"
-  git -C "${WORKTREE_PATH}" diff "${TARGET_BRANCH}..HEAD" -- \
+  git diff "${TARGET_BRANCH}..HEAD" -- \
     '.claude/cat/issues/**/*.md' | grep -B2 "^-.*Status.*closed"
   echo "Restore the correct state from target branch before squashing:"
   echo "  git checkout ${TARGET_BRANCH} -- .claude/cat/issues/v*/v*/<issue-name>/STATE.md"
@@ -223,7 +224,8 @@ for parent_dir in "$VERSION_DIR"/*/; do
       if ! grep -q '^\*\*Resolution:\*\*' "$parent_state"; then
         sed -i '/\*\*Progress:\*\* 100%/a - **Resolution:** implemented' "$parent_state"
       fi
-      git -C "${WORKTREE_PATH}" add "${parent_state#${WORKTREE_PATH}/}"
+      cd "${WORKTREE_PATH}"
+      git add "${parent_state#${WORKTREE_PATH}/}"
       echo "Auto-closed decomposed parent: $parent_name"
     fi
     break  # Only one parent possible

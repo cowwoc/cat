@@ -5,8 +5,7 @@ See LICENSE.md in the project root for license terms.
 -->
 # Git Linear Merge Skill
 
-Merge source branch to its target branch using WORKTREE_PATH parameter. Uses `git -C` for all operations to avoid cd into
-worktree. Fast-forwards target branch without checking out.
+Merge source branch to its target branch using WORKTREE_PATH parameter. Fast-forwards target branch without checking out.
 
 ## Step 0: Read Git Workflow Preferences
 
@@ -82,8 +81,9 @@ to stderr (exit code 1) with `"status": "error"` and a `"message"` field contain
 **Cause**: Target branch has moved ahead since issue branch was created
 **Solution**: Rebase issue branch onto target first:
 ```bash
-git -C "$WORKTREE_PATH" fetch origin "$TARGET_BRANCH"
-git -C "$WORKTREE_PATH" rebase "origin/$TARGET_BRANCH"
+cd "$WORKTREE_PATH"
+git fetch origin "$TARGET_BRANCH"
+git rebase "origin/$TARGET_BRANCH"
 # Then retry merge script
 ```
 

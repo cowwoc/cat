@@ -290,6 +290,7 @@ else
 fi
 
 # Stage ALL files: retrospective metadata + prevention files — all go to $COMMIT_DIR
+# git -C is intentional: $COMMIT_DIR is the project config directory, not an issue worktree.
 git -C "$COMMIT_DIR" add "$MISTAKES_FILE" "$INDEX_FILE"
 for file in "${files_modified[@]}"; do
   git -C "$COMMIT_DIR" add "$file"
