@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks.skills;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.IssueDiscovery;
+import io.github.cowwoc.cat.hooks.util.IssueGoalReader;
 import io.github.cowwoc.cat.hooks.util.IssueLock;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 import org.slf4j.Logger;
@@ -232,7 +233,7 @@ public final class GetNextIssueOutput implements SkillOutput
 
       String goal;
       if (!nextIssuePath.isEmpty())
-        goal = readIssueGoal(nextIssuePath);
+        goal = IssueGoalReader.readGoalFromPlan(Path.of(nextIssuePath, "PLAN.md"));
       else
         goal = "No goal available";
 
@@ -303,20 +304,6 @@ public final class GetNextIssueOutput implements SkillOutput
   }
 
   /**
-   * Reads the goal from PLAN.md in the issue directory.
-   * <p>
-   * Delegates to {@link GetIssueCompleteOutput#readGoalFromPlan(Path)}.
-   *
-   * @param issuePath the path to the issue directory
-   * @return the goal text (first paragraph after Goal heading)
-   */
-  private String readIssueGoal(String issuePath)
-  {
-    Path planPath = Path.of(issuePath, "PLAN.md");
-    return GetIssueCompleteOutput.readGoalFromPlan(planPath);
-  }
-
-  /**
    * Extracts the scope from a completed issue ID.
    * <p>
    * Handles all version formats: major ({@code 2-xxx} -> {@code v2}),
@@ -348,16 +335,5 @@ public final class GetNextIssueOutput implements SkillOutput
   public String extractScopePublic(String completedIssue)
   {
     return extractScope(completedIssue);
-  }
-
-  /**
-   * Public test helper for readIssueGoal.
-   *
-   * @param issuePath the path to the issue directory
-   * @return the goal text
-   */
-  public String readIssueGoalPublic(String issuePath)
-  {
-    return readIssueGoal(issuePath);
   }
 }

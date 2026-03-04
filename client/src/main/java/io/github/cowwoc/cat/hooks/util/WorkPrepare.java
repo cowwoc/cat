@@ -465,7 +465,7 @@ public final class WorkPrepare
     }
 
     // Read goal from PLAN.md
-    String goal = readGoalFromPlan(planPath);
+    String goal = IssueGoalReader.readGoalFromPlan(planPath);
 
     // Read pre-conditions from PLAN.md
     List<String> preconditions;
@@ -1390,62 +1390,6 @@ public final class WorkPrepare
     content = PROGRESS_PATTERN.matcher(content).replaceAll("**Progress:** 0%");
 
     Files.writeString(stateFile, content);
-  }
-
-  /**
-   * Reads the goal from PLAN.md.
-   * <p>
-   * Extracts the first paragraph of text under the {@code ## Goal} heading.
-   *
-   * @param planPath the path to PLAN.md
-   * @return the goal text, or "No goal found" if absent
-   */
-  private String readGoalFromPlan(Path planPath)
-  {
-    if (!Files.isRegularFile(planPath))
-      return "No goal found";
-
-    List<String> lines;
-    try
-    {
-      lines = Files.readAllLines(planPath);
-    }
-    catch (IOException _)
-    {
-      return "No goal found";
-    }
-
-    // Find ## Goal heading
-    int goalStart = -1;
-    for (int i = 0; i < lines.size(); ++i)
-    {
-      if (lines.get(i).strip().startsWith("## Goal"))
-      {
-        goalStart = i + 1;
-        break;
-      }
-    }
-
-    if (goalStart < 0)
-      return "No goal found";
-
-    // Extract text until next ## heading or end of file
-    List<String> goalLines = new ArrayList<>();
-    for (int i = goalStart; i < lines.size(); ++i)
-    {
-      String line = lines.get(i);
-      if (line.strip().startsWith("##"))
-        break;
-      goalLines.add(line.stripTrailing());
-    }
-
-    String goal = String.join("\n", goalLines).strip();
-
-    // Return first paragraph
-    int blankIndex = goal.indexOf("\n\n");
-    if (blankIndex >= 0)
-      return goal.substring(0, blankIndex).strip();
-    return goal;
   }
 
   /**
