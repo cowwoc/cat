@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetNextIssueOutput;
+import io.github.cowwoc.cat.hooks.util.IssueGoalReader;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -98,7 +99,7 @@ public class GetNextIssueOutputTest
   }
 
   /**
-   * Verifies that readIssueGoal extracts first paragraph from PLAN.md.
+   * Verifies that IssueGoalReader extracts first paragraph from PLAN.md.
    */
   @Test
   public void readIssueGoalExtractsFirstParagraph() throws IOException
@@ -122,12 +123,8 @@ public class GetNextIssueOutputTest
         """;
       Files.writeString(planPath, planContent);
 
-      try (JvmScope scope = new TestJvmScope())
-      {
-        GetNextIssueOutput output = new GetNextIssueOutput(scope);
-        String goal = output.readIssueGoalPublic(tempDir.toString());
-        requireThat(goal, "goal").isEqualTo("This is the first paragraph.");
-      }
+      String goal = IssueGoalReader.readGoalFromPlan(planPath);
+      requireThat(goal, "goal").isEqualTo("This is the first paragraph.");
     }
     finally
     {
@@ -137,7 +134,7 @@ public class GetNextIssueOutputTest
   }
 
   /**
-   * Verifies that readIssueGoal returns fallback message when no Goal section.
+   * Verifies that IssueGoalReader returns fallback message when no Goal section.
    */
   @Test
   public void readIssueGoalReturnsNoGoalFoundWhenSectionMissing() throws IOException
@@ -155,12 +152,8 @@ public class GetNextIssueOutputTest
         """;
       Files.writeString(planPath, planContent);
 
-      try (JvmScope scope = new TestJvmScope())
-      {
-        GetNextIssueOutput output = new GetNextIssueOutput(scope);
-        String goal = output.readIssueGoalPublic(tempDir.toString());
-        requireThat(goal, "goal").isEqualTo("No goal found");
-      }
+      String goal = IssueGoalReader.readGoalFromPlan(planPath);
+      requireThat(goal, "goal").isEqualTo("No goal found");
     }
     finally
     {
@@ -170,29 +163,20 @@ public class GetNextIssueOutputTest
   }
 
   /**
-   * Verifies that readIssueGoal returns fallback message when PLAN.md missing.
+   * Verifies that IssueGoalReader returns fallback message when PLAN.md missing.
    */
   @Test
-  public void readIssueGoalReturnsNoGoalFoundWhenFileMissing() throws IOException
+  public void readIssueGoalReturnsNoGoalFoundWhenFileMissing()
   {
-    Path tempDir = Files.createTempDirectory("test-issue");
-    try
-    {
-      try (JvmScope scope = new TestJvmScope())
-      {
-        GetNextIssueOutput output = new GetNextIssueOutput(scope);
-        String goal = output.readIssueGoalPublic(tempDir.toString());
-        requireThat(goal, "goal").isEqualTo("No goal found");
-      }
-    }
-    finally
-    {
-      Files.deleteIfExists(tempDir);
-    }
+    Path tempDir = Path.of(System.getProperty("java.io.tmpdir"), "test-issue-missing-" +
+      System.nanoTime());
+    Path planPath = tempDir.resolve("PLAN.md");
+    String goal = IssueGoalReader.readGoalFromPlan(planPath);
+    requireThat(goal, "goal").isEqualTo("No goal found");
   }
 
   /**
-   * Verifies that readIssueGoal handles goal with trailing whitespace.
+   * Verifies that IssueGoalReader trims leading/trailing whitespace from goal text.
    */
   @Test
   public void readIssueGoalTrimsWhitespace() throws IOException
@@ -210,12 +194,8 @@ public class GetNextIssueOutputTest
         """;
       Files.writeString(planPath, planContent);
 
-      try (JvmScope scope = new TestJvmScope())
-      {
-        GetNextIssueOutput output = new GetNextIssueOutput(scope);
-        String goal = output.readIssueGoalPublic(tempDir.toString());
-        requireThat(goal, "goal").isEqualTo("First paragraph with leading/trailing spaces.");
-      }
+      String goal = IssueGoalReader.readGoalFromPlan(planPath);
+      requireThat(goal, "goal").isEqualTo("First paragraph with leading/trailing spaces.");
     }
     finally
     {

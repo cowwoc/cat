@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetIssueCompleteOutput;
+import io.github.cowwoc.cat.hooks.util.IssueGoalReader;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.testng.annotations.Test;
 
@@ -616,7 +617,7 @@ public class GetIssueCompleteOutputTest
     {
       Files.writeString(planFile,
         "# Plan\n\n## Goal\n\nFix the bug in the parser.\n\n## Steps\n\n- Step 1\n");
-      String goal = GetIssueCompleteOutput.readGoalFromPlan(planFile);
+      String goal = IssueGoalReader.readGoalFromPlan(planFile);
       requireThat(goal, "goal").isEqualTo("Fix the bug in the parser.");
     }
     finally
@@ -632,7 +633,7 @@ public class GetIssueCompleteOutputTest
   public void readGoalFromPlanMissingFile()
   {
     Path nonExistent = Path.of("/tmp/nonexistent-plan-" + System.nanoTime() + ".md");
-    String goal = GetIssueCompleteOutput.readGoalFromPlan(nonExistent);
+    String goal = IssueGoalReader.readGoalFromPlan(nonExistent);
     requireThat(goal, "goal").isEqualTo("No goal found");
   }
 
@@ -648,7 +649,7 @@ public class GetIssueCompleteOutputTest
     try
     {
       Files.writeString(planFile, "# Plan\n\n## Steps\n\n- Step 1\n");
-      String goal = GetIssueCompleteOutput.readGoalFromPlan(planFile);
+      String goal = IssueGoalReader.readGoalFromPlan(planFile);
       requireThat(goal, "goal").isEqualTo("No goal found");
     }
     finally
@@ -671,7 +672,7 @@ public class GetIssueCompleteOutputTest
     {
       Files.writeString(planFile,
         "## Goal\n\nFirst paragraph text.\n\nSecond paragraph text.\n\n## Steps\n\n- Step\n");
-      String goal = GetIssueCompleteOutput.readGoalFromPlan(planFile);
+      String goal = IssueGoalReader.readGoalFromPlan(planFile);
       requireThat(goal, "goal").isEqualTo("First paragraph text.");
     }
     finally
@@ -692,7 +693,7 @@ public class GetIssueCompleteOutputTest
     try
     {
       Files.writeString(planFile, "## Goal\n\n## Steps\n\n- Step\n");
-      String goal = GetIssueCompleteOutput.readGoalFromPlan(planFile);
+      String goal = IssueGoalReader.readGoalFromPlan(planFile);
       requireThat(goal, "goal").isEqualTo("No goal found");
     }
     finally
