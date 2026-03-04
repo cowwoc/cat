@@ -1437,6 +1437,12 @@ Do NOT skip the banner or continue without it.
 cd "${CLAUDE_PROJECT_DIR}"
 ```
 
+**Context-Aware Merge Delegation:**
+
+Always delegate the merge phase to a work-merge subagent via the Task tool. This is mandatory when main agent context
+exceeds 37k tokens to prevent session compaction during git operations (rebase, squash, conflict resolution). Even when
+context is below the threshold, delegation keeps the main agent context lean.
+
 **Pre-merge approval verification (when trust != "high"):**
 
 Before spawning the merge subagent, verify that user approval was obtained in Step 8. This proactive check
