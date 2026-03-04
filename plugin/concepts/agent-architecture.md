@@ -378,55 +378,11 @@ When a subagent exceeds the hard limit:
 3. **Analyze:** Review why estimation failed
 4. **Improve:** Update estimation factors based on pattern
 
-## Path and Config Verification (A003)
+## Path and Config Verification
 
-**MANDATORY**: Verify paths and config values before use. Common failure patterns documented below.
-
-### Worktree Path Handling
-
-When working in a worktree (e.g., `${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/issue-name/`):
-
-| Path Type | Example | Risk |
-|-----------|---------|------|
-| Absolute to /workspace/ | `/workspace/plugin/skills/` | Bypasses worktree isolation |
-| Relative from cwd | `plugin/skills/` | Correct - stays in worktree |
-| ${CLAUDE_PROJECT_DIR} | `${CLAUDE_PROJECT_DIR}/plugin/` | Points to main workspace |
-
-**Worktree directory location:** Worktrees are stored in external CAT storage, not inside the project directory.
-The path is `${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/{issue-branch}` where `${ENCODED_PROJECT_DIR}`
-replaces `/` and `.` with `-` in the project directory path.
-
-**Verification checklist:**
-1. Check if cwd is a worktree: `[ -f ".git/cat-branch-point" ]`
-2. If in worktree, use relative paths for file creation/editing
-3. Use absolute paths only for reading config from main workspace
-
-**Anti-pattern**: Creating files with `/workspace/` prefix while in worktree - changes go to main workspace instead of
-issue worktree.
-
-### Config File Resolution
-
-Config files may not exist in worktrees due to `.gitignore`:
-
-| File | Main Workspace | Worktree |
-|------|----------------|----------|
-| `cat-config.json` | ✓ Exists | ✓ Exists (tracked) |
-| `.local.json` | ✓ Exists | ✗ Missing (gitignored) |
-| `.claude/settings.json` | ✓ Exists | ✗ May be missing |
-
-**Resolution strategy:**
-```bash
-# Use CLAUDE_PROJECT_DIR for config lookup (always points to main workspace)
-CONFIG_DIR="${CLAUDE_PROJECT_DIR}/.claude/cat"
-CONFIG_FILE="${CONFIG_DIR}/cat-config.json"
-
-# Fall back to cwd only if CLAUDE_PROJECT_DIR not set
-if [ -z "$CLAUDE_PROJECT_DIR" ]; then
-  CONFIG_FILE=".claude/cat/cat-config.json"
-fi
-```
-
-**Anti-pattern**: Reading config from cwd in worktree, getting default values instead of user's configured values.
+**MANDATORY**: Verify paths and config values before use. See
+[worktree-isolation.md](worktree-isolation.md) for the full verification checklist, config read ordering, abort
+semantics, and worktree context variables.
 
 ### Terminology Disambiguation
 

@@ -18,6 +18,7 @@ import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
+import tools.jackson.databind.json.JsonMapper;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -246,9 +247,40 @@ public final class GetConfigOutput implements SkillOutput
   }
 
   /**
+   * Get the effective configuration as JSON with all defaults applied.
+   * <p>
+   * Loads {@code cat-config.json} and {@code cat-config.local.json}, merges them with defaults,
+   * and returns the effective configuration as a JSON object. This eliminates the need for agents
+   * to parse config files with {@code grep}/{@code sed} and figure out default values for missing entries.
+   *
+   * @return the effective configuration as a JSON string, or null if CLAUDE_PROJECT_DIR not set
+   * @throws IOException if the config file cannot be read or contains invalid JSON
+   */
+  public String getEffectiveConfig() throws IOException
+  {
+    return getEffectiveConfig(scope.getClaudeProjectDir());
+  }
+
+  /**
+   * Get the effective configuration as JSON with all defaults applied.
+   *
+   * @param projectRoot the project root path
+   * @return the effective configuration as a JSON string
+   * @throws IOException if the config file cannot be read or contains invalid JSON
+   * @throws NullPointerException if {@code projectRoot} is null
+   */
+  public String getEffectiveConfig(Path projectRoot) throws IOException
+  {
+    requireThat(projectRoot, "projectRoot").isNotNull();
+    Config config = Config.load(scope.getJsonMapper(), projectRoot);
+    JsonMapper mapper = scope.getJsonMapper();
+    return mapper.writeValueAsString(config.asMap());
+  }
+
+  /**
    * Generates a config output box for the requested page.
    *
-   * @param args the page argument and optional extra args: [settings | versions | saved | no-changes |
+   * @param args the page argument and optional extra args: [effective | settings | versions | saved | no-changes |
    *             conditions-for-version version preconditions postconditions |
    *             setting-updated name old new | conditions-updated version preconditions postconditions]
    * @return the formatted box
@@ -265,6 +297,7 @@ public final class GetConfigOutput implements SkillOutput
     String page = args[0];
     return switch (page)
     {
+      case "effective" -> getEffectiveConfig();
       case "settings" -> getCurrentSettings();
       case "versions" -> getVersionConditionsOverview();
       case "saved" -> getConfigurationSaved();
@@ -291,7 +324,7 @@ public final class GetConfigOutput implements SkillOutput
         yield getConditionsUpdated(args[1], args[2], args[3]);
       }
       default -> throw new IllegalArgumentException("Unknown page: '" + page +
-        "'. Valid pages: settings, versions, saved, no-changes, conditions-for-version, " +
+        "'. Valid pages: effective, settings, versions, saved, no-changes, conditions-for-version, " +
         "setting-updated, conditions-updated");
     };
   }
