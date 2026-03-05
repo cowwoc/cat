@@ -8,27 +8,35 @@ skill file content without throwing `InvalidPathException`.
 None
 
 ## Current Behavior
-When `SkillLoader` processes a skill file containing non-ASCII characters (e.g., box-drawing characters used in
-architecture diagrams), `executeDirective()` passes strings containing those characters to `Paths.get()`. Java's
-`UnixPath.encode()` cannot handle non-ASCII bytes and throws:
+`processPreprocessorDirectives()` scans the entire skill file content with `PREPROCESSOR_DIRECTIVE_PATTERN`
+(`!`"([^\"]+)"(\s+[^`]+)?``) but does not skip fenced code blocks. When a skill file contains a code block diagram
+with box-drawing characters that also includes a `!`"` sequence (e.g., showing a preprocessor directive inside a
+diagram), the regex matches across lines:
+
+```
+│                      │     │ !`"${CLAUDE_PLUGIN_ROOT}/    │
+│ Returns content via  │──→  │  client/bin/get-output" TYPE`│
+```
+
+Here, `[^\"]+` greedily captures everything from the `"` on the first line to the `"` on the second line, including
+the `│` and `→` box-drawing characters. After variable substitution, `Paths.get()` receives a multi-line string
+containing non-ASCII characters and throws:
 ```
 java.nio.file.InvalidPathException: Malformed input or input contains unmappable characters
 ```
-This prevents `skill-builder-agent` and other preprocessor directives from loading skill files that contain visual
-formatting such as `╭─── box ───╮` or `│──→` style diagrams.
 
 ## Target Behavior
-`SkillLoader` handles non-ASCII characters in skill file content without crashing. Skill files containing
-box-drawing characters, arrows, and other Unicode visual formatting load and process correctly.
+`PREPROCESSOR_DIRECTIVE_PATTERN` does not match across line boundaries. The path capture group `[^"\n]+` and
+arguments capture group `[^`\n]+` both exclude newlines, preventing cross-line matches in code block diagrams.
 
 ## Risk Assessment
 - **Risk Level:** LOW
 - **Concerns:** Fix must not alter the actual path resolution logic for valid paths
-- **Mitigation:** Scope fix narrowly to the string passed to `Paths.get()` in `executeDirective()`
+- **Mitigation:** Preprocessor directives are always single-line; adding `\n` to the exclusion set is safe
 
 ## Files to Modify
-- `client/src/main/java/io/github/cowwoc/cat/hooks/util/SkillLoader.java` — fix `executeDirective()` to
-  sanitize or properly handle non-ASCII characters before passing to `Paths.get()`
+- `client/src/main/java/io/github/cowwoc/cat/hooks/util/SkillLoader.java` — fix `PREPROCESSOR_DIRECTIVE_PATTERN`
+  regex to exclude newlines from capture groups
 - `client/src/test/java/io/github/cowwoc/cat/hooks/util/SkillLoaderTest.java` — add test case for skill
   files containing non-ASCII characters
 
