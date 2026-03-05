@@ -4,7 +4,6 @@
 - **Progress:** 50%
 - **Dependencies:** [showcase-template]
 - **Blocks:** []
-- **Last Updated:** 2026-01-23
 
 ## Notes
 Page template created at docs/demo-task-management.html but video not recorded yet.

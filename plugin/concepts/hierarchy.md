@@ -27,6 +27,8 @@ See LICENSE.md in the project root for license terms.
             └── PLAN.md
 ```
 
+> **See also:** [state-schema.md](state-schema.md) for the current STATE.md field schema and deprecated field list.
+
 > **NOTE**: Issue-level CHANGELOG.md is not created. Issue changelog content is embedded
 > in commit messages (see commit message format in work command).
 

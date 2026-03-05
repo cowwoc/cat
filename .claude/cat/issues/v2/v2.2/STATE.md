@@ -2,7 +2,6 @@
 
 - **Dependencies:** []
 - **Blocks:** []
-- **Last Updated:** 2026-03-05
 
 
 # v2.2 State: Demos & Marketing
