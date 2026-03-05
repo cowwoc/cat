@@ -600,5 +600,25 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M475",
+    "timestamp" : "2026-03-05T17:00:53Z",
+    "category" : "protocol_violation",
+    "description" : "",
+    "root_cause" : "Agent defaulted to asking user permission for a potentially impactful action (auto-fix loop) despite the workflow explicitly pre-approving this step.",
+    "rca_method" : "B",
+    "rca_method_name" : "taxonomy",
+    "prevention_type" : "documentation",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "medium",
+      "catches_variations" : false
+    },
+    "correct_behavior" : ""
   } ]
 }
