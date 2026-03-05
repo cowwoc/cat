@@ -21,7 +21,8 @@ public final class DetectGivingUpTest
   /**
    * Verifies that blank prompt throws IllegalArgumentException.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*prompt.*")
   public void blankPromptThrowsException()
   {
     DetectGivingUp handler = new DetectGivingUp();

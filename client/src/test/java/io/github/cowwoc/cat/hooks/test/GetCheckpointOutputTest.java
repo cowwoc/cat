@@ -186,7 +186,8 @@ public class GetCheckpointOutputTest
   /**
    * Verifies that getCheckpointIssueComplete throws for null issueName.
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*issueName.*")
   public void getCheckpointIssueCompleteThrowsOnNullIssueName() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -199,7 +200,8 @@ public class GetCheckpointOutputTest
   /**
    * Verifies that getCheckpointIssueComplete throws for blank issueName.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*issueName.*")
   public void getCheckpointIssueCompleteThrowsOnBlankIssueName() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -212,7 +214,8 @@ public class GetCheckpointOutputTest
   /**
    * Verifies that getCheckpointIssueComplete throws for null tokens.
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*tokens.*")
   public void getCheckpointIssueCompleteThrowsOnNullTokens() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -225,7 +228,8 @@ public class GetCheckpointOutputTest
   /**
    * Verifies that getCheckpointIssueComplete throws for blank tokens.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*tokens.*")
   public void getCheckpointIssueCompleteThrowsOnBlankTokens() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -238,7 +242,8 @@ public class GetCheckpointOutputTest
   /**
    * Verifies that getCheckpointFeedbackApplied throws for null iteration.
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*iteration.*")
   public void getCheckpointFeedbackAppliedThrowsOnNullIteration() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -251,7 +256,8 @@ public class GetCheckpointOutputTest
   /**
    * Verifies that getCheckpointFeedbackApplied throws for blank iteration.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*iteration.*")
   public void getCheckpointFeedbackAppliedThrowsOnBlankIteration() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -264,7 +270,8 @@ public class GetCheckpointOutputTest
   /**
    * Verifies that constructor throws NullPointerException for null scope.
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*scope.*")
   public void constructorThrowsOnNullScope()
   {
     new GetCheckpointOutput(null);
