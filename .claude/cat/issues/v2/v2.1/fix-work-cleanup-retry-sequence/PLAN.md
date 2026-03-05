@@ -19,7 +19,7 @@ cleanup → retry workflow was not followed.
 - **Mitigation:** Narrow change scope to the existing worktree ERROR path only
 
 ## Files to Modify
-- `plugin/skills/work/SKILL.md` — add explicit instruction: after cleanup-agent succeeds, retry
+- `plugin/skills/work/first-use.md` — add explicit instruction: after cleanup-agent succeeds, retry
   work-prepare immediately before any other action
 
 ## Pre-conditions
@@ -28,13 +28,13 @@ cleanup → retry workflow was not followed.
 ## Execution Waves
 
 ### Wave 1
-- Read the current work SKILL.md ERROR handling section
-  - Files: `plugin/skills/work/SKILL.md`
+- Read the current work first-use.md ERROR handling section
+  - Files: `plugin/skills/work/first-use.md`
 - Add explicit instruction in the ERROR handling table: when ERROR is "existing worktree" and
   user selects cleanup, the ONLY next action after cleanup-agent returns is to retry work-prepare
-  - Files: `plugin/skills/work/SKILL.md`
+  - Files: `plugin/skills/work/first-use.md`
 
 ## Post-conditions
-- [ ] `plugin/skills/work/SKILL.md` ERROR handling section explicitly states: after cleanup-agent
+- [ ] `plugin/skills/work/first-use.md` ERROR handling section explicitly states: after cleanup-agent
   completes, the next step must be retrying work-prepare, with no intervening skill invocations
 - [ ] The cleanup-and-retry workflow is unambiguous from the skill documentation alone
