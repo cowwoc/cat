@@ -12,6 +12,7 @@ allowed-tools:
   - Read
   - Bash
   - Task
+  - AskUserQuestion
 user-invocable: false
 ---
 
