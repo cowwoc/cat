@@ -67,6 +67,7 @@ public final class IssueLock
 
   private final JvmScope scope;
   private final Clock clock;
+  private final PrintStream warnings;
   private final Path lockDir;
 
   /**
@@ -77,7 +78,7 @@ public final class IssueLock
    */
   public IssueLock(JvmScope scope)
   {
-    this(scope, Clock.systemUTC());
+    this(scope, Clock.systemUTC(), System.err);
   }
 
   /**
@@ -89,10 +90,25 @@ public final class IssueLock
    */
   public IssueLock(JvmScope scope, Clock clock)
   {
+    this(scope, clock, System.err);
+  }
+
+  /**
+   * Creates a new issue lock manager with injectable clock and warning stream.
+   *
+   * @param scope    the JVM scope providing JSON mapper and project directory
+   * @param clock    the clock to use for determining lock staleness
+   * @param warnings the stream to write warning messages to
+   * @throws NullPointerException if {@code scope}, {@code clock}, or {@code warnings} are null
+   */
+  public IssueLock(JvmScope scope, Clock clock, PrintStream warnings)
+  {
     requireThat(scope, "scope").isNotNull();
     requireThat(clock, "clock").isNotNull();
+    requireThat(warnings, "warnings").isNotNull();
     this.scope = scope;
     this.clock = clock;
+    this.warnings = warnings;
     this.lockDir = scope.getProjectCatDir().resolve("locks");
   }
 
@@ -735,8 +751,8 @@ public final class IssueLock
   /**
    * Lists all locks.
    * <p>
-   * Skips malformed lock files with a warning to stderr.
-   * Returns at most {@value MAX_LOCK_FILES} entries; warns to stderr if the limit is exceeded.
+   * Skips malformed lock files with a warning to the warnings stream.
+   * Returns at most {@value MAX_LOCK_FILES} entries; warns if the limit is exceeded.
    *
    * @return list of lock entries
    * @throws IOException if file operations fail
@@ -758,7 +774,7 @@ public final class IssueLock
     {
       if (locks.size() >= MAX_LOCK_FILES)
       {
-        System.err.println("WARNING: More than " + MAX_LOCK_FILES +
+        warnings.println("WARNING: More than " + MAX_LOCK_FILES +
           " lock files found in " + lockDir + ". Only the first " + MAX_LOCK_FILES + " are listed.");
         break;
       }
@@ -778,7 +794,7 @@ public final class IssueLock
       }
       catch (IOException | JacksonException e)
       {
-        System.err.println("WARNING: Skipping malformed lock file " + lockFile + ": " + e.getMessage());
+        warnings.println("WARNING: Skipping malformed lock file " + lockFile + ": " + e.getMessage());
       }
     }
 
@@ -993,7 +1009,7 @@ public final class IssueLock
     JsonMapper mapper = scope.getJsonMapper();
     try
     {
-      IssueLock lock = new IssueLock(scope);
+      IssueLock lock = new IssueLock(scope, Clock.systemUTC(), err);
 
       return switch (command)
       {

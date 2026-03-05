@@ -14,7 +14,10 @@ import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.testng.annotations.Test;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -477,11 +480,14 @@ public class IssueLockTest
     {
       try
       {
-        IssueLock lock = new IssueLock(scope);
+        ByteArrayOutputStream warningBytes = new ByteArrayOutputStream();
+        PrintStream warnings = new PrintStream(warningBytes, true, StandardCharsets.UTF_8);
+        IssueLock lock = new IssueLock(scope, Clock.systemUTC(), warnings);
 
         List<LockListEntry> locks = lock.list();
 
         requireThat(locks, "locks").isEmpty();
+        requireThat(warningBytes.toString(StandardCharsets.UTF_8), "warnings").isEmpty();
       }
       finally
       {
@@ -503,7 +509,9 @@ public class IssueLockTest
     {
       try
       {
-        IssueLock lock = new IssueLock(scope);
+        ByteArrayOutputStream warningBytes = new ByteArrayOutputStream();
+        PrintStream warnings = new PrintStream(warningBytes, true, StandardCharsets.UTF_8);
+        IssueLock lock = new IssueLock(scope, Clock.systemUTC(), warnings);
         String sessionId1 = UUID.randomUUID().toString();
         String sessionId2 = UUID.randomUUID().toString();
 
@@ -513,6 +521,7 @@ public class IssueLockTest
         List<LockListEntry> locks = lock.list();
 
         requireThat(locks.size(), "size").isEqualTo(2);
+        requireThat(warningBytes.toString(StandardCharsets.UTF_8), "warnings").isEmpty();
 
         boolean foundIssue1 = false;
         boolean foundIssue2 = false;
@@ -554,7 +563,9 @@ public class IssueLockTest
     {
       try
       {
-        IssueLock lock = new IssueLock(scope);
+        ByteArrayOutputStream warningBytes = new ByteArrayOutputStream();
+        PrintStream warnings = new PrintStream(warningBytes, true, StandardCharsets.UTF_8);
+        IssueLock lock = new IssueLock(scope, Clock.systemUTC(), warnings);
         String sessionId = UUID.randomUUID().toString();
 
         lock.acquire("valid-issue", sessionId, "/path/to/worktree");
@@ -567,6 +578,9 @@ public class IssueLockTest
 
         requireThat(locks.size(), "size").isEqualTo(1);
         requireThat(locks.get(0).issue(), "issue").isEqualTo("valid-issue");
+        String warningOutput = warningBytes.toString(StandardCharsets.UTF_8);
+        requireThat(warningOutput, "warningOutput").contains("Skipping malformed lock file");
+        requireThat(warningOutput, "warningOutput").contains("corrupted.lock");
       }
       finally
       {
