@@ -16,7 +16,7 @@ The git log should read like a changelog of what shipped, not a diary of plannin
 | PROJECT.md + ROADMAP.md created | YES | Project initialization |
 | PLAN.md created | NO | Intermediate - commit with first issue |
 | RESEARCH.md created | NO | Intermediate artifact |
-| **Issue completed** | YES | Implementation + planning metadata |
+| **Issue closed** | YES | Implementation + planning metadata |
 | Handoff created | YES | WIP state preserved |
 
 **Key principle:** Commit working code and shipped outcomes, not planning process.
@@ -182,7 +182,7 @@ git log -p -- .claude/cat/issues/v2/v2.1/issue-name/STATE.md
 ```
 
 **Why this works:**
-- STATE.md is updated when the issue is completed
+- STATE.md is updated when the issue is closed
 - STATE.md commits are part of the implementation commit (per M076)
 - Git's file history tracking survives rebases automatically
 - No manual commit hash maintenance required

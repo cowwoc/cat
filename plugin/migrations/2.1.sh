@@ -121,8 +121,8 @@ else
                 }
             ' "$state_file" > "${state_file}.tmp" && mv "${state_file}.tmp" "$state_file"
         else
-            # No "## Issues Pending" section: create one before "## Issues Completed"
-            # (or at end of file if no Completed section), then remove In Progress section.
+            # No "## Issues Pending" section: create one before "## Issues Closed"
+            # (or at end of file if no Closed section), then remove In Progress section.
             awk -v entries="$in_progress_entries" '
                 BEGIN {
                     n = split(entries, entry_arr, "\n")
@@ -137,7 +137,7 @@ else
                 skip && /^## / { skip=0 }
                 skip { next }
 
-                /^## Issues Completed/ && !inserted {
+                /^## Issues Closed/ && !inserted {
                     if (entry_count > 0) {
                         print "## Issues Pending"
                         for (i = 1; i <= n; i++) {
@@ -873,10 +873,10 @@ else
     fi
 fi
 
-# Phase 12: Remove deprecated Last Updated and Completed fields from open issue-level STATE.md
+# Phase 12: Remove deprecated Last Updated, Completed, and Closed fields from open issue-level STATE.md
 # ──────────────────────────────────────────────────────────────────────────────
 
-log_migration "Phase 12: Remove deprecated Last Updated and Completed fields from open issue-level STATE.md"
+log_migration "Phase 12: Remove deprecated Last Updated, Completed, and Closed fields from open issue-level STATE.md"
 
 # Issue-level STATE.md files live at .claude/cat/issues/v*/v*.*/issue-name/STATE.md (depth 5 from issues/).
 issue_state_files=$(find .claude/cat/issues -path "*v*.*/*" -name "STATE.md" -mindepth 5 -maxdepth 5 -type f \
@@ -910,6 +910,11 @@ else
 
         if grep -q '^- \*\*Completed:\*\*' "$state_file" 2>/dev/null; then
             sed -i '/^- \*\*Completed:\*\*/d' "$state_file"
+            changed=true
+        fi
+
+        if grep -q '^- \*\*Closed:\*\*' "$state_file" 2>/dev/null; then
+            sed -i '/^- \*\*Closed:\*\*/d' "$state_file"
             changed=true
         fi
 

@@ -17,11 +17,11 @@ See LICENSE.md in the project root for license terms.
 └── v<n>/
     ├── STATE.md
     ├── PLAN.md
-    ├── CHANGELOG.md          # Aggregates completed issues
+    ├── CHANGELOG.md          # Aggregates closed issues
     └── v<n>.<m>/
         ├── STATE.md
         ├── PLAN.md
-        ├── CHANGELOG.md      # Aggregates completed issues
+        ├── CHANGELOG.md      # Aggregates closed issues
         └── <issue-name>/
             ├── STATE.md
             └── PLAN.md
@@ -92,7 +92,7 @@ Minor versions have implicit sequential dependencies:
 - `v1.1` → Depends on `v1.0`
 
 **A minor version is executable when:**
-1. Its dependency minor version is completed (all issues in that minor are completed)
+1. Its dependency minor version is closed (all issues in that minor are closed)
 2. OR it has no dependency (first version)
 
 **Issue-level dependencies:**
@@ -109,7 +109,7 @@ issue list. Multiple independent issues can execute concurrently.
 | Issue State | Execution Eligibility |
 |------------|----------------------|
 | Dependencies empty | Immediately eligible |
-| All dependencies completed | Eligible |
+| All dependencies closed | Eligible |
 | Any dependency pending | Blocked until resolved |
 
 This enables parallel execution of independent issues while maintaining correct ordering for
