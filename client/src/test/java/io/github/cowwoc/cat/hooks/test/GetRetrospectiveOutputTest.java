@@ -1204,4 +1204,222 @@ public final class GetRetrospectiveOutputTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that an action item description exactly 60 characters long is not truncated.
+   */
+  @Test
+  public void truncationBoundary60CharsNotTruncated() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Files.createDirectories(retroDir);
+
+      Instant eightDaysAgo = Instant.now().minus(8, ChronoUnit.DAYS);
+      String description60 = "A".repeat(60);
+      String indexContent = """
+        {
+          "version": "2.0",
+          "config": {
+            "trigger_interval_days": 7,
+            "mistake_count_threshold": 10
+          },
+          "last_retrospective": "%s",
+          "mistake_count_since_last": 3,
+          "files": {
+            "mistakes": [],
+            "retrospectives": []
+          },
+          "patterns": [],
+          "action_items": [
+            {
+              "id": "A001",
+              "priority": "high",
+              "description": "%s",
+              "status": "implemented",
+              "effectiveness_check": {
+                "verdict": "effective"
+              }
+            }
+          ]
+        }
+        """.formatted(eightDaysAgo, description60);
+
+      Path indexFile = retroDir.resolve("index.json");
+      Files.writeString(indexFile, indexContent);
+
+      GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
+      String output = handler.getOutput(new String[0]);
+      requireThat(output, "output").contains(description60);
+      requireThat(output, "output").doesNotContain("...");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that an action item description 61 characters long is truncated and ends with "...".
+   */
+  @Test
+  public void truncationBoundary61CharsTruncated() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Files.createDirectories(retroDir);
+
+      Instant eightDaysAgo = Instant.now().minus(8, ChronoUnit.DAYS);
+      String description61 = "A".repeat(61);
+      String indexContent = """
+        {
+          "version": "2.0",
+          "config": {
+            "trigger_interval_days": 7,
+            "mistake_count_threshold": 10
+          },
+          "last_retrospective": "%s",
+          "mistake_count_since_last": 3,
+          "files": {
+            "mistakes": [],
+            "retrospectives": []
+          },
+          "patterns": [],
+          "action_items": [
+            {
+              "id": "A001",
+              "priority": "high",
+              "description": "%s",
+              "status": "implemented",
+              "effectiveness_check": {
+                "verdict": "effective"
+              }
+            }
+          ]
+        }
+        """.formatted(eightDaysAgo, description61);
+
+      Path indexFile = retroDir.resolve("index.json");
+      Files.writeString(indexFile, indexContent);
+
+      GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
+      String output = handler.getOutput(new String[0]);
+      requireThat(output, "output").contains("...");
+      requireThat(output, "output").doesNotContain(description61);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that an action item without a "description" field shows only "id: verdict" with no dash.
+   */
+  @Test
+  public void effectivenessWithoutDescription() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Files.createDirectories(retroDir);
+
+      Instant eightDaysAgo = Instant.now().minus(8, ChronoUnit.DAYS);
+      String indexContent = """
+        {
+          "version": "2.0",
+          "config": {
+            "trigger_interval_days": 7,
+            "mistake_count_threshold": 10
+          },
+          "last_retrospective": "%s",
+          "mistake_count_since_last": 3,
+          "files": {
+            "mistakes": [],
+            "retrospectives": []
+          },
+          "patterns": [],
+          "action_items": [
+            {
+              "id": "A001",
+              "priority": "high",
+              "status": "implemented",
+              "effectiveness_check": {
+                "verdict": "effective"
+              }
+            }
+          ]
+        }
+        """.formatted(eightDaysAgo);
+
+      Path indexFile = retroDir.resolve("index.json");
+      Files.writeString(indexFile, indexContent);
+
+      GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
+      String output = handler.getOutput(new String[0]);
+      requireThat(output, "output").contains("A001: effective");
+      requireThat(output, "output").doesNotContain("A001: effective -");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a pattern without a "pattern" field shows only "id: status (occurrences: N/M)" with no dash.
+   */
+  @Test
+  public void patternWithoutPatternField() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Files.createDirectories(retroDir);
+
+      Instant eightDaysAgo = Instant.now().minus(8, ChronoUnit.DAYS);
+      String indexContent = """
+        {
+          "version": "2.0",
+          "config": {
+            "trigger_interval_days": 7,
+            "mistake_count_threshold": 10
+          },
+          "last_retrospective": "%s",
+          "mistake_count_since_last": 3,
+          "files": {
+            "mistakes": [],
+            "retrospectives": []
+          },
+          "patterns": [
+            {
+              "pattern_id": "P001",
+              "status": "active",
+              "occurrences_total": 5,
+              "occurrences_after_fix": 2
+            }
+          ],
+          "action_items": []
+        }
+        """.formatted(eightDaysAgo);
+
+      Path indexFile = retroDir.resolve("index.json");
+      Files.writeString(indexFile, indexContent);
+
+      GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
+      String output = handler.getOutput(new String[0]);
+      requireThat(output, "output").contains("P001: active (occurrences: 5/2)");
+      requireThat(output, "output").doesNotContain("P001: active (occurrences: 5/2) -");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }
