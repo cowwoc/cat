@@ -567,7 +567,7 @@ public class IssueDiscoveryTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       DiscoveryResult.Found found = new DiscoveryResult.Found(
-        "2.1-my-feature", "2", "1", "", "my-feature", "/path/to/issue", "all");
+        "2.1-my-feature", "2", "1", "", "my-feature", "/path/to/issue", "all", false);
 
       String json = found.toJson(mapper);
 
@@ -1161,7 +1161,7 @@ public class IssueDiscoveryTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       DiscoveryResult.Found found = new DiscoveryResult.Found(
-        "2.1.3-patch-fix", "2", "1", "3", "patch-fix", "/path/to/issue", "all");
+        "2.1.3-patch-fix", "2", "1", "3", "patch-fix", "/path/to/issue", "all", false);
 
       String json = found.toJson(mapper);
 
@@ -1292,7 +1292,7 @@ public class IssueDiscoveryTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       DiscoveryResult.Found found = new DiscoveryResult.Found(
-        "2-my-feature", "2", "", "", "my-feature", "/path/to/issue", "all");
+        "2-my-feature", "2", "", "", "my-feature", "/path/to/issue", "all", false);
 
       String json = found.toJson(mapper);
 
@@ -1805,6 +1805,149 @@ public class IssueDiscoveryTest
         requireThat(result, "result").isInstanceOf(DiscoveryResult.Found.class);
         DiscoveryResult.Found found = (DiscoveryResult.Found) result;
         requireThat(found.issueId(), "issueId").isEqualTo("2.1-issue-a");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that an issue directory containing only PLAN.md (no STATE.md) is included as a candidate
+   * by findIssueInDir and treated as open.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void findIssueInDirIncludesPlanMdOnlyDir() throws IOException
+  {
+    Path projectDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      try
+      {
+        String sessionId = UUID.randomUUID().toString();
+
+        // Create an issue with only PLAN.md - no STATE.md
+        Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+          resolve("v2").resolve("v2.1").resolve("plan-only-issue");
+        Files.createDirectories(issueDir);
+        Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nTest goal\n");
+
+        IssueDiscovery discovery = new IssueDiscovery(scope);
+        SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
+        DiscoveryResult result = discovery.findNextIssue(options);
+
+        requireThat(result, "result").isInstanceOf(DiscoveryResult.Found.class);
+        DiscoveryResult.Found found = (DiscoveryResult.Found) result;
+        requireThat(found.issueId(), "issueId").isEqualTo("2.1-plan-only-issue");
+        requireThat(found.createStateMd(), "createStateMd").isTrue();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that hasOpenIssues returns true when a minor directory contains an issue
+   * directory with only PLAN.md (no STATE.md).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void hasOpenIssuesReturnsTrueForPlanMdOnlyDir() throws IOException
+  {
+    Path projectDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      try
+      {
+        String sessionId = UUID.randomUUID().toString();
+
+        // Create a closed issue (normally would prevent hasOpenIssues from returning true)
+        createIssue(projectDir, "2", "1", "closed-issue", "closed");
+
+        // Create an issue with only PLAN.md - no STATE.md
+        Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+          resolve("v2").resolve("v2.1").resolve("plan-only-issue");
+        Files.createDirectories(issueDir);
+        Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nTest goal\n");
+
+        IssueDiscovery discovery = new IssueDiscovery(scope);
+        SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
+        DiscoveryResult result = discovery.findNextIssue(options);
+
+        // The PLAN.md-only issue should be found since it's treated as open
+        requireThat(result, "result").isInstanceOf(DiscoveryResult.Found.class);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that getIssueStatus returns "open" when the STATE.md file has no status field.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getIssueStatusReturnOpenWhenStatusFieldMissing() throws IOException
+  {
+    List<String> lines = List.of("# State", "", "- **Progress:** 0%");
+    Path fakePath = Path.of("fake/STATE.md");
+    String result = SharedSecrets.getIssueStatus(lines, fakePath);
+    requireThat(result, "result").isEqualTo("open");
+  }
+
+  /**
+   * Verifies that getIssueStatus returns "open" when the STATE.md file is empty.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getIssueStatusReturnOpenWhenFileIsEmpty() throws IOException
+  {
+    List<String> lines = List.of();
+    Path fakePath = Path.of("fake/STATE.md");
+    String result = SharedSecrets.getIssueStatus(lines, fakePath);
+    requireThat(result, "result").isEqualTo("open");
+  }
+
+  /**
+   * Verifies that an issue with only PLAN.md is found when looked up by specific issue ID.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void findSpecificIssueWithNullStateMdTreatsAsOpen() throws IOException
+  {
+    Path projectDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      try
+      {
+        String sessionId = UUID.randomUUID().toString();
+
+        // Create an issue with only PLAN.md - no STATE.md
+        Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+          resolve("v2").resolve("v2.1").resolve("plan-only-issue");
+        Files.createDirectories(issueDir);
+        Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nTest goal\n");
+
+        IssueDiscovery discovery = new IssueDiscovery(scope);
+        SearchOptions options = new SearchOptions(Scope.ISSUE, "2.1-plan-only-issue", sessionId, "",
+          false);
+        DiscoveryResult result = discovery.findNextIssue(options);
+
+        requireThat(result, "result").isInstanceOf(DiscoveryResult.Found.class);
+        DiscoveryResult.Found found = (DiscoveryResult.Found) result;
+        requireThat(found.issueId(), "issueId").isEqualTo("2.1-plan-only-issue");
+        requireThat(found.createStateMd(), "createStateMd").isTrue();
       }
       finally
       {

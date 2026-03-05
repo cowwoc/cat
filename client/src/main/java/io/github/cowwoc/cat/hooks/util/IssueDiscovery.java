@@ -202,9 +202,10 @@ public final class IssueDiscovery
      * @param issueName the bare issue name
      * @param issuePath the absolute path to the issue directory
      * @param scope the scope used to find the issue
+     * @param createStateMd true if the issue directory had no STATE.md file
      */
     record Found(String issueId, String major, String minor, String patch, String issueName,
-      String issuePath, String scope) implements DiscoveryResult
+      String issuePath, String scope, boolean createStateMd) implements DiscoveryResult
     {
       /**
        * Creates a new found result.
@@ -216,6 +217,7 @@ public final class IssueDiscovery
        * @param issueName the bare issue name
        * @param issuePath the absolute path to the issue directory
        * @param scope the scope used to find the issue
+       * @param createStateMd true if the issue directory had no STATE.md file
        * @throws IllegalArgumentException if {@code issueId}, {@code major}, {@code issueName},
        *   {@code issuePath} or {@code scope} are blank
        * @throws NullPointerException if {@code minor} or {@code patch} are null
@@ -598,21 +600,21 @@ public final class IssueDiscovery
     {
       // Check directly under the major dir (major-only layout)
       Path majorIssueDir = majorDir.resolve(bareName);
-      if (Files.isDirectory(majorIssueDir) && Files.isRegularFile(majorIssueDir.resolve("STATE.md")))
+      if (Files.isDirectory(majorIssueDir))
         matchingDirs.add(majorIssueDir);
 
       for (Path minorDir : listMinorDirs(majorDir))
       {
         // Check directly under the minor dir
         Path issueDir = minorDir.resolve(bareName);
-        if (Files.isDirectory(issueDir) && Files.isRegularFile(issueDir.resolve("STATE.md")))
+        if (Files.isDirectory(issueDir))
           matchingDirs.add(issueDir);
 
         // Check under patch subdirs
         for (Path patchDir : listPatchDirs(minorDir))
         {
           Path patchIssueDir = patchDir.resolve(bareName);
-          if (Files.isDirectory(patchIssueDir) && Files.isRegularFile(patchIssueDir.resolve("STATE.md")))
+          if (Files.isDirectory(patchIssueDir))
             matchingDirs.add(patchIssueDir);
         }
       }
@@ -692,26 +694,35 @@ public final class IssueDiscovery
     }
 
     Path statePath = issueDir.resolve("STATE.md");
+    boolean createStateMd = !Files.isRegularFile(statePath);
     List<String> stateLines;
-    try
-    {
-      stateLines = readFileLines(statePath);
-    }
-    catch (IOException _)
-    {
-      return new DiscoveryResult.NotExecutable(issueId,
-        "Issue " + issueId + " has no readable status");
-    }
-
     String status;
-    try
+    if (createStateMd)
     {
-      status = getIssueStatus(stateLines, statePath);
+      stateLines = Collections.emptyList();
+      status = "open";
     }
-    catch (IOException _)
+    else
     {
-      return new DiscoveryResult.NotExecutable(issueId,
-        "Issue " + issueId + " has no readable status");
+      try
+      {
+        stateLines = readFileLines(statePath);
+      }
+      catch (IOException _)
+      {
+        return new DiscoveryResult.NotExecutable(issueId,
+          "Issue " + issueId + " has no readable status");
+      }
+
+      try
+      {
+        status = getIssueStatus(stateLines, statePath);
+      }
+      catch (IOException _)
+      {
+        return new DiscoveryResult.NotExecutable(issueId,
+          "Issue " + issueId + " has no readable status");
+      }
     }
 
     if (!status.equals("open") && !status.equals("in-progress"))
@@ -752,7 +763,7 @@ public final class IssueDiscovery
     }
 
     return new DiscoveryResult.Found(issueId, major, minor, patch, issueName, issueDir.toString(),
-      "issue");
+      "issue", createStateMd);
   }
 
   /**
@@ -914,7 +925,7 @@ public final class IssueDiscovery
     {
       Path statePath = issueDir.resolve("STATE.md");
       if (!Files.isRegularFile(statePath))
-        continue;
+        return true;
       try
       {
         String status = getIssueStatus(statePath);
@@ -934,7 +945,7 @@ public final class IssueDiscovery
       {
         Path statePath = issueDir.resolve("STATE.md");
         if (!Files.isRegularFile(statePath))
-          continue;
+          return true;
         try
         {
           String status = getIssueStatus(statePath);
@@ -1019,8 +1030,7 @@ public final class IssueDiscovery
     {
       String issueName = issueDir.getFileName().toString();
       Path statePath = issueDir.resolve("STATE.md");
-      if (!Files.isRegularFile(statePath))
-        continue;
+      boolean stateMdMissing = !Files.isRegularFile(statePath);
 
       // Skip if matches exclude pattern
       if (!options.excludePattern().isEmpty() && GlobMatcher.matches(options.excludePattern(), issueName))
@@ -1029,25 +1039,34 @@ public final class IssueDiscovery
         continue;
       }
 
-      // Read STATE.md once and reuse across all checks to avoid repeated I/O
+      // Read STATE.md once and reuse across all checks to avoid repeated I/O.
+      // If STATE.md is absent, treat the issue as open with no content.
       List<String> stateLines;
-      try
-      {
-        stateLines = readFileLines(statePath);
-      }
-      catch (IOException _)
-      {
-        continue;
-      }
-
       String status;
-      try
+      if (stateMdMissing)
       {
-        status = getIssueStatus(stateLines, statePath);
+        stateLines = Collections.emptyList();
+        status = "open";
       }
-      catch (IOException _)
+      else
       {
-        continue;
+        try
+        {
+          stateLines = readFileLines(statePath);
+        }
+        catch (IOException _)
+        {
+          continue;
+        }
+
+        try
+        {
+          status = getIssueStatus(stateLines, statePath);
+        }
+        catch (IOException _)
+        {
+          continue;
+        }
       }
 
       if (!status.equals("open") && !status.equals("in-progress"))
@@ -1083,7 +1102,7 @@ public final class IssueDiscovery
       }
 
       return new DiscoveryResult.Found(issueId, major, minor, patch, issueName, issueDir.toString(),
-        scopeName);
+        scopeName, stateMdMissing);
     }
 
     return null;
@@ -1118,11 +1137,13 @@ public final class IssueDiscovery
 
   /**
    * Reads and validates the status from pre-read STATE.md lines.
+   * <p>
+   * When the status field is missing, returns {@code "open"} and logs a warning with the file path.
    *
    * @param lines the lines already read from the STATE.md file
    * @param statePath the path to the STATE.md file (used in error messages only)
-   * @return the normalized status string
-   * @throws IOException if the status field is missing or the status is invalid
+   * @return the normalized status string, or {@code "open"} if the status field is absent
+   * @throws IOException if the status value is present but non-canonical
    */
   private static String getIssueStatus(List<String> lines, Path statePath) throws IOException
   {
@@ -1137,8 +1158,11 @@ public final class IssueDiscovery
     }
 
     if (status == null)
-      throw new IOException("Status field missing in " + statePath +
-        ". STATE.md must contain a '- **Status:**' line.");
+    {
+      System.err.println("WARNING: Status field missing in " + statePath +
+        ". STATE.md has no '- **Status:**' line. Treating as open.");
+      return "open";
+    }
 
     // Validate against allowed canonical status values only (no aliases).
     // Legacy alias values must be migrated using plugin/migrations/2.1.sh before reading.
