@@ -260,10 +260,21 @@ When a statement applies to specific contexts:
 3. **No Duplicates:** If same constraint appears multiple ways, extract once
 4. **Original Language:** Preserve exact wording for feedback
 5. **Skip:** Pure examples without constraints, meta-commentary, formatting
+6. **Quote:** Include the minimal verbatim span from the source document in the `quote` field
 
 ---
 
 ## Output Format (JSON)
+
+Each semantic unit includes a `quote` field containing the minimal verbatim span from the source document that
+captures the semantic unit. The quote enables the comparison agent to cite evidence from both documents when
+reporting findings.
+
+**Quote guidelines:**
+- Copy the text exactly as it appears in the source document (verbatim, no paraphrasing)
+- Use the shortest span that fully conveys the semantic unit's meaning
+- Include surrounding words if they are essential to understand the constraint (e.g., the subject or modal verb)
+- Do NOT include unrelated surrounding sentences
 
 ```json
 {
@@ -273,6 +284,7 @@ When a statement applies to specific contexts:
       "category": "SEQUENCE",
       "original": "Check pwd before rm-rf",
       "normalized": "sequence: check pwd → rm-rf",
+      "quote": "Check pwd before rm-rf",
       "location": "line 15"
     },
     {
@@ -280,13 +292,15 @@ When a statement applies to specific contexts:
       "category": "PROHIBITION",
       "original": "MUST NOT run A before B",
       "normalized": "prohibited: [sequence: A → B]",
+      "quote": "MUST NOT run A before B",
       "location": "line 23"
     },
     {
       "id": "unit_3",
       "category": "REQUIREMENT",
       "original": "Should validate input",
-      "normalized": "suggested: validate input",
+      "normalized": "should: validate input",
+      "quote": "Should validate input",
       "location": "line 31"
     }
   ],
@@ -308,6 +322,7 @@ When a statement applies to specific contexts:
 Before returning output:
 - [ ] Each unit classified by checking priorities 1-9 in order
 - [ ] Compound statements have embedded semantics in normalized form
-- [ ] "should" normalized as `suggested:`, "must" as `required:`
+- [ ] "should" normalized as `should:`, "must" as `require:` or `must:`
 - [ ] Original text preserved exactly
 - [ ] No duplicate units for same semantic content
+- [ ] Each unit includes a `quote` field with the minimal verbatim span from the source document
