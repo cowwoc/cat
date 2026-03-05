@@ -7,6 +7,7 @@
 package io.github.cowwoc.cat.hooks.bash;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
+import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ShellParser;
 import io.github.cowwoc.cat.hooks.util.IssueLock;
@@ -45,8 +46,6 @@ public final class BlockUnsafeRemoval implements BashHandler
   private static final Pattern WORKTREE_REMOVE_PATTERN =
     Pattern.compile("\\bgit\\s+worktree\\s+remove\\s+(?:-[^\\s]+\\s+)*([^\\s;&|]+)", Pattern.CASE_INSENSITIVE);
   private static final Pattern RECURSIVE_FLAG_PATTERN = Pattern.compile("(?:^|\\s)-[^\\s]*[rR]");
-  private static final Pattern CAT_AGENT_ID_PATTERN =
-    Pattern.compile("^CAT_AGENT_ID=(\\S+)\\s+(.*)$", Pattern.DOTALL);
 
   /**
    * The reason a path is protected.
@@ -58,39 +57,17 @@ public final class BlockUnsafeRemoval implements BashHandler
      */
     CURRENT_WORKING_DIRECTORY,
     /**
-     * Worktree locked by a different agent (known agent_id in command but doesn't match lock).
+     * Worktree locked by a different agent (agent_id from hook input doesn't match lock).
      */
     LOCKED_BY_OTHER_AGENT,
     /**
-     * Worktree locked but no CAT_AGENT_ID in command (fail-safe).
+     * Worktree locked but no agent_id available from hook input (fail-safe).
      */
     UNKNOWN_AGENT,
     /**
      * Target is the main git worktree root.
      */
     MAIN_WORKTREE
-  }
-
-  /**
-   * Parsed CAT agent ID prefix result.
-   *
-   * @param catAgentId the extracted CAT agent ID, or empty string if not present
-   * @param rawCommand the command without the CAT_AGENT_ID prefix
-   */
-  private record CatAgentIdParse(String catAgentId, String rawCommand)
-  {
-    /**
-     * Compact constructor for CatAgentIdParse.
-     *
-     * @param catAgentId the extracted CAT agent ID, or empty string if not present
-     * @param rawCommand the command without the CAT_AGENT_ID prefix
-     * @throws NullPointerException if {@code catAgentId} or {@code rawCommand} are null
-     */
-    CatAgentIdParse
-    {
-      assert that(catAgentId, "catAgentId").isNotNull().elseThrow();
-      assert that(rawCommand, "rawCommand").isNotNull().elseThrow();
-    }
   }
 
   private final Clock clock;
@@ -123,22 +100,21 @@ public final class BlockUnsafeRemoval implements BashHandler
   }
 
   @Override
-  public Result check(String command, String workingDirectory, JsonNode toolInput, JsonNode toolResult,
-    String sessionId)
+  public Result check(HookInput input)
   {
+    String command = input.getCommand();
+    String workingDirectory = input.getString("cwd");
+    String sessionId = input.getSessionId();
+    String catAgentId = input.getCompositeAgentId(sessionId);
+
     try
     {
-      // Extract CAT_AGENT_ID prefix if present, using single regex parse
-      CatAgentIdParse parse = parseCatAgentIdPrefix(command);
-      String commandCatAgentId = parse.catAgentId;
-      String rawCommand = parse.rawCommand;
-
-      String commandLower = rawCommand.toLowerCase(Locale.ENGLISH);
+      String commandLower = command.toLowerCase(Locale.ENGLISH);
 
       // Check rm -rf commands
-      if (commandLower.contains("rm") && hasRecursiveFlag(rawCommand))
+      if (commandLower.contains("rm") && hasRecursiveFlag(command))
       {
-        Result rmResult = checkRmCommand(rawCommand, workingDirectory, sessionId, commandCatAgentId);
+        Result rmResult = checkRmCommand(command, workingDirectory, sessionId, catAgentId);
         if (rmResult != null)
           return rmResult;
       }
@@ -147,8 +123,7 @@ public final class BlockUnsafeRemoval implements BashHandler
       if (commandLower.contains("git") && commandLower.contains("worktree") &&
           commandLower.contains("remove"))
       {
-        Result worktreeResult = checkWorktreeRemove(rawCommand, workingDirectory, sessionId,
-          commandCatAgentId);
+        Result worktreeResult = checkWorktreeRemove(command, workingDirectory, sessionId, catAgentId);
         if (worktreeResult != null)
           return worktreeResult;
       }
@@ -159,23 +134,6 @@ public final class BlockUnsafeRemoval implements BashHandler
     {
       throw WrappedCheckedException.wrap(e);
     }
-  }
-
-  /**
-   * Parses the CAT_AGENT_ID prefix from a command string, if present.
-   * <p>
-   * Runs the regex once to extract both the CAT agent ID and the raw command.
-   * Looks for a prefix of the form {@code CAT_AGENT_ID=<value> <rest>}.
-   *
-   * @param command the bash command
-   * @return parsed CAT agent ID and raw command (CAT agent ID is empty if not present)
-   */
-  private CatAgentIdParse parseCatAgentIdPrefix(String command)
-  {
-    Matcher matcher = CAT_AGENT_ID_PATTERN.matcher(command.strip());
-    if (matcher.matches())
-      return new CatAgentIdParse(matcher.group(1), matcher.group(2));
-    return new CatAgentIdParse("", command);
   }
 
   /**
@@ -250,21 +208,21 @@ public final class BlockUnsafeRemoval implements BashHandler
   /**
    * Checks if an rm command would delete any protected path.
    *
-   * @param command the bash command (without CAT_AGENT_ID prefix)
+   * @param command the bash command
    * @param workingDirectory the shell's current working directory
    * @param sessionId the current session ID
-   * @param commandCatAgentId the CAT_AGENT_ID extracted from the original command
+   * @param catAgentId the composite CAT agent ID from the hook input
    * @return a block result if unsafe removal detected, null otherwise
    * @throws IOException if path operations fail
    */
   private Result checkRmCommand(String command, String workingDirectory, String sessionId,
-    String commandCatAgentId) throws IOException
+    String catAgentId) throws IOException
   {
     List<String> targets = extractRmTargets(command);
 
     for (String target : targets)
     {
-      Result blockResult = checkProtectedPaths(target, workingDirectory, sessionId, commandCatAgentId,
+      Result blockResult = checkProtectedPaths(target, workingDirectory, sessionId, catAgentId,
         "rm (recursive)");
       if (blockResult != null)
         return blockResult;
@@ -276,15 +234,15 @@ public final class BlockUnsafeRemoval implements BashHandler
   /**
    * Checks if a git worktree remove command would delete any protected path.
    *
-   * @param command the bash command (without CAT_AGENT_ID prefix)
+   * @param command the bash command
    * @param workingDirectory the shell's current working directory
    * @param sessionId the current session ID
-   * @param commandCatAgentId the CAT_AGENT_ID extracted from the original command
+   * @param catAgentId the composite CAT agent ID from the hook input
    * @return a block result if unsafe removal detected, null otherwise
    * @throws IOException if path operations fail
    */
   private Result checkWorktreeRemove(String command, String workingDirectory, String sessionId,
-    String commandCatAgentId) throws IOException
+    String catAgentId) throws IOException
   {
     Matcher matcher = WORKTREE_REMOVE_PATTERN.matcher(command);
 
@@ -295,7 +253,7 @@ public final class BlockUnsafeRemoval implements BashHandler
         continue;
 
       // Check if deletion would affect protected paths
-      Result blockResult = checkProtectedPaths(target, workingDirectory, sessionId, commandCatAgentId,
+      Result blockResult = checkProtectedPaths(target, workingDirectory, sessionId, catAgentId,
         "git worktree remove");
       if (blockResult != null)
         return blockResult;
@@ -310,16 +268,15 @@ public final class BlockUnsafeRemoval implements BashHandler
    * @param target the deletion target path
    * @param workingDirectory the shell's current working directory
    * @param sessionId the current session ID
-   * @param commandCatAgentId the CAT_AGENT_ID from the command (empty if not provided)
+   * @param catAgentId the composite CAT agent ID from the hook input
    * @param commandType the command type for error messages
    * @return a block result if protected paths would be affected, null otherwise
    * @throws IOException if path operations fail
    */
   private Result checkProtectedPaths(String target, String workingDirectory, String sessionId,
-    String commandCatAgentId, String commandType) throws IOException
+    String catAgentId, String commandType) throws IOException
   {
-    Map<Path, ProtectionReason> protectedPaths = getProtectedPaths(workingDirectory, sessionId,
-      commandCatAgentId);
+    Map<Path, ProtectionReason> protectedPaths = getProtectedPaths(workingDirectory, sessionId, catAgentId);
     if (protectedPaths.isEmpty())
       return null;
 
@@ -344,7 +301,7 @@ public final class BlockUnsafeRemoval implements BashHandler
       ProtectionReason reason = entry.getValue();
       if (isInsideOrEqual(protectedPath, targetPath))
         return buildBlockResult(reason, commandType, target, targetPath, workingDirectory,
-          commandCatAgentId, protectedPath);
+          catAgentId, protectedPath);
     }
 
     return null;
@@ -358,13 +315,13 @@ public final class BlockUnsafeRemoval implements BashHandler
    * @param target the deletion target as provided in the command
    * @param targetPath the resolved target path
    * @param workingDirectory the shell's current working directory
-   * @param commandCatAgentId the CAT_AGENT_ID from the command (empty if not provided)
+   * @param catAgentId the composite CAT agent ID from the hook input (empty if not provided)
    * @param protectedPath the protected path that caused the block
    * @return a block result with an appropriate error message
    * @throws IOException if lock file reading fails
    */
   private Result buildBlockResult(ProtectionReason reason, String commandType, String target,
-    Path targetPath, String workingDirectory, String commandCatAgentId,
+    Path targetPath, String workingDirectory, String catAgentId,
     Path protectedPath) throws IOException
   {
     String message = "";
@@ -409,10 +366,10 @@ public final class BlockUnsafeRemoval implements BashHandler
       {
         String lockOwner = getLockOwner(protectedPath, targetPath);
         String yourId;
-        if (commandCatAgentId.isBlank())
-          yourId = "(not provided)";
+        if (catAgentId.isBlank())
+          yourId = "(not available)";
         else
-          yourId = commandCatAgentId;
+          yourId = catAgentId;
         String issueId = getIssueIdFromWorktreePath(targetPath);
         message = """
           UNSAFE DIRECTORY REMOVAL BLOCKED
@@ -428,13 +385,10 @@ public final class BlockUnsafeRemoval implements BashHandler
           - Deleting it could corrupt that agent's shell and lose uncommitted work
 
           WHAT TO DO:
-          1. If you own this worktree, prefix your command:
-             CAT_AGENT_ID=<your-agent-id> %s %s
-          2. If another agent owns it, release the lock first:
+          1. If another agent owns it, release the lock first:
              issue-lock force-release %s
-          3. Or use /cat:cleanup to release all stale locks
-          """.formatted(commandType, target, lockOwner, yourId, targetPath,
-          commandType, target, issueId);
+          2. Or use /cat:cleanup to release all stale locks
+          """.formatted(commandType, target, lockOwner, yourId, targetPath, issueId);
       }
     }
     return Result.block(message);
@@ -509,24 +463,24 @@ public final class BlockUnsafeRemoval implements BashHandler
    * <p>
    * Lock ownership determination:
    * <ul>
-   *   <li>Lock's worktrees map has agent IDs: match against commandCatAgentId; no match → LOCKED_BY_OTHER_AGENT</li>
-   *   <li>Lock has agent IDs but no commandCatAgentId: fail-safe → UNKNOWN_AGENT</li>
+   *   <li>Lock's worktrees map has agent IDs: match against catAgentId; no match → LOCKED_BY_OTHER_AGENT</li>
+   *   <li>Lock has agent IDs but no catAgentId from hook input: fail-safe → UNKNOWN_AGENT</li>
    *   <li>Lock's worktrees map has no agent IDs: fall back to session_id comparison</li>
    * </ul>
    * Stale locks (older than 4 hours) are skipped. Locks owned by the current agent are skipped.
    *
    * @param workingDirectory the shell's current working directory
    * @param sessionId the current session ID
-   * @param commandCatAgentId the CAT_AGENT_ID extracted from the command (empty if not provided)
+   * @param catAgentId the composite CAT agent ID from the hook input (empty if not available)
    * @return map from protected path to protection reason
    * @throws IOException if path operations fail
    */
   private Map<Path, ProtectionReason> getProtectedPaths(String workingDirectory, String sessionId,
-    String commandCatAgentId) throws IOException
+    String catAgentId) throws IOException
   {
     // Use LinkedHashMap so the working directory check takes priority when it is inside the target.
     // The working directory entry is inserted first so it wins over lock entries in iteration order.
-    // Per PLAN.md, working directory check blocks even if CAT_AGENT_ID matches.
+    // Working directory check blocks even when the agent ID matches the lock owner.
     Map<Path, ProtectionReason> paths = new LinkedHashMap<>();
 
     if (workingDirectory.isEmpty())
@@ -562,7 +516,7 @@ public final class BlockUnsafeRemoval implements BashHandler
             if (lock == null)
               continue;
 
-            ProtectionReason lockReason = determineLockReason(lock, sessionId, commandCatAgentId);
+            ProtectionReason lockReason = determineLockReason(lock, sessionId, catAgentId);
             if (lockReason == null)
               continue;
 
@@ -595,11 +549,10 @@ public final class BlockUnsafeRemoval implements BashHandler
    *
    * @param lock the parsed lock JSON node
    * @param sessionId the current session ID
-   * @param commandCatAgentId the CAT_AGENT_ID from the command (empty if not provided)
+   * @param catAgentId the composite CAT agent ID from the hook input (empty if not available)
    * @return the protection reason, or null if the lock is owned by the current agent
    */
-  private ProtectionReason determineLockReason(JsonNode lock, String sessionId,
-    String commandCatAgentId)
+  private ProtectionReason determineLockReason(JsonNode lock, String sessionId, String catAgentId)
   {
     // Check worktrees map values for agent ownership
     JsonNode worktreesNode = lock.get("worktrees");
@@ -612,13 +565,13 @@ public final class BlockUnsafeRemoval implements BashHandler
         if (agentNode != null && agentNode.isString() && !agentNode.asString().isBlank())
         {
           hasAgentId = true;
-          if (!commandCatAgentId.isBlank() && commandCatAgentId.equals(agentNode.asString()))
+          if (!catAgentId.isBlank() && catAgentId.equals(agentNode.asString()))
             return null; // Owner — allow
         }
       }
       if (hasAgentId)
       {
-        if (commandCatAgentId.isBlank())
+        if (catAgentId.isBlank())
           return ProtectionReason.UNKNOWN_AGENT;
         return ProtectionReason.LOCKED_BY_OTHER_AGENT;
       }

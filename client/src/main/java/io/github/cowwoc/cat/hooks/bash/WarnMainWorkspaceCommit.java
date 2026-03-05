@@ -10,10 +10,10 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.CatMetadata;
+import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.WorktreeLock;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
-import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
@@ -65,9 +65,11 @@ public final class WarnMainWorkspaceCommit implements BashHandler
   }
 
   @Override
-  public Result check(String command, String workingDirectory, JsonNode toolInput, JsonNode toolResult,
-    String sessionId)
+  public Result check(HookInput input)
   {
+    String command = input.getCommand();
+    String workingDirectory = input.getString("cwd");
+    String sessionId = input.getSessionId();
     requireThat(command, "command").isNotNull();
     requireThat(workingDirectory, "workingDirectory").isNotNull();
     requireThat(sessionId, "sessionId").isNotBlank();

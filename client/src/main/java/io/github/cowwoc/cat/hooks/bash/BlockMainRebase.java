@@ -7,9 +7,9 @@
 package io.github.cowwoc.cat.hooks.bash;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
+import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
-import tools.jackson.databind.JsonNode;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -52,9 +52,9 @@ public final class BlockMainRebase implements BashHandler
   }
 
   @Override
-  public Result check(String command, String workingDirectory, JsonNode toolInput, JsonNode toolResult,
-    String sessionId)
+  public Result check(HookInput input)
   {
+    String command = input.getCommand();
     String commandLower = GitCommands.toLowerCase(command);
 
     // Check for git checkout/switch in main worktree

@@ -7,6 +7,7 @@
 package io.github.cowwoc.cat.hooks.bash.post;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
+import io.github.cowwoc.cat.hooks.HookInput;
 import tools.jackson.databind.JsonNode;
 
 import java.util.regex.Pattern;
@@ -31,10 +32,12 @@ public final class DetectFailures implements BashHandler
   }
 
   @Override
-  public Result check(String command, String workingDirectory, JsonNode toolInput, JsonNode toolResult,
-    String sessionId)
+  public Result check(HookInput input)
   {
-    if (toolResult == null)
+    JsonNode toolResult = input.getToolResult();
+
+    // treat empty tool_result object as absent (PreToolUse context has no tool result)
+    if (toolResult.isEmpty())
       return Result.allow();
 
     // Get exit code

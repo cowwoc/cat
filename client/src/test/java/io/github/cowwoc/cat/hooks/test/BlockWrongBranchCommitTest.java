@@ -65,7 +65,7 @@ public final class BlockWrongBranchCommitTest
     {
       BlockWrongBranchCommit handler = new BlockWrongBranchCommit();
 
-      BashHandler.Result result = handler.check("git status", tempDir.toString(), null, null, SESSION_ID);
+      BashHandler.Result result = handler.check(TestUtils.bashInput("git status", tempDir.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -90,7 +90,7 @@ public final class BlockWrongBranchCommitTest
 
       // No cat-branch-point file means not a CAT worktree
       BashHandler.Result result = handler.check(
-        "git commit -m \"feature: add something\"", tempDir.toString(), null, null, SESSION_ID);
+        TestUtils.bashInput("git commit -m \"feature: add something\"", tempDir.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -125,8 +125,8 @@ public final class BlockWrongBranchCommitTest
 
         // Working in the worktree directory — current branch is "2.1-my-issue"
         BashHandler.Result result = handler.check(
-          "git commit -m \"feature: implement the feature\"",
-          worktreeDir.toString(), null, null, SESSION_ID);
+          TestUtils.bashInput("git commit -m \"feature: implement the feature\"",
+            worktreeDir.toString(), SESSION_ID));
 
         requireThat(result.blocked(), "blocked").isFalse();
       }
@@ -174,8 +174,8 @@ public final class BlockWrongBranchCommitTest
         BlockWrongBranchCommit handler = new BlockWrongBranchCommit();
 
         BashHandler.Result result = handler.check(
-          "git commit -m \"feature: wrong branch commit\"",
-          wrongWorktreeDir.toString(), null, null, SESSION_ID);
+          TestUtils.bashInput("git commit -m \"feature: wrong branch commit\"",
+            wrongWorktreeDir.toString(), SESSION_ID));
 
         requireThat(result.blocked(), "blocked").isTrue();
         requireThat(result.reason(), "reason").contains("BLOCKED");
@@ -220,7 +220,7 @@ public final class BlockWrongBranchCommitTest
 
         // cwd is mainRepo but command cd's into the worktree
         String command = "cd " + worktreeDir + " && git commit -m \"feature: test\"";
-        BashHandler.Result result = handler.check(command, mainRepo.toString(), null, null, SESSION_ID);
+        BashHandler.Result result = handler.check(TestUtils.bashInput(command, mainRepo.toString(), SESSION_ID));
 
         requireThat(result.blocked(), "blocked").isFalse();
       }
@@ -258,8 +258,7 @@ public final class BlockWrongBranchCommitTest
 
         // git push — not a commit
         BashHandler.Result result = handler.check(
-          "git push origin 2.1-push-test",
-          worktreeDir.toString(), null, null, SESSION_ID);
+          TestUtils.bashInput("git push origin 2.1-push-test", worktreeDir.toString(), SESSION_ID));
 
         requireThat(result.blocked(), "blocked").isFalse();
       }
@@ -292,7 +291,7 @@ public final class BlockWrongBranchCommitTest
 
       // This will throw IOException because tempDir is not a git repo
       BashHandler.Result result = handler.check(
-        "git commit -m \"feature: something\"", tempDir.toString(), null, null, SESSION_ID);
+        TestUtils.bashInput("git commit -m \"feature: something\"", tempDir.toString(), SESSION_ID));
 
       // Should allow because IOException → fail-open
       requireThat(result.blocked(), "blocked").isFalse();
@@ -328,7 +327,7 @@ public final class BlockWrongBranchCommitTest
         // Command starts in wrong worktree but ends in the correct one
         String command = "cd " + wrongWorktreeDir + " && cd " + correctWorktreeDir +
           " && git commit -m \"feature: test\"";
-        BashHandler.Result result = handler.check(command, mainRepo.toString(), null, null, SESSION_ID);
+        BashHandler.Result result = handler.check(TestUtils.bashInput(command, mainRepo.toString(), SESSION_ID));
 
         // Should allow because the LAST cd target (correctWorktreeDir) is on the correct branch
         requireThat(result.blocked(), "blocked").isFalse();
@@ -367,8 +366,7 @@ public final class BlockWrongBranchCommitTest
         BlockWrongBranchCommit handler = new BlockWrongBranchCommit();
 
         BashHandler.Result result = handler.check(
-          "git commit --amend --no-edit",
-          wrongWorktreeDir.toString(), null, null, SESSION_ID);
+          TestUtils.bashInput("git commit --amend --no-edit", wrongWorktreeDir.toString(), SESSION_ID));
 
         requireThat(result.blocked(), "blocked").isTrue();
       }
@@ -409,8 +407,7 @@ public final class BlockWrongBranchCommitTest
 
       // Main repo: .git dir parent is mainRepo itself, which is NOT named "worktrees"
       BashHandler.Result result = handler.check(
-        "git commit -m \"feature: something\"",
-        mainRepo.toString(), null, null, SESSION_ID);
+        TestUtils.bashInput("git commit -m \"feature: something\"", mainRepo.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -449,7 +446,7 @@ public final class BlockWrongBranchCommitTest
 
         // Relative cd from siblingA to siblingB using "../sibling-b"
         String command = "cd ../2.1-sibling-b && git commit -m \"feature: test\"";
-        BashHandler.Result result = handler.check(command, siblingA.toString(), null, null, SESSION_ID);
+        BashHandler.Result result = handler.check(TestUtils.bashInput(command, siblingA.toString(), SESSION_ID));
 
         // siblingB is a CAT worktree on the correct branch → should be allowed
         requireThat(result.blocked(), "blocked").isFalse();
@@ -486,8 +483,7 @@ public final class BlockWrongBranchCommitTest
 
       // Command with whitespace-only cd target — should fall back to cwd (mainRepo, not a CAT worktree)
       BashHandler.Result result = handler.check(
-        "cd   && git commit -m \"feature: something\"",
-        mainRepo.toString(), null, null, SESSION_ID);
+        TestUtils.bashInput("cd   && git commit -m \"feature: something\"", mainRepo.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -524,19 +520,17 @@ public final class BlockWrongBranchCommitTest
 
         // Test: git commit -a
         BashHandler.Result result1 = handler.check(
-          "git commit -a", worktreeDir.toString(), null, null, SESSION_ID);
+          TestUtils.bashInput("git commit -a", worktreeDir.toString(), SESSION_ID));
         requireThat(result1.blocked(), "blockedForDashA").isTrue();
 
         // Test: git commit -am "message"
         BashHandler.Result result2 = handler.check(
-          "git commit -am \"feature: add something\"",
-          worktreeDir.toString(), null, null, SESSION_ID);
+          TestUtils.bashInput("git commit -am \"feature: add something\"", worktreeDir.toString(), SESSION_ID));
         requireThat(result2.blocked(), "blockedForDashAm").isTrue();
 
         // Test: git commit --message="message"
         BashHandler.Result result3 = handler.check(
-          "git commit --message=\"feature: long form\"",
-          worktreeDir.toString(), null, null, SESSION_ID);
+          TestUtils.bashInput("git commit --message=\"feature: long form\"", worktreeDir.toString(), SESSION_ID));
         requireThat(result3.blocked(), "blockedForMessageFlag").isTrue();
       }
       finally

@@ -7,7 +7,7 @@
 package io.github.cowwoc.cat.hooks.bash;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
-import tools.jackson.databind.JsonNode;
+import io.github.cowwoc.cat.hooks.HookInput;
 
 import java.util.regex.Pattern;
 
@@ -30,9 +30,10 @@ public final class ValidateGitFilterBranch implements BashHandler
   }
 
   @Override
-  public Result check(String command, String workingDirectory, JsonNode toolInput, JsonNode toolResult,
-    String sessionId)
+  public Result check(HookInput input)
   {
+    String command = input.getCommand();
+
     // BLOCK: dangerous --all or --branches flags with history rewriting
     if (DANGEROUS_FLAGS_PATTERN.matcher(command).find())
     {

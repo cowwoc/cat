@@ -7,8 +7,8 @@
 package io.github.cowwoc.cat.hooks.bash.post;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
+import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
-import tools.jackson.databind.JsonNode;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -61,9 +61,10 @@ public final class VerifyCommitType implements BashHandler
   }
 
   @Override
-  public Result check(String command, String workingDirectory, JsonNode toolInput, JsonNode toolResult,
-    String sessionId)
+  public Result check(HookInput input)
   {
+    String command = input.getCommand();
+
     // Only check git commit commands
     if (!command.contains("git commit"))
       return Result.allow();

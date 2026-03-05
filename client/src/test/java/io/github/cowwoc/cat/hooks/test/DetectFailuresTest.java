@@ -32,8 +32,7 @@ public final class DetectFailuresTest
     toolResult.put("stderr", "ERROR: something went wrong");
 
     DetectFailures handler = new DetectFailures();
-    BashHandler.Result result = handler.check("mvn test", "", mapper.createObjectNode(), toolResult,
-      "test-session");
+    BashHandler.Result result = handler.check(TestUtils.bashInput("mvn test", "", "test-session", toolResult));
 
     requireThat(result.blocked(), "blocked").isFalse();
     requireThat(result.reason(), "reason").isEmpty();
@@ -52,8 +51,7 @@ public final class DetectFailuresTest
     toolResult.put("stderr", "");
 
     DetectFailures handler = new DetectFailures();
-    BashHandler.Result result = handler.check("mvn test", "", mapper.createObjectNode(), toolResult,
-      "test-session");
+    BashHandler.Result result = handler.check(TestUtils.bashInput("mvn test", "", "test-session", toolResult));
 
     requireThat(result.blocked(), "blocked").isFalse();
     requireThat(result.reason(), "reason").isNotEmpty();
@@ -72,8 +70,8 @@ public final class DetectFailuresTest
     toolResult.put("stderr", "");
 
     DetectFailures handler = new DetectFailures();
-    BashHandler.Result result = handler.check("nonexistent-cmd", "", mapper.createObjectNode(), toolResult,
-      "test-session");
+    BashHandler.Result result = handler.check(
+      TestUtils.bashInput("nonexistent-cmd", "", "test-session", toolResult));
 
     requireThat(result.blocked(), "blocked").isFalse();
     requireThat(result.reason(), "reason").isEmpty();
@@ -92,8 +90,7 @@ public final class DetectFailuresTest
     toolResult.put("stderr", "");
 
     DetectFailures handler = new DetectFailures();
-    BashHandler.Result result = handler.check("mvn verify", "", mapper.createObjectNode(), toolResult,
-      "test-session");
+    BashHandler.Result result = handler.check(TestUtils.bashInput("mvn verify", "", "test-session", toolResult));
 
     requireThat(result.reason(), "reason").isNotEmpty();
   }
@@ -111,8 +108,8 @@ public final class DetectFailuresTest
     toolResult.put("stderr", "FAILED: test suite execution");
 
     DetectFailures handler = new DetectFailures();
-    BashHandler.Result result = handler.check("./run-tests.sh", "", mapper.createObjectNode(), toolResult,
-      "test-session");
+    BashHandler.Result result = handler.check(
+      TestUtils.bashInput("./run-tests.sh", "", "test-session", toolResult));
 
     requireThat(result.reason(), "reason").isNotEmpty();
   }
@@ -130,8 +127,8 @@ public final class DetectFailuresTest
     toolResult.put("stderr", "");
 
     DetectFailures handler = new DetectFailures();
-    BashHandler.Result result = handler.check("javac Main.java", "", mapper.createObjectNode(), toolResult,
-      "test-session");
+    BashHandler.Result result = handler.check(
+      TestUtils.bashInput("javac Main.java", "", "test-session", toolResult));
 
     requireThat(result.reason(), "reason").isNotEmpty();
   }
@@ -149,8 +146,8 @@ public final class DetectFailuresTest
     toolResult.put("stderr", "");
 
     DetectFailures handler = new DetectFailures();
-    BashHandler.Result result = handler.check("java -jar app.jar", "", mapper.createObjectNode(), toolResult,
-      "test-session");
+    BashHandler.Result result = handler.check(
+      TestUtils.bashInput("java -jar app.jar", "", "test-session", toolResult));
 
     requireThat(result.reason(), "reason").isNotEmpty();
   }
@@ -168,8 +165,8 @@ public final class DetectFailuresTest
     toolResult.put("stderr", "");
 
     DetectFailures handler = new DetectFailures();
-    BashHandler.Result result = handler.check("start-server.sh", "", mapper.createObjectNode(), toolResult,
-      "test-session");
+    BashHandler.Result result = handler.check(
+      TestUtils.bashInput("start-server.sh", "", "test-session", toolResult));
 
     requireThat(result.reason(), "reason").isNotEmpty();
   }
@@ -187,8 +184,7 @@ public final class DetectFailuresTest
     toolResult.put("stderr", "");
 
     DetectFailures handler = new DetectFailures();
-    BashHandler.Result result = handler.check("git status", "", mapper.createObjectNode(), toolResult,
-      "test-session");
+    BashHandler.Result result = handler.check(TestUtils.bashInput("git status", "", "test-session", toolResult));
 
     requireThat(result.reason(), "reason").isNotEmpty();
   }
@@ -205,8 +201,8 @@ public final class DetectFailuresTest
     // stdout and stderr fields intentionally absent
 
     DetectFailures handler = new DetectFailures();
-    BashHandler.Result result = handler.check("some-command", "", mapper.createObjectNode(), toolResult,
-      "test-session");
+    BashHandler.Result result = handler.check(
+      TestUtils.bashInput("some-command", "", "test-session", toolResult));
 
     // No exception and returns allow (no failure pattern found)
     requireThat(result.blocked(), "blocked").isFalse();
@@ -219,11 +215,8 @@ public final class DetectFailuresTest
   @Test
   public void nullToolResultReturnsAllow()
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-
     DetectFailures handler = new DetectFailures();
-    BashHandler.Result result = handler.check("some-command", "", mapper.createObjectNode(), null,
-      "test-session");
+    BashHandler.Result result = handler.check(TestUtils.bashInput("some-command", "", "test-session"));
 
     requireThat(result.blocked(), "blocked").isFalse();
     requireThat(result.reason(), "reason").isEmpty();
@@ -242,8 +235,7 @@ public final class DetectFailuresTest
     toolResult.put("stderr", "");
 
     DetectFailures handler = new DetectFailures();
-    BashHandler.Result result = handler.check("mvn test", "", mapper.createObjectNode(), toolResult,
-      "test-session");
+    BashHandler.Result result = handler.check(TestUtils.bashInput("mvn test", "", "test-session", toolResult));
 
     // exit_code missing → defaults to 0 → allow
     requireThat(result.blocked(), "blocked").isFalse();
@@ -263,8 +255,7 @@ public final class DetectFailuresTest
     toolResult.put("stderr", "");
 
     DetectFailures handler = new DetectFailures();
-    BashHandler.Result result = handler.check("mvn test", "", mapper.createObjectNode(), toolResult,
-      "test-session");
+    BashHandler.Result result = handler.check(TestUtils.bashInput("mvn test", "", "test-session", toolResult));
 
     requireThat(result.reason(), "reason").contains("42");
   }
@@ -282,8 +273,7 @@ public final class DetectFailuresTest
     toolResult.put("stderr", "");
 
     DetectFailures handler = new DetectFailures();
-    BashHandler.Result result = handler.check("mvn test", "", mapper.createObjectNode(), toolResult,
-      "test-session");
+    BashHandler.Result result = handler.check(TestUtils.bashInput("mvn test", "", "test-session", toolResult));
 
     // exitCode=1 (non-zero) with BUILD FAILED pattern → warn
     requireThat(result.reason(), "reason").isNotEmpty();

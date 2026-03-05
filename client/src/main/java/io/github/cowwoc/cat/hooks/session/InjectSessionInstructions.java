@@ -9,7 +9,6 @@ package io.github.cowwoc.cat.hooks.session;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.JvmScope;
 
 /**
  * Injects critical session instructions into Claude's context.
@@ -183,27 +182,6 @@ public final class InjectSessionInstructions implements SessionStartHandler
 
       **Never use** bare names (e.g., `create-config-property-enums`) in agent-to-user text.
 
-      ### Worktree Removal Safety (CAT_AGENT_ID Protocol)
-      **MANDATORY**: When removing a worktree or its directory, prefix the command with your agent ID.
-
-      **Why**: The hook identifies which agent owns a lock by matching `CAT_AGENT_ID` against the lock \
-      file's `agent_id` field. Without this prefix, the hook cannot verify ownership and will block the \
-      command as a fail-safe.
-
-      **Format**: `CAT_AGENT_ID=<agent-id> git worktree remove <path>`
-      **Format**: `CAT_AGENT_ID=<agent-id> rm -rf <path>`
-
-      **Your agent ID** is the session ID shown at the bottom of this context block.
-
-      **Example**:
-      ```bash
-      CAT_AGENT_ID=351df8c9-048f-4c74-bcdb-9b8c207b6a1c git worktree remove \\
-        {worktreeExamplePath}/my-issue
-      ```
-
-      **When NOT required**: Only needed when removing worktrees or directories that may be locked.
-      Regular file deletions, `git clean`, and other operations do not need this prefix.
-
       ### Issue Lock Checking
       **CRITICAL**: Lock status is managed by the `issue-lock` CLI tool. NEVER probe the filesystem.
 
@@ -242,18 +220,11 @@ public final class InjectSessionInstructions implements SessionStartHandler
       create the parent directory first with `mkdir -p`. The heredoc write fails if the directory doesn't \
       exist.""";
 
-  private final JvmScope scope;
-
   /**
    * Creates a new InjectSessionInstructions handler.
-   *
-   * @param scope the JVM scope providing project directory configuration
-   * @throws NullPointerException if {@code scope} is null
    */
-  public InjectSessionInstructions(JvmScope scope)
+  public InjectSessionInstructions()
   {
-    requireThat(scope, "scope").isNotNull();
-    this.scope = scope;
   }
 
   /**
@@ -270,9 +241,7 @@ public final class InjectSessionInstructions implements SessionStartHandler
     String sessionId = input.getSessionId();
     if (sessionId.isEmpty())
       sessionId = "unknown";
-    String worktreesPath = scope.getProjectCatDir().resolve("worktrees").toString();
-    String instructions = INSTRUCTIONS.replace("{worktreeExamplePath}", worktreesPath);
-    return Result.context(instructions + "\n" +
+    return Result.context(INSTRUCTIONS + "\n" +
       "Session ID: " + sessionId);
   }
 }

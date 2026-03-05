@@ -27,7 +27,6 @@ import io.github.cowwoc.cat.hooks.bash.WarnFileExtraction;
 import io.github.cowwoc.cat.hooks.bash.WarnMainWorkspaceCommit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tools.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -109,21 +108,9 @@ public final class PreToolUseHook implements HookHandler
     if (!equalsIgnoreCase(toolName, "Bash"))
       return HookResult.withoutWarnings(output.empty());
 
-    JsonNode toolInput = input.getToolInput();
-    JsonNode commandNode = toolInput.get("command");
-    String command;
-    if (commandNode != null)
-      command = commandNode.asString();
-    else
-      command = "";
-
-    if (command.isEmpty())
+    if (input.getCommand().isEmpty())
       return HookResult.withoutWarnings(output.empty());
 
-    String sessionId = input.getSessionId();
-    requireThat(sessionId, "sessionId").isNotBlank();
-    String workingDirectory = input.getString("cwd");
-    requireThat(workingDirectory, "workingDirectory").isNotBlank();
     List<String> warnings = new ArrayList<>();
 
     // Run all bash pretool handlers
@@ -131,7 +118,7 @@ public final class PreToolUseHook implements HookHandler
     {
       try
       {
-        BashHandler.Result result = handler.check(command, workingDirectory, toolInput, null, sessionId);
+        BashHandler.Result result = handler.check(input);
         if (result.blocked())
         {
           String jsonOutput;

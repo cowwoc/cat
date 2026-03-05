@@ -29,7 +29,7 @@ public final class RemindGitSquashTest
     RemindGitSquash handler = new RemindGitSquash();
     String command = "git reset --soft HEAD~1";
 
-    BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
 
     requireThat(result.blocked(), "blocked").isTrue();
     requireThat(result.reason(), "reason").contains("/cat:git-squash");
@@ -50,7 +50,7 @@ public final class RemindGitSquashTest
       String worktreePath = scope.getProjectCatDir().resolve("worktrees").resolve("2.1-my-issue").toString();
       String command = "git -C " + worktreePath + " reset --soft v2.1";
 
-      BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("/cat:git-squash");
@@ -66,7 +66,7 @@ public final class RemindGitSquashTest
     RemindGitSquash handler = new RemindGitSquash();
     String command = "git commit -m \"feature: add something\"";
 
-    BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
 
     requireThat(result.blocked(), "blocked").isFalse();
   }
@@ -80,7 +80,7 @@ public final class RemindGitSquashTest
     RemindGitSquash handler = new RemindGitSquash();
     String command = "git rebase -i HEAD~3";
 
-    BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
 
     requireThat(result.blocked(), "blocked").isFalse();
     requireThat(result.reason(), "reason").contains("/cat:git-squash");

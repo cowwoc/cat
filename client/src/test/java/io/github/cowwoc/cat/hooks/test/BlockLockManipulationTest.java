@@ -34,7 +34,7 @@ public final class BlockLockManipulationTest
       String locksPath = scope.getProjectCatDir().resolve("locks").resolve("task-123.lock").toString();
       String command = "rm -f " + locksPath;
 
-      BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("issue-lock force-release");
@@ -55,7 +55,7 @@ public final class BlockLockManipulationTest
       String locksPath = scope.getProjectCatDir().resolve("locks").resolve("my-issue.lock").toString();
       String command = "rm " + locksPath;
 
-      BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("/cat:cleanup");
@@ -76,7 +76,7 @@ public final class BlockLockManipulationTest
       String locksDir = scope.getProjectCatDir().resolve("locks").toString() + "/";
       String command = "rm -rf " + locksDir;
 
-      BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("issue-lock force-release");
@@ -98,7 +98,7 @@ public final class BlockLockManipulationTest
       String locksDir = scope.getProjectCatDir().resolve("locks").toString() + "/";
       String command = "rm -rf " + locksDir;
 
-      BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("/cat:cleanup");
@@ -114,7 +114,7 @@ public final class BlockLockManipulationTest
     BlockLockManipulation handler = new BlockLockManipulation();
     String command = "rm -rf /tmp/some-other-file";
 
-    BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
 
     requireThat(result.blocked(), "blocked").isFalse();
   }
@@ -133,7 +133,7 @@ public final class BlockLockManipulationTest
       String locksPath = scope.getProjectCatDir().resolve("locks").resolve("task-456.lock").toString();
       String command = "rm -rf " + locksPath;
 
-      BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("issue-lock force-release");
@@ -154,7 +154,7 @@ public final class BlockLockManipulationTest
       String locksDir = scope.getProjectCatDir().resolve("locks").toString();
       String command = "rm -r " + locksDir;
 
-      BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("issue-lock force-release");
@@ -176,7 +176,7 @@ public final class BlockLockManipulationTest
       String locksPath = scope.getProjectCatDir().resolve("locks").resolve("task-123.lock").toString();
       String command = "rm -f " + locksPath;
 
-      BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("issue-lock force-release");
@@ -197,7 +197,7 @@ public final class BlockLockManipulationTest
       String locksDir = scope.getProjectCatDir().resolve("locks").toString() + "/";
       String command = "rm -rf " + locksDir;
 
-      BashHandler.Result result = handler.check(command, "/workspace", null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("issue-lock force-release");

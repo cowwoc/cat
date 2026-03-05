@@ -9,9 +9,9 @@ package io.github.cowwoc.cat.hooks.bash;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
+import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.DisplayUtils;
-import tools.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,9 +44,10 @@ public final class ComputeBoxLines implements BashHandler
   }
 
   @Override
-  public Result check(String command, String workingDirectory, JsonNode toolInput, JsonNode toolResult,
-    String sessionId)
+  public Result check(HookInput input)
   {
+    String command = input.getCommand();
+
     // Check for the BOX_COMPUTE marker
     String[] lines = command.split("\n");
     if (lines.length == 0 || !lines[0].startsWith(BOX_COMPUTE_MARKER))
