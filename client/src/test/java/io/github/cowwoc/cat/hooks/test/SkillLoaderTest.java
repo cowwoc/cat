@@ -3094,4 +3094,46 @@ Agent: $0
       TestUtils.deleteDirectoryRecursively(tempPluginRoot);
     }
   }
+
+  /**
+   * Verifies that the constructor splits $0 on the first whitespace when the first skill argument
+   * contains a space, extracting the catAgentId prefix and inserting the remainder as $1,
+   * shifting any existing $1..$N arguments to $2..$N+1.
+   * <p>
+   * This handles the case where a caller passes {@code "catAgentId description text"} as a single
+   * quoted argument: the catAgentId is path-safe (no spaces), while the description text is
+   * preserved as $1.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void constructorSplitsFirstArgumentOnWhitespace() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      Files.writeString(companionDir.resolve("first-use.md"),
+        "Agent: $0, Desc: $1, Extra: $2\n");
+
+      String catAgentId = "550e8400-e29b-41d4-a716-446655440000";
+      String description = "Add an issue to the project";
+      SkillLoader loader = new SkillLoader(scope,
+        List.of(catAgentId + " " + description, "extraArg"));
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").
+        contains("Agent: " + catAgentId).
+        contains("Desc: " + description).
+        contains("Extra: extraArg").
+        doesNotContain("$0").
+        doesNotContain("$1").
+        doesNotContain("$2");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
 }

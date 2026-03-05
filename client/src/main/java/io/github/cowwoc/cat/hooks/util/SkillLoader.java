@@ -138,7 +138,10 @@ public final class SkillLoader
    * Creates a new SkillLoader instance.
    * <p>
    * The CAT agent ID is derived from the first positional skill argument ({@code skillArgs.get(0)}). If
-   * {@code skillArgs} is non-empty but the first element is blank (e.g., when the user invokes a slash
+   * the first element contains a space, it is split on the first space: the prefix becomes the agent ID
+   * ({@code $0}) and the remainder is inserted as {@code $1}, shifting any existing {@code $1}..$N
+   * arguments to {@code $2}..$N+1. This handles callers that pass {@code "catAgentId description text"}
+   * as a single quoted argument. If the first element is blank (e.g., when the user invokes a slash
    * command directly without passing args), the session ID from {@code CLAUDE_SESSION_ID} is used as the
    * fallback agent ID. If {@code skillArgs} is empty, the SKILL.md is misconfigured (missing
    * {@code "$0"}) and the constructor fails fast.
@@ -147,7 +150,8 @@ public final class SkillLoader
    * {@link JvmScope#getClaudePluginRoot()} and {@link JvmScope#getClaudeProjectDir()}.
    *
    * @param scope the JVM scope for accessing shared services and environment paths
-   * @param skillArgs pre-tokenized positional arguments; the first element ({@code $0}) is the CAT agent ID
+   * @param skillArgs pre-tokenized positional arguments; the first element ({@code $0}) is the CAT agent ID,
+   *   optionally followed by a space and description text to insert as {@code $1}
    * @throws NullPointerException if {@code scope} or {@code skillArgs} are null
    * @throws IllegalArgumentException if {@code skillArgs} is empty, or if the first element (catAgentId)
    *   is blank and {@code CLAUDE_SESSION_ID} is also unavailable
@@ -167,15 +171,30 @@ public final class SkillLoader
           "(e.g., {sessionId}/subagents/{agent_id}).");
     }
 
+    // When $0 contains a space, split into catAgentId (before space) and remainder (after space).
+    // This handles callers that pass "catAgentId description text" as a single quoted argument:
+    // the catAgentId is path-safe (no spaces), while the description is inserted as $1,
+    // shifting any existing $1..$N arguments to $2..$N+1.
     // When $0 is blank (user invoked slash command directly), fall back to CLAUDE_SESSION_ID.
     String catAgentId;
-    if (skillArgs.getFirst().isBlank())
-      catAgentId = scope.getClaudeSessionId();
-    else
-      catAgentId = skillArgs.getFirst();
-
     List<String> tokens = new ArrayList<>(skillArgs);
-    tokens.set(0, catAgentId);
+    String firstArg = skillArgs.getFirst();
+    int spaceIdx = firstArg.indexOf(' ');
+    if (spaceIdx >= 0)
+    {
+      catAgentId = firstArg.substring(0, spaceIdx);
+      String remainder = firstArg.substring(spaceIdx + 1);
+      tokens.set(0, catAgentId);
+      tokens.add(1, remainder);
+    }
+    else
+    {
+      if (firstArg.isBlank())
+        catAgentId = scope.getClaudeSessionId();
+      else
+        catAgentId = firstArg;
+      tokens.set(0, catAgentId);
+    }
 
     this.scope = scope;
     this.pluginRoot = scope.getClaudePluginRoot();
