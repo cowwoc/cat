@@ -74,7 +74,8 @@ Run `"${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --arguments "${ARGUMENTS}"`
 | NO_ISSUES | Display extended diagnostics (see below), stop |
 | LOCKED | Display lock message, try next issue |
 | OVERSIZED | Invoke /cat:decompose-issue-agent, then retry |
-| ERROR | Display error, stop |
+| ERROR (existing worktree) | Offer cleanup and retry (see below) — ONLY retry work-prepare after cleanup |
+| ERROR (other) | Display error, stop |
 | No JSON / empty | Subagent failed to produce output - display error, release lock if acquired, stop |
 
 **Parsing the result:** The script returns JSON to stdout. Parse it directly.
@@ -106,6 +107,35 @@ Fallback to `message` field if extended fields are absent:
 | other | Run `work-prepare` to determine which issues are available and display them |
 
 **NEVER suggest working on a previous version** - if user is on v2.1, suggesting v2.0 is unhelpful.
+
+**ERROR: Existing Worktree Handling:**
+
+When `work-prepare` returns ERROR and the `message` field references an existing worktree or an existing
+session lock (e.g., "already holds a lock", "worktree already exists"):
+
+1. Display the error message to the user.
+2. Offer cleanup and retry using AskUserQuestion:
+
+   ```
+   AskUserQuestion:
+     header: "Existing Worktree Detected"
+     question: "<error message from work-prepare>"
+     options:
+       - "Clean up and retry" (invoke cat:cleanup-agent, then immediately retry work-prepare)
+       - "Abort" (stop)
+   ```
+
+3. If user selects **"Clean up and retry"**:
+   - Invoke `cat:cleanup-agent` (no arguments needed)
+   - **IMMEDIATELY after cleanup-agent returns, call work-prepare again** using the same subprocess invocation from Phase 1: `"${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --arguments "${ARGUMENTS}"`. Parse the result and resume Phase 1 error handling logic.
+   - Do NOT invoke any other skill or workflow between cleanup-agent returning and the work-prepare retry
+   - Do NOT invoke `cat:extract-investigation-context-agent` or any investigation skill at this point
+   - The ONLY permitted action between cleanup-agent returning and the retry is reading the cleanup result
+
+4. If user selects **"Abort"**: stop.
+
+**CRITICAL:** After cleanup-agent returns, the next action MUST be retrying `work-prepare`. Any other
+skill invocation at this point is a control-flow error.
 
 **Potentially Complete Handling:**
 
