@@ -448,6 +448,46 @@ argument-hint: "<count> <label>"
 When invoked with args `"5 done"`, SkillLoader resolves `$0` → `5` and `$1` → `done`
 before running the preprocessor directive.
 
+### Step 8: Validate with Test Prompts
+
+After the skill is written, generate test prompts to verify that the description routes correctly.
+This catches calibration errors — descriptions that are too broad, too narrow, or ambiguous — before
+the skill is deployed.
+
+**Generate 2-3 should-trigger prompts**: Phrases a user would actually type that the skill should match.
+
+**Generate 2-3 should-not-trigger prompts**: Phrases from adjacent domains that the skill should NOT match.
+
+**Format**:
+```
+SHOULD TRIGGER:
+- "[phrase that clearly matches the skill's trigger condition]"
+- "[another phrase the skill should pick up]"
+
+SHOULD NOT TRIGGER:
+- "[phrase from an adjacent domain that should not activate this skill]"
+- "[another phrase that might be confused with the skill but shouldn't trigger it]"
+```
+
+**What to look for**:
+- If a should-trigger prompt feels forced or unlikely, the description may be over-specified
+- If a should-not-trigger prompt could reasonably trigger the skill, the description is too broad
+- If you can't write 2 natural should-trigger phrases, the trigger condition may be unclear
+
+**Optional: Delegate to skill-validator-agent**
+
+If you want to run the prompts against an actual model rather than reasoning about them manually,
+delegate to `skill-validator-agent`:
+
+```
+Skill(skill="cat:skill-validator-agent", args="<skill-path> <test-prompts-json>")
+```
+
+The validator runs each prompt and returns pass/fail results with explanations.
+
+**Iteration**: If validation reveals calibration issues, revisit the `description:` frontmatter (Step 7)
+and regenerate test prompts. Repeat until all prompts pass.
+
 ---
 
 ## Skill Structure Template
@@ -831,7 +871,10 @@ If script fails, skill expansion fails visibly.
 
 ### Script Extraction: Deterministic Bash Must Be External
 
-**MANDATORY: Skills must not contain inline bash for deterministic operations.**
+**Skills must not contain inline bash for deterministic operations** — because inline bash in skill
+markdown gets read by Claude, who then generates nearly identical bash via tool calls rather than
+invoking the script directly. This doubles the token cost and introduces transcription errors. External
+scripts are executed once, produce verified output, and keep the skill focused on intent rather than mechanics.
 
 All deterministic bash belongs in external script files (plugin/scripts/). Skills contain only:
 - **When to use**: Conditions and prerequisites for the operation
@@ -1019,8 +1062,10 @@ Hand-writing approximate output without calculation causes alignment errors.
 
 ### No Embedded Box Drawings in Skills
 
-**Critical rule**: Skills MUST NOT contain embedded box-drawing examples in their instructions.
-Embedded boxes cause agents to manually render similar output instead of using preprocessing.
+**Skills should not contain embedded box-drawing examples in their instructions** — because when
+agents see a rendered box in a skill document, they interpret it as a template and attempt to reproduce
+it manually. Manual reproduction produces misaligned boxes. Preprocessing scripts produce correctly
+aligned output every time.
 
 **Important distinction**: This rule applies to skills that **output boxes to users**. Documentation
 diagrams in skills that **do not produce boxes** (e.g., state machine diagrams in tdd-implementation,
@@ -1085,8 +1130,10 @@ architecture flowcharts) are acceptable because:
 
 ### Conditional Information Principle
 
-**Critical rule**: Formatting details (emoji meanings, box characters, column widths) belong
-in preprocessing scripts, not in skill documentation.
+**Formatting details (emoji meanings, box characters, column widths) belong in preprocessing
+scripts, not in skill documentation** — because any reference information in a skill document
+becomes material the agent tries to apply manually. Even when a section is labeled "for reference
+only", the agent sees it and uses it. Move all formatting reference to the script that applies it.
 
 **The failure pattern:**
 1. Skill doc contains "reference" information (emoji meanings, circle patterns, formatting rules)
@@ -1825,11 +1872,14 @@ options:
 
 ## Conditional Section Lazy-Loading
 
-**Principle**: Conditional sections of a skill (content only needed in certain execution paths) MUST be stored in
-separate files and loaded on-demand, not embedded inline.
+**Conditional sections of a skill (content only needed in certain execution paths) should be stored in
+separate files and loaded on-demand, not embedded inline** — because an agent reads all inline content
+regardless of which branch it takes. Content that's only relevant in edge cases still primes the agent,
+consumes context, and may cause it to follow an unintended path. Lazy-loading ensures each agent only
+receives the content it actually needs for the path it's on.
 
 **Why lazy-loading matters:**
-- Reduces token cost when the conditional path isn't taken
+- Reduces token usage when the conditional path isn't taken
 - Keeps the main skill focused on the primary workflow
 - Prevents priming from information that won't be used
 - Allows conditional content to be more detailed without bloating the skill
@@ -1901,7 +1951,10 @@ Read `{skill-directory}/SPECIAL-CASE.md` and execute its workflow.
 
 ## File Colocation
 
-Files referenced **only** by a single skill MUST reside within that skill's directory:
+Files referenced **only** by a single skill should reside within that skill's directory — because
+colocation makes ownership explicit, simplifies deletion (remove the skill directory and you remove all
+its dependencies), and prevents concept files from accumulating in shared locations where they no longer
+have a clear owner:
 
 ```
 plugin/skills/
