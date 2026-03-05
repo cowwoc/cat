@@ -59,3 +59,10 @@ skill total execution time by ~24% (~3.5 minutes).
 - [ ] All tests pass (`mvn -f client/pom.xml verify` exits 0)
 - [ ] `phase-record.md` invokes the CLI tool instead of containing inline bash instructions
 - [ ] Learn skill SKILL.md references the new tool for Phase 4
+
+### Wave 3: Register record-learning launcher in build-jlink.sh
+
+- Add `"record-learning:util.RecordLearning"` to the `HANDLERS` array in `client/build-jlink.sh` so
+  the `record-learning` binary launcher is generated during jlink builds. Without this entry the
+  `$CLIENT_BIN/record-learning` path referenced by `phase-record.md` does not exist in the jlink image.
+  - Files: `client/build-jlink.sh`
