@@ -1272,7 +1272,8 @@ public class GetCleanupOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*args.*")
   public void getOutputNullArgsThrowsNullPointerException() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -1336,7 +1337,8 @@ public class GetCleanupOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Unknown argument.*--unknown-flag.*")
   public void getOutputUnknownFlagThrowsIllegalArgumentException() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())

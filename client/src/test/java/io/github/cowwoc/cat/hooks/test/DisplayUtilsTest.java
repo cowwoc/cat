@@ -370,7 +370,8 @@ public class DisplayUtilsTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*content.*")
   public void buildLineWithNullContentThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -390,7 +391,8 @@ public class DisplayUtilsTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*header.*")
   public void buildHeaderBoxWithNullHeaderThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -410,7 +412,8 @@ public class DisplayUtilsTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*contentLines.*")
   public void buildHeaderBoxWithNullContentLinesThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -430,7 +433,8 @@ public class DisplayUtilsTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*percent.*")
   public void buildProgressBarNegativePercentThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -450,7 +454,8 @@ public class DisplayUtilsTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*percent.*")
   public void buildProgressBarOverHundredPercentThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -470,7 +475,8 @@ public class DisplayUtilsTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*width.*")
   public void buildProgressBarZeroWidthThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -490,7 +496,8 @@ public class DisplayUtilsTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*width.*")
   public void buildProgressBarNegativeWidthThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -510,7 +517,8 @@ public class DisplayUtilsTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*text.*")
   public void displayWidthWithNullTextThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -535,7 +543,8 @@ public class DisplayUtilsTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*percent.*")
   public void buildProgressBarHundredPercentThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -1340,7 +1349,8 @@ public class DisplayUtilsTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*line.*")
   public void wrapLineWithNullLineThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -1360,7 +1370,8 @@ public class DisplayUtilsTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*maxWidth.*")
   public void wrapLineWithNegativeMaxWidthThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -1380,7 +1391,8 @@ public class DisplayUtilsTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*indentWidth.*")
   public void wrapLineWithNegativeIndentWidthThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");

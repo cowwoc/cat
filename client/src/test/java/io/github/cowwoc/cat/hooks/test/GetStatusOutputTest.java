@@ -41,7 +41,8 @@ public class GetStatusOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*scope.*")
   public void constructorRejectsNullScope() throws IOException
   {
     new GetStatusOutput(null);
@@ -53,7 +54,8 @@ public class GetStatusOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*args.*")
   public void getOutputRejectsUnexpectedArguments() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -818,7 +820,8 @@ public class GetStatusOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IOException.class)
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*Missing Status field.*")
   public void parseStatusFromContentRejectsMissingStatus() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-missing-status");

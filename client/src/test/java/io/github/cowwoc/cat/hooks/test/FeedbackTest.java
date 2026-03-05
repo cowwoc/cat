@@ -97,7 +97,8 @@ public class FeedbackTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*title.*")
   public void openIssueRejectsNullTitle() throws IOException
   {
     Path tempDir = Files.createTempDirectory("feedback-test");
@@ -119,7 +120,8 @@ public class FeedbackTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*title.*")
   public void openIssueRejectsBlankTitle() throws IOException
   {
     Path tempDir = Files.createTempDirectory("feedback-test");
@@ -141,7 +143,8 @@ public class FeedbackTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*body.*")
   public void openIssueRejectsNullBody() throws IOException
   {
     Path tempDir = Files.createTempDirectory("feedback-test");
@@ -163,7 +166,8 @@ public class FeedbackTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*body.*")
   public void openIssueRejectsBlankBody() throws IOException
   {
     Path tempDir = Files.createTempDirectory("feedback-test");
@@ -185,7 +189,8 @@ public class FeedbackTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*labels.*")
   public void openIssueRejectsNullLabels() throws IOException
   {
     Path tempDir = Files.createTempDirectory("feedback-test");
@@ -207,7 +212,8 @@ public class FeedbackTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*browserOpener.*")
   public void openIssueRejectsNullBrowserOpener() throws IOException
   {
     Path tempDir = Files.createTempDirectory("feedback-test");
