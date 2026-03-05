@@ -325,6 +325,24 @@ git branch --show-current && git log --oneline -3 && git diff --stat
 **Worktree directory safety:** You may `cd` into worktrees to work. However, before removing a directory (via `rm`,
 `git worktree remove`, etc.), ensure your shell is NOT inside the directory being removed. See `/cat:safe-rm`.
 
+**Directory before file write (M470):** When writing files via heredoc (`cat > path/file << 'EOF'`), always create the
+parent directory first with `mkdir -p`. The heredoc write fails silently in chained commands if the directory doesn't
+exist.
+
+```bash
+# Good: directory first, then write
+mkdir -p /path/to/dir
+cat > /path/to/dir/file.txt << 'EOF'
+content
+EOF
+
+# Bad: write before directory exists
+cat > /path/to/dir/file.txt << 'EOF'
+content
+EOF
+mkdir -p /path/to/dir
+```
+
 ## Testing
 
 - Java: TestNG for unit tests
