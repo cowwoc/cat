@@ -514,7 +514,7 @@ for file in $CHANGED_FILES; do
             # Small file: include full content
             FILE_CONTENTS="${FILE_CONTENTS}
 
-### File: ${file}
+### File: $(pwd)/${file}
 \`\`\`
 $(cat "$file")
 \`\`\`"
@@ -522,7 +522,7 @@ $(cat "$file")
             # Large file: structure summary + diff with extended context
             FILE_CONTENTS="${FILE_CONTENTS}
 
-### File: ${file} (large file)
+### File: $(pwd)/${file} (large file)
 "
 
             # Extract file structure summary based on language
