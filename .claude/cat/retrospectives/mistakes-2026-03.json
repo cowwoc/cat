@@ -620,5 +620,25 @@
       "catches_variations" : false
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M476",
+    "timestamp" : "2026-03-05T18:03:08Z",
+    "category" : "",
+    "description" : "",
+    "root_cause" : "",
+    "rca_method" : "",
+    "rca_method_name" : "",
+    "prevention_type" : "code_fix",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }
