@@ -77,6 +77,24 @@ git rebase -i <base-commit>
 # drop   - remove commit
 ```
 
+### Critical: Hash Format in Rebase Todo
+
+**When generating sed scripts to transform the git rebase todo file, ALWAYS use the abbreviated hash from
+`git log --format='%h' -1 <commit>`.** Git rebase -i uses 7-character abbreviated hashes in the todo file. Using a
+longer hash (9+ characters) in sed patterns will silently fail to match, causing commits to be replayed as normal picks
+instead of squash/fixup.
+
+```bash
+# CORRECT: use abbreviated hash matching git rebase -i format
+HASH=$(git log --format='%h' -1 "$COMMIT")
+sed -i "s/^pick $HASH/fixup $HASH/" "$1"
+
+# WRONG: 9-char or full hash will not match git rebase -i entries
+sed -i 's/^pick 27200257c/fixup 27200257c/' "$1"
+```
+
+This silent failure is particularly dangerous because `git rebase` reports success even when no substitution occurred.
+
 ## Handling Conflicts
 
 **CRITICAL: Persist through conflicts. Never switch to cherry-pick mid-rebase.**
