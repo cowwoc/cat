@@ -125,9 +125,22 @@ is passed through unchanged — this will likely cause errors in the target bina
 
 ### Variable-Length Arguments (`$ARGUMENTS`)
 
-For skills that accept a variable number of arguments (e.g., keyword lists), use the unbraced `$ARGUMENTS` variable.
+For skills that accept a variable number of arguments or free-text descriptions, use the unbraced `$ARGUMENTS` variable.
 This bypasses SkillLoader's variable substitution and is expanded by the shell, where Claude Code sets the `ARGUMENTS`
 environment variable to the raw args string.
+
+**Do NOT use `${ARGUMENTS}`** (braced form). SkillLoader's variable resolver intercepts braced variables and
+`ARGUMENTS` is not a recognized built-in, causing it to resolve to empty. See
+[claude-code#18044](https://github.com/anthropics/claude-code/issues/18044#issuecomment-3928291132).
+
+Two quoting styles exist depending on whether the tool expects tokens or free text:
+
+| Style | Syntax | When to Use |
+|-------|--------|-------------|
+| Unquoted | `$ARGUMENTS` | Tool expects separate tokens (e.g., keyword list, flag-style args) |
+| Quoted | `"$ARGUMENTS"` | Tool expects the full text as one argument (e.g., free-text description, multiline input) |
+
+**Unquoted** — shell performs word-splitting; each whitespace-separated token becomes a separate argument:
 
 ```yaml
 ---
@@ -136,12 +149,18 @@ argument-hint: "<keywords...>"
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/my-tool" $ARGUMENTS`
 ```
 
-**Do NOT use `${ARGUMENTS}`** (braced form). SkillLoader's variable resolver intercepts braced variables and
-`ARGUMENTS` is not a recognized built-in, causing it to resolve to empty. See
-[claude-code#18044](https://github.com/anthropics/claude-code/issues/18044).
+**Quoted** — shell passes the entire value as a single argument, preserving spaces and newlines:
 
-Leave `$ARGUMENTS` unquoted so the shell performs word-splitting, passing each whitespace-separated token as a separate
-argument to the binary.
+```yaml
+---
+argument-hint: "[description]"
+---
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/my-tool" "$ARGUMENTS"`
+```
+
+Use quoted `"$ARGUMENTS"` whenever the input may contain spaces, newlines, or punctuation that the shell would otherwise
+split or interpret. Unquoted `$ARGUMENTS` is appropriate only when word-splitting into separate tokens is the intended
+behavior.
 
 ## Loading Paths
 
@@ -307,6 +326,11 @@ per-agent state. Skills that perform stateless operations (e.g., format a docume
   # WRONG: calls skill-loader, which loads skill content but does NOT invoke Java handlers
   !`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" get-output "$0" $ARGUMENTS`
   ```
+  **Quoting `$ARGUMENTS`:** The examples above use unquoted `$ARGUMENTS`, which is appropriate when the tool
+  expects separate tokens (e.g., keyword lists or flag-style arguments). If the skill's `argument-hint` accepts
+  free-text input (e.g., `[description]`), use `"$ARGUMENTS"` (quoted) so spaces and newlines are passed as one
+  argument rather than being word-split by the shell. See the [Variable-Length Arguments](#variable-length-arguments-arguments)
+  section for the full quoting guide.
 
 `skill-loader` (SkillLoader) reads and returns skill content from `first-use.md`. It does not route to
 Java handlers. Using `skill-loader` when the intent is to invoke a Java handler produces empty or
