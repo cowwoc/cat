@@ -18,3 +18,4 @@ plugin/runtime/
 __pycache__/
 *.pyc
 target/
+.claude/worktrees/
