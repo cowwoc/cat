@@ -779,5 +779,25 @@
       "catches_variations" : false
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M484",
+    "timestamp" : "2026-03-05T20:41:57Z",
+    "category" : "insufficient_investigation",
+    "description" : "",
+    "root_cause" : "The learn subagent (haiku model) did not follow the phase-investigate.md instructions to search the JSONL for evidence before analyzing root cause. It fabricated a plausible-sounding but incorrect root cause without examining the git commands that actually created/staged the files. The pre-extracted investigation context provided only keyword matches and did not include the git add -A command at line 339.",
+    "rca_method" : "B",
+    "rca_method_name" : "taxonomy",
+    "prevention_type" : "documentation",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "medium",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }
