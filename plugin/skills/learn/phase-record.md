@@ -5,367 +5,43 @@ See LICENSE.md in the project root for license terms.
 -->
 # Phase 4: Record
 
-This phase verifies the prevention works, records the learning in MEMORY.md, updates the retrospective counter, and
-commits.
+This phase records the learning by running the `record-learning` CLI tool, which handles all file I/O
+mechanically: generating the next mistake ID, appending to `mistakes-YYYY-MM.json`, updating the
+retrospective counter in `index.json`, and committing everything in a single operation.
 
-## Your Task
+## Step 10: Run record-learning CLI
 
-Complete the recording phase for the learn skill. You will receive prevention results from Phase 3 as input.
-
-Your final message must be ONLY the JSON result object with no surrounding text or explanation. The parent agent parses
-your response as JSON.
-
-## Input
-
-You will receive JSON objects from all previous phases containing:
-- Investigation results (event sequence, documents read, priming analysis)
-- Analysis results (mistake description, root cause, RCA method, category)
-- Prevention results (prevention type, files modified, quality metrics)
-
-## Step 10: Verify Prevention Works
-
-```yaml
-verification:
-  action: "Rerun similar issue with new threshold"
-  success_criteria:
-    - Decomposition triggered before 60K tokens
-    - No quality degradation observed
-    - Original mistake type does not recur
-```
-
-## Step 11: Record Learning
-
-**MANDATORY: Persist learning to file, not just context.**
-
-**CRITICAL VALIDATION - Before recording, verify prevention is REAL:**
-
-```yaml
-prevention_path_validation:
-  invalid_examples:
-    - "N/A"
-    - "N/A - behavioral change"
-    - "behavioral"
-    - "process change"
-    - ""  # empty
-    - "TBD"
-
-  valid_examples:
-    - "/workspace/cat/commands/work.md"
-    - ".claude/hooks/validate-commit.sh"
-    - "src/main/java/Parser.java"
-
-  # Rule: prevention_path MUST be a real file path that was actually modified
-  # "Behavioral change" without enforcement is NOT prevention - it WILL recur
-
-  # (A022) BLOCKING: prevention_path must match a file listed in the BLOCKING GATE from Phase 3
-  # If prevention_path doesn't match what you edited, STOP and fix before recording
-  # Recording with mismatched path corrupts the learning system
-```
-
-**If you cannot identify a real file to change, you have NOT implemented prevention.**
-Go back to step 9 and find a code/config/documentation fix.
-
-**Directory:** `.claude/cat/retrospectives/`
-
-**File Structure (v2.0 - time-based splits):**
-- `index.json` - Centralized config and file tracking
-- `mistakes-YYYY-MM.json` - Mistakes for each month
-- `retrospectives-YYYY-MM.json` - Retrospectives for each month
-
-**CRITICAL PATH CHECKS**:
-
-1. **Directory path**: Files MUST be in `.claude/cat/retrospectives/`, NOT `.claude/retrospectives/`.
-
-2. **prevention_path format**: MUST use `${CLAUDE_PROJECT_DIR}` prefix for project-relative
-paths:
-   ```yaml
-   # INVALID - relative paths break when cwd changes
-   prevention_path: ".claude/hooks/my-hook.sh"
-   prevention_path: "hooks/my-hook.sh"
-
-   # VALID - absolute paths work from any directory
-   prevention_path: "${CLAUDE_PROJECT_DIR}/.claude/hooks/my-hook.sh"
-   prevention_path: "/workspace/cat/skills/my-skill/SKILL.md"
-   ```
-
-3. **Plugin source vs cache**: When fixing CAT plugin files, edit SOURCE not CACHE:
-   ```yaml
-   # WRONG - edits lost on plugin update
-   ~/.config/claude/plugins/cache/claude-code-cat/cat/1.1/skills/...
-
-   # CORRECT - edit the source repository
-   /workspace/cat/skills/...  # or wherever CAT source is cloned
-   ```
-
-If files exist at wrong location, migrate:
+Save the Phase 3 JSON output to a temporary file, then invoke the CLI tool:
 
 ```bash
-if [ -d .claude/retrospectives ] && [ ! -d .claude/cat/retrospectives ]; then
-  mkdir -p .claude/cat/retrospectives
-  mv .claude/retrospectives/*.json .claude/cat/retrospectives/ 2>/dev/null || true
-  rmdir .claude/retrospectives 2>/dev/null || true
-fi
+# Save Phase 3 output to temp file
+cat > /tmp/phase3-output.json << 'PHASE3_EOF'
+{...Phase 3 JSON output...}
+PHASE3_EOF
+
+# Run the record-learning tool
+"$CLIENT_BIN/record-learning" < /tmp/phase3-output.json
 ```
 
-```bash
-RETRO_DIR="${CLAUDE_PROJECT_DIR}/.claude/cat/retrospectives"
-INDEX_FILE="$RETRO_DIR/index.json"
+The tool reads Phase 3 JSON from stdin and outputs a JSON result to stdout.
 
-# Get current year-month for file naming
-YEAR_MONTH=$(date +%Y-%m)
-MISTAKES_FILE="$RETRO_DIR/mistakes-${YEAR_MONTH}.json"
+## Output
 
-mkdir -p "$RETRO_DIR"
-
-# Initialize index.json if needed
-if [ ! -f "$INDEX_FILE" ]; then
-  cat > "$INDEX_FILE" << 'EOF'
-{
-  "version": "2.0",
-  "config": {
-    "mistake_count_threshold": 10,
-    "trigger_interval_days": 7
-  },
-  "last_retrospective": null,
-  "mistake_count_since_last": 0,
-  "files": {
-    "mistakes": [],
-    "retrospectives": []
-  }
-}
-EOF
-fi
-
-# Initialize split file for current month if needed
-if [ ! -f "$MISTAKES_FILE" ]; then
-  echo "{\"period\":\"$YEAR_MONTH\",\"mistakes\":[]}" > "$MISTAKES_FILE"
-  # Add to index
-  jq --arg f "mistakes-${YEAR_MONTH}.json" \
-    'if (.files.mistakes | index($f)) then . else .files.mistakes += [$f] | .files.mistakes |= sort end' \
-    "$INDEX_FILE" > "$INDEX_FILE.tmp" && mv "$INDEX_FILE.tmp" "$INDEX_FILE"
-fi
-
-# Get max ID across ALL split files (handles gaps correctly)
-MAX_NUM=$(cat "$RETRO_DIR"/mistakes-*.json 2>/dev/null | \
-  jq -s '[.[].mistakes[].id] | map(select(startswith("M")) | ltrimstr("M") | tonumber) | max // 0')
-NEXT_NUM=$((MAX_NUM + 1))
-NEXT_ID=$(printf "M%03d" $NEXT_NUM)
-
-# Verify ID doesn't already exist across all files (safety check)
-if cat "$RETRO_DIR"/mistakes-*.json 2>/dev/null | jq -s -e --arg id "$NEXT_ID" \
-    '[.[].mistakes[] | select(.id == $id)] | length > 0' >/dev/null 2>&1; then
-  echo "ERROR: ID $NEXT_ID already exists! Finding next available..."
-  MAX_NUM=$(cat "$RETRO_DIR"/mistakes-*.json 2>/dev/null | \
-    jq -s '[.[].mistakes[].id] | map(ltrimstr("M") | tonumber) | max')
-  NEXT_NUM=$((MAX_NUM + 1))
-  NEXT_ID=$(printf "M%03d" $NEXT_NUM)
-fi
-```
-
-**Append entry to mistakes.json:**
+The tool outputs JSON to stdout:
 
 ```json
 {
-  "id": "{NEXT_ID}",
-  "timestamp": "{ISO-8601 timestamp}",
-  "category": "{see category reference below}",
-  "description": "{One-line description of the mistake}",
-  "root_cause": "{Root cause from analysis}",
-  "rca_method": "{A|B|C}",
-  "rca_method_name": "{5-whys|taxonomy|causal-barrier}",
-  "prevention_type": "{code_fix|hook|validation|config|skill|threshold|process|documentation}",
-  "prevention_path": "{path/to/file/changed}",
-  "pattern_keywords": ["{keyword1}", "{keyword2}"],
-  "prevention_implemented": true,
-  "prevention_verified": true,
-  "recurrence_of": "{null or ID of original mistake if this is a recurrence}",
-  "prevention_quality": {
-    "verification_type": "{positive|negative}",
-    "fragility": "{low|medium|high}",
-    "catches_variations": true
+  "learning_id": "M463",
+  "counter_status": {
+    "count": 5,
+    "threshold": 10,
+    "days_since_last": 3,
+    "interval_days": 7
   },
-  "correct_behavior": "{What should be done instead}"
+  "retrospective_trigger": false,
+  "commit_hash": "abc123"
 }
 ```
 
-**Category and Prevention Type Reference:**
-
-See [mistake-categories.md](mistake-categories.md) for full category list, prevention types, and common root cause
-patterns.
-
-**Common categories:** protocol_violation, prompt_engineering, context_degradation, tool_misuse,
-assumption_without_verification, misleading_documentation
-
-**Use jq to append to current month's split file:**
-
-```bash
-# Append to current month's split file (mistakes-YYYY-MM.json)
-jq --argjson new '{...new entry...}' '.mistakes += [$new]' \
-  "$MISTAKES_FILE" > "$MISTAKES_FILE.tmp" \
-  && mv "$MISTAKES_FILE.tmp" "$MISTAKES_FILE"
-```
-
-**CRITICAL: After appending, verify the entry exists in the file.**
-
-```bash
-# Verify the new entry was written successfully
-if ! jq -e --arg id "$NEXT_ID" '.mistakes[] | select(.id == $id)' "$MISTAKES_FILE" >/dev/null; then
-  echo "ERROR: Failed to write mistake entry $NEXT_ID to $MISTAKES_FILE"
-  exit 1
-fi
-```
-
-Do not proceed until verification confirms the entry exists.
-
-## Step 12: Determine Commit Location
-
-**Single-commit rule:** ALL learning changes — prevention files AND retrospective metadata — go to the same location
-in a SINGLE commit. Never split a learn session across two separate commits or two separate git trees.
-
-**Commit location:**
-- Active issue worktree exists → commit everything to the worktree
-- No active worktree → commit everything to the main workspace
-
-```bash
-# Determine commit location: worktree if active, otherwise main workspace
-if [[ -f "$(git rev-parse --git-common-dir)/worktrees/$(basename "$PWD")/cat-branch-point" ]]; then
-  COMMIT_DIR="$PWD"  # Already in a worktree
-  IN_WORKTREE=true
-else
-  # Check for active worktrees
-  source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
-  ACTIVE_WORKTREE=$(find "${WORKTREES_DIR}" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | head -1)
-  if [[ -n "$ACTIVE_WORKTREE" ]]; then
-    COMMIT_DIR="$ACTIVE_WORKTREE"
-    IN_WORKTREE=true
-  else
-    COMMIT_DIR="${CLAUDE_PROJECT_DIR}"
-    IN_WORKTREE=false
-  fi
-fi
-
-echo "Commit location: $COMMIT_DIR (in_worktree=$IN_WORKTREE)"
-```
-
-**Why all changes go to the same location:**
-
-Prevention files and retrospective metadata are both produced by the same learn session. Splitting them across the
-worktree and main workspace violates worktree isolation: the main workspace branch advances independently, bypassing
-review. Committing everything together — to the active worktree when one exists — ensures the full learning record
-flows through the normal merge and review process.
-
-## Step 13: Update Retrospective Counter and Commit
-
-**MANDATORY: Update counter and commit all files (prevention + retrospective metadata) to $COMMIT_DIR together.**
-
-**VALIDATION CHECK**: Before incrementing, verify counter matches actual mistake count:
-
-```bash
-RETRO_DIR="${CLAUDE_PROJECT_DIR}/.claude/cat/retrospectives"
-INDEX_FILE="$RETRO_DIR/index.json"
-
-LAST_RETRO=$(jq -r '.last_retrospective // empty' "$INDEX_FILE")
-
-# Count actual mistakes since last retrospective across ALL split files
-if [[ -n "$LAST_RETRO" && "$LAST_RETRO" != "null" ]]; then
-  ACTUAL_COUNT=$(cat "$RETRO_DIR"/mistakes-*.json 2>/dev/null | \
-    jq -s --arg date "$LAST_RETRO" \
-    '[.[].mistakes[] | select(.timestamp > $date)] | length')
-else
-  ACTUAL_COUNT=$(cat "$RETRO_DIR"/mistakes-*.json 2>/dev/null | \
-    jq -s '[.[].mistakes[]] | length')
-fi
-
-COUNTER=$(jq '.mistake_count_since_last' "$INDEX_FILE")
-
-# Warn if mismatch (counter should be ACTUAL_COUNT - 1 before we increment)
-if [[ $COUNTER -ne $((ACTUAL_COUNT - 1)) ]] && [[ $COUNTER -ne $ACTUAL_COUNT ]]; then
-  echo "WARNING: Counter mismatch! Counter=$COUNTER, Actual mistakes since $LAST_RETRO=$ACTUAL_COUNT"
-  echo "Fixing counter to match actual count..."
-  jq --argjson count "$ACTUAL_COUNT" '.mistake_count_since_last = $count' "$INDEX_FILE" > "$INDEX_FILE.tmp" \
-    && mv "$INDEX_FILE.tmp" "$INDEX_FILE"
-else
-  jq '.mistake_count_since_last += 1' "$INDEX_FILE" > "$INDEX_FILE.tmp" \
-    && mv "$INDEX_FILE.tmp" "$INDEX_FILE"
-fi
-
-# Stage ALL files: retrospective metadata + prevention files — all go to $COMMIT_DIR
-# git -C is intentional: $COMMIT_DIR is the project config directory, not an issue worktree.
-git -C "$COMMIT_DIR" add "$MISTAKES_FILE" "$INDEX_FILE"
-for file in "${files_modified[@]}"; do
-  git -C "$COMMIT_DIR" add "$file"
-done
-
-COMMIT_OUTPUT=$(git -C "$COMMIT_DIR" commit -m "config: record learning ${NEXT_ID} - {short description}" 2>&1)
-COMMIT_HASH=$(git -C "$COMMIT_DIR" rev-parse --short HEAD)
-
-# CRITICAL: Verify commit succeeded and capture actual hash
-if [[ $? -ne 0 ]]; then
-  echo "ERROR: Commit failed: $COMMIT_OUTPUT"
-  exit 1
-fi
-
-# Get current values to check trigger
-MISTAKES=$(jq '.mistake_count_since_last' "$INDEX_FILE")
-THRESHOLD=$(jq '.config.mistake_count_threshold' "$INDEX_FILE")
-LAST_RETRO=$(jq -r '.last_retrospective // empty' "$INDEX_FILE")
-INTERVAL=$(jq '.config.trigger_interval_days' "$INDEX_FILE")
-
-# Calculate days since last retrospective
-if [[ -n "$LAST_RETRO" && "$LAST_RETRO" != "null" ]]; then
-  LAST_EPOCH=$(date -d "$LAST_RETRO" +%s 2>/dev/null || echo 0)
-else
-  LAST_EPOCH=0
-fi
-NOW_EPOCH=$(date +%s)
-DAYS_SINCE=$(( (NOW_EPOCH - LAST_EPOCH) / 86400 ))
-
-# Check thresholds
-if [[ $MISTAKES -ge $THRESHOLD ]]; then
-  echo "RETROSPECTIVE TRIGGERED: Mistake threshold reached ($MISTAKES >= $THRESHOLD)"
-  echo "Run: /cat:retrospective-agent"
-elif [[ $DAYS_SINCE -ge $INTERVAL ]]; then
-  echo "RETROSPECTIVE TRIGGERED: Time threshold reached ($DAYS_SINCE days >= $INTERVAL)"
-  echo "Run: /cat:retrospective-agent"
-else
-  echo "Retrospective status: $MISTAKES/$THRESHOLD mistakes, $DAYS_SINCE/$INTERVAL days"
-fi
-```
-
-**If triggered, MUST use AskUserQuestion:**
-
-```yaml
-retrospective_trigger:
-  condition: mistakes >= threshold OR days >= interval
-  action: "Use AskUserQuestion to offer user choice"
-  mandatory_prompt:
-    question: "Retrospective threshold exceeded ({count}/{threshold}). Run retrospective now?"
-    options:
-      - "Run now" - Invoke /cat:retrospective-agent immediately
-      - "Later" - Inform user to run /cat:retrospective when ready
-      - "Skip this cycle" - Reset counter without running
-```
-
-**Anti-pattern:** Printing "retrospective should be triggered" without using AskUserQuestion
-to give user explicit choice.
-
-## Output Format
-
-Your final message MUST be ONLY this JSON (no other text):
-
-```json
-{
-  "phase": "record",
-  "status": "COMPLETE",
-  "user_summary": "1-3 sentence summary of what this phase did (for display to user between phases)",
-  "learning_id": "M123",
-  "memory_updated": true,
-  "counter_updated": true,
-  "prevention_committed": true,
-  "prevention_commit_hash": "<actual-git-hash-or-null>",
-  "retrospective_committed": true,
-  "retrospective_commit_hash": "<actual-git-hash-or-null>",
-  "retrospective_triggered": false,
-  "retrospective_status": "5/10 mistakes, 3/7 days"
-}
-```
+Capture the output and return it as the Phase 4 result. If the tool exits non-zero, the recording failed —
+do not proceed and report the error to the caller.
