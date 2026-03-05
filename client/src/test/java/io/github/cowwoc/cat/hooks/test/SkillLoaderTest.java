@@ -3144,4 +3144,50 @@ Agent: $0
       TestUtils.deleteDirectoryRecursively(tempPluginRoot);
     }
   }
+
+  /**
+   * Verifies that skill files containing code block diagrams with box-drawing characters and
+   * embedded preprocessor directive syntax do not match {@code PREPROCESSOR_DIRECTIVE_PATTERN}.
+   * <p>
+   * {@code processPreprocessorDirectives()} does not skip fenced code blocks. When a diagram inside
+   * a code block contains a {@code !`"path"} sequence split across lines, the regex must not match
+   * across line boundaries. The {@code [^"\n]+} character class in the path capture group prevents
+   * the pattern from spanning multiple lines.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadHandlesNonAsciiBoxDrawingCharacters() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      // Replicate the real-world scenario from skill-builder-agent/first-use.md:
+      // A code block diagram contains !`"path" split across lines with box-drawing characters.
+      // The regex matches across lines, capturing non-ASCII chars in the launcher path.
+      Files.writeString(companionDir.resolve("first-use.md"),
+        "# Architecture\n" +
+        "\n" +
+        "```\n" +
+        "│                      │     │ !`\"${CLAUDE_PLUGIN_ROOT}/    │\n" +
+        "│ Returns content via  │──→  │  client/bin/get-output\" TYPE`│\n" +
+        "```\n" +
+        "\n" +
+        "Use the Skill tool to invoke this skill.\n",
+        java.nio.charset.StandardCharsets.UTF_8);
+
+      SkillLoader loader = new SkillLoader(scope, List.of("agent-" + System.nanoTime()));
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").
+        contains("│──→").
+        contains("Use the Skill tool to invoke this skill.");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
 }

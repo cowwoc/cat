@@ -92,7 +92,7 @@ public final class SkillLoader
   private static final Pattern VAR_PATTERN = Pattern.compile("\\$\\{([^}]+)}");
   private static final Pattern PATH_PATTERN = Pattern.compile("^@(.+/.+)$", Pattern.MULTILINE);
   private static final Pattern PREPROCESSOR_DIRECTIVE_PATTERN = Pattern.compile(
-    "!`\"([^\"]+)\"(\\s+[^`]+)?`");
+    "!`\"([^\"\n]+)\"([ \t]+[^`\n]+)?`");
   private static final Pattern FRONTMATTER_PATTERN = Pattern.compile(
     "\\A---\\n.*?\\n---\\n?", Pattern.DOTALL);
   private static final Pattern OUTPUT_TAG_PATTERN = Pattern.compile(
