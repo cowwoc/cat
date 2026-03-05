@@ -245,6 +245,12 @@ public final class InjectSessionInstructions implements SessionStartHandler
       git -c user.name=Alice commit ...      # inline override
       GIT_AUTHOR_NAME=Alice git commit ...   # env var override
       git commit --author='Alice <a@b.com>'  # commit --author flag
+      echo '[user]' >> ~/.gitconfig          # direct file write
+      printf '[user]\nname=X\n' >> ~/.gitconfig  # direct file write
+      tee ~/.gitconfig                       # direct file write
+      sed -i 's/name/X/' ~/.gitconfig        # in-place file edit
+      awk '{...}' > ~/.gitconfig             # direct file write
+      cat > ~/.gitconfig                     # direct file write
       ```
 
       **When to write**: Only when the user explicitly says something like "set my git user name to X" \

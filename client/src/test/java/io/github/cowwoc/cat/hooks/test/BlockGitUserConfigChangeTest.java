@@ -319,4 +319,280 @@ public final class BlockGitUserConfigChangeTest
     BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
     requireThat(result.blocked(), "blocked").isTrue();
   }
+
+  /**
+   * Verifies that printf appending to ~/.gitconfig is blocked.
+   */
+  @Test
+  public void printfAppendToHomeDotGitconfigIsBlocked()
+  {
+    BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
+    String command = "printf '[user]\\nname=X\\n' >> ~/.gitconfig";
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+    requireThat(result.blocked(), "blocked").isTrue();
+  }
+
+  /**
+   * Verifies that echo appending to ~/.gitconfig is blocked.
+   */
+  @Test
+  public void echoAppendToHomeDotGitconfigIsBlocked()
+  {
+    BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
+    String command = "echo '  name = X' >> ~/.gitconfig";
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+    requireThat(result.blocked(), "blocked").isTrue();
+  }
+
+  /**
+   * Verifies that echo redirecting to ~/.gitconfig (overwrite) is blocked.
+   */
+  @Test
+  public void echoOverwriteHomeDotGitconfigIsBlocked()
+  {
+    BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
+    String command = "echo '[user]' > ~/.gitconfig";
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+    requireThat(result.blocked(), "blocked").isTrue();
+  }
+
+  /**
+   * Verifies that tee targeting ~/.gitconfig is blocked.
+   */
+  @Test
+  public void teeToHomeDotGitconfigIsBlocked()
+  {
+    BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
+    String command = "echo '[user]' | tee ~/.gitconfig";
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+    requireThat(result.blocked(), "blocked").isTrue();
+  }
+
+  /**
+   * Verifies that tee -a (append) targeting ~/.gitconfig is blocked.
+   */
+  @Test
+  public void teeAppendToHomeDotGitconfigIsBlocked()
+  {
+    BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
+    String command = "echo '  name = X' | tee -a ~/.gitconfig";
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+    requireThat(result.blocked(), "blocked").isTrue();
+  }
+
+  /**
+   * Verifies that sed -i editing ~/.gitconfig is blocked.
+   */
+  @Test
+  public void sedInPlaceEditHomeDotGitconfigIsBlocked()
+  {
+    BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
+    String command = "sed -i 's/name = Alice/name = Attacker/' ~/.gitconfig";
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+    requireThat(result.blocked(), "blocked").isTrue();
+  }
+
+  /**
+   * Verifies that awk redirecting to ~/.gitconfig is blocked.
+   */
+  @Test
+  public void awkWriteToHomeDotGitconfigIsBlocked()
+  {
+    BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
+    String command = "awk '{print}' input.txt > ~/.gitconfig";
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+    requireThat(result.blocked(), "blocked").isTrue();
+  }
+
+  /**
+   * Verifies that cat with output redirect to ~/.gitconfig is blocked.
+   */
+  @Test
+  public void catWriteToHomeDotGitconfigIsBlocked()
+  {
+    BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
+    String command = "cat > ~/.gitconfig";
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+    requireThat(result.blocked(), "blocked").isTrue();
+  }
+
+  /**
+   * Verifies that writes using $HOME instead of ~ are also blocked.
+   */
+  @Test
+  public void echoAppendUsingDollarHomeIsBlocked()
+  {
+    BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
+    String command = "echo '[user]' >> $HOME/.gitconfig";
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+    requireThat(result.blocked(), "blocked").isTrue();
+  }
+
+  /**
+   * Verifies that writes to ~/.config/git/config are blocked.
+   */
+  @Test
+  public void echoAppendToXdgGitConfigIsBlocked()
+  {
+    BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
+    String command = "echo '[user]' >> ~/.config/git/config";
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+    requireThat(result.blocked(), "blocked").isTrue();
+  }
+
+  /**
+   * Verifies that writes to /etc/gitconfig are blocked.
+   */
+  @Test
+  public void echoAppendToEtcGitconfigIsBlocked()
+  {
+    BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
+    String command = "echo '[user]' >> /etc/gitconfig";
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+    requireThat(result.blocked(), "blocked").isTrue();
+  }
+
+  /**
+   * Verifies that reading ~/.gitconfig with cat (no redirect) is allowed.
+   */
+  @Test
+  public void catReadHomeDotGitconfigIsAllowed()
+  {
+    BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
+    String command = "cat ~/.gitconfig";
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+    requireThat(result.blocked(), "blocked").isFalse();
+  }
+
+  /**
+   * Verifies that writing to an unrelated file (e.g., ~/notes.txt) is allowed.
+   */
+  @Test
+  public void echoAppendToUnrelatedFileIsAllowed()
+  {
+    BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
+    String command = "echo hello >> ~/notes.txt";
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+    requireThat(result.blocked(), "blocked").isFalse();
+  }
+
+  /**
+   * Verifies that printf appending to a non-gitconfig file is allowed.
+   */
+  @Test
+  public void printfAppendToUnrelatedFileIsAllowed()
+  {
+    BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
+    String command = "printf 'some content' >> ~/somefile.txt";
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+    requireThat(result.blocked(), "blocked").isFalse();
+  }
+
+  /**
+   * Verifies that tee with long-form flag (--append) targeting ~/.gitconfig is blocked.
+   */
+  @Test
+  public void teeLongFormAppendToHomeDotGitconfigIsBlocked()
+  {
+    BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
+    String command = "echo '[user]' | tee --append ~/.gitconfig";
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+    requireThat(result.blocked(), "blocked").isTrue();
+  }
+
+  /**
+   * Verifies that tee with combined flags (tee -ai) targeting ~/.gitconfig is blocked.
+   */
+  @Test
+  public void teeCombinedFlagsToHomeDotGitconfigIsBlocked()
+  {
+    BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
+    String command = "echo '[user]' | tee -ai ~/.gitconfig";
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+    requireThat(result.blocked(), "blocked").isTrue();
+  }
+
+  /**
+   * Verifies that cp targeting ~/.gitconfig is blocked.
+   */
+  @Test
+  public void cpToHomeDotGitconfigIsBlocked()
+  {
+    BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
+    String command = "cp /tmp/evil.gitconfig ~/.gitconfig";
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+    requireThat(result.blocked(), "blocked").isTrue();
+  }
+
+  /**
+   * Verifies that mv targeting ~/.gitconfig is blocked.
+   */
+  @Test
+  public void mvToHomeDotGitconfigIsBlocked()
+  {
+    BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
+    String command = "mv /tmp/evil.gitconfig ~/.gitconfig";
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+    requireThat(result.blocked(), "blocked").isTrue();
+  }
+
+  /**
+   * Verifies that install targeting ~/.gitconfig is blocked.
+   */
+  @Test
+  public void installToHomeDotGitconfigIsBlocked()
+  {
+    BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
+    String command = "install -m 600 /tmp/evil.gitconfig ~/.gitconfig";
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+    requireThat(result.blocked(), "blocked").isTrue();
+  }
+
+  /**
+   * Verifies that cp targeting ~/.config/git/config is blocked.
+   */
+  @Test
+  public void cpToXdgGitConfigIsBlocked()
+  {
+    BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
+    String command = "cp /tmp/evil.gitconfig ~/.config/git/config";
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+    requireThat(result.blocked(), "blocked").isTrue();
+  }
+
+  /**
+   * Verifies that mv targeting /etc/gitconfig is blocked.
+   */
+  @Test
+  public void mvToEtcGitconfigIsBlocked()
+  {
+    BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
+    String command = "mv /tmp/evil.gitconfig /etc/gitconfig";
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+    requireThat(result.blocked(), "blocked").isTrue();
+  }
+
+  /**
+   * Verifies that cp to an unrelated file is allowed.
+   */
+  @Test
+  public void cpToUnrelatedFileIsAllowed()
+  {
+    BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
+    String command = "cp /tmp/notes.txt ~/notes.txt";
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+    requireThat(result.blocked(), "blocked").isFalse();
+  }
+
+  /**
+   * Verifies that mv to an unrelated file is allowed.
+   */
+  @Test
+  public void mvToUnrelatedFileIsAllowed()
+  {
+    BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
+    String command = "mv /tmp/notes.txt ~/notes.txt";
+    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+    requireThat(result.blocked(), "blocked").isFalse();
+  }
 }
