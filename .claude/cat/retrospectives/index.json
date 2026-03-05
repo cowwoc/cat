@@ -1,1185 +1,817 @@
 {
-  "version": "2.0",
-  "config": {
-    "mistake_count_threshold": 10,
-    "trigger_interval_days": 7
+  "version" : "2.0",
+  "config" : {
+    "mistake_count_threshold" : 10,
+    "trigger_interval_days" : 7
   },
-  "last_retrospective": "2026-03-05T19:10:00Z",
-  "mistake_count_since_last": 0,
-  "files": {
-    "mistakes": [
-      "mistakes-2026-01.json",
-      "mistakes-2026-02.json",
-      "mistakes-2026-03.json"
-    ],
-    "retrospectives": [
-      "retrospectives-2026-01.json",
-      "retrospectives-2026-02.json",
-      "retrospectives-2026-03.json"
-    ]
+  "last_retrospective" : "2026-03-05T19:10:00Z",
+  "mistake_count_since_last" : 1,
+  "files" : {
+    "mistakes" : [ "mistakes-2026-01.json", "mistakes-2026-02.json", "mistakes-2026-03.json" ],
+    "retrospectives" : [ "retrospectives-2026-01.json", "retrospectives-2026-02.json", "retrospectives-2026-03.json" ]
   },
-  "patterns": [
-    {
-      "pattern_id": "PATTERN-001",
-      "pattern": "subagent_validation_fabrication",
-      "occurrences_total": 9,
-      "occurrences_after_fix": 5,
-      "first_seen": "2026-01-26T17:00:00Z",
-      "last_seen": "2026-02-02T12:00:00Z",
-      "last_action_date": null,
-      "status": "recurring",
-      "effectiveness": "partially_effective",
-      "preventions": [
-        "M269",
-        "M270",
-        "M271",
-        "M273",
-        "M274",
-        "M276",
-        "M346",
-        "M349",
-        "M356"
-      ],
-      "related_action_items": [
-        "A001"
-      ],
-      "note": "Subagents fabricate or skip validation scores when delegation prompts prime expected values or combine producer/validator roles"
+  "patterns" : [ {
+    "pattern_id" : "PATTERN-001",
+    "pattern" : "subagent_validation_fabrication",
+    "occurrences_total" : 9,
+    "occurrences_after_fix" : 5,
+    "first_seen" : "2026-01-26T17:00:00Z",
+    "last_seen" : "2026-02-02T12:00:00Z",
+    "last_action_date" : null,
+    "status" : "recurring",
+    "effectiveness" : "partially_effective",
+    "preventions" : [ "M269", "M270", "M271", "M273", "M274", "M276", "M346", "M349", "M356" ],
+    "related_action_items" : [ "A001" ],
+    "note" : "Subagents fabricate or skip validation scores when delegation prompts prime expected values or combine producer/validator roles"
+  }, {
+    "pattern_id" : "PATTERN-002",
+    "pattern" : "task_status_lifecycle_violation",
+    "occurrences_total" : 2,
+    "occurrences_after_fix" : 2,
+    "first_seen" : "2026-01-27T11:00:00Z",
+    "last_seen" : "2026-01-27T12:00:00Z",
+    "last_action_date" : null,
+    "status" : "recurring",
+    "effectiveness" : "pending",
+    "preventions" : [ "M278", "M279" ],
+    "related_action_items" : [ "A002" ],
+    "note" : "Incorrect task state transitions: abort marked as completed, decomposed parents marked completed before subtasks done"
+  }, {
+    "pattern_id" : "PATTERN-003",
+    "pattern" : "path_config_assumption",
+    "occurrences_total" : 3,
+    "occurrences_after_fix" : 5,
+    "first_seen" : "2026-01-26T18:00:00Z",
+    "last_seen" : "2026-02-28T00:00:00Z",
+    "last_action_date" : null,
+    "status" : "recurring",
+    "effectiveness" : "pending",
+    "preventions" : [ "M266", "M267", "M268", "M436" ],
+    "related_action_items" : [ "A003" ],
+    "note" : "Assumptions about paths or config values without verification - worktree paths, terminal width, abort semantics"
+  }, {
+    "pattern_id" : "PATTERN-004",
+    "pattern" : "user_message_ignored_mid_operation",
+    "occurrences_total" : 4,
+    "occurrences_after_fix" : 2,
+    "first_seen" : "2026-01-25T14:10:00Z",
+    "last_seen" : "2026-03-03T00:00:00Z",
+    "last_action_date" : null,
+    "status" : "recurring",
+    "effectiveness" : "partially_effective",
+    "preventions" : [ "M247", "M289", "M379", "M455" ],
+    "related_action_items" : [ "A004" ],
+    "note" : "User questions arriving mid-operation via system-reminders are ignored instead of being acknowledged immediately"
+  }, {
+    "pattern_id" : "PATTERN-005",
+    "pattern" : "main_agent_delegation_bypass",
+    "occurrences_total" : 6,
+    "occurrences_after_fix" : 2,
+    "first_seen" : "2026-01-28T00:15:00Z",
+    "last_seen" : "2026-01-28T12:15:00Z",
+    "last_action_date" : "2026-01-28T11:30:00-05:00",
+    "status" : "recurring",
+    "effectiveness" : "partially_effective",
+    "preventions" : [ "M294", "M296", "M297", "M302", "M304" ],
+    "related_action_items" : [ "A005" ],
+    "note" : "Main agent uses Write/Edit tools directly instead of delegating to subagents for implementation work"
+  }, {
+    "pattern_id" : "PATTERN-006",
+    "pattern" : "test_data_fabrication",
+    "occurrences_total" : 2,
+    "occurrences_after_fix" : 0,
+    "first_seen" : "2026-01-28T09:55:00Z",
+    "last_seen" : "2026-01-28T10:40:00Z",
+    "last_action_date" : "2026-01-28T11:30:00-05:00",
+    "status" : "new",
+    "effectiveness" : "pending",
+    "preventions" : [ "M300", "M303" ],
+    "related_action_items" : [ "A006" ],
+    "note" : "Using fabricated placeholder data instead of real values from context when testing"
+  }, {
+    "pattern_id" : "PATTERN-007",
+    "pattern" : "commit_type_classification_error",
+    "occurrences_total" : 2,
+    "occurrences_after_fix" : 0,
+    "first_seen" : "2026-01-26T21:45:00Z",
+    "last_seen" : "2026-01-28T13:34:47-05:00",
+    "last_action_date" : null,
+    "status" : "recurring",
+    "effectiveness" : "pending",
+    "preventions" : [ "M255", "M306" ],
+    "related_action_items" : [ "A007" ],
+    "note" : "Using docs: commit type for Claude-facing files instead of config:. Recurs despite M255 prevention adding guidance to CLAUDE.md."
+  }, {
+    "pattern_id" : "PATTERN-008",
+    "pattern" : "pre_rendered_output_bypass",
+    "occurrences_total" : 18,
+    "occurrences_after_fix" : 8,
+    "first_seen" : "2026-01-29T09:00:00Z",
+    "last_seen" : "2026-02-19T11:24:00Z",
+    "last_action_date" : null,
+    "status" : "recurring",
+    "effectiveness" : "pending",
+    "preventions" : [ "M311", "M315", "M319", "M321", "M322", "M323", "M331", "M332", "M333", "M334", "M452" ],
+    "related_action_items" : [ "A008", "A019" ],
+    "note" : "Claude manually constructs progress banners, work boxes, checkpoint boxes instead of using pre-rendered scripts. Results in misaligned boxes due to LLM inability to count display widths."
+  }, {
+    "pattern_id" : "PATTERN-009",
+    "pattern" : "render_diff_omission",
+    "occurrences_total" : 2,
+    "occurrences_after_fix" : 0,
+    "first_seen" : "2026-01-29T10:00:00Z",
+    "last_seen" : "2026-01-29T11:00:00Z",
+    "last_action_date" : null,
+    "status" : "new",
+    "effectiveness" : "pending",
+    "preventions" : [ "M312", "M313" ],
+    "related_action_items" : [ "A009" ],
+    "note" : "Approval gates shown without /cat:render-diff, user sees raw git diff or summary instead of 4-column table format."
+  }, {
+    "pattern_id" : "PATTERN-010",
+    "pattern" : "two_run_validation_bypass",
+    "occurrences_total" : 3,
+    "occurrences_after_fix" : 0,
+    "first_seen" : "2026-02-02T22:15:00Z",
+    "last_seen" : "2026-02-02T06:20:00Z",
+    "last_action_date" : "2026-02-02T18:00:00-05:00",
+    "status" : "addressed",
+    "effectiveness" : "pending",
+    "preventions" : [ "M351", "M354", "M357" ],
+    "related_action_items" : [ "A010" ],
+    "note" : "compare-docs executed with single comparison run instead of mandatory two-run protocol. Completion bias causes skip of 'repeat' steps."
+  }, {
+    "pattern_id" : "PATTERN-011",
+    "pattern" : "rca_symptom_fix",
+    "occurrences_total" : 2,
+    "occurrences_after_fix" : 0,
+    "first_seen" : "2026-02-02T00:20:00Z",
+    "last_seen" : "2026-02-02T01:00:00Z",
+    "last_action_date" : "2026-02-02T18:00:00-05:00",
+    "status" : "addressed",
+    "effectiveness" : "pending",
+    "preventions" : [ "M355", "M358" ],
+    "related_action_items" : [ "A011" ],
+    "note" : "RCA adds validation layers to detect symptoms instead of fixing source prompts that caused subagent misbehavior."
+  }, {
+    "pattern_id" : "PATTERN-012",
+    "pattern" : "subagent_prompt_priming",
+    "occurrences_total" : 3,
+    "occurrences_after_fix" : 0,
+    "first_seen" : "2026-02-01T14:30:00Z",
+    "last_seen" : "2026-02-02T14:00:00Z",
+    "last_action_date" : "2026-02-02T18:00:00-05:00",
+    "status" : "addressed",
+    "effectiveness" : "pending",
+    "preventions" : [ "M346", "M350", "M349" ],
+    "related_action_items" : [ "A012" ],
+    "note" : "Delegation prompts contain example values that prime subagents to fabricate or deprioritize actual execution."
+  }, {
+    "pattern_id" : "PATTERN-013",
+    "pattern" : "delegation_tooling_confusion",
+    "occurrences_total" : 6,
+    "occurrences_after_fix" : 2,
+    "first_seen" : "2026-02-03T06:00:00Z",
+    "last_seen" : "2026-03-04T00:00:00Z",
+    "last_action_date" : null,
+    "status" : "recurring",
+    "effectiveness" : "pending",
+    "preventions" : [ "M367", "M371", "M372", "M373", "M447", "M457" ],
+    "related_action_items" : [ "A013" ],
+    "note" : "Confusion about delegation mechanics: Task vs TaskCreate, manual spawning vs /cat:delegate, polling vs blocking. Subagent prompts also omit critical requirements."
+  }, {
+    "pattern_id" : "PATTERN-014",
+    "pattern" : "batch_skill_invocation_failure",
+    "occurrences_total" : 5,
+    "occurrences_after_fix" : 0,
+    "first_seen" : "2026-02-05T00:00:00Z",
+    "last_seen" : "2026-02-05T06:00:00Z",
+    "last_action_date" : "2026-02-05T00:57:20-05:00",
+    "status" : "new",
+    "effectiveness" : "pending",
+    "preventions" : [ "M425", "M426", "M427", "M428", "M429" ],
+    "related_action_items" : [ "A015", "A016" ],
+    "note" : "Chain failures when batch operations require nested skill invocations. Subagents fail/fabricate, failure messages prime bypass, main agent does work manually."
+  }, {
+    "pattern_id" : "PATTERN-015",
+    "pattern" : "shell_operator_escaping",
+    "occurrences_total" : 3,
+    "occurrences_after_fix" : 1,
+    "first_seen" : "2026-02-05T15:39:00Z",
+    "last_seen" : "2026-02-06T12:00:00Z",
+    "last_action_date" : null,
+    "status" : "new",
+    "effectiveness" : "pending",
+    "preventions" : [ "M431", "M448", "M449" ],
+    "related_action_items" : [ "A017" ],
+    "note" : "Bash tool inline operators (!=, //, compound &&/||) get shell-escaped or produce incorrect results. Skill-level prevention insufficient."
+  }, {
+    "pattern_id" : "PATTERN-016",
+    "pattern" : "squash_commit_corruption",
+    "occurrences_total" : 13,
+    "occurrences_after_fix" : 11,
+    "first_seen" : "2026-02-06T12:54:53Z",
+    "last_seen" : "2026-03-03T00:00:00Z",
+    "last_action_date" : null,
+    "status" : "recurring",
+    "effectiveness" : "pending",
+    "preventions" : [ "M450", "M451", "M484", "M488", "M500", "M503", "M379", "M385", "M386", "M417", "M448" ],
+    "related_action_items" : [ "A018" ],
+    "note" : "Git squash operations produce incorrect results - orphaned backup branches, unsquashed commits at approval gate, working tree not updated after branch pointer move. RemindGitSquash hook blocks direct reset alternatives but does not enforce pre-gate squash verification. GitSquash.java now deletes backup branch on success. Squash gate added to work-with-issue Step 7."
+  }, {
+    "pattern_id" : "PATTERN-017",
+    "pattern" : "approval_gate_bypass",
+    "occurrences_total" : 9,
+    "occurrences_after_fix" : 6,
+    "first_seen" : "2026-02-08T14:00:00Z",
+    "last_seen" : "2026-03-05T00:00:00Z",
+    "last_action_date" : null,
+    "status" : "recurring",
+    "effectiveness" : "pending",
+    "preventions" : [ "M479", "M480", "M489", "M437", "M446", "M459", "M462", "M463", "M464" ],
+    "related_action_items" : [ "A020" ],
+    "note" : "Agent bypasses approval gate when trust=medium. Merges without formal AskUserQuestion, or interprets conversational 'yes' as approval instead of requiring explicit option selection."
+  }, {
+    "pattern_id" : "PATTERN-018",
+    "pattern" : "stakeholder_review_quality",
+    "occurrences_total" : 8,
+    "occurrences_after_fix" : 4,
+    "first_seen" : "2026-02-08T14:00:00Z",
+    "last_seen" : "2026-02-23T02:00:00Z",
+    "last_action_date" : null,
+    "status" : "recurring",
+    "effectiveness" : "pending",
+    "preventions" : [ "M478", "M496", "M498", "M499", "M389" ],
+    "related_action_items" : [ "A021" ],
+    "note" : "Stakeholder reviewers fail to detect behavioral gaps, missing validation, and code quality issues. Reviewers read wrong branch or miss patterns spanning multiple files. Requirements stakeholder skips task-local Success Criteria for porting tasks, reading only formal REQ-IDs and missing behavioral parity checks. Pattern persists across 8 total occurrences despite multiple preventions."
+  }, {
+    "pattern_id" : "PATTERN-019",
+    "pattern" : "line_length_violation",
+    "occurrences_total" : 2,
+    "occurrences_after_fix" : 0,
+    "first_seen" : "2026-02-22T16:26:18Z",
+    "last_seen" : "2026-02-22T17:00:00Z",
+    "last_action_date" : null,
+    "status" : "new",
+    "effectiveness" : "pending",
+    "preventions" : [ "M380", "M382" ],
+    "related_action_items" : [ "A023" ],
+    "note" : "Agents write lines exceeding 120-character limit in both Java source files and Markdown skill files. Prevention rules exist in java.md and common.md but agents do not actively verify line length when editing content-focused files. Formatting attention is consumed by content correctness."
+  }, {
+    "pattern_id" : "PATTERN-020",
+    "pattern" : "mandatory_step_treated_as_optional",
+    "occurrences_total" : 2,
+    "occurrences_after_fix" : 0,
+    "first_seen" : "2026-02-22T17:40:28Z",
+    "last_seen" : "2026-02-23T00:00:00Z",
+    "last_action_date" : null,
+    "status" : "new",
+    "effectiveness" : "pending",
+    "preventions" : [ "M384", "M388" ],
+    "related_action_items" : [ "A024" ],
+    "note" : "Agents ask user permission before mandatory workflow steps or skip them entirely. Examples: asking permission for stakeholder review (mandatory in work-with-issue), skipping skill-builder review before approval gate. Agents cannot distinguish mandatory from optional workflow steps when skill documentation does not explicitly mark steps as MANDATORY."
+  }, {
+    "pattern_id" : "PATTERN-021",
+    "pattern" : "skill_output_re_presentation",
+    "occurrences_total" : 2,
+    "occurrences_after_fix" : 0,
+    "first_seen" : "2026-02-27T15:42:38Z",
+    "last_seen" : "2026-02-27T15:48:36Z",
+    "last_action_date" : null,
+    "status" : "new",
+    "effectiveness" : "pending",
+    "preventions" : [ "M419", "M420" ],
+    "related_action_items" : [ "A025" ],
+    "note" : "Agent invokes a skill that produces interactive wizard output (AskUserQuestion) but then re-renders the output as markdown prose or responds conversationally instead of letting the skill's wizard drive the interaction. Specific to skills like /cat:config that use AskUserQuestion."
+  }, {
+    "pattern_id" : "PATTERN-022",
+    "pattern" : "workflow_rejection_handling",
+    "occurrences_total" : 3,
+    "occurrences_after_fix" : 0,
+    "first_seen" : "2026-02-27T23:25:50Z",
+    "last_seen" : "2026-02-28T00:00:00Z",
+    "last_action_date" : null,
+    "status" : "new",
+    "effectiveness" : "pending",
+    "preventions" : [ "M433", "M434", "M435" ],
+    "related_action_items" : [ "A026" ],
+    "note" : "Agent fails to handle rejected or partial workflow states correctly: (1) proceeds to next phase when verify returns PARTIAL, (2) asks user 'what should I do?' after rejected stakeholder review instead of entering auto-fix loop, (3) skips re-presenting approval gate after user rejects it mid-workflow. Agent treats rejections as terminal instead of triggering the prescribed remediation."
+  }, {
+    "pattern_id" : "PATTERN-023",
+    "pattern" : "autolearn_false_positive",
+    "occurrences_total" : 2,
+    "occurrences_after_fix" : 0,
+    "first_seen" : "2026-03-04T00:00:00Z",
+    "last_seen" : "2026-03-05T00:00:00Z",
+    "last_action_date" : null,
+    "status" : "new",
+    "effectiveness" : "pending",
+    "preventions" : [ "M461", "M466" ],
+    "related_action_items" : [ "A027" ],
+    "note" : "AutoLearnMistakes hook triggers false positives on benign content: documentation severity tables matching CRITICAL ISSUE regex, embedded JSON strings in session-analyzer output containing build_failure/test_failure keywords."
+  } ],
+  "action_items" : [ {
+    "id" : "A001",
+    "priority" : "high",
+    "description" : "Enforce validation separation: subagents that PRODUCE output must NOT validate it. Add explicit check in subagent-delegation.md and fail-fast in work.md when subagent claims validation without tool evidence",
+    "category" : "protocol_violation",
+    "pattern_id" : "PATTERN-001",
+    "status" : "escalated",
+    "created_date" : "2026-01-27T12:30:00Z",
+    "completed_date" : "2026-01-27T12:30:00Z",
+    "related_mistakes" : [ "M269", "M270", "M271", "M273", "M274", "M276", "M346", "M349", "M356" ],
+    "effectiveness_check" : {
+      "mistakes_before" : 6,
+      "mistakes_after" : 5,
+      "post_fix_mistakes" : [ "M269", "M273", "M346", "M349", "M356" ],
+      "verdict" : "ineffective"
     },
-    {
-      "pattern_id": "PATTERN-002",
-      "pattern": "task_status_lifecycle_violation",
-      "occurrences_total": 2,
-      "occurrences_after_fix": 2,
-      "first_seen": "2026-01-27T11:00:00Z",
-      "last_seen": "2026-01-27T12:00:00Z",
-      "last_action_date": null,
-      "status": "recurring",
-      "effectiveness": "pending",
-      "preventions": [
-        "M278",
-        "M279"
-      ],
-      "related_action_items": [
-        "A002"
-      ],
-      "note": "Incorrect task state transitions: abort marked as completed, decomposed parents marked completed before subtasks done"
-    },
-    {
-      "pattern_id": "PATTERN-003",
-      "pattern": "path_config_assumption",
-      "occurrences_total": 3,
-      "occurrences_after_fix": 5,
-      "first_seen": "2026-01-26T18:00:00Z",
-      "last_seen": "2026-02-28T00:00:00Z",
-      "last_action_date": null,
-      "status": "recurring",
-      "effectiveness": "pending",
-      "preventions": [
-        "M266",
-        "M267",
-        "M268",
-        "M436"
-      ],
-      "related_action_items": [
-        "A003"
-      ],
-      "note": "Assumptions about paths or config values without verification - worktree paths, terminal width, abort semantics"
-    },
-    {
-      "pattern_id": "PATTERN-004",
-      "pattern": "user_message_ignored_mid_operation",
-      "occurrences_total": 4,
-      "occurrences_after_fix": 2,
-      "first_seen": "2026-01-25T14:10:00Z",
-      "last_seen": "2026-03-03T00:00:00Z",
-      "last_action_date": null,
-      "status": "recurring",
-      "effectiveness": "partially_effective",
-      "preventions": [
-        "M247",
-        "M289",
-        "M379",
-        "M455"
-      ],
-      "related_action_items": [
-        "A004"
-      ],
-      "note": "User questions arriving mid-operation via system-reminders are ignored instead of being acknowledged immediately"
-    },
-    {
-      "pattern_id": "PATTERN-005",
-      "pattern": "main_agent_delegation_bypass",
-      "occurrences_total": 6,
-      "occurrences_after_fix": 2,
-      "first_seen": "2026-01-28T00:15:00Z",
-      "last_seen": "2026-01-28T12:15:00Z",
-      "last_action_date": "2026-01-28T11:30:00-05:00",
-      "status": "recurring",
-      "effectiveness": "partially_effective",
-      "preventions": [
-        "M294",
-        "M296",
-        "M297",
-        "M302",
-        "M304"
-      ],
-      "related_action_items": [
-        "A005"
-      ],
-      "note": "Main agent uses Write/Edit tools directly instead of delegating to subagents for implementation work"
-    },
-    {
-      "pattern_id": "PATTERN-006",
-      "pattern": "test_data_fabrication",
-      "occurrences_total": 2,
-      "occurrences_after_fix": 0,
-      "first_seen": "2026-01-28T09:55:00Z",
-      "last_seen": "2026-01-28T10:40:00Z",
-      "last_action_date": "2026-01-28T11:30:00-05:00",
-      "status": "new",
-      "effectiveness": "pending",
-      "preventions": [
-        "M300",
-        "M303"
-      ],
-      "related_action_items": [
-        "A006"
-      ],
-      "note": "Using fabricated placeholder data instead of real values from context when testing"
-    },
-    {
-      "pattern_id": "PATTERN-007",
-      "pattern": "commit_type_classification_error",
-      "occurrences_total": 2,
-      "occurrences_after_fix": 0,
-      "first_seen": "2026-01-26T21:45:00Z",
-      "last_seen": "2026-01-28T13:34:47-05:00",
-      "last_action_date": null,
-      "status": "recurring",
-      "effectiveness": "pending",
-      "preventions": [
-        "M255",
-        "M306"
-      ],
-      "related_action_items": [
-        "A007"
-      ],
-      "note": "Using docs: commit type for Claude-facing files instead of config:. Recurs despite M255 prevention adding guidance to CLAUDE.md."
-    },
-    {
-      "pattern_id": "PATTERN-008",
-      "pattern": "pre_rendered_output_bypass",
-      "occurrences_total": 18,
-      "occurrences_after_fix": 8,
-      "first_seen": "2026-01-29T09:00:00Z",
-      "last_seen": "2026-02-19T11:24:00Z",
-      "last_action_date": null,
-      "status": "recurring",
-      "effectiveness": "pending",
-      "preventions": [
-        "M311",
-        "M315",
-        "M319",
-        "M321",
-        "M322",
-        "M323",
-        "M331",
-        "M332",
-        "M333",
-        "M334",
-        "M452"
-      ],
-      "related_action_items": [
-        "A008",
-        "A019"
-      ],
-      "note": "Claude manually constructs progress banners, work boxes, checkpoint boxes instead of using pre-rendered scripts. Results in misaligned boxes due to LLM inability to count display widths."
-    },
-    {
-      "pattern_id": "PATTERN-009",
-      "pattern": "render_diff_omission",
-      "occurrences_total": 2,
-      "occurrences_after_fix": 0,
-      "first_seen": "2026-01-29T10:00:00Z",
-      "last_seen": "2026-01-29T11:00:00Z",
-      "last_action_date": null,
-      "status": "new",
-      "effectiveness": "pending",
-      "preventions": [
-        "M312",
-        "M313"
-      ],
-      "related_action_items": [
-        "A009"
-      ],
-      "note": "Approval gates shown without /cat:render-diff, user sees raw git diff or summary instead of 4-column table format."
-    },
-    {
-      "pattern_id": "PATTERN-010",
-      "pattern": "two_run_validation_bypass",
-      "occurrences_total": 3,
-      "occurrences_after_fix": 0,
-      "first_seen": "2026-02-02T22:15:00Z",
-      "last_seen": "2026-02-02T06:20:00Z",
-      "last_action_date": "2026-02-02T18:00:00-05:00",
-      "status": "addressed",
-      "effectiveness": "pending",
-      "preventions": [
-        "M351",
-        "M354",
-        "M357"
-      ],
-      "related_action_items": [
-        "A010"
-      ],
-      "note": "compare-docs executed with single comparison run instead of mandatory two-run protocol. Completion bias causes skip of 'repeat' steps."
-    },
-    {
-      "pattern_id": "PATTERN-011",
-      "pattern": "rca_symptom_fix",
-      "occurrences_total": 2,
-      "occurrences_after_fix": 0,
-      "first_seen": "2026-02-02T00:20:00Z",
-      "last_seen": "2026-02-02T01:00:00Z",
-      "last_action_date": "2026-02-02T18:00:00-05:00",
-      "status": "addressed",
-      "effectiveness": "pending",
-      "preventions": [
-        "M355",
-        "M358"
-      ],
-      "related_action_items": [
-        "A011"
-      ],
-      "note": "RCA adds validation layers to detect symptoms instead of fixing source prompts that caused subagent misbehavior."
-    },
-    {
-      "pattern_id": "PATTERN-012",
-      "pattern": "subagent_prompt_priming",
-      "occurrences_total": 3,
-      "occurrences_after_fix": 0,
-      "first_seen": "2026-02-01T14:30:00Z",
-      "last_seen": "2026-02-02T14:00:00Z",
-      "last_action_date": "2026-02-02T18:00:00-05:00",
-      "status": "addressed",
-      "effectiveness": "pending",
-      "preventions": [
-        "M346",
-        "M350",
-        "M349"
-      ],
-      "related_action_items": [
-        "A012"
-      ],
-      "note": "Delegation prompts contain example values that prime subagents to fabricate or deprioritize actual execution."
-    },
-    {
-      "pattern_id": "PATTERN-013",
-      "pattern": "delegation_tooling_confusion",
-      "occurrences_total": 6,
-      "occurrences_after_fix": 2,
-      "first_seen": "2026-02-03T06:00:00Z",
-      "last_seen": "2026-03-04T00:00:00Z",
-      "last_action_date": null,
-      "status": "recurring",
-      "effectiveness": "pending",
-      "preventions": [
-        "M367",
-        "M371",
-        "M372",
-        "M373",
-        "M447",
-        "M457"
-      ],
-      "related_action_items": [
-        "A013"
-      ],
-      "note": "Confusion about delegation mechanics: Task vs TaskCreate, manual spawning vs /cat:delegate, polling vs blocking. Subagent prompts also omit critical requirements."
-    },
-    {
-      "pattern_id": "PATTERN-014",
-      "pattern": "batch_skill_invocation_failure",
-      "occurrences_total": 5,
-      "occurrences_after_fix": 0,
-      "first_seen": "2026-02-05T00:00:00Z",
-      "last_seen": "2026-02-05T06:00:00Z",
-      "last_action_date": "2026-02-05T00:57:20-05:00",
-      "status": "new",
-      "effectiveness": "pending",
-      "preventions": [
-        "M425",
-        "M426",
-        "M427",
-        "M428",
-        "M429"
-      ],
-      "related_action_items": [
-        "A015",
-        "A016"
-      ],
-      "note": "Chain failures when batch operations require nested skill invocations. Subagents fail/fabricate, failure messages prime bypass, main agent does work manually."
-    },
-    {
-      "pattern_id": "PATTERN-015",
-      "pattern": "shell_operator_escaping",
-      "occurrences_total": 3,
-      "occurrences_after_fix": 1,
-      "first_seen": "2026-02-05T15:39:00Z",
-      "last_seen": "2026-02-06T12:00:00Z",
-      "last_action_date": null,
-      "status": "new",
-      "effectiveness": "pending",
-      "preventions": [
-        "M431",
-        "M448",
-        "M449"
-      ],
-      "related_action_items": [
-        "A017"
-      ],
-      "note": "Bash tool inline operators (!=, //, compound &&/||) get shell-escaped or produce incorrect results. Skill-level prevention insufficient."
-    },
-    {
-      "pattern_id": "PATTERN-016",
-      "pattern": "squash_commit_corruption",
-      "occurrences_total": 13,
-      "occurrences_after_fix": 11,
-      "first_seen": "2026-02-06T12:54:53Z",
-      "last_seen": "2026-03-03T00:00:00Z",
-      "last_action_date": null,
-      "status": "recurring",
-      "effectiveness": "pending",
-      "preventions": [
-        "M450",
-        "M451",
-        "M484",
-        "M488",
-        "M500",
-        "M503",
-        "M379",
-        "M385",
-        "M386",
-        "M417",
-        "M448"
-      ],
-      "related_action_items": [
-        "A018"
-      ],
-      "note": "Git squash operations produce incorrect results - orphaned backup branches, unsquashed commits at approval gate, working tree not updated after branch pointer move. RemindGitSquash hook blocks direct reset alternatives but does not enforce pre-gate squash verification. GitSquash.java now deletes backup branch on success. Squash gate added to work-with-issue Step 7."
-    },
-    {
-      "pattern_id": "PATTERN-017",
-      "pattern": "approval_gate_bypass",
-      "occurrences_total": 9,
-      "occurrences_after_fix": 6,
-      "first_seen": "2026-02-08T14:00:00Z",
-      "last_seen": "2026-03-05T00:00:00Z",
-      "last_action_date": null,
-      "status": "recurring",
-      "effectiveness": "pending",
-      "preventions": [
-        "M479",
-        "M480",
-        "M489",
-        "M437",
-        "M446",
-        "M459",
-        "M462",
-        "M463",
-        "M464"
-      ],
-      "related_action_items": [
-        "A020"
-      ],
-      "note": "Agent bypasses approval gate when trust=medium. Merges without formal AskUserQuestion, or interprets conversational 'yes' as approval instead of requiring explicit option selection."
-    },
-    {
-      "pattern_id": "PATTERN-018",
-      "pattern": "stakeholder_review_quality",
-      "occurrences_total": 8,
-      "occurrences_after_fix": 4,
-      "first_seen": "2026-02-08T14:00:00Z",
-      "last_seen": "2026-02-23T02:00:00Z",
-      "last_action_date": null,
-      "status": "recurring",
-      "effectiveness": "pending",
-      "preventions": [
-        "M478",
-        "M496",
-        "M498",
-        "M499",
-        "M389"
-      ],
-      "related_action_items": [
-        "A021"
-      ],
-      "note": "Stakeholder reviewers fail to detect behavioral gaps, missing validation, and code quality issues. Reviewers read wrong branch or miss patterns spanning multiple files. Requirements stakeholder skips task-local Success Criteria for porting tasks, reading only formal REQ-IDs and missing behavioral parity checks. Pattern persists across 8 total occurrences despite multiple preventions."
-    },
-    {
-      "pattern_id": "PATTERN-019",
-      "pattern": "line_length_violation",
-      "occurrences_total": 2,
-      "occurrences_after_fix": 0,
-      "first_seen": "2026-02-22T16:26:18Z",
-      "last_seen": "2026-02-22T17:00:00Z",
-      "last_action_date": null,
-      "status": "new",
-      "effectiveness": "pending",
-      "preventions": [
-        "M380",
-        "M382"
-      ],
-      "related_action_items": [
-        "A023"
-      ],
-      "note": "Agents write lines exceeding 120-character limit in both Java source files and Markdown skill files. Prevention rules exist in java.md and common.md but agents do not actively verify line length when editing content-focused files. Formatting attention is consumed by content correctness."
-    },
-    {
-      "pattern_id": "PATTERN-020",
-      "pattern": "mandatory_step_treated_as_optional",
-      "occurrences_total": 2,
-      "occurrences_after_fix": 0,
-      "first_seen": "2026-02-22T17:40:28Z",
-      "last_seen": "2026-02-23T00:00:00Z",
-      "last_action_date": null,
-      "status": "new",
-      "effectiveness": "pending",
-      "preventions": [
-        "M384",
-        "M388"
-      ],
-      "related_action_items": [
-        "A024"
-      ],
-      "note": "Agents ask user permission before mandatory workflow steps or skip them entirely. Examples: asking permission for stakeholder review (mandatory in work-with-issue), skipping skill-builder review before approval gate. Agents cannot distinguish mandatory from optional workflow steps when skill documentation does not explicitly mark steps as MANDATORY."
-    },
-    {
-      "pattern_id": "PATTERN-021",
-      "pattern": "skill_output_re_presentation",
-      "occurrences_total": 2,
-      "occurrences_after_fix": 0,
-      "first_seen": "2026-02-27T15:42:38Z",
-      "last_seen": "2026-02-27T15:48:36Z",
-      "last_action_date": null,
-      "status": "new",
-      "effectiveness": "pending",
-      "preventions": [
-        "M419",
-        "M420"
-      ],
-      "related_action_items": [
-        "A025"
-      ],
-      "note": "Agent invokes a skill that produces interactive wizard output (AskUserQuestion) but then re-renders the output as markdown prose or responds conversationally instead of letting the skill's wizard drive the interaction. Specific to skills like /cat:config that use AskUserQuestion."
-    },
-    {
-      "pattern_id": "PATTERN-022",
-      "pattern": "workflow_rejection_handling",
-      "occurrences_total": 3,
-      "occurrences_after_fix": 0,
-      "first_seen": "2026-02-27T23:25:50Z",
-      "last_seen": "2026-02-28T00:00:00Z",
-      "last_action_date": null,
-      "status": "new",
-      "effectiveness": "pending",
-      "preventions": [
-        "M433",
-        "M434",
-        "M435"
-      ],
-      "related_action_items": [
-        "A026"
-      ],
-      "note": "Agent fails to handle rejected or partial workflow states correctly: (1) proceeds to next phase when verify returns PARTIAL, (2) asks user 'what should I do?' after rejected stakeholder review instead of entering auto-fix loop, (3) skips re-presenting approval gate after user rejects it mid-workflow. Agent treats rejections as terminal instead of triggering the prescribed remediation."
-    },
-    {
-      "pattern_id": "PATTERN-023",
-      "pattern": "autolearn_false_positive",
-      "occurrences_total": 2,
-      "occurrences_after_fix": 0,
-      "first_seen": "2026-03-04T00:00:00Z",
-      "last_seen": "2026-03-05T00:00:00Z",
-      "last_action_date": null,
-      "status": "new",
-      "effectiveness": "pending",
-      "preventions": [
-        "M461",
-        "M466"
-      ],
-      "related_action_items": [
-        "A027"
-      ],
-      "note": "AutoLearnMistakes hook triggers false positives on benign content: documentation severity tables matching CRITICAL ISSUE regex, embedded JSON strings in session-analyzer output containing build_failure/test_failure keywords."
+    "escalation" : {
+      "id" : "ESCALATE-A001",
+      "escalated_date" : "2026-02-02T18:00:00-05:00",
+      "last_reviewed" : "2026-02-23T10:22:49Z",
+      "reason" : "5 post-fix mistakes (M346, M349, M356 in current period) - documentation-level prevention ineffective",
+      "escalation_level" : "hook",
+      "analysis" : "R022 update: No new PATTERN-001 recurrences in current period (M377-M391). Prior period had 5 post-fix failures (M346, M349, M356, M364, M368). A012 (prompt priming prevention) may be taking effect - descriptive placeholders instead of example values appears to reduce fabrication rate. PATTERN-020 (mandatory step bypass) shows subagent compliance gap persists in different form. Escalation remains open: if PATTERN-001 recurs, implement PostToolUse hook to detect validation claims without corresponding skill invocation evidence in session transcript.",
+      "proposed_solution" : "Continue monitoring. A012 (prompt priming prevention) may be stabilizing the pattern. R022: No new recurrences in current period. If recurrence in next period, implement structural enforcement: PostToolUse hook requiring tool output evidence in subagent validation claims. Current escalation level: hook (proposed but not implemented). Monitor for 2+ clean periods before closing.",
+      "status" : "open"
     }
-  ],
-  "action_items": [
-    {
-      "id": "A001",
-      "priority": "high",
-      "description": "Enforce validation separation: subagents that PRODUCE output must NOT validate it. Add explicit check in subagent-delegation.md and fail-fast in work.md when subagent claims validation without tool evidence",
-      "category": "protocol_violation",
-      "pattern_id": "PATTERN-001",
-      "status": "escalated",
-      "created_date": "2026-01-27T12:30:00Z",
-      "completed_date": "2026-01-27T12:30:00Z",
-      "related_mistakes": [
-        "M269",
-        "M270",
-        "M271",
-        "M273",
-        "M274",
-        "M276",
-        "M346",
-        "M349",
-        "M356"
-      ],
-      "effectiveness_check": {
-        "mistakes_before": 6,
-        "mistakes_after": 5,
-        "post_fix_mistakes": [
-          "M269",
-          "M273",
-          "M346",
-          "M349",
-          "M356"
-        ],
-        "verdict": "ineffective"
-      },
-      "escalation": {
-        "id": "ESCALATE-A001",
-        "escalated_date": "2026-02-02T18:00:00-05:00",
-        "last_reviewed": "2026-02-23T10:22:49Z",
-        "reason": "5 post-fix mistakes (M346, M349, M356 in current period) - documentation-level prevention ineffective",
-        "escalation_level": "hook",
-        "analysis": "R022 update: No new PATTERN-001 recurrences in current period (M377-M391). Prior period had 5 post-fix failures (M346, M349, M356, M364, M368). A012 (prompt priming prevention) may be taking effect - descriptive placeholders instead of example values appears to reduce fabrication rate. PATTERN-020 (mandatory step bypass) shows subagent compliance gap persists in different form. Escalation remains open: if PATTERN-001 recurs, implement PostToolUse hook to detect validation claims without corresponding skill invocation evidence in session transcript.",
-        "proposed_solution": "Continue monitoring. A012 (prompt priming prevention) may be stabilizing the pattern. R022: No new recurrences in current period. If recurrence in next period, implement structural enforcement: PostToolUse hook requiring tool output evidence in subagent validation claims. Current escalation level: hook (proposed but not implemented). Monitor for 2+ clean periods before closing.",
-        "status": "open"
-      }
-    },
-    {
-      "id": "A002",
-      "priority": "high",
-      "description": "Add hook-level validation for task status transitions: abort restores to pending, decomposed parents stay pending until all subtasks complete",
-      "category": "protocol_violation",
-      "pattern_id": "PATTERN-002",
-      "status": "implemented",
-      "created_date": "2026-01-27T12:30:00Z",
-      "completed_date": "2026-01-27T12:30:00Z",
-      "related_mistakes": [
-        "M278",
-        "M279"
-      ],
-      "effectiveness_check": {
-        "mistakes_before": 2,
-        "mistakes_after": 2,
-        "post_fix_mistakes": [
-          "M278",
-          "M280"
-        ],
-        "verdict": "partially_effective"
-      }
-    },
-    {
-      "id": "A003",
-      "priority": "medium",
-      "description": "Document path and config verification requirements: always check worktree context, read cat-config.json before using values, clarify abort semantics",
-      "category": "assumption_without_verification",
-      "pattern_id": "PATTERN-003",
-      "status": "escalated",
-      "created_date": "2026-01-27T12:30:00Z",
-      "completed_date": "2026-01-27T17:45:00Z",
-      "related_mistakes": [
-        "M266",
-        "M267",
-        "M268"
-      ],
-      "implementation": "Added 'Path and Config Verification (A003)' section to agent-architecture.md with worktree path handling, config resolution strategy, and terminology disambiguation guidelines",
-      "effectiveness_check": {
-        "mistakes_before": 3,
-        "mistakes_after": 4,
-        "post_fix_mistakes": [
-          "M267",
-          "M268",
-          "M281",
-          "M286"
-        ],
-        "verdict": "ineffective"
-      },
-      "escalation": {
-        "id": "ESCALATE-A003",
-        "escalated_date": "2026-01-28T11:30:00-05:00",
-        "reason": "Documentation-level prevention ineffective (4 post-fix mistakes vs 3 before)",
-        "escalation_level": "hook",
-        "implementation": "Enhanced warn-base-branch-edit.sh to detect and warn when Edit/Write uses absolute /workspace/ paths while in a worktree, bypassing isolation",
-        "prevention_path": "${CLAUDE_PLUGIN_ROOT}/hooks/warn-base-branch-edit.sh",
-        "last_reviewed": "2026-02-23T10:22:49Z",
-        "analysis": "R022 update: M390 (learn skill committed retrospective metadata to main workspace instead of active worktree) adds new path/commit-routing assumption instance. warn-base-branch-edit.sh hook covers Edit/Write tool calls in worktrees, but learn skill commit routing decisions are not enforced at hook level. A022 (phase-record.md single-commit-rule) partially addresses M390 scenario. Documentation-level A003 (agent-architecture.md section) confirmed ineffective across 5+ instances. Hook enforcement covers only a subset of path assumption failure modes.",
-        "proposed_solution": "Expand hook coverage to detect commits to main workspace while active worktree exists. A022 prevention (phase-record.md) addresses the specific M390 learn-skill scenario. Consider adding commit destination validation to learn skill phase-record subagent. R022: Escalation remains open; M390 prevention implemented but not yet verified."
-      }
-    },
-    {
-      "id": "A004",
-      "priority": "high",
-      "description": "Strengthen user input handling: clarify that current task means current tool call not entire workflow. Add explicit instruction to respond in very next message when system-reminder contains user question.",
-      "category": "protocol_violation",
-      "pattern_id": "PATTERN-004",
-      "status": "superseded",
-      "created_date": "2026-01-27T21:55:08-05:00",
-      "completed_date": "2026-01-27T21:55:08-05:00",
-      "related_mistakes": [
-        "M247",
-        "M289"
-      ],
-      "implementation": "Updated inject-session-instructions.sh to clarify that IMPORTANT After completing your current task means after current tool call, not entire workflow",
-      "effectiveness_check": {
-        "mistakes_before": 2,
-        "mistakes_after": 0,
-        "post_fix_mistakes": [],
-        "verdict": "effective"
-      }
-    },
-    {
-      "id": "A005",
-      "priority": "high",
-      "description": "Enforce main agent delegation boundary: main agent NEVER uses Write/Edit tools on source files during task execution. All implementation work must be delegated to subagents.",
-      "category": "protocol_violation",
-      "pattern_id": "PATTERN-005",
-      "status": "implemented",
-      "created_date": "2026-01-28T11:00:00Z",
-      "completed_date": "2026-01-28T11:30:00-05:00",
-      "related_mistakes": [
-        "M294",
-        "M296",
-        "M297",
-        "M302",
-        "M304"
-      ],
-      "implementation": "Hook warn-base-branch-edit.sh already warns about main agent source edits (A003/M097/M302). Emits warning when Edit/Write targets non-orchestration files. Warning includes delegation guidance.",
-      "prevention_path": "${CLAUDE_PLUGIN_ROOT}/hooks/warn-base-branch-edit.sh",
-      "effectiveness_check": {
-        "mistakes_before": 4,
-        "mistakes_after": 1,
-        "post_fix_mistakes": [
-          "M304"
-        ],
-        "verdict": "partially_effective"
-      }
-    },
-    {
-      "id": "A006",
-      "priority": "medium",
-      "description": "Prevent test data fabrication: when testing commands/scripts, always use real values from context (e.g., session ID from SessionStart) instead of placeholder/fabricated data.",
-      "category": "assumption_without_verification",
-      "pattern_id": "PATTERN-006",
-      "status": "implemented",
-      "created_date": "2026-01-28T11:00:00Z",
-      "completed_date": "2026-01-28T11:30:00-05:00",
-      "related_mistakes": [
-        "M300",
-        "M303"
-      ],
-      "implementation": "Added anti-pattern M300 to work.md documenting that session IDs must come from SessionStart context, not fabricated placeholders. Script validates UUID format and fails on invalid input.",
-      "prevention_path": "${CLAUDE_PLUGIN_ROOT}/concepts/work.md",
-      "effectiveness_check": {
-        "mistakes_before": 2,
-        "mistakes_after": 0,
-        "post_fix_mistakes": [],
-        "verdict": "effective"
-      }
-    },
-    {
-      "id": "A007",
-      "priority": "medium",
-      "description": "Add hook-level validation for commit type selection: detect when docs: is used for plugin/ or CLAUDE.md paths and suggest config: instead",
-      "category": "protocol_violation",
-      "pattern_id": "PATTERN-007",
-      "status": "implemented",
-      "created_date": "2026-01-28T14:51:20-05:00",
-      "completed_date": "2026-01-28T15:00:00-05:00",
-      "related_mistakes": [
-        "M255",
-        "M306"
-      ],
-      "implementation": "Added PreToolUse check in validate_commit_type.py that blocks docs: commits when staged files match Claude-facing patterns (plugin/, CLAUDE.md, .claude/, hooks/, skills/, concepts/, commands/). Also added plugin/ to PostToolUse verify_commit_type.py for defense-in-depth.",
-      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/bash_handlers/validate_commit_type.py",
-      "effectiveness_check": {
-        "mistakes_before": 2,
-        "mistakes_after": 0,
-        "post_fix_mistakes": [],
-        "verdict": "effective"
-      }
-    },
-    {
-      "id": "A008",
-      "priority": "high",
-      "description": "Enforce pre-rendered output usage: add PostToolUse hook to detect manual box/banner construction patterns and warn agent. Pattern detection: box-drawing chars in agent output not preceded by script execution.",
-      "category": "protocol_violation",
-      "pattern_id": "PATTERN-008",
-      "status": "implemented",
-      "created_date": "2026-01-31T01:14:50-05:00",
-      "completed_date": "2026-01-31T01:25:00-05:00",
-      "implementation": "Created detect_manual_boxes.py PostToolUse handler that monitors conversation log for box-drawing characters in assistant messages without preceding script execution. Warns with A008/PATTERN-008 context.",
-      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/posttool_handlers/detect_manual_boxes.py",
-      "related_mistakes": [
-        "M311",
-        "M315",
-        "M319",
-        "M321",
-        "M322",
-        "M323"
-      ],
-      "effectiveness_check": {
-        "mistakes_before": 6,
-        "mistakes_after": 4,
-        "post_fix_mistakes": [
-          "M331",
-          "M332",
-          "M333",
-          "M334"
-        ],
-        "verdict": "partially_effective"
-      },
-      "escalation": {
-        "id": "ESCALATE-A008",
-        "escalated_date": "2026-01-31T16:02:48-05:00",
-        "reason": "4 post-fix mistakes (M331, M332, M333, M334) - hook detects but does not prevent bypass",
-        "escalation_level": "code_fix",
-        "analysis": "Current PostToolUse hook warns AFTER manual construction occurs. Need PreToolUse enforcement that BLOCKS text generation containing box-drawing characters unless preceded by script call.",
-        "proposed_solution": "Add PreToolUse blocking hook that requires script invocation before any response containing box-drawing chars. Alternative: Move all box/banner generation to mandatory skill invocations.",
-        "status": "implemented",
-        "implementation": "Added FAIL-FAST instructions to work.md, work-with-task.md, status.md. When preprocessing fails, agents must run scripts manually - never construct boxes.",
-        "completed_date": "2026-01-31T16:30:00-05:00"
-      }
-    },
-    {
-      "id": "A009",
-      "priority": "medium",
-      "description": "Enforce render-diff at approval gates: add PreToolUse hook on AskUserQuestion that checks for approval keywords and validates render-diff was invoked.",
-      "category": "protocol_violation",
-      "pattern_id": "PATTERN-009",
-      "status": "implemented",
-      "created_date": "2026-01-31T01:14:50-05:00",
-      "completed_date": "2026-01-31T01:25:00-05:00",
-      "implementation": "Already implemented via warn-approval-without-renderdiff.sh PreToolUse hook. Detects approval-related AskUserQuestion calls and warns if render-diff.py wasn't invoked recently.",
-      "prevention_path": "${CLAUDE_PLUGIN_ROOT}/hooks/warn-approval-without-renderdiff.sh",
-      "related_mistakes": [
-        "M312",
-        "M313"
-      ],
-      "effectiveness_check": {
-        "mistakes_before": 2,
-        "mistakes_after": null,
-        "post_fix_mistakes": [],
-        "verdict": "pending"
-      }
-    },
-    {
-      "id": "A010",
-      "priority": "high",
-      "description": "Restructure compare-docs to make two-run validation structurally impossible to skip: Step 1 spawns all 4 extraction agents, Step 2 spawns both comparison agents. No 'repeat' instruction that completion bias can skip.",
-      "category": "protocol_violation",
-      "pattern_id": "PATTERN-010",
-      "status": "implemented",
-      "created_date": "2026-02-02T18:00:00-05:00",
-      "completed_date": "2026-02-02T18:00:00-05:00",
-      "related_mistakes": [
-        "M351",
-        "M354",
-        "M357"
-      ],
-      "implementation": "M354 prevention already restructured compare-docs to spawn all agents upfront. M357 added explicit batch handling. Two-run is now default structure.",
-      "effectiveness_check": {
-        "mistakes_before": 3,
-        "mistakes_after": null,
-        "post_fix_mistakes": [],
-        "verdict": "pending"
-      }
-    },
-    {
-      "id": "A011",
-      "priority": "high",
-      "description": "When subagent produces wrong output, fix the SOURCE (prompt/skill) not add validation layers. learn-from-mistakes skill must require asking 'Why did subagent do X?' and fixing prompt if answer involves prompt content.",
-      "category": "rca_failure",
-      "pattern_id": "PATTERN-011",
-      "status": "implemented",
-      "created_date": "2026-02-02T18:00:00-05:00",
-      "completed_date": "2026-02-02T18:00:00-05:00",
-      "related_mistakes": [
-        "M355",
-        "M358"
-      ],
-      "implementation": "M355 prevention added source-vs-symptom guidance to learn skill. M358 added explicit warning against independent validation layers.",
-      "effectiveness_check": {
-        "mistakes_before": 2,
-        "mistakes_after": null,
-        "post_fix_mistakes": [],
-        "verdict": "pending"
-      }
-    },
-    {
-      "id": "A012",
-      "priority": "high",
-      "description": "Use descriptive placeholders in delegation prompt examples (e.g., '<actual score from /compare-docs>') instead of example values like '1.0'. Require per-file score reporting with evidence of skill invocation.",
-      "category": "prompt_engineering",
-      "pattern_id": "PATTERN-012",
-      "status": "implemented",
-      "created_date": "2026-02-02T18:00:00-05:00",
-      "completed_date": "2026-02-02T18:00:00-05:00",
-      "related_mistakes": [
-        "M346",
-        "M349",
-        "M350"
-      ],
-      "implementation": "M346 prevention added descriptive placeholder guidance and per-file reporting requirement. M350 prevention restructured prompts with critical requirements first.",
-      "effectiveness_check": {
-        "mistakes_before": 3,
-        "mistakes_after": null,
-        "post_fix_mistakes": [],
-        "verdict": "pending"
-      }
-    },
-    {
-      "id": "A013",
-      "priority": "high",
-      "description": "Consolidate delegation guidance: (1) Document Task vs TaskCreate distinction clearly, (2) Prefer /cat:delegate for batch/parallel work, (3) Always use blocking TaskOutput calls, (4) Include CRITICAL REQUIREMENTS checklist in delegation prompts",
-      "category": "protocol_violation",
-      "pattern_id": "PATTERN-013",
-      "status": "implemented",
-      "created_date": "2026-02-03T07:30:00Z",
-      "completed_date": "2026-02-04T20:30:00Z",
-      "implementation": "Already implemented: Task vs TaskCreate in subagent-delegation.md (M372), /cat:delegate examples in delegate/SKILL.md, blocking TaskOutput guidance in lines 901-957 (M293/M373), SUBAGENT-PROMPT-CHECKLIST.md for CRITICAL REQUIREMENTS",
-      "related_mistakes": [
-        "M367",
-        "M371",
-        "M372",
-        "M373"
-      ],
-      "effectiveness_check": {
-        "mistakes_before": 4,
-        "mistakes_after": null,
-        "post_fix_mistakes": [],
-        "verdict": "pending"
-      }
-    },
-    {
-      "id": "A014",
-      "priority": "medium",
-      "description": "Strengthen hook patterns: (1) Account for git -C flag in worktree hooks, (2) Test hook patterns against command variations, (3) Add hook coverage tests",
-      "category": "hook_coverage_gap",
-      "pattern_id": null,
-      "status": "implemented",
-      "created_date": "2026-02-04T12:30:00Z",
-      "completed_date": "2026-02-04",
-      "related_mistakes": [
-        "M398"
-      ],
-      "effectiveness_check": {
-        "mistakes_before": 1,
-        "mistakes_after": null,
-        "post_fix_mistakes": [],
-        "verdict": "pending"
-      },
-      "implementation_note": "Implemented in 2.1-strengthen-hook-patterns: Updated validate-worktree-branch.sh and block_main_rebase.py to handle git -C flag variations, added test_git_flag_patterns.py with 12 test cases"
-    },
-    {
-      "id": "A015",
-      "priority": "high",
-      "description": "Failure messages must include actionable recovery guidance: retry with single file, escalate to user, NEVER bypass skill",
-      "category": "protocol_violation",
-      "pattern_id": "PATTERN-014",
-      "status": "implemented",
-      "created_date": "2026-02-05T00:57:20-05:00",
-      "completed_date": "2026-02-05T00:57:20-05:00",
-      "related_mistakes": [
-        "M425",
-        "M429"
-      ],
-      "implementation": "M429 prevention added to error-handling.md: explicit guidance for main agent when subagent fails at skill invocation",
-      "effectiveness_check": {
-        "mistakes_before": 2,
-        "mistakes_after": null,
-        "post_fix_mistakes": [],
-        "verdict": "pending"
-      }
-    },
-    {
-      "id": "A016",
-      "priority": "medium",
-      "description": "Remove detailed failure response examples from skill docs to prevent fabrication",
-      "category": "misleading_documentation",
-      "pattern_id": "PATTERN-014",
-      "status": "implemented",
-      "created_date": "2026-02-05T00:57:20-05:00",
-      "completed_date": "2026-02-05T00:58:34-05:00",
-      "related_mistakes": [
-        "M428"
-      ],
-      "effectiveness_check": {
-        "mistakes_before": 1,
-        "mistakes_after": null,
-        "post_fix_mistakes": [],
-        "verdict": "pending"
-      },
-      "implementation": "Removed detailed failure JSON examples from work-batch-executor/SKILL.md that were being copied as fabricated responses"
-    },
-    {
-      "id": "A017",
-      "priority": "high",
-      "description": "Enforce Python for all comparison/conditional logic in bash handlers. Add detection for !=, ==, // operators in Bash commands. Current skill-level prevention (M431) insufficient.",
-      "category": "tool_misuse",
-      "pattern_id": "PATTERN-015",
-      "status": "closed_wontfix",
-      "created_date": "2026-02-06T19:00:00Z",
-      "completed_date": "2026-02-16T09:46:34.135846+00:00",
-      "related_mistakes": [
-        "M431",
-        "M448",
-        "M449"
-      ],
-      "effectiveness_check": {
-        "mistakes_before": 3,
-        "mistakes_after": null,
-        "post_fix_mistakes": [],
-        "verdict": "pending"
-      },
-      "implementation": "Root cause was incorrect quoting, not a bash limitation. jq filters in double quotes expose != to zsh history expansion; single quotes prevent this. Variable interpolation should use jq --arg instead of shell interpolation. No hook needed — the fix is proper quoting discipline, not banning bash comparisons. No recurrences since 2026-02-06."
-    },
-    {
-      "id": "A018",
-      "priority": "medium",
-      "description": "Fix squash workflow to require rebase-before-squash and clarify STATE.md grouping with implementation files, not as separate config commit.",
-      "category": "incorrect_implementation",
-      "pattern_id": "PATTERN-016",
-      "status": "implemented",
-      "created_date": "2026-02-06T19:00:00Z",
-      "completed_date": "2026-03-03",
-      "related_mistakes": [
-        "M450",
-        "M451",
-        "M484",
-        "M488",
-        "M500",
-        "M503"
-      ],
-      "implementation": "Three code fixes verified as implemented: (1) GitSquash.java line 190 deletes backup branch on success. (2) MergeAndCleanup.java uses git merge --ff-only which atomically updates ref, index, and working tree. (3) work-with-issue delegates squash to work-squash subagent which consolidates all commits. Additionally: delegate-squash-to-subagent (closed 2026-02-25), cleanup-squash-backups-in-merge (closed 2026-02-20), fix-squash-workflow (closed), delegate-squash-to-subagent (closed) all address sub-issues.",
-      "effectiveness_check": {
-        "mistakes_before": 2,
-        "mistakes_after": 4,
-        "post_fix_mistakes": [
-          "M484",
-          "M488",
-          "M500",
-          "M503"
-        ],
-        "verdict": "pending"
-      },
-      "escalation": {
-        "id": "ESCALATE-A018",
-        "escalated_date": "2026-02-20T06:19:02-05:00",
-        "last_reviewed": "2026-03-03",
-        "reason": "Squash workflow continues to fail despite A018. 4 post-fix mistakes (M484, M488, M500, M503). M503 added RemindGitSquash hook blocking git reset --soft, but underlying issue is worktree staleness and manual squash bypass.",
-        "escalation_level": "partial_implementation",
-        "analysis": "2026-03-03 update: All three proposed code fixes verified as implemented in codebase. GitSquash.java deletes backup on success (line 190). MergeAndCleanup uses git merge --ff-only (atomically syncs working tree). work-with-issue delegates to work-squash subagent. Escalation closed pending effectiveness measurement.",
-        "proposed_solution": "Implemented. Monitor for recurrences.",
-        "status": "closed"
-      }
-    },
-    {
-      "id": "A019",
-      "priority": "medium",
-      "description": "Add fallback banner script re-invocation when pre-rendered banners unavailable due to context compaction. Skills should include script path for manual re-invocation.",
-      "category": "protocol_violation",
-      "pattern_id": "PATTERN-008",
-      "status": "implemented",
-      "created_date": "2026-02-06T19:00:00Z",
-      "completed_date": "2026-02-16T09:43:10.733071+00:00",
-      "related_mistakes": [
-        "M452"
-      ],
-      "effectiveness_check": {
-        "mistakes_before": 1,
-        "mistakes_after": null,
-        "post_fix_mistakes": [],
-        "verdict": "pending"
-      },
-      "implementation": "M452 prevention updated work-with-issue skill to include explicit progress-banner script commands at every phase step, eliminating dependency on pre-rendered context."
-    },
-    {
-      "id": "A020",
-      "priority": "high",
-      "description": "Enforce approval gate: PreToolUse hook on Task(work-merge) must verify AskUserQuestion with 'Approve and merge' was selected when trust != high. Conversational responses are NOT approval.",
-      "category": "protocol_violation",
-      "pattern_id": "PATTERN-017",
-      "status": "escalated",
-      "created_date": "2026-02-16T09:40:08.086328+00:00",
-      "completed_date": "2026-02-16T09:40:08.086328+00:00",
-      "related_mistakes": [
-        "M479",
-        "M480",
-        "M489"
-      ],
-      "implementation": "M489 prevention added Approval Gate Protocol to .claude/rules/hooks.md. M480 added PreToolUse hook blocking work-merge spawn without explicit approval. Both already committed.",
-      "effectiveness_check": {
-        "mistakes_before": 3,
-        "mistakes_after": 6,
-        "post_fix_mistakes": [
-          "M489",
-          "M446",
-          "M459",
-          "M462",
-          "M463",
-          "M464"
-        ],
-        "verdict": "ineffective"
-      },
-      "escalation": {
-        "id": "ESCALATE-A020",
-        "escalated_date": "2026-03-05T19:10:00Z",
-        "reason": "6 post-fix failures. Hook validates AskUserQuestion was called but does not check that answers object is non-empty. M459/M462/M463/M464 all bypass approval gate via empty answers {}.",
-        "escalation_level": "hook",
-        "analysis": "R026 escalation: 6 post-fix failures recorded. However, issue 2.1-fix-approval-gate-empty-answers-handling was closed 2026-03-04 with a documentation fix adding explicit empty-answers handling to work-with-issue Step 8. M459/M462/M463/M464 occurred before or during the fix. Fix implemented; effectiveness pending next monitoring period.",
-        "proposed_solution": "Implemented via 2.1-fix-approval-gate-empty-answers-handling (closed 2026-03-04). Monitor for recurrences.",
-        "status": "implemented"
-      }
-    },
-    {
-      "id": "A021",
-      "priority": "medium",
-      "description": "Require stakeholder reviewers to diff against base branch and read all modified files before reviewing. Add mandatory file-reading evidence to review format.",
-      "category": "stakeholder_review_quality",
-      "pattern_id": "PATTERN-018",
-      "status": "implemented",
-      "created_date": "2026-02-20T06:19:02-05:00",
-      "completed_date": "2026-02-22",
-      "related_mistakes": [
-        "M478",
-        "M496",
-        "M498",
-        "M499"
-      ],
-      "implementation": "Implemented in v2.1-require-reviewer-file-evidence (closed 2026-02-22). Added mandatory Evidence section to stakeholder reviewer JSON output and diff-analysis-first requirement to all 10 stakeholder agent definitions.",
-      "effectiveness_check": {
-        "mistakes_before": 4,
-        "mistakes_after": null,
-        "post_fix_mistakes": [],
-        "verdict": "pending"
-      }
-    },
-    {
-      "id": "A022",
-      "priority": "medium",
-      "description": "Fix learn skill commit-grouping: when prevention type is skill/process/documentation/config and no active worktree exists, include prevention files in same commit as retrospective metadata. Only split commits when prevention targets a worktree (code_fix, hook, validation).",
-      "category": "protocol_violation",
-      "pattern_id": null,
-      "status": "implemented",
-      "created_date": "2026-02-22T13:45:25Z",
-      "completed_date": "2026-02-22T13:45:25Z",
-      "related_mistakes": [
-        "M366"
-      ],
-      "implementation": "M366 prevention added single-commit-rule to phase-record.md Step 12-13: when prevention is skill/process/documentation/config type, group prevention file and retrospective metadata into one commit in Step 13. Only split when prevention targets a worktree.",
-      "effectiveness_check": null
-    },
-    {
-      "id": "A023",
-      "priority": "low",
-      "description": "Add active line-length verification reminder to phase-prevent.md: after editing any Markdown or Java file, verify all added lines comply with the 120-character limit (common.md). Include in phase-prevent Step 4 a checkstep: count characters in each added line and wrap any that exceed 120.",
-      "category": "formatting_violation",
-      "pattern_id": "PATTERN-019",
-      "status": "implemented",
-      "created_date": "2026-02-23T10:22:49Z",
-      "completed_date": "2026-03-01",
-      "related_mistakes": [
-        "M380",
-        "M382"
-      ],
-      "implementation": "Implemented in v2.1-add-line-length-verification-reminder (closed 2026-03-01). Added line-length check-step to phase-prevent.md Step 4.",
-      "effectiveness_check": {
-        "mistakes_before": 2,
-        "mistakes_after": null,
-        "post_fix_mistakes": [],
-        "verdict": "pending"
-      }
-    },
-    {
-      "id": "A024",
-      "priority": "high",
-      "description": "Explicitly label all mandatory workflow steps as MANDATORY in work-with-issue and other orchestration skills. Add explicit instruction that mandatory steps do not require user permission and must not be skipped. Affected steps: stakeholder-review (Step 5), skill-builder review before approval gate, squash before approval gate (Step 6). Add a MANDATORY STEPS checklist at the top of work-with-issue/first-use.md.",
-      "category": "protocol_violation",
-      "pattern_id": "PATTERN-020",
-      "status": "implemented",
-      "created_date": "2026-02-23T10:22:49Z",
-      "completed_date": "2026-03-02",
-      "related_mistakes": [
-        "M384",
-        "M388"
-      ],
-      "implementation": "Implemented in v2.1-label-mandatory-workflow-steps (closed 2026-03-02). Added MANDATORY STEPS checklist to work-with-issue/first-use.md and labeled stakeholder-review, skill-builder review, and squash steps as MANDATORY.",
-      "effectiveness_check": {
-        "mistakes_before": 2,
-        "mistakes_after": null,
-        "post_fix_mistakes": [],
-        "verdict": "pending"
-      }
-    },
-    {
-      "id": "A025",
-      "priority": "low",
-      "description": "Document skill output forwarding protocol: when a skill produces AskUserQuestion wizard output, the invoking agent must call AskUserQuestion directly (not render it as prose). Add to wizard-based skills (config, etc.) explicit note: 'After invoking this skill, forward the AskUserQuestion tool call verbatim — do not respond conversationally.'",
-      "category": "protocol_violation",
-      "pattern_id": "PATTERN-021",
-      "status": "implemented",
-      "created_date": "2026-02-28T16:57:40-05:00",
-      "completed_date": "2026-03-01",
-      "related_mistakes": [
-        "M419",
-        "M420"
-      ],
-      "implementation": "Implemented in v2.1-document-skill-output-forwarding-protocol (closed 2026-03-01). Added forwarding note to wizard-based skills instructing invoking agents to forward AskUserQuestion calls verbatim.",
-      "effectiveness_check": {
-        "mistakes_before": 2,
-        "mistakes_after": null,
-        "post_fix_mistakes": [],
-        "verdict": "pending"
-      }
-    },
-    {
-      "id": "A026",
-      "priority": "medium",
-      "description": "Add explicit rejection-state handling to work-with-issue: (1) PARTIAL verify result = STOP, do NOT proceed to stakeholder review — fix unmet conditions first; (2) Rejected stakeholder review = automatically enter re-work loop (fix issues, re-run review) without asking user permission; (3) User rejects AskUserQuestion approval gate mid-workflow = re-present the gate in the NEXT response, do not skip it. Add 'REJECTION HANDLING' section to work-with-issue/first-use.md covering all three cases.",
-      "category": "protocol_violation",
-      "pattern_id": "PATTERN-022",
-      "status": "implemented",
-      "created_date": "2026-02-28T16:57:40-05:00",
-      "completed_date": "2026-03-01",
-      "related_mistakes": [
-        "M433",
-        "M434",
-        "M435"
-      ],
-      "implementation": "Implemented in v2.1-add-rejection-state-handling (closed 2026-03-01). Added REJECTION HANDLING section to work-with-issue/first-use.md covering all three rejection cases.",
-      "effectiveness_check": {
-        "mistakes_before": 3,
-        "mistakes_after": null,
-        "post_fix_mistakes": [],
-        "verdict": "pending"
-      }
-    },
-    {
-      "id": "A027",
-      "priority": "low",
-      "description": "Fix AutoLearnMistakes pattern matching to exclude false positives from documentation tables, code blocks, and embedded JSON in tool output. Add context-aware filtering: only match patterns in plain text assistant messages.",
-      "category": "detection_gap",
-      "pattern_id": "PATTERN-023",
-      "status": "closed_addressed",
-      "created_date": "2026-03-05T19:10:00Z",
-      "completed_date": "2026-03-04",
-      "related_mistakes": [
-        "M461",
-        "M466"
-      ],
-      "effectiveness_check": null,
-      "implementation": "Addressed by 2.1-fix-autolearn-pattern2-false-positive (closed). Removed ^(FAIL:|FAILED\\s) sub-pattern from Pattern 2 in AutoLearnMistakes.java."
+  }, {
+    "id" : "A002",
+    "priority" : "high",
+    "description" : "Add hook-level validation for task status transitions: abort restores to pending, decomposed parents stay pending until all subtasks complete",
+    "category" : "protocol_violation",
+    "pattern_id" : "PATTERN-002",
+    "status" : "implemented",
+    "created_date" : "2026-01-27T12:30:00Z",
+    "completed_date" : "2026-01-27T12:30:00Z",
+    "related_mistakes" : [ "M278", "M279" ],
+    "effectiveness_check" : {
+      "mistakes_before" : 2,
+      "mistakes_after" : 2,
+      "post_fix_mistakes" : [ "M278", "M280" ],
+      "verdict" : "partially_effective"
     }
-  ]
+  }, {
+    "id" : "A003",
+    "priority" : "medium",
+    "description" : "Document path and config verification requirements: always check worktree context, read cat-config.json before using values, clarify abort semantics",
+    "category" : "assumption_without_verification",
+    "pattern_id" : "PATTERN-003",
+    "status" : "escalated",
+    "created_date" : "2026-01-27T12:30:00Z",
+    "completed_date" : "2026-01-27T17:45:00Z",
+    "related_mistakes" : [ "M266", "M267", "M268" ],
+    "implementation" : "Added 'Path and Config Verification (A003)' section to agent-architecture.md with worktree path handling, config resolution strategy, and terminology disambiguation guidelines",
+    "effectiveness_check" : {
+      "mistakes_before" : 3,
+      "mistakes_after" : 4,
+      "post_fix_mistakes" : [ "M267", "M268", "M281", "M286" ],
+      "verdict" : "ineffective"
+    },
+    "escalation" : {
+      "id" : "ESCALATE-A003",
+      "escalated_date" : "2026-01-28T11:30:00-05:00",
+      "reason" : "Documentation-level prevention ineffective (4 post-fix mistakes vs 3 before)",
+      "escalation_level" : "hook",
+      "implementation" : "Enhanced warn-base-branch-edit.sh to detect and warn when Edit/Write uses absolute /workspace/ paths while in a worktree, bypassing isolation",
+      "prevention_path" : "${CLAUDE_PLUGIN_ROOT}/hooks/warn-base-branch-edit.sh",
+      "last_reviewed" : "2026-02-23T10:22:49Z",
+      "analysis" : "R022 update: M390 (learn skill committed retrospective metadata to main workspace instead of active worktree) adds new path/commit-routing assumption instance. warn-base-branch-edit.sh hook covers Edit/Write tool calls in worktrees, but learn skill commit routing decisions are not enforced at hook level. A022 (phase-record.md single-commit-rule) partially addresses M390 scenario. Documentation-level A003 (agent-architecture.md section) confirmed ineffective across 5+ instances. Hook enforcement covers only a subset of path assumption failure modes.",
+      "proposed_solution" : "Expand hook coverage to detect commits to main workspace while active worktree exists. A022 prevention (phase-record.md) addresses the specific M390 learn-skill scenario. Consider adding commit destination validation to learn skill phase-record subagent. R022: Escalation remains open; M390 prevention implemented but not yet verified."
+    }
+  }, {
+    "id" : "A004",
+    "priority" : "high",
+    "description" : "Strengthen user input handling: clarify that current task means current tool call not entire workflow. Add explicit instruction to respond in very next message when system-reminder contains user question.",
+    "category" : "protocol_violation",
+    "pattern_id" : "PATTERN-004",
+    "status" : "superseded",
+    "created_date" : "2026-01-27T21:55:08-05:00",
+    "completed_date" : "2026-01-27T21:55:08-05:00",
+    "related_mistakes" : [ "M247", "M289" ],
+    "implementation" : "Updated inject-session-instructions.sh to clarify that IMPORTANT After completing your current task means after current tool call, not entire workflow",
+    "effectiveness_check" : {
+      "mistakes_before" : 2,
+      "mistakes_after" : 0,
+      "post_fix_mistakes" : [ ],
+      "verdict" : "effective"
+    }
+  }, {
+    "id" : "A005",
+    "priority" : "high",
+    "description" : "Enforce main agent delegation boundary: main agent NEVER uses Write/Edit tools on source files during task execution. All implementation work must be delegated to subagents.",
+    "category" : "protocol_violation",
+    "pattern_id" : "PATTERN-005",
+    "status" : "implemented",
+    "created_date" : "2026-01-28T11:00:00Z",
+    "completed_date" : "2026-01-28T11:30:00-05:00",
+    "related_mistakes" : [ "M294", "M296", "M297", "M302", "M304" ],
+    "implementation" : "Hook warn-base-branch-edit.sh already warns about main agent source edits (A003/M097/M302). Emits warning when Edit/Write targets non-orchestration files. Warning includes delegation guidance.",
+    "prevention_path" : "${CLAUDE_PLUGIN_ROOT}/hooks/warn-base-branch-edit.sh",
+    "effectiveness_check" : {
+      "mistakes_before" : 4,
+      "mistakes_after" : 1,
+      "post_fix_mistakes" : [ "M304" ],
+      "verdict" : "partially_effective"
+    }
+  }, {
+    "id" : "A006",
+    "priority" : "medium",
+    "description" : "Prevent test data fabrication: when testing commands/scripts, always use real values from context (e.g., session ID from SessionStart) instead of placeholder/fabricated data.",
+    "category" : "assumption_without_verification",
+    "pattern_id" : "PATTERN-006",
+    "status" : "implemented",
+    "created_date" : "2026-01-28T11:00:00Z",
+    "completed_date" : "2026-01-28T11:30:00-05:00",
+    "related_mistakes" : [ "M300", "M303" ],
+    "implementation" : "Added anti-pattern M300 to work.md documenting that session IDs must come from SessionStart context, not fabricated placeholders. Script validates UUID format and fails on invalid input.",
+    "prevention_path" : "${CLAUDE_PLUGIN_ROOT}/concepts/work.md",
+    "effectiveness_check" : {
+      "mistakes_before" : 2,
+      "mistakes_after" : 0,
+      "post_fix_mistakes" : [ ],
+      "verdict" : "effective"
+    }
+  }, {
+    "id" : "A007",
+    "priority" : "medium",
+    "description" : "Add hook-level validation for commit type selection: detect when docs: is used for plugin/ or CLAUDE.md paths and suggest config: instead",
+    "category" : "protocol_violation",
+    "pattern_id" : "PATTERN-007",
+    "status" : "implemented",
+    "created_date" : "2026-01-28T14:51:20-05:00",
+    "completed_date" : "2026-01-28T15:00:00-05:00",
+    "related_mistakes" : [ "M255", "M306" ],
+    "implementation" : "Added PreToolUse check in validate_commit_type.py that blocks docs: commits when staged files match Claude-facing patterns (plugin/, CLAUDE.md, .claude/, hooks/, skills/, concepts/, commands/). Also added plugin/ to PostToolUse verify_commit_type.py for defense-in-depth.",
+    "prevention_path" : "${CLAUDE_PROJECT_DIR}/plugin/hooks/bash_handlers/validate_commit_type.py",
+    "effectiveness_check" : {
+      "mistakes_before" : 2,
+      "mistakes_after" : 0,
+      "post_fix_mistakes" : [ ],
+      "verdict" : "effective"
+    }
+  }, {
+    "id" : "A008",
+    "priority" : "high",
+    "description" : "Enforce pre-rendered output usage: add PostToolUse hook to detect manual box/banner construction patterns and warn agent. Pattern detection: box-drawing chars in agent output not preceded by script execution.",
+    "category" : "protocol_violation",
+    "pattern_id" : "PATTERN-008",
+    "status" : "implemented",
+    "created_date" : "2026-01-31T01:14:50-05:00",
+    "completed_date" : "2026-01-31T01:25:00-05:00",
+    "implementation" : "Created detect_manual_boxes.py PostToolUse handler that monitors conversation log for box-drawing characters in assistant messages without preceding script execution. Warns with A008/PATTERN-008 context.",
+    "prevention_path" : "${CLAUDE_PROJECT_DIR}/plugin/hooks/posttool_handlers/detect_manual_boxes.py",
+    "related_mistakes" : [ "M311", "M315", "M319", "M321", "M322", "M323" ],
+    "effectiveness_check" : {
+      "mistakes_before" : 6,
+      "mistakes_after" : 4,
+      "post_fix_mistakes" : [ "M331", "M332", "M333", "M334" ],
+      "verdict" : "partially_effective"
+    },
+    "escalation" : {
+      "id" : "ESCALATE-A008",
+      "escalated_date" : "2026-01-31T16:02:48-05:00",
+      "reason" : "4 post-fix mistakes (M331, M332, M333, M334) - hook detects but does not prevent bypass",
+      "escalation_level" : "code_fix",
+      "analysis" : "Current PostToolUse hook warns AFTER manual construction occurs. Need PreToolUse enforcement that BLOCKS text generation containing box-drawing characters unless preceded by script call.",
+      "proposed_solution" : "Add PreToolUse blocking hook that requires script invocation before any response containing box-drawing chars. Alternative: Move all box/banner generation to mandatory skill invocations.",
+      "status" : "implemented",
+      "implementation" : "Added FAIL-FAST instructions to work.md, work-with-task.md, status.md. When preprocessing fails, agents must run scripts manually - never construct boxes.",
+      "completed_date" : "2026-01-31T16:30:00-05:00"
+    }
+  }, {
+    "id" : "A009",
+    "priority" : "medium",
+    "description" : "Enforce render-diff at approval gates: add PreToolUse hook on AskUserQuestion that checks for approval keywords and validates render-diff was invoked.",
+    "category" : "protocol_violation",
+    "pattern_id" : "PATTERN-009",
+    "status" : "implemented",
+    "created_date" : "2026-01-31T01:14:50-05:00",
+    "completed_date" : "2026-01-31T01:25:00-05:00",
+    "implementation" : "Already implemented via warn-approval-without-renderdiff.sh PreToolUse hook. Detects approval-related AskUserQuestion calls and warns if render-diff.py wasn't invoked recently.",
+    "prevention_path" : "${CLAUDE_PLUGIN_ROOT}/hooks/warn-approval-without-renderdiff.sh",
+    "related_mistakes" : [ "M312", "M313" ],
+    "effectiveness_check" : {
+      "mistakes_before" : 2,
+      "mistakes_after" : null,
+      "post_fix_mistakes" : [ ],
+      "verdict" : "pending"
+    }
+  }, {
+    "id" : "A010",
+    "priority" : "high",
+    "description" : "Restructure compare-docs to make two-run validation structurally impossible to skip: Step 1 spawns all 4 extraction agents, Step 2 spawns both comparison agents. No 'repeat' instruction that completion bias can skip.",
+    "category" : "protocol_violation",
+    "pattern_id" : "PATTERN-010",
+    "status" : "implemented",
+    "created_date" : "2026-02-02T18:00:00-05:00",
+    "completed_date" : "2026-02-02T18:00:00-05:00",
+    "related_mistakes" : [ "M351", "M354", "M357" ],
+    "implementation" : "M354 prevention already restructured compare-docs to spawn all agents upfront. M357 added explicit batch handling. Two-run is now default structure.",
+    "effectiveness_check" : {
+      "mistakes_before" : 3,
+      "mistakes_after" : null,
+      "post_fix_mistakes" : [ ],
+      "verdict" : "pending"
+    }
+  }, {
+    "id" : "A011",
+    "priority" : "high",
+    "description" : "When subagent produces wrong output, fix the SOURCE (prompt/skill) not add validation layers. learn-from-mistakes skill must require asking 'Why did subagent do X?' and fixing prompt if answer involves prompt content.",
+    "category" : "rca_failure",
+    "pattern_id" : "PATTERN-011",
+    "status" : "implemented",
+    "created_date" : "2026-02-02T18:00:00-05:00",
+    "completed_date" : "2026-02-02T18:00:00-05:00",
+    "related_mistakes" : [ "M355", "M358" ],
+    "implementation" : "M355 prevention added source-vs-symptom guidance to learn skill. M358 added explicit warning against independent validation layers.",
+    "effectiveness_check" : {
+      "mistakes_before" : 2,
+      "mistakes_after" : null,
+      "post_fix_mistakes" : [ ],
+      "verdict" : "pending"
+    }
+  }, {
+    "id" : "A012",
+    "priority" : "high",
+    "description" : "Use descriptive placeholders in delegation prompt examples (e.g., '<actual score from /compare-docs>') instead of example values like '1.0'. Require per-file score reporting with evidence of skill invocation.",
+    "category" : "prompt_engineering",
+    "pattern_id" : "PATTERN-012",
+    "status" : "implemented",
+    "created_date" : "2026-02-02T18:00:00-05:00",
+    "completed_date" : "2026-02-02T18:00:00-05:00",
+    "related_mistakes" : [ "M346", "M349", "M350" ],
+    "implementation" : "M346 prevention added descriptive placeholder guidance and per-file reporting requirement. M350 prevention restructured prompts with critical requirements first.",
+    "effectiveness_check" : {
+      "mistakes_before" : 3,
+      "mistakes_after" : null,
+      "post_fix_mistakes" : [ ],
+      "verdict" : "pending"
+    }
+  }, {
+    "id" : "A013",
+    "priority" : "high",
+    "description" : "Consolidate delegation guidance: (1) Document Task vs TaskCreate distinction clearly, (2) Prefer /cat:delegate for batch/parallel work, (3) Always use blocking TaskOutput calls, (4) Include CRITICAL REQUIREMENTS checklist in delegation prompts",
+    "category" : "protocol_violation",
+    "pattern_id" : "PATTERN-013",
+    "status" : "implemented",
+    "created_date" : "2026-02-03T07:30:00Z",
+    "completed_date" : "2026-02-04T20:30:00Z",
+    "implementation" : "Already implemented: Task vs TaskCreate in subagent-delegation.md (M372), /cat:delegate examples in delegate/SKILL.md, blocking TaskOutput guidance in lines 901-957 (M293/M373), SUBAGENT-PROMPT-CHECKLIST.md for CRITICAL REQUIREMENTS",
+    "related_mistakes" : [ "M367", "M371", "M372", "M373" ],
+    "effectiveness_check" : {
+      "mistakes_before" : 4,
+      "mistakes_after" : null,
+      "post_fix_mistakes" : [ ],
+      "verdict" : "pending"
+    }
+  }, {
+    "id" : "A014",
+    "priority" : "medium",
+    "description" : "Strengthen hook patterns: (1) Account for git -C flag in worktree hooks, (2) Test hook patterns against command variations, (3) Add hook coverage tests",
+    "category" : "hook_coverage_gap",
+    "pattern_id" : null,
+    "status" : "implemented",
+    "created_date" : "2026-02-04T12:30:00Z",
+    "completed_date" : "2026-02-04",
+    "related_mistakes" : [ "M398" ],
+    "effectiveness_check" : {
+      "mistakes_before" : 1,
+      "mistakes_after" : null,
+      "post_fix_mistakes" : [ ],
+      "verdict" : "pending"
+    },
+    "implementation_note" : "Implemented in 2.1-strengthen-hook-patterns: Updated validate-worktree-branch.sh and block_main_rebase.py to handle git -C flag variations, added test_git_flag_patterns.py with 12 test cases"
+  }, {
+    "id" : "A015",
+    "priority" : "high",
+    "description" : "Failure messages must include actionable recovery guidance: retry with single file, escalate to user, NEVER bypass skill",
+    "category" : "protocol_violation",
+    "pattern_id" : "PATTERN-014",
+    "status" : "implemented",
+    "created_date" : "2026-02-05T00:57:20-05:00",
+    "completed_date" : "2026-02-05T00:57:20-05:00",
+    "related_mistakes" : [ "M425", "M429" ],
+    "implementation" : "M429 prevention added to error-handling.md: explicit guidance for main agent when subagent fails at skill invocation",
+    "effectiveness_check" : {
+      "mistakes_before" : 2,
+      "mistakes_after" : null,
+      "post_fix_mistakes" : [ ],
+      "verdict" : "pending"
+    }
+  }, {
+    "id" : "A016",
+    "priority" : "medium",
+    "description" : "Remove detailed failure response examples from skill docs to prevent fabrication",
+    "category" : "misleading_documentation",
+    "pattern_id" : "PATTERN-014",
+    "status" : "implemented",
+    "created_date" : "2026-02-05T00:57:20-05:00",
+    "completed_date" : "2026-02-05T00:58:34-05:00",
+    "related_mistakes" : [ "M428" ],
+    "effectiveness_check" : {
+      "mistakes_before" : 1,
+      "mistakes_after" : null,
+      "post_fix_mistakes" : [ ],
+      "verdict" : "pending"
+    },
+    "implementation" : "Removed detailed failure JSON examples from work-batch-executor/SKILL.md that were being copied as fabricated responses"
+  }, {
+    "id" : "A017",
+    "priority" : "high",
+    "description" : "Enforce Python for all comparison/conditional logic in bash handlers. Add detection for !=, ==, // operators in Bash commands. Current skill-level prevention (M431) insufficient.",
+    "category" : "tool_misuse",
+    "pattern_id" : "PATTERN-015",
+    "status" : "closed_wontfix",
+    "created_date" : "2026-02-06T19:00:00Z",
+    "completed_date" : "2026-02-16T09:46:34.135846+00:00",
+    "related_mistakes" : [ "M431", "M448", "M449" ],
+    "effectiveness_check" : {
+      "mistakes_before" : 3,
+      "mistakes_after" : null,
+      "post_fix_mistakes" : [ ],
+      "verdict" : "pending"
+    },
+    "implementation" : "Root cause was incorrect quoting, not a bash limitation. jq filters in double quotes expose != to zsh history expansion; single quotes prevent this. Variable interpolation should use jq --arg instead of shell interpolation. No hook needed — the fix is proper quoting discipline, not banning bash comparisons. No recurrences since 2026-02-06."
+  }, {
+    "id" : "A018",
+    "priority" : "medium",
+    "description" : "Fix squash workflow to require rebase-before-squash and clarify STATE.md grouping with implementation files, not as separate config commit.",
+    "category" : "incorrect_implementation",
+    "pattern_id" : "PATTERN-016",
+    "status" : "implemented",
+    "created_date" : "2026-02-06T19:00:00Z",
+    "completed_date" : "2026-03-03",
+    "related_mistakes" : [ "M450", "M451", "M484", "M488", "M500", "M503" ],
+    "implementation" : "Three code fixes verified as implemented: (1) GitSquash.java line 190 deletes backup branch on success. (2) MergeAndCleanup.java uses git merge --ff-only which atomically updates ref, index, and working tree. (3) work-with-issue delegates squash to work-squash subagent which consolidates all commits. Additionally: delegate-squash-to-subagent (closed 2026-02-25), cleanup-squash-backups-in-merge (closed 2026-02-20), fix-squash-workflow (closed), delegate-squash-to-subagent (closed) all address sub-issues.",
+    "effectiveness_check" : {
+      "mistakes_before" : 2,
+      "mistakes_after" : 4,
+      "post_fix_mistakes" : [ "M484", "M488", "M500", "M503" ],
+      "verdict" : "pending"
+    },
+    "escalation" : {
+      "id" : "ESCALATE-A018",
+      "escalated_date" : "2026-02-20T06:19:02-05:00",
+      "last_reviewed" : "2026-03-03",
+      "reason" : "Squash workflow continues to fail despite A018. 4 post-fix mistakes (M484, M488, M500, M503). M503 added RemindGitSquash hook blocking git reset --soft, but underlying issue is worktree staleness and manual squash bypass.",
+      "escalation_level" : "partial_implementation",
+      "analysis" : "2026-03-03 update: All three proposed code fixes verified as implemented in codebase. GitSquash.java deletes backup on success (line 190). MergeAndCleanup uses git merge --ff-only (atomically syncs working tree). work-with-issue delegates to work-squash subagent. Escalation closed pending effectiveness measurement.",
+      "proposed_solution" : "Implemented. Monitor for recurrences.",
+      "status" : "closed"
+    }
+  }, {
+    "id" : "A019",
+    "priority" : "medium",
+    "description" : "Add fallback banner script re-invocation when pre-rendered banners unavailable due to context compaction. Skills should include script path for manual re-invocation.",
+    "category" : "protocol_violation",
+    "pattern_id" : "PATTERN-008",
+    "status" : "implemented",
+    "created_date" : "2026-02-06T19:00:00Z",
+    "completed_date" : "2026-02-16T09:43:10.733071+00:00",
+    "related_mistakes" : [ "M452" ],
+    "effectiveness_check" : {
+      "mistakes_before" : 1,
+      "mistakes_after" : null,
+      "post_fix_mistakes" : [ ],
+      "verdict" : "pending"
+    },
+    "implementation" : "M452 prevention updated work-with-issue skill to include explicit progress-banner script commands at every phase step, eliminating dependency on pre-rendered context."
+  }, {
+    "id" : "A020",
+    "priority" : "high",
+    "description" : "Enforce approval gate: PreToolUse hook on Task(work-merge) must verify AskUserQuestion with 'Approve and merge' was selected when trust != high. Conversational responses are NOT approval.",
+    "category" : "protocol_violation",
+    "pattern_id" : "PATTERN-017",
+    "status" : "escalated",
+    "created_date" : "2026-02-16T09:40:08.086328+00:00",
+    "completed_date" : "2026-02-16T09:40:08.086328+00:00",
+    "related_mistakes" : [ "M479", "M480", "M489" ],
+    "implementation" : "M489 prevention added Approval Gate Protocol to .claude/rules/hooks.md. M480 added PreToolUse hook blocking work-merge spawn without explicit approval. Both already committed.",
+    "effectiveness_check" : {
+      "mistakes_before" : 3,
+      "mistakes_after" : 6,
+      "post_fix_mistakes" : [ "M489", "M446", "M459", "M462", "M463", "M464" ],
+      "verdict" : "ineffective"
+    },
+    "escalation" : {
+      "id" : "ESCALATE-A020",
+      "escalated_date" : "2026-03-05T19:10:00Z",
+      "reason" : "6 post-fix failures. Hook validates AskUserQuestion was called but does not check that answers object is non-empty. M459/M462/M463/M464 all bypass approval gate via empty answers {}.",
+      "escalation_level" : "hook",
+      "analysis" : "R026 escalation: 6 post-fix failures recorded. However, issue 2.1-fix-approval-gate-empty-answers-handling was closed 2026-03-04 with a documentation fix adding explicit empty-answers handling to work-with-issue Step 8. M459/M462/M463/M464 occurred before or during the fix. Fix implemented; effectiveness pending next monitoring period.",
+      "proposed_solution" : "Implemented via 2.1-fix-approval-gate-empty-answers-handling (closed 2026-03-04). Monitor for recurrences.",
+      "status" : "implemented"
+    }
+  }, {
+    "id" : "A021",
+    "priority" : "medium",
+    "description" : "Require stakeholder reviewers to diff against base branch and read all modified files before reviewing. Add mandatory file-reading evidence to review format.",
+    "category" : "stakeholder_review_quality",
+    "pattern_id" : "PATTERN-018",
+    "status" : "implemented",
+    "created_date" : "2026-02-20T06:19:02-05:00",
+    "completed_date" : "2026-02-22",
+    "related_mistakes" : [ "M478", "M496", "M498", "M499" ],
+    "implementation" : "Implemented in v2.1-require-reviewer-file-evidence (closed 2026-02-22). Added mandatory Evidence section to stakeholder reviewer JSON output and diff-analysis-first requirement to all 10 stakeholder agent definitions.",
+    "effectiveness_check" : {
+      "mistakes_before" : 4,
+      "mistakes_after" : null,
+      "post_fix_mistakes" : [ ],
+      "verdict" : "pending"
+    }
+  }, {
+    "id" : "A022",
+    "priority" : "medium",
+    "description" : "Fix learn skill commit-grouping: when prevention type is skill/process/documentation/config and no active worktree exists, include prevention files in same commit as retrospective metadata. Only split commits when prevention targets a worktree (code_fix, hook, validation).",
+    "category" : "protocol_violation",
+    "pattern_id" : null,
+    "status" : "implemented",
+    "created_date" : "2026-02-22T13:45:25Z",
+    "completed_date" : "2026-02-22T13:45:25Z",
+    "related_mistakes" : [ "M366" ],
+    "implementation" : "M366 prevention added single-commit-rule to phase-record.md Step 12-13: when prevention is skill/process/documentation/config type, group prevention file and retrospective metadata into one commit in Step 13. Only split when prevention targets a worktree.",
+    "effectiveness_check" : null
+  }, {
+    "id" : "A023",
+    "priority" : "low",
+    "description" : "Add active line-length verification reminder to phase-prevent.md: after editing any Markdown or Java file, verify all added lines comply with the 120-character limit (common.md). Include in phase-prevent Step 4 a checkstep: count characters in each added line and wrap any that exceed 120.",
+    "category" : "formatting_violation",
+    "pattern_id" : "PATTERN-019",
+    "status" : "implemented",
+    "created_date" : "2026-02-23T10:22:49Z",
+    "completed_date" : "2026-03-01",
+    "related_mistakes" : [ "M380", "M382" ],
+    "implementation" : "Implemented in v2.1-add-line-length-verification-reminder (closed 2026-03-01). Added line-length check-step to phase-prevent.md Step 4.",
+    "effectiveness_check" : {
+      "mistakes_before" : 2,
+      "mistakes_after" : null,
+      "post_fix_mistakes" : [ ],
+      "verdict" : "pending"
+    }
+  }, {
+    "id" : "A024",
+    "priority" : "high",
+    "description" : "Explicitly label all mandatory workflow steps as MANDATORY in work-with-issue and other orchestration skills. Add explicit instruction that mandatory steps do not require user permission and must not be skipped. Affected steps: stakeholder-review (Step 5), skill-builder review before approval gate, squash before approval gate (Step 6). Add a MANDATORY STEPS checklist at the top of work-with-issue/first-use.md.",
+    "category" : "protocol_violation",
+    "pattern_id" : "PATTERN-020",
+    "status" : "implemented",
+    "created_date" : "2026-02-23T10:22:49Z",
+    "completed_date" : "2026-03-02",
+    "related_mistakes" : [ "M384", "M388" ],
+    "implementation" : "Implemented in v2.1-label-mandatory-workflow-steps (closed 2026-03-02). Added MANDATORY STEPS checklist to work-with-issue/first-use.md and labeled stakeholder-review, skill-builder review, and squash steps as MANDATORY.",
+    "effectiveness_check" : {
+      "mistakes_before" : 2,
+      "mistakes_after" : null,
+      "post_fix_mistakes" : [ ],
+      "verdict" : "pending"
+    }
+  }, {
+    "id" : "A025",
+    "priority" : "low",
+    "description" : "Document skill output forwarding protocol: when a skill produces AskUserQuestion wizard output, the invoking agent must call AskUserQuestion directly (not render it as prose). Add to wizard-based skills (config, etc.) explicit note: 'After invoking this skill, forward the AskUserQuestion tool call verbatim — do not respond conversationally.'",
+    "category" : "protocol_violation",
+    "pattern_id" : "PATTERN-021",
+    "status" : "implemented",
+    "created_date" : "2026-02-28T16:57:40-05:00",
+    "completed_date" : "2026-03-01",
+    "related_mistakes" : [ "M419", "M420" ],
+    "implementation" : "Implemented in v2.1-document-skill-output-forwarding-protocol (closed 2026-03-01). Added forwarding note to wizard-based skills instructing invoking agents to forward AskUserQuestion calls verbatim.",
+    "effectiveness_check" : {
+      "mistakes_before" : 2,
+      "mistakes_after" : null,
+      "post_fix_mistakes" : [ ],
+      "verdict" : "pending"
+    }
+  }, {
+    "id" : "A026",
+    "priority" : "medium",
+    "description" : "Add explicit rejection-state handling to work-with-issue: (1) PARTIAL verify result = STOP, do NOT proceed to stakeholder review — fix unmet conditions first; (2) Rejected stakeholder review = automatically enter re-work loop (fix issues, re-run review) without asking user permission; (3) User rejects AskUserQuestion approval gate mid-workflow = re-present the gate in the NEXT response, do not skip it. Add 'REJECTION HANDLING' section to work-with-issue/first-use.md covering all three cases.",
+    "category" : "protocol_violation",
+    "pattern_id" : "PATTERN-022",
+    "status" : "implemented",
+    "created_date" : "2026-02-28T16:57:40-05:00",
+    "completed_date" : "2026-03-01",
+    "related_mistakes" : [ "M433", "M434", "M435" ],
+    "implementation" : "Implemented in v2.1-add-rejection-state-handling (closed 2026-03-01). Added REJECTION HANDLING section to work-with-issue/first-use.md covering all three rejection cases.",
+    "effectiveness_check" : {
+      "mistakes_before" : 3,
+      "mistakes_after" : null,
+      "post_fix_mistakes" : [ ],
+      "verdict" : "pending"
+    }
+  }, {
+    "id" : "A027",
+    "priority" : "low",
+    "description" : "Fix AutoLearnMistakes pattern matching to exclude false positives from documentation tables, code blocks, and embedded JSON in tool output. Add context-aware filtering: only match patterns in plain text assistant messages.",
+    "category" : "detection_gap",
+    "pattern_id" : "PATTERN-023",
+    "status" : "closed_addressed",
+    "created_date" : "2026-03-05T19:10:00Z",
+    "completed_date" : "2026-03-04",
+    "related_mistakes" : [ "M461", "M466" ],
+    "effectiveness_check" : null,
+    "implementation" : "Addressed by 2.1-fix-autolearn-pattern2-false-positive (closed). Removed ^(FAIL:|FAILED\\s) sub-pattern from Pattern 2 in AutoLearnMistakes.java."
+  } ]
 }
