@@ -21,6 +21,8 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
 /**
  * Shared test utilities for directory, file, and git operations.
  */
@@ -37,6 +39,48 @@ public final class TestUtils
   private TestUtils()
   {
     // Utility class
+  }
+
+  /**
+   * Creates a temporary directory with the given prefix.
+   *
+   * @param prefix the prefix for the temporary directory name
+   * @return the path to the created temporary directory
+   * @throws NullPointerException if {@code prefix} is null
+   */
+  public static Path createTempDir(String prefix)
+  {
+    requireThat(prefix, "prefix").isNotNull();
+    try
+    {
+      return Files.createTempDirectory(prefix);
+    }
+    catch (IOException e)
+    {
+      throw WrappedCheckedException.wrap(e);
+    }
+  }
+
+  /**
+   * Creates a temporary project directory with a {@code .claude/cat/issues} tree.
+   *
+   * @param prefix the prefix for the temporary directory name
+   * @return the path to the created project directory
+   * @throws NullPointerException if {@code prefix} is null
+   */
+  public static Path createTempCatProject(String prefix)
+  {
+    requireThat(prefix, "prefix").isNotNull();
+    try
+    {
+      Path projectDir = Files.createTempDirectory(prefix);
+      Files.createDirectories(projectDir.resolve(".claude").resolve("cat").resolve("issues"));
+      return projectDir;
+    }
+    catch (IOException e)
+    {
+      throw WrappedCheckedException.wrap(e);
+    }
   }
 
   /**

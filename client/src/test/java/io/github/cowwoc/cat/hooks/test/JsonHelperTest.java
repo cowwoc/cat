@@ -240,7 +240,8 @@ public class JsonHelperTest
   /**
    * Verifies that getStringOrDefault with null node throws NullPointerException.
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*node.*")
   public void getStringOrDefaultWithNullNodeThrows()
   {
     JsonHelper.getStringOrDefault(null, "key", "default");
@@ -251,7 +252,8 @@ public class JsonHelperTest
    *
    * @throws IOException if JSON parsing fails
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*key.*")
   public void getStringOrDefaultWithNullKeyThrows() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -265,7 +267,8 @@ public class JsonHelperTest
   /**
    * Verifies that getIntOrDefault with null node throws NullPointerException.
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*node.*")
   public void getIntOrDefaultWithNullNodeThrows()
   {
     JsonHelper.getIntOrDefault(null, "key", 0);
@@ -276,7 +279,8 @@ public class JsonHelperTest
    *
    * @throws IOException if JSON parsing fails
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*key.*")
   public void getIntOrDefaultWithNullKeyThrows() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -290,7 +294,8 @@ public class JsonHelperTest
   /**
    * Verifies that getArray with null node throws NullPointerException.
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*node.*")
   public void getArrayWithNullNodeThrows()
   {
     JsonHelper.getArray(null, "key");
@@ -301,7 +306,8 @@ public class JsonHelperTest
    *
    * @throws IOException if JSON parsing fails
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*key.*")
   public void getArrayWithNullKeyThrows() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -315,7 +321,8 @@ public class JsonHelperTest
   /**
    * Verifies that getStringArray with null node throws NullPointerException.
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*node.*")
   public void getStringArrayWithNullNodeThrows()
   {
     JsonHelper.getStringArray(null, "key");
@@ -326,7 +333,8 @@ public class JsonHelperTest
    *
    * @throws IOException if JSON parsing fails
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*key.*")
   public void getStringArrayWithNullKeyThrows() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())

@@ -131,7 +131,8 @@ public final class ResetFailureCounterTest
   /**
    * Verifies that a blank sessionId throws IllegalArgumentException.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*sessionId.*")
   public void blankSessionIdThrows() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-reset-test-");

@@ -207,7 +207,8 @@ public class GetNextIssueOutputTest
   /**
    * Verifies that constructor throws NullPointerException for null scope.
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*scope.*")
   public void constructorThrowsOnNullScope()
   {
     new GetNextIssueOutput(null);
@@ -216,7 +217,8 @@ public class GetNextIssueOutputTest
   /**
    * Verifies that getNextIssueBox throws for null completedIssue.
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*completedIssue.*")
   public void getNextIssueBoxThrowsOnNullCompletedIssue() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -229,7 +231,8 @@ public class GetNextIssueOutputTest
   /**
    * Verifies that getNextIssueBox throws for blank completedIssue.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*completedIssue.*")
   public void getNextIssueBoxThrowsOnBlankCompletedIssue() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -242,7 +245,8 @@ public class GetNextIssueOutputTest
   /**
    * Verifies that getNextIssueBox throws for null targetBranch.
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*targetBranch.*")
   public void getNextIssueBoxThrowsOnNullTargetBranch() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -255,7 +259,8 @@ public class GetNextIssueOutputTest
   /**
    * Verifies that getNextIssueBox throws for blank targetBranch.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*targetBranch.*")
   public void getNextIssueBoxThrowsOnBlankTargetBranch() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -268,7 +273,8 @@ public class GetNextIssueOutputTest
   /**
    * Verifies that getNextIssueBox throws for null sessionId.
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*sessionId.*")
   public void getNextIssueBoxThrowsOnNullSessionId() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -281,7 +287,8 @@ public class GetNextIssueOutputTest
   /**
    * Verifies that getNextIssueBox throws for blank sessionId.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*sessionId.*")
   public void getNextIssueBoxThrowsOnBlankSessionId() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -294,7 +301,8 @@ public class GetNextIssueOutputTest
   /**
    * Verifies that getNextIssueBox throws for null projectDir.
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*projectDir.*")
   public void getNextIssueBoxThrowsOnNullProjectDir() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -307,7 +315,8 @@ public class GetNextIssueOutputTest
   /**
    * Verifies that getNextIssueBox throws for blank projectDir.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*projectDir.*")
   public void getNextIssueBoxThrowsOnBlankProjectDir() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -320,7 +329,8 @@ public class GetNextIssueOutputTest
   /**
    * Verifies that getNextIssueBox throws for null excludePattern.
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*excludePattern.*")
   public void getNextIssueBoxThrowsOnNullExcludePattern() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -371,7 +381,8 @@ public class GetNextIssueOutputTest
    *
    * @throws IOException expected for missing arguments
    */
-  @Test(expectedExceptions = IOException.class)
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*GetNextIssueOutput.getOutput\\(\\) requires.*")
   public void getOutputThrowsForMissingArguments() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -413,7 +424,8 @@ public class GetNextIssueOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*args.*")
   public void getOutputThrowsOnNullArgs() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())

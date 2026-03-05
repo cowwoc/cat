@@ -9,7 +9,6 @@ package io.github.cowwoc.cat.hooks.test;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetIssueCompleteOutput;
 import io.github.cowwoc.cat.hooks.util.IssueGoalReader;
-import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -250,7 +249,8 @@ public class GetIssueCompleteOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*issueName.*")
   public void getIssueCompleteBoxThrowsOnNullIssueName() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -265,7 +265,8 @@ public class GetIssueCompleteOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*issueName.*")
   public void getIssueCompleteBoxThrowsOnBlankIssueName() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -280,7 +281,8 @@ public class GetIssueCompleteOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*nextIssue.*")
   public void getIssueCompleteBoxThrowsOnNullNextIssue() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -295,7 +297,8 @@ public class GetIssueCompleteOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*nextIssue.*")
   public void getIssueCompleteBoxThrowsOnBlankNextIssue() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -310,7 +313,8 @@ public class GetIssueCompleteOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*nextGoal.*")
   public void getIssueCompleteBoxThrowsOnNullNextGoal() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -325,7 +329,8 @@ public class GetIssueCompleteOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*nextGoal.*")
   public void getIssueCompleteBoxThrowsOnBlankNextGoal() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -340,7 +345,8 @@ public class GetIssueCompleteOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*scopeName.*")
   public void getScopeCompleteBoxThrowsOnNullScope() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -355,7 +361,8 @@ public class GetIssueCompleteOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*scopeName.*")
   public void getScopeCompleteBoxThrowsOnBlankScope() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -368,7 +375,8 @@ public class GetIssueCompleteOutputTest
   /**
    * Verifies that constructor throws NullPointerException for null scope.
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*scope.*")
   public void constructorThrowsOnNullScope()
   {
     new GetIssueCompleteOutput(null);
@@ -416,7 +424,8 @@ public class GetIssueCompleteOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Expected 1 or 2 arguments.*")
   public void getOutputThreeArgsThrowsIllegalArgument() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -434,7 +443,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getOutputTwoArgDiscoveriesNextIssue() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("get-issue-complete-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       createIssueWithPlan(projectDir, "2", "1", "next-feature", "open",
@@ -460,7 +469,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getOutputTwoArgNoNextIssueRendersScope() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("get-issue-complete-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
@@ -484,7 +493,8 @@ public class GetIssueCompleteOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*issueName.*")
   public void discoverAndRenderNullIssueNameThrows() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -498,7 +508,8 @@ public class GetIssueCompleteOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*issueName.*")
   public void discoverAndRenderBlankIssueNameThrows() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -512,7 +523,8 @@ public class GetIssueCompleteOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*targetBranch.*")
   public void discoverAndRenderNullTargetBranchThrows() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -526,7 +538,8 @@ public class GetIssueCompleteOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*targetBranch.*")
   public void discoverAndRenderBlankTargetBranchThrows() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -558,7 +571,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void discoverAndRenderNotFoundRendersScope() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("get-issue-complete-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       String result = new GetIssueCompleteOutput(scope).discoverAndRender("2.1-done-issue", "v2.1");
@@ -580,7 +593,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void discoverAndRenderSuccessPathRendersIssueComplete() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("get-issue-complete-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       createIssueWithPlan(projectDir, "2", "1", "next-issue", "open",
@@ -705,26 +718,6 @@ public class GetIssueCompleteOutputTest
   // -----------------------------------------------------------------------------------------
   // Setup helpers
   // -----------------------------------------------------------------------------------------
-
-  /**
-   * Creates a minimal project directory structure with a {@code .claude/cat/issues} tree.
-   *
-   * @return the project root temp directory
-   */
-  private Path createTempProject()
-  {
-    try
-    {
-      Path projectDir = Files.createTempDirectory("get-issue-complete-test");
-      Path catDir = projectDir.resolve(".claude").resolve("cat");
-      Files.createDirectories(catDir.resolve("issues"));
-      return projectDir;
-    }
-    catch (IOException e)
-    {
-      throw WrappedCheckedException.wrap(e);
-    }
-  }
 
   /**
    * Creates an issue directory with STATE.md and a PLAN.md with the given content.

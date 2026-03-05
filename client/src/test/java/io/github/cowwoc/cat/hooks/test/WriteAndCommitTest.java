@@ -8,7 +8,6 @@ package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.util.WriteAndCommit;
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -25,23 +24,6 @@ import java.nio.file.Path;
 public class WriteAndCommitTest
 {
   /**
-   * Creates a temporary directory for testing.
-   *
-   * @return the temporary directory path
-   */
-  private Path createTempDir()
-  {
-    try
-    {
-      return Files.createTempDirectory("write-and-commit-test");
-    }
-    catch (IOException e)
-    {
-      throw WrappedCheckedException.wrap(e);
-    }
-  }
-
-  /**
    * Verifies that execute rejects null filePath.
    *
    * @throws IOException if an I/O error occurs
@@ -52,7 +34,7 @@ public class WriteAndCommitTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("write-and-commit-test");
     try
     {
       Path contentFile = tempDir.resolve("content.txt");
@@ -82,7 +64,7 @@ public class WriteAndCommitTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("write-and-commit-test");
     try
     {
       Path contentFile = tempDir.resolve("content.txt");
@@ -112,7 +94,7 @@ public class WriteAndCommitTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("write-and-commit-test");
     try
     {
       Path commitMsgFile = tempDir.resolve("commit.txt");
@@ -141,7 +123,7 @@ public class WriteAndCommitTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("write-and-commit-test");
     try
     {
       Path contentFile = tempDir.resolve("content.txt");

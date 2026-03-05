@@ -25,7 +25,8 @@ public final class GetRetrospectiveOutputTest
   /**
    * Verifies that getOutput rejects unexpected arguments.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*args.*")
   public void getOutputRejectsUnexpectedArguments() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -86,7 +87,8 @@ public final class GetRetrospectiveOutputTest
   /**
    * Verifies that malformed index.json throws an exception.
    */
-  @Test(expectedExceptions = Exception.class)
+  @Test(expectedExceptions = Exception.class,
+    expectedExceptionsMessageRegExp = ".*Unexpected character.*")
   public void malformedIndexFile() throws Exception
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -511,7 +513,8 @@ public final class GetRetrospectiveOutputTest
   /**
    * Verifies that an unparseable mistakes file propagates the error.
    */
-  @Test(expectedExceptions = Exception.class)
+  @Test(expectedExceptions = Exception.class,
+    expectedExceptionsMessageRegExp = ".*Unrecognized token.*")
   public void unparseableMistakesFilePropagatesError() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");

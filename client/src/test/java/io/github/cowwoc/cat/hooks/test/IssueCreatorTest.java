@@ -30,7 +30,8 @@ public class IssueCreatorTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*jsonInput.*")
   public void executeRejectsNullInput() throws IOException
   {
     IssueCreator creator = new IssueCreator();
@@ -42,7 +43,8 @@ public class IssueCreatorTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*jsonInput.*")
   public void executeRejectsEmptyInput() throws IOException
   {
     IssueCreator creator = new IssueCreator();
@@ -54,7 +56,8 @@ public class IssueCreatorTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = {IOException.class, tools.jackson.core.exc.StreamReadException.class})
+  @Test(expectedExceptions = {IOException.class, tools.jackson.core.exc.StreamReadException.class},
+    expectedExceptionsMessageRegExp = ".*Unexpected character.*")
   public void executeRejectsMalformedJson() throws IOException
   {
     IssueCreator creator = new IssueCreator();
@@ -66,7 +69,8 @@ public class IssueCreatorTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IOException.class)
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*Missing required field: major.*")
   public void executeRejectsMissingMajor() throws IOException
   {
     IssueCreator creator = new IssueCreator();
@@ -85,7 +89,8 @@ public class IssueCreatorTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IOException.class)
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*Missing required field: minor.*")
   public void executeRejectsMissingMinor() throws IOException
   {
     IssueCreator creator = new IssueCreator();
@@ -104,7 +109,8 @@ public class IssueCreatorTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IOException.class)
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*Missing required field: issue_name.*")
   public void executeRejectsMissingIssueName() throws IOException
   {
     IssueCreator creator = new IssueCreator();
@@ -123,7 +129,8 @@ public class IssueCreatorTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IOException.class)
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*Missing required field: state_content.*")
   public void executeRejectsMissingStateContent() throws IOException
   {
     IssueCreator creator = new IssueCreator();
@@ -142,7 +149,8 @@ public class IssueCreatorTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IOException.class)
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*Missing required field: plan_content.*")
   public void executeRejectsMissingPlanContent() throws IOException
   {
     IssueCreator creator = new IssueCreator();
@@ -371,7 +379,8 @@ public class IssueCreatorTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IOException.class)
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*git command failed.*")
   public void executeHandlesNonGitDirectory() throws IOException
   {
     Path tempDir = Files.createTempDirectory("issue-creator-test-nongit");

@@ -44,7 +44,7 @@ public class LicenseValidatorTest
   @Test
   public void missingConfigFileReturnsCore() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
@@ -73,7 +73,7 @@ public class LicenseValidatorTest
   @Test
   public void emptyLicenseTokenReturnsCore() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
@@ -110,7 +110,7 @@ public class LicenseValidatorTest
   @Test
   public void validJwtFormatIsParsedCorrectly() throws Exception
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
@@ -146,7 +146,7 @@ public class LicenseValidatorTest
   @Test
   public void invalidJwtFormatReturnsError() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
@@ -181,7 +181,7 @@ public class LicenseValidatorTest
   @Test
   public void missingPublicKeyReturnsError() throws Exception
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
@@ -214,7 +214,7 @@ public class LicenseValidatorTest
   @Test
   public void expiredTokenPastGracePeriodFallsBackToCore() throws Exception
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
@@ -252,7 +252,7 @@ public class LicenseValidatorTest
   @Test
   public void expiredTokenWithinGracePeriodRetainsTierWithWarning() throws Exception
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
@@ -291,7 +291,7 @@ public class LicenseValidatorTest
   @Test
   public void tokenWithInvalidSignatureReturnsError() throws Exception
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
@@ -327,7 +327,7 @@ public class LicenseValidatorTest
   @Test
   public void tokenWithNoExpirationIsValidIndefinitely() throws Exception
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
@@ -364,7 +364,7 @@ public class LicenseValidatorTest
   @Test
   public void tokenWithOnePartReturnsError() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
@@ -399,7 +399,7 @@ public class LicenseValidatorTest
   @Test
   public void tokenWithFourPartsReturnsError() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
@@ -434,7 +434,7 @@ public class LicenseValidatorTest
   @Test
   public void tokenWithInvalidJsonReturnsError() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
@@ -472,7 +472,7 @@ public class LicenseValidatorTest
   @Test
   public void tokenWithInvalidBase64ReturnsError() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
@@ -507,7 +507,7 @@ public class LicenseValidatorTest
   @Test
   public void tokenWithInvalidTierStringReturnsError() throws Exception
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
@@ -542,7 +542,7 @@ public class LicenseValidatorTest
   @Test
   public void tokenWithMissingTierFieldDefaultsToCore() throws Exception
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
@@ -565,23 +565,6 @@ public class LicenseValidatorTest
         TestUtils.deleteDirectoryRecursively(tempDir);
         TestUtils.deleteDirectoryRecursively(pluginRoot);
       }
-    }
-  }
-
-  /**
-   * Creates a temporary directory for test isolation.
-   *
-   * @return the path to the created temporary directory
-   */
-  private Path createTempDir()
-  {
-    try
-    {
-      return Files.createTempDirectory("license-test");
-    }
-    catch (IOException e)
-    {
-      throw WrappedCheckedException.wrap(e);
     }
   }
 

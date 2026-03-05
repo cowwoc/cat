@@ -349,7 +349,8 @@ public class HookEntryPointTest
   /**
    * Verifies that HookInput.getString with non-string value throws IllegalArgumentException.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Expected string for key.*count.*")
   public void hookInputGetStringWithNonStringValueThrows() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -378,7 +379,8 @@ public class HookEntryPointTest
   /**
    * Verifies that HookInput.readFrom with null stream throws NullPointerException.
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*inputStream.*")
   public void hookInputReadFromNullStreamThrows() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -405,7 +407,8 @@ public class HookEntryPointTest
   /**
    * Verifies that HookOutput.block with blank reason throws IllegalArgumentException.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*reason.*")
   public void hookOutputBlockWithBlankReasonThrows() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -418,7 +421,8 @@ public class HookEntryPointTest
   /**
    * Verifies that HookOutput.block with null reason throws NullPointerException.
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*reason.*")
   public void hookOutputBlockWithNullReasonThrows() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -431,7 +435,8 @@ public class HookEntryPointTest
   /**
    * Verifies that HookOutput constructor with null mapper throws NullPointerException.
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*scope.*")
   public void hookOutputWithNullMapperThrows()
   {
     new HookOutput(null);
@@ -440,7 +445,8 @@ public class HookEntryPointTest
   /**
    * Verifies that HookOutput.wrapSystemReminder with blank content throws IllegalArgumentException.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*content.*")
   public void hookOutputWrapSystemReminderWithBlankContentThrows()
   {
     HookOutput.wrapSystemReminder("   ");
@@ -449,7 +455,8 @@ public class HookEntryPointTest
   /**
    * Verifies that HookOutput.additionalContext with blank hookEventName throws IllegalArgumentException.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*hookEventName.*")
   public void hookOutputAdditionalContextWithBlankEventNameThrows() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -574,7 +581,8 @@ public class HookEntryPointTest
   /**
    * Verifies that PreEditHook throws IllegalArgumentException when session_id is missing.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*sessionId.*")
   public void getEditPretoolThrowsOnMissingSessionId() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())

@@ -261,7 +261,8 @@ public class ProgressBannerTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*issueId.*")
   public void generateBannerRejectsNullIssueId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -281,7 +282,8 @@ public class ProgressBannerTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*phase.*")
   public void generateBannerRejectsNullPhase() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -376,7 +378,8 @@ public class ProgressBannerTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*issueId.*")
   public void generateAllPhasesRejectsNullIssueId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");

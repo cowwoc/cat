@@ -8,7 +8,6 @@ package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.util.MergeAndCleanup;
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -25,23 +24,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public class MergeAndCleanupTest
 {
   /**
-   * Creates a temporary directory for testing.
-   *
-   * @return the temporary directory path
-   */
-  private Path createTempDir()
-  {
-    try
-    {
-      return Files.createTempDirectory("merge-and-cleanup-test");
-    }
-    catch (IOException e)
-    {
-      throw WrappedCheckedException.wrap(e);
-    }
-  }
-
-  /**
    * Verifies that execute rejects null projectDir.
    *
    * @throws IOException if an I/O error occurs
@@ -54,7 +36,7 @@ public class MergeAndCleanupTest
     Path pluginRoot = Files.createTempDirectory("test-plugin");
     try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
-      Path tempDir = createTempDir();
+      Path tempDir = TestUtils.createTempDir("merge-cleanup-test");
       try
       {
         MergeAndCleanup cmd = new MergeAndCleanup(scope);
@@ -81,7 +63,7 @@ public class MergeAndCleanupTest
     Path pluginRoot = Files.createTempDirectory("test-plugin");
     try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
-      Path tempDir = createTempDir();
+      Path tempDir = TestUtils.createTempDir("merge-cleanup-test");
       try
       {
         MergeAndCleanup cmd = new MergeAndCleanup(scope);
@@ -108,7 +90,7 @@ public class MergeAndCleanupTest
     Path pluginRoot = Files.createTempDirectory("test-plugin");
     try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
-      Path tempDir = createTempDir();
+      Path tempDir = TestUtils.createTempDir("merge-cleanup-test");
       try
       {
         MergeAndCleanup cmd = new MergeAndCleanup(scope);
@@ -135,7 +117,7 @@ public class MergeAndCleanupTest
     Path pluginRoot = Files.createTempDirectory("test-plugin");
     try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
-      Path tempDir = createTempDir();
+      Path tempDir = TestUtils.createTempDir("merge-cleanup-test");
       try
       {
         MergeAndCleanup cmd = new MergeAndCleanup(scope);
@@ -162,7 +144,7 @@ public class MergeAndCleanupTest
     Path pluginRoot = Files.createTempDirectory("test-plugin");
     try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
-      Path tempDir = createTempDir();
+      Path tempDir = TestUtils.createTempDir("merge-cleanup-test");
       try
       {
         Path catDir = tempDir.resolve(".claude/cat");

@@ -14,7 +14,6 @@ import io.github.cowwoc.cat.hooks.util.EffortLevel;
 import io.github.cowwoc.cat.hooks.util.PatienceLevel;
 import io.github.cowwoc.cat.hooks.util.TrustLevel;
 import io.github.cowwoc.cat.hooks.util.VerifyLevel;
-import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.testng.annotations.Test;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
@@ -43,7 +42,7 @@ public class ConfigTest
   @Test
   public void configUsesDefaultTrustWhenConfigMissing() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -64,7 +63,7 @@ public class ConfigTest
   @Test
   public void configUsesDefaultVerifyWhenConfigMissing() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -87,7 +86,7 @@ public class ConfigTest
   @Test
   public void configReadsValuesFromFile() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -119,7 +118,7 @@ public class ConfigTest
   @Test
   public void configUsesDefaultsForMissingKeys() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -150,10 +149,11 @@ public class ConfigTest
    *
    * @throws IOException if an I/O error occurs creating test files
    */
-  @Test(expectedExceptions = JacksonException.class)
+  @Test(expectedExceptions = JacksonException.class,
+    expectedExceptionsMessageRegExp = ".*Unexpected character.*")
   public void configThrowsOnInvalidJson() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -175,7 +175,7 @@ public class ConfigTest
   @Test
   public void configAsMapReturnsAllDefaults() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -205,7 +205,7 @@ public class ConfigTest
   @Test
   public void getConfigOutputFormatsSettingsCorrectly() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       Path catDir = tempDir.resolve(".claude").resolve("cat");
@@ -244,7 +244,7 @@ public class ConfigTest
   @Test
   public void localConfigOverridesBaseConfig() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -274,7 +274,8 @@ public class ConfigTest
   /**
    * Verifies that null scope throws NullPointerException.
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*scope.*")
   public void constructorRejectsNullScope()
   {
     new GetConfigOutput(null);
@@ -285,10 +286,11 @@ public class ConfigTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Unknown page.*")
   public void getOutputRejectsUnknownPage() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetConfigOutput generator = new GetConfigOutput(scope);
@@ -308,7 +310,7 @@ public class ConfigTest
   @Test
   public void getOutputContainsExpectedBoxHeaders() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       Path catDir = tempDir.resolve(".claude").resolve("cat");
@@ -340,7 +342,7 @@ public class ConfigTest
   @Test
   public void getOutputWorksWithoutConfigFile() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetConfigOutput handler = new GetConfigOutput(scope);
@@ -359,10 +361,11 @@ public class ConfigTest
    *
    * @throws IOException if an I/O error occurs creating test files
    */
-  @Test(expectedExceptions = JacksonException.class)
+  @Test(expectedExceptions = JacksonException.class,
+    expectedExceptionsMessageRegExp = ".*Unexpected character.*")
   public void getOutputPropagatesIOException() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       Path catDir = tempDir.resolve(".claude").resolve("cat");
@@ -384,7 +387,7 @@ public class ConfigTest
   @Test
   public void getTrustDefaultsToMedium() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -404,7 +407,7 @@ public class ConfigTest
   @Test
   public void getTrustParsesHighFromConfig() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -429,10 +432,11 @@ public class ConfigTest
   /**
    * Verifies that getTrust() throws IllegalArgumentException for an unrecognized trust value in the config file.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*UNKNOWN.*")
   public void getTrustThrowsForInvalidValue() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -459,7 +463,7 @@ public class ConfigTest
   @Test
   public void getVerifyDefaultsToChanged() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -479,7 +483,7 @@ public class ConfigTest
   @Test
   public void getVerifyParsesAllFromConfig() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -504,10 +508,11 @@ public class ConfigTest
   /**
    * Verifies that getVerify() throws IllegalArgumentException for an unrecognized verify value in the config file.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*UNKNOWN.*")
   public void getVerifyThrowsForInvalidValue() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -534,7 +539,7 @@ public class ConfigTest
   @Test
   public void getEffortDefaultsToMedium() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -554,7 +559,7 @@ public class ConfigTest
   @Test
   public void getEffortParsesHighFromConfig() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -582,7 +587,7 @@ public class ConfigTest
   @Test
   public void getEffortParsesMediumFromConfig() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -608,10 +613,11 @@ public class ConfigTest
    * Verifies that getEffort() throws IllegalArgumentException for an unrecognized effort value in the config
    * file.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*UNKNOWN.*")
   public void getEffortThrowsForInvalidValue() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -638,7 +644,7 @@ public class ConfigTest
   @Test
   public void getPatienceDefaultsToHigh() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -658,7 +664,7 @@ public class ConfigTest
   @Test
   public void getPatienceParsesLowFromConfig() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -684,10 +690,11 @@ public class ConfigTest
    * Verifies that getPatience() throws IllegalArgumentException for an unrecognized patience value in the config
    * file.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*UNKNOWN.*")
   public void getPatienceThrowsForInvalidValue() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -714,7 +721,7 @@ public class ConfigTest
   @Test
   public void getMinSeverityDefaultsToLow() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -734,7 +741,7 @@ public class ConfigTest
   @Test
   public void getMinSeverityParsesMediumFromConfig() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -762,7 +769,7 @@ public class ConfigTest
   @Test
   public void getMinSeverityParsesHighFromConfig() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -790,7 +797,7 @@ public class ConfigTest
   @Test
   public void getMinSeverityParsesCriticalFromConfig() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -815,10 +822,11 @@ public class ConfigTest
   /**
    * Verifies that getMinSeverity() throws IllegalArgumentException for an unrecognized value in the config file.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*UNKNOWN.*")
   public void getMinSeverityThrowsForInvalidValue() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -850,7 +858,7 @@ public class ConfigTest
   @Test
   public void configAsMapContainsBothDefaultsAndOverrides() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -886,7 +894,7 @@ public class ConfigTest
   @Test
   public void configAsMapIncludesMinSeverityDefault() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -907,10 +915,11 @@ public class ConfigTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Unknown configuration keys found.*")
   public void configRejectsUnknownKeys() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -941,7 +950,7 @@ public class ConfigTest
   @Test
   public void configUnknownKeyErrorIncludesKnownKeys() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -981,7 +990,7 @@ public class ConfigTest
     expectedExceptionsMessageRegExp = ".*license.*user-specific.*cat-config\\.local\\.json.*")
   public void configRejectsLicenseInBaseConfig() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -1009,7 +1018,7 @@ public class ConfigTest
   @Test
   public void configAcceptsLicenseInLocalConfig() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
@@ -1040,7 +1049,7 @@ public class ConfigTest
   @Test
   public void getEffectiveConfigReturnsAllDefaults() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetConfigOutput handler = new GetConfigOutput(scope);
@@ -1075,7 +1084,7 @@ public class ConfigTest
   @Test
   public void getEffectiveConfigMergesFileWithDefaults() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       Path catDir = tempDir.resolve(".claude").resolve("cat");
@@ -1116,7 +1125,7 @@ public class ConfigTest
   @Test
   public void getOutputEffectiveReturnsJson() throws IOException
   {
-    Path tempDir = createTempDir();
+    Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetConfigOutput handler = new GetConfigOutput(scope);
@@ -1129,23 +1138,6 @@ public class ConfigTest
     finally
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Creates a temporary directory for test isolation.
-   *
-   * @return the path to the created temporary directory
-   */
-  private Path createTempDir()
-  {
-    try
-    {
-      return Files.createTempDirectory("config-test");
-    }
-    catch (IOException e)
-    {
-      throw WrappedCheckedException.wrap(e);
     }
   }
 }

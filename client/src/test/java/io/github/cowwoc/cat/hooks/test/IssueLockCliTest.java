@@ -8,14 +8,12 @@ package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.IssueLock;
-import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
 
@@ -37,7 +35,7 @@ public class IssueLockCliTest
   @Test
   public void acquireWithValidArgsWritesAcquiredToStdout() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -73,7 +71,7 @@ public class IssueLockCliTest
   @Test
   public void acquireWithMissingSessionIdWritesErrorToStderr() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -105,7 +103,7 @@ public class IssueLockCliTest
   @Test
   public void acquireWithInvalidUuidSessionIdWritesUuidErrorToStderr() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -137,7 +135,7 @@ public class IssueLockCliTest
   @Test
   public void releaseWithValidArgsWritesReleasedToStdout() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -174,7 +172,7 @@ public class IssueLockCliTest
   @Test
   public void updateWithValidArgsWritesUpdatedToStdout() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -211,7 +209,7 @@ public class IssueLockCliTest
   @Test
   public void checkWithValidIssueReturnsLockedFalseJson() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -243,7 +241,7 @@ public class IssueLockCliTest
   @Test
   public void listCommandReturnsJsonArray() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -275,7 +273,7 @@ public class IssueLockCliTest
   @Test
   public void unknownCommandWritesErrorToStderr() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -307,7 +305,7 @@ public class IssueLockCliTest
   @Test
   public void forceReleaseWithValidIssueWritesReleasedToStdout() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -342,7 +340,7 @@ public class IssueLockCliTest
   @Test
   public void noArgsWritesUsageErrorToStderr() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -363,26 +361,6 @@ public class IssueLockCliTest
       {
         TestUtils.deleteDirectoryRecursively(tempDir);
       }
-    }
-  }
-
-  /**
-   * Creates a temporary CAT project directory for test isolation.
-   *
-   * @return the path to the created temporary directory
-   */
-  private Path createTempProject()
-  {
-    try
-    {
-      Path tempDir = Files.createTempDirectory("issue-lock-cli-test");
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
-      Files.createDirectories(catDir);
-      return tempDir;
-    }
-    catch (IOException e)
-    {
-      throw WrappedCheckedException.wrap(e);
     }
   }
 }
