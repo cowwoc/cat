@@ -5,8 +5,9 @@ See LICENSE.md in the project root for license terms.
 -->
 # Learn From Mistakes: Orchestrator
 
-**Architecture:** Main agent spawns single subagent that loads all phase files (investigate, analyze, prevent,
-record) and executes them in one context.
+**Architecture:** Main agent spawns a subagent that executes phases 1-3 (Investigate, Analyze, Prevent). The
+main agent then passes the Phase 3 output directly to the `record-learning` CLI tool for Phase 4, eliminating
+an LLM invocation for the purely mechanical recording work.
 
 ## Purpose
 
@@ -58,7 +59,7 @@ to the caller.
 
 Delegate to general-purpose subagent using the Task tool with these JSON parameters:
 
-- **description:** `"Learn: Execute all phases for mistake analysis"`
+- **description:** `"Learn: Execute phases 1-3 for mistake analysis"`
 - **subagent_type:** `"general-purpose"`
 - **model:** `"sonnet"`
 - **prompt:** The prompt below (substitute variables with actual values)
@@ -71,7 +72,7 @@ Delegate to general-purpose subagent using the Task tool with these JSON paramet
 > SESSION_ID: ${CLAUDE_SESSION_ID}
 > PROJECT_DIR: ${CLAUDE_PROJECT_DIR}
 >
-> **Your task:** Execute phases in sequence: Investigate → Analyze → Prevent → Record
+> **Your task:** Execute phases in sequence: Investigate → Analyze → Prevent
 >
 > **CRITICAL:** You MUST read and execute each phase file below. Do NOT summarize prior conversation
 > history or reuse results from earlier sessions. Each phase file contains instructions you must follow
@@ -88,7 +89,6 @@ Delegate to general-purpose subagent using the Task tool with these JSON paramet
 > - Phase 1 (Investigate): ${CLAUDE_PLUGIN_ROOT}/skills/learn/phase-investigate.md
 > - Phase 2 (Analyze): ${CLAUDE_PLUGIN_ROOT}/skills/learn/phase-analyze.md
 > - Phase 3 (Prevent): ${CLAUDE_PLUGIN_ROOT}/skills/learn/phase-prevent.md
-> - Phase 4 (Record): ${CLAUDE_PLUGIN_ROOT}/skills/learn/phase-record.md
 >
 > **Pre-Extracted Investigation Context (Starting-Point Index Only):**
 > ```json
@@ -96,7 +96,7 @@ Delegate to general-purpose subagent using the Task tool with these JSON paramet
 > ```
 > **IMPORTANT:** This context is a starting-point index to help you navigate the JSONL file more efficiently. It is NOT the authoritative source of events or evidence. JSONL is the authoritative source for what the agent actually received. Always verify critical findings by searching the JSONL directly (using session-analyzer), especially when investigating priming, documentation corruption, or timeline discrepancies.
 >
-> **Anti-fabrication rule:** `prevention_commit_hash`, `retrospective_commit_hash`, and `prevention_implemented`
+> **Anti-fabrication rule:** `prevention_commit_hash` and `prevention_implemented`
 > MUST reflect actual actions taken. Do NOT fill in plausible-looking values. If no commit was made, set the
 > hash field to `null`. If prevention was not implemented, set `prevention_implemented` to `false`. Fabricated
 > values corrupt the learning record and will be discovered on review.
@@ -106,26 +106,56 @@ Delegate to general-purpose subagent using the Task tool with these JSON paramet
 >
 > ```json
 > {
->   "phases_executed": ["investigate", "analyze", "prevent", "record"],
+>   "phases_executed": ["investigate", "analyze", "prevent"],
 >   "phase_summaries": {
 >     "investigate": "1-3 sentence summary for user",
 >     "analyze": "1-3 sentence summary for user",
->     "prevent": "1-3 sentence summary for user",
->     "record": "1-3 sentence summary for user"
+>     "prevent": "1-3 sentence summary for user"
 >   },
 >   "investigate": { ...phase 1 output fields... },
 >   "analyze": { ...phase 2 output fields... },
->   "prevent": { ...phase 3 output fields... },
->   "record": { ...phase 4 output fields... }
+>   "prevent": { ...phase 3 output fields... }
 > }
 > ```
 
-## Step 4: Display Phase Summaries
+## Step 4: Run record-learning CLI (Phase 4)
 
-**Note:** If the subagent was spawned in background (Step 2), this step executes when the background task
+**Note:** If the subagent was spawned in background (Step 2), Steps 4-6 execute when the background task
 notification arrives, not immediately after Step 3.
 
-After the subagent completes, parse the result JSON and display each phase summary to the user:
+After the subagent completes, pass the Phase 3 output to the `record-learning` CLI tool:
+
+```bash
+# Write Phase 3 output to temp file
+PHASE3_TMP=$(mktemp /tmp/phase3-output.XXXXXX.json)
+cat > "$PHASE3_TMP" << 'PHASE3_EOF'
+{...prevent phase JSON output from subagent...}
+PHASE3_EOF
+
+# Run the record-learning tool — reads Phase 3 JSON from stdin, outputs recording result JSON to stdout
+RECORD_RESULT=$("${CLAUDE_PLUGIN_ROOT}/client/bin/record-learning" < "$PHASE3_TMP")
+RECORD_EXIT=$?
+rm -f "$PHASE3_TMP"
+
+if [[ $RECORD_EXIT -ne 0 ]]; then
+  echo "ERROR: record-learning failed (exit $RECORD_EXIT): $RECORD_RESULT"
+  exit 1
+fi
+```
+
+The tool outputs JSON with fields: `learning_id`, `counter_status`, `retrospective_trigger`, `commit_hash`.
+Capture this as the Phase 4 result and proceed to Step 5.
+
+**Error handling for Step 4:**
+
+| Condition | Action |
+|-----------|--------|
+| `record-learning` exits non-zero | Display error output, stop |
+| Output is not valid JSON | Display raw output with error, stop |
+
+## Step 5: Display Phase Summaries
+
+After Phase 4 completes, parse the results and display each phase summary to the user:
 
 ```
 Phase: Investigate
@@ -138,7 +168,7 @@ Phase: Prevent
 {prevent.user_summary or phase_summaries.prevent}
 
 Phase: Record
-{record.user_summary or phase_summaries.record}
+Learning {learning_id} recorded. {counter_status.count}/{counter_status.threshold} mistakes since last retrospective.
 ```
 
 **If prevent.prevention_implemented is false:**
@@ -161,7 +191,7 @@ requires source code changes. Create a CAT issue from the issue_creation_info:
    Suggested description: {suggested_description or "(not provided)"}
    Suggested acceptance criteria: {suggested_acceptance_criteria or "(not provided)"}
    ```
-   Then skip to Step 5.
+   Then skip to Step 6.
 
 2. Display to user: "Prevention requires code changes that cannot be committed on protected branch. Creating
    follow-up issue."
@@ -179,9 +209,9 @@ requires source code changes. Create a CAT issue from the issue_creation_info:
    Description: {suggested_description}
    Acceptance criteria: {suggested_acceptance_criteria}
    ```
-   Then continue to Step 5.
+   Then continue to Step 6.
 
-4. Continue to Step 5 (Display Final Summary) - note that prevention_implemented is false in the summary
+4. Continue to Step 6 (Display Final Summary) - note that prevention_implemented is false in the summary
 
 **Error handling:**
 
@@ -191,7 +221,7 @@ requires source code changes. Create a CAT issue from the issue_creation_info:
 | JSON missing required fields | Display error with details, stop |
 | Phase status is ERROR | Display error from that phase, stop |
 
-## Step 5: Display Final Summary
+## Step 6: Display Final Summary
 
 After all phases complete, display a summary of results:
 

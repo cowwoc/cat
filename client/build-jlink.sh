@@ -85,6 +85,7 @@ readonly -a HANDLERS=(
   "get-add-output:skills.GetAddOutput"
   "statusline-command:util.StatuslineCommand"
   "statusline-install:util.StatuslineInstall"
+  "record-learning:util.RecordLearning"
 )
 
 # --- Logging ---
