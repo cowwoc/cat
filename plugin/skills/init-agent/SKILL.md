@@ -4,7 +4,7 @@ description: >
   IMPORTANT: After invoking this skill, forward the AskUserQuestion tool call verbatim — do not respond
   conversationally.
 model: sonnet
-allowed-tools: [Read, Write, Bash, Glob, Grep, AskUserQuestion]
+allowed-tools: [Read, Write, Bash, Glob, Grep]
 user-invocable: false
 ---
 

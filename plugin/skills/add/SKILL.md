@@ -6,7 +6,6 @@ allowed-tools:
   - Write
   - Bash
   - Glob
-  - AskUserQuestion
   - Skill
 argument-hint: "[description]"
 disable-model-invocation: true
