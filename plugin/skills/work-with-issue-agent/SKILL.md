@@ -11,6 +11,7 @@ allowed-tools:
   - Bash
   - Task
   - Skill
+  - AskUserQuestion
 ---
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" work-with-issue-agent $ARGUMENTS`
