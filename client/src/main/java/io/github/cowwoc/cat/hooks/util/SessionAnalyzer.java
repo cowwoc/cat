@@ -45,6 +45,7 @@ public final class SessionAnalyzer
 {
   private static final int MIN_BATCH_SIZE = 2;
   private static final Pattern AGENT_ID_PATTERN = Pattern.compile("\"agentId\"\\s*:\\s*\"([^\"]+)\"");
+  private static final Pattern SAFE_AGENT_ID_PATTERN = Pattern.compile("^[A-Za-z0-9_-]+$");
   private static final Pattern ERROR_PATTERN = Pattern.compile(
     "build failed|failed|error:|exception|fatal:",
     Pattern.CASE_INSENSITIVE);
@@ -1231,6 +1232,11 @@ public final class SessionAnalyzer
           while (matcher.find())
           {
             String agentId = matcher.group(1);
+            if (!SAFE_AGENT_ID_PATTERN.matcher(agentId).matches())
+            {
+              log.warn("Skipping agentId with unsafe characters: '{}'", agentId);
+              continue;
+            }
             Path subagentPath = subagentDir.resolve("agent-" + agentId + ".jsonl");
             if (Files.exists(subagentPath))
               subagentPaths.add(subagentPath);
