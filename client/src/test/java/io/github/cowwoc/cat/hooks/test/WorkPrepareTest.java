@@ -2079,6 +2079,150 @@ public class WorkPrepareTest
   }
 
   /**
+   * Verifies that execute returns READY when an issue directory has only PLAN.md (no STATE.md).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeReturnsReadyForPlanMdOnlyIssue() throws IOException
+  {
+    Path projectDir = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // Create issue with only PLAN.md - no STATE.md
+      Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+        resolve("v2").resolve("v2.1").resolve("plan-only-issue");
+      Files.createDirectories(issueDir);
+      Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nTest goal\n");
+      GitCommands.runGit(projectDir, "add", ".");
+      GitCommands.runGit(projectDir, "commit", "-m", "Add PLAN.md-only issue");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+      requireThat(node.path("issue_id").asString(), "issueId").isEqualTo("2.1-plan-only-issue");
+
+      worktreePath = Path.of(node.path("worktree_path").asString());
+      requireThat(Files.isDirectory(worktreePath), "worktreeExists").isTrue();
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectDir, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that execute creates STATE.md in the worktree for a PLAN.md-only issue.
+   * <p>
+   * The created STATE.md must contain in-progress status and standard template content.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeCreatesStateMdInWorktreeForPlanMdOnlyIssue() throws IOException
+  {
+    Path projectDir = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // Create issue with only PLAN.md - no STATE.md
+      Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+        resolve("v2").resolve("v2.1").resolve("plan-only-issue");
+      Files.createDirectories(issueDir);
+      Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nTest goal\n");
+      GitCommands.runGit(projectDir, "add", ".");
+      GitCommands.runGit(projectDir, "commit", "-m", "Add PLAN.md-only issue");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+
+      worktreePath = Path.of(node.path("worktree_path").asString());
+
+      // Verify STATE.md was created in the worktree (not in the main workspace)
+      Path worktreeIssueDir = worktreePath.resolve(".claude").resolve("cat").resolve("issues").
+        resolve("v2").resolve("v2.1").resolve("plan-only-issue");
+      Path worktreeStateMd = worktreeIssueDir.resolve("STATE.md");
+      requireThat(Files.isRegularFile(worktreeStateMd), "worktreeStateMdExists").isTrue();
+
+      String stateMdContent = Files.readString(worktreeStateMd);
+      requireThat(stateMdContent, "content").contains("**Status:** in-progress");
+      requireThat(stateMdContent, "content").contains("**Progress:** 0%");
+      requireThat(stateMdContent, "content").contains("**Dependencies:** []");
+      requireThat(stateMdContent, "content").contains("**Blocks:** []");
+
+      // STATE.md must NOT be created in the main workspace
+      Path mainWorkspaceStateMd = issueDir.resolve("STATE.md");
+      requireThat(Files.exists(mainWorkspaceStateMd), "mainWorkspaceStateMdCreated").isFalse();
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectDir, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that execute treats a STATE.md with a missing status field as open and returns READY.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeReturnsReadyWhenStateMdHasMissingStatusField() throws IOException
+  {
+    Path projectDir = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // Create issue with STATE.md that has no status field
+      Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+        resolve("v2").resolve("v2.1").resolve("no-status-issue");
+      Files.createDirectories(issueDir);
+      Files.writeString(issueDir.resolve("STATE.md"), """
+        # State
+
+        - **Progress:** 0%
+        - **Dependencies:** []
+        - **Blocks:** []
+        """);
+      GitCommands.runGit(projectDir, "add", ".");
+      GitCommands.runGit(projectDir, "commit", "-m", "Add issue with missing status field");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+      requireThat(node.path("issue_id").asString(), "issueId").isEqualTo("2.1-no-status-issue");
+
+      worktreePath = Path.of(node.path("worktree_path").asString());
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectDir, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
    * Cleans up a worktree if it exists (best-effort, errors are swallowed).
    *
    * @param projectDir the project root directory
