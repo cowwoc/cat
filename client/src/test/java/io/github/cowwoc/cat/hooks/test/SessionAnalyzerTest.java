@@ -561,6 +561,67 @@ public final class SessionAnalyzerTest
   }
 
   /**
+   * Verifies that subagent files are discovered via filesystem scan even when the main JSONL
+   * contains no "agentId" references (simulating post-compaction state where earlier Task
+   * tool_result entries have been replaced by a summary entry).
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void discoversSubagentsAfterCompaction() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("session-");
+    Path mainSession = tempDir.resolve("main.jsonl");
+    Path subagentsDir = tempDir.resolve("subagents");
+    Files.createDirectories(subagentsDir);
+    Path subagent1 = subagentsDir.resolve("agent-abc123.jsonl");
+    Path subagent2 = subagentsDir.resolve("agent-def456.jsonl");
+    // Compaction artifact — must be excluded from subagent analysis
+    Path compactionArtifact = subagentsDir.resolve("agent-acompact-xyz.jsonl");
+
+    try
+    {
+      // Main JSONL has no agentId references (simulates post-compaction state)
+      String mainJsonl =
+        assistantMessage("msg1", "tool1", "Read", "") + "\n" +
+        assistantMessage("msg2", "tool2", "Write", "") + "\n";
+      Files.writeString(mainSession, mainJsonl);
+
+      String subagent1Jsonl =
+        assistantMessage("sub1", "t1", "Read", "") + "\n";
+      Files.writeString(subagent1, subagent1Jsonl);
+
+      String subagent2Jsonl =
+        assistantMessage("sub2", "t2", "Write", "") + "\n";
+      Files.writeString(subagent2, subagent2Jsonl);
+
+      // Write a compaction artifact that should not appear in results
+      String compactionJsonl =
+        assistantMessage("compact1", "tc1", "Bash", "") + "\n";
+      Files.writeString(compactionArtifact, compactionJsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.analyzeSession(mainSession);
+
+      requireThat(result.has("subagents"), "has_subagents").isTrue();
+      JsonNode subagents = result.path("subagents");
+      requireThat(subagents.has("abc123"), "has_abc123").isTrue();
+      requireThat(subagents.has("def456"), "has_def456").isTrue();
+      requireThat(subagents.has("acompact-xyz"), "no_compaction_artifact").isFalse();
+      requireThat(subagents.size(), "subagent_count").isEqualTo(2);
+    }
+    finally
+    {
+      Files.deleteIfExists(compactionArtifact);
+      Files.deleteIfExists(subagent1);
+      Files.deleteIfExists(subagent2);
+      Files.deleteIfExists(subagentsDir);
+      Files.deleteIfExists(mainSession);
+      Files.deleteIfExists(tempDir);
+    }
+  }
+
+  /**
    * Verifies that combined analysis merges tool frequency across
    * agents.
    *
