@@ -13,7 +13,9 @@ import io.github.cowwoc.cat.hooks.util.SessionAnalyzer;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 import org.testng.annotations.Test;
 
 /**
@@ -495,7 +497,9 @@ public final class SessionAnalyzerTest
   {
     Path tempDir = Files.createTempDirectory("session-");
     Path mainSession = tempDir.resolve("main.jsonl");
-    Path subagentsDir = tempDir.resolve("subagents");
+    // Extract sessionName from JSONL filename (without .jsonl extension)
+    Path sessionNameDir = tempDir.resolve("main");
+    Path subagentsDir = sessionNameDir.resolve("subagents");
     Files.createDirectories(subagentsDir);
     Path subagent1 =
       subagentsDir.resolve("agent-abc123.jsonl");
@@ -554,9 +558,22 @@ public final class SessionAnalyzerTest
     {
       Files.deleteIfExists(subagent1);
       Files.deleteIfExists(subagent2);
-      Files.deleteIfExists(subagentsDir);
-      Files.deleteIfExists(mainSession);
-      Files.deleteIfExists(tempDir);
+      // Recursively delete nested directories
+      try (Stream<Path> walk = Files.walk(tempDir))
+      {
+        walk.sorted(Comparator.reverseOrder()).
+          forEach(path ->
+          {
+            try
+            {
+              Files.deleteIfExists(path);
+            }
+            catch (IOException _)
+            {
+              // Ignore
+            }
+          });
+      }
     }
   }
 
@@ -572,7 +589,9 @@ public final class SessionAnalyzerTest
   {
     Path tempDir = Files.createTempDirectory("session-");
     Path mainSession = tempDir.resolve("main.jsonl");
-    Path subagentsDir = tempDir.resolve("subagents");
+    // Extract sessionName from JSONL filename
+    Path sessionNameDir = tempDir.resolve("main");
+    Path subagentsDir = sessionNameDir.resolve("subagents");
     Files.createDirectories(subagentsDir);
     Path subagent1 = subagentsDir.resolve("agent-abc123.jsonl");
     Path subagent2 = subagentsDir.resolve("agent-def456.jsonl");
@@ -612,12 +631,26 @@ public final class SessionAnalyzerTest
     }
     finally
     {
-      Files.deleteIfExists(compactionArtifact);
-      Files.deleteIfExists(subagent1);
-      Files.deleteIfExists(subagent2);
-      Files.deleteIfExists(subagentsDir);
-      Files.deleteIfExists(mainSession);
-      Files.deleteIfExists(tempDir);
+      // Recursively delete nested directories
+      try (Stream<Path> walk = Files.walk(tempDir))
+      {
+        walk.sorted(Comparator.reverseOrder()).
+          forEach(path ->
+          {
+            try
+            {
+              Files.deleteIfExists(path);
+            }
+            catch (IOException _)
+            {
+              // Ignore
+            }
+          });
+      }
+      catch (IOException _)
+      {
+        // Ignore
+      }
     }
   }
 
@@ -698,7 +731,9 @@ public final class SessionAnalyzerTest
   {
     Path tempDir = Files.createTempDirectory("session-");
     Path mainSession = tempDir.resolve("main.jsonl");
-    Path subagentsDir = tempDir.resolve("subagents");
+    // Extract sessionName from JSONL filename
+    Path sessionNameDir = tempDir.resolve("main");
+    Path subagentsDir = sessionNameDir.resolve("subagents");
     Files.createDirectories(subagentsDir);
     Path subagent1 = subagentsDir.resolve("agent-abc123.jsonl");
 
@@ -726,6 +761,7 @@ public final class SessionAnalyzerTest
     {
       Files.deleteIfExists(subagent1);
       Files.deleteIfExists(subagentsDir);
+      Files.deleteIfExists(sessionNameDir);
       Files.deleteIfExists(mainSession);
       Files.deleteIfExists(tempDir);
     }
@@ -743,7 +779,9 @@ public final class SessionAnalyzerTest
   {
     Path tempDir = Files.createTempDirectory("session-");
     Path mainSession = tempDir.resolve("main.jsonl");
-    Path subagentsDir = tempDir.resolve("subagents");
+    // Extract sessionName from JSONL filename
+    Path sessionNameDir = tempDir.resolve("main");
+    Path subagentsDir = sessionNameDir.resolve("subagents");
     Files.createDirectories(subagentsDir);
     Path subagent1 =
       subagentsDir.resolve("agent-abc123.jsonl");
@@ -806,6 +844,7 @@ public final class SessionAnalyzerTest
     {
       Files.deleteIfExists(subagent1);
       Files.deleteIfExists(subagentsDir);
+      Files.deleteIfExists(sessionNameDir);
       Files.deleteIfExists(mainSession);
       Files.deleteIfExists(tempDir);
     }
