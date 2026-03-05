@@ -23,6 +23,10 @@ None (infrastructure/bugfix)
     variable to CLOSED_ISSUES for consistency)
 - plugin/skills/delegate-agent/first-use.md - Review 'completed' usage (lines 341, 505, 677); change only
   references to CAT issue STATE.md status, leave subagent task tracking as-is if it's a separate domain
+- .claude/skills/cat-release-plugin/SKILL.md - Fix 'completed' references for CAT issue status:
+  - Line 65: "Generate CHANGELOG from completed issues" → "closed issues"
+  - Line 98: `grep -l "status: completed"` → `grep -l "Status:** closed"` (match actual STATE.md format)
+  - Line 102: "Found completed issues" → "Found closed issues" (and rename COMPLETED_ISSUES → CLOSED_ISSUES)
 
 ## Pre-conditions
 - [ ] All dependent issues are closed
@@ -33,3 +37,4 @@ None (infrastructure/bugfix)
 - [ ] Warning message refers to 'closed' issues consistently
 - [ ] COMPLETED_ISSUES variable renamed to CLOSED_ISSUES in remove/first-use.md
 - [ ] delegate-agent/first-use.md line 341 uses 'closed' for STATE.md status reference
+- [ ] .claude/skills/cat-release-plugin/SKILL.md uses 'closed' for issue status grep and log messages
