@@ -4,7 +4,6 @@ model: sonnet
 argument-hint: "<research-type> <topic>"
 allowed-tools:
   - Task
-  - AskUserQuestion
 disable-model-invocation: true
 ---
 

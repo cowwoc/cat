@@ -9,7 +9,6 @@ allowed-tools:
   - Bash
   - Read
   - Write
-  - AskUserQuestion
 user-invocable: false
 ---
 
