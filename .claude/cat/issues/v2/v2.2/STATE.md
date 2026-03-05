@@ -2,7 +2,7 @@
 
 - **Dependencies:** []
 - **Blocks:** []
-- **Last Updated:** 2026-02-13
+- **Last Updated:** 2026-03-05
 
 
 # v2.2 State: Demos & Marketing
@@ -21,6 +21,7 @@ Record demo videos showcasing CAT features for marketing and documentation.
 - git-safety-demo
 - multi-agent-demo
 - planning-research-demo
+- precompile-autolearn-pattern-constants
 
 ## Issues Completed
 (None)
