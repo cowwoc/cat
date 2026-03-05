@@ -341,7 +341,14 @@ public final class GetRetrospectiveOutput implements SkillOutput
 
       String verdict = extractString(effectivenessCheck, "verdict", "");
       if (!verdict.isEmpty())
-        lines.add("%s: %s".formatted(id, verdict));
+      {
+        String description = extractString(item, "description", "");
+        String truncated = truncateDescription(description, 60);
+        if (truncated.isEmpty())
+          lines.add("%s: %s".formatted(id, verdict));
+        else
+          lines.add("%s: %s - %s".formatted(id, verdict, truncated));
+      }
     }
 
     if (lines.isEmpty())
@@ -374,7 +381,11 @@ public final class GetRetrospectiveOutput implements SkillOutput
 
       int total = extractInt(pattern, "occurrences_total", 0);
       int after = extractInt(pattern, "occurrences_after_fix", 0);
-      lines.add("%s: %s (occurrences: %d/%d)".formatted(id, status, total, after));
+      String patternName = extractString(pattern, "pattern", "");
+      if (patternName.isEmpty())
+        lines.add("%s: %s (occurrences: %d/%d)".formatted(id, status, total, after));
+      else
+        lines.add("%s: %s (occurrences: %d/%d) - %s".formatted(id, status, total, after, patternName));
     }
 
     if (lines.isEmpty())
@@ -517,6 +528,21 @@ public final class GetRetrospectiveOutput implements SkillOutput
     if (child != null && child.isString())
       return child.asString();
     return defaultValue;
+  }
+
+  /**
+   * Truncates a description string to the specified maximum length, appending {@code "..."} if truncated.
+   *
+   * @param description the description to truncate
+   * @param maxLength the maximum allowed length of the result
+   * @return the original description if it fits within {@code maxLength}, or a truncated version ending with
+   *   {@code "..."}
+   */
+  private static String truncateDescription(String description, int maxLength)
+  {
+    if (description.length() <= maxLength)
+      return description;
+    return description.substring(0, maxLength - 3) + "...";
   }
 
   /**

@@ -365,8 +365,8 @@ public final class GetRetrospectiveOutputTest
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
       requireThat(output, "output").contains("Action Item Effectiveness:");
-      requireThat(output, "output").contains("A001: effective");
-      requireThat(output, "output").contains("A002: ineffective");
+      requireThat(output, "output").contains("A001: effective - Fix something");
+      requireThat(output, "output").contains("A002: ineffective - Fix something else");
     }
     finally
     {
@@ -583,18 +583,21 @@ public final class GetRetrospectiveOutputTest
           "patterns": [
             {
               "pattern_id": "P001",
+              "pattern": "missed_edge_case",
               "status": "active",
               "occurrences_total": 5,
               "occurrences_after_fix": 2
             },
             {
               "pattern_id": "P002",
+              "pattern": "resolved_pattern",
               "status": "addressed",
               "occurrences_total": 3,
               "occurrences_after_fix": 0
             },
             {
               "pattern_id": "P003",
+              "pattern": "flaky_test",
               "status": "monitoring",
               "occurrences_total": 7,
               "occurrences_after_fix": 1
@@ -609,8 +612,8 @@ public final class GetRetrospectiveOutputTest
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").contains("P001: active (occurrences: 5/2)");
-      requireThat(output, "output").contains("P003: monitoring (occurrences: 7/1)");
+      requireThat(output, "output").contains("P001: active (occurrences: 5/2) - missed_edge_case");
+      requireThat(output, "output").contains("P003: monitoring (occurrences: 7/1) - flaky_test");
       requireThat(output, "output").doesNotContain("P002");
     }
     finally
