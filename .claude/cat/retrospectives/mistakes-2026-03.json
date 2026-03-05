@@ -425,10 +425,7 @@
     "rca_method_name" : "5-whys",
     "prevention_type" : "code_fix",
     "prevention_path" : "${CLAUDE_PROJECT_DIR}/client/src/main/java/io/github/cowwoc/cat/hooks/tool/post/AutoLearnMistakes.java",
-    "pattern_keywords" : [
-      "auto_learn_mistakes", "false_positive", "build_failure", "test_failure",
-      "session_analyzer", "filter_json_content", "text_field", "embedded_json"
-    ],
+    "pattern_keywords" : [ "auto_learn_mistakes", "false_positive", "build_failure", "test_failure", "session_analyzer", "filter_json_content", "text_field", "embedded_json" ],
     "prevention_implemented" : false,
     "prevention_verified" : false,
     "recurrence_of" : "M461",
@@ -441,15 +438,27 @@
     "issue_creation_info" : {
       "suggested_title" : "Fix AutoLearnMistakes false-positives on session-analyzer output",
       "suggested_description" : "AutoLearnMistakes.filterJsonContent() does not filter 'text' field lines from session-analyzer JSON output. These lines look like '    \"text\" : \"{\\\"...build_failure...\\\"}'\" — they start with whitespace and pass through the filter, causing Patterns 1 and 2 to match embedded content and fire false-positive mistake hooks. The fix should extend filterJsonContent() to also strip lines whose content is a JSON string value that could contain embedded keywords. This is a recurrence of M461 (same filter gap, different trigger source).",
-      "suggested_acceptance_criteria" : [
-        "filterJsonContent() strips 'text' field lines from session-analyzer JSON output",
-        "Pattern 1 (build_failure) does NOT trigger when session-analyzer output contains 'build_failure' in a 'text' field",
-        "Pattern 2 (test_failure) does NOT trigger when session-analyzer output contains 'test_failure' in a 'text' field",
-        "Real build failures (BUILD FAILURE in direct maven output) still trigger Pattern 1",
-        "Real test failures (Tests run: X, Failures: N with N>0) still trigger Pattern 2",
-        "Tests in AutoLearnMistakesTest verify all false-positive and true-positive cases for session-analyzer output",
-        "No regression in other AutoLearnMistakes patterns"
-      ]
+      "suggested_acceptance_criteria" : [ "filterJsonContent() strips 'text' field lines from session-analyzer JSON output", "Pattern 1 (build_failure) does NOT trigger when session-analyzer output contains 'build_failure' in a 'text' field", "Pattern 2 (test_failure) does NOT trigger when session-analyzer output contains 'test_failure' in a 'text' field", "Real build failures (BUILD FAILURE in direct maven output) still trigger Pattern 1", "Real test failures (Tests run: X, Failures: N with N>0) still trigger Pattern 2", "Tests in AutoLearnMistakesTest verify all false-positive and true-positive cases for session-analyzer output", "No regression in other AutoLearnMistakes patterns" ]
     }
+  }, {
+    "id" : "M467",
+    "timestamp" : "2026-03-05T02:49:02Z",
+    "category" : "",
+    "description" : "",
+    "root_cause" : "",
+    "rca_method" : "",
+    "rca_method_name" : "",
+    "prevention_type" : "documentation",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }
