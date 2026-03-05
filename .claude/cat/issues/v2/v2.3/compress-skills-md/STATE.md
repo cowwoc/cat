@@ -5,7 +5,6 @@
 - **Parent:** compress-md-files
 - **Dependencies:** [migrate-to-silent-preprocessing, prevent-plan-md-priming, migrate-python-to-java]
 - **Blocks:** []
-- **Last Updated:** 2026-02-03
 
 ## Decomposed Into
 - 2.1-compress-skills-batch-1 (files 1-9: add through format-documentation)

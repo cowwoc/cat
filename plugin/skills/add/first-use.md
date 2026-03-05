@@ -1384,8 +1384,6 @@ cat > "$VERSION_PATH/STATE.md" << EOF
 ## Status
 - **Status:** open
 - **Progress:** 0%
-- **Started:** $(date +%Y-%m-%d)
-- **Last Updated:** $(date +%Y-%m-%d)
 
 ## Minor Versions
 - v$MAJOR.0
@@ -1444,8 +1442,6 @@ cat > "$VERSION_PATH/STATE.md" << EOF
 ## Status
 - **Status:** open
 - **Progress:** 0%
-- **Started:** $(date +%Y-%m-%d)
-- **Last Updated:** $(date +%Y-%m-%d)
 
 ## Issues Pending
 (No issues yet)
@@ -1514,8 +1510,6 @@ cat > "$VERSION_PATH/STATE.md" << EOF
 ## Status
 - **Status:** open
 - **Progress:** 0%
-- **Started:** $(date +%Y-%m-%d)
-- **Last Updated:** $(date +%Y-%m-%d)
 
 ## Issues Pending
 (No issues yet)

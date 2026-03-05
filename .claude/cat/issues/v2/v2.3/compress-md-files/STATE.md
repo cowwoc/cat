@@ -4,7 +4,6 @@
 - **Progress:** 33%
 - **Dependencies:** [migrate-python-to-java]
 - **Blocks:** []
-- **Last Updated:** 2026-01-26
 
 ## Decomposed Into
 - 2.1-compress-skills-md (34 files)

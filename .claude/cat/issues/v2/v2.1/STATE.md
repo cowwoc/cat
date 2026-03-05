@@ -2,7 +2,6 @@
 
 - **Dependencies:** []
 - **Blocks:** []
-- **Last Updated:** 2026-02-28
 
 
 # v2.1 State: Pre-Demo Polish
