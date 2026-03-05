@@ -17,8 +17,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -29,6 +29,11 @@ import java.util.regex.Pattern;
  */
 public final class AutoLearnMistakes implements PostToolHandler
 {
+  private static final int MAX_OUTPUT_LENGTH = 100_000;
+  private static final int MAX_PATTERN_GAP = 200;
+  private static final Pattern UUID_PATTERN = Pattern.compile(
+    "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+    Pattern.CASE_INSENSITIVE);
   private final Map<String, Integer> sessionIdToLineCount = new HashMap<>();
 
   /**
@@ -36,7 +41,6 @@ public final class AutoLearnMistakes implements PostToolHandler
    */
   public AutoLearnMistakes()
   {
-    // Handler class
   }
 
   @Override
@@ -46,6 +50,8 @@ public final class AutoLearnMistakes implements PostToolHandler
     String stdout = getTextValue(toolResult, "stdout");
     String stderr = getTextValue(toolResult, "stderr");
     String toolOutput = stdout + stderr;
+    if (toolOutput.length() > MAX_OUTPUT_LENGTH)
+      toolOutput = toolOutput.substring(0, MAX_OUTPUT_LENGTH);
 
     int exitCode = 0;
     JsonNode exitCodeNode = toolResult.get("exit_code");
@@ -112,10 +118,7 @@ public final class AutoLearnMistakes implements PostToolHandler
     JsonNode child = node.get(key);
     if (child == null || !child.isString())
       return "";
-    String value = child.asString();
-    if (value != null)
-      return value;
-    return "";
+    return child.asString();
   }
 
   /**
@@ -126,9 +129,14 @@ public final class AutoLearnMistakes implements PostToolHandler
    */
   private String getRecentAssistantMessages(String sessionId)
   {
+    if (!UUID_PATTERN.matcher(sessionId).matches())
+    {
+      throw new IllegalArgumentException("Invalid sessionId format: '" + sessionId +
+        "'. Expected UUID format (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).");
+    }
     Path convLog = Path.of(System.getProperty("user.home"), ".config", "claude", "projects",
       "-workspace", sessionId + ".jsonl");
-    if (!Files.exists(convLog))
+    if (Files.notExists(convLog))
       return "";
 
     try
@@ -182,7 +190,7 @@ public final class AutoLearnMistakes implements PostToolHandler
 
     // Pattern 2: Test failures
     String testFailPattern = "Tests run:.*Failures: [1-9]|\\d+\\s+tests?\\s+failed|" +
-        "\\d+\\s+failures?\\b|^(FAIL:|FAILED\\s)|^\\s*\\S+\\s+\\.\\.\\.\\s+FAILED";
+        "\\d+\\s+failures?\\b|^\\s*\\S+\\s+\\.\\.\\.\\s+FAILED";
     if (Pattern.compile(testFailPattern, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE).
         matcher(filtered).find())
       return new MistakeDetection("test_failure", extractContext(filtered, "fail|error", 5));
@@ -227,8 +235,8 @@ public final class AutoLearnMistakes implements PostToolHandler
     }
 
     // Pattern 9: Self-acknowledged mistakes
-    String selfAckPattern = "(you're|you are) (right|correct|absolutely right).*" +
-        "(should have|should've)|I should have.*instead";
+    String selfAckPattern = "(you're|you are) (right|correct|absolutely right).{0," + MAX_PATTERN_GAP + "}" +
+        "(should have|should've)|I should have.{0," + MAX_PATTERN_GAP + "}instead";
     if (Pattern.compile(selfAckPattern, Pattern.CASE_INSENSITIVE).matcher(filtered).find())
     {
       return new MistakeDetection("self_acknowledged_mistake",
@@ -259,7 +267,7 @@ public final class AutoLearnMistakes implements PostToolHandler
           extractContext(filtered, "not a git repository", 3));
     }
 
-    // Pattern 12b: Missing pom.xml
+    // Pattern 13: Missing pom.xml
     String pomPattern = "Could not (find|locate) (the )?pom\\.xml|No pom\\.xml found";
     if (Pattern.compile(pomPattern, Pattern.CASE_INSENSITIVE).matcher(filtered).find())
     {
@@ -267,20 +275,20 @@ public final class AutoLearnMistakes implements PostToolHandler
           extractContext(filtered, "pom\\.xml", 3));
     }
 
-    // Pattern 12c: Path errors in Bash
+    // Pattern 14: Path errors in Bash
     if (toolName.equals("Bash") && Pattern.compile(
         "No such file or directory.*(/workspace|/tasks)|cannot access.*/workspace",
         Pattern.CASE_INSENSITIVE).matcher(filtered).find())
       return new MistakeDetection("wrong_working_directory",
         extractContext(filtered, "No such file or directory|cannot access", 3));
 
-    // Pattern 13: Parse errors
+    // Pattern 15: Parse errors
     if (exitCode != 0 && Pattern.compile(
         "parse error.*Invalid|jq: error|JSON.parse.*SyntaxError|malformed JSON",
         Pattern.CASE_INSENSITIVE).matcher(filtered).find())
       return new MistakeDetection("parse_error", extractContext(filtered, "parse error|jq: error|JSON|SyntaxError", 5));
 
-    // Pattern 14: Bash parse errors
+    // Pattern 16: Bash parse errors
     if (toolName.equals("Bash") && Pattern.compile("\\(eval\\):[0-9]+:.*parse error").matcher(filtered).find())
       return new MistakeDetection("bash_parse_error", extractContext(filtered, "\\(eval\\):[0-9]+:|parse error", 3));
 
@@ -392,18 +400,26 @@ public final class AutoLearnMistakes implements PostToolHandler
    */
   private String extractAssistantContext(String assistantMsg)
   {
+    String[] keywords = {"critical", "catastrophic", "devastating",
+        "My error", "mistake", "error", "accidentally"};
     StringBuilder result = new StringBuilder();
-    String contextPattern = ".*(?:critical|CRITICAL|catastrophic|devastating|" +
-        "My error|mistake|error|accidentally).*";
-    Pattern pattern = Pattern.compile(contextPattern);
-    Matcher matcher = pattern.matcher(assistantMsg);
     int count = 0;
-    while (matcher.find() && count < 3)
+    for (String line : assistantMsg.split("\n"))
     {
-      if (!result.isEmpty())
-        result.append('\n');
-      result.append(matcher.group());
-      ++count;
+      if (count >= 3)
+        break;
+      String lower = line.toLowerCase(Locale.ROOT);
+      for (String keyword : keywords)
+      {
+        if (lower.contains(keyword.toLowerCase(Locale.ROOT)))
+        {
+          if (!result.isEmpty())
+            result.append('\n');
+          result.append(line);
+          ++count;
+          break;
+        }
+      }
     }
     return result.toString();
   }
