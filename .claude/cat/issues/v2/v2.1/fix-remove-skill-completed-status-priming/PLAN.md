@@ -1,25 +1,35 @@
 # Plan: fix-remove-skill-completed-status-priming
 
 ## Goal
-Fix plugin/skills/remove/first-use.md which uses 'completed' as a status check value, creating a cognitive
-anchor that causes agents to write 'complete'/'completed' in STATE.md files instead of the valid 'closed'.
+Fix all plugin skill files that use 'completed' as a CAT issue status value, replacing with 'closed' where
+appropriate. This removes cognitive anchors that cause agents to write 'complete'/'completed' in STATE.md
+files instead of the valid 'closed'.
 
 ## Satisfies
 None (infrastructure/bugfix)
 
 ## Risk Assessment
 - **Risk Level:** LOW
-- **Concerns:** None
-- **Mitigation:** N/A
+- **Concerns:** delegate-agent uses 'completed' for subagent task status (different domain) — must only
+  change references that refer to CAT issue status, not subagent completion tracking
+- **Mitigation:** Review each occurrence in context before changing
 
 ## Files to Modify
-- plugin/skills/remove/first-use.md - Change 'completed' status check to 'closed'; add INVALID note
+- plugin/skills/remove/first-use.md - Replace all 'completed' with 'closed' for CAT issue status:
+  - Line 146: "Warn if completed" → "Warn if closed"
+  - Line 148: "If status is `completed`" → "If status is `closed`"
+  - Line 152: "This issue is already completed" → "This issue is already closed"
+  - Line 240: `grep -c "^| .* | completed |"` → `grep -c "^| .* | closed |"` (and rename COMPLETED_ISSUES
+    variable to CLOSED_ISSUES for consistency)
+- plugin/skills/delegate-agent/first-use.md - Review 'completed' usage (lines 341, 505, 677); change only
+  references to CAT issue STATE.md status, leave subagent task tracking as-is if it's a separate domain
 
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
 ## Post-conditions
 - [ ] plugin/skills/remove/first-use.md uses 'closed' as the status check value (not 'completed')
-- [ ] No occurrence of 'completed' as a status value check remains in the remove skill
+- [ ] No occurrence of 'completed' as a CAT issue status value remains in remove/first-use.md
 - [ ] Warning message refers to 'closed' issues consistently
-- [ ] An INVALID note clarifies that 'completed' and 'complete' are not valid status values
+- [ ] COMPLETED_ISSUES variable renamed to CLOSED_ISSUES in remove/first-use.md
+- [ ] delegate-agent/first-use.md line 341 uses 'closed' for STATE.md status reference
