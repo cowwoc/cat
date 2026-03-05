@@ -29,6 +29,28 @@ public class Example
 }
 ```
 
+### Imports
+Use `import` statements instead of fully-qualified class names (FQNs) in code:
+
+```java
+// Good - import at top, short name in code
+import java.util.stream.Stream;
+import java.util.Comparator;
+
+try (Stream<Path> walk = Files.walk(dir))
+{
+  walk.sorted(Comparator.reverseOrder()).forEach(Files::delete);
+}
+
+// Avoid - FQN inline
+try (java.util.stream.Stream<Path> walk = Files.walk(dir))
+{
+  walk.sorted(java.util.Comparator.reverseOrder()).forEach(Files::delete);
+}
+```
+
+**Exception:** FQNs are acceptable in Javadoc `{@link}` / `{@code}` tags when the type is not already imported.
+
 ### Single-Statement Blocks
 Omit braces for if/else/for/while with a single-statement body that fits on one visual line.
 Add braces when the body spans multiple visual lines (e.g., string concatenation continuation):

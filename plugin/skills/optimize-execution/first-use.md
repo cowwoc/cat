@@ -53,7 +53,8 @@ The skill outputs a JSON object with:
 - `combined`: Aggregated metrics across main agent and all subagents
 
 **Subagent Discovery**: The script automatically discovers subagent JSONL files by parsing Task tool_result
-entries for `agentId` fields, then resolves paths as `{session_dir}/subagents/agent-{agentId}.jsonl`.
+entries for `agentId` fields, then resolves paths as `{session_dir}/{session_name}/subagents/agent-{agentId}.jsonl`,
+where `session_name` is the basename of the session JSONL file (the Claude Code session ID).
 Only existing files are included.
 
 ### Step 2: Categorize UX Relevance
