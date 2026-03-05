@@ -782,7 +782,7 @@ public class GetStatusOutputTest
       GetStatusOutput handler = new GetStatusOutput(scope);
       String content = "- **Status:** in-progress\n- **Owner:** alice\n";
 
-      String status = handler.parseStatusFromContent(content);
+      String status = handler.parseStatusFromContent(content, "test/STATE.md");
 
       requireThat(status, "status").isEqualTo("in-progress");
     }
@@ -797,7 +797,7 @@ public class GetStatusOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IOException.class)
+  @Test(expectedExceptions = IOException.class, expectedExceptionsMessageRegExp = ".*Unknown status.*")
   public void parseStatusFromContentRejectsInvalidStatus() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-invalid-status");
@@ -805,7 +805,7 @@ public class GetStatusOutputTest
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String content = "- **Status:** invalid-value\n";
-      handler.parseStatusFromContent(content);
+      handler.parseStatusFromContent(content, "test/STATE.md");
     }
     finally
     {
@@ -826,7 +826,7 @@ public class GetStatusOutputTest
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String content = "- **Owner:** alice\n- **Created:** 2024-01-01\n";
-      handler.parseStatusFromContent(content);
+      handler.parseStatusFromContent(content, "test/STATE.md");
     }
     finally
     {
@@ -848,7 +848,7 @@ public class GetStatusOutputTest
       GetStatusOutput handler = new GetStatusOutput(scope);
       String content = "- **Status:** CLOSED\n";
 
-      String status = handler.parseStatusFromContent(content);
+      String status = handler.parseStatusFromContent(content, "test/STATE.md");
 
       requireThat(status, "status").isEqualTo("closed");
     }
@@ -874,7 +874,7 @@ public class GetStatusOutputTest
       for (IssueStatus expected : IssueStatus.values())
       {
         String content = "- **Status:** " + expected.toString() + "\n";
-        String actual = handler.parseStatusFromContent(content);
+        String actual = handler.parseStatusFromContent(content, "test/STATE.md");
         requireThat(actual, "status").isEqualTo(expected.toString());
       }
     }
