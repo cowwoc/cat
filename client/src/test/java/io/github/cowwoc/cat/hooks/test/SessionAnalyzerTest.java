@@ -622,6 +622,116 @@ public final class SessionAnalyzerTest
   }
 
   /**
+   * Verifies that when the subagents/ directory does not exist, analyzeSession returns an
+   * empty subagents map without throwing an exception.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void missingSubagentsDirectoryReturnsEmptySubagents() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("session-");
+    Path mainSession = tempDir.resolve("main.jsonl");
+    // Intentionally do NOT create subagents/ directory
+
+    try
+    {
+      String mainJsonl = assistantMessage("msg1", "tool1", "Read", "") + "\n";
+      Files.writeString(mainSession, mainJsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.analyzeSession(mainSession);
+
+      requireThat(result.has("subagents"), "has_subagents").isTrue();
+      JsonNode subagents = result.path("subagents");
+      requireThat(subagents.size(), "subagent_count").isEqualTo(0);
+    }
+    finally
+    {
+      Files.deleteIfExists(mainSession);
+      Files.deleteIfExists(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that when the subagents/ directory exists but contains no agent-*.jsonl files,
+   * analyzeSession returns an empty subagents map.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void emptySubagentsDirectoryReturnsEmptySubagents() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("session-");
+    Path mainSession = tempDir.resolve("main.jsonl");
+    Path subagentsDir = tempDir.resolve("subagents");
+    Files.createDirectories(subagentsDir);
+
+    try
+    {
+      String mainJsonl = assistantMessage("msg1", "tool1", "Read", "") + "\n";
+      Files.writeString(mainSession, mainJsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.analyzeSession(mainSession);
+
+      requireThat(result.has("subagents"), "has_subagents").isTrue();
+      JsonNode subagents = result.path("subagents");
+      requireThat(subagents.size(), "subagent_count").isEqualTo(0);
+    }
+    finally
+    {
+      Files.deleteIfExists(subagentsDir);
+      Files.deleteIfExists(mainSession);
+      Files.deleteIfExists(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that when both Phase 1 (filesystem scan) and Phase 2 (agentId parse) discover the
+   * same subagent, it appears exactly once in the results (no duplicates).
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void deduplicatesSubagentDiscoveredByBothPhases() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("session-");
+    Path mainSession = tempDir.resolve("main.jsonl");
+    Path subagentsDir = tempDir.resolve("subagents");
+    Files.createDirectories(subagentsDir);
+    Path subagent1 = subagentsDir.resolve("agent-abc123.jsonl");
+
+    try
+    {
+      // Main JSONL contains an agentId reference to abc123 (Phase 2 source),
+      // while the file agent-abc123.jsonl also exists on disk (Phase 1 source).
+      String mainJsonl =
+        assistantMessage("msg1", "tool1", "Task", "") + "\n" +
+        toolResult("tool1", "{\\\"agentId\\\":\\\"abc123\\\",\\\"status\\\":\\\"running\\\"}") + "\n";
+      Files.writeString(mainSession, mainJsonl);
+
+      String subagent1Jsonl = assistantMessage("sub1", "t1", "Read", "") + "\n";
+      Files.writeString(subagent1, subagent1Jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.analyzeSession(mainSession);
+
+      requireThat(result.has("subagents"), "has_subagents").isTrue();
+      JsonNode subagents = result.path("subagents");
+      requireThat(subagents.has("abc123"), "has_abc123").isTrue();
+      requireThat(subagents.size(), "subagent_count").isEqualTo(1);
+    }
+    finally
+    {
+      Files.deleteIfExists(subagent1);
+      Files.deleteIfExists(subagentsDir);
+      Files.deleteIfExists(mainSession);
+      Files.deleteIfExists(tempDir);
+    }
+  }
+
+  /**
    * Verifies that combined analysis merges tool frequency across
    * agents.
    *
