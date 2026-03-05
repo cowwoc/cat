@@ -1190,12 +1190,34 @@ public final class SessionAnalyzer
    * @throws NullPointerException if any parameter is null
    */
   private List<Path> discoverSubagents(List<JsonNode> entries, Path filePath)
+    throws IOException
   {
     requireThat(entries, "entries").isNotNull();
     requireThat(filePath, "filePath").isNotNull();
 
-    Set<String> agentIds = new HashSet<>();
+    Path sessionDir = filePath.getParent();
+    if (sessionDir == null)
+      sessionDir = Path.of(".");
+    Path subagentDir = sessionDir.resolve("subagents");
 
+    // Phase 1: Filesystem scan — find all agent-*.jsonl files in the subagents directory,
+    // excluding compaction artifacts (agent-acompact-*.jsonl).
+    Set<Path> subagentPaths = new LinkedHashSet<>();
+    if (Files.isDirectory(subagentDir))
+    {
+      try (java.nio.file.DirectoryStream<Path> stream =
+        Files.newDirectoryStream(subagentDir, "agent-*.jsonl"))
+      {
+        for (Path p : stream)
+        {
+          String name = p.getFileName().toString();
+          if (!name.startsWith("agent-acompact-"))
+            subagentPaths.add(p);
+        }
+      }
+    }
+
+    // Phase 2: AgentId parse — finds refs in non-compacted sessions (retained for completeness).
     for (JsonNode entry : entries)
     {
       for (JsonNode resultItem : extractToolResults(entry))
@@ -1208,27 +1230,18 @@ public final class SessionAnalyzer
           Matcher matcher = AGENT_ID_PATTERN.matcher(contentStr);
           while (matcher.find())
           {
-            agentIds.add(matcher.group(1));
+            String agentId = matcher.group(1);
+            Path subagentPath = subagentDir.resolve("agent-" + agentId + ".jsonl");
+            if (Files.exists(subagentPath))
+              subagentPaths.add(subagentPath);
           }
         }
       }
     }
 
-    Path sessionDir = filePath.getParent();
-    if (sessionDir == null)
-      sessionDir = Path.of(".");
-    Path subagentDir = sessionDir.resolve("subagents");
-
-    List<Path> subagentPaths = new ArrayList<>();
-    for (String agentId : agentIds)
-    {
-      Path subagentPath = subagentDir.resolve("agent-" + agentId + ".jsonl");
-      if (Files.exists(subagentPath))
-        subagentPaths.add(subagentPath);
-    }
-
-    subagentPaths.sort(Path::compareTo);
-    return subagentPaths;
+    List<Path> result = new ArrayList<>(subagentPaths);
+    result.sort(Path::compareTo);
+    return result;
   }
 
   /**
