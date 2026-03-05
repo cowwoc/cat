@@ -6,7 +6,6 @@ allowed-tools:
   - Bash
   - Read
   - Write
-  - AskUserQuestion
 disable-model-invocation: true
 ---
 

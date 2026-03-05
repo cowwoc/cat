@@ -9,7 +9,6 @@ argument-hint: "[description]"
 allowed-tools:
   - Bash
   - Read
-  - AskUserQuestion
 user-invocable: false
 ---
 
