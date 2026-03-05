@@ -7,8 +7,8 @@
 package io.github.cowwoc.cat.hooks.bash.post;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
+import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
-import tools.jackson.databind.JsonNode;
 
 import java.io.IOException;
 import java.util.regex.Matcher;
@@ -36,9 +36,10 @@ public final class ValidateRebaseTarget implements BashHandler
   }
 
   @Override
-  public Result check(String command, String workingDirectory, JsonNode toolInput, JsonNode toolResult,
-    String sessionId)
+  public Result check(HookInput input)
   {
+    String command = input.getCommand();
+
     // Check for git rebase with origin/ prefix
     if (!REBASE_ORIGIN_PATTERN.matcher(command).find())
       return Result.allow();

@@ -53,7 +53,7 @@ public final class SessionStartHook implements HookHandler
       new WarnUnknownTerminal(scope),
       new EchoSessionId(),
       new CheckRetrospectiveDue(scope),
-      new InjectSessionInstructions(scope),
+      new InjectSessionInstructions(),
       new InjectCatRules(scope),
       new InjectSkillListing(scope),
       new InjectCriticalThinking(),

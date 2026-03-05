@@ -85,7 +85,7 @@ public final class BlockWorktreeIsolationViolationTest
       String outsidePath = projectDir.resolve("plugin/file.txt").toString();
       String command = "echo \"text\" > " + outsidePath;
 
-      BashHandler.Result result = handler.check(command, projectDir.toString(), null, null, SESSION_ID);
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, projectDir.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -113,7 +113,7 @@ public final class BlockWorktreeIsolationViolationTest
       String outsidePath = projectDir.resolve("plugin/file.txt").toString();
       String command = "echo \"text\" > " + outsidePath;
 
-      BashHandler.Result result = handler.check(command, projectDir.toString(), null, null, SESSION_ID);
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, projectDir.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -140,7 +140,7 @@ public final class BlockWorktreeIsolationViolationTest
       String command = "echo \"text\" > " + insidePath;
 
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
-      BashHandler.Result result = handler.check(command, projectDir.toString(), null, null, SESSION_ID);
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, projectDir.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -170,7 +170,7 @@ public final class BlockWorktreeIsolationViolationTest
       String command = "echo \"text\" > " + outsidePath;
 
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
-      BashHandler.Result result = handler.check(command, projectDir.toString(), null, null, SESSION_ID);
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, projectDir.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -200,7 +200,7 @@ public final class BlockWorktreeIsolationViolationTest
       String command = "echo \"text\" >> " + outsidePath;
 
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
-      BashHandler.Result result = handler.check(command, projectDir.toString(), null, null, SESSION_ID);
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, projectDir.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -228,7 +228,7 @@ public final class BlockWorktreeIsolationViolationTest
       String command = "cat source.txt | tee " + outsidePath;
 
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
-      BashHandler.Result result = handler.check(command, projectDir.toString(), null, null, SESSION_ID);
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, projectDir.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -256,7 +256,7 @@ public final class BlockWorktreeIsolationViolationTest
       String command = "echo \"text\" | tee -a " + outsidePath;
 
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
-      BashHandler.Result result = handler.check(command, projectDir.toString(), null, null, SESSION_ID);
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, projectDir.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -284,7 +284,7 @@ public final class BlockWorktreeIsolationViolationTest
       String command = "cat source.txt | tee " + insidePath;
 
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
-      BashHandler.Result result = handler.check(command, projectDir.toString(), null, null, SESSION_ID);
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, projectDir.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -312,7 +312,7 @@ public final class BlockWorktreeIsolationViolationTest
       String command = "cp " + sourcePath + " " + destPath;
 
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
-      BashHandler.Result result = handler.check(command, projectDir.toString(), null, null, SESSION_ID);
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, projectDir.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -341,7 +341,7 @@ public final class BlockWorktreeIsolationViolationTest
       String command = "cp " + sourcePath + " " + destPath;
 
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
-      BashHandler.Result result = handler.check(command, projectDir.toString(), null, null, SESSION_ID);
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, projectDir.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -369,7 +369,7 @@ public final class BlockWorktreeIsolationViolationTest
       String command = "mv " + sourcePath + " " + destPath;
 
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
-      BashHandler.Result result = handler.check(command, projectDir.toString(), null, null, SESSION_ID);
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, projectDir.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -398,7 +398,7 @@ public final class BlockWorktreeIsolationViolationTest
       String command = "mv " + sourcePath + " " + destPath;
 
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
-      BashHandler.Result result = handler.check(command, projectDir.toString(), null, null, SESSION_ID);
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, projectDir.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -427,7 +427,7 @@ public final class BlockWorktreeIsolationViolationTest
       String command = "echo \"text\" > /tmp/output.txt";
 
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
-      BashHandler.Result result = handler.check(command, projectDir.toString(), null, null, SESSION_ID);
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, projectDir.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -458,7 +458,7 @@ public final class BlockWorktreeIsolationViolationTest
       String command = "echo \"text\" > plugin/file.txt";
 
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
-      BashHandler.Result result = handler.check(command, projectDir.toString(), null, null, SESSION_ID);
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, projectDir.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -486,7 +486,7 @@ public final class BlockWorktreeIsolationViolationTest
       String command = "echo \"text\" | tee --append " + outsidePath;
 
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
-      BashHandler.Result result = handler.check(command, projectDir.toString(), null, null, SESSION_ID);
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, projectDir.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -517,7 +517,7 @@ public final class BlockWorktreeIsolationViolationTest
       String command = "echo x | tee " + insidePath + " " + outsidePath;
 
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
-      BashHandler.Result result = handler.check(command, projectDir.toString(), null, null, SESSION_ID);
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, projectDir.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -546,7 +546,7 @@ public final class BlockWorktreeIsolationViolationTest
       String command = "echo x | tee " + insidePath1 + " " + insidePath2;
 
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
-      BashHandler.Result result = handler.check(command, projectDir.toString(), null, null, SESSION_ID);
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, projectDir.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -574,7 +574,7 @@ public final class BlockWorktreeIsolationViolationTest
       String command = "echo \"text\" > $CLAUDE_PROJECT_DIR/plugin/file.txt";
 
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
-      BashHandler.Result result = handler.check(command, projectDir.toString(), null, null, SESSION_ID);
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, projectDir.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("variable-expanded");
@@ -605,7 +605,7 @@ public final class BlockWorktreeIsolationViolationTest
       String command = "echo \"text\" > `echo /some/path`";
 
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
-      BashHandler.Result result = handler.check(command, projectDir.toString(), null, null, SESSION_ID);
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, projectDir.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("variable-expanded");
@@ -637,7 +637,7 @@ public final class BlockWorktreeIsolationViolationTest
       String command = "echo \"text\" > \"" + outsidePath + "\"";
 
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
-      BashHandler.Result result = handler.check(command, projectDir.toString(), null, null, SESSION_ID);
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, projectDir.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -666,7 +666,7 @@ public final class BlockWorktreeIsolationViolationTest
       String command = "cat " + projectDir.resolve("plugin/file.txt") + " | grep pattern";
 
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
-      BashHandler.Result result = handler.check(command, projectDir.toString(), null, null, SESSION_ID);
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, projectDir.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -696,7 +696,7 @@ public final class BlockWorktreeIsolationViolationTest
       String command = "echo \"text\" > " + outsidePath;
 
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
-      BashHandler.Result result = handler.check(command, projectDir.toString(), null, null, SESSION_ID);
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, projectDir.toString(), SESSION_ID));
 
       Path expectedCorrected = worktreeDir.resolve("plugin/file.txt").toAbsolutePath().normalize();
       requireThat(result.blocked(), "blocked").isTrue();
