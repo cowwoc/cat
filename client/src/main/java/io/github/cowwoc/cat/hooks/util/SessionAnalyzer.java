@@ -77,15 +77,15 @@ public final class SessionAnalyzer
    * @return the resolved JSONL file path
    * @throws IllegalArgumentException if the resolved path does not exist
    */
-  private Path resolveSessionPath(String sessionId)
+  public Path resolveSessionPath(String sessionId)
   {
-    Path resolved = scope.getSessionBasePath().resolve(sessionId + ".jsonl");
-    if (!Files.exists(resolved))
-    {
-      throw new IllegalArgumentException("Session file not found: " + resolved +
-        "\nSession ID: " + sessionId);
-    }
-    return resolved;
+    Path basePath = scope.getSessionBasePath();
+    Path resolved = basePath.resolve(sessionId + ".jsonl");
+    if (Files.exists(resolved))
+      return resolved;
+    throw new IllegalArgumentException("Session file not found: " + resolved +
+      "\nSession ID: " + sessionId +
+      "\nSearched in: " + basePath);
   }
 
   /**
@@ -1199,7 +1199,12 @@ public final class SessionAnalyzer
     Path sessionDir = filePath.getParent();
     if (sessionDir == null)
       sessionDir = Path.of(".");
-    Path subagentDir = sessionDir.resolve("subagents");
+    // Extract session name from JSONL filename to locate subagents directory.
+    // Claude Code stores subagents at {sessionDir}/{sessionName}/subagents/.
+    String sessionName = filePath.getFileName().toString();
+    if (sessionName.endsWith(".jsonl"))
+      sessionName = sessionName.substring(0, sessionName.length() - ".jsonl".length());
+    Path subagentDir = sessionDir.resolve(sessionName).resolve("subagents");
 
     // Phase 1: Filesystem scan — find all agent-*.jsonl files in the subagents directory,
     // excluding compaction artifacts (agent-acompact-*.jsonl).
