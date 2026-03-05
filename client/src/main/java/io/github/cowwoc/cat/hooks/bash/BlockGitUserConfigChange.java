@@ -101,6 +101,67 @@ public final class BlockGitUserConfigChange implements BashHandler
     Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
   /**
+   * The canonical gitconfig paths that must be protected from direct shell writes.
+   * <p>
+   * These paths cover:
+   * <ul>
+   *   <li>{@code ~/.gitconfig} (tilde or {@code $HOME} form)</li>
+   *   <li>{@code ~/.config/git/config} (tilde or {@code $HOME} form)</li>
+   *   <li>{@code /etc/gitconfig} (system-wide)</li>
+   * </ul>
+   */
+  private static final String GITCONFIG_PATH_PATTERN =
+    "(?:~|\\$(?:HOME|\\{HOME\\}))/\\.gitconfig" +
+      "|(?:~|\\$(?:HOME|\\{HOME\\}))/\\.config/git/config" +
+      "|/etc/gitconfig";
+
+  /**
+   * Matches shell write redirections targeting canonical gitconfig file paths.
+   * <p>
+   * Detects commands such as:
+   * <ul>
+   *   <li>{@code echo '[user]' >> ~/.gitconfig}</li>
+   *   <li>{@code printf '[user]\nname=X\n' >> ~/.gitconfig}</li>
+   *   <li>{@code tee ~/.gitconfig}</li>
+   *   <li>{@code tee -a ~/.gitconfig}</li>
+   *   <li>{@code tee --append ~/.gitconfig}</li>
+   *   <li>{@code cp /tmp/evil.gitconfig ~/.gitconfig}</li>
+   *   <li>{@code mv /tmp/evil.gitconfig ~/.gitconfig}</li>
+   *   <li>{@code install -m 600 /tmp/evil.gitconfig ~/.gitconfig}</li>
+   *   <li>{@code sed -i 's/name/X/' ~/.gitconfig}</li>
+   *   <li>{@code awk '{...}' > ~/.gitconfig}</li>
+   *   <li>{@code cat > ~/.gitconfig}</li>
+   * </ul>
+   * Read-only invocations (e.g., {@code cat ~/.gitconfig} without redirection) are not matched.
+   */
+  private static final Pattern SHELL_WRITE_GITCONFIG_PATTERN = Pattern.compile(
+    // echo/printf piped or redirected to a gitconfig path
+    "(?:echo|printf)\\b[^\\n]*?>>?\\s*(?:" + GITCONFIG_PATH_PATTERN + ")" +
+      "|" +
+      // tee targeting a gitconfig path (tee writes by definition)
+      // Matches: tee, tee -a, tee --append, tee -ai, etc.
+      "tee\\b(?:\\s+(?:--?[a-zA-Z-]+(?:=\\S+)?)*)*\\s+(?:" + GITCONFIG_PATH_PATTERN + ")" +
+      "|" +
+      // cp (copy) targeting a gitconfig path
+      "cp\\b[^\\n]*?(?:" + GITCONFIG_PATH_PATTERN + ")" +
+      "|" +
+      // mv (move) targeting a gitconfig path
+      "mv\\b[^\\n]*?(?:" + GITCONFIG_PATH_PATTERN + ")" +
+      "|" +
+      // install command targeting a gitconfig path
+      "install\\b[^\\n]*?(?:" + GITCONFIG_PATH_PATTERN + ")" +
+      "|" +
+      // sed -i editing a gitconfig path in place
+      "sed\\s+(?:-[a-z]*i[a-z]*|--in-place)\\b[^\\n]*?(?:" + GITCONFIG_PATH_PATTERN + ")" +
+      "|" +
+      // awk writing output to a gitconfig path
+      "awk\\b[^\\n]*?>\\s*(?:" + GITCONFIG_PATH_PATTERN + ")" +
+      "|" +
+      // cat with output redirection to a gitconfig path
+      "cat\\b[^\\n]*?>\\s*(?:" + GITCONFIG_PATH_PATTERN + ")",
+    Pattern.CASE_INSENSITIVE);
+
+  /**
    * Creates a new handler for blocking git user identity changes.
    */
   public BlockGitUserConfigChange()
@@ -112,6 +173,30 @@ public final class BlockGitUserConfigChange implements BashHandler
   public Result check(HookInput input)
   {
     String command = input.getCommand();
+
+    // Check for direct shell writes to canonical gitconfig paths (does not require "git" keyword)
+    boolean mentionsGitconfigPath = command.contains(".gitconfig") ||
+      command.contains("git/config") || command.contains("/etc/gitconfig");
+    if (mentionsGitconfigPath && SHELL_WRITE_GITCONFIG_PATTERN.matcher(command).find())
+    {
+      return Result.block("""
+        **BLOCKED: direct write to gitconfig file without explicit user request**
+
+        Writing directly to `~/.gitconfig`, `~/.config/git/config`, or `/etc/gitconfig` via shell \
+        tools (echo, printf, tee, sed, awk, cat) bypasses git's identity protection and silently \
+        overwrites the author information on every future commit.
+
+        Only change git identity when the user explicitly asks you to (e.g., "set my git username \
+        to Alice").
+
+        To read or modify git identity safely:
+        ```bash
+        git config user.name        # read current name
+        git config user.email       # read current email
+        ```
+        """);
+    }
+
     // Quick exit: must contain "git" plus any relevant marker
     if (!command.contains("git"))
       return Result.allow();
