@@ -1037,9 +1037,9 @@
         "escalated_date": "2026-03-05T19:10:00Z",
         "reason": "6 post-fix failures. Hook validates AskUserQuestion was called but does not check that answers object is non-empty. M459/M462/M463/M464 all bypass approval gate via empty answers {}.",
         "escalation_level": "hook",
-        "analysis": "A020 added Approval Gate Protocol doc and PreToolUse hook blocking work-merge without AskUserQuestion. But the empty-answers variant was not covered: AskUserQuestion IS called, but returns {} and agent proceeds anyway. Root cause: hook checks for tool invocation presence, not result validity.",
-        "proposed_solution": "Extend approval gate hook to validate AskUserQuestion result: answers object must be non-empty and contain explicit option selection before permitting work-merge. Add PostToolUse hook on AskUserQuestion that flags empty answers as rejection.",
-        "status": "open"
+        "analysis": "R026 escalation: 6 post-fix failures recorded. However, issue 2.1-fix-approval-gate-empty-answers-handling was closed 2026-03-04 with a documentation fix adding explicit empty-answers handling to work-with-issue Step 8. M459/M462/M463/M464 occurred before or during the fix. Fix implemented; effectiveness pending next monitoring period.",
+        "proposed_solution": "Implemented via 2.1-fix-approval-gate-empty-answers-handling (closed 2026-03-04). Monitor for recurrences.",
+        "status": "implemented"
       }
     },
     {
@@ -1171,14 +1171,15 @@
       "description": "Fix AutoLearnMistakes pattern matching to exclude false positives from documentation tables, code blocks, and embedded JSON in tool output. Add context-aware filtering: only match patterns in plain text assistant messages.",
       "category": "detection_gap",
       "pattern_id": "PATTERN-023",
-      "status": "open",
+      "status": "closed_addressed",
       "created_date": "2026-03-05T19:10:00Z",
-      "completed_date": null,
+      "completed_date": "2026-03-04",
       "related_mistakes": [
         "M461",
         "M466"
       ],
-      "effectiveness_check": null
+      "effectiveness_check": null,
+      "implementation": "Addressed by 2.1-fix-autolearn-pattern2-false-positive (closed). Removed ^(FAIL:|FAILED\\s) sub-pattern from Pattern 2 in AutoLearnMistakes.java."
     }
   ]
 }
