@@ -6,14 +6,39 @@
  */
 package io.github.cowwoc.cat.hooks;
 
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
 /**
  * String utility methods.
  */
 public final class Strings
 {
+  /**
+   * The maximum length for truncated description text in display output.
+   */
+  public static final int DESCRIPTION_MAX_LENGTH = 60;
+
   private Strings()
   {
     // Prevent instantiation
+  }
+
+  /**
+   * Truncates a string to at most {@code maxLength} characters, appending {@code "..."} if truncated.
+   *
+   * @param str the string to truncate
+   * @param maxLength the maximum allowed length of the result, must be at least 3
+   * @return the original string if its length is within {@code maxLength}, or a truncated version ending with
+   *   {@code "..."}
+   * @throws NullPointerException if {@code str} is null
+   * @throws IllegalArgumentException if {@code maxLength} is less than 3
+   */
+  public static String truncate(String str, int maxLength)
+  {
+    requireThat(maxLength, "maxLength").isGreaterThanOrEqualTo(3);
+    if (str.length() <= maxLength)
+      return str;
+    return str.substring(0, maxLength - 3) + "...";
   }
 
   /**

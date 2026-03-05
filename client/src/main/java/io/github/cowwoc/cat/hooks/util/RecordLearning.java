@@ -12,6 +12,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import io.github.cowwoc.cat.hooks.ClaudeEnv;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
@@ -142,7 +143,7 @@ public final class RecordLearning
     String indexRelative = repoRoot.relativize(indexFile.toAbsolutePath()).toString();
     String description = getStringField(phase3Input, "description", "learning entry");
     String commitMessage = "config: record learning " + nextId + " - " +
-      truncate(description, 60);
+      Strings.truncate(description, Strings.DESCRIPTION_MAX_LENGTH);
 
     runGit(commitDir, "add", "--", mistakesRelative, indexRelative);
     runGit(commitDir, "commit", "-m", commitMessage);
@@ -498,20 +499,6 @@ public final class RecordLearning
     if (v.isNull() || v.isMissingNode())
       return defaultValue;
     return v.asString(defaultValue);
-  }
-
-  /**
-   * Truncates a string to at most {@code maxLen} characters, appending "..." if truncated.
-   *
-   * @param str the string to truncate
-   * @param maxLen the maximum length
-   * @return the truncated string
-   */
-  private static String truncate(String str, int maxLen)
-  {
-    if (str.length() <= maxLen)
-      return str;
-    return str.substring(0, maxLen - 3) + "...";
   }
 
   /**
