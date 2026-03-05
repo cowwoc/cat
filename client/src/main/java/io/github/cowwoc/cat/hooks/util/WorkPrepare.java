@@ -252,7 +252,7 @@ public final class WorkPrepare
     // Steps 5-10: Create worktree and build READY result
     String issueBranch = buildIssueBranch(major, minor, found.patch(), issueName);
     return executeWithLock(input, projectDir, mapper, issueId, major, minor, issueName,
-      issuePath, targetBranch, planPath, estimatedTokens, issueBranch);
+      issuePath, targetBranch, planPath, estimatedTokens, issueBranch, found.createStateMd());
   }
 
   /**
@@ -373,13 +373,14 @@ public final class WorkPrepare
    * @param planPath the path to PLAN.md
    * @param estimatedTokens the estimated token count
    * @param issueBranch the issue branch name
+   * @param createStateMd true if the issue had no STATE.md in the main workspace
    * @return JSON string with READY or ERROR result
    * @throws IOException if file operations fail
    */
   private String executeWithLock(PrepareInput input, Path projectDir, JsonMapper mapper,
     String issueId, String major, String minor,
     String issueName, Path issuePath, String targetBranch, Path planPath, int estimatedTokens,
-    String issueBranch) throws IOException
+    String issueBranch, boolean createStateMd) throws IOException
   {
     // Step 5: Create worktree
     Path worktreePath;
@@ -450,10 +451,13 @@ public final class WorkPrepare
     // Step 8: Check target branch for suspicious commits
     String suspiciousCommits = checkTargetBranchCommits(projectDir, targetBranch, issueName, planPath);
 
-    // Step 9: Update STATE.md in worktree
+    // Step 9: Create or update STATE.md in worktree
     try
     {
-      updateStateMd(worktreePath, issuePath, projectDir);
+      if (createStateMd)
+        createStateMd(worktreePath, issuePath, projectDir);
+      else
+        updateStateMd(worktreePath, issuePath, projectDir);
     }
     catch (IOException e)
     {
@@ -1388,6 +1392,36 @@ public final class WorkPrepare
 
     content = STATUS_PATTERN.matcher(content).replaceAll("**Status:** in-progress");
     content = PROGRESS_PATTERN.matcher(content).replaceAll("**Progress:** 0%");
+
+    Files.writeString(stateFile, content);
+  }
+
+  /**
+   * Creates a minimal STATE.md in the worktree for an issue that had no STATE.md in the main workspace.
+   * <p>
+   * The created file contains the standard initial state: status {@code in-progress}, progress 0%,
+   * and empty dependencies and blocks lists.
+   *
+   * @param worktreePath the path to the worktree
+   * @param issuePath the absolute path to the issue directory in the main working tree
+   * @param projectDir the project root directory
+   * @throws IOException if file operations fail
+   */
+  private void createStateMd(Path worktreePath, Path issuePath, Path projectDir) throws IOException
+  {
+    Path relativeIssuePath = projectDir.relativize(issuePath);
+    Path issueDir = worktreePath.resolve(relativeIssuePath);
+    Files.createDirectories(issueDir);
+    Path stateFile = issueDir.resolve("STATE.md");
+
+    String content = """
+      # State
+
+      - **Status:** in-progress
+      - **Progress:** 0%
+      - **Dependencies:** []
+      - **Blocks:** []
+      """;
 
     Files.writeString(stateFile, content);
   }
