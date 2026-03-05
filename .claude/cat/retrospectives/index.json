@@ -88,17 +88,18 @@
     {
       "pattern_id": "PATTERN-004",
       "pattern": "user_message_ignored_mid_operation",
-      "occurrences_total": 3,
-      "occurrences_after_fix": 1,
+      "occurrences_total": 4,
+      "occurrences_after_fix": 2,
       "first_seen": "2026-01-25T14:10:00Z",
-      "last_seen": "2026-02-03T08:00:00Z",
+      "last_seen": "2026-03-03T00:00:00Z",
       "last_action_date": null,
       "status": "recurring",
       "effectiveness": "partially_effective",
       "preventions": [
         "M247",
         "M289",
-        "M379"
+        "M379",
+        "M455"
       ],
       "related_action_items": [
         "A004"
@@ -275,18 +276,20 @@
     {
       "pattern_id": "PATTERN-013",
       "pattern": "delegation_tooling_confusion",
-      "occurrences_total": 4,
-      "occurrences_after_fix": 0,
+      "occurrences_total": 6,
+      "occurrences_after_fix": 2,
       "first_seen": "2026-02-03T06:00:00Z",
-      "last_seen": "2026-02-03T07:00:00Z",
+      "last_seen": "2026-03-04T00:00:00Z",
       "last_action_date": null,
-      "status": "new",
+      "status": "recurring",
       "effectiveness": "pending",
       "preventions": [
         "M367",
         "M371",
         "M372",
-        "M373"
+        "M373",
+        "M447",
+        "M457"
       ],
       "related_action_items": [
         "A013"
@@ -339,10 +342,10 @@
     {
       "pattern_id": "PATTERN-016",
       "pattern": "squash_commit_corruption",
-      "occurrences_total": 12,
-      "occurrences_after_fix": 10,
+      "occurrences_total": 13,
+      "occurrences_after_fix": 11,
       "first_seen": "2026-02-06T12:54:53Z",
-      "last_seen": "2026-02-27T11:17:24Z",
+      "last_seen": "2026-03-03T00:00:00Z",
       "last_action_date": null,
       "status": "recurring",
       "effectiveness": "pending",
@@ -356,7 +359,8 @@
         "M379",
         "M385",
         "M386",
-        "M417"
+        "M417",
+        "M448"
       ],
       "related_action_items": [
         "A018"
@@ -366,18 +370,23 @@
     {
       "pattern_id": "PATTERN-017",
       "pattern": "approval_gate_bypass",
-      "occurrences_total": 4,
-      "occurrences_after_fix": 1,
+      "occurrences_total": 9,
+      "occurrences_after_fix": 6,
       "first_seen": "2026-02-08T14:00:00Z",
-      "last_seen": "2026-02-28T00:00:00Z",
+      "last_seen": "2026-03-05T00:00:00Z",
       "last_action_date": null,
-      "status": "new",
+      "status": "recurring",
       "effectiveness": "pending",
       "preventions": [
         "M479",
         "M480",
         "M489",
-        "M437"
+        "M437",
+        "M446",
+        "M459",
+        "M462",
+        "M463",
+        "M464"
       ],
       "related_action_items": [
         "A020"
@@ -482,6 +491,25 @@
         "A026"
       ],
       "note": "Agent fails to handle rejected or partial workflow states correctly: (1) proceeds to next phase when verify returns PARTIAL, (2) asks user 'what should I do?' after rejected stakeholder review instead of entering auto-fix loop, (3) skips re-presenting approval gate after user rejects it mid-workflow. Agent treats rejections as terminal instead of triggering the prescribed remediation."
+    },
+    {
+      "pattern_id": "PATTERN-023",
+      "pattern": "autolearn_false_positive",
+      "occurrences_total": 2,
+      "occurrences_after_fix": 0,
+      "first_seen": "2026-03-04T00:00:00Z",
+      "last_seen": "2026-03-05T00:00:00Z",
+      "last_action_date": null,
+      "status": "new",
+      "effectiveness": "pending",
+      "preventions": [
+        "M461",
+        "M466"
+      ],
+      "related_action_items": [
+        "A027"
+      ],
+      "note": "AutoLearnMistakes hook triggers false positives on benign content: documentation severity tables matching CRITICAL ISSUE regex, embedded JSON strings in session-analyzer output containing build_failure/test_failure keywords."
     }
   ],
   "action_items": [
@@ -982,7 +1010,7 @@
       "description": "Enforce approval gate: PreToolUse hook on Task(work-merge) must verify AskUserQuestion with 'Approve and merge' was selected when trust != high. Conversational responses are NOT approval.",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-017",
-      "status": "implemented",
+      "status": "escalated",
       "created_date": "2026-02-16T09:40:08.086328+00:00",
       "completed_date": "2026-02-16T09:40:08.086328+00:00",
       "related_mistakes": [
@@ -993,9 +1021,25 @@
       "implementation": "M489 prevention added Approval Gate Protocol to .claude/rules/hooks.md. M480 added PreToolUse hook blocking work-merge spawn without explicit approval. Both already committed.",
       "effectiveness_check": {
         "mistakes_before": 3,
-        "mistakes_after": null,
-        "post_fix_mistakes": [],
-        "verdict": "pending"
+        "mistakes_after": 6,
+        "post_fix_mistakes": [
+          "M489",
+          "M446",
+          "M459",
+          "M462",
+          "M463",
+          "M464"
+        ],
+        "verdict": "ineffective"
+      },
+      "escalation": {
+        "id": "ESCALATE-A020",
+        "escalated_date": "2026-03-05T19:10:00Z",
+        "reason": "6 post-fix failures. Hook validates AskUserQuestion was called but does not check that answers object is non-empty. M459/M462/M463/M464 all bypass approval gate via empty answers {}.",
+        "escalation_level": "hook",
+        "analysis": "A020 added Approval Gate Protocol doc and PreToolUse hook blocking work-merge without AskUserQuestion. But the empty-answers variant was not covered: AskUserQuestion IS called, but returns {} and agent proceeds anyway. Root cause: hook checks for tool invocation presence, not result validity.",
+        "proposed_solution": "Extend approval gate hook to validate AskUserQuestion result: answers object must be non-empty and contain explicit option selection before permitting work-merge. Add PostToolUse hook on AskUserQuestion that flags empty answers as rejection.",
+        "status": "open"
       }
     },
     {
@@ -1120,6 +1164,21 @@
         "post_fix_mistakes": [],
         "verdict": "pending"
       }
+    },
+    {
+      "id": "A027",
+      "priority": "low",
+      "description": "Fix AutoLearnMistakes pattern matching to exclude false positives from documentation tables, code blocks, and embedded JSON in tool output. Add context-aware filtering: only match patterns in plain text assistant messages.",
+      "category": "detection_gap",
+      "pattern_id": "PATTERN-023",
+      "status": "open",
+      "created_date": "2026-03-05T19:10:00Z",
+      "completed_date": null,
+      "related_mistakes": [
+        "M461",
+        "M466"
+      ],
+      "effectiveness_check": null
     }
   ]
 }
