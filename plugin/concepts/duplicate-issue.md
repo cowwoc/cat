@@ -50,7 +50,6 @@ find .claude/cat/issues/v*/v*.*/ -name "STATE.md" -exec grep -l "closed" {} \;
 - **Progress:** 100%
 - **Resolution:** duplicate
 - **Duplicate Of:** v{major}.{minor}-{original-issue-name}
-- **Completed:** {date}
 ```
 
 ### 5. Commit STATE.md Only
@@ -90,7 +89,7 @@ Continue to next executable issue as normal.
 
 | Resolution | Meaning |
 |------------|---------|
-| `implemented` | Issue completed with code changes |
+| `implemented` | Issue closed with code changes |
 | `duplicate` | Functionality already exists |
 | `obsolete` | Issue no longer needed |
 

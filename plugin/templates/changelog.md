@@ -4,8 +4,6 @@
 > END-USERS get from this version, NOT internal issue names. When the version is released,
 > this content is copied to the root CHANGELOG.md.
 
-**Completed**: {YYYY-MM-DD}
-
 **{Version Theme/Tagline}**
 
 {1-2 sentence summary of what this version delivers to users}
@@ -43,7 +41,7 @@ Issues that were resolved:
 
 *(This section is for development tracking only - do NOT copy to root CHANGELOG.md)*
 
-Issues completed: {count} issues across {count} commits
+Issues closed: {count} issues across {count} commits
 
 ```bash
 # Find all commits for this version via STATE.md history:
