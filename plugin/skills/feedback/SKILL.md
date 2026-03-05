@@ -5,6 +5,7 @@ argument-hint: "[description]"
 allowed-tools:
   - Bash
   - Read
+  - AskUserQuestion
 disable-model-invocation: true
 ---
 

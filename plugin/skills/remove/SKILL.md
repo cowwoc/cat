@@ -7,6 +7,7 @@ allowed-tools:
   - Write
   - Bash
   - Glob
+  - AskUserQuestion
 disable-model-invocation: true
 ---
 

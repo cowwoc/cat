@@ -10,6 +10,7 @@ allowed-tools:
   - Write
   - Bash
   - Glob
+  - AskUserQuestion
   - Skill
 argument-hint: "[description]"
 user-invocable: false

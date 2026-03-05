@@ -9,6 +9,7 @@ model: sonnet
 argument-hint: "<research-type> <topic>"
 allowed-tools:
   - Task
+  - AskUserQuestion
 user-invocable: false
 ---
 

@@ -10,6 +10,7 @@ allowed-tools:
   - Write
   - Bash
   - Glob
+  - AskUserQuestion
 user-invocable: false
 ---
 
