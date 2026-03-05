@@ -132,7 +132,6 @@ Before merge, ensure STATE.md is updated in the implementation commit:
 ```yaml
 - **Status:** closed
 - **Progress:** 100%
-- **Completed:** {date}
 - **Resolution:** implemented
 ```
 

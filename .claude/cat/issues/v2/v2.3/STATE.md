@@ -2,7 +2,6 @@
 
 - **Dependencies:** []
 - **Blocks:** []
-- **Last Updated:** 2026-02-26
 
 
 # v2.3 State: Pluggable Issue Trackers

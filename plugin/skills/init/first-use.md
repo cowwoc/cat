@@ -272,27 +272,16 @@ mkdir -p ".claude/cat/issues/v{major}/v{major}.{minor}/{issue-name}"
 
 **STATE.md** (closed issues):
 ```markdown
-# Issue State: {issue-name}
-## Status
+# State
+
 - **Status:** closed
 - **Progress:** 100%
-- **Started:** DATE
-- **Completed:** DATE
-## Commits
-- `{hash}` ({date}) - {subject}
-## Dependencies
-- {Required capability}
-## Provides
-- {Delivered capability}
-## Key Files
-created: `{path}` | modified: `{path}`
-## Key Decisions
-- **{Decision}**: {Rationale}
----
-*Source: git commits {hashes}*
+- **Resolution:** implemented
+- **Dependencies:** []
+- **Blocks:** []
 ```
 
-**STATE.md** (pending): status: pending, progress: 0%
+**STATE.md** (open): status: open, progress: 0%
 
 </step>
 
@@ -917,17 +906,12 @@ mkdir -p ".claude/cat/issues/v0/v0.0/${ISSUE_NAME}"
 
 5. Create initial STATE.md:
 ```markdown
-# Issue State: {issue-name}
+# State
 
-## Status
-- **Status:** pending
+- **Status:** open
 - **Progress:** 0%
-
-## Dependencies
-- None
-
-## Provides
-- [What this issue delivers]
+- **Dependencies:** []
+- **Blocks:** []
 ```
 
 6. Commit the new issue:
