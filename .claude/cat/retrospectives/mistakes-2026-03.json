@@ -759,5 +759,25 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M483",
+    "timestamp" : "2026-03-05T20:29:45Z",
+    "category" : "incorrect_implementation",
+    "description" : "",
+    "root_cause" : "The audit implementation subagent misinterpreted the scope of 'search and update all STATE.md examples' as including creation of new issue directories. The subagent created planning files for issues that don't exist on the target branch, likely from generating examples or confusing issue exploration with issue creation.",
+    "rca_method" : "B",
+    "rca_method_name" : "taxonomy",
+    "prevention_type" : "documentation",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "medium",
+      "catches_variations" : false
+    },
+    "correct_behavior" : ""
   } ]
 }
