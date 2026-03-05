@@ -302,17 +302,29 @@ public final class SkillLoader
 
   /**
    * Loads raw content (including frontmatter) from the skill's {@code first-use.md} file.
+   * <p>
+   * For {@code *-agent} skills that have no {@code first-use.md} of their own, falls back to the
+   * parent skill's {@code first-use.md} (the same name without the {@code -agent} suffix), if it
+   * exists. This covers the case where an agent variant delegates its full workflow to its parent.
+   * Only one level of {@code -agent} suffix is stripped.
    *
    * @param skillName the skill name
-   * @return the raw content including YAML frontmatter, or empty string if no content file exists
-   * @throws IOException if content file cannot be read
+   * @return the raw content including YAML frontmatter
+   * @throws IOException if {@code first-use.md} is not found or cannot be read
    */
   private String loadRawContent(String skillName) throws IOException
   {
     String dirName = stripPrefix(skillName);
     Path contentPath = pluginRoot.resolve("skills/" + dirName + "/first-use.md");
-    if (!Files.exists(contentPath))
-      return "";
+
+    // Fall back to parent skill's first-use.md for *-agent variants that have none of their own.
+    // Only one level of -agent suffix is stripped: "add-agent" → "add", not "add-agent-agent" → "add".
+    if (!Files.exists(contentPath) && dirName.endsWith("-agent"))
+    {
+      String parentDirName = dirName.substring(0, dirName.length() - "-agent".length());
+      contentPath = pluginRoot.resolve("skills/" + parentDirName + "/first-use.md");
+    }
+
     return Files.readString(contentPath, StandardCharsets.UTF_8);
   }
 
