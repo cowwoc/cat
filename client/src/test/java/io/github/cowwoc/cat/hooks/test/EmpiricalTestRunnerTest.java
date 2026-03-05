@@ -10,8 +10,14 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner;
+import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner.CriterionGrade;
+import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner.CriterionMetadata;
 import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner.EvaluationResult;
+import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner.GradingReport;
 import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner.ParsedOutput;
+import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner.PostHocAnalysis;
+import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner.RubricScore;
+import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner.Severity;
 import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner.TestMessage;
 import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner.TurnOutput;
 import io.github.cowwoc.cat.hooks.skills.PrimingMessage;
@@ -1824,5 +1830,1224 @@ public final class EmpiricalTestRunnerTest
   {
     int rate = EmpiricalTestRunner.calculateRate(1, 2);
     requireThat(rate, "rate").isEqualTo(50);
+  }
+
+  // ─── Wave 1: Structured Grading ────────────────────────────────────────────
+
+  /**
+   * Verifies that gradeOutput with a passing must_contain criterion includes the criterion grade.
+   */
+  @Test
+  public void gradeOutputMustContainPass() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      List<String> texts = List.of("The answer is correct and complete.");
+      Map<String, Object> criteria = Map.of("must_contain", List.of("correct"));
+
+      GradingReport report = runner.gradeOutput(0, texts, List.of(), criteria);
+
+      requireThat(report.pass(), "pass").isTrue();
+      requireThat(report.messageIndex(), "messageIndex").isEqualTo(0);
+      requireThat(report.grades().size(), "gradeCount").isEqualTo(1);
+
+      CriterionGrade grade = report.grades().get(0);
+      requireThat(grade.criterionKey(), "key").isEqualTo("contains:correct");
+      requireThat(grade.pass(), "gradePass").isTrue();
+      requireThat(grade.quote().isEmpty(), "quoteNotEmpty").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that gradeOutput with a failing must_contain criterion marks the grade as failed.
+   */
+  @Test
+  public void gradeOutputMustContainFail() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      List<String> texts = List.of("The answer is wrong.");
+      Map<String, Object> criteria = Map.of("must_contain", List.of("correct"));
+
+      GradingReport report = runner.gradeOutput(0, texts, List.of(), criteria);
+
+      requireThat(report.pass(), "pass").isFalse();
+      CriterionGrade grade = report.grades().get(0);
+      requireThat(grade.pass(), "gradePass").isFalse();
+      requireThat(grade.quote(), "quote").isEqualTo("");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that gradeOutput with rich _metadata extracts description and severity correctly.
+   */
+  @Test
+  public void gradeOutputUsesRichMetadata() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      List<String> texts = List.of("Output contains magic word.");
+
+      Map<String, Object> metadataEntry = new HashMap<>();
+      metadataEntry.put("description", "Checks for magic keyword");
+      metadataEntry.put("reason", "Required for validation");
+      metadataEntry.put("severity", "HIGH");
+
+      Map<String, Object> metadata = new HashMap<>();
+      metadata.put("contains:magic", metadataEntry);
+
+      Map<String, Object> criteria = new HashMap<>();
+      criteria.put("must_contain", List.of("magic"));
+      criteria.put("_metadata", metadata);
+
+      GradingReport report = runner.gradeOutput(0, texts, List.of(), criteria);
+
+      requireThat(report.grades().size(), "gradeCount").isEqualTo(1);
+      CriterionGrade grade = report.grades().get(0);
+      requireThat(grade.metadata().description(), "description").isEqualTo("Checks for magic keyword");
+      requireThat(grade.metadata().reason(), "reason").isEqualTo("Required for validation");
+      requireThat(grade.metadata().severity(), "severity").isEqualTo(Severity.HIGH);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that gradeOutput defaults severity to MEDIUM and description to the criterion key
+   * when no metadata is present.
+   */
+  @Test
+  public void gradeOutputDefaultsMetadataWhenAbsent() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      Map<String, Object> criteria = Map.of("must_contain", List.of("hello"));
+
+      GradingReport report = runner.gradeOutput(0, List.of("hello world"), List.of(), criteria);
+
+      CriterionGrade grade = report.grades().get(0);
+      requireThat(grade.metadata().severity(), "severity").isEqualTo(Severity.MEDIUM);
+      requireThat(grade.metadata().description(), "description").isEqualTo("contains:hello");
+      requireThat(grade.metadata().reason(), "reason").isEqualTo("");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that gradeOutput sorts grades by severity (HIGH before MEDIUM before LOW).
+   */
+  @Test
+  public void gradeOutputSortsBySeverity() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      List<String> texts = List.of("alpha beta gamma");
+
+      Map<String, Object> lowMeta = new HashMap<>();
+      lowMeta.put("severity", "LOW");
+      Map<String, Object> highMeta = new HashMap<>();
+      highMeta.put("severity", "HIGH");
+      Map<String, Object> medMeta = new HashMap<>();
+      medMeta.put("severity", "MEDIUM");
+
+      Map<String, Object> metadataMap = new HashMap<>();
+      metadataMap.put("contains:alpha", lowMeta);
+      metadataMap.put("contains:beta", highMeta);
+      metadataMap.put("contains:gamma", medMeta);
+
+      Map<String, Object> criteria = new HashMap<>();
+      criteria.put("must_contain", List.of("alpha", "beta", "gamma"));
+      criteria.put("_metadata", metadataMap);
+
+      GradingReport report = runner.gradeOutput(0, texts, List.of(), criteria);
+
+      requireThat(report.grades().size(), "gradeCount").isEqualTo(3);
+      requireThat(report.grades().get(0).metadata().severity(), "firstSeverity").isEqualTo(Severity.HIGH);
+      requireThat(report.grades().get(1).metadata().severity(), "secondSeverity").isEqualTo(Severity.MEDIUM);
+      requireThat(report.grades().get(2).metadata().severity(), "thirdSeverity").isEqualTo(Severity.LOW);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that gradeOutput with empty criteria returns an empty grade list with pass=true.
+   */
+  @Test
+  public void gradeOutputWithEmptyCriteriaPassesWithNoGrades() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+
+      GradingReport report = runner.gradeOutput(2, List.of("any output"), List.of(), Map.of());
+
+      requireThat(report.pass(), "pass").isTrue();
+      requireThat(report.grades().isEmpty(), "noGrades").isTrue();
+      requireThat(report.messageIndex(), "messageIndex").isEqualTo(2);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that extractQuote returns the surrounding context around the matched term.
+   */
+  @Test
+  public void extractQuoteReturnsContextAroundTerm()
+  {
+    String text = "The quick brown fox jumps over the lazy dog";
+    String quote = EmpiricalTestRunner.extractQuote(text, "fox", 200);
+    requireThat(quote.isEmpty(), "quoteNotEmpty").isFalse();
+    requireThat(quote, "quote").contains("fox");
+  }
+
+  /**
+   * Verifies that extractQuote returns empty string when term is not found.
+   */
+  @Test
+  public void extractQuoteReturnsEmptyWhenTermAbsent()
+  {
+    String text = "The quick brown fox";
+    String quote = EmpiricalTestRunner.extractQuote(text, "cat", 200);
+    requireThat(quote, "quote").isEqualTo("");
+  }
+
+  /**
+   * Verifies that CriterionMetadata.fromRaw defaults to MEDIUM severity for missing severity field.
+   */
+  @Test
+  public void criterionMetadataFromRawDefaultsSeverityToMedium()
+  {
+    Map<String, Object> rawMap = Map.of("description", "Test criterion");
+    CriterionMetadata meta = CriterionMetadata.fromRaw("myKey", rawMap);
+    requireThat(meta.severity(), "severity").isEqualTo(Severity.MEDIUM);
+    requireThat(meta.description(), "description").isEqualTo("Test criterion");
+  }
+
+  /**
+   * Verifies that CriterionMetadata.fromRaw throws for an unknown severity value.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*invalid severity 'CRITICAL'.*")
+  public void criterionMetadataFromRawHandlesUnknownSeverity()
+  {
+    Map<String, Object> rawMap = Map.of("description", "desc", "severity", "CRITICAL");
+    CriterionMetadata.fromRaw("key", rawMap);
+  }
+
+  /**
+   * Verifies that CriterionMetadata.fromRaw with a non-Map rawValue uses the criterion key as description.
+   */
+  @Test
+  public void criterionMetadataFromRawWithNullValueUsesKeyAsDescription()
+  {
+    CriterionMetadata meta = CriterionMetadata.fromRaw("contains:hello", null);
+    requireThat(meta.description(), "description").isEqualTo("contains:hello");
+    requireThat(meta.severity(), "severity").isEqualTo(Severity.MEDIUM);
+    requireThat(meta.reason(), "reason").isEqualTo("");
+  }
+
+  // ─── Wave 2: Post-Hoc Analysis ─────────────────────────────────────────────
+
+  /**
+   * Verifies that analyzeFailedTrial on a trial with no failing criteria returns score=10
+   * and no violations.
+   */
+  @Test
+  public void analyzeFailedTrialWithNoFailuresReturnsMaxScore() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      List<String> texts = List.of("Output is correct and helpful.");
+      Map<String, Object> criteria = Map.of("must_contain", List.of("correct"));
+
+      PostHocAnalysis analysis = runner.analyzeFailedTrial(0, texts, List.of(), criteria);
+
+      requireThat(analysis.adherenceScore(), "score").isEqualTo(10);
+      requireThat(analysis.violations().isEmpty(), "noViolations").isTrue();
+      requireThat(analysis.suggestions().isEmpty(), "noSuggestions").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that analyzeFailedTrial on a trial with one missing must_contain generates a
+   * violation in the instructions category.
+   */
+  @Test
+  public void analyzeFailedTrialIdentifiesInstructionViolation() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      List<String> texts = List.of("The output is wrong.");
+      Map<String, Object> criteria = Map.of("must_contain", List.of("correct"));
+
+      PostHocAnalysis analysis = runner.analyzeFailedTrial(0, texts, List.of(), criteria);
+
+      requireThat(analysis.violations().size(), "violationCount").isEqualTo(1);
+      requireThat(analysis.violations().get(0).category(), "category").isEqualTo("instructions");
+      requireThat(analysis.violations().get(0).expected(), "expected").contains("correct");
+      requireThat(analysis.violations().get(0).severity(), "severity").isEqualTo(Severity.MEDIUM);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that analyzeFailedTrial assigns the tool_usage category for missing tool criteria.
+   */
+  @Test
+  public void analyzeFailedTrialCategoriesToolUsageForMissingTool() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      List<String> texts = List.of("Done without using any tools.");
+      Map<String, Object> criteria = Map.of("must_use_tools", List.of("Bash"));
+
+      PostHocAnalysis analysis = runner.analyzeFailedTrial(0, texts, List.of(), criteria);
+
+      requireThat(analysis.violations().size(), "violationCount").isEqualTo(1);
+      requireThat(analysis.violations().get(0).category(), "category").isEqualTo("tool_usage");
+      requireThat(analysis.violations().get(0).actual(), "actual").contains("none");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that analyzeFailedTrial generates improvement suggestions sorted by severity.
+   */
+  @Test
+  public void analyzeFailedTrialSuggestionsAreSortedBySeverity() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      List<String> texts = List.of("Something output here.");
+
+      Map<String, Object> lowMeta = new HashMap<>();
+      lowMeta.put("severity", "LOW");
+      Map<String, Object> highMeta = new HashMap<>();
+      highMeta.put("severity", "HIGH");
+
+      Map<String, Object> metadataMap = new HashMap<>();
+      metadataMap.put("contains:alpha", lowMeta);
+      metadataMap.put("contains:beta", highMeta);
+
+      Map<String, Object> criteria = new HashMap<>();
+      criteria.put("must_contain", List.of("alpha", "beta"));
+      criteria.put("_metadata", metadataMap);
+
+      PostHocAnalysis analysis = runner.analyzeFailedTrial(0, texts, List.of(), criteria);
+
+      requireThat(analysis.suggestions().size(), "suggestionCount").isEqualTo(2);
+      requireThat(analysis.suggestions().get(0), "firstSuggestion").contains("[HIGH]");
+      requireThat(analysis.suggestions().get(1), "secondSuggestion").contains("[LOW]");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that analyzeFailedTrial adherence score is 1 when all criteria fail.
+   */
+  @Test
+  public void analyzeFailedTrialMinScoreWhenAllFail() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      List<String> texts = List.of("completely wrong output with nothing right");
+      Map<String, Object> criteria = Map.of(
+        "must_contain", List.of("alpha", "beta", "gamma", "delta", "epsilon",
+          "zeta", "eta", "theta", "iota", "kappa"));
+
+      PostHocAnalysis analysis = runner.analyzeFailedTrial(0, texts, List.of(), criteria);
+
+      requireThat(analysis.adherenceScore(), "score").isEqualTo(1);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that analyzeFailedTrial with empty criteria returns score=10 and no violations.
+   */
+  @Test
+  public void analyzeFailedTrialWithEmptyCriteriaReturnsMaxScore() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+
+      PostHocAnalysis analysis = runner.analyzeFailedTrial(0, List.of("any"), List.of(), Map.of());
+
+      requireThat(analysis.adherenceScore(), "score").isEqualTo(10);
+      requireThat(analysis.violations().isEmpty(), "noViolations").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  // ─── Wave 3: Blind Comparison ───────────────────────────────────────────────
+
+  /**
+   * Verifies that rateToScore maps pass rates to the correct 1-5 score.
+   */
+  @Test
+  public void rateToScoreMapsCorrectly()
+  {
+    requireThat(EmpiricalTestRunner.rateToScore(100), "score100").isEqualTo(5);
+    requireThat(EmpiricalTestRunner.rateToScore(90), "score90").isEqualTo(5);
+    requireThat(EmpiricalTestRunner.rateToScore(89), "score89").isEqualTo(4);
+    requireThat(EmpiricalTestRunner.rateToScore(70), "score70").isEqualTo(4);
+    requireThat(EmpiricalTestRunner.rateToScore(69), "score69").isEqualTo(3);
+    requireThat(EmpiricalTestRunner.rateToScore(50), "score50").isEqualTo(3);
+    requireThat(EmpiricalTestRunner.rateToScore(49), "score49").isEqualTo(2);
+    requireThat(EmpiricalTestRunner.rateToScore(25), "score25").isEqualTo(2);
+    requireThat(EmpiricalTestRunner.rateToScore(24), "score24").isEqualTo(1);
+    requireThat(EmpiricalTestRunner.rateToScore(0), "score0").isEqualTo(1);
+  }
+
+  /**
+   * Verifies that RubricScore.total returns the sum of all four dimensions.
+   */
+  @Test
+  public void rubricScoreTotalIsSumOfDimensions()
+  {
+    RubricScore score = new RubricScore(5, 4, 3, 2);
+    requireThat(score.total(), "total").isEqualTo(14);
+  }
+
+  /**
+   * Verifies that RubricScore rejects values outside the 1-5 range.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void rubricScoreRejectsOutOfRangeValues()
+  {
+    new RubricScore(0, 3, 3, 3);
+  }
+
+  /**
+   * Verifies that computeRubricScore returns default score of 3 per dimension when no trials exist.
+   */
+  @Test
+  public void computeRubricScoreReturnsDefaultWhenNoTrials() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      EmpiricalTestRunner.ConfigResult result =
+        new EmpiricalTestRunner.ConfigResult("empty", 0, 0, 0, List.of());
+
+      RubricScore score = runner.computeRubricScore(result);
+
+      requireThat(score.instructionAdherence(), "instructionAdherence").isEqualTo(3);
+      requireThat(score.outputQuality(), "outputQuality").isEqualTo(3);
+      requireThat(score.toolUsageCorrectness(), "toolUsageCorrectness").isEqualTo(3);
+      requireThat(score.errorHandling(), "errorHandling").isEqualTo(3);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that computeRubricScore assigns a score of 5 for instruction adherence when all trials pass.
+   */
+  @Test
+  public void computeRubricScoreAssignsFiveForPerfectPassRate() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      List<EmpiricalTestRunner.TrialResult> trials = List.of(
+        new EmpiricalTestRunner.TrialResult(true, Map.of("msg0:contains:hello", true), 1L, "",
+          List.of(), "", List.of(), List.of()),
+        new EmpiricalTestRunner.TrialResult(true, Map.of("msg0:contains:hello", true), 1L, "",
+          List.of(), "", List.of(), List.of()));
+      EmpiricalTestRunner.ConfigResult result =
+        new EmpiricalTestRunner.ConfigResult("perfect", 2, 2, 100, trials);
+
+      RubricScore score = runner.computeRubricScore(result);
+
+      requireThat(score.instructionAdherence(), "instructionAdherence").isEqualTo(5);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that PostHocAnalysis rejects an adherence score below 1.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void postHocAnalysisRejectsScoreBelowOne()
+  {
+    new PostHocAnalysis(0, List.of(), List.of());
+  }
+
+  /**
+   * Verifies that PostHocAnalysis rejects an adherence score above 10.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void postHocAnalysisRejectsScoreAboveTen()
+  {
+    new PostHocAnalysis(11, List.of(), List.of());
+  }
+
+  // ─── CRITICAL: Additional gradeOutput tests ─────────────────────────────────
+
+  /**
+   * Verifies that gradeOutput with must_not_contain and a present term fails with a quote.
+   */
+  @Test
+  public void gradeOutputMustNotContainFailWithQuote() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      List<String> texts = List.of("An error occurred during processing.");
+      Map<String, Object> criteria = Map.of("must_not_contain", List.of("error"));
+
+      GradingReport report = runner.gradeOutput(0, texts, List.of(), criteria);
+
+      requireThat(report.pass(), "pass").isFalse();
+      requireThat(report.grades().size(), "gradeCount").isEqualTo(1);
+      CriterionGrade grade = report.grades().get(0);
+      requireThat(grade.criterionKey(), "key").isEqualTo("not_contains:error");
+      requireThat(grade.pass(), "gradePass").isFalse();
+      requireThat(grade.quote().isEmpty(), "quotePresent").isFalse();
+      requireThat(grade.quote(), "quote").contains("error");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that gradeOutput with must_not_contain and an absent term passes with empty quote.
+   */
+  @Test
+  public void gradeOutputMustNotContainPassWithEmptyQuote() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      List<String> texts = List.of("Operation completed successfully.");
+      Map<String, Object> criteria = Map.of("must_not_contain", List.of("error"));
+
+      GradingReport report = runner.gradeOutput(0, texts, List.of(), criteria);
+
+      requireThat(report.pass(), "pass").isTrue();
+      CriterionGrade grade = report.grades().get(0);
+      requireThat(grade.pass(), "gradePass").isTrue();
+      requireThat(grade.quote(), "quote").isEqualTo("");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that gradeOutput with must_use_tools passes when the tool was used.
+   */
+  @Test
+  public void gradeOutputMustUseToolsPass() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      List<String> toolUses = List.of("Bash", "Read");
+      Map<String, Object> criteria = Map.of("must_use_tools", List.of("Bash"));
+
+      GradingReport report = runner.gradeOutput(0, List.of("output"), toolUses, criteria);
+
+      requireThat(report.pass(), "pass").isTrue();
+      requireThat(report.grades().size(), "gradeCount").isEqualTo(1);
+      CriterionGrade grade = report.grades().get(0);
+      requireThat(grade.criterionKey(), "key").isEqualTo("uses_tool:Bash");
+      requireThat(grade.pass(), "gradePass").isTrue();
+      requireThat(grade.expected(), "expected").contains("Bash");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that gradeOutput with must_use_tools fails when the tool was not used.
+   */
+  @Test
+  public void gradeOutputMustUseToolsFail() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      List<String> toolUses = List.of("Read");
+      Map<String, Object> criteria = Map.of("must_use_tools", List.of("Bash"));
+
+      GradingReport report = runner.gradeOutput(0, List.of("output"), toolUses, criteria);
+
+      requireThat(report.pass(), "pass").isFalse();
+      CriterionGrade grade = report.grades().get(0);
+      requireThat(grade.pass(), "gradePass").isFalse();
+      requireThat(grade.actual(), "actual").contains("not invoked");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that gradeOutput with must_not_use_tools passes when tool was not used.
+   */
+  @Test
+  public void gradeOutputMustNotUseToolsPass() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      List<String> toolUses = List.of("Read");
+      Map<String, Object> criteria = Map.of("must_not_use_tools", List.of("Bash"));
+
+      GradingReport report = runner.gradeOutput(0, List.of("output"), toolUses, criteria);
+
+      requireThat(report.pass(), "pass").isTrue();
+      CriterionGrade grade = report.grades().get(0);
+      requireThat(grade.criterionKey(), "key").isEqualTo("not_uses_tool:Bash");
+      requireThat(grade.pass(), "gradePass").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that gradeOutput with must_not_use_tools fails when tool was used.
+   */
+  @Test
+  public void gradeOutputMustNotUseToolsFail() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      List<String> toolUses = List.of("Bash");
+      Map<String, Object> criteria = Map.of("must_not_use_tools", List.of("Bash"));
+
+      GradingReport report = runner.gradeOutput(0, List.of("output"), toolUses, criteria);
+
+      requireThat(report.pass(), "pass").isFalse();
+      CriterionGrade grade = report.grades().get(0);
+      requireThat(grade.pass(), "gradePass").isFalse();
+      requireThat(grade.actual(), "actual").contains("invoked");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that CriterionGrade.expected and actual fields are populated correctly for must_contain.
+   */
+  @Test
+  public void criterionGradeHasExpectedAndActualFields() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      List<String> texts = List.of("The answer is correct.");
+      Map<String, Object> criteria = Map.of("must_contain", List.of("correct"));
+
+      GradingReport report = runner.gradeOutput(0, texts, List.of(), criteria);
+      CriterionGrade grade = report.grades().get(0);
+
+      requireThat(grade.expected(), "expected").isNotNull();
+      requireThat(grade.actual(), "actual").isNotNull();
+      requireThat(grade.expected(), "expected").contains("correct");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  // ─── CRITICAL: Additional analyzeFailedTrial tests ─────────────────────────
+
+  /**
+   * Verifies that analyzeFailedTrial categorizes not_contains error violations as error_handling.
+   */
+  @Test
+  public void analyzeFailedTrialCategorizesNotContainsErrorAsErrorHandling() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      List<String> texts = List.of("An error occurred in processing.");
+      Map<String, Object> criteria = Map.of("must_not_contain", List.of("error"));
+
+      PostHocAnalysis analysis = runner.analyzeFailedTrial(0, texts, List.of(), criteria);
+
+      requireThat(analysis.violations().size(), "violationCount").isEqualTo(1);
+      requireThat(analysis.violations().get(0).category(), "category").isEqualTo("error_handling");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that analyzeFailedTrial with not_uses_tool violation generates tool_usage category.
+   */
+  @Test
+  public void analyzeFailedTrialCategorizesNotUsesToolAsToolUsage() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      List<String> toolUses = List.of("Bash");
+      Map<String, Object> criteria = Map.of("must_not_use_tools", List.of("Bash"));
+
+      PostHocAnalysis analysis = runner.analyzeFailedTrial(0, List.of("output"), toolUses, criteria);
+
+      requireThat(analysis.violations().size(), "violationCount").isEqualTo(1);
+      requireThat(analysis.violations().get(0).category(), "category").isEqualTo("tool_usage");
+      requireThat(analysis.violations().get(0).actual(), "actual").contains("Bash");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that analyzeFailedTrial uses the messageIndex when calling gradeOutput.
+   */
+  @Test
+  public void analyzeFailedTrialUsesMessageIndex() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      List<String> texts = List.of("All criteria satisfied.");
+      Map<String, Object> criteria = Map.of("must_contain", List.of("criteria"));
+
+      // Different message indices should not affect the analysis result
+      PostHocAnalysis analysis0 = runner.analyzeFailedTrial(0, texts, List.of(), criteria);
+      PostHocAnalysis analysis3 = runner.analyzeFailedTrial(3, texts, List.of(), criteria);
+
+      requireThat(analysis0.adherenceScore(), "score0").isEqualTo(analysis3.adherenceScore());
+      requireThat(analysis0.violations().size(), "violations0").
+        isEqualTo(analysis3.violations().size());
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  // ─── CRITICAL: Additional computeRubricScore tests ──────────────────────────
+
+  /**
+   * Verifies that computeRubricScore correctly scores tool-related dimensions from trial checks.
+   */
+  @Test
+  public void computeRubricScoreToolDimensionFromChecks() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      // All tool checks pass → tool dimension should be 5
+      List<EmpiricalTestRunner.TrialResult> trials = List.of(
+        new EmpiricalTestRunner.TrialResult(true, Map.of("msg0:uses_tool:Bash", true), 1L, "",
+          List.of("Bash"), "", List.of(), List.of()),
+        new EmpiricalTestRunner.TrialResult(true, Map.of("msg0:uses_tool:Bash", true), 1L, "",
+          List.of("Bash"), "", List.of(), List.of()));
+      EmpiricalTestRunner.ConfigResult result =
+        new EmpiricalTestRunner.ConfigResult("tool-test", 2, 2, 100, trials);
+
+      RubricScore score = runner.computeRubricScore(result);
+
+      requireThat(score.toolUsageCorrectness(), "toolUsage").isEqualTo(5);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that computeRubricScore uses default 3 for dimensions with no relevant checks.
+   */
+  @Test
+  public void computeRubricScoreDefaultsToThreeForMissingDimensions() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      // Only text criteria — tool and error dimensions should default to 3
+      List<EmpiricalTestRunner.TrialResult> trials = List.of(
+        new EmpiricalTestRunner.TrialResult(true, Map.of("msg0:contains:hello", true), 1L, "",
+          List.of(), "", List.of(), List.of()));
+      EmpiricalTestRunner.ConfigResult result =
+        new EmpiricalTestRunner.ConfigResult("text-only", 1, 1, 100, trials);
+
+      RubricScore score = runner.computeRubricScore(result);
+
+      requireThat(score.toolUsageCorrectness(), "toolUsage").isEqualTo(3);
+      requireThat(score.errorHandling(), "errorHandling").isEqualTo(3);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that computeRubricScore total() returns sum of all four dimensions.
+   */
+  @Test
+  public void computeRubricScoreTotalIsSumOfDimensions() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      EmpiricalTestRunner.ConfigResult result =
+        new EmpiricalTestRunner.ConfigResult("empty", 0, 0, 0, List.of());
+
+      RubricScore score = runner.computeRubricScore(result);
+
+      requireThat(score.total(), "total").isEqualTo(
+        score.instructionAdherence() + score.outputQuality() +
+        score.toolUsageCorrectness() + score.errorHandling());
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  // ─── HIGH: Validation tests ──────────────────────────────────────────────────
+
+  /**
+   * Verifies that runTests rejects trials count above MAX_TRIALS.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void runTestsRejectsTrialsAboveMaxBound() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path configFile = Files.createTempFile(tempDir, "config", ".json");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      Files.writeString(configFile,
+        "{\"configs\":{\"A\":{\"messages\":[{\"prompt\":\"test\"}]}}}");
+      // 1001 > MAX_TRIALS (1000)
+      runner.runTests(configFile, 1001, "haiku", tempDir, null);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that runTests rejects zero trials.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void runTestsRejectsZeroTrials() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path configFile = Files.createTempFile(tempDir, "config", ".json");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      Files.writeString(configFile,
+        "{\"configs\":{\"A\":{\"messages\":[{\"prompt\":\"test\"}]}}}");
+      runner.runTests(configFile, 0, "haiku", tempDir, null);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that runTests rejects a config file with empty configs map.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*no entries in 'configs'.*")
+  public void runTestsRejectsEmptyConfigs() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path configFile = Files.createTempFile(tempDir, "config", ".json");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      Files.writeString(configFile, "{\"configs\":{}}");
+      runner.runTests(configFile, 1, "haiku", tempDir, null);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that runBlindComparison rejects a config file with empty configs map.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*no entries in 'configs'.*")
+  public void runBlindComparisonRejectsEmptyConfigs() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path configFile = Files.createTempFile(tempDir, "config", ".json");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      Files.writeString(configFile, "{\"configs\":{}}");
+      runner.runBlindComparison(configFile, 1, "haiku", tempDir, "candidate", "baseline");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that runBlindComparison rejects trials above MAX_TRIALS.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void runBlindComparisonRejectsTrialsAboveMaxBound() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path configFile = Files.createTempFile(tempDir, "config", ".json");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      Files.writeString(configFile,
+        "{\"configs\":{\"A\":{\"messages\":[{\"prompt\":\"test\"}]}}}");
+      runner.runBlindComparison(configFile, 1001, "haiku", tempDir, "candidate", "baseline");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  // ─── MEDIUM: CriterionGrade fields validation ────────────────────────────────
+
+  /**
+   * Verifies that CriterionGrade constructor rejects null expected.
+   */
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*expected.*")
+  public void criterionGradeRejectsNullExpected()
+  {
+    new CriterionGrade("key",
+      new CriterionMetadata("desc", "", EmpiricalTestRunner.Severity.MEDIUM),
+      true, "", null, "actual");
+  }
+
+  /**
+   * Verifies that CriterionGrade constructor rejects null actual.
+   */
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*actual.*")
+  public void criterionGradeRejectsNullActual()
+  {
+    new CriterionGrade("key",
+      new CriterionMetadata("desc", "", EmpiricalTestRunner.Severity.MEDIUM),
+      true, "", "expected", null);
+  }
+
+  /**
+   * Verifies that gradeOutput expected field for must_contain describes the term to find.
+   */
+  @Test
+  public void gradeOutputMustContainExpectedDescribesTerm() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      Map<String, Object> criteria = Map.of("must_contain", List.of("hello"));
+
+      GradingReport report = runner.gradeOutput(0, List.of("hello world"), List.of(), criteria);
+      CriterionGrade grade = report.grades().get(0);
+
+      requireThat(grade.expected(), "expected").contains("hello");
+      requireThat(grade.actual(), "actual").contains("found");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that gradeOutput actual field for must_contain when term absent says not found.
+   */
+  @Test
+  public void gradeOutputMustContainActualWhenAbsentSaysNotFound() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      Map<String, Object> criteria = Map.of("must_contain", List.of("missing"));
+
+      GradingReport report = runner.gradeOutput(0, List.of("something else"), List.of(), criteria);
+      CriterionGrade grade = report.grades().get(0);
+
+      requireThat(grade.actual(), "actual").contains("not found");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  // ─── LOW: extractQuote edge cases ────────────────────────────────────────────
+
+  /**
+   * Verifies that extractQuote truncates to the specified maxLength.
+   */
+  @Test
+  public void extractQuoteTruncatesToMaxLength()
+  {
+    String text = "The quick brown fox jumps over the lazy dog and then some more text here";
+    String quote = EmpiricalTestRunner.extractQuote(text, "fox", 10);
+    requireThat(quote.length(), "quoteLength").isLessThanOrEqualTo(10);
+    requireThat(quote.isEmpty(), "quoteNotEmpty").isFalse();
+  }
+
+  /**
+   * Verifies that extractQuote is case-insensitive when finding the term.
+   */
+  @Test
+  public void extractQuoteIsCaseInsensitive()
+  {
+    String text = "The Quick Brown Fox jumps";
+    String quote = EmpiricalTestRunner.extractQuote(text, "fox", 200);
+    requireThat(quote.isEmpty(), "quoteNotEmpty").isFalse();
+    requireThat(quote.toLowerCase(java.util.Locale.ROOT), "quoteLower").contains("fox");
+  }
+
+  /**
+   * Verifies that extractQuote handles a term at the very beginning of the text.
+   */
+  @Test
+  public void extractQuoteHandlesTermAtStart()
+  {
+    String text = "fox is at the start";
+    String quote = EmpiricalTestRunner.extractQuote(text, "fox", 200);
+    requireThat(quote.isEmpty(), "quoteNotEmpty").isFalse();
+    requireThat(quote, "quote").contains("fox");
+  }
+
+  /**
+   * Verifies that extractQuote handles a term at the very end of the text.
+   */
+  @Test
+  public void extractQuoteHandlesTermAtEnd()
+  {
+    String text = "at the end is the fox";
+    String quote = EmpiricalTestRunner.extractQuote(text, "fox", 200);
+    requireThat(quote.isEmpty(), "quoteNotEmpty").isFalse();
+    requireThat(quote, "quote").contains("fox");
+  }
+
+  // ─── LOW: rateToScore boundary tests ─────────────────────────────────────────
+
+  /**
+   * Verifies that rateToScore assigns 1 for a rate of 0.
+   */
+  @Test
+  public void rateToScoreZeroRateReturnsOne()
+  {
+    requireThat(EmpiricalTestRunner.rateToScore(0), "score").isEqualTo(1);
+  }
+
+  /**
+   * Verifies that rateToScore assigns 5 for a rate of 100.
+   */
+  @Test
+  public void rateToScoreHundredPercentReturnsFive()
+  {
+    requireThat(EmpiricalTestRunner.rateToScore(100), "score").isEqualTo(5);
+  }
+
+  // ─── LOW: Magic constants accessible ────────────────────────────────────────
+
+  /**
+   * Verifies that truncatePreview limits output to MAX_PREVIEW_CHARS when text is long.
+   */
+  @Test
+  public void gradeOutputQuoteDoesNotExceedMaxPreviewChars() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      // Create a very long text to ensure truncation happens
+      String longText = "prefix ".repeat(100) + "target" + " suffix".repeat(100);
+      List<String> texts = List.of(longText);
+      Map<String, Object> criteria = Map.of("must_contain", List.of("target"));
+
+      GradingReport report = runner.gradeOutput(0, texts, List.of(), criteria);
+      CriterionGrade grade = report.grades().get(0);
+
+      requireThat(grade.quote().length(), "quoteLength").isLessThanOrEqualTo(200);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 }
