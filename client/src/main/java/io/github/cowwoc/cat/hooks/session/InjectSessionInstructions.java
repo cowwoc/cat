@@ -236,7 +236,11 @@ public final class InjectSessionInstructions implements SessionStartHandler
 
       **Chain independent commands**: Combine independent Bash commands (e.g., `git status`, `git log`, \
       `git diff --stat`) with `&&` in a single Bash call instead of issuing separate tool calls. This \
-      reduces round-trips.""";
+      reduces round-trips.
+
+      **Directory before file write**: When writing files via heredoc (`cat > path/file << 'EOF'`), always \
+      create the parent directory first with `mkdir -p`. The heredoc write fails if the directory doesn't \
+      exist.""";
 
   private final JvmScope scope;
 
