@@ -6,10 +6,10 @@ See LICENSE.md in the project root for license terms.
 # Workflow: Merge and Cleanup
 
 ## Overview
-Post-issue workflow for merging completed work and cleaning up worktrees.
+Post-issue workflow for merging closed issue work and cleaning up worktrees.
 
 ## Prerequisites
-- Issue execution completed
+- Issue execution finished
 - Subagent branches ready for merge
 - Approval received (interactive mode)
 
@@ -104,7 +104,6 @@ Before squashing/merging, update issue STATE.md to closed in the issue branch:
 #   Status: closed
 #   Progress: 100%
 #   Resolution: implemented   ← REQUIRED for all closed issues
-#   Completed: {date}
 
 # Include in implementation commit
 git add .claude/cat/issues/v{major}/v{major}.{minor}/{issue-name}/STATE.md

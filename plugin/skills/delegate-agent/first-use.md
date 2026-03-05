@@ -338,7 +338,7 @@ If ANY of these occur, STOP and report BLOCKED:
 | Test verification steps | Explicit commands to run, expected outcomes |
 | Edge cases to handle | Subagent won't discover these independently |
 | Commit message format | Exact text, not guidelines |
-| **STATE.md update** | Issue STATE.md must be updated to completed IN THE SAME COMMIT |
+| **STATE.md update** | Issue STATE.md must be updated to closed IN THE SAME COMMIT |
 
 ### Error Handling Requirements
 

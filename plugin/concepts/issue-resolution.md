@@ -11,7 +11,7 @@ How issues are marked complete and how to trace their resolving commits.
 
 | Resolution | Description | Has Commit? | How to Find |
 |------------|-------------|-------------|-------------|
-| `implemented` | Issue completed normally | Yes | `git log -- .claude/cat/issues/v{x}/v{x}.{y}/{issue-name}/` |
+| `implemented` | Issue closed normally | Yes | `git log -- .claude/cat/issues/v{x}/v{x}.{y}/{issue-name}/` |
 | `duplicate` | Another issue did this work | No | Check STATE.md "Duplicate Of" field |
 | `obsolete` | No longer needed | No | No implementation commit |
 
@@ -19,7 +19,7 @@ How issues are marked complete and how to trace their resolving commits.
 
 ## Standard Completion (implemented)
 
-When an issue is completed through normal execution:
+When an issue is closed through normal execution:
 
 1. Work is done and committed
 2. STATE.md updated in the same commit (per M076)
@@ -37,7 +37,7 @@ An issue is a **duplicate** when another issue already implemented the same func
 ### When This Happens
 
 1. Issue A and Issue B are created for similar problems
-2. Issue A is executed and completed
+2. Issue A is executed and closed
 3. When Issue B is started, investigation reveals Issue A already fixed it
 4. Issue B is marked as duplicate of Issue A
 
@@ -50,7 +50,6 @@ Update the duplicate issue's STATE.md:
 - **Progress:** 100%
 - **Resolution:** duplicate
 - **Duplicate Of:** v{major}.{minor}-{original-issue-name}
-- **Completed:** {date}
 ```
 
 **Example:**
@@ -59,7 +58,6 @@ Update the duplicate issue's STATE.md:
 - **Progress:** 100%
 - **Resolution:** duplicate
 - **Duplicate Of:** v0.5-fix-multi-param-lambda
-- **Completed:** 2026-01-14
 ```
 
 ### Finding Commits for Duplicates
@@ -100,7 +98,6 @@ An issue is **obsolete** when it's no longer needed (requirements changed, featu
 - **Progress:** 100%
 - **Resolution:** obsolete
 - **Reason:** {why issue is no longer needed}
-- **Completed:** {date}
 ```
 
 ### Commit for Obsolete Resolution

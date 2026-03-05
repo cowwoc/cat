@@ -72,7 +72,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - restore-askuserquestion-in-allowed-tools
 
 
-## Issues Completed
+## Issues Closed
 - fix-migration-21-awk-syntax-error
 - unknown-terminal-fallback
 - acceptance-criteria-options

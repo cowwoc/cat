@@ -143,13 +143,13 @@ Options:
 
 Exit command.
 
-**Warn if completed:**
+**Warn if closed:**
 
-If status is `completed`:
+If status is `closed`:
 
 Use AskUserQuestion:
 - header: "Warning"
-- question: "This issue is already completed. Removing it will lose the recorded work. Continue?"
+- question: "This issue is already closed. Removing it will lose the recorded work. Continue?"
 - options:
   - "Yes, remove anyway" - Proceed with removal
   - "No, keep it" - Cancel removal
@@ -232,14 +232,14 @@ VERSION_STATE=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/STATE.md"
 # Remove issue from Issues Pending section
 sed -i "/^- $ISSUE_NAME$/d" "$VERSION_STATE"
 
-# Also remove from Issues Completed if present
+# Also remove from Issues table (closed issues) if present
 sed -i "/^| $ISSUE_NAME |/d" "$VERSION_STATE"
 
 # Recalculate progress
 TOTAL_ISSUES=$(grep -c "^- " "$VERSION_STATE" 2>/dev/null || echo 0)
-COMPLETED_ISSUES=$(grep -c "^| .* | completed |" "$VERSION_STATE" 2>/dev/null || echo 0)
+CLOSED_ISSUES=$(grep -c "^| .* | closed |" "$VERSION_STATE" 2>/dev/null || echo 0)
 if [ "$TOTAL_ISSUES" -gt 0 ]; then
-  PROGRESS=$((COMPLETED_ISSUES * 100 / TOTAL_ISSUES))
+  PROGRESS=$((CLOSED_ISSUES * 100 / TOTAL_ISSUES))
 else
   PROGRESS=0
 fi
@@ -630,15 +630,15 @@ sed -i "/^- v$MAJOR.$MINOR$/d" "$PARENT_STATE"
 
 # Recalculate progress based on remaining minor versions
 TOTAL_MINORS=$(grep -c "^- v$MAJOR\." "$PARENT_STATE" 2>/dev/null || echo 0)
-COMPLETED_MINORS=0
+CLOSED_MINORS=0
 for minor_entry in $(grep "^- v$MAJOR\." "$PARENT_STATE" | sed 's/- v//'); do
   MINOR_STATE=".claude/cat/issues/v$MAJOR/v$minor_entry/STATE.md"
   if [ -f "$MINOR_STATE" ] && grep -q "\*\*Status:\*\*.*closed" "$MINOR_STATE"; then
-    COMPLETED_MINORS=$((COMPLETED_MINORS + 1))
+    CLOSED_MINORS=$((CLOSED_MINORS + 1))
   fi
 done
 if [ "$TOTAL_MINORS" -gt 0 ]; then
-  PROGRESS=$((COMPLETED_MINORS * 100 / TOTAL_MINORS))
+  PROGRESS=$((CLOSED_MINORS * 100 / TOTAL_MINORS))
 else
   PROGRESS=0
 fi

@@ -38,3 +38,10 @@ None (infrastructure/bugfix)
 - [ ] COMPLETED_ISSUES variable renamed to CLOSED_ISSUES in remove/first-use.md
 - [ ] delegate-agent/first-use.md line 341 uses 'closed' for STATE.md status reference
 - [ ] .claude/skills/cat-release-plugin/SKILL.md uses 'closed' for issue status grep and log messages
+- [ ] .claude/skills/cat-release-plugin/SKILL.md for loop on line 122 uses $CLOSED_ISSUES (not undeclared $COMPLETED_ISSUES)
+
+## Execution Steps
+
+### Fix: rename $COMPLETED_ISSUES to $CLOSED_ISSUES in cat-release-plugin/SKILL.md for loop
+- In `.claude/skills/cat-release-plugin/SKILL.md` line 122, change
+  `for issue_name in $COMPLETED_ISSUES; do` → `for issue_name in $CLOSED_ISSUES; do`

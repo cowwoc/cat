@@ -119,7 +119,7 @@ Summary of what was tested and what needs to be fixed.
 
 | Resolution | When to Use | Commit? |
 |------------|-------------|---------|
-| `implemented` | Issue completed (with or without code changes) | Yes if code changed |
+| `implemented` | Issue closed (with or without code changes) | Yes if code changed |
 | `duplicate` | Another issue already did this work | No - reference other issue |
 | `obsolete` | Issue no longer needed (requirements changed) | No |
 | `won't-fix` | Issue intentionally not implemented | No |

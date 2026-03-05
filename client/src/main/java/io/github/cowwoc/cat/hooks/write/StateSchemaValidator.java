@@ -39,7 +39,7 @@ public final class StateSchemaValidator implements FileWriteHandler
   private static final Set<String> MANDATORY_KEYS =
     Set.of("Status", "Progress", "Dependencies", "Blocks");
   private static final Set<String> OPTIONAL_KEYS = Set.of("Resolution", "Parent");
-  private static final Set<String> DEPRECATED_KEYS = Set.of("Last Updated", "Completed");
+  private static final Set<String> DEPRECATED_KEYS = Set.of("Last Updated", "Completed", "Closed");
   private static final Set<String> ALL_VALID_KEYS;
 
   static

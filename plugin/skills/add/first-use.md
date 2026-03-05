@@ -1450,7 +1450,7 @@ cat > "$VERSION_PATH/STATE.md" << EOF
 ## Issues Pending
 (No issues yet)
 
-## Issues Completed
+## Issues Closed
 (None)
 
 ## Summary
@@ -1520,7 +1520,7 @@ cat > "$VERSION_PATH/STATE.md" << EOF
 ## Issues Pending
 (No issues yet)
 
-## Issues Completed
+## Issues Closed
 (None)
 
 ## Summary

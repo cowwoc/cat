@@ -62,7 +62,7 @@ if [[ -d ".claude/cat/issues" ]]; then
   MINOR_CHANGELOG=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/CHANGELOG.md"
   if [[ ! -f "$MINOR_CHANGELOG" ]]; then
     echo "ERROR: Missing CHANGELOG at $MINOR_CHANGELOG"
-    echo "Run: Generate CHANGELOG from completed issues in this version"
+    echo "Run: Generate CHANGELOG from closed issues in this version"
     exit 1
   fi
 
@@ -75,9 +75,9 @@ if [[ -d ".claude/cat/issues" ]]; then
 
   # Check for required sections in minor CHANGELOG
   if ! grep -q "## Summary" "$MINOR_CHANGELOG" || \
-     ! grep -q "## Issues Completed" "$MINOR_CHANGELOG"; then
+     ! grep -q "## Issues Closed" "$MINOR_CHANGELOG"; then
     echo "WARNING: $MINOR_CHANGELOG may be incomplete"
-    echo "Required sections: ## Summary, ## Issues Completed"
+    echo "Required sections: ## Summary, ## Issues Closed"
   fi
 
   echo "✓ CHANGELOG validation passed"
@@ -86,40 +86,40 @@ fi
 
 **Required CHANGELOG sections:**
 - `## Summary` - Brief description of what this version accomplished
-- `## Issues Completed` - Table of issues with type, description, resolution
+- `## Issues Closed` - Table of issues with type, description, resolution
 
 **Auto-update capability:**
 
 If CHANGELOG is missing or incomplete, offer to auto-populate from STATE.md:
 
 ```bash
-# Find all completed issues in this minor version
-COMPLETED_ISSUES=$(find ".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}" \
-  -name "STATE.md" -exec grep -l "status: completed" {} \; 2>/dev/null \
+# Find all closed issues in this minor version
+CLOSED_ISSUES=$(find ".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}" \
+  -name "STATE.md" -exec grep -l "Status:** closed" {} \; 2>/dev/null \
   | xargs -I {} dirname {} | xargs -I {} basename {})
 
-if [[ -n "$COMPLETED_ISSUES" ]]; then
-  echo "Found completed issues: $COMPLETED_ISSUES"
+if [[ -n "$CLOSED_ISSUES" ]]; then
+  echo "Found closed issues: $CLOSED_ISSUES"
   echo "Auto-generating CHANGELOG entries..."
 
   # Generate CHANGELOG template with issue list
   cat > "$MINOR_CHANGELOG" << EOF
 # Changelog: v${MAJOR}.${MINOR}
 
-**Completed**: $(date +%Y-%m-%d)
+**Closed**: $(date +%Y-%m-%d)
 
 ## Summary
 
 [One-line description of what this version accomplished]
 
-## Issues Completed
+## Issues Closed
 
 | Issue | Type | Description | Resolution |
 |-------|------|-------------|------------|
 EOF
 
   # Append each issue
-  for issue_name in $COMPLETED_ISSUES; do
+  for issue_name in $CLOSED_ISSUES; do
     ISSUE_PLAN=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${issue_name}/PLAN.md"
     if [[ -f "$ISSUE_PLAN" ]]; then
       GOAL=$(grep -A1 "^## Goal" "$ISSUE_PLAN" | tail -1 | head -c 50)
