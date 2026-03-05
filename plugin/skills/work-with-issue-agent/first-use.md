@@ -215,6 +215,22 @@ the subagent to treat distinct steps as a single operation, causing incomplete e
 - ❌ Do NOT add interpretive summaries or aggregate instructions
 - ❌ Do NOT synthesize "Important Notes" that restate steps differently
 
+### Commit-Before-Spawn Requirement
+
+**BLOCKING:** Before spawning ANY implementation subagent (single or parallel), commit all pending changes in
+the worktree. This is enforced by the `EnforceCommitBeforeSubagentSpawn` hook, which blocks Task spawning of
+`cat:work-execute` when the worktree is dirty.
+
+**Why:** Each subagent is spawned with `isolation: "worktree"`, creating a separate git worktree branched from
+the current HEAD of the issue branch. Uncommitted changes in the main agent's worktree are NOT visible in the
+subagent's worktree. All changes must be committed before spawning so the subagent sees the complete state.
+
+```bash
+cd ${WORKTREE_PATH}
+git status --porcelain  # Must be empty before spawning
+git add -A && git commit -m "planning: update PLAN.md before delegation"  # if needed
+```
+
 ### Single-Subagent Execution (no groups or only one group)
 
 Spawn a subagent to implement the issue:
@@ -223,6 +239,7 @@ Spawn a subagent to implement the issue:
 Task tool:
   description: "Execute: implement ${ISSUE_ID}"
   subagent_type: "cat:work-execute"
+  isolation: "worktree"
   prompt: |
     Execute the implementation for issue ${ISSUE_ID}.
 
@@ -245,15 +262,14 @@ Task tool:
     [If skills were pre-invoked above, include their output here]
 
     ## First Action (MANDATORY)
-    Before doing ANYTHING else, navigate to the worktree and verify the branch:
+    Before doing ANYTHING else, verify the branch:
     ```bash
-    cd ${WORKTREE_PATH}
     git branch --show-current  # Must output: ${BRANCH}
     ```
     If the branch does not match ${BRANCH}, STOP and return BLOCKED immediately.
 
     ## Critical Requirements
-    - Work ONLY in the worktree at ${WORKTREE_PATH} — cd there as your FIRST action (see above)
+    - You are working in an isolated worktree. Your changes will be merged back to the issue branch.
     - Verify you are on branch ${BRANCH} before making changes
     - Follow execution steps from PLAN.md EXACTLY
     - If steps say to invoke a skill that was pre-invoked above, use the provided results
@@ -295,15 +311,26 @@ Task tool:
     CRITICAL: You are the implementation agent - implement directly, do NOT spawn another subagent.
 ```
 
+**After the subagent returns**, merge its commits back into the issue branch:
+
+```bash
+cd ${WORKTREE_PATH}
+git merge --ff-only <subagent-branch>  # fast-forward merge of subagent commits
+```
+
+The subagent branch name and worktree path are returned in the Task tool result when `isolation: "worktree"` is
+used. Use that branch name in the merge command above.
+
 ### Parallel Subagent Execution (two or more groups)
 
 When PLAN.md contains two or more execution groups, spawn one subagent per group simultaneously.
-Each subagent works in the **same issue worktree** (`${WORKTREE_PATH}`) but executes only its
-assigned steps. The last group's subagent updates STATE.md; other groups skip it.
+Each subagent is spawned with `isolation: "worktree"` — it gets its own isolated git worktree branched from
+the issue branch HEAD. Subagents execute concurrently without shared disk state. The last group's subagent
+updates STATE.md; other groups skip it.
 
-**IMPORTANT:** Parallel subagents all push to the same branch (`${BRANCH}`). Each subagent must
-pull before pushing to avoid conflicts. Only one subagent should update STATE.md — assign this
-responsibility to the last group (highest group label alphabetically).
+**IMPORTANT:** Each parallel subagent commits to its own isolated worktree branch. After all subagents
+complete, the main agent merges each subagent branch back into the issue branch in order (A, B, C, ...).
+Only the last wave subagent updates STATE.md.
 
 **Step order:** For each group label (A, B, C, ... sorted alphabetically), extract the steps
 belonging to that group from PLAN.md, then spawn the subagent. Spawn all subagents in the same
@@ -315,6 +342,7 @@ For each group (example for group A with steps 1, 2, 3):
 Task tool:
   description: "Execute: implement ${ISSUE_ID} group A (steps 1, 2, 3)"
   subagent_type: "cat:work-execute"
+  isolation: "worktree"
   prompt: |
     Execute the implementation for issue ${ISSUE_ID}, group A only.
 
@@ -339,22 +367,23 @@ Task tool:
     [If skills were pre-invoked above, include their output here]
 
     ## First Action (MANDATORY)
-    Before doing ANYTHING else, navigate to the worktree and verify the branch:
+    Before doing ANYTHING else, verify the branch:
     ```bash
-    cd ${WORKTREE_PATH}
     git branch --show-current  # Must output: ${BRANCH}
     ```
     If the branch does not match ${BRANCH}, STOP and return BLOCKED immediately.
 
     ## Critical Requirements
-    - Work ONLY in the worktree at ${WORKTREE_PATH} — cd there as your FIRST action (see above)
+    - You are working in an isolated worktree. Your changes will be merged back to the issue branch.
     - Verify you are on branch ${BRANCH} before making changes
     - Execute ONLY the items assigned to your wave (ASSIGNED_ITEMS above)
     - Do NOT execute items from other waves
-    - After committing your work, run: cd ${WORKTREE_PATH} && git pull --rebase origin ${BRANCH} (if remote exists)
-    - **STATE.md ownership:** You are [DETERMINED AUTOMATICALLY: if wave is the last one, "the STATE.md owner" else "NOT the STATE.md owner"]. [If owner: "Update STATE.md in your final commit: status: closed, progress: 100%." Else: "Do NOT modify STATE.md in any commit."]
+    - **STATE.md ownership:** You are [DETERMINED AUTOMATICALLY: if wave is the last one, "the STATE.md owner"
+      else "NOT the STATE.md owner"]. [If owner: "Update STATE.md in your final commit: status: closed,
+      progress: 100%." Else: "Do NOT modify STATE.md in any commit."]
     - Run tests if applicable
-    - Commit your changes using the commit type from PLAN.md (e.g., `feature:`, `bugfix:`, `docs:`). The commit message must follow the format: `<type>: <descriptive summary>`. Do NOT use generic messages.
+    - Commit your changes using the commit type from PLAN.md (e.g., `feature:`, `bugfix:`, `docs:`). The commit
+      message must follow the format: `<type>: <descriptive summary>`. Do NOT use generic messages.
 
     ## Return Format
     Return JSON when complete:
@@ -392,7 +421,19 @@ Task tool:
     CRITICAL: You are the implementation agent - implement directly, do NOT spawn another subagent.
 ```
 
-**Wait for all group subagents to complete, then merge their results:**
+**Wait for all group subagents to complete, then merge each subagent branch back into the issue branch in
+alphabetical order (A first, then B, C, ...):**
+
+```bash
+cd ${WORKTREE_PATH}
+git merge --ff-only <subagent-A-branch>
+git merge --no-ff <subagent-B-branch>  # use --no-ff if ff-only fails due to diverged history
+# ... repeat for each group
+```
+
+The subagent branch name and worktree path for each group are returned in the Task tool result when
+`isolation: "worktree"` is used.
+
 - Collect commits from all groups into a single combined list
 - If any group returns FAILED or BLOCKED, stop and report failure
 - Aggregate `files_changed`, `tokens_used`, and `compaction_events` across all groups
