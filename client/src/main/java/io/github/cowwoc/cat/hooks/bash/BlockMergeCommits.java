@@ -7,7 +7,7 @@
 package io.github.cowwoc.cat.hooks.bash;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
-import tools.jackson.databind.JsonNode;
+import io.github.cowwoc.cat.hooks.HookInput;
 
 import java.util.regex.Pattern;
 
@@ -32,9 +32,10 @@ public final class BlockMergeCommits implements BashHandler
   }
 
   @Override
-  public Result check(String command, String workingDirectory, JsonNode toolInput, JsonNode toolResult,
-    String sessionId)
+  public Result check(HookInput input)
   {
+    String command = input.getCommand();
+
     // Skip if not a git merge command
     if (!MERGE_PATTERN.matcher(command).find())
     {

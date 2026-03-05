@@ -6,8 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks;
 
-import tools.jackson.databind.JsonNode;
-
 /**
  * Interface for bash command handlers.
  * <p>
@@ -86,14 +84,9 @@ public interface BashHandler
   /**
    * Check a bash command.
    *
-   * @param command the bash command string
-   * @param workingDirectory the shell's current working directory from hook input, or empty string if unavailable
-   * @param toolInput the full tool input JSON
-   * @param toolResult the tool result JSON (null for PreToolUse)
-   * @param sessionId the session ID
+   * @param input the hook input containing command, working directory, session info, and tool result
    * @return the check result
-   * @throws NullPointerException if command, workingDirectory, toolInput, or sessionId is null
-   * @throws IllegalArgumentException if sessionId is blank
+   * @throws NullPointerException if {@code input} is null
    */
-  Result check(String command, String workingDirectory, JsonNode toolInput, JsonNode toolResult, String sessionId);
+  Result check(HookInput input);
 }
