@@ -6,6 +6,9 @@ argument-hint: "<keywords...>"
 ---
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/extract-investigation-context" $ARGUMENTS 2>/dev/null || echo '{"error":"pre-extraction unavailable - jlink binary not built"}'`
 
+Pass all relevant keywords as arguments. The extractor performs a single file scan regardless of how many keywords are
+provided.
+
 The returned JSON contains structured evidence for Phase 1 investigation:
 
 - `documents_read`: All files the agent Read during the session (path, tool, timestamp)

@@ -104,7 +104,8 @@ Use raw JSONL as the primary source to determine what the agent actually receive
 
 | Command | When to Use |
 |---------|-------------|
-| `search <session-id> <keyword> --context N` | Find specific content the agent received (skills, documents, prompts) |
+| `search <session-id> <pattern> --context N` | Find specific content the agent received (skills, documents, prompts) |
+| `search <session-id> <pattern> --context N --regex` | Find multiple keywords in one scan using regex alternation (e.g., `"Read\|Skill\|Task"`) |
 | `errors <session-id>` | Find tool failures, non-zero exit codes, error patterns |
 | `file-history <session-id> <path>` | Trace all reads/writes/edits to a specific file path |
 | `analyze <session-id>` | Get full session overview including subagent discovery |
@@ -112,6 +113,9 @@ Use raw JSONL as the primary source to determine what the agent actually receive
 ```bash
 # Find what content was delivered for a specific skill or document
 "$SESSION_ANALYZER" search "$SESSION_ID" "skill-name-or-keyword" --context 5
+
+# Search for multiple keywords in a single file scan (use --regex with alternation)
+"$SESSION_ANALYZER" search "$SESSION_ID" "keyword1|keyword2|keyword3" --regex --context 5
 
 # Find tool errors that may have triggered the mistake
 "$SESSION_ANALYZER" errors "$SESSION_ID"
@@ -129,6 +133,9 @@ subagent's full conversation. Use `analyze` to discover subagent IDs, then searc
 
 # Search a specific subagent's conversation
 "$SESSION_ANALYZER" search "$SESSION_ID/subagents/agent-AGENT_ID" "keyword" --context 5
+
+# Search for multiple keywords in a subagent's conversation in one scan
+"$SESSION_ANALYZER" search "$SESSION_ID/subagents/agent-AGENT_ID" "keyword1|keyword2" --regex --context 5
 ```
 
 **What to verify in JSONL before looking at source files:**
@@ -143,14 +150,8 @@ After JSONL examination, use source files for comparison only. Source files are 
 "expected vs actual":
 
 ```bash
-# Cross-reference documents read with actual source files
-"$SESSION_ANALYZER" search "$SESSION_ID" "Read" --context 2
-
-# Find skill invocations
-"$SESSION_ANALYZER" search "$SESSION_ID" "Skill" --context 2
-
-# Find delegation prompts (Task tool invocations)
-"$SESSION_ANALYZER" search "$SESSION_ID" "Task" --context 5
+# Cross-reference documents read, skill invocations, and delegation prompts in one scan
+"$SESSION_ANALYZER" search "$SESSION_ID" "Read|Skill|Task" --regex --context 5
 ```
 
 **For each document, check for priming patterns:**

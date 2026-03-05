@@ -499,7 +499,10 @@ public final class SessionAnalyzer
    * Subcommands:
    * <ul>
    *   <li>{@code analyze <session-id>} — full session analysis (default when no subcommand given)</li>
-   *   <li>{@code search <session-id> <keyword> [--context N]} — search for keyword with N lines of context</li>
+   *   <li>{@code search <session-id> <pattern> [--context N] [--regex]} — search for pattern; use
+   *     {@code --regex} to treat the pattern as a Java regular expression (supports alternation like
+   *     {@code alpha|beta} and inline flags like {@code (?i)} for case-insensitive matching);
+   *     without {@code --regex} the pattern is matched as a literal string</li>
    *   <li>{@code errors <session-id>} — list tool_result entries containing error indicators</li>
    *   <li>{@code file-history <session-id> <path-pattern>} — trace tool uses referencing a path pattern</li>
    * </ul>
@@ -514,7 +517,7 @@ public final class SessionAnalyzer
       System.err.println("""
         Usage: SessionAnalyzer <session-id>
                SessionAnalyzer analyze <session-id>
-               SessionAnalyzer search <session-id> <keyword> [--context N]
+               SessionAnalyzer search <session-id> <pattern> [--context N] [--regex]
                SessionAnalyzer errors <session-id>
                SessionAnalyzer file-history <session-id> <path-pattern>""");
       System.exit(1);
@@ -539,29 +542,11 @@ public final class SessionAnalyzer
         {
           if (args.length < 3)
           {
-            System.err.println("Usage: SessionAnalyzer search <session-id> <keyword> [--context N]");
+            System.err.println(
+              "Usage: SessionAnalyzer search <session-id> <pattern> [--context N] [--regex]");
             System.exit(1);
           }
-          Path filePath = analyzer.resolveSessionPath(args[1]);
-          String keyword = args[2];
-          int contextLines = 0;
-          for (int i = 3; i < args.length - 1; ++i)
-          {
-            if (args[i].equals("--context"))
-            {
-              try
-              {
-                contextLines = Integer.parseInt(args[i + 1]);
-              }
-              catch (NumberFormatException _)
-              {
-                System.err.println("Error: --context requires an integer value, got: " + args[i + 1]);
-                System.exit(1);
-              }
-              break;
-            }
-          }
-          result = analyzer.search(filePath, keyword, contextLines);
+          result = runSearchCommand(analyzer, args);
         }
         case "errors" ->
         {
@@ -596,6 +581,52 @@ public final class SessionAnalyzer
     }
   }
 
+  /**
+   * Handles the {@code search} subcommand from the CLI, parsing flags and delegating to
+   * {@link #search(Path, String, int, boolean)}.
+   *
+   * @param analyzer the analyzer instance to use
+   * @param args     the full CLI argument array (args[0] is "search", args[1] is session-id,
+   *                 args[2] is pattern)
+   * @return the search result JSON
+   * @throws IOException if the session file cannot be read
+   */
+  @SuppressWarnings("PMD.DoNotTerminateVM")
+  private static JsonNode runSearchCommand(SessionAnalyzer analyzer, String[] args) throws IOException
+  {
+    Path filePath = analyzer.resolveSessionPath(args[1]);
+    String pattern = args[2];
+    int contextLines = 0;
+    boolean useRegex = false;
+    for (int i = 3; i < args.length; ++i)
+    {
+      if (args[i].equals("--context") && i + 1 < args.length)
+      {
+        try
+        {
+          contextLines = Integer.parseInt(args[i + 1]);
+          ++i;
+        }
+        catch (NumberFormatException _)
+        {
+          System.err.println("Error: --context requires an integer value, got: " + args[i + 1]);
+          System.exit(1);
+        }
+      }
+      else if (args[i].equals("--regex"))
+        useRegex = true;
+    }
+    try
+    {
+      return analyzer.search(filePath, pattern, contextLines, useRegex);
+    }
+    catch (IllegalArgumentException e)
+    {
+      System.err.println("Error: " + e.getMessage());
+      System.exit(1);
+      return null;
+    }
+  }
 
   /**
    * Analyzes a session JSONL file with subagent discovery and combined analysis.
@@ -1326,13 +1357,13 @@ public final class SessionAnalyzer
   }
 
   /**
-   * Searches a session JSONL file for entries containing a keyword.
+   * Searches a session JSONL file for entries containing a keyword (literal match).
    * <p>
    * For each matching entry, extracts the relevant text block containing the keyword with
    * up to {@code contextLines} surrounding lines from the same message.
    *
    * @param filePath path to the session JSONL file
-   * @param keyword the keyword to search for (case-sensitive)
+   * @param keyword the keyword to search for (case-sensitive, literal match)
    * @param contextLines number of surrounding lines to include before and after the match
    * @return JSON object with a "matches" array, each element containing "type", "text", and "entry_index"
    * @throws NullPointerException if {@code filePath} or {@code keyword} are null
@@ -1340,8 +1371,54 @@ public final class SessionAnalyzer
    */
   public JsonNode search(Path filePath, String keyword, int contextLines) throws IOException
   {
+    return search(filePath, keyword, contextLines, false);
+  }
+
+  /**
+   * Searches a session JSONL file for entries matching a pattern.
+   * <p>
+   * For each matching entry, extracts the relevant text block containing the match with
+   * up to {@code contextLines} surrounding lines from the same message.
+   * <p>
+   * When {@code useRegex} is {@code true}, the pattern is compiled as a Java regular expression.
+   * Inline flags such as {@code (?i)} for case-insensitive matching are supported.
+   * If the pattern is not a valid regular expression, an {@link IllegalArgumentException} is thrown
+   * with a message that includes the invalid pattern and the regex syntax error.
+   * <p>
+   * When {@code useRegex} is {@code false}, the pattern is treated as a literal string
+   * (case-sensitive substring match), identical to {@link #search(Path, String, int)}.
+   *
+   * @param filePath  path to the session JSONL file
+   * @param pattern   the pattern to search for; a literal keyword or a regex depending on {@code useRegex}
+   * @param contextLines number of surrounding lines to include before and after the match
+   * @param useRegex  {@code true} to compile {@code pattern} as a Java regex; {@code false} for literal match
+   * @return JSON object with a "matches" array (each element has "type", "text", "entry_index") and a
+   *   "pattern" field containing the original pattern string
+   * @throws NullPointerException     if {@code filePath} or {@code pattern} are null
+   * @throws IllegalArgumentException if {@code useRegex} is {@code true} and {@code pattern} is not a valid regex
+   * @throws IOException              if file reading fails
+   */
+  public JsonNode search(Path filePath, String pattern, int contextLines, boolean useRegex)
+    throws IOException
+  {
     requireThat(filePath, "filePath").isNotNull();
-    requireThat(keyword, "keyword").isNotNull();
+    requireThat(pattern, "pattern").isNotNull();
+
+    final Pattern compiledPattern;
+    if (useRegex)
+    {
+      try
+      {
+        compiledPattern = Pattern.compile(pattern);
+      }
+      catch (java.util.regex.PatternSyntaxException e)
+      {
+        throw new IllegalArgumentException(
+          "Invalid regex pattern: '" + pattern + "'. " + e.getMessage(), e);
+      }
+    }
+    else
+      compiledPattern = null;
 
     List<JsonNode> entries = parseJsonl(filePath);
     ArrayNode matches = scope.getJsonMapper().createArrayNode();
@@ -1350,14 +1427,25 @@ public final class SessionAnalyzer
     {
       JsonNode entry = entries.get(entryIndex);
       String entryText = extractTextContent(entry);
-      if (!entryText.contains(keyword))
+
+      boolean entryMatches;
+      if (useRegex)
+        entryMatches = compiledPattern.matcher(entryText).find();
+      else
+        entryMatches = entryText.contains(pattern);
+      if (!entryMatches)
         continue;
 
       String[] lines = entryText.split("\n", -1);
       SequencedSet<String> contextBlock = new LinkedHashSet<>();
       for (int lineIndex = 0; lineIndex < lines.length; ++lineIndex)
       {
-        if (lines[lineIndex].contains(keyword))
+        boolean lineMatches;
+        if (useRegex)
+          lineMatches = compiledPattern.matcher(lines[lineIndex]).find();
+        else
+          lineMatches = lines[lineIndex].contains(pattern);
+        if (lineMatches)
         {
           int start = Math.max(0, lineIndex - contextLines);
           int end = Math.min(lines.length, lineIndex + contextLines + 1);
@@ -1376,7 +1464,7 @@ public final class SessionAnalyzer
 
     ObjectNode result = scope.getJsonMapper().createObjectNode();
     result.set("matches", matches);
-    result.put("keyword", keyword);
+    result.put("pattern", pattern);
     result.put("total_entries_scanned", entries.size());
     return result;
   }

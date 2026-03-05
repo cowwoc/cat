@@ -808,8 +808,8 @@ public final class SessionAnalyzerTest
 
       requireThat(result.path("matches").size(),
         "matches_size").isEqualTo(0);
-      requireThat(result.path("keyword").asString(),
-        "keyword").isEqualTo("nonexistent_keyword_xyz");
+      requireThat(result.path("pattern").asString(),
+        "pattern").isEqualTo("nonexistent_keyword_xyz");
     }
     finally
     {
@@ -841,6 +841,104 @@ public final class SessionAnalyzerTest
       // Empty keyword matches every entry — behavior is well-defined as "match all"
       requireThat(result.path("matches").size(),
         "matches_size").isEqualTo(2);
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that regex search with alternation matches entries containing either keyword.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void searchRegexAlternationMatchesBothKeywords() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      String jsonl =
+        assistantMessage("msg1", "tool1", "Read",
+          "\"file_path\":\"/test.txt\"") + "\n" +
+        toolResult("tool1", "file contents with alpha here") + "\n" +
+        assistantMessage("msg2", "tool2", "Write",
+          "\"file_path\":\"/out.txt\",\"content\":\"no match here\"") + "\n" +
+        toolResult("tool2", "no match") + "\n" +
+        assistantMessage("msg3", "tool3", "Bash",
+          "\"command\":\"ls\"") + "\n" +
+        toolResult("tool3", "output contains beta keyword") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer =
+        new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.search(tempFile, "alpha|beta", 0, true);
+
+      requireThat(result.path("matches").size(),
+        "matches_size").isEqualTo(2);
+      requireThat(result.path("pattern").asString(),
+        "pattern").isEqualTo("alpha|beta");
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that regex search with the case-insensitive flag matches regardless of case.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void searchRegexCaseInsensitive() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      String msgWithKeyword = "{\"type\":\"assistant\",\"message\":{\"id\":\"msg1\"," +
+        "\"content\":[{\"type\":\"text\",\"text\":\"UPPERCASE_KEYWORD found here\"}]}}";
+      Files.writeString(tempFile, msgWithKeyword + "\n");
+
+      SessionAnalyzer analyzer =
+        new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.search(tempFile, "(?i)uppercase_keyword", 0, true);
+
+      requireThat(result.path("matches").size(),
+        "matches_size").isEqualTo(1);
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that an invalid regex pattern produces a clear error message instead of a stack trace.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void searchInvalidRegexProducesClearError() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      Files.writeString(tempFile, assistantMessage("msg1", "tool1", "Read",
+        "\"file_path\":\"/test.txt\"") + "\n");
+
+      SessionAnalyzer analyzer =
+        new SessionAnalyzer(new TestJvmScope());
+      try
+      {
+        analyzer.search(tempFile, "[invalid(regex", 0, true);
+        throw new AssertionError("Expected IllegalArgumentException for invalid regex");
+      }
+      catch (IllegalArgumentException e)
+      {
+        requireThat(e.getMessage(), "error_message").contains("[invalid(regex");
+      }
     }
     finally
     {
