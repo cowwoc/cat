@@ -180,7 +180,7 @@ public final class GetStatusOutput implements SkillOutput
         if (Files.exists(majorStateFile))
         {
           String content = Files.readString(majorStateFile);
-          majorStatus = parseStatusFromContent(content);
+          majorStatus = parseStatusFromContent(content, majorStateFile.toString());
         }
 
         MajorVersion major = new MajorVersion();
@@ -332,7 +332,7 @@ public final class GetStatusOutput implements SkillOutput
       return "open";
 
     String content = Files.readString(stateFile);
-    String status = parseStatusFromContent(content);
+    String status = parseStatusFromContent(content, stateFile.toString());
 
     if (status.equals("open"))
     {
@@ -362,22 +362,24 @@ public final class GetStatusOutput implements SkillOutput
    * enforcing canonical status validation at read time.
    *
    * @param content the STATE.md file content
+   * @param sourcePath the file path to include in error messages (e.g., "v2/v2.1/my-issue/STATE.md")
    * @return the parsed status
    * @throws IOException if the Status field is missing or its value is not a recognized canonical value
    */
-  public String parseStatusFromContent(String content) throws IOException
+  public String parseStatusFromContent(String content, String sourcePath) throws IOException
   {
     Pattern pattern = Pattern.compile("^- \\*\\*Status:\\*\\*\\s*(.+)$", Pattern.MULTILINE);
     Matcher matcher = pattern.matcher(content);
     if (!matcher.find())
-      throw new IOException("Missing Status field in STATE.md content");
+      throw new IOException("Missing Status field in " + sourcePath);
 
     String rawStatus = matcher.group(1).strip();
+    int lineNumber = (int) content.substring(0, matcher.start()).chars().filter(c -> c == '\n').count() + 1;
     IssueStatus status = IssueStatus.fromString(rawStatus);
     if (status != null)
       return status.toString();
-    throw new IOException("Unknown status '" + rawStatus + "'. Valid values: " +
-      IssueStatus.asCommaSeparated() + ".\n" +
+    throw new IOException("Unknown status '" + rawStatus + "' in " + sourcePath + ":" + lineNumber + ".\n" +
+      "Valid values: " + IssueStatus.asCommaSeparated() + ".\n" +
       "If migrating from older versions, run: plugin/migrations/2.1.sh");
   }
 
@@ -920,7 +922,7 @@ public final class GetStatusOutput implements SkillOutput
     for (String line : lines)
       content.append(line).append('\n');
 
-    return parseStatusFromContent(content.toString());
+    return parseStatusFromContent(content.toString(), branch + ":" + filePath);
   }
 
   /**
