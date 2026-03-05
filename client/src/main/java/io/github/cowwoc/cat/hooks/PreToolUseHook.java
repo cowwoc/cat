@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks;
 import static io.github.cowwoc.cat.hooks.Strings.equalsIgnoreCase;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.bash.BlockGitUserConfigChange;
 import io.github.cowwoc.cat.hooks.bash.BlockLockManipulation;
 import io.github.cowwoc.cat.hooks.bash.BlockMainRebase;
 import io.github.cowwoc.cat.hooks.bash.BlockMergeCommits;
@@ -62,6 +63,7 @@ public final class PreToolUseHook implements HookHandler
   {
     requireThat(scope, "scope").isNotNull();
     this.handlers = List.of(
+      new BlockGitUserConfigChange(),
       new BlockLockManipulation(),
       new BlockMainRebase(scope),
       new BlockMergeCommits(),
