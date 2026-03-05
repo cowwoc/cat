@@ -69,6 +69,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-remove-skill-completed-status-priming
 - fix-work-prepare-missing-state-md
 - remove-cat-agent-id-command-prefix
+- restore-askuserquestion-in-allowed-tools
 
 
 ## Issues Completed
