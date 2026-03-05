@@ -32,12 +32,16 @@ Each contains:
       "category": "SEQUENCE",
       "original": "Check pwd before rm-rf",
       "normalized": "sequence: check pwd → rm-rf",
+      "quote": "Check pwd before rm-rf",
       "location": "line 15"
     }
   ],
   "metadata": { "total_units": N }
 }
 ```
+
+The `quote` field contains the verbatim minimal span from the source document. Use it when reporting evidence for each
+finding.
 
 ---
 
@@ -60,18 +64,46 @@ For each normalized form in Doc A:
 For each normalized form in Doc B:
 - If not in Doc A → **ADDED**
 
-### Step 3: Determine Status
+### Step 3: Classify Severity for Each LOST Unit
+
+For each LOST unit, assign a severity based on its category:
+
+| Severity | Categories |
+|----------|-----------|
+| **HIGH** | PROHIBITION, REQUIREMENT, CONDITIONAL, EXCLUSION |
+| **MEDIUM** | CONSEQUENCE, DEPENDENCY, SEQUENCE |
+| **LOW** | CONJUNCTION, REFERENCE |
+
+**Special rule:** EXCLUSION units are always HIGH — they define boundaries that cannot be lost without changing
+execution behavior.
+
+### Step 4: Extract Evidence
+
+For each LOST unit, collect evidence from both documents:
+- **Original evidence:** The `quote` field from the matched unit in Doc A
+- **Compressed evidence:** The `quote` field from the closest semantically related unit in Doc B (if any), or
+  `(absent)` if no related unit exists in the compressed document
+
+### Step 5: Determine Status and Verdict
 
 ```
 if LOST count == 0:
     status = "EQUIVALENT"
 else:
     status = "NOT_EQUIVALENT"
+
+if any LOST unit has severity HIGH or MEDIUM:
+    execution_equivalent = false
+else:
+    execution_equivalent = true
 ```
 
 **Note:** ADDED units are informational only. A document can be EQUIVALENT
 even with additions (compressed doc adding clarifications is acceptable).
-Only LOST units cause NOT_EQUIVALENT status.
+Only LOST units affect status. Only HIGH or MEDIUM LOST units affect the execution equivalence verdict.
+
+**LOW-severity findings do NOT fail the gate.** They are informational diagnostics that report context loss
+(e.g., missing cross-references or conjunction grouping hints) but are unlikely to change execution behavior.
 
 ---
 
@@ -101,8 +133,8 @@ Two units are equivalent if they express the same constraint regardless of wordi
 - `prohibited: skip validation` ≈ `prohibited: bypass validation step` (same constraint)
 
 **Examples of NOT EQUIVALENT:**
-- `required!: X` ≠ `required: X` (different strength - strict vs advisory)
-- `required: X` ≠ `suggested: X` (different strength)
+- `must: X` ≠ `require: X` (different strength - strict vs standard)
+- `require: X` ≠ `should: X` (different strength)
 - `sequence: A → B` ≠ `sequence: B → A` (different order)
 - `sequence: A → B → C` ≠ `sequence: A → B` + `sequence: B → C` (decomposition loses explicit chain)
 - `prohibited: X` ≠ `required: X` (opposite meaning)
@@ -157,7 +189,7 @@ Result: EQUIVALENT (terminology differs but same semantic flow)
 ```
 
 ### Strength Distinction
-- `required: X` does NOT match `suggested: X`
+- `require: X` does NOT match `should: X`
 - Both are REQUIREMENT category but different strength
 - This is a semantic difference, not just terminology
 
@@ -177,13 +209,22 @@ Result: EQUIVALENT (terminology differs but same semantic flow)
 ═══════════════════════════════════════════════════════════════════════════════
 
 Status: NOT_EQUIVALENT (44/47 preserved, 3 lost)
+Execution Equivalent: false
 
 ───────────────────────────────────────────────────────────────────────────────
 LOST (in original, missing in compressed)
 ───────────────────────────────────────────────────────────────────────────────
-- [SEQUENCE] "When cleaning up test files: verify not inside target"
-- [REFERENCE] "See recovery procedures in ops/recovery.md"
-- [REQUIREMENT] "Use parent directory as working dir for build artifacts"
+- [SEQUENCE] [MEDIUM] verify not inside target → cleanup
+  Original:   "verify not inside target directory before cleanup"
+  Compressed: (absent)
+
+- [REFERENCE] [LOW] ops/recovery.md
+  Original:   "See recovery procedures in ops/recovery.md"
+  Compressed: (absent)
+
+- [REQUIREMENT] [HIGH] use parent directory as working dir for build artifacts
+  Original:   "Use parent directory as working dir for build artifacts"
+  Compressed: (absent)
 
 ───────────────────────────────────────────────────────────────────────────────
 ADDED (in compressed, not in original)
@@ -201,6 +242,7 @@ ADDED (in compressed, not in original)
 ═══════════════════════════════════════════════════════════════════════════════
 
 Status: EQUIVALENT (47/47 preserved, 0 lost)
+Execution Equivalent: true
 
 ───────────────────────────────────────────────────────────────────────────────
 LOST (in original, missing in compressed)
@@ -211,6 +253,33 @@ LOST (in original, missing in compressed)
 ADDED (in compressed, not in original)
 ───────────────────────────────────────────────────────────────────────────────
 - [REQUIREMENT] "Additional clarification about edge case"
+
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+### When EQUIVALENT with LOW-only losses
+
+When all LOST units are LOW severity, the status is NOT_EQUIVALENT but execution equivalence is preserved:
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+                              COMPARISON RESULT
+═══════════════════════════════════════════════════════════════════════════════
+
+Status: NOT_EQUIVALENT (46/47 preserved, 1 lost)
+Execution Equivalent: true
+
+───────────────────────────────────────────────────────────────────────────────
+LOST (in original, missing in compressed)
+───────────────────────────────────────────────────────────────────────────────
+- [REFERENCE] [LOW] ops/recovery.md
+  Original:   "See ops/recovery.md for recovery steps"
+  Compressed: (absent)
+
+───────────────────────────────────────────────────────────────────────────────
+ADDED (in compressed, not in original)
+───────────────────────────────────────────────────────────────────────────────
+- (none)
 
 ═══════════════════════════════════════════════════════════════════════════════
 ```
@@ -226,26 +295,45 @@ When comparing multiple files, provide summary table first:
                            BATCH COMPARISON RESULT
 ═══════════════════════════════════════════════════════════════════════════════
 
-| File                 | Status          | Preserved | Lost |
-|----------------------|-----------------|-----------|------|
-| safe-rm/SKILL.md     | NOT_EQUIVALENT  | 44/47     | 3    |
-| status/SKILL.md      | EQUIVALENT      | 23/23     | 0    |
-| deploy/SKILL.md      | NOT_EQUIVALENT  | 31/35     | 4    |
+| File                 | Status          | Preserved | Lost | Exec Equivalent |
+|----------------------|-----------------|-----------|------|-----------------|
+| safe-rm/SKILL.md     | NOT_EQUIVALENT  | 44/47     | 3    | false           |
+| status/SKILL.md      | EQUIVALENT      | 23/23     | 0    | true            |
+| deploy/SKILL.md      | NOT_EQUIVALENT  | 31/35     | 4    | false           |
 
 ───────────────────────────────────────────────────────────────────────────────
 DETAILS: safe-rm/SKILL.md (3 lost)
 ───────────────────────────────────────────────────────────────────────────────
-- [SEQUENCE] "verify not inside target before cleanup"
-- [REFERENCE] "See ops/recovery.md"
-- [REQUIREMENT] "Use parent directory as working dir"
+- [SEQUENCE] [MEDIUM] "verify not inside target before cleanup"
+  Original:   "verify not inside target before cleanup"
+  Compressed: (absent)
+
+- [REFERENCE] [LOW] "See ops/recovery.md"
+  Original:   "See ops/recovery.md"
+  Compressed: (absent)
+
+- [REQUIREMENT] [HIGH] "Use parent directory as working dir"
+  Original:   "Use parent directory as working dir"
+  Compressed: (absent)
 
 ───────────────────────────────────────────────────────────────────────────────
 DETAILS: deploy/SKILL.md (4 lost)
 ───────────────────────────────────────────────────────────────────────────────
-- [PROHIBITION] "NEVER deploy without approval"
-- [CONDITIONAL] "IF production THEN require sign-off"
-- [DEPENDENCY] "Valid credentials required for deploy"
-- [SEQUENCE] "Run tests before deploy"
+- [PROHIBITION] [HIGH] "NEVER deploy without approval"
+  Original:   "NEVER deploy without approval"
+  Compressed: (absent)
+
+- [CONDITIONAL] [HIGH] "IF production THEN require sign-off"
+  Original:   "IF production THEN require sign-off"
+  Compressed: (absent)
+
+- [DEPENDENCY] [MEDIUM] "Valid credentials required for deploy"
+  Original:   "Valid credentials required for deploy"
+  Compressed: (absent)
+
+- [SEQUENCE] [MEDIUM] "Run tests before deploy"
+  Original:   "Run tests before deploy"
+  Compressed: (absent)
 
 ═══════════════════════════════════════════════════════════════════════════════
 ```
@@ -256,9 +344,13 @@ DETAILS: deploy/SKILL.md (4 lost)
 
 1. **Use original text in LOST/ADDED lists** - not normalized form
 2. **Include category tag** - `[SEQUENCE]`, `[PROHIBITION]`, etc.
-3. **Count format** - `X/Y preserved, Z lost` where Y is total in original
-4. **Status determination** - EQUIVALENT only if 0 lost units
-5. **No numeric scores** - binary status with counts only
+3. **Include severity tag** - `[HIGH]`, `[MEDIUM]`, or `[LOW]` after category tag
+4. **Include evidence** - `Original:` and `Compressed:` quotes for each LOST unit
+5. **Count format** - `X/Y preserved, Z lost` where Y is total in original
+6. **Status determination** - EQUIVALENT only if 0 lost units
+7. **Execution equivalent determination** - `false` if any LOST unit has severity HIGH or MEDIUM; `true` otherwise
+8. **No numeric scores** - binary status with counts only
+9. **Severity is authoritative gate** - LOW findings are informational only and do NOT cause `execution_equivalent: false`
 
 ---
 
@@ -272,3 +364,8 @@ Before returning output:
 - [ ] Status = EQUIVALENT only if LOST count is 0
 - [ ] Original text used in output (not normalized)
 - [ ] Category tags included for each unit
+- [ ] Severity tag assigned per LOST unit (HIGH/MEDIUM/LOW per category table)
+- [ ] Evidence quotes included for each LOST unit (Original: and Compressed:)
+- [ ] `Execution Equivalent:` line present in output header
+- [ ] `execution_equivalent = false` if any HIGH or MEDIUM lost unit exists
+- [ ] `execution_equivalent = true` if all lost units are LOW severity or no units are lost
