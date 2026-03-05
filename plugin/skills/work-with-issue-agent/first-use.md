@@ -1048,8 +1048,13 @@ patience fixes 13/16 combinations, medium fixes 8/16, high fixes 6/16.
 
 **Step 4: Act on the evaluation:**
 
+Partition `ALL_CONCERNS` into two named lists based on the threshold:
+
+- `FIXED_CONCERNS` — concerns where `benefit >= cost × patience_multiplier` (will be fixed in the auto-fix loop)
+- `DEFERRED_CONCERNS` — concerns where `benefit < cost × patience_multiplier` (will be deferred or tracked as issues)
+
 **Concerns that pass the threshold** (benefit >= cost × patience_multiplier):
-- Add back into the auto-fix loop for fixing
+- Add to `FIXED_CONCERNS` and back into the auto-fix loop for fixing
 - These additional loop iterations count toward the existing `AUTOFIX_ITERATION < 3` limit
 
 **Step 5: Handle deferred concerns** (benefit < cost × patience_multiplier):
@@ -1310,6 +1315,17 @@ conversation. Scan recent conversation messages for user messages containing bot
 PreToolUse hook reads the session JSONL file and will recognize the user's direct message as approval.
 
 **If no direct approval is detected:** Continue to the approval gate below.
+
+**MANDATORY — PATIENCE MATRIX MUST PRECEDE APPROVAL GATE:** Before presenting the approval gate, the patience matrix
+workflow (Step 4/5) MUST have already executed and produced `ALL_CONCERNS`, `FIXED_CONCERNS`, and `DEFERRED_CONCERNS`
+lists. The approval gate displays these lists — it does NOT drive concern handling decisions.
+
+**Do NOT ask the user how to handle concerns.** Concern handling is determined automatically by the patience matrix
+based on severity, benefit, cost, and patience level. Users are shown the results at the approval gate, not asked to
+decide in advance.
+
+**If you are about to present the approval gate without having run the patience matrix: STOP.** Return to Step 4,
+execute the patience matrix, then resume from Step 5 onward before proceeding to the approval gate.
 
 ### Present Changes Before Approval Gate (BLOCKING)
 
