@@ -60,3 +60,16 @@ Add tests to `AutoLearnMistakesTest` verifying:
   from Pattern 2 `testFailPattern`
 - `client/src/test/java/io/github/cowwoc/cat/hooks/test/AutoLearnMistakesTest.java` — add false-positive and
   true-positive test cases for Pattern 2
+
+## Execution Steps
+
+1. In `AutoLearnMistakesTest.java`, add a test `failPrefixDocumentationErrorIsNotTestFailure()` that asserts
+   `FAIL: some documentation error message` does NOT trigger a `test_failure` detection (addresses "Pattern 2 does
+   NOT trigger on `FAIL: some documentation error message`" — current test uses a proxy string).
+2. In `AutoLearnMistakesTest.java`, add a test `testMethodFailedIsDetected()` that asserts
+   `MyTest.testMethod ... FAILED` DOES trigger a `test_failure` detection (addresses "Pattern 2 DOES trigger on
+   `MyTest.testMethod ... FAILED`" — no test currently covers this case).
+3. In `AutoLearnMistakesTest.java`, add a test `failuresCountIsDetected()` that asserts `5 failures` DOES trigger
+   a `test_failure` detection (addresses "Pattern 2 DOES trigger on `5 failures`" — no test currently covers this
+   case).
+4. Run `mvn -f client/pom.xml test` and confirm all tests pass.
