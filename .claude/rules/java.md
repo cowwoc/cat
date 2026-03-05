@@ -620,6 +620,21 @@ if (agentId.isEmpty())
 - Whitespace-only is a valid, meaningful value
 - Checking collection/map emptiness (`Map.isEmpty()`, `List.isEmpty()`)
 
+### Prefer Files.notExists() Over !Files.exists()
+Use `Files.notExists(path)` instead of `!Files.exists(path)`. They have different semantics: `Files.exists()` returns
+`false` both when the file doesn't exist and when existence cannot be determined (e.g., insufficient permissions).
+`Files.notExists()` returns `true` only when the file is verified to not exist:
+
+```java
+// Good - explicitly checks non-existence
+if (Files.notExists(configPath))
+  createDefaultConfig(configPath);
+
+// Avoid - true for both "doesn't exist" and "can't determine"
+if (!Files.exists(configPath))
+  createDefaultConfig(configPath);
+```
+
 ### No Null Strings
 Use `""` (empty string) instead of `null` for String values - both for return values and parameters:
 
