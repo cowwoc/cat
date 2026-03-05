@@ -15,8 +15,9 @@ import io.github.cowwoc.cat.hooks.JvmScope;
  * Injects critical session instructions into Claude's context.
  * <p>
  * This handler fires on every SessionStart (including after compaction), ensuring
- * session instructions are always available. The instructions cover user input handling,
- * mistake tracking, commit workflow, skill compliance, and worktree isolation.
+ * session instructions are always available. The instructions cover all mandatory behavioral
+ * rules for the session, including input handling, mistake tracking, commit workflow,
+ * skill compliance, worktree isolation, and issue lock checking.
  */
 public final class InjectSessionInstructions implements SessionStartHandler
 {
@@ -202,6 +203,26 @@ public final class InjectSessionInstructions implements SessionStartHandler
 
       **When NOT required**: Only needed when removing worktrees or directories that may be locked.
       Regular file deletions, `git clean`, and other operations do not need this prefix.
+
+      ### Issue Lock Checking
+      **CRITICAL**: Lock status is managed by the `issue-lock` CLI tool. NEVER probe the filesystem.
+
+      **Correct approach** — when asked "Is issue X locked?":
+      ```bash
+      issue-lock check <issue-id>
+      ```
+
+      **Example**:
+      ```bash
+      issue-lock check 2.1-add-regex-to-session-analyzer
+      ```
+
+      **NEVER** use filesystem commands to find locks:
+      - `ls /workspace/.claude/cat/locks/` — the locks directory does not exist as a browsable path
+      - `find ... -name "*.lock"` — lock files are not stored in a filesystem-discoverable location
+
+      There is no user-accessible lock directory. `issue-lock check` is the first and only step when
+      querying lock status.
 
       ### Tool Usage Efficiency
 
