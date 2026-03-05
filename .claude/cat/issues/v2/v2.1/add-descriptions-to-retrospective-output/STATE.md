@@ -1,6 +1,7 @@
----
-status: open
-priority: low
-assignee: ""
-created: "2026-03-05"
----
+# State
+
+- **Status:** closed
+- **Progress:** 100%
+- **Resolution:** implemented
+- **Dependencies:** []
+- **Blocks:** []
