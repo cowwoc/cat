@@ -11,6 +11,7 @@ import io.github.cowwoc.cat.hooks.util.SkillLoader;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.nio.file.NoSuchFileException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -304,11 +305,11 @@ Full skill content
   }
 
   /**
-   * Verifies that load handles skills without a companion SKILL.md file.
+   * Verifies that load throws NoSuchFileException for skills without a first-use.md file.
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = NoSuchFileException.class)
   public void loadHandlesMissingContentFile() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
@@ -319,9 +320,7 @@ Full skill content
 
       SkillLoader loader = new SkillLoader(scope,
         List.of("agent-" + System.nanoTime()));
-      String result = loader.load("empty-skill");
-
-      requireThat(result, "result").isEmpty();
+      loader.load("empty-skill");
     }
     finally
     {
@@ -2954,6 +2953,141 @@ Agent: $0
       requireThat(result, "result").
         contains("Agent: " + scope.getClaudeSessionId()).
         doesNotContain("Agent: $0");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that an {@code *-agent} skill with no {@code first-use.md} of its own falls back to
+   * the parent skill's {@code first-use.md} (i.e., same name without the {@code -agent} suffix).
+   * <p>
+   * For example, {@code add-agent} has no {@code first-use.md}, but {@code add} does. Invoking
+   * {@code add-agent} should return the content from {@code add/first-use.md}.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void agentSkillFallsBackToParentFirstUseMd() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      // Create parent skill with first-use.md content
+      Path parentDir = tempPluginRoot.resolve("skills/add");
+      Files.createDirectories(parentDir);
+      Files.writeString(parentDir.resolve("first-use.md"), "Parent skill instructions.\n");
+
+      // Create agent skill directory WITHOUT a first-use.md
+      Path agentDir = tempPluginRoot.resolve("skills/add-agent");
+      Files.createDirectories(agentDir);
+      // No first-use.md in add-agent/
+
+      SkillLoader loader = new SkillLoader(scope, List.of("agent-" + System.nanoTime()));
+      String result = loader.load("add-agent");
+
+      // Should return the parent skill's content, not empty
+      requireThat(result, "result").contains("Parent skill instructions.");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that an {@code *-agent} skill with its own {@code first-use.md} uses that file,
+   * not the parent's {@code first-use.md}.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void agentSkillWithOwnFirstUseMdDoesNotFallBack() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      // Create parent skill with first-use.md content
+      Path parentDir = tempPluginRoot.resolve("skills/myskill");
+      Files.createDirectories(parentDir);
+      Files.writeString(parentDir.resolve("first-use.md"), "Parent instructions.\n");
+
+      // Create agent skill with its OWN first-use.md
+      Path agentDir = tempPluginRoot.resolve("skills/myskill-agent");
+      Files.createDirectories(agentDir);
+      Files.writeString(agentDir.resolve("first-use.md"), "Agent-specific instructions.\n");
+
+      SkillLoader loader = new SkillLoader(scope, List.of("agent-" + System.nanoTime()));
+      String result = loader.load("myskill-agent");
+
+      // Should return the agent's OWN content, not the parent's
+      requireThat(result, "result").
+        contains("Agent-specific instructions.").
+        doesNotContain("Parent instructions.");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that an {@code *-agent} skill with no {@code first-use.md} AND no parent skill
+   * throws NoSuchFileException (first-use.md is mandatory for skills using skill-loader).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = NoSuchFileException.class)
+  public void agentSkillWithNoParentThrowsException() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      // Create agent skill directory WITHOUT a first-use.md AND no parent skill
+      Path agentDir = tempPluginRoot.resolve("skills/extract-investigation-context-agent");
+      Files.createDirectories(agentDir);
+      // No first-use.md in agent dir, no parent dir
+
+      SkillLoader loader = new SkillLoader(scope, List.of("agent-" + System.nanoTime()));
+      loader.load("extract-investigation-context-agent");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that load falls back to the parent skill's {@code first-use.md} when the skill name
+   * is supplied as a qualified name (e.g., {@code "cat:add-agent"}).
+   * <p>
+   * {@code stripPrefix("cat:add-agent")} returns {@code "add-agent"}. The {@code -agent} variant has
+   * no {@code first-use.md} of its own, so the loader must fall back to the parent skill
+   * ({@code "add"}) and return its content.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void agentSkillWithQualifiedNameFallsBackToParent() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      // Create parent skill with first-use.md
+      Path parentDir = tempPluginRoot.resolve("skills/add");
+      Files.createDirectories(parentDir);
+      Files.writeString(parentDir.resolve("first-use.md"), "Parent instructions.\n");
+
+      // Create agent skill directory WITHOUT a first-use.md
+      Path agentDir = tempPluginRoot.resolve("skills/add-agent");
+      Files.createDirectories(agentDir);
+
+      SkillLoader loader = new SkillLoader(scope, List.of("agent-" + System.nanoTime()));
+      String result = loader.load("cat:add-agent");
+
+      requireThat(result, "result").contains("Parent instructions.");
     }
     finally
     {
