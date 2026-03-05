@@ -520,5 +520,25 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M471",
+    "timestamp" : "2026-03-05T12:58:25Z",
+    "category" : "incorrect_implementation",
+    "description" : "",
+    "root_cause" : "The sed pattern uses a 9-character hash when searching the git rebase todo file, but git rebase -i uses 7-character abbreviated hashes. The mismatch caused the pattern to silently fail.",
+    "rca_method" : "C",
+    "rca_method_name" : "causal-barrier",
+    "prevention_type" : "",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : null,
+      "fragility" : null,
+      "catches_variations" : null
+    },
+    "correct_behavior" : ""
   } ]
 }
