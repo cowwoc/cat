@@ -540,5 +540,25 @@
       "catches_variations" : null
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M472",
+    "timestamp" : "2026-03-05T15:05:17Z",
+    "category" : "incorrect_implementation",
+    "description" : "",
+    "root_cause" : "Orchestrator delegation prompt described the GOAL but not the MECHANISM. Subagent chose weaker mechanism. Verify subagents also accepted the weaker interpretation.",
+    "rca_method" : "A",
+    "rca_method_name" : "5-whys",
+    "prevention_type" : "documentation",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "medium",
+      "catches_variations" : false
+    },
+    "correct_behavior" : ""
   } ]
 }
