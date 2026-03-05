@@ -28,7 +28,9 @@ are additionally enforced by hooks or explicit STOP instructions that block prog
   exceptions (VERIFY=none or TRUST=high); do not skip based on perceived simplicity or short feedback cycles
 - **Step 7: Rebase and Squash Commits Before Review** — always squash before the approval gate; do not proceed to
   Step 8 without completing this step
-- **Step 8 (pre-gate sub-step): Skill-Builder Review** — always invoke `cat:skill-builder` for modified skill or
+- **Step 8: Rebase onto Target Branch Before Approval Gate** — always rebase the squashed branch onto the current tip
+  of the target branch before the approval gate; do not proceed to Step 9 without completing this step
+- **Step 9 (sub-step): Skill-Builder Review** — always invoke `cat:skill-builder` for modified skill or
   command files before presenting the approval gate
 
 ## Arguments Format
@@ -858,9 +860,9 @@ trust >= "medium", the concern decision gate is skipped and FIX/DEFER assignment
 directly. In all cases, do NOT present options to the user or ask what to do during the auto-fix loop itself — spawn
 fix subagents and continue.
 
-**CRITICAL: The auto-fix loop applies ONLY to spawning fix subagents. Steps 6, 7, and 8 (Deferred Concern
-Review, Rebase and Squash, and Approval Gate) MUST still be executed after the loop completes. The user
-must explicitly approve the merge via Step 8 when trust != "high".**
+**CRITICAL: The auto-fix loop applies ONLY to spawning fix subagents. Steps 6, 7, 8, and 9 (Deferred Concern
+Review, Rebase and Squash, Rebase onto Target Branch, and Approval Gate) MUST still be executed after the loop
+completes. The user must explicitly approve the merge via Step 9 when trust != "high".**
 
 Initialize loop counter: `AUTOFIX_ITERATION=0`
 
@@ -993,7 +995,7 @@ Initialize loop counter: `AUTOFIX_ITERATION=0`
 - Continue to out-of-scope classification below
 
 **NOTE:** "REVIEW_PASSED" means stakeholder review passed, NOT user approval to merge.
-User approval is a SEPARATE gate in Step 8.
+User approval is a SEPARATE gate in Step 9.
 
 ### Evaluate Remaining Concerns (Cost/Benefit)
 
@@ -1102,7 +1104,7 @@ in Step 6.
 
 ## Step 6: Deferred Concern Review (Interactive Wizard)
 
-This step runs BEFORE the Rebase and Squash step (Step 7) and BEFORE the Approval Gate (Step 8), giving the user a
+This step runs BEFORE the Rebase and Squash step (Step 7) and BEFORE the Approval Gate (Step 9), giving the user a
 chance to review and adjust deferred concern handling before committing to the merge.
 
 ### Part A: Review HIGH/CRITICAL concern scheduling
@@ -1178,7 +1180,7 @@ Skip this step entirely and proceed to Step 7 if ANY of:
 ## Step 7: Rebase and Squash Commits Before Review (MANDATORY)
 
 **MANDATORY: Delegate rebase, squash, and STATE.md closure verification to a squash subagent.** This step must not be
-skipped — the approval gate (Step 8) checks that squash was executed and blocks proceeding if it was not.
+skipped — the approval gate (Step 9) checks that squash was executed and blocks proceeding if it was not.
 This keeps the parent agent context lean by offloading git operations to a dedicated haiku-model subagent.
 
 Determine the primary commit message from the execution result (the most significant commit's message). If multiple
@@ -1225,7 +1227,38 @@ Parse the subagent result:
 - **FAILED** (phase: rebase): Return FAILED status with conflict details. Do NOT proceed.
 - **FAILED** (phase: squash or verify): Return FAILED status with error details. Do NOT proceed.
 
-## Step 8: Approval Gate (MANDATORY)
+## Step 8: Rebase onto Target Branch Before Approval Gate (MANDATORY)
+
+Before presenting the approval gate, rebase the squashed issue branch onto the current tip of
+the target branch. This ensures the diff shown at the approval gate reflects what the merge will
+actually produce.
+
+**Invoke `cat:git-rebase-agent`:**
+```
+Skill("cat:git-rebase-agent", args="{WORKTREE_PATH} {TARGET_BRANCH}")
+```
+
+**If rebase reports CONFLICT:**
+- Examine the conflicting files reported by cat:git-rebase-agent
+- Resolve each conflict
+- Stage resolved files and continue the rebase
+- Delete the backup branch created by cat:git-rebase-agent after resolution
+- Continue to Step 9 (Approval Gate)
+
+**If rebase reports OK:**
+- Update `cat-branch-point` to the new base:
+  ```bash
+  git rev-parse {TARGET_BRANCH} > "$(git rev-parse --git-dir)/cat-branch-point"
+  ```
+- Delete the backup branch created by cat:git-rebase-agent
+- Continue to Step 9 (Approval Gate)
+
+**If rebase reports ERROR:**
+- Output the error message
+- Restore from the backup branch if needed
+- STOP — do not proceed to approval gate until the error is resolved
+
+## Step 9: Approval Gate (MANDATORY)
 
 **CRITICAL: This step is MANDATORY when trust != "high".**
 
@@ -1261,7 +1294,7 @@ to the approval gate.
 
 ### If trust == "high"
 
-Skip approval gate. Continue directly to Step 9 (merge).
+Skip approval gate. Continue directly to Step 10 (merge).
 
 ### If trust == "low" or trust == "medium"
 
@@ -1273,7 +1306,7 @@ Before presenting AskUserQuestion, check whether the user has already typed an e
 conversation. Scan recent conversation messages for user messages containing both "approve" and "merge" (e.g.,
 "approve and merge", "approve merge", "approved merge").
 
-**If direct approval is detected:** Skip AskUserQuestion and proceed directly to Step 9 (merge). The
+**If direct approval is detected:** Skip AskUserQuestion and proceed directly to Step 10 (merge). The
 PreToolUse hook reads the session JSONL file and will recognize the user's direct message as approval.
 
 **If no direct approval is detected:** Continue to the approval gate below.
@@ -1383,10 +1416,10 @@ visible signal is "User has answered your questions: ." with nothing after the c
 response — re-present the approval gate. Unknown consent = No consent = STOP.
 
 **If the user rejects the AskUserQuestion tool call** (e.g., to invoke `/cat:learn` or another skill), the approval
-gate was NOT answered. After any interrupting skill completes, return to Step 8 and re-present the approval gate. Do
+gate was NOT answered. After any interrupting skill completes, return to Step 9 and re-present the approval gate. Do
 NOT proceed to merge, release the lock, remove the worktree, or invoke work-complete without explicit user selection.
 
-**If approved:** Continue to Step 9
+**If approved:** Continue to Step 10
 
 **If "Fix remaining concerns" selected:**
 1. Extract MEDIUM+ concerns (severity, description, location, recommendation, detail_file)
@@ -1441,7 +1474,7 @@ NOT proceed to merge, release the lock, remove the worktree, or invoke work-comp
    - Verify the concerns were actually resolved
    - Detect new concerns introduced by the fixes
    - Provide updated results to the user at the approval gate
-4. Return to Step 8 approval gate with updated results
+4. Return to Step 9 approval gate with updated results
 
 **If changes requested:** Return to user with feedback for iteration. Return status:
 ```json
@@ -1461,7 +1494,7 @@ NOT proceed to merge, release the lock, remove the worktree, or invoke work-comp
 }
 ```
 
-## Step 9: Merge Phase
+## Step 10: Merge Phase
 
 Display the **Merging phase** banner by running:
 
@@ -1490,13 +1523,13 @@ context is below the threshold, delegation keeps the main agent context lean.
 
 **Pre-merge approval verification (when trust != "high"):**
 
-Before spawning the merge subagent, verify that user approval was obtained in Step 8. This proactive check
+Before spawning the merge subagent, verify that user approval was obtained in Step 9. This proactive check
 eliminates wasted Task calls that would otherwise be blocked by the PreToolUse hook.
 
 ```
 if TRUST != "high":
-    # Verify Step 8 approval gate was completed
-    # If no approval was obtained (e.g., Step 8 was skipped due to a logic error),
+    # Verify Step 9 approval gate was completed
+    # If no approval was obtained (e.g., Step 9 was skipped due to a logic error),
     # invoke AskUserQuestion now as a safety net:
     AskUserQuestion:
       question: "Ready to merge ${ISSUE_ID} to ${TARGET_BRANCH}?"
@@ -1505,7 +1538,7 @@ if TRUST != "high":
           description: "Squash commits and merge to ${TARGET_BRANCH}"
         - label: "Abort"
           description: "Cancel the merge"
-    # If user selects "Abort", return ABORTED status (same as Step 8 abort handling)
+    # If user selects "Abort", return ABORTED status (same as Step 9 abort handling)
 ```
 
 Spawn a merge subagent using the **Task tool** (NOT the Skill tool — the Skill tool only loads skill
@@ -1542,7 +1575,7 @@ Parse merge result:
 
 ### Post-Merge Verification (BLOCKING — M447)
 
-Before proceeding to Step 10, verify the merge actually occurred by checking that `TARGET_BRANCH`
+Before proceeding to Step 11, verify the merge actually occurred by checking that `TARGET_BRANCH`
 now contains the squashed commit:
 
 ```bash
@@ -1555,7 +1588,7 @@ MERGED=$(git -C "${CLAUDE_PROJECT_DIR}" branch --contains "${SQUASH_HASH}" 2>/de
 if [[ "${MERGED}" -eq 0 ]]; then
   echo "ERROR: Merge not confirmed — ${SQUASH_HASH} is not reachable from ${TARGET_BRANCH}."
   echo "The merge phase may have failed silently. Do NOT invoke work-complete."
-  echo "Re-run Step 9 using the Task tool."
+  echo "Re-run Step 10 using the Task tool."
   exit 1
 fi
 ```
@@ -1563,7 +1596,7 @@ fi
 If verification fails: STOP — do NOT invoke `work-complete`. The merge did not happen.
 Re-spawn the merge subagent using the Task tool.
 
-## Step 10: Return Success
+## Step 11: Return Success
 
 Return summary to the main `/cat:work` skill:
 
@@ -1580,7 +1613,7 @@ Return summary to the main `/cat:work` skill:
 
 ## Rejection Handling
 
-The workflow has three distinct rejection states that can interrupt mid-workflow execution (Steps 4, 5, and 8).
+The workflow has three distinct rejection states that can interrupt mid-workflow execution (Steps 4, 5, and 9).
 Each requires a specific response. Steps 4 and 5 reference this section for full handling rules.
 
 ### PARTIAL Verification Result (Step 4)
@@ -1606,7 +1639,7 @@ gate, not an optional step. Do NOT:
 Always proceed directly into the auto-fix loop (Step 5), fix concerns, re-run the review, and continue
 until either all FIX-marked concerns are resolved or the iteration limit is reached.
 
-### User Rejects Approval Gate (Step 8)
+### User Rejects Approval Gate (Step 9)
 
 When the user rejects the AskUserQuestion tool call — for example, by invoking `/cat:learn`, asking a
 question, or requesting changes without selecting an option — the approval gate was **NOT answered**.
