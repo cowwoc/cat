@@ -26,9 +26,11 @@ The result is one of three types:
 
 | Content starts with | Action |
 |---------------------|--------|
-| Analysis data | Output verbatim, then continue with workflow steps 5-9 |
+| Analysis data | **MANDATORY:** Output verbatim, then continue with workflow steps 5-9. Do NOT skip post-handler steps. |
 | Status message | Output verbatim, then STOP - retrospective not triggered |
 | Error message | Output verbatim, then STOP - cannot proceed |
+
+**CRITICAL:** When output type is "Analysis data" (starts with ╭─── box), the post-handler (Steps 5-9) is NOT optional. You MUST execute Steps 5–9 in sequence: identify new patterns, derive action items, create escalations, write retrospective record, reset counter, and present results.
 
 ## Trigger Conditions
 
