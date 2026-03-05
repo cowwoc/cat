@@ -6,7 +6,10 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
+import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -24,11 +27,59 @@ import java.nio.file.attribute.BasicFileAttributes;
 public final class TestUtils
 {
   /**
+   * Shared JSON mapper for test HookInput construction.
+   */
+  static final JsonMapper MAPPER = JsonMapper.builder().build();
+
+  /**
    * Private constructor to prevent instantiation.
    */
   private TestUtils()
   {
     // Utility class
+  }
+
+  /**
+   * Builds a HookInput for bash command tests.
+   *
+   * @param command the bash command string
+   * @param workingDirectory the working directory, or empty string if unavailable
+   * @param sessionId the session ID
+   * @return a HookInput with the given values and no tool result
+   */
+  public static HookInput bashInput(String command, String workingDirectory, String sessionId)
+  {
+    return HookInput.forBash(MAPPER, command, workingDirectory, sessionId, null, null);
+  }
+
+  /**
+   * Builds a HookInput for bash command tests with a tool result.
+   *
+   * @param command the bash command string
+   * @param workingDirectory the working directory, or empty string if unavailable
+   * @param sessionId the session ID
+   * @param toolResult the tool result node (for PostToolUse handlers)
+   * @return a HookInput with the given values
+   */
+  public static HookInput bashInput(String command, String workingDirectory, String sessionId,
+    JsonNode toolResult)
+  {
+    return HookInput.forBash(MAPPER, command, workingDirectory, sessionId, null, toolResult);
+  }
+
+  /**
+   * Builds a HookInput for bash command tests with a native agent ID.
+   *
+   * @param command the bash command string
+   * @param workingDirectory the working directory, or empty string if unavailable
+   * @param sessionId the session ID
+   * @param nativeAgentId the native (non-composite) agent ID, or null if not a subagent
+   * @return a HookInput with the given values and no tool result
+   */
+  public static HookInput bashInputWithAgentId(String command, String workingDirectory, String sessionId,
+    String nativeAgentId)
+  {
+    return HookInput.forBash(MAPPER, command, workingDirectory, sessionId, nativeAgentId, null);
   }
 
   /**

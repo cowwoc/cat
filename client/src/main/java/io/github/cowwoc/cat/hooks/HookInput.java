@@ -8,6 +8,8 @@ package io.github.cowwoc.cat.hooks;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.util.SkillLoader;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,6 +21,7 @@ import java.util.stream.Collectors;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * Utility class for reading and parsing hook input from stdin.
@@ -176,6 +179,68 @@ public final class HookInput
   }
 
   /**
+   * Create a HookInput for a bash command with explicit field values.
+   * <p>
+   * Constructs the JSON structure expected by bash handlers: {@code tool_name}, {@code tool_input} with
+   * {@code command}, {@code cwd}, {@code session_id}, {@code agent_id}, and optionally
+   * {@code tool_result}.
+   *
+   * @param mapper the JSON mapper to use
+   * @param command the bash command string
+   * @param workingDirectory the shell's current working directory, or empty string if unavailable
+   * @param sessionId the session ID, or empty string if not available
+   * @param agentId the native agent ID (not composite), or empty string if not available
+   * @param toolResult the tool result node (for PostToolUse), or null if not applicable
+   * @return a HookInput with the provided values
+   * @throws NullPointerException if mapper, command, workingDirectory, or sessionId is null
+   */
+  public static HookInput forBash(JsonMapper mapper, String command, String workingDirectory,
+    String sessionId, String agentId, JsonNode toolResult)
+  {
+    requireThat(mapper, "mapper").isNotNull();
+    requireThat(command, "command").isNotNull();
+    requireThat(workingDirectory, "workingDirectory").isNotNull();
+    requireThat(sessionId, "sessionId").isNotNull();
+
+    ObjectNode root = mapper.createObjectNode();
+    root.put("tool_name", "Bash");
+
+    ObjectNode toolInput = mapper.createObjectNode();
+    toolInput.put("command", command);
+    root.set("tool_input", toolInput);
+
+    root.put("cwd", workingDirectory);
+
+    if (!sessionId.isEmpty())
+      root.put("session_id", sessionId);
+
+    if (agentId != null && !agentId.isEmpty())
+      root.put("agent_id", agentId);
+
+    if (toolResult != null)
+      root.set("tool_result", toolResult);
+
+    return new HookInput(mapper, root);
+  }
+
+  /**
+   * Get the bash command from the tool input.
+   *
+   * @return the command string, or empty string if not found
+   */
+  public String getCommand()
+  {
+    JsonNode toolInput = getToolInput();
+    JsonNode commandNode = toolInput.get("command");
+    if (commandNode == null || !commandNode.isString())
+      return "";
+    String value = commandNode.asString();
+    if (value == null)
+      return "";
+    return value;
+  }
+
+  /**
    * Get a string value from the input.
    *
    * @param key the key to look up
@@ -315,6 +380,25 @@ public final class HookInput
   public String getAgentId()
   {
     return agentId;
+  }
+
+  /**
+   * Get the composite agent ID that uniquely identifies the current agent within the session.
+   * <p>
+   * For the main agent, returns {@code sessionId}. For subagents, returns
+   * {@code sessionId + "/subagents/" + agentId}.
+   *
+   * @param sessionId the session ID
+   * @return the composite agent ID
+   * @throws NullPointerException if {@code sessionId} is null
+   */
+  public String getCompositeAgentId(String sessionId)
+  {
+    requireThat(sessionId, "sessionId").isNotNull();
+    String nativeAgentId = getAgentId();
+    if (nativeAgentId.isEmpty())
+      return sessionId;
+    return sessionId + "/" + SkillLoader.SUBAGENTS_DIR + "/" + nativeAgentId;
   }
 
   /**

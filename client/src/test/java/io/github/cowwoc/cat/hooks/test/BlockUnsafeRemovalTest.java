@@ -46,7 +46,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = tempDir.toString();
       String command = "git worktree remove -f " + worktreePath;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -76,7 +76,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = worktreePath.toString();
       String command = "git worktree remove --force " + worktreePath;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
@@ -108,7 +108,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = targetPath.toString();
       String command = "rm -rf " + targetPath;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
@@ -140,7 +140,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = tempDir.toString();
       String command = "git worktree remove --force " + worktreePath;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -170,7 +170,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = subDir.toString();
       String command = "rm -rf " + tempDir;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
@@ -204,7 +204,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = safeDir.toString();  // CWD is outside the deletion target
       String command = "rm -rf " + tempDir;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
@@ -253,7 +253,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = tempDir.toString();
       String command = "rm -rf " + worktreePath;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
@@ -298,7 +298,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = tempDir.toString();
       String command = "git worktree remove " + worktreePath + " --force";
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "my-session");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "my-session"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -344,7 +344,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = tempDir.toString();
       String command = "git worktree remove " + worktreePath + " --force";
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "my-session");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "my-session"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
@@ -375,7 +375,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = tempDir.toString();
       String command = "rm -rf " + safeDir;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -421,7 +421,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = tempDir.toString();
       String command = "rm -rf " + worktreePath;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "my-session");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "my-session"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -467,7 +467,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = tempDir.toString();
       String command = "rm -rf " + worktreePath;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "my-session");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "my-session"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
@@ -516,7 +516,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = tempDir.toString();
       String command = "rm -rf " + worktreePath;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "my-session");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "my-session"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -546,7 +546,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = targetPath.toString();
       String command = "rm -r -f " + targetPath;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
@@ -578,7 +578,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = targetPath.toString();
       String command = "rm " + targetPath + " -rf";
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
@@ -610,7 +610,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = targetPath.toString();
       String command = "rm -f " + targetPath + " -r";
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
@@ -642,7 +642,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = targetPath.toString();
       String command = "rm --recursive " + targetPath;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
@@ -674,7 +674,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = targetPath.toString();
       String command = "rm -Rf " + targetPath;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
@@ -723,7 +723,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = tempDir.toString();
       String command = "rm -rf " + worktreePath;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "my-session");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "my-session"));
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -769,7 +769,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = tempDir.toString();
       String command = "rm -rf " + worktreePath;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "my-session");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "my-session"));
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -815,7 +815,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = tempDir.toString();
       String command = "rm -rf " + worktreePath;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "my-session");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "my-session"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -857,7 +857,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = tempDir.toString();
       String command = "rm -rf " + worktreePath;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "my-session");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "my-session"));
 
       // No created_at means isStale() returns false, so the lock is treated as fresh and the removal is blocked
       requireThat(result.blocked(), "blocked").isTrue();
@@ -904,7 +904,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = tempDir.toString();
       String command = "rm -rf " + worktreePath;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "my-session");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "my-session"));
 
       // Missing session_id means isOwnedBySession() returns false (not mine),
       // and since the lock is fresh, isStale() returns false, so the removal is blocked.
@@ -941,7 +941,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = realTarget.toString();
       String command = "rm -rf " + symlink;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
@@ -976,7 +976,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = tempDir.toString();
       String command = "rm -rf " + symlink;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -1006,7 +1006,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = targetPath.toString();
       String command = "rm -rf " + targetPath;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       // Verify working directory label is present in the error message (with the working directory value)
@@ -1042,7 +1042,7 @@ public final class BlockUnsafeRemovalTest
       String workingDirectory = targetPath.toString();
       String command = "rm -f " + targetPath;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -1053,8 +1053,8 @@ public final class BlockUnsafeRemovalTest
   }
 
   /**
-   * Test A: Verifies that a lock with agent_id blocks removal when no CAT_AGENT_ID is in the command
-   * (fail-safe: agent must self-identify).
+   * Test A: Verifies that a lock with agent_id blocks removal when no agent_id is available from the hook
+   * input (fail-safe: hook must receive agent identity from hook event).
    *
    * @throws IOException if test setup fails
    */
@@ -1086,11 +1086,11 @@ public final class BlockUnsafeRemovalTest
         ZoneOffset.UTC);
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
       String workingDirectory = tempDir.toString();
-      // No CAT_AGENT_ID prefix in command
       String command = "git worktree remove " + worktreePath;
+      // Empty agentId simulates missing agent_id in hook input (fail-safe)
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null,
-        "aaaaaaaa-0000-0000-0000-000000000001");
+      BashHandler.Result result = handler.check(
+        TestUtils.bashInput(command, workingDirectory, "aaaaaaaa-0000-0000-0000-000000000001"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       String reason = result.reason();
@@ -1103,8 +1103,8 @@ public final class BlockUnsafeRemovalTest
   }
 
   /**
-   * Test B: Verifies that removal is allowed when CAT_AGENT_ID in the command matches the lock's agent_id
-   * (owner deleting own worktree).
+   * Test B: Verifies that removal is allowed when the agent_id from the hook input matches the lock's
+   * agent_id (owner deleting own worktree).
    *
    * @throws IOException if test setup fails
    */
@@ -1137,11 +1137,13 @@ public final class BlockUnsafeRemovalTest
         ZoneOffset.UTC);
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
       String workingDirectory = tempDir.toString();
-      // Matching CAT_AGENT_ID prefix
-      String command = "CAT_AGENT_ID=" + ownerAgentId + " git worktree remove " + worktreePath;
+      // Agent ID comes from hook input, not command prefix
+      String command = "git worktree remove " + worktreePath;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null,
-        "aaaaaaaa-0000-0000-0000-000000000001");
+      // ownerAgentId = "aaaaaaaa-0000-0000-0000-000000000001/subagents/abc123"; native part is "abc123"
+      BashHandler.Result result = handler.check(
+        TestUtils.bashInputWithAgentId(command, workingDirectory,
+          "aaaaaaaa-0000-0000-0000-000000000001", "abc123"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -1152,8 +1154,8 @@ public final class BlockUnsafeRemovalTest
   }
 
   /**
-   * Test C: Verifies that removal is blocked when CAT_AGENT_ID in the command does not match the lock's
-   * agent_id (sibling agent protection).
+   * Test C: Verifies that removal is blocked when the agent_id from the hook input does not match the
+   * lock's agent_id (sibling agent protection).
    *
    * @throws IOException if test setup fails
    */
@@ -1174,7 +1176,6 @@ public final class BlockUnsafeRemovalTest
 
       long lockCreatedAt = 1_771_266_833L;
       String lockOwnerAgentId = "aaaaaaaa-0000-0000-0000-000000000001/subagents/ownerX";
-      String commandAgentId = "aaaaaaaa-0000-0000-0000-000000000001/subagents/siblingY";
       Path lockFile = locksDir.resolve("task-agentC.lock");
       Files.writeString(lockFile, """
         {
@@ -1187,11 +1188,13 @@ public final class BlockUnsafeRemovalTest
         ZoneOffset.UTC);
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
       String workingDirectory = tempDir.toString();
-      // Different agent_id in command than in lock
-      String command = "CAT_AGENT_ID=" + commandAgentId + " git worktree remove " + worktreePath;
+      // Different agent_id in hook input than in lock
+      String command = "git worktree remove " + worktreePath;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null,
-        "aaaaaaaa-0000-0000-0000-000000000001");
+      // commandAgentId = "aaaaaaaa-0000-0000-0000-000000000001/subagents/siblingY"; native part is "siblingY"
+      BashHandler.Result result = handler.check(
+        TestUtils.bashInputWithAgentId(command, workingDirectory,
+          "aaaaaaaa-0000-0000-0000-000000000001", "siblingY"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("locked by another agent");
@@ -1203,7 +1206,7 @@ public final class BlockUnsafeRemovalTest
   }
 
   /**
-   * Test D: Verifies that removal is allowed when no lock exists and no CAT_AGENT_ID (unowned worktree).
+   * Test D: Verifies that removal is allowed when no lock exists (unowned worktree).
    *
    * @throws IOException if test setup fails
    */
@@ -1222,10 +1225,10 @@ public final class BlockUnsafeRemovalTest
 
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
       String workingDirectory = tempDir.toString();
-      // No lock file, no CAT_AGENT_ID
+      // No lock file
       String command = "git worktree remove " + worktreePath;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "session1");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -1236,7 +1239,8 @@ public final class BlockUnsafeRemovalTest
   }
 
   /**
-   * Test E: Verifies that CWD-based block shows CWD-specific message, even when CAT_AGENT_ID matches.
+   * Test E: Verifies that CWD-based block shows CWD-specific message, even when agent_id matches the lock
+   * owner.
    *
    * @throws IOException if test setup fails
    */
@@ -1270,11 +1274,13 @@ public final class BlockUnsafeRemovalTest
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
       // CWD is INSIDE the target (shell corruption scenario)
       String workingDirectory = worktreePath.toString();
-      // Matching CAT_AGENT_ID but CWD is inside target
-      String command = "CAT_AGENT_ID=" + ownerAgentId + " git worktree remove " + worktreePath;
+      // Matching agent_id from hook input but CWD is inside target
+      String command = "git worktree remove " + worktreePath;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null,
-        "aaaaaaaa-0000-0000-0000-000000000001");
+      // ownerAgentId = "aaaaaaaa-0000-0000-0000-000000000001/subagents/abc"; native part is "abc"
+      BashHandler.Result result = handler.check(
+        TestUtils.bashInputWithAgentId(command, workingDirectory,
+          "aaaaaaaa-0000-0000-0000-000000000001", "abc"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       String reason = result.reason();
@@ -1328,7 +1334,7 @@ public final class BlockUnsafeRemovalTest
       String command = "git worktree remove " + worktreePath;
 
       // Same session as lock → allowed (backward compat fallback)
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null, mySessionId);
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, mySessionId));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -1373,16 +1379,14 @@ public final class BlockUnsafeRemovalTest
         ZoneOffset.UTC);
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
       String workingDirectory = tempDir.toString();
-      // No CAT_AGENT_ID in command
       String command = "rm -rf " + worktreePath;
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null,
-        "aaaaaaaa-0000-0000-0000-000000000001");
+      BashHandler.Result result = handler.check(
+        TestUtils.bashInput(command, workingDirectory, "aaaaaaaa-0000-0000-0000-000000000001"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       String reason = result.reason();
       requireThat(reason, "reason").contains("locked by another agent");
-      requireThat(reason, "reason").contains("CAT_AGENT_ID=");
       requireThat(reason, "reason").contains("issue-lock force-release");
     }
     finally
@@ -1427,11 +1431,11 @@ public final class BlockUnsafeRemovalTest
         ZoneOffset.UTC);
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
       String workingDirectory = tempDir.toString();
-      // No CAT_AGENT_ID prefix in command, and called from DIFFERENT session
+      // Called from a DIFFERENT session
       String command = "git worktree remove " + worktreePath;
+      String differentSessionId = "bbbbbbbb-1111-1111-1111-111111111111";
 
-      BashHandler.Result result = handler.check(command, workingDirectory, null, null,
-        "bbbbbbbb-1111-1111-1111-111111111111");
+      BashHandler.Result result = handler.check(TestUtils.bashInput(command, workingDirectory, differentSessionId));
 
       requireThat(result.blocked(), "blocked").isTrue();
       String reason = result.reason();

@@ -10,6 +10,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.Config;
+import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.SessionFileUtils;
 import io.github.cowwoc.cat.hooks.util.TrustLevel;
@@ -70,9 +71,9 @@ public final class BlockUnauthorizedMergeCleanup implements BashHandler
   }
 
   @Override
-  public Result check(String command, String workingDirectory, JsonNode toolInput, JsonNode toolResult,
-    String sessionId)
+  public Result check(HookInput input)
   {
+    String command = input.getCommand();
     requireThat(command, "command").isNotNull();
 
     // Only intercept commands that invoke the merge-and-cleanup binary
@@ -92,7 +93,8 @@ public final class BlockUnauthorizedMergeCleanup implements BashHandler
     if (trust == TrustLevel.HIGH)
       return Result.allow();
 
-    if (sessionId == null || sessionId.isBlank())
+    String sessionId = input.getSessionId();
+    if (sessionId.isBlank())
     {
       return Result.block("""
         FAIL: Cannot verify user approval - session ID not available.

@@ -7,7 +7,7 @@
 package io.github.cowwoc.cat.hooks.bash;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
-import tools.jackson.databind.JsonNode;
+import io.github.cowwoc.cat.hooks.HookInput;
 
 import java.util.regex.Pattern;
 
@@ -31,9 +31,10 @@ public final class RemindGitSquash implements BashHandler
   }
 
   @Override
-  public Result check(String command, String workingDirectory, JsonNode toolInput, JsonNode toolResult,
-    String sessionId)
+  public Result check(HookInput input)
   {
+    String command = input.getCommand();
+
     // Block git reset --soft (manual squash bypass)
     if (GIT_RESET_SOFT_PATTERN.matcher(command).find())
     {

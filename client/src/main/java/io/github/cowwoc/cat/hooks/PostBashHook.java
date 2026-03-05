@@ -13,7 +13,6 @@ import io.github.cowwoc.cat.hooks.bash.post.DetectConcatenatedCommit;
 import io.github.cowwoc.cat.hooks.bash.post.DetectFailures;
 import io.github.cowwoc.cat.hooks.bash.post.ValidateRebaseTarget;
 import io.github.cowwoc.cat.hooks.bash.post.VerifyCommitType;
-import tools.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -74,22 +73,9 @@ public final class PostBashHook implements HookHandler
     if (!equalsIgnoreCase(toolName, "Bash"))
       return HookResult.withoutWarnings(output.empty());
 
-    JsonNode toolInput = input.getToolInput();
-    JsonNode commandNode = toolInput.get("command");
-    String command;
-    if (commandNode != null)
-      command = commandNode.asString();
-    else
-      command = "";
-
-    if (command.isEmpty())
+    if (input.getCommand().isEmpty())
       return HookResult.withoutWarnings(output.empty());
 
-    JsonNode toolResult = input.getToolResult();
-    String sessionId = input.getSessionId();
-    requireThat(sessionId, "sessionId").isNotBlank();
-    String workingDirectory = input.getString("cwd");
-    requireThat(workingDirectory, "workingDirectory").isNotBlank();
     List<String> warnings = new ArrayList<>();
     List<String> errorWarnings = new ArrayList<>();
 
@@ -98,7 +84,7 @@ public final class PostBashHook implements HookHandler
     {
       try
       {
-        BashHandler.Result result = handler.check(command, workingDirectory, toolInput, toolResult, sessionId);
+        BashHandler.Result result = handler.check(input);
         // PostToolUse cannot block, only warn
         if (!result.reason().isEmpty())
           warnings.add(result.reason());
