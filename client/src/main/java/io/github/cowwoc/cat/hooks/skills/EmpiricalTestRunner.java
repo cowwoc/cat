@@ -19,10 +19,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -45,12 +47,46 @@ import tools.jackson.databind.node.ObjectNode;
  */
 public final class EmpiricalTestRunner
 {
+  /**
+   * Maximum number of trials allowed per configuration.
+   */
+  private static final int MAX_TRIALS = 1000;
+  /**
+   * Default timeout for the claude CLI process.
+   */
   private static final int DEFAULT_TIMEOUT_SECONDS = 180;
+  /**
+   * Maximum characters in an output preview string.
+   */
+  private static final int MAX_PREVIEW_CHARS = 200;
+  /**
+   * Maximum number of tool uses to retain per trial.
+   */
+  private static final int MAX_TOOL_USES_DISPLAYED = 5;
+  /**
+   * Maximum bytes buffered from a single Claude process output.
+   * Outputs exceeding this limit are truncated before parsing.
+   */
+  private static final int MAX_OUTPUT_BYTES = 10 * 1024 * 1024;
   private static final Path SESSION_DIR = Path.of(
     System.getProperty("user.home"), ".config", "claude", "projects", "-workspace");
   private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>()
   {
   };
+  /**
+   * Allowed model name values for the {@code --model} flag.
+   */
+  private static final Set<String> ALLOWED_MODELS = Set.of("haiku", "sonnet", "opus");
+  /**
+   * Comparator that orders {@link Severity} values HIGH first, then MEDIUM, then LOW.
+   */
+  private static final Comparator<Severity> SEVERITY_COMPARATOR =
+    Comparator.comparingInt((Severity s) -> switch (s)
+    {
+      case HIGH -> 0;
+      case MEDIUM -> 1;
+      case LOW -> 2;
+    });
 
   private final JvmScope scope;
   private final ObjectWriter compactWriter;
@@ -85,30 +121,25 @@ public final class EmpiricalTestRunner
   {
     requireThat(configPath, "configPath").isNotNull();
     requireThat(model, "model").isNotBlank();
+    if (!ALLOWED_MODELS.contains(model))
+    {
+      throw new IllegalArgumentException("Invalid model '" + model +
+        "'. Valid values: " + ALLOWED_MODELS);
+    }
     requireThat(cwd, "cwd").isNotNull();
-    requireThat(trials, "trials").isPositive();
+    requireThat(trials, "trials").isBetween(1, true, MAX_TRIALS, true);
 
-    String configJson = Files.readString(configPath);
-    Map<String, Object> config = scope.getJsonMapper().readValue(configJson, MAP_TYPE);
+    TestConfig tc = loadTestConfig(configPath);
 
-    String targetDescription = (String) config.getOrDefault("target_description", "");
-    String systemPrompt = (String) config.getOrDefault("system_prompt", "");
-    @SuppressWarnings("unchecked")
-    List<PrimingMessage> primingMessages = PrimingMessage.fromRawList(
-      (List<Object>) config.getOrDefault("priming_messages", new ArrayList<>()));
-    @SuppressWarnings("unchecked")
-    List<String> systemReminders = (List<String>) config.getOrDefault("system_reminders",
-      new ArrayList<>());
-    @SuppressWarnings("unchecked")
-    Map<String, Object> configs = (Map<String, Object>) config.getOrDefault("configs",
-      new HashMap<>());
+    if (tc.configs().isEmpty())
+      throw new IllegalArgumentException("Config file '" + configPath + "' has no entries in 'configs'.");
 
-    System.out.println("Empirical Compliance Test: " + targetDescription);
-    System.out.println("Model: " + model + ", Trials: " + trials + ", Configs: " + configs.size());
+    System.out.println("Empirical Compliance Test: " + tc.targetDescription());
+    System.out.println("Model: " + model + ", Trials: " + trials + ", Configs: " + tc.configs().size());
     System.out.println("=".repeat(90));
 
     Map<String, ConfigResult> allResults = new HashMap<>();
-    for (Map.Entry<String, Object> entry : configs.entrySet())
+    for (Map.Entry<String, Object> entry : tc.configs().entrySet())
     {
       String configName = entry.getKey();
       Object configValue = entry.getValue();
@@ -125,8 +156,8 @@ public final class EmpiricalTestRunner
       }
       @SuppressWarnings("unchecked")
       Map<String, Object> configMap = (Map<String, Object>) configValue;
-      ConfigResult result = runMultiMessageConfig(configName, configMap, primingMessages,
-        systemReminders, trials, model, systemPrompt, cwd);
+      ConfigResult result = runMultiMessageConfig(configName, configMap, tc.primingMessages(),
+        tc.systemReminders(), trials, model, tc.systemPrompt(), cwd);
       allResults.put(configName, result);
 
       System.out.println("  RESULT: " + result.passes() + "/" + result.trials() + " (" +
@@ -139,7 +170,7 @@ public final class EmpiricalTestRunner
     if (outputPath != null)
     {
       ObjectNode output = scope.getJsonMapper().createObjectNode();
-      output.put("target", targetDescription);
+      output.put("target", tc.targetDescription());
       output.put("model", model);
       output.put("trials", trials);
       output.set("results", scope.getJsonMapper().valueToTree(allResults));
@@ -365,6 +396,11 @@ public final class EmpiricalTestRunner
   public List<String> buildCommand(String model, String systemPrompt)
   {
     requireThat(model, "model").isNotBlank();
+    if (!ALLOWED_MODELS.contains(model))
+    {
+      throw new IllegalArgumentException("Invalid model '" + model +
+        "'. Valid values: " + ALLOWED_MODELS);
+    }
     requireThat(systemPrompt, "systemPrompt").isNotNull();
     List<String> command = new ArrayList<>();
     command.add("claude");
@@ -415,7 +451,8 @@ public final class EmpiricalTestRunner
         String line = reader.readLine();
         while (line != null)
         {
-          output.append(line).append('\n');
+          if (output.length() + line.length() + 1 <= MAX_OUTPUT_BYTES)
+            output.append(line).append('\n');
           line = reader.readLine();
         }
       }
@@ -510,7 +547,7 @@ public final class EmpiricalTestRunner
         msg.criteria());
 
       String turnPreview = String.join("\n", aggregatedTexts);
-      String truncatedTurnPreview = truncatePreview(turnPreview, 200).replace("\n", "\\n");
+      String truncatedTurnPreview = truncatePreview(turnPreview, MAX_PREVIEW_CHARS).replace("\n", "\\n");
 
       evaluations.add(new MessageEvaluation(i, evaluation.pass(), evaluation.checks(),
         truncatedTurnPreview));
@@ -523,8 +560,8 @@ public final class EmpiricalTestRunner
     }
 
     List<String> toolsUsed;
-    if (parsed.toolUses().size() > 5)
-      toolsUsed = parsed.toolUses().subList(0, 5);
+    if (parsed.toolUses().size() > MAX_TOOL_USES_DISPLAYED)
+      toolsUsed = parsed.toolUses().subList(0, MAX_TOOL_USES_DISPLAYED);
     else
       toolsUsed = parsed.toolUses();
 
@@ -835,6 +872,483 @@ public final class EmpiricalTestRunner
   }
 
   /**
+   * Produces a structured grading report for a single message evaluation.
+   * <p>
+   * For each criterion in the success criteria map, extracts a {@link CriterionGrade} containing
+   * the pass/fail result and a relevant quote from the output. Criteria metadata ({@code description},
+   * {@code reason}, {@code severity}) is read from an optional {@code _metadata} sub-map in the
+   * criteria map. Grades are sorted by severity (HIGH first) then by criterion key.
+   *
+   * @param messageIndex the 0-based message index
+   * @param texts        the text outputs for this message
+   * @param toolUses     the tool uses for this message
+   * @param criteria     the success criteria map (may contain a {@code _metadata} entry)
+   * @return the grading report
+   * @throws NullPointerException if {@code texts}, {@code toolUses}, or {@code criteria} are null
+   */
+  public GradingReport gradeOutput(int messageIndex, List<String> texts, List<String> toolUses,
+    Map<String, Object> criteria)
+  {
+    requireThat(texts, "texts").isNotNull();
+    requireThat(toolUses, "toolUses").isNotNull();
+    requireThat(criteria, "criteria").isNotNull();
+
+    String fullText = String.join("\n", texts);
+    String lowerText = fullText.toLowerCase(Locale.ROOT);
+
+    @SuppressWarnings("unchecked")
+    Map<String, Object> metadataMap =
+      (Map<String, Object>) criteria.getOrDefault("_metadata", new HashMap<>());
+
+    List<CriterionGrade> grades = new ArrayList<>();
+
+    @SuppressWarnings("unchecked")
+    List<String> mustContain = (List<String>) criteria.get("must_contain");
+    if (mustContain != null)
+    {
+      for (String term : mustContain)
+      {
+        String key = "contains:" + term;
+        CriterionMetadata meta = CriterionMetadata.fromRaw(key, metadataMap.get(key));
+        boolean found = lowerText.contains(term.toLowerCase(Locale.ROOT));
+        String quote;
+        if (found)
+          quote = extractQuote(fullText, term, MAX_PREVIEW_CHARS);
+        else
+          quote = "";
+        String expected = "Output contains: \"" + term + "\"";
+        String actual;
+        if (found)
+          actual = "Term found in output";
+        else
+          actual = "Term not found in output";
+        grades.add(new CriterionGrade(key, meta, found, quote, expected, actual));
+      }
+    }
+
+    @SuppressWarnings("unchecked")
+    List<String> mustNotContain = (List<String>) criteria.get("must_not_contain");
+    if (mustNotContain != null)
+    {
+      for (String term : mustNotContain)
+      {
+        String key = "not_contains:" + term;
+        CriterionMetadata meta = CriterionMetadata.fromRaw(key, metadataMap.get(key));
+        boolean found = lowerText.contains(term.toLowerCase(Locale.ROOT));
+        boolean pass = !found;
+        String quote;
+        if (found)
+          quote = extractQuote(fullText, term, MAX_PREVIEW_CHARS);
+        else
+          quote = "";
+        String expected = "Output does not contain: \"" + term + "\"";
+        String actual;
+        if (found)
+          actual = "Term found in output";
+        else
+          actual = "Term not found in output";
+        grades.add(new CriterionGrade(key, meta, pass, quote, expected, actual));
+      }
+    }
+
+    @SuppressWarnings("unchecked")
+    List<String> mustUseTools = (List<String>) criteria.get("must_use_tools");
+    if (mustUseTools != null)
+    {
+      for (String tool : mustUseTools)
+      {
+        String key = "uses_tool:" + tool;
+        CriterionMetadata meta = CriterionMetadata.fromRaw(key, metadataMap.get(key));
+        boolean found = toolUses.contains(tool);
+        String expected = "Tool used: " + tool;
+        String actual;
+        if (found)
+          actual = "Tool was invoked";
+        else
+          actual = "Tool not invoked";
+        grades.add(new CriterionGrade(key, meta, found, "", expected, actual));
+      }
+    }
+
+    @SuppressWarnings("unchecked")
+    List<String> mustNotUseTools = (List<String>) criteria.get("must_not_use_tools");
+    if (mustNotUseTools != null)
+    {
+      for (String tool : mustNotUseTools)
+      {
+        String key = "not_uses_tool:" + tool;
+        CriterionMetadata meta = CriterionMetadata.fromRaw(key, metadataMap.get(key));
+        boolean found = toolUses.contains(tool);
+        boolean pass = !found;
+        String expected = "Tool not used: " + tool;
+        String actual;
+        if (found)
+          actual = "Tool was invoked: " + tool;
+        else
+          actual = "Tool not invoked";
+        grades.add(new CriterionGrade(key, meta, pass, "", expected, actual));
+      }
+    }
+
+    // Sort by severity (HIGH first, then MEDIUM, then LOW), then by key for determinism
+    grades.sort(Comparator.comparing((CriterionGrade g) -> g.metadata().severity(), SEVERITY_COMPARATOR).
+      thenComparing(CriterionGrade::criterionKey));
+
+    boolean allPass = grades.isEmpty() || grades.stream().allMatch(CriterionGrade::pass);
+    return new GradingReport(messageIndex, List.copyOf(grades), allPass);
+  }
+
+  /**
+   * Extracts a short quote around the first occurrence of {@code term} in {@code text}.
+   *
+   * @param text      the full text to search in
+   * @param term      the term to find (case-insensitive)
+   * @param maxLength the maximum length of the returned quote
+   * @return the excerpt, or empty string if not found
+   */
+  public static String extractQuote(String text, String term, int maxLength)
+  {
+    int idx = text.toLowerCase(Locale.ROOT).indexOf(term.toLowerCase(Locale.ROOT));
+    if (idx < 0)
+      return "";
+    int start = Math.max(0, idx - 40);
+    int end = Math.min(text.length(), idx + term.length() + 40);
+    String excerpt = text.substring(start, end);
+    if (excerpt.length() > maxLength)
+      excerpt = excerpt.substring(0, maxLength);
+    return excerpt;
+  }
+
+  /**
+   * Performs post-hoc analysis on a failed trial to identify instruction violations.
+   * <p>
+   * Analyzes the output texts against the criteria to find specific violations, assigns an
+   * overall adherence score, categorizes issues, and generates improvement suggestions sorted by
+   * severity.
+   *
+   * @param messageIndex the 0-based index of the message being analyzed
+   * @param texts        the text outputs from the failed trial
+   * @param toolUses     the tool uses from the failed trial
+   * @param criteria     the success criteria map
+   * @return the post-hoc analysis report
+   * @throws NullPointerException if {@code texts}, {@code toolUses}, or {@code criteria} are null
+   */
+  public PostHocAnalysis analyzeFailedTrial(int messageIndex, List<String> texts,
+    List<String> toolUses, Map<String, Object> criteria)
+  {
+    requireThat(texts, "texts").isNotNull();
+    requireThat(toolUses, "toolUses").isNotNull();
+    requireThat(criteria, "criteria").isNotNull();
+
+    GradingReport report = gradeOutput(messageIndex, texts, toolUses, criteria);
+    List<InstructionViolation> violations = new ArrayList<>();
+
+    for (CriterionGrade grade : report.grades())
+    {
+      if (grade.pass())
+        continue;
+
+      String key = grade.criterionKey();
+      String category = inferCategory(key);
+      String expected;
+      String actual;
+      String quote = grade.quote();
+
+      if (key.startsWith("contains:"))
+      {
+        String term = key.substring("contains:".length());
+        expected = "Output contains: \"" + term + "\"";
+        actual = "Term not found in output";
+      }
+      else if (key.startsWith("not_contains:"))
+      {
+        String term = key.substring("not_contains:".length());
+        expected = "Output does not contain: \"" + term + "\"";
+        if (quote.isEmpty())
+          actual = "Term found in output";
+        else
+          actual = "Term found in output: \"" + quote + "\"";
+      }
+      else if (key.startsWith("uses_tool:"))
+      {
+        String tool = key.substring("uses_tool:".length());
+        expected = "Tool used: " + tool;
+        String toolList;
+        if (toolUses.isEmpty())
+          toolList = "none";
+        else
+          toolList = String.join(", ", toolUses);
+        actual = "Tool not invoked. Tools used: " + toolList;
+      }
+      else if (key.startsWith("not_uses_tool:"))
+      {
+        String tool = key.substring("not_uses_tool:".length());
+        expected = "Tool not used: " + tool;
+        actual = "Tool was invoked: " + tool;
+      }
+      else
+      {
+        expected = "Criterion satisfied: " + key;
+        actual = "Criterion not satisfied";
+      }
+
+      violations.add(new InstructionViolation(category, quote, expected, actual,
+        grade.metadata().severity()));
+    }
+
+    // Sort violations by severity (HIGH first)
+    violations.sort(Comparator.comparing(InstructionViolation::severity, SEVERITY_COMPARATOR));
+
+    // Compute adherence score (1-10 scale)
+    int totalCriteria = report.grades().size();
+    int failedCriteria = (int) report.grades().stream().filter(g -> !g.pass()).count();
+    int adherenceScore;
+    if (totalCriteria == 0)
+      adherenceScore = 10;
+    else
+    {
+      double passRate = (double) (totalCriteria - failedCriteria) / totalCriteria;
+      adherenceScore = Math.max(1, (int) Math.round(passRate * 10));
+    }
+
+    // Generate improvement suggestions sorted by severity
+    List<String> suggestions = new ArrayList<>();
+    for (InstructionViolation v : violations)
+    {
+      String prefix = "[" + v.severity() + "] ";
+      suggestions.add(prefix + "Fix: " + v.expected() + " — " + v.actual());
+    }
+
+    return new PostHocAnalysis(adherenceScore, List.copyOf(violations), List.copyOf(suggestions));
+  }
+
+  /**
+   * Infers the violation category from the criterion key.
+   *
+   * @param key the criterion key
+   * @return the category string
+   */
+  private static String inferCategory(String key)
+  {
+    if (key.startsWith("uses_tool:") || key.startsWith("not_uses_tool:"))
+      return "tool_usage";
+    if (key.startsWith("not_contains:") && key.toLowerCase(Locale.ROOT).contains("error"))
+      return "error_handling";
+    return "instructions";
+  }
+
+  /**
+   * Runs a blind comparison between two system prompts (candidate vs. baseline) using the same
+   * test configuration.
+   * <p>
+   * Both prompts are run for the specified number of trials. The winner is determined by assertion
+   * pass rate (primary) then total rubric score (secondary).
+   *
+   * @param configPath      path to the test config JSON file
+   * @param trials          number of trials per configuration
+   * @param model           the model to test with
+   * @param cwd             working directory for claude CLI
+   * @param candidatePrompt the candidate system prompt being evaluated
+   * @param baselinePrompt  the baseline system prompt to compare against
+   * @return the comparison result
+   * @throws NullPointerException if any parameter is null
+   * @throws IOException          if the config cannot be read
+   */
+  public ComparisonResult runBlindComparison(Path configPath, int trials, String model, Path cwd,
+    String candidatePrompt, String baselinePrompt) throws IOException
+  {
+    requireThat(configPath, "configPath").isNotNull();
+    requireThat(model, "model").isNotBlank();
+    requireThat(cwd, "cwd").isNotNull();
+    requireThat(candidatePrompt, "candidatePrompt").isNotNull();
+    requireThat(baselinePrompt, "baselinePrompt").isNotNull();
+    requireThat(trials, "trials").isBetween(1, true, MAX_TRIALS, true);
+
+    TestConfig tc = loadTestConfig(configPath);
+
+    if (tc.configs().isEmpty())
+      throw new IllegalArgumentException("Config file '" + configPath + "' has no entries in 'configs'.");
+
+    // Use the first config entry as the benchmark
+    Map.Entry<String, Object> firstEntry = tc.configs().entrySet().iterator().next();
+    @SuppressWarnings("unchecked")
+    Map<String, Object> configMap = (Map<String, Object>) firstEntry.getValue();
+
+    // Run candidate and baseline in parallel
+    final Map<String, Object> finalConfigMap = configMap;
+    CompletableFuture<ConfigResult> candidateFuture = CompletableFuture.supplyAsync(() ->
+      runMultiMessageConfig("candidate", finalConfigMap, tc.primingMessages(),
+        tc.systemReminders(), trials, model, candidatePrompt, cwd));
+    CompletableFuture<ConfigResult> baselineFuture = CompletableFuture.supplyAsync(() ->
+      runMultiMessageConfig("baseline", finalConfigMap, tc.primingMessages(),
+        tc.systemReminders(), trials, model, baselinePrompt, cwd));
+
+    ConfigResult candidateResult = candidateFuture.join();
+    ConfigResult baselineResult = baselineFuture.join();
+
+    RubricScore candidateRubric = computeRubricScore(candidateResult);
+    RubricScore baselineRubric = computeRubricScore(baselineResult);
+
+    String winner;
+    String winnerReason;
+    if (candidateResult.rate() > baselineResult.rate())
+    {
+      winner = "candidate";
+      winnerReason = "Higher assertion pass rate: " + candidateResult.rate() + "% vs " +
+        baselineResult.rate() + "%";
+    }
+    else if (baselineResult.rate() > candidateResult.rate())
+    {
+      winner = "baseline";
+      winnerReason = "Higher assertion pass rate: " + baselineResult.rate() + "% vs " +
+        candidateResult.rate() + "%";
+    }
+    else if (candidateRubric.total() > baselineRubric.total())
+    {
+      winner = "candidate";
+      winnerReason = "Equal pass rate (" + candidateResult.rate() + "%), higher rubric score: " +
+        candidateRubric.total() + " vs " + baselineRubric.total();
+    }
+    else if (baselineRubric.total() > candidateRubric.total())
+    {
+      winner = "baseline";
+      winnerReason = "Equal pass rate (" + baselineResult.rate() + "%), higher rubric score: " +
+        baselineRubric.total() + " vs " + candidateRubric.total();
+    }
+    else
+    {
+      winner = "tie";
+      winnerReason = "Equal pass rate (" + candidateResult.rate() + "%) and equal rubric score (" +
+        candidateRubric.total() + ")";
+    }
+
+    return new ComparisonResult(candidateResult, baselineResult, candidateRubric, baselineRubric,
+      winner, winnerReason);
+  }
+
+  /**
+   * Loads and parses the test configuration from a JSON file.
+   *
+   * @param configPath path to the test config JSON file
+   * @return the parsed test configuration
+   * @throws NullPointerException if {@code configPath} is null
+   * @throws IOException          if the config cannot be read
+   */
+  private TestConfig loadTestConfig(Path configPath) throws IOException
+  {
+    requireThat(configPath, "configPath").isNotNull();
+    String configJson = Files.readString(configPath);
+    Map<String, Object> config = scope.getJsonMapper().readValue(configJson, MAP_TYPE);
+
+    String targetDescription = (String) config.getOrDefault("target_description", "");
+    String systemPrompt = (String) config.getOrDefault("system_prompt", "");
+    @SuppressWarnings("unchecked")
+    List<PrimingMessage> primingMessages = PrimingMessage.fromRawList(
+      (List<Object>) config.getOrDefault("priming_messages", new ArrayList<>()));
+    @SuppressWarnings("unchecked")
+    List<String> systemReminders = (List<String>) config.getOrDefault("system_reminders",
+      new ArrayList<>());
+    @SuppressWarnings("unchecked")
+    Map<String, Object> configs = (Map<String, Object>) config.getOrDefault("configs",
+      new HashMap<>());
+    return new TestConfig(targetDescription, systemPrompt, primingMessages, systemReminders, configs);
+  }
+
+  /**
+   * Computes a multi-dimensional rubric score for a configuration result.
+   * <p>
+   * Scores are derived from trial outcomes:
+   * <ul>
+   *   <li>Instruction adherence: based on overall pass rate</li>
+   *   <li>Output quality: based on pass rate of text-based criteria</li>
+   *   <li>Tool usage correctness: based on pass rate of tool-related criteria</li>
+   *   <li>Error handling: based on pass rate of not_contains error criteria</li>
+   * </ul>
+   * Each dimension is scored 1-5. In the absence of relevant criteria, the dimension defaults to 3.
+   *
+   * @param result the configuration result to score
+   * @return the rubric score
+   */
+  public RubricScore computeRubricScore(ConfigResult result)
+  {
+    requireThat(result, "result").isNotNull();
+    if (result.results().isEmpty())
+      return new RubricScore(3, 3, 3, 3);
+
+    // Instruction adherence: overall pass rate scaled to 1-5
+    int instructionAdherence = rateToScore(result.rate());
+
+    // Output quality: checks that use text criteria (contains/not_contains)
+    int outputQuality = computeDimensionScore(result, key ->
+      key.startsWith("contains:") || key.startsWith("not_contains:"));
+
+    // Tool usage correctness: checks involving tool criteria
+    int toolUsage = computeDimensionScore(result, key ->
+      key.startsWith("uses_tool:") || key.startsWith("not_uses_tool:"));
+
+    // Error handling: checks involving error-related not_contains
+    int errorHandling = computeDimensionScore(result, key ->
+      key.startsWith("not_contains:") && key.toLowerCase(Locale.ROOT).contains("error"));
+
+    return new RubricScore(instructionAdherence, outputQuality, toolUsage, errorHandling);
+  }
+
+  /**
+   * Computes a dimension score (1-5) from trials by filtering checks matching the predicate.
+   *
+   * @param result    the configuration result
+   * @param keyFilter predicate to select relevant check keys
+   * @return a score from 1 (all fail) to 5 (all pass), or 3 if no relevant checks exist
+   */
+  private static int computeDimensionScore(ConfigResult result, Predicate<String> keyFilter)
+  {
+    int totalChecks = 0;
+    int passedChecks = 0;
+    for (TrialResult trial : result.results())
+    {
+      for (Map.Entry<String, Boolean> entry : trial.checks().entrySet())
+      {
+        String checkKey = entry.getKey();
+        // Strip the "msgN:" prefix that was added during combined check generation
+        String bareKey;
+        if (checkKey.contains(":"))
+          bareKey = checkKey.substring(checkKey.indexOf(':') + 1);
+        else
+          bareKey = checkKey;
+        if (keyFilter.test(bareKey))
+        {
+          totalChecks += 1;
+          if (entry.getValue())
+            passedChecks += 1;
+        }
+      }
+    }
+    if (totalChecks == 0)
+      return 3;
+    int rate = calculateRate(passedChecks, totalChecks);
+    return rateToScore(rate);
+  }
+
+  /**
+   * Converts a pass rate (0-100) to a rubric score (1-5).
+   *
+   * @param rate the pass rate percentage
+   * @return the score from 1 to 5
+   */
+  public static int rateToScore(int rate)
+  {
+    if (rate >= 90)
+      return 5;
+    if (rate >= 70)
+      return 4;
+    if (rate >= 50)
+      return 3;
+    if (rate >= 25)
+      return 2;
+    return 1;
+  }
+
+  /**
    * Prints a summary table of all configuration results.
    *
    * @param allResults the map of configuration results
@@ -875,6 +1389,7 @@ public final class EmpiricalTestRunner
           --model <name>      Model to test with: haiku|sonnet|opus (default: haiku)
           --cwd <path>        Working directory for claude CLI (default: /workspace)
           --output <path>     Path to write JSON results (optional)
+          --baseline <prompt> Baseline system prompt for blind comparison mode
 
         Config JSON fields:
           target_description  Description of expected behavior
@@ -888,6 +1403,14 @@ public final class EmpiricalTestRunner
           optional "success_criteria" with must_contain, must_not_contain, must_use_tools,
           must_not_use_tools.
 
+          Criteria may include optional "_metadata" maps for structured grading:
+            "success_criteria": {
+              "must_contain": ["expected"],
+              "_metadata": {
+                "contains:expected": { "description": "Checks for expected text", "severity": "HIGH" }
+              }
+            }
+
             "A_test": {
               "messages": [
                 { "prompt": "First prompt", "success_criteria": { "must_contain": ["expected"] } },
@@ -897,7 +1420,8 @@ public final class EmpiricalTestRunner
 
         Examples:
           empirical-test-runner --config /tmp/test.json --trials 10 --model sonnet
-          empirical-test-runner --config test.json --output results.json""");
+          empirical-test-runner --config test.json --output results.json
+          empirical-test-runner --config test.json --baseline "baseline prompt" --output compare.json""");
       return;
     }
 
@@ -906,6 +1430,7 @@ public final class EmpiricalTestRunner
     String model = "haiku";
     Path cwd = Path.of("/workspace");
     Path outputPath = null;
+    String baselinePrompt = null;
 
     for (int i = 0; i < args.length; ++i)
     {
@@ -938,6 +1463,11 @@ public final class EmpiricalTestRunner
           outputPath = Path.of(args[i + 1]);
           ++i;
         }
+        case "--baseline" ->
+        {
+          baselinePrompt = args[i + 1];
+          ++i;
+        }
         default ->
         {
           // Ignore unknown arguments
@@ -954,8 +1484,29 @@ public final class EmpiricalTestRunner
     try (JvmScope scope = new MainJvmScope())
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
-      int exitCode = runner.runTests(configPath, trials, model, cwd, outputPath);
-      System.exit(exitCode);
+      if (baselinePrompt != null)
+      {
+        // Blind comparison mode: read system_prompt from config as candidate
+        String configJson = Files.readString(configPath);
+        Map<String, Object> config = scope.getJsonMapper().readValue(configJson, MAP_TYPE);
+        String candidatePrompt = (String) config.getOrDefault("system_prompt", "");
+        ComparisonResult comparison = runner.runBlindComparison(configPath, trials, model, cwd,
+          candidatePrompt, baselinePrompt);
+        System.out.println("Winner: " + comparison.winner());
+        System.out.println("Reason: " + comparison.winnerReason());
+        if (outputPath != null)
+        {
+          Files.writeString(outputPath,
+            scope.getJsonMapper().writeValueAsString(comparison), StandardCharsets.UTF_8);
+          System.out.println("Comparison results written to: " + outputPath);
+        }
+        System.exit(0);
+      }
+      else
+      {
+        int exitCode = runner.runTests(configPath, trials, model, cwd, outputPath);
+        System.exit(exitCode);
+      }
     }
   }
 
@@ -1179,6 +1730,289 @@ public final class EmpiricalTestRunner
     {
       requireThat(name, "name").isNotBlank();
       requireThat(results, "results").isNotNull();
+    }
+  }
+
+  /**
+   * Severity level for a criterion.
+   */
+  public enum Severity
+  {
+    HIGH, MEDIUM, LOW
+  }
+
+  /**
+   * Metadata for a single success criterion providing human-readable context.
+   *
+   * @param description what the criterion tests (defaults to the criterion key name)
+   * @param reason why the criterion matters (may be empty)
+   * @param severity the impact classification (defaults to MEDIUM)
+   */
+  public record CriterionMetadata(String description, String reason, Severity severity)
+  {
+    /**
+     * Creates a new criterion metadata.
+     *
+     * @param description what the criterion tests
+     * @param reason      why the criterion matters
+     * @param severity    the impact classification
+     * @throws NullPointerException if {@code description}, {@code reason}, or {@code severity} are null
+     */
+    public CriterionMetadata
+    {
+      requireThat(description, "description").isNotNull();
+      requireThat(reason, "reason").isNotNull();
+      requireThat(severity, "severity").isNotNull();
+    }
+
+    /**
+     * Parses criterion metadata from a raw config value.
+     * <p>
+     * If the value is a string, it is treated as an inlined description with MEDIUM severity.
+     * If the value is a map, the fields {@code description}, {@code reason}, and {@code severity}
+     * are extracted. Missing fields fall back to defaults.
+     *
+     * @param criterionKey the criterion key, used as the default description
+     * @param rawValue     the raw config value (String or Map)
+     * @return the parsed metadata
+     */
+    public static CriterionMetadata fromRaw(String criterionKey, Object rawValue)
+    {
+      requireThat(criterionKey, "criterionKey").isNotNull();
+      if (rawValue instanceof Map<?, ?> rawMap)
+      {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> map = (Map<String, Object>) rawMap;
+        String description = (String) map.getOrDefault("description", criterionKey);
+        String reason = (String) map.getOrDefault("reason", "");
+        String severityStr = (String) map.getOrDefault("severity", "MEDIUM");
+        String severityUpper = severityStr.toUpperCase(Locale.ROOT);
+        Severity severity = switch (severityUpper)
+        {
+          case "HIGH" -> Severity.HIGH;
+          case "MEDIUM" -> Severity.MEDIUM;
+          case "LOW" -> Severity.LOW;
+          default -> throw new IllegalArgumentException("Config key '" + criterionKey +
+            "': invalid severity '" + severityStr + "'. Valid values: HIGH, MEDIUM, LOW");
+        };
+        return new CriterionMetadata(description, reason, severity);
+      }
+      return new CriterionMetadata(criterionKey, "", Severity.MEDIUM);
+    }
+  }
+
+  /**
+   * Grading result for a single criterion including evidence from the output.
+   *
+   * @param criterionKey the key identifying the criterion
+   * @param metadata     the criterion metadata
+   * @param pass         whether the criterion passed
+   * @param quote        a relevant excerpt from the output (up to 200 chars), or empty string
+   * @param expected     the expected value or behavior described by the criterion
+   * @param actual       the actual value or behavior observed in the output
+   */
+  public record CriterionGrade(String criterionKey, CriterionMetadata metadata, boolean pass,
+    String quote, String expected, String actual)
+  {
+    /**
+     * Creates a new criterion grade.
+     *
+     * @param criterionKey the key identifying the criterion
+     * @param metadata     the criterion metadata
+     * @param pass         whether the criterion passed
+     * @param quote        a relevant excerpt from the output
+     * @param expected     the expected value or behavior described by the criterion
+     * @param actual       the actual value or behavior observed in the output
+     * @throws NullPointerException if {@code criterionKey}, {@code metadata}, {@code quote},
+     *                              {@code expected}, or {@code actual} are null
+     */
+    public CriterionGrade
+    {
+      requireThat(criterionKey, "criterionKey").isNotNull();
+      requireThat(metadata, "metadata").isNotNull();
+      requireThat(quote, "quote").isNotNull();
+      requireThat(expected, "expected").isNotNull();
+      requireThat(actual, "actual").isNotNull();
+    }
+  }
+
+  /**
+   * Structured grading report for a single message evaluation.
+   *
+   * @param messageIndex the 0-based index of the message
+   * @param grades       the per-criterion grades, ordered by severity (HIGH first) then by key
+   * @param pass         whether all criteria passed
+   */
+  public record GradingReport(int messageIndex, List<CriterionGrade> grades, boolean pass)
+  {
+    /**
+     * Creates a new grading report.
+     *
+     * @param messageIndex the 0-based index of the message
+     * @param grades       the per-criterion grades
+     * @param pass         whether all criteria passed
+     * @throws NullPointerException if {@code grades} is null
+     */
+    public GradingReport
+    {
+      requireThat(grades, "grades").isNotNull();
+    }
+  }
+
+  /**
+   * A single violation identified during post-hoc analysis.
+   *
+   * @param category  the category of violation (instructions, tool_usage, error_handling, logic)
+   * @param quote     the excerpt from the output that illustrates the violation
+   * @param expected  the expected behavior
+   * @param actual    the actual behavior observed
+   * @param severity  the severity of the violation
+   */
+  public record InstructionViolation(String category, String quote, String expected, String actual,
+    Severity severity)
+  {
+    /**
+     * Creates a new instruction violation.
+     *
+     * @param category the category of violation
+     * @param quote    the excerpt from the output
+     * @param expected the expected behavior
+     * @param actual   the actual behavior observed
+     * @param severity the severity of the violation
+     * @throws NullPointerException if {@code category}, {@code quote}, {@code expected},
+     *                              {@code actual}, or {@code severity} are null
+     */
+    public InstructionViolation
+    {
+      requireThat(category, "category").isNotNull();
+      requireThat(quote, "quote").isNotNull();
+      requireThat(expected, "expected").isNotNull();
+      requireThat(actual, "actual").isNotNull();
+      requireThat(severity, "severity").isNotNull();
+    }
+  }
+
+  /**
+   * Post-hoc analysis report for a failed trial.
+   *
+   * @param adherenceScore     instruction adherence score from 1 (poor) to 10 (perfect)
+   * @param violations         the list of identified violations, ordered by severity
+   * @param suggestions        prioritized improvement suggestions
+   */
+  public record PostHocAnalysis(int adherenceScore, List<InstructionViolation> violations,
+    List<String> suggestions)
+  {
+    /**
+     * Creates a new post-hoc analysis.
+     *
+     * @param adherenceScore the instruction adherence score (1-10)
+     * @param violations     the identified violations
+     * @param suggestions    improvement suggestions
+     * @throws NullPointerException     if {@code violations} or {@code suggestions} are null
+     * @throws IllegalArgumentException if {@code adherenceScore} is not in range [1, 10]
+     */
+    public PostHocAnalysis
+    {
+      requireThat(adherenceScore, "adherenceScore").isBetween(1, true, 10, true);
+      requireThat(violations, "violations").isNotNull();
+      requireThat(suggestions, "suggestions").isNotNull();
+    }
+  }
+
+  /**
+   * Multi-dimensional rubric score for blind comparison.
+   *
+   * @param instructionAdherence instruction adherence score (1-5)
+   * @param outputQuality        output quality score (1-5)
+   * @param toolUsageCorrectness tool usage correctness score (1-5)
+   * @param errorHandling        error handling score (1-5)
+   */
+  public record RubricScore(int instructionAdherence, int outputQuality,
+    int toolUsageCorrectness, int errorHandling)
+  {
+    /**
+     * Creates a new rubric score.
+     *
+     * @param instructionAdherence instruction adherence score (1-5)
+     * @param outputQuality        output quality score (1-5)
+     * @param toolUsageCorrectness tool usage correctness score (1-5)
+     * @param errorHandling        error handling score (1-5)
+     * @throws IllegalArgumentException if any score is not in range [1, 5]
+     */
+    public RubricScore
+    {
+      requireThat(instructionAdherence, "instructionAdherence").isBetween(1, true, 5, true);
+      requireThat(outputQuality, "outputQuality").isBetween(1, true, 5, true);
+      requireThat(toolUsageCorrectness, "toolUsageCorrectness").isBetween(1, true, 5, true);
+      requireThat(errorHandling, "errorHandling").isBetween(1, true, 5, true);
+    }
+
+    /**
+     * Returns the total rubric score as the sum of all dimensions.
+     *
+     * @return the total score (4-20)
+     */
+    public int total()
+    {
+      return instructionAdherence + outputQuality + toolUsageCorrectness + errorHandling;
+    }
+  }
+
+  /**
+   * Parsed content of a test configuration file.
+   *
+   * @param targetDescription human-readable description of what is being tested
+   * @param systemPrompt      system prompt to append to claude CLI, or empty string for none
+   * @param primingMessages   priming messages to send before the test messages
+   * @param systemReminders   system reminder strings to inject into each test message
+   * @param configs           map of config name to config map with "messages" key
+   */
+  private record TestConfig(String targetDescription, String systemPrompt,
+    List<PrimingMessage> primingMessages, List<String> systemReminders,
+    Map<String, Object> configs)
+  {
+    TestConfig
+    {
+      requireThat(targetDescription, "targetDescription").isNotNull();
+      requireThat(systemPrompt, "systemPrompt").isNotNull();
+      requireThat(primingMessages, "primingMessages").isNotNull();
+      requireThat(systemReminders, "systemReminders").isNotNull();
+      requireThat(configs, "configs").isNotNull();
+    }
+  }
+
+  /**
+   * Result of a blind comparison between a candidate and baseline system prompt.
+   *
+   * @param candidateResult    the results for the candidate system prompt
+   * @param baselineResult     the results for the baseline system prompt
+   * @param candidateRubric    the multi-dimensional rubric score for the candidate
+   * @param baselineRubric     the multi-dimensional rubric score for the baseline
+   * @param winner             which configuration won: "candidate", "baseline", or "tie"
+   * @param winnerReason       explanation of how the winner was determined
+   */
+  public record ComparisonResult(ConfigResult candidateResult, ConfigResult baselineResult,
+    RubricScore candidateRubric, RubricScore baselineRubric, String winner, String winnerReason)
+  {
+    /**
+     * Creates a new comparison result.
+     *
+     * @param candidateResult the results for the candidate system prompt
+     * @param baselineResult  the results for the baseline system prompt
+     * @param candidateRubric the multi-dimensional rubric score for the candidate
+     * @param baselineRubric  the multi-dimensional rubric score for the baseline
+     * @param winner          which configuration won
+     * @param winnerReason    explanation of the winner determination
+     * @throws NullPointerException if any parameter is null
+     */
+    public ComparisonResult
+    {
+      requireThat(candidateResult, "candidateResult").isNotNull();
+      requireThat(baselineResult, "baselineResult").isNotNull();
+      requireThat(candidateRubric, "candidateRubric").isNotNull();
+      requireThat(baselineRubric, "baselineRubric").isNotNull();
+      requireThat(winner, "winner").isNotNull();
+      requireThat(winnerReason, "winnerReason").isNotNull();
     }
   }
 }
