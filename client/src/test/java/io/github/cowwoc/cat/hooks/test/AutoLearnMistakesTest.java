@@ -364,7 +364,8 @@ public final class AutoLearnMistakesTest
   /**
    * Verifies that an invalid sessionId (non-UUID) triggers an IllegalArgumentException.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid sessionId format.*")
   public void invalidSessionIdThrowsException() throws IOException
   {
     AutoLearnMistakes handler = new AutoLearnMistakes();

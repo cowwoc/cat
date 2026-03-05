@@ -294,7 +294,8 @@ public final class SessionEndHookTest
   /**
    * Verifies that null input throws NullPointerException.
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*input.*")
   public void nullInputThrowsException() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -316,7 +317,8 @@ public final class SessionEndHookTest
   /**
    * Verifies that null output throws NullPointerException.
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*output.*")
   public void nullOutputThrowsException() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -337,7 +339,8 @@ public final class SessionEndHookTest
   /**
    * Verifies that null project path throws NullPointerException.
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*projectPath.*")
   public void nullProjectPathThrowsException() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())

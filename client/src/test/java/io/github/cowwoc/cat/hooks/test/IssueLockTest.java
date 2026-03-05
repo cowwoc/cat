@@ -10,8 +10,8 @@ import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.IssueLock;
 import io.github.cowwoc.cat.hooks.util.IssueLock.LockListEntry;
 import io.github.cowwoc.cat.hooks.util.IssueLock.LockResult;
-import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.testng.annotations.Test;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.ByteArrayOutputStream;
@@ -45,7 +45,7 @@ public class IssueLockTest
   @Test
   public void acquireSucceedsWhenNoLockExists() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -75,7 +75,7 @@ public class IssueLockTest
   @Test
   public void acquireIsIdempotentForSameSession() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -106,7 +106,7 @@ public class IssueLockTest
   @Test
   public void acquireFailsWhenLockedByAnotherSession() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -142,7 +142,7 @@ public class IssueLockTest
     expectedExceptionsMessageRegExp = ".*Invalid session_id format.*")
   public void acquireRejectsInvalidSessionId() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -166,7 +166,7 @@ public class IssueLockTest
   @Test
   public void updateSucceedsWhenLockOwned() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -197,7 +197,7 @@ public class IssueLockTest
   @Test
   public void updateFailsWhenLockOwnedByAnotherSession() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -229,7 +229,7 @@ public class IssueLockTest
   @Test
   public void updateFailsWhenNoLockExists() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -259,7 +259,7 @@ public class IssueLockTest
   @Test
   public void releaseSucceedsWhenLockOwned() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -290,7 +290,7 @@ public class IssueLockTest
   @Test
   public void releaseFailsWhenLockOwnedByAnotherSession() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -322,7 +322,7 @@ public class IssueLockTest
   @Test
   public void releaseSucceedsWhenNoLockExists() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -352,7 +352,7 @@ public class IssueLockTest
   @Test
   public void forceReleaseRemovesLockRegardlessOfOwner() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -384,7 +384,7 @@ public class IssueLockTest
   @Test
   public void forceReleaseSucceedsWhenNoLockExists() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -413,7 +413,7 @@ public class IssueLockTest
   @Test
   public void checkReturnsUnlockedWhenNoLockExists() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -442,7 +442,7 @@ public class IssueLockTest
   @Test
   public void checkReturnsLockedStatusWhenLockExists() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -475,7 +475,7 @@ public class IssueLockTest
   @Test
   public void listReturnsEmptyListWhenNoLocksExist() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -504,7 +504,7 @@ public class IssueLockTest
   @Test
   public void listReturnsAllLocks() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -558,7 +558,7 @@ public class IssueLockTest
   @Test
   public void listSkipsMalformedLockFiles() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -597,7 +597,7 @@ public class IssueLockTest
   @Test(expectedExceptions = NullPointerException.class)
   public void checkHandlesMissingCreatedAtField() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -627,7 +627,7 @@ public class IssueLockTest
   @Test
   public void lockFileSanitizesIssueIdWithSlashes() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -650,7 +650,7 @@ public class IssueLockTest
   }
 
   /**
-   * Verifies that toJson produces correct format for acquired status.
+   * Verifies that toJson produces correct field values for acquired status.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -663,15 +663,15 @@ public class IssueLockTest
       LockResult.Acquired result = new LockResult.Acquired("acquired", "Lock acquired successfully");
 
       String json = result.toJson(mapper);
+      JsonNode parsed = mapper.readTree(json);
 
-      requireThat(json, "json").contains("\"status\"");
-      requireThat(json, "json").contains("\"acquired\"");
-      requireThat(json, "json").contains("\"message\"");
+      requireThat(parsed.get("status").asString(), "status").isEqualTo("acquired");
+      requireThat(parsed.get("message").asString(), "message").isEqualTo("Lock acquired successfully");
     }
   }
 
   /**
-   * Verifies that toJson produces correct format for locked status.
+   * Verifies that toJson produces correct field values for locked status.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -685,17 +685,18 @@ public class IssueLockTest
         "FIND_ANOTHER_ISSUE", "guidance text");
 
       String json = result.toJson(mapper);
+      JsonNode parsed = mapper.readTree(json);
 
-      requireThat(json, "json").contains("\"status\"");
-      requireThat(json, "json").contains("\"locked\"");
-      requireThat(json, "json").contains("\"owner\"");
-      requireThat(json, "json").contains("\"action\"");
-      requireThat(json, "json").contains("\"guidance\"");
+      requireThat(parsed.get("status").asString(), "status").isEqualTo("locked");
+      requireThat(parsed.get("message").asString(), "message").isEqualTo("Issue locked");
+      requireThat(parsed.get("owner").asString(), "owner").isEqualTo("session-123");
+      requireThat(parsed.get("action").asString(), "action").isEqualTo("FIND_ANOTHER_ISSUE");
+      requireThat(parsed.get("guidance").asString(), "guidance").isEqualTo("guidance text");
     }
   }
 
   /**
-   * Verifies that toJson produces correct format for check locked result.
+   * Verifies that toJson produces correct field values for check locked result.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -708,16 +709,17 @@ public class IssueLockTest
       LockResult.CheckLocked result = new LockResult.CheckLocked(true, "session-id", 300, "/path");
 
       String json = result.toJson(mapper);
+      JsonNode parsed = mapper.readTree(json);
 
-      requireThat(json, "json").contains("\"locked\"");
-      requireThat(json, "json").contains("true");
-      requireThat(json, "json").contains("\"session_id\"");
-      requireThat(json, "json").contains("\"age_seconds\"");
+      requireThat(parsed.get("locked").asBoolean(), "locked").isTrue();
+      requireThat(parsed.get("session_id").asString(), "session_id").isEqualTo("session-id");
+      requireThat(parsed.get("age_seconds").asLong(), "age_seconds").isEqualTo(300L);
+      requireThat(parsed.get("worktree").asString(), "worktree").isEqualTo("/path");
     }
   }
 
   /**
-   * Verifies that toJson produces correct format for check unlocked result.
+   * Verifies that toJson produces correct field values for check unlocked result.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -730,10 +732,10 @@ public class IssueLockTest
       LockResult.CheckUnlocked result = new LockResult.CheckUnlocked(false, "Issue not locked");
 
       String json = result.toJson(mapper);
+      JsonNode parsed = mapper.readTree(json);
 
-      requireThat(json, "json").contains("\"locked\"");
-      requireThat(json, "json").contains("false");
-      requireThat(json, "json").contains("\"message\"");
+      requireThat(parsed.get("locked").asBoolean(), "locked").isFalse();
+      requireThat(parsed.get("message").asString(), "message").isEqualTo("Issue not locked");
     }
   }
 
@@ -745,7 +747,7 @@ public class IssueLockTest
   @Test
   public void updatePreservesCreatedAt() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -789,7 +791,7 @@ public class IssueLockTest
   @Test
   public void lockFileSanitizesBackslashesInIssueId() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -819,7 +821,7 @@ public class IssueLockTest
   @Test
   public void lockFileSanitizesColonsInIssueId() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -849,7 +851,7 @@ public class IssueLockTest
   @Test
   public void acquireStoresSessionIdInLockFile() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -882,7 +884,7 @@ public class IssueLockTest
   @Test
   public void updateAddsWorktreeToLockFile() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -915,7 +917,7 @@ public class IssueLockTest
   @Test
   public void updateStoresSessionIdInWorktreesMap() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -952,7 +954,7 @@ public class IssueLockTest
   @Test
   public void acquireRejectsLockRefreshedByConcurrentSession() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -1006,23 +1008,6 @@ public class IssueLockTest
   }
 
   /**
-   * Creates a temporary CAT project directory for test isolation.
-   *
-   * @return the path to the created temporary directory
-   */
-  private Path createTempProject()
-  {
-    try
-    {
-      return Files.createTempDirectory("issue-lock-test");
-    }
-    catch (IOException e)
-    {
-      throw WrappedCheckedException.wrap(e);
-    }
-  }
-
-  /**
    * Verifies that acquire overwrites a stale lock from a different session.
    *
    * @throws IOException if an I/O error occurs
@@ -1030,7 +1015,7 @@ public class IssueLockTest
   @Test
   public void acquireOverwritesStaleLockFromDifferentSession() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try
@@ -1091,7 +1076,7 @@ public class IssueLockTest
   @Test
   public void acquireRejectsNonStaleLockFromDifferentSession() throws IOException
   {
-    Path tempDir = createTempProject();
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       try

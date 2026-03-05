@@ -32,7 +32,8 @@ public class SkillLoaderTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*scope.*")
   public void constructorRejectsNullScope() throws IOException
   {
     new SkillLoader(null, List.of("session123"));
@@ -43,7 +44,8 @@ public class SkillLoaderTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*catAgentId is required.*")
   public void constructorRejectsEmptySkillArgs() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -107,7 +109,8 @@ public class SkillLoaderTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IOException.class)
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*Plugin root directory does not exist.*")
   public void constructorFailsWhenPluginRootDoesNotExist() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("test-plugin-");
@@ -333,7 +336,8 @@ Full skill content
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*skillName.*")
   public void loadRejectsNullSkillName() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
@@ -354,7 +358,8 @@ Full skill content
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*skillName.*")
   public void loadRejectsEmptySkillName() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
@@ -551,7 +556,8 @@ Root: ${CLAUDE_PLUGIN_ROOT}
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IOException.class)
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*@path reference.*not found.*")
   public void loadRejectsMissingPathFile() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
@@ -2521,7 +2527,8 @@ Prefixed skill content
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*contains path traversal.*")
   public void constructorRejectsAgentIdWithPathTraversal() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -2540,7 +2547,8 @@ Prefixed skill content
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*contains path traversal.*")
   public void constructorRejectsAgentIdWithAbsolutePath() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");

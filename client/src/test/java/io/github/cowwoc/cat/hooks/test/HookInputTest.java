@@ -25,7 +25,8 @@ public final class HookInputTest
   /**
    * Verifies that a session ID containing path traversal characters throws IllegalArgumentException.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid session_id format.*")
   public void invalidSessionIdThrowsException()
   {
     JsonMapper mapper = JsonMapper.builder().build();
@@ -54,7 +55,8 @@ public final class HookInputTest
   /**
    * Verifies that a session ID with slash characters throws IllegalArgumentException.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid session_id format.*")
   public void sessionIdWithSlashThrowsException()
   {
     JsonMapper mapper = JsonMapper.builder().build();
@@ -125,7 +127,8 @@ public final class HookInputTest
   /**
    * Verifies that a session ID containing a dollar sign throws IllegalArgumentException.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid session_id format.*")
   public void sessionIdWithDollarSignThrowsException()
   {
     JsonMapper mapper = JsonMapper.builder().build();
@@ -137,7 +140,8 @@ public final class HookInputTest
   /**
    * Verifies that a session ID containing a space throws IllegalArgumentException.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid session_id format.*")
   public void sessionIdWithSpaceThrowsException()
   {
     JsonMapper mapper = JsonMapper.builder().build();

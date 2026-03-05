@@ -12,6 +12,7 @@ import io.github.cowwoc.cat.hooks.util.ExistingWorkChecker.CheckResult;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.testng.annotations.Test;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.ByteArrayOutputStream;
@@ -239,7 +240,7 @@ public class ExistingWorkCheckerTest
   }
 
   /**
-   * Verifies that toJson produces correct format for no existing work.
+   * Verifies that toJson produces correct field values for no existing work.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -252,17 +253,16 @@ public class ExistingWorkCheckerTest
 
       JsonMapper mapper = scope.getJsonMapper();
       String json = result.toJson(mapper);
+      JsonNode parsed = mapper.readTree(json);
 
-      requireThat(json, "json").contains("\"has_existing_work\"");
-      requireThat(json, "json").contains("false");
-      requireThat(json, "json").contains("\"existing_commits\"");
-      requireThat(json, "json").contains("0");
-      requireThat(json, "json").contains("\"commit_summary\"");
+      requireThat(parsed.get("has_existing_work").asBoolean(), "has_existing_work").isFalse();
+      requireThat(parsed.get("existing_commits").asInt(), "existing_commits").isEqualTo(0);
+      requireThat(parsed.get("commit_summary").asString(), "commit_summary").isEqualTo("");
     }
   }
 
   /**
-   * Verifies that toJson produces correct format for existing work.
+   * Verifies that toJson produces correct field values for existing work.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -275,13 +275,12 @@ public class ExistingWorkCheckerTest
 
       JsonMapper mapper = scope.getJsonMapper();
       String json = result.toJson(mapper);
+      JsonNode parsed = mapper.readTree(json);
 
-      requireThat(json, "json").contains("\"has_existing_work\"");
-      requireThat(json, "json").contains("true");
-      requireThat(json, "json").contains("\"existing_commits\"");
-      requireThat(json, "json").contains("3");
-      requireThat(json, "json").contains("\"commit_summary\"");
-      requireThat(json, "json").contains("abc1234");
+      requireThat(parsed.get("has_existing_work").asBoolean(), "has_existing_work").isTrue();
+      requireThat(parsed.get("existing_commits").asInt(), "existing_commits").isEqualTo(3);
+      requireThat(parsed.get("commit_summary").asString(), "commit_summary").
+        isEqualTo("abc1234 First|def5678 Second");
     }
   }
 

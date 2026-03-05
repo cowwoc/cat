@@ -12,7 +12,6 @@ import io.github.cowwoc.cat.hooks.util.IssueDiscovery;
 import io.github.cowwoc.cat.hooks.util.IssueDiscovery.DiscoveryResult;
 import io.github.cowwoc.cat.hooks.util.IssueDiscovery.SearchOptions;
 import io.github.cowwoc.cat.hooks.util.IssueDiscovery.Scope;
-import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import tools.jackson.databind.json.JsonMapper;
@@ -41,7 +40,7 @@ public class IssueDiscoveryTest
   @Test
   public void findsOpenIssueWhenScanningAll() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -75,7 +74,7 @@ public class IssueDiscoveryTest
   @Test
   public void findsInProgressIssue() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -104,7 +103,7 @@ public class IssueDiscoveryTest
   @Test
   public void doesNotReturnClosedIssue() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -133,7 +132,7 @@ public class IssueDiscoveryTest
   @Test
   public void doesNotReturnBlockedStatusIssue() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -162,7 +161,7 @@ public class IssueDiscoveryTest
   @Test
   public void findsSpecificIssueById() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -194,7 +193,7 @@ public class IssueDiscoveryTest
   @Test
   public void specificIssueAlreadyClosedReturnsAlreadyComplete() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -225,7 +224,7 @@ public class IssueDiscoveryTest
   @Test
   public void specificIssueNotFoundReturnsNotFound() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -253,7 +252,7 @@ public class IssueDiscoveryTest
   @Test
   public void issueWithUnsatisfiedDependenciesIsSkipped() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -289,7 +288,7 @@ public class IssueDiscoveryTest
   @Test
   public void issueWithSatisfiedDependenciesIsEligible() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -323,7 +322,7 @@ public class IssueDiscoveryTest
   @Test
   public void specificIssueWithUnsatisfiedDependenciesReturnsBlocked() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -359,7 +358,7 @@ public class IssueDiscoveryTest
   @Test
   public void decomposedParentWithOpenSubissuesIsSkipped() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -395,7 +394,7 @@ public class IssueDiscoveryTest
   @Test
   public void decomposedParentWithAllSubissuesClosedIsEligible() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -428,7 +427,7 @@ public class IssueDiscoveryTest
   @Test
   public void issuesMatchingExcludePatternAreSkipped() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -459,7 +458,7 @@ public class IssueDiscoveryTest
   @Test
   public void minorScopeSearchesOnlySpecifiedVersion() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -491,7 +490,7 @@ public class IssueDiscoveryTest
   @Test
   public void bareNameScopeFindsIssueByBaseName() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -522,7 +521,7 @@ public class IssueDiscoveryTest
   @Test
   public void returnsNotFoundWhenNoIssuesExist() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -655,7 +654,7 @@ public class IssueDiscoveryTest
   @Test
   public void issueWithExistingWorktreeIsSkipped() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -692,7 +691,7 @@ public class IssueDiscoveryTest
   @Test
   public void specificIssueWithExistingWorktreeReturnsExistingWorktree() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -727,7 +726,7 @@ public class IssueDiscoveryTest
   @Test
   public void postconditionIssueIsEnforcedWhenPrerequisitesAreOpen() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -765,7 +764,7 @@ public class IssueDiscoveryTest
   @Test
   public void majorScopeSearchesOnlySpecifiedVersion() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -797,7 +796,7 @@ public class IssueDiscoveryTest
   @Test
   public void postconditionIssueSkippedWhenOverridePostconditionsIsTrue() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -907,7 +906,7 @@ public class IssueDiscoveryTest
   @Test
   public void versionWithUnsatisfiedDependenciesIsSkipped() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -945,7 +944,7 @@ public class IssueDiscoveryTest
   @Test
   public void blockedResultContainsAllUnsatisfiedDependencies() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -987,7 +986,7 @@ public class IssueDiscoveryTest
   @Test
   public void bareNameWithMultipleMatchesSelectsFirstVersionInSortOrder() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -1022,7 +1021,7 @@ public class IssueDiscoveryTest
   @Test
   public void excludePatternWithRegexSpecialCharsWorksCorrectly() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -1057,7 +1056,7 @@ public class IssueDiscoveryTest
   @Test
   public void findsPatchLevelIssue() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -1092,7 +1091,7 @@ public class IssueDiscoveryTest
   @Test
   public void specificPatchLevelIssueById() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -1125,7 +1124,7 @@ public class IssueDiscoveryTest
   @Test
   public void bareNameResolvesPatchLevelIssue() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -1185,7 +1184,7 @@ public class IssueDiscoveryTest
   @Test
   public void findsMajorOnlyIssue() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -1220,7 +1219,7 @@ public class IssueDiscoveryTest
   @Test
   public void specificMajorOnlyIssueById() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -1255,7 +1254,7 @@ public class IssueDiscoveryTest
   @Test
   public void bareNameResolvesMajorOnlyIssue() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -1305,26 +1304,6 @@ public class IssueDiscoveryTest
       requireThat(json, "json").doesNotContain("\"patch\"");
       requireThat(json, "json").contains("\"lock_status\"");
       requireThat(json, "json").contains("\"acquired\"");
-    }
-  }
-
-  /**
-   * Creates a temporary CAT project directory for test isolation.
-   *
-   * @return the path to the created temporary directory
-   */
-  private Path createTempProject()
-  {
-    try
-    {
-      Path projectDir = Files.createTempDirectory("issue-discovery-test");
-      Path catDir = projectDir.resolve(".claude").resolve("cat");
-      Files.createDirectories(catDir.resolve("issues"));
-      return projectDir;
-    }
-    catch (IOException e)
-    {
-      throw WrappedCheckedException.wrap(e);
     }
   }
 
@@ -1529,7 +1508,7 @@ public class IssueDiscoveryTest
   @Test
   public void issueInSimpleCircularDependencyIsBlocked() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -1561,7 +1540,7 @@ public class IssueDiscoveryTest
   @Test
   public void issueInComplexCircularDependencyIsBlocked() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -1594,7 +1573,7 @@ public class IssueDiscoveryTest
   @Test
   public void issueNotInCycleIsFoundDespiteExistingCycle() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -1694,7 +1673,7 @@ public class IssueDiscoveryTest
   @Test
   public void nonGitEnvironmentFallsBackToAlphabeticalSort() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -1822,7 +1801,7 @@ public class IssueDiscoveryTest
   @Test
   public void findIssueInDirIncludesPlanMdOnlyDir() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -1860,7 +1839,7 @@ public class IssueDiscoveryTest
   @Test
   public void hasOpenIssuesReturnsTrueForPlanMdOnlyDir() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try
@@ -1926,7 +1905,7 @@ public class IssueDiscoveryTest
   @Test
   public void findSpecificIssueWithNullStateMdTreatsAsOpen() throws IOException
   {
-    Path projectDir = createTempProject();
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       try

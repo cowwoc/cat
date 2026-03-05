@@ -1847,7 +1847,8 @@ public final class SessionAnalyzerTest
    *
    * @throws IOException if file operations fail
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*filePath.*")
   public void toolCallSequencesThrowsNullPointerExceptionForNullFilePath() throws IOException
   {
     SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());

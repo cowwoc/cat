@@ -516,7 +516,8 @@ public class SessionStartHookTest
    * this validation is defense-in-depth for injected values; the test uses Path.of() to bypass filesystem
    * restrictions.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*contains a dangerous shell character.*")
   public void injectEnvRejectsDangerousShellCharacterInProjectDir() throws IOException
   {
     Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
@@ -561,7 +562,8 @@ public class SessionStartHookTest
    * Since validateEnvValue is private, this test exercises it indirectly by injecting a path containing
    * {@code "} via TestJvmScope. The test uses Path.of() to bypass filesystem restrictions.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*contains a dangerous shell character.*")
   public void injectEnvRejectsDoubleQuoteInProjectDir() throws IOException
   {
     Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
@@ -605,7 +607,8 @@ public class SessionStartHookTest
    * Since validateEnvValue is private, this test exercises it indirectly by injecting a path containing
    * a backtick via TestJvmScope. The test uses Path.of() to bypass filesystem restrictions.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*contains a dangerous shell character.*")
   public void injectEnvRejectsBacktickInProjectDir() throws IOException
   {
     Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
@@ -649,7 +652,8 @@ public class SessionStartHookTest
    * Since validateEnvValue is private, this test exercises it indirectly by injecting a path containing
    * a newline via TestJvmScope. The test uses Path.of() to bypass filesystem restrictions.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*contains a dangerous shell character.*")
   public void injectEnvRejectsNewlineInProjectDir() throws IOException
   {
     Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
@@ -795,7 +799,8 @@ public class SessionStartHookTest
    * Since validateEnvValue is private, this test exercises it indirectly by injecting a path containing
    * {@code $} via TestJvmScope. The test uses Path.of() to bypass filesystem restrictions.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*contains a dangerous shell character.*")
   public void injectEnvRejectsDangerousShellCharacterInPluginRoot() throws IOException
   {
     Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
@@ -839,7 +844,8 @@ public class SessionStartHookTest
    * The session_id value is validated before being written into the env file. Injecting a dangerous
    * character via the JSON input must cause an immediate failure.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid session_id format.*")
   public void injectEnvRejectsDangerousShellCharacterInSessionId() throws IOException
   {
     Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
@@ -1316,7 +1322,8 @@ public class SessionStartHookTest
   /**
    * Verifies that Result constructor rejects null additionalContext.
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*additionalContext.*")
   public void resultRejectsNullContext()
   {
     new SessionStartHandler.Result(null, "");
@@ -1325,7 +1332,8 @@ public class SessionStartHookTest
   /**
    * Verifies that Result constructor rejects null stderr.
    */
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*stderr.*")
   public void resultRejectsNullStderr()
   {
     new SessionStartHandler.Result("", null);
@@ -1406,7 +1414,8 @@ public class SessionStartHookTest
   /**
    * Verifies that getPluginVersion throws when client/VERSION is not found.
    */
-  @Test(expectedExceptions = AssertionError.class)
+  @Test(expectedExceptions = AssertionError.class,
+    expectedExceptionsMessageRegExp = ".*Plugin version not found.*")
   public void getPluginVersionThrowsForMissingVersionFile() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-test-version-");
@@ -1465,7 +1474,8 @@ public class SessionStartHookTest
   /**
    * Verifies that getPluginVersion throws for an invalid version format.
    */
-  @Test(expectedExceptions = AssertionError.class)
+  @Test(expectedExceptions = AssertionError.class,
+    expectedExceptionsMessageRegExp = ".*Invalid version format.*")
   public void getPluginVersionThrowsForInvalidFormat() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-test-version-");
@@ -1485,7 +1495,8 @@ public class SessionStartHookTest
   /**
    * Verifies that getPluginVersion throws for an empty VERSION file.
    */
-  @Test(expectedExceptions = AssertionError.class)
+  @Test(expectedExceptions = AssertionError.class,
+    expectedExceptionsMessageRegExp = ".*Invalid version format.*")
   public void getPluginVersionThrowsForEmptyFile() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-test-version-");
