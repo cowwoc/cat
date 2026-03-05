@@ -2,7 +2,9 @@
 
 ## Goal
 Fix the skill-loader so that `*-agent` skills (e.g., `add-agent`) correctly load their parent skill's
-`first-use.md` content when invoked via the Skill tool, instead of silently returning empty content.
+`first-use.md` content when invoked via the Skill tool, and make `first-use.md` mandatory for all skills
+that use skill-loader — throwing `FileNotFoundException` if neither the skill's own nor its parent's
+`first-use.md` exists.
 
 ## Background
 When `cat:add-agent` is invoked via the Skill tool, only "Base directory for this skill: ..." is shown —
@@ -12,10 +14,15 @@ no AskUserQuestion, no instructions, nothing. Investigation shows:
 - But content loading looks for `add-agent/first-use.md` (which doesn't exist) and returns empty string
 - The parent skill `add/first-use.md` exists and contains the full AskUserQuestion workflow
 
-**Scope:** 20 `-agent` skills are affected — all those missing `first-use.md` where the parent skill
-(same name without `-agent` suffix) has a `first-use.md`. 4 skills intentionally have no parent
+**Why mandatory `first-use.md`:** Skills that use `skill-loader` opt into the first-use/reference
+mechanism. If a skill uses `skill-loader` but has no `first-use.md`, its instructions live only in
+`SKILL.md` and get re-injected on every invocation, wasting context. A missing `first-use.md` is a
+configuration error that should fail fast, not silently return empty.
+
+**Scope:** 20 `-agent` skills are affected by the fallback fix. 4 internal skills
 (`extract-investigation-context-agent`, `stakeholder-concern-box-agent`,
-`stakeholder-review-box-agent`, `stakeholder-selection-box-agent`) and are unaffected.
+`stakeholder-review-box-agent`, `stakeholder-selection-box-agent`) are unaffected because they
+call other binaries directly and do not use `skill-loader`.
 
 **Affected skills (20):**
 add-agent, cleanup-agent, config-agent, empirical-test-agent, feedback-agent, get-output-agent,
@@ -28,12 +35,14 @@ retrospective-agent, shrink-doc-agent, status-agent, statusline-agent, work-agen
 
 ## Risk Assessment
 - **Risk Level:** LOW
-- **Concerns:** Must not change behavior for skills that intentionally return empty (internal skills)
-- **Mitigation:** Only fall back to parent when (a) `-agent` suffix detected AND (b) parent exists with first-use.md
+- **Concerns:** Must not break skills that don't use skill-loader (the 4 internal skills are unaffected)
+- **Mitigation:** Only skills invoking skill-loader go through `loadRawContent`; the exception catches
+  future misconfigurations where a skill uses skill-loader without a `first-use.md`
 
 ## Files to Modify
-- `client/src/main/java/.../SkillLoader.java` — add fallback: when loading `{name}-agent` and
-  `{name}-agent/first-use.md` is missing, check if `{name}/first-use.md` exists and load that instead
+- `client/src/main/java/.../SkillLoader.java` — add `-agent` fallback and throw `FileNotFoundException`
+  when no `first-use.md` is found
+- `client/src/test/java/.../SkillLoaderTest.java` — update tests
 
 ## Pre-conditions
 - [ ] All dependent issues are closed
@@ -41,17 +50,21 @@ retrospective-agent, shrink-doc-agent, status-agent, statusline-agent, work-agen
 ## Execution Waves
 
 ### Wave 1
-- Read `SkillLoader.java` to understand current content loading logic
+- Add fallback logic in `loadRawContent`: when loading `{skill}-agent` and `{skill}-agent/first-use.md`
+  is missing, check for `{skill}/first-use.md`
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/SkillLoader.java`
-- Add fallback logic: after failing to find `{skill}-agent/first-use.md`, check for `{skill}/first-use.md`
+- Change `loadRawContent` to throw `FileNotFoundException` instead of returning `""` when no
+  `first-use.md` is found (neither own nor parent)
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/SkillLoader.java`
-- Write a test that verifies `add-agent` returns the same content as `add` when invoked without its own
-  first-use.md
-  - Files: `client/src/test/java/.../SkillLoaderTest.java` (or equivalent)
+- Update test `agentSkillWithNoParentReturnsEmpty` → `agentSkillWithNoParentThrowsException`
+  - Files: `client/src/test/java/.../SkillLoaderTest.java`
+- Update test `loadHandlesMissingContentFile` to expect `FileNotFoundException` instead of empty result
+  - Files: `client/src/test/java/.../SkillLoaderTest.java`
 
 ## Post-conditions
 - [ ] `SkillLoader.java` falls back to parent skill's `first-use.md` when `*-agent` variant has none
+- [ ] `SkillLoader.java` throws `FileNotFoundException` when no `first-use.md` exists (own or parent)
 - [ ] Invoking `cat:add-agent` via Skill tool displays the full AskUserQuestion workflow from `add/first-use.md`
-- [ ] The 4 intentionally-internal skills (no parent) continue to return empty content
+- [ ] The 4 internal skills (which don't use skill-loader) are unaffected
 - [ ] All existing tests pass
 - [ ] Manual verification: invoke `cat:add-agent` — AskUserQuestion is shown for issue type selection
