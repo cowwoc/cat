@@ -23,5 +23,5 @@ Record demo videos showcasing CAT features for marketing and documentation.
 - planning-research-demo
 - precompile-autolearn-pattern-constants
 
-## Issues Completed
+## Issues Closed
 (None)

@@ -12,7 +12,7 @@
 ## Summary
 Prepare CAT for commercial release with pricing tiers and license key system.
 
-## Issues Completed
+## Issues Closed
 - reorganize-plugin-layout
 - add-clear-guidance-to-next-steps
 - add-display-redesign

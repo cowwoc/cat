@@ -117,14 +117,6 @@ fi
    - Open the file for editing: `$VERSION_CHANGELOG`
    - Return to this step after edits are saved
 
-4. **Update Completed date**:
-
-   ```bash
-   TODAY=$(date +%Y-%m-%d)
-   sed -i "s/\*\*Completed\*\*: (in progress)/\*\*Completed\*\*: $TODAY/" "$VERSION_CHANGELOG"
-   sed -i "s/\*\*Completed\*\*: (pending)/\*\*Completed\*\*: $TODAY/" "$VERSION_CHANGELOG"
-   ```
-
 ### Update Root CHANGELOG.md
 
 **MANDATORY**: Copy the version's release notes to the root CHANGELOG.md.
@@ -160,7 +152,7 @@ fi
    # Skip any existing "In Development" section for this version
    ```
 
-   **Note**: If an "In Development" entry exists for this version, replace it with the completed entry.
+   **Note**: If an "In Development" entry exists for this version, replace it with the closed entry.
 
 4. **Commit CHANGELOG updates**:
 
