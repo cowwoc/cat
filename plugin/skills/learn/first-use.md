@@ -96,6 +96,11 @@ Delegate to general-purpose subagent using the Task tool with these JSON paramet
 > ```
 > **IMPORTANT:** This context is a starting-point index to help you navigate the JSONL file more efficiently. It is NOT the authoritative source of events or evidence. JSONL is the authoritative source for what the agent actually received. Always verify critical findings by searching the JSONL directly (using session-analyzer), especially when investigating priming, documentation corruption, or timeline discrepancies.
 >
+> **Anti-fabrication rule:** `prevention_commit_hash`, `retrospective_commit_hash`, and `prevention_implemented`
+> MUST reflect actual actions taken. Do NOT fill in plausible-looking values. If no commit was made, set the
+> hash field to `null`. If prevention was not implemented, set `prevention_implemented` to `false`. Fabricated
+> values corrupt the learning record and will be discovered on review.
+>
 > **Your FINAL message must be ONLY the JSON result object below — no surrounding text, no explanation.**
 > This is critical because the parent agent parses your response as JSON.
 >

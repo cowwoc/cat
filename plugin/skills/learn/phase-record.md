@@ -362,9 +362,9 @@ Your final message MUST be ONLY this JSON (no other text):
   "memory_updated": true,
   "counter_updated": true,
   "prevention_committed": true,
-  "prevention_commit_hash": "abc1234",
+  "prevention_commit_hash": "<actual-git-hash-or-null>",
   "retrospective_committed": true,
-  "retrospective_commit_hash": "def5678",
+  "retrospective_commit_hash": "<actual-git-hash-or-null>",
   "retrospective_triggered": false,
   "retrospective_status": "5/10 mistakes, 3/7 days"
 }
