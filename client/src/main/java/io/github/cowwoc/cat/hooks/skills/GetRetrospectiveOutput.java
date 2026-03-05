@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.hooks.skills;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.Strings;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -332,7 +333,7 @@ public final class GetRetrospectiveOutput implements SkillOutput
     for (JsonNode item : actionItems)
     {
       String id = extractString(item, "id", "");
-      if (id.isEmpty())
+      if (id.isBlank())
         continue;
 
       JsonNode effectivenessCheck = item.get("effectiveness_check");
@@ -340,11 +341,11 @@ public final class GetRetrospectiveOutput implements SkillOutput
         continue;
 
       String verdict = extractString(effectivenessCheck, "verdict", "");
-      if (!verdict.isEmpty())
+      if (!verdict.isBlank())
       {
         String description = extractString(item, "description", "");
-        String truncated = truncateDescription(description, 60);
-        if (truncated.isEmpty())
+        String truncated = Strings.truncate(description, Strings.DESCRIPTION_MAX_LENGTH);
+        if (truncated.isBlank())
           lines.add("%s: %s".formatted(id, verdict));
         else
           lines.add("%s: %s - %s".formatted(id, verdict, truncated));
@@ -372,20 +373,21 @@ public final class GetRetrospectiveOutput implements SkillOutput
     for (JsonNode pattern : patterns)
     {
       String status = extractString(pattern, "status", "");
-      if (status.isEmpty() || status.equals("addressed"))
+      if (status.isBlank() || status.equals("addressed"))
         continue;
 
       String id = extractString(pattern, "pattern_id", "");
-      if (id.isEmpty())
+      if (id.isBlank())
         continue;
 
       int total = extractInt(pattern, "occurrences_total", 0);
       int after = extractInt(pattern, "occurrences_after_fix", 0);
       String patternName = extractString(pattern, "pattern", "");
-      if (patternName.isEmpty())
+      if (patternName.isBlank())
         lines.add("%s: %s (occurrences: %d/%d)".formatted(id, status, total, after));
       else
-        lines.add("%s: %s (occurrences: %d/%d) - %s".formatted(id, status, total, after, patternName));
+        lines.add("%s: %s (occurrences: %d/%d) - %s".formatted(id, status, total, after,
+          Strings.truncate(patternName, Strings.DESCRIPTION_MAX_LENGTH)));
     }
 
     if (lines.isEmpty())
@@ -528,21 +530,6 @@ public final class GetRetrospectiveOutput implements SkillOutput
     if (child != null && child.isString())
       return child.asString();
     return defaultValue;
-  }
-
-  /**
-   * Truncates a description string to the specified maximum length, appending {@code "..."} if truncated.
-   *
-   * @param description the description to truncate
-   * @param maxLength the maximum allowed length of the result
-   * @return the original description if it fits within {@code maxLength}, or a truncated version ending with
-   *   {@code "..."}
-   */
-  private static String truncateDescription(String description, int maxLength)
-  {
-    if (description.length() <= maxLength)
-      return description;
-    return description.substring(0, maxLength - 3) + "...";
   }
 
   /**
