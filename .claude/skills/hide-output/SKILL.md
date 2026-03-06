@@ -1,4 +1,4 @@
----
+Up---
 description: Apply silent preprocessing or skill chaining to hide undesirable tool output from users
 ---
 
@@ -84,8 +84,8 @@ Skill B (renderer):
 Use when multiple invisible data-gathering steps must precede skill execution.
 
 **Implementation**:
-1. Create a Python handler in `plugin/hooks/skill_handlers/`
-2. Handler runs subprocess calls invisibly during skill loading
+1. Create a Java handler in `client/src/` (preferred) or a Bash script in `plugin/scripts/`
+2. Handler runs invisibly during skill loading via the jlink binary
 3. Handler returns JSON data + rendered banners via `additionalContext`
 4. Skill parses handler output and proceeds with meaningful work
 
@@ -110,7 +110,7 @@ Based on the classification from Step 2, implement the appropriate pattern.
 ### For Direct Preprocessing
 
 1. **Create the script**:
-   - Location: `plugin/scripts/<descriptive-name>.sh` (or `.py`)
+   - Location: `plugin/scripts/<descriptive-name>.sh` (Bash) or `client/src/` (Java, preferred)
    - Script must be executable (`chmod +x`)
    - Script reads all needed data from environment/files
    - Script outputs the final formatted content to stdout
@@ -147,9 +147,9 @@ Based on the classification from Step 2, implement the appropriate pattern.
 ### For Handler Chain
 
 1. **Create the handler**:
-   - Location: `plugin/hooks/skill_handlers/<name>_handler.py`
-   - Implement `handle(self, context: dict) -> str | None`
-   - Register in `plugin/hooks/skill_handlers/__init__.py`
+   - Preferred: Java class in `client/src/` bundled via jlink
+   - Alternative: Bash script in `plugin/scripts/`
+   - Handler runs invisibly and returns structured output
 
 2. **Move data collection into the handler**:
    - All file reads, config parsing, discovery logic
@@ -173,7 +173,7 @@ Based on the classification from Step 2, implement the appropriate pattern.
 
 3. **Run tests** if the modified handler has test coverage:
    ```bash
-   python3 /workspace/run_tests.py
+   mvn -f client/pom.xml test
    ```
 
 ## Step 5: Commit
