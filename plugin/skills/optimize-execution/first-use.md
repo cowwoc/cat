@@ -306,6 +306,9 @@ Compile analysis into actionable recommendations based on the skill output:
    estimated turns meet the "Delegate?" threshold, emit a `delegation_opportunity` entry
 8. **Token optimization**: Use `token_usage` to identify high-cost operations
 9. **Output management**: Use `output_sizes` and UX categorization to suggest hiding/summarizing patterns
+10. **Content relay detection**: Identify main agent Read/Grep/Bash calls whose output is only used to populate
+    a subagent prompt. Recommend letting the subagent load its own content instead. Exception: content the main
+    agent already had in context for its own decision-making may be passed to avoid a redundant subagent read.
 
 Generate a comprehensive analysis report with specific recommendations for:
 - Which operations to batch together
@@ -348,6 +351,38 @@ branching, no user interaction) is a candidate for script extraction.
 deterministic execution, and produces fewer tool call round-trips.
 
 See `/cat:skill-builder-agent` for the full script extraction architecture and hybrid workflow pattern.
+
+#### Subagent Content Relay Anti-Pattern
+
+**Definition**: The main agent reads files or runs commands it does not need for its own work, solely
+to pass the output to a subagent prompt. This bloats the main agent's context without benefit — the
+subagent could read the files directly at lower token cost.
+
+**Detection Criteria**: A Read, Grep, or Bash call on the main agent whose output is:
+1. Not referenced in any main agent reasoning or decision
+2. Included verbatim (or near-verbatim) in the next Agent/Task tool call's prompt
+3. Content that the subagent could obtain independently (files on disk, git commands)
+
+**Correct pattern — let subagents load their own content:**
+- Main agent provides the subagent with *file paths*, *search terms*, or *task descriptions*
+- Subagent reads files and runs commands in its own context (cheaper tokens, isolated context)
+- Main agent context stays lean for orchestration decisions
+
+**Correct pattern — pass content already in context:**
+- If the main agent already read a file for its own decision-making (e.g., reviewing PLAN.md to
+  choose which phase to run), it MAY include that content in the subagent prompt to save a
+  redundant read
+- The key distinction: the main agent read it for *its own purpose first*, not as a relay
+
+**Anti-pattern examples:**
+- Reading 5 source files before spawning an implementation subagent, just to paste them into the
+  prompt
+- Running `git diff` before spawning a review subagent, when the subagent can run `git diff` itself
+- Reading test output to relay to a fix subagent, when the fix subagent can re-run tests
+
+**Impact**: Each relayed file adds its full content to the main agent's context window permanently,
+compounding with every subsequent main agent turn. For a 500-line file (~2k tokens), relaying
+instead of letting the subagent read it costs `2k * remaining_main_turns` additional tokens.
 
 ### Step 6: Present Results
 
