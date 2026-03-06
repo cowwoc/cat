@@ -46,9 +46,15 @@ TARGET_BRANCH is required. The tool outputs JSON.
 
 | Status | Meaning | Agent Recovery Action |
 |--------|---------|----------------------|
-| `OK` | Rebase completed successfully | Report commits rebased, verify no content changes |
+| `OK` | Rebase completed successfully | Report commits rebased, verify no content changes. Delete backup branch (see below). |
 | `CONFLICT` | Rebase stopped due to conflicts | Agent examines conflicting_files and decides: manual resolution, alternative strategy, or abort. Backup preserved at backup_branch. Delete backup after resolution is complete. |
 | `ERROR` | Rebase failed (not a conflict) | Check backup_branch and error message. Restore from backup if needed. Delete backup after the error is handled. |
+
+**On OK status:** After a successful rebase:
+- Delete the backup: `git branch -D <backup_branch>`
+- If this rebase was a retry after a prior failed attempt, also delete the prior attempt's backup branch
+  (branches matching `backup-before-rebase-*`)
+- The backup exists only during verification — leaving it permanently clutters the repository
 
 **On CONFLICT status:** Agent should examine the conflicting files to determine the best strategy:
 - If conflicts are simple (whitespace, formatting), attempt manual resolution
