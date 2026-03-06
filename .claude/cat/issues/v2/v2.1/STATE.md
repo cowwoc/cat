@@ -22,6 +22,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-disable-model-invocation-docs
 - refactor-eliminate-content-relay
 - split-execution-waves-into-agent-sections
+- extract-shared-planning-approach
 
 
 ## Issues Closed
