@@ -16,20 +16,30 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.util.Optional;
 
 /**
- * Restores the agent's working directory after context compaction.
+ * Restores the agent's working directory and deferred tool state after context compaction.
  * <p>
- * When a session is compacted ({@code source} is {@code "compact"}), this handler reads the
- * session's CWD file from the session CAT storage location
- * ({@code {claudeConfigDir}/projects/{encodedProjectDir}/{sessionId}/cat/session.cwd}) written by
- * {@link PreCompactHook}. If the file exists and the recorded path is still a live directory,
- * additional context is injected instructing the agent to {@code cd} back into that path.
+ * When a session is compacted ({@code source} is {@code "compact"}), this handler:
+ * <ol>
+ *   <li>Injects an instruction to batch-load all commonly-needed deferred tools in a single
+ *       ToolSearch call, avoiding the 7-10 sequential round-trips that occur without this
+ *       instruction.</li>
+ *   <li>Reads the session's CWD file from the session CAT storage location
+ *       ({@code {claudeConfigDir}/projects/{encodedProjectDir}/{sessionId}/cat/session.cwd}) written
+ *       by {@link PreCompactHook}. If the file exists and the recorded path is still a live
+ *       directory, additional context is injected instructing the agent to {@code cd} back into that
+ *       path.</li>
+ * </ol>
  */
 public final class RestoreCwdAfterCompaction implements SessionStartHandler
 {
+  public static final String BATCH_TOOLSEARCH_INSTRUCTION = """
+    After context compaction, batch-load all commonly-needed deferred tools in a single \
+    ToolSearch call using comma-separated select syntax: \
+    `select:Bash,Read,Edit,Grep,Write,Agent,Skill,AskUserQuestion`""";
   private final Logger log = LoggerFactory.getLogger(RestoreCwdAfterCompaction.class);
   private final JvmScope scope;
 
@@ -49,19 +59,22 @@ public final class RestoreCwdAfterCompaction implements SessionStartHandler
   public Result handle(HookInput input)
   {
     requireThat(input, "input").isNotNull();
-
     String source = input.getString("source");
     if (!source.equals("compact"))
       return Result.empty();
 
-    String sessionId = input.getSessionId();
-    if (sessionId.isBlank())
-      return Result.empty();
+    Optional<String> cdInstruction = resolveCdInstruction();
+    String context = cdInstruction.
+      map(cd -> cd + "\n\n" + BATCH_TOOLSEARCH_INSTRUCTION).
+      orElse(BATCH_TOOLSEARCH_INSTRUCTION);
+    return Result.context(context);
+  }
 
+  private Optional<String> resolveCdInstruction()
+  {
     Path cwdFile = scope.getSessionCatDir().resolve("session.cwd");
-
-    if (!Files.exists(cwdFile))
-      return Result.empty();
+    if (Files.notExists(cwdFile))
+      return Optional.empty();
 
     String savedPath;
     try
@@ -71,21 +84,21 @@ public final class RestoreCwdAfterCompaction implements SessionStartHandler
     catch (IOException e)
     {
       log.debug("Failed to read .cwd file {}: {}", cwdFile, e.getMessage());
-      return Result.empty();
+      return Optional.empty();
     }
 
     if (savedPath.isBlank())
-      return Result.empty();
+      return Optional.empty();
 
     Path savedDir = Path.of(savedPath);
-    if (!Files.isDirectory(savedDir, LinkOption.NOFOLLOW_LINKS))
-      return Result.empty();
+    if (!Files.isDirectory(savedDir))
+      return Optional.empty();
 
-    String context = """
+    String instruction = """
       Your context was compacted. Your previous working directory was: %s
 
-      Run `cd %s` once now, then continue working from that directory.\
-      """.formatted(savedPath, savedPath);
-    return Result.context(context);
+      Run `cd %s` once now, then continue working from that directory.""".
+      formatted(savedPath, savedPath);
+    return Optional.of(instruction);
   }
 }

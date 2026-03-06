@@ -41,8 +41,8 @@ public final class RestoreCwdAfterCompactionTest
   }
 
   /**
-   * Verifies that handle() injects a cd instruction when source is "compact" and the .cwd file
-   * exists with a valid directory path.
+   * Verifies that handle() injects a cd instruction and the batch ToolSearch instruction when
+   * source is "compact" and the .cwd file exists with a valid directory path.
    */
   @Test
   public void compactSourceWithExistingCwdFileInjectsContext() throws IOException
@@ -68,6 +68,8 @@ public final class RestoreCwdAfterCompactionTest
 
       requireThat(result.additionalContext(), "additionalContext").contains("cd");
       requireThat(result.additionalContext(), "additionalContext").contains(savedDir.toString());
+      requireThat(result.additionalContext(), "additionalContext").
+        contains(RestoreCwdAfterCompaction.BATCH_TOOLSEARCH_INSTRUCTION);
       requireThat(result.stderr(), "stderr").isEmpty();
     }
     finally
@@ -77,10 +79,10 @@ public final class RestoreCwdAfterCompactionTest
   }
 
   /**
-   * Verifies that handle() returns empty when source is "compact" but no .cwd file exists.
+   * Verifies that handle() injects the batch ToolSearch instruction even when no .cwd file exists.
    */
   @Test
-  public void compactSourceWithNoCwdFileReturnsEmpty() throws IOException
+  public void compactSourceWithNoCwdFileInjectsBatchToolSearch() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-restore-cwd-nofile-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -94,7 +96,8 @@ public final class RestoreCwdAfterCompactionTest
 
       SessionStartHandler.Result result = handler.handle(input);
 
-      requireThat(result.additionalContext(), "additionalContext").isEmpty();
+      requireThat(result.additionalContext(), "additionalContext").
+        contains(RestoreCwdAfterCompaction.BATCH_TOOLSEARCH_INSTRUCTION);
       requireThat(result.stderr(), "stderr").isEmpty();
     }
     finally
@@ -172,11 +175,11 @@ public final class RestoreCwdAfterCompactionTest
   }
 
   /**
-   * Verifies that handle() returns empty when source is "compact" but the saved path no longer
-   * exists as a directory.
+   * Verifies that handle() injects the batch ToolSearch instruction when source is "compact" but
+   * the saved path no longer exists as a directory.
    */
   @Test
-  public void compactSourceWithNonExistentPathReturnsEmpty() throws IOException
+  public void compactSourceWithNonExistentPathInjectsBatchToolSearch() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-restore-cwd-missing-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -196,7 +199,8 @@ public final class RestoreCwdAfterCompactionTest
 
       SessionStartHandler.Result result = handler.handle(input);
 
-      requireThat(result.additionalContext(), "additionalContext").isEmpty();
+      requireThat(result.additionalContext(), "additionalContext").
+        contains(RestoreCwdAfterCompaction.BATCH_TOOLSEARCH_INSTRUCTION);
       requireThat(result.stderr(), "stderr").isEmpty();
     }
     finally
@@ -206,10 +210,11 @@ public final class RestoreCwdAfterCompactionTest
   }
 
   /**
-   * Verifies that handle() returns empty when source is "compact" but session_id is blank.
+   * Verifies that handle() injects both a cd instruction and the batch ToolSearch instruction
+   * when session_id is blank but a valid .cwd file exists.
    */
   @Test
-  public void blankSessionIdReturnsEmpty() throws IOException
+  public void blankSessionIdInjectsCdAndBatchToolSearch() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-restore-cwd-blank-session-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -229,7 +234,10 @@ public final class RestoreCwdAfterCompactionTest
 
       SessionStartHandler.Result result = handler.handle(input);
 
-      requireThat(result.additionalContext(), "additionalContext").isEmpty();
+      requireThat(result.additionalContext(), "additionalContext").contains("cd");
+      requireThat(result.additionalContext(), "additionalContext").contains(savedDir.toString());
+      requireThat(result.additionalContext(), "additionalContext").
+        contains(RestoreCwdAfterCompaction.BATCH_TOOLSEARCH_INSTRUCTION);
       requireThat(result.stderr(), "stderr").isEmpty();
     }
     finally
@@ -239,10 +247,10 @@ public final class RestoreCwdAfterCompactionTest
   }
 
   /**
-   * Verifies that handle() returns empty when source is "compact" but .cwd file contains only whitespace.
+   * Verifies that handle() injects the batch ToolSearch instruction when .cwd file contains only whitespace.
    */
   @Test
-  public void compactSourceWithBlankPathContentReturnsEmpty() throws IOException
+  public void compactSourceWithBlankPathContentInjectsBatchToolSearch() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-restore-cwd-blank-content-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -261,7 +269,8 @@ public final class RestoreCwdAfterCompactionTest
 
       SessionStartHandler.Result result = handler.handle(input);
 
-      requireThat(result.additionalContext(), "additionalContext").isEmpty();
+      requireThat(result.additionalContext(), "additionalContext").
+        contains(RestoreCwdAfterCompaction.BATCH_TOOLSEARCH_INSTRUCTION);
       requireThat(result.stderr(), "stderr").isEmpty();
     }
     finally
@@ -271,10 +280,11 @@ public final class RestoreCwdAfterCompactionTest
   }
 
   /**
-   * Verifies that handle() returns empty and handles IOException gracefully when reading .cwd file.
+   * Verifies that handle() injects the batch ToolSearch instruction and handles IOException
+   * gracefully when reading .cwd file.
    */
   @Test
-  public void ioErrorReadingCwdFileHandledGracefully() throws IOException
+  public void ioErrorReadingCwdFileInjectsBatchToolSearch() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-restore-cwd-io-error-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -294,7 +304,8 @@ public final class RestoreCwdAfterCompactionTest
 
       SessionStartHandler.Result result = handler.handle(input);
 
-      requireThat(result.additionalContext(), "additionalContext").isEmpty();
+      requireThat(result.additionalContext(), "additionalContext").
+        contains(RestoreCwdAfterCompaction.BATCH_TOOLSEARCH_INSTRUCTION);
       requireThat(result.stderr(), "stderr").isEmpty();
     }
     finally
@@ -304,11 +315,12 @@ public final class RestoreCwdAfterCompactionTest
   }
 
   /**
-   * Verifies that handle() returns empty when .cwd file contains a symlink path.
-   * NOFOLLOW_LINKS returns false for symlinks.
+   * Verifies that handle() injects both a cd instruction and the batch ToolSearch instruction when
+   * .cwd file contains a symlink path pointing to a directory. Symlinks are followed, so the cd
+   * instruction is present along with the symlink path.
    */
   @Test
-  public void compactSourceWithSymlinkPathReturnsEmpty() throws IOException
+  public void compactSourceWithSymlinkPathInjectsCdAndBatchToolSearch() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-restore-cwd-symlink-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -333,8 +345,11 @@ public final class RestoreCwdAfterCompactionTest
 
       SessionStartHandler.Result result = handler.handle(input);
 
-      // NOFOLLOW_LINKS returns false for symlinks, so result should be empty
-      requireThat(result.additionalContext(), "additionalContext").isEmpty();
+      // Symlinks to directories are followed, so cd instruction is present with symlink path
+      requireThat(result.additionalContext(), "additionalContext").contains("cd");
+      requireThat(result.additionalContext(), "additionalContext").contains(symlinkPath.toString());
+      requireThat(result.additionalContext(), "additionalContext").
+        contains(RestoreCwdAfterCompaction.BATCH_TOOLSEARCH_INSTRUCTION);
       requireThat(result.stderr(), "stderr").isEmpty();
     }
     finally
