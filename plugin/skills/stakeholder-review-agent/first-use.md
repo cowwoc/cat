@@ -346,16 +346,20 @@ fi
 
 ### Output Format
 
-After context analysis, generate the selection box by invoking:
+After context analysis, generate the selection box by invoking the Skill tool:
 
-**IMPORTANT:** `cat:stakeholder-selection-box-agent` uses POSITIONAL space-separated arguments, NOT JSON.
-Do NOT pass the skill's own arguments or a JSON object. Compute the values first, then pass them as:
+Compute counts first, then invoke via the Skill tool:
 
+```bash
+SELECTED_COUNT=$(echo "$SELECTED" | tr ' ' '
+' | grep -c '.')
+SELECTED_LIST=$(echo "$SELECTED" | tr ' ' ',')
+SKIPPED_LIST=$(echo "$SKIPPED" | tr ' ' ',')
 ```
+
 Skill tool:
   skill: "cat:stakeholder-selection-box-agent"
   args: "${SELECTED_COUNT} 10 ${SELECTED_LIST} ${SKIPPED_LIST}"
-```
 
 **Argument format (positional):**
 - Arg 1: `${SELECTED_COUNT}` — integer count of selected stakeholders (e.g., `5`)
@@ -364,17 +368,7 @@ Skill tool:
 - Arg 4: `${SKIPPED_LIST}` — comma-separated `stakeholder:reason` pairs
 
 **CRITICAL:** Args 1 and 2 MUST be integers. Passing stakeholder names as args 1 or 2 will cause
-`selected-count must be an integer` error. Compute counts before invoking:
-
-```bash
-SELECTED_COUNT=$(echo "$SELECTED" | tr ' ' '
-' | grep -c '.')
-SELECTED_LIST=$(echo "$SELECTED" | tr ' ' ',')
-SKIPPED_COUNT=$(echo "$SKIPPED" | tr ' ' '
-' | grep -c '.' 2>/dev/null || echo 0)
-SKIPPED_LIST=$(echo "$SKIPPED" | tr ' ' ',')
-# Then invoke: args: "${SELECTED_COUNT} 10 ${SELECTED_LIST} ${SKIPPED_LIST}"
-```
+`selected-count must be an integer` error.
 
 Copy the output verbatim.
 
@@ -775,37 +769,29 @@ The patience matrix decision (FIX vs DEFER) alone determines which concerns are 
 
 Output the review results:
 
-Generate the review summary by invoking:
+Generate the review summary by invoking via the Skill tool:
 
-```
 Skill tool:
   skill: "cat:stakeholder-review-box-agent"
   args: "${ISSUE_ID} ${REVIEWER_STATUS_LIST} ${REVIEW_RESULT} ${REVIEW_SUMMARY}"
-```
 
-**CRITICAL - Argument Count:** `cat:stakeholder-review-box-agent` expects exactly 4 arguments. The entire reviewer list MUST
+**CRITICAL - Argument Count:** The skill expects exactly 4 arguments. The entire reviewer list MUST
 be a single comma-separated string (the second positional argument). Build the string before invoking — do NOT pass
 each reviewer as a separate space-separated argument (that produces 8+ args instead of 4 and causes a CLI error).
 
 ```bash
 # Correct: build comma-separated string first, then pass as single arg
 REVIEWER_STATUS_LIST="requirements:✓ APPROVED,architecture:✓ APPROVED,security:⚠ 1 HIGH"
-# Invoke: args: "${ISSUE_ID} ${REVIEWER_STATUS_LIST} ${REVIEW_RESULT} ${REVIEW_SUMMARY}"
-
-# WRONG: space-separated — each reviewer becomes a separate arg → CLI rejects as wrong argument count
-# args: "${ISSUE_ID} requirements:APPROVED architecture:APPROVED security:CONCERNS ..."
 ```
 
 The second argument is a comma-separated list of `stakeholder:status` pairs
 (e.g., `"architecture:✓ APPROVED,design:⚠ 1 HIGH"`).
 
-For each concern, generate a concern box:
+For each concern, generate a concern box by invoking via the Skill tool:
 
-```
 Skill tool:
   skill: "cat:stakeholder-concern-box-agent"
   args: "${SEVERITY} ${STAKEHOLDER} ${CONCERN_DESCRIPTION} ${FILE_LOCATION}"
-```
 
 Where `${SEVERITY}` is CRITICAL, HIGH, MEDIUM, or LOW.
 
@@ -843,9 +829,10 @@ The calling skill (work-with-issue) is responsible for:
 
 **User-Facing Output:**
 
-The review box CLI tools (`cat:stakeholder-review-box-agent` and `cat:stakeholder-concern-box-agent`) are the complete user-facing
-output. Invoke them in the `report` step — they provide all information users need (stakeholder names, concern counts,
-icons, overall result). No additional output is needed after the boxes are rendered.
+The review box skills (`cat:stakeholder-review-box-agent` and `cat:stakeholder-concern-box-agent`) are the complete
+user-facing output. Invoke them via the Skill tool in the `report` step — they provide all information users need
+(stakeholder names, concern counts, icons, overall result). No additional output is needed after the boxes are
+rendered.
 
 **Internal Result Contract (for work-with-issue only):**
 
