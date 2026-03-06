@@ -22,8 +22,8 @@ If you need this skill's functionality within delegated work:
 Run parallel stakeholder reviews of implementation changes to identify concerns from multiple
 perspectives (architecture, security, design, testing, performance, deployment) before user approval.
 
-**Holistic Review Approach:** Stakeholders receive full file context (not just diffs) to evaluate how
-changes affect the overall codebase. This enables reviewers to catch:
+Stakeholders receive file paths and a diff summary, then read the files independently using their
+Read, Glob, and Grep tools. This enables reviewers to catch:
 - Accumulated technical debt patterns
 - Inconsistencies with existing code
 - Architecture violations that only appear in full context
@@ -398,14 +398,14 @@ If file-based overrides occurred, add an "Overrides (file-based):" section insid
 
 <step name="prepare">
 
-**Prepare review context (Holistic Approach):**
+**Prepare review context:**
 
 Uses stakeholders selected by the `analyze_context` step. The `SELECTED` variable contains
 the space-separated list of stakeholders to run.
 
 1. Identify files changed in implementation
-2. **Read full file content** (not just diffs) for holistic evaluation
-3. Include diff summary as supplementary context
+2. Collect diff summary for orientation
+3. Pass file paths to subagents — they read files independently using Read/Glob/Grep tools
 4. Use stakeholder selection from analyze_context step
 
 **Worktree Isolation:** When reviewing work done in a worktree, ALL git commands and file reads
@@ -500,87 +500,7 @@ if [[ -d ".claude/cat/rules" ]]; then
     done
 fi
 
-# --- Batch 3: Prepare file content for holistic review ---
-# For small files: include full content
-# For large files: diff with extended context + file structure summary
-MAX_FILE_SIZE=50000  # characters threshold for "large file" handling
-FILE_CONTENTS=""
-for file in $CHANGED_FILES; do
-    if [[ -f "$file" ]]; then
-        size=$(wc -c < "$file")
-        if [[ $size -lt $MAX_FILE_SIZE ]]; then
-            # Small file: include full content
-            FILE_CONTENTS="${FILE_CONTENTS}
-
-### File: $(pwd)/${file}
-\`\`\`
-$(cat "$file")
-\`\`\`"
-        else
-            # Large file: structure summary + diff with extended context
-            FILE_CONTENTS="${FILE_CONTENTS}
-
-### File: $(pwd)/${file} (large file)
-"
-
-            # Extract file structure summary based on language
-            ext="${file##*.}"
-            FILE_CONTENTS="${FILE_CONTENTS}
-#### Structure Summary:
-\`\`\`
-"
-            case "$ext" in
-                java)
-                    # Java: package, imports, class/interface/enum declarations, method signatures
-                    grep -nE '^package |^import |^(public |private |protected )?(abstract |static |final )*(class |interface |enum |record )|^\s+(public |private |protected )?(abstract |static |final |synchronized )*[a-zA-Z<>\[\]]+\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\(' "$file" 2>/dev/null | head -100
-                    ;;
-                py)
-                    # Python: imports, class definitions, function definitions
-                    grep -nE '^import |^from .* import |^class |^def |^async def ' "$file" 2>/dev/null | head -100
-                    ;;
-                ts|js|tsx|jsx)
-                    # TypeScript/JavaScript: imports, exports, class/function declarations
-                    grep -nE '^import |^export |^(export )?(async )?(function |class |const |let |interface |type )' "$file" 2>/dev/null | head -100
-                    ;;
-                go)
-                    # Go: package, imports, type/func declarations
-                    grep -nE '^package |^import |^type |^func ' "$file" 2>/dev/null | head -100
-                    ;;
-                *)
-                    # Generic: show first 20 lines (often contains headers/imports) + any function-like patterns
-                    head -20 "$file"
-                    echo "..."
-                    grep -nE '^\s*(function|def|class|struct|enum|interface|impl|pub fn|fn |sub |proc )' "$file" 2>/dev/null | head -50
-                    ;;
-            esac
-            FILE_CONTENTS="${FILE_CONTENTS}\`\`\`
-"
-
-            # Diff with 100 lines of context for this file
-            FILE_CONTENTS="${FILE_CONTENTS}
-#### Changes (with 100 lines context):
-\`\`\`diff
-"
-            FILE_CONTENTS="${FILE_CONTENTS}$(git diff "${TARGET_BRANCH}..HEAD" -U100 -- "$file" 2>/dev/null)
-\`\`\`
-"
-        fi
-    fi
-done
 ```
-
-**Holistic context enables:**
-- Reviewing changes in context of surrounding code
-- Detecting inconsistencies with existing patterns
-- Evaluating test coverage relative to implementation complexity
-- Identifying accumulated technical debt
-
-**Large file handling:**
-- Files under 50KB: full content included
-- Files over 50KB: structure summary + diff with 100 lines context
-  - Structure summary extracts: imports, class/function declarations, method signatures
-  - Language-aware extraction for Java, Python, TypeScript/JavaScript, Go
-  - Diff with extended context shows changes in their surrounding code
 
 **Stakeholder selection is now context-aware:**
 
@@ -598,14 +518,6 @@ See `analyze_context` step for full selection rules and skip reasons.
 <step name="spawn_reviewers">
 
 **Spawn stakeholder subagents in parallel:**
-
-**Prompt Completeness Requirement (applies to ALL rounds including re-runs after fixes):**
-
-Every reviewer prompt MUST include the complete set of sections below — including `## Files to Review
-(Full Content)` with the actual `FILE_CONTENTS` embedded. Do NOT simplify prompts in subsequent
-rounds by replacing file content with instructions like "Read InjectEnv.java and verify". Subagents
-receiving simplified prompts will read from their default working directory (`/workspace/`), which
-contains the target-branch code, not the source's implementation — producing false-positive rejections.
 
 For each relevant stakeholder, spawn a subagent with:
 
@@ -631,7 +543,7 @@ Before spawning, pre-fetch the issue context files using absolute worktree paths
 
 ```bash
 # Pre-fetch context files using absolute paths so subagents receive content directly
-# and do not need to read any files themselves
+# and do not need to read these planning files themselves
 ISSUE_DIR=$(ls -d "${WORKTREE_PATH}/.claude/cat/issues/"*/ 2>/dev/null | head -1)
 ISSUE_PLAN_CONTENT=""
 VERSION_PLAN_CONTENT=""
@@ -648,6 +560,9 @@ if [[ -n "$ISSUE_DIR" && -f "${ISSUE_DIR}PLAN.md" ]]; then
         fi
     fi
 fi
+
+# CHANGED_FILES already contains relative paths from git diff --name-only
+# Subagents receive WORKTREE_PATH + CHANGED_FILES and construct absolute paths themselves
 ```
 
 **Domain Knowledge Injection:**
@@ -706,14 +621,20 @@ evaluating whether there are better alternatives to the approaches chosen.
 ## Project Conventions
 {STAKEHOLDER_CONVENTIONS if any match this stakeholder, otherwise "No project conventions assigned to this stakeholder."}
 
-## Files to Review (Full Content)
-{FILE_CONTENTS - full file content prepared in prepare step}
+## Files to Review
+
+The following files were changed in this implementation (paths relative to the worktree):
+
+{CHANGED_FILES - one relative path per line}
+
+Read each file using the Read tool with absolute paths: prefix each path with {WORKTREE_PATH}/.
+Use Read, Glob, and Grep tools as needed to explore any additional context within the worktree.
 
 ## What Changed (Diff Summary)
 {DIFF_SUMMARY - git diff for reference}
 
 ## Holistic Review Instructions
-You have access to the FULL content of changed files, not just diffs. Use this to:
+Read the full content of each file listed above to evaluate holistic impact. Use this to:
 
 1. **Evaluate impact on entire project** - How do these changes affect the codebase as a whole?
 2. **Check for accumulated patterns** - Is this change contributing to technical debt?
