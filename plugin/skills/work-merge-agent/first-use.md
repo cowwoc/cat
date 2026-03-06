@@ -238,6 +238,84 @@ If minor version is now complete, update CHANGELOG.md inside the worktree and co
 
 ### Step 7: Remove Worktree, Merge, and Cleanup
 
+Before invoking the tool, verify the worktree and branch still exist (idempotency guard for retries):
+
+```bash
+# Check worktree exists before removal
+if git worktree list --porcelain | grep -qxF "worktree ${WORKTREE_PATH}"; then
+  WORKTREE_EXISTS=true
+else
+  WORKTREE_EXISTS=false
+fi
+
+# Check branch exists before deletion
+if git show-ref --verify --quiet "refs/heads/${ISSUE_BRANCH}"; then
+  BRANCH_EXISTS=true
+else
+  BRANCH_EXISTS=false
+fi
+```
+
+If `WORKTREE_EXISTS=false` and `BRANCH_EXISTS=false`, the cleanup was already completed in a previous
+run — skip the tool invocation and proceed directly to Step 8 with a synthesized success result.
+
+Synthesize this result for Step 8:
+```json
+{
+  "status": "MERGED",
+  "merge_commit": "already merged — read from: git -C /workspace log --format=%H -1 ${TARGET_BRANCH}",
+  "squashed_commits": [],
+  "state_updated": true,
+  "changelog_updated": false,
+  "lock_released": true
+}
+```
+
+If `WORKTREE_EXISTS=false` and `BRANCH_EXISTS=true`, the worktree was already removed but the branch
+was not deleted. Delete the orphaned branch directly and proceed to Step 8:
+
+```bash
+git branch -D "${ISSUE_BRANCH}"
+```
+
+Synthesize this result for Step 8:
+```json
+{
+  "status": "MERGED",
+  "merge_commit": "already merged — read from: git -C /workspace log --format=%H -1 ${TARGET_BRANCH}",
+  "squashed_commits": [],
+  "state_updated": true,
+  "changelog_updated": false,
+  "lock_released": true
+}
+```
+
+If `WORKTREE_EXISTS=true` and `BRANCH_EXISTS=false`, the branch was deleted but the worktree was not
+removed. Remove the orphaned worktree and proceed to Step 8 with a synthesized success result:
+
+```bash
+git worktree remove --force "${WORKTREE_PATH}"
+```
+
+Synthesize this result for Step 8:
+```json
+{
+  "status": "MERGED",
+  "merge_commit": "already merged — read from: git -C /workspace log --format=%H -1 ${TARGET_BRANCH}",
+  "squashed_commits": [],
+  "state_updated": true,
+  "changelog_updated": false,
+  "lock_released": false
+}
+```
+
+Note: since the tool did not run, the lock was not released. Release it manually:
+```bash
+"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${ISSUE_ID}" "${SESSION_ID}"
+```
+
+Otherwise, invoke the tool:
+
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/client/bin/merge-and-cleanup" \
   "${CLAUDE_PROJECT_DIR}" "${ISSUE_ID}" "${SESSION_ID}" "${TARGET_BRANCH}" --worktree "${WORKTREE_PATH}"
@@ -255,7 +333,7 @@ exits with code 1.
 |--------|---------|----------------------|
 | `"status": "success"` (stdout JSON) | Merge and cleanup completed | Report `merged_commit` and `target_branch`, continue to Step 8 |
 | `"status": "error"`: Not a CAT project | Missing `.claude/cat` directory | Verify `CLAUDE_PROJECT_DIR` is correct |
-| `"status": "error"`: Worktree not found | No worktree for issue branch | Check worktree exists with `git worktree list` |
+| `"status": "error"`: Worktree not found | No worktree for issue branch | If retry after partial cleanup, check worktree/branch existence guards above |
 | `"status": "error"`: Worktree has uncommitted changes | Dirty worktree | Commit or stash changes in worktree first |
 | `"status": "error"`: Target branch has diverged | Target has commits not in HEAD | Rebase onto target branch before merging |
 | `"status": "error"`: Fast-forward merge not possible | History diverged | Rebase issue branch onto target branch first |
