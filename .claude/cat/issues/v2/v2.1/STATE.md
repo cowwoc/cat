@@ -76,6 +76,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - convert-compression-agent-to-registered-agent
 - merge-agent-skill-variants
 - rename-satisfies-to-parent-requirements
+- clarify-squash-before-rebase-ordering
 
 
 ## Issues Closed
