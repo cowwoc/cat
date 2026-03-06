@@ -199,6 +199,7 @@ public class SessionStartHookTest
       requireThat(context, "context").contains("Verbatim Output Skills");
       requireThat(context, "context").contains("Qualified Issue Names");
       requireThat(context, "context").contains("Persisted Skill Output");
+      requireThat(context, "context").contains("Tool Usage Efficiency");
     }
   }
 
