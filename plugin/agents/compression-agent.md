@@ -94,6 +94,12 @@ When compressing, apply these normalizations to reduce ambiguity:
 - AFTER: "Check X if [condition]" or remove if optional
 
 **Negative → Positive:**
+
+> Note: Step 2 (Priming Analysis) in first-use.md attempts to eliminate negative rules by removing
+> their root cause (priming sources). Negative rules that reach this compression step are those where
+> either no priming source was found, or priming removal was attempted but did not fully eliminate the
+> behavior. Convert them to positive actionable instructions rather than leaving them as prohibitions.
+
 - BEFORE: "Don't skip validation"
 - AFTER: "Validate before proceeding" (actionable positive instruction)
 
