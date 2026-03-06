@@ -9,7 +9,6 @@ package io.github.cowwoc.cat.hooks.bash;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
-import io.github.cowwoc.cat.hooks.CatMetadata;
 import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.WorktreeLock;
@@ -17,7 +16,6 @@ import io.github.cowwoc.cat.hooks.util.GitCommands;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.regex.Matcher;
@@ -127,8 +125,8 @@ public final class WarnMainWorkspaceCommit implements BashHandler
   /**
    * Checks whether the given directory is inside a CAT worktree.
    * <p>
-   * A directory is inside a CAT worktree if its git directory contains the {@code cat-branch-point}
-   * marker file written by {@code /cat:work} when creating the worktree.
+   * A directory is inside a CAT worktree if its git directory ends with {@code worktrees/<branch-name>},
+   * matching the structure created by {@code /cat:work}.
    *
    * @param directory the directory to check
    * @return {@code true} if the directory is inside a CAT worktree
@@ -150,8 +148,7 @@ public final class WarnMainWorkspaceCommit implements BashHandler
     if (!gitDir.isAbsolute())
       gitDir = Paths.get(directory).resolve(gitDirPath).normalize();
 
-    Path catBranchPointFile = gitDir.resolve(CatMetadata.BRANCH_POINT_FILE);
-    return Files.exists(catBranchPointFile);
+    return GitCommands.isCatWorktreeGitDir(gitDir);
   }
 
   /**

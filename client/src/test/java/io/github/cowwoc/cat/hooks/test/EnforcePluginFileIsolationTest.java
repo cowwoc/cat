@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.CatMetadata;
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.write.EnforcePluginFileIsolation;
@@ -17,7 +16,6 @@ import tools.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -25,7 +23,8 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * Tests for EnforcePluginFileIsolation hook.
  * <p>
  * Tests verify that plugin/ and client/ source files are properly blocked outside of issue worktrees
- * and allowed inside issue worktrees (identified by the presence of a cat-branch-point file).
+ * and allowed inside issue worktrees (identified by the git directory ending with
+ * {@code worktrees/<branch-name>}).
  * <p>
  * Tests are designed for parallel execution - each test is self-contained
  * with no shared state.
@@ -52,7 +51,7 @@ public class EnforcePluginFileIsolationTest
   }
 
   /**
-   * Verifies that plugin files in a repo without cat-branch-point (e.g., on main) are blocked.
+   * Verifies that plugin files in a regular repo (e.g., on main) are blocked.
    */
   @Test
   public void pluginFilesBlockedOnMain() throws IOException
@@ -77,7 +76,7 @@ public class EnforcePluginFileIsolationTest
   }
 
   /**
-   * Verifies that plugin files in a repo without cat-branch-point (e.g., on v2.1) are blocked.
+   * Verifies that plugin files in a regular repo (e.g., on v2.1) are blocked.
    */
   @Test
   public void pluginFilesBlockedOnV21() throws IOException
@@ -102,7 +101,7 @@ public class EnforcePluginFileIsolationTest
   }
 
   /**
-   * Verifies that plugin files in a repo without cat-branch-point (e.g., on version branch v1.0) are blocked.
+   * Verifies that plugin files in a regular repo (e.g., on version branch v1.0) are blocked.
    */
   @Test
   public void pluginFilesBlockedOnVersionBranch() throws IOException
@@ -127,38 +126,48 @@ public class EnforcePluginFileIsolationTest
   }
 
   /**
-   * Verifies that plugin files in an issue worktree (with cat-branch-point) are allowed.
+   * Verifies that plugin files in an issue worktree are allowed.
+   * <p>
+   * An issue worktree has a git directory ending with {@code worktrees/<branch-name>}.
    */
   @Test
   public void pluginFilesAllowedOnTaskBranch() throws IOException
   {
-    Path tempDir = TestUtils.createTempGitRepo("v2.1-fix-bug");
-    try
+    Path mainDir = TestUtils.createTempGitRepo("v2.1");
+    try (JvmScope scope = new TestJvmScope(mainDir, mainDir))
     {
-      createCatBranchPointFile(tempDir);
-      try (JvmScope scope = new TestJvmScope())
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+
+      Path worktreeDir = TestUtils.createWorktree(mainDir, worktreesDir, "2.1-fix-bug");
+      try
       {
         EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
         JsonMapper mapper = scope.getJsonMapper();
         ObjectNode input = mapper.createObjectNode();
-        input.put("file_path", tempDir.resolve("plugin/hooks/handler.py").toString());
+        input.put("file_path", worktreeDir.resolve("plugin/hooks/handler.py").toString());
 
         FileWriteHandler.Result result = handler.check(input, "test-session");
 
         requireThat(result.blocked(), "blocked").isFalse();
       }
+      finally
+      {
+        TestUtils.runGit(mainDir, "worktree", "remove", "--force", worktreeDir.toString());
+        TestUtils.deleteDirectoryRecursively(worktreeDir);
+      }
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(mainDir);
     }
   }
 
   /**
-   * Verifies that plugin files in a worktree directory with cat-branch-point are allowed.
+   * Verifies that plugin files in a worktree directory are allowed.
    * <p>
-   * This tests the core use case: worktrees created by /cat:work have a cat-branch-point file
-   * in their git directory and edits in them must be permitted.
+   * Worktrees created by /cat:work have a git directory ending with {@code worktrees/<branch-name>}
+   * and edits in them must be permitted.
    */
   @Test
   public void pluginFilesAllowedInWorktree() throws IOException
@@ -174,7 +183,6 @@ public class EnforcePluginFileIsolationTest
         Path worktreeDir = TestUtils.createWorktree(mainDir, worktreesDir, "2.1-test-task");
         try
         {
-          createCatBranchPointFile(worktreeDir);
           EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
           JsonMapper mapper = scope.getJsonMapper();
           ObjectNode input = mapper.createObjectNode();
@@ -258,7 +266,7 @@ public class EnforcePluginFileIsolationTest
   }
 
   /**
-   * Verifies that client files in a repo without cat-branch-point (e.g., on main) are blocked.
+   * Verifies that client files in a regular repo (e.g., on main) are blocked.
    */
   @Test
   public void clientFilesBlockedOnMain() throws IOException
@@ -283,7 +291,7 @@ public class EnforcePluginFileIsolationTest
   }
 
   /**
-   * Verifies that client files in a repo without cat-branch-point (e.g., on v2.1) are blocked.
+   * Verifies that client files in a regular repo (e.g., on v2.1) are blocked.
    */
   @Test
   public void clientFilesBlockedOnV21() throws IOException
@@ -308,30 +316,40 @@ public class EnforcePluginFileIsolationTest
   }
 
   /**
-   * Verifies that client files in an issue worktree (with cat-branch-point) are allowed.
+   * Verifies that client files in an issue worktree are allowed.
+   * <p>
+   * An issue worktree has a git directory ending with {@code worktrees/<branch-name>}.
    */
   @Test
   public void clientFilesAllowedOnTaskBranch() throws IOException
   {
-    Path tempDir = TestUtils.createTempGitRepo("v2.1-fix-bug");
-    try
+    Path mainDir = TestUtils.createTempGitRepo("v2.1");
+    try (JvmScope scope = new TestJvmScope(mainDir, mainDir))
     {
-      createCatBranchPointFile(tempDir);
-      try (JvmScope scope = new TestJvmScope())
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+
+      Path worktreeDir = TestUtils.createWorktree(mainDir, worktreesDir, "2.1-fix-bug");
+      try
       {
         EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
         JsonMapper mapper = scope.getJsonMapper();
         ObjectNode input = mapper.createObjectNode();
-        input.put("file_path", tempDir.resolve("client/src/main/java/Handler.java").toString());
+        input.put("file_path", worktreeDir.resolve("client/src/main/java/Handler.java").toString());
 
         FileWriteHandler.Result result = handler.check(input, "test-session");
 
         requireThat(result.blocked(), "blocked").isFalse();
       }
+      finally
+      {
+        TestUtils.runGit(mainDir, "worktree", "remove", "--force", worktreeDir.toString());
+        TestUtils.deleteDirectoryRecursively(worktreeDir);
+      }
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(mainDir);
     }
   }
 
@@ -360,24 +378,5 @@ public class EnforcePluginFileIsolationTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
-
-  /**
-   * Creates a {@code cat-branch-point} file in the git directory of the given repository.
-   * <p>
-   * This simulates an issue worktree created by {@code /cat:work}. The file content is
-   * the target branch name (e.g., "v2.1").
-   *
-   * @param repoDir the repository directory
-   * @throws IOException if the git command fails or file creation fails
-   */
-  private void createCatBranchPointFile(Path repoDir) throws IOException
-  {
-    String gitDirPath = TestUtils.runGitCommandWithOutput(repoDir, "rev-parse", "--git-dir");
-    Path gitDir;
-    if (Paths.get(gitDirPath).isAbsolute())
-      gitDir = Paths.get(gitDirPath);
-    else
-      gitDir = repoDir.resolve(gitDirPath);
-    Files.writeString(gitDir.resolve(CatMetadata.BRANCH_POINT_FILE), "v2.1");
-  }
 }
+

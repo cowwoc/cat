@@ -137,10 +137,33 @@ Closed issue PLANs also reference it but are historical records and must not be 
    - Files: `tests/worktree-isolation.bats`
    - Update tests to validate the current worktree detection mechanism instead of `cat-branch-point`
 
+### Wave 5: Store target branch in STATE.md
+
+The `cat-branch-point` file previously provided the fork-point commit hash. Skills like `cleanup/first-use.md` need
+the **target branch name** to run `git branch --merged`. Git does not natively track which branch a branch was forked
+from, so the target branch must be stored explicitly. STATE.md is version-controlled and pushed to remote, making it
+collaborative.
+
+1. **Update `WorkPrepare.java` to write `Target Branch:` to STATE.md**
+   - Add `targetBranch` parameter to `updateStateMd()` and `createStateMd()`
+   - Write `- **Target Branch:** <branch-name>` field to STATE.md
+   - For `updateStateMd()`: append the field if not already present
+   - For `createStateMd()`: include in the template
+
+2. **Update `cleanup/first-use.md` to read `Target Branch:` from STATE.md**
+   - Replace naming-convention derivation (`grep -oE '^[0-9]+\.[0-9]+'`) with STATE.md read
+   - If `Target Branch:` is absent, skip `--merged` check with a warning
+   - If present, pass it to `git branch --merged "$TARGET_BRANCH"`
+
+3. **Run full test suite**
+   - `mvn -f client/pom.xml test`
+
 ## Post-conditions
 
 - [ ] Zero references to `cat-branch-point` in non-closed-issue files (`grep -r "cat-branch-point"` returns only
   closed issue PLANs)
 - [ ] All hooks that need worktree detection use the current replacement mechanism consistently
+- [ ] `WorkPrepare` writes `Target Branch:` to STATE.md at worktree creation
+- [ ] `cleanup/first-use.md` reads `Target Branch:` from STATE.md for `git branch --merged`
 - [ ] `mvn -f client/pom.xml test` passes
 - [ ] Bats tests pass

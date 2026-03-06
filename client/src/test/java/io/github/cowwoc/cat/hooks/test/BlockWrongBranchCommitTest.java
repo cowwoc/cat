@@ -9,7 +9,6 @@ package io.github.cowwoc.cat.hooks.test;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
-import io.github.cowwoc.cat.hooks.CatMetadata;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.bash.BlockWrongBranchCommit;
 import org.testng.annotations.Test;
@@ -17,7 +16,6 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 /**
  * Tests for {@link BlockWrongBranchCommit}.
@@ -31,26 +29,6 @@ import java.nio.file.Paths;
 public final class BlockWrongBranchCommitTest
 {
   private static final String SESSION_ID = "12345678-1234-1234-1234-123456789012";
-
-  /**
-   * Creates a {@code cat-branch-point} file in the git directory of the given repository.
-   * <p>
-   * This simulates an issue worktree created by {@code /cat:work}. The file content is
-   * a representative fork-point commit hash.
-   *
-   * @param repoDir the repository directory
-   * @throws IOException if the git command fails or file creation fails
-   */
-  private static void createCatBranchPointFile(Path repoDir) throws IOException
-  {
-    String gitDirPath = TestUtils.runGitCommandWithOutput(repoDir, "rev-parse", "--git-dir");
-    Path gitDir;
-    if (Paths.get(gitDirPath).isAbsolute())
-      gitDir = Paths.get(gitDirPath);
-    else
-      gitDir = repoDir.resolve(gitDirPath);
-    Files.writeString(gitDir.resolve(CatMetadata.BRANCH_POINT_FILE), "abc1234567890abcdef1234567890abcdef123456");
-  }
 
   /**
    * Verifies that non-commit commands are allowed without branch checks.
@@ -76,7 +54,7 @@ public final class BlockWrongBranchCommitTest
   }
 
   /**
-   * Verifies that a git commit outside a CAT worktree (no cat-branch-point marker) is allowed.
+   * Verifies that a git commit outside a CAT worktree is allowed.
    *
    * @throws IOException if test setup fails
    */
@@ -88,7 +66,7 @@ public final class BlockWrongBranchCommitTest
     {
       BlockWrongBranchCommit handler = new BlockWrongBranchCommit();
 
-      // No cat-branch-point file means not a CAT worktree
+      // Regular repo: git dir parent is not "worktrees", so not a CAT worktree
       BashHandler.Result result = handler.check(
         TestUtils.bashInput("git commit -m \"feature: add something\"", tempDir.toString(), SESSION_ID));
 
@@ -120,7 +98,6 @@ public final class BlockWrongBranchCommitTest
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-my-issue");
       try
       {
-        createCatBranchPointFile(worktreeDir);
         BlockWrongBranchCommit handler = new BlockWrongBranchCommit();
 
         // Working in the worktree directory — current branch is "2.1-my-issue"
@@ -145,7 +122,7 @@ public final class BlockWrongBranchCommitTest
   /**
    * Verifies that a git commit inside a CAT worktree on the wrong branch is blocked.
    * <p>
-   * The cat-branch-point marker exists but the current branch does not match the git dir name.
+   * The worktree git dir structure is correct but the current branch does not match the git dir name.
    * This simulates a subagent that checked out a different branch inside the worktree.
    *
    * @throws IOException if test setup fails
@@ -165,8 +142,6 @@ public final class BlockWrongBranchCommitTest
       Path wrongWorktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-wrong-test");
       try
       {
-        createCatBranchPointFile(wrongWorktreeDir);
-
         // Checkout a different branch inside the worktree — current branch "wrong-branch" but
         // git dir name is "2.1-wrong-test"
         TestUtils.runGit(wrongWorktreeDir, "checkout", "wrong-branch");
@@ -215,7 +190,6 @@ public final class BlockWrongBranchCommitTest
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-cd-issue");
       try
       {
-        createCatBranchPointFile(worktreeDir);
         BlockWrongBranchCommit handler = new BlockWrongBranchCommit();
 
         // cwd is mainRepo but command cd's into the worktree
@@ -253,7 +227,6 @@ public final class BlockWrongBranchCommitTest
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-push-test");
       try
       {
-        createCatBranchPointFile(worktreeDir);
         BlockWrongBranchCommit handler = new BlockWrongBranchCommit();
 
         // git push — not a commit
@@ -321,7 +294,6 @@ public final class BlockWrongBranchCommitTest
       Path wrongWorktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-wrong-issue");
       try
       {
-        createCatBranchPointFile(correctWorktreeDir);
         BlockWrongBranchCommit handler = new BlockWrongBranchCommit();
 
         // Command starts in wrong worktree but ends in the correct one
@@ -361,7 +333,6 @@ public final class BlockWrongBranchCommitTest
       Path wrongWorktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-amend-test");
       try
       {
-        createCatBranchPointFile(wrongWorktreeDir);
         TestUtils.runGit(wrongWorktreeDir, "checkout", "wrong-amend");
         BlockWrongBranchCommit handler = new BlockWrongBranchCommit();
 
@@ -385,9 +356,8 @@ public final class BlockWrongBranchCommitTest
   /**
    * Verifies that a git commit is allowed when the git dir parent is not named "worktrees".
    * <p>
-   * Even if a {@code cat-branch-point} marker file exists, the handler must allow the commit when
-   * the git directory structure does not match the expected {@code worktrees/<branch>} pattern.
-   * This guards against false-positive blocking in non-worktree git configurations.
+   * A regular git repository (not a CAT worktree) has its git dir parent set to the repo root,
+   * which is not named "worktrees". The handler must allow commits in these directories.
    *
    * @throws IOException if test setup fails
    */
@@ -397,12 +367,6 @@ public final class BlockWrongBranchCommitTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try
     {
-      // Add a cat-branch-point file directly in .git/ (not under .git/worktrees/<name>/)
-      // This simulates a repository where the file exists but the structure is not a worktree
-      Path gitDir = mainRepo.resolve(".git");
-      Files.writeString(gitDir.resolve(CatMetadata.BRANCH_POINT_FILE),
-        "abc1234567890abcdef1234567890abcdef123456");
-
       BlockWrongBranchCommit handler = new BlockWrongBranchCommit();
 
       // Main repo: .git dir parent is mainRepo itself, which is NOT named "worktrees"
@@ -440,8 +404,6 @@ public final class BlockWrongBranchCommitTest
       Path siblingB = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-sibling-b");
       try
       {
-        createCatBranchPointFile(siblingB);
-
         BlockWrongBranchCommit handler = new BlockWrongBranchCommit();
 
         // Relative cd from siblingA to siblingB using "../sibling-b"
@@ -514,7 +476,6 @@ public final class BlockWrongBranchCommitTest
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-flag-test");
       try
       {
-        createCatBranchPointFile(worktreeDir);
         TestUtils.runGit(worktreeDir, "checkout", "wrong-branch");
         BlockWrongBranchCommit handler = new BlockWrongBranchCommit();
 

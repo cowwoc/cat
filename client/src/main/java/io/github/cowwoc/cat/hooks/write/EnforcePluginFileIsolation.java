@@ -8,13 +8,11 @@ package io.github.cowwoc.cat.hooks.write;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.CatMetadata;
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 import tools.jackson.databind.JsonNode;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -22,8 +20,9 @@ import java.nio.file.Paths;
  * Enforce source file isolation to issue worktrees.
  * <p>
  * Blocks Edit/Write operations on plugin/ and client/ files when not in an issue worktree.
- * An issue worktree is identified by the presence of a {@code cat-branch-point} file in its git directory,
- * created by {@code /cat:work}. All source development must happen in issue worktrees.
+ * A CAT issue worktree is identified by its git directory ending with {@code worktrees/<branch-name>},
+ * matching the structure created by {@code /cat:work}. All source development must happen in issue
+ * worktrees.
  */
 public final class EnforcePluginFileIsolation implements FileWriteHandler
 {
@@ -96,11 +95,10 @@ public final class EnforcePluginFileIsolation implements FileWriteHandler
   /**
    * Check if the given directory is an issue worktree created by {@code /cat:work}.
    * <p>
-   * An issue worktree has a {@code cat-branch-point} file in its git directory
+   * A CAT issue worktree has a git directory ending with {@code worktrees/<branch-name>}
    * (the path returned by {@code git rev-parse --git-dir}).
    * <p>
-   * This check is fail-safe: if the {@code cat-branch-point} metadata is missing or the git command fails,
-   * the edit is blocked.
+   * This check is fail-safe: if the git command fails, the edit is blocked.
    *
    * @param directory the directory to check
    * @return true if the directory is an issue worktree, false otherwise
@@ -112,13 +110,10 @@ public final class EnforcePluginFileIsolation implements FileWriteHandler
       String gitDirPath = GitCommands.runGit(Path.of(directory), "rev-parse", "--git-dir");
       if (gitDirPath.isEmpty())
         return false;
-      Path catBranchPoint = Paths.get(gitDirPath).resolve(CatMetadata.BRANCH_POINT_FILE);
-      if (!catBranchPoint.isAbsolute())
-      {
-        // git rev-parse --git-dir may return a relative path like ".git" when run in a main worktree
-        catBranchPoint = Paths.get(directory).resolve(gitDirPath).resolve(CatMetadata.BRANCH_POINT_FILE);
-      }
-      return Files.exists(catBranchPoint);
+      Path gitDir = Paths.get(gitDirPath);
+      if (!gitDir.isAbsolute())
+        gitDir = Paths.get(directory).resolve(gitDirPath).normalize();
+      return GitCommands.isCatWorktreeGitDir(gitDir);
     }
     catch (IOException _)
     {

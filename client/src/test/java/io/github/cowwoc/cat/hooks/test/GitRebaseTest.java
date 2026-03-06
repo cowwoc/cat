@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.CatMetadata;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.GitRebase;
 import org.testng.annotations.Test;
@@ -163,50 +162,10 @@ public class GitRebaseTest
   }
 
   /**
-   * Verifies that a cat-branch-point file containing a commit hash is used when target branch is not
-   * provided.
+   * Verifies that rebase fails with ERROR when target branch is not provided.
    */
   @Test
-  public void executeReadsCatBranchPointFileWhenTargetBranchAbsent() throws IOException
-  {
-    Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
-    {
-      try
-      {
-        // Record the fork-point commit hash (current HEAD on main before creating feature branch)
-        String forkCommitHash = TestUtils.runGitCommandWithOutput(repoDir, "rev-parse", "HEAD");
-
-        // Create a feature branch
-        TestUtils.runGit(repoDir, "checkout", "-b", "feature");
-        Files.writeString(repoDir.resolve("feature.txt"), "feature content");
-        TestUtils.runGit(repoDir, "add", "feature.txt");
-        TestUtils.runGit(repoDir, "commit", "-m", "feature commit");
-
-        // Write cat-branch-point file with the fork-point commit hash (not a branch name)
-        Path gitDir = Path.of(TestUtils.runGitCommandWithOutput(repoDir, "rev-parse", "--git-dir"));
-        if (!gitDir.isAbsolute())
-          gitDir = repoDir.resolve(gitDir);
-        Files.writeString(gitDir.resolve(CatMetadata.BRANCH_POINT_FILE), forkCommitHash);
-
-        GitRebase cmd = new GitRebase(scope, repoDir);
-        String result = cmd.execute("");
-
-        requireThat(result, "result").contains("\"status\"");
-        requireThat(result, "result").contains("\"OK\"");
-      }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(repoDir);
-      }
-    }
-  }
-
-  /**
-   * Verifies that rebase fails with ERROR when cat-branch-point file is absent and target not provided.
-   */
-  @Test
-  public void executeFailsWhenCatBranchPointFileMissingAndNoTarget() throws IOException
+  public void executeFailsWhenTargetBranchAbsent() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
@@ -218,7 +177,7 @@ public class GitRebaseTest
 
         requireThat(result, "result").contains("\"status\"");
         requireThat(result, "result").contains("\"ERROR\"");
-        requireThat(result, "result").contains(CatMetadata.BRANCH_POINT_FILE);
+        requireThat(result, "result").contains("TARGET_BRANCH is required");
       }
       finally
       {
