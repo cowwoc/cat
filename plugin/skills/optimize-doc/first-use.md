@@ -77,7 +77,7 @@ defines what Claude does when the command is invoked.
 **⚠️ SPECIAL HANDLING: CLAUDE.md**
 
 When compressing `CLAUDE.md`, the compression agent uses **content reorganization** instead of
-standard compression. The detailed reorganization algorithm is in COMPRESSION-AGENT.md.
+standard compression. The detailed reorganization algorithm is in the compression-agent.
 
 **Validation after compression:**
 ```bash
@@ -93,7 +93,7 @@ grep -c "Step 1:" CLAUDE.md  # Should be minimal
 **⚠️ SPECIAL HANDLING: Style Documentation Files**
 
 When compressing `.claude/rules/*.md` or `docs/code-style/*-claude.md`, the compression agent
-follows special rules defined in COMPRESSION-AGENT.md. The orchestrator does NOT need to know
+follows special rules defined in its instructions. The orchestrator does NOT need to know
 what to preserve/remove - just invoke the subagent and validate the result.
 
 **Verification Required (orchestrator runs AFTER compression)**: Count section headers:
@@ -149,28 +149,25 @@ fi
 
 ### Step 3: Invoke Compression Agent
 
-**⚠️ ENCAPSULATION**: The compression algorithm is in a separate internal document.
-Do NOT attempt to compress manually - invoke the subagent which will read its own instructions.
+**⚠️ ENCAPSULATION**: The compression algorithm is handled by the registered compression agent.
+Do NOT attempt to compress manually - invoke the subagent which has its own instructions injected automatically.
 
 **Subagent invocation** (use Task tool, not TaskCreate - see M372 in subagent-delegation.md):
 
 ```
 Task tool:
-  subagent_type: "general-purpose"
+  subagent_type: "cat:compression-agent"
   description: "Compress {{arg}}"
   prompt: |
-    Read the instructions at: plugin/skills/optimize-doc/COMPRESSION-AGENT.md
-
-    Then compress the following file according to those instructions:
+    Compress the following file according to your instructions:
     - FILE_PATH: {{arg}}
     - OUTPUT_PATH: /tmp/compressed-{{filename}}-v${VERSION}.md
 
     Use the Write tool to save the compressed version.
 ```
 
-**Why separate documents**: The compression algorithm is intentionally NOT in this file.
-If you can see HOW to compress, you might bypass the skill and do it manually - which skips
-validation. The subagent reads COMPRESSION-AGENT.md; you (the orchestrator) only invoke and validate.
+**Why registered agent**: The compression agent is registered as `cat:compression-agent` so its instructions
+are injected automatically. You (the orchestrator) only invoke and validate.
 
 ---
 
@@ -535,7 +532,7 @@ Each optimize-doc subagent spawns SEPARATE validation subagents per Step 4.
 
 ## Implementation Notes
 
-**Agent Type**: MUST use `subagent_type: "general-purpose"`
+**Agent Type**: MUST use `subagent_type: "cat:compression-agent"`
 
 **Validation Tool**: Use `/cat:delegate-agent --skill compare-docs-agent` - delegate handles subagent
 spawning and result collection.
