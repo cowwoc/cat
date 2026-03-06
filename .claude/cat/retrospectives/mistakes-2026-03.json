@@ -839,5 +839,25 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M487",
+    "timestamp" : "2026-03-06T11:57:38Z",
+    "category" : "protocol_violation",
+    "description" : "",
+    "root_cause" : "Existing rule not enforced as a hard constraint.",
+    "rca_method" : "C",
+    "rca_method_name" : "causal-barrier",
+    "prevention_type" : "hook",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }
