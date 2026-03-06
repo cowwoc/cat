@@ -37,7 +37,7 @@ fi
 For deterministic execution with automatic backup and conflict detection:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/git-rebase-safe" "$WORKTREE_PATH" "$TARGET_BRANCH"
+"${CLAUDE_PLUGIN_ROOT}/client/bin/git-rebase" "$WORKTREE_PATH" "$TARGET_BRANCH"
 ```
 
 If TARGET_BRANCH not provided, the tool reads from the cat-branch-point file. The tool outputs JSON.
