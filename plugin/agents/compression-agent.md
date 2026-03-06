@@ -1,16 +1,14 @@
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
+---
+name: compression-agent
+description: Compression specialist for optimize-doc. Compresses documents while preserving execution equivalence.
+model: sonnet
+---
 # Compression Agent Instructions
-
-**INTERNAL DOCUMENT** - This document is for the compression subagent spawned by optimize-doc.
-Do NOT read this document if you are orchestrating compression - use SKILL.md instead.
 
 ## Your Task
 
-Compress the document at `{{FILE_PATH}}` while preserving execution equivalence.
+Compress the document at the FILE_PATH provided in the task prompt while preserving execution equivalence.
+Write the compressed output to the OUTPUT_PATH provided in the task prompt.
 
 ## Goal
 
@@ -123,9 +121,9 @@ instructions over negative prohibitions when the positive form is equally clear.
 
 ## Output
 
-1. Read `{{FILE_PATH}}`
+1. Read the FILE_PATH provided in the task prompt
 2. Compress the content following the above guidelines
-3. **USE THE WRITE TOOL** to save the compressed version to `{{OUTPUT_PATH}}`
+3. **USE THE WRITE TOOL** to save the compressed version to the OUTPUT_PATH provided in the task prompt
 
 **CRITICAL**: You MUST actually write the file using the Write tool. Do NOT just describe
 or summarize the compressed content - physically create the file.
