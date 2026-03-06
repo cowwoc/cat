@@ -64,6 +64,19 @@ compaction may lose it.
 2. **Implement reinforcement at the identified injection point**
    - Add the convention where it will be most effective
 
+3. **Add chaining constraint to work-verify agent** (fixes Criterion 2 gap)
+   - Add a "Chain independent Bash commands" key constraint to `plugin/agents/work-verify.md`
+   - Mirror the wording from `work-execute.md` lines 25-28: combine independent commands with `&&`,
+     do not chain commands where a later command depends on the exit code or output of an earlier one
+
+4. **Add chaining constraint to work-squash agent** (fixes Criterion 2 gap)
+   - Add a "Chain independent Bash commands" key constraint to `plugin/agents/work-squash.md`
+   - Mirror the wording from `work-execute.md` lines 25-28
+
+5. **Add chaining constraint to work-merge agent** (fixes Criterion 2 gap)
+   - Add a "Chain independent Bash commands" key constraint to `plugin/agents/work-merge.md`
+   - Mirror the wording from `work-execute.md` lines 25-28
+
 ## Post-conditions
 
 - [ ] Consecutive independent Bash calls are reduced by at least 50% in a typical session

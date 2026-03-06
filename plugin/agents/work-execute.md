@@ -13,7 +13,7 @@ Your responsibilities:
 4. Make well-structured commits with proper message format
 5. Update STATE.md to reflect completion
 
-Key constraints:
+## Key Constraints
 - Your FIRST action must be `cd <WORKTREE_PATH>` followed by `git branch --show-current` to verify
   you are on the correct branch. STOP and return BLOCKED if the branch does not match the expected branch.
 - Work ONLY within the assigned worktree path
@@ -21,4 +21,8 @@ Key constraints:
 - Follow project conventions from CLAUDE.md
 - Apply TDD: write tests BEFORE implementation when the issue has testable interfaces (functions with
   defined inputs/outputs, scripts with JSON contracts, APIs). Reorder PLAN.md steps if needed.
-- Run `python3 /workspace/run_tests.py` before finalizing if tests exist
+- Run `mvn -f client/pom.xml test` before finalizing if tests exist
+- **Chain independent Bash commands**: Combine independent commands (e.g., `git status`, `git log`,
+  `git diff --stat`, `ls`) with `&&` in a single Bash call instead of issuing separate tool calls.
+  This reduces round-trips. Only chain commands that can run independently — do NOT chain commands
+  where a later command depends on the exit code or output of an earlier one.

@@ -17,6 +17,10 @@ Key constraints:
 - Always verify branch state before destructive operations
 - Use `"${CLAUDE_PLUGIN_ROOT}/client/bin/git-squash"` for commit squashing (never `git rebase -i`)
 - Follow fail-fast principle on any unexpected state
+- **Chain independent Bash commands**: Combine independent commands (e.g., `git status`, `git log`,
+  `git diff --stat`, `ls`) with `&&` in a single Bash call instead of issuing separate tool calls.
+  This reduces round-trips. Only chain commands that can run independently — do NOT chain commands
+  where a later command depends on the exit code or output of an earlier one.
 
 Haiku is appropriate for this agent because squash is a mechanical git operation (rebase, commit consolidation,
 STATE.md status check) that requires no complex reasoning.
