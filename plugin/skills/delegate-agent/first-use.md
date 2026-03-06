@@ -449,7 +449,11 @@ if [[ ${#ISSUES[@]} -gt 0 ]]; then
   # Build dependency graph
   declare -A BLOCKED_BY
   for issue in "${ISSUES[@]}"; do
-    deps=$(echo "$TASK_INFO" | jq -r ".issues[] | select(.id == \"$issue\") | .blockedBy[]")
+    deps=$(echo "$TASK_INFO" | grep -A20 "\"id\"[[:space:]]*:[[:space:]]*\"$issue\"" \
+      | grep '"blockedBy"' \
+      | sed 's/.*"blockedBy"[[:space:]]*:[[:space:]]*\[//;s/\].*//' \
+      | tr ',' '\n' \
+      | sed 's/[[:space:]]*"//g;s/"[[:space:]]*//')
     BLOCKED_BY[$issue]="$deps"
   done
 
@@ -934,29 +938,44 @@ Background mode requires waiting for task-notification, adding complexity.
 
 **Background Task Protocol:**
 
-When tasks are launched with `run_in_background: true`, **NEVER use TaskOutput to poll or check status**.
-The system will notify you when the task completes via task-notification. Wait for that notification,
-then use TaskOutput to retrieve results.
+The Task tool and Agent tool deliver results differently. Do NOT confuse them:
 
-```bash
-# ❌ WRONG: Poll background tasks for status
-TaskOutput issue_id="abc" block=true  # DO NOT do this - wait for notification
+| Tool | ID type | Result delivery | Can call TaskOutput? |
+|------|---------|-----------------|---------------------|
+| `Task(run_in_background=true)` | task_id | `<task-notification>` + TaskOutput | YES |
+| `Agent(run_in_background=true)` | agentId | `<task-notification>` contains full result | NO — will fail |
+
+**Task tool background tasks** — `task_id` is pollable:
+```
+# ❌ WRONG: Poll before notification
+TaskOutput task_id="abc" block=true  # DO NOT do this - wait for notification
 
 # ✅ CORRECT: Wait for task-notification, then retrieve results
 # [System sends task-notification when task completes]
-# Then: TaskOutput issue_id="abc"  # Only after notification
+# Then: TaskOutput task_id="abc"  # Only after notification
 ```
 
-**The correct pattern for background tasks:**
-1. Launch task with `run_in_background: true`
+**The correct pattern for Task tool background tasks:**
+1. Launch with `run_in_background: true`
 2. Do other work while task runs
 3. Wait for system's task-notification (do NOT poll)
 4. After notification, use TaskOutput to retrieve results
+
+**Agent tool background tasks** — result is INSIDE the notification:
+```
+# ❌ WRONG: Calling TaskOutput with an agentId — always fails
+TaskOutput task_id="a94f0f03405a97e89"  # agentId is NOT a valid TaskOutput ID
+
+# ✅ CORRECT: Read the result from the task-notification message directly
+# The <task-notification> system message contains the full result inline
+```
 
 **Anti-pattern:**
 ```
 ❌ "I'll check if the background task is done yet" (polling)
 ✅ "Background task launched. I'll wait for notification." (correct)
+❌ TaskOutput with an agentId (wrong ID namespace — always "No task found")
+✅ Read Agent task results from the task-notification message content
 ```
 
 ## Related Skills
