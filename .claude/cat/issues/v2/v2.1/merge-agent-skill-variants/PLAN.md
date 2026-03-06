@@ -93,6 +93,16 @@ These 33 agent-only skills correctly have only an `-agent` variant:
 - Update `InjectSessionInstructions.java` if it references the deleted skills
   - Files: `plugin/concepts/skill-loading.md`, `client/src/main/java/**/InjectSessionInstructions.java`
 
+### Wave 3 (Post-condition Fixes)
+- Create `plugin/skills/get-output-agent/first-use.md` (was deleted from base variant)
+  - Files: `plugin/skills/get-output-agent/first-use.md`
+- Create `plugin/skills/recover-from-drift-agent/first-use.md` (was deleted from base variant)
+  - Files: `plugin/skills/recover-from-drift-agent/first-use.md`
+- Add `disable-model-invocation: true` to `plugin/skills/init/SKILL.md` frontmatter
+  - Files: `plugin/skills/init/SKILL.md`
+- Add `disable-model-invocation: true` to `plugin/skills/statusline/SKILL.md` frontmatter
+  - Files: `plugin/skills/statusline/SKILL.md`
+
 ## Post-conditions
 - [ ] `plugin/skills/init-agent/` does not exist
 - [ ] `plugin/skills/statusline-agent/` does not exist
