@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.UUID;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -118,7 +119,7 @@ public class SkillLoaderTest
     {
       // Delete the plugin root after TestJvmScope is constructed so SkillLoader sees a missing directory
       TestUtils.deleteDirectoryRecursively(tempPluginRoot);
-      new SkillLoader(scope, List.of("agent-" + System.nanoTime()));
+      new SkillLoader(scope, List.of(UUID.randomUUID().toString()));
     }
   }
 
@@ -138,7 +139,7 @@ public class SkillLoaderTest
     try (JvmScope scope = new TestJvmScope(nonExistentProjectDir, tempPluginRoot))
     {
       // Constructor should succeed even when projectDir does not point to an existing directory
-      SkillLoader loader = new SkillLoader(scope, List.of("agent-" + System.nanoTime()));
+      SkillLoader loader = new SkillLoader(scope, List.of(UUID.randomUUID().toString()));
       requireThat(loader, "loader").isNotNull();
     }
     finally
@@ -165,7 +166,7 @@ Path: ${CLAUDE_PLUGIN_ROOT}/file.txt
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -195,7 +196,7 @@ Path: ${CLAUDE_PLUGIN_ROOT}/file.txt
 Session: ${CLAUDE_SESSION_ID}
 """);
 
-      String uniqueAgentId = "agent-" + System.nanoTime();
+      String uniqueAgentId = UUID.randomUUID().toString();
       SkillLoader loader = new SkillLoader(scope,
         List.of(uniqueAgentId));
       String result = loader.load("test-skill");
@@ -229,7 +230,7 @@ Session: ${CLAUDE_SESSION_ID}
 Project: ${CLAUDE_PROJECT_DIR}/data
 """);
 
-      SkillLoader loader = new SkillLoader(scope, List.of("agent-" + System.nanoTime()));
+      SkillLoader loader = new SkillLoader(scope, List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -261,7 +262,7 @@ Full skill content here
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").contains("Full skill content here");
@@ -290,7 +291,7 @@ Full skill content
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
 
       String firstResult = loader.load("test-skill");
       requireThat(firstResult, "firstResult").contains("Full skill content");
@@ -322,7 +323,7 @@ Full skill content
       Files.createDirectories(skillDir);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       loader.load("empty-skill");
     }
     finally
@@ -344,7 +345,7 @@ Full skill content
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       loader.load(null);
     }
     finally
@@ -366,7 +367,7 @@ Full skill content
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       loader.load("");
     }
     finally
@@ -394,7 +395,7 @@ Path: ${CLAUDE_PLUGIN_ROOT}/contains_${CLAUDE_SESSION_ID}
 Project: ${CLAUDE_PROJECT_DIR}/session_${CLAUDE_SESSION_ID}
 """);
 
-      SkillLoader loader = new SkillLoader(scope, List.of("agent-" + System.nanoTime()));
+      SkillLoader loader = new SkillLoader(scope, List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -430,7 +431,7 @@ Value: ${UNDEFINED_VAR}
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").contains("Value: ${UNDEFINED_VAR}");
@@ -460,7 +461,7 @@ Session: ${CLAUDE_SESSION_ID}
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -499,7 +500,7 @@ Context file content
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -538,7 +539,7 @@ Root: ${CLAUDE_PLUGIN_ROOT}
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -571,7 +572,7 @@ Root: ${CLAUDE_PLUGIN_ROOT}
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       loader.load("test-skill");
     }
     finally
@@ -603,7 +604,7 @@ Root: ${CLAUDE_PLUGIN_ROOT}
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       loader.load("test-skill");
       Assert.fail("Expected IOException to be thrown");
     }
@@ -634,7 +635,7 @@ Email: user@example.com
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -679,7 +680,7 @@ Content B
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
 
       loader.load("test-skill");
       Assert.fail("Expected IOException to be thrown");
@@ -724,7 +725,7 @@ Conclusion section
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -776,7 +777,7 @@ Plain text content
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -817,7 +818,7 @@ Content with spaces in filename
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -855,7 +856,7 @@ See @concepts/note.md for details
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -891,7 +892,7 @@ Next line
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -927,7 +928,7 @@ Root: ${CLAUDE_PLUGIN_ROOT}
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -969,7 +970,7 @@ git checkout ${BASE}
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1002,7 +1003,7 @@ git checkout ${BASE}
         "# Skill Content\n");
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1034,7 +1035,7 @@ Regular content here
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1066,7 +1067,7 @@ Done
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1098,7 +1099,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1137,7 +1138,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
         """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1178,7 +1179,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
         """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       loader.load("test-skill");
     }
     finally
@@ -1213,7 +1214,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
         """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1253,7 +1254,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
         """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1293,7 +1294,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
         """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1343,7 +1344,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
 
       // Note: concepts/some-file.md does NOT exist.
       // If @path inside code block is expanded, this would throw IOException.
-      SkillLoader loader = new SkillLoader(scope, List.of("agent-" + System.nanoTime()));
+      SkillLoader loader = new SkillLoader(scope, List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       // The @path inside the code block should be preserved as-is
@@ -1435,7 +1436,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
         """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       loader.load("test-skill");
     }
     finally
@@ -1472,7 +1473,7 @@ Output content here.
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1520,7 +1521,7 @@ Dynamic output.
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
 
       String firstResult = loader.load("test-skill");
       requireThat(firstResult, "firstResult").
@@ -1571,7 +1572,7 @@ Skill body without output.
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1611,7 +1612,7 @@ Output content.
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1655,7 +1656,7 @@ Output content.
         """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1697,7 +1698,7 @@ Dynamic output with attribute.
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
 
       String result = loader.load("test-skill");
       requireThat(result, "result").
@@ -1742,7 +1743,7 @@ Dynamic output with multiple attributes.
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
 
       String result = loader.load("test-skill");
       requireThat(result, "result").
@@ -1787,7 +1788,7 @@ Dynamic output with attribute.
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
 
       String firstResult = loader.load("test-skill");
       requireThat(firstResult, "firstResult").
@@ -1832,7 +1833,7 @@ Dynamic output with attribute.
         "Count: $1, Label: $2\n");
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime(), "42", "hello"));
+        List.of(UUID.randomUUID().toString(), "42", "hello"));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1865,7 +1866,7 @@ Dynamic output with attribute.
         "First: $1, Second: $2\n");
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime(), "value1"));
+        List.of(UUID.randomUUID().toString(), "value1"));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1897,7 +1898,7 @@ Dynamic output with attribute.
         "Name: $1\n");
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime(), "Alice", "Bob", "Charlie"));
+        List.of(UUID.randomUUID().toString(), "Alice", "Bob", "Charlie"));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1930,7 +1931,7 @@ Dynamic output with attribute.
         "Count: $1\n");
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").contains("Count: $1");
@@ -1960,7 +1961,7 @@ Dynamic output with attribute.
         "Count: $1\n");
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime(), "   "));
+        List.of(UUID.randomUUID().toString(), "   "));
       String result = loader.load("test-skill");
 
       // The whitespace-only skill arg is preserved as the value of $1
@@ -2006,7 +2007,7 @@ Read the `<output skill="test-skill">` tag below and echo it verbatim.
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       // The instructions must include the text about reading the <output> tag
@@ -2050,7 +2051,7 @@ status data here
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       // Instructions must contain the backtick reference and NOT be split at it
@@ -2097,7 +2098,7 @@ some `code` here
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -2151,7 +2152,7 @@ actual preprocessor content
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       // The real tag (outside code block) should be used; instructions should include code block content
@@ -2204,7 +2205,7 @@ More documentation text.
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       // No real output tag — content should be returned as non-tagged skill content (no wrapping).
@@ -2262,7 +2263,7 @@ status output here
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("status");
 
       // All instruction text (including table) must be in the instructions block
@@ -2301,7 +2302,7 @@ Prefixed skill content
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       // Load with prefixed name (as SubagentStartHook lists it)
       String result = loader.load("cat:test-skill");
 
@@ -2348,7 +2349,7 @@ Prefixed skill content
         """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       // The argument "/some/path" must arrive without surrounding quotes
@@ -2392,7 +2393,7 @@ Prefixed skill content
         """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       // The path with spaces must arrive as a single argument
@@ -2434,7 +2435,7 @@ Prefixed skill content
         """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       // The path with single-quoted spaces must arrive as a single argument
@@ -2476,7 +2477,7 @@ Prefixed skill content
         """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       // All arguments must be correctly parsed: --verbose, /home/user/workspace, --mode, read-write
@@ -2508,7 +2509,7 @@ Prefixed skill content
         "First: $1, Second: $2\n");
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime(), "hello world", "foo bar"));
+        List.of(UUID.randomUUID().toString(), "hello world", "foo bar"));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -2524,12 +2525,15 @@ Prefixed skill content
 
   /**
    * Verifies that constructor rejects agentId containing path traversal sequences (../).
+   * <p>
+   * Path traversal values do not match UUID or subagent ID format, so the constructor
+   * throws IllegalArgumentException rather than silently creating marker files in wrong directories.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*contains path traversal.*")
-  public void constructorRejectsAgentIdWithPathTraversal() throws IOException
+    expectedExceptionsMessageRegExp = ".*catAgentId '\\.\\..*does not match a valid format.*")
+  public void constructorRejectsPathTraversalCatAgentId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -2544,12 +2548,15 @@ Prefixed skill content
 
   /**
    * Verifies that constructor rejects agentId starting with absolute path (/).
+   * <p>
+   * Absolute path values do not match UUID or subagent ID format, so the constructor
+   * throws IllegalArgumentException rather than silently creating marker files in wrong directories.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*contains path traversal.*")
-  public void constructorRejectsAgentIdWithAbsolutePath() throws IOException
+    expectedExceptionsMessageRegExp = ".*catAgentId '/etc/passwd' does not match a valid format.*")
+  public void constructorRejectsAbsolutePathCatAgentId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -2585,8 +2592,9 @@ Prefixed skill content
 Full skill content for agent test
 """);
 
-      String agentId1 = "agent-1-" + System.nanoTime();
-      String agentId2 = "agent-2-" + System.nanoTime();
+      // Use valid UUID-format agent IDs so they pass catAgentId validation
+      String agentId1 = "550e8400-e29b-41d4-a716-446655440001";
+      String agentId2 = "550e8400-e29b-41d4-a716-446655440002";
 
       // Create two loaders with different agent IDs but same plugin/project dirs
       SkillLoader loader1 = new SkillLoader(scope,
@@ -2674,7 +2682,7 @@ Skill instructions here.
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -2730,7 +2738,7 @@ Skill instructions here.
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
 
       String firstResult = loader.load("test-skill");
       requireThat(firstResult, "firstResult").
@@ -2800,7 +2808,7 @@ Instructions after the directive.
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       // Instructions before the directive are captured in the <instructions> block
@@ -2855,7 +2863,7 @@ Skill instructions here.
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -2914,7 +2922,7 @@ More instructions after static tag.
 """);
 
       SkillLoader loader = new SkillLoader(scope,
-        List.of("agent-" + System.nanoTime()));
+        List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       // The preprocessor-generated tag (last) must be used for the output section,
@@ -2993,7 +3001,7 @@ Agent: $0
       Files.createDirectories(agentDir);
       // No first-use.md in add-agent/
 
-      SkillLoader loader = new SkillLoader(scope, List.of("agent-" + System.nanoTime()));
+      SkillLoader loader = new SkillLoader(scope, List.of(UUID.randomUUID().toString()));
       String result = loader.load("add-agent");
 
       // Should return the parent skill's content, not empty
@@ -3027,7 +3035,7 @@ Agent: $0
       Files.createDirectories(agentDir);
       Files.writeString(agentDir.resolve("first-use.md"), "Agent-specific instructions.\n");
 
-      SkillLoader loader = new SkillLoader(scope, List.of("agent-" + System.nanoTime()));
+      SkillLoader loader = new SkillLoader(scope, List.of(UUID.randomUUID().toString()));
       String result = loader.load("myskill-agent");
 
       // Should return the agent's OWN content, not the parent's
@@ -3058,7 +3066,7 @@ Agent: $0
       Files.createDirectories(agentDir);
       // No first-use.md in agent dir, no parent dir
 
-      SkillLoader loader = new SkillLoader(scope, List.of("agent-" + System.nanoTime()));
+      SkillLoader loader = new SkillLoader(scope, List.of(UUID.randomUUID().toString()));
       loader.load("extract-investigation-context-agent");
     }
     finally
@@ -3092,7 +3100,7 @@ Agent: $0
       Path agentDir = tempPluginRoot.resolve("skills/add-agent");
       Files.createDirectories(agentDir);
 
-      SkillLoader loader = new SkillLoader(scope, List.of("agent-" + System.nanoTime()));
+      SkillLoader loader = new SkillLoader(scope, List.of(UUID.randomUUID().toString()));
       String result = loader.load("cat:add-agent");
 
       requireThat(result, "result").contains("Parent instructions.");
@@ -3178,7 +3186,7 @@ Agent: $0
         "Use the Skill tool to invoke this skill.\n",
         java.nio.charset.StandardCharsets.UTF_8);
 
-      SkillLoader loader = new SkillLoader(scope, List.of("agent-" + System.nanoTime()));
+      SkillLoader loader = new SkillLoader(scope, List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -3188,6 +3196,156 @@ Agent: $0
     finally
     {
       TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that a valid UUID-format catAgentId is accepted and the marker file is created in the
+   * correct location under the session base path.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void constructorAcceptsValidUuidCatAgentId() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      String validUuid = "550e8400-e29b-41d4-a716-446655440000";
+      SkillLoader loader = new SkillLoader(scope, List.of(validUuid));
+      // Constructor should succeed and marker file should be under sessionBasePath/validUuid/
+      requireThat(loader, "loader").isNotNull();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a valid subagent ID in the format "{uuid}/subagents/{agentId}" is accepted.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void constructorAcceptsValidSubagentCatAgentId() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      String validSubagentId = "550e8400-e29b-41d4-a716-446655440000/subagents/abc123def456";
+      SkillLoader loader = new SkillLoader(scope, List.of(validSubagentId));
+      requireThat(loader, "loader").isNotNull();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a branch-name-style catAgentId (like "2.1-fix-something") is detected as invalid
+   * and rejected with an exception.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*catAgentId '2\\.1-fix-catid-path-resolution' does not match a valid format.*")
+  public void constructorRejectsBranchNameCatAgentId() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      new SkillLoader(scope, List.of("2.1-fix-catid-path-resolution"));
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a path-like catAgentId (like "cat/worktrees/something") is detected as invalid
+   * and rejected with an exception.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*catAgentId 'cat/worktrees/.*' does not match a valid format.*")
+  public void constructorRejectsPathLikeCatAgentId() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      new SkillLoader(scope, List.of("cat/worktrees/2.1-fix-skillloader-non-ascii-characters"));
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a literal "{" catAgentId is detected as invalid and rejected with an exception.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*catAgentId '\\{' does not match a valid format.*")
+  public void constructorRejectsBraceCatAgentId() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      new SkillLoader(scope, List.of("{"));
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a git range catAgentId (like "HEAD~2..HEAD") is detected as invalid and
+   * rejected with an exception.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*catAgentId 'HEAD~2\\.\\.HEAD' does not match a valid format.*")
+  public void constructorRejectsGitRangeCatAgentId() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      new SkillLoader(scope, List.of("HEAD~2..HEAD"));
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a subagent ID containing hyphens and underscores in the agentId segment is accepted.
+   * <p>
+   * The agentId segment allows [A-Za-z0-9_-] characters to match HookInput.AGENT_ID_PATTERN.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void constructorAcceptsSubagentIdWithHyphenAndUnderscore() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      String validSubagentId = "550e8400-e29b-41d4-a716-446655440000/subagents/abc-123_xyz";
+      SkillLoader loader = new SkillLoader(scope, List.of(validSubagentId));
+      requireThat(loader, "loader").isNotNull();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 }

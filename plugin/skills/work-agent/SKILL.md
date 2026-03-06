@@ -7,7 +7,7 @@ description: >
   IMPORTANT: After invoking this skill, forward the AskUserQuestion tool call verbatim — do not respond
   conversationally.
 model: sonnet
-argument-hint: "[version | issueId | filter] [--override-gate]"
+argument-hint: "<catAgentId> [version | issueId | filter] [--override-gate]"
 allowed-tools:
   - Read
   - Bash
