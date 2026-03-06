@@ -373,6 +373,22 @@ public final class GitCommands
   }
 
   /**
+   * Returns true if the given git directory belongs to a CAT issue worktree.
+   * <p>
+   * A CAT issue worktree has a git directory whose parent directory is named {@code "worktrees"},
+   * e.g. {@code /workspace/.git/worktrees/2.1-my-issue}. The {@code gitDir} argument must be
+   * an absolute, normalized path (resolved against the working directory if originally relative).
+   *
+   * @param gitDir the absolute, normalized path returned by {@code git rev-parse --git-dir}
+   * @return true if {@code gitDir} is a CAT worktree git directory
+   */
+  public static boolean isCatWorktreeGitDir(Path gitDir)
+  {
+    Path parent = gitDir.getParent();
+    return parent != null && parent.getFileName().toString().equals("worktrees");
+  }
+
+  /**
    * Converts a string to lowercase using Locale.ROOT.
    * <p>
    * This avoids locale-specific issues with case conversion.

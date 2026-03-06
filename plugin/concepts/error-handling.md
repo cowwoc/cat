@@ -78,15 +78,16 @@ report BLOCKED with search attempts. Do NOT guess or make assumptions.
 Operations requiring specific environment state must verify before proceeding.
 
 ```bash
-# Detect target branch from worktree metadata (fail-fast if missing)
-TARGET_BRANCH=$(cat .git/cat-branch-point 2>/dev/null)
-if [[ -z "$TARGET_BRANCH" ]]; then
-    echo "ERROR: No cat-branch-point file found. Not in a CAT worktree."
+# Verify we are in a CAT issue worktree (git dir must end with worktrees/<branch-name>)
+GIT_DIR=$(git rev-parse --git-dir 2>/dev/null)
+GIT_DIR_PARENT=$(dirname "$GIT_DIR")
+if [[ "$(basename "$GIT_DIR_PARENT")" != "worktrees" ]]; then
+    echo "ERROR: Not in a CAT issue worktree. Run /cat:work to create one."
     exit 1
 fi
 ```
 
-**Why?** Operating without required metadata produces undefined behavior.
+**Why?** Operating outside an issue worktree produces undefined behavior.
 
 ### 4. Validation Fail-Fast
 

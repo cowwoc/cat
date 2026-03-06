@@ -121,14 +121,25 @@ If output is non-empty, there is uncommitted work.
 ```bash
 BRANCH_NAME="<branch-from-survey>"
 cd "$WORKTREE_PATH"
-TARGET_BRANCH=$(cat "$(git rev-parse --git-dir)/cat-branch-point" 2>/dev/null || echo "main")
-MERGED=$(git branch --merged "$TARGET_BRANCH" | grep -q "^[* ]*${BRANCH_NAME}$" && echo "yes" || echo "no")
+# Read target branch from the issue's STATE.md
+STATE_FILE=$(grep -rl "in-progress\|closed" "$WORKTREE_PATH/.claude/cat/issues/" --include="STATE.md" 2>/dev/null | head -1)
+TARGET_BRANCH=""
+if [[ -n "$STATE_FILE" ]]; then
+  TARGET_BRANCH=$(grep "Target Branch:" "$STATE_FILE" | sed 's/.*\*\*Target Branch:\*\*\s*//')
+fi
+if [[ -z "$TARGET_BRANCH" ]]; then
+  echo "Warning: Could not determine target branch from STATE.md — skipping merge check"
+  MERGED="unknown"
+else
+  MERGED=$(git branch --merged "$TARGET_BRANCH" | grep -q "^[* ]*${BRANCH_NAME}$" && echo "yes" || echo "no")
+fi
 ```
 
 | Merge Status | Risk Assessment |
 |---|---|
 | Branch is merged into target | Low risk — branch commits are safe on target; only uncommitted modifications would be lost |
 | Branch is NOT merged | High risk — discarding uncommitted work may also represent the only copy of work in progress |
+| Unknown (no Target Branch in STATE.md) | Treat as high risk — cannot confirm merge status |
 
 Present findings:
 

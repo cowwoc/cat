@@ -14,6 +14,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import org.testng.annotations.Test;
 
@@ -742,7 +743,7 @@ public final class StatuslineCommandTest
   @Test
   public void gitInfoShowsNaWhenNotInGitRepo() throws IOException
   {
-    Path nonGitDir = java.nio.file.Files.createTempDirectory("statusline-nogit-");
+    Path nonGitDir = Files.createTempDirectory("statusline-nogit-");
     try (TestJvmScope scope = new TestJvmScope(nonGitDir, nonGitDir))
     {
       String json = """

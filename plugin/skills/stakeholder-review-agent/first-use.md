@@ -280,15 +280,14 @@ SELECTED=$(echo "$SELECTED" | tr ' ' '
 
 ```bash
 # Get changed files from target branch to HEAD (captures all commits since worktree creation)
-# Read target branch from cat-branch-point metadata (fail-fast if missing - stakeholder-review always runs in worktrees)
-WORKTREE_NAME=$(basename "$PWD" 2>/dev/null)
-CAT_BRANCH_POINT_FILE="$(git rev-parse --git-common-dir)/worktrees/${WORKTREE_NAME}/cat-branch-point"
-if [[ ! -f "$CAT_BRANCH_POINT_FILE" ]]; then
-    echo "ERROR: cat-branch-point metadata not found: $CAT_BRANCH_POINT_FILE" >&2
-    echo "Stakeholder review requires worktree context. Run via /cat:work." >&2
+# Verify we are in a CAT issue worktree (git dir must end with worktrees/<branch-name>)
+GIT_DIR=$(git rev-parse --git-dir 2>/dev/null)
+GIT_DIR_PARENT=$(dirname "$GIT_DIR")
+if [[ "$(basename "$GIT_DIR_PARENT")" != "worktrees" ]]; then
+    echo "ERROR: Not in a CAT issue worktree. Stakeholder review requires worktree context. Run via /cat:work." >&2
     exit 1
 fi
-TARGET_BRANCH=$(cat "$CAT_BRANCH_POINT_FILE")
+TARGET_BRANCH="${TARGET_BRANCH:-$(git merge-base HEAD @{upstream} 2>/dev/null || git rev-parse HEAD~1 2>/dev/null)}"
 
 CHANGED_FILES=$(git diff --name-only "${TARGET_BRANCH}..HEAD" 2>/dev/null || git diff --name-only --cached)
 
@@ -426,14 +425,13 @@ fi
 # --- Batch 1: Gather git data, detect language, read config (all independent) ---
 # Chain these independent operations in a single Bash call to reduce round-trips.
 
-WORKTREE_NAME=$(basename "$PWD" 2>/dev/null)
-CAT_BRANCH_POINT_FILE="$(git rev-parse --git-common-dir)/worktrees/${WORKTREE_NAME}/cat-branch-point"
-if [[ ! -f "$CAT_BRANCH_POINT_FILE" ]]; then
-    echo "ERROR: cat-branch-point metadata not found: $CAT_BRANCH_POINT_FILE" >&2
-    echo "Stakeholder review requires worktree context. Run via /cat:work." >&2
+GIT_DIR=$(git rev-parse --git-dir 2>/dev/null)
+GIT_DIR_PARENT=$(dirname "$GIT_DIR")
+if [[ "$(basename "$GIT_DIR_PARENT")" != "worktrees" ]]; then
+    echo "ERROR: Not in a CAT issue worktree. Stakeholder review requires worktree context. Run via /cat:work." >&2
     exit 1
 fi
-TARGET_BRANCH=$(cat "$CAT_BRANCH_POINT_FILE") && \
+TARGET_BRANCH="${TARGET_BRANCH:-$(git merge-base HEAD @{upstream} 2>/dev/null || git rev-parse HEAD~1 2>/dev/null)}" && \
 CHANGED_FILES=$(git diff --name-only "${TARGET_BRANCH}..HEAD" 2>/dev/null || git diff --name-only --cached) && \
 DIFF_SUMMARY=$(git diff "${TARGET_BRANCH}..HEAD" -U3 2>/dev/null || git diff --cached -U3) && \
 PRIMARY_LANG=$(echo "$CHANGED_FILES" | grep -oE '\.[a-z]+$' | sort | uniq -c | sort -rn | head -1 | awk '{print $2}' | tr -d '.') && \

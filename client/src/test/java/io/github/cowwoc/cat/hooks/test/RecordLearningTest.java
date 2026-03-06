@@ -447,13 +447,8 @@ public final class RecordLearningTest
       Files.createDirectories(worktreesDir);
       Path worktree = TestUtils.createWorktree(mainRepo, worktreesDir, "feature-branch");
 
-      // Create the cat-branch-point file that identifies this as a CAT worktree
-      Path gitCommonDir = Path.of(TestUtils.runGitCommandWithOutput(worktree, "rev-parse", "--git-common-dir"));
-      if (!gitCommonDir.isAbsolute())
-        gitCommonDir = worktree.resolve(gitCommonDir);
-      String worktreeName = worktree.getFileName().toString();
-      Path catBranchPoint = gitCommonDir.resolve("worktrees").resolve(worktreeName).resolve("cat-branch-point");
-      Files.writeString(catBranchPoint, "main");
+      // The worktree is identified as a CAT worktree by its git dir ending with "worktrees/<branch-name>"
+      // No additional setup needed — git worktree creation establishes the correct structure
 
       // No pre-existing retrospectives — RecordLearning will create them in commitDir (worktree)
       RecordLearning cmd = new RecordLearning(scope, mainRepo, FIXED_CLOCK);

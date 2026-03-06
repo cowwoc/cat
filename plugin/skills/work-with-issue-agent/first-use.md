@@ -1005,11 +1005,9 @@ defer it.
 **Step 1: Read the list of files changed by this issue:**
 
 ```bash
-# Compare against branch point (what the issue changed), not target branch head
-# Target branch may have new files added after the worktree was created
+# Compare against target branch (what the issue changed)
 cd "${WORKTREE_PATH}"
-BRANCH_POINT=$(cat "$(git rev-parse --git-dir)/cat-branch-point")
-git diff --name-only "${BRANCH_POINT}..HEAD"
+git diff --name-only "${TARGET_BRANCH}..HEAD"
 ```
 
 **Step 2: For each remaining concern, calculate benefit and cost:**
@@ -1251,10 +1249,6 @@ Skill("cat:git-rebase-agent", args="{WORKTREE_PATH} {TARGET_BRANCH}")
 - Continue to Step 9 (Approval Gate)
 
 **If rebase reports OK:**
-- Update `cat-branch-point` to the new base:
-  ```bash
-  git rev-parse {TARGET_BRANCH} > "$(git rev-parse --git-dir)/cat-branch-point"
-  ```
 - Delete the backup branch created by cat:git-rebase-agent
 - Continue to Step 9 (Approval Gate)
 
@@ -1288,7 +1282,7 @@ do not proceed to the approval gate without completing skill-builder review for 
 
 ```bash
 # Check whether any skill or command files were modified
-git diff --name-only "$(cat "$(git rev-parse --git-dir)/cat-branch-point")..HEAD" | grep -E '^plugin/(skills|commands)/'
+git diff --name-only "${TARGET_BRANCH}..HEAD" | grep -E '^plugin/(skills|commands)/'
 ```
 
 **If skill or command files were modified:** Invoke `/cat:skill-builder` with the path to each modified skill or

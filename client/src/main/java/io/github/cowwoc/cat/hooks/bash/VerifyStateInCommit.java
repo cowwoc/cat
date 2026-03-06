@@ -9,7 +9,6 @@ package io.github.cowwoc.cat.hooks.bash;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
-import io.github.cowwoc.cat.hooks.CatMetadata;
 import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 
@@ -124,22 +123,29 @@ public final class VerifyStateInCommit implements BashHandler
   /**
    * Checks whether the working directory is inside a CAT worktree.
    * <p>
-   * Only the {@code cat-branch-point} file inside the git directory is a reliable worktree marker. The
-   * {@code .claude/cat} directory exists in the main workspace too, so it cannot be used to detect
-   * worktrees.
+   * A CAT issue worktree has a git directory ending with {@code worktrees/<branch-name>}
+   * (the path returned by {@code git rev-parse --git-dir}). The {@code .claude/cat} directory
+   * exists in the main workspace too, so it cannot be used to detect worktrees.
    *
    * @param workingDirectory the working directory path
    * @return {@code true} if this is a CAT worktree
    */
   private boolean isInCatWorktree(String workingDirectory)
   {
-    Path workDir = Path.of(workingDirectory);
-
-    // Check for .git/cat-branch-point file (worktree marker).
-    // This file is written by /cat:work when creating a worktree and is the only reliable indicator
-    // that we are operating inside a CAT worktree rather than the main workspace.
-    Path gitCatBranchPoint = workDir.resolve(".git").resolve(CatMetadata.BRANCH_POINT_FILE);
-    return Files.exists(gitCatBranchPoint);
+    try
+    {
+      String gitDirPath = GitCommands.runGit(Path.of(workingDirectory), "rev-parse", "--git-dir");
+      if (gitDirPath.isEmpty())
+        return false;
+      Path gitDir = Paths.get(gitDirPath);
+      if (!gitDir.isAbsolute())
+        gitDir = Paths.get(workingDirectory).resolve(gitDirPath).normalize();
+      return GitCommands.isCatWorktreeGitDir(gitDir);
+    }
+    catch (IOException _)
+    {
+      return false;
+    }
   }
 
   /**

@@ -165,7 +165,7 @@ public final class InjectSessionInstructions implements SessionStartHandler
       This ensures all file operations target the worktree, not the main workspace.
 
       **Violation indicators**:
-      - No `cat-branch-point` file in current git dir (not an issue worktree)
+      - Git dir does not end with `worktrees/<branch-name>` (not an issue worktree)
       - Making issue-related edits without first running `/cat:work`
 
       **Why isolation matters**:

@@ -9,7 +9,6 @@ package io.github.cowwoc.cat.hooks.test;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
-import io.github.cowwoc.cat.hooks.CatMetadata;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.bash.WarnMainWorkspaceCommit;
 import io.github.cowwoc.cat.hooks.util.IssueLock;
@@ -18,7 +17,6 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.UUID;
 
 /**
@@ -53,37 +51,15 @@ public final class WarnMainWorkspaceCommitTest
   }
 
   /**
-   * Creates a {@code cat-branch-point} marker file in the git directory of the given repository.
+   * Verifies that committing from inside a real CAT worktree does NOT emit a warning.
    * <p>
-   * This simulates a CAT worktree created by {@code /cat:work}. The marker file is necessary to distinguish
-   * CAT-managed worktrees from regular git worktrees, as the handler only suppresses warnings for CAT-specific
-   * worktrees. This marker is written by {@code /cat:work} and checked by {@code isInsideCatWorktree()} to
-   * validate that a worktree was created and managed by CAT (not just any regular git worktree).
-   *
-   * @param repoDir the repository directory
-   * @throws IOException if file operations fail
-   */
-  private static void createCatBranchPointFile(Path repoDir) throws IOException
-  {
-    String gitDirPath = TestUtils.runGitCommandWithOutput(repoDir, "rev-parse", "--git-dir");
-    Path gitDir;
-    if (Paths.get(gitDirPath).isAbsolute())
-      gitDir = Paths.get(gitDirPath);
-    else
-      gitDir = repoDir.resolve(gitDirPath);
-    Files.writeString(gitDir.resolve(CatMetadata.BRANCH_POINT_FILE), "abc1234567890abcdef1234567890abcdef123456");
-  }
-
-  /**
-   * Verifies that the handler requires the {@code cat-branch-point} marker file to identify CAT worktrees.
-   * <p>
-   * Even if cwd points to a git worktree directory, without the marker file the handler cannot confirm
-   * it's a CAT-managed worktree and will emit a warning if an active lock exists.
+   * A CAT worktree is identified by its git directory ending with {@code worktrees/<branch-name>}.
+   * When the agent correctly commits from inside the worktree, no warning is emitted.
    *
    * @throws IOException if an I/O error occurs during test setup
    */
   @Test
-  public void cwdBasedDetectionRequiresMarkerFile() throws IOException
+  public void cwdInWorktreeIsIdentifiedAsCatWorktree() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
@@ -95,19 +71,17 @@ public final class WarnMainWorkspaceCommitTest
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-cwd-issue");
       try
       {
-        // Note: NOT creating the marker file — the handler cannot identify this as a CAT worktree
         createLockFile(scope, "2.1-cwd-issue", sessionId);
 
         WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
-        // Pass worktreeDir as the working directory, but no marker file exists
+        // Pass worktreeDir as the working directory — it IS a CAT worktree by git dir structure
         BashHandler.Result result = handler.check(
           TestUtils.bashInput("git commit -m \"feature: test cwd detection\"",
             worktreeDir.toString(), sessionId));
 
-        // Should warn because marker file is missing, so it's not identified as a CAT worktree
+        // Should allow because the worktree is identified by git dir structure
         requireThat(result.blocked(), "blocked").isFalse();
-        requireThat(result.reason(), "reason").isNotEmpty();
-        requireThat(result.reason(), "reason").contains("MAIN WORKSPACE COMMIT DETECTED");
+        requireThat(result.reason(), "reason").isEmpty();
       }
       finally
       {
@@ -248,8 +222,7 @@ public final class WarnMainWorkspaceCommitTest
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-active-issue");
       try
       {
-        createCatBranchPointFile(worktreeDir);
-        createLockFile(scope, "2.1-active-issue", sessionId);
+        createLockFile(scope,"2.1-active-issue", sessionId);
 
         WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
         BashHandler.Result result = handler.check(
@@ -322,8 +295,7 @@ public final class WarnMainWorkspaceCommitTest
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-cd-issue");
       try
       {
-        createCatBranchPointFile(worktreeDir);
-        createLockFile(scope, "2.1-cd-issue", sessionId);
+        createLockFile(scope,"2.1-cd-issue", sessionId);
 
         WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
         // cwd is mainRepo but command cd's into the worktree
@@ -503,8 +475,7 @@ public final class WarnMainWorkspaceCommitTest
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-semicolon-issue");
       try
       {
-        createCatBranchPointFile(worktreeDir);
-        createLockFile(scope, "2.1-semicolon-issue", sessionId);
+        createLockFile(scope,"2.1-semicolon-issue", sessionId);
 
         WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
         // Semicolon syntax instead of &&
@@ -546,8 +517,7 @@ public final class WarnMainWorkspaceCommitTest
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-pipe-issue");
       try
       {
-        createCatBranchPointFile(worktreeDir);
-        createLockFile(scope, "2.1-pipe-issue", sessionId);
+        createLockFile(scope,"2.1-pipe-issue", sessionId);
 
         WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
         // Using pipe operator
@@ -587,8 +557,7 @@ public final class WarnMainWorkspaceCommitTest
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-quoted-issue");
       try
       {
-        createCatBranchPointFile(worktreeDir);
-        createLockFile(scope, "2.1-quoted-issue", sessionId);
+        createLockFile(scope,"2.1-quoted-issue", sessionId);
 
         WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
         // Double-quoted path
