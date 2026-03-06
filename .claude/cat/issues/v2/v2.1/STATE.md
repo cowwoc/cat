@@ -20,6 +20,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - merge-agent-skill-variants
 - rename-satisfies-to-parent-requirements
 - fix-disable-model-invocation-docs
+- refactor-eliminate-content-relay
 
 
 ## Issues Closed
