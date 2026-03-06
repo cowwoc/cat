@@ -32,7 +32,7 @@ All abandoned CAT artifacts (worktrees, locks, branches) are identified and clea
 
 **When resetting stuck `in-progress` issues, verify implementation status first:**
 
-Before changing an issue from `in-progress` to `open`, check git history:
+Before changing an issue from `in-progress` to `pending`, check git history:
 
 ```bash
 ISSUE_NAME="issue-name-here"
@@ -43,11 +43,11 @@ git log --oneline -- ".claude/cat/issues/*/v*/$ISSUE_NAME/" -5
 | Git History Shows | Correct Action |
 |-------------------|----------------|
 | Commits implementing the issue | Mark as `completed` with commit reference |
-| No relevant commits | Mark as `open` (truly abandoned) |
+| No relevant commits | Mark as `pending` (truly abandoned) |
 | Partial commits | Check commit content, may be partial completion |
 
 **Why this matters:** An issue may show `in-progress` with 0% because STATE.md wasn't updated after
-work was completed on the target branch. Resetting to `open` causes duplicate work.
+work was completed on the target branch. Resetting to `pending` causes duplicate work.
 
 ---
 
@@ -85,18 +85,16 @@ issue_id="<from-survey>"
 
 The output shows: `{"locked":true,"session_id":"...","age_seconds":...,"worktree":"..."}`
 
-Classify each artifact as **stale** (age ≥ 4 hours / 14400 seconds) or **recent** (age < 4 hours):
-
 Present classification:
 
 ```
 ## Abandoned Artifacts
 
-### Stale (≥ 4 hours) — safe to remove by default
-- <artifact>: session <first-8-chars-of-session-id>, age <Xh Ym> — <reason>
+### Likely Abandoned
+- <artifact>: <reason>
 
-### Recent (< 4 hours) — requires explicit confirmation to remove
-- <artifact>: session <first-8-chars-of-session-id>, age <Xm Ys> — <reason for caution>
+### Possibly Active
+- <artifact>: <reason for caution>
 
 ### Safe to Keep
 - <artifact>: <reason>
@@ -106,7 +104,7 @@ Present classification:
 
 ### Step 3: Check for Uncommitted Work
 
-**CRITICAL: Before removing a worktree, ensure your shell is NOT inside it.** If you are inside the worktree, `cd "${CLAUDE_PROJECT_DIR}"` first.
+**CRITICAL: Before removing a worktree, ensure your shell is NOT inside it.** If you are inside the worktree, `cd /workspace` first.
 
 For each worktree identified as abandoned:
 
@@ -123,20 +121,14 @@ If output is non-empty, there is uncommitted work.
 ```bash
 BRANCH_NAME="<branch-from-survey>"
 cd "$WORKTREE_PATH"
-# Check if branch HEAD is reachable from any other branch (no naming convention assumptions)
-BRANCH_HEAD=$(git rev-parse "$BRANCH_NAME")
-CONTAINING=$(git branch --contains "$BRANCH_HEAD" | grep -v "^[* ]*${BRANCH_NAME}$" | head -1)
-if [[ -n "$CONTAINING" ]]; then
-  MERGED="yes"
-else
-  MERGED="no"
-fi
+TARGET_BRANCH=$(cat "$(git rev-parse --git-dir)/cat-branch-point" 2>/dev/null || echo "main")
+MERGED=$(git branch --merged "$TARGET_BRANCH" | grep -q "^[* ]*${BRANCH_NAME}$" && echo "yes" || echo "no")
 ```
 
 | Merge Status | Risk Assessment |
 |---|---|
-| Branch commits reachable from another branch | Low risk — commits are safe; only uncommitted modifications would be lost |
-| Branch commits NOT reachable from any other branch | High risk — discarding may lose the only copy of work in progress |
+| Branch is merged into target | Low risk — branch commits are safe on target; only uncommitted modifications would be lost |
+| Branch is NOT merged | High risk — discarding uncommitted work may also represent the only copy of work in progress |
 
 Present findings:
 
@@ -145,7 +137,7 @@ Present findings:
 
 ### <worktree-path>
 Status: CLEAN | HAS UNCOMMITTED WORK
-Branch merge status: MERGED (reachable from another branch) | NOT MERGED
+Branch merge status: MERGED into <target-branch> | NOT MERGED
 
 If uncommitted:
   Modified files:
@@ -168,56 +160,25 @@ If uncommitted:
 
 ### Step 4: Get User Confirmation
 
-Generate two cleanup plan boxes — one for stale artifacts (≥ 4 hours) and one for all artifacts — by invoking the
-handler with your analysis. Use the stale-only list for the default option:
+Generate the cleanup plan box by invoking the handler with your analysis:
 
 ```bash
-# Stale-only plan (age ≥ 4 hours / 14400 seconds)
 echo '{
   "handler": "cleanup",
   "context": {
     "phase": "plan",
-    "locks_to_remove": ["2.1-stale-issue-name"],
-    "worktrees_to_remove": [{"path": "...", "branch": "2.1-stale-issue-name"}],
-    "branches_to_remove": ["2.1-stale-issue-name"],
-    "stale_remotes": []
-  }
-}' | "${CLAUDE_PLUGIN_ROOT}/client/bin/get-cleanup-output" --phase plan
-
-# All-artifacts plan (stale + recent)
-echo '{
-  "handler": "cleanup",
-  "context": {
-    "phase": "plan",
-    "locks_to_remove": ["2.1-stale-issue-name", "2.1-recent-issue-name"],
-    "worktrees_to_remove": [
-      {"path": "...", "branch": "2.1-stale-issue-name"},
-      {"path": "...", "branch": "2.1-recent-issue-name"}
-    ],
-    "branches_to_remove": ["2.1-stale-issue-name", "2.1-recent-issue-name"],
+    "locks_to_remove": ["2.1-issue-name"],
+    "worktrees_to_remove": [{"path": "${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/2.1-issue-name", "branch": "2.1-issue-name"}],
+    "branches_to_remove": ["2.1-issue-name"],
     "stale_remotes": []
   }
 }' | "${CLAUDE_PLUGIN_ROOT}/client/bin/get-cleanup-output" --phase plan
 ```
 
-Replace the example values with the artifacts identified in Step 2.
+Replace the example values with actual items identified in Step 2.
+The resulting box will be output verbatim.
 
-Then use AskUserQuestion with these three options:
-
-```
-1. Remove stale artifacts only (≥ 4 hours) [DEFAULT]
-   Locks: <list of stale lock IDs with session and age, or "none">
-   Worktrees: <list of stale worktree paths, or "none">
-   Branches: <list of stale branch names, or "none">
-
-2. Remove all artifacts (including recent)
-   Also removes: <list of recent artifact IDs with session and age, or "none additional">
-
-3. Abort — stop without removing anything
-```
-
-For each artifact in options 1 and 2, include session ID (first 8 chars) and age. For example:
-`2.1-fix-catid-path-resolution — 5m 26s, session eb68bb02`
+Then use AskUserQuestion to confirm before proceeding.
 
 **BLOCKING: Do NOT execute cleanup without explicit user confirmation.**
 
@@ -225,8 +186,7 @@ For each artifact in options 1 and 2, include session ID (first 8 chars) and age
 
 ### Step 5: Execute Cleanup
 
-Execute only the artifacts in scope based on the user's choice (stale-only or all). Errors should propagate - do not
-suppress with `|| true`.
+Execute in strict order. Errors should propagate - do not suppress with `|| true`.
 
 **Order matters:**
 1. Stale locks first (may be blocking worktree operations)
@@ -305,7 +265,7 @@ echo '{
   "context": {
     "phase": "verify",
     "removed_counts": {"locks": 1, "worktrees": 1, "branches": 1},
-    "remaining_worktrees": ["<project-dir> (main)"],
+    "remaining_worktrees": ["/workspace (main)"],
     "remaining_branches": [],
     "remaining_locks": []
   }
