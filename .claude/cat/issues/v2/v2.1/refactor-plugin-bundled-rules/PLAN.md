@@ -20,9 +20,9 @@ cannot target subagents independently, and cannot use the same audience-filterin
   from the plugin cache
 - `InjectSessionInstructions` hardcoded string is split into individual `.md` files in `plugin/rules/`, each with
   appropriate audience tags
-- `InjectSessionInstructions` class is removed (or reduced to only inject the dynamic `Session ID:` line)
-- The `Session ID: ${sessionId}` line currently appended by `InjectSessionInstructions.handle()` needs a solution:
-  either a variable substitution mechanism in rule files or a minimal dedicated handler
+- `InjectSessionInstructions` class is removed entirely
+- `EchoSessionId` (a separate handler already registered in `SessionStartHook`) already injects `Session ID: {id}`
+  independently — no special handling needed when removing `InjectSessionInstructions`
 
 ## Satisfies
 
@@ -94,11 +94,7 @@ None — architectural refactor
   - Files: `InjectRulesToSubAgent.java`
   - Same two sources as above
 
-- Handle `Session ID:` injection:
-  - If variable substitution is used: add `${SESSION_ID}` support to `RulesDiscovery`
-  - If minimal handler: keep a small `InjectSessionId` handler that only injects `Session ID: ${sessionId}`
-  - Remove or gut `InjectSessionInstructions.java`
-
+- Remove `InjectSessionInstructions.java` entirely (session ID already handled by `EchoSessionId`)
 - Update `SessionStartHook.java` to remove `InjectSessionInstructions` from handler list
 
 - Add/update tests:
@@ -107,7 +103,7 @@ None — architectural refactor
   - Test: project rules and plugin rules are merged correctly
   - Test: audience filtering works across both sources
   - Test: missing plugin rules directory is handled gracefully
-  - Test: session ID is still injected
+  - Test: session ID is still injected (by existing EchoSessionId, not by plugin rules)
 
 - Run `mvn -f client/pom.xml verify`
 - Update STATE.md: status closed, progress 100%
@@ -121,7 +117,7 @@ None — architectural refactor
 - [ ] `InjectRulesToSubAgent` reads from both sources
 - [ ] Plugin-bundled rules are NOT visible in end-user's `.claude/cat/rules/` directory
 - [ ] Rules with `subagent: true` are now injected into subagents (new capability vs hardcoded string)
-- [ ] `Session ID:` line is still injected into every session
-- [ ] `InjectSessionInstructions` class is removed or reduced to session-ID-only
+- [ ] `Session ID:` line is still injected into every session (verified via existing `EchoSessionId` handler)
+- [ ] `InjectSessionInstructions` class is fully removed
 - [ ] All tests pass (`mvn -f client/pom.xml verify` exits 0)
 - [ ] E2E: Start a session and confirm all behavioral rules appear in context from plugin rules source
