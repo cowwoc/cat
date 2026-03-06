@@ -23,6 +23,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - refactor-eliminate-content-relay
 - split-execution-waves-into-agent-sections
 - extract-shared-planning-approach
+- move-planning-to-subagents
 
 
 ## Issues Closed
