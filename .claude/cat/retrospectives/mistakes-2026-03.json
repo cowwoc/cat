@@ -1034,5 +1034,25 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M497",
+    "timestamp" : "2026-03-06T20:18:06Z",
+    "category" : "",
+    "description" : "",
+    "root_cause" : "",
+    "rca_method" : "",
+    "rca_method_name" : "",
+    "prevention_type" : "skill",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }
