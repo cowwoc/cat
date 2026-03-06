@@ -65,6 +65,15 @@ pattern. The `argument-hint` in `work-with-issue-agent/SKILL.md` correctly shows
    - Files: `plugin/skills/work/first-use.md`, `plugin/skills/work/SKILL.md`
    - Search for other skill invocations that require catAgentId and verify they include it
 
+3. **Fix work-complete-agent invocation — add missing `${CLAUDE_SESSION_ID}` argument**
+   - File: `plugin/skills/work/first-use.md`
+   - Find line 252: `/cat:work-complete-agent ${issue_id} ${target_branch}`
+   - The `argument-hint` in `work-complete-agent/SKILL.md` requires `<catAgentId> <completedIssue> <targetBranch>`
+   - Prepend `${CLAUDE_SESSION_ID}` so the invocation becomes:
+     `/cat:work-complete-agent ${CLAUDE_SESSION_ID} ${issue_id} ${target_branch}`
+   - Verify the updated invocation matches the argument-hint in
+     `plugin/skills/work-complete-agent/SKILL.md`
+
 ## Post-conditions
 
 - [ ] `plugin/skills/work/first-use.md` includes `${CLAUDE_SESSION_ID}` as the first positional
