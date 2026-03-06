@@ -35,6 +35,10 @@ None
 - `plugin/skills/add/first-use.md` — rename `## Satisfies` in PLAN.md template, AskUserQuestion
   `header: "Satisfies"`, and all prose references (`Satisfies = None`, `Satisfies field`, etc.)
 
+### Migration Script
+- `plugin/migrations/` — add or update the current version's migration script to rename
+  `## Satisfies` → `## Parent Requirements` in all issue PLAN.md files (idempotent)
+
 ### Existing Issue PLAN.md Files
 - `.claude/cat/issues/v2/v2.1/*/PLAN.md` — rename `## Satisfies` heading (~pending issues only;
   closed issues are NOT modified)
@@ -52,10 +56,11 @@ None
     plugin/concepts/version-completion.md, plugin/agents/stakeholder-requirements.md,
     plugin/skills/add/first-use.md
 
-### Wave 2: Update Existing Issue PLAN.md Files
-- Use find + sed to rename `## Satisfies` → `## Parent Requirements` across all issue PLAN.md files
-  - Command: `find .claude/cat/issues -name "PLAN.md" -exec sed -i 's/^## Satisfies$/## Parent Requirements/' {} +`
-  - Files: all PLAN.md files under .claude/cat/issues/
+### Wave 2: Migration Script + Existing Issue PLAN.md Files
+- Add or update the current version's migration script in `plugin/migrations/` to rename
+  `## Satisfies` → `## Parent Requirements` in all issue PLAN.md files (must be idempotent)
+- Run the migration to update all existing PLAN.md files
+  - Files: plugin/migrations/, all PLAN.md files under .claude/cat/issues/
 
 ### Wave 3: Verification
 - `grep -r "^## Satisfies" plugin/` returns zero matches
@@ -70,4 +75,5 @@ None
 - [ ] AskUserQuestion `header: "Satisfies"` in add-agent skill renamed to `"Parent Requirements"`
 - [ ] No occurrences of `## Satisfies` remain in `plugin/`
 - [ ] No occurrences of `## Satisfies` remain in `plugin/` or open issue PLAN.md files
+- [ ] Migration script in `plugin/migrations/` is idempotent and renames `## Satisfies` in PLAN.md files
 - [ ] E2E: Running `/cat:add` produces a PLAN.md with `## Parent Requirements` (not `## Satisfies`)
