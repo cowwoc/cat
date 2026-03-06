@@ -86,6 +86,26 @@ to specify requirements that can be objectively verified.
 
 ## Review Mode (default)
 
+## Fail-Fast: Working Directory Check
+
+Before performing any analysis, verify that the prompt contains a "## Working Directory" section:
+- If `## Working Directory` section IS present: extract `WORKTREE_PATH` from it and use that path as the base for all file reads
+- If `## Working Directory` section is NOT present: immediately return the following JSON and stop:
+  ```json
+  {
+    "stakeholder": "requirements",
+    "approval": "REJECTED",
+    "concerns": [
+      {
+        "severity": "CRITICAL",
+        "location": "reviewer prompt",
+        "explanation": "No working directory provided in reviewer prompt. Cannot determine which branch to read files from.",
+        "recommendation": "Update stakeholder-review-agent SKILL.md to include WORKTREE_PATH in reviewer prompts."
+      }
+    ]
+  }
+  ```
+
 ## Working Directory
 
 The delegation prompt MUST specify a working directory. Read and modify files ONLY within that directory. Do NOT access
