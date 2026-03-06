@@ -772,6 +772,17 @@ public record DiffStats(int filesChanged, int insertions, int deletions)
   }
 }
 
+// Good - Duration validation using Comparable support
+public record Lock(String issueId, String session, Duration age)
+{
+  public Lock
+  {
+    requireThat(issueId, "issueId").isNotBlank();
+    requireThat(session, "session").isNotBlank();
+    requireThat(age, "age").isGreaterThanOrEqualTo(Duration.ZERO);
+  }
+}
+
 // Good - no compact constructor needed (no validation to perform)
 private record CheckResult(boolean statusInvoked, boolean hasBoxOutput)
 {
