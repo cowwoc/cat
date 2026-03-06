@@ -27,15 +27,41 @@ None (infrastructure bugfix)
 - **Expected:** `git branch --merged <target-branch-name>` correctly identifies merged branches
 - **Actual:** Cleanup fails with a missing-file error
 
+## Investigation Results
+
+Investigated all candidate mechanisms for reading the target branch from within a worktree:
+
+| Mechanism | Stores target branch? | Pushed to remote? | Notes |
+|---|---|---|---|
+| STATE.md | No (currently) | Yes | Version-controlled, collaborative |
+| Lock file | No (currently) | No | Local only, session-scoped |
+| `work-prepare` JSON stdout | Yes | No | Not persisted to disk |
+| Git upstream tracking | No | No | Not set by `git worktree add` |
+| `git config branch.<name>.key` | No (currently) | No | Local `.git/config` only |
+| `git merge-base` heuristic | Indirect | N/A | Requires naming convention for candidates |
+
+Git does not natively store which branch a branch was forked from. All heuristic approaches
+(`git show-branch`, `git reflog`, `git merge-base`) are fragile and unreliable. The target branch
+must be stored explicitly.
+
+**Chosen approach:** Add a `Target Branch:` field to each issue's STATE.md. STATE.md is already
+version-controlled and pushed to remote, so collaborators working on the same branch get the target
+branch info automatically. `WorkPrepare` writes the field at worktree creation time.
+
 ## Risk Assessment
 
 - **Risk Level:** LOW
-- **Concerns:** The approach for determining the target branch must be reliable
-- **Mitigation:** Fail-fast with clear error if target branch cannot be determined
+- **Concerns:** Existing STATE.md files lack the `Target Branch:` field; cleanup must handle the
+  missing field gracefully (skip the `--merged` check with a warning)
+- **Mitigation:** Add a migration to backfill `Target Branch:` for open issues; fail gracefully
+  when the field is absent
 
 ## Files to Modify
 
-- `plugin/skills/cleanup/first-use.md:122-123` — determine target branch for `--merged` check
+- `client/src/main/java/io/github/cowwoc/cat/hooks/util/WorkPrepare.java` — write `Target Branch:`
+  field to STATE.md at worktree creation
+- `plugin/skills/cleanup/first-use.md:122-123` — read `Target Branch:` from issue STATE.md instead
+  of the removed marker file
 
 ## Pre-conditions
 
@@ -45,19 +71,20 @@ None (infrastructure bugfix)
 
 ### Wave 1
 
-1. **Step 1:** Investigate how to determine the target branch for each worktree
-   - Each issue has a STATE.md that records which version it belongs to
-   - `work-prepare` outputs `target_branch` in its JSON result
-   - Evaluate whether git-native tools (e.g., `git merge-base`) can determine merge status without
-     knowing the target branch explicitly
+1. **Step 1:** Update `WorkPrepare.java` to write `Target Branch:` to STATE.md
+   - After creating the worktree, write `- **Target Branch:** <branch-name>` to the issue's
+     STATE.md (the target branch is already available as a local variable)
+   - Ensure the field is written idempotently (don't duplicate if already present)
 
-2. **Step 2:** Update `cleanup/first-use.md` to use the chosen approach
+2. **Step 2:** Update `cleanup/first-use.md` to read `Target Branch:` from STATE.md
    - File: `plugin/skills/cleanup/first-use.md:122-123`
-   - Fail-fast with clear error if target branch cannot be determined
-   - Pass target branch to `git branch --merged`
+   - Read `Target Branch:` from STATE.md using grep/sed
+   - If `Target Branch:` is empty/absent, skip `--merged` check with a warning
+   - If present, pass it to `git branch --merged "$TARGET_BRANCH"`
 
 3. **Step 3:** Add regression test to `tests/worktree-isolation.bats`
-   - Verify cleanup correctly identifies merged branches
+   - Verify cleanup correctly identifies merged branches when STATE.md has `Target Branch:`
+   - Verify cleanup skips the check gracefully when `Target Branch:` is absent
 
 4. **Step 4:** Run full test suite
    - `mvn -f client/pom.xml test`
@@ -68,6 +95,8 @@ None (infrastructure bugfix)
 
 - [ ] No new marker files written to git directory
 - [ ] No branch name derivation from naming conventions
-- [ ] Cleanup correctly identifies merged branches
+- [ ] `WorkPrepare` writes `Target Branch:` to STATE.md at worktree creation
+- [ ] Cleanup reads `Target Branch:` from STATE.md for `git branch --merged`
+- [ ] Cleanup skips `--merged` check gracefully when `Target Branch:` is absent
 - [ ] Regression test in `worktree-isolation.bats` verifies merged branch detection
 - [ ] All tests pass with no regressions
