@@ -448,6 +448,9 @@ public final class RecordLearning
   /**
    * Determines where to commit: in a worktree if the current directory is a CAT worktree,
    * otherwise the project directory.
+   * <p>
+   * A CAT issue worktree has a git directory ending with {@code worktrees/<branch-name>}
+   * (the path returned by {@code git rev-parse --git-dir}).
    *
    * @param cwd the current working directory
    * @return the path to commit from
@@ -455,15 +458,12 @@ public final class RecordLearning
    */
   private Path determineCommitLocation(Path cwd) throws IOException
   {
-    // Check if cwd is a git worktree with a cat-branch-point marker
+    // Check if cwd is a CAT issue worktree by checking git dir structure
     try
     {
-      String gitCommonDirStr = runGit(cwd, "rev-parse", "--git-common-dir").strip();
-      Path gitCommonDir = cwd.resolve(gitCommonDirStr).normalize();
-      String worktreeName = cwd.getFileName().toString();
-      Path catBranchPoint = gitCommonDir.resolve("worktrees").resolve(worktreeName).
-        resolve("cat-branch-point");
-      if (Files.exists(catBranchPoint))
+      String gitDirStr = runGit(cwd, "rev-parse", "--git-dir").strip();
+      Path gitDir = cwd.resolve(gitDirStr).normalize();
+      if (GitCommands.isCatWorktreeGitDir(gitDir))
         return cwd;
     }
     catch (IOException _)
