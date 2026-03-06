@@ -68,10 +68,10 @@
       "path": "/workspace/.claude/cat/worktrees/2.1-evaluate-skill-activation/plugin/skills/run-retrospective/SKILL.md"
     },
     {
-      "name": "shrink-doc",
+      "name": "optimize-doc",
       "description": "> Use to reduce Claude-facing document size while maintaining execution equivalence. Validates with /compare-docs to ensure no semantic loss.",
       "argument_hint": "",
-      "path": "/workspace/.claude/cat/worktrees/2.1-evaluate-skill-activation/plugin/skills/shrink-doc/SKILL.md"
+      "path": "/workspace/.claude/cat/worktrees/2.1-evaluate-skill-activation/plugin/skills/optimize-doc/SKILL.md"
     },
     {
       "name": "status",

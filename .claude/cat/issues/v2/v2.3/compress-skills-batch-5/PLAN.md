@@ -1,7 +1,7 @@
 # Plan: compress-skills-batch-5
 
 ## Goal
-Compress skill files batch 5 (files 37-45) using /cat:shrink-doc with equivalence validation.
+Compress skill files batch 5 (files 37-45) using /cat:optimize-doc with equivalence validation.
 
 ## Parent Task
 compress-skills-md (decomposed)
@@ -35,5 +35,5 @@ None - sub-issue of parent
 ## Execution Waves
 
 ### Wave 1
-1. For each file in scope: Run /cat:shrink-doc
+1. For each file in scope: Run /cat:optimize-doc
 2. Commit changes with message: "config: compress skills batch 5 (token-report through write-and-commit)"

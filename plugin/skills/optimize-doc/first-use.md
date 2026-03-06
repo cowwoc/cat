@@ -30,7 +30,7 @@ objective validation instead of prescriptive rules.
 
 Manual compression bypasses:
 1. The **iteration loop** that automatically retries when status = NOT_EQUIVALENT
-2. The **EQUIVALENT requirement** enforced for shrink-doc
+2. The **EQUIVALENT requirement** enforced for optimize-doc
 3. The **structured feedback** (LOST units list) that guides compression improvements
 
 If you compress manually and get NOT_EQUIVALENT, you must manually iterate.
@@ -63,8 +63,8 @@ Go back and run /compare-docs validation for each file, then report results.
 - `docs/project/` development protocol documentation
 - `docs/code-style/*-claude.md` style detection patterns
 
-**Why slash commands are Claude-facing**: When you invoke `/shrink-doc`, the
-contents of `.claude/commands/shrink-doc.md` expand into a prompt for Claude
+**Why slash commands are Claude-facing**: When you invoke `/optimize-doc`, the
+contents of `.claude/commands/optimize-doc.md` expand into a prompt for Claude
 to execute. The file is NOT for users to read - it's a configuration that
 defines what Claude does when the command is invoked.
 
@@ -117,7 +117,7 @@ The file `{{arg}}` appears to be human-facing documentation.
 ```
 
 **Examples**:
-- ✅ ALLOWED: `.claude/commands/shrink-doc.md` (slash command prompt)
+- ✅ ALLOWED: `.claude/commands/optimize-doc.md` (slash command prompt)
 - ✅ ALLOWED: `.claude/agents/architect.md` (agent prompt)
 - ❌ FORBIDDEN: `README.md` (user-facing project description)
 - ❌ FORBIDDEN: `changelog.md` (user-facing change history)
@@ -159,7 +159,7 @@ Task tool:
   subagent_type: "general-purpose"
   description: "Compress {{arg}}"
   prompt: |
-    Read the instructions at: plugin/skills/shrink-doc/COMPRESSION-AGENT.md
+    Read the instructions at: plugin/skills/optimize-doc/COMPRESSION-AGENT.md
 
     Then compress the following file according to those instructions:
     - FILE_PATH: {{arg}}
@@ -209,7 +209,7 @@ After agent completes:
    found, start at version 1.
 
    ```bash
-   VERSION_FILE="/tmp/shrink-doc-{{filename}}-version.txt"
+   VERSION_FILE="/tmp/optimize-doc-{{filename}}-version.txt"
 
    # Get next version number from persistent counter (survives across sessions)
    if [ -f "$VERSION_FILE" ]; then
@@ -277,7 +277,7 @@ After agent completes:
 **Validation Context**: When reporting to the user, explicitly state:
 ```
 Status: {EQUIVALENT|NOT_EQUIVALENT} compares the compressed version against
-the ORIGINAL document state from before /shrink-doc was invoked.
+the ORIGINAL document state from before /optimize-doc was invoked.
 ```
 
 **⚠️ CRITICAL REMINDER**: On second, third, etc. invocations:
@@ -353,14 +353,14 @@ Would you like to try again to generate an even better version?
 
 **If user says YES** (wants to try again):
 → Keep `/tmp/original-{{filename}}`
-→ Future /shrink-doc invocations will reuse this baseline
+→ Future /optimize-doc invocations will reuse this baseline
 → Scores will reflect cumulative compression from true original
 → Go back to Step 3 with user's feedback
 
 **If user says NO** (done iterating):
 → `rm /tmp/original-{{filename}}`
-→ `rm /tmp/shrink-doc-{{filename}}-version.txt`
-→ Note: Future /shrink-doc on this file will use compressed version as new baseline
+→ `rm /tmp/optimize-doc-{{filename}}-version.txt`
+→ Note: Future /optimize-doc on this file will use compressed version as new baseline
 
 **If status = NOT_EQUIVALENT**: ❌ **ITERATE**
 ```
@@ -469,7 +469,7 @@ No exceptions. Status is ONLY valid if it comes from /compare-docs output.
 **For compressing multiple files**, use `/cat:delegate-agent`:
 
 ```bash
-/cat:delegate-agent --skill shrink-doc-agent file1.md file2.md file3.md
+/cat:delegate-agent --skill optimize-doc-agent file1.md file2.md file3.md
 ```
 
 Delegate handles:
@@ -489,7 +489,7 @@ parallel execution, fault tolerance, and retry logic.
 | {filename} | {count} | {count} | {%} | {X}/{Y} | {EQUIVALENT/NOT_EQUIVALENT} |
 
 **Validation separation:** Compression subagents must NOT validate their own work.
-Each shrink-doc subagent spawns SEPARATE validation subagents per Step 4.
+Each optimize-doc subagent spawns SEPARATE validation subagents per Step 4.
 
 ---
 
@@ -563,7 +563,7 @@ and compressing separately to improve iteration efficiency.
 ## Example Usage
 
 ```
-/shrink-doc /workspace/main/.claude/commands/example-command.md
+/optimize-doc /workspace/main/.claude/commands/example-command.md
 ```
 
 Expected flow:

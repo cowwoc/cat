@@ -330,8 +330,8 @@
     "stderr": ""
   },
   {
-    "test_id": "shrink-doc-1",
-    "expected_skill": "shrink-doc",
+    "test_id": "optimize-doc-1",
+    "expected_skill": "optimize-doc",
     "actual_skill": null,
     "passed": false,
     "prompt": "Shrink the PLAN.md file to reduce token usage",
@@ -341,8 +341,8 @@
     "stderr": ""
   },
   {
-    "test_id": "shrink-doc-2",
-    "expected_skill": "shrink-doc",
+    "test_id": "optimize-doc-2",
+    "expected_skill": "optimize-doc",
     "actual_skill": null,
     "passed": false,
     "prompt": "Compress this documentation while keeping the same meaning",
@@ -528,8 +528,8 @@
     "stderr": ""
   },
   {
-    "test_id": "shrink-doc-with-args",
-    "expected_skill": "shrink-doc",
+    "test_id": "optimize-doc-with-args",
+    "expected_skill": "optimize-doc",
     "actual_skill": null,
     "passed": false,
     "prompt": "Shrink the STATE.md file in the current directory",
