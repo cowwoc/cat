@@ -24,22 +24,22 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * Safe git amend with push status verification and TOCTOU race detection.
  * <p>
  * Implements: pre-check push status, perform amend, post-amend TOCTOU detection.
- * Equivalent to git-amend-safe.sh.
+ * Equivalent to git-amend.sh.
  */
-public final class GitAmendSafe
+public final class GitAmend
 {
   private final JvmScope scope;
   private final String directory;
 
   /**
-   * Creates a new GitAmendSafe instance.
+   * Creates a new GitAmend instance.
    *
    * @param scope     the JVM scope providing JSON mapper
    * @param directory the working directory for git commands
    * @throws NullPointerException     if {@code scope} is null
    * @throws IllegalArgumentException if {@code directory} is blank
    */
-  public GitAmendSafe(JvmScope scope, String directory)
+  public GitAmend(JvmScope scope, String directory)
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(directory, "directory").isNotBlank();
@@ -247,7 +247,7 @@ public final class GitAmendSafe
   /**
    * Main method for command-line execution.
    * <p>
-   * Usage: git-amend-safe [--message "new message"] [--no-edit] [WORKTREE_PATH]
+   * Usage: git-amend [--message "new message"] [--no-edit] [WORKTREE_PATH]
    * <p>
    * Outputs JSON to stdout on success (OK, RACE_DETECTED).
    * Outputs JSON to stderr on failure (ERROR, ALREADY_PUSHED).
@@ -301,7 +301,7 @@ public final class GitAmendSafe
 
     try (JvmScope scope = new MainJvmScope())
     {
-      GitAmendSafe cmd = new GitAmendSafe(scope, finalWorktreePath);
+      GitAmend cmd = new GitAmend(scope, finalWorktreePath);
       try
       {
         String result = cmd.execute(finalAmendMessage, finalNoEdit);
@@ -339,7 +339,7 @@ public final class GitAmendSafe
     }
     catch (RuntimeException | AssertionError e)
     {
-      Logger log = LoggerFactory.getLogger(GitAmendSafe.class);
+      Logger log = LoggerFactory.getLogger(GitAmend.class);
       log.error("Unexpected error", e);
       throw e;
     }

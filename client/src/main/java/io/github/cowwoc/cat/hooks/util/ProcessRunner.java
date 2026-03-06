@@ -12,6 +12,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.StringJoiner;
 
@@ -59,9 +60,24 @@ public final class ProcessRunner
    */
   public static Result run(String... command)
   {
+    return run(null, command);
+  }
+
+  /**
+   * Runs a command in a specific working directory and returns the exit code and stdout.
+   *
+   * @param workingDirectory the working directory for the process, or {@code null} to inherit the JVM's
+   *                         working directory
+   * @param command          the command and arguments to run
+   * @return the result with exit code and stdout
+   */
+  public static Result run(Path workingDirectory, String... command)
+  {
     try
     {
       ProcessBuilder pb = new ProcessBuilder(command);
+      if (workingDirectory != null)
+        pb.directory(workingDirectory.toFile());
       pb.redirectErrorStream(true);
       Process process = pb.start();
 
