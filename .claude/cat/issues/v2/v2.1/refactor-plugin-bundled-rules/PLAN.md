@@ -82,8 +82,9 @@ None — architectural refactor
 - Extend `RulesDiscovery.getCatRulesForAudience()` to accept a list of source directories instead of one:
   - Files: `RulesDiscovery.java`
   - New signature: `getCatRulesForAudience(List<Path> rulesDirs, ...)` or overload that merges results
-  - Discover rules from all directories, merge, then filter by audience
-  - Deduplicate if same filename appears in both sources (project-local overrides plugin-bundled)
+  - Discover rules from all directories, concatenate (plugin rules first, project-local second), then
+    filter by audience
+  - No filename-based deduplication — if the same filename exists in both sources, both are included
 
 - Update `InjectRulesToMainAgent` to read from both sources:
   - Files: `InjectRulesToMainAgent.java`
@@ -100,7 +101,7 @@ None — architectural refactor
 - Add/update tests:
   - Files: test classes for `InjectRulesToMainAgent`, `InjectRulesToSubAgent`, `RulesDiscovery`
   - Test: plugin rules directory is read and content injected
-  - Test: project rules and plugin rules are merged correctly
+  - Test: plugin rules and project rules are concatenated in order (plugin first, project second)
   - Test: audience filtering works across both sources
   - Test: missing plugin rules directory is handled gracefully
   - Test: session ID is still injected (by existing EchoSessionId, not by plugin rules)
