@@ -218,7 +218,7 @@ Use the Skill tool to invoke `/cat:work-with-issue-agent` with positional space-
 ```
 Skill tool:
   skill: "cat:work-with-issue-agent"
-  args: "${issue_id} ${issue_path} ${worktree_path} ${issue_branch} ${target_branch} ${estimated_tokens} ${TRUST} ${VERIFY}"
+  args: "${CLAUDE_SESSION_ID} ${issue_id} ${issue_path} ${worktree_path} ${issue_branch} ${target_branch} ${estimated_tokens} ${TRUST} ${VERIFY}"
 ```
 
 The skill will:
@@ -249,7 +249,7 @@ The skill will:
 After successful merge, invoke `/cat:work-complete-agent` with positional arguments:
 
 ```
-/cat:work-complete-agent ${issue_id} ${target_branch}
+/cat:work-complete-agent ${CLAUDE_SESSION_ID} ${issue_id} ${target_branch}
 ```
 
 Output the skill result verbatim.
@@ -276,7 +276,7 @@ Ready to continue to next issue. Use /cat:work to continue, or /cat:status to re
 
 **Auto-continue (trust >= medium):**
 
-Invoke the Skill tool again with `/cat:work-agent ${next_issue_id}` to continue to the next issue.
+Invoke the Skill tool again with `cat:work-agent` and args `"${CLAUDE_SESSION_ID} ${next_issue_id}"` to continue to the next issue.
 No delay needed - the work skill handles its own orchestration.
 
 ## Error Handling
