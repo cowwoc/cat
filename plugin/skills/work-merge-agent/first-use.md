@@ -266,6 +266,21 @@ exits with code 1.
 
 Output the JSON result with all cleanup status.
 
+## Bash Efficiency
+
+Chain independent verification commands with `&&` in a single Bash call to reduce round-trips:
+
+```bash
+# Verify squash result and working tree state in one call
+git log --oneline -1 && git status --porcelain
+
+# Verify merge result, worktree cleanup, and branch state in one call
+git worktree list && git branch --show-current && git log --oneline -3
+```
+
+Never issue independent read-only git commands as separate Bash calls when they have no output
+dependencies between them.
+
 ## Fail-Fast Conditions
 
 - Rebase conflict (any number of files): Return CONFLICT
