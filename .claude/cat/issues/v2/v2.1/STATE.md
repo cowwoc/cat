@@ -132,6 +132,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - empirical-test-production-context
 - empirical-test-strict-defaults
 - empirical-test-tool-use-priming
+- eliminate-cwd-worktree-assumption
 - enforce-bash-command-chaining
 - enforce-canonical-status-values
 - enforce-jvmscope-env-access
