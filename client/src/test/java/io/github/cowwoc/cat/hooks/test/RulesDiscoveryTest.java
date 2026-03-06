@@ -1231,4 +1231,123 @@ public final class RulesDiscoveryTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  // ---- Multi-directory getCatRulesForAudience(List<Path>) ----
+
+  /**
+   * Verifies that getCatRulesForAudience(List) merges rules from multiple directories.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void getCatRulesForAudienceListMergesMultipleDirs() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("rules-test-multi-merge-");
+    try
+    {
+      Path pluginRulesDir = tempDir.resolve("plugin/rules");
+      Files.createDirectories(pluginRulesDir);
+      Files.writeString(pluginRulesDir.resolve("plugin-rule.md"), """
+        ---
+        mainAgent: true
+        ---
+        # Plugin rule
+        From plugin.
+        """);
+
+      Path projectRulesDir = tempDir.resolve(".claude/cat/rules");
+      Files.createDirectories(projectRulesDir);
+      Files.writeString(projectRulesDir.resolve("project-rule.md"), """
+        ---
+        mainAgent: true
+        ---
+        # Project rule
+        From project.
+        """);
+
+      String result = RulesDiscovery.getCatRulesForAudience(
+        List.of(pluginRulesDir, projectRulesDir), YAML_MAPPER,
+        RulesDiscovery::filterForMainAgent, List.of());
+      requireThat(result, "result").contains("Plugin rule");
+      requireThat(result, "result").contains("From plugin.");
+      requireThat(result, "result").contains("Project rule");
+      requireThat(result, "result").contains("From project.");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getCatRulesForAudience(List) includes rules from both directories when filenames
+   * collide. Both rules are concatenated in order (first directory first, second directory second).
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void getCatRulesForAudienceListBothRulesIncludedOnFilenameCollision() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("rules-test-multi-override-");
+    try
+    {
+      Path dir1 = tempDir.resolve("dir1");
+      Files.createDirectories(dir1);
+      Files.writeString(dir1.resolve("shared.md"), """
+        ---
+        mainAgent: true
+        ---
+        # Dir1 version
+        Content from dir1.
+        """);
+
+      Path dir2 = tempDir.resolve("dir2");
+      Files.createDirectories(dir2);
+      Files.writeString(dir2.resolve("shared.md"), """
+        ---
+        mainAgent: true
+        ---
+        # Dir2 version
+        Content from dir2.
+        """);
+
+      String result = RulesDiscovery.getCatRulesForAudience(
+        List.of(dir1, dir2), YAML_MAPPER,
+        RulesDiscovery::filterForMainAgent, List.of());
+      // Both rules are included (no deduplication)
+      requireThat(result, "result").contains("Dir1 version");
+      requireThat(result, "result").contains("Content from dir1.");
+      requireThat(result, "result").contains("Dir2 version");
+      requireThat(result, "result").contains("Content from dir2.");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getCatRulesForAudience(List) returns empty when all directories are missing.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void getCatRulesForAudienceListReturnEmptyWhenAllDirsMissing() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("rules-test-multi-empty-");
+    try
+    {
+      Path missingDir1 = tempDir.resolve("does-not-exist-1");
+      Path missingDir2 = tempDir.resolve("does-not-exist-2");
+
+      String result = RulesDiscovery.getCatRulesForAudience(
+        List.of(missingDir1, missingDir2), YAML_MAPPER,
+        RulesDiscovery::filterForMainAgent, List.of());
+      requireThat(result, "result").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }

@@ -18,11 +18,14 @@ import java.util.List;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Injects audience-filtered rules from {@code .claude/cat/rules/} into subagent context.
+ * Injects audience-filtered rules from plugin-bundled and project-local rule directories into
+ * subagent context.
  * <p>
- * Discovers all rule files, filters using the {@code subAgents} frontmatter property, and injects
- * matching content as additional context. Omitting {@code subAgents} (or providing no frontmatter)
- * reaches all subagents; {@code subAgents: []} excludes all subagents; specific types like
+ * Discovers all rule files from both {@code ${CLAUDE_PLUGIN_ROOT}/rules/} (plugin-bundled) and
+ * {@code ${projectDir}/.claude/cat/rules/} (project-local), concatenates them (plugin-bundled
+ * first, project-local second), then filters using the {@code subAgents} frontmatter property.
+ * Omitting {@code subAgents} (or providing no frontmatter) reaches all subagents;
+ * {@code subAgents: []} excludes all subagents; specific types like
  * {@code subAgents: ["cat:work-execute"]} target only matching subagents.
  */
 public final class InjectSubAgentRules implements SubagentStartHandler
@@ -44,6 +47,13 @@ public final class InjectSubAgentRules implements SubagentStartHandler
 
   /**
    * Discovers and injects CAT rules applicable to this subagent.
+   * <p>
+   * Reads from two sources in order (plugin-bundled first, project-local second):
+   * <ol>
+   *   <li>{@code ${CLAUDE_PLUGIN_ROOT}/rules/} — plugin-bundled rules</li>
+   *   <li>{@code ${projectDir}/.claude/cat/rules/} — project-local rules</li>
+   * </ol>
+   * Both sources are concatenated; no filename-based deduplication is performed.
    *
    * @param input the hook input containing the subagent type
    * @return a result containing the filtered rule content, or an empty result if no rules apply
@@ -59,10 +69,12 @@ public final class InjectSubAgentRules implements SubagentStartHandler
       log.debug("SubagentStart hook received blank subagent_type; rules requiring a specific " +
         "subagent type will not match");
 
-    Path rulesDir = scope.getClaudeProjectDir().resolve(".claude/cat/rules");
+    Path pluginRulesDir = scope.getClaudePluginRoot().resolve("rules");
+    Path projectRulesDir = scope.getClaudeProjectDir().resolve(".claude/cat/rules");
     // Rules with paths: restrictions are injected dynamically by InjectPathRules (PreToolUse hook)
     // when matching files are accessed. For subagents, only non-paths rules are injected at start.
-    String rules = RulesDiscovery.getCatRulesForAudience(rulesDir, scope.getYamlMapper(),
+    String rules = RulesDiscovery.getCatRulesForAudience(List.of(pluginRulesDir, projectRulesDir),
+      scope.getYamlMapper(),
       (r, activeFiles) -> RulesDiscovery.filterForSubagent(r, subagentType, activeFiles),
       List.of());
     if (rules.isBlank())
