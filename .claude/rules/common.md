@@ -246,6 +246,10 @@ and write all code against the new design only.
 run. Scripts should check current state before making changes (e.g., skip renaming a file that's already renamed, skip
 adding a field that already exists).
 
+**Planning file schema changes:** When an issue modifies the schema of planning files (STATE.md, PLAN.md headings,
+field names, section structure), the issue MUST include updating the current version's `plugin/migrations/` script to
+transform existing files. The migration is part of the same issue — do not defer it to a separate issue.
+
 **DO NOT:**
 - Add "legacy format" branches in readers
 - Keep old writers alongside new writers
