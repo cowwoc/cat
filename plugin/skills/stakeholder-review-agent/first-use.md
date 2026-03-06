@@ -562,7 +562,8 @@ if [[ -n "$ISSUE_DIR" && -f "${ISSUE_DIR}PLAN.md" ]]; then
 fi
 
 # CHANGED_FILES already contains relative paths from git diff --name-only
-# Subagents receive WORKTREE_PATH + CHANGED_FILES and construct absolute paths themselves
+# Format as bullet list for the ## Working Directory section in reviewer prompts
+CHANGED_FILES_BULLETS=$(echo "$CHANGED_FILES" | sed 's/^/- /')
 ```
 
 **Domain Knowledge Injection:**
@@ -590,9 +591,14 @@ Spawn each stakeholder with this prompt:
 You are the {stakeholder} stakeholder reviewing an implementation.
 
 ## Working Directory
-All file reads, searches, and git commands must target this directory: {WORKTREE_PATH}
-Use absolute paths prefixed with {WORKTREE_PATH}/ for any additional files you read.
-Do NOT access files outside this directory.
+WORKTREE_PATH: {WORKTREE_PATH}
+
+Changed files (read from WORKTREE_PATH):
+{CHANGED_FILES_BULLETS - one "- relative/path" bullet per line}
+
+Read each file using the Read tool with absolute paths: prefix each relative path with {WORKTREE_PATH}/.
+Use Read, Glob, and Grep tools as needed to explore any additional context within the worktree.
+Do NOT access files outside {WORKTREE_PATH}.
 
 ## Issue Context (Pre-fetched)
 
@@ -620,15 +626,6 @@ evaluating whether there are better alternatives to the approaches chosen.
 
 ## Project Conventions
 {STAKEHOLDER_CONVENTIONS if any match this stakeholder, otherwise "No project conventions assigned to this stakeholder."}
-
-## Files to Review
-
-The following files were changed in this implementation (paths relative to the worktree):
-
-{CHANGED_FILES - one relative path per line}
-
-Read each file using the Read tool with absolute paths: prefix each path with {WORKTREE_PATH}/.
-Use Read, Glob, and Grep tools as needed to explore any additional context within the worktree.
 
 ## What Changed (Diff Summary)
 {DIFF_SUMMARY - git diff for reference}
