@@ -70,6 +70,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - remove-cat-agent-id-command-prefix
 - restore-askuserquestion-in-allowed-tools
 - improve-cleanup-stale-artifact-ux
+- fix-stakeholder-review-worktree-context
 - add-priming-analysis-to-optimize-doc
 - fix-git-rebase-skill-backup-deletion
 - convert-compression-agent-to-registered-agent
