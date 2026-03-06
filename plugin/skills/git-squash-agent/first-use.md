@@ -254,8 +254,8 @@ After dropping unwanted commits, NOW use the Interactive Rebase Workflow below t
 ### Interactive Rebase Steps
 
 ```bash
-# 1. Read fork-point commit hash from cat-branch-point
-BASE=$(cat "$(git rev-parse --git-dir)/cat-branch-point")
+# 1. Find merge-base commit (common ancestor with target branch)
+BASE=$(git merge-base HEAD "$TARGET_BRANCH")
 
 # 2. Create backup of current branch
 BACKUP="backup-before-squash-$(date +%Y%m%d-%H%M%S)"

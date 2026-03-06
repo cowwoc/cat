@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
-import io.github.cowwoc.cat.hooks.CatMetadata;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import tools.jackson.core.type.TypeReference;
@@ -455,9 +454,9 @@ public final class WorkPrepare
     try
     {
       if (createStateMd)
-        createStateMd(worktreePath, issuePath, projectDir);
+        createStateMd(worktreePath, issuePath, projectDir, targetBranch);
       else
-        updateStateMd(worktreePath, issuePath, projectDir);
+        updateStateMd(worktreePath, issuePath, projectDir, targetBranch);
     }
     catch (IOException e)
     {
@@ -1123,7 +1122,6 @@ public final class WorkPrepare
    * Creates a git worktree for the issue branch.
    * <p>
    * If the branch already exists (stale from a previous session), it is deleted first.
-   * Also writes the {@code cat-branch-point} file recording the fork-point commit hash for merge operations.
    *
    * @param projectDir the project root directory
    * @param issueBranch the branch name for the issue
@@ -1146,19 +1144,9 @@ public final class WorkPrepare
       // Branch does not exist - that is fine
     }
 
-    // Capture the fork-point commit hash before creating the worktree to avoid TOCTOU
-    String commitHash = GitCommands.runGit(projectDir, "rev-parse", "HEAD");
-
     // Create worktree
     GitCommands.runGit(projectDir, "worktree", "add", "-b", issueBranch, worktreePath.toString(),
       "HEAD");
-
-    // Write cat-branch-point file with fork-point commit hash
-    String gitCommonDir = GitCommands.runGit(projectDir, "rev-parse", "--git-common-dir");
-    Path catBranchPointFile = projectDir.resolve(gitCommonDir).resolve("worktrees").
-      resolve(issueBranch).resolve(CatMetadata.BRANCH_POINT_FILE);
-    Files.createDirectories(catBranchPointFile.getParent());
-    Files.writeString(catBranchPointFile, commitHash);
 
     return worktreePath;
   }
@@ -1370,14 +1358,16 @@ public final class WorkPrepare
   }
 
   /**
-   * Updates STATE.md in the worktree to mark the issue as in-progress.
+   * Updates STATE.md in the worktree to mark the issue as in-progress and record the target branch.
    *
    * @param worktreePath the path to the worktree
    * @param issuePath the absolute path to the issue directory in the main working tree
    * @param projectDir the project root directory
+   * @param targetBranch the target branch name for this issue
    * @throws IOException if file operations fail
    */
-  private void updateStateMd(Path worktreePath, Path issuePath, Path projectDir) throws IOException
+  private void updateStateMd(Path worktreePath, Path issuePath, Path projectDir, String targetBranch)
+    throws IOException
   {
     // STATE.md is in the worktree's copy of the issue directory
     Path relativeIssuePath = projectDir.relativize(issuePath);
@@ -1393,6 +1383,12 @@ public final class WorkPrepare
     content = STATUS_PATTERN.matcher(content).replaceAll("**Status:** in-progress");
     content = PROGRESS_PATTERN.matcher(content).replaceAll("**Progress:** 0%");
 
+    // Add Target Branch field if not already present
+    if (!content.contains("**Target Branch:**"))
+    {
+      content = content.stripTrailing() + "\n- **Target Branch:** " + targetBranch + "\n";
+    }
+
     Files.writeString(stateFile, content);
   }
 
@@ -1400,14 +1396,16 @@ public final class WorkPrepare
    * Creates a minimal STATE.md in the worktree for an issue that had no STATE.md in the main workspace.
    * <p>
    * The created file contains the standard initial state: status {@code in-progress}, progress 0%,
-   * and empty dependencies and blocks lists.
+   * empty dependencies and blocks lists, and the target branch.
    *
    * @param worktreePath the path to the worktree
    * @param issuePath the absolute path to the issue directory in the main working tree
    * @param projectDir the project root directory
+   * @param targetBranch the target branch name for this issue
    * @throws IOException if file operations fail
    */
-  private void createStateMd(Path worktreePath, Path issuePath, Path projectDir) throws IOException
+  private void createStateMd(Path worktreePath, Path issuePath, Path projectDir, String targetBranch)
+    throws IOException
   {
     Path relativeIssuePath = projectDir.relativize(issuePath);
     Path issueDir = worktreePath.resolve(relativeIssuePath);
@@ -1418,10 +1416,11 @@ public final class WorkPrepare
       # State
 
       - **Status:** in-progress
-      - **Progress:** 0%
+      - **Progress:** 0%%
       - **Dependencies:** []
       - **Blocks:** []
-      """;
+      - **Target Branch:** %s
+      """.formatted(targetBranch);
 
     Files.writeString(stateFile, content);
   }

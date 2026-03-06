@@ -8,7 +8,6 @@ package io.github.cowwoc.cat.hooks.write;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.CatMetadata;
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
@@ -227,6 +226,8 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
 
   /**
    * Check if we're in a task worktree.
+   * <p>
+   * A CAT issue worktree has a git directory ending with {@code worktrees/<branch-name>}.
    *
    * @return true if in a task worktree
    * @throws IOException if the git command fails
@@ -234,8 +235,7 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
   private static boolean isInTaskWorktree() throws IOException
   {
     Path gitDir = GitCommands.getGitDir();
-    Path catBranchPointFile = gitDir.resolve(CatMetadata.BRANCH_POINT_FILE);
-    return Files.exists(catBranchPointFile);
+    return GitCommands.isCatWorktreeGitDir(gitDir);
   }
 
   /**

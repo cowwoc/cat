@@ -9,12 +9,10 @@ package io.github.cowwoc.cat.hooks.bash;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
-import io.github.cowwoc.cat.hooks.CatMetadata;
 import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.regex.Matcher;
@@ -25,9 +23,9 @@ import java.util.regex.Pattern;
  * <p>
  * When an agent is working inside a CAT issue worktree, it must commit only to the issue branch.
  * This hook detects {@code git commit} commands, identifies whether the current directory is a
- * CAT worktree (by checking for the {@code cat-branch-point} marker file), derives the expected
- * branch from the worktree's git directory path, and blocks the commit if the current branch
- * does not match.
+ * CAT worktree (by checking that the git directory ends with {@code worktrees/<branch-name>}),
+ * derives the expected branch from the worktree's git directory path, and blocks the commit if
+ * the current branch does not match.
  * <p>
  * Commands containing a {@code cd <path>} prefix are supported: the effective working directory
  * used for git operations is the last {@code cd} target found in the command.
@@ -82,15 +80,10 @@ public final class BlockWrongBranchCommit implements BashHandler
     if (!gitDir.isAbsolute())
       gitDir = Paths.get(effectiveDirectory).resolve(gitDirPath).normalize();
 
-    Path catBranchPointFile = gitDir.resolve(CatMetadata.BRANCH_POINT_FILE);
-    if (!Files.exists(catBranchPointFile))
-      return Result.allow();
-
-    // The git dir for a worktree ends with "worktrees/<branch-name>"
+    // The git dir for a CAT worktree ends with "worktrees/<branch-name>"
     // e.g. /workspace/.git/worktrees/2.1-my-issue
     // Guard: verify structural precondition before deriving the expected branch
-    Path gitDirParent = gitDir.getParent();
-    if (gitDirParent == null || !"worktrees".equals(gitDirParent.getFileName().toString()))
+    if (!GitCommands.isCatWorktreeGitDir(gitDir))
       return Result.allow();
     String expectedBranch = gitDir.getFileName().toString();
 

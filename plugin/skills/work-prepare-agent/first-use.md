@@ -287,9 +287,7 @@ ISSUE_BRANCH="${MAJOR}.${MINOR}-${ISSUE_NAME}"
 TARGET_BRANCH=$(git branch --show-current)
 WORKTREE_PATH="${PROJECT_CAT_DIR}/worktrees/${ISSUE_BRANCH}"
 
-FORK_COMMIT=$(git rev-parse HEAD)
 git worktree add -b "${ISSUE_BRANCH}" "${WORKTREE_PATH}" HEAD
-printf '%s' "$FORK_COMMIT" > "$(git rev-parse --git-common-dir)/worktrees/${ISSUE_BRANCH}/cat-branch-point"
 ```
 
 ### Step 5: Verify Worktree Branch

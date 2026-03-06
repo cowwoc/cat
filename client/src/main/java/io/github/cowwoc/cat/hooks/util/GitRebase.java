@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
-import io.github.cowwoc.cat.hooks.CatMetadata;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import org.slf4j.Logger;
@@ -30,9 +29,8 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 /**
  * Safe git rebase with backup creation, conflict detection, and content verification.
  * <p>
- * Reads the target from {@code cat-branch-point} (a 40-character commit hash) when no target is provided,
- * creates a timestamped backup branch, attempts the rebase, verifies no content changes, counts
- * commits rebased, and cleans up the backup.
+ * Requires an explicit target branch or commit hash, creates a timestamped backup branch, attempts
+ * the rebase, verifies no content changes, counts commits rebased, and cleans up the backup.
  * <p>
  * Uses {@code git merge-base --fork-point} to detect when the upstream has been retroactively
  * rewritten. Always uses {@code git rebase --onto} with the detected fork point:
@@ -76,7 +74,7 @@ public final class GitRebase
    * <p>
    * The process:
    * <ol>
-   *   <li>If target not provided, read commit hash from cat-branch-point file</li>
+   *   <li>Validate that target branch is provided</li>
    *   <li>Detect the fork point (always returns a non-null value)</li>
    *   <li>Create timestamped backup branch</li>
    *   <li>Attempt rebase with {@code --onto}, verify tree state, and clean orphaned files</li>
@@ -87,8 +85,7 @@ public final class GitRebase
    * <p>
    * Success JSON is written to stdout; error/conflict JSON to stderr.
    *
-   * @param targetBranch the branch or commit hash to rebase onto, or empty string to read from
-   *                     cat-branch-point file
+   * @param targetBranch the branch or commit hash to rebase onto (must not be empty)
    * @return JSON string with operation result
    * @throws NullPointerException if {@code targetBranch} is null
    * @throws IOException          if the operation fails
@@ -97,26 +94,14 @@ public final class GitRebase
   {
     requireThat(targetBranch, "targetBranch").isNotNull();
 
-    // Step 1: Resolve target branch
+    // Step 1: Validate target branch
     String resolvedTarget = targetBranch;
     if (resolvedTarget.isEmpty())
     {
-      ProcessRunner.Result gitDirResult = runGit("rev-parse", "--git-dir");
-      if (gitDirResult.exitCode() != 0)
-        return buildErrorJson("Failed to resolve git dir: " + gitDirResult.stdout().strip(), null, null);
-
-      Path gitDir = Path.of(gitDirResult.stdout().strip());
-      if (!gitDir.isAbsolute())
-        gitDir = workingDirectory.resolve(gitDir);
-
-      Path catBranchPointFile = gitDir.resolve(CatMetadata.BRANCH_POINT_FILE);
-      if (!Files.exists(catBranchPointFile))
-      {
-        return buildErrorJson(
-          CatMetadata.BRANCH_POINT_FILE + " file not found: " + catBranchPointFile +
-            ". Recreate worktree with /cat:work.", null, null);
-      }
-      resolvedTarget = Files.readString(catBranchPointFile).strip();
+      return buildErrorJson(
+        "Usage: git-rebase <SOURCE_DIR> <TARGET_BRANCH>\n" +
+          "TARGET_BRANCH is required. Provide the branch or commit hash to rebase onto.",
+        null, null);
     }
 
     // Step 2: Detect fork point (always returns a non-null value)
@@ -474,9 +459,8 @@ public final class GitRebase
   /**
    * Main method for command-line execution.
    * <p>
-   * Usage: git-rebase SOURCE_DIR [TARGET_BRANCH]
+   * Usage: git-rebase SOURCE_DIR TARGET_BRANCH
    * <p>
-   * If TARGET_BRANCH is not provided, reads from the cat-branch-point file in the git directory.
    * Outputs JSON to stdout on success (OK).
    * Outputs JSON to stderr on failure (CONFLICT, ERROR).
    * Exit code 0 for success, 1 for errors.
@@ -491,7 +475,7 @@ public final class GitRebase
       System.err.println("""
         {
           "status": "ERROR",
-          "message": "Usage: git-rebase <SOURCE_DIR> [TARGET_BRANCH]",
+          "message": "Usage: git-rebase <SOURCE_DIR> <TARGET_BRANCH>",
           "backup_branch": null
         }""");
       System.exit(1);

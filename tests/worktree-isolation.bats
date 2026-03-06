@@ -4,9 +4,8 @@
 # Licensed under the CAT Commercial License.
 # See LICENSE.md in the project root for license terms.
 #
-# Tests verifying that cat-branch-point contains an immutable fork-point commit hash,
-# not a mutable branch name, so that worktree isolation is preserved even when
-# the base branch advances after worktree creation.
+# Tests verifying that git worktree detection uses the git directory structure
+# (git dir parent named "worktrees") rather than a sentinel file.
 
 setup() {
     REPO_DIR="$(mktemp -d)"
@@ -24,95 +23,53 @@ teardown() {
     rm -rf "${REPO_DIR:-}"
 }
 
-# Simulate what work-prepare writes to cat-branch-point: the fork-point commit hash.
-# The worktree directory is named after the branch (matching production behavior),
-# so git stores worktree metadata under <git-dir>/worktrees/<branch-name>/.
-# Returns the absolute path to the created worktree directory.
-write_cat_branch_point_hash() {
-    local repo_dir="$1"
-    local issue_branch="$2"
-    # Name the worktree directory after the branch, matching work-prepare behavior
-    local worktrees_parent
-    worktrees_parent="$(mktemp -d)"
-    local worktree_dir="${worktrees_parent}/${issue_branch}"
-
-    # Capture the fork-point commit hash before creating the worktree
-    local fork_hash
-    fork_hash=$(git -C "$repo_dir" rev-parse HEAD)
-
-    # Create the worktree on a new branch
-    git -C "$repo_dir" worktree add -b "$issue_branch" "$worktree_dir" HEAD --quiet
-
-    # Write the commit hash to cat-branch-point (simulating work-prepare)
-    # git stores worktree metadata under <git-common-dir>/worktrees/<worktree-dir-basename>/
+# Returns 0 if the given directory is inside a git worktree (git dir parent == "worktrees"), 1 otherwise.
+is_cat_worktree() {
+    local dir="$1"
     local git_dir
-    git_dir=$(git -C "$repo_dir" rev-parse --absolute-git-dir)
-    local worktree_basename
-    worktree_basename="$(basename "$worktree_dir")"
-    printf '%s' "$fork_hash" > "${git_dir}/worktrees/${worktree_basename}/cat-branch-point"
-
-    echo "$worktree_dir"
+    git_dir=$(git -C "$dir" rev-parse --git-dir 2>/dev/null) || return 1
+    # Resolve relative path
+    if [[ "$git_dir" != /* ]]; then
+        git_dir="${dir}/${git_dir}"
+    fi
+    local parent_name
+    parent_name=$(basename "$(dirname "$git_dir")")
+    [ "$parent_name" = "worktrees" ]
 }
 
-@test "cat-branch-point contains a 40-character hex commit hash, not a branch name" {
-    local issue_branch="test-issue"
-    local worktree_dir
-    worktree_dir=$(write_cat_branch_point_hash "$REPO_DIR" "$issue_branch")
+@test "main workspace is not identified as a CAT worktree" {
+    # The main repo has .git/ directly — parent of .git is the repo root, not "worktrees"
+    run is_cat_worktree "$REPO_DIR"
+    [ "$status" -ne 0 ]
+}
 
-    # Locate cat-branch-point using the same path logic as write_cat_branch_point_hash
-    local git_dir
-    git_dir=$(git -C "$REPO_DIR" rev-parse --absolute-git-dir)
-    local worktree_basename
-    worktree_basename="$(basename "$worktree_dir")"
-    local cat_branch_point_path="${git_dir}/worktrees/${worktree_basename}/cat-branch-point"
+@test "git worktree is identified as a CAT worktree" {
+    local worktrees_parent
+    worktrees_parent="$(mktemp -d)"
+    local worktree_dir="${worktrees_parent}/test-issue"
 
-    [ -f "$cat_branch_point_path" ]
+    git -C "$REPO_DIR" worktree add -b test-issue "$worktree_dir" HEAD --quiet
 
-    local cat_branch_point_content
-    cat_branch_point_content=$(cat "$cat_branch_point_path")
+    # The worktree's git dir is .git/worktrees/test-issue/ — parent is "worktrees"
+    run is_cat_worktree "$worktree_dir"
+    [ "$status" -eq 0 ]
 
-    # Must match exactly 40 hex characters (a full commit hash)
-    [[ "$cat_branch_point_content" =~ ^[0-9a-f]{40}$ ]]
-
-    # Must be a valid commit object in the git object store
-    local object_type
-    object_type=$(git -C "$REPO_DIR" cat-file -t "$cat_branch_point_content")
-    [ "$object_type" = "commit" ]
-
-    # Clean up
     git -C "$REPO_DIR" worktree remove "$worktree_dir" --force 2>/dev/null || true
 }
 
-@test "cat-branch-point value is unchanged after the base branch advances by one commit" {
-    local issue_branch="stable-issue"
-    local worktree_dir
-    worktree_dir=$(write_cat_branch_point_hash "$REPO_DIR" "$issue_branch")
+@test "worktree detection is stable after base branch advances" {
+    local worktrees_parent
+    worktrees_parent="$(mktemp -d)"
+    local worktree_dir="${worktrees_parent}/stable-issue"
 
-    # Locate cat-branch-point using the same path logic as write_cat_branch_point_hash
-    local git_dir
-    git_dir=$(git -C "$REPO_DIR" rev-parse --absolute-git-dir)
-    local worktree_basename
-    worktree_basename="$(basename "$worktree_dir")"
-    local cat_branch_point_path="${git_dir}/worktrees/${worktree_basename}/cat-branch-point"
+    git -C "$REPO_DIR" worktree add -b stable-issue "$worktree_dir" HEAD --quiet
 
-    # Record the fork-point hash before the base advances
-    local fork_hash_before
-    fork_hash_before=$(cat "$cat_branch_point_path")
-
-    # Advance the base branch by adding a new commit on main
+    # Advance the base branch
     git -C "$REPO_DIR" commit --quiet --allow-empty -m "Base branch advances"
 
-    # cat-branch-point must still contain the original fork-point hash
-    local fork_hash_after
-    fork_hash_after=$(cat "$cat_branch_point_path")
+    # Worktree detection must still work after base branch moves
+    run is_cat_worktree "$worktree_dir"
+    [ "$status" -eq 0 ]
 
-    [ "$fork_hash_before" = "$fork_hash_after" ]
-
-    # The fork-point hash must differ from the new HEAD of main (proving base advanced)
-    local new_main_head
-    new_main_head=$(git -C "$REPO_DIR" rev-parse main)
-    [ "$fork_hash_after" != "$new_main_head" ]
-
-    # Clean up
     git -C "$REPO_DIR" worktree remove "$worktree_dir" --force 2>/dev/null || true
 }

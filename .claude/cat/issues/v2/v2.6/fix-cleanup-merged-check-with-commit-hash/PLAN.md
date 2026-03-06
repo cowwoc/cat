@@ -3,16 +3,14 @@ Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
-# Plan: Fix Cleanup --merged Check with Commit Hash
+# Plan: Fix Cleanup --merged Check with Target Branch Name
 
 ## Problem
 
-`plugin/skills/cleanup/first-use.md:122-123` reads `cat-branch-point` into `BASE_BRANCH` then runs
-`git branch --merged "$BASE_BRANCH"`. Since issue `2.1-record-fork-commit-at-worktree-creation`,
-`cat-branch-point` stores a fork-point commit hash (40-char hex) instead of a branch name. The `--merged`
-check now tests ancestry to the fork-point commit rather than the current branch tip. Branches
-merged into the base branch after the fork-point incorrectly report as NOT merged, producing false
-high-risk warnings during cleanup.
+`plugin/skills/cleanup/first-use.md:122-123` needs the target branch name to run
+`git branch --merged "$TARGET_BRANCH"`. The file it previously read was removed in v2.1, leaving cleanup
+without a source for the target branch name. This causes cleanup to fail with a missing-file error
+when trying to determine whether an issue branch has been merged.
 
 ## Satisfies
 
@@ -20,71 +18,56 @@ None (infrastructure bugfix)
 
 ## Reproduction
 
-1. Create a worktree for any issue (cat-branch-point stores fork-point commit hash)
-2. Merge additional commits into the base branch after the worktree was created
-3. Run `/cat:cleanup` on the worktree
-4. Observe: cleanup warns the branch is not merged even though it has been merged
+1. Create a worktree for any issue
+2. Run `/cat:cleanup` on the worktree
+3. Observe: cleanup fails trying to read the target branch name
 
 ## Expected vs Actual
 
-- **Expected:** `git branch --merged <base-branch-tip>` correctly identifies merged branches
-- **Actual:** `git branch --merged <fork-point-hash>` misses branches merged after the fork-point
+- **Expected:** `git branch --merged <target-branch-name>` correctly identifies merged branches
+- **Actual:** Cleanup fails with a missing-file error
 
 ## Risk Assessment
 
-- **Risk Level:** MEDIUM
-- **Concerns:** Adding `cat-branch` requires updating all worktree creation paths (WorkPrepare.java
-  and work-prepare skill); missing the file causes fail-fast errors
-- **Mitigation:** Fail-fast with clear error if `cat-branch` missing; update WorkPrepare.java and
-  work-prepare skill atomically
+- **Risk Level:** LOW
+- **Concerns:** The approach for determining the target branch must be reliable
+- **Mitigation:** Fail-fast with clear error if target branch cannot be determined
 
 ## Files to Modify
 
-- `client/src/main/java/io/github/cowwoc/cat/hooks/util/WorkPrepare.java` — write `cat-branch`
-  file alongside `cat-branch-point` at worktree creation
-- `plugin/skills/work-prepare/first-use.md` — write `cat-branch` alongside `cat-branch-point`
-- `plugin/skills/cleanup/first-use.md:122-123` — read `cat-branch` instead of `cat-branch-point` for
-  `--merged` check
+- `plugin/skills/cleanup/first-use.md:122-123` — determine target branch for `--merged` check
 
 ## Pre-conditions
 
-- [ ] Issue `2.1-record-fork-commit-at-worktree-creation` is closed (defines cat-branch-point format)
+- [x] Issue `2.1-remove-cat-branch-point-references` is closed
 
 ## Execution Waves
 
 ### Wave 1
 
-1. **Step 1:** In `WorkPrepare.java`, after writing `cat-branch-point`, write `cat-branch` file
-   - File: `client/src/main/java/io/github/cowwoc/cat/hooks/util/WorkPrepare.java`
-   - After `Files.writeString(catBranchPointFile, commitHash)`, add:
-     `Path catBranchFile = gitCommonDir.resolve("worktrees").resolve(branch).resolve("cat-branch");`
-     `Files.writeString(catBranchFile, baseBranch);`
+1. **Step 1:** Investigate how to determine the target branch for each worktree
+   - Each issue has a STATE.md that records which version it belongs to
+   - `work-prepare` outputs `target_branch` in its JSON result
+   - Evaluate whether git-native tools (e.g., `git merge-base`) can determine merge status without
+     knowing the target branch explicitly
 
-2. **Step 2:** In `work-prepare/first-use.md`, write `cat-branch` alongside `cat-branch-point`
-   - File: `plugin/skills/work-prepare/first-use.md`
-   - After the line that writes `cat-branch-point`, add a line writing `cat-branch`:
-     `echo "${BASE_BRANCH}" > "$(git rev-parse --git-common-dir)/worktrees/${BRANCH}/cat-branch"`
-
-3. **Step 3:** In `cleanup/first-use.md`, replace `cat-branch-point` with `cat-branch` for `--merged` check
+2. **Step 2:** Update `cleanup/first-use.md` to use the chosen approach
    - File: `plugin/skills/cleanup/first-use.md:122-123`
-   - Replace: `BASE_BRANCH=$(cat "$(git rev-parse --git-dir)/cat-branch-point")`
-   - With: `BASE_BRANCH=$(cat "$(git rev-parse --git-dir)/cat-branch")`
-   - Add fail-fast error block if `cat-branch` file is missing
+   - Fail-fast with clear error if target branch cannot be determined
+   - Pass target branch to `git branch --merged`
 
-4. **Step 4:** Add regression test to `tests/worktree-isolation.bats`
-   - Verify `cat-branch` contains a branch name (not a 40-char commit hash)
-   - Verify `git branch --merged $(cat cat-branch)` succeeds when branch is merged
+3. **Step 3:** Add regression test to `tests/worktree-isolation.bats`
+   - Verify cleanup correctly identifies merged branches
 
-5. **Step 5:** Run full test suite
+4. **Step 4:** Run full test suite
    - `mvn -f client/pom.xml test`
    - `bats tests/worktree-isolation.bats`
 
 
 ## Post-conditions
 
-- [ ] `cat-branch` file written by `WorkPrepare.java` at worktree creation containing base branch name
-- [ ] `cat-branch` file written by `work-prepare` skill at worktree creation
-- [ ] `cleanup/first-use.md` uses `cat-branch` for `git branch --merged` check
-- [ ] Cleanup correctly identifies branches merged after the fork-point as merged
-- [ ] Regression test in `worktree-isolation.bats` verifies `cat-branch` contains branch name
+- [ ] No new marker files written to git directory
+- [ ] No branch name derivation from naming conventions
+- [ ] Cleanup correctly identifies merged branches
+- [ ] Regression test in `worktree-isolation.bats` verifies merged branch detection
 - [ ] All tests pass with no regressions
