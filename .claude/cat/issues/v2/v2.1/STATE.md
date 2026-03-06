@@ -71,6 +71,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - restore-askuserquestion-in-allowed-tools
 - improve-cleanup-stale-artifact-ux
 - add-priming-analysis-to-optimize-doc
+- fix-git-rebase-skill-backup-deletion
 
 
 ## Issues Closed
