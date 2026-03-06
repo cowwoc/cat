@@ -16,7 +16,6 @@ import io.github.cowwoc.cat.hooks.session.CheckDataMigration;
 import io.github.cowwoc.cat.hooks.session.ClearSkillMarker;
 import io.github.cowwoc.cat.hooks.session.EchoSessionId;
 import io.github.cowwoc.cat.hooks.session.InjectEnv;
-import io.github.cowwoc.cat.hooks.session.InjectSessionInstructions;
 import io.github.cowwoc.cat.hooks.session.SessionStartHandler;
 import io.github.cowwoc.cat.hooks.skills.TerminalType;
 import io.github.cowwoc.cat.hooks.util.VersionUtils;
@@ -140,66 +139,6 @@ public class SessionStartHookTest
     {
       TestUtils.deleteDirectoryRecursively(projectDir);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
-    }
-  }
-
-  // --- InjectSessionInstructions tests ---
-
-  /**
-   * Verifies that InjectSessionInstructions returns instructions with session ID.
-   */
-  @Test
-  public void injectSessionInstructionsIncludesSessionId() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"my-session\"}");
-      SessionStartHandler.Result result = new InjectSessionInstructions().handle(input);
-      requireThat(result.additionalContext(), "additionalContext").contains("CAT SESSION INSTRUCTIONS");
-      requireThat(result.additionalContext(), "additionalContext").contains("Session ID: my-session");
-      requireThat(result.stderr(), "stderr").isEmpty();
-    }
-  }
-
-  /**
-   * Verifies that InjectSessionInstructions uses "unknown" when session ID is missing.
-   */
-  @Test
-  public void injectSessionInstructionsUsesUnknownWhenNoSessionId() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{}");
-      SessionStartHandler.Result result = new InjectSessionInstructions().handle(input);
-      requireThat(result.additionalContext(), "additionalContext").contains("Session ID: unknown");
-    }
-  }
-
-  /**
-   * Verifies that InjectSessionInstructions includes key instruction sections.
-   */
-  @Test
-  public void injectSessionInstructionsIncludesKeyInstructions() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"test\"}");
-      SessionStartHandler.Result result = new InjectSessionInstructions().handle(input);
-      String context = result.additionalContext();
-      requireThat(context, "context").contains("User Input Handling");
-      requireThat(context, "context").contains("Mandatory Mistake Handling");
-      requireThat(context, "context").contains("Commit Before Review");
-      requireThat(context, "context").contains("Skill Workflow Compliance");
-      requireThat(context, "context").contains("Work Request Handling");
-      requireThat(context, "context").contains("Worktree Isolation");
-      requireThat(context, "context").contains("Fail-Fast Protocol");
-      requireThat(context, "context").contains("Verbatim Output Skills");
-      requireThat(context, "context").contains("Qualified Issue Names");
-      requireThat(context, "context").contains("Persisted Skill Output");
-      requireThat(context, "context").contains("Tool Usage Efficiency");
     }
   }
 
