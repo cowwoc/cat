@@ -59,6 +59,10 @@ Status values:
 
 ## Key Constraints
 
+- **Chain independent Bash commands**: Combine independent commands (e.g., `git status`, `git log`,
+  `git diff --stat`, `ls`) with `&&` in a single Bash call instead of issuing separate tool calls.
+  This reduces round-trips. Only chain commands that can run independently — do NOT chain commands
+  where a later command depends on the exit code or output of an earlier one.
 - Work ONLY within the assigned worktree path
 - NEVER return verbose output, build logs, or file contents in your JSON response
 - Write ALL details to the output files — the parent agent never reads these files
