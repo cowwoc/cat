@@ -19,6 +19,7 @@ import io.github.cowwoc.cat.hooks.skills.GetCleanupOutput.WorktreeToRemove;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -245,7 +246,7 @@ public class GetCleanupOutputTest
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<Lock> locks = List.of(
-        new Lock("v2.0-my-task", "session123", 300));
+        new Lock("v2.0-my-task", "session123", Duration.ofSeconds(300)));
 
       String result = handler.getSurveyOutput(
         List.of(),
@@ -352,7 +353,7 @@ public class GetCleanupOutputTest
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
         List.of(new Worktree("/path", "branch", "")),
-        List.of(new Lock("task", "sess", 10)),
+        List.of(new Lock("task", "sess", Duration.ofSeconds(10))),
         List.of("branch1", "branch2"),
         List.of(new StaleRemote("old", "user", "1d", "stale")),
         null);
@@ -399,7 +400,7 @@ public class GetCleanupOutputTest
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<WorktreeToRemove> worktrees = List.of(
-        new WorktreeToRemove("/path/to/wt", "task-branch"));
+        new WorktreeToRemove("/path/to/wt", "task-branch", Duration.ofSeconds(3600)));
 
       String result = handler.getPlanOutput(
         List.of(),
@@ -499,8 +500,9 @@ public class GetCleanupOutputTest
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getPlanOutput(
-        List.of("lock1", "lock2"),
-        List.of(new WorktreeToRemove("/path", "branch")),
+        List.of(new Lock("lock1", "session1", Duration.ofSeconds(100)),
+          new Lock("lock2", "session2", Duration.ofSeconds(200))),
+        List.of(new WorktreeToRemove("/path", "branch", Duration.ofSeconds(600))),
         List.of("branch1"),
         List.of());
 
@@ -545,7 +547,7 @@ public class GetCleanupOutputTest
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getPlanOutput(
-        List.of("my-lock-id"),
+        List.of(new Lock("my-lock-id", "session123", Duration.ofSeconds(500))),
         List.of(),
         List.of(),
         List.of());
@@ -553,6 +555,158 @@ public class GetCleanupOutputTest
       requireThat(result, "result").contains("Locks to Remove").contains("my-lock-id");
     }
   }
+
+  /**
+   * Verifies that plan output labels a lock with age >= 4 hours as stale.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void planOutputLabelsStaleLockAsStale() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
+      GetCleanupOutput handler = new GetCleanupOutput(scope);
+      // 14_400 seconds = exactly 4 hours (stale threshold)
+      String result = handler.getPlanOutput(
+        List.of(new Lock("stale-issue", "session123", Duration.ofSeconds(14_400))),
+        List.of(),
+        List.of(),
+        List.of());
+
+      requireThat(result, "result").contains("stale-issue").contains("[stale]");
+    }
+  }
+
+  /**
+   * Verifies that plan output labels a lock with age < 4 hours as recent.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void planOutputLabelsRecentLockAsRecent() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
+      GetCleanupOutput handler = new GetCleanupOutput(scope);
+      // 3600 seconds = 1 hour (below stale threshold)
+      String result = handler.getPlanOutput(
+        List.of(new Lock("recent-issue", "session456", Duration.ofSeconds(3600))),
+        List.of(),
+        List.of(),
+        List.of());
+
+      requireThat(result, "result").contains("recent-issue").contains("[recent]");
+    }
+  }
+
+  /**
+   * Verifies that plan output displays session ID and age for each lock.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void planOutputDisplaysLockSessionAndAge() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
+      GetCleanupOutput handler = new GetCleanupOutput(scope);
+      // Use a full UUID-style session ID; output should show only first 8 chars
+      String result = handler.getPlanOutput(
+        List.of(new Lock("2.1-fix-catid", "eb68bb02abcd1234", Duration.ofSeconds(326))),
+        List.of(),
+        List.of(),
+        List.of());
+
+      requireThat(result, "result").
+        contains("2.1-fix-catid").
+        contains("session eb68bb02").
+        contains("326s");
+    }
+  }
+
+  /**
+   * Verifies that plan output displays worktree age and stale classification.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void planOutputDisplaysWorktreeAgeAndClassification() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
+      GetCleanupOutput handler = new GetCleanupOutput(scope);
+      // 18_000 seconds = 5 hours (stale)
+      String result = handler.getPlanOutput(
+        List.of(),
+        List.of(new WorktreeToRemove("/path/to/wt", "task-branch", Duration.ofSeconds(18_000))),
+        List.of(),
+        List.of());
+
+      requireThat(result, "result").
+        contains("/path/to/wt").
+        contains("task-branch").
+        contains("[stale]");
+    }
+  }
+
+  /**
+   * Verifies that plan output shows stale/recent counts in the summary line.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void planOutputShowsStaleAndRecentCounts() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
+      GetCleanupOutput handler = new GetCleanupOutput(scope);
+      String result = handler.getPlanOutput(
+        List.of(
+          new Lock("stale-lock", "session1", Duration.ofSeconds(20_000)),   // stale (>= 4h)
+          new Lock("recent-lock", "session2", Duration.ofSeconds(1000))),  // recent (< 4h)
+        List.of(),
+        List.of(),
+        List.of());
+
+      requireThat(result, "result").contains("1 stale").contains("1 recent");
+    }
+  }
+
+  /**
+   * Verifies that plan output formats lock age >= 1 hour in hours and minutes.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void planOutputFormatsAgeInHoursAndMinutes() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
+      GetCleanupOutput handler = new GetCleanupOutput(scope);
+      // 5h 30m = 19_800 seconds
+      String result = handler.getPlanOutput(
+        List.of(new Lock("long-running-issue", "session999", Duration.ofSeconds(19_800))),
+        List.of(),
+        List.of(),
+        List.of());
+
+      requireThat(result, "result").contains("5h 30m");
+    }
+  }
+
 
   /**
    * Verifies that verify output contains header.
@@ -719,8 +873,8 @@ public class GetCleanupOutputTest
       String result = handler.getSurveyOutput(
         List.of(new Worktree("/path/a", "branch-a", ""),
           new Worktree("/path/b", "branch-b", "locked")),
-        List.of(new Lock("task-a", "abc123def456", 3600),
-          new Lock("task-b", "xyz789uvw012", 7200)),
+        List.of(new Lock("task-a", "abc123def456", Duration.ofSeconds(3600)),
+          new Lock("task-b", "xyz789uvw012", Duration.ofSeconds(7200))),
         List.of("branch-a", "branch-b", "branch-c"),
         List.of(new StaleRemote("old-task", "user@example.com", "3 days ago", "stale")),
         ".claude/context.md");
@@ -747,8 +901,9 @@ public class GetCleanupOutputTest
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getPlanOutput(
-        List.of("lock-a", "lock-b"),
-        List.of(new WorktreeToRemove("/workspace/.worktrees/task-a", "task-a")),
+        List.of(new Lock("lock-a", "session-aa", Duration.ofSeconds(300)),
+          new Lock("lock-b", "session-bb", Duration.ofSeconds(50_000))),
+        List.of(new WorktreeToRemove("/workspace/.worktrees/task-a", "task-a", Duration.ofSeconds(1800))),
         List.of("branch-a", "branch-b"),
         List.of(new StaleRemote("old-branch", "user", "5 days ago", "5 days")));
 
@@ -1126,9 +1281,9 @@ public class GetCleanupOutputTest
           "handler": "cleanup",
           "context": {
             "phase": "plan",
-            "locks_to_remove": ["2.1-issue-name"],
+            "locks_to_remove": [{"issue_id": "2.1-issue-name", "session": "eb68bb02", "age_seconds": 326}],
             "worktrees_to_remove": [{"path": "%s",
-              "branch": "2.1-issue-name"}],
+              "branch": "2.1-issue-name", "age_seconds": 326}],
             "branches_to_remove": ["2.1-issue-name"],
             "stale_remotes": []
           }

@@ -74,16 +74,24 @@ Analyze survey results to classify artifacts:
 - No corresponding lock exists (orphaned)
 
 **Stale lock indicators:**
-- Lock age exceeds 4 hours (14400 seconds) — do not label a worktree or lock as "abandoned" unless idle time meets this threshold
+- Branch age exceeds 4 hours — do not label a worktree or lock as "abandoned" unless idle time meets this threshold
 - No heartbeat updates (if heartbeat tracking enabled)
 
-For each lock, check status:
+For each lock, check status and record the `session_id` for use in Step 4:
 ```bash
 issue_id="<from-survey>"
 "${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" check "$issue_id"
 ```
 
-The output shows: `{"locked":true,"session_id":"...","age_seconds":...,"worktree":"..."}`
+Derive age from the branch's last commit time (not the lock file):
+```bash
+branch="<issue-id>"
+git log -1 --format=%ct "$branch"
+```
+
+Compute age as `now - commit_timestamp`. Classify each artifact based on branch age:
+- **Stale** (age ≥ 4 hours): safe to remove with the default option
+- **Recent** (age < 4 hours): requires explicit user confirmation via the secondary option
 
 Present classification:
 
@@ -171,15 +179,22 @@ If uncommitted:
 
 ### Step 4: Get User Confirmation
 
-Generate the cleanup plan box by invoking the handler with your analysis:
+Generate the cleanup plan box by invoking the handler with your analysis. For each lock, include
+`issue_id`, `session` (first 8 chars of session ID), and `age_seconds` (derived from the branch's last commit time
+via `git log -1 --format=%ct <branch>`). For each worktree, include `age_seconds` (same source):
 
 ```bash
 echo '{
   "handler": "cleanup",
   "context": {
     "phase": "plan",
-    "locks_to_remove": ["2.1-issue-name"],
-    "worktrees_to_remove": [{"path": "${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/2.1-issue-name", "branch": "2.1-issue-name"}],
+    "locks_to_remove": [
+      {"issue_id": "2.1-issue-name", "session": "eb68bb02", "age_seconds": 326}
+    ],
+    "worktrees_to_remove": [
+      {"path": "${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/2.1-issue-name",
+       "branch": "2.1-issue-name", "age_seconds": 326}
+    ],
     "branches_to_remove": ["2.1-issue-name"],
     "stale_remotes": []
   }
@@ -187,9 +202,18 @@ echo '{
 ```
 
 Replace the example values with actual items identified in Step 2.
-The resulting box will be output verbatim.
+The resulting box will be output verbatim. It displays session ID and age per lock, and classifies
+each artifact as **stale** (age ≥ 4 hours) or **recent** (age < 4 hours).
 
-Then use AskUserQuestion to confirm before proceeding.
+Then use AskUserQuestion with these options (in this order):
+
+1. **Remove stale artifacts only (≥4 hours)** *(default)* — remove only locks and worktrees with age ≥ 4 hours,
+   plus all orphaned branches regardless of age
+2. **Remove all artifacts (including recent)** — remove all identified artifacts regardless of age
+3. **Abort** — stop without removing anything
+
+If the user selects option 1, skip any locks and worktrees classified as "recent" in the plan box.
+If the user selects option 2, remove all items in the plan box.
 
 **BLOCKING: Do NOT execute cleanup without explicit user confirmation.**
 
