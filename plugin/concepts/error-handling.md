@@ -214,7 +214,7 @@ Main agent MUST:
 ```
 
 **Why this matters:**
-- Skills contain validation logic (e.g., `/cat:shrink-doc-agent` uses `/cat:compare-docs-agent` for equivalence)
+- Skills contain validation logic (e.g., `/cat:optimize-doc-agent` uses `/cat:compare-docs-agent` for equivalence)
 - Manual implementation bypasses this validation
 - The skill exists precisely BECAUSE manual work is error-prone or requires validation
 
@@ -229,12 +229,12 @@ Main agent MUST:
 **Anti-pattern:**
 ```
 # BAD - Main agent sees subagent failure and decides to "just do it"
-Subagent: "FAILED: recursion issues with /cat:shrink-doc-agent"
+Subagent: "FAILED: recursion issues with /cat:optimize-doc-agent"
 Main agent: "Let me take a more direct approach..."
 Main agent: [Uses Edit tool to compress file manually]
 
 # GOOD - Main agent respects skill boundary
-Subagent: "FAILED: recursion issues with /cat:shrink-doc-agent"
+Subagent: "FAILED: recursion issues with /cat:optimize-doc-agent"
 Main agent: "The skill invocation failed. Let me retry with a single file first,
              or ask the user how to proceed."
 ```

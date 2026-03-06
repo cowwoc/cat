@@ -20,8 +20,8 @@ default; use `--sequential` to force sequential execution when needed.
 
 **Skill arguments**: Everything after the skill name is passed to that skill.
 ```bash
-# Example: delegate shrink-doc with 3 files as arguments
-/cat:delegate --skill shrink-doc file1.md file2.md file3.md
+# Example: delegate optimize-doc with 3 files as arguments
+/cat:delegate --skill optimize-doc file1.md file2.md file3.md
 #                     ^^^^^^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^^
 #                     skill name   skill arguments (passed through)
 ```
@@ -119,8 +119,8 @@ should be delegated at all. Work requiring Opus-level reasoning often benefits f
 ```
 ❌ Task tool: subagent_type: "general-purpose" (missing model - uses expensive default)
 ❌ Task tool: model: "haiku" for code refactoring (will likely fail)
-❌ Task tool: model: "haiku" for "/cat:shrink-doc file.md" (skill exposes algorithm - M376)
-✅ Task tool: model: "sonnet" for "/cat:shrink-doc file.md" (skill doc shows HOW, needs reasoning)
+❌ Task tool: model: "haiku" for "/cat:optimize-doc file.md" (skill exposes algorithm - M376)
+✅ Task tool: model: "sonnet" for "/cat:optimize-doc file.md" (skill doc shows HOW, needs reasoning)
 ✅ Task tool: model: "sonnet" for "refactor these 4 handlers" (needs reasoning)
 ✅ Task tool: model: "haiku" for "/cat:status" (pure orchestration, no algorithm exposed)
 ```
@@ -139,7 +139,7 @@ CRITICAL REQUIREMENTS (enforced by hooks):
 - Always use git-filter-repo instead of git filter-branch
 - Preserve .git/refs/original unless user explicitly requests deletion
 - Include tests for bugfixes in the SAME commit as the fix
-- If task references skills (e.g., /cat:shrink-doc), MUST invoke them - do NOT manually reimplement
+- If task references skills (e.g., /cat:optimize-doc), MUST invoke them - do NOT manually reimplement
 
 COMMIT SEPARATION:
 - .claude/rules/ updates → separate config: commit (not bundled with bugfix/feature)
@@ -368,7 +368,7 @@ Before delegating, verify your prompt answers:
 - [ ] What commit message to use? (exact text, for implementation)
 - [ ] **Does prompt include STATE.md update?** (MUST be in same commit as implementation - M076/M077)
 - [ ] **Does prompt include PLAN.md acceptance criteria?** (M260: validation commands, expected scores)
-- [ ] **If delegating a skill, does prompt require invoking it?** (M261: "Use /cat:shrink-doc" not "compress")
+- [ ] **If delegating a skill, does prompt require invoking it?** (M261: "Use /cat:optimize-doc" not "compress")
 - [ ] **Does prompt include caller context?** (M426: goal, constraints, expected outcome for this invocation)
 
 ### Mandatory Subagent Prompt Checklist (A013)
@@ -668,7 +668,7 @@ fi
 **Forward Skill Output to User:**
 
 If `skill_output` is non-empty, display it to the user. Subagent tool calls are invisible,
-so this is the only way users see what skills like `/cat:shrink-doc` actually did.
+so this is the only way users see what skills like `/cat:optimize-doc` actually did.
 
 **Update TaskList entry:**
 ```
@@ -775,19 +775,19 @@ wave_2: [1.2b]        # Depends on 1.2a
 
 ### Single Skill Delegation
 ```bash
-/cat:delegate --skill shrink-doc plugin/skills/add/SKILL.md
-# → 1 subagent executes /cat:shrink-doc plugin/skills/add/SKILL.md
+/cat:delegate --skill optimize-doc plugin/skills/add/SKILL.md
+# → 1 subagent executes /cat:optimize-doc plugin/skills/add/SKILL.md
 ```
 
 ### Batch Skill Delegation (Parallel by Default)
 ```bash
-/cat:delegate --skill shrink-doc plugin/skills/add/SKILL.md plugin/skills/work/SKILL.md plugin/skills/status/SKILL.md
-# → 3 subagents execute in parallel, each running shrink-doc on one file
+/cat:delegate --skill optimize-doc plugin/skills/add/SKILL.md plugin/skills/work/SKILL.md plugin/skills/status/SKILL.md
+# → 3 subagents execute in parallel, each running optimize-doc on one file
 ```
 
 ### Batch Skill Delegation (Sequential Override)
 ```bash
-/cat:delegate --sequential --skill shrink-doc file1.md file2.md file3.md
+/cat:delegate --sequential --skill optimize-doc file1.md file2.md file3.md
 # → 3 subagents execute sequentially (wait for each before starting next)
 ```
 
@@ -817,17 +817,17 @@ wave_2: [1.2b]        # Depends on 1.2a
 
 ```bash
 # ❌ WRONG - Asking for parallel explicitly
-/cat:delegate --parallel --skill shrink-doc file1.md file2.md
+/cat:delegate --parallel --skill optimize-doc file1.md file2.md
 
 # ✅ CORRECT - Parallel is automatic for multiple items
-/cat:delegate --skill shrink-doc file1.md file2.md
+/cat:delegate --skill optimize-doc file1.md file2.md
 ```
 
 ### Use --sequential only when order matters
 
 ```bash
 # ❌ WRONG - Sequential for independent items
-/cat:delegate --sequential --skill shrink-doc independent1.md independent2.md
+/cat:delegate --sequential --skill optimize-doc independent1.md independent2.md
 
 # ✅ CORRECT - Sequential only when order matters
 /cat:delegate --sequential --skill migrate-schema v1-to-v2 v2-to-v3
@@ -837,20 +837,20 @@ wave_2: [1.2b]        # Depends on 1.2a
 
 ```
 # ❌ WRONG - Tells subagent to apply principles
-"Compress the file using shrink-doc's principles: reduce size while maintaining equivalence..."
+"Compress the file using optimize-doc's principles: reduce size while maintaining equivalence..."
 
 # ✅ CORRECT - Tells subagent to invoke the skill
-"Invoke /cat:shrink-doc-agent {file} and report the validation score."
+"Invoke /cat:optimize-doc-agent {file} and report the validation score."
 ```
 
 ### Require postcondition reporting
 
 ```
 # ❌ WRONG - No postcondition reporting required
-"Run shrink-doc on each file."
+"Run optimize-doc on each file."
 
 # ✅ CORRECT - Explicit postcondition reporting
-"Run /cat:shrink-doc on each file. Report: validation_score, postcondition_met (true/false)."
+"Run /cat:optimize-doc on each file. Report: validation_score, postcondition_met (true/false)."
 ```
 
 ### Verify findings through delegation, not direct investigation

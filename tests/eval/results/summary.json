@@ -83,7 +83,7 @@
       "failed": 1,
       "activation_rate": 50.0
     },
-    "shrink-doc": {
+    "optimize-doc": {
       "total": 3,
       "passed": 0,
       "failed": 3,
