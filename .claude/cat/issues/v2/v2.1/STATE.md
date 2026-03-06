@@ -75,6 +75,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-git-rebase-skill-backup-deletion
 - convert-compression-agent-to-registered-agent
 - merge-agent-skill-variants
+- rename-satisfies-to-parent-requirements
 
 
 ## Issues Closed
