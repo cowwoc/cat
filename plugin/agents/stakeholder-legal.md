@@ -3,6 +3,7 @@ name: stakeholder-legal
 description: "Legal Counsel stakeholder for code review and research. Focus: licensing, regulatory compliance, intellectual property, data privacy"
 tools: Read, Grep, Glob, WebSearch, WebFetch
 model: haiku
+skills: [cat:stakeholder-common]
 ---
 
 # Stakeholder: Legal
@@ -144,11 +145,6 @@ Before performing any analysis, verify that the prompt contains a "## Working Di
   }
   ```
 
-## Working Directory
-
-The delegation prompt MUST specify a working directory. Read and modify files ONLY within that directory. Do NOT access
-files outside it.
-
 ## Holistic Review
 
 **Review changes in context of the entire project's legal posture, not just the diff.**
@@ -172,19 +168,6 @@ Before analyzing specific concerns, evaluate:
 
 **Anti-Accumulation Check**: Flag if this change adds to accumulated legal risk
 (e.g., "this is the 4th dependency added without license verification").
-
-## Mandatory Pre-Review Steps
-
-Before analyzing any code, you MUST complete these steps in order:
-
-1. **Analyze the diff**: Review the git diff summary provided in "What Changed" section. List every file that was
-   modified, added, or deleted.
-2. **Read all modified files**: For each modified file listed in the diff, read the full file content provided in
-   the "Files to Review" section. Do not skip any file.
-3. **Note cross-file relationships**: Identify any patterns, interfaces, or dependencies that span multiple
-   modified files.
-
-These steps must be completed before forming any review opinions.
 
 ## Review Concerns
 
