@@ -13,6 +13,8 @@ import io.github.cowwoc.cat.hooks.util.ProcessRunner;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -36,9 +38,8 @@ public final class GetCleanupOutput implements SkillOutput
 {
   private static final Pattern CAT_BRANCH_PATTERN = Pattern.compile("(release/|worktree|\\d+\\.\\d+-)");
   private static final Pattern STALE_REMOTE_PATTERN = Pattern.compile("origin/\\d+\\.\\d+-");
-  private static final int SECONDS_PER_DAY = 86_400;
-  private static final int MIN_STALE_DAYS = 1;
-  private static final int MAX_STALE_DAYS = 7;
+  private static final Duration MIN_STALE_AGE = Duration.ofDays(1);
+  private static final Duration MAX_STALE_AGE = Duration.ofDays(7);
 
   /**
    * The JVM scope for accessing shared services.
@@ -88,24 +89,24 @@ public final class GetCleanupOutput implements SkillOutput
    *
    * @param issueId the task ID
    * @param session the session ID
-   * @param age the lock age in seconds
+   * @param age the age of the branch's last commit
    */
-  public record Lock(String issueId, String session, int age)
+  public record Lock(String issueId, String session, Duration age)
   {
     /**
      * Creates a lock entry.
      *
      * @param issueId the task ID
      * @param session the session ID
-     * @param age the lock age in seconds
-     * @throws NullPointerException if issueId or session is null
+     * @param age the age of the branch's last commit
+     * @throws NullPointerException if any parameter is null
      * @throws IllegalArgumentException if issueId or session is blank, or age is negative
      */
     public Lock
     {
       requireThat(issueId, "issueId").isNotBlank();
       requireThat(session, "session").isNotBlank();
-      requireThat(age, "age").isNotNegative();
+      requireThat(age, "age").isGreaterThanOrEqualTo(Duration.ZERO);
     }
   }
 
@@ -143,21 +144,24 @@ public final class GetCleanupOutput implements SkillOutput
    *
    * @param path the worktree path
    * @param branch the branch name
+   * @param age the age of the branch's last commit
    */
-  public record WorktreeToRemove(String path, String branch)
+  public record WorktreeToRemove(String path, String branch, Duration age)
   {
     /**
      * Creates a worktree-to-remove entry.
      *
      * @param path the worktree path
      * @param branch the branch name
+     * @param age the age of the branch's last commit
      * @throws NullPointerException if any parameter is null
-     * @throws IllegalArgumentException if path or branch is blank
+     * @throws IllegalArgumentException if path or branch is blank, or age is negative
      */
     public WorktreeToRemove
     {
       requireThat(path, "path").isNotBlank();
       requireThat(branch, "branch").isNotBlank();
+      requireThat(age, "age").isGreaterThanOrEqualTo(Duration.ZERO);
     }
   }
 
@@ -323,7 +327,8 @@ public final class GetCleanupOutput implements SkillOutput
   /**
    * Gathers lock information from the external CAT locks directory.
    * <p>
-   * Reads JSON lock files and calculates age in seconds.
+   * Reads lock files for issue and session IDs, then derives age from the branch's last commit time
+   * via {@code git log -1 --format=%ct <branch>}.
    *
    * @param projectDir the project root directory
    * @return list of locks (empty if directory does not exist or on error)
@@ -337,18 +342,44 @@ public final class GetCleanupOutput implements SkillOutput
     {
       IssueLock lockManager = new IssueLock(scope);
       List<IssueLock.LockListEntry> entries = lockManager.list();
+      Instant now = Instant.now();
 
       List<Lock> locks = new ArrayList<>();
       for (IssueLock.LockListEntry entry : entries)
       {
-        int ageSeconds = (int) entry.ageSeconds();
-        locks.add(new Lock(entry.issue(), entry.session(), ageSeconds));
+        Duration age = getBranchAge(projectDir, entry.issue(), now);
+        locks.add(new Lock(entry.issue(), entry.session(), age));
       }
       return locks;
     }
     catch (IOException | IllegalArgumentException _)
     {
       return List.of();
+    }
+  }
+
+  /**
+   * Derives the age of a branch from its last commit time.
+   *
+   * @param projectDir the project root directory
+   * @param branch the branch name
+   * @param now the current instant
+   * @return the duration since the branch's last commit
+   */
+  private static Duration getBranchAge(Path projectDir, String branch, Instant now)
+  {
+    ProcessRunner.Result result = ProcessRunner.run("git", "-C", projectDir.toString(),
+      "log", "-1", "--format=%ct", branch);
+    if (result.exitCode() != 0)
+      return Duration.ZERO;
+    try
+    {
+      Instant commitTime = Instant.ofEpochSecond(Long.parseLong(result.stdout().strip()));
+      return Duration.between(commitTime, now);
+    }
+    catch (NumberFormatException _)
+    {
+      return Duration.ZERO;
     }
   }
 
@@ -406,7 +437,7 @@ public final class GetCleanupOutput implements SkillOutput
       return List.of();
 
     List<StaleRemote> staleRemotes = new ArrayList<>();
-    long nowSeconds = System.currentTimeMillis() / 1000;
+    Instant now = Instant.now();
     String[] lines = branchResult.stdout().split("\n");
 
     for (String line : lines)
@@ -423,10 +454,10 @@ public final class GetCleanupOutput implements SkillOutput
 
       try
       {
-        long commitDate = Long.parseLong(dateResult.stdout().strip());
-        long ageDays = (nowSeconds - commitDate) / SECONDS_PER_DAY;
+        Instant commitTime = Instant.ofEpochSecond(Long.parseLong(dateResult.stdout().strip()));
+        Duration age = Duration.between(commitTime, now);
 
-        if (ageDays >= MIN_STALE_DAYS && ageDays <= MAX_STALE_DAYS)
+        if (age.compareTo(MIN_STALE_AGE) >= 0 && age.compareTo(MAX_STALE_AGE) <= 0)
         {
           ProcessRunner.Result authorResult = ProcessRunner.run("git", "-C", projectDir.toString(),
             "log", "-1", "--format=%an", branch);
@@ -515,7 +546,7 @@ public final class GetCleanupOutput implements SkillOutput
       String session = lock.session();
       if (session != null && session.length() > 8)
         session = session.substring(0, 8);
-      lockItems.add(lock.issueId() + ": session=" + session + ", age=" + lock.age() + "s");
+      lockItems.add(lock.issueId() + ": session=" + session + ", age=" + formatAge(lock.age()));
     }
     if (lockItems.isEmpty())
       lockItems.add("None found");
@@ -562,15 +593,18 @@ public final class GetCleanupOutput implements SkillOutput
 
   /**
    * Generate output display for plan phase.
+   * <p>
+   * Locks and worktrees are classified as stale (age &ge; {@link IssueLock#STALE_LOCK_THRESHOLD}) or recent
+   * (age &lt; {@link IssueLock#STALE_LOCK_THRESHOLD}) so the user can choose which scope to clean up.
    *
-   * @param locksToRemove the list of lock IDs to remove
-   * @param worktreesToRemove the list of worktrees to remove
+   * @param locksToRemove the list of locks to remove (with session ID and age)
+   * @param worktreesToRemove the list of worktrees to remove (with age)
    * @param branchesToRemove the list of branch names to remove
    * @param staleRemotes the list of stale remotes (for reporting)
    * @return the formatted plan display
    * @throws NullPointerException if any parameter is null
    */
-  public String getPlanOutput(List<String> locksToRemove, List<WorktreeToRemove> worktreesToRemove,
+  public String getPlanOutput(List<Lock> locksToRemove, List<WorktreeToRemove> worktreesToRemove,
                               List<String> branchesToRemove, List<StaleRemote> staleRemotes)
   {
     requireThat(locksToRemove, "locksToRemove").isNotNull();
@@ -585,8 +619,20 @@ public final class GetCleanupOutput implements SkillOutput
     contentItems.add(DisplayUtils.EMOJI_LOCK + " Locks to Remove:");
     if (!locksToRemove.isEmpty())
     {
-      for (String lock : locksToRemove)
-        contentItems.add("   " + DisplayUtils.BULLET + " " + lock);
+      for (Lock lock : locksToRemove)
+      {
+        String session = lock.session();
+        if (session != null && session.length() > 8)
+          session = session.substring(0, 8);
+        String age = formatAge(lock.age());
+        String classification;
+        if (lock.age().compareTo(IssueLock.STALE_LOCK_THRESHOLD) >= 0)
+          classification = "stale";
+        else
+          classification = "recent";
+        contentItems.add("   " + DisplayUtils.BULLET + " " + lock.issueId() +
+          " — " + age + ", session " + session + " [" + classification + "]");
+      }
     }
     else
     {
@@ -600,8 +646,14 @@ public final class GetCleanupOutput implements SkillOutput
     {
       for (WorktreeToRemove wt : worktreesToRemove)
       {
+        String agePart = " — " + formatAge(wt.age());
+        String classification;
+        if (wt.age().compareTo(IssueLock.STALE_LOCK_THRESHOLD) >= 0)
+          classification = " [stale]";
+        else
+          classification = " [recent]";
         String wtLine = "   " + DisplayUtils.BULLET + " " + wt.path() + " " +
-                        DisplayUtils.ARROW_RIGHT + " " + wt.branch();
+          DisplayUtils.ARROW_RIGHT + " " + wt.branch() + agePart + classification;
         contentItems.add(wtLine);
       }
     }
@@ -643,11 +695,44 @@ public final class GetCleanupOutput implements SkillOutput
     // Count summary
     int total = locksToRemove.size() + worktreesToRemove.size() + branchesToRemove.size();
 
+    Duration threshold = IssueLock.STALE_LOCK_THRESHOLD;
+    long staleLocks = locksToRemove.stream().
+      filter(l -> l.age().compareTo(threshold) >= 0).count();
+    long staleWorktrees = worktreesToRemove.stream().
+      filter(wt -> wt.age().compareTo(threshold) >= 0).count();
+    long staleCount = staleLocks + staleWorktrees;
+    long recentLocks = locksToRemove.stream().
+      filter(l -> l.age().compareTo(threshold) < 0).count();
+    long recentWorktrees = worktreesToRemove.stream().
+      filter(wt -> wt.age().compareTo(threshold) < 0).count();
+    long recentCount = recentLocks + recentWorktrees;
+
     return finalBox + "\n" +
            "\n" +
-           "Total items to remove: " + total + "\n" +
+           "Total items to remove: " + total + " (" + staleCount + " stale, " + recentCount + " recent)\n" +
            "\n" +
-           "Confirm cleanup? (yes/no)";
+           "Confirm cleanup?";
+  }
+
+  /**
+   * Formats a duration into a human-readable string.
+   * <p>
+   * Returns hours and minutes for durations of one hour or more, otherwise seconds.
+   *
+   * @param age the duration (non-negative)
+   * @return the formatted age string (e.g., "4h 23m", "326s")
+   * @throws NullPointerException if {@code age} is null
+   */
+  private static String formatAge(Duration age)
+  {
+    long totalSeconds = age.toSeconds();
+    if (totalSeconds >= 3600)
+    {
+      long hours = totalSeconds / 3600;
+      long minutes = (totalSeconds % 3600) / 60;
+      return hours + "h " + minutes + "m";
+    }
+    return totalSeconds + "s";
   }
 
   /**
@@ -843,14 +928,24 @@ public final class GetCleanupOutput implements SkillOutput
     JsonNode root = mapper.readTree(json);
     JsonNode context = root.path("context");
 
-    List<String> locksToRemove = new ArrayList<>();
+    List<Lock> locksToRemove = new ArrayList<>();
     for (JsonNode lock : context.path("locks_to_remove"))
-      locksToRemove.add(lock.asString());
+    {
+      String issueId = lock.path("issue_id").asString();
+      String session = lock.path("session").asString();
+      int ageSeconds = lock.path("age_seconds").asInt(0);
+      locksToRemove.add(new Lock(issueId, session, Duration.ofSeconds(ageSeconds)));
+    }
 
     List<WorktreeToRemove> worktreesToRemove = new ArrayList<>();
     for (JsonNode wt : context.path("worktrees_to_remove"))
+    {
+      if (wt.path("age_seconds").isMissingNode())
+        throw new IllegalArgumentException("Missing age_seconds for worktree: " + wt.path("path"));
+      Duration age = Duration.ofSeconds(wt.path("age_seconds").asInt(0));
       worktreesToRemove.add(new WorktreeToRemove(wt.path("path").asString(),
-        wt.path("branch").asString()));
+        wt.path("branch").asString(), age));
+    }
 
     List<String> branchesToRemove = new ArrayList<>();
     for (JsonNode branch : context.path("branches_to_remove"))
