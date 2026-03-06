@@ -7,7 +7,7 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.util.GitAmendSafe;
+import io.github.cowwoc.cat.hooks.util.GitAmend;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -17,11 +17,11 @@ import java.nio.file.Path;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Tests for GitAmendSafe.
+ * Tests for GitAmend.
  * <p>
  * Tests verify argument parsing, push status checking, and amend behavior in isolated git repositories.
  */
-public class GitAmendSafeTest
+public class GitAmendTest
 {
   /**
    * Verifies that executing with a null scope throws NullPointerException.
@@ -30,7 +30,7 @@ public class GitAmendSafeTest
     expectedExceptionsMessageRegExp = "(?s).*")
   public void constructorRejectsNullScope()
   {
-    new GitAmendSafe(null, ".");
+    new GitAmend(null, ".");
   }
 
   /**
@@ -43,7 +43,7 @@ public class GitAmendSafeTest
     Path tempDir = Files.createTempDirectory("git-amend-test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      new GitAmendSafe(scope, "");
+      new GitAmend(scope, "");
     }
     finally
     {
@@ -67,7 +67,7 @@ public class GitAmendSafeTest
         TestUtils.runGit(repoDir, "add", "extra.txt");
         TestUtils.runGit(repoDir, "commit", "-m", "extra commit");
 
-        GitAmendSafe cmd = new GitAmendSafe(scope, repoDir.toString());
+        GitAmend cmd = new GitAmend(scope, repoDir.toString());
         String result = cmd.execute("", true);
 
         requireThat(result, "result").contains("\"status\"");
@@ -98,7 +98,7 @@ public class GitAmendSafeTest
         TestUtils.runGit(repoDir, "add", "extra.txt");
         TestUtils.runGit(repoDir, "commit", "-m", "original message");
 
-        GitAmendSafe cmd = new GitAmendSafe(scope, repoDir.toString());
+        GitAmend cmd = new GitAmend(scope, repoDir.toString());
         String result = cmd.execute("new commit message", false);
 
         requireThat(result, "result").contains("\"status\"");
@@ -149,7 +149,7 @@ public class GitAmendSafeTest
           // Now try to amend the pushed commit
           try (JvmScope scope = new TestJvmScope(cloneDir, cloneDir))
           {
-            GitAmendSafe cmd = new GitAmendSafe(scope, cloneDir.toString());
+            GitAmend cmd = new GitAmend(scope, cloneDir.toString());
             String result = cmd.execute("", true);
 
             // Should fail with ALREADY_PUSHED
@@ -184,7 +184,7 @@ public class GitAmendSafeTest
     {
       try
       {
-        GitAmendSafe cmd = new GitAmendSafe(scope, repoDir.toString());
+        GitAmend cmd = new GitAmend(scope, repoDir.toString());
         cmd.execute(null, false);
       }
       finally
@@ -210,7 +210,7 @@ public class GitAmendSafeTest
         TestUtils.runGit(repoDir, "add", "file.txt");
         TestUtils.runGit(repoDir, "commit", "-m", "test commit");
 
-        GitAmendSafe cmd = new GitAmendSafe(scope, repoDir.toString());
+        GitAmend cmd = new GitAmend(scope, repoDir.toString());
         String result = cmd.execute("", true);
 
         requireThat(result, "result").contains("\"status\"");
@@ -257,7 +257,7 @@ public class GitAmendSafeTest
 
           try (JvmScope scope = new TestJvmScope(cloneDir, cloneDir))
           {
-            GitAmendSafe cmd = new GitAmendSafe(scope, cloneDir.toString());
+            GitAmend cmd = new GitAmend(scope, cloneDir.toString());
             String result = cmd.execute("amended message", false, () ->
             {
               // Simulate: OLD_HEAD gets pushed to remote during the amend window.
