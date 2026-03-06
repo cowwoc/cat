@@ -337,8 +337,8 @@ Dead code: 26
 #### Advanced Skills
 - empirical-test/SKILL.md - REFERENCED (empirical testing, 1 instantiation)
 - empirical-test-agent/SKILL.md - REFERENCED (subagent skill)
-- shrink-doc/SKILL.md - REFERENCED (documentation compression, 1 instantiation)
-- shrink-doc-agent/SKILL.md - REFERENCED (subagent skill)
+- optimize-doc/SKILL.md - REFERENCED (documentation compression, 1 instantiation)
+- optimize-doc-agent/SKILL.md - REFERENCED (subagent skill)
 - skill-builder/SKILL.md - REFERENCED (skill creation guidance, 2 instantiations)
 - tdd-implementation/SKILL.md - REFERENCED (TDD workflow guidance, 1 instantiation)
 - init/SKILL.md - REFERENCED (project initialization, 1 instantiation)

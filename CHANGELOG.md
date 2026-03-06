@@ -8,6 +8,10 @@
 
 *In development - see planned tasks in .claude/cat/issues/v2/v2.1/*
 
+**Renames:**
+- `shrink-doc` skill renamed to `optimize-doc` (and `shrink-doc-agent` to `optimize-doc-agent`); all plugin references
+  updated; existing sessions must rebuild the plugin cache
+
 ### 2026-01-26: v2.0
 
 **Commercialization & Display Overhaul**

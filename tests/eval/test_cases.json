@@ -181,14 +181,14 @@
       "category": "implicit"
     },
     {
-      "id": "shrink-doc-1",
-      "skill": "shrink-doc",
+      "id": "optimize-doc-1",
+      "skill": "optimize-doc",
       "prompt": "Shrink the PLAN.md file to reduce token usage",
       "category": "explicit"
     },
     {
-      "id": "shrink-doc-2",
-      "skill": "shrink-doc",
+      "id": "optimize-doc-2",
+      "skill": "optimize-doc",
       "prompt": "Compress this documentation while keeping the same meaning",
       "category": "implicit"
     },
@@ -277,8 +277,8 @@
       "category": "explicit"
     },
     {
-      "id": "shrink-doc-with-args",
-      "skill": "shrink-doc",
+      "id": "optimize-doc-with-args",
+      "skill": "optimize-doc",
       "prompt": "Shrink the STATE.md file in the current directory",
       "category": "explicit"
     },

@@ -1,7 +1,7 @@
 # Plan: enhance-optimize-doc-iteration
 
 ## Goal
-Enhance optimize-doc-agent (formerly shrink-doc-agent) with root cause categorization on validation failure and
+Enhance optimize-doc-agent (formerly optimize-doc-agent) with root cause categorization on validation failure and
 targeted re-compression, using compare-docs' binary execution-equivalence verdict as the pass/fail gate and its
 diagnostic metadata (severity, evidence) to guide intelligent retry.
 

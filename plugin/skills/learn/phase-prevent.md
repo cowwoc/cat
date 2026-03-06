@@ -522,7 +522,7 @@ When choosing WHERE to implement a fix, prefer the lowest-level document that ad
 | Level | Example | Benefit |
 |-------|---------|---------|
 | Concept doc | `concepts/subagent-delegation.md` | All skills/workflows referencing it inherit the fix |
-| Skill doc | `skills/shrink-doc/SKILL.md` | All invocations of that skill get the fix |
+| Skill doc | `skills/optimize-doc/SKILL.md` | All invocations of that skill get the fix |
 | Workflow doc | `concepts/work.md` | Specific workflow improved |
 | Command doc | `commands/work.md` | Single entry point fixed |
 
@@ -530,8 +530,8 @@ When choosing WHERE to implement a fix, prefer the lowest-level document that ad
 and workflow that references it. A fix in a command document benefits only that command. Apply fixes
 at the deepest level where they're relevant to maximize fix propagation.
 
-**Example:** M277 (validation separation) belongs in `shrink-doc/SKILL.md` (skill-specific validation)
-not `work.md` (generic workflow) because the per-file subagent pattern is shrink-doc-specific.
+**Example:** M277 (validation separation) belongs in `optimize-doc/SKILL.md` (skill-specific validation)
+not `work.md` (generic workflow) because the per-file subagent pattern is optimize-doc-specific.
 
 **Verification question:** Before committing a fix, ask: "Is this rule specific to one skill/context,
 or genuinely applies to all issues?" If specific → find the skill doc. If generic → workflow doc is correct.
@@ -542,12 +542,12 @@ triggered the problem. The fix should cover all similar cases.
 
 | Fix Location | Prevention Wording |
 |--------------|-------------------|
-| Skill-specific doc (e.g., `shrink-doc/SKILL.md`) | May reference that skill's specific behavior |
+| Skill-specific doc (e.g., `optimize-doc/SKILL.md`) | May reference that skill's specific behavior |
 | General doc (e.g., `work-with-issue/SKILL.md`) | Must apply to ALL skills handled by that doc |
 | Concept doc (e.g., `concepts/subagent-delegation.md`) | Must apply to ALL contexts using that concept |
 
-Example: If shrink-doc's iteration loop was bypassed, and the fix goes in work-with-issue (which handles
-all skills), write "complete each skill fully before delegation" — not "complete shrink-doc's iteration
+Example: If optimize-doc's iteration loop was bypassed, and the fix goes in work-with-issue (which handles
+all skills), write "complete each skill fully before delegation" — not "complete optimize-doc's iteration
 loop before delegation."
 
 **Language requirements for documentation/prompt changes:**

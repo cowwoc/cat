@@ -11,10 +11,10 @@ Two skills address documentation quality, with different goals:
 
 | Concern | Skill | Goal |
 |---------|-------|------|
-| File is too large | `cat:shrink-doc` | Reduce token count while preserving meaning |
+| File is too large | `cat:optimize-doc` | Reduce token count while preserving meaning |
 | Content is scattered or redundant | `cat:consolidate-doc-agent` | Reorganize into coherent, non-redundant form |
 
-**Use shrink-doc** when the document says what it needs to say but takes too many tokens to say it. Size is the
+**Use optimize-doc** when the document says what it needs to say but takes too many tokens to say it. Size is the
 problem; organization is not.
 
 **Use consolidate-doc-agent** when the same information appears in multiple sections, or when workflow steps are
@@ -81,7 +81,7 @@ include orchestrator + subagent pairs, caller + implementation pairs, and public
 
 **Consolidation strategy**: Do NOT consolidate. These files exist as separate documents because the separation is a
 design invariant, not a documentation defect. Consolidating them exposes internals to the caller, violating
-encapsulation. In the `shrink-doc` skill, the compression algorithm is intentionally hidden from the orchestrator
+encapsulation. In the `optimize-doc` skill, the compression algorithm is intentionally hidden from the orchestrator
 to prevent manual bypass — consolidating would defeat this design.
 
 ---
@@ -166,7 +166,7 @@ File B does not compensate for NOT_EQUIVALENT on File A.
 
 ## See Also
 
-- `cat:shrink-doc` — reduce token count while preserving meaning
+- `cat:optimize-doc` — reduce token count while preserving meaning
 - `cat:compare-docs` — validate semantic equivalence; provides the binary verdict used as the consolidation gate
 - `plugin/skills/consolidate-doc-agent/first-use.md` — full methodology, phase-by-phase instructions, and
   validation evidence from Waves 1–3

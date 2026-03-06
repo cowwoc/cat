@@ -47,7 +47,7 @@ Baseline evaluation of CAT skill activation rates using sandboxed evals against 
 | Skill | Tests | Analysis |
 |-------|-------|----------|
 | debug-env | 0/2 | Too specialized, low user awareness |
-| shrink-doc | 0/3 | New skill, not well established |
+| optimize-doc | 0/3 | New skill, not well established |
 
 ## Key Findings
 
@@ -62,7 +62,7 @@ This suggests Claude interprets vague "work on" as "tell me what to work on" rat
 ### Pattern 2: Established Workflows Win
 
 Skills that map to common, well-known patterns (status, help, init, cleanup) have 100% activation.
-Newer or specialized skills (shrink-doc, debug-env, research) struggle even with trigger words.
+Newer or specialized skills (optimize-doc, debug-env, research) struggle even with trigger words.
 
 ### Pattern 3: Semantic Overlap Causes Confusion
 
@@ -78,7 +78,7 @@ This suggests Claude's skill matching uses factors beyond description text alone
 ## Improvements Made
 
 Updated 8 skill definitions with clearer trigger words and more explicit use cases:
-- add, debug-env, learn, get-subagent-status, research, run-retrospective, shrink-doc, work
+- add, debug-env, learn, get-subagent-status, research, run-retrospective, optimize-doc, work
 
 Changes included:
 - Added "Trigger words:" sections listing specific phrases
@@ -91,7 +91,7 @@ Changes included:
 
 1. **Use distinctive terminology**: Skills with unique vocabulary (optimize-execution, cleanup) activate reliably
 2. **Avoid semantic overlap**: Clearly distinguish similar skills in descriptions
-3. **Consider explicit invocation**: For specialized skills (debug-env, shrink-doc), may need `/cat:skill-name` syntax
+3. **Consider explicit invocation**: For specialized skills (debug-env, optimize-doc), may need `/cat:skill-name` syntax
 4. **Test with real user prompts**: Natural language is more varied than test cases suggest
 
 ### For Test Suite
@@ -112,5 +112,5 @@ Changes included:
 71.2% overall activation represents a solid baseline, with core workflows achieving 100%.
 Improving the remaining 29% requires deeper investigation into skill matching mechanics.
 
-For specialized skills with 0% activation, explicit invocation syntax (`/cat:shrink-doc`) may be more
+For specialized skills with 0% activation, explicit invocation syntax (`/cat:optimize-doc`) may be more
 practical than trying to achieve natural language activation.

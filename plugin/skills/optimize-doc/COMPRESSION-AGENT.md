@@ -5,7 +5,7 @@ See LICENSE.md in the project root for license terms.
 -->
 # Compression Agent Instructions
 
-**INTERNAL DOCUMENT** - This document is for the compression subagent spawned by shrink-doc.
+**INTERNAL DOCUMENT** - This document is for the compression subagent spawned by optimize-doc.
 Do NOT read this document if you are orchestrating compression - use SKILL.md instead.
 
 ## Your Task

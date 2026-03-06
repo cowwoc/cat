@@ -19,7 +19,7 @@ Use this skill when a document (or set of documents) has:
 - Workflow steps scattered across subsections, headers, and notes rather than organized sequentially
 - Redundant restatements of the same requirement in "Notes", "CRITICAL", and "Reminder" sections
 
-**Do NOT use to reduce file size.** Use `cat:shrink-doc` for size reduction; use this skill only when content
+**Do NOT use to reduce file size.** Use `cat:optimize-doc` for size reduction; use this skill only when content
 organization is the problem.
 
 ### When NOT to Use
@@ -211,7 +211,7 @@ Wave 3 analysis: the "discovery procedures" branch (u59–u67) would have been l
 
 | Wave | Document | Type | Strategy | Units | Lost | Verdict |
 |------|----------|------|----------|-------|------|---------|
-| 1 | shrink-doc/first-use.md | Procedural | Backward chaining | 56 | 6 | NOT_EQUIVALENT |
+| 1 | optimize-doc/first-use.md | Procedural | Backward chaining | 56 | 6 | NOT_EQUIVALENT |
 | 2 | first-use.md (File A) | Procedural orchestrator | Backward chaining | 59 | 3 | NOT_EQUIVALENT |
 | 2 | COMPRESSION-AGENT.md (File B) | Procedural subagent | Backward chaining | 42 | 0 | EQUIVALENT |
 | 3 | commit-types.md | Reference | Topical clustering | 67 | 0 | EQUIVALENT |
@@ -226,7 +226,7 @@ prevents the most harmful consolidation failures.
 
 ### Document Selected
 
-**Target**: `plugin/skills/shrink-doc/first-use.md` (582 lines)
+**Target**: `plugin/skills/optimize-doc/first-use.md` (582 lines)
 
 **Rationale**: Large skill first-use.md with identified scattered content:
 - "CRITICAL: Always Use This Skill" section (lines 27-46) duplicates what Step 6 (Iteration)
@@ -313,7 +313,7 @@ GOAL: Complete compression with validation and optional iteration
 into the step-by-step workflow. Removed the "MANDATORY: Validation Gate" subsection from
 Step 4 and merged its logic into Step 5 as explicit conditional branches.
 
-**Result**: Created `/tmp/consolidated-shrink-doc-first-use.md` (499 lines, 14% reduction)
+**Result**: Created `/tmp/consolidated-optimize-doc-first-use.md` (499 lines, 14% reduction)
 
 ---
 
@@ -333,7 +333,7 @@ LOST (in original, missing in consolidated)
 ───────────────────────────────────────────────────────────────────────────────
 - [REQUIREMENT] When reporting to the user, explicitly state: Status:
   {EQUIVALENT|NOT_EQUIVALENT} compares the compressed version against the
-  ORIGINAL document state from before /shrink-doc was invoked.
+  ORIGINAL document state from before /optimize-doc was invoked.
 - [REQUIREMENT] On second, third, etc. invocations: REUSE /tmp/original-{{filename}}
   from first invocation; Always compare against original baseline (not intermediate
   versions); The baseline is set ONCE on first invocation and REUSED for all
@@ -510,7 +510,7 @@ revealed that **"scattered documentation" requires distinguishing between**:
 2. **Separated-for-editorial-reasons information** (distinct purposes - should NOT consolidate)
 3. **Execution-prerequisite information** (found via backward chaining - properly ordered)
 
-For procedural documents like shrink-doc, the approach works IF the consolidation also
+For procedural documents like optimize-doc, the approach works IF the consolidation also
 respects editorial concerns alongside execution order. Simply following backward chaining
 order loses content that was intentionally grouped separately.
 
@@ -523,8 +523,8 @@ applies more broadly.
 
 ### Documents Selected
 
-**Candidate pair**: `plugin/skills/shrink-doc/first-use.md` (orchestrator, 582 lines) and
-`plugin/skills/shrink-doc/COMPRESSION-AGENT.md` (compression subagent, 199 lines).
+**Candidate pair**: `plugin/skills/optimize-doc/first-use.md` (orchestrator, 582 lines) and
+`plugin/skills/optimize-doc/COMPRESSION-AGENT.md` (compression subagent, 199 lines).
 
 **Rationale**: Both describe document compression but serve DIFFERENT audiences:
 - `first-use.md`: Main agent orchestrating the compression workflow
@@ -615,7 +615,7 @@ a single unified flow without destroying the invocation boundary.
 ### Phase 4: Consolidated Version
 
 **Consolidation attempt**: Combined into Part 1 (orchestrator) + Part 2 (subagent) in
-`/tmp/consolidated-shrink-doc-wave2.md`.
+`/tmp/consolidated-optimize-doc-wave2.md`.
 
 ---
 

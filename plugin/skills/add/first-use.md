@@ -851,10 +851,10 @@ Apply the following depth to PLAN.md content based on `$EFFORT`:
   list rejected alternatives with rationale. Execution steps must cover all known edge cases and failure modes.
 
 **Batch Execution Check:** When the issue involves multiple files AND a skill (e.g., compress 9 files with
-/cat:shrink-doc-agent):
+/cat:optimize-doc-agent):
 1. Read the target skill's documentation for batch/parallel execution patterns
 2. If the skill documents using `/cat:delegate-agent` for multiple files, write execution steps to use delegate
-3. Example: Instead of "For each file: Run /cat:shrink-doc-agent", use "/cat:delegate-agent --skill shrink-doc-agent file1.md file2.md
+3. Example: Instead of "For each file: Run /cat:optimize-doc-agent", use "/cat:delegate-agent --skill optimize-doc-agent file1.md file2.md
    ..."
 
 This ensures batch tasks leverage parallel execution rather than sequential processing.

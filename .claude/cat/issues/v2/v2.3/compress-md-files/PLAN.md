@@ -41,6 +41,6 @@ None - infrastructure/optimization task
    - Templates (12 files)
    - Stakeholders (11 files)
    - Lang (1 file)
-2. **For each file:** Run /cat:shrink-doc
+2. **For each file:** Run /cat:optimize-doc
 3. **After all files:** Test affected skills/commands
    - Verify: Commands execute without errors

@@ -1,7 +1,7 @@
 # Plan: compress-concepts-batch-4
 
 ## Goal
-Compress versioning-related concept files using /cat:shrink-doc skill.
+Compress versioning-related concept files using /cat:optimize-doc skill.
 
 ## Parent Task
 compress-concepts-md (decomposed)
@@ -23,5 +23,5 @@ compress-concepts-md (decomposed)
 ## Execution Waves
 
 ### Wave 1
-1. For each file: Invoke /cat:shrink-doc
+1. For each file: Invoke /cat:optimize-doc
 2. Commit with message: "config: compress versioning-related concepts"
