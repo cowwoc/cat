@@ -73,6 +73,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - add-priming-analysis-to-optimize-doc
 - fix-git-rebase-skill-backup-deletion
 - convert-compression-agent-to-registered-agent
+- merge-agent-skill-variants
 
 
 ## Issues Closed
