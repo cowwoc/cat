@@ -124,7 +124,117 @@ The file `{{arg}}` appears to be human-facing documentation.
 
 ---
 
-### Step 2: Check for Existing Baseline
+### Step 2: Priming Analysis
+
+This step is optional — if negative rules and priming sources exist, eliminate them; otherwise skip to Step 3.
+
+BEFORE compression, scan the document for negative rules and attempt to eliminate their root cause.
+
+#### 2a: Detect Negative Rules and Positive Counterparts
+
+Scan the document for explicit negative rule patterns:
+- Lines containing: NEVER, DO NOT, DON'T, don't, MUST NOT, must not, PROHIBITED, FORBIDDEN, avoid, Never, Do not
+- Extract the forbidden behavior for each rule (e.g., "NEVER use X" → forbidden behavior = "use X")
+- **Process only the 5 most critical rules** (highest-impact prohibitions). Skip any remaining rules.
+
+If no negative rule patterns found: skip to Step 3 (no priming analysis needed).
+
+For each negative rule found, also scan within ~5 lines before and after it for **positive counterpart rules**:
+a positive counterpart describes the preferred alternative to the forbidden behavior (e.g., "NEVER use X" paired
+with "Always use Y instead" → "Always use Y instead" is the positive counterpart). Record these alongside their
+associated negative rule.
+
+#### 2b: Search for Priming Sources
+
+For each forbidden behavior identified, search ALL Claude-facing files for content that primes the agent toward
+that behavior. Claude-facing files are:
+- plugin/skills/**/*.md
+- plugin/agents/**/*.md
+- plugin/hooks/**/*.md (concept/reference docs)
+- .claude/rules/**/*.md
+- CLAUDE.md
+- client/src/main/java/**/InjectSessionInstructions.java
+
+Search strategy: For each forbidden behavior, extract 2-3 key keywords and grep across all Claude-facing files
+for those keywords. Consider a file a priming source only if it meets ALL three criteria:
+1. Contains the same keywords as the forbidden behavior, AND
+2. Provides examples or instructions for performing that behavior (not merely mentions it), AND
+3. Is NOT framed as a prohibition or anti-pattern (i.e., does NOT say "don't do this" or present it as a bad
+   example)
+
+If no priming sources found for ANY negative rule: skip to Step 3 (compression agent handles
+negative→positive rewrite via cat:compression-agent).
+
+#### 2c: Remove Negative Rules from Document
+
+For each negative rule that has an identified priming source:
+- Remove the rule from the document using the Edit tool
+- Note any positive counterpart rules identified in 2a for this negative rule (do not remove them yet —
+  they remain until 2f confirms priming is eliminated)
+- Record each removal in `/tmp/priming-analysis-edits.json` using the Write tool:
+  ```json
+  {
+    "rule_removals": [
+      {"file": "{{arg}}", "removed_text": "<exact text removed>"}
+    ],
+    "priming_removals": [],
+    "positive_rule_removals": []
+  }
+  ```
+  (If the file already exists from a prior run, overwrite it with the combined list.)
+
+#### 2d: Empirical Test — Confirm Priming Exists
+
+**Context**: Negative rules have been removed (step 2c) but priming sources are still intact.
+This tests whether the priming source alone is sufficient to cause the forbidden behavior.
+
+For each identified priming source, spawn a subagent (Task tool, general-purpose) to test whether the agent
+still exhibits the forbidden behavior with the rules removed but priming intact. Subagent reports:
+BEHAVIOR_OBSERVED or BEHAVIOR_NOT_OBSERVED.
+
+If BEHAVIOR_NOT_OBSERVED for a priming source: the rules were its only enforcement; skip priming removal for
+that source. If ALL tests report BEHAVIOR_NOT_OBSERVED: rules were the only guard (no active priming).
+Revert rule removals from step 2c and skip to Step 3.
+
+#### 2e: Remove Priming Sources
+
+For each confirmed priming source (BEHAVIOR_OBSERVED in 2d):
+- Remove the priming content from the source file using the Edit tool
+- Append each removal to `/tmp/priming-analysis-edits.json` under `"priming_removals"`:
+  ```json
+  {"file": "<source file path>", "removed_text": "<exact text removed>"}
+  ```
+
+Do NOT remove positive counterpart rules yet — wait until 2f confirms priming is eliminated.
+
+#### 2f: Empirical Test — Confirm Priming Eliminated
+
+**Context**: Both negative rules (step 2c) and priming sources (step 2e) have been removed.
+This tests whether the forbidden behavior has been fully eliminated.
+
+Re-run the same empirical tests from step 2d.
+
+If all tests report BEHAVIOR_NOT_OBSERVED: priming eliminated. Keep all removals. Additionally:
+- For each positive counterpart rule noted in 2c: remove it from the document using the Edit tool
+  (it was only needed because the priming existed; with priming gone, it is unnecessary)
+- Append each positive counterpart removal to `/tmp/priming-analysis-edits.json` under
+  `"positive_rule_removals"`:
+  ```json
+  {"file": "{{arg}}", "removed_text": "<exact text removed>"}
+  ```
+- Delete `/tmp/priming-analysis-edits.json`. Continue to Step 3.
+
+If any test reports BEHAVIOR_OBSERVED: priming source may be deeper.
+- Read `/tmp/priming-analysis-edits.json` to identify every edit made in steps 2c and 2e
+- For each entry in `"priming_removals"`: restore the `removed_text` to its `file` using the Edit tool
+- For each entry in `"rule_removals"`: restore the `removed_text` to its `file` using the Edit tool
+- Do NOT remove positive counterpart rules — they are still needed as guards
+- Delete `/tmp/priming-analysis-edits.json`
+- Continue to Step 3 (compression agent will handle negative→positive rewrite)
+
+---
+
+### Step 3: Check for Existing Baseline
 
 **Check baseline and git history in parallel**:
 
@@ -147,7 +257,7 @@ fi
 
 ---
 
-### Step 3: Invoke Compression Agent
+### Step 4: Invoke Compression Agent
 
 **⚠️ ENCAPSULATION**: The compression algorithm is handled by the registered compression agent.
 Do NOT attempt to compress manually - invoke the subagent which has its own instructions injected automatically.
@@ -171,7 +281,7 @@ are injected automatically. You (the orchestrator) only invoke and validate.
 
 ---
 
-### Step 4: Validate with /compare-docs
+### Step 5: Validate with /compare-docs
 
 **⚠️ CRITICAL**: Before saving compressed version, read and save the ORIGINAL
 document state to use as baseline for validation.
@@ -190,7 +300,7 @@ After agent completes:
    ```
 
    **Why baseline is preserved**: Baseline is kept until user explicitly confirms
-   they're done iterating (see Step 5). This ensures scores always compare against
+   they're done iterating (see Step 6). This ensures scores always compare against
    the TRUE original, not intermediate compressed versions.
 
 2. **Determine version number and save compressed version**:
@@ -264,7 +374,7 @@ After agent completes:
    - Extract LOST section for iteration feedback
    - Extract ADDED section (informational only)
 
-   **If Status = NOT_EQUIVALENT**: Proceed to Step 6 (Iteration). After creating new version,
+   **If Status = NOT_EQUIVALENT**: Proceed to Step 7 (Iteration). After creating new version,
    re-run validation on the NEW compressed version.
 
 5. **Parse validation result**:
@@ -284,7 +394,7 @@ the ORIGINAL document state from before /optimize-doc was invoked.
 
 ---
 
-### Step 5: Decision Logic
+### Step 6: Decision Logic
 
 **Threshold**: EQUIVALENT status required (no "close enough" - see M254)
 
@@ -352,7 +462,7 @@ Would you like to try again to generate an even better version?
 → Keep `/tmp/original-{{filename}}`
 → Future /optimize-doc invocations will reuse this baseline
 → Scores will reflect cumulative compression from true original
-→ Go back to Step 3 with user's feedback
+→ Go back to Step 4 with user's feedback
 
 **If user says NO** (done iterating):
 → `rm /tmp/original-{{filename}}`
@@ -367,7 +477,7 @@ Validation requires improvement. Status: NOT_EQUIVALENT ({X}/{Y} preserved, {Z} 
 
 Re-invoking agent with feedback to fix issues...
 ```
-→ Go to Step 6 (Iteration)
+→ Go to Step 7 (Iteration)
 
 **⚠️ MANDATORY: Validation Gate**
 
@@ -395,20 +505,20 @@ else:
 **Iteration required**: If DECISION=ITERATE:
 1. **STOP** - do not ask user for approval
 2. **Extract** the LOST section from the report (lists units that need restoration)
-3. **Proceed** directly to Step 6 (Iteration Loop) with that feedback
+3. **Proceed** directly to Step 7 (Iteration Loop) with that feedback
 
 **Why this gate exists**: Completion bias causes agents to rationalize "close enough". Only EQUIVALENT status
 permits approval. No exceptions.
 
 ---
 
-### Step 6: Iteration Loop
+### Step 7: Iteration Loop
 
 Initialize `TARGETED_RETRIES = 0` before the loop begins.
 
 **If status = NOT_EQUIVALENT**, before re-invoking the compression agent:
 
-#### 6a: Categorize Root Causes
+#### 7a: Categorize Root Causes
 
 Examine each unit in the LOST section and map it to a root cause category. Use the `[CATEGORY]` tag
 and the `Original:` / `Compressed:` evidence quotes from the compare-docs report to identify what
@@ -425,7 +535,7 @@ went wrong.
 **Categorize every LOST unit before retrying.** The category determines the constraint applied
 during re-compression.
 
-#### 6b: Targeted Section-Only Retry
+#### 7b: Targeted Section-Only Retry
 
 Instead of re-compressing the entire document, identify which sections contain the failing units
 and re-compress ONLY those sections. All other sections remain unchanged from the current compressed
@@ -443,7 +553,7 @@ For each LOST unit:
 
 Increment `TARGETED_RETRIES` after each pass. Stop when `TARGETED_RETRIES >= 2`.
 
-#### 6c: Targeted Iteration Prompt Template
+#### 7c: Targeted Iteration Prompt Template
 
 ```
 **Document Compression - Targeted Revision (Retry {TARGETED_RETRIES}/{MAX_RETRIES})**
@@ -477,7 +587,7 @@ Do NOT just describe or return the content - you MUST physically write the file.
 **After each targeted retry**:
 - Save revised version as next version number (v${VERSION+1})
 - Re-run /compare-docs validation **AGAINST ORIGINAL BASELINE**
-- Apply decision logic again (Step 5)
+- Apply decision logic again (Step 6)
 
 **🚨 MANDATORY: /compare-docs Required for EVERY Iteration**
 
@@ -526,7 +636,7 @@ parallel execution, fault tolerance, and retry logic.
 | {filename} | {count} | {count} | {%} | {X}/{Y} | {EQUIVALENT/NOT_EQUIVALENT} |
 
 **Validation separation:** Compression subagents must NOT validate their own work.
-Each optimize-doc subagent spawns SEPARATE validation subagents per Step 4.
+Each optimize-doc subagent spawns SEPARATE validation subagents per Step 5.
 
 ---
 
@@ -605,12 +715,13 @@ and compressing separately to improve iteration efficiency.
 
 Expected flow:
 1. Validate document type ✅
-2. Save original to /tmp/original-example-command.md (baseline) ✅
-3. Invoke compression agent
-4. Save to /tmp/compressed-example-command-v1.md (version 1) ✅
-5. Run /compare-docs /tmp/original-example-command.md /tmp/compressed-example-command-v1.md
-6. Status = EQUIVALENT → Approve v1 and overwrite original ✅
-7. Cleanup: Remove /tmp/compressed-example-command-v*.md and /tmp/original-example-command.md ✅
+2. Priming analysis: no negative rules found → skip to Step 3 ✅
+3. Save original to /tmp/original-example-command.md (baseline) ✅
+4. Invoke compression agent
+5. Save to /tmp/compressed-example-command-v1.md (version 1) ✅
+6. Run /compare-docs /tmp/original-example-command.md /tmp/compressed-example-command-v1.md
+7. Status = EQUIVALENT → Approve v1 and overwrite original ✅
+8. Cleanup: Remove /tmp/compressed-example-command-v*.md and /tmp/original-example-command.md ✅
 
 **If iteration needed**:
 - v1 NOT_EQUIVALENT (3 lost) → Save v2, validate against original
