@@ -28,7 +28,7 @@ orchestrating agent needs to know the exact blocker to adjust its delegation str
 
 **General-purpose subagents have access to ALL tools**, including Task and Skill.
 
-If a PLAN.md or delegation prompt specifies using a skill (e.g., `/cat:shrink-doc-agent`), invoke it directly via the Skill
+If a PLAN.md or delegation prompt specifies using a skill (e.g., `/cat:optimize-doc-agent`), invoke it directly via the Skill
 tool. Do not assume tool limitations exist - subagents have full tool access.
 
 ## Spawning Subagents: Task vs TaskCreate
@@ -356,7 +356,7 @@ If so, use that format - don't compose your own.
 
 | Source | Format Location | Example |
 |--------|-----------------|---------|
-| /shrink-doc | SKILL.md lines 308-311 | Table with "Tokens" header |
+| /optimize-doc | SKILL.md lines 308-311 | Table with "Tokens" header |
 | /compare-docs | SKILL.md output section | Comparison report format |
 | /cat:status | Handler preprocessing | Status box (skill output) |
 
@@ -369,7 +369,7 @@ You present: "| Before | After |" (units unclear)
 
 # ✅ RIGHT: Use source skill's format
 Subagent returns: {"tokens_before": 1598, "tokens_after": 1278}
-Check /shrink-doc format specification
+Check /optimize-doc format specification
 Present: "| Tokens (Before) | Tokens (After) |" (matches skill spec)
 ```
 

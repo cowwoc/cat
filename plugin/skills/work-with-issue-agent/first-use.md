@@ -156,17 +156,17 @@ ISSUE_GOAL=$(sed -n '/## Goal/,/^## /p' "$PLAN_MD" | head -n -1 | tail -n +2)
 
 Scan execution steps for skill references that require spawning capability:
 
-- `/cat:shrink-doc` - Document compression (spawns compare-docs subagent)
+- `/cat:optimize-doc` - Document compression (spawns compare-docs subagent)
 - `/cat:compare-docs` - Document equivalence validation (spawns validation subagent)
 - `/cat:stakeholder-review-agent` - Code review (spawns reviewer subagents)
 
 **If execution steps reference these skills**, invoke them NOW at the main agent level using the Skill tool.
 
-Example: If PLAN.md says "Step 1: Invoke /cat:shrink-doc on file.md", then:
+Example: If PLAN.md says "Step 1: Invoke /cat:optimize-doc on file.md", then:
 
 ```
 Skill tool:
-  skill: "cat:shrink-doc-agent"
+  skill: "cat:optimize-doc-agent"
   args: "path/to/file.md"
 ```
 
@@ -1697,7 +1697,7 @@ If any phase fails:
 ## Success Criteria
 
 - [ ] All phases orchestrated at main agent level
-- [ ] Skills requiring spawning (shrink-doc, compare-docs, stakeholder-review) invoked directly
+- [ ] Skills requiring spawning (optimize-doc, compare-docs, stakeholder-review) invoked directly
 - [ ] Approval gates respected based on trust level
 - [ ] Progress banners displayed at phase transitions
 - [ ] Lock released on completion or error

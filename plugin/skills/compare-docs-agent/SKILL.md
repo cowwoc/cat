@@ -1,7 +1,7 @@
 ---
 description: >
   Use to validate semantic equivalence when compressing, modifying, or comparing documentation.
-  Required by shrink-doc for validation.
+  Required by optimize-doc for validation.
 model: sonnet
 user-invocable: false
 ---

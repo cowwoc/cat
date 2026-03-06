@@ -340,7 +340,7 @@ See EXTRACTION-AGENT.md for full marker definitions and disambiguation rules.
 ## Use Cases
 
 **Best suited for:**
-- Compression validation (shrink-doc)
+- Compression validation (optimize-doc)
 - Documentation refactoring verification
 - Procedure change impact analysis
 

@@ -29,5 +29,5 @@ None - infrastructure/optimization sub-issue
 
 ### Wave 1
 1. List all MD files in `plugin/skills/`
-2. For each file: Run /cat:shrink-doc
+2. For each file: Run /cat:optimize-doc
 3. Commit changes with appropriate message
