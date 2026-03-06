@@ -224,7 +224,8 @@ public final class GetNextIssueOutput implements SkillOutput
     List<String> warnings = new ArrayList<>();
     releaseLock(completedIssue, sessionId, warnings);
 
-    Map<String, Object> nextIssue = findNextIssue(sessionId, excludePattern, warnings);
+    String effectiveExcludePattern = combineExcludePatterns(completedIssue, excludePattern);
+    Map<String, Object> nextIssue = findNextIssue(sessionId, effectiveExcludePattern, warnings);
 
     if (!nextIssue.isEmpty())
     {
@@ -335,5 +336,25 @@ public final class GetNextIssueOutput implements SkillOutput
   public String extractScopePublic(String completedIssue)
   {
     return extractScope(completedIssue);
+  }
+
+  /**
+   * Combines two exclude patterns into a single glob pattern.
+   * <p>
+   * If both are non-empty, uses {@code {pattern1,pattern2}} glob syntax.
+   * If only one is non-empty, returns it directly.
+   * If both are empty, returns an empty string (no exclusion).
+   *
+   * @param pattern1 the first pattern (may be empty)
+   * @param pattern2 the second pattern (may be empty)
+   * @return the combined glob pattern
+   */
+  private String combineExcludePatterns(String pattern1, String pattern2)
+  {
+    if (pattern1.isEmpty())
+      return pattern2;
+    if (pattern2.isEmpty())
+      return pattern1;
+    return "{" + pattern1 + "," + pattern2 + "}";
   }
 }

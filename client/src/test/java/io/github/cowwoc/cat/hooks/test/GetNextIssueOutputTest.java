@@ -455,4 +455,168 @@ public class GetNextIssueOutputTest
       requireThat(result, "result").isNotEmpty();
     }
   }
+
+  /**
+   * Verifies that getNextIssueBox excludes the completed issue from next-issue discovery.
+   * <p>
+   * When only the completed issue exists in the project, discovery must not return it as the
+   * next issue.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getNextIssueBoxExcludesCompletedIssue() throws IOException
+  {
+    Path projectDir = TestUtils.createTempCatProject("get-next-issue-test");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // Only the completed issue exists; no other open issues
+      createIssueWithState(projectDir, "2", "1", "done-feature", "open");
+
+      GetNextIssueOutput output = new GetNextIssueOutput(scope);
+      // Use a valid UUID-format session ID so IssueLock.validateSessionId passes
+      String result = output.getNextIssueBox("2.1-done-feature", "v2.1",
+        "00000000-0000-0000-0000-000000000001", projectDir.toString(), "");
+
+      // Must show scope-complete since no other issues remain after excluding the completed one
+      requireThat(result, "result").contains("Scope Complete");
+      // Must NOT suggest the completed issue as the next issue to work on
+      requireThat(result, "result").doesNotContain("**Next:** 2.1-done-feature");
+      // Must have box structure intact
+      requireThat(result, "result").contains("╰");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that getNextIssueBox finds a different open issue when the completed one is excluded.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getNextIssueBoxSkipsCompletedAndFindsOtherIssue() throws IOException
+  {
+    Path projectDir = TestUtils.createTempCatProject("get-next-issue-test");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      createIssueWithState(projectDir, "2", "1", "done-feature", "open");
+      createIssueWithState(projectDir, "2", "1", "pending-feature", "open");
+
+      GetNextIssueOutput output = new GetNextIssueOutput(scope);
+      // Use a valid UUID-format session ID so IssueLock.validateSessionId passes
+      String result = output.getNextIssueBox("2.1-done-feature", "v2.1",
+        "00000000-0000-0000-0000-000000000002", projectDir.toString(), "");
+
+      // Must suggest the other issue as next
+      requireThat(result, "result").contains("2.1-pending-feature");
+      // Must NOT suggest the completed issue as the next issue to work on
+      requireThat(result, "result").doesNotContain("**Next:** 2.1-done-feature");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that getNextIssueBox combines both the completed-issue bare name and the external
+   * excludePattern when both are non-empty.
+   * <p>
+   * With three issues present and the completed issue plus one excluded by external pattern, only
+   * the remaining issue should appear as the next suggestion.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getNextIssueBoxCombinesCompletedAndExternalExcludePatterns() throws IOException
+  {
+    Path projectDir = TestUtils.createTempCatProject("get-next-issue-test");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      createIssueWithState(projectDir, "2", "1", "done-feature", "open");
+      createIssueWithState(projectDir, "2", "1", "skip-feature", "open");
+      createIssueWithState(projectDir, "2", "1", "next-feature", "open");
+
+      GetNextIssueOutput output = new GetNextIssueOutput(scope);
+      // External excludePattern excludes "2.1-skip-feature"; completed issue is "2.1-done-feature"
+      // Both should be excluded, leaving only "next-feature" as next
+      String result = output.getNextIssueBox("2.1-done-feature", "v2.1",
+        "00000000-0000-0000-0000-000000000003", projectDir.toString(), "2.1-skip-feature");
+
+      // Must NOT suggest either excluded issue
+      requireThat(result, "result").doesNotContain("**Next:** 2.1-done-feature");
+      requireThat(result, "result").doesNotContain("**Next:** 2.1-skip-feature");
+      // Must suggest the remaining issue
+      requireThat(result, "result").contains("2.1-next-feature");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that getNextIssueBox handles an issue ID with no dash gracefully.
+   * <p>
+   * When the completed issue ID contains no dash, it is used as the exclude pattern unchanged.
+   * With an empty project, the method should return a scope-complete box without throwing.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getNextIssueBoxHandlesIssueIdWithNoDash() throws IOException
+  {
+    Path projectDir = TestUtils.createTempCatProject("get-next-issue-test");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      GetNextIssueOutput output = new GetNextIssueOutput(scope);
+      // "nodash" has no '-' so extractBareName returns "nodash" as the exclude pattern
+      String result = output.getNextIssueBox("nodash", "v2.1",
+        "00000000-0000-0000-0000-000000000004", projectDir.toString(), "");
+
+      // Must not throw; must return non-empty output (scope-complete)
+      requireThat(result, "result").isNotNull().isNotEmpty();
+      requireThat(result, "result").contains("Scope Complete");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  // -----------------------------------------------------------------------------------------
+  // Setup helpers
+  // -----------------------------------------------------------------------------------------
+
+  /**
+   * Creates an issue directory with STATE.md.
+   *
+   * @param projectDir the project root
+   * @param major      the major version string
+   * @param minor      the minor version string
+   * @param issueName  the bare issue name
+   * @param status     the issue status (e.g., "open")
+   * @throws IOException if file creation fails
+   */
+  private void createIssueWithState(Path projectDir, String major, String minor, String issueName,
+    String status) throws IOException
+  {
+    Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+      resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
+    Files.createDirectories(issueDir);
+
+    String stateContent = """
+      # State
+
+      - **Status:** %s
+      - **Progress:** 0%%
+      - **Dependencies:** []
+      - **Blocks:** []
+      """.formatted(status);
+
+    Files.writeString(issueDir.resolve("STATE.md"), stateContent);
+  }
 }

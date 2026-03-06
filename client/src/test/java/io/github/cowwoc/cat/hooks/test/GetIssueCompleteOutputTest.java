@@ -613,6 +613,107 @@ public class GetIssueCompleteOutputTest
     }
   }
 
+  /**
+   * Verifies that discoverAndRender excludes the completed issue from next-issue discovery.
+   * <p>
+   * When only the completed issue exists in the version scope, discovery must return scope-complete
+   * rather than re-suggesting the same issue as "next".
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void discoverAndRenderExcludesCompletedIssue() throws IOException
+  {
+    Path projectDir = TestUtils.createTempCatProject("get-issue-complete-test");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // Only the completed issue exists; no other open issues in this version
+      createIssueWithPlan(projectDir, "2", "1", "completed-feature", "open",
+        "## Goal\n\nAlready done.\n");
+
+      String result = new GetIssueCompleteOutput(scope).discoverAndRender("2.1-completed-feature",
+        "v2.1");
+
+      // Must show scope-complete since no other issues remain after excluding the completed one
+      requireThat(result, "result").contains("Scope Complete");
+      // Must NOT suggest the completed issue as the next issue to work on
+      requireThat(result, "result").doesNotContain("**Next:** 2.1-completed-feature");
+      // Must have box structure intact
+      requireThat(result, "result").contains("╰");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that discoverAndRender finds a different open issue when the completed one is excluded.
+   * <p>
+   * When both the completed issue and another open issue exist, the next issue should be the other
+   * issue, not the completed one.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void discoverAndRenderSkipsCompletedAndFindsOtherIssue() throws IOException
+  {
+    Path projectDir = TestUtils.createTempCatProject("get-issue-complete-test");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      createIssueWithPlan(projectDir, "2", "1", "done-feature", "open",
+        "## Goal\n\nAlready merged.\n");
+      createIssueWithPlan(projectDir, "2", "1", "pending-feature", "open",
+        "## Goal\n\nNext thing to build.\n");
+
+      String result = new GetIssueCompleteOutput(scope).discoverAndRender("2.1-done-feature", "v2.1");
+
+      // Must show the other open issue as next
+      requireThat(result, "result").contains("2.1-pending-feature");
+      requireThat(result, "result").contains("Next thing to build");
+      // Must NOT show the completed issue as the "Next:" recommendation
+      // (it may still appear in the "merged to" line, which is expected)
+      requireThat(result, "result").contains("**Next:** 2.1-pending-feature");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that discoverAndRender correctly handles a patch-version issue ID.
+   * <p>
+   * For an issue ID like {@code 2.1.3-completed-feature}, the version is extracted as {@code 2.1.3}
+   * and the exclude pattern is set to {@code completed-feature}. With only the completed issue
+   * present, the result must be scope-complete.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void discoverAndRenderExcludesCompletedIssueWithPatchVersion() throws IOException
+  {
+    Path projectDir = TestUtils.createTempCatProject("get-issue-complete-test");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // Create a patch-version issue under .claude/cat/issues/v2/v2.1/v2.1.3/completed-feature
+      createIssueWithPlan(projectDir, "2", "1", "3", "completed-feature", "open",
+        "## Goal\n\nAlready done.\n");
+
+      String result = new GetIssueCompleteOutput(scope).discoverAndRender("2.1.3-completed-feature",
+        "v2.1.3");
+
+      // Must show scope-complete since no other issues remain after excluding the completed one
+      requireThat(result, "result").contains("Scope Complete");
+      // Must NOT suggest the completed issue as the next issue to work on
+      requireThat(result, "result").doesNotContain("**Next:** 2.1.3-completed-feature");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
   // -----------------------------------------------------------------------------------------
   // readGoalFromPlan() tests
   // -----------------------------------------------------------------------------------------
@@ -735,6 +836,39 @@ public class GetIssueCompleteOutputTest
   {
     Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
+    Files.createDirectories(issueDir);
+
+    String stateContent = """
+      # State
+
+      - **Status:** %s
+      - **Progress:** 0%%
+      - **Dependencies:** []
+      - **Blocks:** []
+      """.formatted(status);
+
+    Files.writeString(issueDir.resolve("STATE.md"), stateContent);
+    Files.writeString(issueDir.resolve("PLAN.md"), planContent);
+  }
+
+  /**
+   * Creates a patch-version issue directory with STATE.md and a PLAN.md with the given content.
+   *
+   * @param projectDir  the project root
+   * @param major       the major version string
+   * @param minor       the minor version string
+   * @param patch       the patch version string
+   * @param issueName   the bare issue name
+   * @param status      the issue status (e.g., "open")
+   * @param planContent the full content to write into PLAN.md
+   * @throws IOException if file creation fails
+   */
+  private void createIssueWithPlan(Path projectDir, String major, String minor, String patch,
+    String issueName, String status, String planContent) throws IOException
+  {
+    Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+      resolve("v" + major).resolve("v" + major + "." + minor).
+      resolve("v" + major + "." + minor + "." + patch).resolve(issueName);
     Files.createDirectories(issueDir);
 
     String stateContent = """

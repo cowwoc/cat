@@ -1032,13 +1032,6 @@ public final class IssueDiscovery
       Path statePath = issueDir.resolve("STATE.md");
       boolean stateMdMissing = !Files.isRegularFile(statePath);
 
-      // Skip if matches exclude pattern
-      if (!options.excludePattern().isEmpty() && GlobMatcher.matches(options.excludePattern(), issueName))
-      {
-        excludedCount.incrementAndGet();
-        continue;
-      }
-
       // Read STATE.md once and reuse across all checks to avoid repeated I/O.
       // If STATE.md is absent, treat the issue as open with no content.
       List<String> stateLines;
@@ -1077,6 +1070,13 @@ public final class IssueDiscovery
         continue;
 
       String issueId = buildIssueId(major, minor, patch, issueName);
+
+      // Skip if matches exclude pattern (matched against fully-qualified issue ID)
+      if (!options.excludePattern().isEmpty() && GlobMatcher.matches(options.excludePattern(), issueId))
+      {
+        excludedCount.incrementAndGet();
+        continue;
+      }
 
       // Check dependencies
       List<String> dependencies = getDependencies(stateLines);

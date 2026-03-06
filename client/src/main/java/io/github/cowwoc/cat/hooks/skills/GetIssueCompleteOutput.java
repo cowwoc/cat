@@ -95,6 +95,7 @@ public final class GetIssueCompleteOutput implements SkillOutput
    * {@code 2.1.3} from {@code 2.1.3-fix-bug}, or {@code 2} from {@code 2-fix-bug}), searches for
    * the next open issue in that version scope using IssueDiscovery with no lock acquisition,
    * and renders either the issue-complete box (if a next issue is found) or the scope-complete box.
+   * The completed issue is excluded from discovery by its full qualified ID.
    * <p>
    * Determines the appropriate {@link IssueDiscovery.Scope} from the version format:
    * uses {@code Scope.VERSION} which handles all version formats. Compare with
@@ -124,7 +125,7 @@ public final class GetIssueCompleteOutput implements SkillOutput
     String version = issueName.substring(0, dashIndex);
 
     IssueDiscovery discovery = new IssueDiscovery(scope);
-    SearchOptions options = new SearchOptions(Scope.VERSION, version, "", "", false);
+    SearchOptions options = new SearchOptions(Scope.VERSION, version, "", issueName, false);
     DiscoveryResult result = discovery.findNextIssue(options);
 
     if (result instanceof DiscoveryResult.Found found)
