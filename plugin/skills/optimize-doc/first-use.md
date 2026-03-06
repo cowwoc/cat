@@ -407,38 +407,77 @@ permits approval. No exceptions.
 
 ### Step 6: Iteration Loop
 
-**If status = NOT_EQUIVALENT**, invoke agent again with specific feedback:
+Initialize `TARGETED_RETRIES = 0` before the loop begins.
 
-**Iteration Prompt Template**:
+**If status = NOT_EQUIVALENT**, before re-invoking the compression agent:
+
+#### 6a: Categorize Root Causes
+
+Examine each unit in the LOST section and map it to a root cause category. Use the `[CATEGORY]` tag
+and the `Original:` / `Compressed:` evidence quotes from the compare-docs report to identify what
+went wrong.
+
+| Root Cause | Signs in LOST Section | Re-Compression Constraint |
+|---|---|---|
+| Over-aggressive merging | Multiple distinct units collapsed into one; `[EXCLUSION]` lost | Keep units separate; compress wording only |
+| Dropped qualifiers | `[CONDITIONAL]`, `[REQUIREMENT]` lost; strength words absent | Restore conditional/strength markers verbatim |
+| Lost prohibitions | `[PROHIBITION]` lost; "do NOT", "never" absent | Treat negative constraints as immutable text |
+| Flattened compound semantics | `[CONDITIONAL]` with nested logic simplified; `[SEQUENCE]` ordering removed | Preserve nesting structure; compress leaf content only |
+| Broken references | `[REFERENCE]` lost; heading/file path/anchor missing | Preserve all cross-reference targets verbatim |
+
+**Categorize every LOST unit before retrying.** The category determines the constraint applied
+during re-compression.
+
+#### 6b: Targeted Section-Only Retry
+
+Instead of re-compressing the entire document, identify which sections contain the failing units
+and re-compress ONLY those sections. All other sections remain unchanged from the current compressed
+version.
+
+For each LOST unit:
+1. Locate the document section containing the `Original:` quote
+2. Find the corresponding section in the compressed document
+3. Apply the root-cause-specific constraint when re-compressing that section:
+   - **Over-aggressive merging:** keep items in separate list entries; compress wording not structure
+   - **Dropped qualifiers:** restore the original conditional/strength marker verbatim; compress prose only
+   - **Lost prohibitions:** restore the prohibition verbatim ("do NOT …", "never …"); compress context only
+   - **Flattened compound semantics:** restore nesting and ordering; compress leaf content only
+   - **Broken references:** restore the reference target verbatim; compress surrounding prose only
+
+Increment `TARGETED_RETRIES` after each pass. Stop when `TARGETED_RETRIES >= 2`.
+
+#### 6c: Targeted Iteration Prompt Template
+
 ```
-**Document Compression - Revision Attempt {iteration_number}**
+**Document Compression - Targeted Revision (Retry {TARGETED_RETRIES}/{MAX_RETRIES})**
 
 **Previous Status**: NOT_EQUIVALENT ({X}/{Y} preserved, {Z} lost)
 
-**Lost Semantic Units** (MUST be restored):
+**Lost Semantic Units with Root Causes** (MUST be restored):
 
 {for each lost unit from LOST section:}
 - [{CATEGORY}] "{original text of lost unit}"
+  Root cause: {root cause category}
+  Constraint: {re-compression constraint for this root cause}
+  Failing section: {section heading containing this unit}
 
 **Your Task**:
 
-Revise the compressed document to restore the lost semantic units while maintaining compression.
+Re-compress ONLY the failing sections listed above. All other sections remain unchanged.
+
+For each failing section:
+1. Read the original text from /tmp/original-{{filename}}
+2. Apply the root-cause-specific constraint to that section
+3. Replace only that section in the current compressed document
 
 **Original**: /tmp/original-{{filename}}
-**Previous Attempt**: /tmp/compressed-{{filename}}-v${VERSION}.md
-
-Focus on:
-1. Restoring the exact semantic meaning of each lost unit
-2. Maintaining conditional structure (IF-THEN-ELSE)
-3. Preserving mutual exclusivity constraints (EXCLUSION category)
-4. Keeping temporal ordering (SEQUENCE category)
-5. Keeping prohibition constraints (PROHIBITION category)
+**Current Compressed**: /tmp/compressed-{{filename}}-v${VERSION}.md
 
 **⚠️ CRITICAL**: USE THE WRITE TOOL to save the revised document to the specified path.
 Do NOT just describe or return the content - you MUST physically write the file.
 ```
 
-**After iteration**:
+**After each targeted retry**:
 - Save revised version as next version number (v${VERSION+1})
 - Re-run /compare-docs validation **AGAINST ORIGINAL BASELINE**
 - Apply decision logic again (Step 5)
@@ -457,8 +496,9 @@ No exceptions. Status is ONLY valid if it comes from /compare-docs output.
 2. Is the status from /compare-docs output? YES/NO
 3. If either is NO → STOP and invoke /compare-docs
 
-**Maximum iterations**: 3
-- If still NOT_EQUIVALENT after 3 attempts, report to user and ask for guidance
+**Maximum iterations**: 3 (`TARGETED_RETRIES` cap = 2 targeted retries after initial failure)
+- If still NOT_EQUIVALENT after `TARGETED_RETRIES >= 2`, report remaining findings to user and ask for
+  guidance
 - All versions preserved in /tmp for rollback
 - User may choose to accept best attempt or abandon compression
 
