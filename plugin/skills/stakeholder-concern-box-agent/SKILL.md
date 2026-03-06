@@ -4,4 +4,4 @@ model: haiku
 user-invocable: false
 argument-hint: "<severity> <stakeholder> <description> <location>"
 ---
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-stakeholder-concern-box" "$0" "$1" "$2" "$3"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-stakeholder-concern-box" "$1" "$2" "$3" "$4"`
