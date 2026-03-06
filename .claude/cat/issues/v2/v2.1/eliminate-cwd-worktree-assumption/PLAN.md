@@ -19,7 +19,8 @@ Two failure modes:
   (fail-fast if worktree path is needed but no lock exists)
 - Skills and agents use `${WORKTREE_PATH}/path` (absolute) for all Read/Edit/Write file operations
 - Git commands keep `cd ${WORKTREE_PATH} && git ...` (single Bash call — cwd persists within the call)
-- `EnforceWorktreePathIsolation` remains as a safety net for absolute-path violations
+- `EnforceWorktreePathIsolation` extended to intercept Read (not just Edit/Write), blocking reads
+  of `/workspace/` paths when a worktree is active — prevents stale reads after context compaction
 
 ## Parent Requirements
 
@@ -44,6 +45,11 @@ None — infrastructure correctness fix
   commit location with lock-based lookup; fail-fast if no lock
 - `client/src/main/java/io/github/cowwoc/cat/hooks/bash/BlockMainRebase.java` — replace cwd vs
   project-dir comparison with `WorktreeContext.forSession()` null check
+
+**Read interception:**
+- `client/src/main/java/io/github/cowwoc/cat/hooks/write/EnforceWorktreePathIsolation.java` — extend
+  to intercept Read tool calls (not just Edit/Write); block reads of project-dir paths when a worktree
+  is active, with corrected worktree path in error message
 
 **Skills/agents (absolute paths instead of cd + relative):**
 - `plugin/skills/work/first-use.md` — remove "cd into worktree" instruction; require `${WORKTREE_PATH}/` prefix
@@ -76,7 +82,14 @@ None — infrastructure correctness fix
 - Fix `BlockMainRebase.java` — replace cwd == projectDir check with `WorktreeContext.forSession()`
   null check (null = no active worktree = main context)
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/bash/BlockMainRebase.java`
-- Write/update tests for all four fixes
+- Extend `EnforceWorktreePathIsolation` to intercept Read tool calls — same logic as Edit/Write:
+  look up session's worktree via lock file, block reads targeting `/workspace/` when a worktree is
+  active, include corrected path in error message. The class currently implements `FileWriteHandler`;
+  it will need to also register as a PreToolUse handler for Read, or the dispatch layer needs
+  updating to route Read calls through the same check.
+  - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/write/EnforceWorktreePathIsolation.java`,
+    hook registration/dispatch
+- Write/update tests for all fixes (including Read interception)
   - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/`
 - Run `mvn -f client/pom.xml test` — confirm BUILD SUCCESS
 
@@ -97,6 +110,7 @@ None — infrastructure correctness fix
 
 ## Post-conditions
 
+- [ ] `EnforceWorktreePathIsolation` blocks Read calls targeting `/workspace/` when a worktree is active
 - [ ] No `System.getProperty("user.dir")` calls remain in hook/tool code for worktree detection
 - [ ] No skill instructs agents to `cd` into the worktree as a persistent context setup
 - [ ] All skill file-operation examples use `${WORKTREE_PATH}/path` (absolute)
