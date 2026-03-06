@@ -302,6 +302,18 @@ causing skills to misbehave (e.g., first-use check passes for the wrong agent).
 per-agent state. Skills that perform stateless operations (e.g., format a document) do not need variants — use
 `disable-model-invocation: true` or `user-invocable: false` alone based on the intended audience.
 
+**Variant sets by audience:**
+
+| Category | Example Skills (logical name) | Has `{name}/` directory? | Has `{name}-agent/` directory? |
+|----------|-------------------------------|--------------------------|-------------------------------|
+| User-only (model never invokes) | `init`, `statusline` | Yes | No |
+| Agent-only (user never invokes) | `get-output`, `recover-from-drift` | No | Yes (only) |
+| Both (user and model invoke) | `add`, `status`, `work`, `learn`, `help` | Yes | Yes |
+
+- **User-only**: Base directory only (`{name}/`). No paired `-agent` directory.
+- **Agent-only**: `-agent` directory only (`{name}-agent/`, `user-invocable: false`). No base directory.
+- **Both**: Paired directories — `{name}/` with `disable-model-invocation: true`, `{name}-agent/` with `user-invocable: false`.
+
 ### Creating a New Plugin Skill
 
 1. Create directory: `plugin/skills/{skill-name}/`
