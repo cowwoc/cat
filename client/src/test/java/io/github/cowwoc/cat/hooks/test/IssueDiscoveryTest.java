@@ -436,7 +436,7 @@ public class IssueDiscoveryTest
         createIssue(projectDir, "2", "1", "compress-docs", "open");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
-        SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "compress*", false);
+        SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "2.1-compress*", false);
         DiscoveryResult result = discovery.findNextIssue(options);
 
         requireThat(result, "result").isInstanceOf(DiscoveryResult.NotFound.class);
@@ -812,12 +812,12 @@ public class IssueDiscoveryTest
         IssueDiscovery discovery = new IssueDiscovery(scope);
 
         // First confirm: without overridePostconditions, exit-gate-issue is skipped in scan
-        SearchOptions scanWithoutOverride = new SearchOptions(Scope.ALL, "", sessionId, "regular-feature", false);
+        SearchOptions scanWithoutOverride = new SearchOptions(Scope.ALL, "", sessionId, "2.1-regular-feature", false);
         DiscoveryResult withoutOverride = discovery.findNextIssue(scanWithoutOverride);
         requireThat(withoutOverride, "withoutOverride").isInstanceOf(DiscoveryResult.NotFound.class);
 
         // With overridePostconditions=true, post-condition evaluation is skipped so exit-gate-issue is returned
-        SearchOptions scanWithOverride = new SearchOptions(Scope.ALL, "", sessionId, "regular-feature", true);
+        SearchOptions scanWithOverride = new SearchOptions(Scope.ALL, "", sessionId, "2.1-regular-feature", true);
         DiscoveryResult withOverride = discovery.findNextIssue(scanWithOverride);
 
         requireThat(withOverride, "withOverride").isInstanceOf(DiscoveryResult.Found.class);
@@ -1033,7 +1033,7 @@ public class IssueDiscoveryTest
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         // Pattern with a dot (regex wildcard) and glob wildcard - should treat as glob
-        SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "fix-bug-v1.0", false);
+        SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "2.1-fix-bug-v1.0", false);
         DiscoveryResult result = discovery.findNextIssue(options);
 
         // fix-bug-v1.0 should be excluded, other-feature should be found
