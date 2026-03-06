@@ -1,4 +1,7 @@
-status: closed
-progress: 100%
-resolution: implemented
-merged_commit: b215ce76
+# State
+
+- **Status:** closed
+- **Resolution:** implemented
+- **Progress:** 100%
+- **Dependencies:** []
+- **Blocks:** []
