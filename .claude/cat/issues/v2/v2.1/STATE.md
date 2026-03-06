@@ -8,7 +8,7 @@
 
 ## Status
 - **Status:** in-progress
-- **Progress:** 93%
+- **Progress:** 74%
 
 ## Summary
 Finalize naming conventions and UI polish before recording demo videos.
@@ -73,13 +73,13 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-stakeholder-review-worktree-context
 - add-priming-analysis-to-optimize-doc
 - fix-git-rebase-skill-backup-deletion
-- convert-compression-agent-to-registered-agent
 - merge-agent-skill-variants
 - rename-satisfies-to-parent-requirements
 - clarify-squash-before-rebase-ordering
 
 
 ## Issues Closed
+- convert-compression-agent-to-registered-agent
 - fix-migration-21-awk-syntax-error
 - unknown-terminal-fallback
 - acceptance-criteria-options
