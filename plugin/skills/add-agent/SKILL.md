@@ -12,7 +12,7 @@ allowed-tools:
   - Glob
   - AskUserQuestion
   - Skill
-argument-hint: "[description]"
+argument-hint: "<catAgentId> [description]"
 user-invocable: false
 ---
 

@@ -5,7 +5,7 @@ description: >
   conversationally.
 model: sonnet
 user-invocable: false
-argument-hint: "<issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <estimated_tokens> <trust> <verify>"
+argument-hint: "<catAgentId> <issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <estimated_tokens> <trust> <verify>"
 allowed-tools:
   - Read
   - Bash

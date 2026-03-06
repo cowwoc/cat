@@ -103,6 +103,18 @@ public final class SkillLoader
     Pattern.DOTALL | Pattern.MULTILINE);
   private static final String LAUNCHER_DIRECTORY = "client/bin";
   /**
+   * Matches a standard UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (case-insensitive).
+   */
+  private static final Pattern UUID_PATTERN = Pattern.compile(
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    Pattern.CASE_INSENSITIVE);
+  /**
+   * Matches a subagent ID: {uuid}/subagents/{alphanumeric, hyphens, underscores} (case-insensitive).
+   */
+  private static final Pattern SUBAGENT_ID_PATTERN = Pattern.compile(
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/subagents/[A-Za-z0-9_-]+",
+    Pattern.CASE_INSENSITIVE);
+  /**
    * Parsed content from a {@code -first-use} SKILL.md file.
    * <p>
    * The {@code instructions} are output directly on first use. The {@code outputBody}
@@ -153,8 +165,9 @@ public final class SkillLoader
    * @param skillArgs pre-tokenized positional arguments; the first element ({@code $0}) is the CAT agent ID,
    *   optionally followed by a space and description text to insert as {@code $1}
    * @throws NullPointerException if {@code scope} or {@code skillArgs} are null
-   * @throws IllegalArgumentException if {@code skillArgs} is empty, or if the first element (catAgentId)
-   *   is blank and {@code CLAUDE_SESSION_ID} is also unavailable
+   * @throws IllegalArgumentException if {@code skillArgs} is empty, if the first element (catAgentId)
+   *   is blank and {@code CLAUDE_SESSION_ID} is also unavailable, or if the catAgentId does not match
+   *   a valid UUID or subagent ID format
    * @throws IOException if the plugin root directory does not exist, or if the agent marker file cannot be read
    */
   public SkillLoader(JvmScope scope, List<String> skillArgs) throws IOException
@@ -179,11 +192,11 @@ public final class SkillLoader
     String catAgentId;
     List<String> tokens = new ArrayList<>(skillArgs);
     String firstArg = skillArgs.getFirst();
-    int spaceIdx = firstArg.indexOf(' ');
-    if (spaceIdx >= 0)
+    int spaceIndex = firstArg.indexOf(' ');
+    if (spaceIndex > 0)
     {
-      catAgentId = firstArg.substring(0, spaceIdx);
-      String remainder = firstArg.substring(spaceIdx + 1);
+      catAgentId = firstArg.substring(0, spaceIndex);
+      String remainder = firstArg.substring(spaceIndex + 1);
       tokens.set(0, catAgentId);
       tokens.add(1, remainder);
     }
@@ -194,6 +207,21 @@ public final class SkillLoader
       else
         catAgentId = firstArg;
       tokens.set(0, catAgentId);
+    }
+
+    // Validate catAgentId format. A valid catAgentId is either a UUID (main agent) or
+    // "{uuid}/subagents/{agentId}" (subagent). If the value doesn't match either pattern,
+    // the model passed the wrong argument (e.g., a branch name or path). Fail fast to
+    // prevent marker files from being created in wrong directories.
+    if (!catAgentId.equals(scope.getClaudeSessionId()) &&
+      !UUID_PATTERN.matcher(catAgentId).matches() &&
+      !SUBAGENT_ID_PATTERN.matcher(catAgentId).matches())
+    {
+      throw new IllegalArgumentException(
+        "catAgentId '" + catAgentId + "' does not match a valid format. " +
+          "Expected: UUID (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx) for main agents, or " +
+          "UUID/subagents/{agentId} for subagents. " +
+          "The model must pass the value injected by SubagentStartHook ($0), not a branch name or path.");
     }
 
     this.scope = scope;
