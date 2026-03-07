@@ -25,6 +25,9 @@ Record demo videos showcasing CAT features for marketing and documentation.
 - fix-migration-depth-fragility
 - add-parent-requirements-e2e-test
 - fix-phase12-depth-bug
+- add-lock-file-concurrency-tests
+- add-lock-schema-validation-tests
+- rename-enforce-worktree-path-isolation
 
 ## Issues Closed
 (None)
