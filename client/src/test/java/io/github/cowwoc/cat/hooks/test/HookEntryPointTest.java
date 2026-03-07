@@ -25,7 +25,6 @@ import io.github.cowwoc.cat.hooks.HookResult;
 import io.github.cowwoc.cat.hooks.edit.EnforceWorkflowCompletion;
 import io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge;
 import io.github.cowwoc.cat.hooks.write.EnforcePluginFileIsolation;
-import io.github.cowwoc.cat.hooks.write.ValidateStateMdFormat;
 import io.github.cowwoc.cat.hooks.write.WarnBaseBranchEdit;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.JsonNode;
@@ -1498,110 +1497,6 @@ public class HookEntryPointTest
   }
 
   // --- BlockWorktreeCd handler tests ---
-  // --- ValidateStateMdFormat handler tests ---
-
-  /**
-   * Verifies that ValidateStateMdFormat blocks STATE.md writes missing Status field.
-   */
-  @Test
-  public void validateStateMdFormatBlocksMissingStatus() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      JsonNode toolInput = mapper.readTree(
-        "{\"file_path\": \".claude/cat/issues/v2/v2.1/my-task/STATE.md\", " +
-        "\"content\": \"- **Progress:** 50%\\n- **Dependencies:** []\"}");
-      FileWriteHandler.Result result = new ValidateStateMdFormat().check(toolInput, "test");
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Missing '- **Status:** value'");
-    }
-  }
-
-  /**
-   * Verifies that ValidateStateMdFormat blocks STATE.md writes missing Progress field.
-   */
-  @Test
-  public void validateStateMdFormatBlocksMissingProgress() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      JsonNode toolInput = mapper.readTree(
-        "{\"file_path\": \".claude/cat/issues/v2/v2.1/my-task/STATE.md\", " +
-        "\"content\": \"- **Status:** pending\\n- **Dependencies:** []\"}");
-      FileWriteHandler.Result result = new ValidateStateMdFormat().check(toolInput, "test");
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Missing '- **Progress:** value'");
-    }
-  }
-
-  /**
-   * Verifies that ValidateStateMdFormat blocks STATE.md writes missing Dependencies field.
-   */
-  @Test
-  public void validateStateMdFormatBlocksMissingDependencies() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      JsonNode toolInput = mapper.readTree(
-        "{\"file_path\": \".claude/cat/issues/v2/v2.1/my-task/STATE.md\", " +
-        "\"content\": \"- **Status:** pending\\n- **Progress:** 0%\"}");
-      FileWriteHandler.Result result = new ValidateStateMdFormat().check(toolInput, "test");
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Missing '- **Dependencies:** [...]'");
-    }
-  }
-
-  /**
-   * Verifies that ValidateStateMdFormat allows valid STATE.md content.
-   */
-  @Test
-  public void validateStateMdFormatAllowsValidContent() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      JsonNode toolInput = mapper.readTree(
-        "{\"file_path\": \".claude/cat/issues/v2/v2.1/my-task/STATE.md\", " +
-        "\"content\": \"- **Status:** pending\\n- **Progress:** 0%\\n- **Dependencies:** []\"}");
-      FileWriteHandler.Result result = new ValidateStateMdFormat().check(toolInput, "test");
-      requireThat(result.blocked(), "blocked").isFalse();
-    }
-  }
-
-  /**
-   * Verifies that ValidateStateMdFormat allows non-STATE.md files.
-   */
-  @Test
-  public void validateStateMdFormatAllowsNonStateMdFiles() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      JsonNode toolInput = mapper.readTree(
-        "{\"file_path\": \"/workspace/README.md\", \"content\": \"Some content\"}");
-      FileWriteHandler.Result result = new ValidateStateMdFormat().check(toolInput, "test");
-      requireThat(result.blocked(), "blocked").isFalse();
-    }
-  }
-
-  /**
-   * Verifies that ValidateStateMdFormat allows STATE.md files outside issues directory.
-   */
-  @Test
-  public void validateStateMdFormatAllowsNonIssueStateMd() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      JsonNode toolInput = mapper.readTree(
-        "{\"file_path\": \"/workspace/docs/STATE.md\", \"content\": \"Random content\"}");
-      FileWriteHandler.Result result = new ValidateStateMdFormat().check(toolInput, "test");
-      requireThat(result.blocked(), "blocked").isFalse();
-    }
-  }
 
   /**
    * Creates a temporary git repository with the specified branch.

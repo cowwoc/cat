@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,14 +40,17 @@ public final class StateSchemaValidator implements FileWriteHandler
   private static final Set<String> MANDATORY_KEYS =
     Set.of("Status", "Progress", "Dependencies", "Blocks");
   private static final Set<String> OPTIONAL_KEYS = Set.of("Resolution", "Parent", "Target Branch");
-  private static final Set<String> DEPRECATED_KEYS = Set.of("Last Updated", "Completed", "Closed");
   private static final Set<String> ALL_VALID_KEYS;
+  private static final String MANDATORY_KEYS_LIST;
+  private static final String OPTIONAL_KEYS_LIST;
 
   static
   {
     Set<String> allKeys = new HashSet<>(MANDATORY_KEYS);
     allKeys.addAll(OPTIONAL_KEYS);
     ALL_VALID_KEYS = Set.copyOf(allKeys);
+    MANDATORY_KEYS_LIST = String.join(", ", new TreeSet<>(MANDATORY_KEYS));
+    OPTIONAL_KEYS_LIST = String.join(", ", new TreeSet<>(OPTIONAL_KEYS));
   }
 
   /**
@@ -54,16 +58,6 @@ public final class StateSchemaValidator implements FileWriteHandler
    */
   public StateSchemaValidator()
   {
-  }
-
-  /**
-   * Returns the set of deprecated keys that must not appear in STATE.md files.
-   *
-   * @return the deprecated keys
-   */
-  public static Set<String> getDeprecatedKeys()
-  {
-    return DEPRECATED_KEYS;
   }
 
   /**
@@ -127,11 +121,7 @@ public final class StateSchemaValidator implements FileWriteHandler
    */
   private FileWriteHandler.Result validateSchema(Map<String, String> fields)
   {
-    FileWriteHandler.Result result = validateNoDeprecatedKeys(fields);
-    if (result.blocked())
-      return result;
-
-    result = validateMandatoryKeys(fields);
+    FileWriteHandler.Result result = validateMandatoryKeys(fields);
     if (result.blocked())
       return result;
 
@@ -178,28 +168,6 @@ public final class StateSchemaValidator implements FileWriteHandler
   }
 
   /**
-   * Validate that no deprecated keys are present.
-   *
-   * @param fields the parsed fields
-   * @return validation result
-   */
-  private FileWriteHandler.Result validateNoDeprecatedKeys(Map<String, String> fields)
-  {
-    for (String key : DEPRECATED_KEYS)
-    {
-      if (fields.containsKey(key))
-      {
-        return FileWriteHandler.Result.block(
-          "STATE.md schema violation: Deprecated key '" + key + "' must be removed.\n" +
-          "\n" +
-          "The '" + key + "' field duplicates information available via 'git log'.\n" +
-          "Remove the '" + key + "' line from the file before writing.");
-      }
-    }
-    return FileWriteHandler.Result.allow();
-  }
-
-  /**
    * Validate that all mandatory keys are present.
    *
    * @param fields the parsed fields
@@ -214,8 +182,8 @@ public final class StateSchemaValidator implements FileWriteHandler
         return FileWriteHandler.Result.block(
           "STATE.md schema violation: Missing mandatory key '" + key + "'.\n" +
           "\n" +
-          "Mandatory keys: Status, Progress, Dependencies, Blocks\n" +
-          "Optional keys: Resolution (required for closed issues), Parent");
+          "Mandatory keys: " + MANDATORY_KEYS_LIST + "\n" +
+          "Optional keys: " + OPTIONAL_KEYS_LIST + " (Resolution required for closed issues)");
       }
     }
     return FileWriteHandler.Result.allow();
@@ -237,8 +205,8 @@ public final class StateSchemaValidator implements FileWriteHandler
           "STATE.md schema violation: Non-standard key '" + key + "'.\n" +
           "\n" +
           "Only these keys are allowed:\n" +
-          "  Mandatory: Status, Progress, Dependencies, Blocks\n" +
-          "  Optional: Resolution, Parent, Target Branch");
+          "  Mandatory: " + MANDATORY_KEYS_LIST + "\n" +
+          "  Optional: " + OPTIONAL_KEYS_LIST);
       }
     }
     return FileWriteHandler.Result.allow();
@@ -303,7 +271,7 @@ public final class StateSchemaValidator implements FileWriteHandler
    */
   private FileWriteHandler.Result validateClosedResolution(String status, Map<String, String> fields)
   {
-    if (status != null && status.equals("closed"))
+    if (IssueStatus.fromString(status) == IssueStatus.CLOSED)
     {
       String resolution = fields.get("Resolution");
       if (resolution == null || resolution.isEmpty())
