@@ -147,8 +147,16 @@ skill invocation at this point is a control-flow error.
 When prepare returns READY with `potentially_complete: true`, work may already exist on the target branch
 with STATE.md not reflecting completion (e.g., stale merge overwrote status).
 
-1. Read the diff for each commit in `suspicious_commits` using `git show --stat <hash>` (run in the target branch's
-   working tree, not the new worktree).
+1. Read the diff for all commits in `suspicious_commits` in a single Bash call (git show reads object history,
+   not working tree contents, so any git directory in the repo works):
+   ```bash
+   # suspicious_commits is a space-separated list of commit hashes from work-prepare JSON output
+   cd "${WORKTREE_PATH}" && for hash in ${suspicious_commits}; do
+     echo "=== $hash ==="
+     git show --stat "$hash"
+   done
+   ```
+   If `suspicious_commits` is empty, skip to step 2 (no analysis needed).
 2. Read the issue's goal from its PLAN.md.
 3. Analyze whether the suspicious commits implement the issue's goal:
    - **YES** (commits clearly address the goal) → ask user permission to close:
