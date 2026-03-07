@@ -32,6 +32,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-diff-against-target-branch
 - move-verify-dir-to-session-base-path
 - fix-issue-path-worktree-resolution
+- fix-branch-verification-in-worktree-isolated-delegation-prompts
 
 
 ## Issues Closed
