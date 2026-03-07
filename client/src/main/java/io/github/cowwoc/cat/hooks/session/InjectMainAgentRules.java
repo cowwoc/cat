@@ -16,13 +16,10 @@ import java.util.List;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Injects audience-filtered rules from plugin-bundled and project-local rule directories into main
- * agent context.
+ * Injects audience-filtered rules from {@code .claude/cat/rules/} into main agent context.
  * <p>
- * Discovers all rule files from both {@code ${CLAUDE_PLUGIN_ROOT}/rules/} (plugin-bundled) and
- * {@code ${projectDir}/.claude/cat/rules/} (project-local), concatenates them (plugin-bundled
- * first, project-local second), filters to those with {@code mainAgent: true}, applies any
- * {@code paths} restrictions, and injects matching content as additional context.
+ * Discovers all rule files, filters to those with {@code mainAgent: true}, applies any {@code paths}
+ * restrictions, and injects matching content as additional context.
  */
 public final class InjectMainAgentRules implements SessionStartHandler
 {
@@ -42,13 +39,6 @@ public final class InjectMainAgentRules implements SessionStartHandler
 
   /**
    * Discovers and injects CAT rules applicable to the main agent.
-   * <p>
-   * Reads from two sources in order (plugin-bundled first, project-local second):
-   * <ol>
-   *   <li>{@code ${CLAUDE_PLUGIN_ROOT}/rules/} — plugin-bundled rules</li>
-   *   <li>{@code ${projectDir}/.claude/cat/rules/} — project-local rules</li>
-   * </ol>
-   * Both sources are concatenated; no filename-based deduplication is performed.
    *
    * @param input the hook input
    * @return a result with the injected rules content, or empty if no rules apply
@@ -59,12 +49,11 @@ public final class InjectMainAgentRules implements SessionStartHandler
   {
     requireThat(input, "input").isNotNull();
 
-    Path pluginRulesDir = scope.getClaudePluginRoot().resolve("rules");
-    Path projectRulesDir = scope.getClaudeProjectDir().resolve(".claude/cat/rules");
+    Path rulesDir = scope.getClaudeProjectDir().resolve(".claude/cat/rules");
     // Rules with paths: restrictions are injected dynamically by InjectPathRules (PreToolUse hook)
     // when matching files are accessed. Only non-paths rules are injected here at session start.
-    String content = RulesDiscovery.getCatRulesForAudience(List.of(pluginRulesDir, projectRulesDir),
-      scope.getYamlMapper(), RulesDiscovery::filterForMainAgent, List.of());
+    String content = RulesDiscovery.getCatRulesForAudience(rulesDir, scope.getYamlMapper(),
+      RulesDiscovery::filterForMainAgent, List.of());
     if (content.isBlank())
       return Result.empty();
 
