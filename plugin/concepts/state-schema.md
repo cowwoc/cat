@@ -19,6 +19,7 @@ All issue STATE.md files MUST contain only the following fields:
 | `Blocks` | Always | `[]` or `[issue-slug, ...]` |
 | `Resolution` | Closed issues only | `implemented`, `duplicate (...)`, `obsolete (...)`, `won't-fix (...)`, or `not-applicable (...)` |
 | `Parent` | Sub-issues only | Parent issue slug |
+| `Target Branch` | Optional | The branch this issue merges into (e.g., `v2.1`, `main`) |
 
 **Example — open issue:**
 
