@@ -818,116 +818,35 @@ Use appropriate template format:
 - **Blocks:** []
 ```
 
-**Generate PLAN.md content based on issue type:**
+**Generate PLAN.md via plan-builder-agent:**
 
-Use appropriate template (Feature, Bugfix, or Refactor) from issue-plan.md reference.
+Invoke the plan-builder-agent skill to generate the PLAN.md. This centralizes all planning logic (effort-based depth,
+comprehensiveness requirements, sub-agent waves, templates) in one place.
 
-**CRITICAL:** Follow template guidance to separate Sub-Agent Waves/Steps (actions only) from Success Criteria
-(measurable outcomes). Do NOT include expected values like "score = 1.0" in Execution sections as this primes subagents
-to fabricate
-results.
+1. Write a temporary context file with the issue details:
 
-**PLAN.md Comprehensiveness:** The PLAN.md must be comprehensive enough for a haiku-level
-model to implement mechanically without making architectural decisions. Include:
-- Exact file paths to create/modify
-- Specific code patterns or formats to use
-- Complete lists (all files, all references to update, all post-conditions)
-- Research findings that inform implementation decisions
-
-If the execution subagent needs to make judgment calls about "how" to implement, the PLAN.md
-is not detailed enough. The subagent should only decide "how to write the code", not "what approach to take".
-
-**Effort-Based Planning Depth:**
-
-Use the EFFORT value set in issue_read_config to calibrate planning thoroughness.
-
-Apply the following depth to PLAN.md content based on `$EFFORT`:
-
-- `low`: Generate a concise plan. Assume the obvious approach. Skip alternative analysis. List only essential steps
-  and post-conditions.
-- `medium`: Explore two or three alternative approaches before settling on one. Note key trade-offs in a brief
-  section. Execution steps should cover non-obvious edge cases.
-- `high`: Perform deep research on the problem space. Document the reasoning for the chosen approach and explicitly
-  list rejected alternatives with rationale. Execution steps must cover all known edge cases and failure modes.
-
-**Batch Execution Check:** When the issue involves multiple files AND a skill (e.g., compress 9 files with
-/cat:optimize-doc-agent):
-1. Read the target skill's documentation for batch/parallel execution patterns
-2. If the skill documents using `/cat:delegate-agent` for multiple files, write execution steps to use delegate
-3. Example: Instead of "For each file: Run /cat:optimize-doc-agent", use "/cat:delegate-agent --skill optimize-doc-agent file1.md file2.md
-   ..."
-
-This ensures batch tasks leverage parallel execution rather than sequential processing.
-
-**Sub-Agent Waves for Parallel Execution:** When the issue has clearly independent work that can run simultaneously,
-use `## Sub-Agent Waves` with `### Wave N` sections to enable parallel subagent spawning. Use sparingly — only when
-items genuinely don't depend on each other and won't modify the same files.
-
-Rules for sub-agent waves:
-- Create `## Sub-Agent Waves` section (replaces `## Execution Steps`)
-- Each `### Wave N` subsection contains bullet items for parallel execution
-- Waves execute sequentially (Wave 1 completes before Wave 2 starts)
-- All items within a wave run in parallel
-- Waves must not modify the same files (to avoid merge conflicts)
-- The last wave is responsible for updating STATE.md
-
-**Main Agent Waves (optional):** If the issue requires skills that spawn their own subagents (e.g.,
-`/cat:optimize-doc`, `/cat:compare-docs`, `/cat:stakeholder-review-agent`), add a `## Main Agent Waves` section
-**above** `## Sub-Agent Waves`. The main agent executes these skills directly before spawning implementation
-subagents. Each bullet is a skill invocation:
-
-```markdown
-## Main Agent Waves
-
-- /cat:optimize-doc path/to/file.md
+```bash
+PLAN_CONTEXT="/tmp/plan-context-${ISSUE_NAME}.json"
+cat > "$PLAN_CONTEXT" << EOF
+{
+  "issue_type": "${ISSUE_TYPE}",
+  "description": "${ISSUE_DESCRIPTION}",
+  "postconditions": ${POSTCONDITIONS_JSON},
+  "research_findings": "${RESEARCH_FINDINGS:-}",
+  "impact_notes": "${IMPACT_NOTES:-}"
+}
+EOF
 ```
 
-Omit `## Main Agent Waves` entirely when the issue has no pre-delegation skills.
+2. Invoke plan-builder-agent:
 
-Example valid sub-agent wave structure (independent modules):
-
-```markdown
-## Sub-Agent Waves
-
-### Wave 1
-- Implement parser module
-- Add parser tests
-
-### Wave 2
-- Implement formatter module
-- Add formatter tests
-- Run full test suite
+```
+Skill tool:
+  skill: "cat:plan-builder-agent"
+  args: "${CAT_AGENT_ID} ${EFFORT} initial ${PLAN_CONTEXT}"
 ```
 
-Do NOT use multiple waves if items share files or if the sequential dependency is unclear. In such cases, use a single
-`## Sub-Agent Waves` / `### Wave 1` section or revert to `## Execution Steps` for sequential execution.
-
-**If RESEARCH_FINDINGS exists:**
-
-Add a Research Findings section to PLAN.md after the Goal/Problem section:
-
-```markdown
-## Research Findings
-{RESEARCH_FINDINGS}
-```
-
-This section should appear before the "Parent Requirements" section in all templates.
-
-**If IMPACT_NOTES is non-empty:**
-
-Add an Impact Notes section to PLAN.md after the Research Findings section (or after the Goal/Problem section if no
-Research Findings):
-
-```markdown
-## Impact Notes
-{IMPACT_NOTES}
-```
-
-This section documents the potential impact of this issue on existing features, identified during issue creation.
-
-**After generating STATE.md and PLAN.md content, create the issue:**
-
-Call the create-issue binary with JSON input:
+3. Create the issue, passing the generated PLAN.md file path:
 
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/client/bin/create-issue" --json '{
@@ -937,7 +856,7 @@ Call the create-issue binary with JSON input:
   "issue_type": "{issue-type}",
   "dependencies": ["{dep1}", "{dep2}"],
   "state_content": "{full STATE.md content}",
-  "plan_content": "{full PLAN.md content}",
+  "plan_file": "'"${PLAN_CONTEXT%.json}.plan.md"'",
   "commit_description": "{one-line description}"
 }'
 ```

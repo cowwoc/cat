@@ -197,6 +197,32 @@ Where `$PLAN_MD` is the path to the issue's PLAN.md file.
 **If two or more waves are present (`WAVES_COUNT` >= 2):** use parallel execution (see Parallel Subagent Execution
 below). Extract the wave sections from PLAN.md and count items in each wave.
 
+### Mid-Work PLAN.md Revision
+
+If requirements change during implementation (user feedback, discovered constraints, or scope adjustments), invoke
+`cat:plan-builder-agent` to revise the PLAN.md before continuing execution.
+
+Read effort from config:
+
+```bash
+CONFIG_FILE="/workspace/.claude/cat/cat-config.json"
+EFFORT=$(grep '"effort"' "$CONFIG_FILE" | sed 's/.*"effort"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+if [[ -z "$EFFORT" ]]; then
+  echo "ERROR: 'effort' key not found in $CONFIG_FILE" >&2
+  exit 1
+fi
+```
+
+Invoke:
+
+```
+Skill tool:
+  skill: "cat:plan-builder-agent"
+  args: "${CAT_AGENT_ID} ${EFFORT} revise ${ISSUE_PATH} <description of what changed>"
+```
+
+After revision, re-read the updated PLAN.md and adjust remaining execution accordingly.
+
 ### Delegation Prompt Construction
 
 **Subagents read PLAN.md directly — do NOT relay its content into prompts.**

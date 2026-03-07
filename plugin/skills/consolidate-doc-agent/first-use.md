@@ -248,7 +248,7 @@ Extracted **56 semantic units** from original document, categorized as:
 
 | Category | Count | Examples |
 |----------|-------|----------|
-| REQUIREMENT | 18 | Main agent only, report validation status, use delegate-agent |
+| REQUIREMENT | 18 | Main agent only, report validation status, spawn parallel subagents |
 | PROHIBITION | 8 | Never manually compress, cannot invoke from subagent |
 | SEQUENCE | 10 | Check baseline, save original, validate, iterate |
 | CONDITIONAL | 8 | If EQUIVALENT then approve, if NOT_EQUIVALENT then iterate |
@@ -302,7 +302,7 @@ GOAL: Complete compression with validation and optional iteration
    - **Missing from consolidated**: Validation Context explanation, exact decision logic algorithm,
      "don't ask user if ITERATE" requirement
 7. **Step 6: Iteration Loop** (u32-u37, u49-u50): Re-invoke with feedback, self-check, max 3 attempts
-8. **Step 7: Multiple Files** (u38-u40): Batch processing via delegate-agent
+8. **Step 7: Multiple Files** (u38-u40): Batch processing via parallel subagents
 9. **Supporting Details**: References (u44-u46), **u55-u56 missing** (File Operations, Rollback)
 
 ---
