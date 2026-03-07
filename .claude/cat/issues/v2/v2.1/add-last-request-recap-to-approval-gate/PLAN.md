@@ -19,21 +19,23 @@ None
 
 ## Root Cause
 
-The work-with-issue-agent's Step 9 (Approval Gate) does not include an instruction to recap the
-user's last issue-specific change request before presenting the approval question.
+The `work-merge-agent`'s Step 9 (`### Present Changes Before Approval Gate`) does not include
+an instruction to recap the user's last issue-specific change request before invoking
+AskUserQuestion. The sequence ends at stakeholder concerns (step 6) and goes straight to the
+approval question.
 
 ## Risk Assessment
 
 - **Risk Level:** LOW
 - **Regression Risk:** None — additive documentation change only.
-- **Mitigation:** The instruction is a behavioral hint; if no user change request exists, the agent
-  skips the recap naturally.
+- **Mitigation:** The instruction is a behavioral hint; if no issue-specific change request exists,
+  the agent skips the recap naturally.
 
 ## Files to Modify
 
-- `plugin/skills/work-with-issue-agent/first-use.md` — add instruction to Step 9 (Approval Gate)
-  to recap the user's last change request for the issue being approved before presenting
-  AskUserQuestion.
+- `plugin/skills/work-merge-agent/first-use.md` — add step 7 to the
+  `### Present Changes Before Approval Gate` section (after stakeholder concerns, before
+  AskUserQuestion) that recaps the user's last change request for the issue being approved.
 
 ## Pre-conditions
 
@@ -43,37 +45,34 @@ user's last issue-specific change request before presenting the approval questio
 
 ### Wave 1
 
-- In `plugin/skills/work-with-issue-agent/first-use.md`, locate Step 9 (Approval Gate), specifically
-  the section `### If trust == "low" or trust == "medium"`. Add a new subsection immediately before
-  the `### Check for Prior Direct Approval` subsection:
-
-  ```markdown
-  ### Recap Last User Change Request
-
-  Before presenting the approval gate, remind the user of the last change they requested **for this
-  specific issue** and what was done about it. This provides context after long workflows with
-  interruptions.
-
-  - Scan the conversation for the most recent user message that requested a change, revision, or
-    correction to the issue being approved (e.g., "use the simpler approach", "also fix X",
-    "change the test to cover Y").
-  - Exclude unrelated requests (e.g., requests about other issues, learn invocations, status queries).
-  - Display before the approval summary:
-    ```
-    **Last change you requested for this issue:** <brief description of user's request>
-    **What was done:** <brief description of action taken>
-    ```
-  - If no issue-specific change request exists in the conversation, skip this recap.
+- In `plugin/skills/work-merge-agent/first-use.md`, locate the line:
   ```
+  Invoke AskUserQuestion ONLY AFTER all six items above are output in the current turn:
+  ```
+  Replace it with:
+  ```markdown
+  7. **Recap last user change request** — scan the conversation for the most recent user message
+     that requested a change, revision, or correction **to this specific issue** (e.g., "use the
+     simpler approach", "also fix X", "change the test to cover Y"). Exclude unrelated requests
+     (other issues, learn invocations, status queries). If found, display:
+     ```
+     **Last change you requested for this issue:** <brief description of user's request>
+     **What was done:** <brief description of action taken>
+     ```
+     If no issue-specific change request exists in the conversation history, skip this item.
 
-  - Files: `plugin/skills/work-with-issue-agent/first-use.md`
+  Invoke AskUserQuestion ONLY AFTER all seven items above are output in the current turn:
+  ```
+  - Files: `plugin/skills/work-merge-agent/first-use.md`
 
-- Commit: `feature: add last-request recap to approval gate in work-with-issue-agent`
+- Commit: `feature: add last-request recap to approval gate in work-merge-agent`
 
 ## Post-conditions
 
-- [ ] `first-use.md` Step 9 contains a "Recap Last User Change Request" subsection
-- [ ] The subsection appears before the "Check for Prior Direct Approval" subsection
+- [ ] `work-merge-agent/first-use.md` `### Present Changes Before Approval Gate` contains
+  step 7 "Recap last user change request"
+- [ ] Step 7 appears after step 6 (stakeholder concerns) and before the AskUserQuestion call
 - [ ] The instruction scopes the recap to the issue being approved (not unrelated requests)
+- [ ] The AskUserQuestion line now references "all seven items" instead of "all six items"
 - [ ] E2E: Run `/cat:work` on an issue where the user requested a mid-workflow change; the
-  approval gate includes the recap
+  approval gate recap appears before the AskUserQuestion
