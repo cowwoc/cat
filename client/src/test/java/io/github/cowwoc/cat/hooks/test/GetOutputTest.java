@@ -256,4 +256,92 @@ public class GetOutputTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Integration test: verifies that "benchmark-aggregator" type routes through GetOutput dispatcher
+   * to BenchmarkAggregator and returns wrapped output with configs and no delta for
+   * a single config.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void benchmarkAggregatorRoutesThroughDispatcher() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-get-output-benchmark-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetOutput handler = new GetOutput(scope);
+      String runResultsJson = """
+        [
+          {"config": "with-skill", "assertions": [true, false, true], "duration_ms": 1200, "total_tokens": 500}
+        ]
+        """;
+
+      String result = handler.getOutput(new String[]{"benchmark-aggregator", runResultsJson});
+
+      requireThat(result, "result").
+        contains("<output type=\"benchmark-aggregator\">").
+        contains("</output>").
+        contains("\"with-skill\"").
+        contains("pass_rate");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Integration test: verifies that "description-optimizer" type routes through GetOutput dispatcher
+   * to DescriptionOptimizer and returns a wrapped optimization prompt.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void descriptionOptimizerRoutesThroughDispatcher() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-get-output-desc-opt-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      // Write a minimal SKILL.md into temp dir
+      Path skillFile = tempDir.resolve("SKILL.md");
+      Files.writeString(skillFile, """
+        ---
+        description: Use when user wants to squash commits
+        user-invocable: false
+        ---
+        # Git Squash
+        """);
+
+      String evalSetJson = """
+        [
+          {"query": "squash my last 3 commits", "should_trigger": true},
+          {"query": "push to remote", "should_trigger": false},
+          {"query": "combine two commits", "should_trigger": true},
+          {"query": "check git log", "should_trigger": false},
+          {"query": "squash before push", "should_trigger": true}
+        ]
+        """;
+
+      GetOutput handler = new GetOutput(scope);
+      String result = handler.getOutput(new String[]{
+        "description-optimizer",
+        skillFile.toString(),
+        evalSetJson,
+        "claude-sonnet-4-5",
+        "3"
+      });
+
+      requireThat(result, "result").
+        contains("<output type=\"description-optimizer\">").
+        contains("</output>").
+        contains("DESCRIPTION OPTIMIZATION REQUEST").
+        contains("train_size").
+        contains("test_size");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }
