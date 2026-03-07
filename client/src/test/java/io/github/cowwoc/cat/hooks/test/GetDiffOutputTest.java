@@ -30,20 +30,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public class GetDiffOutputTest
 {
   /**
-   * Verifies that getOutput throws NullPointerException for null projectRoot.
-   */
-  @Test(expectedExceptions = NullPointerException.class,
-    expectedExceptionsMessageRegExp = ".*projectRoot.*")
-  public void nullProjectRootThrowsException() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      GetDiffOutput handler = new GetDiffOutput(scope);
-      handler.getOutput((Path) null);
-    }
-  }
-
-  /**
    * Verifies that constructor throws NullPointerException for null scope.
    */
   @Test(expectedExceptions = NullPointerException.class,
@@ -72,7 +58,8 @@ public class GetDiffOutputTest
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "main");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // Non-git directory should return error message (git commands fail)
         requireThat(result, "result").contains("Target branch");
@@ -112,7 +99,8 @@ public class GetDiffOutputTest
         runGit(tempDir, "commit", "-m", "initial commit");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "main");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // HEAD matches main, so no changes
         requireThat(result, "result").contains("No changes");
@@ -141,7 +129,8 @@ public class GetDiffOutputTest
           "initial content\n", "modified content\n");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         requireThat(result, "result").contains("Diff Summary").
           contains("file.txt");
@@ -170,7 +159,8 @@ public class GetDiffOutputTest
           "class Foo {\n}\n", "class Foo {\n  void bar() {}\n}\n");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         requireThat(result, "result").contains("Rendered Diff (2-column format)").
           contains("code.java");
@@ -202,7 +192,8 @@ public class GetDiffOutputTest
           "line1\nline2\nline3\n", "line1\nmodified\nline3\nnew line\n");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         requireThat(result, "result").contains("Insertions:").contains("Deletions:");
         // Verify 2-column format indicators
@@ -253,7 +244,8 @@ public class GetDiffOutputTest
         runGit(tempDir, "commit", "-m", "update both files");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         requireThat(result, "result").contains("Changed Files").
           contains("alpha.txt").contains("beta.txt");
@@ -304,7 +296,8 @@ public class GetDiffOutputTest
         runGit(tempDir, "commit", "-m", "edit large file");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // Should contain 4-digit line numbers (1499)
         requireThat(result, "result").contains("1499");
@@ -354,7 +347,8 @@ public class GetDiffOutputTest
         runGit(tempDir, "commit", "-m", "modify long line");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // Should contain wrap indicator
         requireThat(result, "result").contains("↩");
@@ -403,7 +397,8 @@ public class GetDiffOutputTest
         runGit(tempDir, "commit", "-m", "change to tabs");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // Should visualize space and tab
         requireThat(result, "result").contains("·");  // Space marker
@@ -453,7 +448,8 @@ public class GetDiffOutputTest
         runGit(tempDir, "commit", "-m", "modify binary");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // Should contain binary file indicator
         requireThat(result, "result").contains("binary");
@@ -499,7 +495,8 @@ public class GetDiffOutputTest
         runGit(tempDir, "commit", "-m", "rename file");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // Should show rename
         requireThat(result, "result").contains("old-name.txt");
@@ -559,7 +556,8 @@ public class GetDiffOutputTest
         runGit(tempDir, "commit", "-m", "modify both sections");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // Should contain both modifications (word diff marks changed words with **)
         requireThat(result, "result").contains("**Modified**").
@@ -608,7 +606,8 @@ public class GetDiffOutputTest
         runGit(tempDir, "commit", "-m", "modify long filename");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // Should contain the long filename (possibly truncated with ...)
         requireThat(result, "result").contains("this-is-a-very-long");
@@ -652,7 +651,8 @@ public class GetDiffOutputTest
         runGit(tempDir, "checkout", "-b", "2.0-no-changes");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // Should report no changes
         requireThat(result, "result").contains("No changes");
@@ -700,7 +700,8 @@ public class GetDiffOutputTest
         runGit(tempDir, "commit", "-m", "modify file1");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // Should show changes to file1
         requireThat(result, "result").contains("file1.txt").contains("modified");
@@ -744,7 +745,8 @@ public class GetDiffOutputTest
         runGit(tempDir, "checkout", "-b", "2.0-empty");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // Should handle empty stats without error
         requireThat(result, "result").isNotNull();
@@ -759,9 +761,8 @@ public class GetDiffOutputTest
   /**
    * Verifies that target branch detection works from a worktree directory path.
    * <p>
-   * When projectRoot is inside a directory named {@code worktrees/<version-prefix>-issue},
-   * the target branch is derived from the version prefix (e.g., {@code 2.1-feature} → {@code v2.1}).
-   * This must work using the projectRoot path directly, not from user.dir.
+   * When the issue path's STATE.md specifies "v2.1" as the target branch, the diff is computed
+   * against "v2.1".
    *
    * @throws IOException if an I/O error occurs
    */
@@ -803,9 +804,10 @@ public class GetDiffOutputTest
         runGit(worktree, "add", ".");
         runGit(worktree, "commit", "-m", "feature change");
 
-        // getOutput(worktree) should detect target branch from worktree path (2.1-* → v2.1)
+        // Use issue path with STATE.md specifying v2.1 as the target branch
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(worktree);
+        Path issuePath = createIssueDirWithTargetBranch(worktree, "v2.1");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         requireThat(result, "result").contains("Diff Summary");
         requireThat(result, "result").contains("v2.1");
@@ -834,7 +836,8 @@ public class GetDiffOutputTest
           "initial\n", "modified\n");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "main");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // Should detect target branch from branch name pattern
         requireThat(result, "result").contains("Diff Summary");
@@ -911,7 +914,8 @@ public class GetDiffOutputTest
           "initial\n", "modified\n");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // Should detect v2.0 from branch name "2.0-feature"
         requireThat(result, "result").contains("Diff Summary");
@@ -958,7 +962,8 @@ public class GetDiffOutputTest
         runGit(tempDir, "commit", "-m", "modify");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "main");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // Should detect main as base for v2.0 branch
         requireThat(result, "result").contains("Diff Summary");
@@ -972,17 +977,15 @@ public class GetDiffOutputTest
   }
 
   /**
-   * Verifies that --project-dir flag correctly overrides fallback directory selection.
-   * <p>
-   * When --project-dir is specified, git operations use that directory rather than
-   * falling back to scope.getClaudeProjectDir() or user.dir.
+   * Verifies that the issue path argument derives the project root and reads the target branch
+   * from STATE.md.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void projectDirFlagIsUsedForGitOperations() throws IOException
+  public void issuePathDrivesProjectRootAndTargetBranch() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("project-dir-git-repo");
+    Path tempDir = Files.createTempDirectory("issue-path-test");
     try
     {
       // Set up tempDir as a git repo with version branches
@@ -1004,13 +1007,18 @@ public class GetDiffOutputTest
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
+      // Create issue directory with STATE.md containing target branch
+      Path issuePath = tempDir.resolve(".claude/cat/issues/v2/v2.0/some-feature");
+      Files.createDirectories(issuePath);
+      Files.writeString(issuePath.resolve("STATE.md"),
+        "# State\n\n- **Status:** in-progress\n- **Target Branch:** v2.0\n");
+
       try (JvmScope scope = new TestJvmScope())
       {
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(new String[]{"--project-dir", tempDir.toString()});
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
-        // --project-dir should be used for git operations, so we expect to see diff summary
-        // with the v2.0 branch detected from 2.0-feature branch name
+        // Project root derived from issue path, target branch read from STATE.md
         requireThat(result, "result").contains("Diff Summary").contains("v2.0");
       }
     }
@@ -1056,7 +1064,8 @@ public class GetDiffOutputTest
         runGit(tempDir, "commit", "-m", "rename and modify");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // Should show both rename indicator and diff content
         requireThat(result, "result").contains("new.txt");
@@ -1104,7 +1113,8 @@ public class GetDiffOutputTest
         runGit(tempDir, "commit", "-m", "modify all lines");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // Should contain all changes (pairing happens sequentially)
         requireThat(result, "result").contains("changed1");
@@ -1153,7 +1163,8 @@ public class GetDiffOutputTest
         runGit(tempDir, "commit", "-m", "orphan commit");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "main");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // Should handle malformed diff stats gracefully (no common ancestor means diff may fail)
         requireThat(result, "result").isNotNull();
@@ -1182,7 +1193,8 @@ public class GetDiffOutputTest
           "1\n2\n3\n4\n5\n", "1\nmodified\n3\n4\n5\n");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // Should use 2-digit column width even for files with < 10 lines
         // Verify line numbers appear (line 2 was modified)
@@ -1238,7 +1250,8 @@ public class GetDiffOutputTest
         runGit(tempDir, "commit", "-m", "second change");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // git diff shows cumulative changes from both commits
         // Final state shows "modified twice" content; since no tokens are shared with "initial",
@@ -1271,7 +1284,8 @@ public class GetDiffOutputTest
           "hello world foo\n", "hello earth foo\n");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // "world" changed to "earth" - both should be bold-marked
         requireThat(result, "result").contains("**world**");
@@ -1306,7 +1320,8 @@ public class GetDiffOutputTest
           "alpha beta gamma\n", "alpha BETA gamma\n");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // "beta" changed to "BETA" - only these should be bold-marked
         requireThat(result, "result").contains("**beta**");
@@ -1358,7 +1373,8 @@ public class GetDiffOutputTest
         runGit(tempDir, "commit", "-m", "add third line");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // Pure addition "line three" should appear without ** markers
         requireThat(result, "result").contains("line three").
@@ -1389,7 +1405,8 @@ public class GetDiffOutputTest
           "def func(**kwargs):\n", "def func(**args):\n");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // The literal ** in kwargs/args should be escaped (\\*\\*), not rendered as bold.
         // The library tokenizes by word boundary, so the ** prefix stays as an unchanged token
@@ -1422,7 +1439,8 @@ public class GetDiffOutputTest
           "my_variable = 1\n", "my_variable = 2\n");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // Underscores should be escaped
         requireThat(result, "result").contains("my\\_variable");
@@ -1469,7 +1487,8 @@ public class GetDiffOutputTest
         runGit(tempDir, "commit", "-m", "space to tab");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // Whitespace-only path uses visualization markers (· and →), not bold word markers
         requireThat(result, "result").contains("·");   // Space marker
@@ -1502,7 +1521,8 @@ public class GetDiffOutputTest
           "alpha beta gamma\n", "alpha BETA gamma\n");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // Verify word diff bold markers are present (changes are marked)
         requireThat(result, "result").contains("**beta**");
@@ -1578,7 +1598,8 @@ public class GetDiffOutputTest
         runGit(tempDir, "commit", "-m", "modify last word");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // Word diff must NOT be applied (line has > 500 tokens)
         requireThat(result, "result").doesNotContain("**word0**");
@@ -1638,7 +1659,8 @@ public class GetDiffOutputTest
         runGit(tempDir, "commit", "-m", "add large number of files");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // Should return a descriptive message about the diff being too large
         requireThat(result, "result").contains("too large");
@@ -1655,11 +1677,10 @@ public class GetDiffOutputTest
 
   /**
    * Verifies that target branch detection works from the worktree path when the project root
-   * is passed explicitly.
+   * is passed via issue path STATE.md.
    * <p>
-   * When the project root's parent directory is named "worktrees" and the worktree name begins
-   * with a version prefix (e.g., "2.1-"), the target branch is detected as "v2.1". This
-   * replaces the previous cwd-based mechanism ({@code System.getProperty("user.dir")}).
+   * When STATE.md specifies "v2.1" as the target branch, the diff is computed against "v2.1"
+   * regardless of the worktree directory name.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -1707,11 +1728,12 @@ public class GetDiffOutputTest
         runGit(worktree, "add", ".");
         runGit(worktree, "commit", "-m", "modify file");
 
-        // Pass the worktree path explicitly as projectRoot
+        // Pass issue path with STATE.md specifying v2.1 as target branch
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(worktree);
+        Path issuePath = createIssueDirWithTargetBranch(worktree, "v2.1");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
-        // The worktree name "2.1-test-feature" starts with "2.1-", so target branch is "v2.1"
+        // The STATE.md specifies v2.1 as the target branch
         requireThat(result, "result").contains("v2.1");
 
         TestUtils.deleteDirectoryRecursively(worktreesParent);
@@ -1726,9 +1748,8 @@ public class GetDiffOutputTest
   /**
    * Verifies that getOutput returns an error message when target branch detection returns null.
    * <p>
-   * When the project root is not in a "worktrees" directory, has no version-prefix branch, and
-   * has no upstream configured, and no commits exist (non-git), the output should indicate that
-   * the target branch could not be detected.
+   * When the project root is not a git directory, git commands fail and the output should indicate
+   * that the target branch could not be detected.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -1746,7 +1767,8 @@ public class GetDiffOutputTest
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        String result = handler.getOutput(tempDir);
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "main");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
 
         // Non-git directory: all detection methods fail, returns error message
         requireThat(result, "result").contains("Target branch");
@@ -1756,6 +1778,122 @@ public class GetDiffOutputTest
         TestUtils.deleteDirectoryRecursively(tempDir);
       }
     }
+  }
+
+  /**
+   * Verifies that getOutput throws IllegalArgumentException when no arguments are provided.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Expected exactly 1 argument.*got 0.*")
+  public void testNoArgumentsThrowsException() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetDiffOutput handler = new GetDiffOutput(scope);
+      handler.getOutput(new String[]{});
+    }
+  }
+
+  /**
+   * Verifies that getOutput throws IllegalArgumentException when too many arguments are provided.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Expected exactly 1 argument.*got 2.*")
+  public void testTooManyArgumentsThrowsException() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetDiffOutput handler = new GetDiffOutput(scope);
+      handler.getOutput(new String[]{"/some/path", "extra"});
+    }
+  }
+
+  /**
+   * Verifies that getOutput throws IllegalArgumentException when the issue path does not contain
+   * the {@code .claude/cat/issues/} segment.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*\\.claude/cat/issues/.*")
+  public void testInvalidIssuePathThrowsException() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetDiffOutput handler = new GetDiffOutput(scope);
+      handler.getOutput(new String[]{"/tmp/not-an-issue-path"});
+    }
+  }
+
+  /**
+   * Verifies that getOutput throws IllegalArgumentException when STATE.md is missing from the
+   * issue directory.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*STATE\\.md not found.*")
+  public void testMissingStateMdThrowsException() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("missing-state-test");
+    try
+    {
+      Path issuePath = tempDir.resolve(".claude/cat/issues/v2/v2.0/some-issue");
+      Files.createDirectories(issuePath);
+
+      try (JvmScope scope = new TestJvmScope())
+      {
+        GetDiffOutput handler = new GetDiffOutput(scope);
+        handler.getOutput(new String[]{issuePath.toString()});
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getOutput throws IllegalArgumentException when STATE.md exists but does not
+   * contain a Target Branch field.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Target Branch.*")
+  public void testMissingTargetBranchInStateMdThrowsException() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("no-target-branch-test");
+    try
+    {
+      Path issuePath = tempDir.resolve(".claude/cat/issues/v2/v2.0/some-issue");
+      Files.createDirectories(issuePath);
+      Files.writeString(issuePath.resolve("STATE.md"),
+        "# State\n\n- **Status:** in-progress\n");
+
+      try (JvmScope scope = new TestJvmScope())
+      {
+        GetDiffOutput handler = new GetDiffOutput(scope);
+        handler.getOutput(new String[]{issuePath.toString()});
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Creates a minimal issue directory with STATE.md inside the given project root,
+   * and returns the issue path. Used by tests to call getOutput(String[]) with the
+   * issue path interface.
+   *
+   * @param projectRoot  the project root directory in which to create the issue directory
+   * @param targetBranch the target branch value to write into STATE.md
+   * @return the path to the created issue directory
+   * @throws IOException if an I/O error occurs
+   */
+  private Path createIssueDirWithTargetBranch(Path projectRoot, String targetBranch) throws IOException
+  {
+    Path issuePath = projectRoot.resolve(".claude/cat/issues/v1/v1.0/test-issue");
+    Files.createDirectories(issuePath);
+    Files.writeString(issuePath.resolve("STATE.md"),
+      "# State\n\n- **Status:** in-progress\n- **Target Branch:** " + targetBranch + "\n");
+    return issuePath;
   }
 
   /**
