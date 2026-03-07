@@ -273,7 +273,19 @@ about what they are approving.
 For fixed concerns: `Skill("cat:stakeholder-concern-box-agent", "${SEVERITY} ${STAKEHOLDER} ${CONCERN_DESCRIPTION} ${FILE_LOCATION}")`
 For deferred: `Skill("cat:stakeholder-concern-box-agent", "${SEVERITY} ${STAKEHOLDER} ${CONCERN_DESCRIPTION} [deferred: benefit=${BENEFIT}, cost=${COST}, threshold=${THRESHOLD}] ${FILE_LOCATION}")`
 
-Invoke AskUserQuestion ONLY AFTER all six items above are output in the current turn:
+7. **Recap last user change request** — scan the conversation for the most recent user message
+   that requested a change, revision, or correction **to this specific issue** (e.g., "use the
+   simpler approach", "also fix X", "change the test to cover Y"). Exclude unrelated requests
+   (other issues, learn invocations, status queries). When uncertain whether a message qualifies,
+   skip this item rather than displaying a potentially incorrect recap. If found, display:
+   ```
+   **Last change you requested for this issue:** <brief description of user's request>
+   **What was done:** <specific action taken in response, based on commits or conversation following the request>
+   ```
+   If no issue-specific change request exists in the conversation history, or the outcome cannot
+   be confirmed from the conversation, skip this item.
+
+Invoke AskUserQuestion ONLY AFTER all seven items above are output in the current turn:
 - If MEDIUM+ concerns: options = ["Approve and merge", "Fix remaining concerns", "Request changes", "Abort"]
 - If no concerns or only LOW: options = ["Approve and merge", "Request changes", "Abort"]
 
