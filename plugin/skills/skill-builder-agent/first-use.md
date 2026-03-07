@@ -488,6 +488,199 @@ The validator runs each prompt and returns pass/fail results with explanations.
 **Iteration**: If validation reveals calibration issues, revisit the `description:` frontmatter (Step 7)
 and regenerate test prompts. Repeat until all prompts pass.
 
+### Step 9: Write Test Cases and Assertions
+
+Create an eval set to measure the skill's impact quantitatively. The eval set is a JSON array of test
+cases used in the benchmark/iterate loop (Steps 10-13).
+
+**For each test case, define:**
+- `id`: a unique string identifier (e.g., `"case-1"`)
+- `prompt`: the user prompt sent to the subagent under test
+- `assertions`: natural-language assertions evaluated against the subagent output
+
+**Guidelines:**
+
+- Write 2-3 test cases. Fewer than 2 provides insufficient signal.
+- Write assertions in terms of observable output properties: "Output includes X", "Agent invokes Y",
+  "No Z is present".
+- Avoid assertions that are always true regardless of skill activation — these will be flagged as
+  non-discriminating by skill-analyzer-agent in Step 12.
+- For **subjective skills** (creative writing, explanation quality, etc.): include only `prompt` with
+  an empty `assertions` array and rely on human review in Step 12 instead.
+
+**Eval set format:**
+
+```json
+[
+  {
+    "id": "case-1",
+    "prompt": "<user prompt that should trigger skill behavior>",
+    "assertions": [
+      "<verifiable property of the output>",
+      "<another verifiable property>"
+    ]
+  },
+  {
+    "id": "case-2",
+    "prompt": "<another user prompt>",
+    "assertions": [
+      "<verifiable property>"
+    ]
+  }
+]
+```
+
+See `plugin/concepts/skill-benchmarking.md` for the complete eval set schema and assertion writing
+guidelines.
+
+### Step 10: Spawn Parallel Runs
+
+For each test case, spawn **two subagents in the same turn** — one `with-skill` (skill active) and
+one `without-skill` (skill inactive). Spawning both configs in the same turn minimizes total elapsed
+time.
+
+**For each subagent, record on completion:**
+- `duration_ms`: wall-clock time in milliseconds
+- `total_tokens`: total tokens consumed by the run
+
+**Important: spawn ALL test cases for ALL configs in a single turn** — do not run test cases
+sequentially. With 2 test cases, spawn 4 subagents simultaneously (2 cases × 2 configs).
+
+Each subagent receives:
+1. The test case `prompt` from the eval set
+2. Whether the skill is active for this run (`with-skill` or `without-skill`)
+3. Instructions to record `duration_ms` and `total_tokens` and return them with the output
+
+Collect all run outputs before proceeding to Step 11.
+
+### Step 11: Grade and Aggregate
+
+**Grade each run:**
+
+For each completed run, invoke `skill-grader-agent` with the run output and its assertion list:
+
+```
+Skill(skill="cat:skill-grader-agent", args={
+  "test_case_id": "<eval set id>-<config>",
+  "output": "<full run output text>",
+  "assertions": [<assertion strings from eval set>],
+  "config": "<with-skill or without-skill>"
+})
+```
+
+The grader returns a grading JSON object with per-assertion verdicts (PASS/FAIL), evidence quotes,
+and a `pass_rate`. Collect all grading JSON objects.
+
+**Aggregate results:**
+
+After all runs are graded, build the run-results array and call the BenchmarkAggregator Java tool:
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" benchmark-aggregator '[
+  {
+    "config": "with-skill",
+    "assertions": [true, false, true],
+    "duration_ms": 4100,
+    "total_tokens": 1480
+  },
+  {
+    "config": "without-skill",
+    "assertions": [false, false, false],
+    "duration_ms": 3200,
+    "total_tokens": 1090
+  }
+]'
+```
+
+Each entry in the array corresponds to one graded run. The `assertions` field is a boolean array
+derived from the grading JSON: `true` for each PASS verdict, `false` for each FAIL.
+
+The tool returns a benchmark JSON with per-config stats (pass rate, mean/stddev duration and tokens)
+and a delta comparing `with-skill` vs. `without-skill`. See `plugin/concepts/skill-benchmarking.md`
+for the complete benchmark JSON schema.
+
+### Step 12: Analyze and Review
+
+**Analyze the benchmark JSON:**
+
+Invoke `skill-analyzer-agent` with the benchmark JSON produced in Step 11:
+
+```
+Skill(skill="cat:skill-analyzer-agent", args="<benchmark JSON>")
+```
+
+The analyzer returns a pattern analysis report identifying:
+- **Non-discriminating assertions**: pass at the same rate with and without the skill (not measuring
+  the skill's contribution)
+- **High-variance evals**: stddev > 50% of mean (unreliable benchmark results)
+- **Time/token tradeoffs**: skill improves pass rate but adds latency or token cost
+
+**Display benchmark summary to the user:**
+
+Present the benchmark summary table followed by the pattern analysis report. Use this format for the
+summary table:
+
+```
+BENCHMARK SUMMARY
+=================
+Config        | Pass Rate | Mean Duration | StdDev Duration | Mean Tokens | StdDev Tokens
+------------- | --------- | ------------- | --------------- | ----------- | -------------
+with-skill    |   XX%     |    XXXX ms    |      XXX ms     |    XXXX     |      XXX
+without-skill |   XX%     |    XXXX ms    |      XXX ms     |    XXXX     |      XXX
+DELTA         |  +XX%     |   +XXXX ms    |                 |    +XXX     |
+```
+
+Fill in the actual values from the benchmark JSON's `configs` and `delta` fields.
+
+**Ask the user for feedback:**
+
+After presenting the summary and analysis report, ask the user:
+
+1. Are there any assertions to remove or replace based on the pattern analysis?
+2. Would you like to improve the skill and re-run the benchmark?
+3. Are you satisfied with the current skill version?
+
+### Step 13: Improve and Iterate
+
+**If the user requests improvement:**
+
+1. Apply targeted changes to the skill based on the pattern analysis and user feedback. Focus on:
+   - Removing or replacing non-discriminating assertions from the eval set
+   - Addressing skill gaps identified by failing assertions
+   - Refining the skill's procedure or trigger conditions
+2. Return to Step 10 and re-run with the updated skill.
+3. Repeat until the user is satisfied, or pass rate shows no improvement across two consecutive
+   iterations.
+
+**Convergence criterion**: Stop iterating when the user accepts the result, or when pass rate
+does not improve between the last two benchmark runs.
+
+**After the iteration loop converges — optional description optimization:**
+
+If the skill has a `description:` frontmatter field used for intent routing, run the
+DescriptionOptimizer tool to find a better description using a 60/40 train/test split:
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" description-optimizer \
+  "<path-to-SKILL.md>" \
+  '[{"query": "<phrase>", "should_trigger": true}, ...]' \
+  "<model-id>" \
+  "5"
+```
+
+Arguments:
+1. Absolute path to the skill's SKILL.md file
+2. Eval set JSON — array of objects with `query` (string) and `should_trigger` (boolean)
+3. Model ID string (e.g., `"claude-sonnet-4-5"`)
+4. Maximum number of optimization iterations (default: `"5"`)
+
+The tool returns a structured prompt for a description-optimization subagent. Spawn the subagent
+with this prompt and instruct it to return a JSON object with `best_description` (selected by test
+score) and `iterations` (per-iteration train/test scores).
+
+Apply `best_description` to the skill's `description:` frontmatter if the test score improves on
+the current description.
+
 ---
 
 ## Skill Structure Template

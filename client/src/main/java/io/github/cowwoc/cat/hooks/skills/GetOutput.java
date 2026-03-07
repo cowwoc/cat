@@ -113,9 +113,12 @@ public final class GetOutput implements SkillOutput
       case "work-complete" -> new GetIssueCompleteOutput(scope).getOutput(handlerArgs);
       case "statusline" -> new GetStatuslineOutput(scope).getOutput(handlerArgs);
       case "get-subagent-status" -> new GetSubagentStatusOutput(scope).getOutput(handlerArgs);
+      case "benchmark-aggregator" -> new BenchmarkAggregator(scope).getOutput(handlerArgs);
+      case "description-optimizer" -> new DescriptionOptimizer(scope).getOutput(handlerArgs);
       default -> throw new IllegalArgumentException("Unknown skill: '" + skill +
         "'. Valid skills: status, token-report, get-diff, cleanup, retrospective, " +
-        "config, init, work-complete, statusline, get-subagent-status");
+        "config, init, work-complete, statusline, get-subagent-status, " +
+        "benchmark-aggregator, description-optimizer");
     };
 
     if (content == null)

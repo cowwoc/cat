@@ -1094,5 +1094,45 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M500",
+    "timestamp" : "2026-03-07T18:20:38Z",
+    "category" : "tool_misuse",
+    "description" : "",
+    "root_cause" : "get-diff-agent used main as the base branch for git diff instead of the target branch (v2.1) that was passed as an argument, resulting in a massively inflated diff that included all changes between main and v2.1 plus the issue changes.",
+    "rca_method" : "B",
+    "rca_method_name" : "taxonomy",
+    "prevention_type" : "skill",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
+  }, {
+    "id" : "M501",
+    "timestamp" : "2026-03-07T18:58:44Z",
+    "category" : "",
+    "description" : "",
+    "root_cause" : "",
+    "rca_method" : "",
+    "rca_method_name" : "",
+    "prevention_type" : "code_fix",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }
