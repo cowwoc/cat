@@ -78,6 +78,22 @@ Only a compact JSON summary is returned to the main agent:
     HIGH = write proposal, ask user
   - Files: `plugin/skills/work-with-issue-agent/first-use.md`
 
+### Wave 3
+
+- Add a `## Manual E2E Verification` section to `plugin/skills/rebase-impact-agent/first-use.md` that
+  documents a reproducible test procedure a developer can follow in a live `/cat:work` session to satisfy
+  the E2E post-condition. The checklist covers:
+  1. Create a test issue branch from the current target branch tip.
+  2. Commit a change to the target branch that modifies a file listed in the test issue's PLAN.md
+     `## Files to Modify` section (e.g., edit `plugin/skills/work-with-issue-agent/first-use.md`).
+  3. Run `/cat:work` on the test issue; observe that `rebase-impact-agent` is invoked automatically
+     during the rebase step.
+  4. Verify `${WORKTREE_PATH}/.claude/cat/rebase-impact-analysis.md` is written.
+  5. Verify the compact JSON severity matches the change type (structural PLAN.md dependency change →
+     `MEDIUM` or `HIGH`; cosmetic change → `LOW`).
+  6. Verify the routing action in `work-with-issue-agent` matches the severity table (NO_IMPACT/LOW =
+     silent continue; MEDIUM = plan-builder-agent invoked; HIGH = user prompted).
+
 ## Post-conditions
 
 - [ ] Post-rebase impact analysis runs automatically after each rebase in /cat:work
@@ -88,4 +104,6 @@ Only a compact JSON summary is returned to the main agent:
 - [ ] Main agent context is not polluted ��� only compact JSON (status, severity, summary, analysis_path) returned
 - [ ] Analysis details are written to `${WORKTREE_PATH}/.claude/cat/rebase-impact-analysis.md`
 - [ ] Severity classification follows defined rule: MEDIUM = zero judgment calls needed; HIGH = conflicting approaches
-- [ ] E2E: Rebase an issue branch where target branch changes conflict with PLAN.md assumptions; verify correct severity triggers correct behavior
+- [ ] E2E: Rebase an issue branch where target branch changes conflict with PLAN.md assumptions; verify correct
+  severity triggers correct behavior — verified manually using the checklist in
+  `plugin/skills/rebase-impact-agent/first-use.md` § "Manual E2E Verification"
