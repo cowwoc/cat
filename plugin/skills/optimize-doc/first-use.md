@@ -106,9 +106,8 @@ if [ "$COMPRESSED_SECTIONS" -lt "$ORIGINAL_SECTIONS" ]; then
 fi
 ```
 
-**Why This Protection Exists**: Session from 2025-12-19 had documentation update remove
-intentionally-added "Use 'empty' Not 'blank'" style rule section, causing repeated data loss
-during subsequent rebases.
+**Why This Protection Exists**: Style rule sections removed during compression are not recoverable
+and cause repeated data loss when the document is reprocessed.
 
 **If forbidden**, respond:
 ```
@@ -262,7 +261,7 @@ fi
 **⚠️ ENCAPSULATION**: The compression algorithm is handled by the registered compression agent.
 Do NOT attempt to compress manually - invoke the subagent which has its own instructions injected automatically.
 
-**Subagent invocation** (use Task tool, not TaskCreate - see M372 in subagent-delegation.md):
+**Subagent invocation** (use Task tool, not TaskCreate — see subagent-delegation.md § "Spawning Subagents: Task vs TaskCreate"):
 
 ```
 Task tool:
@@ -351,25 +350,21 @@ After agent completes:
      echo "⚠️ WARNING: YAML frontmatter missing!"
    ```
 
-4. **Run validation via /cat:delegate-agent**:
+4. **Run validation via compare-docs subagent**:
 
-   Use `/cat:delegate-agent` for ALL validation (single or multiple files). The compare-docs skill
-   handles extraction, comparison, and report generation.
+   Spawn a validation subagent to run compare-docs:
 
-   ```bash
-   /cat:delegate-agent --skill compare-docs-agent /tmp/original-{{filename}} /tmp/compressed-{{filename}}-v${VERSION}.md
+   ```
+   Task tool:
+     description: "Validate compression"
+     subagent_type: "general-purpose"
+     model: "sonnet"
+     prompt: |
+       Invoke /cat:compare-docs-agent /tmp/original-{{filename}} /tmp/compressed-{{filename}}-v${VERSION}.md
+       Report the validation result (EQUIVALENT or NOT_EQUIVALENT with details).
    ```
 
-   **Why delegate**: Delegate handles:
-   - Subagent spawning with appropriate model selection (opus for validation)
-   - Isolation of validation context from main agent
-   - Result collection and formatting
-
-   **The compare-docs skill handles internally**:
-   - Parallel extraction from both documents (3-agent model)
-   - Binary equivalence determination (EQUIVALENT or NOT_EQUIVALENT)
-
-   **Parse validation result from delegate output**:
+   **Parse validation result from subagent output**:
    - Extract `Status:` line (EQUIVALENT or NOT_EQUIVALENT with counts)
    - Extract LOST section for iteration feedback
    - Extract ADDED section (informational only)
@@ -396,7 +391,7 @@ the ORIGINAL document state from before /optimize-doc was invoked.
 
 ### Step 6: Decision Logic
 
-**Threshold**: EQUIVALENT status required (no "close enough" - see M254)
+**Threshold**: EQUIVALENT status required (no "close enough" — binary pass/fail, no partial credit)
 
 **COMMIT GATE**: Files may ONLY be committed after validation passes:
 - Status = NOT_EQUIVALENT → File MUST NOT be applied or committed
@@ -611,23 +606,19 @@ No exceptions. Status is ONLY valid if it comes from /compare-docs output.
 
 ---
 
-## Multiple Files: Use /cat:delegate-agent
+## Multiple Files: Parallel Subagent Execution
 
-**For compressing multiple files**, use `/cat:delegate-agent`:
+**For compressing multiple files**, spawn parallel subagents directly:
 
-```bash
-/cat:delegate-agent --skill optimize-doc-agent file1.md file2.md file3.md
+```
+# Spawn one subagent per file — all run in parallel
+Task tool: description: "Compress file1.md", subagent_type: "cat:compression-agent", prompt: "..."
+Task tool: description: "Compress file2.md", subagent_type: "cat:compression-agent", prompt: "..."
+Task tool: description: "Compress file3.md", subagent_type: "cat:compression-agent", prompt: "..."
 ```
 
-Delegate handles:
-- Wave-based parallel execution (all files in a single wave since they have no dependencies)
-- Parallel subagent spawning (one per file, each running this full workflow)
-- Fault-tolerant result collection
-- Automatic retry of failed subagents
-- Result aggregation into per-file table
-
-**Do NOT manually spawn Task tools for batch operations** - delegate already implements
-parallel execution, fault tolerance, and retry logic.
+Spawning multiple Task calls in a single message runs them concurrently. Each subagent runs the full
+optimize-doc workflow independently.
 
 **Per-file validation:** Each file MUST be validated individually. Report results:
 
@@ -644,8 +635,7 @@ Each optimize-doc subagent spawns SEPARATE validation subagents per Step 5.
 
 **Agent Type**: MUST use `subagent_type: "cat:compression-agent"`
 
-**Validation Tool**: Use `/cat:delegate-agent --skill compare-docs-agent` - delegate handles subagent
-spawning and result collection.
+**Validation Tool**: Spawn a validation subagent with `/cat:compare-docs-agent` — see Step 4 above.
 
 **Validation Baseline**: On first invocation, save original document to
 `/tmp/original-{filename}` and use this as baseline for ALL subsequent
