@@ -70,18 +70,27 @@ public final class IssueCreator
       throw new IOException("Input must be a JSON object, got: " + parsedNode.getNodeType());
     ObjectNode data = (ObjectNode) parsedNode;
 
-    String[] required = {"major", "minor", "issue_name", "state_content", "plan_content"};
+    String[] required = {"major", "minor", "issue_name", "state_content"};
     for (String field : required)
     {
       if (!data.has(field))
         throw new IOException("Missing required field: " + field);
     }
+    if (!data.has("plan_content") && !data.has("plan_file"))
+      throw new IOException("Missing required field: plan_content or plan_file (provide one)");
 
     int major = data.get("major").asInt();
     int minor = data.get("minor").asInt();
     String issueName = data.get("issue_name").asString();
     String stateContent = data.get("state_content").asString();
-    String planContent = data.get("plan_content").asString();
+    String planContent;
+    if (data.has("plan_file"))
+    {
+      Path planSourceFile = Path.of(data.get("plan_file").asString());
+      planContent = Files.readString(planSourceFile, StandardCharsets.UTF_8);
+    }
+    else
+      planContent = data.get("plan_content").asString();
     String commitDesc;
     if (data.has("commit_description"))
       commitDesc = data.get("commit_description").asString();
