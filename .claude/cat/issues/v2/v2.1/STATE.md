@@ -30,6 +30,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - link-state-schema-doc-to-write-and-commit
 - add-catagentid-check-to-skill-builder
 - fix-diff-against-target-branch
+- move-verify-dir-to-session-base-path
 
 
 ## Issues Closed
