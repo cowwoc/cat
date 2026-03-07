@@ -11,9 +11,7 @@ an LLM invocation for the purely mechanical recording work.
 
 ## Purpose
 
-Analyze mistakes using 5-whys with CAT-specific consideration of conversation length and context
-degradation. Integrates token tracking to identify context-related failures and recommend preventive
-measures including earlier decomposition.
+Investigate the root cause of a mistake and implement prevention so the mistake does not recur.
 
 ## When to Use
 
@@ -120,7 +118,7 @@ Delegate to general-purpose subagent using the Task tool with these JSON paramet
 
 ## Step 4: Run record-learning CLI (Phase 4)
 
-**Note:** If the subagent was spawned in background (Step 2), Steps 4-6 execute when the background task
+**Note:** If the subagent was spawned in background (Step 2), Steps 4-7 execute when the background task
 notification arrives, not immediately after Step 3.
 
 After the subagent completes, pass the Phase 3 output to the `record-learning` CLI tool:
@@ -171,16 +169,27 @@ Phase: Record
 Learning {learning_id} recorded. {counter_status.count}/{counter_status.threshold} mistakes since last retrospective.
 ```
 
-**If prevent.prevention_implemented is false:**
+**Error handling:**
 
-The prevent phase could not implement prevention directly because the current branch is protected and the prevention
-requires source code changes. Create a CAT issue from the issue_creation_info:
+| Condition | Action |
+|-----------|--------|
+| Subagent returns no JSON | Display error, stop |
+| JSON missing required fields | Display error with details, stop |
+| Phase status is ERROR | Display error from that phase, stop |
 
-1. **Validate issue_creation_info before proceeding.** Verify that:
+## Step 6: Create Follow-up Issue
+
+**MANDATORY when `prevent.prevention_implemented` is false. Skip this step entirely if
+`prevent.prevention_implemented` is true.**
+
+When `prevention_implemented` is false, the subagent could not commit prevention because the current branch is
+protected. A follow-up issue must be created so the prevention is not lost.
+
+1. **Validate `issue_creation_info` before proceeding.** Verify that:
    - `issue_creation_info` is present and non-empty in the prevent phase output
    - `issue_creation_info.suggested_title` is a non-empty string
    - `issue_creation_info.suggested_description` is a non-empty string
-   - `issue_creation_info.suggested_acceptance_criteria` is a non-empty string
+   - `issue_creation_info.suggested_acceptance_criteria` is a non-empty array
 
    If any field is missing or empty, display:
    ```
@@ -189,17 +198,17 @@ requires source code changes. Create a CAT issue from the issue_creation_info:
    Please create the issue manually using /cat:add.
    Suggested title: {suggested_title or "(not provided)"}
    Suggested description: {suggested_description or "(not provided)"}
-   Suggested acceptance criteria: {suggested_acceptance_criteria or "(not provided)"}
+   Suggested acceptance criteria:
+   {render each element of suggested_acceptance_criteria as "- {element}", or "(not provided)" if absent}
    ```
-   Then skip to Step 6.
+   Then continue to Step 7.
 
 2. Display to user: "Prevention requires code changes that cannot be committed on protected branch. Creating
    follow-up issue."
 
-3. Invoke `/cat:add-agent suggested_title` where `suggested_title` is the one-line summary of the prevention needed
-   (e.g., "Fix SkillLoader to look up launchers in client/bin"). This becomes the issue's name. When cat:add-agent
-   prompts for more detail, provide `suggested_description` as the description and
-   `suggested_acceptance_criteria` as the acceptance criteria.
+3. Invoke `/cat:add-agent {suggested_title}` where `{suggested_title}` is the one-line summary from
+   `issue_creation_info.suggested_title`. When cat:add-agent prompts for more detail, provide
+   `suggested_description` as the description and `suggested_acceptance_criteria` as the acceptance criteria.
 
    If `cat:add-agent` fails or returns an error, display:
    ```
@@ -209,19 +218,8 @@ requires source code changes. Create a CAT issue from the issue_creation_info:
    Description: {suggested_description}
    Acceptance criteria: {suggested_acceptance_criteria}
    ```
-   Then continue to Step 6.
 
-4. Continue to Step 6 (Display Final Summary) - note that prevention_implemented is false in the summary
-
-**Error handling:**
-
-| Condition | Action |
-|-----------|--------|
-| Subagent returns no JSON | Display error, stop |
-| JSON missing required fields | Display error with details, stop |
-| Phase status is ERROR | Display error from that phase, stop |
-
-## Step 6: Display Final Summary
+## Step 7: Display Final Summary
 
 After all phases complete, display a summary of results:
 
@@ -241,7 +239,7 @@ Commit: {commit_hash}
 {retrospective_status}
 ```
 
-If `retrospective_triggered` is true, use AskUserQuestion to offer user choice:
+If `retrospective_trigger` is true, use AskUserQuestion to offer user choice:
 
 ```yaml
 question: "Retrospective threshold exceeded. Run retrospective now?"
