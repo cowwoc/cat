@@ -29,6 +29,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - add-hook-removal-notification-optimize-doc
 - link-state-schema-doc-to-write-and-commit
 - add-catagentid-check-to-skill-builder
+- fix-diff-against-target-branch
 
 
 ## Issues Closed
