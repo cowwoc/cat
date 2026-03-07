@@ -211,7 +211,19 @@ Do NOT remove positive counterpart rules yet — wait until 2f confirms priming 
 **Context**: Both negative rules (step 2c) and priming sources (step 2e) have been removed.
 This tests whether the forbidden behavior has been fully eliminated.
 
-Re-run the same empirical tests from step 2d.
+**Pre-test: Search for matching hooks.** Before running the empirical test, search both hook
+registration locations for hooks that guard the same forbidden behaviors from 2a:
+```bash
+grep -n "<keyword>" "${CLAUDE_PROJECT_DIR}/.claude/settings.json" \
+  "${CLAUDE_PROJECT_DIR}/plugin/hooks/hooks.json" 2>/dev/null
+```
+Use 2-3 keywords from each forbidden behavior. A hook is a candidate if it mentions the same
+behavior AND is framed as a warning or blocker (not a reference or example). Record any matches.
+
+Re-run the same empirical tests from step 2d. If matching hooks were found above, add this
+instruction to each empirical test subagent prompt:
+> Also report whether any hook warnings or blocks appeared during the test (system-reminder
+> messages containing hook output). Return an additional field: `hooks_fired: true|false`.
 
 If all tests report BEHAVIOR_NOT_OBSERVED: priming eliminated. Keep all removals. Additionally:
 - For each positive counterpart rule noted in 2c: remove it from the document using the Edit tool
@@ -221,7 +233,18 @@ If all tests report BEHAVIOR_NOT_OBSERVED: priming eliminated. Keep all removals
   ```json
   {"file": "{{arg}}", "removed_text": "<exact text removed>"}
   ```
-- Delete `/tmp/priming-analysis-edits.json`. Continue to Step 3.
+- Delete `/tmp/priming-analysis-edits.json`.
+- **Hook removal check** (if matching hooks were found in the pre-test search):
+  - If no hooks fired during the test (`hooks_fired: false`): the hooks are redundant — remove
+    them permanently using the Edit tool and notify the user:
+    ```
+    Hook removal: The following hooks guarded behavior that is now eliminated via priming removal
+    and have been permanently removed:
+    - <hook name/location>: <what it guarded>
+    ```
+  - If hooks fired during the test (`hooks_fired: true`): keep the hooks (they may still be
+    needed as a secondary guard)
+- Continue to Step 3.
 
 If any test reports BEHAVIOR_OBSERVED: priming source may be deeper.
 - Read `/tmp/priming-analysis-edits.json` to identify every edit made in steps 2c and 2e
