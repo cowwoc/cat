@@ -2223,6 +2223,59 @@ public class WorkPrepareTest
   }
 
   /**
+   * Verifies that execute returns issue_path pointing to the worktree, not the main workspace.
+   * <p>
+   * Agents use issue_path to read PLAN.md via the Read tool, which is blocked by
+   * EnforceWorktreePathIsolation when the path points outside the active worktree.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeReturnsIssuePathInsideWorktree() throws IOException
+  {
+    Path projectDir = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+        resolve("v2").resolve("v2.1").resolve("worktree-path-issue");
+      Files.createDirectories(issueDir);
+      Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nTest goal\n");
+      GitCommands.runGit(projectDir, "add", ".");
+      GitCommands.runGit(projectDir, "commit", "-m", "Add worktree-path-issue");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+
+      worktreePath = Path.of(node.path("worktree_path").asString());
+      String issuePath = node.path("issue_path").asString();
+
+      // issue_path must be inside the worktree, not the main workspace issue directory
+      requireThat(issuePath, "issue_path").startsWith(worktreePath.toString());
+
+      // issue_path must end with the correct relative issue directory
+      requireThat(issuePath, "issue_path").endsWith(
+        ".claude/cat/issues/v2/v2.1/worktree-path-issue");
+
+      // issue_path must NOT be the main workspace issue directory
+      requireThat(issuePath, "issue_path").isNotEqualTo(
+        projectDir.resolve(".claude/cat/issues/v2/v2.1/worktree-path-issue").toString());
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectDir, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
    * Cleans up a worktree if it exists (best-effort, errors are swallowed).
    *
    * @param projectDir the project root directory
