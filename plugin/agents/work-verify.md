@@ -25,7 +25,7 @@ You receive a prompt containing:
 Write detailed analysis to files in the external session-scoped CAT directory:
 ```bash
 source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
-VERIFY_DIR="${PROJECT_CAT_DIR}/${CLAUDE_SESSION_ID}/cat/verify"
+VERIFY_DIR="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}/cat/verify"
 mkdir -p "${VERIFY_DIR}"
 ```
 - Criterion-level verification details: `${VERIFY_DIR}/criteria-analysis.json`
