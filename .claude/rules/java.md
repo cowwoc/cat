@@ -51,6 +51,20 @@ try (java.util.stream.Stream<Path> walk = Files.walk(dir))
 
 **Exception:** FQNs are acceptable in Javadoc `{@link}` / `{@code}` tags when the type is not already imported.
 
+### Static Imports for Common Constants
+
+Use static imports for frequently used constants to reduce verbosity:
+
+```java
+// Good - static import
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+byte[] bytes = str.getBytes(UTF_8);
+
+// Avoid - qualified constant
+byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
+```
+
 ### Single-Statement Blocks
 Omit braces for if/else/for/while with a single-statement body that fits on one visual line.
 Add braces when the body spans multiple visual lines (e.g., string concatenation continuation):
