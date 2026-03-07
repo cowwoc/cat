@@ -493,7 +493,8 @@ public final class WorkPrepare
     result.put("major", major);
     result.put("minor", minor);
     result.put("issue_name", issueName);
-    result.put("issue_path", issuePath.toString());
+    Path relativeIssuePath = projectDir.relativize(issuePath);
+    result.put("issue_path", worktreePath.resolve(relativeIssuePath).toString());
     result.put("worktree_path", worktreePath.toString());
     result.put("issue_branch", issueBranch);
     result.put("target_branch", targetBranch);
