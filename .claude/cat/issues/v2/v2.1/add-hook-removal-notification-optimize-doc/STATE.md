@@ -1,6 +1,6 @@
 # State
 
-- **Status:** completed
+- **Status:** closed
 - **Resolution:** implemented
 - **Progress:** 100%
 - **Dependencies:** []
