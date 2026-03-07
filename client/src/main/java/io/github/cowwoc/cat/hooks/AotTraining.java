@@ -63,7 +63,8 @@ public final class AotTraining
     try (JvmScope scope = new MainJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = HookInput.empty(mapper);
+      HookInput input = HookInput.readFrom(mapper, new ByteArrayInputStream(
+        "{\"session_id\": \"aot-training-session\"}".getBytes(StandardCharsets.UTF_8)));
       HookOutput output = new HookOutput(scope);
 
       // Hook handlers with run(HookInput, HookOutput)

@@ -252,9 +252,8 @@ the current HEAD of the issue branch. Uncommitted changes in the main agent's wo
 subagent's worktree. All changes must be committed before spawning so the subagent sees the complete state.
 
 ```bash
-cd ${WORKTREE_PATH}
-git status --porcelain  # Must be empty before spawning
-git add -A && git commit -m "planning: update PLAN.md before delegation"  # if needed
+cd "${WORKTREE_PATH}" && git status --porcelain  # Must be empty before spawning
+cd "${WORKTREE_PATH}" && git add -A && git commit -m "planning: update PLAN.md before delegation"  # if needed
 ```
 
 ### Single-Subagent Execution (no groups or only one group)
@@ -338,8 +337,7 @@ Task tool:
 **After the subagent returns**, merge its commits back into the issue branch:
 
 ```bash
-cd ${WORKTREE_PATH}
-git merge --ff-only <subagent-branch>  # fast-forward merge of subagent commits
+cd "${WORKTREE_PATH}" && git merge --ff-only <subagent-branch>  # fast-forward merge of subagent commits
 ```
 
 The subagent branch name and worktree path are returned in the Task tool result when `isolation: "worktree"` is
@@ -447,9 +445,8 @@ Task tool:
 alphabetical order (A first, then B, C, ...):**
 
 ```bash
-cd ${WORKTREE_PATH}
-git merge --ff-only <subagent-A-branch>
-git merge --no-ff <subagent-B-branch>  # use --no-ff if ff-only fails due to diverged history
+cd "${WORKTREE_PATH}" && git merge --ff-only <subagent-A-branch>
+# For subsequent groups where ff-only fails (diverged history), use /cat:git-merge-linear-agent
 # ... repeat for each group
 ```
 
@@ -483,8 +480,7 @@ what the orchestrator instructed for that specific deliverable.
 **Get actual commit messages from git:**
 
 ```bash
-cd ${WORKTREE_PATH}
-git log --format="%H %s" ${TARGET_BRANCH}..HEAD
+cd "${WORKTREE_PATH}" && git log --format="%H %s" ${TARGET_BRANCH}..HEAD
 ```
 
 This returns lines of: `<commit-hash> <commit-subject>`.
@@ -515,8 +511,7 @@ When a mismatch is detected, the orchestrator MUST amend the commit(s) to use th
 
 For single commit:
 ```bash
-cd ${WORKTREE_PATH}
-git commit --amend -m "<correct message>"
+cd "${WORKTREE_PATH}" && git commit --amend -m "<correct message>"
 ```
 
 For multiple commits: Use interactive rebase or sequential amend from oldest to newest to fix each incorrect message.
@@ -899,9 +894,9 @@ Initialize loop counter: `AUTOFIX_ITERATION=0`
    substitute `"(field missing — see detail_file for full context)"`.
 
    **`detail_file_paths`** — a newline-separated list of absolute paths to concern detail files. For each filtered
-   concern, if `detail_file` is present and non-empty, prepend `${WORKTREE_PATH}/` to form an absolute path, then
-   include it only if the file exists on disk. Omit concerns with no `detail_file` or a non-existent file — this is
-   normal when a reviewer found no detailed concerns worth recording.
+   concern, if `detail_file` is present and non-empty, use it as an absolute path (reviewer agents write absolute
+   paths using their `${WORKTREE_PATH}`). Include the path only if the file exists on disk. Omit concerns with no
+   `detail_file` or a non-existent file — this is normal when a reviewer found no detailed concerns worth recording.
 
 3. Spawn a planning subagent to analyze the concerns and produce a fix strategy:
    ```
@@ -1021,8 +1016,7 @@ defer it.
 
 ```bash
 # Compare against target branch (what the issue changed)
-cd "${WORKTREE_PATH}"
-git diff --name-only "${TARGET_BRANCH}..HEAD"
+cd "${WORKTREE_PATH}" && git diff --name-only "${TARGET_BRANCH}..HEAD"
 ```
 
 **Step 2: For each remaining concern, calculate benefit and cost:**
@@ -1355,8 +1349,7 @@ about what they are approving.
 
 2. **Display commit summary** — list commits since target branch:
    ```bash
-   cd ${WORKTREE_PATH}
-   git log --oneline ${TARGET_BRANCH}..HEAD
+   cd "${WORKTREE_PATH}" && git log --oneline ${TARGET_BRANCH}..HEAD
    ```
 
 3. **Display issue goal** — extract the first non-empty line after `## Goal` in PLAN.md:

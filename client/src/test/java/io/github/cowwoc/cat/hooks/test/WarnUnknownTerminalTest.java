@@ -226,11 +226,11 @@ public class WarnUnknownTerminalTest
   }
 
   /**
-   * Verifies that an empty session ID causes WarnUnknownTerminal to return an empty result without
-   * emitting a warning.
+   * Verifies that an empty session ID throws IllegalStateException (fail-fast).
    */
-  @Test
-  public void emptySessionIdSkipsWarning() throws IOException
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*sessionId is empty.*")
+  public void emptySessionIdThrows() throws IOException
   {
     Path projectDir = Files.createTempDirectory("cat-test-empty-session-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -241,11 +241,8 @@ public class WarnUnknownTerminalTest
       ensureEmojiWidthsFile(pluginRoot);
 
       JsonMapper mapper = scope.getJsonMapper();
-      // session_id is empty — handler should return early
       HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"\"}");
-      SessionStartHandler.Result result = new WarnUnknownTerminal(scope).handle(input);
-
-      requireThat(result.stderr(), "stderr").isEmpty();
+      new WarnUnknownTerminal(scope).handle(input);
     }
     finally
     {
