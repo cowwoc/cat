@@ -47,6 +47,11 @@ it without a hard failure signal.
   - Step 5: Display Phase Summaries (display only)
   - Step 6: Create Follow-up Issue (**MANDATORY** when `prevention_implemented=false`, else skip)
   - Step 7: Display Final Summary (renamed from current Step 6)
+  - Update `## Purpose` section to clearly state: "Investigate the root cause of a mistake and
+    implement prevention so the mistake does not recur."
+- `plugin/skills/retrospective-agent/SKILL.md` — update `description:` field to clarify:
+  "Review whether previously implemented preventions were effective or need revision; identify
+  patterns across multiple learnings."
 
 ## Pre-conditions
 
@@ -107,7 +112,18 @@ it without a hard failure signal.
      — update the `If retrospective_triggered` block within the renamed Step 7 if needed
   - Files: `plugin/skills/learn/first-use.md`
 
-- Commit: `bugfix: split Step 5 of learn skill to make follow-up issue creation a distinct mandatory step`
+- In `plugin/skills/learn/first-use.md`:
+  - Update `## Purpose` to read: "Investigate the root cause of a mistake and implement prevention
+    so the mistake does not recur."
+  - Files: `plugin/skills/learn/first-use.md`
+
+- In `plugin/skills/retrospective-agent/SKILL.md`:
+  - Update the `description:` field to: "Review whether preventions implemented by /cat:learn were
+    effective or need revision. Analyzes patterns across multiple recorded learnings to identify
+    systemic improvements."
+  - Files: `plugin/skills/retrospective-agent/SKILL.md`
+
+- Commit: `bugfix: split Step 5 of learn skill and clarify learn vs retrospective purpose`
   - Files: _(git only)_
 
 ## Post-conditions
@@ -116,5 +132,9 @@ it without a hard failure signal.
   when `prevention_implemented=false`
 - [ ] `first-use.md` Step 7 is "Display Final Summary" (formerly Step 6)
 - [ ] The `**If prevent.prevention_implemented is false:**` sub-section is removed from Step 5
+- [ ] `first-use.md` `## Purpose` states learn's role as root cause investigation and prevention
+  implementation
+- [ ] `retrospective-agent/SKILL.md` description states retrospective's role as reviewing prevention
+  effectiveness
 - [ ] E2E: Run `/cat:learn` with a mistake that cannot be prevented on a protected branch; a
   follow-up issue is created
