@@ -1,0 +1,269 @@
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
+# Skill Benchmarking
+
+The benchmark/iterate workflow for measuring skill quality using parallel test execution, quantitative
+aggregation, and a structured run-grade-review-improve-repeat cycle.
+
+## Overview
+
+Skill benchmarking produces quantitative evidence about whether a skill improves agent behavior. Each
+benchmark run executes the same test cases in two configurations — `with-skill` (skill active) and
+`without-skill` (skill inactive) — grades the outputs against defined assertions, and aggregates
+pass rates, timing, and token counts. The result is a benchmark JSON that supports A/B comparison
+and pattern analysis.
+
+The full loop: write test cases -> spawn parallel runs -> grade outputs -> aggregate -> analyze ->
+review with user -> improve skill -> repeat.
+
+## Eval Set Format
+
+An eval set is a JSON array of test cases. Each test case defines the prompt to send to the
+subagent and the assertions to evaluate against the output.
+
+```json
+[
+  {
+    "id": "case-1",
+    "prompt": "Squash my last 3 commits into one",
+    "assertions": [
+      "Output includes a squash commit message",
+      "Agent invokes the git-squash skill",
+      "No destructive git commands are run without confirmation"
+    ]
+  },
+  {
+    "id": "case-2",
+    "prompt": "Combine the last two commits before I merge",
+    "assertions": [
+      "Output includes a squash commit message",
+      "Agent invokes the git-squash skill"
+    ]
+  }
+]
+```
+
+**Field definitions:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique identifier for this test case (used in grading output and benchmark JSON) |
+| `prompt` | string | The user prompt sent to the subagent under test |
+| `assertions` | array of strings | Natural-language assertions evaluated against the subagent output |
+
+**Guidelines for writing test cases:**
+
+- Use 2-5 test cases per eval set. Fewer than 2 provides insufficient signal; more than 5 becomes
+  expensive to run and hard to review.
+- Write assertions in terms of observable output properties (e.g., "Output includes X", "Agent
+  invokes Y", "No Z is present").
+- Avoid assertions that are always true regardless of skill activation — these are non-discriminating
+  and will be flagged by skill-analyzer-agent.
+- For subjective skills (e.g., creative writing, explanation quality), skip assertions and rely on
+  the human review step instead.
+
+## Assertion Schema
+
+Each assertion is a natural-language string that the skill-grader-agent evaluates against
+a single test-case output.
+
+An assertion should describe a **verifiable property** of the output:
+
+```
+Good: "Output includes a commit message in the conventional format"
+Good: "Agent does not run git push without explicit user confirmation"
+Bad:  "Output is good"          — not verifiable
+Bad:  "Agent performs correctly" — not falsifiable
+```
+
+The grader assigns each assertion a verdict and an evidence quote. The verdict is:
+- **PASS**: The output clearly satisfies the assertion.
+- **FAIL**: The output violates the assertion, or provides no evidence the assertion holds.
+
+## Grading Output Schema
+
+The skill-grader-agent returns one grading JSON object per run. The structure is:
+
+```json
+{
+  "test_case_id": "case-1-with-skill",
+  "config": "with-skill",
+  "assertion_results": [
+    {
+      "assertion": "Output includes a squash commit message",
+      "verdict": "PASS",
+      "evidence": "Squash commit: feat: combine login and logout handlers",
+      "explanation": "The output contains a squash commit message in conventional format."
+    },
+    {
+      "assertion": "No destructive git commands are run without confirmation",
+      "verdict": "FAIL",
+      "evidence": "(no relevant text found)",
+      "explanation": "The output does not show a confirmation step before running git reset."
+    }
+  ],
+  "pass_count": 1,
+  "fail_count": 1,
+  "total_count": 2,
+  "pass_rate": 0.50
+}
+```
+
+**Field definitions:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `test_case_id` | string | Matches the eval set `id` plus config suffix (e.g., `"case-1-with-skill"`) |
+| `config` | string | `"with-skill"` or `"without-skill"` |
+| `assertion_results` | array | One entry per assertion in evaluation order |
+| `assertion` | string | The original assertion text |
+| `verdict` | string | `"PASS"` or `"FAIL"` |
+| `evidence` | string | Verbatim quote from output, or `"(no relevant text found)"` |
+| `explanation` | string | One-sentence explanation of the verdict |
+| `pass_count` | integer | Number of assertions that passed |
+| `fail_count` | integer | Number of assertions that failed |
+| `total_count` | integer | `pass_count + fail_count` |
+| `pass_rate` | number | `pass_count / total_count`, rounded to two decimal places |
+
+## Benchmark JSON Schema
+
+The BenchmarkAggregator Java tool accepts all grading outputs for a single eval run and returns
+a benchmark JSON object used by skill-analyzer-agent and displayed in the review step.
+
+```json
+{
+  "configs": {
+    "with-skill": {
+      "pass_rate": 0.83,
+      "mean_duration_ms": 4200,
+      "stddev_duration_ms": 800,
+      "mean_tokens": 1500,
+      "stddev_tokens": 200
+    },
+    "without-skill": {
+      "pass_rate": 0.50,
+      "mean_duration_ms": 3100,
+      "stddev_duration_ms": 300,
+      "mean_tokens": 1100,
+      "stddev_tokens": 150
+    }
+  },
+  "delta": {
+    "pass_rate": 0.33,
+    "mean_duration_ms": 1100,
+    "mean_tokens": 400
+  }
+}
+```
+
+**Field definitions:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `configs` | object | Per-config aggregated stats keyed by config name |
+| `configs.<name>.pass_rate` | number | Mean pass rate across all test cases for this config |
+| `configs.<name>.mean_duration_ms` | number | Mean wall-clock time in milliseconds per run |
+| `configs.<name>.stddev_duration_ms` | number | Standard deviation of duration across runs |
+| `configs.<name>.mean_tokens` | number | Mean total token count per run |
+| `configs.<name>.stddev_tokens` | number | Standard deviation of token count across runs |
+| `delta` | object | `with-skill` minus `without-skill` for each metric (positive = with-skill is higher/slower/more) |
+
+**BenchmarkAggregator inputs** (one entry per graded run):
+
+```json
+[
+  {
+    "config": "with-skill",
+    "test_case_id": "case-1",
+    "assertions": [true, false, true],
+    "duration_ms": 4100,
+    "total_tokens": 1480
+  },
+  {
+    "config": "without-skill",
+    "test_case_id": "case-1",
+    "assertions": [false, false, false],
+    "duration_ms": 3200,
+    "total_tokens": 1090
+  }
+]
+```
+
+## Benchmark/Iterate Workflow
+
+### Step 1: Write Test Cases (skill-builder Step 9)
+
+Create an eval set JSON with 2-5 test cases. Each case has a `prompt` and an `assertions` array.
+For subjective skills, include only `prompt` with an empty `assertions` array and rely on the
+human review step.
+
+### Step 2: Spawn Parallel Runs (skill-builder Step 10)
+
+For each test case, spawn **two subagents in the same turn** — one with the skill active and one
+without. Pass each subagent its prompt, whether the skill is active, and instructions to record
+`duration_ms` and `total_tokens` on completion.
+
+Do not run test cases sequentially: all test cases for all configs must be in flight simultaneously
+to minimize total elapsed time.
+
+### Step 3: Grade and Aggregate (skill-builder Step 11)
+
+For each completed run:
+1. Invoke `skill-grader-agent` with the run's output and assertion list. Record the grading JSON.
+2. After all runs are graded, call the BenchmarkAggregator Java tool with all grading outputs.
+   The tool returns the benchmark JSON.
+
+### Step 4: Analyze and Review (skill-builder Step 12)
+
+1. Invoke `skill-analyzer-agent` with the benchmark JSON. The agent returns a pattern analysis report.
+2. Display the benchmark summary table and the pattern analysis report to the user.
+3. Ask the user whether to iterate (improve and re-run) or accept the current skill version.
+
+**Benchmark summary table format:**
+
+```
+BENCHMARK SUMMARY
+=================
+Config        | Pass Rate | Mean Duration | StdDev Duration | Mean Tokens | StdDev Tokens
+------------- | --------- | ------------- | --------------- | ----------- | -------------
+with-skill    |   83%     |    4200 ms    |      800 ms     |    1500     |      200
+without-skill |   50%     |    3100 ms    |      300 ms     |    1100     |      150
+DELTA         |  +33%     |   +1100 ms    |                 |    +400     |
+```
+
+### Step 5: Improve and Iterate (skill-builder Step 13)
+
+If the user requests improvement:
+1. Apply targeted changes to the skill based on the pattern analysis and user feedback.
+2. Return to Step 2 and re-run with the updated skill.
+3. Repeat until the user is satisfied or pass rate stops improving across two consecutive iterations.
+
+If convergence: the skill is ready to commit. Optionally run description optimization via the
+DescriptionOptimizer Java tool before finalizing.
+
+## Description Optimization
+
+After the iteration loop converges, the DescriptionOptimizer tool can be used to improve the skill's
+`description:` frontmatter for better trigger routing:
+
+- **Inputs**: skill path, eval set JSON (query, should_trigger), model ID, max_iterations (default 5)
+- **Split**: 60% of eval cases used for training iterations, 40% held out for final selection
+- **Output**: JSON with `best_description` and per-iteration train/test scores
+
+The optimizer runs up to `max_iterations` description variants, scores each on the training split,
+then selects the variant with the highest score on the held-out test split. This prevents overfitting
+to the training cases.
+
+```json
+{
+  "best_description": "Use BEFORE squashing commits...",
+  "iterations": [
+    { "iteration": 1, "description": "...", "train_score": 0.80, "test_score": 0.75 },
+    { "iteration": 2, "description": "...", "train_score": 0.90, "test_score": 0.85 }
+  ],
+  "selected_iteration": 2
+}
+```
