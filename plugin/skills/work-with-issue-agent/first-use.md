@@ -205,7 +205,7 @@ If requirements change during implementation (user feedback, discovered constrai
 Read effort from config:
 
 ```bash
-CONFIG_FILE="/workspace/.claude/cat/cat-config.json"
+CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json"
 EFFORT=$(grep '"effort"' "$CONFIG_FILE" | sed 's/.*"effort"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 if [[ -z "$EFFORT" ]]; then
   echo "ERROR: 'effort' key not found in $CONFIG_FILE" >&2
@@ -1245,6 +1245,21 @@ Before presenting the approval gate, rebase the squashed issue branch onto the c
 the target branch. This ensures the diff shown at the approval gate reflects what the merge will
 actually produce.
 
+### Step 8a: Capture Old Fork Point
+
+Record the current fork point before the rebase so the impact analysis can compare what changed:
+
+```bash
+cd "${WORKTREE_PATH}"
+OLD_FORK_POINT=$(git merge-base HEAD "${TARGET_BRANCH}" 2>/dev/null)
+if [[ -z "$OLD_FORK_POINT" ]]; then
+  echo "ERROR: Could not determine fork point before rebase" >&2
+  exit 1
+fi
+```
+
+### Step 8b: Perform Rebase
+
 **Invoke `cat:git-rebase-agent`:**
 ```
 Skill("cat:git-rebase-agent", args="{WORKTREE_PATH} {TARGET_BRANCH}")
@@ -1255,16 +1270,114 @@ Skill("cat:git-rebase-agent", args="{WORKTREE_PATH} {TARGET_BRANCH}")
 - Resolve each conflict
 - Stage resolved files and continue the rebase
 - Delete the backup branch created by cat:git-rebase-agent after resolution
-- Continue to Step 9 (Approval Gate)
+- Proceed to Step 8c (Impact Analysis)
 
 **If rebase reports OK:**
 - Delete the backup branch created by cat:git-rebase-agent
-- Continue to Step 9 (Approval Gate)
+- Proceed to Step 8c (Impact Analysis)
 
 **If rebase reports ERROR:**
 - Output the error message
 - Restore from the backup branch if needed
 - STOP — do not proceed to approval gate until the error is resolved
+
+### Step 8c: Post-Rebase Impact Analysis
+
+After a successful rebase (OK or resolved CONFLICT), capture the new fork point and invoke the
+impact analysis skill to determine whether upstream changes affect the current PLAN.md:
+
+```bash
+cd "${WORKTREE_PATH}"
+NEW_FORK_POINT=$(git merge-base HEAD "${TARGET_BRANCH}" 2>/dev/null)
+if [[ -z "$NEW_FORK_POINT" ]]; then
+  echo "WARNING: Could not determine fork point after rebase; skipping impact analysis" >&2
+  # Continue to Step 9 without analysis
+fi
+```
+
+If `NEW_FORK_POINT` equals `OLD_FORK_POINT`, the target branch had no new commits — skip impact
+analysis and continue to Step 9.
+
+Otherwise, invoke the impact analysis skill and capture its compact JSON output as `IMPACT_JSON`:
+
+```
+IMPACT_JSON = Skill("cat:rebase-impact-agent", args="${ISSUE_PATH} ${WORKTREE_PATH} ${OLD_FORK_POINT} ${NEW_FORK_POINT}")
+```
+
+Extract the severity from the JSON:
+
+```bash
+IMPACT_SEVERITY=$(echo "${IMPACT_JSON}" | grep -o '"severity"[[:space:]]*:[[:space:]]*"[^"]*"' \
+  | head -1 | sed 's/.*"severity"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+```
+
+**Route based on the returned severity:**
+
+| `IMPACT_SEVERITY` value | Action |
+|------------------------|--------|
+| `NO_IMPACT` | Continue silently to Step 9 |
+| `LOW` | Continue silently to Step 9 |
+| `MEDIUM` | Auto-revise PLAN.md then continue to Step 9 (see below) |
+| `HIGH` | Write proposal file then ask user for guidance (see below) |
+
+**MEDIUM: Auto-Revision**
+
+Read `EFFORT` from config and read the full analysis file before invoking the plan builder:
+
+```bash
+CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json"
+EFFORT=$(grep '"effort"' "$CONFIG_FILE" | sed 's/.*"effort"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+if [[ -z "$EFFORT" ]]; then
+  echo "ERROR: 'effort' key not found in $CONFIG_FILE" >&2
+  exit 1
+fi
+ANALYSIS_PATH=$(echo "${IMPACT_JSON}" | grep -o '"analysis_path"[[:space:]]*:[[:space:]]*"[^"]*"' \
+  | sed 's/.*"analysis_path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+```
+
+Invoke `cat:plan-builder-agent` to mechanically revise the PLAN.md based on the upstream changes:
+
+```
+Skill("cat:plan-builder-agent", args="${CAT_AGENT_ID} ${EFFORT} revise ${ISSUE_PATH} rebase introduced upstream changes that affect PLAN.md — see ${ANALYSIS_PATH}")
+```
+
+If any implementation work was already committed on this branch before the rebase, spawn an implementation
+subagent to apply the revised PLAN.md to the already-implemented code. This ensures in-progress work
+remains consistent with the updated plan before continuing. The subagent receives the revised PLAN.md and
+the analysis file path as context.
+
+After the plan-builder (and any code-revision subagent) returns, continue to Step 9.
+
+**HIGH: User Guidance Required**
+
+Write a proposal file summarizing the conflict for the user, then ask for input:
+
+```bash
+PROPOSAL_PATH="${ISSUE_PATH}/rebase-conflict-proposal.md"
+```
+
+Write to `${PROPOSAL_PATH}`:
+
+```markdown
+# Rebase Impact: User Decision Required
+
+The rebase introduced upstream changes that conflict with the current PLAN.md in ways
+that require a human decision. See the full analysis:
+
+**Analysis file:** <analysis_path from returned JSON>
+
+## Summary
+<summary from returned JSON>
+
+## Options
+Please review the analysis and choose one of:
+1. Revise the plan (describe the preferred approach)
+2. Proceed without plan revision (upstream changes do not affect remaining work)
+3. Abort and re-scope the issue
+```
+
+Present the proposal file path to the user and invoke `AskUserQuestion` to request guidance
+before continuing to Step 9.
 
 ## Step 9: Approval Gate (MANDATORY)
 
