@@ -17,6 +17,7 @@ import io.github.cowwoc.cat.hooks.session.InjectCatAgentId;
 import io.github.cowwoc.cat.hooks.session.InjectMainAgentRules;
 import io.github.cowwoc.cat.hooks.session.InjectCriticalThinking;
 import io.github.cowwoc.cat.hooks.session.InjectEnv;
+import io.github.cowwoc.cat.hooks.session.InjectSessionInstructions;
 import io.github.cowwoc.cat.hooks.session.InjectSkillListing;
 import io.github.cowwoc.cat.hooks.session.RestoreCwdAfterCompaction;
 import io.github.cowwoc.cat.hooks.session.RestoreWorktreeOnResume;
@@ -52,6 +53,7 @@ public final class SessionStartHook implements HookHandler
       new WarnUnknownTerminal(scope),
       new EchoSessionId(),
       new CheckRetrospectiveDue(scope),
+      new InjectSessionInstructions(),
       new InjectMainAgentRules(scope),
       new InjectSkillListing(scope),
       new InjectCriticalThinking(),

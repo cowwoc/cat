@@ -320,8 +320,14 @@ public final class RulesDiscovery
   /**
    * Discovers, filters, and renders CAT rules for an audience in one step.
    * <p>
-   * Delegates to {@link #getCatRulesForAudience(List, YAMLMapper, BiFunction, List)} with a
-   * single-element list containing {@code rulesDir}.
+   * Constructs a {@link RulesDiscovery} for the given directory, discovers all rule files,
+   * applies the provided filter function (which combines audience and paths checks), and returns
+   * the rendered content. Returns an empty string if the rules directory does not exist, no rules
+   * survive the filter, or all content is blank.
+   * <p>
+   * This shared pipeline is used by both the main-agent and subagent injection paths.
+   * The only difference between callers is which filter function they supply:
+   * {@link #filterForMainAgent} or {@link #filterForSubagent}.
    *
    * @param rulesDir    the directory containing rule files (typically {@code .claude/cat/rules/})
    * @param yamlMapper  the YAML mapper for parsing frontmatter
@@ -334,41 +340,11 @@ public final class RulesDiscovery
     BiFunction<List<RuleFile>, List<String>, List<RuleFile>> filterFn, List<String> activeFiles)
   {
     requireThat(rulesDir, "rulesDir").isNotNull();
-    return getCatRulesForAudience(List.of(rulesDir), yamlMapper, filterFn, activeFiles);
-  }
-
-  /**
-   * Discovers, filters, and renders CAT rules from multiple source directories for an audience in
-   * one step.
-   * <p>
-   * Discovers rules from all directories in order, concatenates them (no filename-based
-   * deduplication), then applies the audience filter and renders the result. Returns an empty
-   * string if all directories are missing, no rules survive the filter, or all content is blank.
-   * <p>
-   * Directories are processed in order: plugin-bundled rules first, then project-local rules.
-   * Within each directory, rules are sorted alphabetically by filename.
-   *
-   * @param rulesDirs   the ordered list of directories to discover rules from
-   * @param yamlMapper  the YAML mapper for parsing frontmatter
-   * @param filterFn    function that takes all rules and active files, and returns the filtered rules
-   * @param activeFiles the list of files currently active in the session (for paths matching)
-   * @return the rendered rule content, or empty string if no rules apply
-   * @throws NullPointerException if any parameter is null
-   */
-  public static String getCatRulesForAudience(List<Path> rulesDirs, YAMLMapper yamlMapper,
-    BiFunction<List<RuleFile>, List<String>, List<RuleFile>> filterFn, List<String> activeFiles)
-  {
-    requireThat(rulesDirs, "rulesDirs").isNotNull();
     requireThat(yamlMapper, "yamlMapper").isNotNull();
     requireThat(filterFn, "filterFn").isNotNull();
     requireThat(activeFiles, "activeFiles").isNotNull();
 
-    // Collect all rules from all directories in order (plugin-bundled first, project-local second).
-    // No deduplication — if the same filename exists in both sources, both are included.
-    List<RuleFile> allRules = new ArrayList<>();
-    for (Path rulesDir : rulesDirs)
-      allRules.addAll(new RulesDiscovery(rulesDir, yamlMapper).discoverAll());
-
+    List<RuleFile> allRules = new RulesDiscovery(rulesDir, yamlMapper).discoverAll();
     if (allRules.isEmpty())
       return "";
 
