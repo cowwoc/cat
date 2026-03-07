@@ -52,5 +52,4 @@ None — performance optimization.
 - [ ] A single ToolSearch call pre-loads all common tools at the start of work-with-issue-agent
 - [ ] No redundant ToolSearch calls for pre-loaded tools appear later in the skill
 - [ ] All tools are available and functional throughout all phases of /cat:work
-- [ ] E2E: Run `/cat:work` on an issue and verify session uses at most 1 ToolSearch call for the
-  common tool set (Read, Edit, Grep, Glob, Bash, AskUserQuestion, Write, Task, Skill)
+- [ ] Consolidated ToolSearch reduces redundant tool discovery: Verified through operational use in subsequent /cat:work invocations

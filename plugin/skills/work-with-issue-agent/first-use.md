@@ -39,6 +39,11 @@ The main `/cat:work` skill invokes this with positional space-separated argument
 read ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH ESTIMATED_TOKENS TRUST VERIFY <<< "$ARGUMENTS"
 ```
 
+## Tool Preloading
+
+Add a single consolidated ToolSearch call using `select:Read,Bash,AskUserQuestion,Task,Skill` to
+pre-load all tools needed before Phase 1 executes.
+
 ## Phase 1: Implement
 
 Invoke the implement phase skill:
