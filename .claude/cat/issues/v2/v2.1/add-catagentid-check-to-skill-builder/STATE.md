@@ -2,6 +2,6 @@
 
 - **Status:** open
 - **Progress:** 0%
-- **Dependencies:** [2.1-fix-read-block-on-issue-planning-files]
+- **Dependencies:** []
 - **Blocks:** []
 - **Target Branch:** v2.1
