@@ -516,12 +516,12 @@ public final class SubagentStartHookTest
   }
 
   /**
-   * Verifies that run() throws IllegalArgumentException when session_id is blank.
+   * Verifies that HookInput.readFrom throws IllegalStateException when session_id is blank.
    *
    * @throws IOException if file operations fail
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*session_id.*")
+    expectedExceptionsMessageRegExp = ".*sessionId is empty.*")
   public void getAgentIdContextAbsentWhenSessionIdBlank() throws IOException
   {
     Path projectDir = Files.createTempDirectory("cat-test-session-id-blank-");
@@ -529,10 +529,7 @@ public final class SubagentStartHookTest
     try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"session_id\": \"\", \"agent_id\": \"subagent-xyz\"}");
-      HookOutput output = new HookOutput(scope);
-      new SubagentStartHook(scope).run(input, output);
+      createInput(mapper, "{\"session_id\": \"\", \"agent_id\": \"subagent-xyz\"}");
     }
     finally
     {

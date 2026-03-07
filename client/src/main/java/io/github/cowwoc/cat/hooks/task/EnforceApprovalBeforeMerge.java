@@ -111,16 +111,6 @@ public final class EnforceApprovalBeforeMerge implements TaskHandler
     if (trust == TrustLevel.HIGH)
       return Result.allow();
 
-    if (sessionId.isEmpty())
-    {
-      String reason = "FAIL: Cannot verify user approval - session ID not available.\n" +
-                      "\n" +
-                      "Trust level is \"" + trust + "\" which requires explicit approval before merge.\n" +
-                      "\n" +
-                      "BLOCKING: This merge attempt is blocked until user approval can be verified.";
-      return Result.block(reason);
-    }
-
     Path sessionFile = scope.getSessionBasePath().resolve(sessionId + ".jsonl");
 
     if (!Files.exists(sessionFile))

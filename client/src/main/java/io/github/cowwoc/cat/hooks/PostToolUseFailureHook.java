@@ -74,9 +74,6 @@ public final class PostToolUseFailureHook implements HookHandler
     requireThat(output, "output").isNotNull();
 
     String sessionId = input.getSessionId();
-    if (sessionId.isEmpty())
-      return HookResult.withoutWarnings(output.empty());
-
     // Create handlers using sessionId from HookInput
     Path sessionDirectory = scope.getSessionBasePath().resolve(sessionId);
     List<PostToolHandler> handlers = List.of(

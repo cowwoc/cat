@@ -693,7 +693,7 @@ Wait for all stakeholder subagents to complete. Parse each response as JSON:
       "location": "file:line",
       "explanation": "Brief description of the concern",
       "recommendation": "Brief remediation guidance",
-      "detail_file": ".claude/cat/review/<stakeholder>-concerns.json"
+      "detail_file": "${WORKTREE_PATH}/.claude/cat/review/<stakeholder>-concerns.json"
     }
   ]
 }
@@ -846,7 +846,7 @@ The caller parses these fields:
   - `location`: file and line reference (e.g., `"src/UserDao.java:45"`)
   - `explanation`: brief description of the concern
   - `recommendation`: brief remediation guidance
-  - `detail_file`: path to detailed reviewer analysis (e.g., `".claude/cat/review/security-concerns.json"`)
+  - `detail_file`: absolute path to detailed reviewer analysis (e.g., `"${WORKTREE_PATH}/.claude/cat/review/security-concerns.json"`)
 - `summary`: brief summary of review outcome
 
 The `detail_file` path points to the comprehensive analysis written by the reviewer subagent. The main agent must NOT

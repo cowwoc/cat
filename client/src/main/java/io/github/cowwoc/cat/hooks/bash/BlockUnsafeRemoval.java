@@ -105,7 +105,7 @@ public final class BlockUnsafeRemoval implements BashHandler
     String command = input.getCommand();
     String workingDirectory = input.getString("cwd");
     String sessionId = input.getSessionId();
-    String catAgentId = input.getCompositeAgentId(sessionId);
+    String catAgentId = input.getCatAgentId(sessionId);
 
     try
     {
