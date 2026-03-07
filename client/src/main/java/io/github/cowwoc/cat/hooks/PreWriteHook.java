@@ -14,7 +14,6 @@ import io.github.cowwoc.cat.hooks.write.BlockGitconfigFileWrite;
 import io.github.cowwoc.cat.hooks.write.EnforcePluginFileIsolation;
 import io.github.cowwoc.cat.hooks.write.EnforceWorktreePathIsolation;
 import io.github.cowwoc.cat.hooks.write.StateSchemaValidator;
-import io.github.cowwoc.cat.hooks.write.ValidateStateMdFormat;
 import io.github.cowwoc.cat.hooks.write.WarnBaseBranchEdit;
 import tools.jackson.databind.JsonNode;
 
@@ -45,7 +44,7 @@ public final class PreWriteHook implements HookHandler
    * Creates a new PreWriteHook instance with default handlers.
    * <p>
    * Handlers are checked in order. EnforceWorkflowCompletion warns first, then WarnBaseBranchEdit
-   * warns (non-blocking), followed by blocking handlers (ValidateStateMdFormat, StateSchemaValidator,
+   * warns (non-blocking), followed by blocking handlers (StateSchemaValidator,
    * BlockGitconfigFileWrite, EnforcePluginFileIsolation, EnforceWorktreePathIsolation).
    *
    * @param scope the JVM scope providing project directory and shared services
@@ -57,7 +56,6 @@ public final class PreWriteHook implements HookHandler
     this.handlers = List.of(
       new EnforceWorkflowCompletion(),
       new WarnBaseBranchEdit(scope),
-      new ValidateStateMdFormat(),
       new StateSchemaValidator(),
       new BlockGitconfigFileWrite(),
       new EnforcePluginFileIsolation(),
