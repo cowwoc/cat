@@ -25,6 +25,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - extract-shared-planning-approach
 - move-planning-to-subagents
 - enforce-patience-matrix-before-approval-gate
+- add-rebase-impact-analysis
 
 
 ## Issues Closed
