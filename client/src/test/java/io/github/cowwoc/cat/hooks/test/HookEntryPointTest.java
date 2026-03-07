@@ -63,6 +63,19 @@ public class HookEntryPointTest
    */
   private HookInput createInput(JsonMapper mapper, String json)
   {
+    // Inject a default session_id if the JSON is valid but doesn't contain one
+    if (!json.isBlank() && json.contains("{") && !json.contains("session_id"))
+    {
+      json = json.stripTrailing();
+      if (json.endsWith("}"))
+      {
+        String inner = json.substring(1, json.length() - 1).strip();
+        if (inner.isEmpty())
+          json = "{\"session_id\": \"test-session\"}";
+        else
+          json = json.substring(0, json.length() - 1) + ", \"session_id\": \"test-session\"}";
+      }
+    }
     return HookInput.readFrom(mapper, new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
   }
 
@@ -305,44 +318,44 @@ public class HookEntryPointTest
   // --- HookInput error path tests ---
 
   /**
-   * Verifies that HookInput.readFrom with malformed JSON returns empty HookInput.
+   * Verifies that HookInput.readFrom with malformed JSON throws IllegalStateException.
    */
-  @Test
-  public void hookInputWithMalformedJsonReturnsEmpty() throws IOException
+  @Test(expectedExceptions = IllegalStateException.class,
+    expectedExceptionsMessageRegExp = ".*malformed JSON.*")
+  public void hookInputWithMalformedJsonThrows() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "not valid json {{{");
-      requireThat(input.isEmpty(), "isEmpty").isTrue();
+      createInput(mapper, "not valid json {{{");
     }
   }
 
   /**
-   * Verifies that HookInput.readFrom with blank input returns empty HookInput.
+   * Verifies that HookInput.readFrom with blank input throws IllegalStateException.
    */
-  @Test
-  public void hookInputWithBlankInputReturnsEmpty() throws IOException
+  @Test(expectedExceptions = IllegalStateException.class,
+    expectedExceptionsMessageRegExp = ".*blank.*")
+  public void hookInputWithBlankInputThrows() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "   ");
-      requireThat(input.isEmpty(), "isEmpty").isTrue();
+      createInput(mapper, "   ");
     }
   }
 
   /**
-   * Verifies that HookInput.readFrom with empty string returns empty HookInput.
+   * Verifies that HookInput.readFrom with empty string throws IllegalStateException.
    */
-  @Test
-  public void hookInputWithEmptyStringReturnsEmpty() throws IOException
+  @Test(expectedExceptions = IllegalStateException.class,
+    expectedExceptionsMessageRegExp = ".*blank.*")
+  public void hookInputWithEmptyStringThrows() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "");
-      requireThat(input.isEmpty(), "isEmpty").isTrue();
+      createInput(mapper, "");
     }
   }
 
@@ -390,15 +403,17 @@ public class HookEntryPointTest
   }
 
   /**
-   * Verifies that HookInput.empty returns an empty input.
+   * Verifies that HookInput.readFrom with valid JSON missing session_id throws IllegalArgumentException.
    */
-  @Test
-  public void hookInputEmptyReturnsEmptyInput() throws IOException
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*session_id.*")
+  public void hookInputWithoutSessionIdThrows() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    HookInput input = HookInput.empty(scope.getJsonMapper());
-    requireThat(input.isEmpty(), "isEmpty").isTrue();
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput.readFrom(mapper, new ByteArrayInputStream(
+        "{\"tool_name\": \"Bash\"}".getBytes(StandardCharsets.UTF_8)));
     }
   }
 
@@ -579,20 +594,17 @@ public class HookEntryPointTest
   }
 
   /**
-   * Verifies that PreEditHook throws IllegalArgumentException when session_id is missing.
+   * Verifies that HookInput.readFrom throws IllegalArgumentException when session_id is missing.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*sessionId.*")
+    expectedExceptionsMessageRegExp = ".*session_id.*")
   public void getEditPretoolThrowsOnMissingSessionId() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\"}}");
-      HookOutput output = new HookOutput(scope);
-
-      new PreWriteHook(scope).run(input, output);
+      String json = "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\"}}";
+      HookInput.readFrom(mapper, new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
     }
   }
 

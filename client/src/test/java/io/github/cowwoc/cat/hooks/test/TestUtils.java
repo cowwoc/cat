@@ -42,6 +42,19 @@ public final class TestUtils
   }
 
   /**
+   * Creates a HookInput with a dummy session ID for tests that need a valid input but don't depend on the
+   * session ID value.
+   *
+   * @param mapper the JSON mapper
+   * @return a HookInput with a hard-coded session ID
+   */
+  static HookInput dummyInput(JsonMapper mapper)
+  {
+    return HookInput.readFrom(mapper, new java.io.ByteArrayInputStream(
+      "{\"session_id\": \"test-session\"}".getBytes(StandardCharsets.UTF_8)));
+  }
+
+  /**
    * Creates a temporary directory with the given prefix.
    *
    * @param prefix the prefix for the temporary directory name

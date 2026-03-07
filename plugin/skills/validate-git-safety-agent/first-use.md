@@ -65,30 +65,18 @@ git branch -f v21 <new-commit>
 
 ## Worktree Verification
 
-**During CAT issue execution, NEVER operate on the main `/workspace` worktree.**
+**During CAT issue execution, git operations MUST target the issue worktree, not `/workspace`.**
+
+The worktree path is passed as the `WORKTREE_PATH` parameter by the invoking skill. Use it directly:
 
 ```bash
-# Before ANY git operation in a CAT issue, verify location:
-source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
-CURRENT_DIR=$(pwd)
-if [[ "$CURRENT_DIR" == "/workspace" ]] && [[ -d "${WORKTREES_DIR}" ]]; then
-  echo "BLOCKED: Currently in main worktree while issue worktrees exist"
-  echo "Expected: ${WORKTREES_DIR}/<issue-name>"
-  echo "Current:  $CURRENT_DIR"
-  exit 1
-fi
-```
-
-**Check for active issue worktrees:**
-```bash
-# If any worktrees exist, you should be in one of them (not main)
-if ls -d "${WORKTREES_DIR}"/*/ 2>/dev/null | head -1 | grep -q .; then
-  # Worktrees exist - verify we're in one
-  if [[ "$(pwd)" == "/workspace" ]]; then
-    echo "ERROR: Issue worktrees exist but operating on main"
-    ls "${WORKTREES_DIR}/"
-    exit 1
-  fi
+# WORKTREE_PATH is provided by the skill invocation context
+if [[ -n "${WORKTREE_PATH:-}" ]]; then
+  echo "Active worktree: $WORKTREE_PATH"
+  # All git operations must target $WORKTREE_PATH, not /workspace
+  cd "$WORKTREE_PATH"
+else
+  echo "No active worktree — operating in main workspace context"
 fi
 ```
 

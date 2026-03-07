@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks.bash;
 import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.WorktreeContext;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 
 import java.io.IOException;
@@ -56,11 +57,12 @@ public final class BlockMainRebase implements BashHandler
   {
     String command = input.getCommand();
     String commandLower = GitCommands.toLowerCase(command);
+    String sessionId = input.getSessionId();
 
     // Check for git checkout/switch in main worktree
     if (CHECKOUT_PATTERN.matcher(commandLower).find())
     {
-      Result checkoutResult = checkCheckoutInMainWorktree(command);
+      Result checkoutResult = checkCheckoutInMainWorktree(command, sessionId);
       if (checkoutResult != null)
         return checkoutResult;
     }
@@ -70,7 +72,7 @@ public final class BlockMainRebase implements BashHandler
       return Result.allow();
 
     // Check if rebasing on main
-    String currentBranch = getCurrentBranch(command);
+    String currentBranch = getCurrentBranch(command, sessionId);
     if (currentBranch == null)
     {
       return Result.warn(
@@ -106,9 +108,10 @@ public final class BlockMainRebase implements BashHandler
    * Checks if a checkout command is targeting the main worktree.
    *
    * @param command the bash command
+   * @param sessionId the session ID for worktree context lookup
    * @return a block result if checkout in main worktree detected, null otherwise
    */
-  private Result checkCheckoutInMainWorktree(String command)
+  private Result checkCheckoutInMainWorktree(String command, String sessionId)
   {
     // Check if command cd's to the project directory
     if (cdProjectPattern.matcher(command).find())
@@ -135,30 +138,17 @@ public final class BlockMainRebase implements BashHandler
       }
     }
 
-    // Check if currently in the project directory (main worktree)
-    String cwd = System.getProperty("user.dir");
-    if (projectDir.toString().equals(cwd))
+    WorktreeContext context = WorktreeContext.forSession(
+      scope.getProjectCatDir(), projectDir, scope.getJsonMapper(), sessionId);
+    if (context == null)
     {
-      boolean mainWorktree;
-      try
+      // No active worktree for this session — this is the main context; block checkout
+      String target = extractCheckoutTarget(command);
+      if (!isCheckoutFlag(target))
       {
-        mainWorktree = GitCommands.isMainWorktree();
-      }
-      catch (IOException _)
-      {
-        return Result.warn(
-          "Failed to determine if this is the main worktree while checking checkout safety.\n" +
-          "Proceeding without main worktree check.");
-      }
-      if (mainWorktree)
-      {
-        String target = extractCheckoutTarget(command);
-        if (!isCheckoutFlag(target))
-        {
-          return Result.block(String.format(
-            "Blocked: Cannot checkout '%s' in main worktree. Use issue worktrees instead.",
-            target));
-        }
+        return Result.block(String.format(
+          "Blocked: Cannot checkout '%s' in main worktree. Use issue worktrees instead.",
+          target));
       }
     }
 
@@ -194,9 +184,10 @@ public final class BlockMainRebase implements BashHandler
    * Determines the current branch for the command's target directory.
    *
    * @param command the bash command (may contain cd to another directory)
+   * @param sessionId the session ID for worktree context lookup
    * @return the branch name, or {@code null} if branch detection failed
    */
-  private String getCurrentBranch(String command)
+  private String getCurrentBranch(String command, String sessionId)
   {
     // Check if command cd's to the project directory
     if (cdProjectPattern.matcher(command).find())
@@ -217,10 +208,25 @@ public final class BlockMainRebase implements BashHandler
       }
     }
 
-    // Fallback to current directory
+    // Use lock-based worktree context to determine branch
+    WorktreeContext context = WorktreeContext.forSession(
+      scope.getProjectCatDir(), projectDir, scope.getJsonMapper(), sessionId);
+    if (context == null)
+    {
+      // No active worktree for this session — commands run in main context
+      try
+      {
+        return GitCommands.getCurrentBranch(projectDir.toString());
+      }
+      catch (IOException _)
+      {
+        return null;
+      }
+    }
+    // In a worktree — determine branch from worktree directory
     try
     {
-      return GitCommands.getCurrentBranch();
+      return GitCommands.getCurrentBranch(context.absoluteWorktreePath().toString());
     }
     catch (IOException _)
     {

@@ -48,33 +48,32 @@ git status && git log --oneline -3 && git diff --stat
 
 ### Working Directory During Implementation
 
-When executing an issue, run git commands from inside the issue worktree — not from the main workspace using `git -C`.
+When executing an issue, run git commands from inside the issue worktree using the single-call `cd` pattern.
 
 ```bash
-# Correct: cd into worktree, then run git commands normally
-cd ${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/2.1-issue-name
-git log --oneline -3
-git add file.txt && git commit -m "feature: add thing"
+# Correct: cd and git in a single Bash call — cwd persists within the call
+cd "${WORKTREE_PATH}" && git log --oneline -3
+cd "${WORKTREE_PATH}" && git add "${WORKTREE_PATH}/plugin/skills/foo.md" && git commit -m "feature: add thing"
 
 # Wrong: running git -C /workspace from outside the worktree
-git -C /workspace log --oneline -3     # commits to main workspace, not issue branch
+git -C /workspace log --oneline -3     # targets main workspace, not issue branch
 git -C /workspace add file.txt         # stages in main workspace
 ```
 
 Using `git -C /workspace` from outside the worktree targets the main workspace git state, not the issue
 branch. Commits, adds, and log output will reflect the main workspace — bypassing worktree isolation.
 
-The `git -C WORKTREE_PATH` form is acceptable when the caller cannot cd (e.g., orchestration scripts),
-but implementation agents should `cd` into the worktree at the start of their work and use plain git.
+**Why single-call cd:** The Bash tool resets cwd to `/workspace` on every invocation. A bare `cd` in one
+call does not persist to the next call. Always combine `cd ${WORKTREE_PATH} && git ...` in a single Bash call.
 
 ### Worktree Directory Safety
 
-You may `cd` into worktrees to work. However, before removing a directory (via `rm`, `git worktree remove`, etc.), ensure your shell is NOT inside the directory being removed.
+Before removing a worktree (via `rm`, `git worktree remove`, etc.), ensure your shell is NOT inside the directory
+being removed. With the single-call `cd` pattern this is generally safe, but verify cwd before any removal.
 
 ```bash
 # Safe pattern when removing a worktree:
-cd /workspace  # Exit the worktree first
-git worktree remove ${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/issue
+git worktree remove "${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/issue"
 ```
 
 See `/cat:safe-rm-agent` for detailed guidance on safe directory removal.
