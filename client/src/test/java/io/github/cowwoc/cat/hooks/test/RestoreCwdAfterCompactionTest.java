@@ -210,35 +210,17 @@ public final class RestoreCwdAfterCompactionTest
   }
 
   /**
-   * Verifies that handle() injects both a cd instruction and the batch ToolSearch instruction
-   * when session_id is blank but a valid .cwd file exists.
+   * Verifies that HookInput.readFrom throws IllegalStateException when session_id is blank.
    */
-  @Test
-  public void blankSessionIdInjectsCdAndBatchToolSearch() throws IOException
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*sessionId is empty.*")
+  public void blankSessionIdThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-restore-cwd-blank-session-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-
-      // Write a .cwd file with valid content
-      Path sessionCatDir = scope.getSessionCatDir();
-      Files.createDirectories(sessionCatDir);
-      Path savedDir = tempDir.resolve("some/dir");
-      Files.createDirectories(savedDir);
-      Files.writeString(sessionCatDir.resolve("session.cwd"), savedDir.toString());
-
-      RestoreCwdAfterCompaction handler = new RestoreCwdAfterCompaction(scope);
-      HookInput input = createInput(mapper,
-        "{\"source\": \"compact\", \"session_id\": \"\"}");
-
-      SessionStartHandler.Result result = handler.handle(input);
-
-      requireThat(result.additionalContext(), "additionalContext").contains("cd");
-      requireThat(result.additionalContext(), "additionalContext").contains(savedDir.toString());
-      requireThat(result.additionalContext(), "additionalContext").
-        contains(RestoreCwdAfterCompaction.BATCH_TOOLSEARCH_INSTRUCTION);
-      requireThat(result.stderr(), "stderr").isEmpty();
+      createInput(mapper, "{\"source\": \"compact\", \"session_id\": \"\"}");
     }
     finally
     {

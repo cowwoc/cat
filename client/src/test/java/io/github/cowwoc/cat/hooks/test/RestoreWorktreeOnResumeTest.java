@@ -235,10 +235,11 @@ public final class RestoreWorktreeOnResumeTest
   }
 
   /**
-   * Verifies that handle returns an empty result when the session_id is empty.
+   * Verifies that HookInput.readFrom throws IllegalArgumentException when session_id is missing.
    */
-  @Test
-  public void emptySessionIdReturnsEmpty() throws IOException
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*session_id.*")
+  public void emptySessionIdThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -253,10 +254,7 @@ public final class RestoreWorktreeOnResumeTest
       InputStream stream = new ByteArrayInputStream(hookJson.getBytes(StandardCharsets.UTF_8));
       HookInput input = HookInput.readFrom(mapper, stream);
 
-      SessionStartHandler.Result result = handler.handle(input);
-
-      requireThat(result.additionalContext(), "additionalContext").isEmpty();
-      requireThat(result.stderr(), "stderr").isEmpty();
+      handler.handle(input);
     }
     finally
     {

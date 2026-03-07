@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
 import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ReadHandler;
 import io.github.cowwoc.cat.hooks.write.EnforceWorktreePathIsolation;
 import org.testng.annotations.Test;
 import tools.jackson.databind.json.JsonMapper;
@@ -302,6 +303,11 @@ public class EnforceWorktreePathIsolationTest
       createWorktreeDir(scope, ISSUE_ID);
       Path tmpFile = Files.createTempDirectory("test-outside-").resolve("file.txt");
 
+      // Verify the test path is actually outside the project root (precondition check)
+      Path normalizedProject = projectDir.toAbsolutePath().normalize();
+      Path normalizedTmp = tmpFile.toAbsolutePath().normalize();
+      requireThat(normalizedTmp.startsWith(normalizedProject), "tmpFileInsideProjectDir").isFalse();
+
       EnforceWorktreePathIsolation handler = new EnforceWorktreePathIsolation(scope);
       JsonMapper mapper = scope.getJsonMapper();
       ObjectNode input = mapper.createObjectNode();
@@ -378,6 +384,197 @@ public class EnforceWorktreePathIsolationTest
       FileWriteHandler.Result result = handler.check(input, SESSION_ID);
 
       requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  // ============================================================================
+  // Read interception tests
+  // ============================================================================
+
+  /**
+   * Verifies that reading a file inside the worktree is allowed when a lock and worktree exist.
+   * <p>
+   * The Read tool should be permitted to access files within the active worktree.
+   */
+  @Test
+  public void readInsideWorktreeIsAllowed() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("ewpi-test-");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      Path worktreeDir = createWorktreeDir(scope, ISSUE_ID);
+
+      EnforceWorktreePathIsolation handler = new EnforceWorktreePathIsolation(scope);
+      JsonMapper mapper = scope.getJsonMapper();
+      ObjectNode input = mapper.createObjectNode();
+      input.put("file_path", worktreeDir.resolve("plugin/test.py").toString());
+
+      ReadHandler.Result result = handler.check("Read", input, null, SESSION_ID);
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that reading a file outside the worktree (in the main workspace) is blocked
+   * when a lock and worktree exist.
+   * <p>
+   * Agents in a worktree must not read stale project-root files — they must read through
+   * the worktree path to get the correct version of the file.
+   */
+  @Test
+  public void readOutsideWorktreeIsBlocked() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("ewpi-test-");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      createWorktreeDir(scope, ISSUE_ID);
+      Path mainWorkspaceFile = projectDir.resolve("plugin/important.py");
+
+      EnforceWorktreePathIsolation handler = new EnforceWorktreePathIsolation(scope);
+      JsonMapper mapper = scope.getJsonMapper();
+      ObjectNode input = mapper.createObjectNode();
+      input.put("file_path", mainWorkspaceFile.toString());
+
+      ReadHandler.Result result = handler.check("Read", input, null, SESSION_ID);
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Worktree isolation violation");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that Glob tool calls are NOT blocked by Read interception.
+   * <p>
+   * Glob uses a {@code pattern} field (not {@code file_path}) and must not be subject to
+   * the isolation check even when its pattern string happens to match a path inside the project.
+   * The check must be skipped because the Glob tool has different input semantics.
+   */
+  @Test
+  public void globToolIsNotBlocked() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("ewpi-test-");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      createWorktreeDir(scope, ISSUE_ID);
+
+      EnforceWorktreePathIsolation handler = new EnforceWorktreePathIsolation(scope);
+      JsonMapper mapper = scope.getJsonMapper();
+      ObjectNode input = mapper.createObjectNode();
+      // Glob uses 'pattern', not 'file_path'; a path that would be blocked for Read
+      // must be allowed for Glob because Glob is excluded from the isolation check
+      input.put("pattern", projectDir.resolve("plugin/**/*.py").toString());
+
+      ReadHandler.Result result = handler.check("Glob", input, null, SESSION_ID);
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that Grep tool calls are NOT blocked by Read interception.
+   * <p>
+   * Grep uses a {@code pattern} field and a {@code path} field, not {@code file_path}.
+   * The check must be skipped because Grep is excluded from the isolation check.
+   */
+  @Test
+  public void grepToolIsNotBlocked() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("ewpi-test-");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      createWorktreeDir(scope, ISSUE_ID);
+
+      EnforceWorktreePathIsolation handler = new EnforceWorktreePathIsolation(scope);
+      JsonMapper mapper = scope.getJsonMapper();
+      ObjectNode input = mapper.createObjectNode();
+      // Grep uses 'pattern' and 'path', not 'file_path'
+      input.put("pattern", "someFunction");
+      input.put("path", projectDir.resolve("plugin").toString());
+
+      ReadHandler.Result result = handler.check("Grep", input, null, SESSION_ID);
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that reading with no lock file is always allowed.
+   * <p>
+   * No active worktree means no isolation constraint for reads.
+   */
+  @Test
+  public void readWithNoLockIsAllowed() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("ewpi-test-");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // No lock file created
+      EnforceWorktreePathIsolation handler = new EnforceWorktreePathIsolation(scope);
+      JsonMapper mapper = scope.getJsonMapper();
+      ObjectNode input = mapper.createObjectNode();
+      input.put("file_path", projectDir.resolve("plugin/test.py").toString());
+
+      ReadHandler.Result result = handler.check("Read", input, null, SESSION_ID);
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that the Read error message includes the corrected worktree path suggestion.
+   * <p>
+   * When a read targets the main workspace, the error must include the corrected path
+   * inside the worktree.
+   */
+  @Test
+  public void readBlockedMessageShowsCorrectedPath() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("ewpi-test-");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      Path worktreeDir = createWorktreeDir(scope, ISSUE_ID);
+      Path mainWorkspaceFile = projectDir.resolve("plugin/important.py");
+
+      EnforceWorktreePathIsolation handler = new EnforceWorktreePathIsolation(scope);
+      JsonMapper mapper = scope.getJsonMapper();
+      ObjectNode input = mapper.createObjectNode();
+      input.put("file_path", mainWorkspaceFile.toString());
+
+      ReadHandler.Result result = handler.check("Read", input, null, SESSION_ID);
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Use the corrected worktree path");
+      requireThat(result.reason(), "reason").contains(worktreeDir.toAbsolutePath().normalize().toString());
     }
     finally
     {

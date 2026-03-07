@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.hooks;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.write.EnforceWorktreePathIsolation;
 import tools.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
@@ -41,7 +42,9 @@ public final class PreReadHook implements HookHandler
   public PreReadHook(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
-    this.handlers = List.of(scope.getPredictBatchOpportunity());
+    this.handlers = List.of(
+      scope.getPredictBatchOpportunity(),
+      new EnforceWorktreePathIsolation(scope));
   }
 
   /**

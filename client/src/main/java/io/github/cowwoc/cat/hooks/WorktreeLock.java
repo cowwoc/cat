@@ -15,8 +15,6 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * Utility for looking up the worktree lock associated with a session.
@@ -27,10 +25,6 @@ import java.util.concurrent.ConcurrentMap;
  */
 public final class WorktreeLock
 {
-  // Cache from sessionId to issueId. Empty string "" is a sentinel meaning "no lock found".
-  private static final ConcurrentMap<String, String> SESSION_CACHE = new ConcurrentHashMap<>();
-  private static final int MAX_CACHE_SIZE = 100;
-
   /**
    * Prevent instantiation.
    */
@@ -58,20 +52,9 @@ public final class WorktreeLock
     requireThat(jsonMapper, "jsonMapper").isNotNull();
     requireThat(sessionId, "sessionId").isNotBlank();
 
-    String cached = SESSION_CACHE.get(sessionId);
-    if (cached != null)
-    {
-      if (cached.isEmpty())
-        return null;
-      return cached;
-    }
-
     Path lockDir = projectCatDir.resolve("locks");
     if (!Files.isDirectory(lockDir))
-    {
-      cacheResult(sessionId, "");
       return null;
-    }
 
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(lockDir, "*.lock"))
     {
@@ -88,9 +71,7 @@ public final class WorktreeLock
           if (sessionId.equals(sessionNode.asString()))
           {
             String filename = lockFile.getFileName().toString();
-            String issueId = filename.substring(0, filename.length() - ".lock".length());
-            cacheResult(sessionId, issueId);
-            return issueId;
+            return filename.substring(0, filename.length() - ".lock".length());
           }
         }
         catch (IOException _)
@@ -104,20 +85,6 @@ public final class WorktreeLock
       // Lock directory not accessible - no active lock context
     }
 
-    cacheResult(sessionId, "");
     return null;
-  }
-
-  /**
-   * Stores a result in the session cache, clearing the cache first if the size limit is reached.
-   *
-   * @param sessionId the session ID to cache
-   * @param value the issue ID, or an empty string to indicate no lock was found
-   */
-  private static void cacheResult(String sessionId, String value)
-  {
-    if (SESSION_CACHE.size() >= MAX_CACHE_SIZE)
-      SESSION_CACHE.clear();
-    SESSION_CACHE.put(sessionId, value);
   }
 }

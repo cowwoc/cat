@@ -339,7 +339,7 @@ is tool misuse.
 ## Checklist Before Committing
 
 - [ ] **Files inside repository**: All files to commit are under the repository root
-- [ ] **In correct worktree**: `pwd` shows issue worktree, NOT `/workspace`
+- [ ] **On correct branch**: `cd "${WORKTREE_PATH}" && git branch --show-current` shows issue branch, NOT main
 - [ ] Subject line is imperative mood ("Add", not "Added")
 - [ ] Subject line is specific (not "Update files")
 - [ ] Subject line is under 72 characters
@@ -350,15 +350,14 @@ is tool misuse.
 
 ## Worktree Verification
 
-**Before committing in a CAT issue, verify you're in the issue worktree:**
+**Before committing in a CAT issue, verify you're on the correct branch:**
 
 ```bash
 # Quick verification
-pwd  # Should show ${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/<issue-name>, NOT /workspace
-git branch --show-current  # Should show issue branch, NOT main
+cd "${WORKTREE_PATH}" && git branch --show-current  # Should show issue branch, NOT main
 ```
 
-**If in wrong worktree:** Stop and navigate to the correct one before committing.
+**If on wrong branch:** Stop and investigate before committing.
 
 ## Quick Test
 

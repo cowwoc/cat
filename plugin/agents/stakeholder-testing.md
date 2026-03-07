@@ -181,7 +181,7 @@ Use these domain-specific examples to calibrate your severity ratings against th
 ## Detail File
 
 Before returning your review, write comprehensive analysis to:
-`<worktree>/.claude/cat/review/testing-concerns.json`
+`${WORKTREE_PATH}/.claude/cat/review/testing-concerns.json`
 
 The detail file is consumed by a planning subagent that creates concrete fix steps. Include:
 - Exact file paths and line numbers for each problem
@@ -202,7 +202,7 @@ Return compact JSON inline. Write full details to the detail file, not inline.
       "location": "file:line or test class",
       "explanation": "Brief description of the testing gap",
       "recommendation": "Brief guidance on tests to add or fix",
-      "detail_file": ".claude/cat/review/testing-concerns.json"
+      "detail_file": "${WORKTREE_PATH}/.claude/cat/review/testing-concerns.json"
     }
   ]
 }

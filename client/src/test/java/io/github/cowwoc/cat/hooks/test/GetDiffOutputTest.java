@@ -757,6 +757,67 @@ public class GetDiffOutputTest
   }
 
   /**
+   * Verifies that target branch detection works from a worktree directory path.
+   * <p>
+   * When projectRoot is inside a directory named {@code worktrees/<version-prefix>-issue},
+   * the target branch is derived from the version prefix (e.g., {@code 2.1-feature} → {@code v2.1}).
+   * This must work using the projectRoot path directly, not from user.dir.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void targetBranchDetectionFromWorktreePath() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      Path tempBase = Files.createTempDirectory("render-diff-test-base");
+      try
+      {
+        // Set up main repo at tempBase/main-repo
+        Path mainRepo = tempBase.resolve("main-repo");
+        Files.createDirectories(mainRepo);
+        runGit(mainRepo, "init");
+        runGit(mainRepo, "checkout", "-b", "v2.1");
+
+        // Create cat-config
+        Path catDir = mainRepo.resolve(".claude").resolve("cat");
+        Files.createDirectories(catDir);
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
+
+        // Create initial commit on v2.1
+        Files.writeString(mainRepo.resolve("file.txt"), "initial\n");
+        runGit(mainRepo, "add", ".");
+        runGit(mainRepo, "commit", "-m", "initial");
+
+        // Create worktrees/2.1-my-feature directory via git worktree add
+        Path worktreesDir = tempBase.resolve("worktrees");
+        Files.createDirectories(worktreesDir);
+        Path worktree = worktreesDir.resolve("2.1-my-feature");
+        runGit(mainRepo, "worktree", "add", worktree.toString(), "-b", "2.1-my-feature");
+
+        // Make a change in the worktree
+        Path catDirWorktree = worktree.resolve(".claude").resolve("cat");
+        Files.createDirectories(catDirWorktree);
+        Files.writeString(catDirWorktree.resolve("cat-config.json"), "{\"displayWidth\": 80}");
+        Files.writeString(worktree.resolve("file.txt"), "modified\n");
+        runGit(worktree, "add", ".");
+        runGit(worktree, "commit", "-m", "feature change");
+
+        // getOutput(worktree) should detect target branch from worktree path (2.1-* → v2.1)
+        GetDiffOutput handler = new GetDiffOutput(scope);
+        String result = handler.getOutput(worktree);
+
+        requireThat(result, "result").contains("Diff Summary");
+        requireThat(result, "result").contains("v2.1");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempBase);
+      }
+    }
+  }
+
+  /**
    * Verifies that target branch detection works from non-worktree directory.
    *
    * @throws IOException if an I/O error occurs
@@ -1584,6 +1645,111 @@ public class GetDiffOutputTest
         requireThat(result, "result").contains("git diff");
         // Should NOT contain rendered diff sections
         requireThat(result, "result").doesNotContain("Rendered Diff");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that target branch detection works from the worktree path when the project root
+   * is passed explicitly.
+   * <p>
+   * When the project root's parent directory is named "worktrees" and the worktree name begins
+   * with a version prefix (e.g., "2.1-"), the target branch is detected as "v2.1". This
+   * replaces the previous cwd-based mechanism ({@code System.getProperty("user.dir")}).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void detectTargetBranchFromWorktreePathViaExplicitProjectRoot() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      // Create main repo
+      Path mainRepo = Files.createTempDirectory("render-diff-worktree-test");
+      try
+      {
+        runGit(mainRepo, "init");
+        runGit(mainRepo, "checkout", "-b", "main");
+
+        // Create cat-config in main repo
+        Path catDir = mainRepo.resolve(".claude").resolve("cat");
+        Files.createDirectories(catDir);
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
+
+        Files.writeString(mainRepo.resolve("file.txt"), "initial content\n");
+        runGit(mainRepo, "add", ".");
+        runGit(mainRepo, "commit", "-m", "initial commit");
+
+        // Create the target branch "v2.1" so branchExists() returns true during detection
+        runGit(mainRepo, "checkout", "-b", "v2.1");
+        runGit(mainRepo, "checkout", "main");
+
+        // Create a worktree in a directory named "worktrees" with a "2.1-..." prefix
+        Path worktreesParent = Files.createTempDirectory("worktrees-parent-");
+        Path worktreesDir = worktreesParent.resolve("worktrees");
+        Files.createDirectories(worktreesDir);
+
+        // Add git worktree with version-prefixed name
+        Path worktree = worktreesDir.resolve("2.1-test-feature");
+        runGit(mainRepo, "worktree", "add", "-b", "2.1-test-feature", worktree.toString());
+
+        // Copy cat-config into worktree
+        Path worktreeCatDir = worktree.resolve(".claude").resolve("cat");
+        Files.createDirectories(worktreeCatDir);
+        Files.writeString(worktreeCatDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
+
+        // Make a change in the worktree
+        Files.writeString(worktree.resolve("file.txt"), "modified content\n");
+        runGit(worktree, "add", ".");
+        runGit(worktree, "commit", "-m", "modify file");
+
+        // Pass the worktree path explicitly as projectRoot
+        GetDiffOutput handler = new GetDiffOutput(scope);
+        String result = handler.getOutput(worktree);
+
+        // The worktree name "2.1-test-feature" starts with "2.1-", so target branch is "v2.1"
+        requireThat(result, "result").contains("v2.1");
+
+        TestUtils.deleteDirectoryRecursively(worktreesParent);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(mainRepo);
+      }
+    }
+  }
+
+  /**
+   * Verifies that getOutput returns an error message when target branch detection returns null.
+   * <p>
+   * When the project root is not in a "worktrees" directory, has no version-prefix branch, and
+   * has no upstream configured, and no commits exist (non-git), the output should indicate that
+   * the target branch could not be detected.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void nonGitDirectoryReturnsMissingTargetBranchMessage() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      Path tempDir = Files.createTempDirectory("render-diff-no-target-test");
+      try
+      {
+        // Create a minimal cat-config.json so Config.load doesn't fail
+        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Files.createDirectories(catDir);
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
+
+        GetDiffOutput handler = new GetDiffOutput(scope);
+        String result = handler.getOutput(tempDir);
+
+        // Non-git directory: all detection methods fail, returns error message
+        requireThat(result, "result").contains("Target branch");
       }
       finally
       {

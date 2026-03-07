@@ -10,6 +10,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
 import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ReadHandler;
 import io.github.cowwoc.cat.hooks.WorktreeContext;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.JsonNode;
@@ -19,25 +20,26 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 
 /**
- * Enforce worktree path isolation.
+ * Enforce worktree path isolation for both read and write operations.
  * <p>
- * Blocks Edit/Write operations that target a path outside the current session's worktree. Two checks
- * are performed:
+ * Blocks Read/Edit/Write operations that target a path outside the current session's worktree.
+ * Two checks are performed:
  * <ol>
- * <li>If the current session holds a lock, edits must target that session's worktree.</li>
+ * <li>If the current session holds a lock, file operations must target that session's worktree.</li>
  * <li>If no session lock exists (e.g., during a "direct fix" in a session that did not start the
  *     worktree), any active worktree in the project that covers the target file is used to redirect
- *     the edit. This prevents accidental modifications to the main workspace when a worktree
+ *     the operation. This prevents accidental access to the main workspace when a worktree
  *     already owns that file path.</li>
  * </ol>
  * <p>
  * Uses session ID to find the matching lock file in the external CAT storage location
  * ({@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/locks/}), derives the issue_id from the lock filename,
- * and checks whether the file being edited falls within the corresponding worktree.
+ * and checks whether the file being accessed falls within the corresponding worktree.
  */
-public final class EnforceWorktreePathIsolation implements FileWriteHandler
+public final class EnforceWorktreePathIsolation implements FileWriteHandler, ReadHandler
 {
   private final JvmScope scope;
   private final Path projectDir;
@@ -70,29 +72,101 @@ public final class EnforceWorktreePathIsolation implements FileWriteHandler
     requireThat(toolInput, "toolInput").isNotNull();
     requireThat(sessionId, "sessionId").isNotBlank();
 
-    JsonNode filePathNode = toolInput.get("file_path");
-    String filePath;
-    if (filePathNode != null)
-      filePath = filePathNode.asString();
-    else
-      filePath = "";
-
-    if (filePath.isEmpty())
+    Path absoluteFilePath = extractAbsoluteFilePath(toolInput).orElse(null);
+    if (absoluteFilePath == null)
       return FileWriteHandler.Result.allow();
 
-    Path absoluteFilePath = Path.of(filePath).toAbsolutePath().normalize();
+    String blockReason = isolationCheckReason(absoluteFilePath, sessionId);
+    if (blockReason != null)
+      return FileWriteHandler.Result.block(blockReason);
 
+    return FileWriteHandler.Result.allow();
+  }
+
+  /**
+   * Check if the read should be blocked due to worktree path isolation violation.
+   * <p>
+   * Applies the same isolation check as {@link #check(JsonNode, String)} for write/edit
+   * operations. Only the {@code Read} tool checks the {@code file_path} field; Glob and Grep
+   * use different input fields and are not checked here.
+   *
+   * @param toolName the tool name (Read, Glob, or Grep)
+   * @param toolInput the tool input JSON
+   * @param toolResult the tool result JSON (null for PreToolUse)
+   * @param sessionId the session ID
+   * @return the check result
+   * @throws NullPointerException if {@code toolName}, {@code toolInput}, or {@code sessionId} is null
+   * @throws IllegalArgumentException if {@code sessionId} is blank
+   */
+  @Override
+  public ReadHandler.Result check(String toolName, JsonNode toolInput, JsonNode toolResult,
+    String sessionId)
+  {
+    requireThat(toolName, "toolName").isNotNull();
+    requireThat(toolInput, "toolInput").isNotNull();
+    requireThat(sessionId, "sessionId").isNotBlank();
+
+    // Only check Read tool (Glob/Grep use pattern/glob fields, not file_path)
+    if (!"Read".equals(toolName))
+      return ReadHandler.Result.allow();
+
+    Path absoluteFilePath = extractAbsoluteFilePath(toolInput).orElse(null);
+    if (absoluteFilePath == null)
+      return ReadHandler.Result.allow();
+
+    String blockReason = isolationCheckReason(absoluteFilePath, sessionId);
+    if (blockReason != null)
+      return ReadHandler.Result.block(blockReason);
+
+    return ReadHandler.Result.allow();
+  }
+
+  /**
+   * Extracts and normalizes the {@code file_path} field from tool input.
+   *
+   * @param toolInput the tool input JSON
+   * @return the absolute normalized path, or empty if absent or blank
+   */
+  private Optional<Path> extractAbsoluteFilePath(JsonNode toolInput)
+  {
+    JsonNode filePathNode = toolInput.get("file_path");
+    if (filePathNode == null)
+      return Optional.empty();
+    String filePath = filePathNode.asString();
+    if (filePath == null || filePath.isEmpty())
+      return Optional.empty();
+    return Optional.of(Path.of(filePath).toAbsolutePath().normalize());
+  }
+
+  /**
+   * Runs the isolation check and returns a block reason string, or {@code null} if the path is allowed.
+   *
+   * @param absoluteFilePath the absolute normalized file path to check
+   * @param sessionId the session ID
+   * @return the block reason, or {@code null} if allowed
+   */
+  private String isolationCheckReason(Path absoluteFilePath, String sessionId)
+  {
     WorktreeContext context = WorktreeContext.forSession(scope.getProjectCatDir(), projectDir, mapper, sessionId);
     if (context != null)
-      return checkAgainstContext(context, absoluteFilePath);
+    {
+      FileWriteHandler.Result writeResult = checkAgainstContext(context, absoluteFilePath);
+      if (writeResult.blocked())
+        return writeResult.reason();
+      return null;
+    }
 
     // No session lock: fall back to checking if any active worktree covers the target file.
     // This catches "direct fix" edits made in a session that did not start the worktree.
     WorktreeContext anyContext = findCoveringWorktree(absoluteFilePath);
     if (anyContext != null)
-      return checkAgainstContext(anyContext, absoluteFilePath);
+    {
+      FileWriteHandler.Result writeResult = checkAgainstContext(anyContext, absoluteFilePath);
+      if (writeResult.blocked())
+        return writeResult.reason();
+    }
 
-    return FileWriteHandler.Result.allow();
+    return null;
   }
 
   /**
@@ -100,6 +174,10 @@ public final class EnforceWorktreePathIsolation implements FileWriteHandler
    * <p>
    * Returns the first {@link WorktreeContext} whose worktree directory is an ancestor of
    * {@code absoluteFilePath}, or {@code null} if no active worktree covers the path.
+   * <p>
+   * The iteration order over lock files is determined by the filesystem's directory stream
+   * ordering, which is non-deterministic. When multiple active worktrees cover the same
+   * file path (which is not a normal state), the returned context is arbitrary.
    *
    * @param absoluteFilePath the absolute normalized path of the file being edited
    * @return a matching worktree context, or {@code null} if none found
@@ -162,12 +240,12 @@ public final class EnforceWorktreePathIsolation implements FileWriteHandler
       ERROR: Worktree isolation violation
 
       You are working in worktree: %s
-      But attempting to edit outside it: %s
+      But attempting to access outside it: %s
 
       Use the corrected worktree path instead:
         %s
 
-      Do NOT bypass this hook using Bash (cat, echo, tee, etc.) to write the file directly. \
+      Do NOT bypass this hook using Bash (cat, echo, tee, etc.) to access the file directly. \
       The worktree exists to isolate changes from the main workspace until merge.""".formatted(
       context.absoluteWorktreePath(),
       absoluteFilePath,

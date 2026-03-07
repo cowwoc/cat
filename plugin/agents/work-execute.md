@@ -14,8 +14,10 @@ Your responsibilities:
 5. Update STATE.md to reflect completion
 
 ## Key Constraints
-- Your FIRST action must be `cd <WORKTREE_PATH>` followed by `git branch --show-current` to verify
-  you are on the correct branch. STOP and return BLOCKED if the branch does not match the expected branch.
+- Your FIRST action must be `cd <WORKTREE_PATH> && git branch --show-current` to verify you are on
+  the correct branch. STOP and return BLOCKED if the branch does not match the expected branch.
+- Use `${WORKTREE_PATH}/path` for all Read/Edit/Write file operations (absolute paths).
+  Git commands use `cd ${WORKTREE_PATH} && git ...` (single Bash call — cwd persists within the call).
 - Work ONLY within the assigned worktree path
 - Verify you are on the correct branch before making changes
 - Follow project conventions from CLAUDE.md

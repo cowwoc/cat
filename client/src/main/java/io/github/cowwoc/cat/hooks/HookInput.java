@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks;
 
+import static io.github.cowwoc.requirements13.jackson.DefaultJacksonValidators.requireThat;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.util.SkillLoader;
@@ -67,18 +68,18 @@ public final class HookInput
    * Validates and returns the session ID from the JSON data.
    *
    * @param data the parsed JSON data
-   * @return the session ID, or empty string if missing or empty
-   * @throws IllegalArgumentException if the session_id field is present but contains characters other than
-   *   alphanumerics, hyphens, and underscores
+   * @return the session ID (never empty)
+   * @throws IllegalArgumentException if the session_id field is missing, blank, or contains characters
+   *   other than alphanumerics, hyphens, and underscores
    */
   private static String validateSessionId(JsonNode data)
   {
-    JsonNode node = data.get("session_id");
-    if (node == null || !node.isString())
-      return "";
-    String value = node.asString();
-    if (value == null || value.isBlank())
-      return "";
+    String value = requireThat(data, "data").property("session_id").isString().getValue().asString();
+    if (value.isBlank())
+    {
+      throw new IllegalArgumentException(
+        "sessionId is empty. Hook infrastructure must provide CLAUDE_SESSION_ID.");
+    }
     if (!SESSION_ID_PATTERN.matcher(value).matches())
     {
       throw new IllegalArgumentException("Invalid session_id format: '" + value +
@@ -115,8 +116,10 @@ public final class HookInput
    * Read and parse JSON input from stdin.
    *
    * @param mapper the JSON mapper to use for parsing
-   * @return parsed hook input, or empty input if stdin is not available or contains invalid JSON
+   * @return parsed hook input
    * @throws NullPointerException if mapper is null
+   * @throws IllegalStateException if stdin has no piped input, contains blank/malformed JSON, or is missing
+   *   a session_id
    */
   public static HookInput readFromStdin(JsonMapper mapper)
   {
@@ -124,14 +127,11 @@ public final class HookInput
     try
     {
       if (System.console() != null && System.in.available() == 0)
-      {
-        // Interactive terminal with no piped input
-        return new HookInput(mapper, mapper.createObjectNode());
-      }
+        throw new IllegalStateException("No piped input available on stdin.");
     }
-    catch (IOException _)
+    catch (IOException e)
     {
-      return new HookInput(mapper, mapper.createObjectNode());
+      throw new IllegalStateException("Failed to check stdin availability.", e);
     }
     return readFrom(mapper, System.in);
   }
@@ -141,8 +141,9 @@ public final class HookInput
    *
    * @param mapper the JSON mapper to use for parsing
    * @param inputStream the stream to read from
-   * @return parsed hook input, or empty input if the stream is not available or contains invalid JSON
+   * @return parsed hook input
    * @throws NullPointerException if mapper or inputStream is null
+   * @throws IllegalStateException if the stream contains blank/malformed JSON, or is missing a session_id
    */
   public static HookInput readFrom(JsonMapper mapper, InputStream inputStream)
   {
@@ -153,29 +154,16 @@ public final class HookInput
       BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
       String raw = reader.lines().collect(Collectors.joining("\n"));
 
-      if (raw == null || raw.isBlank())
-        return new HookInput(mapper, mapper.createObjectNode());
+      if (raw.isBlank())
+        throw new IllegalStateException("Hook input is blank.");
 
       JsonNode node = mapper.readTree(raw);
       return new HookInput(mapper, node);
     }
-    catch (JacksonException _)
+    catch (JacksonException e)
     {
-      return new HookInput(mapper, mapper.createObjectNode());
+      throw new IllegalStateException("Hook input contains malformed JSON.", e);
     }
-  }
-
-  /**
-   * Create an empty hook input.
-   *
-   * @param mapper the JSON mapper to use
-   * @return an empty HookInput instance
-   * @throws NullPointerException if mapper is null
-   */
-  public static HookInput empty(JsonMapper mapper)
-  {
-    requireThat(mapper, "mapper").isNotNull();
-    return new HookInput(mapper, mapper.createObjectNode());
   }
 
   /**
@@ -358,11 +346,8 @@ public final class HookInput
 
   /**
    * Get the session ID from standard hook input locations.
-   * <p>
-   * Returns empty string if the session ID is missing or empty. Throws if the session ID is present but
-   * contains characters other than alphanumerics, hyphens, and underscores.
    *
-   * @return the session ID, or empty string if not present
+   * @return the session ID (never empty)
    */
   public String getSessionId()
   {
@@ -392,7 +377,7 @@ public final class HookInput
    * @return the composite agent ID
    * @throws NullPointerException if {@code sessionId} is null
    */
-  public String getCompositeAgentId(String sessionId)
+  public String getCatAgentId(String sessionId)
   {
     requireThat(sessionId, "sessionId").isNotNull();
     String nativeAgentId = getAgentId();

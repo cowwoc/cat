@@ -174,7 +174,7 @@ Use these domain-specific examples to calibrate your severity ratings against th
 ## Detail File
 
 Before returning your review, write comprehensive analysis to:
-`<worktree>/.claude/cat/review/performance-concerns.json`
+`${WORKTREE_PATH}/.claude/cat/review/performance-concerns.json`
 
 The detail file is consumed by a planning subagent that creates concrete fix steps. Include:
 - Exact file paths and line numbers for each problem
@@ -195,7 +195,7 @@ Return compact JSON inline. Write full details to the detail file, not inline.
       "location": "file:line",
       "explanation": "Brief description of the performance problem",
       "recommendation": "Brief optimization approach",
-      "detail_file": ".claude/cat/review/performance-concerns.json"
+      "detail_file": "${WORKTREE_PATH}/.claude/cat/review/performance-concerns.json"
     }
   ]
 }

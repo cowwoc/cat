@@ -63,9 +63,6 @@ public final class RestoreWorktreeOnResume implements SessionStartHandler
       return Result.empty();
 
     String sessionId = input.getSessionId();
-    if (sessionId.isEmpty())
-      return Result.empty();
-
     Path locksDir = scope.getProjectCatDir().resolve("locks");
     if (!Files.isDirectory(locksDir))
       return Result.empty();

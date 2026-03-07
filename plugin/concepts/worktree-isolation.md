@@ -19,37 +19,22 @@ sources for each value.
 
 Before using any path or config value derived from worktree context, agents **MUST** verify:
 
-### Step 1: Verify Current Worktree Location
+### Step 1: Verify Current Branch
 
-Immediately after entering a worktree, verify you are in the correct directory:
-
-```bash
-cd ${WORKTREE_PATH} && pwd
-```
-
-**Required output:** The shell is inside the issue worktree directory (e.g.,
-`/home/node/.config/claude/projects/-workspace/cat/worktrees/2.1-issue-name`).
-
-**Fail-fast rule:** If `pwd` shows the main workspace or any other directory, abort immediately with an error message
-identifying the current location and expected worktree path.
-
-### Step 2: Verify Current Branch
-
-Check that you are on the correct issue branch:
+Verify you are on the correct issue branch:
 
 ```bash
-git branch --show-current
+cd ${WORKTREE_PATH} && git branch --show-current
 ```
 
-**Required output:** The branch name matches the expected issue branch (typically the worktree directory name converted
-to branch format, e.g., `2.1-issue-name`).
+**Required output:** The branch name matches the expected issue branch (e.g., `2.1-issue-name`).
 
 **Fail-fast rule:** If the branch is `main`, `master`, or any branch other than the expected issue branch, abort
 immediately with an error message showing the current branch and expected branch.
 
 **Rationale:** Working on the wrong branch will cause commits to go to the wrong place, corrupting both branches.
 
-### Step 3: Read Effective Configuration Before Using Config Values
+### Step 2: Read Effective Configuration Before Using Config Values
 
 Before reading or relying on any behavioral configuration value (trust level, verify level, effort, etc.), **MUST**
 read the effective configuration using the `get-config-output` tool:
@@ -79,7 +64,7 @@ validates that `cat-config.json` exists and contains valid JSON.
 **Note:** The target branch (`target_branch`) and issue ID are passed as explicit parameters to skill invocations,
 not stored in `cat-config.json`. Do not attempt to read target branch names from this file.
 
-### Step 4: Verify Base Branch Before Merge Operations
+### Step 3: Verify Base Branch Before Merge Operations
 
 The `target_branch` is provided as a parameter when invoking merge skills. It is **not** stored in `cat-config.json`.
 
@@ -112,30 +97,33 @@ attempt to fetch or guess alternatives.
 **Rationale:** Wrong target branch = wrong merge target = silent data corruption. Example: Merging to `main` when the
 project's target branch is `v1.10` silently breaks the version's work.
 
-### Step 5: Verify Relative vs. Absolute Paths
+### Step 4: Use Absolute Paths for File Operations
 
-When working in a worktree:
+When working in a worktree, always prefix file paths with `${WORKTREE_PATH}/`:
 
-- **Use relative paths** for worktree-local operations (e.g., `plugin/skills/`, `.claude/cat/cat-config.json`)
-- **Never use absolute paths to `/workspace/`** — these bypass worktree isolation and modify the main workspace instead
+- **File operations (Read/Edit/Write):** use `${WORKTREE_PATH}/path` (absolute)
+- **Git commands:** use `cd ${WORKTREE_PATH} && git ...` — the `cd` keeps git in the worktree for that single Bash call
+- **Never use bare relative paths or `/workspace/` paths** — the shell's cwd is reset to `/workspace` on every new
+  Bash invocation, so relative paths silently operate on the main workspace instead of the worktree
 
 **Example — WRONG:**
 ```bash
-# This modifies the main workspace, not the issue worktree
+# Relative path silently reads from /workspace, not the worktree
+cat plugin/skills/skill.md
+# Absolute path to /workspace bypasses worktree isolation entirely
 cat /workspace/plugin/skills/skill.md
-cp /workspace/file.txt /workspace/file-backup.txt
 ```
 
 **Example — CORRECT:**
 ```bash
-# This uses the worktree's copy
-cat plugin/skills/skill.md
-cp file.txt file-backup.txt
+# Absolute path rooted at the worktree
+cat "${WORKTREE_PATH}/plugin/skills/skill.md"
+# Git in the worktree via single-call cd
+cd "${WORKTREE_PATH}" && git log --oneline -3
 ```
 
-**Fail-fast rule:** If you are about to use an absolute path to `/workspace/`, stop and reconsider. Use a relative
-path instead. If an absolute path is truly necessary (e.g., accessing files outside the worktree), document why in
-a comment and include clear error handling.
+**Fail-fast rule:** The `EnforceWorktreePathIsolation` hook blocks Read, Edit, and Write calls targeting `/workspace/`
+when an active worktree exists. If a hook blocks your operation, switch to the `${WORKTREE_PATH}/` form.
 
 ## Configuration Read Ordering
 
@@ -144,9 +132,8 @@ a comment and include clear error handling.
 ### Correct Pattern
 
 ```bash
-# Step 1: Verify location and branch
-cd "${WORKTREE_PATH}" || exit 1
-CURRENT_BRANCH=$(git branch --show-current) || exit 1
+# Step 1: Verify branch (cd + git in a single Bash call)
+CURRENT_BRANCH=$(cd "${WORKTREE_PATH}" && git branch --show-current) || exit 1
 
 # Step 2: Read behavioral config values using the effective config tool
 CONFIG=$("${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output" effective)

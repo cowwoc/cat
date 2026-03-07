@@ -68,19 +68,18 @@ public final class HookInputTest
   }
 
   /**
-   * Verifies that a missing session ID returns empty string.
+   * Verifies that a missing session ID throws IllegalArgumentException.
    */
-  @Test
-  public void missingSessionIdReturnsEmpty()
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*session_id.*")
+  public void missingSessionIdThrows()
   {
     JsonMapper mapper = JsonMapper.builder().build();
     String json = """
       {"tool_name": "Bash"}
       """;
     ByteArrayInputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-    HookInput input = HookInput.readFrom(mapper, inputStream);
-
-    requireThat(input.getSessionId(), "sessionId").isEmpty();
+    HookInput.readFrom(mapper, inputStream);
   }
 
   /**
@@ -99,29 +98,29 @@ public final class HookInputTest
   }
 
   /**
-   * Verifies that an empty session ID returns empty string.
+   * Verifies that an empty session ID throws IllegalStateException.
    */
-  @Test
-  public void emptySessionIdReturnsEmpty() throws IOException
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*sessionId is empty.*")
+  public void emptySessionIdThrows() throws IOException
   {
     JsonMapper mapper = JsonMapper.builder().build();
     String json = "{\"session_id\": \"\"}";
     InputStream stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-    HookInput input = HookInput.readFrom(mapper, stream);
-    requireThat(input.getSessionId(), "sessionId").isEmpty();
+    HookInput.readFrom(mapper, stream);
   }
 
   /**
-   * Verifies that a whitespace-only session ID returns empty string.
+   * Verifies that a whitespace-only session ID throws IllegalStateException.
    */
-  @Test
-  public void whitespaceSessionIdReturnsEmpty() throws IOException
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*sessionId is empty.*")
+  public void whitespaceSessionIdThrows() throws IOException
   {
     JsonMapper mapper = JsonMapper.builder().build();
     String json = "{\"session_id\": \"   \"}";
     InputStream stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-    HookInput input = HookInput.readFrom(mapper, stream);
-    requireThat(input.getSessionId(), "sessionId").isEmpty();
+    HookInput.readFrom(mapper, stream);
   }
 
   /**

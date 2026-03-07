@@ -6,8 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.session;
 
-import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
-
 import io.github.cowwoc.cat.hooks.HookInput;
 
 /**
@@ -30,15 +28,10 @@ public final class EchoSessionId implements SessionStartHandler
    *
    * @param input the hook input
    * @return a result containing "Session ID: {id}" as context, or empty if no session ID
-   * @throws NullPointerException if input is null
    */
   @Override
   public Result handle(HookInput input)
   {
-    requireThat(input, "input").isNotNull();
-    String sessionId = input.getSessionId();
-    if (sessionId.isEmpty())
-      return Result.empty();
-    return Result.context("Session ID: " + sessionId);
+    return Result.context("Session ID: " + input.getSessionId());
   }
 }

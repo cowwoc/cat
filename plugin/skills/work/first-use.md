@@ -33,9 +33,14 @@ Filters are interpreted by the prepare phase subagent using natural language und
 
 ## Critical Constraints
 
-### Worktree Directory Safety
+### Worktree Path Convention
 
-**Work from inside the worktree.** After setup, `cd` into the worktree directory and work from there.
+**Use absolute paths for all file operations.** When reading, editing, or writing files inside the
+worktree, prefix every path with `${WORKTREE_PATH}/` (e.g., `${WORKTREE_PATH}/plugin/skills/foo.md`).
+
+**Git commands use the single-call pattern:** `cd ${WORKTREE_PATH} && git ...` — the `cd` keeps git
+operating in the worktree within that single Bash call. Do NOT rely on a prior `cd` persisting across
+separate Bash calls.
 
 **CRITICAL SAFETY RULE:** Before removing a worktree (during merge/cleanup), ensure your shell is
 NOT inside the worktree directory. If a shell is inside a directory when it's deleted, the shell
@@ -200,14 +205,6 @@ Offering closure without criteria verification is a protocol violation.
 
 After Phase 1 returns READY, delegate remaining phases to the work-with-issue skill.
 
-**Change directory into the worktree:**
-
-```bash
-cd "${worktree_path}"
-```
-
-This ensures subsequent shell commands run inside the isolated worktree context.
-
 This skill receives the issue ID and metadata, allowing its exclamation-backtick preprocessing to
 render progress banners automatically for all 4 phases.
 
@@ -284,10 +281,9 @@ No delay needed - the work skill handles its own orchestration.
 If any phase subagent fails unexpectedly:
 
 1. Capture error message
-2. Run `cd "${CLAUDE_PROJECT_DIR}"` to restore working directory to the project root before releasing the lock.
-3. Run `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"` to release the lock.
-4. Display error to user
-5. Offer: Retry, Abort, or Manual cleanup
+2. Run `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"` to release the lock.
+3. Display error to user
+4. Offer: Retry, Abort, or Manual cleanup
 
 ## Success Criteria
 

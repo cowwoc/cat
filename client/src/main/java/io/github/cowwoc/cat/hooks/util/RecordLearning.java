@@ -13,6 +13,7 @@ import io.github.cowwoc.cat.hooks.ClaudeEnv;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.Strings;
+import io.github.cowwoc.cat.hooks.WorktreeContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
@@ -76,21 +77,39 @@ public final class RecordLearning
 
   /**
    * Executes the record learning operation.
+   * <p>
+   * Uses the session ID to look up the active worktree lock and determine the commit location.
+   * When the session holds an active worktree lock, files are committed inside that worktree.
+   * When no lock is found, files are committed in the project directory.
    *
    * @param phase3Input the Phase 3 JSON output containing learning metadata
-   * @param cwdForCommit the current working directory — used to determine if we are in a worktree
+   * @param sessionId the session ID used to locate the active worktree lock
    * @return JSON result with {@code learning_id}, {@code counter_status}, {@code retrospective_trigger},
    *   and {@code commit_hash}
    * @throws NullPointerException if any parameter is null
+   * @throws IllegalArgumentException if {@code sessionId} is blank
    * @throws IOException if file operations or git commands fail
    */
-  public String execute(ObjectNode phase3Input, Path cwdForCommit) throws IOException
+  public String execute(ObjectNode phase3Input, String sessionId) throws IOException
   {
     requireThat(phase3Input, "phase3Input").isNotNull();
-    requireThat(cwdForCommit, "cwdForCommit").isNotNull();
+    requireThat(sessionId, "sessionId").isNotBlank();
 
-    // Determine commit location first — retrospective files are written into commitDir
-    Path commitDir = determineCommitLocation(cwdForCommit);
+    Path commitDir = determineCommitLocation(sessionId);
+    return executeWithCommitDir(phase3Input, commitDir);
+  }
+
+  /**
+   * Executes the core record learning logic against a specific commit directory.
+   *
+   * @param phase3Input the Phase 3 JSON output containing learning metadata
+   * @param commitDir the directory from which to make the git commit
+   * @return JSON result with {@code learning_id}, {@code counter_status}, {@code retrospective_trigger},
+   *   and {@code commit_hash}
+   * @throws IOException if file operations or git commands fail
+   */
+  private String executeWithCommitDir(ObjectNode phase3Input, Path commitDir) throws IOException
+  {
     Path retroDir = commitDir.resolve(".claude").resolve("cat").resolve("retrospectives");
     Files.createDirectories(retroDir);
 
@@ -446,30 +465,40 @@ public final class RecordLearning
   }
 
   /**
-   * Determines where to commit: in a worktree if the current directory is a CAT worktree,
-   * otherwise the project directory.
+   * Executes the record learning operation in a specific commit directory.
    * <p>
-   * A CAT issue worktree has a git directory ending with {@code worktrees/<branch-name>}
-   * (the path returned by {@code git rev-parse --git-dir}).
+   * This method is for testing and for fallback execution when no session ID is available.
+   * Production code should prefer {@link #execute(ObjectNode, String)}.
    *
-   * @param cwd the current working directory
-   * @return the path to commit from
-   * @throws IOException if git commands fail
+   * @param phase3Input the Phase 3 JSON output containing learning metadata
+   * @param commitDir the directory to commit from
+   * @return JSON result with {@code learning_id}, {@code counter_status}, {@code retrospective_trigger},
+   *   and {@code commit_hash}
+   * @throws NullPointerException if any parameter is null
+   * @throws IOException if file operations or git commands fail
    */
-  private Path determineCommitLocation(Path cwd) throws IOException
+  public String executeInDir(ObjectNode phase3Input, Path commitDir) throws IOException
   {
-    // Check if cwd is a CAT issue worktree by checking git dir structure
-    try
-    {
-      String gitDirStr = runGit(cwd, "rev-parse", "--git-dir").strip();
-      Path gitDir = cwd.resolve(gitDirStr).normalize();
-      if (GitCommands.isCatWorktreeGitDir(gitDir))
-        return cwd;
-    }
-    catch (IOException _)
-    {
-      // Not in a git repo or command failed — fall through
-    }
+    requireThat(phase3Input, "phase3Input").isNotNull();
+    requireThat(commitDir, "commitDir").isNotNull();
+    return executeWithCommitDir(phase3Input, commitDir.toAbsolutePath().normalize());
+  }
+
+  /**
+   * Determines where to commit by looking up the active worktree lock for the session.
+   * <p>
+   * When the session holds an active worktree lock and the worktree directory exists,
+   * the commit is made inside the worktree. Otherwise the commit is made in the project directory.
+   *
+   * @param sessionId the session ID used to look up the active worktree lock
+   * @return the path to commit from
+   */
+  private Path determineCommitLocation(String sessionId)
+  {
+    WorktreeContext context = WorktreeContext.forSession(
+      scope.getProjectCatDir(), projectDir, scope.getJsonMapper(), sessionId);
+    if (context != null)
+      return context.absoluteWorktreePath();
     return projectDir;
   }
 
@@ -578,12 +607,12 @@ public final class RecordLearning
       }
 
       Path projectDir = Path.of(projectDirStr);
-      Path cwd = Path.of(System.getProperty("user.dir"));
+      String sessionId = new ClaudeEnv().getClaudeSessionId();
       RecordLearning cmd = new RecordLearning(scope, projectDir, Clock.systemUTC());
 
       try
       {
-        String result = cmd.execute(phase3Input, cwd);
+        String result = cmd.execute(phase3Input, sessionId);
         System.out.println(result);
       }
       catch (IOException e)

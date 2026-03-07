@@ -49,19 +49,12 @@ public final class WarnUnknownTerminal implements SessionStartHandler
    * @param input the hook input containing the session ID
    * @return a result with a stderr warning if fallback widths are in use and the warning hasn't been shown
    *   yet, or an empty result otherwise
-   * @throws NullPointerException if {@code input} is null
    */
   @Override
   public Result handle(HookInput input)
   {
-    requireThat(input, "input").isNotNull();
-
     DisplayUtils display = scope.getDisplayUtils();
     if (!display.isUsingFallbackWidths())
-      return Result.empty();
-
-    String sessionId = input.getSessionId();
-    if (sessionId.isEmpty())
       return Result.empty();
 
     Path sessionDir = scope.getSessionDirectory();

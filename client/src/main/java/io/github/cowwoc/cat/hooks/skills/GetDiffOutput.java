@@ -276,7 +276,7 @@ public final class GetDiffOutput implements SkillOutput
       Logger log = LoggerFactory.getLogger(GetDiffOutput.class);
       try
       {
-        String worktreeBase = detectFromWorktreePath();
+        String worktreeBase = detectFromWorktreePath(projectRoot);
         if (worktreeBase != null)
           return worktreeBase;
 
@@ -299,14 +299,17 @@ public final class GetDiffOutput implements SkillOutput
     /**
      * Detects target branch from worktree directory path.
      *
+     * @param projectRoot the project root path (the actual directory being operated on)
      * @return the target branch name, or null if not in a worktree
+     * @throws NullPointerException if {@code projectRoot} is null
      */
-    private static String detectFromWorktreePath()
+    private static String detectFromWorktreePath(Path projectRoot)
     {
-      Path cwd = Path.of(System.getProperty("user.dir"));
-      String worktreeName = cwd.getFileName().toString();
+      requireThat(projectRoot, "projectRoot").isNotNull();
+      String worktreeName = projectRoot.getFileName().toString();
 
-      if (cwd.getParent() != null && "worktrees".equals(cwd.getParent().getFileName().toString()))
+      if (projectRoot.getParent() != null &&
+        "worktrees".equals(projectRoot.getParent().getFileName().toString()))
       {
         Matcher match = VERSION_PATTERN.matcher(worktreeName);
         if (match.find())
@@ -363,9 +366,9 @@ public final class GetDiffOutput implements SkillOutput
    * Generates the diff output for this skill.
    * <p>
    * Parses {@code --project-dir PATH} from {@code args} if present; otherwise uses
-   * {@code Path.of(System.getProperty("user.dir"))} (the JVM's current working directory). This
-   * ensures that when invoked from a worktree directory, git commands run against the worktree
-   * rather than the main workspace.
+   * {@code scope.getClaudeProjectDir()} as the project directory. The {@code --project-dir} flag
+   * must be provided when invoked from a worktree so that git commands run against the correct
+   * directory.
    *
    * @param args the arguments from the preprocessor directive
    * @return the formatted diff display
@@ -391,7 +394,7 @@ public final class GetDiffOutput implements SkillOutput
         throw new IllegalArgumentException("Unknown argument: " + args[i]);
     }
     if (projectDir == null)
-      projectDir = Path.of(System.getProperty("user.dir"));
+      projectDir = scope.getClaudeProjectDir();
     return getOutput(projectDir);
   }
 

@@ -65,9 +65,6 @@ public final class WarnApprovalWithoutRenderDiff implements AskHandler
     if (!Files.isDirectory(catDir))
       return Result.allow();
 
-    if (sessionId.isEmpty())
-      return Result.allow();
-
     Path sessionFile = scope.getSessionBasePath().resolve(sessionId + ".jsonl");
 
     if (!Files.exists(sessionFile))

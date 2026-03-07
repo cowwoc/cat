@@ -10,13 +10,13 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
 import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.WorktreeContext;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 import tools.jackson.databind.JsonNode;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 /**
@@ -108,7 +108,7 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
 
     if (filePath.contains("client/") || filePath.contains("skills/"))
     {
-      Path path = Paths.get(filePath);
+      Path path = Path.of(filePath);
       if (Files.exists(path))
         return FileWriteHandler.Result.allow();
     }
@@ -149,36 +149,27 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
       return FileWriteHandler.Result.warn(warning);
     }
 
-    boolean inTaskWorktree;
-    try
+    WorktreeContext worktreeContext = WorktreeContext.forSession(
+      scope.getProjectCatDir(), scope.getClaudeProjectDir(), scope.getJsonMapper(), sessionId);
+    boolean inTaskWorktree = worktreeContext != null;
+    if (inTaskWorktree && filePath.startsWith(scope.getClaudeProjectDir().toString()))
     {
-      inTaskWorktree = isInTaskWorktree();
-    }
-    catch (IOException _)
-    {
-      return FileWriteHandler.Result.warn(
-        "Failed to determine if in a task worktree for: " + filePath + "\n" +
-        "Cannot verify worktree isolation.\n" +
-        "Proceeding without worktree check.");
-    }
-    if (inTaskWorktree && filePath.startsWith("/workspace/"))
-    {
-      String cwd = System.getProperty("user.dir");
-      if (!cwd.equals("/workspace") && !cwd.startsWith("/workspace/") ||
-          cwd.contains("worktrees"))
+      Path absoluteFilePath = Path.of(filePath).toAbsolutePath().normalize();
+      if (!absoluteFilePath.startsWith(worktreeContext.absoluteWorktreePath()))
       {
         String warning = "⚠️ WORKTREE PATH BYPASS DETECTED (ESCALATE-A003/M267)\n" +
                          "\n" +
                          "File: " + filePath + "\n" +
-                         "CWD: " + cwd + "\n" +
+                         "Worktree: " + worktreeContext.absoluteWorktreePath() + "\n" +
                          "\n" +
-                         "Absolute /workspace/ paths bypass worktree isolation!\n" +
-                         "You are in a issue worktree but editing the main workspace.\n" +
+                         "Absolute project paths bypass worktree isolation!\n" +
+                         "You are in an issue worktree but editing the main workspace.\n" +
                          "\n" +
-                         "Fix: Use relative path or path within current worktree.\n" +
-                         "Example: Instead of /workspace/plugin/... use plugin/...\n" +
+                         "Fix: Use the path within your current worktree.\n" +
+                         "Example: Instead of " + scope.getClaudeProjectDir() + "/plugin/... use " +
+                         worktreeContext.absoluteWorktreePath() + "/plugin/...\n" +
                          "\n" +
-                         "Ref: plugin/concepts/agent-architecture.md § Worktree Path Handling\n" +
+                         "Ref: plugin/concepts/worktree-isolation.md\n" +
                          "\n" +
                          "Proceeding with edit (warning only, not blocked).";
         return FileWriteHandler.Result.warn(warning);
@@ -213,7 +204,7 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
    */
   private static String findExistingAncestor(String filePath)
   {
-    Path path = Paths.get(filePath);
+    Path path = Path.of(filePath);
     Path current = path.getParent();
     while (current != null)
     {
@@ -222,20 +213,6 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
       current = current.getParent();
     }
     return filePath;
-  }
-
-  /**
-   * Check if we're in a task worktree.
-   * <p>
-   * A CAT issue worktree has a git directory ending with {@code worktrees/<branch-name>}.
-   *
-   * @return true if in a task worktree
-   * @throws IOException if the git command fails
-   */
-  private static boolean isInTaskWorktree() throws IOException
-  {
-    Path gitDir = GitCommands.getGitDir();
-    return GitCommands.isCatWorktreeGitDir(gitDir);
   }
 
   /**

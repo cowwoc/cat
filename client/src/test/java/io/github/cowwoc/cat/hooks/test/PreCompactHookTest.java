@@ -130,10 +130,11 @@ public final class PreCompactHookTest
   }
 
   /**
-   * Verifies that a PreCompact event with a blank session_id does NOT write the .cwd file.
+   * Verifies that a PreCompact event with a blank session_id throws IllegalStateException.
    */
-  @Test
-  public void blankSessionIdSkipsCwdFile() throws IOException
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*sessionId is empty.*")
+  public void blankSessionIdThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-pre-compact-blank-session-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -147,14 +148,8 @@ public final class PreCompactHookTest
           "session_id": "",
           "cwd": "%s"
         }""".formatted(subDir.toString());
-      HookInput input = HookInput.readFrom(mapper,
+      HookInput.readFrom(mapper,
         new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
-      HookOutput output = new HookOutput(scope);
-
-      new PreCompactHook(scope).run(input, output);
-
-      Path cwdFile = scope.getSessionCatDir().resolve("session.cwd");
-      requireThat(Files.exists(cwdFile), "cwdFileExists").isFalse();
     }
     finally
     {

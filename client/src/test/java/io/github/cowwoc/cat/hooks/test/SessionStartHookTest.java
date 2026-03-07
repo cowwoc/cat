@@ -48,6 +48,19 @@ public class SessionStartHookTest
    */
   private HookInput createInput(JsonMapper mapper, String json)
   {
+    // Inject a default session_id if the JSON is valid but doesn't contain one
+    if (!json.isBlank() && json.contains("{") && !json.contains("session_id"))
+    {
+      json = json.stripTrailing();
+      if (json.endsWith("}"))
+      {
+        String inner = json.substring(1, json.length() - 1).strip();
+        if (inner.isEmpty())
+          json = "{\"session_id\": \"test-session\"}";
+        else
+          json = json.substring(0, json.length() - 1) + ", \"session_id\": \"test-session\"}";
+      }
+    }
     return HookInput.readFrom(mapper, new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
   }
 
@@ -71,18 +84,16 @@ public class SessionStartHookTest
   }
 
   /**
-   * Verifies that EchoSessionId returns empty when no session ID is present.
+   * Verifies that HookInput.readFrom throws IllegalArgumentException when no session ID is present.
    */
-  @Test
-  public void echoSessionIdReturnsEmptyWhenNoSessionId() throws IOException
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*session_id.*")
+  public void echoSessionIdThrowsWhenNoSessionId() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{}");
-      SessionStartHandler.Result result = new EchoSessionId().handle(input);
-      requireThat(result.additionalContext(), "additionalContext").isEmpty();
-      requireThat(result.stderr(), "stderr").isEmpty();
+      HookInput.readFrom(mapper, new ByteArrayInputStream("{}".getBytes(StandardCharsets.UTF_8)));
     }
   }
 
@@ -1040,20 +1051,17 @@ public class SessionStartHookTest
   }
 
   /**
-   * Verifies that SessionStartHook.run() throws IllegalArgumentException when session_id is blank.
+   * Verifies that HookInput.readFrom throws IllegalStateException when session_id is blank.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*session_id.*")
+    expectedExceptionsMessageRegExp = ".*sessionId is empty.*")
   public void dispatcherThrowsWhenSessionIdIsBlank() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      SessionStartHook dispatcher = new SessionStartHook(scope, List.of());
-
-      HookInput input = createInput(mapper, "{\"session_id\": \"\"}");
-      HookOutput output = new HookOutput(scope);
-      dispatcher.run(input, output);
+      HookInput.readFrom(mapper, new ByteArrayInputStream(
+        "{\"session_id\": \"\"}".getBytes(StandardCharsets.UTF_8)));
     }
   }
 

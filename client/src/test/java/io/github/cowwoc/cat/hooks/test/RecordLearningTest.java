@@ -23,10 +23,15 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 
 /**
  * Tests for RecordLearning: ID generation, JSON append, counter validation/increment,
  * retrospective threshold detection, and commit location determination.
+ * <p>
+ * Tests that do not exercise commit location use {@code executeInDir()} directly.
+ * Tests that exercise lock-based commit location use {@code execute()} with a session ID
+ * after creating the required lock file structure.
  */
 public final class RecordLearningTest
 {
@@ -56,7 +61,7 @@ public final class RecordLearningTest
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
       ObjectNode input = buildPhase3Input(scope, "Test mistake", null);
-      String result = cmd.execute(input, tempDir);
+      String result = cmd.executeInDir(input, tempDir);
       JsonNode json = scope.getJsonMapper().readTree(result);
 
       requireThat(json.get("learning_id").asString(), "learning_id").isEqualTo("M001");
@@ -87,7 +92,7 @@ public final class RecordLearningTest
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
       ObjectNode input = buildPhase3Input(scope, "Second mistake", null);
-      String result = cmd.execute(input, tempDir);
+      String result = cmd.executeInDir(input, tempDir);
       JsonNode json = scope.getJsonMapper().readTree(result);
 
       requireThat(json.get("learning_id").asString(), "learning_id").isEqualTo("M002");
@@ -121,7 +126,7 @@ public final class RecordLearningTest
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
       ObjectNode input = buildPhase3Input(scope, "Third mistake", null);
-      String result = cmd.execute(input, tempDir);
+      String result = cmd.executeInDir(input, tempDir);
       JsonNode json = scope.getJsonMapper().readTree(result);
 
       requireThat(json.get("learning_id").asString(), "learning_id").isEqualTo("M003");
@@ -155,7 +160,7 @@ public final class RecordLearningTest
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
       ObjectNode input = buildPhase3Input(scope, "Test mistake description", null);
-      cmd.execute(input, tempDir);
+      cmd.executeInDir(input, tempDir);
 
       // Check that the current month file exists and has the entry
       String yearMonth = ZonedDateTime.now(FIXED_CLOCK).format(YEAR_MONTH_FORMAT);
@@ -201,7 +206,7 @@ public final class RecordLearningTest
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
       ObjectNode input = buildPhase3Input(scope, "Second mistake", null);
-      cmd.execute(input, tempDir);
+      cmd.executeInDir(input, tempDir);
 
       Path mistakesFile = retroDir.resolve("mistakes-" + yearMonth + ".json");
       JsonNode mistakesData = scope.getJsonMapper().readTree(Files.readString(mistakesFile));
@@ -241,7 +246,7 @@ public final class RecordLearningTest
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
       ObjectNode input = buildPhase3Input(scope, "Fourth mistake", null);
-      cmd.execute(input, tempDir);
+      cmd.executeInDir(input, tempDir);
 
       // Read updated index
       Path indexFile = retroDir.resolve("index.json");
@@ -276,7 +281,7 @@ public final class RecordLearningTest
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
       ObjectNode input = buildPhase3Input(scope, "Third mistake", null);
-      cmd.execute(input, tempDir);
+      cmd.executeInDir(input, tempDir);
 
       // After fixing mismatch (counter becomes actual=2+1new=3), not 1+1=2
       Path indexFile = retroDir.resolve("index.json");
@@ -315,7 +320,7 @@ public final class RecordLearningTest
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
       ObjectNode input = buildPhase3Input(scope, "Fifth mistake", null);
-      String result = cmd.execute(input, tempDir);
+      String result = cmd.executeInDir(input, tempDir);
       JsonNode json = scope.getJsonMapper().readTree(result);
 
       requireThat(json.get("retrospective_trigger").asBoolean(), "retrospective_trigger").isFalse();
@@ -348,7 +353,7 @@ public final class RecordLearningTest
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
       ObjectNode input = buildPhase3Input(scope, "Tenth mistake", null);
-      String result = cmd.execute(input, tempDir);
+      String result = cmd.executeInDir(input, tempDir);
       JsonNode json = scope.getJsonMapper().readTree(result);
 
       requireThat(json.get("retrospective_trigger").asBoolean(), "retrospective_trigger").isTrue();
@@ -378,7 +383,7 @@ public final class RecordLearningTest
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
       ObjectNode input = buildPhase3Input(scope, "Test mistake", null);
-      String result = cmd.execute(input, tempDir);
+      String result = cmd.executeInDir(input, tempDir);
       JsonNode json = scope.getJsonMapper().readTree(result);
 
       JsonNode counterStatus = json.get("counter_status");
@@ -415,7 +420,7 @@ public final class RecordLearningTest
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
       ObjectNode input = buildPhase3Input(scope, "Test mistake", null);
-      String result = cmd.execute(input, tempDir);
+      String result = cmd.executeInDir(input, tempDir);
       JsonNode json = scope.getJsonMapper().readTree(result);
 
       requireThat(json.get("commit_hash"), "commit_hash").isNotNull();
@@ -431,34 +436,55 @@ public final class RecordLearningTest
   }
 
   /**
-   * Verifies that the commit is made to the worktree repo when executed from a worktree.
+   * Verifies that the commit is made to the worktree repo when the session lock points to a worktree.
+   * <p>
+   * Creates a lock file associating the test session ID with an issue ID, creates the corresponding
+   * worktree under the project CAT directory, then verifies that {@code execute()} commits into
+   * the worktree rather than the main repo.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void commitLocationIsWorktreeWhenInWorktree() throws IOException
+  public void commitLocationIsWorktreeWhenLockPointsToWorktree() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(mainRepo, pluginRoot))
+    // Use a unique session ID to avoid the WorktreeLock static cache returning stale results
+    // from other tests that used the default "test-session" ID.
+    String sessionId = UUID.randomUUID().toString();
+    Path envFile = Files.createTempFile("test-env", ".sh");
+    try (JvmScope scope = new TestJvmScope(mainRepo, pluginRoot, sessionId, envFile,
+      io.github.cowwoc.cat.hooks.skills.TerminalType.WINDOWS_TERMINAL))
     {
-      // Create worktree
-      Path worktreesDir = mainRepo.resolve("worktrees");
+      // Create the worktree at the location WorktreeContext expects:
+      // {projectCatDir}/worktrees/{issueId}
+      String issueId = "2.1-test-feature";
+
+      Path projectCatDir = scope.getProjectCatDir();
+      Path worktreesDir = projectCatDir.resolve("worktrees");
       Files.createDirectories(worktreesDir);
-      Path worktree = TestUtils.createWorktree(mainRepo, worktreesDir, "feature-branch");
 
-      // The worktree is identified as a CAT worktree by its git dir ending with "worktrees/<branch-name>"
-      // No additional setup needed — git worktree creation establishes the correct structure
+      // Create the git worktree in the CAT worktrees directory
+      Path worktree = TestUtils.createWorktree(mainRepo, worktreesDir, issueId);
 
-      // No pre-existing retrospectives — RecordLearning will create them in commitDir (worktree)
+      // Create a lock file mapping the test session to the issue
+      Path lockDir = projectCatDir.resolve("locks");
+      Files.createDirectories(lockDir);
+      String lockContent = """
+        {"session_id": "%s", "worktrees": {}, "created_at": 1000000, "created_iso": "2026-01-01T00:00:00Z"}
+        """.formatted(sessionId);
+      Files.writeString(lockDir.resolve(issueId + ".lock"), lockContent);
+
+      // No pre-existing retrospectives — RecordLearning will create them in the worktree
       RecordLearning cmd = new RecordLearning(scope, mainRepo, FIXED_CLOCK);
       ObjectNode input = buildPhase3Input(scope, "Test mistake", null);
-      // Execute from the worktree context — commit lands in the worktree
-      String result = cmd.execute(input, worktree);
+
+      // execute() uses lock-based detection: session -> issue -> worktree path
+      String result = cmd.execute(input, sessionId);
       JsonNode json = scope.getJsonMapper().readTree(result);
 
       requireThat(json.get("commit_hash"), "commit_hash").isNotNull();
-      // The commit should be in the worktree
+      // The commit should be in the worktree, not the main repo
       String worktreeHash = TestUtils.runGitCommandWithOutput(worktree, "rev-parse", "--short", "HEAD");
       requireThat(json.get("commit_hash").asString(), "commit_hash").isEqualTo(worktreeHash);
     }
@@ -466,6 +492,49 @@ public final class RecordLearningTest
     {
       TestUtils.deleteDirectoryRecursively(mainRepo);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
+      Files.deleteIfExists(envFile);
+    }
+  }
+
+  /**
+   * Verifies that the commit is made to the main repo when the session has no active worktree lock.
+   * <p>
+   * When no lock file maps the session to a worktree, {@code execute()} falls back to committing
+   * in the project directory.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void commitLocationIsMainRepoWhenNoLockExists() throws IOException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("main");
+    Path pluginRoot = Files.createTempDirectory("plugin-root-");
+    // Use a unique session ID to avoid the WorktreeLock static cache returning stale results
+    String sessionId = UUID.randomUUID().toString();
+    Path envFile = Files.createTempFile("test-env", ".sh");
+    try (JvmScope scope = new TestJvmScope(mainRepo, pluginRoot, sessionId, envFile,
+      io.github.cowwoc.cat.hooks.skills.TerminalType.WINDOWS_TERMINAL))
+    {
+      Path retroDir = mainRepo.resolve(".claude/cat/retrospectives");
+      Files.createDirectories(retroDir);
+      initializeIndex(scope, retroDir, 0, null);
+
+      // No lock file — session has no active worktree
+      RecordLearning cmd = new RecordLearning(scope, mainRepo, FIXED_CLOCK);
+      ObjectNode input = buildPhase3Input(scope, "Test mistake", null);
+      String result = cmd.execute(input, sessionId);
+      JsonNode json = scope.getJsonMapper().readTree(result);
+
+      requireThat(json.get("commit_hash"), "commit_hash").isNotNull();
+      // The commit must be in the main repo
+      String commitHash = TestUtils.runGitCommandWithOutput(mainRepo, "rev-parse", "--short", "HEAD");
+      requireThat(json.get("commit_hash").asString(), "commit_hash").isEqualTo(commitHash);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      Files.deleteIfExists(envFile);
     }
   }
 
@@ -488,7 +557,7 @@ public final class RecordLearningTest
       // Do NOT create the retrospectives directory or index.json
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
       ObjectNode input = buildPhase3Input(scope, "First mistake in fresh repo", null);
-      String result = cmd.execute(input, tempDir);
+      String result = cmd.executeInDir(input, tempDir);
       JsonNode json = scope.getJsonMapper().readTree(result);
 
       Path indexFile = tempDir.resolve(".claude/cat/retrospectives/index.json");
@@ -525,7 +594,7 @@ public final class RecordLearningTest
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
       ObjectNode input = buildPhase3Input(scope, "Recurring mistake", "M001");
-      cmd.execute(input, tempDir);
+      cmd.executeInDir(input, tempDir);
 
       String yearMonth = ZonedDateTime.now(FIXED_CLOCK).format(YEAR_MONTH_FORMAT);
       Path mistakesFile = retroDir.resolve("mistakes-" + yearMonth + ".json");
