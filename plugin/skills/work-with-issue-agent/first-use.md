@@ -1169,8 +1169,8 @@ AskUserQuestion tool:
 
   How should these be handled?"
   options:
-    - "Skip all (no action needed)"
     - "Create issues for selected concerns"
+    - "Ignore these concerns"
     - "Other"
 ```
 
@@ -1178,7 +1178,7 @@ AskUserQuestion tool:
    pick which concerns to track, then invoke `/cat:add-agent` for each selected concern. Use the same severity × patience
    matrix from Step 5 to determine the target version for each selected concern.
 
-4. If user selects **"Skip all"**: proceed without creating issues for these concerns.
+4. If user selects **"Ignore these concerns"**: proceed without creating issues for these concerns.
 
 5. If user selects **"Other"**: pause and let the user provide freeform instructions, then act on them.
 
