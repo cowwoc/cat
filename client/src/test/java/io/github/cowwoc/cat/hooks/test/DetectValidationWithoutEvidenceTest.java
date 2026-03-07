@@ -309,6 +309,100 @@ public final class DetectValidationWithoutEvidenceTest
   }
 
   /**
+   * Verifies that a cat:verify-implementation-agent skill invocation counts as evidence.
+   * <p>
+   * This is the primary regression test for the false-positive bug: the main agent invokes
+   * cat:verify-implementation-agent (with -agent suffix) and then summarizes results. The hook
+   * must recognize the -agent suffix variant as valid evidence.
+   */
+  @Test
+  public void verifyImplementationAgentSkillCountsAsEvidence() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      String sessionId = "test-" + UUID.randomUUID();
+      String skillInvocationLine =
+        "{\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"name\":\"Skill\"," +
+          "\"input\":{\"skill\":\"cat:verify-implementation-agent\",\"args\":\"\"}}]}";
+      String claimLine =
+        "{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":" +
+          "\"Verification complete: all acceptance criteria met.\"}]}";
+
+      Path conversationLog = createConversationLog(scope, sessionId,
+        skillInvocationLine + "\n" + claimLine + "\n");
+
+      DetectValidationWithoutEvidence handler = new DetectValidationWithoutEvidence(scope);
+
+      String hookDataJson = """
+        {
+          "tool_input": {},
+          "tool_result": {},
+          "session_id": "%s"
+        }""".formatted(sessionId);
+      JsonNode hookData = mapper.readTree(hookDataJson);
+      JsonNode toolResult = mapper.readTree("{}");
+
+      PostToolHandler.Result result = handler.check("Bash", toolResult, sessionId, hookData);
+
+      requireThat(result.warning(), "warning").isEmpty();
+      requireThat(result.additionalContext(), "additionalContext").isEmpty();
+
+      Files.deleteIfExists(conversationLog);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a cat:compare-docs-agent skill invocation counts as evidence.
+   */
+  @Test
+  public void compareDocsAgentSkillCountsAsEvidence() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      String sessionId = "test-" + UUID.randomUUID();
+      String skillInvocationLine =
+        "{\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"name\":\"Skill\"," +
+          "\"input\":{\"skill\":\"cat:compare-docs-agent\",\"args\":\"doc1.md doc2.md\"}}]}";
+      String claimLine =
+        "{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":" +
+          "\"The documents are semantically equivalent.\"}]}";
+
+      Path conversationLog = createConversationLog(scope, sessionId,
+        skillInvocationLine + "\n" + claimLine + "\n");
+
+      DetectValidationWithoutEvidence handler = new DetectValidationWithoutEvidence(scope);
+
+      String hookDataJson = """
+        {
+          "tool_input": {},
+          "tool_result": {},
+          "session_id": "%s"
+        }""".formatted(sessionId);
+      JsonNode hookData = mapper.readTree(hookDataJson);
+      JsonNode toolResult = mapper.readTree("{}");
+
+      PostToolHandler.Result result = handler.check("Bash", toolResult, sessionId, hookData);
+
+      requireThat(result.warning(), "warning").isEmpty();
+      requireThat(result.additionalContext(), "additionalContext").isEmpty();
+
+      Files.deleteIfExists(conversationLog);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that "validated:" pattern without evidence triggers a warning.
    */
   @Test

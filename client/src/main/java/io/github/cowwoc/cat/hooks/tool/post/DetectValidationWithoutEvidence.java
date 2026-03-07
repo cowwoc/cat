@@ -20,19 +20,29 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Detects validation or verification claims in assistant messages that lack corresponding skill invocation
  * evidence in the conversation transcript.
  * <p>
  * Monitors the most recent assistant text message for validation claim patterns. When a claim is found,
- * checks the last 20 messages for evidence of a {@code cat:compare-docs} or {@code cat:verify-implementation}
- * skill invocation. If no evidence is found, injects a warning into the context.
+ * checks the last 20 messages for evidence of a {@code cat:compare-docs}, {@code cat:compare-docs-agent},
+ * {@code cat:verify-implementation}, or {@code cat:verify-implementation-agent} skill invocation. If no
+ * evidence is found, injects a warning into the context.
  */
 public final class DetectValidationWithoutEvidence implements PostToolHandler
 {
   private static final int CLAIM_CHECK_LIMIT = 5;
   private static final int EVIDENCE_CHECK_LIMIT = 20;
+  /**
+   * Read slightly more lines than needed to ensure we cover EVIDENCE_CHECK_LIMIT assistant messages even if
+   * some lines are non-assistant entries.
+   */
+  private static final int TAIL_READ_LIMIT = 30;
+  private static final Pattern SCORE_PATTERN = Pattern.compile("score:\\s*\\d+/\\d+");
 
   private final Path sessionBasePath;
   private final JsonMapper mapper;
@@ -110,11 +120,12 @@ public final class DetectValidationWithoutEvidence implements PostToolHandler
       An agent claimed verification or validation results without evidence of a corresponding skill invocation.
 
       **Claim detected in assistant output**: contains validation/verification claim keywords
-      **Expected evidence**: cat:compare-docs or cat:verify-implementation skill invocation in recent transcript
+      **Expected evidence**: cat:compare-docs-agent or cat:verify-implementation-agent skill invocation in \
+      recent transcript
 
       **MANDATORY**: Do NOT fabricate validation results. Only report verification outcomes after invoking \
-      the appropriate skill (cat:compare-docs for semantic equivalence, cat:verify-implementation for \
-      post-condition checks).
+      the appropriate skill (cat:compare-docs-agent for semantic equivalence, \
+      cat:verify-implementation-agent for post-condition checks).
 
       **If you need to validate**: Invoke the skill first, then report the result.""");
   }
@@ -131,16 +142,21 @@ public final class DetectValidationWithoutEvidence implements PostToolHandler
   }
 
   /**
-   * Reads all lines from a conversation log file.
+   * Reads the last {@link #TAIL_READ_LIMIT} lines from a conversation log file.
+   * <p>
+   * Only the tail of the file is needed for evidence and claim checks, so reading the entire file is
+   * avoided to prevent resource exhaustion on long sessions.
    *
    * @param conversationLog the path to the conversation log
-   * @return list of all lines, or empty list on error
+   * @return list of the last {@code TAIL_READ_LIMIT} lines, or empty list on error
    */
   private List<String> readAllLines(Path conversationLog)
   {
-    try
+    try (Stream<String> lines = Files.lines(conversationLog))
     {
-      return Files.readAllLines(conversationLog);
+      List<String> allLines = lines.collect(Collectors.toList());
+      int total = allLines.size();
+      return allLines.subList(Math.max(0, total - TAIL_READ_LIMIT), total);
     }
     catch (IOException _)
     {
@@ -150,7 +166,7 @@ public final class DetectValidationWithoutEvidence implements PostToolHandler
 
   /**
    * Checks whether a JSONL line contains a Skill tool_use block invoking cat:compare-docs or
-   * cat:verify-implementation.
+   * cat:verify-implementation (including their {@code -agent} suffix variants).
    *
    * @param jsonlLine the raw JSONL line to parse
    * @return true if a qualifying skill invocation is found in the line
@@ -173,7 +189,7 @@ public final class DetectValidationWithoutEvidence implements PostToolHandler
         if (!"Skill".equals(block.path("name").asString()))
           continue;
         String skillName = block.path("input").path("skill").asString();
-        if ("cat:compare-docs".equals(skillName) || "cat:verify-implementation".equals(skillName))
+        if (skillName != null && isValidationSkill(skillName))
           return true;
       }
       return false;
@@ -182,6 +198,24 @@ public final class DetectValidationWithoutEvidence implements PostToolHandler
     {
       return false;
     }
+  }
+
+  /**
+   * Checks whether the given skill name is a recognized validation or verification skill.
+   * <p>
+   * Accepts both bare names (e.g., {@code cat:compare-docs}) and their {@code -agent} suffix variants
+   * (e.g., {@code cat:compare-docs-agent}), since either form may appear in the conversation log depending
+   * on how the skill was invoked.
+   *
+   * @param skillName the skill name from a Skill tool_use block
+   * @return true if this skill qualifies as validation evidence
+   */
+  private static boolean isValidationSkill(String skillName)
+  {
+    return skillName.equals("cat:compare-docs") ||
+      skillName.equals("cat:compare-docs-agent") ||
+      skillName.equals("cat:verify-implementation") ||
+      skillName.equals("cat:verify-implementation-agent");
   }
 
   /**
@@ -195,7 +229,7 @@ public final class DetectValidationWithoutEvidence implements PostToolHandler
     if (text.isEmpty())
       return false;
     String lower = text.toLowerCase(Locale.ENGLISH);
-    return lower.matches(".*score:\\s*\\d+/\\d+.*") ||
+    return SCORE_PATTERN.matcher(lower).find() ||
       lower.contains("verified:") || lower.contains("validated:") ||
       lower.contains("semantically equivalent") || lower.contains("semantic equivalence") ||
       lower.contains("validation complete") || lower.contains("verification complete") ||
