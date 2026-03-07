@@ -24,6 +24,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - split-execution-waves-into-agent-sections
 - extract-shared-planning-approach
 - move-planning-to-subagents
+- enforce-patience-matrix-before-approval-gate
 
 
 ## Issues Closed
