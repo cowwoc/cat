@@ -18,7 +18,7 @@ import tools.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Set;
+
 
 /**
  * Tests for {@link StateSchemaValidator}.
@@ -1052,7 +1052,7 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that a STATE.md file containing the deprecated 'Last Updated' field is rejected.
+   * Verifies that a STATE.md file containing the non-standard 'Last Updated' field is rejected.
    */
   @Test
   public void lastUpdatedFieldIsRejected() throws IOException
@@ -1080,7 +1080,10 @@ public final class StateSchemaValidatorTest
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
 
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Deprecated key 'Last Updated' must be removed");
+      requireThat(result.reason(), "reason").contains("Non-standard key 'Last Updated'");
+      requireThat(result.reason(), "reason").contains("Only these keys are allowed:");
+      requireThat(result.reason(), "reason").contains("Mandatory: Blocks, Dependencies, Progress, Status");
+      requireThat(result.reason(), "reason").contains("Optional: Parent, Resolution, Target Branch");
     }
     finally
     {
@@ -1164,7 +1167,7 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that a STATE.md file containing the deprecated 'Completed' field is rejected.
+   * Verifies that a STATE.md file containing the non-standard 'Completed' field is rejected.
    */
   @Test
   public void completedFieldIsRejected() throws IOException
@@ -1193,7 +1196,10 @@ public final class StateSchemaValidatorTest
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
 
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Deprecated key 'Completed' must be removed");
+      requireThat(result.reason(), "reason").contains("Non-standard key 'Completed'");
+      requireThat(result.reason(), "reason").contains("Only these keys are allowed:");
+      requireThat(result.reason(), "reason").contains("Mandatory: Blocks, Dependencies, Progress, Status");
+      requireThat(result.reason(), "reason").contains("Optional: Parent, Resolution, Target Branch");
     }
     finally
     {
@@ -1559,10 +1565,10 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that deprecated 'Last Updated' combined with missing mandatory 'Status' reports the mandatory key first.
+   * Verifies that non-standard 'Last Updated' combined with missing mandatory 'Status' reports the mandatory key first.
    */
   @Test
-  public void testDeprecatedKeyWithMissingMandatory() throws IOException
+  public void testNonStandardKeyWithMissingMandatory() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -1586,7 +1592,7 @@ public final class StateSchemaValidatorTest
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
 
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Deprecated key 'Last Updated'");
+      requireThat(result.reason(), "reason").contains("Missing mandatory key 'Status'");
     }
     finally
     {
@@ -1595,10 +1601,11 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that deprecated 'Last Updated' combined with non-standard 'CustomField' reports deprecated first.
+   * Verifies that non-standard 'Last Updated' combined with non-standard 'CustomField' reports the first non-standard
+   * key found.
    */
   @Test
-  public void testDeprecatedKeyWithNonStandardKey() throws IOException
+  public void testMultipleNonStandardKeys() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -1624,7 +1631,7 @@ public final class StateSchemaValidatorTest
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
 
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Deprecated key 'Last Updated'");
+      requireThat(result.reason(), "reason").contains("Non-standard key");
     }
     finally
     {
@@ -1748,23 +1755,158 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that the set returned by getDeprecatedKeys() is unmodifiable.
+   * Verifies that a STATE.md file containing the non-standard 'Closed' field is rejected.
    */
   @Test
-  public void testDeprecatedKeysReturnsUnmodifiableSet()
+  public void closedFieldIsRejected() throws IOException
   {
-    Set<String> deprecatedKeys = StateSchemaValidator.getDeprecatedKeys();
-
-    boolean isUnmodifiable = false;
-    try
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      deprecatedKeys.add("NewKey");
-    }
-    catch (UnsupportedOperationException _)
-    {
-      isUnmodifiable = true;
-    }
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
 
-    requireThat(isUnmodifiable, "isUnmodifiable").isTrue();
+      String content = """
+        # State
+
+        - **Status:** closed
+        - **Progress:** 100%
+        - **Resolution:** implemented
+        - **Dependencies:** []
+        - **Blocks:** []
+        - **Closed:** 2026-02-12
+        """;
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("content", content);
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Non-standard key 'Closed'");
+      requireThat(result.reason(), "reason").contains("Mandatory: Blocks, Dependencies, Progress, Status");
+      requireThat(result.reason(), "reason").contains("Optional: Parent, Resolution, Target Branch");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that uppercase 'CLOSED' status correctly triggers the Resolution requirement.
+   */
+  @Test
+  public void testUppercaseClosedStatusRequiresResolution() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String content = """
+        # State
+
+        - **Status:** CLOSED
+        - **Progress:** 100%
+        - **Dependencies:** []
+        - **Blocks:** []
+        """;
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("content", content);
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Resolution is required when Status is 'closed'");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a STATE.md file containing the non-standard 'Started' field is rejected.
+   */
+  @Test
+  public void startedFieldIsRejected() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String content = """
+        # State
+
+        - **Status:** in-progress
+        - **Progress:** 50%
+        - **Dependencies:** []
+        - **Blocks:** []
+        - **Started:** 2026-02-12
+        """;
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("content", content);
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Non-standard key 'Started'");
+      requireThat(result.reason(), "reason").contains("Only these keys are allowed:");
+      requireThat(result.reason(), "reason").contains("Mandatory: Blocks, Dependencies, Progress, Status");
+      requireThat(result.reason(), "reason").contains("Optional: Parent, Resolution, Target Branch");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a STATE.md file containing the non-standard 'Tokens Used' field is rejected.
+   */
+  @Test
+  public void tokensUsedFieldIsRejected() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String content = """
+        # State
+
+        - **Status:** open
+        - **Progress:** 0%
+        - **Dependencies:** []
+        - **Blocks:** []
+        - **Tokens Used:** 12345
+        """;
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("content", content);
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Non-standard key 'Tokens Used'");
+      requireThat(result.reason(), "reason").contains("Only these keys are allowed:");
+      requireThat(result.reason(), "reason").contains("Mandatory: Blocks, Dependencies, Progress, Status");
+      requireThat(result.reason(), "reason").contains("Optional: Parent, Resolution, Target Branch");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 }

@@ -11,6 +11,11 @@ See LICENSE.md in the project root for license terms.
 
 ## When to Use This Skill
 
+### STATE.md Files
+
+When creating a STATE.md file, read `plugin/concepts/state-schema.md` for the current allowed fields
+before writing. Writing disallowed fields causes StateSchemaValidator to block the write.
+
 ### ✅ Use write-and-commit When:
 
 - Creating a **new file** that will be committed immediately
