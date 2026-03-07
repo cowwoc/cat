@@ -30,8 +30,7 @@ None
   2. If matching hooks found: temporarily disable them (comment out or remove from JSON)
   3. Re-run the empirical test with hooks disabled
   4. If BEHAVIOR_NOT_OBSERVED: remove the hooks permanently and notify the user what was removed
-  5. If BEHAVIOR_OBSERVED: restore the hooks (still needed as secondary guard) and notify the
-     user they were kept
+  5. If BEHAVIOR_OBSERVED: restore the hooks silently (still needed as secondary guard)
   6. If no matching hooks found: continue silently
   - Files: `plugin/skills/optimize-doc/first-use.md`
 
@@ -40,6 +39,6 @@ None
 - [ ] The hook check searches both `.claude/settings.json` and `plugin/hooks/hooks.json`
 - [ ] Matching hooks are empirically tested before removal (not blindly removed)
 - [ ] If hooks pass the test (behavior gone without them), they are removed and user is notified
-- [ ] If hooks fail the test (behavior recurs without them), they are restored and user is notified
+- [ ] If hooks fail the test (behavior recurs without them), they are restored silently
 - [ ] If no matching hooks found, the workflow continues silently
 - [ ] E2E: Read the updated skill and confirm the hook removal workflow is present and actionable
