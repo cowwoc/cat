@@ -11,6 +11,7 @@ import com.github.difflib.text.DiffRowGenerator;
 
 import java.io.IOException;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -255,169 +256,100 @@ public final class GetDiffOutput implements SkillOutput
   }
 
   /**
-   * Handles target branch detection logic.
-   */
-  private static final class TargetBranchDetector
-  {
-    private static final Pattern VERSION_PATTERN = Pattern.compile("^(\\d+\\.\\d+)-");
-    private static final Pattern VERSION_BRANCH_PATTERN = Pattern.compile("^v\\d+\\.\\d+$");
-
-    /**
-     * Detects the target branch for diff comparison.
-     *
-     * @param projectRoot the project root path
-     * @return the target branch name, or null if not detected
-     * @throws NullPointerException if {@code projectRoot} is null
-     */
-    static String detectTargetBranch(Path projectRoot)
-    {
-      requireThat(projectRoot, "projectRoot").isNotNull();
-
-      Logger log = LoggerFactory.getLogger(GetDiffOutput.class);
-      try
-      {
-        String worktreeBase = detectFromWorktreePath(projectRoot);
-        if (worktreeBase != null)
-          return worktreeBase;
-
-        String branchBase = detectFromBranchName(projectRoot);
-        if (branchBase != null)
-          return branchBase;
-
-        String upstreamBase = detectFromUpstream(projectRoot);
-        if (upstreamBase != null)
-          return upstreamBase;
-      }
-      catch (Exception e)
-      {
-        log.debug("Failed to detect target branch", e);
-      }
-
-      return "main";
-    }
-
-    /**
-     * Detects target branch from worktree directory path.
-     *
-     * @param projectRoot the project root path (the actual directory being operated on)
-     * @return the target branch name, or null if not in a worktree
-     * @throws NullPointerException if {@code projectRoot} is null
-     */
-    private static String detectFromWorktreePath(Path projectRoot)
-    {
-      requireThat(projectRoot, "projectRoot").isNotNull();
-      String worktreeName = projectRoot.getFileName().toString();
-
-      if (projectRoot.getParent() != null &&
-        "worktrees".equals(projectRoot.getParent().getFileName().toString()))
-      {
-        Matcher match = VERSION_PATTERN.matcher(worktreeName);
-        if (match.find())
-          return "v" + match.group(1);
-      }
-      return null;
-    }
-
-    /**
-     * Detects target branch from current branch name.
-     *
-     * @param projectRoot the project root path
-     * @return the target branch name, or null if not detected
-     * @throws NullPointerException if {@code projectRoot} is null
-     */
-    private static String detectFromBranchName(Path projectRoot)
-    {
-      requireThat(projectRoot, "projectRoot").isNotNull();
-
-      String branch = GitHelper.getCurrentBranch(projectRoot);
-      if (branch != null)
-      {
-        Matcher match = VERSION_PATTERN.matcher(branch);
-        if (match.find())
-          return "v" + match.group(1);
-
-        if (VERSION_BRANCH_PATTERN.matcher(branch).matches())
-          return "main";
-      }
-      return null;
-    }
-
-    /**
-     * Detects target branch from upstream tracking branch.
-     *
-     * @param projectRoot the project root path
-     * @return the target branch name, or null if not detected
-     * @throws NullPointerException if {@code projectRoot} is null
-     */
-    private static String detectFromUpstream(Path projectRoot)
-    {
-      requireThat(projectRoot, "projectRoot").isNotNull();
-
-      String upstream = GitHelper.getUpstreamBranch(projectRoot);
-      if (upstream != null && upstream.contains("/"))
-        return upstream.substring(upstream.indexOf('/') + 1);
-      if (upstream != null)
-        return upstream;
-      return null;
-    }
-  }
-
-  /**
    * Generates the diff output for this skill.
    * <p>
-   * Parses {@code --project-dir PATH} from {@code args} if present; otherwise uses
-   * {@code scope.getClaudeProjectDir()} as the project directory. The {@code --project-dir} flag
-   * must be provided when invoked from a worktree so that git commands run against the correct
-   * directory.
+   * Expects a single positional argument: the absolute path to the issue directory (e.g.,
+   * {@code /path/to/worktree/.claude/cat/issues/v2/v2.1/fix-foo/}). The project root (worktree path)
+   * is derived by stripping everything from {@code .claude/cat/issues/} onward. The target branch is
+   * read from the issue's {@code STATE.md} file.
    *
-   * @param args the arguments from the preprocessor directive
+   * @param args the arguments from the preprocessor directive (exactly 1: issue path)
    * @return the formatted diff display
    * @throws NullPointerException     if {@code args} is null
-   * @throws IllegalArgumentException if {@code --project-dir} flag is present but lacks a PATH value
+   * @throws IllegalArgumentException if args does not contain exactly 1 element, or the issue path is invalid
    * @throws IOException              if an I/O error occurs
    */
   @Override
   public String getOutput(String[] args) throws IOException
   {
     requireThat(args, "args").isNotNull();
-    Path projectDir = null;
-    for (int i = 0; i < args.length; ++i)
+    if (args.length != 1)
     {
-      if (args[i].equals("--project-dir"))
-      {
-        if (i + 1 >= args.length)
-          throw new IllegalArgumentException("Missing PATH argument for --project-dir");
-        projectDir = Path.of(args[i + 1]);
-        ++i;
-      }
-      else
-        throw new IllegalArgumentException("Unknown argument: " + args[i]);
+      throw new IllegalArgumentException(
+        "Expected exactly 1 argument (issue path), got " + args.length);
     }
-    if (projectDir == null)
-      projectDir = scope.getClaudeProjectDir();
-    return getOutput(projectDir);
+    Path issuePath = Path.of(args[0]);
+    Path projectDir = deriveProjectRoot(issuePath);
+    String targetBranch = readTargetBranch(issuePath);
+    return getOutput(projectDir, targetBranch);
   }
 
   /**
-   * Pre-compute rendered diff for approval gates.
+   * Derives the project root (worktree path) from an issue path by finding the
+   * {@code .claude/cat/issues/} segment and returning everything before it.
    *
-   * @param projectRoot the project root path
-   * @return the formatted diff output, or null on error
-   * @throws IOException if the config file cannot be read or contains invalid JSON
-   * @throws NullPointerException if {@code projectRoot} is null
+   * @param issuePath absolute path to the issue directory
+   * @return the project root path
+   * @throws IllegalArgumentException if the path does not contain {@code .claude/cat/issues/}
    */
-  public String getOutput(Path projectRoot) throws IOException
+  private static Path deriveProjectRoot(Path issuePath)
+  {
+    String pathStr = issuePath.toString();
+    int index = pathStr.indexOf("/.claude/cat/issues/");
+    if (index < 0)
+    {
+      throw new IllegalArgumentException(
+        "Issue path does not contain '.claude/cat/issues/': " + issuePath);
+    }
+    return Path.of(pathStr.substring(0, index));
+  }
+
+  /**
+   * Reads the target branch from the issue's STATE.md file.
+   *
+   * @param issuePath absolute path to the issue directory
+   * @return the target branch name
+   * @throws IOException              if STATE.md cannot be read
+   * @throws IllegalArgumentException if STATE.md does not exist or does not contain a Target Branch field
+   */
+  private static String readTargetBranch(Path issuePath) throws IOException
+  {
+    Path stateMd = issuePath.resolve("STATE.md");
+    if (!Files.exists(stateMd))
+      throw new IllegalArgumentException("STATE.md not found at: " + stateMd);
+    List<String> lines = Files.readAllLines(stateMd);
+    String marker = "**Target Branch:**";
+    for (String line : lines)
+    {
+      int pos = line.indexOf(marker);
+      if (pos >= 0)
+      {
+        String branch = line.substring(pos + marker.length()).trim();
+        if (!branch.isEmpty())
+          return branch;
+      }
+    }
+    throw new IllegalArgumentException(
+      "STATE.md does not contain a 'Target Branch' field: " + stateMd);
+  }
+
+  /**
+   * Renders the diff between the target branch and HEAD.
+   *
+   * @param projectRoot  the project root path (worktree directory)
+   * @param targetBranch the target branch for the diff
+   * @return the formatted diff output
+   * @throws IOException          if the config file cannot be read or contains invalid JSON
+   * @throws NullPointerException if {@code projectRoot} or {@code targetBranch} is null
+   */
+  private String getOutput(Path projectRoot, String targetBranch) throws IOException
   {
     requireThat(projectRoot, "projectRoot").isNotNull();
+    requireThat(targetBranch, "targetBranch").isNotNull();
 
     // Load config for display width
     Config config = Config.load(scope.getJsonMapper(), projectRoot);
     int displayWidth = config.getInt("displayWidth", 120);
-
-    // Detect target branch
-    String targetBranch = TargetBranchDetector.detectTargetBranch(projectRoot);
-    if (targetBranch == null)
-      return "Target branch could not be detected from current directory or branch name.";
 
     // Check if target branch exists
     if (!GitHelper.branchExists(projectRoot, targetBranch))

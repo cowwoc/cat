@@ -432,9 +432,9 @@ in the description so intent routing matches correctly.
 
 Do NOT add fields set to their default value — it adds noise and obscures intentional overrides.
 
-**Positional arguments**: For skills that accept arguments, use `argument-hint` to document expected
-args and reference them as `$0`, `$1`, etc. in content. SkillLoader splits the args string on
-whitespace and resolves positional references.
+**Positional arguments (MANDATORY)**: Skills that reference `$0`...`$N` or `$ARGUMENTS` in their
+content MUST specify `argument-hint` in frontmatter. This documents expected args for callers.
+SkillLoader splits the args string on whitespace and resolves positional references.
 
 ```yaml
 ---
