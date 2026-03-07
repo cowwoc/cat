@@ -1,8 +1,8 @@
 ---
 description: >
-  Run retrospective analysis on recorded learnings and derive action items from patterns.
+  Review whether preventions implemented by /cat:learn were effective or need revision.
+  Analyzes patterns across multiple recorded learnings to identify systemic improvements.
   Trigger words: "run retrospective", "analyze patterns", "learning session", "retrospective on learnings", "patterns from".
-  Analyzes patterns across multiple learning entries, not individual mistakes.
   MANDATORY after learn threshold is reached.
 model: sonnet
 user-invocable: false
