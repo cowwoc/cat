@@ -1054,5 +1054,25 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M498",
+    "timestamp" : "2026-03-07T00:28:15Z",
+    "category" : "protocol_violation",
+    "description" : "",
+    "root_cause" : "work-with-issue-agent documentation lacks explicit enforcement that patience matrix concern-handling is mandatory before approval gate. Agent treated it as optional.",
+    "rca_method" : "C",
+    "rca_method_name" : "causal-barrier",
+    "prevention_type" : "skill",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }
