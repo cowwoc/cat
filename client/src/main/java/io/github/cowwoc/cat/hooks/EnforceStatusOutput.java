@@ -67,7 +67,9 @@ public final class EnforceStatusOutput
         HookInput input = HookInput.readFromStdin(mapper);
         String transcriptPath = input.getString("transcript_path");
         boolean stopHookActive = input.getBoolean("stop_hook_active", false);
-        output = check(mapper, transcriptPath, stopHookActive, hookOutput);
+        String sessionId = input.getSessionId();
+        Path sessionBasePath = scope.getSessionBasePath();
+        output = check(mapper, transcriptPath, stopHookActive, hookOutput, sessionId, sessionBasePath);
       }
       catch (Exception e)
       {
@@ -88,7 +90,11 @@ public final class EnforceStatusOutput
   }
 
   /**
-   * Checks the transcript and returns the hook decision.
+   * Checks the transcript and returns the hook decision, with pending-agent-result enforcement.
+   * <p>
+   * Before checking the transcript for the status box, this method checks whether a pending-agent-result
+   * flag file exists for the session. If it does, the session cannot end until {@code collect-results-agent}
+   * is invoked.
    * <p>
    * When {@code stopHookActive} is {@code true} (second attempt after a prior block), the hook
    * re-checks the transcript: if the status box is now present it allows the response through;
@@ -102,12 +108,35 @@ public final class EnforceStatusOutput
    * @param transcriptPath path to the transcript JSONL file, or empty string if unavailable
    * @param stopHookActive whether Claude Code set {@code stop_hook_active=true} on this invocation
    * @param hookOutput the hook output builder
+   * @param sessionId the session ID, or empty string if unavailable
+   * @param sessionBasePath the base path for session directories, or null if unavailable
    * @return JSON string representing the hook decision
    * @throws IOException if the transcript file cannot be read
    */
   public static String check(JsonMapper mapper, String transcriptPath, boolean stopHookActive,
-    HookOutput hookOutput) throws IOException
+    HookOutput hookOutput, String sessionId, Path sessionBasePath) throws IOException
   {
+    // Check for pending-agent-result flag before any other enforcement
+    if (!sessionId.isEmpty() && sessionBasePath != null)
+    {
+      Path flagPath = sessionBasePath.resolve(sessionId).resolve("pending-agent-result");
+      if (Files.exists(flagPath))
+      {
+        String reason = """
+          BLOCKED: Agent tool result has not been processed.
+
+          The previous Agent tool invocation completed but collect-results-agent was not called.
+          You cannot end your turn until you have collected the subagent result.
+
+          Required next step: Invoke collect-results-agent:
+            Skill tool: skill="cat:collect-results-agent"
+            Arguments: "<cat_agent_id> <issue_path> <subagent_commits_json>"
+
+          See plugin/skills/collect-results-agent/SKILL.md for argument details.""";
+        return hookOutput.block(reason);
+      }
+    }
+
     CheckResult result = checkTranscriptForStatusSkill(mapper, transcriptPath);
 
     if (result.statusInvoked && !result.hasBoxOutput)
