@@ -45,6 +45,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-rebase-dry-run-flag
 - fix-retro-counter-reset
 - improve-retrospective-ux
+- enforce-skill-loading-via-hook
 
 
 ## Issues Closed
