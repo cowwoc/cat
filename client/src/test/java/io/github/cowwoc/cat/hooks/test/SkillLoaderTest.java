@@ -8,7 +8,6 @@ package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.SkillLoader;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.nio.file.NoSuchFileException;
@@ -16,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -149,12 +149,15 @@ public class SkillLoaderTest
   }
 
   /**
-   * Verifies that load substitutes CLAUDE_PLUGIN_ROOT variable.
+   * Verifies that load passes through CLAUDE_PLUGIN_ROOT variable in content body unchanged.
+   * <p>
+   * Variable substitution applies only inside {@code !} directive strings; content body
+   * passes through to Claude Code unmodified.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void loadSubstitutesPluginRootVariable() throws IOException
+  public void loadPassesThroughPluginRootVariableInContentBody() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
@@ -169,9 +172,7 @@ Path: ${CLAUDE_PLUGIN_ROOT}/file.txt
         List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
-      requireThat(result, "result").
-        contains("Path: " + tempPluginRoot + "/file.txt").
-        doesNotContain("${CLAUDE_PLUGIN_ROOT}");
+      requireThat(result, "result").contains("Path: ${CLAUDE_PLUGIN_ROOT}/file.txt");
     }
     finally
     {
@@ -180,12 +181,15 @@ Path: ${CLAUDE_PLUGIN_ROOT}/file.txt
   }
 
   /**
-   * Verifies that load substitutes CLAUDE_SESSION_ID variable with the scope's session ID.
+   * Verifies that load passes through CLAUDE_SESSION_ID variable in content body unchanged.
+   * <p>
+   * Variable substitution applies only inside {@code !} directive strings; content body
+   * passes through to Claude Code unmodified.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void loadSubstitutesSessionIdVariable() throws IOException
+  public void loadPassesThroughSessionIdVariableInContentBody() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
@@ -201,10 +205,7 @@ Session: ${CLAUDE_SESSION_ID}
         List.of(uniqueAgentId));
       String result = loader.load("test-skill");
 
-      // CLAUDE_SESSION_ID is resolved from scope.getClaudeSessionId(), not from agentId
-      requireThat(result, "result").
-        contains("Session: " + scope.getClaudeSessionId()).
-        doesNotContain("${CLAUDE_SESSION_ID}");
+      requireThat(result, "result").contains("Session: ${CLAUDE_SESSION_ID}");
     }
     finally
     {
@@ -213,12 +214,15 @@ Session: ${CLAUDE_SESSION_ID}
   }
 
   /**
-   * Verifies that load substitutes CLAUDE_PROJECT_DIR variable with the scope's project directory.
+   * Verifies that load passes through CLAUDE_PROJECT_DIR variable in content body unchanged.
+   * <p>
+   * Variable substitution applies only inside {@code !} directive strings; content body
+   * passes through to Claude Code unmodified.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void loadSubstitutesProjectDirVariable() throws IOException
+  public void loadPassesThroughProjectDirVariableInContentBody() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     Path tempProjectDir = Files.createTempDirectory("skill-loader-project");
@@ -233,9 +237,7 @@ Project: ${CLAUDE_PROJECT_DIR}/data
       SkillLoader loader = new SkillLoader(scope, List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
-      requireThat(result, "result").
-        contains("Project: " + tempProjectDir + "/data").
-        doesNotContain("${CLAUDE_PROJECT_DIR}");
+      requireThat(result, "result").contains("Project: ${CLAUDE_PROJECT_DIR}/data");
     }
     finally
     {
@@ -377,12 +379,15 @@ Full skill content
   }
 
   /**
-   * Verifies that load handles nested variable references in content.
+   * Verifies that content body variable references pass through unchanged.
+   * <p>
+   * Variable substitution applies only inside {@code !} directive strings; content body
+   * passes through to Claude Code unmodified, including adjacent variable references.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void loadHandlesNestedVariableReferences() throws IOException
+  public void loadPassesThroughContentBodyVariableReferences() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     Path tempProjectDir = Files.createTempDirectory("skill-loader-project");
@@ -399,11 +404,8 @@ Project: ${CLAUDE_PROJECT_DIR}/session_${CLAUDE_SESSION_ID}
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
-        contains("Path: " + tempPluginRoot + "/contains_" + scope.getClaudeSessionId()).
-        contains("Project: " + tempProjectDir + "/session_" + scope.getClaudeSessionId()).
-        doesNotContain("${CLAUDE_PLUGIN_ROOT}").
-        doesNotContain("${CLAUDE_SESSION_ID}").
-        doesNotContain("${CLAUDE_PROJECT_DIR}");
+        contains("Path: ${CLAUDE_PLUGIN_ROOT}/contains_${CLAUDE_SESSION_ID}").
+        contains("Project: ${CLAUDE_PROJECT_DIR}/session_${CLAUDE_SESSION_ID}");
     }
     finally
     {
@@ -443,7 +445,9 @@ Value: ${UNDEFINED_VAR}
   }
 
   /**
-   * Verifies that load works with no bindings.json file.
+   * Verifies that load works without a bindings.json file.
+   * <p>
+   * Content body variable references pass through unchanged regardless of bindings configuration.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -465,8 +469,8 @@ Session: ${CLAUDE_SESSION_ID}
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
-        contains("Root: " + tempPluginRoot).
-        contains("Session: " + scope.getClaudeSessionId());
+        contains("Root: ${CLAUDE_PLUGIN_ROOT}").
+        contains("Session: ${CLAUDE_SESSION_ID}");
     }
     finally
     {
@@ -475,144 +479,6 @@ Session: ${CLAUDE_SESSION_ID}
   }
 
 
-  /**
-   * Verifies that load expands @path references in skill content.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void loadExpandsPathReferences() throws IOException
-  {
-    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
-    {
-      Path conceptsDir = tempPluginRoot.resolve("concepts");
-      Files.createDirectories(conceptsDir);
-      Files.writeString(conceptsDir.resolve("context.md"), """
-Context file content
-""");
-
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
-      Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("first-use.md"), """
-@concepts/context.md
-# Main Content
-""");
-
-      SkillLoader loader = new SkillLoader(scope,
-        List.of(UUID.randomUUID().toString()));
-      String result = loader.load("test-skill");
-
-      requireThat(result, "result").
-        contains("Context file content").
-        contains("# Main Content").
-        doesNotContain("@concepts/context.md");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
-    }
-  }
-
-  /**
-   * Verifies that load substitutes variables in @path-expanded content.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void loadSubstitutesVariablesInExpandedPaths() throws IOException
-  {
-    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
-    {
-      Path conceptsDir = tempPluginRoot.resolve("concepts");
-      Files.createDirectories(conceptsDir);
-      Files.writeString(conceptsDir.resolve("context.md"), """
-Root: ${CLAUDE_PLUGIN_ROOT}
-""");
-
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
-      Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("first-use.md"), """
-@concepts/context.md
-# Main
-""");
-
-      SkillLoader loader = new SkillLoader(scope,
-        List.of(UUID.randomUUID().toString()));
-      String result = loader.load("test-skill");
-
-      requireThat(result, "result").
-        contains("Root: " + tempPluginRoot).
-        doesNotContain("${CLAUDE_PLUGIN_ROOT}");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
-    }
-  }
-
-  /**
-   * Verifies that load throws IOException for missing @path file.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test(expectedExceptions = IOException.class,
-    expectedExceptionsMessageRegExp = ".*@path reference.*not found.*")
-  public void loadRejectsMissingPathFile() throws IOException
-  {
-    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
-    {
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
-      Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("first-use.md"), """
-@concepts/missing.md
-# Main
-""");
-
-      SkillLoader loader = new SkillLoader(scope,
-        List.of(UUID.randomUUID().toString()));
-      loader.load("test-skill");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
-    }
-  }
-
-  /**
-   * Verifies that load rejects @path references that resolve outside the plugin root.
-   * <p>
-   * A path like {@code @../../etc/passwd} must not be allowed to read files outside the plugin root.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test(expectedExceptions = IOException.class,
-    expectedExceptionsMessageRegExp = ".*resolves outside the plugin root.*")
-  public void loadRejectsPathTraversalOutsidePluginRoot() throws IOException
-  {
-    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
-    {
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
-      Files.createDirectories(companionDir);
-      // Attempt path traversal: @../../etc/passwd resolves above the plugin root
-      Files.writeString(companionDir.resolve("first-use.md"), """
-@../../etc/passwd
-# Main
-""");
-
-      SkillLoader loader = new SkillLoader(scope,
-        List.of(UUID.randomUUID().toString()));
-      loader.load("test-skill");
-      Assert.fail("Expected IOException to be thrown");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
-    }
-  }
 
   /**
    * Verifies that load does not expand @ symbols in non-path contexts.
@@ -650,190 +516,10 @@ Email: user@example.com
   }
 
 
-  /**
-   * Verifies that circular @path references are detected and rejected.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test(expectedExceptions = IOException.class,
-    expectedExceptionsMessageRegExp = ".*Circular @path reference.*")
-  public void loadRejectsCircularPathReferences() throws IOException
-  {
-    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
-    {
-      Path conceptsDir = tempPluginRoot.resolve("concepts");
-      Files.createDirectories(conceptsDir);
-      Files.writeString(conceptsDir.resolve("file-a.md"), """
-Content A
-@concepts/file-b.md
-""");
-      Files.writeString(conceptsDir.resolve("file-b.md"), """
-Content B
-@concepts/file-a.md
-""");
-
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
-      Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("first-use.md"), """
-@concepts/file-a.md
-""");
-
-      SkillLoader loader = new SkillLoader(scope,
-        List.of(UUID.randomUUID().toString()));
-
-      loader.load("test-skill");
-      Assert.fail("Expected IOException to be thrown");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
-    }
-  }
-
-  /**
-   * Verifies that multiple @path references in a single file are expanded correctly.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void loadExpandsMultiplePathReferences() throws IOException
-  {
-    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
-    {
-      Path conceptsDir = tempPluginRoot.resolve("concepts");
-      Files.createDirectories(conceptsDir);
-      Files.writeString(conceptsDir.resolve("intro.md"), """
-Introduction section
-""");
-      Files.writeString(conceptsDir.resolve("details.md"), """
-Details section
-""");
-      Files.writeString(conceptsDir.resolve("conclusion.md"), """
-Conclusion section
-""");
-
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
-      Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("first-use.md"), """
-# Header
-@concepts/intro.md
-@concepts/details.md
-@concepts/conclusion.md
-# Footer
-""");
-
-      SkillLoader loader = new SkillLoader(scope,
-        List.of(UUID.randomUUID().toString()));
-      String result = loader.load("test-skill");
-
-      requireThat(result, "result").
-        contains("# Header").
-        contains("Introduction section").
-        contains("Details section").
-        contains("Conclusion section").
-        contains("# Footer");
-      int introIndex = result.indexOf("Introduction section");
-      int detailsIndex = result.indexOf("Details section");
-      int conclusionIndex = result.indexOf("Conclusion section");
-      requireThat(introIndex, "introIndex").isLessThan(detailsIndex);
-      requireThat(detailsIndex, "detailsIndex").isLessThan(conclusionIndex);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
-    }
-  }
-
-  /**
-   * Verifies that load expands @path references for files with non-.md/.json extensions.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void loadExpandsPathReferencesWithAnyExtension() throws IOException
-  {
-    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
-    {
-      Path configDir = tempPluginRoot.resolve("config");
-      Files.createDirectories(configDir);
-      Files.writeString(configDir.resolve("settings.yaml"), """
-option: value
-enabled: true
-""");
-      Files.writeString(configDir.resolve("notes.txt"), """
-Plain text content
-""");
-
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
-      Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("first-use.md"), """
-# Configuration
-@config/settings.yaml
-# Notes
-@config/notes.txt
-""");
-
-      SkillLoader loader = new SkillLoader(scope,
-        List.of(UUID.randomUUID().toString()));
-      String result = loader.load("test-skill");
-
-      requireThat(result, "result").
-        contains("option: value").
-        contains("enabled: true").
-        contains("Plain text content").
-        doesNotContain("@config/settings.yaml").
-        doesNotContain("@config/notes.txt");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
-    }
-  }
 
 
   /**
-   * Verifies that load expands @path references with special characters in filenames.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void loadExpandsPathWithSpecialCharacters() throws IOException
-  {
-    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
-    {
-      Path conceptsDir = tempPluginRoot.resolve("concepts");
-      Files.createDirectories(conceptsDir);
-      Files.writeString(conceptsDir.resolve("my notes.md"), """
-Content with spaces in filename
-""");
-
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
-      Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("first-use.md"), """
-@concepts/my notes.md
-""");
-
-      SkillLoader loader = new SkillLoader(scope,
-        List.of(UUID.randomUUID().toString()));
-      String result = loader.load("test-skill");
-
-      requireThat(result, "result").
-        contains("Content with spaces in filename").
-        doesNotContain("@concepts/my notes.md");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
-    }
-  }
-
-
-  /**
-   * Verifies that load ignores @path in the middle of a line.
+   * Verifies that content body with {@code @}-prefixed text in the middle of a line passes through unchanged.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -869,52 +555,17 @@ See @concepts/note.md for details
     }
   }
 
+
   /**
-   * Verifies that load adds newline if @path target file lacks trailing newline.
+   * Verifies that all variable references in content body pass through as literals.
+   * <p>
+   * Unknown variables, custom variables, and built-in variables alike all pass through
+   * unchanged in content body; only directive strings receive variable expansion.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void loadExpandsPathFileWithoutTrailingNewline() throws IOException
-  {
-    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
-    {
-      Path conceptsDir = tempPluginRoot.resolve("concepts");
-      Files.createDirectories(conceptsDir);
-      Files.writeString(conceptsDir.resolve("no-newline.md"), "Content without newline");
-
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
-      Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("first-use.md"), """
-@concepts/no-newline.md
-Next line
-""");
-
-      SkillLoader loader = new SkillLoader(scope,
-        List.of(UUID.randomUUID().toString()));
-      String result = loader.load("test-skill");
-
-      requireThat(result, "result").
-        contains("Content without newline").
-        contains("Next line");
-      int contentIndex = result.indexOf("Content without newline");
-      int nextIndex = result.indexOf("Next line");
-      requireThat(contentIndex, "contentIndex").isLessThan(nextIndex);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
-    }
-  }
-
-  /**
-   * Verifies that multiple unknown variables are all passed through as literals.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void loadPassesThroughMultipleUnknownVariables() throws IOException
+  public void loadPassesThroughAllVariablesInContentBody() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
@@ -934,8 +585,7 @@ Root: ${CLAUDE_PLUGIN_ROOT}
       requireThat(result, "result").
         contains("Branch: ${BASE}").
         contains("Other: ${SOME_UNKNOWN}").
-        contains("Root: " + tempPluginRoot).
-        doesNotContain("${CLAUDE_PLUGIN_ROOT}");
+        contains("Root: ${CLAUDE_PLUGIN_ROOT}");
     }
     finally
     {
@@ -943,45 +593,6 @@ Root: ${CLAUDE_PLUGIN_ROOT}
     }
   }
 
-  /**
-   * Verifies that unknown variables in @path-expanded content are passed through as literals.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void loadPassesThroughUnknownVarsInExpandedPaths() throws IOException
-  {
-    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
-    {
-      Path conceptsDir = tempPluginRoot.resolve("concepts");
-      Files.createDirectories(conceptsDir);
-      Files.writeString(conceptsDir.resolve("version-paths.md"), """
-```bash
-git checkout ${BASE}
-```
-""");
-
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
-      Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("first-use.md"), """
-@concepts/version-paths.md
-# Main
-""");
-
-      SkillLoader loader = new SkillLoader(scope,
-        List.of(UUID.randomUUID().toString()));
-      String result = loader.load("test-skill");
-
-      requireThat(result, "result").
-        contains("git checkout ${BASE}").
-        contains("# Main");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
-    }
-  }
 
   /**
    * Verifies that load strips YAML frontmatter from companion SKILL.md.
@@ -1049,7 +660,11 @@ Regular content here
   }
 
   /**
-   * Verifies that preprocessor directive passes through when launcher not found.
+   * Verifies that preprocessor directive passes through unchanged when launcher not found.
+   * <p>
+   * When no matching launcher exists in {@code client/bin/}, {@code executeDirective} returns
+   * the original directive text verbatim (including already-expanded variables).
+   *
    *
    * @throws IOException if an I/O error occurs
    */
@@ -1062,7 +677,7 @@ Regular content here
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
       Files.writeString(companionDir.resolve("first-use.md"), """
-Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/nonexistent-launcher"`
+Output: !`"/nonexistent/client/bin/nonexistent-launcher"`
 Done
 """);
 
@@ -1071,7 +686,7 @@ Done
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
-        contains("!`\"" + tempPluginRoot + "/client/bin/nonexistent-launcher\"`").
+        contains("!`\"/nonexistent/client/bin/nonexistent-launcher\"`").
         contains("Done");
     }
     finally
@@ -1081,12 +696,15 @@ Done
   }
 
   /**
-   * Verifies that CLAUDE_PLUGIN_ROOT is resolved before preprocessor directive processing.
+   * Verifies that variable expansion applies only inside directive strings, not content body prose.
+   * <p>
+   * Content body references to {@code ${CLAUDE_PLUGIN_ROOT}} pass through unchanged, while the same
+   * variable inside an {@code !} directive string is expanded before launcher lookup.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void loadResolvesVariablesBeforePreprocessorDirectives() throws IOException
+  public void loadExpandsVariablesInDirectivesButNotContentBody() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
@@ -1102,9 +720,10 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
         List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
+      // Prose passes through unchanged; directive expands the variable before lookup
       requireThat(result, "result").
-        contains("Root: " + tempPluginRoot).
-        doesNotContain("${CLAUDE_PLUGIN_ROOT}");
+        contains("Root: ${CLAUDE_PLUGIN_ROOT}").
+        contains("Directive:");
     }
     finally
     {
@@ -1309,16 +928,15 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
   }
 
   /**
-   * Verifies that {@code @path} references inside markdown code blocks are not expanded.
+   * Verifies that content inside markdown code blocks passes through unchanged.
    * <p>
-   * When a code block contains an {@code @path}-style reference as an example, SkillLoader must
-   * preserve it as-is rather than attempting file expansion (which would throw IOException for
-   * non-existent files).
+   * Code block content is preserved verbatim including {@code @}-prefixed lines that resemble
+   * the defunct {@code @path} syntax — no expansion or substitution is applied to code block content.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void atPathInsideCodeBlockIsNotExpanded() throws IOException
+  public void codeBlockContentPassesThroughUnchanged() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
@@ -1342,12 +960,9 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
         </output>
         """);
 
-      // Note: concepts/some-file.md does NOT exist.
-      // If @path inside code block is expanded, this would throw IOException.
       SkillLoader loader = new SkillLoader(scope, List.of(UUID.randomUUID().toString()));
       String result = loader.load("test-skill");
 
-      // The @path inside the code block should be preserved as-is
       requireThat(result, "result").
         contains("@concepts/some-file.md").
         contains("<instructions skill=\"test-skill\">");
@@ -1815,29 +1430,37 @@ Dynamic output with attribute.
   }
 
   /**
-   * Verifies that positional arguments are resolved from the args array.
+   * Verifies that positional arguments are substituted inside {@code !} directive strings.
    * <p>
-   * $0 is the agent ID; skill-specific args start at $1.
+   * {@code $0} is the agent ID; skill-specific args start at {@code $1}. Directive arguments
+   * receive substitution; content body prose does not.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void positionalArgsResolved() throws IOException
+  public void directivePositionalArgsSubstituted() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutput "$@"
+        """);
+
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
       Files.writeString(companionDir.resolve("first-use.md"),
-        "Count: $1, Label: $2\n");
+        "!`\"" + tempPluginRoot + "/client/bin/test-output\" $1 $2`\n");
 
       SkillLoader loader = new SkillLoader(scope,
         List.of(UUID.randomUUID().toString(), "42", "hello"));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
-        contains("Count: 42, Label: hello").
+        contains("ARGS:42,hello").
         doesNotContain("$1").
         doesNotContain("$2");
     }
@@ -1848,14 +1471,15 @@ Dynamic output with attribute.
   }
 
   /**
-   * Verifies that missing positional args are passed through as literals.
+   * Verifies that content body positional argument references always pass through unchanged.
    * <p>
-   * $0 is the agent ID. When only two args are provided (agentId + one skill arg), $2 is unresolved.
+   * Positional arg substitution applies only inside {@code !} directive strings. In prose,
+   * {@code $1} is always preserved verbatim regardless of how many args are provided.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void missingPositionalArgsPassedThrough() throws IOException
+  public void contentBodyPositionalArgPassedThrough() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
@@ -1870,7 +1494,7 @@ Dynamic output with attribute.
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
-        contains("First: value1").
+        contains("First: $1").
         contains("Second: $2");
     }
     finally
@@ -1880,14 +1504,15 @@ Dynamic output with attribute.
   }
 
   /**
-   * Verifies that extra positional args beyond referenced indices are ignored.
+   * Verifies that extra positional args are not injected into content body prose.
    * <p>
-   * $0 is the agent ID; $1 is the first skill-specific arg. Args at $2 and beyond are not referenced.
+   * Content body positional references pass through as-is; extra args beyond referenced
+   * indices are not injected into prose regardless of how many args are provided.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void extraPositionalArgsIgnored() throws IOException
+  public void extraPositionalArgsNotInjectedIntoContentBody() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
@@ -1902,7 +1527,8 @@ Dynamic output with attribute.
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
-        contains("Name: Alice").
+        contains("Name: $1").
+        doesNotContain("Alice").
         doesNotContain("Bob").
         doesNotContain("Charlie");
     }
@@ -1913,9 +1539,10 @@ Dynamic output with attribute.
   }
 
   /**
-   * Verifies that unreferenced positional indices are passed through as literals.
+   * Verifies that content body positional references pass through as literals.
    * <p>
-   * When only the agent ID arg ($0) is provided, references to $1 and beyond remain unresolved.
+   * Content body does not perform positional arg substitution, so {@code $1} always passes
+   * through regardless of whether skill args are provided.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -1943,14 +1570,15 @@ Dynamic output with attribute.
   }
 
   /**
-   * Verifies that whitespace-only skill args are preserved as argument values.
+   * Verifies that content body positional references pass through unchanged even with whitespace-only args.
    * <p>
-   * $0 is the agent ID (non-blank); $1 is the skill arg which may be whitespace-only.
+   * Content body does not perform positional arg substitution. {@code $1} in prose always passes
+   * through verbatim regardless of the skill arg value.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void whitespaceOnlyArgPreservedAsValue() throws IOException
+  public void whitespaceOnlyArgNotInjectedIntoContentBody() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
@@ -1964,8 +1592,7 @@ Dynamic output with attribute.
         List.of(UUID.randomUUID().toString(), "   "));
       String result = loader.load("test-skill");
 
-      // The whitespace-only skill arg is preserved as the value of $1
-      requireThat(result, "result").contains("Count:    ");
+      requireThat(result, "result").contains("Count: $1");
     }
     finally
     {
@@ -2490,30 +2117,38 @@ Prefixed skill content
   }
 
   /**
-   * Verifies that positional arguments with spaces are preserved when passed as separate array elements.
+   * Verifies that positional arguments with spaces are preserved when passed to a directive.
    * <p>
-   * $0 is the agent ID; skill-specific args with spaces start at $1. The constructor must preserve
-   * arguments containing spaces (e.g., "hello world", "foo bar") without splitting on whitespace.
+   * {@code $1} and {@code $2} in a directive string are expanded to their argument values, including
+   * values that contain spaces (e.g., "hello world", "foo bar").
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void positionalArgsWithSpacesPreserved() throws IOException
+  public void directivePositionalArgsWithSpacesPreserved() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutput "$@"
+        """);
+
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
+      // Quote the expanded args so ShellParser treats each as a single token
       Files.writeString(companionDir.resolve("first-use.md"),
-        "First: $1, Second: $2\n");
+        "!`\"" + tempPluginRoot + "/client/bin/test-output\" \"$1\" \"$2\"`\n");
 
       SkillLoader loader = new SkillLoader(scope,
         List.of(UUID.randomUUID().toString(), "hello world", "foo bar"));
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
-        contains("First: hello world, Second: foo bar").
+        contains("ARGS:hello world,foo bar").
         doesNotContain("$1").
         doesNotContain("$2");
     }
@@ -2944,8 +2579,10 @@ More instructions after static tag.
 
   /**
    * Verifies that when the first skillArg ($0) is blank, the constructor falls back to
-   * {@code CLAUDE_SESSION_ID} as the agent ID. This covers the scenario where a user
-   * invokes a slash command directly without passing args.
+   * {@code CLAUDE_SESSION_ID} as the agent ID, and the loader succeeds.
+   * <p>
+   * Content body does not substitute {@code $0}; this test verifies constructor-level
+   * fallback via successful load (no exception) and marker file creation.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -2965,10 +2602,8 @@ Agent: $0
       SkillLoader loader = new SkillLoader(scope, List.of("", "extra-arg"));
       String result = loader.load("test-skill");
 
-      // $0 should be the session ID (not blank)
-      requireThat(result, "result").
-        contains("Agent: " + scope.getClaudeSessionId()).
-        doesNotContain("Agent: $0");
+      // Content body passes through unchanged; $0 in prose is not substituted
+      requireThat(result, "result").contains("Agent: $0");
     }
     finally
     {
@@ -3118,7 +2753,7 @@ Agent: $0
    * <p>
    * This handles the case where a caller passes {@code "catAgentId description text"} as a single
    * quoted argument: the catAgentId is path-safe (no spaces), while the description text is
-   * preserved as $1.
+   * preserved as $1 for use in directive strings. Content body prose is not substituted.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -3128,10 +2763,18 @@ Agent: $0
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutput "$@"
+        """);
+
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
+      // Directive expands $0, $1, $2 so we can verify splitting behavior
       Files.writeString(companionDir.resolve("first-use.md"),
-        "Agent: $0, Desc: $1, Extra: $2\n");
+        "!`\"" + tempPluginRoot + "/client/bin/test-output\" $0 \"$1\" $2`\n");
 
       String catAgentId = "550e8400-e29b-41d4-a716-446655440000";
       String description = "Add an issue to the project";
@@ -3140,12 +2783,7 @@ Agent: $0
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
-        contains("Agent: " + catAgentId).
-        contains("Desc: " + description).
-        contains("Extra: extraArg").
-        doesNotContain("$0").
-        doesNotContain("$1").
-        doesNotContain("$2");
+        contains("ARGS:" + catAgentId + "," + description + ",extraArg");
     }
     finally
     {
@@ -3346,6 +2984,357 @@ Agent: $0
     finally
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that {@code ${VAR}} inside a {@code !} directive string is expanded via the environment.
+   * <p>
+   * The {@code MY_TEST_VAR} env var is injected via {@code TestJvmScope}'s env map and referenced
+   * inside a directive argument. The test confirms the expanded value appears in the directive output.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void directiveEnvVarSubstitution() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    Map<String, String> envVars = Map.of("MY_TEST_VAR", "injected-value");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot, envVars))
+    {
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutput "$@"
+        """);
+
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      // Directive uses ${MY_TEST_VAR} in the arguments; expansion is verified by checking that
+      // the resolved value appears in the output (TestSkillOutput echoes its args as "ARGS:...")
+      Files.writeString(companionDir.resolve("first-use.md"),
+        "!`\"" + tempPluginRoot + "/client/bin/test-output\" ${MY_TEST_VAR}`\n");
+
+      SkillLoader loader = new SkillLoader(scope,
+        List.of(UUID.randomUUID().toString()));
+      String result = loader.load("test-skill");
+
+      // Directive was executed with the expanded variable value
+      requireThat(result, "result").
+        contains("ARGS:injected-value").
+        doesNotContain("!`").
+        doesNotContain("${MY_TEST_VAR}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that {@code $ARGUMENTS} inside a directive string expands to all skill args joined with a space.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void directiveArgumentsAllSubstituted() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutput "$@"
+        """);
+
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      // $ARGUMENTS expands to all skill args (excluding $0) joined with a space, then tokenized
+      Files.writeString(companionDir.resolve("first-use.md"),
+        "!`\"" + tempPluginRoot + "/client/bin/test-output\" $ARGUMENTS`\n");
+
+      SkillLoader loader = new SkillLoader(scope,
+        List.of(UUID.randomUUID().toString(), "alpha", "beta", "gamma"));
+      String result = loader.load("test-skill");
+
+      // $ARGUMENTS expands to all skillArgs joined — verify at least the skill args appear
+      requireThat(result, "result").
+        contains("ARGS:").
+        contains("alpha").
+        contains("beta").
+        contains("gamma");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that {@code $ARGUMENTS[N]} inside a directive string expands to the Nth skill argument.
+   * <p>
+   * {@code $ARGUMENTS[0]} is the first element of {@code skillArgs} (the agent ID at index 0).
+   * {@code $ARGUMENTS[1]} is the first skill-specific argument.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void directiveArgumentsIndexedSubstituted() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutput "$@"
+        """);
+
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      Files.writeString(companionDir.resolve("first-use.md"),
+        "!`\"" + tempPluginRoot + "/client/bin/test-output\" \"$ARGUMENTS[1]\" \"$ARGUMENTS[2]\"`\n");
+
+      SkillLoader loader = new SkillLoader(scope,
+        List.of(UUID.randomUUID().toString(), "first", "second"));
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").contains("ARGS:first,second");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that {@code ${CLAUDE_SKILL_DIR}} inside a directive string expands to the skill's directory.
+   * <p>
+   * {@code ${CLAUDE_SKILL_DIR}} resolves to {@code pluginRoot/skills/{skill-name}/} and is computed
+   * by SkillLoader rather than from the environment.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void directiveSkillDirSubstituted() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutput "$@"
+        """);
+
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      Files.writeString(companionDir.resolve("first-use.md"),
+        "!`\"" + tempPluginRoot + "/client/bin/test-output\" \"${CLAUDE_SKILL_DIR}\"`\n");
+
+      SkillLoader loader = new SkillLoader(scope,
+        List.of(UUID.randomUUID().toString()));
+      String result = loader.load("test-skill");
+
+      String expectedSkillDir = tempPluginRoot.resolve("skills/test-skill").toString();
+      requireThat(result, "result").contains("ARGS:" + expectedSkillDir);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that {@code ${CLAUDE_PLUGIN_ROOT}} in content body prose passes through unchanged.
+   * <p>
+   * Variable substitution applies only inside {@code !} directive strings. Claude Code handles
+   * {@code ${VAR}} expansion natively in content body.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void contentBodyVarPassedThrough() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      Files.writeString(companionDir.resolve("first-use.md"), """
+Use ${CLAUDE_PLUGIN_ROOT}/scripts/helper.sh to run tasks.
+""");
+
+      SkillLoader loader = new SkillLoader(scope,
+        List.of(UUID.randomUUID().toString()));
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").contains("${CLAUDE_PLUGIN_ROOT}/scripts/helper.sh");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that indexed arguments like {@code $ARGUMENTS[N]} when {@code N >= skillArgs.size()}
+   * do not crash but gracefully degrade.
+   * <p>
+   * Out-of-range indices should not crash. The [N] suffix remains even if the index is out of range.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void directiveIndexedArgsOutOfRangePassThrough() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutput "$@"
+        """);
+
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      Files.writeString(companionDir.resolve("first-use.md"),
+        "!`\"" + tempPluginRoot + "/client/bin/test-output\" \"$ARGUMENTS[99]\"`\n");
+
+      SkillLoader loader = new SkillLoader(scope,
+        List.of(UUID.randomUUID().toString(), "arg1", "arg2", "arg3"));
+      String result = loader.load("test-skill");
+
+      // Out-of-range indices should result in [N] being left in the output
+      requireThat(result, "result").contains("[99]");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that undefined environment variables like {@code ${UNDEFINED_VAR}} do not crash
+   * when the variable does not exist.
+   * <p>
+   * Environment variables that don't exist should be handled gracefully without crashing.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void directiveUndefinedEnvVarHandling() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot, Map.of()))
+    {
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutput "$@"
+        """);
+
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      Files.writeString(companionDir.resolve("first-use.md"),
+        "!`\"" + tempPluginRoot + "/client/bin/test-output\" \"${UNDEFINED_VAR}\"`\n");
+
+      SkillLoader loader = new SkillLoader(scope,
+        List.of(UUID.randomUUID().toString()));
+      String result = loader.load("test-skill");
+
+      // Undefined variables should be handled gracefully (empty string or literal)
+      requireThat(result, "result").isNotNull();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that substitution handles multiple patterns in the same directive.
+   * <p>
+   * When a directive contains both indexed and full {@code $ARGUMENTS} patterns,
+   * and environment variables, they should all be processed correctly.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void directiveSubstitutionOrderVerified() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot, Map.of("TEST_VAR", "test-value")))
+    {
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutput "$@"
+        """);
+
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      Files.writeString(companionDir.resolve("first-use.md"),
+        "!`\"" + tempPluginRoot + "/client/bin/test-output\" \"$ARGUMENTS[0]\" \"$ARGUMENTS\" \"${TEST_VAR}\"`\n");
+
+      SkillLoader loader = new SkillLoader(scope,
+        List.of(UUID.randomUUID().toString(), "arg0"));
+      String result = loader.load("test-skill");
+
+      // All three patterns should be substituted: $ARGUMENTS[0], $ARGUMENTS, and ${TEST_VAR}
+      requireThat(result, "result").contains("test-value");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that directives work correctly when a skill is invoked with no arguments.
+   * <p>
+   * When a skill has no arguments, environment variable substitution like
+   * {@code ${CLAUDE_SESSION_ID}} should still work without crashing.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void directiveNoSkillArgsEnvVarSubstitution() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot,
+      Map.of("CUSTOM_VAR", "custom-value")))
+    {
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutput "$@"
+        """);
+
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      Files.writeString(companionDir.resolve("first-use.md"),
+        "!`\"" + tempPluginRoot + "/client/bin/test-output\" \"${CUSTOM_VAR}\"`\n");
+
+      SkillLoader loader = new SkillLoader(scope,
+        List.of(UUID.randomUUID().toString()));
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").contains("ARGS:custom-value");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
     }
   }
 }

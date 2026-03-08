@@ -35,7 +35,7 @@ The Skill tool triggers the full SkillLoader pipeline:
 2. SKILL.md preprocessor directive (`!` backtick) calls `skill-loader`
 3. `skill-loader` invokes `SkillLoader.java`
 4. SkillLoader checks per-agent marker file, returns full content or a short reference
-5. Variable substitution and `@path` expansion run on the returned content
+5. Preprocessor directives are processed, with variable substitution applied inside directive strings
 
 ```
 Skill tool:
@@ -366,6 +366,31 @@ incorrect output — the skill appears to work (no error) but generates no compu
 1. Create directory: `.claude/skills/{skill-name}/`
 2. Create `SKILL.md` with content (no preprocessor needed)
 3. The skill is available as `{skill-name}` within the project
+
+### Referencing Files From Skills
+
+Claude resolves relative file paths in skill content relative to the skill's SKILL.md directory (per
+[Claude Code docs](https://code.claude.com/docs/en/skills#add-supporting-files)). This means:
+
+- Files **within** the skill directory (e.g., `reference.md`, `examples/sample.md`) can use relative paths
+- Files **outside** the skill directory (e.g., `plugin/templates/`, `plugin/concepts/`) must use absolute paths
+
+**For cross-directory references, use `${CLAUDE_PLUGIN_ROOT}`-prefixed paths:**
+
+```markdown
+# Good — absolute path, unambiguous
+See `${CLAUDE_PLUGIN_ROOT}/templates/issue-state.md` for the STATE.md template.
+See `${CLAUDE_PLUGIN_ROOT}/concepts/version-paths.md` for version path conventions.
+
+# Good — relative path for files within the skill directory
+See [workflow-output.md](workflow-output.md) for output format details.
+
+# Wrong — bare relative path resolves to the skill directory, not the plugin root
+See `templates/issue-state.md` for the STATE.md template.
+```
+
+`${CLAUDE_PLUGIN_ROOT}` is not expanded by SkillLoader in content body (only inside `!` directive strings).
+Claude resolves it at runtime using the `CLAUDE_PLUGIN_ROOT` environment variable (injected by `InjectEnv.java`).
 
 ## Output Path Changes Convention
 

@@ -49,36 +49,37 @@ import org.slf4j.LoggerFactory;
  * the execution trigger is generated. The {@code <output>} section is always wrapped in
  * {@code <output skill="X">} tags (where X is the skill name) and appended on every invocation.
  * <p>
- * <b>File inclusion via @path:</b> Lines in skill content starting with {@code @} followed by a
- * relative path containing at least one {@code /} (e.g., {@code @concepts/version-paths.md},
- * {@code @config/settings.yaml}) are replaced with the raw file contents (no wrapping). Any file extension
- * is allowed. Paths are resolved relative to the plugin root. Variable substitution is applied to the
- * inlined content. Missing files cause an {@link IOException}.
+ * <b>Variable substitution:</b> Variable substitution applies only inside {@code !} directive strings.
+ * Content body passes through untouched to Claude Code, which handles {@code ${VAR}} expansion natively.
  * <p>
- * <b>Variable substitution:</b> The following built-in placeholders are replaced in all loaded content:
+ * Inside {@code !} directive strings, the following variable forms are expanded:
  * <ul>
- *   <li>{@code ${CLAUDE_PLUGIN_ROOT}} — plugin root directory path</li>
- *   <li>{@code ${CLAUDE_SESSION_ID}} — current session identifier</li>
- *   <li>{@code ${CLAUDE_PROJECT_DIR}} — project directory path</li>
+ *   <li>{@code ${name}} — resolved via {@link JvmScope#getEnvironmentVariable(String)}</li>
+ *   <li>{@code ${CLAUDE_SKILL_DIR}} — resolved by SkillLoader to the skill's directory
+ *       ({@code pluginRoot/skills/{skill-name}/})</li>
+ *   <li>{@code $0}, {@code $1}, ..., {@code $N} — resolved to skill positional arguments</li>
+ *   <li>{@code $ARGUMENTS} — all skill arguments joined with a space</li>
+ *   <li>{@code $ARGUMENTS[N]} — the Nth skill argument (0-based)</li>
  * </ul>
  * <p>
- * <b>Positional arguments:</b> Skills reference pre-tokenized arguments as {@code $0}, {@code $1},
- * etc. The first positional argument ({@code $0}) is the agent ID, which identifies the agent instance
- * and is used to determine the per-agent marker file path. Arguments with spaces are preserved in the
- * substitution. Use the {@code argument-hint} frontmatter field to document expected arguments.
+ * Undefined variables are passed through unchanged.
  * <p>
- * Undefined variables are passed through unchanged, matching Claude Code's native behavior.
+ * <b>Positional arguments:</b> The first positional argument ({@code $0}) is the agent ID, which
+ * identifies the agent instance and is used to determine the per-agent marker file path. Arguments with
+ * spaces are preserved in the substitution. Use the {@code argument-hint} frontmatter field to document
+ * expected arguments. {@code $0}.{@code $N}, {@code $ARGUMENTS}, and {@code $ARGUMENTS[N]} are expanded
+ * inside {@code !} directive strings only — not in the content body.
  * <p>
  * <b>Preprocessor directives:</b> Lines containing {@code !`"path" [args]`} patterns are processed
- * after variable substitution. When the path's filename matches a launcher in the {@code client/bin/}
- * lookup directory, instantiates the class as a {@link SkillOutput} and calls
+ * by expanding variables in the directive string, then when the path's filename matches a launcher in
+ * the {@code client/bin/} lookup directory, instantiating the class as a {@link SkillOutput} and calling
  * {@link SkillOutput#getOutput(String[])} to replace the directive with the output.
  * <p>
  * <b>Usage:</b> {@code skill-loader <skill-name> <catAgentId> [skill-args...]}
  * <br>
  * The {@code catAgentId} argument is mandatory. Main agents pass {@code ${CLAUDE_SESSION_ID}};
  * subagents pass the value injected by SubagentStartHook (e.g., {@code {sessionId}/subagents/{agent_id}}).
- * The {@code pluginRoot} and {@code projectDir} are read from the JVM environment via {@link JvmScope}.
+ * The {@code pluginRoot} is read from the JVM environment via {@link JvmScope}.
  *
  * @see io.github.cowwoc.cat.hooks.session.ClearSkillMarker
  */
@@ -90,7 +91,6 @@ public final class SkillLoader
   public static final String SUBAGENTS_DIR = "subagents";
 
   private static final Pattern VAR_PATTERN = Pattern.compile("\\$\\{([^}]+)}");
-  private static final Pattern PATH_PATTERN = Pattern.compile("^@(.+/.+)$", Pattern.MULTILINE);
   private static final Pattern PREPROCESSOR_DIRECTIVE_PATTERN = Pattern.compile(
     "!`\"([^\"\n]+)\"([ \t]+[^`\n]+)?`");
   private static final Pattern FRONTMATTER_PATTERN = Pattern.compile(
@@ -98,7 +98,8 @@ public final class SkillLoader
   private static final Pattern OUTPUT_TAG_PATTERN = Pattern.compile(
     "<output(?:\\s[^>]*)?>(.+?)</output>", Pattern.DOTALL);
   private static final Pattern INLINE_BACKTICK_PATTERN = Pattern.compile("`[^`\n]+`");
-  private static final Pattern POSITIONAL_ARG_PATTERN = Pattern.compile("\\$(\\d+)");
+  private static final Pattern POSITIONAL_INDEXED_ARG_PATTERN = Pattern.compile("\\$(\\d+)");
+  private static final Pattern ARGUMENTS_INDEXED_PATTERN = Pattern.compile("\\$ARGUMENTS\\[(\\d+)]");
   private static final Pattern CODE_BLOCK_PATTERN = Pattern.compile("^```[a-z]*\\s*$(.+?)^```\\s*$",
     Pattern.DOTALL | Pattern.MULTILINE);
   private static final String LAUNCHER_DIRECTORY = "client/bin";
@@ -141,7 +142,6 @@ public final class SkillLoader
 
   private final JvmScope scope;
   private final Path pluginRoot;
-  private final String projectDir;
   private final List<String> skillArgs;
   private final Path agentMarkerFile;
   private final Set<String> loadedSkills;
@@ -232,7 +232,6 @@ public final class SkillLoader
         "Plugin root directory does not exist or is not a directory: " + pluginRoot + ". " +
           "Ensure CLAUDE_PLUGIN_ROOT points to a valid plugin installation directory.");
     }
-    this.projectDir = scope.getClaudeProjectDir().toString();
     this.skillArgs = List.copyOf(tokens);
 
     Path baseDir = scope.getSessionBasePath().toAbsolutePath().normalize();
@@ -299,7 +298,7 @@ public final class SkillLoader
    */
   private String processContent(String skillName, String content) throws IOException
   {
-    String expanded = substituteVars(content);
+    String expanded = processPreprocessorDirectives(content, skillName);
     ParsedContent parsed = parseContent(expanded);
 
     if (parsed != null)
@@ -328,7 +327,7 @@ public final class SkillLoader
       return output.toString();
     }
 
-    // Content without tags — variable substitution already applied
+    // Content without tags — content body passes through unchanged to Claude Code
     StringBuilder output = new StringBuilder(4096);
     if (loadedSkills.contains(skillName))
     {
@@ -483,79 +482,6 @@ public final class SkillLoader
   }
 
   /**
-   * Expands @path references in content.
-   * <p>
-   * Lines starting with {@code @} followed by a relative path containing at least one {@code /}
-   * (e.g., {@code @concepts/version-paths.md}, {@code @config/settings.yaml}) are replaced with
-   * the raw file contents. Any file extension is allowed. Paths are resolved relative to the plugin
-   * root. Missing files cause an {@link IOException}.
-   *
-   * @param content the content to process
-   * @return the content with all @path references expanded
-   * @throws IOException if a referenced file cannot be read or circular reference is detected
-   */
-  private String expandPaths(String content) throws IOException
-  {
-    return expandPaths(content, new HashSet<>());
-  }
-
-  /**
-   * Expands @path references in content with cycle detection.
-   *
-   * @param content the content to process
-   * @param visitedPaths the set of paths already being expanded (for cycle detection)
-   * @return the content with all @path references expanded
-   * @throws IOException if a referenced file cannot be read or circular reference is detected
-   */
-  private String expandPaths(String content, Set<Path> visitedPaths) throws IOException
-  {
-    Set<int[]> codeBlockRegions = findCodeBlockRegions(content);
-    Matcher matcher = PATH_PATTERN.matcher(content);
-    StringBuilder result = new StringBuilder();
-    int lastEnd = 0;
-
-    while (matcher.find())
-    {
-      if (isInsideCodeBlock(matcher.start(), codeBlockRegions))
-      {
-        result.append(content, lastEnd, matcher.end());
-        lastEnd = matcher.end();
-        continue;
-      }
-      result.append(content, lastEnd, matcher.start());
-      String relativePath = matcher.group(1);
-      Path filePath = pluginRoot.resolve(relativePath).toAbsolutePath().normalize();
-      Path normalizedPluginRoot = pluginRoot.toAbsolutePath().normalize();
-      if (!filePath.startsWith(normalizedPluginRoot))
-      {
-        throw new IOException("@path reference '" + relativePath + "' resolves outside the plugin root. " +
-          "Resolved to: " + filePath + ". Plugin root: " + normalizedPluginRoot);
-      }
-      if (!Files.exists(filePath))
-      {
-        throw new IOException("@path reference '" + relativePath + "' not found. " +
-          "Resolved to: " + filePath);
-      }
-      if (visitedPaths.contains(filePath))
-      {
-        throw new IOException("Circular @path reference detected: " + relativePath + ". " +
-          "Resolved to: " + filePath);
-      }
-      visitedPaths.add(filePath);
-      String fileContent = Files.readString(filePath, StandardCharsets.UTF_8);
-      String expandedContent = expandPaths(fileContent, visitedPaths);
-      visitedPaths.remove(filePath);
-      result.append(expandedContent);
-      if (!expandedContent.endsWith("\n"))
-        result.append('\n');
-      lastEnd = matcher.end();
-    }
-    result.append(content.substring(lastEnd));
-
-    return result.toString();
-  }
-
-  /**
    * Finds all code block regions (between ``` fences) in the content.
    *
    * @param content the content to scan
@@ -588,74 +514,20 @@ public final class SkillLoader
   }
 
   /**
-   * Substitutes variable placeholders in content.
-   * <p>
-   * Replaces built-in variables:
-   * <ul>
-   *   <li>{@code ${CLAUDE_PLUGIN_ROOT}} - plugin root directory path</li>
-   *   <li>{@code ${CLAUDE_SESSION_ID}} - current session identifier</li>
-   *   <li>{@code ${CLAUDE_PROJECT_DIR}} - project directory path</li>
-   * </ul>
-   * <p>
-   * After variable substitution, processes preprocessor directives to invoke Java classes in-JVM.
-   *
-   * @param content the content to process
-   * @return the content with all variables substituted and preprocessor directives processed
-   * @throws IOException if variable resolution fails
-   */
-  private String substituteVars(String content) throws IOException
-  {
-    String expanded = expandPaths(content);
-
-    // Pass 1: resolve ${VAR_NAME} built-in variables
-    Matcher varMatcher = VAR_PATTERN.matcher(expanded);
-    StringBuilder varResult = new StringBuilder();
-    int lastEnd = 0;
-
-    while (varMatcher.find())
-    {
-      varResult.append(expanded, lastEnd, varMatcher.start());
-      String varName = varMatcher.group(1);
-      String replacement = resolveVariable(varName);
-      varResult.append(replacement);
-      lastEnd = varMatcher.end();
-    }
-    varResult.append(expanded.substring(lastEnd));
-
-    // Pass 2: resolve $N positional arguments
-    String afterVars = varResult.toString();
-    Matcher argMatcher = POSITIONAL_ARG_PATTERN.matcher(afterVars);
-    StringBuilder argResult = new StringBuilder();
-    lastEnd = 0;
-
-    while (argMatcher.find())
-    {
-      argResult.append(afterVars, lastEnd, argMatcher.start());
-      int index = Integer.parseInt(argMatcher.group(1));
-      if (index >= 0 && index < skillArgs.size())
-        argResult.append(skillArgs.get(index));
-      else
-        argResult.append(argMatcher.group(0));
-      lastEnd = argMatcher.end();
-    }
-    argResult.append(afterVars.substring(lastEnd));
-
-    return processPreprocessorDirectives(argResult.toString());
-  }
-
-  /**
    * Processes preprocessor directives in content.
    * <p>
-   * Scans for patterns like {@code !`"path/to/launcher" [args]`} and when the launcher's filename
-   * matches a file in the {@code client/bin/} launcher lookup directory, instantiates the corresponding
-   * Java class as a {@link SkillOutput} and calls {@link SkillOutput#getOutput(String[])} to replace
-   * the directive with the output.
+   * Scans for patterns like {@code !`"path/to/launcher" [args]`}, expands variables in the launcher
+   * path and arguments token using {@link #expandDirectiveString(String, String)}, then when the launcher's
+   * filename matches a file in the {@code client/bin/} launcher lookup directory, instantiates the
+   * corresponding Java class as a {@link SkillOutput} and calls {@link SkillOutput#getOutput(String[])}
+   * to replace the directive with the output.
    *
    * @param content the content to process
+   * @param skillName the skill name, used to resolve {@code ${CLAUDE_SKILL_DIR}}
    * @return the content with preprocessor directives replaced by their output
    * @throws IOException if directive processing fails
    */
-  private String processPreprocessorDirectives(String content) throws IOException
+  private String processPreprocessorDirectives(String content, String skillName) throws IOException
   {
     Matcher matcher = PREPROCESSOR_DIRECTIVE_PATTERN.matcher(content);
     StringBuilder result = new StringBuilder();
@@ -664,16 +536,21 @@ public final class SkillLoader
     while (matcher.find())
     {
       result.append(content, lastEnd, matcher.start());
-      String launcherPath = matcher.group(1);
+      String launcherPath = expandDirectiveString(matcher.group(1), skillName);
       String argumentsToken = matcher.group(2);
+      String expandedArgs;
+      if (argumentsToken == null)
+        expandedArgs = null;
+      else
+        expandedArgs = expandDirectiveString(argumentsToken.strip(), skillName);
       String[] arguments;
-      if (argumentsToken != null)
+      if (expandedArgs == null)
+        arguments = new String[0];
+      else
       {
-        List<String> tokenList = ShellParser.tokenize(argumentsToken.strip());
+        List<String> tokenList = ShellParser.tokenize(expandedArgs);
         arguments = tokenList.toArray(new String[0]);
       }
-      else
-        arguments = new String[0];
 
       String originalDirective = matcher.group(0);
       String output = executeDirective(launcherPath, arguments, originalDirective);
@@ -683,6 +560,77 @@ public final class SkillLoader
     result.append(content.substring(lastEnd));
 
     return result.toString();
+  }
+
+  /**
+   * Expands variable references within a directive string.
+   * <p>
+   * Applied to both the launcher path and arguments token of {@code !} directives. The following
+   * substitutions are performed in order:
+   * <ol>
+   *   <li>{@code $ARGUMENTS[N]} — replaced with the Nth skill argument (0-based), or literal
+   *       {@code $ARGUMENTS[N]} if out of range</li>
+   *   <li>{@code $ARGUMENTS} — replaced with all skill arguments joined with a space</li>
+   *   <li>{@code $N} — replaced with the Nth skill positional argument, or literal {@code $N} if
+   *       out of range</li>
+   *   <li>{@code ${name}} — resolved via {@link #resolveVariable(String, String)}</li>
+   * </ol>
+   *
+   * @param text the directive string to expand
+   * @param skillName the skill name, used to resolve {@code ${CLAUDE_SKILL_DIR}}
+   * @return the text with all recognized variable forms expanded
+   */
+  private String expandDirectiveString(String text, String skillName)
+  {
+    // Step 1: $ARGUMENTS[N] — indexed access (must come before $ARGUMENTS to avoid partial match)
+    Matcher indexedMatcher = ARGUMENTS_INDEXED_PATTERN.matcher(text);
+    StringBuilder step1 = new StringBuilder();
+    int lastEnd = 0;
+    while (indexedMatcher.find())
+    {
+      step1.append(text, lastEnd, indexedMatcher.start());
+      int index = Integer.parseInt(indexedMatcher.group(1));
+      if (index >= 0 && index < skillArgs.size())
+        step1.append(skillArgs.get(index));
+      else
+        step1.append(indexedMatcher.group(0));
+      lastEnd = indexedMatcher.end();
+    }
+    step1.append(text.substring(lastEnd));
+
+    // Step 2: $ARGUMENTS — all skill args joined with space
+    String step2 = step1.toString().replace("$ARGUMENTS", String.join(" ", skillArgs));
+
+    // Step 3: $N — positional args
+    Matcher positionalMatcher = POSITIONAL_INDEXED_ARG_PATTERN.matcher(step2);
+    StringBuilder step3 = new StringBuilder();
+    lastEnd = 0;
+    while (positionalMatcher.find())
+    {
+      step3.append(step2, lastEnd, positionalMatcher.start());
+      int index = Integer.parseInt(positionalMatcher.group(1));
+      if (index >= 0 && index < skillArgs.size())
+        step3.append(skillArgs.get(index));
+      else
+        step3.append(positionalMatcher.group(0));
+      lastEnd = positionalMatcher.end();
+    }
+    step3.append(step2.substring(lastEnd));
+
+    // Step 4: ${name} — environment variable lookup via resolveVariable()
+    Matcher varMatcher = VAR_PATTERN.matcher(step3);
+    StringBuilder step4 = new StringBuilder();
+    lastEnd = 0;
+    while (varMatcher.find())
+    {
+      step4.append(step3, lastEnd, varMatcher.start());
+      String varName = varMatcher.group(1);
+      step4.append(resolveVariable(varName, skillName));
+      lastEnd = varMatcher.end();
+    }
+    step4.append(step3.substring(lastEnd));
+
+    return step4.toString();
   }
 
   /**
@@ -808,25 +756,25 @@ public final class SkillLoader
   }
 
   /**
-   * Resolves a single {@code ${VAR}} variable to its value.
+   * Resolves a single {@code ${name}} variable inside a directive string.
    * <p>
-   * Handles built-in variables only. Positional arguments ({@code $0}, {@code $1}, etc.) are
-   * resolved separately in {@link #substituteVars(String)}. Unknown variables are passed through
-   * as {@code ${varName}} literals, matching Claude Code's native behavior.
+   * {@code ${CLAUDE_SKILL_DIR}} is resolved by SkillLoader to the skill's directory
+   * ({@code pluginRoot/skills/{skill-name}/}). All other variables are resolved via
+   * {@link JvmScope#getEnvironmentVariable(String)}. Unknown variables (not set in the environment)
+   * are passed through as {@code ${name}} literals.
    *
    * @param varName the variable name (without ${} delimiters)
+   * @param skillName the skill name, used to resolve {@code ${CLAUDE_SKILL_DIR}}
    * @return the resolved value, or the original {@code ${varName}} literal if undefined
    */
-  private String resolveVariable(String varName)
+  private String resolveVariable(String varName, String skillName)
   {
-    return switch (varName)
-    {
-      case "CLAUDE_PLUGIN_ROOT" -> pluginRoot.toString();
-      case "CLAUDE_SESSION_ID" -> scope.getClaudeSessionId();
-      case "CLAUDE_PROJECT_DIR" -> projectDir;
-      // Pass through unknown variables unchanged (matches Claude Code's native behavior)
-      default -> "${" + varName + "}";
-    };
+    if (varName.equals("CLAUDE_SKILL_DIR"))
+      return pluginRoot.resolve("skills").resolve(stripPrefix(skillName)).toString();
+    String envValue = scope.getEnvironmentVariable(varName);
+    if (envValue == null)
+      return "${" + varName + "}";
+    return envValue;
   }
 
   /**

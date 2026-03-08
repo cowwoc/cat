@@ -228,6 +228,34 @@ else
 String command = commandNode != null ? commandNode.asString() : "";
 ```
 
+### Null-First Conditionals
+When a conditional handles both the null and non-null case, test the null case first. This applies to explicit
+if/else and to early-return patterns:
+
+```java
+// Good - null case first (explicit else)
+if (argumentsToken == null)
+  expandedArgs = null;
+else
+  expandedArgs = expandDirectiveString(argumentsToken.strip(), skillName);
+
+// Good - null case first (implicit else via early return)
+if (envValue == null)
+  return "${" + varName + "}";
+return envValue;
+
+// Avoid - non-null case first
+if (argumentsToken != null)
+  expandedArgs = expandDirectiveString(argumentsToken.strip(), skillName);
+else
+  expandedArgs = null;
+
+// Avoid - non-null case first (implicit else)
+if (envValue != null)
+  return envValue;
+return "${" + varName + "}";
+```
+
 ### Switch Over Chained If-Else
 When comparing the same variable against 3 or more constant values, use a `switch` statement instead of chained
 if-else:
@@ -361,6 +389,18 @@ for (int i = 0; i < lineCount; ++i)
   summary.append(lines[i].trim());
 }
 return summary.toString();
+```
+
+### Regex: Minimal Escaping
+Only escape characters that require escaping in the given context. In particular, `]` outside a character class `[...]`
+is a literal and does not need a backslash:
+
+```java
+// Good - ] is not inside a character class, no escape needed
+Pattern.compile("\\$ARGUMENTS\\[(\\d+)]");
+
+// Avoid - unnecessary escape of ]
+Pattern.compile("\\$ARGUMENTS\\[(\\d+)\\]");
 ```
 
 ### Multiline Strings
