@@ -16,4 +16,4 @@ allowed-tools:
 user-invocable: false
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" work-agent $ARGUMENTS`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" work-agent "$ARGUMENTS"`

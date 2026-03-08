@@ -134,4 +134,79 @@ public class ShellParserTest
     List<String> tokens = ShellParser.tokenize("--flag \"path with spaces\" --other 'another path'");
     requireThat(tokens, "tokens").isEqualTo(List.of("--flag", "path with spaces", "--other", "another path"));
   }
+
+  /**
+   * Verifies that parentheses inside a double-quoted string are treated as literals,
+   * not as shell glob or subshell metacharacters.
+   */
+  @Test
+  public void tokenizeHandlesParenthesesInsideDoubleQuotes()
+  {
+    List<String> tokens = ShellParser.tokenize("\"occurrences: (3/5)\"");
+    requireThat(tokens, "tokens").isEqualTo(List.of("occurrences: (3/5)"));
+  }
+
+  /**
+   * Verifies that square brackets inside a double-quoted string are treated as literals,
+   * not as shell glob character class metacharacters.
+   */
+  @Test
+  public void tokenizeHandlesBracketsInsideDoubleQuotes()
+  {
+    List<String> tokens = ShellParser.tokenize("\"commits: [abc123,def456]\"");
+    requireThat(tokens, "tokens").isEqualTo(List.of("commits: [abc123,def456]"));
+  }
+
+  /**
+   * Verifies that curly braces inside a double-quoted string are treated as literals,
+   * not as shell brace expansion metacharacters.
+   */
+  @Test
+  public void tokenizeHandlesBracesInsideDoubleQuotes()
+  {
+    List<String> tokens = ShellParser.tokenize("\"{\\\"key\\\": \\\"value\\\"}\"");
+    requireThat(tokens, "tokens").isEqualTo(List.of("{\"key\": \"value\"}"));
+  }
+
+  /**
+   * Verifies that wildcards inside a double-quoted string are treated as literals,
+   * not as shell glob expansion characters.
+   */
+  @Test
+  public void tokenizeHandlesWildcardsInsideDoubleQuotes()
+  {
+    List<String> tokens = ShellParser.tokenize("\"pattern: *.java and file?.txt\"");
+    requireThat(tokens, "tokens").isEqualTo(List.of("pattern: *.java and file?.txt"));
+  }
+
+  /**
+   * Verifies that a mix of multiple tokens where some contain shell metacharacters works correctly.
+   * The metacharacter-containing token must be double-quoted; unquoted tokens are split normally.
+   */
+  @Test
+  public void tokenizeHandlesMixedTokensWithMetacharacters()
+  {
+    List<String> tokens = ShellParser.tokenize("skill-name \"arg with (parens) and [brackets]\" --flag");
+    requireThat(tokens, "tokens").isEqualTo(List.of("skill-name", "arg with (parens) and [brackets]", "--flag"));
+  }
+
+  /**
+   * Verifies that a null input throws AssertionError.
+   */
+  @Test(expectedExceptions = AssertionError.class)
+  public void tokenizeThrowsAssertionErrorWhenInputIsNull()
+  {
+    ShellParser.tokenize(null);
+  }
+
+  /**
+   * Verifies that an unclosed double-quoted string is handled leniently: the remaining content
+   * after the opening quote is returned as a token with the quote stripped.
+   */
+  @Test
+  public void tokenizeHandlesUnclosedDoubleQuote()
+  {
+    List<String> tokens = ShellParser.tokenize("\"unclosed content");
+    requireThat(tokens, "tokens").isEqualTo(List.of("unclosed content"));
+  }
 }
