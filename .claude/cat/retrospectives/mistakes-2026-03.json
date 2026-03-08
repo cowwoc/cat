@@ -1355,5 +1355,20 @@
       "fragility_reasoning" : "The fix adds explicit specification of a required output section, making it impossible to miss when reading the documented report structure."
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M513",
+    "timestamp" : "2026-03-08T14:32:59Z",
+    "category" : "",
+    "description" : "",
+    "root_cause" : "",
+    "rca_method" : "",
+    "rca_method_name" : "",
+    "prevention_type" : "process",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "correct_behavior" : ""
   } ]
 }
