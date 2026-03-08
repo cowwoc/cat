@@ -10,6 +10,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.HookInput;
+import io.github.cowwoc.cat.hooks.IssueStatus;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 
 import java.io.IOException;
@@ -25,13 +26,15 @@ import java.util.regex.Pattern;
  * Validates that bugfix/feature commits in CAT worktrees include STATE.md changes.
  * <p>
  * Blocks commits when STATE.md is not staged, and warns when STATE.md is staged but does not
- * contain a "completed" status.
+ * contain a "closed" status.
  */
 public final class VerifyStateInCommit implements BashHandler
 {
   private static final Pattern IMPLEMENTATION_COMMIT_PATTERN = Pattern.compile(
     "git\\s+commit(?!.*--amend).*-m\\s+.*?(bugfix|feature):", Pattern.DOTALL);
   private static final Pattern CD_PATTERN = Pattern.compile("(?:^|[;&|])\\s*cd\\s+([^;&|\\s]+)");
+  private static final Pattern STATUS_PATTERN = Pattern.compile("^- \\*\\*Status:\\*\\* (.+)$",
+    Pattern.MULTILINE);
 
   /**
    * Creates a new handler for verifying STATE.md in commits.
@@ -80,11 +83,17 @@ public final class VerifyStateInCommit implements BashHandler
       }
 
       String stateMdContent = readStagedStateMd(stagedFiles, effectiveDirectory);
-      if (!stateMdContent.isEmpty() && !stateMdContent.contains("completed"))
+      if (!stateMdContent.isEmpty())
       {
-        return Result.warn(
-          "STATE.md is staged but does not contain 'completed' status. " +
-          "Verify the issue status is correct before committing.");
+        Matcher statusMatcher = STATUS_PATTERN.matcher(stateMdContent);
+        boolean isClosed = statusMatcher.find() &&
+          IssueStatus.fromString(statusMatcher.group(1).strip()) == IssueStatus.CLOSED;
+        if (!isClosed)
+        {
+          return Result.warn(
+            "STATE.md is staged but does not contain 'closed' status. " +
+            "Verify the issue status is correct before committing.");
+        }
       }
 
       return Result.allow();
