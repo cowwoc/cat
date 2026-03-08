@@ -14,10 +14,11 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * @param id          the action item ID
  * @param priority    the priority level
  * @param description the action item description
+ * @param createdDate the ISO-8601 creation date, or empty string if absent
  * @throws NullPointerException     if any of the arguments are null
  * @throws IllegalArgumentException if {@code id} is blank
  */
-public record ActionItemSummary(String id, Priority priority, String description)
+public record ActionItemSummary(String id, Priority priority, String description, String createdDate)
 {
   /**
    * Creates a new ActionItemSummary.
@@ -27,5 +28,6 @@ public record ActionItemSummary(String id, Priority priority, String description
     requireThat(id, "id").isNotBlank();
     requireThat(priority, "priority").isNotNull();
     requireThat(description, "description").isNotNull();
+    requireThat(createdDate, "createdDate").isNotNull();
   }
 }

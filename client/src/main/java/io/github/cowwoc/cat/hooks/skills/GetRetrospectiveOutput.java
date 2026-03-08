@@ -12,20 +12,21 @@ import io.github.cowwoc.cat.hooks.Strings;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.ObjectNode;
-
-import static io.github.cowwoc.cat.hooks.skills.JsonHelper.getIntOrDefault;
-import static io.github.cowwoc.cat.hooks.skills.JsonHelper.getStringOrEmpty;
 
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -49,6 +50,9 @@ public final class GetRetrospectiveOutput implements SkillOutput
 {
   private static final int DEFAULT_TRIGGER_DAYS = 7;
   private static final int DEFAULT_MISTAKE_THRESHOLD = 10;
+  private static final int MAX_CATEGORY_ROWS = 8;
+  private static final DateTimeFormatter PERIOD_FORMATTER =
+    DateTimeFormatter.ofPattern("MMM d h:mm a", Locale.ENGLISH).withZone(ZoneOffset.UTC);
   private final JvmScope scope;
 
   /**
@@ -65,10 +69,6 @@ public final class GetRetrospectiveOutput implements SkillOutput
 
   /**
    * Generates the retrospective output.
-   * <p>
-   * On the success path (when a retrospective is triggered and analysis is generated), this method writes
-   * to {@code index.json}: it resets {@code mistake_count_since_last} to {@code 0} and updates
-   * {@code last_retrospective} to the current UTC instant.
    *
    * @param args the arguments from the preprocessor directive (must be empty)
    * @return the retrospective analysis or status message
@@ -110,15 +110,15 @@ public final class GetRetrospectiveOutput implements SkillOutput
     JsonNode config = root.get("config");
     if (config != null)
     {
-      triggerDays = getIntOrDefault(config, "trigger_interval_days", DEFAULT_TRIGGER_DAYS);
-      mistakeThreshold = getIntOrDefault(config, "mistake_count_threshold", DEFAULT_MISTAKE_THRESHOLD);
+      triggerDays = extractInt(config, "trigger_interval_days", DEFAULT_TRIGGER_DAYS);
+      mistakeThreshold = extractInt(config, "mistake_count_threshold", DEFAULT_MISTAKE_THRESHOLD);
     }
 
-    String lastRetro = getStringOrEmpty(root, "last_retrospective", "");
-    int mistakeCount = getIntOrDefault(root, "mistake_count_since_last", 0);
+    String lastRetro = extractString(root, "last_retrospective", "");
+    int mistakeCount = extractInt(root, "mistake_count_since_last", 0);
 
     String triggerReason = checkTrigger(lastRetro, mistakeCount, triggerDays, mistakeThreshold,
-      retroDir, root, mapper);
+      retroDir, mapper);
 
     if (triggerReason.isEmpty())
     {
@@ -134,9 +134,7 @@ public final class GetRetrospectiveOutput implements SkillOutput
         """.formatted(daysSince, triggerDays, mistakeCount, mistakeThreshold);
     }
 
-    String output = generateAnalysis(retroDir, root, lastRetro, triggerReason, mapper);
-    resetRetrospectiveCounter(indexFile, root, mapper);
-    return output;
+    return generateAnalysis(retroDir, root, lastRetro, triggerReason, mapper);
   }
 
   /**
@@ -147,18 +145,17 @@ public final class GetRetrospectiveOutput implements SkillOutput
    * @param triggerDays the number of days threshold for triggering
    * @param mistakeThreshold the mistake count threshold for triggering
    * @param retroDir the retrospectives directory
-   * @param index the index.json root node
    * @param mapper the JSON mapper
    * @return the trigger reason, or empty string if not triggered
    * @throws IOException if an I/O error occurs
    */
   private String checkTrigger(String lastRetro, int mistakeCount, int triggerDays, int mistakeThreshold,
-    Path retroDir, JsonNode index, JsonMapper mapper) throws IOException
+    Path retroDir, JsonMapper mapper) throws IOException
   {
     boolean hasLastRetro = !lastRetro.isEmpty() && !lastRetro.equals("null");
     if (!hasLastRetro)
     {
-      int totalMistakes = countMistakesFromFiles(retroDir, index, mapper);
+      int totalMistakes = countMistakesFromFiles(retroDir, mapper);
       if (totalMistakes > 0)
         return "First retrospective with " + totalMistakes + " logged mistakes";
     }
@@ -166,11 +163,11 @@ public final class GetRetrospectiveOutput implements SkillOutput
     {
       long daysSince = daysSinceDate(lastRetro);
       if (daysSince >= triggerDays)
-        return daysSince + " days since last retrospective (threshold: " + triggerDays + ")";
+        return daysSince + " days since last retrospective (threshold: " + triggerDays + " days)";
     }
 
     if (mistakeCount >= mistakeThreshold)
-      return mistakeCount + " mistakes accumulated (threshold: " + mistakeThreshold + ")";
+      return mistakeCount + " mistakes since last retrospective (threshold: " + mistakeThreshold + ")";
 
     return "";
   }
@@ -204,6 +201,10 @@ public final class GetRetrospectiveOutput implements SkillOutput
 
     List<String> contentLines = new ArrayList<>();
 
+    // Executive Summary section (appears before trigger/period)
+    for (String line : generateExecutiveSummaryLines(mistakes, index))
+      contentLines.add(line);
+
     // Subtitle rows: trigger, period, mistakes analyzed
     contentLines.add("Trigger: " + triggerReason);
     contentLines.add("Period: " + period);
@@ -230,34 +231,16 @@ public final class GetRetrospectiveOutput implements SkillOutput
     // Open Action Items section
     contentLines.add("");
     contentLines.add("Open Action Items:");
-    for (String line : generateOpenActionItemLines(index))
+    for (String line : generateOpenActionItemLines(index, lastRetroTime))
+      contentLines.add("  " + line);
+
+    // Action Item Details section
+    contentLines.add("");
+    contentLines.add("Action Item Details:");
+    for (String line : generateActionItemDetailsLines(index))
       contentLines.add("  " + line);
 
     return display.buildHeaderBox("RETROSPECTIVE ANALYSIS", contentLines);
-  }
-
-  /**
-   * Resets the retrospective counter in {@code index.json} after a successful analysis.
-   * <p>
-   * Sets {@code last_retrospective} to the current UTC instant and {@code mistake_count_since_last} to 0.
-   * Writes atomically by writing to a temp file first, then renaming over the target.
-   *
-   * @param indexFile the path to {@code index.json}
-   * @param indexRoot the parsed root node of {@code index.json}
-   * @param mapper the JSON mapper
-   * @throws IOException if an I/O error occurs
-   */
-  private void resetRetrospectiveCounter(Path indexFile, JsonNode indexRoot, JsonMapper mapper)
-    throws IOException
-  {
-    ObjectNode updated = ((ObjectNode) indexRoot).deepCopy();
-    updated.put("last_retrospective", Instant.now().toString());
-    updated.put("mistake_count_since_last", 0);
-
-    String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(updated);
-    Path tempFile = Files.createTempFile(indexFile.getParent(), "index-", ".tmp");
-    Files.writeString(tempFile, json);
-    Files.move(tempFile, indexFile, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
   }
 
   /**
@@ -288,11 +271,7 @@ public final class GetRetrospectiveOutput implements SkillOutput
         continue;
 
       String fileName = fileNode.asString();
-      Path mistakeFile = retroDir.resolve(fileName).normalize();
-      if (!mistakeFile.startsWith(retroDir.normalize()))
-      {
-        throw new IOException("Mistakes file path escapes retrospectives directory: " + mistakeFile);
-      }
+      Path mistakeFile = retroDir.resolve(fileName);
       if (!Files.exists(mistakeFile))
       {
         throw new IOException("Mistakes file listed in index.json not found: " + mistakeFile);
@@ -329,7 +308,11 @@ public final class GetRetrospectiveOutput implements SkillOutput
   }
 
   /**
-   * Generates category breakdown lines from mistakes.
+   * Generates category breakdown lines from mistakes, sorted by count descending.
+   * Each line includes the count and percentage of total mistakes.
+   * If there are more than {@value #MAX_CATEGORY_ROWS} categories, only the top
+   * {@value #MAX_CATEGORY_ROWS} are shown and the remainder are summarized as
+   * {@code "[N more categories]"}.
    *
    * @param mistakes the list of mistake nodes
    * @return the category breakdown lines
@@ -340,24 +323,151 @@ public final class GetRetrospectiveOutput implements SkillOutput
       return List.of("(no mistakes in period)");
 
     Map<String, Integer> categoryCount = new HashMap<>();
+    int total = 0;
     for (JsonNode mistake : mistakes)
     {
-      String category = getStringOrEmpty(mistake, "category", "");
+      String category = extractString(mistake, "category", "");
       if (!category.isEmpty())
+      {
         categoryCount.put(category, categoryCount.getOrDefault(category, 0) + 1);
+        total += 1;
+      }
     }
 
+    // Sort by count descending, then alphabetically for stable ordering
     List<String> categories = new ArrayList<>(categoryCount.keySet());
-    categories.sort(String::compareTo);
+    final int finalTotal = total;
+    categories.sort((a, b) ->
+    {
+      int countCompare = categoryCount.get(b) - categoryCount.get(a);
+      if (countCompare != 0)
+        return countCompare;
+      return a.compareTo(b);
+    });
+
     List<String> lines = new ArrayList<>();
-    for (String category : categories)
-      lines.add("%s: %d".formatted(category, categoryCount.get(category)));
+    int shown = Math.min(categories.size(), MAX_CATEGORY_ROWS);
+    for (int i = 0; i < shown; i += 1)
+    {
+      String category = categories.get(i);
+      int count = categoryCount.get(category);
+      int pct = count * 100 / finalTotal;
+      lines.add("%s: %d (%d%%)".formatted(category, count, pct));
+    }
+    if (categories.size() > MAX_CATEGORY_ROWS)
+      lines.add("[" + (categories.size() - MAX_CATEGORY_ROWS) + " more categories]");
 
     return lines;
   }
 
   /**
-   * Generates action item effectiveness report lines.
+   * Generates the executive summary lines shown before the trigger and period information.
+   * <p>
+   * The summary includes:
+   * <ol>
+   *   <li>Top mistake category with count and percentage</li>
+   *   <li>Count of WORSENING patterns (omitted when zero)</li>
+   *   <li>Count of high-priority open action items</li>
+   * </ol>
+   *
+   * @param mistakes the list of mistake nodes for the current period
+   * @param index    the index.json root node
+   * @return the executive summary lines, each starting with the bullet character
+   */
+  private List<String> generateExecutiveSummaryLines(List<JsonNode> mistakes, JsonNode index)
+  {
+    List<String> lines = new ArrayList<>();
+
+    // Bullet 1: top mistake category
+    if (!mistakes.isEmpty())
+    {
+      Map<String, Integer> categoryCount = new HashMap<>();
+      for (JsonNode mistake : mistakes)
+      {
+        String category = extractString(mistake, "category", "");
+        if (!category.isEmpty())
+          categoryCount.put(category, categoryCount.getOrDefault(category, 0) + 1);
+      }
+      if (!categoryCount.isEmpty())
+      {
+        String topCategory = categoryCount.entrySet().stream().
+          max(Map.Entry.comparingByValue()).
+          get().
+          getKey();
+        int topCount = categoryCount.get(topCategory);
+        int pct = topCount * 100 / mistakes.size();
+        lines.add("• Top category: " + topCategory + " (" + topCount + " mistakes, " + pct + "%)");
+      }
+    }
+
+    // Bullet 2: worsening patterns count (omit if zero)
+    int worseningCount = countWorseningPatterns(index);
+    if (worseningCount > 0)
+      lines.add("• " + worseningCount + " pattern(s) WORSENING — fixes not effective");
+
+    // Bullet 3: high-priority open items
+    int highPriorityCount = countHighPriorityOpenItems(index);
+    lines.add("• " + highPriorityCount + " high-priority action item(s) require attention");
+
+    // Blank line separator after summary before trigger line
+    lines.add("");
+
+    return lines;
+  }
+
+  /**
+   * Counts patterns with WORSENING semantic status (occurrences_after_fix greater than occurrences_total).
+   *
+   * @param index the index.json root node
+   * @return the number of worsening patterns
+   */
+  private static int countWorseningPatterns(JsonNode index)
+  {
+    JsonNode patterns = index.get("patterns");
+    if (patterns == null || !patterns.isArray())
+      return 0;
+    int count = 0;
+    for (JsonNode pattern : patterns)
+    {
+      String status = extractString(pattern, "status", "");
+      if (status.isBlank() || status.equals("addressed"))
+        continue;
+      int total = extractInt(pattern, "occurrences_total", 0);
+      int after = extractInt(pattern, "occurrences_after_fix", 0);
+      if (after > total)
+        count += 1;
+    }
+    return count;
+  }
+
+  /**
+   * Counts open action items (status "open" or "escalated") with HIGH priority.
+   *
+   * @param index the index.json root node
+   * @return the number of high-priority open action items
+   */
+  private static int countHighPriorityOpenItems(JsonNode index)
+  {
+    JsonNode actionItems = index.get("action_items");
+    if (actionItems == null || !actionItems.isArray())
+      return 0;
+    int count = 0;
+    for (JsonNode item : actionItems)
+    {
+      String status = extractString(item, "status", "");
+      if (!status.equals("open") && !status.equals("escalated"))
+        continue;
+      String priority = extractString(item, "priority", "medium");
+      if (priority.equalsIgnoreCase("high"))
+        count += 1;
+    }
+    return count;
+  }
+
+  /**
+   * Generates action item effectiveness report lines, including verdict-specific guidance.
+   * Descriptions longer than {@value Strings#DESCRIPTION_MAX_LENGTH} characters are truncated with
+   * {@code "... (see details)"} to direct readers to the Action Item Details section.
    *
    * @param index the index.json root node
    * @return the effectiveness report lines
@@ -371,7 +481,7 @@ public final class GetRetrospectiveOutput implements SkillOutput
     List<String> lines = new ArrayList<>();
     for (JsonNode item : actionItems)
     {
-      String id = getStringOrEmpty(item, "id", "");
+      String id = extractString(item, "id", "");
       if (id.isBlank())
         continue;
 
@@ -379,15 +489,16 @@ public final class GetRetrospectiveOutput implements SkillOutput
       if (effectivenessCheck == null)
         continue;
 
-      String verdict = getStringOrEmpty(effectivenessCheck, "verdict", "");
+      String verdict = extractString(effectivenessCheck, "verdict", "");
       if (!verdict.isBlank())
       {
-        String description = getStringOrEmpty(item, "description", "");
-        String truncated = Strings.truncate(description, Strings.DESCRIPTION_MAX_LENGTH);
+        String description = extractString(item, "description", "");
+        String truncated = truncateWithDetails(description);
         if (truncated.isBlank())
           lines.add("%s: %s".formatted(id, verdict));
         else
           lines.add("%s: %s - %s".formatted(id, verdict, truncated));
+        lines.add("     → " + verdictGuidance(verdict));
       }
     }
 
@@ -397,7 +508,79 @@ public final class GetRetrospectiveOutput implements SkillOutput
   }
 
   /**
-   * Generates pattern status summary lines.
+   * Returns the verdict-specific next-step guidance for an effectiveness verdict.
+   *
+   * @param verdict the effectiveness verdict string
+   * @return the guidance text
+   */
+  private static String verdictGuidance(String verdict)
+  {
+    return switch (verdict)
+    {
+      case "effective" -> "Continue monitoring";
+      case "ineffective" -> "Escalate: root cause may be misdiagnosed";
+      case "partially_effective" -> "Refine approach based on remaining occurrences";
+      case "pending" -> "Awaiting data to evaluate";
+      default -> "Review and update action item";
+    };
+  }
+
+  /**
+   * Truncates a description to at most {@value Strings#DESCRIPTION_MAX_LENGTH} characters.
+   * If truncated, appends {@code "... (see details)"} to direct readers to the full text.
+   *
+   * @param description the description to truncate
+   * @return the original description if short enough, or a truncated version ending with
+   *   {@code "... (see details)"}
+   */
+  private static String truncateWithDetails(String description)
+  {
+    if (description.length() <= Strings.DESCRIPTION_MAX_LENGTH)
+      return description;
+    return description.substring(0, Strings.DESCRIPTION_MAX_LENGTH) + "... (see details)";
+  }
+
+  /**
+   * Severity ordering for pattern status labels.
+   * Lower value = higher severity (displayed first).
+   *
+   * @param semanticStatus the semantic status label
+   * @return the sort order value, where 0 is highest severity
+   */
+  private static int patternSeverityOrder(String semanticStatus)
+  {
+    return switch (semanticStatus)
+    {
+      case "📈 WORSENING" -> 0;
+      case "⛔ NO IMPROVEMENT" -> 1;
+      case "📉 IMPROVING" -> 2;
+      case "✅ RESOLVED" -> 3;
+      default -> 4;
+    };
+  }
+
+  /**
+   * Derives a semantic status label from pattern occurrence counts.
+   *
+   * @param total the total occurrences
+   * @param after the occurrences after the fix was applied
+   * @return the semantic status label
+   */
+  private static String derivePatternSemanticStatus(int total, int after)
+  {
+    if (after > total)
+      return "📈 WORSENING";
+    if (after == total)
+      return "⛔ NO IMPROVEMENT";
+    if (after > 0)
+      return "📉 IMPROVING";
+    return "✅ RESOLVED";
+  }
+
+  /**
+   * Generates pattern status summary lines using semantic labels (WORSENING, NO IMPROVEMENT, IMPROVING,
+   * RESOLVED). Patterns with status "addressed" are excluded. Results are sorted by severity
+   * (WORSENING first, then NO IMPROVEMENT, then IMPROVING, then RESOLVED).
    *
    * @param index the index.json root node
    * @return the pattern status lines
@@ -408,48 +591,80 @@ public final class GetRetrospectiveOutput implements SkillOutput
     if (patterns == null || !patterns.isArray() || patterns.isEmpty())
       return List.of("(no patterns)");
 
-    List<String> lines = new ArrayList<>();
+    record PatternEntry(String id, String semanticStatus, int total, int after, String patternName)
+    {
+    }
+
+    List<PatternEntry> entries = new ArrayList<>();
     for (JsonNode pattern : patterns)
     {
-      String status = getStringOrEmpty(pattern, "status", "");
+      String status = extractString(pattern, "status", "");
       if (status.isBlank() || status.equals("addressed"))
         continue;
 
-      String id = getStringOrEmpty(pattern, "pattern_id", "");
+      String id = extractString(pattern, "pattern_id", "");
       if (id.isBlank())
         continue;
 
-      int total = getIntOrDefault(pattern, "occurrences_total", 0);
-      int after = getIntOrDefault(pattern, "occurrences_after_fix", 0);
-      String patternName = getStringOrEmpty(pattern, "pattern", "");
-      if (patternName.isBlank())
-        lines.add("%s: %s (%d total, %d after fix)".formatted(id, status, total, after));
-      else
-        lines.add("%s: %s (%d total, %d after fix) - %s".formatted(id, status, total, after,
-          Strings.truncate(patternName, Strings.DESCRIPTION_MAX_LENGTH)));
+      int total = extractInt(pattern, "occurrences_total", 0);
+      int after = extractInt(pattern, "occurrences_after_fix", 0);
+      String patternName = extractString(pattern, "pattern", "");
+      String semanticStatus = derivePatternSemanticStatus(total, after);
+      entries.add(new PatternEntry(id, semanticStatus, total, after, patternName));
     }
 
-    if (lines.isEmpty())
+    if (entries.isEmpty())
       return List.of("(all patterns addressed)");
+
+    entries.sort(Comparator.comparingInt((PatternEntry e) -> patternSeverityOrder(e.semanticStatus())).
+      thenComparing(PatternEntry::id));
+
+    List<String> lines = new ArrayList<>();
+    for (PatternEntry entry : entries)
+    {
+      String occurrencePart = switch (entry.semanticStatus())
+      {
+        case "📈 WORSENING" -> "%d total, %d after fix".formatted(entry.total(), entry.after());
+        case "⛔ NO IMPROVEMENT" -> "%d detected, %d after fix".formatted(entry.total(), entry.after());
+        case "📉 IMPROVING" -> "%d total, %d remaining".formatted(entry.total(), entry.after());
+        case "✅ RESOLVED" -> "%d total".formatted(entry.total());
+        default -> "%d total, %d after fix".formatted(entry.total(), entry.after());
+      };
+
+      String line;
+      if (entry.patternName().isBlank())
+        line = "%s: %s — %s".formatted(entry.id(), entry.semanticStatus(), occurrencePart);
+      else
+        line = "%s: %s — %s - %s".formatted(entry.id(), entry.semanticStatus(), occurrencePart,
+          Strings.truncate(entry.patternName(), Strings.DESCRIPTION_MAX_LENGTH));
+      lines.add(line);
+    }
     return lines;
   }
 
   /**
-   * Generates open action item lines.
+   * Generates open action item lines grouped by priority (HIGH, MEDIUM, LOW) with section headers.
+   * Each item is prefixed with {@code [NEW]} if created during the current retrospective period, or
+   * {@code [recurring xN]} if it has appeared in N previous retrospectives.
+   * Descriptions longer than {@value Strings#DESCRIPTION_MAX_LENGTH} characters are truncated with
+   * {@code "... (see details)"}.
    *
-   * @param index the index.json root node
+   * @param index         the index.json root node
+   * @param lastRetroTime the start of the current retrospective period
    * @return the open action item lines
    */
-  private List<String> generateOpenActionItemLines(JsonNode index)
+  private List<String> generateOpenActionItemLines(JsonNode index, Instant lastRetroTime)
   {
     JsonNode actionItems = index.get("action_items");
     if (actionItems == null || !actionItems.isArray() || actionItems.isEmpty())
       return List.of("(no open action items)");
 
+    int pastRetroCount = countPastRetrospectives(index);
+
     List<ActionItemSummary> openItems = new ArrayList<>();
     for (JsonNode item : actionItems)
     {
-      String status = getStringOrEmpty(item, "status", "");
+      String status = extractString(item, "status", "");
       if (!status.equals("open") && !status.equals("escalated"))
         continue;
 
@@ -469,11 +684,107 @@ public final class GetRetrospectiveOutput implements SkillOutput
       return a.id().compareTo(b.id());
     });
 
-    List<String> lines = new ArrayList<>();
+    // Group by priority
+    Map<Priority, List<ActionItemSummary>> byPriority = new LinkedHashMap<>();
+    for (Priority p : new Priority[]{Priority.HIGH, Priority.MEDIUM, Priority.LOW})
+      byPriority.put(p, new ArrayList<>());
     for (ActionItemSummary item : openItems)
-      lines.add("%s (%s): %s".formatted(item.id(),
-        item.priority().name().toLowerCase(Locale.ROOT), item.description()));
+      byPriority.computeIfAbsent(item.priority(), _ -> new ArrayList<>()).add(item);
 
+    List<String> lines = new ArrayList<>();
+    for (Map.Entry<Priority, List<ActionItemSummary>> entry : byPriority.entrySet())
+    {
+      List<ActionItemSummary> group = entry.getValue();
+      if (group.isEmpty())
+        continue;
+
+      String priorityLabel = entry.getKey().name() + " PRIORITY (" + group.size() + " items):";
+      lines.add(priorityLabel);
+      for (ActionItemSummary item : group)
+      {
+        String indicator = computeRecurrenceIndicator(item.createdDate(), lastRetroTime, pastRetroCount);
+        String truncatedDesc = truncateWithDetails(item.description());
+        lines.add("  " + item.id() + ": " + indicator + " " + truncatedDesc);
+      }
+    }
+
+    return lines;
+  }
+
+  /**
+   * Counts the number of past retrospectives listed in the index.
+   *
+   * @param index the index.json root node
+   * @return the count of past retrospective files
+   */
+  private static int countPastRetrospectives(JsonNode index)
+  {
+    JsonNode filesNode = index.get("files");
+    if (filesNode == null)
+      return 0;
+    JsonNode retrosNode = filesNode.get("retrospectives");
+    if (retrosNode == null || !retrosNode.isArray())
+      return 0;
+    return retrosNode.size();
+  }
+
+  /**
+   * Computes the recurrence indicator for an action item.
+   *
+   * @param createdDate    the ISO-8601 creation date of the action item, or empty string if absent
+   * @param lastRetroTime  the start of the current retrospective period
+   * @param pastRetroCount the number of past retrospective files
+   * @return {@code "[NEW]"} if the item was created in the current period, or
+   *         {@code "[recurring xN]"} where N is the number of past retrospectives
+   */
+  private static String computeRecurrenceIndicator(String createdDate, Instant lastRetroTime,
+    int pastRetroCount)
+  {
+    if (!createdDate.isEmpty())
+    {
+      try
+      {
+        Instant created = Instant.parse(createdDate);
+        if (created.isAfter(lastRetroTime))
+          return "[NEW]";
+      }
+      catch (DateTimeParseException _)
+      {
+        // fall through to recurring
+      }
+    }
+    return "[recurring × " + pastRetroCount + "]";
+  }
+
+  /**
+   * Generates the action item details section showing full (untruncated) descriptions.
+   * This section follows the open action items section to provide the complete text
+   * referenced by truncated summary lines.
+   *
+   * @param index the index.json root node
+   * @return the action item detail lines, one per action item with an id
+   */
+  private List<String> generateActionItemDetailsLines(JsonNode index)
+  {
+    JsonNode actionItems = index.get("action_items");
+    if (actionItems == null || !actionItems.isArray() || actionItems.isEmpty())
+      return List.of("(no action items)");
+
+    List<String> lines = new ArrayList<>();
+    for (JsonNode item : actionItems)
+    {
+      String id = extractString(item, "id", "");
+      if (id.isBlank())
+        continue;
+      String status = extractString(item, "status", "");
+      if (!status.equals("open") && !status.equals("escalated"))
+        continue;
+      String description = extractString(item, "description", "");
+      lines.add(id + ": " + description);
+    }
+
+    if (lines.isEmpty())
+      return List.of("(no action items)");
     return lines;
   }
 
@@ -485,11 +796,11 @@ public final class GetRetrospectiveOutput implements SkillOutput
    */
   private ActionItemSummary parseActionItem(JsonNode item)
   {
-    String id = getStringOrEmpty(item, "id", "");
+    String id = extractString(item, "id", "");
     if (id.isEmpty())
       return null;
 
-    String priorityText = getStringOrEmpty(item, "priority", "medium");
+    String priorityText = extractString(item, "priority", "medium");
     Priority priority;
     try
     {
@@ -500,49 +811,31 @@ public final class GetRetrospectiveOutput implements SkillOutput
       priority = Priority.MEDIUM;
     }
 
-    String description = getStringOrEmpty(item, "description", "");
-    return new ActionItemSummary(id, priority, description);
+    String description = extractString(item, "description", "");
+    String createdDate = extractString(item, "created_date", "");
+    return new ActionItemSummary(id, priority, description, createdDate);
   }
 
   /**
-   * Counts total mistakes using the registry in {@code index.json}'s {@code files.mistakes} array.
-   * <p>
-   * Uses the same file-discovery strategy as {@link #loadMistakesSince} so that the first-retrospective
-   * trigger count and the analysis mistake count are always derived from the same authoritative source.
+   * Counts total mistakes from mistakes-*.json files.
    *
    * @param retroDir the retrospectives directory
-   * @param index the index.json root node
    * @param mapper the JSON mapper
    * @return the total number of mistakes
    * @throws IOException if an I/O error occurs
    */
-  private int countMistakesFromFiles(Path retroDir, JsonNode index, JsonMapper mapper) throws IOException
+  private int countMistakesFromFiles(Path retroDir, JsonMapper mapper) throws IOException
   {
     int total = 0;
-    JsonNode filesNode = index.get("files");
-    if (filesNode == null)
-      return total;
-
-    JsonNode mistakeFilesNode = filesNode.get("mistakes");
-    if (mistakeFilesNode == null || !mistakeFilesNode.isArray())
-      return total;
-
-    for (JsonNode fileNode : mistakeFilesNode)
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(retroDir, "mistakes-*.json"))
     {
-      if (!fileNode.isString())
-        continue;
-
-      String fileName = fileNode.asString();
-      Path mistakeFile = retroDir.resolve(fileName).normalize();
-      if (!mistakeFile.startsWith(retroDir.normalize()))
-        throw new IOException("Mistakes file path escapes retrospectives directory: " + mistakeFile);
-      if (!Files.exists(mistakeFile))
-        throw new IOException("Mistakes file listed in index.json not found: " + mistakeFile);
-
-      JsonNode root = mapper.readTree(Files.readString(mistakeFile));
-      JsonNode mistakes = root.get("mistakes");
-      if (mistakes != null && mistakes.isArray())
-        total += mistakes.size();
+      for (Path file : stream)
+      {
+        JsonNode root = mapper.readTree(Files.readString(file));
+        JsonNode mistakes = root.get("mistakes");
+        if (mistakes != null && mistakes.isArray())
+          total += mistakes.size();
+      }
     }
     return total;
   }
@@ -562,16 +855,64 @@ public final class GetRetrospectiveOutput implements SkillOutput
 
   /**
    * Formats the retrospective period as a human-readable string.
+   * <p>
+   * Format: {@code "MMM d h:mm a — MMM d h:mm a (N days)"} or
+   * {@code "MMM d h:mm a — MMM d h:mm a (N days, M hours)"} when hours are non-zero.
+   * When there is no previous retrospective, returns {@code "Beginning — MMM d h:mm a"}.
    *
    * @param lastRetroTime the time of the last retrospective, or {@link Instant#EPOCH} if none
    * @return the formatted period string
    */
   private static String formatPeriod(Instant lastRetroTime)
   {
-    Instant now = Instant.now();
+    Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
     if (lastRetroTime.equals(Instant.EPOCH))
-      return "Beginning to " + now;
-    return lastRetroTime + " to " + now;
+      return "Beginning — " + PERIOD_FORMATTER.format(now);
+
+    Duration duration = Duration.between(lastRetroTime, now);
+    long days = duration.toDays();
+    long hours = duration.toHoursPart();
+
+    String durationStr;
+    if (hours == 0)
+      durationStr = days + " days";
+    else
+      durationStr = days + " days, " + hours + " hours";
+
+    return PERIOD_FORMATTER.format(lastRetroTime) + " — " +
+      PERIOD_FORMATTER.format(now) + " (" + durationStr + ")";
+  }
+
+  /**
+   * Extracts a string field from a JSON node, returning a default value if absent or not a string.
+   *
+   * @param node the JSON object node to read from
+   * @param key the field name to extract
+   * @param defaultValue the value to return when the field is absent or not a string
+   * @return the string value, or {@code defaultValue}
+   */
+  private static String extractString(JsonNode node, String key, String defaultValue)
+  {
+    JsonNode child = node.get(key);
+    if (child != null && child.isString())
+      return child.asString();
+    return defaultValue;
+  }
+
+  /**
+   * Extracts an integer field from a JSON node, returning a default value if absent or not a number.
+   *
+   * @param node the JSON object node to read from
+   * @param key the field name to extract
+   * @param defaultValue the value to return when the field is absent or not a number
+   * @return the integer value, or {@code defaultValue}
+   */
+  private static int extractInt(JsonNode node, String key, int defaultValue)
+  {
+    JsonNode child = node.get(key);
+    if (child != null && child.isNumber())
+      return child.asInt();
+    return defaultValue;
   }
 
   /**

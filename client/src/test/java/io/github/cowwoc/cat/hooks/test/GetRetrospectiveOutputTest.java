@@ -85,38 +85,6 @@ public final class GetRetrospectiveOutputTest
   }
 
   /**
-   * Verifies that missing index.json produces an error and does NOT reset any counter.
-   * <p>
-   * When index.json is absent the error path is taken before any write occurs;
-   * no index.json must be created as a side-effect.
-   */
-  @Test
-  public void counterNotResetOnMissingIndexFile() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
-      Files.createDirectories(retroDir);
-      // index.json intentionally absent
-
-      GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      String output = handler.getOutput(new String[0]);
-
-      requireThat(output, "output").contains("ERROR:");
-      requireThat(output, "output").contains("Index file not found");
-
-      // index.json must not have been created as a side-effect of the error path
-      Path indexFile = retroDir.resolve("index.json");
-      requireThat(Files.exists(indexFile), "indexCreated").isFalse();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
    * Verifies that malformed index.json throws an exception.
    */
   @Test(expectedExceptions = Exception.class,
@@ -224,7 +192,7 @@ public final class GetRetrospectiveOutputTest
       String output = handler.getOutput(new String[0]);
       requireThat(output, "output").contains("╭");
       requireThat(output, "output").contains("RETROSPECTIVE ANALYSIS");
-      requireThat(output, "output").contains("Trigger: 8 days since last retrospective (threshold: 7)");
+      requireThat(output, "output").contains("Trigger: 8 days since last retrospective (threshold: 7 days)");
       requireThat(output, "output").contains("Period:");
       requireThat(output, "output").contains("Mistakes analyzed: 0");
     }
@@ -272,7 +240,7 @@ public final class GetRetrospectiveOutputTest
       String output = handler.getOutput(new String[0]);
       requireThat(output, "output").contains("╭");
       requireThat(output, "output").contains("RETROSPECTIVE ANALYSIS");
-      requireThat(output, "output").contains("Trigger: 12 mistakes accumulated (threshold: 10)");
+      requireThat(output, "output").contains("Trigger: 12 mistakes since last retrospective (threshold: 10)");
       requireThat(output, "output").contains("Mistakes analyzed: 0");
     }
     finally
@@ -647,8 +615,8 @@ public final class GetRetrospectiveOutputTest
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").contains("P001: active (5 total, 2 after fix) - missed_edge_case");
-      requireThat(output, "output").contains("P003: monitoring (7 total, 1 after fix) - flaky_test");
+      requireThat(output, "output").contains("P001: 📉 IMPROVING — 5 total, 2 remaining - missed_edge_case");
+      requireThat(output, "output").contains("P003: 📉 IMPROVING — 7 total, 1 remaining - flaky_test");
       requireThat(output, "output").doesNotContain("P002");
     }
     finally
@@ -727,11 +695,26 @@ public final class GetRetrospectiveOutputTest
       requireThat(output, "output").contains("Open Action Items:");
       requireThat(output, "output").doesNotContain("A005");
 
-      // Verify ordering: high items first, then medium, then low
-      int posA002 = output.indexOf("A002 (high)");
-      int posA004 = output.indexOf("A004 (high)");
-      int posA003 = output.indexOf("A003 (medium)");
-      int posA001 = output.indexOf("A001 (low)");
+      // Verify priority group headers appear
+      requireThat(output, "output").contains("HIGH PRIORITY");
+      requireThat(output, "output").contains("MEDIUM PRIORITY");
+      requireThat(output, "output").contains("LOW PRIORITY");
+
+      // Verify ordering: HIGH PRIORITY before MEDIUM PRIORITY before LOW PRIORITY
+      int posHigh = output.indexOf("HIGH PRIORITY");
+      int posMedium = output.indexOf("MEDIUM PRIORITY");
+      int posLow = output.indexOf("LOW PRIORITY");
+      requireThat(posHigh, "posHigh").isGreaterThan(-1);
+      requireThat(posMedium, "posMedium").isGreaterThan(-1);
+      requireThat(posLow, "posLow").isGreaterThan(-1);
+      requireThat(posHigh, "posHighBeforeMedium").isLessThan(posMedium);
+      requireThat(posMedium, "posMediumBeforeLow").isLessThan(posLow);
+
+      // Verify individual items appear and high items appear before medium which appears before low
+      int posA002 = output.indexOf("A002:");
+      int posA004 = output.indexOf("A004:");
+      int posA003 = output.indexOf("A003:");
+      int posA001 = output.indexOf("A001:");
       requireThat(posA002, "posA002").isGreaterThan(-1);
       requireThat(posA004, "posA004").isGreaterThan(-1);
       requireThat(posA003, "posA003").isGreaterThan(-1);
@@ -939,7 +922,8 @@ public final class GetRetrospectiveOutputTest
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").contains("A001 (medium)");
+      requireThat(output, "output").contains("MEDIUM PRIORITY");
+      requireThat(output, "output").contains("A001:");
     }
     finally
     {
@@ -1172,7 +1156,7 @@ public final class GetRetrospectiveOutputTest
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").contains("P001: active (0 total, 0 after fix)");
+      requireThat(output, "output").contains("P001: ⛔ NO IMPROVEMENT — 0 detected, 0 after fix");
     }
     finally
     {
@@ -1449,236 +1433,8 @@ public final class GetRetrospectiveOutputTest
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").contains("P001: active (5 total, 2 after fix)");
-      requireThat(output, "output").doesNotContain("P001: active (5 total, 2 after fix) -");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that mistake_count_since_last is reset to 0 and last_retrospective is updated in index.json
-   * after a successful retrospective analysis is generated (count-based trigger).
-   */
-  @Test
-  public void counterResetAfterSuccessfulAnalysis() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
-      Files.createDirectories(retroDir);
-
-      Instant recentRetro = Instant.now().minus(1, ChronoUnit.DAYS);
-      String indexContent = """
-        {
-          "version": "2.0",
-          "config": {
-            "trigger_interval_days": 7,
-            "mistake_count_threshold": 10
-          },
-          "last_retrospective": "%s",
-          "mistake_count_since_last": 12,
-          "files": {
-            "mistakes": [],
-            "retrospectives": []
-          },
-          "patterns": [],
-          "action_items": []
-        }
-        """.formatted(recentRetro);
-
-      Path indexFile = retroDir.resolve("index.json");
-      Files.writeString(indexFile, indexContent);
-
-      Instant beforeCall = Instant.now();
-      GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      String output = handler.getOutput(new String[0]);
-      Instant afterCall = Instant.now();
-
-      requireThat(output, "output").contains("RETROSPECTIVE ANALYSIS");
-
-      // Parse the updated JSON and check field values programmatically
-      tools.jackson.databind.json.JsonMapper mapper = scope.getJsonMapper();
-      String updatedContent = Files.readString(indexFile);
-      tools.jackson.databind.JsonNode updatedRoot = mapper.readTree(updatedContent);
-
-      tools.jackson.databind.JsonNode mistakeCountNode = updatedRoot.get("mistake_count_since_last");
-      requireThat(mistakeCountNode, "mistakeCountNode").isNotNull();
-      requireThat(mistakeCountNode.asInt(), "mistake_count_since_last").isEqualTo(0);
-
-      // Verify last_retrospective was updated to a timestamp within the call window (±2 seconds)
-      tools.jackson.databind.JsonNode lastRetroNode = updatedRoot.get("last_retrospective");
-      requireThat(lastRetroNode, "lastRetroNode").isNotNull();
-      Instant updatedInstant = Instant.parse(lastRetroNode.asString());
-      requireThat(updatedInstant.isBefore(beforeCall.minusSeconds(2)), "timestampTooOld").isFalse();
-      requireThat(updatedInstant.isAfter(afterCall.plusSeconds(2)), "timestampTooNew").isFalse();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that mistake_count_since_last is NOT reset when the retrospective is not triggered
-   * (status message path — threshold not met).
-   */
-  @Test
-  public void counterNotResetWhenThresholdNotMet() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
-      Files.createDirectories(retroDir);
-
-      Instant recentRetro = Instant.now().minus(1, ChronoUnit.DAYS);
-      String originalLastRetro = recentRetro.toString();
-      String indexContent = """
-        {
-          "version": "2.0",
-          "config": {
-            "trigger_interval_days": 7,
-            "mistake_count_threshold": 10
-          },
-          "last_retrospective": "%s",
-          "mistake_count_since_last": 3,
-          "files": {
-            "mistakes": [],
-            "retrospectives": []
-          },
-          "patterns": [],
-          "action_items": []
-        }
-        """.formatted(originalLastRetro);
-
-      Path indexFile = retroDir.resolve("index.json");
-      Files.writeString(indexFile, indexContent);
-
-      GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      String output = handler.getOutput(new String[0]);
-
-      requireThat(output, "output").contains("Retrospective not triggered");
-
-      String updatedContent = Files.readString(indexFile);
-      requireThat(updatedContent, "updatedContent").contains("\"mistake_count_since_last\": 3");
-      requireThat(updatedContent, "updatedContent").contains(originalLastRetro);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that mistake_count_since_last is NOT reset when getOutput returns an error
-   * (missing retrospectives directory).
-   */
-  @Test
-  public void counterNotResetOnError() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      // No retroDir created — will produce an error output
-
-      GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      String output = handler.getOutput(new String[0]);
-
-      requireThat(output, "output").contains("ERROR:");
-      requireThat(output, "output").contains("Retrospectives directory not found");
-
-      // No index.json was created, so no counter could have been reset
-      Path indexFile = tempDir.resolve(".claude/cat/retrospectives/index.json");
-      boolean indexExists = Files.exists(indexFile);
-      requireThat(indexExists, "indexExists").isFalse();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that concurrent calls to getOutput do not corrupt index.json.
-   * <p>
-   * Two threads trigger the retrospective simultaneously. Both calls must complete without
-   * throwing, and index.json must contain valid JSON with mistake_count_since_last reset to 0.
-   */
-  @Test
-  public void concurrentCallsDoNotCorruptIndex() throws IOException, InterruptedException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try
-    {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
-      Files.createDirectories(retroDir);
-
-      Instant recentRetro = Instant.now().minus(1, ChronoUnit.DAYS);
-      String indexContent = """
-        {
-          "version": "2.0",
-          "config": {
-            "trigger_interval_days": 7,
-            "mistake_count_threshold": 10
-          },
-          "last_retrospective": "%s",
-          "mistake_count_since_last": 15,
-          "files": {
-            "mistakes": [],
-            "retrospectives": []
-          },
-          "patterns": [],
-          "action_items": []
-        }
-        """.formatted(recentRetro);
-
-      Path indexFile = retroDir.resolve("index.json");
-      Files.writeString(indexFile, indexContent);
-
-      Throwable[] errors = new Throwable[2];
-      Thread t1 = new Thread(() ->
-      {
-        try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
-        {
-          new GetRetrospectiveOutput(scope).getOutput(new String[0]);
-        }
-        catch (Throwable e)
-        {
-          errors[0] = e;
-        }
-      });
-      Thread t2 = new Thread(() ->
-      {
-        try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
-        {
-          new GetRetrospectiveOutput(scope).getOutput(new String[0]);
-        }
-        catch (Throwable e)
-        {
-          errors[1] = e;
-        }
-      });
-
-      t1.start();
-      t2.start();
-      t1.join(5000);
-      t2.join(5000);
-
-      requireThat(errors[0], "thread1Error").isNull();
-      requireThat(errors[1], "thread2Error").isNull();
-
-      // index.json must be valid JSON with mistake_count_since_last reset
-      String updatedContent = Files.readString(indexFile);
-      tools.jackson.databind.json.JsonMapper mapper = new tools.jackson.databind.json.JsonMapper();
-      tools.jackson.databind.JsonNode root = mapper.readTree(updatedContent);
-      requireThat(root, "root").isNotNull();
-      tools.jackson.databind.JsonNode countNode = root.get("mistake_count_since_last");
-      requireThat(countNode, "mistake_count_since_last").isNotNull();
-      requireThat(countNode.asInt(), "mistakeCountValue").isEqualTo(0);
+      requireThat(output, "output").contains("P001: 📉 IMPROVING — 5 total, 2 remaining");
+      requireThat(output, "output").doesNotContain("P001: 📉 IMPROVING — 5 total, 2 remaining -");
     }
     finally
     {
