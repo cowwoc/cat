@@ -615,8 +615,8 @@ public final class GetRetrospectiveOutputTest
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").contains("P001: active (occurrences: 5/2) - missed_edge_case");
-      requireThat(output, "output").contains("P003: monitoring (occurrences: 7/1) - flaky_test");
+      requireThat(output, "output").contains("P001: active (5 total, 2 after fix) - missed_edge_case");
+      requireThat(output, "output").contains("P003: monitoring (7 total, 1 after fix) - flaky_test");
       requireThat(output, "output").doesNotContain("P002");
     }
     finally
@@ -1100,7 +1100,7 @@ public final class GetRetrospectiveOutputTest
   }
 
   /**
-   * Verifies that a pattern without occurrences_total or occurrences_after_fix fields shows 0/0.
+   * Verifies that a pattern without occurrences_total or occurrences_after_fix fields shows 0 total, 0 after fix.
    */
   @Test
   public void patternWithMissingOccurrencesDefaultsToZero() throws IOException
@@ -1140,7 +1140,7 @@ public final class GetRetrospectiveOutputTest
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").contains("P001: active (occurrences: 0/0)");
+      requireThat(output, "output").contains("P001: active (0 total, 0 after fix)");
     }
     finally
     {
@@ -1375,7 +1375,7 @@ public final class GetRetrospectiveOutputTest
   }
 
   /**
-   * Verifies that a pattern without a "pattern" field shows only "id: status (occurrences: N/M)" with no dash.
+   * Verifies that a pattern without a "pattern" field shows only "id: status (N total, M after fix)" with no dash.
    */
   @Test
   public void patternWithoutPatternField() throws IOException
@@ -1417,8 +1417,8 @@ public final class GetRetrospectiveOutputTest
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").contains("P001: active (occurrences: 5/2)");
-      requireThat(output, "output").doesNotContain("P001: active (occurrences: 5/2) -");
+      requireThat(output, "output").contains("P001: active (5 total, 2 after fix)");
+      requireThat(output, "output").doesNotContain("P001: active (5 total, 2 after fix) -");
     }
     finally
     {
