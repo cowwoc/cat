@@ -6,6 +6,7 @@ allowed-tools:
   - Bash
   - Read
 user-invocable: false
+argument-hint: "<catAgentId>"
 ---
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" cleanup-agent "$0"`

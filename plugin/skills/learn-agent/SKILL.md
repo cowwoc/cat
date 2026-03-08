@@ -6,6 +6,7 @@ description: >
   Integrates token tracking for context-related failures.
 model: sonnet
 user-invocable: false
+argument-hint: "<catAgentId>"
 ---
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" learn-agent "$0"`
