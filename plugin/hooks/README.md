@@ -139,24 +139,32 @@ plugin-root/
 
 **First invocation** of a skill within a session:
 1. Load skill content from `-first-use/SKILL.md` (with frontmatter and license header stripped)
-2. Substitute built-in variables and expand `@path` references
-3. Process preprocessor directives
+2. Process preprocessor directives (with variable expansion inside directives)
 
 **Subsequent invocations** of the same skill within the same session:
 1. Load `reference.md` instead of content/includes
-2. Substitute built-in variables
 
 Session tracking uses a temp file (`/tmp/cat-skills-loaded-{session-id}`) to record which skills have been loaded.
 
 ### Built-in Variables
 
-Always available in skill content:
-- `${CLAUDE_PLUGIN_ROOT}` - plugin root directory path
-- `${CLAUDE_SESSION_ID}` - current session identifier
-- `${CLAUDE_PROJECT_DIR}` - project directory path
+Inside `!` directive strings, the following variable forms are expanded:
+- `${name}` — resolved via environment variable (`System.getenv(name)`). Includes `CLAUDE_PLUGIN_ROOT`,
+  `CLAUDE_SESSION_ID`, `CLAUDE_PROJECT_DIR` (injected by `InjectEnv.java`), and any other env var.
+- `${CLAUDE_SKILL_DIR}` — resolved by SkillLoader to the skill's directory
+  (`${CLAUDE_PLUGIN_ROOT}/skills/{skill-name}/`)
+- `$0`, `$1`, ..., `$N` — resolved to skill positional arguments
+- `$ARGUMENTS` — all skill arguments joined with a space
+- `$ARGUMENTS[N]` — the Nth skill argument (0-based)
 
-Unknown variables (e.g., `${UNKNOWN}`) are passed through as literal text. This matches Claude Code's native variable
-handling, allowing skills to include variables that will be processed downstream by Claude Code itself.
+Outside directive strings (content body), all variable references are passed through unchanged.
+Claude Code natively expands `${CLAUDE_SESSION_ID}` and `${CLAUDE_SKILL_DIR}` in SKILL.md content.
+Other variables like `${CLAUDE_PLUGIN_ROOT}` are not expanded by Claude Code but are available as
+environment variables — Claude resolves them at runtime when reading files.
+
+**File path resolution:** Claude resolves relative paths in skill content relative to the skill's
+SKILL.md directory. For files outside the skill directory, use `${CLAUDE_PLUGIN_ROOT}`-prefixed
+absolute paths. See `plugin/concepts/skill-loading.md` § "Referencing Files From Skills".
 
 ### Handler Classes
 

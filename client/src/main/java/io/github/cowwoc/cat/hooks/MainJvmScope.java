@@ -6,19 +6,9 @@
  */
 package io.github.cowwoc.cat.hooks;
 
-import io.github.cowwoc.cat.hooks.prompt.UserIssues;
-import io.github.cowwoc.cat.hooks.read.post.DetectSequentialTools;
-import io.github.cowwoc.cat.hooks.read.pre.PredictBatchOpportunity;
-import io.github.cowwoc.cat.hooks.skills.DisplayUtils;
 import io.github.cowwoc.cat.hooks.skills.TerminalType;
 import io.github.cowwoc.pouch10.core.ConcurrentLazyReference;
 
-import io.github.cowwoc.pouch10.core.WrappedCheckedException;
-import tools.jackson.databind.SerializationFeature;
-import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.dataformat.yaml.YAMLMapper;
-
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -31,29 +21,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class MainJvmScope extends AbstractJvmScope
 {
-  private final ConcurrentLazyReference<JsonMapper> jsonMapper = ConcurrentLazyReference.create(() ->
-    JsonMapper.builder().
-      enable(SerializationFeature.INDENT_OUTPUT).
-      build());
-  private final ConcurrentLazyReference<YAMLMapper> yamlMapper = ConcurrentLazyReference.create(() ->
-    YAMLMapper.builder().build());
-  private final ConcurrentLazyReference<DisplayUtils> displayUtils = ConcurrentLazyReference.create(() ->
-  {
-    try
-    {
-      return new DisplayUtils(this);
-    }
-    catch (IOException e)
-    {
-      throw WrappedCheckedException.wrap(e);
-    }
-  });
-  private final ConcurrentLazyReference<DetectSequentialTools> detectSequentialTools =
-    ConcurrentLazyReference.create(() -> new DetectSequentialTools(this));
-  private final ConcurrentLazyReference<PredictBatchOpportunity> predictBatchOpportunity =
-    ConcurrentLazyReference.create(() -> new PredictBatchOpportunity(this));
-  private final ConcurrentLazyReference<UserIssues> userIssues =
-    ConcurrentLazyReference.create(() -> new UserIssues(this));
   private final ConcurrentLazyReference<Path> claudeProjectDir = ConcurrentLazyReference.create(() ->
   {
     String projectDir = System.getenv("CLAUDE_PROJECT_DIR");
@@ -108,13 +75,6 @@ public final class MainJvmScope extends AbstractJvmScope
   }
 
   @Override
-  public DisplayUtils getDisplayUtils()
-  {
-    ensureOpen();
-    return displayUtils.getValue();
-  }
-
-  @Override
   public Path getClaudeProjectDir()
   {
     ensureOpen();
@@ -157,45 +117,17 @@ public final class MainJvmScope extends AbstractJvmScope
   }
 
   @Override
-  public JsonMapper getJsonMapper()
-  {
-    ensureOpen();
-    return jsonMapper.getValue();
-  }
-
-  @Override
-  public YAMLMapper getYamlMapper()
-  {
-    ensureOpen();
-    return yamlMapper.getValue();
-  }
-
-  @Override
-  public DetectSequentialTools getDetectSequentialTools()
-  {
-    ensureOpen();
-    return detectSequentialTools.getValue();
-  }
-
-  @Override
-  public PredictBatchOpportunity getPredictBatchOpportunity()
-  {
-    ensureOpen();
-    return predictBatchOpportunity.getValue();
-  }
-
-  @Override
-  public UserIssues getUserIssues()
-  {
-    ensureOpen();
-    return userIssues.getValue();
-  }
-
-  @Override
   public String getTimezone()
   {
     ensureOpen();
     return tz.getValue();
+  }
+
+  @Override
+  public String getEnvironmentVariable(String name)
+  {
+    ensureOpen();
+    return System.getenv(name);
   }
 
   @Override

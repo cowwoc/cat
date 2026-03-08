@@ -3,10 +3,6 @@ Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
-@templates/project.md
-@templates/roadmap.md
-@templates/cat-config.json
-
 # Initialize CAT
 
 Initialize CAT planning structure for new or existing projects.
@@ -14,6 +10,11 @@ Initialize CAT planning structure for new or existing projects.
 <objective>
 Initialize CAT planning structure. Creates `.claude/cat/` with PROJECT.md, ROADMAP.md, cat-config.json,
 `.claude/rules/` for universal rules, and `.claude/cat/rules/` for audience-filtered standards.
+
+**Reference files** — read on demand as needed:
+- See `${CLAUDE_PLUGIN_ROOT}/templates/project.md` for the PROJECT.md template.
+- See `${CLAUDE_PLUGIN_ROOT}/templates/roadmap.md` for the ROADMAP.md template.
+- See `${CLAUDE_PLUGIN_ROOT}/templates/config.json` for the cat-config.json template.
 </objective>
 
 

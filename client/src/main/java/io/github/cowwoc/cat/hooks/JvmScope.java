@@ -191,6 +191,19 @@ public interface JvmScope extends AutoCloseable
   UserIssues getUserIssues();
 
   /**
+   * Returns the value of an environment variable by name.
+   * <p>
+   * Returns {@code null} if the variable is not set. Used by {@code SkillLoader} to resolve
+   * {@code ${name}} references inside directive strings via the scope abstraction.
+   *
+   * @param name the environment variable name
+   * @return the value, or {@code null} if not set
+   * @throws NullPointerException if {@code name} is null
+   * @throws IllegalStateException if this scope is closed
+   */
+  String getEnvironmentVariable(String name);
+
+  /**
    * Indicates whether this scope has been closed.
    *
    * @return {@code true} if this scope has been closed

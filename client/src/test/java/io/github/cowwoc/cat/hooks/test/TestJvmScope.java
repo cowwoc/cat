@@ -9,20 +9,13 @@ package io.github.cowwoc.cat.hooks.test;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.AbstractJvmScope;
-import io.github.cowwoc.cat.hooks.prompt.UserIssues;
-import io.github.cowwoc.cat.hooks.read.post.DetectSequentialTools;
-import io.github.cowwoc.cat.hooks.read.pre.PredictBatchOpportunity;
-import io.github.cowwoc.cat.hooks.skills.DisplayUtils;
 import io.github.cowwoc.cat.hooks.skills.TerminalType;
-import io.github.cowwoc.pouch10.core.ConcurrentLazyReference;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
-import tools.jackson.databind.SerializationFeature;
-import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -33,29 +26,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class TestJvmScope extends AbstractJvmScope
 {
-  private final ConcurrentLazyReference<JsonMapper> jsonMapper = ConcurrentLazyReference.create(() ->
-    JsonMapper.builder().
-      enable(SerializationFeature.INDENT_OUTPUT).
-      build());
-  private final ConcurrentLazyReference<YAMLMapper> yamlMapper = ConcurrentLazyReference.create(() ->
-    YAMLMapper.builder().build());
-  private final ConcurrentLazyReference<DisplayUtils> displayUtils = ConcurrentLazyReference.create(() ->
-  {
-    try
-    {
-      return new DisplayUtils(this);
-    }
-    catch (IOException e)
-    {
-      throw WrappedCheckedException.wrap(e);
-    }
-  });
-  private final ConcurrentLazyReference<DetectSequentialTools> detectSequentialTools =
-    ConcurrentLazyReference.create(() -> new DetectSequentialTools(this));
-  private final ConcurrentLazyReference<PredictBatchOpportunity> predictBatchOpportunity =
-    ConcurrentLazyReference.create(() -> new PredictBatchOpportunity(this));
-  private final ConcurrentLazyReference<UserIssues> userIssues =
-    ConcurrentLazyReference.create(() -> new UserIssues(this));
   private final Path claudeProjectDir;
   private final Path claudePluginRoot;
   private final Path claudeConfigDir;
@@ -63,6 +33,7 @@ public final class TestJvmScope extends AbstractJvmScope
   private final Path claudeEnvFile;
   private final TerminalType terminalType;
   private final AtomicBoolean closed = new AtomicBoolean();
+  private final Map<String, String> envVars;
 
   /**
    * Creates a new test JVM scope with auto-generated temporary directories.
@@ -77,6 +48,7 @@ public final class TestJvmScope extends AbstractJvmScope
       this.claudeSessionId = "test-session";
       this.claudeEnvFile = Files.createTempFile("test-env", ".sh");
       this.terminalType = TerminalType.WINDOWS_TERMINAL;
+      this.envVars = Map.of();
 
       // Copy emoji-widths.json from plugin directory to temporary plugin root
       copyEmojiWidthsIfNeeded(claudePluginRoot);
@@ -102,10 +74,42 @@ public final class TestJvmScope extends AbstractJvmScope
     this.claudePluginRoot = claudePluginRoot;
     this.claudeConfigDir = claudeProjectDir;
     this.claudeSessionId = "test-session";
+    this.envVars = Map.of();
     try
     {
       this.claudeEnvFile = Files.createTempFile("test-env", ".sh");
       // Copy emoji-widths.json to the plugin root if it's a temporary directory
+      copyEmojiWidthsIfNeeded(claudePluginRoot);
+    }
+    catch (IOException e)
+    {
+      throw WrappedCheckedException.wrap(e);
+    }
+    this.terminalType = TerminalType.WINDOWS_TERMINAL;
+  }
+
+  /**
+   * Creates a new test JVM scope with injectable environment variables.
+   *
+   * @param claudeProjectDir the project directory path
+   * @param claudePluginRoot the plugin root directory path
+   * @param envVars the environment variables to expose via {@link #getEnvironmentVariable(String)}
+   * @throws NullPointerException if {@code claudeProjectDir}, {@code claudePluginRoot},
+   *   or {@code envVars} are null
+   */
+  public TestJvmScope(Path claudeProjectDir, Path claudePluginRoot, Map<String, String> envVars)
+  {
+    requireThat(claudeProjectDir, "claudeProjectDir").isNotNull();
+    requireThat(claudePluginRoot, "claudePluginRoot").isNotNull();
+    requireThat(envVars, "envVars").isNotNull();
+    this.claudeProjectDir = claudeProjectDir;
+    this.claudePluginRoot = claudePluginRoot;
+    this.claudeConfigDir = claudeProjectDir;
+    this.claudeSessionId = "test-session";
+    this.envVars = Map.copyOf(envVars);
+    try
+    {
+      this.claudeEnvFile = Files.createTempFile("test-env", ".sh");
       copyEmojiWidthsIfNeeded(claudePluginRoot);
     }
     catch (IOException e)
@@ -140,27 +144,7 @@ public final class TestJvmScope extends AbstractJvmScope
     this.claudeSessionId = claudeSessionId;
     this.claudeEnvFile = claudeEnvFile;
     this.terminalType = terminalType;
-  }
-
-  @Override
-  public JsonMapper getJsonMapper()
-  {
-    ensureOpen();
-    return jsonMapper.getValue();
-  }
-
-  @Override
-  public YAMLMapper getYamlMapper()
-  {
-    ensureOpen();
-    return yamlMapper.getValue();
-  }
-
-  @Override
-  public DisplayUtils getDisplayUtils()
-  {
-    ensureOpen();
-    return displayUtils.getValue();
+    this.envVars = Map.of();
   }
 
   @Override
@@ -206,31 +190,17 @@ public final class TestJvmScope extends AbstractJvmScope
   }
 
   @Override
-  public DetectSequentialTools getDetectSequentialTools()
-  {
-    ensureOpen();
-    return detectSequentialTools.getValue();
-  }
-
-  @Override
-  public PredictBatchOpportunity getPredictBatchOpportunity()
-  {
-    ensureOpen();
-    return predictBatchOpportunity.getValue();
-  }
-
-  @Override
-  public UserIssues getUserIssues()
-  {
-    ensureOpen();
-    return userIssues.getValue();
-  }
-
-  @Override
   public String getTimezone()
   {
     ensureOpen();
     return "UTC";
+  }
+
+  @Override
+  public String getEnvironmentVariable(String name)
+  {
+    ensureOpen();
+    return envVars.get(name);
   }
 
   @Override

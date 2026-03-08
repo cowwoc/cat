@@ -3,16 +3,6 @@ Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
-@templates/issue-state.md
-@templates/issue-plan.md
-@templates/major-state.md
-@templates/major-plan.md
-@templates/minor-state.md
-@templates/minor-plan.md
-@templates/changelog.md
-@concepts/questioning.md
-@concepts/version-paths.md
-
 # Add Issue or Version
 
 Unified command for adding issues or versions to the CAT planning structure.
@@ -27,6 +17,15 @@ treats the argument as a issue description and skips directly to issue creation 
 
 **Efficiency:** Independent questions are batched into single AskUserQuestion calls (up to 4 questions per call)
 to minimize wizard interactions and reduce user friction.
+
+**Reference files** — read on demand as needed:
+- See `${CLAUDE_PLUGIN_ROOT}/templates/issue-state.md` for the issue STATE.md template.
+- See `${CLAUDE_PLUGIN_ROOT}/templates/issue-plan.md` for issue PLAN.md templates.
+- See `${CLAUDE_PLUGIN_ROOT}/templates/major-state.md` and `${CLAUDE_PLUGIN_ROOT}/templates/major-plan.md` for major version templates.
+- See `${CLAUDE_PLUGIN_ROOT}/templates/minor-state.md` and `${CLAUDE_PLUGIN_ROOT}/templates/minor-plan.md` for minor version templates.
+- See `${CLAUDE_PLUGIN_ROOT}/templates/changelog.md` for the CHANGELOG.md template.
+- See `${CLAUDE_PLUGIN_ROOT}/concepts/questioning.md` for smart questioning guidance.
+- See `${CLAUDE_PLUGIN_ROOT}/concepts/version-paths.md` for version path conventions.
 
 </objective>
 
