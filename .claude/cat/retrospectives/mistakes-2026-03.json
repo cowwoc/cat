@@ -1370,5 +1370,25 @@
     "prevention_verified" : false,
     "recurrence_of" : null,
     "correct_behavior" : ""
+  }, {
+    "id" : "M514",
+    "timestamp" : "2026-03-08T15:28:17Z",
+    "category" : "protocol_violation",
+    "description" : "",
+    "root_cause" : "merge-phase work-squash skill documentation describes rebase as a procedural step rather than as a mandatory delegation to git-rebase-agent skill, allowing subagent to interpret rebasing as a task to perform directly via bash commands",
+    "rca_method" : "B",
+    "rca_method_name" : "taxonomy",
+    "prevention_type" : "skill",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }
