@@ -42,6 +42,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - remove-toolsearch-preload
 - fix-skill-loader-arg-quoting
 - prevent-ephemeral-analysis-file-commits
+- add-time-usage-to-optimize-report
 
 
 ## Issues Closed
