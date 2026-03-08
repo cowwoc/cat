@@ -34,6 +34,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-issue-path-worktree-resolution
 - fix-branch-verification-in-worktree-isolated-delegation-prompts
 - fix-work-squash-step5-status-priming
+- add-subagent-result-processing-hook
 
 
 ## Issues Closed
