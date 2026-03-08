@@ -95,6 +95,23 @@ git rebase "origin/$TARGET_BRANCH"
 **Cause**: Target branch detection failed (worktree metadata missing)
 **Solution**: Pass `--target <branch>` explicitly to the git-merge-linear command
 
+### Issue 4: `git rebase --dry-run` does not exist
+**Cause**: `git rebase` has no `--dry-run` flag. Agents sometimes attempt `git rebase --dry-run` by analogy with
+commands like `git fetch --dry-run`, but git returns `error: unknown option 'dry-run'`.
+
+**Solution**: There is no way to probe for rebase conflicts without attempting the actual rebase. The correct approach
+is to attempt the rebase directly:
+
+```bash
+git rebase "$TARGET_BRANCH"
+```
+
+- If the rebase succeeds cleanly, continue as normal.
+- If conflicts arise, resolve each conflicted file, stage the resolutions with `git add`, then run
+  `git rebase --continue` to proceed.
+- If the conflicts cannot be resolved, abort the rebase and restore the original state with
+  `git rebase --abort`.
+
 ## Success Criteria
 
 - [ ] Target branch points to source commit
