@@ -20,10 +20,13 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- * Abstract base class providing default implementations of derived path methods for {@link JvmScope}.
+ * Abstract base class providing default implementations of derived path methods and shared
+ * lazy-initialized service instances for {@link JvmScope}.
  * <p>
  * Subclasses must implement the abstract methods declared in {@link JvmScope} to supply the base
  * configuration values from which these derived paths are computed.
+ * <p>
+ * <b>Thread Safety:</b> This class is thread-safe.
  */
 public abstract class AbstractJvmScope implements JvmScope
 {

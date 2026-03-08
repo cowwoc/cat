@@ -18,6 +18,8 @@ import java.nio.file.Path;
 
 /**
  * JVM-wide scope providing lazy-loaded singletons and environment configuration.
+ * <p>
+ * <b>Thread Safety:</b> Implementations are thread-safe.
  */
 public interface JvmScope extends AutoCloseable
 {
