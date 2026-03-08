@@ -1294,5 +1294,25 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M510",
+    "timestamp" : "2026-03-08T04:08:46Z",
+    "category" : "environment_state_mismatch",
+    "description" : "",
+    "root_cause" : "work-prepare determines the target branch by reading the current branch from the main workspace using git, with no validation that this branch is the EXPECTED release branch.",
+    "rca_method" : "C",
+    "rca_method_name" : "causal-barrier",
+    "prevention_type" : "code_fix",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }
