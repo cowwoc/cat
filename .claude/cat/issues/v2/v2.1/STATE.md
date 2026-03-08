@@ -43,6 +43,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-skill-loader-arg-quoting
 - prevent-ephemeral-analysis-file-commits
 - add-time-usage-to-optimize-report
+- fix-retro-counter-reset
 
 
 ## Issues Closed
