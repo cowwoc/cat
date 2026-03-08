@@ -448,6 +448,23 @@ argument-hint: "<count> <label>"
 When invoked with args `"5 done"`, SkillLoader resolves `$0` → `5` and `$1` → `done`
 before running the preprocessor directive.
 
+**catAgentId requirement**: If `user-invocable: false` AND the preprocessor directive uses
+`skill-loader` (with `$ARGUMENTS` or fixed `$N` positional refs), then `argument-hint` MUST
+start with `<catAgentId>`. Omitting it causes runtime failures:
+`catAgentId '<first-arg>' does not match a valid format`.
+
+- [ ] If `user-invocable: false` and skill uses `skill-loader "$ARGUMENTS"`: argument-hint
+      starts with `<catAgentId>`
+- [ ] If `user-invocable: false` and skill uses `skill-loader` with fixed `$N` refs (e.g.,
+      `!skill-loader <name> "$0" "$1"`): argument-hint starts with `<catAgentId>`
+
+**Positional argument completeness**: If the preprocessor directive references `$0`...`$N`,
+`argument-hint` MUST document ALL positional args (including `$0`). Every `$N` reference
+must have a corresponding token in `argument-hint`.
+
+- [ ] Count of tokens in argument-hint matches the highest `$N` reference + 1
+- [ ] Each positional arg has a descriptive name (e.g., `<catAgentId>`, `<issue-path>`)
+
 ### Step 8: Validate with Test Prompts
 
 After the skill is written, generate test prompts to verify that the description routes correctly.
@@ -1993,6 +2010,13 @@ Step 1: Display status
 - [ ] **Encapsulation verified**: Orchestrator cannot perform issue after reading doc
 - [ ] **Delegation-safe**: No expected scores in acceptance criteria
 - [ ] **Formatting details in preprocessing scripts**, not skill doc
+
+### argument-hint Correctness
+
+- [ ] If `user-invocable: false` and skill uses `skill-loader` (with `$ARGUMENTS` or fixed `$N`
+      refs): argument-hint starts with `<catAgentId>` (Check A)
+- [ ] Count of tokens in argument-hint matches the highest `$N` reference + 1; each positional
+      arg has a descriptive name (Check B)
 
 ### Subagent Skill Preloading
 
