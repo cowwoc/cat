@@ -74,9 +74,35 @@ Skills using `skill-loader` conventionally pass catAgentId as the first argument
   - Update STATE.md: status=closed, progress=100%
   - Commit: `feature: add catAgentId and positional arg-hint checks to skill-builder`
 
+### Wave 2 (E2E static validation)
+
+Although `/cat:empirical-test` can run E2E tests on skills, this issue uses static validation
+to verify the checks are documented. Static validation provides immediate, deterministic verification
+of documentation completeness without runtime overhead, and ensures the checks appear in the exact
+form that skill reviewers will search for. Verify that `first-use.md` contains the exact text
+patterns that an AI reviewer would match when flagging violations.
+
+- **Static check A** — verify Check A text exists in `first-use.md`:
+  ```bash
+  grep -q 'catAgentId' plugin/skills/skill-builder-agent/first-use.md
+  grep -q 'skill-loader.*\$ARGUMENTS' plugin/skills/skill-builder-agent/first-use.md
+  ```
+  Both greps must succeed (exit 0), confirming the `$ARGUMENTS`/catAgentId check is documented.
+
+- **Static check B** — verify Check B text exists in `first-use.md`:
+  ```bash
+  grep -q 'argument-hint' plugin/skills/skill-builder-agent/first-use.md
+  grep -qE '\$[0-9]|\$N' plugin/skills/skill-builder-agent/first-use.md
+  ```
+  Both greps must succeed (exit 0), confirming the positional-arg completeness check is documented.
+
+- Commit: `planning: add fix items for missing criteria (iteration 1)`
+
 ## Post-conditions
 
 - [ ] skill-builder documents Check A: catAgentId required in argument-hint for `$ARGUMENTS` skills
 - [ ] skill-builder documents Check B: all `$0`...`$N` args documented in argument-hint
-- [ ] E2E: Invoke skill-builder review on a `$ARGUMENTS` skill missing `<catAgentId>` — flagged
-- [ ] E2E: Invoke skill-builder review on a `$N` skill with incomplete argument-hint — flagged
+- [ ] Static check: first-use.md documents Check A requirement — catAgentId in argument-hint for
+      `skill-loader` skills (both `$ARGUMENTS` and fixed `$N` forms)
+- [ ] Static check: first-use.md documents Check B requirement — all `$0`...`$N` positional args
+      documented in argument-hint
