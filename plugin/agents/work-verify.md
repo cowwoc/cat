@@ -59,6 +59,10 @@ Status values:
 
 ## Key Constraints
 
+- **Path construction:** For all Read/Edit/Write file operations, construct paths as `${WORKTREE_PATH}/relative/path`.
+  Never use `/workspace` paths — the `EnforceWorktreePathIsolation` hook will block them.
+  Example: to read `plugin/agents/work-verify.md`, use `${WORKTREE_PATH}/plugin/agents/work-verify.md`, not
+  `/workspace/plugin/agents/work-verify.md`.
 - **Chain independent Bash commands**: Combine independent commands (e.g., `git status`, `git log`,
   `git diff --stat`, `ls`) with `&&` in a single Bash call instead of issuing separate tool calls.
   This reduces round-trips. Only chain commands that can run independently — do NOT chain commands

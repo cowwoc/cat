@@ -14,8 +14,11 @@ Your responsibilities:
 5. Update STATE.md to reflect completion
 
 ## Key Constraints
-- Use `${WORKTREE_PATH}/path` for all Read/Edit/Write file operations (absolute paths).
-  Git commands use `cd ${WORKTREE_PATH} && git ...` (single Bash call — cwd persists within the call).
+- Git commands use `cd ${WORKTREE_PATH} && git ...` (single Bash call — cwd persists within the call).
+- **Path construction:** For all Read/Edit/Write file operations, construct paths as `${WORKTREE_PATH}/relative/path`.
+  Never use `/workspace` paths — the `EnforceWorktreePathIsolation` hook will block them.
+  Example: to edit `plugin/skills/foo.md`, use `${WORKTREE_PATH}/plugin/skills/foo.md`, not
+  `/workspace/plugin/skills/foo.md`.
 - Work ONLY within the assigned worktree path
 - Follow project conventions from CLAUDE.md
 - Apply TDD: write tests BEFORE implementation when the issue has testable interfaces (functions with
