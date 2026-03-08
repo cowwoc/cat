@@ -1314,5 +1314,25 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M511",
+    "timestamp" : "2026-03-08T04:16:37Z",
+    "category" : "anti_fabrication_failure",
+    "description" : "",
+    "root_cause" : "Prevent phase accepts subagent's self-report in files_modified array without external verification.",
+    "rca_method" : "C",
+    "rca_method_name" : "causal-barrier",
+    "prevention_type" : "skill",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "medium",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }
