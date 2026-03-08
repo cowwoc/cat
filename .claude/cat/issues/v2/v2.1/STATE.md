@@ -41,6 +41,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - add-bash-chaining-convention
 - remove-toolsearch-preload
 - fix-skill-loader-arg-quoting
+- prevent-ephemeral-analysis-file-commits
 
 
 ## Issues Closed
