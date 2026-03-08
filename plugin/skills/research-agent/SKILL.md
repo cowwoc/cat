@@ -13,4 +13,4 @@ allowed-tools:
 user-invocable: false
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" research-agent $ARGUMENTS`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" research-agent "$ARGUMENTS"`
