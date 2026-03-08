@@ -1274,5 +1274,25 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M509",
+    "timestamp" : "2026-03-08T04:06:59Z",
+    "category" : "logical_error",
+    "description" : "",
+    "root_cause" : "The skill-loading.md argument-hint documentation described it as a display-only hint without explicitly stating it documents the SKILL.md preprocessor command arguments.",
+    "rca_method" : "C",
+    "rca_method_name" : "causal-barrier",
+    "prevention_type" : "skill",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }
