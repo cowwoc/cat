@@ -90,7 +90,7 @@ public final class ShellParser
       current.append(c);
     }
 
-    if (current.length() > 0)
+    if (!current.isEmpty())
       tokens.add(current.toString());
 
     return tokens;
