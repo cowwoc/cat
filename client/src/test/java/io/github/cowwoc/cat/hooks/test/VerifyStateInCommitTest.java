@@ -130,10 +130,10 @@ public final class VerifyStateInCommitTest
   }
 
   /**
-   * Verifies that a warning is issued when STATE.md is staged but does not contain "completed" status.
+   * Verifies that a warning is issued when STATE.md is staged but does not contain "closed" status.
    */
   @Test
-  public void warnsWhenStateMdNotCompleted() throws IOException
+  public void warnsWhenStateMdNotClosed() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
@@ -144,10 +144,10 @@ public final class VerifyStateInCommitTest
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-new-feature");
       try
       {
-        // Create and stage STATE.md with "in-progress" status
+        // Create and stage STATE.md with "open" status (not "closed")
         Path issueDir = worktreeDir.resolve(".claude").resolve("cat").resolve("issues").resolve("test-issue");
         Files.createDirectories(issueDir);
-        Files.writeString(issueDir.resolve("STATE.md"), "status: in-progress\n");
+        Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** open\n");
         TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());
 
         // Also stage a source file
@@ -160,7 +160,52 @@ public final class VerifyStateInCommitTest
           TestUtils.bashInput("git commit -m \"feature: add new feature\"", worktreeDir.toString(), "test-session"));
 
         requireThat(result.blocked(), "blocked").isFalse();
-        requireThat(result.reason(), "reason").contains("does not contain 'completed'");
+        requireThat(result.reason(), "reason").contains("closed");
+      }
+      finally
+      {
+        TestUtils.runGit(mainRepo, "worktree", "remove", "--force", worktreeDir.toString());
+        TestUtils.deleteDirectoryRecursively(worktreeDir);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+    }
+  }
+
+  /**
+   * Verifies that no warning is issued when STATE.md is staged with "closed" status.
+   */
+  @Test
+  public void noWarnWhenStateMdIsClosed() throws IOException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("v2.1");
+    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    {
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+
+      Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-closed-feature");
+      try
+      {
+        // Create and stage STATE.md with "closed" status
+        Path issueDir = worktreeDir.resolve(".claude").resolve("cat").resolve("issues").resolve("test-issue");
+        Files.createDirectories(issueDir);
+        Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** closed\n");
+        TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());
+
+        // Also stage a source file
+        Files.writeString(worktreeDir.resolve("Foo.java"), "class Foo {}");
+        TestUtils.runGit(worktreeDir, "add", "Foo.java");
+
+        VerifyStateInCommit handler = new VerifyStateInCommit();
+
+        BashHandler.Result result = handler.check(
+          TestUtils.bashInput("git commit -m \"feature: add new feature\"", worktreeDir.toString(), "test-session"));
+
+        requireThat(result.blocked(), "blocked").isFalse();
+        requireThat(result.reason(), "reason").isEmpty();
       }
       finally
       {
@@ -344,5 +389,346 @@ public final class VerifyStateInCommitTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+  }
+
+  /**
+   * Verifies that when STATE.md is staged but empty, validation is silently skipped and commit is allowed.
+   */
+  @Test
+  public void allowsWhenStateMdIsEmpty() throws IOException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("v2.1");
+    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    {
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+
+      Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-empty-state");
+      try
+      {
+        // Stage an empty STATE.md — validation should be skipped (empty content guard)
+        Path issueDir = worktreeDir.resolve(".claude").resolve("cat").resolve("issues").resolve("test-issue");
+        Files.createDirectories(issueDir);
+        Files.writeString(issueDir.resolve("STATE.md"), "");
+        TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());
+
+        // Also stage a source file
+        Files.writeString(worktreeDir.resolve("Foo.java"), "class Foo {}");
+        TestUtils.runGit(worktreeDir, "add", "Foo.java");
+
+        VerifyStateInCommit handler = new VerifyStateInCommit();
+
+        BashHandler.Result result = handler.check(
+          TestUtils.bashInput("git commit -m \"feature: add feature\"", worktreeDir.toString(), "test-session"));
+
+        requireThat(result.blocked(), "blocked").isFalse();
+        requireThat(result.reason(), "reason").isEmpty();
+      }
+      finally
+      {
+        TestUtils.runGit(mainRepo, "worktree", "remove", "--force", worktreeDir.toString());
+        TestUtils.deleteDirectoryRecursively(worktreeDir);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+    }
+  }
+
+  /**
+   * Verifies that when STATE.md has a malformed status format (e.g., "Status: closed" instead of
+   * "- **Status:** closed"), a warning is issued because the STATUS_PATTERN does not match,
+   * causing isClosed to be false.
+   */
+  @Test
+  public void warnsWhenStateMdHasMalformedFormat() throws IOException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("v2.1");
+    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    {
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+
+      Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-malformed-state");
+      try
+      {
+        // Stage STATE.md with malformed format — STATUS_PATTERN won't match, so validation is skipped
+        Path issueDir = worktreeDir.resolve(".claude").resolve("cat").resolve("issues").resolve("test-issue");
+        Files.createDirectories(issueDir);
+        Files.writeString(issueDir.resolve("STATE.md"), "Status: closed\n");
+        TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());
+
+        // Also stage a source file
+        Files.writeString(worktreeDir.resolve("Foo.java"), "class Foo {}");
+        TestUtils.runGit(worktreeDir, "add", "Foo.java");
+
+        VerifyStateInCommit handler = new VerifyStateInCommit();
+
+        BashHandler.Result result = handler.check(
+          TestUtils.bashInput("git commit -m \"feature: add feature\"", worktreeDir.toString(), "test-session"));
+
+        // Malformed format: pattern doesn't match, isClosed=false, so a warning is issued
+        requireThat(result.blocked(), "blocked").isFalse();
+        requireThat(result.reason(), "reason").contains("closed");
+      }
+      finally
+      {
+        TestUtils.runGit(mainRepo, "worktree", "remove", "--force", worktreeDir.toString());
+        TestUtils.deleteDirectoryRecursively(worktreeDir);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+    }
+  }
+
+  /**
+   * Verifies that when STATE.md has an empty status value (e.g., "- **Status:** \n"), a warning is issued
+   * because the empty string is not IssueStatus.CLOSED, causing isClosed to be false.
+   */
+  @Test
+  public void warnsWhenStateMdHasEmptyStatusValue() throws IOException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("v2.1");
+    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    {
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+
+      Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-empty-status-value");
+      try
+      {
+        // Stage STATE.md with an empty status value — empty string is not IssueStatus.CLOSED
+        Path issueDir = worktreeDir.resolve(".claude").resolve("cat").resolve("issues").resolve("test-issue");
+        Files.createDirectories(issueDir);
+        Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** \n");
+        TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());
+
+        // Also stage a source file
+        Files.writeString(worktreeDir.resolve("Foo.java"), "class Foo {}");
+        TestUtils.runGit(worktreeDir, "add", "Foo.java");
+
+        VerifyStateInCommit handler = new VerifyStateInCommit();
+
+        BashHandler.Result result = handler.check(
+          TestUtils.bashInput("git commit -m \"feature: add feature\"", worktreeDir.toString(), "test-session"));
+
+        // Empty string is not IssueStatus.CLOSED, so a warning is expected
+        requireThat(result.blocked(), "blocked").isFalse();
+        requireThat(result.reason(), "reason").contains("closed");
+      }
+      finally
+      {
+        TestUtils.runGit(mainRepo, "worktree", "remove", "--force", worktreeDir.toString());
+        TestUtils.deleteDirectoryRecursively(worktreeDir);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+    }
+  }
+
+  /**
+   * Verifies that a warning is issued when STATE.md has the Status key but no value at all
+   * (e.g., "- **Status:**\n" with no trailing space and no value), so the STATUS_PATTERN
+   * {@code (.+)$} fails to match because there is no character after the colon.
+   */
+  @Test
+  public void warnsWhenStateMdHasStatusKeyWithNoValue() throws IOException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("v2.1");
+    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    {
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+
+      Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-no-value-status");
+      try
+      {
+        // Stage STATE.md with status key but truly no value — pattern requires (.+) so no match occurs
+        Path issueDir = worktreeDir.resolve(".claude").resolve("cat").resolve("issues").resolve("test-issue");
+        Files.createDirectories(issueDir);
+        Files.writeString(issueDir.resolve("STATE.md"), "- **Status:**\n");
+        TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());
+
+        // Also stage a source file
+        Files.writeString(worktreeDir.resolve("Foo.java"), "class Foo {}");
+        TestUtils.runGit(worktreeDir, "add", "Foo.java");
+
+        VerifyStateInCommit handler = new VerifyStateInCommit();
+
+        BashHandler.Result result = handler.check(
+          TestUtils.bashInput("git commit -m \"feature: add feature\"", worktreeDir.toString(), "test-session"));
+
+        // Pattern fails to match (no value after colon), isClosed=false, so a warning is expected
+        requireThat(result.blocked(), "blocked").isFalse();
+        requireThat(result.reason(), "reason").contains("closed");
+      }
+      finally
+      {
+        TestUtils.runGit(mainRepo, "worktree", "remove", "--force", worktreeDir.toString());
+        TestUtils.deleteDirectoryRecursively(worktreeDir);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+    }
+  }
+
+  /**
+   * Verifies that when STATE.md has a valid format but an unrecognized status value, a warning is issued.
+   */
+  @Test
+  public void warnsWhenStateMdHasInvalidStatus() throws IOException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("v2.1");
+    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    {
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+
+      Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-invalid-status");
+      try
+      {
+        // Stage STATE.md with valid format but an invalid/unknown status value
+        Path issueDir = worktreeDir.resolve(".claude").resolve("cat").resolve("issues").resolve("test-issue");
+        Files.createDirectories(issueDir);
+        Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** unknown\n");
+        TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());
+
+        // Also stage a source file
+        Files.writeString(worktreeDir.resolve("Foo.java"), "class Foo {}");
+        TestUtils.runGit(worktreeDir, "add", "Foo.java");
+
+        VerifyStateInCommit handler = new VerifyStateInCommit();
+
+        BashHandler.Result result = handler.check(
+          TestUtils.bashInput("git commit -m \"feature: add feature\"", worktreeDir.toString(), "test-session"));
+
+        // "unknown" is not IssueStatus.CLOSED, so warning is expected
+        requireThat(result.blocked(), "blocked").isFalse();
+        requireThat(result.reason(), "reason").contains("closed");
+      }
+      finally
+      {
+        TestUtils.runGit(mainRepo, "worktree", "remove", "--force", worktreeDir.toString());
+        TestUtils.deleteDirectoryRecursively(worktreeDir);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+    }
+  }
+
+  /**
+   * Verifies that a warning is issued when STATE.md has "in-progress" status (not closed).
+   */
+  @Test
+  public void warnsWhenStateMdHasInProgressStatus() throws IOException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("v2.1");
+    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    {
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+
+      Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-in-progress-status");
+      try
+      {
+        Path issueDir = worktreeDir.resolve(".claude").resolve("cat").resolve("issues").resolve("test-issue");
+        Files.createDirectories(issueDir);
+        Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** in-progress\n");
+        TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());
+
+        Files.writeString(worktreeDir.resolve("Foo.java"), "class Foo {}");
+        TestUtils.runGit(worktreeDir, "add", "Foo.java");
+
+        VerifyStateInCommit handler = new VerifyStateInCommit();
+
+        BashHandler.Result result = handler.check(
+          TestUtils.bashInput("git commit -m \"feature: add feature\"", worktreeDir.toString(), "test-session"));
+
+        requireThat(result.blocked(), "blocked").isFalse();
+        requireThat(result.reason(), "reason").contains("closed");
+      }
+      finally
+      {
+        TestUtils.runGit(mainRepo, "worktree", "remove", "--force", worktreeDir.toString());
+        TestUtils.deleteDirectoryRecursively(worktreeDir);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+    }
+  }
+
+  /**
+   * Verifies that a warning is issued when STATE.md has "blocked" status (not closed).
+   */
+  @Test
+  public void warnsWhenStateMdHasBlockedStatus() throws IOException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("v2.1");
+    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    {
+      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+
+      Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-blocked-status");
+      try
+      {
+        Path issueDir = worktreeDir.resolve(".claude").resolve("cat").resolve("issues").resolve("test-issue");
+        Files.createDirectories(issueDir);
+        Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** blocked\n");
+        TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());
+
+        Files.writeString(worktreeDir.resolve("Foo.java"), "class Foo {}");
+        TestUtils.runGit(worktreeDir, "add", "Foo.java");
+
+        VerifyStateInCommit handler = new VerifyStateInCommit();
+
+        BashHandler.Result result = handler.check(
+          TestUtils.bashInput("git commit -m \"feature: add feature\"", worktreeDir.toString(), "test-session"));
+
+        requireThat(result.blocked(), "blocked").isFalse();
+        requireThat(result.reason(), "reason").contains("closed");
+      }
+      finally
+      {
+        TestUtils.runGit(mainRepo, "worktree", "remove", "--force", worktreeDir.toString());
+        TestUtils.deleteDirectoryRecursively(worktreeDir);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+    }
+  }
+
+  /**
+   * Verifies that when git commands fail (IOException), the hook silently allows the commit.
+   * This tests the IOException catch block in the check() method (lines handling git failures).
+   */
+  @Test
+  public void allowsWhenGitCommandFails() throws IOException
+  {
+    // Use a non-existent directory to simulate a git command failure (git rev-parse will fail)
+    // The isInCatWorktree() method catches IOException and returns false → Result.allow()
+    Path nonExistentDir = Path.of("/tmp/non-existent-directory-" + System.nanoTime());
+
+    VerifyStateInCommit handler = new VerifyStateInCommit();
+
+    BashHandler.Result result = handler.check(
+      TestUtils.bashInput("git commit -m \"bugfix: fix something\"", nonExistentDir.toString(), "test-session"));
+
+    // When git command fails, isInCatWorktree() returns false → allow
+    requireThat(result.blocked(), "blocked").isFalse();
+    requireThat(result.reason(), "reason").isEmpty();
   }
 }
