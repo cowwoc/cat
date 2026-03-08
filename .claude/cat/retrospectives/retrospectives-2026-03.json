@@ -2,6 +2,29 @@
   "period": "2026-03",
   "retrospectives": [
     {
+      "id": "R027",
+      "timestamp": "2026-03-08T14:27:29Z",
+      "trigger": "count_based",
+      "period_analyzed": "2026-03-05T19:10:00Z to 2026-03-08T14:27:29Z",
+      "mistakes_analyzed": 31,
+      "summary": "31 mistakes analyzed. Protocol violations dominant (5/31). New patterns: PATTERN-014 (batch_skill_invocation_failure, 5), PATTERN-015 (shell_operator_escaping, 3), PATTERN-019 (line_length_violation, 2), PATTERN-020 (mandatory_step_treated_as_optional, 2), PATTERN-021 (skill_output_re_presentation, 2), PATTERN-022 (workflow_rejection_handling, 3), PATTERN-023 (autolearn_false_positive, 2). High-severity open items: A001 (ineffective, validation separation), A020 (ineffective, approval gate).",
+      "findings": {
+        "category_breakdown": {
+          "anti_fabrication_failure": 1,
+          "architectural_mismatch": 1,
+          "environment_state_mismatch": 1,
+          "incorrect_implementation": 1,
+          "insufficient_investigation": 1,
+          "logical_error": 1,
+          "protocol_violation": 5,
+          "skill_priming": 1,
+          "tool_misuse": 2
+        },
+        "new_patterns": ["PATTERN-014", "PATTERN-015", "PATTERN-019", "PATTERN-020", "PATTERN-021", "PATTERN-022", "PATTERN-023"],
+        "open_action_items": ["A001", "A003", "A020"]
+      }
+    },
+    {
       "id": "R026",
       "timestamp": "2026-03-05T19:10:00Z",
       "trigger": "count_based",
