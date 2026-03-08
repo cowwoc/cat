@@ -76,6 +76,32 @@ None
 - Run `mvn -f client/pom.xml test` and confirm all tests pass
   - Files: (no new files)
 
+### Wave 3 (iteration 1 fixes)
+- Fix field name mismatch: align `first-use.md` to the actual `session-analyzer` JSON output. Update all
+  references in `first-use.md` so that:
+  - `timing.total_elapsed_seconds` → `timing.session_elapsed_seconds` (session-level total; lines 63, 309,
+    463)
+  - per-tool `tool.total_elapsed_seconds` → `tool.elapsed_seconds` (per-tool elapsed; lines 62, 311, 475)
+  - Files: `plugin/skills/optimize-execution/first-use.md`
+- Fix `tools` vs `tools_elapsed` container mismatch: `first-use.md` line 311 references `tools` within each
+  phase; the implementation uses `tools_elapsed` at the top level and `tools` within each phase element.
+  Verify whether the phase objects contain a `tools` array (check `SessionAnalyzer.java` lines ~960-970) and
+  update the documentation to use the correct path (`phase.tools[*].tool`, `phase.tools[*].call_count`,
+  `phase.tools[*].elapsed_seconds`)
+  - Files: `plugin/skills/optimize-execution/first-use.md`
+- Fix session-level fallback: `first-use.md` line 57 documents a `"session"` phase when no CAT phase markers
+  are detected, but `SessionAnalyzer.java` returns an empty `phases` array in that case. Update `first-use.md`
+  to match implementation: when `timing.phases` is absent or empty, display a single session-level row using
+  `timing.session_elapsed_seconds` for total time and render the tool breakdown from `timing.tools_elapsed`
+  instead of phase-level `tools`. Remove the `"session"` phase name fallback entirely.
+  - Files: `plugin/skills/optimize-execution/first-use.md`
+- Build jlink binary and verify E2E: run `mvn -f client/pom.xml package -Pjlink` in the worktree to produce
+  a compiled `session-analyzer` binary at `client/target/jlink/bin/session-analyzer`, then invoke
+  `/cat:optimize-execution` against a real CAT session JSONL file to confirm the report includes the Time
+  Usage section with phase timings and per-tool breakdown. Confirm `timing.session_elapsed_seconds` is
+  present in the JSON output.
+  - Files: (no new files; build artifact only)
+
 ## Post-conditions
 
 - [ ] `session-analyzer` JSON output includes a `timing` field with per-phase and per-tool elapsed times

@@ -21,6 +21,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,6 +33,7 @@ import java.util.Locale;
 import java.util.SequencedSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,6 +48,10 @@ import java.util.stream.Collectors;
 public final class SessionAnalyzer
 {
   private static final int MIN_BATCH_SIZE = 2;
+  private static final int MIN_SCRIPT_EXTRACTION_OCCURRENCES = 2;
+  private static final int MIN_SCRIPT_EXTRACTION_LENGTH = 2;
+  private static final Set<String> CAT_PHASE_SKILLS = Set.of(
+    "work-prepare", "work-implement", "work-review", "work-merge");
   private static final Pattern AGENT_ID_PATTERN = Pattern.compile("\"agentId\"\\s*:\\s*\"([^\"]+)\"");
   private static final Pattern SAFE_AGENT_ID_PATTERN = Pattern.compile("^[A-Za-z0-9_-]+$");
   private static final Pattern ERROR_PATTERN = Pattern.compile(
@@ -569,7 +577,7 @@ public final class SessionAnalyzer
         }
         default ->
         {
-          // Backward compatibility: treat first arg as session ID for analyze
+          // No subcommand given — treat first arg as session ID for analyze
           result = analyzer.analyzeSession(analyzer.resolveSessionPath(firstArg));
         }
       }
@@ -659,6 +667,7 @@ public final class SessionAnalyzer
       try
       {
         JsonNode subagentAnalysis = analyzeSingleAgent(subagentPath);
+        ((ObjectNode) subagentAnalysis).remove("timing");
         subagentsNode.set(agentId, subagentAnalysis);
         allAnalyses.add(subagentAnalysis);
       }
@@ -671,6 +680,14 @@ public final class SessionAnalyzer
     JsonNode combined = buildCombinedAnalysis(allAnalyses);
 
     ObjectNode result = scope.getJsonMapper().createObjectNode();
+    // Move timing from mainAnalysis to the top level so callers can access
+    // timing.session_elapsed_seconds directly without duplication
+    JsonNode mainTiming = mainAnalysis.path("timing");
+    if (!mainTiming.isMissingNode())
+    {
+      ((ObjectNode) mainAnalysis).remove("timing");
+      result.set("timing", mainTiming);
+    }
     result.set("main", mainAnalysis);
     result.set("subagents", subagentsNode);
     result.set("combined", combined);
@@ -720,9 +737,301 @@ public final class SessionAnalyzer
     result.set("cache_candidates", findCacheCandidates(toolUses));
     result.set("batch_candidates", findBatchCandidates(toolUses));
     result.set("parallel_candidates", findParallelCandidates(toolUses));
+    result.set("pipeline_candidates", findPipelineCandidates(toolUses));
+    result.set("script_extraction_candidates", findScriptExtractionCandidates(toolUses));
     result.set("summary", buildSummary(entries, toolUses));
 
+    Optional<JsonNode> timing = extractTiming(entries);
+    timing.ifPresent(t -> result.set("timing", t));
+
     return result;
+  }
+
+  /**
+   * Extracts timing information from session entries.
+   * <p>
+   * Parses ISO 8601 {@code timestamp} fields from each entry to compute:
+   * <ul>
+   *   <li>{@code session_elapsed_seconds} — total session duration from first to last timestamp</li>
+   *   <li>{@code tools_elapsed} — per-tool call count and total elapsed time across all entries</li>
+   *   <li>{@code phases} — CAT workflow phases detected via Skill invocations, each with its own
+   *     per-tool breakdown</li>
+   * </ul>
+   * <p>
+   * Returns empty when fewer than two distinct timestamps are found.
+   * <p>
+   * Tool elapsed time is the interval between consecutive timestamped assistant entries.
+   * The last tool call in the session has no following entry and contributes zero elapsed time.
+   *
+   * @param entries list of parsed JSONL entries
+   * @return an {@link Optional} containing the timing JSON node, or empty if no usable timestamps
+   * @throws NullPointerException if entries is null
+   */
+  private Optional<JsonNode> extractTiming(List<JsonNode> entries)
+  {
+    requireThat(entries, "entries").isNotNull();
+
+    List<TimedTool> timedTools = collectTimedTools(entries);
+
+    if (timedTools.size() < 2)
+      return Optional.empty();
+
+    Instant firstTimestamp = timedTools.get(0).timestamp();
+    Instant lastTimestamp = timedTools.get(timedTools.size() - 1).timestamp();
+    if (firstTimestamp.equals(lastTimestamp))
+      return Optional.empty();
+
+    double sessionElapsed = secondsBetween(firstTimestamp, lastTimestamp);
+
+    ArrayNode toolsElapsedArray = buildToolsElapsedArray(timedTools);
+    ArrayNode phasesArray = buildPhaseBreakdown(timedTools);
+
+    ObjectNode timingNode = scope.getJsonMapper().createObjectNode();
+    timingNode.put("session_elapsed_seconds", roundToMillis(sessionElapsed));
+    timingNode.set("tools_elapsed", toolsElapsedArray);
+    if (!phasesArray.isEmpty())
+      timingNode.set("phases", phasesArray);
+
+    return Optional.of(timingNode);
+  }
+
+  /**
+   * Collects timestamped tool events from session entries in chronological order.
+   * <p>
+   * Only assistant entries carrying a valid ISO 8601 {@code timestamp} field contribute events.
+   * Entries without timestamps are skipped.
+   *
+   * @param entries list of parsed JSONL entries
+   * @return list of timed tool events in order of appearance
+   */
+  private List<TimedTool> collectTimedTools(List<JsonNode> entries)
+  {
+    List<TimedTool> timedTools = new ArrayList<>();
+    for (JsonNode entry : entries)
+    {
+      String tsStr = getStringOrDefault(entry, "timestamp", "");
+      if (tsStr.isEmpty())
+        continue;
+
+      Instant ts;
+      try
+      {
+        ts = Instant.parse(tsStr);
+      }
+      catch (DateTimeParseException _)
+      {
+        continue;
+      }
+
+      if (!"assistant".equals(getStringOrDefault(entry, "type", "")))
+        continue;
+
+      JsonNode message = entry.path("message");
+      JsonNode content = message.path("content");
+      if (!content.isArray())
+        continue;
+
+      for (JsonNode item : content)
+      {
+        if (!"tool_use".equals(getStringOrDefault(item, "type", "")))
+          continue;
+
+        String toolName = getStringOrDefault(item, "name", "");
+        if (toolName.isEmpty())
+          continue;
+
+        String phaseName = null;
+        if ("Skill".equals(toolName))
+        {
+          String skill = getStringOrDefault(item.path("input"), "skill", "");
+          phaseName = extractPhaseName(skill);
+        }
+
+        timedTools.add(new TimedTool(ts, toolName, phaseName));
+      }
+    }
+    return timedTools;
+  }
+
+  /**
+   * Builds a JSON array of per-tool elapsed time aggregates across all timed tool events.
+   * <p>
+   * Each entry records the tool name, total call count, and total elapsed seconds.
+   * Elapsed time for each event is the interval to the next event; the last event contributes zero.
+   *
+   * @param timedTools list of timed tool events in chronological order
+   * @return JSON array sorted in order of first appearance
+   */
+  private ArrayNode buildToolsElapsedArray(List<TimedTool> timedTools)
+  {
+    Map<String, ToolTimingStats> toolStats = new LinkedHashMap<>();
+    for (int i = 0; i < timedTools.size(); ++i)
+    {
+      TimedTool tool = timedTools.get(i);
+      double elapsed = 0.0;
+      if (i + 1 < timedTools.size())
+        elapsed = secondsBetween(tool.timestamp(), timedTools.get(i + 1).timestamp());
+      toolStats.computeIfAbsent(tool.toolName(), k -> new ToolTimingStats()).add(elapsed);
+    }
+
+    ArrayNode result = scope.getJsonMapper().createArrayNode();
+    toolStats.forEach((name, stats) -> result.add(toolStatsToNode(name, stats)));
+    return result;
+  }
+
+  /**
+   * Builds a JSON object representing per-tool timing statistics.
+   *
+   * @param toolName the name of the tool
+   * @param stats    the accumulated timing statistics for the tool
+   * @return a JSON object with {@code tool}, {@code call_count}, and {@code elapsed_seconds} fields
+   */
+  private ObjectNode toolStatsToNode(String toolName, ToolTimingStats stats)
+  {
+    ObjectNode node = scope.getJsonMapper().createObjectNode();
+    node.put("tool", toolName);
+    node.put("call_count", stats.count);
+    node.put("elapsed_seconds", roundToMillis(stats.totalSeconds));
+    return node;
+  }
+
+  /**
+   * Builds a JSON array of CAT workflow phase breakdowns.
+   * <p>
+   * Phases are delimited by phase-marker Skill invocations. Tool calls between two phase markers
+   * belong to the earlier phase. Tool calls before the first phase marker are not included in any
+   * phase. Each phase records its name, elapsed time (phase-marker timestamp to next phase marker
+   * or last event), and per-tool breakdown within the phase.
+   *
+   * @param timedTools list of timed tool events in chronological order
+   * @return JSON array of phase objects; empty if no phase markers are present
+   */
+  private ArrayNode buildPhaseBreakdown(List<TimedTool> timedTools)
+  {
+    ArrayNode phasesArray = scope.getJsonMapper().createArrayNode();
+
+    // Find all phase marker indices
+    List<Integer> markerIndices = new ArrayList<>();
+    for (int i = 0; i < timedTools.size(); ++i)
+    {
+      if (timedTools.get(i).phaseName() != null)
+        markerIndices.add(i);
+    }
+
+    if (markerIndices.isEmpty())
+      return phasesArray;
+
+    for (int m = 0; m < markerIndices.size(); ++m)
+    {
+      int phaseStart = markerIndices.get(m);
+      int phaseEnd;
+      if (m + 1 < markerIndices.size())
+        phaseEnd = markerIndices.get(m + 1);
+      else
+        phaseEnd = timedTools.size();
+
+      TimedTool marker = timedTools.get(phaseStart);
+      List<TimedTool> phaseTools = timedTools.subList(phaseStart + 1, phaseEnd);
+      TimedTool sentinel;
+      if (phaseEnd < timedTools.size())
+        sentinel = timedTools.get(phaseEnd);
+      else
+        sentinel = null;
+
+      phasesArray.add(buildPhaseNode(marker, phaseTools, sentinel));
+    }
+
+    return phasesArray;
+  }
+
+  /**
+   * Builds a single phase JSON node from its marker, tool list, and optional sentinel.
+   * <p>
+   * Phase elapsed time is computed from the marker timestamp to the sentinel timestamp (when
+   * present) or to the last tool in the phase (when the phase is the last one in the session).
+   * The sentinel is the next phase's marker and is used only for elapsed calculation, not included
+   * in the tool breakdown.
+   *
+   * @param marker     the phase-marker Skill invocation that opened this phase
+   * @param phaseTools tool calls belonging to this phase (excludes the marker itself)
+   * @param sentinel   the next phase's marker used as a timing boundary, or {@code null} if this
+   *                   is the last phase
+   * @return JSON object with {@code name}, {@code elapsed_seconds}, and {@code tools} fields
+   */
+  private ObjectNode buildPhaseNode(TimedTool marker, List<TimedTool> phaseTools, TimedTool sentinel)
+  {
+    // Phase elapsed: from marker timestamp to sentinel or last tool in phase
+    double phaseElapsed = 0.0;
+    if (sentinel != null)
+      phaseElapsed = secondsBetween(marker.timestamp(), sentinel.timestamp());
+    else if (!phaseTools.isEmpty())
+      phaseElapsed = secondsBetween(marker.timestamp(), phaseTools.get(phaseTools.size() - 1).timestamp());
+
+    // Build elapsed list: phaseTools followed by sentinel (if present) for delta calculation
+    List<TimedTool> forElapsed = new ArrayList<>(phaseTools);
+    if (sentinel != null)
+      forElapsed.add(sentinel);
+
+    Map<String, ToolTimingStats> phaseToolStats = new LinkedHashMap<>();
+    for (int i = 0; i < phaseTools.size(); ++i)
+    {
+      TimedTool tool = phaseTools.get(i);
+      double elapsed = 0.0;
+      if (i + 1 < forElapsed.size())
+        elapsed = secondsBetween(tool.timestamp(), forElapsed.get(i + 1).timestamp());
+      phaseToolStats.computeIfAbsent(tool.toolName(), k -> new ToolTimingStats()).add(elapsed);
+    }
+
+    ArrayNode phaseToolsArray = scope.getJsonMapper().createArrayNode();
+    phaseToolStats.forEach((name, stats) -> phaseToolsArray.add(toolStatsToNode(name, stats)));
+
+    ObjectNode phaseNode = scope.getJsonMapper().createObjectNode();
+    phaseNode.put("name", marker.phaseName());
+    phaseNode.put("elapsed_seconds", roundToMillis(phaseElapsed));
+    phaseNode.set("tools", phaseToolsArray);
+    return phaseNode;
+  }
+
+  /**
+   * Extracts the CAT phase name from a skill identifier.
+   * <p>
+   * Returns a short phase name (e.g., {@code "work-prepare"}) for recognized CAT workflow skills,
+   * or {@code null} if the skill is not a phase marker.
+   *
+   * @param skill the skill identifier (e.g., {@code "cat:work-prepare-agent"})
+   * @return the phase name, or {@code null} if not a phase marker
+   */
+  private static String extractPhaseName(String skill)
+  {
+    for (String phase : CAT_PHASE_SKILLS)
+    {
+      if (skill.contains(phase))
+        return phase;
+    }
+    return null;
+  }
+
+  /**
+   * Returns the number of seconds elapsed between two instants.
+   *
+   * @param from the earlier instant
+   * @param to   the later instant
+   * @return elapsed seconds as a double
+   */
+  private static double secondsBetween(Instant from, Instant to)
+  {
+    return Duration.between(from, to).toMillis() / 1000.0;
+  }
+
+  /**
+   * Rounds a seconds value to three decimal places (millisecond precision).
+   *
+   * @param seconds the value to round
+   * @return the value rounded to millisecond precision
+   */
+  private static double roundToMillis(double seconds)
+  {
+    return Math.round(seconds * 1000.0) / 1000.0;
   }
 
   /**
@@ -1124,7 +1433,7 @@ public final class SessionAnalyzer
       {
         List<String> toolNames = entry.getValue().stream().
           map(ToolUse::name).
-          collect(Collectors.toList());
+          toList();
         candidates.add(new ParallelCandidate(entry.getKey(), toolNames, toolNames.size()));
       }
     }
@@ -1142,6 +1451,161 @@ public final class SessionAnalyzer
       node.set("parallel_tools", toolsArray);
       node.put("count", candidate.count());
       node.put("optimization", "PARALLEL_CANDIDATE");
+      result.add(node);
+    }
+
+    return result;
+  }
+
+  /**
+   * Finds dependent sequential tool chains where a later tool's input references a prior tool's output
+   * (pipeline candidates). A pipeline is a sequence of tool calls where each tool's result feeds the next.
+   * <p>
+   * Detection heuristic: consecutive tool calls where tool B's input JSON contains tool A's tool ID,
+   * indicating that B consumes A's output.
+   *
+   * @param toolUses list of tool uses
+   * @return JSON array of pipeline candidate objects sorted by chain length descending
+   * @throws NullPointerException if toolUses is null
+   */
+  private ArrayNode findPipelineCandidates(List<ToolUse> toolUses)
+  {
+    requireThat(toolUses, "toolUses").isNotNull();
+
+    if (toolUses.size() < 2)
+      return scope.getJsonMapper().createArrayNode();
+
+    List<PipelineCandidate> candidates = new ArrayList<>();
+    List<ToolUse> currentChain = new ArrayList<>();
+    currentChain.add(toolUses.get(0));
+
+    for (int i = 1; i < toolUses.size(); ++i)
+    {
+      ToolUse previous = toolUses.get(i - 1);
+      ToolUse current = toolUses.get(i);
+
+      // Check if current tool's input references the previous tool's ID (output dependency)
+      String inputText = current.input().toString();
+      boolean dependsOnPrevious = !previous.id().isEmpty() && inputText.contains(previous.id());
+
+      if (dependsOnPrevious)
+        currentChain.add(current);
+      else
+      {
+        if (currentChain.size() >= 2)
+        {
+          List<String> toolNames = currentChain.stream().map(ToolUse::name).toList();
+          candidates.add(new PipelineCandidate(toolNames, currentChain.size()));
+        }
+        currentChain.clear();
+        currentChain.add(current);
+      }
+    }
+
+    if (currentChain.size() >= 2)
+    {
+      List<String> toolNames = currentChain.stream().map(ToolUse::name).toList();
+      candidates.add(new PipelineCandidate(toolNames, currentChain.size()));
+    }
+
+    candidates.sort((a, b) -> Integer.compare(b.chainLength(), a.chainLength()));
+
+    ArrayNode result = scope.getJsonMapper().createArrayNode();
+    for (PipelineCandidate candidate : candidates)
+    {
+      ObjectNode node = scope.getJsonMapper().createObjectNode();
+      ArrayNode toolsArray = scope.getJsonMapper().createArrayNode();
+      for (String tool : candidate.tools())
+        toolsArray.add(tool);
+      node.set("tools", toolsArray);
+      node.put("chain_length", candidate.chainLength());
+      node.put("optimization", "PIPELINE_CANDIDATE");
+      result.add(node);
+    }
+
+    return result;
+  }
+
+  /**
+   * Finds deterministic multi-step operations that recur in the same order (script extraction candidates).
+   * These are repeated tool sequences that could be extracted into standalone scripts.
+   * <p>
+   * Detection heuristic: finds all subsequences of length 2-5 that appear at least twice in the session,
+   * then filters out subsequences that are contained within longer matches.
+   *
+   * @param toolUses list of tool uses
+   * @return JSON array of script extraction candidate objects sorted by occurrence count descending
+   * @throws NullPointerException if toolUses is null
+   */
+  private ArrayNode findScriptExtractionCandidates(List<ToolUse> toolUses)
+  {
+    requireThat(toolUses, "toolUses").isNotNull();
+
+    if (toolUses.size() < MIN_SCRIPT_EXTRACTION_LENGTH)
+      return scope.getJsonMapper().createArrayNode();
+
+    // Build tool name sequences and count occurrences of each subsequence (length 2-5)
+    int maxSeqLen = Math.min(5, toolUses.size());
+    Map<String, Integer> sequenceCounts = new LinkedHashMap<>();
+    Map<String, List<String>> sequenceTools = new LinkedHashMap<>();
+
+    for (int len = MIN_SCRIPT_EXTRACTION_LENGTH; len <= maxSeqLen; ++len)
+    {
+      for (int i = 0; i <= toolUses.size() - len; ++i)
+      {
+        List<String> seq = new ArrayList<>();
+        for (int j = i; j < i + len; ++j)
+          seq.add(toolUses.get(j).name());
+
+        String key = String.join("→", seq);
+        sequenceCounts.merge(key, 1, Integer::sum);
+        sequenceTools.putIfAbsent(key, seq);
+      }
+    }
+
+    // Filter to sequences that appear at least MIN_SCRIPT_EXTRACTION_OCCURRENCES times
+    List<ScriptExtractionCandidate> candidates = new ArrayList<>();
+    for (Map.Entry<String, Integer> entry : sequenceCounts.entrySet())
+    {
+      if (entry.getValue() >= MIN_SCRIPT_EXTRACTION_OCCURRENCES)
+      {
+        List<String> tools = sequenceTools.get(entry.getKey());
+        candidates.add(new ScriptExtractionCandidate(tools, entry.getValue(), tools.size()));
+      }
+    }
+
+    // Remove subsequences that are fully contained within a longer candidate
+    List<ScriptExtractionCandidate> filtered = new ArrayList<>();
+    for (ScriptExtractionCandidate candidate : candidates)
+    {
+      String candidateKey = String.join("→", candidate.tools());
+      boolean subsumed = candidates.stream().
+        anyMatch(other -> other.sequenceLength() > candidate.sequenceLength() &&
+          other.occurrences() >= candidate.occurrences() &&
+          String.join("→", other.tools()).contains(candidateKey));
+      if (!subsumed)
+        filtered.add(candidate);
+    }
+
+    filtered.sort((a, b) ->
+    {
+      int cmp = Integer.compare(b.occurrences(), a.occurrences());
+      if (cmp != 0)
+        return cmp;
+      return Integer.compare(b.sequenceLength(), a.sequenceLength());
+    });
+
+    ArrayNode result = scope.getJsonMapper().createArrayNode();
+    for (ScriptExtractionCandidate candidate : filtered)
+    {
+      ObjectNode node = scope.getJsonMapper().createObjectNode();
+      ArrayNode toolsArray = scope.getJsonMapper().createArrayNode();
+      for (String tool : candidate.tools())
+        toolsArray.add(tool);
+      node.set("sequence", toolsArray);
+      node.put("occurrences", candidate.occurrences());
+      node.put("sequence_length", candidate.sequenceLength());
+      node.put("optimization", "SCRIPT_EXTRACTION_CANDIDATE");
       result.add(node);
     }
 
@@ -1823,6 +2287,52 @@ public final class SessionAnalyzer
   }
 
   /**
+   * Represents a pipeline candidate — a chain of dependent sequential tool calls where each tool's input
+   * references the previous tool's output.
+   *
+   * @param tools       ordered list of tool names in the chain
+   * @param chainLength number of tools in the chain
+   */
+  private record PipelineCandidate(List<String> tools, int chainLength)
+  {
+    /**
+     * Creates a new pipeline candidate record.
+     *
+     * @param tools       ordered list of tool names in the chain
+     * @param chainLength number of tools in the chain
+     * @throws NullPointerException if tools is null
+     */
+    private PipelineCandidate
+    {
+      requireThat(tools, "tools").isNotNull();
+    }
+  }
+
+  /**
+   * Represents a script extraction candidate — a recurring tool sequence that could be extracted into a
+   * standalone script.
+   *
+   * @param tools          ordered list of tool names in the sequence
+   * @param occurrences    number of times this sequence appeared
+   * @param sequenceLength number of tools in the sequence
+   */
+  private record ScriptExtractionCandidate(List<String> tools, int occurrences, int sequenceLength)
+  {
+    /**
+     * Creates a new script extraction candidate record.
+     *
+     * @param tools          ordered list of tool names in the sequence
+     * @param occurrences    number of times this sequence appeared
+     * @param sequenceLength number of tools in the sequence
+     * @throws NullPointerException if tools is null
+     */
+    private ScriptExtractionCandidate
+    {
+      requireThat(tools, "tools").isNotNull();
+    }
+  }
+
+  /**
    * Tracks token usage statistics for a tool.
    */
   private static final class TokenStats
@@ -1856,6 +2366,51 @@ public final class SessionAnalyzer
       this.name = name;
       this.input = input;
       this.count = count;
+    }
+  }
+
+  /**
+   * Represents a timestamped tool invocation event.
+   *
+   * @param timestamp the instant when the entry was recorded
+   * @param toolName  the name of the tool (e.g., "Read", "Skill")
+   * @param phaseName the CAT phase name if this is a phase-marker Skill invocation,
+   *   or {@code null} if not a phase marker
+   */
+  private record TimedTool(Instant timestamp, String toolName, String phaseName)
+  {
+    /**
+     * Creates a new timed tool record.
+     *
+     * @param timestamp the instant when the entry was recorded
+     * @param toolName  the name of the tool
+     * @param phaseName the phase name, or {@code null}
+     * @throws NullPointerException if {@code timestamp} or {@code toolName} is null
+     */
+    private TimedTool
+    {
+      requireThat(timestamp, "timestamp").isNotNull();
+      requireThat(toolName, "toolName").isNotNull();
+    }
+  }
+
+  /**
+   * Mutable accumulator for per-tool timing statistics.
+   */
+  private static final class ToolTimingStats
+  {
+    private double totalSeconds;
+    private int count;
+
+    /**
+     * Adds a single tool call with its elapsed time.
+     *
+     * @param elapsedSeconds elapsed time for the call in seconds
+     */
+    private void add(double elapsedSeconds)
+    {
+      totalSeconds += elapsedSeconds;
+      ++count;
     }
   }
 }
