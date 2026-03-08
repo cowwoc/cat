@@ -38,6 +38,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - add-subagent-result-processing-hook
 - refactor-skillloader-variable-substitution
 - parallelize-stakeholder-reviewers
+- add-bash-chaining-convention
 
 
 ## Issues Closed
