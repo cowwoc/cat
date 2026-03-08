@@ -7,6 +7,7 @@ allowed-tools:
   - Glob
   - Grep
 user-invocable: false
+argument-hint: "<catAgentId>"
 ---
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" recover-from-drift-agent "$0"`

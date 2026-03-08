@@ -3,6 +3,7 @@ description: PREFER when writing 3+ independent files - batch operation eliminat
 model: haiku
 user-invocable: false
 allowed-tools: Write, Edit, Bash
+argument-hint: "<catAgentId>"
 ---
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" batch-write-agent "$0"`

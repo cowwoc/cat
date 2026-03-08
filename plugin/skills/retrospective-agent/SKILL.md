@@ -6,6 +6,7 @@ description: >
   MANDATORY after learn threshold is reached.
 model: sonnet
 user-invocable: false
+argument-hint: "<catAgentId>"
 ---
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" retrospective-agent "$0"`

@@ -3,6 +3,7 @@ description: PREFER when searching pattern AND reading matches - single operatio
 model: haiku
 user-invocable: false
 allowed-tools: Grep, Read, Bash
+argument-hint: "<catAgentId>"
 ---
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" grep-and-read-agent "$0"`

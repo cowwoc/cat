@@ -4,6 +4,7 @@ description: >
   Required by optimize-doc for validation.
 model: sonnet
 user-invocable: false
+argument-hint: "<catAgentId>"
 ---
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" compare-docs-agent "$0"`
