@@ -1390,5 +1390,25 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M515",
+    "timestamp" : "2026-03-08T22:26:09Z",
+    "category" : "tool_misuse",
+    "description" : "",
+    "root_cause" : "Over-estimated cost granularity by evaluating at method/line level instead of file level. The cost definition says 'modifications to files or code NOT already changed by the current issue' - since the file IS changed, cost is 0 regardless of which specific lines within the file need modification.",
+    "rca_method" : "B",
+    "rca_method_name" : "taxonomy",
+    "prevention_type" : "skill",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }
