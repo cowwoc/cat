@@ -39,6 +39,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - refactor-skillloader-variable-substitution
 - parallelize-stakeholder-reviewers
 - add-bash-chaining-convention
+- remove-toolsearch-preload
 
 
 ## Issues Closed
