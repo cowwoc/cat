@@ -1,6 +1,22 @@
 # State
 
-- **Status:** open
-- **Progress:** 0%
+- **Status:** closed
+- **Progress:** 100%
 - **Dependencies:** []
 - **Blocks:** []
+- **Target Branch:** v2.1
+- **Resolution:** implemented
+- **Review Concerns Fixed:**
+  - CRITICAL: Moved timing field to top-level of analyzeSession() output (was nested under main.timing)
+  - HIGH: Extracted toolStatsToNode() helper to eliminate JSON serialization code duplication
+  - MEDIUM: Tightened timingAbsentWhenNoTimestamps assertion from OR clause to strict isMissingNode()
+  - Restored pipeline_candidates and script_extraction_candidates documentation and implementation
+  - Testing: Added 8 timing edge case tests + 5 pipeline/script extraction tests
+  - Code quality: Removed misleading dead code comment from collectTimedTools()
+  - Post-review fixes: Corrected skip target in first-use.md (Step 6 → Step 5), removed timing from subagent analysis objects for schema symmetry, fixed test method name typo
+- **Post-Conditions Fixed:**
+  - Timing field accessible at root level of analyzeSession() as documented
+  - Pipeline and script extraction candidate detection implemented with tests
+  - All 2325 tests passing
+  - Code duplication eliminated via helper method
+  - Test assertions strengthened to prevent false positives

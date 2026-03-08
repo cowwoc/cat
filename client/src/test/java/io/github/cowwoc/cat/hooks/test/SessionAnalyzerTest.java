@@ -1887,6 +1887,272 @@ public final class SessionAnalyzerTest
   }
 
   /**
+   * Builds an assistant entry with a Skill tool_use that invokes the given skill name,
+   * with a top-level timestamp.
+   *
+   * @param msgId     the message ID
+   * @param toolId    the tool use ID
+   * @param skillName the skill name (e.g., "cat:work-prepare-agent")
+   * @param timestamp the ISO 8601 timestamp string
+   * @return a JSONL line
+   */
+  private static String skillInvocation(String msgId, String toolId, String skillName,
+    String timestamp)
+  {
+    return "{\"type\":\"assistant\",\"timestamp\":\"" + timestamp +
+      "\",\"message\":{\"id\":\"" + msgId + "\",\"content\":[" +
+      "{\"type\":\"tool_use\",\"id\":\"" + toolId +
+      "\",\"name\":\"Skill\",\"input\":{\"skill\":\"" + skillName + "\"}}]}}";
+  }
+
+  /**
+   * Builds an assistant message entry with a single tool_use and a top-level timestamp.
+   *
+   * @param msgId     the message ID
+   * @param toolId    the tool use ID
+   * @param toolName  the tool name
+   * @param input     the JSON input (without braces)
+   * @param timestamp the ISO 8601 timestamp string
+   * @return a JSONL line
+   */
+  private static String assistantMessageWithTimestamp(String msgId, String toolId,
+    String toolName, String input, String timestamp)
+  {
+    return "{\"type\":\"assistant\",\"timestamp\":\"" + timestamp +
+      "\",\"message\":{\"id\":\"" + msgId + "\",\"content\":[" +
+      "{\"type\":\"tool_use\",\"id\":\"" + toolId +
+      "\",\"name\":\"" + toolName +
+      "\",\"input\":{" + input + "}}]}}";
+  }
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // Timing extraction tests
+  // ────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Verifies that timing extraction returns an absent {@code timing} field when no entries
+   * carry timestamps.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void timingAbsentWhenNoTimestamps() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      String jsonl =
+        assistantMessage("msg1", "t1", "Read", "\"file_path\":\"/a.txt\"") + "\n" +
+        toolResult("t1", "contents") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.analyzeSingleAgent(tempFile);
+
+      requireThat(result.path("timing").isMissingNode(), "timing_absent").isTrue();
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that timing extraction computes {@code session_elapsed_seconds} from the first
+   * and last timestamps in the session.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void timingComputesSessionElapsedSeconds() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      String jsonl =
+        assistantMessageWithTimestamp("msg1", "t1", "Read", "\"file_path\":\"/a.txt\"",
+          "2026-03-01T10:00:00.000Z") + "\n" +
+        toolResult("t1", "contents") + "\n" +
+        assistantMessageWithTimestamp("msg2", "t2", "Write", "\"file_path\":\"/b.txt\"",
+          "2026-03-01T10:01:00.000Z") + "\n" +
+        toolResult("t2", "ok") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.analyzeSingleAgent(tempFile);
+
+      JsonNode timing = result.path("timing");
+      requireThat(timing.isMissingNode(), "timing_present").isFalse();
+      double elapsed = timing.path("session_elapsed_seconds").asDouble();
+      requireThat(elapsed, "session_elapsed_seconds").isBetween(59.9, true, 60.1, true);
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that per-tool timing groups tool calls by name and sums elapsed time.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void timingGroupsToolsByName() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      // Three entries 10s apart: Read, Read, Write, Bash — so:
+      // Read: 2 calls, 10s each = 20s total
+      // Write: 1 call, 20s
+      // Bash: 1 call (last — no next entry, so elapsed = 0)
+      String jsonl =
+        assistantMessageWithTimestamp("msg1", "t1", "Read", "\"file_path\":\"/a.txt\"",
+          "2026-03-01T10:00:00.000Z") + "\n" +
+        toolResult("t1", "contents") + "\n" +
+        assistantMessageWithTimestamp("msg2", "t2", "Read", "\"file_path\":\"/b.txt\"",
+          "2026-03-01T10:00:10.000Z") + "\n" +
+        toolResult("t2", "contents") + "\n" +
+        assistantMessageWithTimestamp("msg3", "t3", "Write", "\"file_path\":\"/c.txt\"",
+          "2026-03-01T10:00:20.000Z") + "\n" +
+        toolResult("t3", "ok") + "\n" +
+        assistantMessageWithTimestamp("msg4", "t4", "Bash", "\"command\":\"echo done\"",
+          "2026-03-01T10:00:40.000Z") + "\n" +
+        toolResult("t4", "done") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.analyzeSingleAgent(tempFile);
+
+      JsonNode timing = result.path("timing");
+      requireThat(timing.isMissingNode(), "timing_present").isFalse();
+
+      JsonNode toolsElapsed = timing.path("tools_elapsed");
+      requireThat(toolsElapsed.isArray(), "tools_elapsed_is_array").isTrue();
+
+      boolean foundRead = false;
+      for (JsonNode item : toolsElapsed)
+      {
+        if ("Read".equals(item.path("tool").asString()))
+        {
+          foundRead = true;
+          requireThat(item.path("call_count").asInt(), "read_call_count").isEqualTo(2);
+          double readElapsed = item.path("elapsed_seconds").asDouble();
+          // Read total elapsed: 10s (msg1→msg2) + 10s (msg2→msg3) = 20s
+          requireThat(readElapsed, "read_elapsed_seconds").isBetween(19.9, true, 20.1, true);
+        }
+      }
+      requireThat(foundRead, "found_read").isTrue();
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that timing detects CAT workflow phases from Skill invocations and groups
+   * tool calls into those phases.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void timingDetectsPhases() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      // work-prepare phase: starts at T=0, one Read at T=10
+      // work-implement phase: starts at T=30, one Write at T=40
+      String jsonl =
+        skillInvocation("msg0", "s0", "cat:work-prepare-agent",
+          "2026-03-01T10:00:00.000Z") + "\n" +
+        toolResult("s0", "prepare done") + "\n" +
+        assistantMessageWithTimestamp("msg1", "t1", "Read", "\"file_path\":\"/a.txt\"",
+          "2026-03-01T10:00:10.000Z") + "\n" +
+        toolResult("t1", "contents") + "\n" +
+        skillInvocation("msg2", "s1", "cat:work-implement-agent",
+          "2026-03-01T10:00:30.000Z") + "\n" +
+        toolResult("s1", "implement done") + "\n" +
+        assistantMessageWithTimestamp("msg3", "t2", "Write", "\"file_path\":\"/b.txt\"",
+          "2026-03-01T10:00:40.000Z") + "\n" +
+        toolResult("t2", "ok") + "\n" +
+        assistantMessageWithTimestamp("msg4", "t3", "Bash", "\"command\":\"done\"",
+          "2026-03-01T10:01:00.000Z") + "\n" +
+        toolResult("t3", "ok") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.analyzeSingleAgent(tempFile);
+
+      JsonNode timing = result.path("timing");
+      requireThat(timing.isMissingNode(), "timing_present").isFalse();
+
+      JsonNode phases = timing.path("phases");
+      requireThat(phases.isArray(), "phases_is_array").isTrue();
+      requireThat(phases.size(), "phase_count").isEqualTo(2);
+
+      JsonNode preparePhase = phases.get(0);
+      requireThat(preparePhase.path("name").asString(),
+        "phase_0_name").isEqualTo("work-prepare");
+
+      JsonNode implementPhase = phases.get(1);
+      requireThat(implementPhase.path("name").asString(),
+        "phase_1_name").isEqualTo("work-implement");
+
+      JsonNode implementTools = implementPhase.path("tools");
+      requireThat(implementTools.isArray(), "implement_tools_is_array").isTrue();
+      boolean foundWrite = false;
+      for (JsonNode tool : implementTools)
+      {
+        if ("Write".equals(tool.path("tool").asString()))
+        {
+          foundWrite = true;
+          requireThat(tool.path("call_count").asInt(), "write_call_count").isEqualTo(1);
+        }
+      }
+      requireThat(foundWrite, "found_write_in_implement_phase").isTrue();
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that timing gracefully handles a single timestamped entry (no elapsed time).
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void timingHandlesSingleTimestampedEntry() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      String jsonl =
+        assistantMessageWithTimestamp("msg1", "t1", "Read", "\"file_path\":\"/a.txt\"",
+          "2026-03-01T10:00:00.000Z") + "\n" +
+        toolResult("t1", "contents") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.analyzeSingleAgent(tempFile);
+
+      // Must not throw; timing field may be absent or have zero elapsed seconds
+      JsonNode timing = result.path("timing");
+      if (!timing.isMissingNode())
+        requireThat(timing.path("session_elapsed_seconds").asDouble(),
+          "session_elapsed_seconds").isBetween(0.0, true, 0.01, true);
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
    * Verifies that isErrorContent returns false for empty content strings.
    * <p>
    * An empty result is not an error even if it contains no exit code or error keyword.
@@ -1949,6 +2215,601 @@ public final class SessionAnalyzerTest
     finally
     {
       Files.deleteIfExists(tempFile);
+    }
+  }
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // Additional timing tests (coverage gaps)
+  // ────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Verifies that malformed timestamp strings (truncated ISO, invalid values) are skipped and
+   * timing is absent when no valid timestamps remain.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void timingSkipsMalformedTimestamps() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      // Entries with various malformed timestamps — none should parse successfully
+      String truncated = "{\"type\":\"assistant\",\"timestamp\":\"2026-03-01T10:00\"," +
+        "\"message\":{\"id\":\"msg1\",\"content\":[" +
+        "{\"type\":\"tool_use\",\"id\":\"t1\",\"name\":\"Read\",\"input\":{}}]}}";
+      String invalidDate = "{\"type\":\"assistant\",\"timestamp\":\"not-a-date\"," +
+        "\"message\":{\"id\":\"msg2\",\"content\":[" +
+        "{\"type\":\"tool_use\",\"id\":\"t2\",\"name\":\"Write\",\"input\":{}}]}}";
+      String overflow = "{\"type\":\"assistant\",\"timestamp\":\"9999999-01-01T00:00:00Z\"," +
+        "\"message\":{\"id\":\"msg3\",\"content\":[" +
+        "{\"type\":\"tool_use\",\"id\":\"t3\",\"name\":\"Bash\",\"input\":{}}]}}";
+      Files.writeString(tempFile, truncated + "\n" + invalidDate + "\n" + overflow + "\n");
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.analyzeSingleAgent(tempFile);
+
+      // No valid timestamps — timing must be absent
+      requireThat(result.path("timing").isMissingNode(), "timing_absent").isTrue();
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that extractPhaseName does not produce a false positive for Skill invocations whose
+   * skill identifier contains none of the recognized CAT phase substrings.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void timingExtractPhaseNameNoFalsePositive() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      // "cat:batch-read-agent" and "cat:git-commit-agent" do not contain any phase substrings
+      // and must not be treated as phase markers
+      String jsonl =
+        skillInvocation("msg0", "s0", "cat:work-prepare-agent",
+          "2026-03-01T10:00:00.000Z") + "\n" +
+        assistantMessageWithTimestamp("msg1", "t1", "Read", "\"file_path\":\"/a.txt\"",
+          "2026-03-01T10:00:10.000Z") + "\n" +
+        skillInvocation("msg2", "s2", "cat:git-commit-agent",
+          "2026-03-01T10:00:20.000Z") + "\n" +
+        assistantMessageWithTimestamp("msg3", "t3", "Write", "\"file_path\":\"/b.txt\"",
+          "2026-03-01T10:00:30.000Z") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.analyzeSingleAgent(tempFile);
+
+      JsonNode timing = result.path("timing");
+      requireThat(timing.isMissingNode(), "timing_present").isFalse();
+      JsonNode phases = timing.path("phases");
+      // Only "work-prepare" from "cat:work-prepare-agent" is a valid phase marker;
+      // "cat:git-commit-agent" must not register as a phase
+      requireThat(phases.isArray(), "phases_is_array").isTrue();
+      requireThat(phases.size(), "phase_count").isEqualTo(1);
+      requireThat(phases.get(0).path("name").asString(), "phase_name").isEqualTo("work-prepare");
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that timing is absent when exactly two entries share the same timestamp (identical boundary).
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void timingAbsentWhenExactlyTwoIdenticalTimestamps() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      // Two entries at the same timestamp — first == last, so elapsed == 0 and timing must be absent
+      String ts = "2026-03-01T10:00:00.000Z";
+      String jsonl =
+        assistantMessageWithTimestamp("msg1", "t1", "Read", "\"file_path\":\"/a.txt\"", ts) + "\n" +
+        assistantMessageWithTimestamp("msg2", "t2", "Write", "\"file_path\":\"/b.txt\"", ts) + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.analyzeSingleAgent(tempFile);
+
+      requireThat(result.path("timing").isMissingNode(), "timing_absent").isTrue();
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that all four CAT workflow phase types are recognized as phase markers when present.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void timingRecognizesAllFourPhaseTypes() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      String jsonl =
+        skillInvocation("m0", "s0", "cat:work-prepare-agent",
+          "2026-03-01T10:00:00.000Z") + "\n" +
+        skillInvocation("m1", "s1", "cat:work-implement-agent",
+          "2026-03-01T10:00:10.000Z") + "\n" +
+        skillInvocation("m2", "s2", "cat:work-review-agent",
+          "2026-03-01T10:00:20.000Z") + "\n" +
+        skillInvocation("m3", "s3", "cat:work-merge-agent",
+          "2026-03-01T10:00:30.000Z") + "\n" +
+        assistantMessageWithTimestamp("m4", "t4", "Read", "\"file_path\":\"/a.txt\"",
+          "2026-03-01T10:00:40.000Z") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.analyzeSingleAgent(tempFile);
+
+      JsonNode phases = result.path("timing").path("phases");
+      requireThat(phases.isArray(), "phases_is_array").isTrue();
+      requireThat(phases.size(), "phase_count").isEqualTo(4);
+
+      requireThat(phases.get(0).path("name").asString(), "phase_0").isEqualTo("work-prepare");
+      requireThat(phases.get(1).path("name").asString(), "phase_1").isEqualTo("work-implement");
+      requireThat(phases.get(2).path("name").asString(), "phase_2").isEqualTo("work-review");
+      requireThat(phases.get(3).path("name").asString(), "phase_3").isEqualTo("work-merge");
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that tool calls appearing before the first phase marker are not included in any phase.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void timingToolsBeforeFirstPhaseMarkerNotIncluded() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      // Read and Write appear before the first phase marker and must not appear in any phase's tools
+      String jsonl =
+        assistantMessageWithTimestamp("msg0", "t0", "Read", "\"file_path\":\"/pre.txt\"",
+          "2026-03-01T10:00:00.000Z") + "\n" +
+        assistantMessageWithTimestamp("msg1", "t1", "Write", "\"file_path\":\"/pre2.txt\"",
+          "2026-03-01T10:00:05.000Z") + "\n" +
+        skillInvocation("msg2", "s0", "cat:work-prepare-agent",
+          "2026-03-01T10:00:10.000Z") + "\n" +
+        assistantMessageWithTimestamp("msg3", "t3", "Bash", "\"command\":\"ls\"",
+          "2026-03-01T10:00:20.000Z") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.analyzeSingleAgent(tempFile);
+
+      JsonNode phases = result.path("timing").path("phases");
+      requireThat(phases.size(), "phase_count").isEqualTo(1);
+      JsonNode prepareTools = phases.get(0).path("tools");
+      // Only Bash is inside the prepare phase; Read/Write are pre-phase and must be absent
+      for (JsonNode tool : prepareTools)
+      {
+        String name = tool.path("tool").asString();
+        requireThat(name.equals("Read") || name.equals("Write"), "pre_phase_tool_absent").isFalse();
+      }
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that Skill invocations with a missing or empty {@code input} field do not throw and
+   * are not recognized as phase markers.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void timingMalformedSkillInvocationNotAPhaseMarker() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      // Skill entry with empty input object — no "skill" key
+      String malformedSkill = "{\"type\":\"assistant\",\"timestamp\":\"2026-03-01T10:00:00.000Z\"," +
+        "\"message\":{\"id\":\"msg0\",\"content\":[" +
+        "{\"type\":\"tool_use\",\"id\":\"s0\",\"name\":\"Skill\",\"input\":{}}]}}";
+      // Skill entry with null-like input (missing entirely)
+      String missingInput = "{\"type\":\"assistant\",\"timestamp\":\"2026-03-01T10:00:10.000Z\"," +
+        "\"message\":{\"id\":\"msg1\",\"content\":[" +
+        "{\"type\":\"tool_use\",\"id\":\"s1\",\"name\":\"Skill\"}]}}";
+      String normalTool =
+        assistantMessageWithTimestamp("msg2", "t2", "Read", "\"file_path\":\"/a.txt\"",
+          "2026-03-01T10:00:20.000Z");
+      Files.writeString(tempFile, malformedSkill + "\n" + missingInput + "\n" + normalTool + "\n");
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      // Must not throw; malformed Skill entries contribute as tool events but not as phase markers
+      JsonNode result = analyzer.analyzeSingleAgent(tempFile);
+
+      JsonNode timing = result.path("timing");
+      requireThat(timing.isMissingNode(), "timing_present").isFalse();
+      // No valid phase markers — phases array must be absent or empty
+      JsonNode phases = timing.path("phases");
+      requireThat(phases.isMissingNode() || phases.size() == 0, "no_phases").isTrue();
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that consecutive timestamped entries at the same timestamp produce zero elapsed time
+   * for the tool at that position.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void timingZeroElapsedForConsecutiveSameTimestamp() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      // Two Read entries at the same timestamp, then Write one minute later
+      String ts = "2026-03-01T10:00:00.000Z";
+      String tsLater = "2026-03-01T10:01:00.000Z";
+      String jsonl =
+        assistantMessageWithTimestamp("msg1", "t1", "Read", "\"file_path\":\"/a.txt\"", ts) + "\n" +
+        assistantMessageWithTimestamp("msg2", "t2", "Read", "\"file_path\":\"/b.txt\"", ts) + "\n" +
+        assistantMessageWithTimestamp("msg3", "t3", "Write", "\"file_path\":\"/c.txt\"",
+          tsLater) + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.analyzeSingleAgent(tempFile);
+
+      JsonNode timing = result.path("timing");
+      requireThat(timing.isMissingNode(), "timing_present").isFalse();
+      // The first Read→Read interval is 0s; the second Read→Write interval is 60s
+      // Total Read elapsed = 0 + 60 = 60s; Write elapsed = 0 (last entry)
+      JsonNode toolsElapsed = timing.path("tools_elapsed");
+      boolean foundRead = false;
+      for (JsonNode item : toolsElapsed)
+      {
+        if ("Read".equals(item.path("tool").asString()))
+        {
+          foundRead = true;
+          requireThat(item.path("call_count").asInt(), "read_call_count").isEqualTo(2);
+          double readElapsed = item.path("elapsed_seconds").asDouble();
+          requireThat(readElapsed, "read_elapsed").isBetween(59.9, true, 60.1, true);
+        }
+      }
+      requireThat(foundRead, "found_read").isTrue();
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that tool names containing spaces, punctuation, and unicode are preserved correctly
+   * in timing output.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void timingPreservesSpecialCharactersInToolNames() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      String specialName1 = "My Tool/v2";
+      String specialName2 = "Tool\u00e9"; // unicode e-acute
+      // Build entries manually because our helper escapes tool names in JSON
+      String entry1 = "{\"type\":\"assistant\",\"timestamp\":\"2026-03-01T10:00:00.000Z\"," +
+        "\"message\":{\"id\":\"msg1\",\"content\":[" +
+        "{\"type\":\"tool_use\",\"id\":\"t1\",\"name\":\"" + specialName1 +
+        "\",\"input\":{}}]}}";
+      String entry2 = "{\"type\":\"assistant\",\"timestamp\":\"2026-03-01T10:00:10.000Z\"," +
+        "\"message\":{\"id\":\"msg2\",\"content\":[" +
+        "{\"type\":\"tool_use\",\"id\":\"t2\",\"name\":\"" + specialName2 +
+        "\",\"input\":{}}]}}";
+      Files.writeString(tempFile, entry1 + "\n" + entry2 + "\n");
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.analyzeSingleAgent(tempFile);
+
+      JsonNode toolsElapsed = result.path("timing").path("tools_elapsed");
+      requireThat(toolsElapsed.isArray(), "tools_elapsed_is_array").isTrue();
+
+      boolean foundSpecial1 = false;
+      boolean foundSpecial2 = false;
+      for (JsonNode item : toolsElapsed)
+      {
+        String name = item.path("tool").asString();
+        if (specialName1.equals(name))
+          foundSpecial1 = true;
+        if (specialName2.equals(name))
+          foundSpecial2 = true;
+      }
+      requireThat(foundSpecial1, "found_special1").isTrue();
+      requireThat(foundSpecial2, "found_special2").isTrue();
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that the top-level {@code timing} field is present in the output of
+   * {@link SessionAnalyzer#analyzeSession(Path)} when the main session has timestamps,
+   * and is accessible at the root level (not nested under {@code main}).
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void pipelineCandidatesDetectsDependentChain() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("session-");
+    Path mainSession = tempDir.resolve("main.jsonl");
+
+    try
+    {
+      // Tool B's input references tool A's ID -> pipeline chain
+      String jsonl =
+        assistantMessage("msg1", "tool-a-id", "Read", "\"file_path\":\"/a.txt\"") + "\n" +
+        assistantMessage("msg2", "tool-b-id", "Write",
+          "\"file_path\":\"/b.txt\",\"ref\":\"tool-a-id\"") + "\n";
+      Files.writeString(mainSession, jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.analyzeSession(mainSession);
+
+      JsonNode candidates = result.path("main").path("pipeline_candidates");
+      requireThat(candidates.isArray(), "is_array").isTrue();
+      requireThat(candidates.size(), "pipeline_count").isGreaterThanOrEqualTo(1);
+
+      JsonNode first = candidates.get(0);
+      requireThat(first.path("chain_length").asInt(), "chain_length").isEqualTo(2);
+      requireThat(first.path("optimization").asString(), "optimization").
+        isEqualTo("PIPELINE_CANDIDATE");
+    }
+    finally
+    {
+      Files.deleteIfExists(mainSession);
+      Files.deleteIfExists(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that pipeline_candidates is empty when no tool references another tool's ID.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void pipelineCandidatesEmptyWhenNoDependencies() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("session-");
+    Path mainSession = tempDir.resolve("main.jsonl");
+
+    try
+    {
+      // No tool references another tool's ID -> no pipeline
+      String jsonl =
+        assistantMessage("msg1", "id-1", "Read", "\"file_path\":\"/a.txt\"") + "\n" +
+        assistantMessage("msg2", "id-2", "Read", "\"file_path\":\"/b.txt\"") + "\n";
+      Files.writeString(mainSession, jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.analyzeSession(mainSession);
+
+      JsonNode candidates = result.path("main").path("pipeline_candidates");
+      requireThat(candidates.isArray(), "is_array").isTrue();
+      requireThat(candidates.size(), "pipeline_count").isEqualTo(0);
+    }
+    finally
+    {
+      Files.deleteIfExists(mainSession);
+      Files.deleteIfExists(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that script_extraction_candidates detects recurring tool sequences.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void scriptExtractionDetectsRecurringSequence() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("session-");
+    Path mainSession = tempDir.resolve("main.jsonl");
+
+    try
+    {
+      // Sequence [Read, Write] appears twice -> script extraction candidate
+      String jsonl =
+        assistantMessage("msg1", "t1", "Read", "\"file_path\":\"/a.txt\"") + "\n" +
+        assistantMessage("msg2", "t2", "Write", "\"file_path\":\"/b.txt\"") + "\n" +
+        assistantMessage("msg3", "t3", "Bash", "\"command\":\"echo hi\"") + "\n" +
+        assistantMessage("msg4", "t4", "Read", "\"file_path\":\"/c.txt\"") + "\n" +
+        assistantMessage("msg5", "t5", "Write", "\"file_path\":\"/d.txt\"") + "\n";
+      Files.writeString(mainSession, jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.analyzeSession(mainSession);
+
+      JsonNode candidates = result.path("main").path("script_extraction_candidates");
+      requireThat(candidates.isArray(), "is_array").isTrue();
+      requireThat(candidates.size(), "candidate_count").isGreaterThanOrEqualTo(1);
+
+      // Find the Read→Write candidate
+      boolean foundReadWrite = false;
+      for (JsonNode candidate : candidates)
+      {
+        JsonNode seq = candidate.path("sequence");
+        if (seq.size() == 2 && "Read".equals(seq.get(0).asString()) &&
+          "Write".equals(seq.get(1).asString()))
+        {
+          foundReadWrite = true;
+          requireThat(candidate.path("occurrences").asInt(), "occurrences").
+            isGreaterThanOrEqualTo(2);
+          requireThat(candidate.path("optimization").asString(), "optimization").
+            isEqualTo("SCRIPT_EXTRACTION_CANDIDATE");
+        }
+      }
+      requireThat(foundReadWrite, "found_read_write_sequence").isTrue();
+    }
+    finally
+    {
+      Files.deleteIfExists(mainSession);
+      Files.deleteIfExists(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that script_extraction_candidates is empty when no tool sequence repeats.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void scriptExtractionEmptyWhenNoRepeats() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("session-");
+    Path mainSession = tempDir.resolve("main.jsonl");
+
+    try
+    {
+      // Each tool is unique -> no recurring sequences
+      String jsonl =
+        assistantMessage("msg1", "t1", "Read", "\"file_path\":\"/a.txt\"") + "\n" +
+        assistantMessage("msg2", "t2", "Write", "\"file_path\":\"/b.txt\"") + "\n" +
+        assistantMessage("msg3", "t3", "Bash", "\"command\":\"ls\"") + "\n";
+      Files.writeString(mainSession, jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.analyzeSession(mainSession);
+
+      JsonNode candidates = result.path("main").path("script_extraction_candidates");
+      requireThat(candidates.isArray(), "is_array").isTrue();
+      requireThat(candidates.size(), "candidate_count").isEqualTo(0);
+    }
+    finally
+    {
+      Files.deleteIfExists(mainSession);
+      Files.deleteIfExists(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that shorter subsequences are filtered when subsumed by a longer candidate.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void scriptExtractionFiltersSubsumedSubsequences() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("session-");
+    Path mainSession = tempDir.resolve("main.jsonl");
+
+    try
+    {
+      // Sequence [Read, Write, Bash] appears twice; [Read, Write] also appears twice
+      // but is subsumed by the longer sequence
+      String jsonl =
+        assistantMessage("msg1", "t1", "Read", "\"file_path\":\"/a.txt\"") + "\n" +
+        assistantMessage("msg2", "t2", "Write", "\"file_path\":\"/b.txt\"") + "\n" +
+        assistantMessage("msg3", "t3", "Bash", "\"command\":\"echo 1\"") + "\n" +
+        assistantMessage("msg4", "t4", "Read", "\"file_path\":\"/c.txt\"") + "\n" +
+        assistantMessage("msg5", "t5", "Write", "\"file_path\":\"/d.txt\"") + "\n" +
+        assistantMessage("msg6", "t6", "Bash", "\"command\":\"echo 2\"") + "\n";
+      Files.writeString(mainSession, jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.analyzeSession(mainSession);
+
+      JsonNode candidates = result.path("main").path("script_extraction_candidates");
+      requireThat(candidates.isArray(), "is_array").isTrue();
+
+      // The shorter [Read, Write] should be filtered out by the longer [Read, Write, Bash]
+      boolean foundLength3 = false;
+      boolean foundLength2Subsumed = false;
+      for (JsonNode candidate : candidates)
+      {
+        JsonNode seq = candidate.path("sequence");
+        if (seq.size() == 3 && "Read".equals(seq.get(0).asString()) &&
+          "Write".equals(seq.get(1).asString()) && "Bash".equals(seq.get(2).asString()))
+        {
+          foundLength3 = true;
+        }
+        if (seq.size() == 2 && "Read".equals(seq.get(0).asString()) &&
+          "Write".equals(seq.get(1).asString()))
+        {
+          foundLength2Subsumed = true;
+        }
+      }
+      requireThat(foundLength3, "found_length_3_sequence").isTrue();
+      requireThat(foundLength2Subsumed, "subsumed_sequence_filtered").isFalse();
+    }
+    finally
+    {
+      Files.deleteIfExists(mainSession);
+      Files.deleteIfExists(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that timing is a top-level field in analyzeSession output.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void analyzeSessionExposesTimingAtTopLevel() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("session-");
+    Path mainSession = tempDir.resolve("main.jsonl");
+
+    try
+    {
+      String jsonl =
+        assistantMessageWithTimestamp("msg1", "t1", "Read", "\"file_path\":\"/a.txt\"",
+          "2026-03-01T10:00:00.000Z") + "\n" +
+        assistantMessageWithTimestamp("msg2", "t2", "Write", "\"file_path\":\"/b.txt\"",
+          "2026-03-01T10:01:00.000Z") + "\n";
+      Files.writeString(mainSession, jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.analyzeSession(mainSession);
+
+      // timing must be a top-level field, sibling to main/subagents/combined
+      requireThat(result.has("timing"), "has_top_level_timing").isTrue();
+      JsonNode timing = result.path("timing");
+      requireThat(timing.isMissingNode(), "timing_present").isFalse();
+      double elapsed = timing.path("session_elapsed_seconds").asDouble();
+      requireThat(elapsed, "session_elapsed_seconds").isBetween(59.9, true, 60.1, true);
+
+      // Also verify it is accessible at the path first-use.md documents
+      requireThat(result.path("timing").path("session_elapsed_seconds").asDouble(),
+        "path_matches_doc").isBetween(59.9, true, 60.1, true);
+    }
+    finally
+    {
+      Files.deleteIfExists(mainSession);
+      Files.deleteIfExists(tempDir);
     }
   }
 }

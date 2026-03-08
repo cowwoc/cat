@@ -51,6 +51,20 @@ The skill outputs a JSON object with:
   - `summary`: Overall session statistics
 - `subagents`: Dictionary of agentId to per-subagent analysis (same structure as main)
 - `combined`: Aggregated metrics across main agent and all subagents
+- `timing`: Phase-level and per-tool time breakdown derived from JSONL `timestamp` fields, containing:
+  - `session_elapsed_seconds`: Overall session elapsed time
+  - `tools_elapsed`: Array of per-tool summaries across the entire session, each with:
+    - `tool`: Tool name
+    - `call_count`: Number of calls to this tool
+    - `elapsed_seconds`: Total time spent in this tool across the session
+  - `phases`: Array of phase objects (present only when CAT phase markers are detected), each with:
+    - `name`: Phase name (e.g., `work-prepare`, `work-implement`, `work-review`, `work-merge`)
+    - `elapsed_seconds`: Total elapsed time for the phase
+    - `tools`: Array of per-tool summaries within the phase, each with:
+      - `tool`: Tool name
+      - `call_count`: Number of calls to this tool in the phase
+      - `elapsed_seconds`: Total time spent in this tool within the phase
+  - This field is absent (not null) when JSONL entries lack timestamps or the file is unreadable
 
 **Subagent Discovery**: The script automatically discovers subagent JSONL files by parsing Task tool_result
 entries for `agentId` fields, then resolves paths as `{session_dir}/{session_name}/subagents/agent-{agentId}.jsonl`,
@@ -118,7 +132,7 @@ transcript before generating recommendations. Do NOT use theoretical estimates �
 
 This step has three subsections: Terminology defines key metrics used throughout, Primary Method covers the
 session-analyzer tool for routine analysis, and Manual Extraction covers direct JSONL inspection for debugging.
-The Measurements section at the end collects per-delegation data for the output in Step 5. Start with Terminology
+The Measurements section at the end collects per-delegation data for the output in Step 6. Start with Terminology
 if you are unfamiliar with delegation metrics; otherwise go straight to Primary Method.
 
 #### Terminology
@@ -289,7 +303,22 @@ a cost-weighted estimate.
 When optimize-execution detects a phase that was NOT delegated but meets the "Delegate?" criteria above, emit a
 `delegation_opportunity` in the analysis data for presentation in Step 6.
 
-### Step 5: Generate Recommendations
+### Step 5: Extract Time Usage
+
+Read the `timing` field from the session-analyzer output obtained in Step 1:
+
+- If `timing` is absent from the output, skip this step and omit the Time Usage section from the report.
+- If `timing` is present, extract:
+  - `timing.session_elapsed_seconds`: overall session wall-clock time
+  - `timing.tools_elapsed`: per-tool breakdown across the entire session, each with `tool`, `call_count`, and
+    `elapsed_seconds`
+  - `timing.phases` (optional): array of phase-level summaries, each with `name`, `elapsed_seconds`, and `tools`;
+    absent when no CAT phase markers were detected; for each phase, `tools` contains per-tool `tool`, `call_count`,
+    and `elapsed_seconds`
+
+Store this data for use in the Time Usage report section (Step 7).
+
+### Step 6: Generate Recommendations
 
 Compile analysis into actionable recommendations based on the skill output:
 
@@ -307,15 +336,13 @@ Compile analysis into actionable recommendations based on the skill output:
 8. **Token optimization**: Use `token_usage` to identify high-cost operations
 9. **Output management**: Use `output_sizes` and UX categorization to suggest hiding/summarizing patterns
 10. **Content relay detection**: Identify main agent Read/Grep/Bash calls whose output is only used to populate
-    a subagent prompt. Recommend letting the subagent load its own content instead. Exception: content the main
-    agent already had in context for its own decision-making may be passed to avoid a redundant subagent read.
+   a subagent prompt. Recommend letting the subagent load its own content instead. Exception: content the main
+   agent already had in context for its own decision-making may be passed to avoid a redundant subagent read.
 
 Generate a comprehensive analysis report with specific recommendations for:
 - Which operations to batch together
 - Which results to cache or reference from context
 - Which independent operations to parallelize
-- Which dependent operations could use pipelining
-- Which deterministic workflows could be extracted to scripts
 - Which tool outputs to hide or summarize
 - Configuration rules for Claude Code UX
 
@@ -384,9 +411,9 @@ subagent could read the files directly at lower token cost.
 compounding with every subsequent main agent turn. For a 500-line file (~2k tokens), relaying
 instead of letting the subagent read it costs `2k * remaining_main_turns` additional tokens.
 
-### Step 6: Present Results
+### Step 7: Present Results
 
-After collecting all analysis data from Steps 1-5, present results as a human-readable markdown report.
+After collecting all analysis data from Steps 1-6, present results as a human-readable markdown report.
 Do NOT output raw JSON to the user. Use the JSON data internally to populate the sections below.
 
 #### Report Structure
@@ -434,6 +461,31 @@ cache hit rate. Cost-weighted savings: {cost_weighted_delta} tokens ({cost_weigh
 **Missed opportunity — {phase}:** Main context was {C_main} tokens with ~{estimated_turns} turns of work.
 Delegating would have saved ~{estimated_savings_percent}% tokens. Recommend delegating this phase.
 
+### Time Usage
+{Include this section only if the `timing` field is present in the session-analyzer output}
+
+**Total session time:** {timing.session_elapsed_seconds}s
+
+{If timing.phases is present and non-empty, render the phase table and per-phase tool breakdowns:}
+
+| Phase | Elapsed |
+|-------|---------|
+| {phase.name} | {phase.elapsed_seconds}s |
+
+{For each phase, include a per-tool breakdown:}
+
+**{phase.name}** — {phase.elapsed_seconds}s total
+
+| Tool | Calls | Total Time |
+|------|-------|------------|
+| {tool.tool} | {tool.call_count} | {tool.elapsed_seconds}s |
+
+{If timing.phases is absent or empty, render the session-level tool breakdown from timing.tools_elapsed:}
+
+| Tool | Calls | Total Time |
+|------|-------|------------|
+| {tool.tool} | {tool.call_count} | {tool.elapsed_seconds}s |
+
 ### Recommendations
 
 | Priority | Recommendation | Estimated Savings |
@@ -451,7 +503,7 @@ Delegating would have saved ~{estimated_savings_percent}% tokens. Recommend dele
 3. **Quantify savings.** Use token counts, percentages, or tool call counts — not vague terms like "significant."
 4. **Order by impact.** Issues and recommendations sorted by estimated savings (highest first).
 5. **Skip empty sections.** If no delegation was detected, omit "Delegation Analysis." If nothing went well
-   (unlikely), omit "What Went Well."
+   (unlikely), omit "What Went Well." If `timing` is absent from session-analyzer output, omit "Time Usage."
 
 ## Example Output
 
@@ -502,6 +554,46 @@ Cost-weighted savings: 253,673 tokens (64.4%). Delegation was highly beneficial.
 
 **Missed opportunity — implement:** Main context was 45,200 tokens with ~8 turns of work.
 Delegating would have saved ~59.1% tokens. Recommend delegating this phase.
+
+### Time Usage
+
+**Total session time:** 847s
+
+| Phase | Elapsed |
+|-------|---------|
+| work-prepare | 38s |
+| work-implement | 612s |
+| work-review | 142s |
+| work-merge | 55s |
+
+**work-prepare** — 38s total
+
+| Tool | Calls | Total Time |
+|------|-------|------------|
+| Bash | 4 | 22s |
+| Read | 3 | 16s |
+
+**work-implement** — 612s total
+
+| Tool | Calls | Total Time |
+|------|-------|------------|
+| Bash | 18 | 284s |
+| Edit | 9 | 63s |
+| Read | 12 | 48s |
+| Grep | 6 | 217s |
+
+**work-review** — 142s total
+
+| Tool | Calls | Total Time |
+|------|-------|------------|
+| Bash | 5 | 98s |
+| Read | 4 | 44s |
+
+**work-merge** — 55s total
+
+| Tool | Calls | Total Time |
+|------|-------|------------|
+| Bash | 6 | 55s |
 
 ### Recommendations
 
