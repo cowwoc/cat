@@ -255,16 +255,10 @@ about what they are approving.
      skill: "cat:get-diff-agent"
    ```
 
-2. **Display commit summary** — list commits since target branch:
+2. **Display commit summary** — list commits since target branch, and extract the issue goal in a single chained bash call:
    ```bash
-   cd "${WORKTREE_PATH}" && git log --oneline ${TARGET_BRANCH}..HEAD
+   cd "${WORKTREE_PATH}" && git log --oneline ${TARGET_BRANCH}..HEAD && ISSUE_GOAL=$(grep -A1 "^## Goal" "${ISSUE_PATH}/PLAN.md" | tail -n1) && echo "Issue Goal: ${ISSUE_GOAL}"
    ```
-
-3. **Display issue goal** — extract the first non-empty line after `## Goal` in PLAN.md:
-   ```bash
-   ISSUE_GOAL=$(grep -A1 "^## Goal" "${ISSUE_PATH}/PLAN.md" | tail -n1)
-   ```
-   Display this to the user.
 
 4. **Display execution summary** (commits count, files changed)
 5. **Display E2E testing summary** — what tests ran, what they verified, results (if skipped: state explicitly)
@@ -364,22 +358,12 @@ if TRUST != "high":
 
 ### Execute Merge
 
-Check idempotency guards before invoking the tool:
+Check idempotency guards before invoking the tool. Chain the worktree and branch existence checks:
 
 ```bash
-# Check worktree exists before removal
-if git worktree list --porcelain | grep -qxF "worktree ${WORKTREE_PATH}"; then
-  WORKTREE_EXISTS=true
-else
-  WORKTREE_EXISTS=false
-fi
-
-# Check branch exists before deletion
-if git show-ref --verify --quiet "refs/heads/${BRANCH}"; then
-  BRANCH_EXISTS=true
-else
-  BRANCH_EXISTS=false
-fi
+# Check worktree exists before removal and check branch exists before deletion in a single call
+git worktree list --porcelain | grep -qxF "worktree ${WORKTREE_PATH}" && WORKTREE_EXISTS=true || WORKTREE_EXISTS=false; \
+git show-ref --verify --quiet "refs/heads/${BRANCH}" && BRANCH_EXISTS=true || BRANCH_EXISTS=false
 ```
 
 If `WORKTREE_EXISTS=false` and `BRANCH_EXISTS=false`, cleanup was already completed in a previous run —
@@ -414,10 +398,10 @@ now contains the squashed commit:
 ```bash
 # Verify the merge commit is reachable from TARGET_BRANCH
 # git -C is intentional here: the worktree is already removed at this point,
-# so we must run from the main project directory.
-SQUASH_HASH=$(git -C "${CLAUDE_PROJECT_DIR}" rev-parse HEAD 2>/dev/null)
+# so we must run from the main project directory. Chain both operations:
+SQUASH_HASH=$(git -C "${CLAUDE_PROJECT_DIR}" rev-parse HEAD 2>/dev/null) && \
 MERGED=$(git -C "${CLAUDE_PROJECT_DIR}" branch --contains "${SQUASH_HASH}" 2>/dev/null \
-  | grep -c "${TARGET_BRANCH}" || true)
+  | grep -c "${TARGET_BRANCH}" || true) && \
 if [[ "${MERGED}" -eq 0 ]]; then
   echo "ERROR: Merge not confirmed — ${SQUASH_HASH} is not reachable from ${TARGET_BRANCH}."
   echo "The merge phase may have failed silently. Do NOT invoke work-complete."
