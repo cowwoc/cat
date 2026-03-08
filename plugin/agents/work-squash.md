@@ -214,22 +214,18 @@ STATUS_IN_COMMIT=$(git show "HEAD:${STATE_RELATIVE}" | \
   grep -i "^\*\*Status:\*\*\|^- \*\*Status:\*\*" | head -1)
 echo "STATE.md status in HEAD commit: ${STATUS_IN_COMMIT}"
 
-# Verify status is "closed"
+# Verify status is "closed".
+# Valid status values per .claude/rules/state-schema.md: open, in-progress, closed, blocked.
+# Only "closed" is valid for an issue being closed.
+# StateSchemaValidator enforces valid values at write time.
 if ! echo "$STATUS_IN_COMMIT" | grep -qi "closed"; then
-  echo "STATE.md status is not 'closed' — fixing before returning"
+  echo "ERROR: STATE.md status is not 'closed' in HEAD commit."
+  echo "  Found: ${STATUS_IN_COMMIT}"
+  echo "  Valid values per .claude/rules/state-schema.md: open, in-progress, closed, blocked"
+  echo "  The implementation commit must include STATE.md with Status: closed."
+  exit 1
 fi
 ```
-
-**Blocking condition:** If STATE.md status does NOT contain `closed` in HEAD, fix before returning:
-
-1. Open `${ISSUE_PATH}/STATE.md` and set `Status: closed`, `Progress: 100%`
-2. Amend the most recent implementation commit to include the STATE.md change:
-   ```bash
-   cd "${WORKTREE_PATH}"
-   git add "${ISSUE_PATH}/STATE.md"
-   git commit --amend --no-edit
-   ```
-3. Re-run squash quality verification (Step 4)
 
 ## Step 6: Return Result
 

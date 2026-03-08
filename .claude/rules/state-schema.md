@@ -8,13 +8,14 @@ All issue STATE.md files must conform to this standardized schema.
 ## Mandatory Keys (All Issues)
 
 ### Status
-**Format:** `Status: open | in-progress | closed`
+**Format:** `Status: open | in-progress | blocked | closed`
 
 **Description:** Current state of the issue.
 
 **Values:**
 - `open` - Issue is defined but work has not started
 - `in-progress` - Work is actively being performed
+- `blocked` - Work cannot proceed until a dependency is resolved
 - `closed` - Issue is completed or resolved
 
 ### Progress

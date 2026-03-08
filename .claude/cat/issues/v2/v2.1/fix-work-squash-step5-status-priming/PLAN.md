@@ -74,6 +74,9 @@ authoritative source for valid values.
   - Add schema reference comment above the status check
   - Update STATE.md to closed/100%
   - Commit: `bugfix: remove misleading status handling from work-squash.md Step 5`
+- Invoke `/cat:empirical-test` to verify that the work-squash agent uses `closed` (not `completed`
+  or any other invalid value) when closing an issue after this fix; confirm the test passes before
+  marking the issue complete
 
 ## Post-conditions
 - [ ] `work-squash.md` Step 5 bash block no longer contains the phrase "fixing before returning"
