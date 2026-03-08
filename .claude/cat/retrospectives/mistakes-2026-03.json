@@ -1334,5 +1334,26 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M512",
+    "timestamp" : "2026-03-08T14:14:35Z",
+    "category" : "",
+    "description" : "",
+    "root_cause" : "",
+    "rca_method" : "",
+    "rca_method_name" : "",
+    "prevention_type" : "",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "structural_prevention" : "Updating documentation to include the Time Usage section makes the requirement explicit rather than inferred, eliminating the ambiguity that required user clarification.",
+      "generality_analysis" : "This fix is general—it applies to all future uses of the optimize-execution skill by any agent, not specific to this session.",
+      "fragility_assessment" : "low",
+      "fragility_reasoning" : "The fix adds explicit specification of a required output section, making it impossible to miss when reading the documented report structure."
+    },
+    "correct_behavior" : ""
   } ]
 }
