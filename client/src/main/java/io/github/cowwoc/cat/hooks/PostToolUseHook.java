@@ -14,6 +14,7 @@ import io.github.cowwoc.cat.hooks.tool.post.DetectAssistantGivingUp;
 import io.github.cowwoc.cat.hooks.tool.post.DetectTokenThreshold;
 import io.github.cowwoc.cat.hooks.tool.post.DetectValidationWithoutEvidence;
 import io.github.cowwoc.cat.hooks.tool.post.RemindRestartAfterSkillModification;
+import io.github.cowwoc.cat.hooks.tool.post.SetPendingAgentResult;
 import tools.jackson.databind.JsonNode;
 
 import java.nio.file.Path;
@@ -85,6 +86,7 @@ public final class PostToolUseHook implements HookHandler
     Path claudeConfigDir = scope.getClaudeConfigDir();
     Path sessionDirectory = scope.getSessionBasePath().resolve(sessionId);
     List<PostToolHandler> handlers = List.of(
+      new SetPendingAgentResult(scope),
       new ResetFailureCounter(sessionDirectory),
       new AutoLearnMistakes(),
       new DetectAssistantGivingUp(scope),
