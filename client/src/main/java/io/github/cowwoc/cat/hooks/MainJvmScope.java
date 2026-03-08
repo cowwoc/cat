@@ -13,11 +13,10 @@ import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Production implementation of JvmScope.
+ * Production implementation of {@link JvmScope} that reads environment configuration from process
+ * environment variables via {@link ConcurrentLazyReference}.
  * <p>
- * Provides lazy-loaded DisplayUtils and environment paths via ConcurrentLazyReference
- * for thread-safe initialization. Reads {@code CLAUDE_PROJECT_DIR} and
- * {@code CLAUDE_PLUGIN_ROOT} from the process environment.
+ * <b>Thread Safety:</b> This class is thread-safe.
  */
 public final class MainJvmScope extends AbstractJvmScope
 {

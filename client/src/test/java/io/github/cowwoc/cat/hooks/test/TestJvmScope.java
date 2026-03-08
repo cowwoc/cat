@@ -23,6 +23,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <p>
  * Accepts {@code claudeProjectDir} and {@code claudePluginRoot} as constructor parameters
  * so tests can point to temporary directories populated with test data.
+ * <p>
+ * <b>Thread Safety:</b> This class is thread-safe.
  */
 public final class TestJvmScope extends AbstractJvmScope
 {
