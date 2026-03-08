@@ -97,32 +97,47 @@ attempt to fetch or guess alternatives.
 **Rationale:** Wrong target branch = wrong merge target = silent data corruption. Example: Merging to `main` when the
 project's target branch is `v1.10` silently breaks the version's work.
 
-### Step 4: Use Absolute Paths for File Operations
+### Step 4: Construct All File Paths Using `${WORKTREE_PATH}`
 
-When working in a worktree, always prefix file paths with `${WORKTREE_PATH}/`:
+When working in a worktree, construct ALL file paths as `${WORKTREE_PATH}/relative/path`. Never use `/workspace/`
+paths or bare relative paths — the shell's cwd resets to `/workspace` on every new Bash invocation, so relative paths
+silently operate on the main workspace instead of the worktree.
 
-- **File operations (Read/Edit/Write):** use `${WORKTREE_PATH}/path` (absolute)
-- **Git commands:** use `cd ${WORKTREE_PATH} && git ...` — the `cd` keeps git in the worktree for that single Bash call
-- **Never use bare relative paths or `/workspace/` paths** — the shell's cwd is reset to `/workspace` on every new
-  Bash invocation, so relative paths silently operate on the main workspace instead of the worktree
+**Path construction rule:**
+- Take the relative path within the repository (e.g., `plugin/skills/skill.md`)
+- Prepend `${WORKTREE_PATH}/` to form the absolute path (e.g., `${WORKTREE_PATH}/plugin/skills/skill.md`)
+- Use this absolute path for all Read, Edit, and Write operations
 
 **Example — WRONG:**
 ```bash
-# Relative path silently reads from /workspace, not the worktree
+# WRONG: Relative path silently reads from /workspace, not the worktree
 cat plugin/skills/skill.md
-# Absolute path to /workspace bypasses worktree isolation entirely
+
+# WRONG: Absolute /workspace path bypasses worktree isolation entirely
 cat /workspace/plugin/skills/skill.md
+
+# WRONG: Constructing path from the wrong root
+SKILL_PATH="/workspace/plugin/skills/skill.md"
 ```
 
 **Example — CORRECT:**
 ```bash
-# Absolute path rooted at the worktree
+# CORRECT: Absolute path rooted at the worktree
 cat "${WORKTREE_PATH}/plugin/skills/skill.md"
-# Git in the worktree via single-call cd
+
+# CORRECT: Construct the path explicitly from WORKTREE_PATH
+SKILL_PATH="${WORKTREE_PATH}/plugin/skills/skill.md"
+
+# CORRECT: Git in the worktree via single-call cd
 cd "${WORKTREE_PATH}" && git log --oneline -3
 ```
 
-**Fail-fast rule:** The `EnforceWorktreePathIsolation` hook blocks Read, Edit, and Write calls targeting `/workspace/`
+**Summary of path forms:**
+- **File operations (Read/Edit/Write):** use `${WORKTREE_PATH}/relative/path` (absolute)
+- **Git commands:** use `cd ${WORKTREE_PATH} && git ...` — the `cd` keeps git in the worktree for that single Bash call
+- **Never use** bare relative paths or `/workspace/` paths
+
+**Enforcement:** The `EnforceWorktreePathIsolation` hook blocks Read, Edit, and Write calls targeting `/workspace/`
 when an active worktree exists. If a hook blocks your operation, switch to the `${WORKTREE_PATH}/` form.
 
 ## Configuration Read Ordering
