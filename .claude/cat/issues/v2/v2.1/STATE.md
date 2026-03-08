@@ -37,6 +37,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-work-squash-step5-status-priming
 - add-subagent-result-processing-hook
 - refactor-skillloader-variable-substitution
+- parallelize-stakeholder-reviewers
 
 
 ## Issues Closed
