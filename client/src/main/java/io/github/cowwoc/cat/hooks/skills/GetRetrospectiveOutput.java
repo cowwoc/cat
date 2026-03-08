@@ -384,9 +384,9 @@ public final class GetRetrospectiveOutput implements SkillOutput
       int after = extractInt(pattern, "occurrences_after_fix", 0);
       String patternName = extractString(pattern, "pattern", "");
       if (patternName.isBlank())
-        lines.add("%s: %s (occurrences: %d/%d)".formatted(id, status, total, after));
+        lines.add("%s: %s (%d total, %d after fix)".formatted(id, status, total, after));
       else
-        lines.add("%s: %s (occurrences: %d/%d) - %s".formatted(id, status, total, after,
+        lines.add("%s: %s (%d total, %d after fix) - %s".formatted(id, status, total, after,
           Strings.truncate(patternName, Strings.DESCRIPTION_MAX_LENGTH)));
     }
 
