@@ -137,10 +137,18 @@ fi
 If `NEW_FORK_POINT` equals `OLD_FORK_POINT`, the target branch had no new commits — skip impact
 analysis and continue to Step 9.
 
-Otherwise, invoke the impact analysis skill and capture its compact JSON output as `IMPACT_JSON`:
+Otherwise, compute the session analysis directory so the analysis file is written outside the worktree
+and never committed, then invoke the impact analysis skill:
+
+```bash
+# Pass session dir so analysis file is written outside the worktree and never committed
+ENCODED_PROJECT_DIR=$(printf '%s' "${CLAUDE_PROJECT_DIR}" | sed 's|/|%2F|g; s| |%20|g')
+SESSION_ANALYSIS_DIR="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}/.claude/cat"
+mkdir -p "${SESSION_ANALYSIS_DIR}"
+```
 
 ```
-IMPACT_JSON = Skill("cat:rebase-impact-agent", args="${ISSUE_PATH} ${WORKTREE_PATH} ${OLD_FORK_POINT} ${NEW_FORK_POINT}")
+IMPACT_JSON = Skill("cat:rebase-impact-agent", args="${ISSUE_PATH} ${WORKTREE_PATH} ${OLD_FORK_POINT} ${NEW_FORK_POINT} ${SESSION_ANALYSIS_DIR}")
 ```
 
 Extract the severity from the JSON:
