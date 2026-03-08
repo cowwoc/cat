@@ -1234,5 +1234,25 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M507",
+    "timestamp" : "2026-03-08T01:13:08Z",
+    "category" : "tool_misuse",
+    "description" : "",
+    "root_cause" : "When a skill invocation returns unexpected output, the agent chose to bypass the skill entirely rather than investigate why the preprocessing failed.",
+    "rca_method" : "B",
+    "rca_method_name" : "taxonomy",
+    "prevention_type" : "skill",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }
