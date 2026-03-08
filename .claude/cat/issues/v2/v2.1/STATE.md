@@ -41,8 +41,8 @@ Finalize naming conventions and UI polish before recording demo videos.
 - add-bash-chaining-convention
 - remove-toolsearch-preload
 - fix-skill-loader-arg-quoting
-- prevent-ephemeral-analysis-file-commits
 - add-time-usage-to-optimize-report
+- fix-rebase-dry-run-flag
 - fix-retro-counter-reset
 - improve-retrospective-ux
 
@@ -376,6 +376,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - preprocess-env-vars-in-skill-content
 - preprocessor-error-bug-reporting
 - preprocessor-skill-output-tags
+- prevent-ephemeral-analysis-file-commits
 - prevent-git-user-changes
 - prevent-plan-md-priming
 - prevent-rca-cascade-bias

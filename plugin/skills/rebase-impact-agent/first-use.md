@@ -6,7 +6,7 @@ See LICENSE.md in the project root for license terms.
 # Skill: rebase-impact-agent
 
 Analyze whether changes introduced between the old and new rebase fork points affect the current PLAN.md.
-Returns a compact JSON summary; writes the full analysis to the CLAUDE session directory (ephemeral, not committed).
+Returns a compact JSON summary; writes the full analysis to the CLAUDE session directory (not the worktree).
 
 ## Purpose
 
@@ -19,7 +19,7 @@ changes add, remove, or modify files that the plan depends on.
 Positional space-separated arguments:
 
 ```
-<issue_path> <worktree_path> <old_fork_point> <new_fork_point>
+<issue_path> <worktree_path> <old_fork_point> <new_fork_point> [session_analysis_dir]
 ```
 
 | Position | Name | Description |
@@ -28,22 +28,30 @@ Positional space-separated arguments:
 | 2 | worktree_path | Absolute path to the issue worktree |
 | 3 | old_fork_point | Git ref (commit hash) of the fork point before the rebase |
 | 4 | new_fork_point | Git ref (commit hash) of the fork point after the rebase |
+| 5 | session_analysis_dir | (Optional) Absolute path to the session directory for ephemeral output |
 
 Parse from ARGUMENTS:
 
 ```bash
-read ISSUE_PATH WORKTREE_PATH OLD_FORK_POINT NEW_FORK_POINT <<< "$ARGUMENTS"
+read ISSUE_PATH WORKTREE_PATH OLD_FORK_POINT NEW_FORK_POINT SESSION_ANALYSIS_DIR <<< "$ARGUMENTS"
 ```
 
 ## Output Contract
 
-Write the full analysis to the CLAUDE session directory. This file is **ephemeral** — do NOT commit it to git.
+Write the full analysis to the CLAUDE session directory. The analysis file is **ephemeral session output —
+do NOT commit it to git**.
+
+Determine the output path:
 
 ```bash
-source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
-ANALYSIS_DIR="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}/cat"
-mkdir -p "${ANALYSIS_DIR}"
-ANALYSIS_PATH="${ANALYSIS_DIR}/rebase-impact-analysis.md"
+if [[ -z "${SESSION_ANALYSIS_DIR:-}" ]]; then
+  # Derive session directory from environment when caller does not provide it
+  ENCODED_PROJECT_DIR=$(printf '%s' "${CLAUDE_PROJECT_DIR}" | sed 's|/|%2F|g; s| |%20|g')
+  SESSION_ANALYSIS_DIR="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}/.claude/cat"
+fi
+mkdir -p "${SESSION_ANALYSIS_DIR}"
+ANALYSIS_PATH="${SESSION_ANALYSIS_DIR}/rebase-impact-analysis.md"
+# This file is ephemeral — do NOT commit it to git
 ```
 
 Return ONLY the following compact JSON to the calling agent (do NOT include analysis prose):
@@ -52,7 +60,7 @@ Return ONLY the following compact JSON to the calling agent (do NOT include anal
 {
   "severity": "NO_IMPACT|LOW|MEDIUM|HIGH",
   "summary": "one-line description of findings",
-  "analysis_path": "${ANALYSIS_DIR}/rebase-impact-analysis.md"
+  "analysis_path": "${SESSION_ANALYSIS_DIR}/rebase-impact-analysis.md"
 }
 ```
 
@@ -72,13 +80,13 @@ Return ONLY the following compact JSON to the calling agent (do NOT include anal
 
 ## Step 1: Validate Arguments
 
-Validate all four arguments are non-empty:
+Validate the required arguments are non-empty:
 
 ```bash
-read ISSUE_PATH WORKTREE_PATH OLD_FORK_POINT NEW_FORK_POINT <<< "$ARGUMENTS"
+read ISSUE_PATH WORKTREE_PATH OLD_FORK_POINT NEW_FORK_POINT SESSION_ANALYSIS_DIR <<< "$ARGUMENTS"
 
 if [[ -z "$ISSUE_PATH" || -z "$WORKTREE_PATH" || -z "$OLD_FORK_POINT" || -z "$NEW_FORK_POINT" ]]; then
-  echo "ERROR: rebase-impact-agent requires 4 arguments: <issue_path> <worktree_path> <old_fork_point> <new_fork_point>" >&2
+  echo "ERROR: rebase-impact-agent requires 4 arguments: <issue_path> <worktree_path> <old_fork_point> <new_fork_point> [session_analysis_dir]" >&2
   exit 1
 fi
 
@@ -158,13 +166,17 @@ Apply the conservative rule: when uncertain between MEDIUM and HIGH, classify as
 
 ## Step 5: Write Full Analysis File
 
-Write the analysis to the session directory (resolved in Output Contract above):
+Resolve the output path (using `SESSION_ANALYSIS_DIR` set in Step 1 / Output Contract) and write the full
+analysis. The file is ephemeral session output — do NOT commit it to git:
 
 ```bash
-source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
-ANALYSIS_DIR="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}/cat"
-mkdir -p "${ANALYSIS_DIR}"
-ANALYSIS_PATH="${ANALYSIS_DIR}/rebase-impact-analysis.md"
+if [[ -z "${SESSION_ANALYSIS_DIR:-}" ]]; then
+  ENCODED_PROJECT_DIR=$(printf '%s' "${CLAUDE_PROJECT_DIR}" | sed 's|/|%2F|g; s| |%20|g')
+  SESSION_ANALYSIS_DIR="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}/.claude/cat"
+fi
+mkdir -p "${SESSION_ANALYSIS_DIR}"
+ANALYSIS_PATH="${SESSION_ANALYSIS_DIR}/rebase-impact-analysis.md"
+# This file is ephemeral — do NOT commit it to git
 ```
 
 Write a Markdown document to `${ANALYSIS_PATH}` containing:
