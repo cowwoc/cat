@@ -209,6 +209,19 @@ public Handler(Path pluginRoot)
 }
 ```
 
+### StringBuilder Empty Check
+Use `!sb.isEmpty()` instead of `sb.length() > 0` to check whether a `StringBuilder` is empty:
+
+```java
+// Good - isEmpty()
+if (!current.isEmpty())
+  tokens.add(current.toString());
+
+// Avoid - length comparison
+if (current.length() > 0)
+  tokens.add(current.toString());
+```
+
 ### Conditional Expressions
 Use if/else statements instead of the ternary operator:
 
