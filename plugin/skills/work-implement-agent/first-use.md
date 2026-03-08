@@ -304,8 +304,21 @@ complete, the main agent merges each subagent branch back into the issue branch 
 Only the last wave subagent updates STATE.md.
 
 **Step order:** For each group label (A, B, C, ... sorted alphabetically), extract the steps
-belonging to that group from PLAN.md, then spawn the subagent. Spawn all subagents in the same
-message (Task tool calls can be parallel).
+belonging to that group from PLAN.md, then spawn the subagent.
+
+**CRITICAL: Parallel means one message — not "start Wave 1, then start Wave 2".**
+When `WAVES_COUNT` >= 2, spawn ALL wave subagents in a SINGLE assistant message by making multiple
+Agent (or Task) tool calls in that same message. Do NOT spawn Wave 1, await its result, then spawn
+Wave 2 in a separate message — that is sequential execution masquerading as parallel.
+
+Correct pattern (one message, two Agent/Task calls):
+
+```
+Task tool call: Wave 1 subagent
+Task tool call: Wave 2 subagent
+```
+
+(Both calls appear in the same response turn.)
 
 For each group (example for group A with steps 1, 2, 3):
 
