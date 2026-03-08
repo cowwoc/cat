@@ -434,3 +434,67 @@ For each output path change:
 Output paths affect core user workflows. Silent regressions (skill runs but produces no computed output, or output
 format changes unexpectedly) can propagate to dependent skills. Empirical testing detects these regressions early,
 before merging to main.
+
+## Skill Failure Handling
+
+**MANDATORY:** When a skill returns unexpected output — oversized, malformed, or with preprocessing errors — investigate
+the failure and report it. Do NOT bypass the skill by manually constructing what the skill was supposed to produce.
+
+### What Constitutes a Skill Failure
+
+- Skill returns empty output when content is expected
+- Skill returns a preprocessing error (e.g., `Error:`, stack trace, non-zero exit from `!` directive)
+- Skill returns content that is truncated or structurally wrong (missing required sections)
+- Skill returns a raw `!` directive string instead of expanded output (preprocessor did not run)
+
+### What NOT to Do (Bypass Workaround)
+
+```
+# ❌ WRONG: Manually constructing what the skill should have produced
+# The skill /cat:get-diff-agent returned oversized output, so instead of investigating,
+# the agent constructs a diff table manually:
+
+| File | Old | New | Change |
+|------|-----|-----|--------|
+| foo.java | ... | ... | ... |
+```
+
+Bypassing a skill is incorrect because:
+- It produces a degraded or subtly incorrect result
+- It leaves the underlying failure hidden and unfixed
+- It violates the Fail-Fast Protocol — skills fail for a reason
+
+### What TO Do (Investigate and Report)
+
+When a skill fails, follow this sequence:
+
+1. **Identify the failure type.** Read the raw output returned by the Skill tool. Does it contain an error message,
+   a stack trace, or is it simply empty?
+2. **Check skill prerequisites.** Some skills require prior context (e.g., a git diff must exist, a worktree must be
+   active). Verify these are satisfied.
+3. **Report the failure.** Use `/cat:feedback-agent` to report the failure to the development team. Include:
+   - The skill name that failed (e.g., `cat:get-diff-agent`)
+   - The exact output returned (error message, empty response, etc.)
+   - The context in which it was invoked (what task was being performed, what arguments were passed)
+4. **Stop and inform the user.** Do not proceed with a workaround. Inform the user that the skill failed, that a
+   report has been filed, and ask how they would like to proceed.
+
+### Example: Correct Response to Skill Failure
+
+```
+# ❌ WRONG: Proceeding despite failure
+Skill /cat:get-diff-agent returned an error. I'll construct the diff table manually instead.
+
+# ✅ CORRECT: Investigate and report
+Skill /cat:get-diff-agent returned an unexpected error:
+  "Error: diff output exceeds maximum size limit"
+
+I've reported this failure via /cat:feedback-agent. I cannot proceed with this step until
+the skill is fixed. Please check with the development team or try again with a smaller diff.
+```
+
+### Why No Bypass
+
+The Fail-Fast Protocol exists because workarounds produce incorrect results and mask real bugs. A skill that returns
+unexpected output indicates a problem in the preprocessing pipeline, the Java handler, or the input data — all of
+which require investigation. Bypassing the skill silently hides the failure, making it harder to reproduce and fix.
