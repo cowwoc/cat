@@ -10,6 +10,7 @@ import static io.github.cowwoc.cat.hooks.Strings.equalsIgnoreCase;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.task.EnforceApprovalBeforeMerge;
+import io.github.cowwoc.cat.hooks.task.EnforceCollectAfterAgent;
 import io.github.cowwoc.cat.hooks.task.EnforceCommitBeforeSubagentSpawn;
 import io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge;
 import tools.jackson.databind.JsonNode;
@@ -47,6 +48,7 @@ public final class PreIssueHook implements HookHandler
   {
     requireThat(scope, "scope").isNotNull();
     this.handlers = List.of(
+      new EnforceCollectAfterAgent(scope),
       new EnforceCommitBeforeSubagentSpawn(scope),
       new EnforceWorktreeSafetyBeforeMerge(),
       new EnforceApprovalBeforeMerge(scope));

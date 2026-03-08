@@ -73,7 +73,7 @@ public final class EnforceStatusOutputTest
       writeTranscriptWithBox(transcriptFile);
 
       HookOutput hookOutput = new HookOutput(scope);
-      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), true, hookOutput);
+      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), true, hookOutput, "", null);
 
       requireThat(result.trim(), "result").isEqualTo("{}");
     }
@@ -100,7 +100,7 @@ public final class EnforceStatusOutputTest
       writeTranscriptWithoutBox(transcriptFile);
 
       HookOutput hookOutput = new HookOutput(scope);
-      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), true, hookOutput);
+      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), true, hookOutput, "", null);
 
       JsonNode resultNode = mapper.readTree(result);
       requireThat(resultNode.get("decision").asString(), "decision").isEqualTo("block");
@@ -129,7 +129,7 @@ public final class EnforceStatusOutputTest
       writeTranscriptWithBox(transcriptFile);
 
       HookOutput hookOutput = new HookOutput(scope);
-      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, hookOutput);
+      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, hookOutput, "", null);
 
       requireThat(result.trim(), "result").isEqualTo("{}");
     }
@@ -156,7 +156,7 @@ public final class EnforceStatusOutputTest
       writeTranscriptWithoutBox(transcriptFile);
 
       HookOutput hookOutput = new HookOutput(scope);
-      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, hookOutput);
+      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, hookOutput, "", null);
 
       JsonNode resultNode = mapper.readTree(result);
       requireThat(resultNode.get("decision").asString(), "decision").isEqualTo("block");
@@ -197,7 +197,7 @@ public final class EnforceStatusOutputTest
       Files.writeString(transcriptFile, sb.toString());
 
       HookOutput hookOutput = new HookOutput(scope);
-      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, hookOutput);
+      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, hookOutput, "", null);
 
       requireThat(result.strip(), "result").isEqualTo("{}");
     }
@@ -223,7 +223,7 @@ public final class EnforceStatusOutputTest
       Files.writeString(transcriptFile, "");
 
       HookOutput hookOutput = new HookOutput(scope);
-      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, hookOutput);
+      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, hookOutput, "", null);
 
       requireThat(result.strip(), "result").isEqualTo("{}");
     }
@@ -256,7 +256,7 @@ public final class EnforceStatusOutputTest
       Files.writeString(transcriptFile, userLine + "\n" + malformedLine + "\n" + assistantLine + "\n");
 
       HookOutput hookOutput = new HookOutput(scope);
-      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, hookOutput);
+      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, hookOutput, "", null);
 
       // Status was invoked and box was present, so hook should allow through
       requireThat(result.strip(), "result").isEqualTo("{}");
