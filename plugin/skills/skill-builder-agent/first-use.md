@@ -34,7 +34,7 @@ XML tags (`<objective>`, `<process>`, `<step>`, `<execution_context>`) are requi
 
 | Feature | XML Syntax | Purpose |
 |---------|------------|---------|
-| **File references** | `@${CLAUDE_PLUGIN_ROOT}/path/file.md` inside | Load external files into context |
+| **File references** | `[description](${CLAUDE_PLUGIN_ROOT}/path/file.md)` inside | Reference files for on-demand loading via Read tool |
 |                     | `<execution_context>` |  |
 | **Named step routing** | `<step name="validate">` with "Continue to step: | Branch between steps based on |
 |                         | create" | conditions |
@@ -44,8 +44,8 @@ XML tags (`<objective>`, `<process>`, `<step>`, `<execution_context>`) are requi
 **Example** (command with file references and routing):
 ```xml
 <execution_context>
-@${CLAUDE_PLUGIN_ROOT}/concepts/work.md
-@${CLAUDE_PLUGIN_ROOT}/skills/merge-subagent/SKILL.md
+[CAT work concepts](${CLAUDE_PLUGIN_ROOT}/concepts/work.md)
+[merge-subagent skill](${CLAUDE_PLUGIN_ROOT}/skills/merge-subagent/SKILL.md)
 </execution_context>
 
 <process>
@@ -442,7 +442,7 @@ description: "Render a status box"
 user-invocable: false
 argument-hint: "<count> <label>"
 ---
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-status-box" "$0" "$1"`
+[BANG]`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-status-box" "$0" "$1"`
 ```
 
 When invoked with args `"5 done"`, SkillLoader resolves `$0` → `5` and `$1` → `done`
@@ -2228,9 +2228,16 @@ automatically — they must be explicitly referenced by a skill, hook, or rules 
 creating a concept file:
 
 1. Identify every skill or hook that should apply the convention.
-2. Add an `@${CLAUDE_PLUGIN_ROOT}/concepts/<filename>.md` reference inside the `<execution_context>` of each
-   relevant skill's SKILL.md (or `first-use.md`).
-3. Verify the reference appears in at least one skill's context block before committing.
+2. Add a `[description](${CLAUDE_PLUGIN_ROOT}/concepts/<filename>.md)` markdown link or
+   `` `${CLAUDE_PLUGIN_ROOT}/concepts/<filename>.md` `` inline code reference inside the skill's
+   `first-use.md`.
+3. Verify the reference appears in at least one skill's content before committing.
+
+**File path resolution:** Claude resolves relative paths in skill content relative to the skill's SKILL.md
+directory. Files within the skill directory can use relative paths (e.g., `[reference](reference.md)`).
+Files outside the skill directory must use `${CLAUDE_PLUGIN_ROOT}`-prefixed absolute paths (e.g.,
+`` `${CLAUDE_PLUGIN_ROOT}/concepts/work.md` ``). See `plugin/concepts/skill-loading.md` §
+"Referencing Files From Skills".
 
 If no existing skill is the right home, add the concept to a rules file in `.claude/rules/` instead — rules
 files ARE injected automatically into the main agent's context.
