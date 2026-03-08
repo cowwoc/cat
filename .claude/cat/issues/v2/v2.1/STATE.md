@@ -40,6 +40,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - parallelize-stakeholder-reviewers
 - add-bash-chaining-convention
 - remove-toolsearch-preload
+- fix-skill-loader-arg-quoting
 
 
 ## Issues Closed
