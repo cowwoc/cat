@@ -10,4 +10,4 @@ allowed-tools:
   - Skill
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" work-implement-agent $ARGUMENTS`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" work-implement-agent "$ARGUMENTS"`
