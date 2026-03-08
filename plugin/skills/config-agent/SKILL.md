@@ -11,6 +11,7 @@ allowed-tools:
   - Write
   - AskUserQuestion
 user-invocable: false
+argument-hint: "<catAgentId>"
 ---
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" config-agent "$0"`
