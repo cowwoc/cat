@@ -511,12 +511,17 @@ See `analyze_context` step for full selection rules and skip reasons.
 
 <step name="spawn_reviewers">
 
-**Spawn stakeholder subagents in parallel:**
+**Spawn all stakeholder subagents simultaneously in one message:**
 
-For each relevant stakeholder, spawn a subagent with:
+All selected reviewers MUST be dispatched in a single response — one Task/Agent call per reviewer,
+all issued at the same time. Do NOT loop or spawn reviewers one at a time. Total wall time becomes
+the MAX of reviewer times rather than the SUM.
+
+First, build the per-stakeholder prompts by collecting conventions and context:
 
 ```bash
-# For each stakeholder in $SELECTED
+# For each stakeholder in $SELECTED, collect its conventions
+# (run this preparation logic before spawning — then spawn all at once)
 stakeholder="architecture"  # example
 
 # Collect conventions for this stakeholder
@@ -578,6 +583,10 @@ fi
 If the PLAN.md does not have a `## Domain Knowledge` section but the implementation touches
 system-specific APIs or behaviors (e.g., CLI output formats, session mechanics, external service
 contracts), synthesize the key facts and add them to the prompt as domain knowledge.
+
+**CRITICAL — Parallel Dispatch:** After preparing all per-stakeholder prompts, issue ALL Task tool
+calls in a single response. Do not await one reviewer before spawning the next. The `collect_reviews`
+step handles results in any order, so arrival order does not matter.
 
 Spawn each stakeholder with this prompt:
 
@@ -662,17 +671,31 @@ invariant) both warrant blocking the merge. If your concern wouldn't block a rel
 Return ONLY valid JSON matching the format in your stakeholder definition.
 ```
 
-**Model Selection:** Before spawning each subagent, read the `model` field from the agent's frontmatter
+**Model Selection:** Before spawning, read the `model` field from each agent's frontmatter
 (`plugin/agents/stakeholder-{stakeholder}.md`). Pass it as the `model` parameter to the Task tool when spawning.
 If no model field is present in the frontmatter, omit the `model` parameter (inherits parent model).
 
 ```bash
-# Extract model from agent frontmatter
+# Extract model from agent frontmatter (do this for all stakeholders before spawning)
 AGENT_FILE="${CLAUDE_PLUGIN_ROOT}/agents/stakeholder-${stakeholder}.md"
 STAKEHOLDER_MODEL=$(sed -n '/^---$/,/^---$/p' "$AGENT_FILE" | grep '^model:' | sed 's/^model:[[:space:]]*//' | head -1)
 ```
 
-Use the Task tool for each stakeholder. If `$STAKEHOLDER_MODEL` is non-empty, pass `model: $STAKEHOLDER_MODEL`.
+**Parallel Dispatch — All Task calls in one message:**
+
+After extracting the model for each stakeholder, issue ALL Task tool calls in a single response.
+Each call targets one stakeholder. Do NOT await any result before issuing the next call.
+
+Example (3 stakeholders selected — all spawned simultaneously):
+
+```
+[Message containing 3 Task tool calls issued at the same time]
+  Task(prompt=<requirements reviewer prompt>, model=<model or omitted>)
+  Task(prompt=<architecture reviewer prompt>, model=<model or omitted>)
+  Task(prompt=<design reviewer prompt>, model=<model or omitted>)
+```
+
+If `$STAKEHOLDER_MODEL` is non-empty, pass `model: $STAKEHOLDER_MODEL`.
 If empty, omit the `model` parameter entirely to inherit the parent model.
 
 </step>
@@ -681,7 +704,9 @@ If empty, omit the `model` parameter entirely to inherit the parent model.
 
 **Collect and parse stakeholder reviews:**
 
-Wait for all stakeholder subagents to complete. Parse each response as JSON:
+Wait for all parallel stakeholder subagents to complete (they were all spawned simultaneously in
+the previous step). Results may arrive in any order — parse each response as JSON regardless of
+arrival order:
 
 ```json
 {
