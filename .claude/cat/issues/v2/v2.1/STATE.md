@@ -47,6 +47,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - improve-retrospective-ux
 - enforce-skill-loading-via-hook
 - fix-verify-state-in-commit-keyword
+- fix-state-schema-validator-edit-blind-spot
 
 
 ## Issues Closed
