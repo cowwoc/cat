@@ -46,21 +46,16 @@ Return JSON when complete:
 
 Extract configuration from the positional ARGUMENTS string. The arguments are space-separated.
 Since some paths may theoretically contain spaces but in practice CAT paths never do,
-split on whitespace:
+split on whitespace. Also display the preparing banner in a chained call:
 
 ```bash
-# Parse positional arguments
-read CAT_AGENT_ID ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH ESTIMATED_TOKENS TRUST VERIFY <<< "$ARGUMENTS"
-PLAN_MD="${ISSUE_PATH}/PLAN.md"
+# Parse positional arguments, set PLAN_MD path, and display preparing banner
+read CAT_AGENT_ID ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH ESTIMATED_TOKENS TRUST VERIFY <<< "$ARGUMENTS" && \
+PLAN_MD="${ISSUE_PATH}/PLAN.md" && \
+"${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase preparing
 ```
 
 ## Step 1: Display Preparing Banner
-
-Display the **Preparing phase** banner by running:
-
-```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase preparing
-```
 
 **If the command fails or produces no output**, STOP immediately:
 ```
@@ -121,14 +116,10 @@ Do NOT skip the banner or continue without it.
 
 ### Read PLAN.md and Invoke Main Agent Waves
 
-```bash
-PLAN_MD="${ISSUE_PATH}/PLAN.md"
-```
-
 Read the `## Main Agent Waves` section from PLAN.md:
 
 ```bash
-MAIN_AGENT_WAVES=$(sed -n '/^## Main Agent Waves/,/^## /p' "$PLAN_MD" | head -n -1)
+PLAN_MD="${ISSUE_PATH}/PLAN.md" && MAIN_AGENT_WAVES=$(sed -n '/^## Main Agent Waves/,/^## /p' "$PLAN_MD" | head -n -1)
 ```
 
 **If `## Main Agent Waves` is present and non-empty:** extract each bullet item
@@ -159,11 +150,8 @@ sub-items (indented bullets with `  - `).
 
 **Simplified detection in Bash:**
 
-```bash
-# Count number of ### Wave N sections in PLAN.md
-# Count ### Wave N sections under ## Sub-Agent Waves
-WAVES_COUNT=$(grep -c "^### Wave " "$PLAN_MD" 2>/dev/null || echo 0)
-```
+The PLAN.md path and wave detection are combined in the chained call above (under "Read PLAN.md and Invoke Main Agent Waves").
+The `WAVES_COUNT` variable should be extracted from the same chained bash call together with `MAIN_AGENT_WAVES`.
 
 Where `$PLAN_MD` is the path to the issue's PLAN.md file.
 
