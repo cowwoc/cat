@@ -8,7 +8,7 @@ or miss their intended target.
 
 | Audience | Location | Injected Into |
 |----------|----------|---------------|
-| **End-users** (all CAT users) | `client/src/.../InjectSessionInstructions.java`, `plugin/` files | Every CAT session via SessionStartHook |
+| **End-users** (all CAT users) | `plugin/rules/`, `plugin/` files | Every CAT session via SessionStartHook |
 | **Plugin developers** (CAT contributors) | `.claude/rules/`, `.claude/cat/rules/` | Development sessions on this repo |
 
 ## End-User Conventions (plugin)
@@ -17,7 +17,7 @@ Behavioral rules that apply to anyone using the CAT plugin — tool usage patter
 approval gates, delegation policies. These ship with the plugin and are injected into every session.
 
 **Where to add:**
-- `InjectSessionInstructions.java` — session-level behavioral rules (injected on every SessionStart)
+- `plugin/rules/*.md` — session-level behavioral rules (injected on every SessionStart)
 - `plugin/agents/*.md` — agent-specific behavioral rules (injected into that agent type only)
 - `plugin/concepts/*.md` — reference documentation loaded by skills on demand
 
