@@ -448,6 +448,27 @@ argument-hint: "<count> <label>"
 When invoked with args `"5 done"`, SkillLoader resolves `$0` → `5` and `$1` → `done`
 before running the preprocessor directive.
 
+**CRITICAL: argument-hint scope clarification**: The `argument-hint` frontmatter field documents
+the arguments to the **SKILL.md preprocessor** (the [BANG] command line), NOT the arguments that
+first-use.md reads. When using `skill-loader` for internal agent skills:
+
+- Caller passes: `<catAgentId> <arg1> <arg2> ...` (N+1 total args)
+- skill-loader receives all args and uses `$0` (catAgentId) for per-agent marker file identification
+- skill-loader passes remaining args (`$1`, `$2`, ...) to first-use.md via `$ARGUMENTS`
+- first-use.md reads: `<arg1> <arg2> ...` (N args, without catAgentId — already consumed)
+
+**Example:**
+```yaml
+---
+user-invocable: false
+argument-hint: "<catAgentId> <issue_id> <path>"  # ← documents what SKILL.md receives
+---
+[BANG]`skill-loader my-skill "$0" "$1" "$2"`      # ← SkillLoader uses $0 for internal tracking
+```
+When invoked with args `"abc123 issue1 /path/to/file"`:
+- SKILL.md preprocessor receives: `$0`=abc123, `$1`=issue1, `$2`=/path/to/file
+- first-use.md reads from $ARGUMENTS: `issue_id` ← issue1, `path` ← /path/to/file (without catAgentId)
+
 **catAgentId requirement**: If `user-invocable: false` AND the preprocessor directive uses
 `skill-loader` (with `$ARGUMENTS` or fixed `$N` positional refs), then `argument-hint` MUST
 start with `<catAgentId>`. Omitting it causes runtime failures:

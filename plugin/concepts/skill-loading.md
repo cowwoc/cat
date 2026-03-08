@@ -87,8 +87,13 @@ and preprocessor-based plugin skills.
 
 ### The `argument-hint` Field
 
-The `argument-hint` frontmatter field is a display-only hint shown in the CLI prompt bar when users type the slash
-command. It does not affect argument parsing. Follow standard CLI conventions:
+The `argument-hint` frontmatter field documents the arguments passed to the SKILL.md preprocessor command
+(the `!` backtick directive), not the arguments received by `first-use.md`. For skills using `skill-loader`,
+this includes `catAgentId` as the first argument — `skill-loader` consumes `catAgentId` internally and passes
+the remaining arguments to `first-use.md`.
+
+The field is also shown as a display-only hint in the CLI prompt bar when users type the slash command.
+It does not affect argument parsing. Follow standard CLI conventions:
 
 | Syntax | Meaning | Example |
 |--------|---------|---------|
