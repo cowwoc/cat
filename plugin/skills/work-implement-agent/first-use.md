@@ -241,16 +241,8 @@ Task tool:
     ## Pre-Invoked Skill Results
     [If skills were pre-invoked above, include their output here]
 
-    ## First Action (MANDATORY)
-    Before doing ANYTHING else, verify the branch:
-    ```bash
-    git branch --show-current  # Must output: ${BRANCH}
-    ```
-    If the branch does not match ${BRANCH}, STOP and return BLOCKED immediately.
-
     ## Critical Requirements
     - You are working in an isolated worktree. Your changes will be merged back to the issue branch.
-    - Verify you are on branch ${BRANCH} before making changes
     - Follow execution steps from PLAN.md EXACTLY
     - If steps say to invoke a skill that was pre-invoked above, use the provided results
     - Update STATE.md in the SAME commit as implementation (status: closed, progress: 100%)
@@ -343,16 +335,8 @@ Task tool:
     ## Pre-Invoked Skill Results
     [If skills were pre-invoked above, include their output here]
 
-    ## First Action (MANDATORY)
-    Before doing ANYTHING else, verify the branch:
-    ```bash
-    git branch --show-current  # Must output: ${BRANCH}
-    ```
-    If the branch does not match ${BRANCH}, STOP and return BLOCKED immediately.
-
     ## Critical Requirements
     - You are working in an isolated worktree. Your changes will be merged back to the issue branch.
-    - Verify you are on branch ${BRANCH} before making changes
     - Execute ONLY the items assigned to your wave (ASSIGNED_WAVE above, read from PLAN.md)
     - Do NOT execute items from other waves
     - **STATE.md ownership:** You are [DETERMINED AUTOMATICALLY: if wave is the last one, "the STATE.md owner"
