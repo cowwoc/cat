@@ -150,9 +150,9 @@ that behavior. Claude-facing files are:
 - plugin/skills/**/*.md
 - plugin/agents/**/*.md
 - plugin/hooks/**/*.md (concept/reference docs)
+- plugin/rules/**/*.md
 - .claude/rules/**/*.md
 - CLAUDE.md
-- client/src/main/java/**/InjectSessionInstructions.java
 
 Search strategy: For each forbidden behavior, extract 2-3 key keywords and grep across all Claude-facing files
 for those keywords. Consider a file a priming source only if it meets ALL three criteria:
