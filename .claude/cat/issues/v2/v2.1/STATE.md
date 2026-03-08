@@ -44,6 +44,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - prevent-ephemeral-analysis-file-commits
 - add-time-usage-to-optimize-report
 - fix-retro-counter-reset
+- improve-retrospective-ux
 
 
 ## Issues Closed
