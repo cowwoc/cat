@@ -12,11 +12,15 @@ import io.github.cowwoc.cat.hooks.Strings;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
+
+import static io.github.cowwoc.cat.hooks.skills.JsonHelper.getIntOrDefault;
+import static io.github.cowwoc.cat.hooks.skills.JsonHelper.getStringOrEmpty;
 
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
@@ -61,6 +65,10 @@ public final class GetRetrospectiveOutput implements SkillOutput
 
   /**
    * Generates the retrospective output.
+   * <p>
+   * On the success path (when a retrospective is triggered and analysis is generated), this method writes
+   * to {@code index.json}: it resets {@code mistake_count_since_last} to {@code 0} and updates
+   * {@code last_retrospective} to the current UTC instant.
    *
    * @param args the arguments from the preprocessor directive (must be empty)
    * @return the retrospective analysis or status message
@@ -102,15 +110,15 @@ public final class GetRetrospectiveOutput implements SkillOutput
     JsonNode config = root.get("config");
     if (config != null)
     {
-      triggerDays = extractInt(config, "trigger_interval_days", DEFAULT_TRIGGER_DAYS);
-      mistakeThreshold = extractInt(config, "mistake_count_threshold", DEFAULT_MISTAKE_THRESHOLD);
+      triggerDays = getIntOrDefault(config, "trigger_interval_days", DEFAULT_TRIGGER_DAYS);
+      mistakeThreshold = getIntOrDefault(config, "mistake_count_threshold", DEFAULT_MISTAKE_THRESHOLD);
     }
 
-    String lastRetro = extractString(root, "last_retrospective", "");
-    int mistakeCount = extractInt(root, "mistake_count_since_last", 0);
+    String lastRetro = getStringOrEmpty(root, "last_retrospective", "");
+    int mistakeCount = getIntOrDefault(root, "mistake_count_since_last", 0);
 
     String triggerReason = checkTrigger(lastRetro, mistakeCount, triggerDays, mistakeThreshold,
-      retroDir, mapper);
+      retroDir, root, mapper);
 
     if (triggerReason.isEmpty())
     {
@@ -126,7 +134,9 @@ public final class GetRetrospectiveOutput implements SkillOutput
         """.formatted(daysSince, triggerDays, mistakeCount, mistakeThreshold);
     }
 
-    return generateAnalysis(retroDir, root, lastRetro, triggerReason, mapper);
+    String output = generateAnalysis(retroDir, root, lastRetro, triggerReason, mapper);
+    resetRetrospectiveCounter(indexFile, root, mapper);
+    return output;
   }
 
   /**
@@ -137,17 +147,18 @@ public final class GetRetrospectiveOutput implements SkillOutput
    * @param triggerDays the number of days threshold for triggering
    * @param mistakeThreshold the mistake count threshold for triggering
    * @param retroDir the retrospectives directory
+   * @param index the index.json root node
    * @param mapper the JSON mapper
    * @return the trigger reason, or empty string if not triggered
    * @throws IOException if an I/O error occurs
    */
   private String checkTrigger(String lastRetro, int mistakeCount, int triggerDays, int mistakeThreshold,
-    Path retroDir, JsonMapper mapper) throws IOException
+    Path retroDir, JsonNode index, JsonMapper mapper) throws IOException
   {
     boolean hasLastRetro = !lastRetro.isEmpty() && !lastRetro.equals("null");
     if (!hasLastRetro)
     {
-      int totalMistakes = countMistakesFromFiles(retroDir, mapper);
+      int totalMistakes = countMistakesFromFiles(retroDir, index, mapper);
       if (totalMistakes > 0)
         return "First retrospective with " + totalMistakes + " logged mistakes";
     }
@@ -226,6 +237,30 @@ public final class GetRetrospectiveOutput implements SkillOutput
   }
 
   /**
+   * Resets the retrospective counter in {@code index.json} after a successful analysis.
+   * <p>
+   * Sets {@code last_retrospective} to the current UTC instant and {@code mistake_count_since_last} to 0.
+   * Writes atomically by writing to a temp file first, then renaming over the target.
+   *
+   * @param indexFile the path to {@code index.json}
+   * @param indexRoot the parsed root node of {@code index.json}
+   * @param mapper the JSON mapper
+   * @throws IOException if an I/O error occurs
+   */
+  private void resetRetrospectiveCounter(Path indexFile, JsonNode indexRoot, JsonMapper mapper)
+    throws IOException
+  {
+    ObjectNode updated = ((ObjectNode) indexRoot).deepCopy();
+    updated.put("last_retrospective", Instant.now().toString());
+    updated.put("mistake_count_since_last", 0);
+
+    String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(updated);
+    Path tempFile = Files.createTempFile(indexFile.getParent(), "index-", ".tmp");
+    Files.writeString(tempFile, json);
+    Files.move(tempFile, indexFile, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+  }
+
+  /**
    * Loads all mistakes since the last retrospective.
    *
    * @param retroDir the retrospectives directory
@@ -253,7 +288,11 @@ public final class GetRetrospectiveOutput implements SkillOutput
         continue;
 
       String fileName = fileNode.asString();
-      Path mistakeFile = retroDir.resolve(fileName);
+      Path mistakeFile = retroDir.resolve(fileName).normalize();
+      if (!mistakeFile.startsWith(retroDir.normalize()))
+      {
+        throw new IOException("Mistakes file path escapes retrospectives directory: " + mistakeFile);
+      }
       if (!Files.exists(mistakeFile))
       {
         throw new IOException("Mistakes file listed in index.json not found: " + mistakeFile);
@@ -303,7 +342,7 @@ public final class GetRetrospectiveOutput implements SkillOutput
     Map<String, Integer> categoryCount = new HashMap<>();
     for (JsonNode mistake : mistakes)
     {
-      String category = extractString(mistake, "category", "");
+      String category = getStringOrEmpty(mistake, "category", "");
       if (!category.isEmpty())
         categoryCount.put(category, categoryCount.getOrDefault(category, 0) + 1);
     }
@@ -332,7 +371,7 @@ public final class GetRetrospectiveOutput implements SkillOutput
     List<String> lines = new ArrayList<>();
     for (JsonNode item : actionItems)
     {
-      String id = extractString(item, "id", "");
+      String id = getStringOrEmpty(item, "id", "");
       if (id.isBlank())
         continue;
 
@@ -340,10 +379,10 @@ public final class GetRetrospectiveOutput implements SkillOutput
       if (effectivenessCheck == null)
         continue;
 
-      String verdict = extractString(effectivenessCheck, "verdict", "");
+      String verdict = getStringOrEmpty(effectivenessCheck, "verdict", "");
       if (!verdict.isBlank())
       {
-        String description = extractString(item, "description", "");
+        String description = getStringOrEmpty(item, "description", "");
         String truncated = Strings.truncate(description, Strings.DESCRIPTION_MAX_LENGTH);
         if (truncated.isBlank())
           lines.add("%s: %s".formatted(id, verdict));
@@ -372,17 +411,17 @@ public final class GetRetrospectiveOutput implements SkillOutput
     List<String> lines = new ArrayList<>();
     for (JsonNode pattern : patterns)
     {
-      String status = extractString(pattern, "status", "");
+      String status = getStringOrEmpty(pattern, "status", "");
       if (status.isBlank() || status.equals("addressed"))
         continue;
 
-      String id = extractString(pattern, "pattern_id", "");
+      String id = getStringOrEmpty(pattern, "pattern_id", "");
       if (id.isBlank())
         continue;
 
-      int total = extractInt(pattern, "occurrences_total", 0);
-      int after = extractInt(pattern, "occurrences_after_fix", 0);
-      String patternName = extractString(pattern, "pattern", "");
+      int total = getIntOrDefault(pattern, "occurrences_total", 0);
+      int after = getIntOrDefault(pattern, "occurrences_after_fix", 0);
+      String patternName = getStringOrEmpty(pattern, "pattern", "");
       if (patternName.isBlank())
         lines.add("%s: %s (%d total, %d after fix)".formatted(id, status, total, after));
       else
@@ -410,7 +449,7 @@ public final class GetRetrospectiveOutput implements SkillOutput
     List<ActionItemSummary> openItems = new ArrayList<>();
     for (JsonNode item : actionItems)
     {
-      String status = extractString(item, "status", "");
+      String status = getStringOrEmpty(item, "status", "");
       if (!status.equals("open") && !status.equals("escalated"))
         continue;
 
@@ -446,11 +485,11 @@ public final class GetRetrospectiveOutput implements SkillOutput
    */
   private ActionItemSummary parseActionItem(JsonNode item)
   {
-    String id = extractString(item, "id", "");
+    String id = getStringOrEmpty(item, "id", "");
     if (id.isEmpty())
       return null;
 
-    String priorityText = extractString(item, "priority", "medium");
+    String priorityText = getStringOrEmpty(item, "priority", "medium");
     Priority priority;
     try
     {
@@ -461,30 +500,49 @@ public final class GetRetrospectiveOutput implements SkillOutput
       priority = Priority.MEDIUM;
     }
 
-    String description = extractString(item, "description", "");
+    String description = getStringOrEmpty(item, "description", "");
     return new ActionItemSummary(id, priority, description);
   }
 
   /**
-   * Counts total mistakes from mistakes-*.json files.
+   * Counts total mistakes using the registry in {@code index.json}'s {@code files.mistakes} array.
+   * <p>
+   * Uses the same file-discovery strategy as {@link #loadMistakesSince} so that the first-retrospective
+   * trigger count and the analysis mistake count are always derived from the same authoritative source.
    *
    * @param retroDir the retrospectives directory
+   * @param index the index.json root node
    * @param mapper the JSON mapper
    * @return the total number of mistakes
    * @throws IOException if an I/O error occurs
    */
-  private int countMistakesFromFiles(Path retroDir, JsonMapper mapper) throws IOException
+  private int countMistakesFromFiles(Path retroDir, JsonNode index, JsonMapper mapper) throws IOException
   {
     int total = 0;
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(retroDir, "mistakes-*.json"))
+    JsonNode filesNode = index.get("files");
+    if (filesNode == null)
+      return total;
+
+    JsonNode mistakeFilesNode = filesNode.get("mistakes");
+    if (mistakeFilesNode == null || !mistakeFilesNode.isArray())
+      return total;
+
+    for (JsonNode fileNode : mistakeFilesNode)
     {
-      for (Path file : stream)
-      {
-        JsonNode root = mapper.readTree(Files.readString(file));
-        JsonNode mistakes = root.get("mistakes");
-        if (mistakes != null && mistakes.isArray())
-          total += mistakes.size();
-      }
+      if (!fileNode.isString())
+        continue;
+
+      String fileName = fileNode.asString();
+      Path mistakeFile = retroDir.resolve(fileName).normalize();
+      if (!mistakeFile.startsWith(retroDir.normalize()))
+        throw new IOException("Mistakes file path escapes retrospectives directory: " + mistakeFile);
+      if (!Files.exists(mistakeFile))
+        throw new IOException("Mistakes file listed in index.json not found: " + mistakeFile);
+
+      JsonNode root = mapper.readTree(Files.readString(mistakeFile));
+      JsonNode mistakes = root.get("mistakes");
+      if (mistakes != null && mistakes.isArray())
+        total += mistakes.size();
     }
     return total;
   }
@@ -514,38 +572,6 @@ public final class GetRetrospectiveOutput implements SkillOutput
     if (lastRetroTime.equals(Instant.EPOCH))
       return "Beginning to " + now;
     return lastRetroTime + " to " + now;
-  }
-
-  /**
-   * Extracts a string field from a JSON node, returning a default value if absent or not a string.
-   *
-   * @param node the JSON object node to read from
-   * @param key the field name to extract
-   * @param defaultValue the value to return when the field is absent or not a string
-   * @return the string value, or {@code defaultValue}
-   */
-  private static String extractString(JsonNode node, String key, String defaultValue)
-  {
-    JsonNode child = node.get(key);
-    if (child != null && child.isString())
-      return child.asString();
-    return defaultValue;
-  }
-
-  /**
-   * Extracts an integer field from a JSON node, returning a default value if absent or not a number.
-   *
-   * @param node the JSON object node to read from
-   * @param key the field name to extract
-   * @param defaultValue the value to return when the field is absent or not a number
-   * @return the integer value, or {@code defaultValue}
-   */
-  private static int extractInt(JsonNode node, String key, int defaultValue)
-  {
-    JsonNode child = node.get(key);
-    if (child != null && child.isNumber())
-      return child.asInt();
-    return defaultValue;
   }
 
   /**
