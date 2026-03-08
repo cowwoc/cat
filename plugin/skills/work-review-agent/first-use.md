@@ -41,18 +41,15 @@ Return JSON when complete:
 
 ## Configuration
 
+Parse arguments and display the **Reviewing phase** banner in a chained call:
+
 ```bash
-read CAT_AGENT_ID ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH ALL_COMMITS_COMPACT TRUST VERIFY <<< "$ARGUMENTS"
-PLAN_MD="${ISSUE_PATH}/PLAN.md"
+read CAT_AGENT_ID ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH ALL_COMMITS_COMPACT TRUST VERIFY <<< "$ARGUMENTS" && \
+PLAN_MD="${ISSUE_PATH}/PLAN.md" && \
+"${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase reviewing
 ```
 
 ## Step 5: Review Phase (MANDATORY)
-
-Display the **Reviewing phase** banner by running:
-
-```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase reviewing
-```
 
 **If the command fails or produces no output**, STOP immediately:
 ```

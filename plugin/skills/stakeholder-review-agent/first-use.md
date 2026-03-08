@@ -348,12 +348,11 @@ fi
 
 After context analysis, generate the selection box by invoking the Skill tool:
 
-Compute counts first, then invoke via the Skill tool:
+Compute counts first (chain all independent operations), then invoke via the Skill tool:
 
 ```bash
-SELECTED_COUNT=$(echo "$SELECTED" | tr ' ' '
-' | grep -c '.')
-SELECTED_LIST=$(echo "$SELECTED" | tr ' ' ',')
+SELECTED_COUNT=$(echo "$SELECTED" | tr ' ' '\n' | grep '.' | wc -l) && \
+SELECTED_LIST=$(echo "$SELECTED" | tr ' ' ',') && \
 SKIPPED_LIST=$(echo "$SKIPPED" | tr ' ' ',')
 ```
 

@@ -6,7 +6,7 @@ See LICENSE.md in the project root for license terms.
 # Skill: rebase-impact-agent
 
 Analyze whether changes introduced between the old and new rebase fork points affect the current PLAN.md.
-Returns a compact JSON summary; writes the full analysis to a file in the worktree.
+Returns a compact JSON summary; writes the full analysis to the CLAUDE session directory (ephemeral, not committed).
 
 ## Purpose
 
@@ -37,7 +37,14 @@ read ISSUE_PATH WORKTREE_PATH OLD_FORK_POINT NEW_FORK_POINT <<< "$ARGUMENTS"
 
 ## Output Contract
 
-Write the full analysis to `${WORKTREE_PATH}/.claude/cat/rebase-impact-analysis.md`.
+Write the full analysis to the CLAUDE session directory. This file is **ephemeral** — do NOT commit it to git.
+
+```bash
+source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
+ANALYSIS_DIR="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}/cat"
+mkdir -p "${ANALYSIS_DIR}"
+ANALYSIS_PATH="${ANALYSIS_DIR}/rebase-impact-analysis.md"
+```
 
 Return ONLY the following compact JSON to the calling agent (do NOT include analysis prose):
 
@@ -45,7 +52,7 @@ Return ONLY the following compact JSON to the calling agent (do NOT include anal
 {
   "severity": "NO_IMPACT|LOW|MEDIUM|HIGH",
   "summary": "one-line description of findings",
-  "analysis_path": "${WORKTREE_PATH}/.claude/cat/rebase-impact-analysis.md"
+  "analysis_path": "${ANALYSIS_DIR}/rebase-impact-analysis.md"
 }
 ```
 
@@ -151,11 +158,13 @@ Apply the conservative rule: when uncertain between MEDIUM and HIGH, classify as
 
 ## Step 5: Write Full Analysis File
 
-Create the analysis directory and write the full analysis:
+Write the analysis to the session directory (resolved in Output Contract above):
 
 ```bash
-mkdir -p "${WORKTREE_PATH}/.claude/cat"
-ANALYSIS_PATH="${WORKTREE_PATH}/.claude/cat/rebase-impact-analysis.md"
+source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
+ANALYSIS_DIR="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}/cat"
+mkdir -p "${ANALYSIS_DIR}"
+ANALYSIS_PATH="${ANALYSIS_DIR}/rebase-impact-analysis.md"
 ```
 
 Write a Markdown document to `${ANALYSIS_PATH}` containing:
@@ -241,8 +250,9 @@ Run `/cat:work` on the test issue. When the rebase step executes, `work-with-iss
 <issue_path> <worktree_path> $BEFORE $NEW
 ```
 
-Verify the invocation appears in the session transcript and that
-`${WORKTREE_PATH}/.claude/cat/rebase-impact-analysis.md` is written with fork-point metadata populated.
+Verify the invocation appears in the session transcript and that the analysis file is written to the CLAUDE
+session directory (the `analysis_path` value in the returned JSON) with fork-point metadata populated.
+Confirm the file does NOT appear inside the worktree directory.
 
 **Step 4 — Verify NO_IMPACT / LOW routing: silent continuation**
 

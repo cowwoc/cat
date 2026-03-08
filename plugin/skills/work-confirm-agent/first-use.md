@@ -41,20 +41,17 @@ Return JSON when complete:
 
 ## Configuration
 
+Parse arguments and display the **Confirming phase** banner in a chained call:
+
 ```bash
-read CAT_AGENT_ID ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH EXECUTION_COMMITS_JSON FILES_CHANGED TRUST VERIFY <<< "$ARGUMENTS"
-PLAN_MD="${ISSUE_PATH}/PLAN.md"
+read CAT_AGENT_ID ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH EXECUTION_COMMITS_JSON FILES_CHANGED TRUST VERIFY <<< "$ARGUMENTS" && \
+PLAN_MD="${ISSUE_PATH}/PLAN.md" && \
+"${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase confirming
 ```
 
 ## Step 4: Confirm Implementation
 
 **This step confirms PLAN.md post-conditions were implemented before stakeholder quality review.**
-
-Display the **Confirming phase** banner by running:
-
-```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase confirming
-```
 
 **If the command fails or produces no output**, STOP immediately:
 ```
