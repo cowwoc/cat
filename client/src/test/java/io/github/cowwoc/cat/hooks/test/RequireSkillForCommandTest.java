@@ -1,0 +1,344 @@
+/*
+ * Copyright (c) 2026 Gili Tzabari. All rights reserved.
+ *
+ * Licensed under the CAT Commercial License.
+ * See LICENSE.md in the project root for license terms.
+ */
+package io.github.cowwoc.cat.hooks.test;
+
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import io.github.cowwoc.cat.hooks.BashHandler;
+import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.bash.RequireSkillForCommand;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+/**
+ * Tests for {@link RequireSkillForCommand}.
+ * <p>
+ * Each test is fully self-contained, creating its own temporary directories and cleaning them up.
+ */
+public final class RequireSkillForCommandTest
+{
+  private static final String REGISTRY_JSON = """
+    {
+      "guards": [
+        {"pattern": "\\\\bgit\\\\s+rebase\\\\b", "skill": "cat:git-rebase-agent"},
+        {"pattern": "\\\\brm\\\\s+-[a-zA-Z]*r[a-zA-Z]*", "skill": "cat:safe-rm-agent"}
+      ]
+    }
+    """;
+
+  /**
+   * Writes the test registry to {@code tempPluginRoot/config/skill-triggers.json}.
+   *
+   * @param tempPluginRoot the temporary plugin root directory
+   * @throws IOException if writing fails
+   */
+  private static void writeRegistry(Path tempPluginRoot) throws IOException
+  {
+    Path configDir = tempPluginRoot.resolve("config");
+    Files.createDirectories(configDir);
+    Files.writeString(configDir.resolve("skill-triggers.json"), REGISTRY_JSON,
+      UTF_8);
+  }
+
+  /**
+   * Writes the skills-loaded marker for the given session ID under the scope's session base path.
+   *
+   * @param scope the JVM scope
+   * @param sessionId the session ID (used as the agent directory name for main agents)
+   * @param skills the newline-separated skill names to write
+   * @throws IOException if writing fails
+   */
+  private static void writeSkillsLoaded(JvmScope scope, String sessionId, String skills) throws IOException
+  {
+    Path agentDir = scope.getSessionBasePath().toAbsolutePath().normalize().resolve(sessionId);
+    Files.createDirectories(agentDir);
+    Files.writeString(agentDir.resolve("skills-loaded"), skills, UTF_8);
+  }
+
+  /**
+   * Writes the skills-loaded marker for a subagent under the scope's session base path.
+   * <p>
+   * The subagent marker file lives at {@code sessionBasePath/{sessionId}/subagents/{nativeAgentId}/skills-loaded}.
+   *
+   * @param scope the JVM scope
+   * @param sessionId the session ID
+   * @param nativeAgentId the native (non-composite) agent ID
+   * @param skills the newline-separated skill names to write
+   * @throws IOException if writing fails
+   */
+  private static void writeSubagentSkillsLoaded(JvmScope scope, String sessionId, String nativeAgentId,
+    String skills) throws IOException
+  {
+    Path agentDir = scope.getSessionBasePath().toAbsolutePath().normalize().
+      resolve(sessionId).resolve("subagents").resolve(nativeAgentId);
+    Files.createDirectories(agentDir);
+    Files.writeString(agentDir.resolve("skills-loaded"), skills, UTF_8);
+  }
+
+  /**
+   * Verifies that a guarded command is blocked when the required skill has not been loaded.
+   * <p>
+   * The {@code skills-loaded} marker file is absent; the handler must block the command and include the
+   * skill name in the reason.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void guardedCommandBlockedWhenSkillNotLoaded() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("plugin-");
+    Path tempProjectDir = Files.createTempDirectory("project-");
+    try (JvmScope scope = new TestJvmScope(tempProjectDir, tempPluginRoot))
+    {
+      writeRegistry(tempPluginRoot);
+      // No skills-loaded marker written — skill is not loaded
+      RequireSkillForCommand handler = new RequireSkillForCommand(scope);
+
+      BashHandler.Result result = handler.check(
+        TestUtils.bashInput("git rebase origin/main", "/workspace", "test-session-id"));
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("BLOCKED");
+      requireThat(result.reason(), "reason").contains("cat:git-rebase-agent");
+      requireThat(result.reason(), "reason").contains("/cat:");
+      requireThat(result.reason(), "reason").contains("Then retry");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+      TestUtils.deleteDirectoryRecursively(tempProjectDir);
+    }
+  }
+
+  /**
+   * Verifies that a guarded command is allowed when the required skill has been loaded.
+   * <p>
+   * The {@code skills-loaded} marker file contains the required skill name; the handler must allow the command.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void guardedCommandAllowedWhenSkillLoaded() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("plugin-");
+    Path tempProjectDir = Files.createTempDirectory("project-");
+    try (JvmScope scope = new TestJvmScope(tempProjectDir, tempPluginRoot))
+    {
+      writeRegistry(tempPluginRoot);
+      writeSkillsLoaded(scope, "test-session-id", "cat:git-rebase-agent\n");
+      RequireSkillForCommand handler = new RequireSkillForCommand(scope);
+
+      BashHandler.Result result = handler.check(
+        TestUtils.bashInput("git rebase origin/main", "/workspace", "test-session-id"));
+
+      requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.reason(), "reason").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+      TestUtils.deleteDirectoryRecursively(tempProjectDir);
+    }
+  }
+
+  /**
+   * Verifies that unguarded commands (matching no registry pattern) are always allowed.
+   * <p>
+   * A command like {@code git status} must pass through without any skill check.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void unguardedCommandAlwaysAllowed() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("plugin-");
+    Path tempProjectDir = Files.createTempDirectory("project-");
+    try (JvmScope scope = new TestJvmScope(tempProjectDir, tempPluginRoot))
+    {
+      writeRegistry(tempPluginRoot);
+      // No skills-loaded marker — but command doesn't match any guard
+      RequireSkillForCommand handler = new RequireSkillForCommand(scope);
+
+      BashHandler.Result result = handler.check(
+        TestUtils.bashInput("git status", "/workspace", "test-session-id"));
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+      TestUtils.deleteDirectoryRecursively(tempProjectDir);
+    }
+  }
+
+  /**
+   * Verifies that a guarded command run by a subagent is blocked when the required skill is not loaded.
+   * <p>
+   * Uses a non-empty native agent ID to simulate a subagent context. The handler must check the per-subagent
+   * marker file and block when the skill is absent.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void subagentCommandBlockedWhenSkillNotLoaded() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("plugin-");
+    Path tempProjectDir = Files.createTempDirectory("project-");
+    try (JvmScope scope = new TestJvmScope(tempProjectDir, tempPluginRoot))
+    {
+      writeRegistry(tempPluginRoot);
+      // No subagent skills-loaded marker written
+      RequireSkillForCommand handler = new RequireSkillForCommand(scope);
+
+      BashHandler.Result result = handler.check(
+        TestUtils.bashInputWithAgentId("git rebase origin/v2.1", "/workspace", "test-session-id",
+          "subagent-abc123"));
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("BLOCKED");
+      requireThat(result.reason(), "reason").contains("cat:git-rebase-agent");
+      requireThat(result.reason(), "reason").contains("/cat:");
+      requireThat(result.reason(), "reason").contains("Then retry");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+      TestUtils.deleteDirectoryRecursively(tempProjectDir);
+    }
+  }
+
+  /**
+   * Verifies that a guarded command run by a subagent is allowed when the required skill has been loaded.
+   * <p>
+   * Uses a non-empty native agent ID to simulate a subagent context. The handler must check the per-subagent
+   * marker file and allow when the skill is present.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void subagentCommandAllowedWhenSkillLoaded() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("plugin-");
+    Path tempProjectDir = Files.createTempDirectory("project-");
+    try (JvmScope scope = new TestJvmScope(tempProjectDir, tempPluginRoot))
+    {
+      writeRegistry(tempPluginRoot);
+      writeSubagentSkillsLoaded(scope, "test-session-id", "subagent-abc123",
+        "cat:git-rebase-agent\n");
+      RequireSkillForCommand handler = new RequireSkillForCommand(scope);
+
+      BashHandler.Result result = handler.check(
+        TestUtils.bashInputWithAgentId("git rebase origin/v2.1", "/workspace", "test-session-id",
+          "subagent-abc123"));
+
+      requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.reason(), "reason").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+      TestUtils.deleteDirectoryRecursively(tempProjectDir);
+    }
+  }
+
+  /**
+   * Verifies that a guarded command is blocked when the {@code skills-loaded} marker file is empty.
+   * <p>
+   * An empty marker file contains no skill names; the handler must treat it the same as a missing file
+   * and block the command.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void emptyMarkerFileBlocksCommand() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("plugin-");
+    Path tempProjectDir = Files.createTempDirectory("project-");
+    try (JvmScope scope = new TestJvmScope(tempProjectDir, tempPluginRoot))
+    {
+      writeRegistry(tempPluginRoot);
+      writeSkillsLoaded(scope, "test-session-id", "");
+      RequireSkillForCommand handler = new RequireSkillForCommand(scope);
+
+      BashHandler.Result result = handler.check(
+        TestUtils.bashInput("git rebase origin/main", "/workspace", "test-session-id"));
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("cat:git-rebase-agent");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+      TestUtils.deleteDirectoryRecursively(tempProjectDir);
+    }
+  }
+
+  /**
+   * Verifies that a guarded command is blocked when the {@code skills-loaded} marker file contains only
+   * whitespace.
+   * <p>
+   * A whitespace-only marker file yields no valid skill names after stripping; the handler must block.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void whitespaceOnlyMarkerFileBlocksCommand() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("plugin-");
+    Path tempProjectDir = Files.createTempDirectory("project-");
+    try (JvmScope scope = new TestJvmScope(tempProjectDir, tempPluginRoot))
+    {
+      writeRegistry(tempPluginRoot);
+      writeSkillsLoaded(scope, "test-session-id", "   \n  \n\t\n");
+      RequireSkillForCommand handler = new RequireSkillForCommand(scope);
+
+      BashHandler.Result result = handler.check(
+        TestUtils.bashInput("git rebase origin/main", "/workspace", "test-session-id"));
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("cat:git-rebase-agent");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+      TestUtils.deleteDirectoryRecursively(tempProjectDir);
+    }
+  }
+
+  /**
+   * Verifies that an empty command string is always allowed without any skill check.
+   * <p>
+   * The handler must return an allow result immediately for blank or empty commands.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void emptyCommandAlwaysAllowed() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("plugin-");
+    Path tempProjectDir = Files.createTempDirectory("project-");
+    try (JvmScope scope = new TestJvmScope(tempProjectDir, tempPluginRoot))
+    {
+      writeRegistry(tempPluginRoot);
+      RequireSkillForCommand handler = new RequireSkillForCommand(scope);
+
+      BashHandler.Result result = handler.check(
+        TestUtils.bashInput("", "/workspace", "test-session-id"));
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+      TestUtils.deleteDirectoryRecursively(tempProjectDir);
+    }
+  }
+}

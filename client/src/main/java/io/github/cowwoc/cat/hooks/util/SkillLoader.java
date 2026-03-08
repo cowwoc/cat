@@ -245,13 +245,30 @@ public final class SkillLoader
     if (Files.exists(agentMarkerFile))
     {
       String content = Files.readString(agentMarkerFile, StandardCharsets.UTF_8);
-      for (String line : content.split("\n"))
-      {
-        String trimmed = line.strip();
-        if (!trimmed.isEmpty())
-          loadedSkills.add(trimmed);
-      }
+      loadedSkills.addAll(parseSkillNames(content));
     }
+  }
+
+  /**
+   * Parses a skills-loaded marker file's content into a set of skill names.
+   * <p>
+   * Each non-blank line in the content is treated as a skill name after stripping surrounding whitespace.
+   *
+   * @param content the content of a {@code skills-loaded} marker file
+   * @return the set of skill names present in the content
+   * @throws NullPointerException if {@code content} is null
+   */
+  public static Set<String> parseSkillNames(String content)
+  {
+    requireThat(content, "content").isNotNull();
+    Set<String> skills = new HashSet<>();
+    for (String line : content.split("\n"))
+    {
+      String stripped = line.strip();
+      if (!stripped.isEmpty())
+        skills.add(stripped);
+    }
+    return skills;
   }
 
   /**
@@ -383,7 +400,7 @@ public final class SkillLoader
    * @param qualifiedName the qualified skill name
    * @return the bare skill name without the prefix
    */
-  private static String stripPrefix(String qualifiedName)
+  public static String stripPrefix(String qualifiedName)
   {
     int colonIndex = qualifiedName.indexOf(':');
     if (colonIndex >= 0)

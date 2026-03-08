@@ -20,6 +20,7 @@ import io.github.cowwoc.cat.hooks.bash.BlockWorktreeIsolationViolation;
 import io.github.cowwoc.cat.hooks.bash.BlockWrongBranchCommit;
 import io.github.cowwoc.cat.hooks.bash.ComputeBoxLines;
 import io.github.cowwoc.cat.hooks.bash.RemindGitSquash;
+import io.github.cowwoc.cat.hooks.bash.RequireSkillForCommand;
 import io.github.cowwoc.cat.hooks.bash.ValidateCommitType;
 import io.github.cowwoc.cat.hooks.bash.ValidateGitFilterBranch;
 import io.github.cowwoc.cat.hooks.bash.ValidateGitOperations;
@@ -79,7 +80,8 @@ public final class PreToolUseHook implements HookHandler
       new ValidateGitOperations(),
       new VerifyStateInCommit(),
       new WarnFileExtraction(),
-      new WarnMainWorkspaceCommit(scope));
+      new WarnMainWorkspaceCommit(scope),
+      new RequireSkillForCommand(scope));
   }
 
   /**
