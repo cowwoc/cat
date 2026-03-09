@@ -8,11 +8,15 @@ package io.github.cowwoc.cat.hooks.write;
 
 import static io.github.cowwoc.cat.hooks.skills.JsonHelper.getStringOrDefault;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
 import io.github.cowwoc.cat.hooks.IssueStatus;
 import tools.jackson.databind.JsonNode;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -86,7 +90,30 @@ public final class StateSchemaValidator implements FileWriteHandler
     String content = getStringOrDefault(toolInput, "content", "");
 
     if (content.isEmpty())
-      return FileWriteHandler.Result.allow();
+    {
+      // "content" is only present for Write operations. For Edit operations, the tool provides
+      // "old_string" and "new_string" instead. Reconstruct the expected post-edit file content by
+      // applying the replacement to the on-disk file so we can validate the result.
+      String newString = getStringOrDefault(toolInput, "new_string", "");
+      if (newString.isEmpty())
+        return FileWriteHandler.Result.allow();
+      String oldString = getStringOrDefault(toolInput, "old_string", "");
+      EditResult editResult = applyEdit(filePath, oldString, newString);
+      if (editResult.exception != null)
+      {
+        // File could not be read. Block the edit so the user knows validation failed due to
+        // I/O failure rather than allowing potentially invalid content through silently.
+        return FileWriteHandler.Result.block(
+          "Edit validation failed: Could not read " + filePath + " to validate post-edit content.\n" +
+          "This may indicate a file system issue or permission problem.\n" +
+          "Error: " + editResult.exception.getClass().getSimpleName() + ": " + editResult.exception.getMessage());
+      }
+      content = editResult.content;
+      if (content.isEmpty())
+        return FileWriteHandler.Result.block(
+          "Edit rejected: old_string not found in " + filePath + ".\n" +
+          "The file on disk does not contain the text being replaced.");
+    }
 
     Map<String, String> fields = parseFields(content);
     return validateSchema(fields);
@@ -347,5 +374,60 @@ public final class StateSchemaValidator implements FileWriteHandler
     }
 
     return FileWriteHandler.Result.allow();
+  }
+
+  /**
+   * Container for applyEdit result with optional exception.
+   * <p>
+   * When content is non-null, the edit was successfully applied. When content is null and exception
+   * is non-null, the file could not be read.
+   */
+  private static class EditResult
+  {
+    final String content;
+    final IOException exception;
+
+    EditResult(String content)
+    {
+      this.content = content;
+      this.exception = null;
+    }
+
+    EditResult(IOException exception)
+    {
+      this.content = null;
+      this.exception = exception;
+    }
+  }
+
+  /**
+   * Apply an Edit tool's string replacement to the on-disk file content.
+   * <p>
+   * Returns an EditResult containing either the post-edit content or an IOException if the file
+   * could not be read. The caller is responsible for deciding whether to block (fail-fast) or
+   * warn (fail-open).
+   *
+   * @param filePath  the path to the file on disk
+   * @param oldString the substring to replace
+   * @param newString the replacement string
+   * @return EditResult with post-edit content if successful, or the IOException if file unreadable
+   */
+  private EditResult applyEdit(String filePath, String oldString, String newString)
+  {
+    try
+    {
+      String diskContent = Files.readString(Path.of(filePath), UTF_8);
+      // Replace only the first occurrence to match Edit tool semantics
+      int index = diskContent.indexOf(oldString);
+      if (index == -1)
+        return new EditResult(""); // oldString not found - fail-fast (caller blocks)
+      String result = diskContent.substring(0, index) + newString +
+        diskContent.substring(index + oldString.length());
+      return new EditResult(result);
+    }
+    catch (IOException e)
+    {
+      return new EditResult(e); // file unreadable - exception returned to caller
+    }
   }
 }

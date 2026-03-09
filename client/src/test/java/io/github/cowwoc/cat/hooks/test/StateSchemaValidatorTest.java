@@ -7,6 +7,7 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
 import io.github.cowwoc.cat.hooks.JvmScope;
@@ -1903,6 +1904,260 @@ public final class StateSchemaValidatorTest
       requireThat(result.reason(), "reason").contains("Only these keys are allowed:");
       requireThat(result.reason(), "reason").contains("Mandatory: Blocks, Dependencies, Progress, Status");
       requireThat(result.reason(), "reason").contains("Optional: Parent, Resolution, Target Branch");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that an Edit call adding a non-standard field to STATE.md is blocked.
+   */
+  @Test
+  public void editWithNonStandardFieldIsBlocked() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String diskContent = """
+        # State
+
+        - **Status:** open
+        - **Progress:** 0%
+        - **Dependencies:** []
+        - **Blocks:** []
+        """;
+
+      // Write a valid STATE.md file to disk at the path expected by the Edit toolInput
+      Path issueDir = tempDir.resolve(".claude/cat/issues/v2/v2.1/test-issue");
+      Files.createDirectories(issueDir);
+      Path stateMd = issueDir.resolve("STATE.md");
+      Files.writeString(stateMd, diskContent, UTF_8);
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", stateMd.toString());
+      toolInput.put("old_string", "- **Blocks:** []");
+      toolInput.put("new_string", "- **Blocks:** []\n- **Stakeholder Review:** xyz");
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Stakeholder Review");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that an Edit call making a valid change to STATE.md is allowed.
+   */
+  @Test
+  public void editWithValidChangeIsAllowed() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String diskContent = """
+        # State
+
+        - **Status:** open
+        - **Progress:** 0%
+        - **Dependencies:** []
+        - **Blocks:** []
+        """;
+
+      Path issueDir = tempDir.resolve(".claude/cat/issues/v2/v2.1/test-issue");
+      Files.createDirectories(issueDir);
+      Path stateMd = issueDir.resolve("STATE.md");
+      Files.writeString(stateMd, diskContent, UTF_8);
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", stateMd.toString());
+      toolInput.put("old_string", "- **Status:** open\n- **Progress:** 0%");
+      toolInput.put("new_string", "- **Status:** closed\n- **Progress:** 100%\n- **Resolution:** implemented");
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that an Edit call with a non-existent file fails open (is allowed).
+   */
+  @Test
+  public void editWithMissingFileReturnsError() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", tempDir.resolve(".claude/cat/issues/v2/v2.1/nonexistent/STATE.md").toString());
+      toolInput.put("old_string", "- **Blocks:** []");
+      toolInput.put("new_string", "- **Blocks:** []\n- **Stakeholder Review:** xyz");
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      // File does not exist, so applyEdit() throws IOException. This should be reported to the
+      // user as a blocked edit with the error details, not silently allowed.
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Edit validation failed");
+      requireThat(result.reason(), "reason").contains("NoSuchFileException");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that an Edit replacing only the first occurrence is validated correctly when oldString appears
+   * multiple times in STATE.md.
+   * <p>
+   * When "[]" appears in both "- **Dependencies:** []" and "- **Blocks:** []", the Edit tool replaces only
+   * the first match. Replacing "[]" with "[dep-a]" must yield "- **Dependencies:** [dep-a]" while leaving
+   * "- **Blocks:** []" untouched — and the resulting content must be valid.
+   */
+  @Test
+  public void editWithMultipleOccurrencesOfOldStringReplacesFirstOnly() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      // "[]" appears twice: once in Dependencies and once in Blocks
+      String diskContent = """
+        # State
+
+        - **Status:** open
+        - **Progress:** 0%
+        - **Dependencies:** []
+        - **Blocks:** []
+        """;
+
+      Path issueDir = tempDir.resolve(".claude/cat/issues/v2/v2.1/test-issue");
+      Files.createDirectories(issueDir);
+      Path stateMd = issueDir.resolve("STATE.md");
+      Files.writeString(stateMd, diskContent, UTF_8);
+
+      // Replace first occurrence of "[]" with "[dep-a]"; Blocks still has "[]"
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", stateMd.toString());
+      toolInput.put("old_string", "[]");
+      toolInput.put("new_string", "[dep-a]");
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      // Result must be allowed — the reconstructed content is a valid open STATE.md
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that an Edit call whose oldString is not present in the file is blocked (fail-fast).
+   * <p>
+   * When oldString is missing from the file, the validator cannot reconstruct the post-edit content.
+   * Rather than silently allowing the edit, it blocks with a clear error message.
+   */
+  @Test
+  public void editWithOldStringNotFoundInFileIsBlocked() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String diskContent = """
+        # State
+
+        - **Status:** open
+        - **Progress:** 0%
+        - **Dependencies:** []
+        - **Blocks:** []
+        """;
+
+      Path issueDir = tempDir.resolve(".claude/cat/issues/v2/v2.1/test-issue");
+      Files.createDirectories(issueDir);
+      Path stateMd = issueDir.resolve("STATE.md");
+      Files.writeString(stateMd, diskContent, UTF_8);
+
+      // oldString does not exist in the file
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", stateMd.toString());
+      toolInput.put("old_string", "- **Status:** in_progress");
+      toolInput.put("new_string", "- **Status:** closed\n- **Progress:** 100%\n- **Resolution:** implemented");
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      // Validator should block — oldString not found means we can't validate the post-edit content
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("old_string not found");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that an Edit that changes Status to an invalid value is blocked.
+   */
+  @Test
+  public void editResultingInInvalidStatusIsBlocked() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String diskContent = """
+        # State
+
+        - **Status:** open
+        - **Progress:** 0%
+        - **Dependencies:** []
+        - **Blocks:** []
+        """;
+
+      Path issueDir = tempDir.resolve(".claude/cat/issues/v2/v2.1/test-issue");
+      Files.createDirectories(issueDir);
+      Path stateMd = issueDir.resolve("STATE.md");
+      Files.writeString(stateMd, diskContent, UTF_8);
+
+      // Replace Status with an invalid value
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", stateMd.toString());
+      toolInput.put("old_string", "- **Status:** open");
+      toolInput.put("new_string", "- **Status:** pending");
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Status");
     }
     finally
     {

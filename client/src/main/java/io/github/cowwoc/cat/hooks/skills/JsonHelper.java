@@ -52,29 +52,6 @@ public final class JsonHelper
   }
 
   /**
-   * Gets a string value from a JSON node, including empty strings, or returns a default.
-   * <p>
-   * Unlike {@link #getStringOrDefault(JsonNode, String, String)}, this method treats an empty string as a
-   * valid value and returns it as-is.
-   *
-   * @param node the JSON node to read from
-   * @param key the key to retrieve
-   * @param defaultValue the value to return if key is missing or not a string
-   * @return the string value (possibly empty), or {@code defaultValue}
-   * @throws NullPointerException if {@code node} or {@code key} are null
-   */
-  public static String getStringOrEmpty(JsonNode node, String key, String defaultValue)
-  {
-    requireThat(node, "node").isNotNull();
-    requireThat(key, "key").isNotBlank();
-
-    JsonNode child = node.get(key);
-    if (child != null && child.isString())
-      return child.asString();
-    return defaultValue;
-  }
-
-  /**
    * Gets an integer value from a JSON node or returns a default.
    *
    * @param node the JSON node to read from
