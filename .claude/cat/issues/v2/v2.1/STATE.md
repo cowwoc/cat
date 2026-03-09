@@ -51,6 +51,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - show-active-issue-in-statusline
 - fix-work-prepare-lock-order
 - fix-collect-results-agent-id-format-docs
+- optimize-work-prepare-performance
 
 
 ## Issues Closed
