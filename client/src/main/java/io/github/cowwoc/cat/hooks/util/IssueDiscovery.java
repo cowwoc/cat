@@ -743,15 +743,9 @@ public final class IssueDiscovery
     if (!blockingDependencies.isEmpty())
       return new DiscoveryResult.Blocked(issueId, blockingDependencies);
 
-    // Check for existing worktree
-    Path worktreePath = getWorktreePath(issueId);
-    if (Files.isDirectory(worktreePath))
-    {
-      return new DiscoveryResult.ExistingWorktree(issueId, major, minor, patch, issueName,
-        issueDir.toString(), worktreePath.toString());
-    }
-
-    // Try to acquire lock
+    // Try to acquire lock before checking for an existing worktree so that a locked issue
+    // (owned by another session) is reported as LOCKED rather than triggering the worktree-cleanup
+    // prompt.
     if (!options.sessionId().isEmpty())
     {
       IssueLock.LockResult lockResult = issueLock.acquire(issueId, options.sessionId(), "");
@@ -760,6 +754,14 @@ public final class IssueDiscovery
         return new DiscoveryResult.NotExecutable(issueId,
           "Issue locked by another session: " + locked.owner());
       }
+    }
+
+    // Check for existing worktree
+    Path worktreePath = getWorktreePath(issueId);
+    if (Files.isDirectory(worktreePath))
+    {
+      return new DiscoveryResult.ExistingWorktree(issueId, major, minor, patch, issueName,
+        issueDir.toString(), worktreePath.toString());
     }
 
     return new DiscoveryResult.Found(issueId, major, minor, patch, issueName, issueDir.toString(),
@@ -1089,17 +1091,18 @@ public final class IssueDiscovery
         !postconditionsSatisfied(minorDir))
         continue;
 
-      // Check for existing worktree
-      if (Files.isDirectory(getWorktreePath(issueId)))
-        continue;
-
-      // Try to acquire lock
+      // Try to acquire lock before checking for an existing worktree so that a locked issue
+      // (owned by another session) is skipped rather than treated as an abandoned worktree.
       if (!options.sessionId().isEmpty())
       {
         IssueLock.LockResult lockResult = issueLock.acquire(issueId, options.sessionId(), "");
         if (!(lockResult instanceof IssueLock.LockResult.Acquired))
           continue;
       }
+
+      // Check for existing worktree
+      if (Files.isDirectory(getWorktreePath(issueId)))
+        continue;
 
       return new DiscoveryResult.Found(issueId, major, minor, patch, issueName, issueDir.toString(),
         scopeName, stateMdMissing);

@@ -545,6 +545,64 @@ public class WorkPrepareTest
   }
 
   /**
+   * Verifies that execute returns LOCKED (not ERROR) when the issue is locked by another session
+   * AND an existing worktree directory is present for that issue.
+   * <p>
+   * Regression test: previously the worktree check ran before the lock check, causing the agent to
+   * show a misleading "existing worktree — clean up?" prompt instead of the correct LOCKED response.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeReturnsLockedWhenIssueIsLockedAndWorktreeExists() throws IOException
+  {
+    Path projectDir = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      createIssue(projectDir, "2", "1", "locked-with-wt", "open");
+      GitCommands.runGit(projectDir, "add", ".");
+      GitCommands.runGit(projectDir, "commit", "-m", "Add issue");
+
+      // Create a lock file owned by a different session with a recent timestamp (non-stale)
+      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Files.createDirectories(locksDir);
+      String otherSession = UUID.randomUUID().toString();
+      long recentTimestamp = Instant.now().getEpochSecond();
+      String lockContent = """
+        {
+          "session_id": "%s",
+          "worktrees": {"/some/worktree": "%s"},
+          "created_at": %d,
+          "created_iso": "2026-03-01T23:00:00Z"
+        }""".formatted(otherSession, otherSession, recentTimestamp);
+      Files.writeString(locksDir.resolve("2.1-locked-with-wt.lock"), lockContent);
+
+      // Create an actual git worktree for the issue branch so the worktree directory exists
+      worktreePath = scope.getProjectCatDir().resolve("worktrees").resolve("2.1-locked-with-wt");
+      Files.createDirectories(worktreePath.getParent());
+      GitCommands.runGit(projectDir, "worktree", "add", "-b", "2.1-locked-with-wt",
+        worktreePath.toString(), "HEAD");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "2.1-locked-with-wt", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("LOCKED");
+      requireThat(node.path("message").asString(), "message").contains("locked");
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectDir, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
    * Verifies that execute detects suspicious commits on the target branch and populates
    * potentially_complete and suspicious_commits fields in the READY result.
    *
