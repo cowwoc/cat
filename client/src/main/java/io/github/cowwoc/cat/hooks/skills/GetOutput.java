@@ -7,9 +7,11 @@
 package io.github.cowwoc.cat.hooks.skills;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.util.AgentIdPatterns;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -49,14 +51,21 @@ public final class GetOutput implements SkillOutput
   /**
    * Generates output by dispatching to the appropriate skill handler.
    * <p>
-   * The first argument is the output type in dot-notation: {@code skill[.page]}.
-   * The part before the first dot selects the handler; the part after the dot (if present) is
-   * prepended to the handler's arguments as a page selector. Any additional arguments are passed
-   * through to the handler.
+   * When invoked via {@code get-output-agent/first-use.md} with {@code $ARGUMENTS}, the first
+   * argument is the agent ID ({@code $0}) and is skipped. The second argument is then the output
+   * type in dot-notation: {@code skill[.page]}.
+   * <p>
+   * When invoked directly (e.g., from CLI or tests without an agent ID prefix), and the first
+   * argument matches the agent ID format (UUID or UUID/subagents/...), it is also skipped.
+   * Otherwise, the first argument is used as the type directly.
+   * <p>
+   * The type format is {@code skill[.page]}: the part before the first dot selects the handler,
+   * and the optional part after the dot is passed as a page argument. Any additional arguments are
+   * passed through to the handler.
    * <p>
    * The output is wrapped in {@code <output type="...">} tags.
    *
-   * @param args the preprocessor arguments: [type, ...extra-args]
+   * @param args the preprocessor arguments: [$0-agent-id (skipped), type, ...extra-args]
    * @return the generated output wrapped in an output tag
    * @throws NullPointerException if {@code args} is null
    * @throws IllegalArgumentException if no type argument is provided or if the skill is unknown
@@ -67,12 +76,15 @@ public final class GetOutput implements SkillOutput
   {
     requireThat(args, "args").isNotNull();
 
-    if (args.length < 1)
+    // Skip $0 (the agent ID) which is always the first argument when invoked via $ARGUMENTS
+    String[] effectiveArgs = skipAgentId(args);
+
+    if (effectiveArgs.length < 1)
       throw new IllegalArgumentException(
         "get-output requires a type argument. Usage: get-output <type> [extra-args...]\n" +
         "Type format: skill[.page] (e.g., status, config.settings, init.choose-your-partner)");
 
-    String type = args[0];
+    String type = effectiveArgs[0];
     int dotIndex = type.indexOf('.');
     String skill;
     String page;
@@ -88,8 +100,8 @@ public final class GetOutput implements SkillOutput
     }
 
     // Build handler args: [page (if present), ...extra-args]
-    String[] extraArgs = new String[args.length - 1];
-    System.arraycopy(args, 1, extraArgs, 0, args.length - 1);
+    String[] extraArgs = new String[effectiveArgs.length - 1];
+    System.arraycopy(effectiveArgs, 1, extraArgs, 0, effectiveArgs.length - 1);
 
     String[] handlerArgs;
     if (page.isEmpty())
@@ -131,6 +143,29 @@ public final class GetOutput implements SkillOutput
       <output type="%s">
       %s
       </output>""".formatted(sanitizedType, content);
+  }
+
+  /**
+   * Skips the first argument if it matches the agent ID format (UUID or subagent ID).
+   * <p>
+   * When invoked via {@code get-output-agent/first-use.md} with {@code $ARGUMENTS}, the first
+   * argument is the agent ID ({@code $0}). This method strips it so the remaining arguments
+   * start with the output type.
+   *
+   * @param args the raw arguments array
+   * @return the arguments with the agent ID prefix removed if present, or the original array if
+   *   the first argument is not an agent ID
+   */
+  private static String[] skipAgentId(String[] args)
+  {
+    if (args.length > 0)
+    {
+      String first = args[0];
+      if (AgentIdPatterns.SESSION_ID_PATTERN.matcher(first).matches() ||
+        AgentIdPatterns.SUBAGENT_ID_PATTERN.matcher(first).matches())
+        return Arrays.copyOfRange(args, 1, args.length);
+    }
+    return args;
   }
 
   /**

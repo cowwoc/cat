@@ -107,18 +107,6 @@ public final class GetSkill
   private static final Pattern POSITIONAL_INDEXED_ARG_PATTERN = Pattern.compile("\\$(\\d+)");
   private static final Pattern ARGUMENTS_INDEXED_PATTERN = Pattern.compile("\\$ARGUMENTS\\[(\\d+)]");
   private static final String LAUNCHER_DIRECTORY = "client/bin";
-  /**
-   * Matches a standard UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (case-insensitive).
-   */
-  private static final Pattern UUID_PATTERN = Pattern.compile(
-    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
-    Pattern.CASE_INSENSITIVE);
-  /**
-   * Matches a subagent ID: {uuid}/subagents/{alphanumeric, hyphens, underscores} (case-insensitive).
-   */
-  private static final Pattern SUBAGENT_ID_PATTERN = Pattern.compile(
-    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/subagents/[A-Za-z0-9_-]+",
-    Pattern.CASE_INSENSITIVE);
 
   private final JvmScope scope;
   private final Path pluginRoot;
@@ -194,8 +182,8 @@ public final class GetSkill
     // the model passed the wrong argument (e.g., a branch name or path). Fail fast to
     // prevent marker files from being created in wrong directories.
     if (!catAgentId.equals(scope.getClaudeSessionId()) &&
-      !UUID_PATTERN.matcher(catAgentId).matches() &&
-      !SUBAGENT_ID_PATTERN.matcher(catAgentId).matches())
+      !AgentIdPatterns.SESSION_ID_PATTERN.matcher(catAgentId).matches() &&
+      !AgentIdPatterns.SUBAGENT_ID_PATTERN.matcher(catAgentId).matches())
     {
       throw new IllegalArgumentException(
         "catAgentId '" + catAgentId + "' does not match a valid format. " +
