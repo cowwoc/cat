@@ -8,12 +8,16 @@ package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.skills.GetRetrospectiveOutput;
 import org.testng.annotations.Test;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.stream.Stream;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -1435,6 +1439,319 @@ public final class GetRetrospectiveOutputTest
       String output = handler.getOutput(new String[0]);
       requireThat(output, "output").contains("P001: 📉 IMPROVING — 5 total, 2 remaining");
       requireThat(output, "output").doesNotContain("P001: 📉 IMPROVING — 5 total, 2 remaining -");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that mistake_count_since_last is reset to 0 and last_retrospective is updated to a recent
+   * timestamp in index.json after successful retrospective analysis output is generated.
+   */
+  @Test
+  public void counterResetAfterSuccessfulAnalysis() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Files.createDirectories(retroDir);
+
+      Instant eightDaysAgo = Instant.now().minus(8, ChronoUnit.DAYS);
+      String indexContent = """
+        {
+          "version": "2.0",
+          "config": {
+            "trigger_interval_days": 7,
+            "mistake_count_threshold": 10
+          },
+          "last_retrospective": "%s",
+          "mistake_count_since_last": 3,
+          "files": {
+            "mistakes": [],
+            "retrospectives": []
+          },
+          "patterns": [],
+          "action_items": []
+        }
+        """.formatted(eightDaysAgo);
+
+      Path indexFile = retroDir.resolve("index.json");
+      Files.writeString(indexFile, indexContent);
+
+      GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
+      String output = handler.getOutput(new String[0]);
+
+      // Confirm analysis path was taken
+      requireThat(output, "output").contains("RETROSPECTIVE ANALYSIS");
+
+      // Re-read index.json from disk and verify counter was reset
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode updatedIndex = mapper.readTree(Files.readString(indexFile));
+      requireThat(updatedIndex.get("mistake_count_since_last").asInt(), "mistake_count_since_last").
+        isEqualTo(0);
+
+      // Verify last_retrospective was updated to a recent timestamp
+      String updatedLastRetro = updatedIndex.get("last_retrospective").asString();
+      requireThat(updatedLastRetro, "last_retrospective").isNotEqualTo(eightDaysAgo.toString());
+      Instant updatedInstant = Instant.parse(updatedLastRetro);
+      long secondsDiff = Math.abs(Duration.between(Instant.now(), updatedInstant).getSeconds());
+      requireThat(secondsDiff, "secondsDiff").isLessThanOrEqualTo(60L);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that mistake_count_since_last is not reset when the retrospective threshold is not met
+   * and a status message is returned instead of an analysis.
+   * Also verifies last_retrospective is unchanged and the entire file content is unmodified.
+   */
+  @Test
+  public void counterNotResetWhenThresholdNotMet() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Files.createDirectories(retroDir);
+
+      Instant yesterday = Instant.now().minus(1, ChronoUnit.DAYS);
+      String indexContent = """
+        {
+          "version": "2.0",
+          "config": {
+            "trigger_interval_days": 7,
+            "mistake_count_threshold": 10
+          },
+          "last_retrospective": "%s",
+          "mistake_count_since_last": 5,
+          "files": {
+            "mistakes": [],
+            "retrospectives": []
+          },
+          "patterns": [],
+          "action_items": []
+        }
+        """.formatted(yesterday);
+
+      Path indexFile = retroDir.resolve("index.json");
+      Files.writeString(indexFile, indexContent);
+
+      GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
+      String output = handler.getOutput(new String[0]);
+
+      // Confirm status-message path was taken
+      requireThat(output, "output").contains("Retrospective not triggered");
+
+      // Re-read index.json from disk and verify counter was NOT reset
+      JsonMapper mapper = scope.getJsonMapper();
+      String diskContent = Files.readString(indexFile);
+      JsonNode updatedIndex = mapper.readTree(diskContent);
+      requireThat(updatedIndex.get("mistake_count_since_last").asInt(), "mistake_count_since_last").
+        isEqualTo(5);
+      requireThat(updatedIndex.get("last_retrospective").asString(), "last_retrospective").
+        isEqualTo(yesterday.toString());
+
+      // Verify the entire file content is unchanged
+      requireThat(diskContent, "diskContent").isEqualTo(indexContent);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that no counter reset is attempted when getOutput returns an error (e.g., missing
+   * retrospectives directory).
+   */
+  @Test
+  public void counterNotResetOnErrorPath() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      // No .claude/cat/retrospectives directory created — triggers missing-directory error
+      GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
+      String output = handler.getOutput(new String[0]);
+
+      // Confirm error path was taken
+      requireThat(output, "output").contains("ERROR:");
+      requireThat(output, "output").contains("Retrospectives directory not found");
+
+      // Verify no temp file was written anywhere in tempDir
+      Path tmpFile = tempDir.resolve("index.json.tmp");
+      requireThat(Files.exists(tmpFile), "tmpFileExists").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that retrospective analysis is triggered on the first retrospective (last_retrospective
+   * is empty or "null"), counter is reset to 0, and last_retrospective is set to a recent timestamp.
+   */
+  @Test
+  public void counterResetOnFirstRetrospective() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Files.createDirectories(retroDir);
+
+      String mistakesContent = """
+        {
+          "period": "2026-01",
+          "mistakes": [
+            {
+              "id": "M001",
+              "timestamp": "2026-01-15T10:00:00Z",
+              "category": "test_failure",
+              "description": "First mistake"
+            }
+          ]
+        }
+        """;
+      Files.writeString(retroDir.resolve("mistakes-2026-01.json"), mistakesContent);
+
+      String indexContent = """
+        {
+          "version": "2.0",
+          "config": {
+            "trigger_interval_days": 7,
+            "mistake_count_threshold": 10
+          },
+          "last_retrospective": "",
+          "mistake_count_since_last": 0,
+          "files": {
+            "mistakes": ["mistakes-2026-01.json"],
+            "retrospectives": []
+          },
+          "patterns": [],
+          "action_items": []
+        }
+        """;
+
+      Path indexFile = retroDir.resolve("index.json");
+      Files.writeString(indexFile, indexContent);
+
+      GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
+      String output = handler.getOutput(new String[0]);
+
+      // Confirm analysis path was taken
+      requireThat(output, "output").contains("RETROSPECTIVE ANALYSIS");
+      requireThat(output, "output").contains("First retrospective with 1 logged mistakes");
+
+      // Re-read index.json and verify counter reset and timestamp updated
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode updatedIndex = mapper.readTree(Files.readString(indexFile));
+      requireThat(updatedIndex.get("mistake_count_since_last").asInt(), "mistake_count_since_last").
+        isEqualTo(0);
+      String updatedLastRetro = updatedIndex.get("last_retrospective").asString();
+      requireThat(updatedLastRetro, "last_retrospective").isNotEqualTo("");
+      Instant updatedInstant = Instant.parse(updatedLastRetro);
+      long secondsDiff = Math.abs(Duration.between(Instant.now(), updatedInstant).getSeconds());
+      requireThat(secondsDiff, "secondsDiff").isLessThanOrEqualTo(60L);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that retrospective analysis is triggered when mistake_count_since_last reaches the
+   * mistake_count_threshold, counter is reset to 0, and last_retrospective is updated.
+   */
+  @Test
+  public void counterResetOnMistakeThresholdTrigger() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Files.createDirectories(retroDir);
+
+      // Set last_retrospective to yesterday to disable the time trigger (1 day < 7 day threshold)
+      Instant yesterday = Instant.now().minus(1, ChronoUnit.DAYS);
+      String indexContent = """
+        {
+          "version": "2.0",
+          "config": {
+            "trigger_interval_days": 7,
+            "mistake_count_threshold": 10
+          },
+          "last_retrospective": "%s",
+          "mistake_count_since_last": 10,
+          "files": {
+            "mistakes": [],
+            "retrospectives": []
+          },
+          "patterns": [],
+          "action_items": []
+        }
+        """.formatted(yesterday);
+
+      Path indexFile = retroDir.resolve("index.json");
+      Files.writeString(indexFile, indexContent);
+
+      GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
+      String output = handler.getOutput(new String[0]);
+
+      // Confirm analysis path was taken due to mistake count threshold
+      requireThat(output, "output").contains("RETROSPECTIVE ANALYSIS");
+      requireThat(output, "output").
+        contains("Trigger: 10 mistakes since last retrospective (threshold: 10)");
+
+      // Re-read index.json and verify counter reset to 0
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode updatedIndex = mapper.readTree(Files.readString(indexFile));
+      requireThat(updatedIndex.get("mistake_count_since_last").asInt(), "mistake_count_since_last").
+        isEqualTo(0);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that no counter reset is attempted when getOutput returns an error due to a missing
+   * index.json file, and no temp file is created.
+   */
+  @Test
+  public void counterNotResetOnErrorPathMissingIndexFile() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Files.createDirectories(retroDir);
+
+      // retroDir exists but index.json does NOT exist
+      GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
+      String output = handler.getOutput(new String[0]);
+
+      // Confirm error path was taken
+      requireThat(output, "output").contains("ERROR:");
+      requireThat(output, "output").contains("Index file not found");
+
+      // Verify no temp file was created in retroDir
+      long tmpFileCount;
+      try (Stream<Path> stream = Files.list(retroDir))
+      {
+        tmpFileCount = stream.filter(p -> p.getFileName().toString().endsWith(".tmp")).
+          count();
+      }
+      requireThat(tmpFileCount, "tmpFileCount").isEqualTo(0L);
     }
     finally
     {
