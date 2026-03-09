@@ -50,6 +50,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-state-schema-validator-edit-blind-spot
 - show-active-issue-in-statusline
 - fix-work-prepare-lock-order
+- fix-collect-results-agent-id-format-docs
 
 
 ## Issues Closed
