@@ -392,6 +392,58 @@ See `templates/issue-state.md` for the STATE.md template.
 `${CLAUDE_PLUGIN_ROOT}` is not expanded by SkillLoader in content body (only inside `!` directive strings).
 Claude resolves it at runtime using the `CLAUDE_PLUGIN_ROOT` environment variable (injected by `InjectEnv.java`).
 
+## Output Tags in Preprocessor Directives
+
+**Convention:** Preprocessor commands return `<output>` tags as part of their output. Skill files do not wrap
+preprocessor commands in `<output>` tags.
+
+### How It Works
+
+SkillLoader processes skill content in two phases:
+
+1. **Preprocessor expansion:** `processPreprocessorDirectives()` expands `!` backtick directives by executing the
+   referenced command. The command's stdout replaces the directive in the content.
+2. **Content parsing:** `parseContent()` splits the expanded content on the last `<output>` tag. Content before the tag
+   becomes the instruction body (cached after first load). Content inside becomes the output body (refreshed on every
+   invocation).
+
+Because preprocessing runs before parsing, a Java handler can return content containing `<output>` tags. After
+expansion, `parseContent()` finds the `<output>` tag in the expanded content and splits correctly.
+
+### Why This Matters
+
+Skills that need fresh data on every invocation (not just the first load) must use `<output>` tags. Without them,
+subsequent loads return a short "already loaded" reference and discard the expanded preprocessor output. With
+`<output>` tags, the output body is regenerated fresh every time the skill is invoked.
+
+### Pattern
+
+**Java handler returns `<output>` tags:**
+
+```java
+@Override
+public String getOutput(String[] args) throws IOException
+{
+  String json = buildData();
+  return "<output>\n" + json + "\n</output>";
+}
+```
+
+**Skill file uses bare preprocessor directive (no wrapper):**
+
+```markdown
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/my-handler"`
+```
+
+**Do NOT wrap preprocessor directives in `<output>` tags in the skill file:**
+
+```markdown
+<!-- WRONG: redundant wrapper -->
+<output>
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/my-handler"`
+</output>
+```
+
 ## Output Path Changes Convention
 
 **MANDATORY:** When modifying a skill's output mechanism, changes must be validated with empirical testing before and after.
