@@ -52,6 +52,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-work-prepare-lock-order
 - fix-collect-results-agent-id-format-docs
 - optimize-work-prepare-performance
+- add-adversarial-tdd-to-skill-builder
 
 
 ## Issues Closed
