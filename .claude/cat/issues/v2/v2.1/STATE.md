@@ -58,6 +58,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-retro-counter-reset-recurrence
 - add-tasklist-update-convention
 - add-skill-builder-batch-review-mode
+- fix-commit-message-shell-expansion
 
 
 ## Issues Closed
