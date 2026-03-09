@@ -30,7 +30,39 @@ When current level failed, escalate:
 | Documentation | Hook/Validation | Add pre-commit hook that blocks incorrect behavior |
 | Process | Code fix | Make incorrect path impossible in code |
 | Skill | Hook | Add enforcement that blocks wrong approach |
+| Threshold | Lower threshold + hook | Add monitoring that forces action |
 | Validation | Code fix | Compile-time or runtime enforcement |
+
+## Priming Root Cause
+
+When the investigate phase sets `priming_found: true`, the prevention hierarchy changes. Priming means a document
+**caused** the mistake — not merely failed to prevent it. The document is the root cause.
+
+**Mandatory evaluation order when `priming_found: true`:**
+
+1. **Remove or correct the priming source first.** If the document can be modified (rewritten, reordered, or
+   removed), that IS the prevention. Prevention type is `documentation` targeting the priming source itself.
+2. **Hooks or enforcement only as a fallback.** Use hook/enforcement (level 2) only when the priming source
+   cannot be modified — for example, it is an external document, a read-only reference, or required for
+   legitimate reasons that outweigh the priming risk.
+
+**Rationale:** Removing the cause is always cheaper and more durable than enforcing against the symptom.
+A hook that blocks the wrong behavior still leaves the priming in place — agents will be primed toward the
+wrong behavior and rely on the hook catching it. Fix the source.
+
+| Priming Source | Can Modify? | Prevention Action |
+|----------------|-------------|-------------------|
+| Skill file in `plugin/skills/` | Yes | Rewrite or remove the priming section |
+| Concept doc in `plugin/concepts/` | Yes | Rewrite or remove the priming section |
+| External documentation (out of repo) | No | Add hook to intercept/enforce correct behavior |
+| Read-only reference required for context | No | Add enforcement layer; mark as priming risk |
+
+**Key distinction from escalation rules:**
+
+| Situation | Meaning | Action |
+|-----------|---------|--------|
+| Documentation failed to prevent mistake | Doc was passive; agent didn't follow it | Escalate to hook |
+| Documentation caused the mistake (priming) | Doc was active; agent followed it incorrectly | Fix the doc |
 
 ## Documentation Prevention Blocked When (A002)
 
@@ -39,7 +71,7 @@ When current level failed, escalate:
 | Similar documentation already exists | Documentation already failed | Escalate to hook or code_fix |
 | Mistake category is `protocol_violation` | Protocol was documented but violated | Escalate to hook enforcement |
 | This is a recurrence (`recurrence_of` is set) | Previous prevention failed | Escalate to stronger level |
-| prevention_type would be `documentation` (level 7) | Weakest level, often ineffective | Consider hook (level 2) or validation (level 3) |
+| prevention_type would be `documentation` (level 7) | Weakest level, often ineffective | Consider hook (level 2) or validation (level 3) (exception: when `priming_found: true` and source is modifiable — see learn-agent Step 5b) |
 
 ## Prevention Quality Checklist
 

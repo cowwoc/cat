@@ -44,6 +44,46 @@ context_degradation_analysis:
   confidence: {0.0-1.0}
 ```
 
+## Step 5b: Priming Source Check (MANDATORY when `priming_found: true`)
+
+**If `investigate.priming_analysis.priming_found` is true, complete this check BEFORE selecting a prevention level.**
+
+The investigate phase identified a document that actively led the agent toward the wrong behavior. The priming
+source is the root cause — not merely a prevention that failed. Fixing the source eliminates the cause.
+
+```yaml
+priming_source_check:
+  priming_found: true  # confirmed from investigate phase
+
+  # Step 1: Identify the source
+  priming_source: "{path to the document that primed wrong behavior}"
+
+  # Step 2: Evaluate modifiability
+  can_modify_source:
+    is_in_repo: true|false           # Is the document in this repository?
+    is_read_only: true|false         # Is editing blocked for any reason?
+    is_required_intact: true|false   # Must remain unchanged for legitimate purpose?
+
+  # Step 3: Choose prevention based on modifiability
+  if_can_modify:
+    prevention_type: documentation   # Target the priming source
+    action: "Rewrite or remove the section that caused the priming"
+    note: "This IS the prevention — do NOT add a hook on top of an unfixed priming source"
+
+  if_cannot_modify:
+    prevention_type: hook            # Intercept and enforce correct behavior
+    action: "Add enforcement that overrides the priming at decision time"
+    note: "Document in prevention_description why source could not be modified"
+```
+
+**Decision rule:** If the priming source can be modified → `prevention_type: documentation` targeting
+the priming source. Skip to Step 9. Do NOT default to hook (level 2) when the source can be corrected.
+
+**Reference:** See [prevention-hierarchy.md § Priming Root Cause](prevention-hierarchy.md) for the full
+rationale and decision table.
+
+---
+
 ## Step 6: Identify Prevention Level
 
 **Reference:** See [prevention-hierarchy.md](prevention-hierarchy.md) for detailed hierarchy and escalation rules.
@@ -279,14 +319,8 @@ existing_prevention_check:
 **Key insight:** Existing prevention that didn't prevent the mistake is NOT prevention - it's
 failed prevention. You must escalate to a level that will actually work.
 
-**Escalation hierarchy (when current level failed):**
-
-| Failed Level | Escalate To | Example |
-|--------------|-------------|---------|
-| Documentation | Hook/Validation | Add pre-commit hook that blocks incorrect behavior |
-| Process | Code fix | Make incorrect path impossible in code |
-| Threshold | Lower threshold + hook | Add monitoring that forces action |
-| Validation | Code fix | Compile-time or runtime enforcement |
+**Escalation hierarchy:** See [prevention-hierarchy.md § Escalation Rules](prevention-hierarchy.md) for the
+full table. When the current level failed, escalate to the next stronger level.
 
 **Example - Documentation failed:**
 
@@ -310,14 +344,9 @@ action: |
 **The prevention step MUST take NEW action.** Recording a mistake without implementing NEW prevention
 (beyond what already existed) is not learning - it's just logging. The same mistake WILL recur.
 
-**BLOCKING CRITERIA (A002) - Documentation-level prevention NOT ALLOWED when:**
-
-| Condition | Why Blocked | Required Action |
-|-----------|-------------|-----------------|
-| Similar documentation already exists | Documentation already failed | Escalate to hook or code_fix |
-| Mistake category is `protocol_violation` | Protocol was documented but violated | Escalate to hook enforcement |
-| Recurrence (`recurrence_of` set) | Previous prevention may have missed root cause | Re-examine from fresh evidence |
-| `prevention_type` is `documentation` (level 7) | Weakest level, often ineffective | Use hook or validation instead |
+**BLOCKING CRITERIA (A002):** See
+[prevention-hierarchy.md § Documentation Prevention Blocked When](prevention-hierarchy.md) for the full blocking
+table and priming exception. Documentation-level prevention is NOT ALLOWED when conditions in that table are met.
 
 **Self-check before recording prevention_type: documentation:**
 
