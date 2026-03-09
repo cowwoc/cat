@@ -246,4 +246,35 @@ public final class EnforceCollectAfterAgentTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that the block reason contains the composite agent ID construction formula so the main agent
+   * knows how to form the correct cat_agent_id argument.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void blockReasonContainsCompositeIdFormula() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("enforce-collect-after-agent-test-");
+    String sessionId = UUID.randomUUID().toString();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      createFlagFile(scope, sessionId);
+
+      EnforceCollectAfterAgent handler = new EnforceCollectAfterAgent(scope);
+      JsonNode toolInput = createSkillInput(mapper, "cat:status-agent");
+      TaskHandler.Result result = handler.check(toolInput, sessionId, "");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      String reason = result.reason();
+      requireThat(reason, "reason").contains("{CLAUDE_SESSION_ID}/subagents/{rawAgentId}");
+      requireThat(reason, "reason").contains("rawAgentId");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }

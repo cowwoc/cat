@@ -104,6 +104,9 @@ public final class EnforceCollectAfterAgent implements TaskHandler
         Skill tool: skill="cat:collect-results-agent"
         Arguments: "<cat_agent_id> <issue_path> <subagent_commits_json>"
 
+      Where <cat_agent_id> = {CLAUDE_SESSION_ID}/subagents/{rawAgentId}
+        (rawAgentId is the agentId: value from the Agent tool result footer)
+
       See plugin/skills/collect-results-agent/SKILL.md for argument details.
 
       Attempted tool: %s""".formatted(attemptedTool);
