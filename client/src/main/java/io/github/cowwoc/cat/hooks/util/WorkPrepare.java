@@ -23,6 +23,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -88,6 +92,7 @@ public final class WorkPrepare
   private final JvmScope scope;
   private final int diagnosticScanSafetyThreshold;
   private final int maxCycleDetectionDepth;
+  private final List<String> warnings = Collections.synchronizedList(new ArrayList<>());
 
   /**
    * Creates a new WorkPrepare instance with default thresholds.
@@ -176,6 +181,7 @@ public final class WorkPrepare
   public String execute(PrepareInput input) throws IOException
   {
     requireThat(input, "input").isNotNull();
+    warnings.clear();
 
     Path projectDir = scope.getClaudeProjectDir();
     JsonMapper mapper = scope.getJsonMapper();
@@ -212,11 +218,30 @@ public final class WorkPrepare
     IssueDiscovery.SearchOptions searchOptions = new IssueDiscovery.SearchOptions(
       discoveryScope, discoveryTarget, input.sessionId(), input.excludePattern(), false);
 
+    // For the ALL scope, build the issue index once so it can be reused in gatherDiagnosticInfo
+    // if no issue is found, avoiding a double scan of all STATE.md files.
+    Map<String, IssueIndexEntry> preBuiltIssueIndex;
+    Map<String, List<String>> preBuiltBareNameIndex;
+    if (discoveryScope == IssueDiscovery.Scope.ALL)
+    {
+      preBuiltIssueIndex = new LinkedHashMap<>();
+      preBuiltBareNameIndex = new LinkedHashMap<>();
+      Path issuesDir = projectDir.resolve(".claude").resolve("cat").resolve("issues");
+      buildIssueIndex(issuesDir, preBuiltIssueIndex, preBuiltBareNameIndex);
+    }
+    else
+    {
+      preBuiltIssueIndex = null;
+      preBuiltBareNameIndex = null;
+    }
+
     // Step 3 (lock acquisition) is handled implicitly by IssueDiscovery.findNextIssue()
     IssueDiscovery.DiscoveryResult discoveryResult = discovery.findNextIssue(searchOptions);
+    warnings.addAll(discovery.getWarnings());
 
     // Handle non-found statuses
-    String nonFoundResult = handleNonFoundResult(discoveryResult, projectDir, mapper);
+    String nonFoundResult = handleNonFoundResult(discoveryResult, projectDir, mapper,
+      preBuiltIssueIndex, preBuiltBareNameIndex);
     if (!nonFoundResult.isEmpty())
       return nonFoundResult;
 
@@ -263,15 +288,20 @@ public final class WorkPrepare
    * @param discoveryResult the discovery result to handle
    * @param projectDir the project root directory
    * @param mapper the JSON mapper for serialization
+   * @param preBuiltIssueIndex a pre-built issue index to reuse (may be null to trigger a fresh scan)
+   * @param preBuiltBareNameIndex a pre-built bare name index to reuse (may be null)
    * @return a JSON response string if the result is not Found, or an empty string if Found
    * @throws IOException if file operations or JSON serialization fail
    */
   private String handleNonFoundResult(IssueDiscovery.DiscoveryResult discoveryResult,
-    Path projectDir, JsonMapper mapper) throws IOException
+    Path projectDir, JsonMapper mapper,
+    Map<String, IssueIndexEntry> preBuiltIssueIndex,
+    Map<String, List<String>> preBuiltBareNameIndex) throws IOException
   {
     if (discoveryResult instanceof IssueDiscovery.DiscoveryResult.NotFound)
     {
-      DiagnosticInfo diagnostics = gatherDiagnosticInfo(projectDir);
+      DiagnosticInfo diagnostics = gatherDiagnosticInfo(projectDir, preBuiltIssueIndex,
+        preBuiltBareNameIndex);
 
       Map<String, Object> result = new LinkedHashMap<>();
       result.put("status", "NO_ISSUES");
@@ -287,6 +317,9 @@ public final class WorkPrepare
 
       result.put("closed_count", diagnostics.closedCount());
       result.put("total_count", diagnostics.totalCount());
+
+      if (!warnings.isEmpty())
+        result.put("warnings", warnings);
 
       return mapper.writeValueAsString(result);
     }
@@ -514,6 +547,9 @@ public final class WorkPrepare
       result.put("suspicious_commits", suspiciousCommits);
     }
 
+    if (!warnings.isEmpty())
+      result.put("warnings", warnings);
+
     return mapper.writeValueAsString(result);
   }
 
@@ -535,18 +571,34 @@ public final class WorkPrepare
    * <p>
    * Scans issue directories to find blocked tasks, locked tasks, closed/total counts,
    * and circular dependencies.
+   * <p>
+   * When {@code preBuiltIssueIndex} and {@code preBuiltBareNameIndex} are non-null (pre-built by
+   * the caller), they are used directly without rebuilding the index, avoiding a redundant scan.
    *
    * @param projectDir the project root directory
+   * @param preBuiltIssueIndex a pre-built issue index to reuse, or null to trigger a fresh scan
+   * @param preBuiltBareNameIndex a pre-built bare name index to reuse, or null to trigger a fresh scan
    * @return the diagnostic info
    * @throws IOException if file operations fail
    */
-  private DiagnosticInfo gatherDiagnosticInfo(Path projectDir) throws IOException
+  private DiagnosticInfo gatherDiagnosticInfo(Path projectDir,
+    Map<String, IssueIndexEntry> preBuiltIssueIndex,
+    Map<String, List<String>> preBuiltBareNameIndex) throws IOException
   {
-    Path issuesDir = projectDir.resolve(".claude").resolve("cat").resolve("issues");
-
-    Map<String, IssueIndexEntry> issueIndex = new LinkedHashMap<>();
-    Map<String, List<String>> bareNameIndex = new LinkedHashMap<>();
-    buildIssueIndex(issuesDir, issueIndex, bareNameIndex);
+    Map<String, IssueIndexEntry> issueIndex;
+    Map<String, List<String>> bareNameIndex;
+    if (preBuiltIssueIndex != null && preBuiltBareNameIndex != null)
+    {
+      issueIndex = preBuiltIssueIndex;
+      bareNameIndex = preBuiltBareNameIndex;
+    }
+    else
+    {
+      Path issuesDir = projectDir.resolve(".claude").resolve("cat").resolve("issues");
+      issueIndex = new LinkedHashMap<>();
+      bareNameIndex = new LinkedHashMap<>();
+      buildIssueIndex(issuesDir, issueIndex, bareNameIndex);
+    }
 
     List<Map<String, Object>> blockedIssues = findBlockedIssues(issueIndex, bareNameIndex);
     List<String> circularDependencies = findCircularDependencies(issueIndex, bareNameIndex);
@@ -567,10 +619,27 @@ public final class WorkPrepare
   }
 
   /**
+   * A (path, qualifiedName, content) tuple collected during the parallel read phase of
+   * {@link #buildIssueIndex}.
+   *
+   * @param stateFile the path to the STATE.md file
+   * @param qualifiedName the qualified issue name (e.g., {@code 2.1-fix-bug})
+   * @param issueName the bare issue name (e.g., {@code fix-bug})
+   * @param content the content of the STATE.md file
+   */
+  private record ReadResult(Path stateFile, String qualifiedName, String issueName, String content)
+  {
+  }
+
+  /**
    * Builds the issue index and bare name index from STATE.md files.
    * <p>
    * Populates the provided maps with qualified issue names mapped to their state content,
    * and bare issue names mapped to lists of qualified names for ambiguous lookups.
+   * <p>
+   * {@code Files.readString()} calls are parallelized using virtual threads. Results are collected
+   * into a thread-safe queue and then merged sequentially into the output maps to preserve
+   * insertion order and avoid concurrent modification.
    * <p>
    * Returns an error via IOException if the scan reaches {@link #diagnosticScanSafetyThreshold}
    * filesystem entries, preventing unbounded scans on pathological repositories.
@@ -586,6 +655,7 @@ public final class WorkPrepare
     if (!Files.isDirectory(issuesDir))
       return;
 
+    List<Path> stateFiles;
     try (Stream<Path> stream = Files.walk(issuesDir, 4))
     {
       List<Path> allEntries = stream.limit(diagnosticScanSafetyThreshold).toList();
@@ -597,29 +667,78 @@ public final class WorkPrepare
             " filesystem entries. Consider archiving old issues.");
       }
 
-      List<Path> stateFiles = allEntries.stream().
+      stateFiles = allEntries.stream().
         filter(p -> p.getFileName().toString().equals("STATE.md")).
         toList();
+    }
 
-      for (Path stateFile : stateFiles)
+    // Parallelize Files.readString() calls using virtual threads.
+    // The results array mirrors stateFiles order so that insertion into the output maps
+    // preserves the original Files.walk() ordering (same as the sequential implementation).
+    @SuppressWarnings("unchecked")
+    ReadResult[] readResults = new ReadResult[stateFiles.size()];
+    try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor())
+    {
+      List<Future<?>> futures = new ArrayList<>(stateFiles.size());
+      for (int i = 0; i < stateFiles.size(); ++i)
       {
-        String issueName = stateFile.getParent().getFileName().toString();
-        String versionDirName = stateFile.getParent().getParent().getFileName().toString();
-        String qualifiedName;
-        if (versionDirName.startsWith("v"))
+        int index = i;
+        Path stateFile = stateFiles.get(index);
+        futures.add(executor.submit(() ->
         {
-          String version = versionDirName.substring(1);
-          qualifiedName = version + "-" + issueName;
-        }
-        else
-        {
-          qualifiedName = issueName;
-        }
-
-        String content = Files.readString(stateFile);
-        issueIndex.put(qualifiedName, new IssueIndexEntry(stateFile, content));
-        bareNameIndex.computeIfAbsent(issueName, k -> new ArrayList<>()).add(qualifiedName);
+          String issueName = stateFile.getParent().getFileName().toString();
+          String versionDirName = stateFile.getParent().getParent().getFileName().toString();
+          String qualifiedName;
+          if (versionDirName.startsWith("v"))
+          {
+            String version = versionDirName.substring(1);
+            qualifiedName = version + "-" + issueName;
+          }
+          else
+          {
+            qualifiedName = issueName;
+          }
+          try
+          {
+            String content = Files.readString(stateFile);
+            readResults[index] = new ReadResult(stateFile, qualifiedName, issueName, content);
+          }
+          catch (IOException e)
+          {
+            warnings.add("Failed to read " + stateFile + ": " + e.getMessage());
+            // Skip unreadable STATE.md files — slot remains null, skipped below
+          }
+          return null;
+        }));
       }
+      for (Future<?> future : futures)
+      {
+        try
+        {
+          future.get();
+        }
+        catch (InterruptedException _)
+        {
+          Thread.currentThread().interrupt();
+          break;
+        }
+        catch (ExecutionException e)
+        {
+          // Individual read failures are already swallowed inside the task; re-throw only
+          // unexpected execution failures that surface as IOException in the cause.
+          if (e.getCause() instanceof IOException ioe)
+            throw ioe;
+        }
+      }
+    }
+
+    // Populate the output maps in Files.walk() order (same as sequential implementation).
+    for (ReadResult r : readResults)
+    {
+      if (r == null)
+        continue;
+      issueIndex.put(r.qualifiedName(), new IssueIndexEntry(r.stateFile(), r.content()));
+      bareNameIndex.computeIfAbsent(r.issueName(), k -> new ArrayList<>()).add(r.qualifiedName());
     }
   }
 

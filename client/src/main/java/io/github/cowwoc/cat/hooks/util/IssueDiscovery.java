@@ -17,11 +17,15 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -114,15 +118,21 @@ public final class IssueDiscovery
    * Cache mapping issue directory paths to their git creation timestamps (seconds since epoch).
    * <p>
    * Avoids redundant git subprocess calls when the same issue directory is queried multiple times.
+   * Thread-safe to support concurrent writes from virtual threads.
    */
-  private final Map<Path, Long> creationTimeCache = new HashMap<>();
+  private final Map<Path, Long> creationTimeCache = new ConcurrentHashMap<>();
   /**
    * Cache mapping version directory paths to their sorted issue directory listings.
    * <p>
    * Avoids redundant directory listings and git subprocess calls when the same version directory is
    * searched multiple times during a single discovery operation.
+   * Thread-safe to support concurrent writes from virtual threads.
    */
-  private final Map<Path, List<Path>> sortedDirCache = new HashMap<>();
+  private final Map<Path, List<Path>> sortedDirCache = new ConcurrentHashMap<>();
+  /**
+   * Warnings accumulated during discovery operations.
+   */
+  private final List<String> warnings = Collections.synchronizedList(new ArrayList<>());
 
   /**
    * Creates a new issue discovery instance.
@@ -142,6 +152,16 @@ public final class IssueDiscovery
     }
     this.issuesDir = catDir.resolve("issues");
     this.issueLock = new IssueLock(scope);
+  }
+
+  /**
+   * Returns warnings accumulated during discovery operations.
+   *
+   * @return an unmodifiable copy of the warnings list
+   */
+  public List<String> getWarnings()
+  {
+    return List.copyOf(warnings);
   }
 
   /**
@@ -716,7 +736,7 @@ public final class IssueDiscovery
 
       try
       {
-        status = getIssueStatus(stateLines, statePath);
+        status = getIssueStatus(stateLines, statePath, warnings);
       }
       catch (IOException _)
       {
@@ -1056,7 +1076,7 @@ public final class IssueDiscovery
 
         try
         {
-          status = getIssueStatus(stateLines, statePath);
+          status = getIssueStatus(stateLines, statePath, warnings);
         }
         catch (IOException _)
         {
@@ -1135,13 +1155,14 @@ public final class IssueDiscovery
   private String getIssueStatus(Path statePath) throws IOException
   {
     List<String> lines = readFileLines(statePath);
-    return getIssueStatus(lines, statePath);
+    return getIssueStatus(lines, statePath, warnings);
   }
 
   /**
    * Reads and validates the status from pre-read STATE.md lines.
    * <p>
-   * When the status field is missing, returns {@code "open"} and logs a warning with the file path.
+   * When the status field is missing, returns {@code "open"}. If {@code warningsSink} is non-null,
+   * appends a warning message describing the missing field; otherwise the warning is silently dropped.
    *
    * @param lines the lines already read from the STATE.md file
    * @param statePath the path to the STATE.md file (used in error messages only)
@@ -1149,6 +1170,24 @@ public final class IssueDiscovery
    * @throws IOException if the status value is present but non-canonical
    */
   private static String getIssueStatus(List<String> lines, Path statePath) throws IOException
+  {
+    return getIssueStatus(lines, statePath, null);
+  }
+
+  /**
+   * Reads and validates the status from pre-read STATE.md lines.
+   * <p>
+   * When the status field is missing, returns {@code "open"}. If {@code warningsSink} is non-null,
+   * appends a warning message describing the missing field; otherwise the warning is silently dropped.
+   *
+   * @param lines the lines already read from the STATE.md file
+   * @param statePath the path to the STATE.md file (used in error messages only)
+   * @param warningsSink a list to collect warnings into, or {@code null} to discard warnings
+   * @return the normalized status string, or {@code "open"} if the status field is absent
+   * @throws IOException if the status value is present but non-canonical
+   */
+  private static String getIssueStatus(List<String> lines, Path statePath,
+    List<String> warningsSink) throws IOException
   {
     String status = null;
     for (String line : lines)
@@ -1162,8 +1201,9 @@ public final class IssueDiscovery
 
     if (status == null)
     {
-      System.err.println("WARNING: Status field missing in " + statePath +
-        ". STATE.md has no '- **Status:**' line. Treating as open.");
+      if (warningsSink != null)
+        warningsSink.add("Status field missing in " + statePath +
+          ". STATE.md has no '- **Status:**' line. Treating as open.");
       return "open";
     }
 
@@ -1627,11 +1667,13 @@ public final class IssueDiscovery
    * Lists issue directories (non-version directories) under a version directory, sorted by creation
    * time (oldest first), with alphabetical ordering as a tiebreaker.
    * <p>
-   * Creation times are precomputed into a map before sorting to avoid O(N log N) subprocess calls.
-   * Results are cached per version directory so repeated calls with the same directory return immediately.
+   * Closed issues are filtered out before invoking {@code git log} subprocesses, and the remaining
+   * creation-time lookups are parallelized using virtual threads. Results are cached per version
+   * directory so repeated calls with the same directory return immediately.
    *
    * @param versionDir the version directory
-   * @return sorted list of issue directories, empty if none found
+   * @return sorted list of open/in-progress issue directories (excluding closed issues), empty if
+   *   none found
    * @throws IOException if listing the directory fails
    */
   public List<Path> listIssueDirsByAge(Path versionDir) throws IOException
@@ -1644,6 +1686,110 @@ public final class IssueDiscovery
       sortedDirCache.put(versionDir, Collections.emptyList());
       return Collections.emptyList();
     }
+    List<Path> allDirs;
+    try (Stream<Path> stream = Files.list(versionDir))
+    {
+      allDirs = stream.
+        filter(Files::isDirectory).
+        filter(d -> !VERSION_DIR_PATTERN.matcher(d.getFileName().toString()).matches()).
+        toList();
+    }
+
+    // Filter out closed issues before paying the git subprocess cost.
+    // Issues without a STATE.md are treated as open.
+    List<Path> openDirs = new ArrayList<>(allDirs.size());
+    for (Path dir : allDirs)
+    {
+      Path statePath = dir.resolve("STATE.md");
+      if (!Files.isRegularFile(statePath))
+      {
+        openDirs.add(dir);
+        continue;
+      }
+      try
+      {
+        String status = getIssueStatus(statePath);
+        if ("open".equals(status) || "in-progress".equals(status))
+          openDirs.add(dir);
+        // closed (and any other non-open status) are silently excluded
+      }
+      catch (IOException e)
+      {
+        warnings.add("Failed to read status from " + statePath + ": " + e.getMessage());
+        // Unreadable status — include the dir so it is not silently lost
+        openDirs.add(dir);
+      }
+    }
+
+    // Parallelize git log calls for the remaining open/in-progress directories.
+    Map<Path, Long> creationTimes = new ConcurrentHashMap<>(openDirs.size());
+    try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor())
+    {
+      List<Future<?>> futures = new ArrayList<>(openDirs.size());
+      for (Path dir : openDirs)
+      {
+        futures.add(executor.submit(() ->
+        {
+          creationTimes.put(dir, getIssueCreationTime(dir));
+          return null;
+        }));
+      }
+      for (Future<?> future : futures)
+      {
+        try
+        {
+          future.get();
+        }
+        catch (InterruptedException _)
+        {
+          // Restore interrupt status and stop waiting for remaining futures.
+          Thread.currentThread().interrupt();
+          break;
+        }
+        catch (ExecutionException e)
+        {
+          Throwable cause;
+          if (e.getCause() != null)
+            cause = e.getCause();
+          else
+            cause = e;
+          warnings.add("Failed to get creation time for issue directory: " + cause.getMessage());
+          // Individual git failures are non-fatal; getIssueCreationTime already returns MAX_VALUE
+          // on failure, so nothing to propagate here.
+        }
+      }
+    }
+
+    Comparator<Path> byAge = Comparator.comparingLong(
+      dir -> creationTimes.getOrDefault(dir, Long.MAX_VALUE));
+    List<Path> sorted = openDirs.stream().
+      sorted(byAge.thenComparing(Comparator.naturalOrder())).
+      toList();
+    sortedDirCache.put(versionDir, sorted);
+    return sorted;
+  }
+
+  /**
+   * Lists all issue directories (non-version directories) under a version directory sorted by git
+   * creation time (oldest first), with alphabetical ordering as a tiebreaker. Includes all issues
+   * regardless of status (open, in-progress, closed, etc.).
+   * <p>
+   * Git log subprocess calls are parallelized using virtual threads. This method does not use a
+   * cache because callers that need all issues (e.g., for display) are typically called once per
+   * version directory, so caching provides less benefit than for the issue-discovery path.
+   * <p>
+   * Use this method when all issue directories are needed for display or summary purposes. Use
+   * {@link #listIssueDirsByAge(Path)} when only open/in-progress issues are needed (e.g., for
+   * issue discovery — it skips git calls for closed issues).
+   *
+   * @param versionDir the version directory
+   * @return sorted list of all issue directories, empty if none found or the directory does not exist
+   * @throws IOException if listing the directory fails
+   */
+  public List<Path> listAllIssueDirsByAge(Path versionDir) throws IOException
+  {
+    if (!Files.isDirectory(versionDir))
+      return Collections.emptyList();
     List<Path> dirs;
     try (Stream<Path> stream = Files.list(versionDir))
     {
@@ -1652,15 +1798,48 @@ public final class IssueDiscovery
         filter(d -> !VERSION_DIR_PATTERN.matcher(d.getFileName().toString()).matches()).
         toList();
     }
-    Map<Path, Long> creationTimes = new HashMap<>(dirs.size());
-    for (Path dir : dirs)
-      creationTimes.put(dir, getIssueCreationTime(dir));
-    Comparator<Path> byAge = Comparator.comparingLong(creationTimes::get);
-    List<Path> sorted = dirs.stream().
+
+    Map<Path, Long> creationTimes = new ConcurrentHashMap<>(dirs.size());
+    try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor())
+    {
+      List<Future<?>> futures = new ArrayList<>(dirs.size());
+      for (Path dir : dirs)
+      {
+        futures.add(executor.submit(() ->
+        {
+          creationTimes.put(dir, getIssueCreationTime(dir));
+          return null;
+        }));
+      }
+      for (Future<?> future : futures)
+      {
+        try
+        {
+          future.get();
+        }
+        catch (InterruptedException _)
+        {
+          Thread.currentThread().interrupt();
+          break;
+        }
+        catch (ExecutionException e)
+        {
+          Throwable cause;
+          if (e.getCause() != null)
+            cause = e.getCause();
+          else
+            cause = e;
+          warnings.add("Failed to get creation time for issue directory: " + cause.getMessage());
+          // Individual git failures are non-fatal; getIssueCreationTime returns MAX_VALUE on failure.
+        }
+      }
+    }
+
+    Comparator<Path> byAge = Comparator.comparingLong(
+      dir -> creationTimes.getOrDefault(dir, Long.MAX_VALUE));
+    return dirs.stream().
       sorted(byAge.thenComparing(Comparator.naturalOrder())).
       toList();
-    sortedDirCache.put(versionDir, sorted);
-    return sorted;
   }
 
   /**

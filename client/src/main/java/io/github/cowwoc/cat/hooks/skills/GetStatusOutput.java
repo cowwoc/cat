@@ -215,7 +215,7 @@ public final class GetStatusOutput implements SkillOutput
             List<IssueItem> issues = new ArrayList<>();
             Map<String, String> allIssueStatuses = new HashMap<>();
 
-            List<Path> issueDirs = issueDiscovery.listIssueDirsByAge(minorDir);
+            List<Path> issueDirs = issueDiscovery.listAllIssueDirsByAge(minorDir);
 
             // Two-pass loop is intentional for dependency resolution:
             // Pass 1: Collect all issue statuses into allIssueStatuses map
