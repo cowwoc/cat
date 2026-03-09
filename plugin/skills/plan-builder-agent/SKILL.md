@@ -18,4 +18,4 @@ argument-hint: "<catAgentId> <issue_path> <effort> [revision-context]"
 user-invocable: false
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" plan-builder-agent "$ARGUMENTS"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" plan-builder-agent "$ARGUMENTS"`

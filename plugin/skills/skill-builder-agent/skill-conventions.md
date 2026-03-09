@@ -74,14 +74,14 @@ content MUST specify `argument-hint` in frontmatter. See `concepts/skill-loading
 § Skill Arguments for full argument-hint syntax, quoting rules, and variable substitution.
 
 **catAgentId requirement**: If `user-invocable: false` AND the preprocessor directive uses
-`skill-loader` (with `$ARGUMENTS` or fixed `$N` positional refs), then `argument-hint` MUST
+`get-skill` (with `$ARGUMENTS` or fixed `$N` positional refs), then `argument-hint` MUST
 start with `<catAgentId>`. Omitting it causes runtime failures:
 `catAgentId '<first-arg>' does not match a valid format`.
 
-- [ ] If `user-invocable: false` and skill uses `skill-loader "$ARGUMENTS"`: argument-hint
+- [ ] If `user-invocable: false` and skill uses `get-skill "$ARGUMENTS"`: argument-hint
       starts with `<catAgentId>`
-- [ ] If `user-invocable: false` and skill uses `skill-loader` with fixed `$N` refs (e.g.,
-      `!skill-loader <name> "$0" "$1"`): argument-hint starts with `<catAgentId>`
+- [ ] If `user-invocable: false` and skill uses `get-skill` with fixed `$N` refs (e.g.,
+      `!get-skill <name> "$0" "$1"`): argument-hint starts with `<catAgentId>`
 
 **Positional argument completeness**: If the preprocessor directive references `$0`...`$N`,
 `argument-hint` MUST document ALL positional args (including `$0`). Every `$N` reference
@@ -1102,7 +1102,7 @@ re-runs via `get-output` with new args, and the agent follows the already-loaded
 | Is the entire skill output script-generated (thin wrapper)? | Java handler + thin skill content | Centralized |
 
 **Benefits of centralized output dispatch pattern**:
-- **Session-efficient**: The full skill content loads only once per session (via `skill-loader`).
+- **Session-efficient**: The full skill content loads only once per session (via `get-skill`).
   Subsequent invocations load a tiny reference (~2 lines) instead. The handler output (`<output type="...">` tag)
   is fresh every time via `get-output`, but the skill instructions are not re-loaded, saving significant context.
   After context compaction, skill markers reset so skills re-load in full automatically.

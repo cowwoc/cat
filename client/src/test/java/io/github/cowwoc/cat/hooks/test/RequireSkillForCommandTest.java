@@ -12,9 +12,11 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.bash.RequireSkillForCommand;
+import io.github.cowwoc.cat.hooks.util.GetSkill;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -49,7 +51,7 @@ public final class RequireSkillForCommandTest
   }
 
   /**
-   * Writes the skills-loaded marker for the given session ID under the scope's session base path.
+   * Writes the loaded markers for the given session ID under the scope's session base path.
    *
    * @param scope the JVM scope
    * @param sessionId the session ID (used as the agent directory name for main agents)
@@ -59,14 +61,23 @@ public final class RequireSkillForCommandTest
   private static void writeSkillsLoaded(JvmScope scope, String sessionId, String skills) throws IOException
   {
     Path agentDir = scope.getSessionBasePath().toAbsolutePath().normalize().resolve(sessionId);
-    Files.createDirectories(agentDir);
-    Files.writeString(agentDir.resolve("skills-loaded"), skills, UTF_8);
+    Path loadedDir = agentDir.resolve(GetSkill.LOADED_DIR);
+    Files.createDirectories(loadedDir);
+    for (String line : skills.split("\n"))
+    {
+      String trimmed = line.strip();
+      if (!trimmed.isEmpty())
+      {
+        String encodedName = URLEncoder.encode(trimmed, UTF_8);
+        Files.writeString(loadedDir.resolve(encodedName), "", UTF_8);
+      }
+    }
   }
 
   /**
-   * Writes the skills-loaded marker for a subagent under the scope's session base path.
+   * Writes the loaded markers for a subagent under the scope's session base path.
    * <p>
-   * The subagent marker file lives at {@code sessionBasePath/{sessionId}/subagents/{nativeAgentId}/skills-loaded}.
+   * Creates marker files in {@code sessionBasePath/{sessionId}/subagents/{nativeAgentId}/loaded/}.
    *
    * @param scope the JVM scope
    * @param sessionId the session ID
@@ -79,8 +90,17 @@ public final class RequireSkillForCommandTest
   {
     Path agentDir = scope.getSessionBasePath().toAbsolutePath().normalize().
       resolve(sessionId).resolve("subagents").resolve(nativeAgentId);
-    Files.createDirectories(agentDir);
-    Files.writeString(agentDir.resolve("skills-loaded"), skills, UTF_8);
+    Path loadedDir = agentDir.resolve(GetSkill.LOADED_DIR);
+    Files.createDirectories(loadedDir);
+    for (String line : skills.split("\n"))
+    {
+      String trimmed = line.strip();
+      if (!trimmed.isEmpty())
+      {
+        String encodedName = URLEncoder.encode(trimmed, UTF_8);
+        Files.writeString(loadedDir.resolve(encodedName), "", UTF_8);
+      }
+    }
   }
 
   /**

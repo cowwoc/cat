@@ -12,12 +12,13 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.util.SkillLoader;
+import io.github.cowwoc.cat.hooks.util.GetSkill;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
 
 import java.io.IOException;
+import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -25,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Blocks guarded Bash commands unless the required skill has already been loaded in the current agent's
@@ -144,10 +146,15 @@ public final class RequireSkillForCommand implements BashHandler
     Set<String> loadedSkills;
     try
     {
-      Path agentDir = SkillLoader.resolveAndValidateContainment(baseDir, catAgentId, "catAgentId");
-      Path markerFile = agentDir.resolve("skills-loaded");
-      String content = Files.readString(markerFile, UTF_8);
-      loadedSkills = SkillLoader.parseSkillNames(content);
+      Path agentDir = GetSkill.resolveAndValidateContainment(baseDir, catAgentId, "catAgentId");
+      Path loadedDir = agentDir.resolve(GetSkill.LOADED_DIR);
+      try (java.util.stream.Stream<Path> stream = Files.list(loadedDir))
+      {
+        loadedSkills = stream.
+          map(p -> p.getFileName().toString()).
+          map(name -> URLDecoder.decode(name, UTF_8)).
+          collect(Collectors.toSet());
+      }
     }
     catch (NoSuchFileException _)
     {
@@ -161,7 +168,7 @@ public final class RequireSkillForCommand implements BashHandler
     }
     catch (IOException e)
     {
-      log.error("RequireSkillForCommand: failed to read skills-loaded marker for agent '{}': {}",
+      log.error("RequireSkillForCommand: failed to read loaded marker directory for agent '{}': {}",
         catAgentId, e.getMessage(), e);
       return Result.allow();
     }
@@ -185,7 +192,7 @@ public final class RequireSkillForCommand implements BashHandler
    */
   private Result buildBlockResult(String skillName)
   {
-    String skillBaseName = SkillLoader.stripPrefix(skillName);
+    String skillBaseName = GetSkill.stripPrefix(skillName);
     String message = """
       BLOCKED: This command requires the %s skill.
 

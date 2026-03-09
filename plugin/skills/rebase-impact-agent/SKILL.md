@@ -13,4 +13,4 @@ allowed-tools:
   - Grep
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" rebase-impact-agent "$ARGUMENTS"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" rebase-impact-agent "$ARGUMENTS"`

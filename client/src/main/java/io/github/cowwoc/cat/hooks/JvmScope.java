@@ -195,7 +195,7 @@ public interface JvmScope extends AutoCloseable
   /**
    * Returns the value of an environment variable by name.
    * <p>
-   * Returns {@code null} if the variable is not set. Used by {@code SkillLoader} to resolve
+   * Returns {@code null} if the variable is not set. Used by {@code GetSkill} to resolve
    * {@code ${name}} references inside directive strings via the scope abstraction.
    *
    * @param name the environment variable name

@@ -13,7 +13,8 @@ import io.github.cowwoc.cat.hooks.SessionStartHook;
 import io.github.cowwoc.cat.hooks.session.CheckRetrospectiveDue;
 import io.github.cowwoc.cat.hooks.session.CheckUpdateAvailable;
 import io.github.cowwoc.cat.hooks.session.CheckDataMigration;
-import io.github.cowwoc.cat.hooks.session.ClearSkillMarker;
+import io.github.cowwoc.cat.hooks.session.ClearAgentMarkers;
+import io.github.cowwoc.cat.hooks.util.GetSkill;
 import io.github.cowwoc.cat.hooks.session.EchoSessionId;
 import io.github.cowwoc.cat.hooks.session.InjectEnv;
 import io.github.cowwoc.cat.hooks.session.SessionStartHandler;
@@ -97,13 +98,13 @@ public class SessionStartHookTest
     }
   }
 
-  // --- ClearSkillMarker tests ---
+  // --- ClearAgentMarkers tests ---
 
   /**
-   * Verifies that ClearSkillMarker deletes the main agent's marker file.
+   * Verifies that ClearAgentMarkers deletes the main agent's loaded directory.
    */
   @Test
-  public void clearSkillMarkerDeletesMainAgentMarker() throws IOException
+  public void clearAgentMarkersDeletesMainAgentMarker() throws IOException
   {
     Path projectDir = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -111,13 +112,13 @@ public class SessionStartHookTest
     {
       String sessionId = "test-session-" + System.nanoTime();
       Path sessionDir = scope.getSessionBasePath().resolve(sessionId);
-      Files.createDirectories(sessionDir);
-      Path markerFile = sessionDir.resolve("skills-loaded");
-      Files.writeString(markerFile, "loaded");
+      Path loadedDir = sessionDir.resolve(GetSkill.LOADED_DIR);
+      Files.createDirectories(loadedDir);
+      Files.writeString(loadedDir.resolve("cat%3Awork"), "");
 
-      String warning = new ClearSkillMarker(scope).clearMainAgentMarker(sessionId);
+      String warning = new ClearAgentMarkers(scope).clearMainAgentMarker(sessionId);
       requireThat(warning, "warning").isEmpty();
-      requireThat(Files.exists(markerFile), "markerFileExists").isFalse();
+      requireThat(Files.exists(loadedDir), "loadedDirExists").isFalse();
     }
     finally
     {
@@ -127,10 +128,10 @@ public class SessionStartHookTest
   }
 
   /**
-   * Verifies that ClearSkillMarker deletes a specific subagent's marker file.
+   * Verifies that ClearAgentMarkers deletes a specific subagent's loaded directory.
    */
   @Test
-  public void clearSkillMarkerDeletesSubagentMarker() throws IOException
+  public void clearAgentMarkersDeletesSubagentMarker() throws IOException
   {
     Path projectDir = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -138,13 +139,13 @@ public class SessionStartHookTest
     {
       String sessionId = "test-session-" + System.nanoTime();
       Path markerDir = scope.getSessionBasePath().resolve(sessionId + "/subagents/agent-1");
-      Files.createDirectories(markerDir);
-      Path markerFile = markerDir.resolve("skills-loaded");
-      Files.writeString(markerFile, "loaded");
+      Path loadedDir = markerDir.resolve(GetSkill.LOADED_DIR);
+      Files.createDirectories(loadedDir);
+      Files.writeString(loadedDir.resolve("cat%3Awork"), "");
 
-      String warning = new ClearSkillMarker(scope).clearSubagentMarker(sessionId, "agent-1");
+      String warning = new ClearAgentMarkers(scope).clearSubagentMarker(sessionId, "agent-1");
       requireThat(warning, "warning").isEmpty();
-      requireThat(Files.exists(markerFile), "markerFileExists").isFalse();
+      requireThat(Files.exists(loadedDir), "loadedDirExists").isFalse();
     }
     finally
     {

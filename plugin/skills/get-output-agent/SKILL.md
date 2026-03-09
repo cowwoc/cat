@@ -4,4 +4,4 @@ user-invocable: false
 argument-hint: "<catAgentId> [skill-args...]"
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" get-output-agent "$ARGUMENTS"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" get-output-agent "$ARGUMENTS"`

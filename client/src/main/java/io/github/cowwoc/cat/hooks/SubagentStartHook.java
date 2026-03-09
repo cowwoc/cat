@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.hooks;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.session.ClearSkillMarker;
+import io.github.cowwoc.cat.hooks.session.ClearAgentMarkers;
 import io.github.cowwoc.cat.hooks.session.InjectCatAgentId;
 import io.github.cowwoc.cat.hooks.session.InjectSubAgentRules;
 import io.github.cowwoc.cat.hooks.session.SubagentStartHandler;
@@ -53,7 +53,7 @@ public final class SubagentStartHook implements HookHandler
       input -> SubagentStartHandler.Result.context(
         InjectCatAgentId.getSubagentContext(input.getSessionId(), input.getAgentId())),
       input -> SubagentStartHandler.Result.ofStderr(
-        new ClearSkillMarker(scope).clearSubagentMarker(
+        new ClearAgentMarkers(scope).clearSubagentMarker(
           input.getSessionId(), input.getAgentId())),
       input -> SubagentStartHandler.Result.ofContext(
         SkillDiscovery.getSubagentSkillListing(scope)),

@@ -22,7 +22,8 @@ import io.github.cowwoc.cat.hooks.util.Feedback;
 import io.github.cowwoc.cat.hooks.util.HookRegistrar;
 import io.github.cowwoc.cat.hooks.util.MarkdownWrapper;
 import io.github.cowwoc.cat.hooks.util.SessionAnalyzer;
-import io.github.cowwoc.cat.hooks.util.SkillLoader;
+import io.github.cowwoc.cat.hooks.util.GetFile;
+import io.github.cowwoc.cat.hooks.util.GetSkill;
 import io.github.cowwoc.cat.hooks.util.StatusAlignmentValidator;
 import io.github.cowwoc.cat.hooks.util.WorkPrepare;
 import java.io.ByteArrayInputStream;
@@ -135,7 +136,8 @@ public final class AotTraining
       referenceClass(GetSubagentStatusOutput.class);
       referenceClass(HookRegistrar.class);
       referenceClass(StatusAlignmentValidator.class);
-      referenceClass(SkillLoader.class);
+      referenceClass(GetSkill.class);
+      referenceClass(GetFile.class);
       referenceClass(Feedback.class);
     }
   }
