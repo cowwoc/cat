@@ -130,6 +130,11 @@ session lock (e.g., "already holds a lock", "worktree already exists"):
        - "Abort" (stop)
    ```
 
+   **Do NOT investigate worktree state between steps 1–2 and presenting the AskUserQuestion.**
+   Do NOT run `git worktree list`, `ls`, or any filesystem/git commands to inspect existing worktree
+   state. The error message from `work-prepare` is sufficient context. Go directly to the
+   AskUserQuestion.
+
 3. If user selects **"Clean up and retry"**:
    - Invoke `cat:cleanup-agent` (no arguments needed)
    - **IMMEDIATELY after cleanup-agent returns, call work-prepare again** using the same subprocess invocation from Phase 1: `"${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --arguments "${ARGUMENTS}"`. Parse the result and resume Phase 1 error handling logic.
