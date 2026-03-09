@@ -29,6 +29,8 @@ subAgents: []
 
 **Skip TaskList only for**: Simple questions ("what's this file?") or one-word commands ("continue")
 
+**TaskList cleanup after major operations**: See `plugin/rules/tasklist-lifecycle.md` for cleanup rules after major CAT operations.
+
 **"IMPORTANT: After completing your current task"** means after your CURRENT tool call completes,
  NOT after the entire /cat:work or skill workflow finishes. Respond in your very next message.
 
