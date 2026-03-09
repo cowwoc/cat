@@ -13,6 +13,7 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.UUID;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -186,21 +187,14 @@ public class GetOutputTest
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = NullPointerException.class)
   public void nullArgsThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetOutput handler = new GetOutput(scope);
-      try
-      {
-        handler.getOutput(null);
-      }
-      catch (NullPointerException _)
-      {
-        // Expected
-      }
+      handler.getOutput(null);
     }
     finally
     {
@@ -338,6 +332,190 @@ public class GetOutputTest
         contains("DESCRIPTION OPTIMIZATION REQUEST").
         contains("train_size").
         contains("test_size");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that when the first argument is a UUID (main agent ID, as passed via {@code $ARGUMENTS}),
+   * it is skipped and the second argument is used as the output type.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void mainAgentIdAsFirstArgIsSkipped() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-get-output-skip-$0-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetOutput handler = new GetOutput(scope);
+      String agentId = UUID.randomUUID().toString();
+      // When invoked via $ARGUMENTS, first arg is $0 (agent ID), second is the type
+      String result = handler.getOutput(new String[]{agentId, "config.saved"});
+
+      requireThat(result, "result").
+        contains("<output type=\"config.saved\">").
+        contains("SAVED");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that when the first argument is a subagent ID (UUID/subagents/xxx), it is skipped and
+   * the second argument is used as the output type.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void subagentIdAsFirstArgIsSkipped() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-get-output-skip-subagent-$0-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetOutput handler = new GetOutput(scope);
+      String subagentId = UUID.randomUUID() + "/subagents/abc123";
+      String result = handler.getOutput(new String[]{subagentId, "config.saved"});
+
+      requireThat(result, "result").
+        contains("<output type=\"config.saved\">").
+        contains("SAVED");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that when the first argument is NOT an agent ID (e.g., a type token), it is used as
+   * the type directly without skipping.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void nonAgentIdFirstArgUsedAsType() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-get-output-no-skip-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetOutput handler = new GetOutput(scope);
+      // Direct invocation without agent ID prefix
+      String result = handler.getOutput(new String[]{"config.saved"});
+
+      requireThat(result, "result").
+        contains("<output type=\"config.saved\">").
+        contains("SAVED");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Integration test: verifies that skipAgentId and dot-notation parsing work together correctly
+   * when a subagent ID prefix is combined with a multi-argument dot-notation type invocation.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void skipAgentIdAndDotNotationIntegration() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-get-output-integration-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      // Create minimal config for config handler
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), "{}");
+
+      GetOutput handler = new GetOutput(scope);
+      String agentId = UUID.randomUUID() + "/subagents/abc123";
+      // Full flow: subagent ID is skipped, then dot-notation type parsed, then extra args passed to handler
+      String result = handler.getOutput(new String[]{
+        agentId, "config.conditions-for-version", "v1.0", "no-deps", "ready-to-release"
+      });
+
+      requireThat(result, "result").
+        contains("<output type=\"config.conditions-for-version\">").
+        contains("CONDITIONS FOR v1.0");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a malformed UUID (wrong hex segment lengths) is not treated as an agent ID
+   * and is used as the type directly instead.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Unknown skill.*")
+  public void malformedUuidNotSkipped() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-get-output-malformed-uuid-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetOutput handler = new GetOutput(scope);
+      // Malformed UUID: wrong segment lengths — must NOT be skipped, treated as type
+      handler.getOutput(new String[]{"12345678-1234-1234-1234-12345", "config.saved"});
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a value matching the UUID prefix but missing the /subagents/{id} suffix is
+   * not treated as a subagent ID and is not skipped.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Unknown skill.*")
+  public void subagentIdWithoutIdentifierNotSkipped() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-get-output-no-subagent-id-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetOutput handler = new GetOutput(scope);
+      // UUID followed by /subagents/ but no identifier — must NOT be skipped
+      String incompleteSubagentId = UUID.randomUUID() + "/subagents/";
+      handler.getOutput(new String[]{incompleteSubagentId, "config.saved"});
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a value with a UUID prefix followed by invalid characters in the subagent
+   * identifier segment is not treated as a subagent ID and is not skipped.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Unknown skill.*")
+  public void subagentIdWithInvalidCharsNotSkipped() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-get-output-invalid-subagent-chars-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetOutput handler = new GetOutput(scope);
+      // UUID followed by /subagents/ with invalid characters (spaces) in identifier — must NOT be skipped
+      String invalidSubagentId = UUID.randomUUID() + "/subagents/agent id with spaces";
+      handler.getOutput(new String[]{invalidSubagentId, "config.saved"});
     }
     finally
     {

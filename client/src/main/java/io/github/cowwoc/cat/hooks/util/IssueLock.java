@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -62,8 +61,6 @@ public final class IssueLock
    * Locks idle for at least this duration are classified as stale.
    */
   public static final Duration STALE_LOCK_THRESHOLD = Duration.ofHours(4);
-  private static final Pattern UUID_PATTERN = Pattern.compile(
-    "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$");
   private static final DateTimeFormatter ISO_FORMATTER =
     DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC);
   private static final int MAX_LOCK_FILES = 1000;
@@ -840,7 +837,7 @@ public final class IssueLock
    */
   private void validateSessionId(String sessionId)
   {
-    if (!UUID_PATTERN.matcher(sessionId).matches())
+    if (!AgentIdPatterns.SESSION_ID_PATTERN.matcher(sessionId).matches())
     {
       throw new IllegalArgumentException("Invalid session_id format: '" + sessionId +
         "'. Expected UUID. Did you swap issue_id and session_id arguments?");

@@ -7,6 +7,7 @@
 package io.github.cowwoc.cat.hooks.tool.post;
 
 import io.github.cowwoc.cat.hooks.PostToolHandler;
+import io.github.cowwoc.cat.hooks.util.AgentIdPatterns;
 import tools.jackson.databind.JsonNode;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -31,9 +32,6 @@ public final class AutoLearnMistakes implements PostToolHandler
 {
   private static final int MAX_OUTPUT_LENGTH = 100_000;
   private static final int MAX_PATTERN_GAP = 200;
-  private static final Pattern UUID_PATTERN = Pattern.compile(
-    "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
-    Pattern.CASE_INSENSITIVE);
   private final Map<String, Integer> sessionIdToLineCount = new HashMap<>();
 
   /**
@@ -129,7 +127,7 @@ public final class AutoLearnMistakes implements PostToolHandler
    */
   private String getRecentAssistantMessages(String sessionId)
   {
-    if (!UUID_PATTERN.matcher(sessionId).matches())
+    if (!AgentIdPatterns.SESSION_ID_PATTERN.matcher(sessionId).matches())
     {
       throw new IllegalArgumentException("Invalid sessionId format: '" + sessionId +
         "'. Expected UUID format (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).");

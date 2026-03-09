@@ -11,4 +11,4 @@ without printing to the user. This variant is invoked by other skills and agents
 Use `cat:get-output-agent` when a skill needs to render a structured output block (banners, summaries, progress
 displays) via the centralized output system.
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" get-output-agent`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" $ARGUMENTS`
