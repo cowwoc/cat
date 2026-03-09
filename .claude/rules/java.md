@@ -482,6 +482,29 @@ if ("Bash".equalsIgnoreCase(toolName))
 }
 ```
 
+### Inline Comments: Explain WHY, Not WHAT
+Inline comments must explain **why** the code does what it does, not restate the operation. The code
+itself shows WHAT happens; the comment must add the reasoning, context, or semantic distinction that
+is not obvious from reading the code.
+
+```java
+// Good - explains WHY content is empty and what semantic distinction drives the branch
+// "content" is only present for Write operations. For Edit operations, the tool provides
+// "old_string" and "new_string" instead. Reconstruct the expected post-edit file content by
+// applying the replacement to the on-disk file so we can validate the result.
+
+// Avoid - restates the operation without explaining the semantic reason
+// Edit tool call: reconstruct post-edit content by applying new_string to on-disk file
+```
+
+**Self-check before writing an inline comment:**
+1. Does the comment explain something the code cannot express?
+2. Would a reader understand the *reason* for this branch/guard/operation?
+3. If removed, would a future reader be confused about *why* this path exists?
+
+If the answer to all three is "no", the comment is noise. If the answer to #2 is "no", rewrite the
+comment to explain the reasoning.
+
 ## Documentation
 
 ### Javadoc Paragraphs
