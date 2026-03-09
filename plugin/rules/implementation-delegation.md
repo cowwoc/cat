@@ -5,19 +5,19 @@ subAgents: []
 ## Implementation Delegation
 **CRITICAL**: Main agent orchestrates; subagents implement.
 
-When implementing code changes within a task, delegate to a subagent via the Task tool.
-Main agent should NOT directly edit files for implementation work.
+The main agent MUST NOT mutate any file by any means — regardless of change size, framing (fix/correction/cleanup),
+or whether the request came from `/cat:work`, a direct user request, or an ad-hoc ask. This prohibition covers all
+file-modifying tools and Bash commands, including but not limited to:
+- Edit, Write, NotebookEdit tools
+- Bash commands that write files: `sed -i`, `cat >`, `echo >>`, `tee`, heredoc (`<<EOF`), `awk ... > file`, `cp`,
+  `mv`, `touch`, `truncate`, `install`, `patch`, and any other command that creates or modifies file content
 
-**Delegate via Task tool when**:
-- Fixing multiple violations (PMD, Checkstyle, lint)
-- Renaming/refactoring across files
-- Any implementation requiring more than 2-3 edits
-- Mechanical transformations (format changes, renames)
+All file mutations must be delegated to a subagent via the Task tool.
 
-**Main agent directly handles**:
-- Single-line config changes
-- Reading/exploring code for planning
-- Orchestration decisions (which task next)
+**Main agent permitted actions — nothing else is allowed**:
+- Reading and exploring files for planning (Read, Glob, Grep, Bash read-only commands)
+- Orchestration decisions (which task next, how to structure work)
+- Spawning subagents via the Task tool to perform implementation
 - User interaction and approval gates
 
 **Why delegation matters**:
