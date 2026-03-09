@@ -13,11 +13,12 @@ import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.ShellParser;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -31,23 +32,23 @@ import org.slf4j.LoggerFactory;
 /**
  * Loads skill content from a plugin's skill directory structure.
  * <p>
- * On first invocation for a given skill, loads the full content. On subsequent invocations
- * within the same session, generates a shorter reference text dynamically instead.
+ * On first invocation for a given skill, returns the full {@code first-use.md} content with
+ * preprocessor directives expanded. On subsequent invocations within the same session, returns a
+ * short "already loaded" reference message and re-executes the single {@code !} preprocessor
+ * directive from {@code first-use.md} (if present) to produce fresh output.
  * <p>
  * <b>Skill directory structure:</b>
  * <pre>
  * plugin-root/
  *   skills/
  *     {skill-name}/
- *       first-use.md            — Skill content with optional {@code <output>} tag
+ *       first-use.md            — Skill content with at most one {@code !} preprocessor directive
  * </pre>
  * <p>
- * <b>Tag-based content:</b> The first-use.md file may contain an optional {@code <output>} tag that separates
- * static instructions from dynamic preprocessor content. Everything before the last {@code <output>} tag
- * is treated as skill instructions. On first use, instructions are wrapped in
- * {@code <instructions skill="X">} tags and followed by an execution trigger. On subsequent uses, only
- * the execution trigger is generated. The {@code <output>} section is always wrapped in
- * {@code <output skill="X">} tags (where X is the skill name) and appended on every invocation.
+ * <b>Single-directive constraint:</b> Each {@code first-use.md} may contain at most one
+ * {@code !} preprocessor directive. If more than one directive is found, {@code GetSkill} fails
+ * with a validation error. Skills without a directive return only the "already loaded" reference
+ * message on subsequent loads.
  * <p>
  * <b>Variable substitution:</b> Variable substitution applies only inside {@code !} directive strings.
  * Content body passes through untouched to Claude Code, which handles {@code ${VAR}} expansion natively.
@@ -55,7 +56,7 @@ import org.slf4j.LoggerFactory;
  * Inside {@code !} directive strings, the following variable forms are expanded:
  * <ul>
  *   <li>{@code ${name}} — resolved via {@link JvmScope#getEnvironmentVariable(String)}</li>
- *   <li>{@code ${CLAUDE_SKILL_DIR}} — resolved by SkillLoader to the skill's directory
+ *   <li>{@code ${CLAUDE_SKILL_DIR}} — resolved by GetSkill to the skill's directory
  *       ({@code pluginRoot/skills/{skill-name}/})</li>
  *   <li>{@code $0}, {@code $1}, ..., {@code $N} — resolved to skill positional arguments</li>
  *   <li>{@code $ARGUMENTS} — all skill arguments joined with a space</li>
@@ -75,33 +76,36 @@ import org.slf4j.LoggerFactory;
  * the {@code client/bin/} lookup directory, instantiating the class as a {@link SkillOutput} and calling
  * {@link SkillOutput#getOutput(String[])} to replace the directive with the output.
  * <p>
- * <b>Usage:</b> {@code skill-loader <skill-name> <catAgentId> [skill-args...]}
+ * <b>Usage:</b> {@code get-skill <skill-name> <catAgentId> [skill-args...]}
  * <br>
  * The {@code catAgentId} argument is mandatory. Main agents pass {@code ${CLAUDE_SESSION_ID}};
  * subagents pass the value injected by SubagentStartHook (e.g., {@code {sessionId}/subagents/{agent_id}}).
  * The {@code pluginRoot} is read from the JVM environment via {@link JvmScope}.
  *
- * @see io.github.cowwoc.cat.hooks.session.ClearSkillMarker
+ * @see io.github.cowwoc.cat.hooks.session.ClearAgentMarkers
  */
-public final class SkillLoader
+public final class GetSkill
 {
   /**
    * Standard subdirectory within a session directory for storing per-subagent marker files.
    */
   public static final String SUBAGENTS_DIR = "subagents";
+  /**
+   * Name of the directory that tracks which skills and files have been loaded by an agent.
+   * <p>
+   * Marker files for loaded skills use the URL-encoded skill name as the filename
+   * (e.g., {@code cat%3Aadd} for {@code cat:add}). Marker files for loaded files use the
+   * URL-encoded absolute file path as the filename.
+   */
+  public static final String LOADED_DIR = "loaded";
 
   private static final Pattern VAR_PATTERN = Pattern.compile("\\$\\{([^}]+)}");
   private static final Pattern PREPROCESSOR_DIRECTIVE_PATTERN = Pattern.compile(
     "!`\"([^\"\n]+)\"([ \t]+[^`\n]+)?`");
   private static final Pattern FRONTMATTER_PATTERN = Pattern.compile(
     "\\A---\\n.*?\\n---\\n?", Pattern.DOTALL);
-  private static final Pattern OUTPUT_TAG_PATTERN = Pattern.compile(
-    "<output(?:\\s[^>]*)?>(.+?)</output>", Pattern.DOTALL);
-  private static final Pattern INLINE_BACKTICK_PATTERN = Pattern.compile("`[^`\n]+`");
   private static final Pattern POSITIONAL_INDEXED_ARG_PATTERN = Pattern.compile("\\$(\\d+)");
   private static final Pattern ARGUMENTS_INDEXED_PATTERN = Pattern.compile("\\$ARGUMENTS\\[(\\d+)]");
-  private static final Pattern CODE_BLOCK_PATTERN = Pattern.compile("^```[a-z]*\\s*$(.+?)^```\\s*$",
-    Pattern.DOTALL | Pattern.MULTILINE);
   private static final String LAUNCHER_DIRECTORY = "client/bin";
   /**
    * Matches a standard UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (case-insensitive).
@@ -115,39 +119,15 @@ public final class SkillLoader
   private static final Pattern SUBAGENT_ID_PATTERN = Pattern.compile(
     "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/subagents/[A-Za-z0-9_-]+",
     Pattern.CASE_INSENSITIVE);
-  /**
-   * Parsed content from a {@code -first-use} SKILL.md file.
-   * <p>
-   * The {@code instructions} are output directly on first use. The {@code outputBody}
-   * is wrapped in {@code <output skill="X">} tags on every invocation.
-   *
-   * @param instructions the content before the {@code <output>} tag
-   * @param outputBody the content inside the {@code <output>} tag (may be empty)
-   */
-  private record ParsedContent(String instructions, String outputBody)
-  {
-    /**
-     * Creates a new ParsedContent instance.
-     *
-     * @param instructions the content before the {@code <output>} tag
-     * @param outputBody the content inside the {@code <output>} tag (may be empty)
-     * @throws NullPointerException if {@code instructions} or {@code outputBody} are null
-     */
-    private ParsedContent
-    {
-      requireThat(instructions, "instructions").isNotNull();
-      requireThat(outputBody, "outputBody").isNotNull();
-    }
-  }
 
   private final JvmScope scope;
   private final Path pluginRoot;
   private final List<String> skillArgs;
-  private final Path agentMarkerFile;
+  private final Path loadedDir;
   private final Set<String> loadedSkills;
 
   /**
-   * Creates a new SkillLoader instance.
+   * Creates a new GetSkill instance.
    * <p>
    * The CAT agent ID is derived from the first positional skill argument ({@code skillArgs.get(0)}). If
    * the first element contains a space, it is split on the first space: the prefix becomes the agent ID
@@ -170,7 +150,7 @@ public final class SkillLoader
    *   a valid UUID or subagent ID format
    * @throws IOException if the plugin root directory does not exist, or if the agent marker file cannot be read
    */
-  public SkillLoader(JvmScope scope, List<String> skillArgs) throws IOException
+  public GetSkill(JvmScope scope, List<String> skillArgs) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(skillArgs, "skillArgs").isNotNull();
@@ -237,55 +217,32 @@ public final class SkillLoader
     Path baseDir = scope.getSessionBasePath().toAbsolutePath().normalize();
     Path agentDir = resolveAndValidateContainment(baseDir, catAgentId,
       "catAgentId");
-    this.agentMarkerFile = agentDir.resolve("skills-loaded");
+    this.loadedDir = agentDir.resolve(LOADED_DIR);
 
-    Files.createDirectories(agentMarkerFile.getParent());
+    Files.createDirectories(loadedDir);
     this.loadedSkills = new HashSet<>();
 
-    if (Files.exists(agentMarkerFile))
+    try (java.util.stream.Stream<Path> stream = Files.list(loadedDir))
     {
-      String content = Files.readString(agentMarkerFile, StandardCharsets.UTF_8);
-      loadedSkills.addAll(parseSkillNames(content));
+      stream.forEach(p -> loadedSkills.add(
+        URLDecoder.decode(p.getFileName().toString(), StandardCharsets.UTF_8)));
     }
-  }
-
-  /**
-   * Parses a skills-loaded marker file's content into a set of skill names.
-   * <p>
-   * Each non-blank line in the content is treated as a skill name after stripping surrounding whitespace.
-   *
-   * @param content the content of a {@code skills-loaded} marker file
-   * @return the set of skill names present in the content
-   * @throws NullPointerException if {@code content} is null
-   */
-  public static Set<String> parseSkillNames(String content)
-  {
-    requireThat(content, "content").isNotNull();
-    Set<String> skills = new HashSet<>();
-    for (String line : content.split("\n"))
-    {
-      String stripped = line.strip();
-      if (!stripped.isEmpty())
-        skills.add(stripped);
-    }
-    return skills;
   }
 
   /**
    * Loads a skill, returning full content on first load or a dynamically generated reference on
    * subsequent loads.
    * <p>
-   * When the skill has a {@code -first-use} companion SKILL.md with an {@code <output>} tag,
-   * the instructions before the tag are wrapped in {@code <instructions skill="X">} tags on first
-   * load, followed by an execution trigger. On subsequent loads, only the execution trigger is
-   * emitted. The {@code <output>} section (dynamic preprocessor content) is always wrapped in
-   * {@code <output skill="X">} tags and appended regardless of whether it is the first or
-   * subsequent load.
+   * On first load: returns full {@code first-use.md} content with preprocessor directives expanded.
+   * On subsequent loads: returns a short "already loaded" reference message. If the {@code first-use.md}
+   * contains a single {@code !} preprocessor directive, that directive is re-executed and its output is
+   * appended to the reference message.
    *
    * @param skillName the skill name
-   * @return the skill content with environment variables substituted
+   * @return the skill content with preprocessor directives expanded
    * @throws NullPointerException if {@code skillName} is null
-   * @throws IllegalArgumentException if {@code skillName} is blank
+   * @throws IllegalArgumentException if {@code skillName} is blank, or if {@code first-use.md} contains
+   *   more than one {@code !} preprocessor directive
    * @throws IOException if skill files cannot be read
    */
   public String load(String skillName) throws IOException
@@ -294,74 +251,132 @@ public final class SkillLoader
 
     String rawContent = loadRawContent(skillName);
     String content = stripFrontmatter(rawContent);
-    return processContent(skillName, content);
+
+    if (loadedSkills.contains(skillName))
+    {
+      // Subsequent load: return reference + re-execute single directive if present
+      return buildSubsequentLoadResponse(skillName, content);
+    }
+    // First load: return full expanded content
+    markSkillLoaded(skillName);
+    return processPreprocessorDirectives(content, skillName);
   }
 
   /**
-   * Processes loaded skill content by applying the first-use/reference logic and variable substitution.
+   * Builds the response for a subsequent (non-first) skill load.
    * <p>
-   * Variable substitution and preprocessor directive expansion run first, so that dynamically
-   * generated {@code <output>} tags (produced by preprocessor directives) are visible to
-   * {@code parseContent()}.
-   * <p>
-   * For skills with {@code <output>} tags: on first use, wraps instructions in
-   * {@code <instructions skill="X">} tags followed by an execution trigger. On subsequent uses,
-   * only the execution trigger is emitted. The {@code <output>} section is always appended.
+   * Returns a short "already loaded" reference message. If the {@code first-use.md} content contains
+   * exactly one {@code !} preprocessor directive, that directive is re-executed and its output is
+   * appended. If more than one directive is found, fails with a validation error.
    *
    * @param skillName the skill name
-   * @param content the skill content with frontmatter already stripped
-   * @return the processed skill output
-   * @throws IOException if processing fails
+   * @param content the {@code first-use.md} content with frontmatter already stripped
+   * @return the subsequent-load response
+   * @throws IllegalArgumentException if the content contains more than one {@code !} preprocessor directive
+   * @throws IOException if directive execution fails
    */
-  private String processContent(String skillName, String content) throws IOException
+  private String buildSubsequentLoadResponse(String skillName, String content) throws IOException
   {
-    String expanded = processPreprocessorDirectives(content, skillName);
-    ParsedContent parsed = parseContent(expanded);
-
-    if (parsed != null)
+    List<String> directives = findPreprocessorDirectives(content);
+    if (directives.size() > 1)
     {
-      StringBuilder output = new StringBuilder(4096);
-      String executeRef = "Execute the <instructions skill=\"" + skillName +
-        "\"> block from earlier in this conversation, using the updated <output skill=\"" +
-        skillName + "\"> tag below.";
-      if (loadedSkills.contains(skillName))
-      {
-        output.append(executeRef);
-      }
-      else
-      {
-        output.append("<instructions skill=\"").append(skillName).append("\">\n").
-          append(parsed.instructions()).
-          append("\n</instructions>\n\n").
-          append(executeRef);
-        markSkillLoaded(skillName);
-      }
-      if (!parsed.outputBody().isEmpty())
-      {
-        output.append("\n\n<output skill=\"").append(skillName).append("\">\n").
-          append(parsed.outputBody()).append("\n</output>");
-      }
-      return output.toString();
+      throw new IllegalArgumentException(
+        "first-use.md for skill '" + skillName + "' contains " + directives.size() +
+          " preprocessor directives but at most one is allowed. " +
+          "GetSkill re-executes the single directive on subsequent loads. " +
+          "Split the skill or reduce to a single directive.");
     }
 
-    // Content without tags — content body passes through unchanged to Claude Code
-    StringBuilder output = new StringBuilder(4096);
-    if (loadedSkills.contains(skillName))
+    StringBuilder output = new StringBuilder(512);
+    output.append("""
+      The skill instructions were already loaded earlier in this conversation.
+      Use the Skill tool to invoke this skill again with the same arguments.
+      The skill script generates fresh, accurate output on every invocation.
+      Execute the skill instructions in FULL - do NOT summarize, paraphrase, or abbreviate any output.""");
+
+    if (!directives.isEmpty())
     {
-      output.append("""
-        The skill instructions were already loaded earlier in this conversation.
-        Use the Skill tool to invoke this skill again with the same arguments.
-        The skill script generates fresh, accurate output on every invocation.
-        Execute the skill instructions in FULL - do NOT summarize, paraphrase, or abbreviate any output.""");
+      String directive = directives.getFirst();
+      String directiveOutput = executeSingleDirective(directive, skillName);
+      output.append("\n\n").append(directiveOutput);
     }
-    else
-    {
-      output.append(expanded);
-      markSkillLoaded(skillName);
-    }
+
     return output.toString();
   }
 
+  /**
+   * Finds all {@code !} preprocessor directive strings in the content.
+   *
+   * @param content the content to scan
+   * @return a list of complete directive strings (e.g., {@code !`"path" args`})
+   */
+  private static List<String> findPreprocessorDirectives(String content)
+  {
+    List<String> directives = new ArrayList<>();
+    Matcher matcher = PREPROCESSOR_DIRECTIVE_PATTERN.matcher(content);
+    while (matcher.find())
+      directives.add(matcher.group(0));
+    return directives;
+  }
+
+  /**
+   * Extracts and expands the launcher path and arguments from a matched preprocessor directive.
+   * <p>
+   * Given a {@link Matcher} that has already matched a preprocessor directive, expands variables in
+   * the launcher path (group 1) and optional arguments token (group 2), then tokenizes the expanded
+   * arguments using the shell parser.
+   *
+   * @param matcher   a {@link Matcher} positioned on a preprocessor directive match
+   * @param skillName the skill name, used to resolve {@code ${CLAUDE_SKILL_DIR}}
+   * @return a two-element array: {@code [0]} is the expanded launcher path string, {@code [1..N]}
+   *   are the tokenized arguments (may be empty if no arguments are present)
+   */
+  private String[] expandDirectiveToArguments(Matcher matcher, String skillName)
+  {
+    String launcherPath = expandDirectiveString(matcher.group(1), skillName);
+    String argumentsToken = matcher.group(2);
+    String expandedArgs;
+    if (argumentsToken == null)
+      expandedArgs = null;
+    else
+      expandedArgs = expandDirectiveString(argumentsToken.strip(), skillName);
+    String[] arguments;
+    if (expandedArgs == null)
+      arguments = new String[0];
+    else
+    {
+      List<String> tokenList = ShellParser.tokenize(expandedArgs);
+      arguments = tokenList.toArray(new String[0]);
+    }
+    // Prepend launcher path as element [0] in a combined array for the caller.
+    // Caller unpacks: [0] = launcher path, [1..] = arguments to pass to the directive.
+    String[] result = new String[1 + arguments.length];
+    result[0] = launcherPath;
+    System.arraycopy(arguments, 0, result, 1, arguments.length);
+    return result;
+  }
+
+  /**
+   * Executes a single preprocessor directive string and returns the output.
+   *
+   * @param directive the complete directive string (e.g., {@code !`"path" args`})
+   * @param skillName the skill name, used to resolve {@code ${CLAUDE_SKILL_DIR}}
+   * @return the output from executing the directive
+   * @throws IOException if execution fails
+   */
+  private String executeSingleDirective(String directive, String skillName) throws IOException
+  {
+    Matcher matcher = PREPROCESSOR_DIRECTIVE_PATTERN.matcher(directive);
+    if (!matcher.find())
+      return directive;
+
+    String[] expanded = expandDirectiveToArguments(matcher, skillName);
+    String launcherPath = expanded[0];
+    String[] arguments = new String[expanded.length - 1];
+    System.arraycopy(expanded, 1, arguments, 0, arguments.length);
+
+    return executeDirective(launcherPath, arguments, directive);
+  }
 
   /**
    * Loads raw content (including frontmatter) from the skill's {@code first-use.md} file.
@@ -412,7 +427,7 @@ public final class SkillLoader
    * Strips YAML frontmatter from the beginning of content.
    * <p>
    * Removes the leading {@code ---\n...\n---\n} block if present. This is used when loading
-   * {@code -first-use} SKILL.md files which carry frontmatter for Claude Code's own use.
+   * {@code first-use.md} files which carry frontmatter for Claude Code's own use.
    *
    * @param content the content to process
    * @return the content with YAML frontmatter removed, or unchanged if none found
@@ -423,111 +438,6 @@ public final class SkillLoader
     if (matcher.find())
       return content.substring(matcher.end());
     return content;
-  }
-
-  /**
-   * Replaces inline backtick-quoted segments (e.g., {@code `<output skill="X">`}) with
-   * equal-length space sequences, producing a sanitized copy of the content.
-   * <p>
-   * This prevents {@code OUTPUT_TAG_PATTERN} from matching {@code <output>} tags that appear
-   * inside backtick-quoted text in instruction prose.
-   * <p>
-   * Only inline backticks are replaced. Fenced code blocks (triple-backtick) are not affected
-   * because triple-backtick fences do not match the single-backtick pattern used here.
-   * <p>
-   * Replacements use equal-length space sequences (not shorter tokens) to preserve the string
-   * length invariant. This ensures that character positions found by pattern matching on the
-   * sanitized copy remain valid indices into the original content.
-   *
-   * @param content the original content
-   * @return a sanitized copy where inline backtick segments are replaced with spaces
-   */
-  private static String sanitizeInlineBackticks(String content)
-  {
-    Matcher matcher = INLINE_BACKTICK_PATTERN.matcher(content);
-    StringBuilder sanitized = new StringBuilder(content);
-    while (matcher.find())
-    {
-      int start = matcher.start();
-      int end = matcher.end();
-      for (int i = start; i < end; ++i)
-        sanitized.setCharAt(i, ' ');
-    }
-    return sanitized.toString();
-  }
-
-  /**
-   * Parses content into instructions and output body using the {@code <output>} tag as delimiter.
-   * <p>
-   * Everything before the last {@code <output>} tag is treated as instructions. The content inside
-   * the last {@code <output>} tag is the preprocessor directive body.
-   * <p>
-   * Inline backtick-quoted segments (e.g., {@code `<output skill="X">`}) are ignored during
-   * tag detection, so literal references in instruction prose do not corrupt the parse.
-   * <p>
-   * {@code <output>} tags inside fenced code blocks (triple-backtick) are also ignored, so
-   * example skill files shown in documentation do not corrupt the parse.
-   * <p>
-   * <b>Index invariant:</b> {@code sanitizeInlineBackticks} replaces segments with equal-length
-   * spaces, preserving string length. This means positions found in the sanitized copy apply
-   * directly to the original content for substring extraction.
-   *
-   * @param content the content to parse
-   * @return the parsed content, or {@code null} if no real {@code <output>} tag is found
-   */
-  private static ParsedContent parseContent(String content)
-  {
-    String sanitized = sanitizeInlineBackticks(content);
-    Set<int[]> codeBlockRegions = findCodeBlockRegions(sanitized);
-    Matcher outputMatcher = OUTPUT_TAG_PATTERN.matcher(sanitized);
-    int lastStart = -1;
-    int lastGroupStart = -1;
-    int lastGroupEnd = -1;
-    while (outputMatcher.find())
-    {
-      if (isInsideCodeBlock(outputMatcher.start(), codeBlockRegions))
-        continue;
-      lastStart = outputMatcher.start();
-      lastGroupStart = outputMatcher.start(1);
-      lastGroupEnd = outputMatcher.end(1);
-    }
-    if (lastStart == -1)
-      return null;
-    String instructions = content.substring(0, lastStart).strip();
-    String lastBody = content.substring(lastGroupStart, lastGroupEnd).strip();
-    return new ParsedContent(instructions, lastBody);
-  }
-
-  /**
-   * Finds all code block regions (between ``` fences) in the content.
-   *
-   * @param content the content to scan
-   * @return a set of int arrays where each array contains [start, end] positions of a code block
-   */
-  private static Set<int[]> findCodeBlockRegions(String content)
-  {
-    Set<int[]> regions = new HashSet<>();
-    Matcher matcher = CODE_BLOCK_PATTERN.matcher(content);
-    while (matcher.find())
-      regions.add(new int[]{matcher.start(), matcher.end()});
-    return regions;
-  }
-
-  /**
-   * Returns {@code true} if the given position falls inside any of the provided code block regions.
-   *
-   * @param position the character position to test
-   * @param regions the code block regions to check against
-   * @return {@code true} if position is inside a code block, {@code false} otherwise
-   */
-  private static boolean isInsideCodeBlock(int position, Set<int[]> regions)
-  {
-    for (int[] region : regions)
-    {
-      if (position >= region[0] && position < region[1])
-        return true;
-    }
-    return false;
   }
 
   /**
@@ -553,23 +463,11 @@ public final class SkillLoader
     while (matcher.find())
     {
       result.append(content, lastEnd, matcher.start());
-      String launcherPath = expandDirectiveString(matcher.group(1), skillName);
-      String argumentsToken = matcher.group(2);
-      String expandedArgs;
-      if (argumentsToken == null)
-        expandedArgs = null;
-      else
-        expandedArgs = expandDirectiveString(argumentsToken.strip(), skillName);
-      String[] arguments;
-      if (expandedArgs == null)
-        arguments = new String[0];
-      else
-      {
-        List<String> tokenList = ShellParser.tokenize(expandedArgs);
-        arguments = tokenList.toArray(new String[0]);
-      }
-
       String originalDirective = matcher.group(0);
+      String[] expanded = expandDirectiveToArguments(matcher, skillName);
+      String launcherPath = expanded[0];
+      String[] arguments = new String[expanded.length - 1];
+      System.arraycopy(expanded, 1, arguments, 0, arguments.length);
       String output = executeDirective(launcherPath, arguments, originalDirective);
       result.append(output);
       lastEnd = matcher.end();
@@ -775,7 +673,7 @@ public final class SkillLoader
   /**
    * Resolves a single {@code ${name}} variable inside a directive string.
    * <p>
-   * {@code ${CLAUDE_SKILL_DIR}} is resolved by SkillLoader to the skill's directory
+   * {@code ${CLAUDE_SKILL_DIR}} is resolved by GetSkill to the skill's directory
    * ({@code pluginRoot/skills/{skill-name}/}). All other variables are resolved via
    * {@link JvmScope#getEnvironmentVariable(String)}. Unknown variables (not set in the environment)
    * are passed through as {@code ${name}} literals.
@@ -795,17 +693,16 @@ public final class SkillLoader
   }
 
   /**
-   * Marks a skill as loaded in the agent marker file.
+   * Marks a skill as loaded by creating an empty marker file in the loaded directory.
    *
    * @param skillName the skill name
-   * @throws IOException if the agent marker file cannot be written
+   * @throws IOException if the marker file cannot be written
    */
   private void markSkillLoaded(String skillName) throws IOException
   {
     loadedSkills.add(skillName);
-    Files.writeString(agentMarkerFile, skillName + "\n", StandardCharsets.UTF_8,
-      StandardOpenOption.CREATE,
-      StandardOpenOption.APPEND);
+    String encodedName = URLEncoder.encode(skillName, StandardCharsets.UTF_8);
+    Files.writeString(loadedDir.resolve(encodedName), "", StandardCharsets.UTF_8);
   }
 
   /**
@@ -838,7 +735,7 @@ public final class SkillLoader
   /**
    * Main method for command-line execution.
    * <p>
-   * Invoked as: java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.util.SkillLoader
+   * Invoked as: java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.util.GetSkill
    * skill-name catAgentId [skill-args...]
    * <p>
    * The plugin root and project directory are read from the JVM environment via {@link MainJvmScope}.
@@ -852,7 +749,7 @@ public final class SkillLoader
     if (args.length < 1)
     {
       System.err.println(
-        "Usage: skill-loader <skill-name> <catAgentId> [skill-args...]");
+        "Usage: get-skill <skill-name> <catAgentId> [skill-args...]");
       System.exit(1);
     }
 
@@ -861,7 +758,7 @@ public final class SkillLoader
 
     try (JvmScope scope = new MainJvmScope())
     {
-      SkillLoader loader = new SkillLoader(scope, skillArgs);
+      GetSkill loader = new GetSkill(scope, skillArgs);
       String result = loader.load(skillName);
       System.out.print(result);
     }
@@ -872,7 +769,7 @@ public final class SkillLoader
     }
     catch (RuntimeException | AssertionError e)
     {
-      Logger log = LoggerFactory.getLogger(SkillLoader.class);
+      Logger log = LoggerFactory.getLogger(GetSkill.class);
       log.error("Unexpected error", e);
       throw e;
     }

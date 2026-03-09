@@ -9,4 +9,4 @@ allowed-tools:
 disable-model-invocation: true
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" feedback "${CLAUDE_SESSION_ID}" "$ARGUMENTS"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" feedback "${CLAUDE_SESSION_ID}" "$ARGUMENTS"`

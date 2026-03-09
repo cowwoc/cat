@@ -6,4 +6,4 @@ allowed-tools: Bash, Write, Read, Edit
 argument-hint: "<catAgentId>"
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" register-hook-agent "$0"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" register-hook-agent "$0"`

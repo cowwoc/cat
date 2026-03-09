@@ -9,45 +9,49 @@ package io.github.cowwoc.cat.hooks.session;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.util.SkillLoader;
+import io.github.cowwoc.cat.hooks.util.GetSkill;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
+import java.util.stream.Stream;
 
 /**
- * Deletes a single agent's skill marker file so that skills reload with full content.
+ * Deletes a single agent's loaded marker directory so that skills and files reload with full content.
  * <p>
- * Marker files track which skills have been loaded by each agent. Deleting a marker forces a fresh
- * skill load on the next invocation. Marker paths:
+ * The {@code loaded/} directory tracks which skills and files have been loaded by each agent.
+ * Deleting the directory forces a fresh load on the next invocation. Marker paths:
  * <ul>
- *   <li>Main agent: {@code {sessionBasePath}/{sessionId}/skills-loaded}</li>
- *   <li>Subagent: {@code {sessionBasePath}/{sessionId}/subagents/{agentId}/skills-loaded}</li>
+ *   <li>Main agent: {@code {sessionBasePath}/{sessionId}/loaded/}</li>
+ *   <li>Subagent: {@code {sessionBasePath}/{sessionId}/subagents/{agentId}/loaded/}</li>
  * </ul>
  * <p>
  * Called by {@code SessionStartHook} for the main agent (on session startup and after context
  * compaction) and by {@code SubagentStartHook} for individual subagents.
  *
- * @see io.github.cowwoc.cat.hooks.util.SkillLoader
+ * @see io.github.cowwoc.cat.hooks.util.GetSkill
+ * @see io.github.cowwoc.cat.hooks.util.GetFile
  */
-public final class ClearSkillMarker
+public final class ClearAgentMarkers
 {
   private final JvmScope scope;
 
   /**
-   * Creates a new ClearSkillMarker.
+   * Creates a new ClearAgentMarkers.
    *
    * @param scope the JVM scope providing the session base path
    * @throws NullPointerException if {@code scope} is null
    */
-  public ClearSkillMarker(JvmScope scope)
+  public ClearAgentMarkers(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
   }
 
   /**
-   * Deletes the main agent's skill marker file for the current session.
+   * Deletes the main agent's loaded marker directory for the current session.
    *
    * @param sessionId the session ID
    * @return a warning message if deletion fails, or an empty string on success
@@ -58,14 +62,14 @@ public final class ClearSkillMarker
   {
     requireThat(sessionId, "sessionId").isNotBlank();
     Path baseDir = scope.getSessionBasePath().toAbsolutePath().normalize();
-    Path sessionDir = SkillLoader.resolveAndValidateContainment(baseDir, sessionId, "sessionId");
+    Path sessionDir = GetSkill.resolveAndValidateContainment(baseDir, sessionId, "sessionId");
     if (!Files.isDirectory(sessionDir))
       return "";
-    return deleteMarker(sessionDir.resolve("skills-loaded"));
+    return deleteLoadedDir(sessionDir.resolve(GetSkill.LOADED_DIR));
   }
 
   /**
-   * Deletes the skill marker file for a specific subagent.
+   * Deletes the loaded marker directory for a specific subagent.
    *
    * @param sessionId the session ID
    * @param agentId   the subagent's native agent ID (not the composite ID)
@@ -78,27 +82,43 @@ public final class ClearSkillMarker
     requireThat(sessionId, "sessionId").isNotBlank();
     requireThat(agentId, "agentId").isNotBlank();
     Path baseDir = scope.getSessionBasePath().toAbsolutePath().normalize();
-    String subagentPath = sessionId + "/" + SkillLoader.SUBAGENTS_DIR + "/" + agentId;
-    Path markerFile = SkillLoader.resolveAndValidateContainment(baseDir, subagentPath,
-      "sessionId or agentId").resolve("skills-loaded");
-    return deleteMarker(markerFile);
+    String subagentPath = sessionId + "/" + GetSkill.SUBAGENTS_DIR + "/" + agentId;
+    Path agentDir = GetSkill.resolveAndValidateContainment(baseDir, subagentPath,
+      "sessionId or agentId");
+    return deleteLoadedDir(agentDir.resolve(GetSkill.LOADED_DIR));
   }
 
   /**
-   * Deletes a marker file and returns a warning if deletion fails.
+   * Deletes the loaded directory and all its contents, returning a warning if deletion fails.
    *
-   * @param markerFile the path to the marker file to delete
+   * @param loadedDir the path to the loaded directory to delete
    * @return a warning message if deletion fails, or an empty string on success
    */
-  private static String deleteMarker(Path markerFile)
+  private static String deleteLoadedDir(Path loadedDir)
   {
+    if (!Files.isDirectory(loadedDir))
+      return "";
     try
     {
-      Files.deleteIfExists(markerFile);
+      try (Stream<Path> stream = Files.walk(loadedDir))
+      {
+        stream.sorted(Comparator.reverseOrder()).forEach(p ->
+        {
+          try
+          {
+            Files.delete(p);
+          }
+          catch (IOException e)
+          {
+            throw new UncheckedIOException(e);
+          }
+        });
+      }
     }
-    catch (IOException e)
+    catch (IOException | UncheckedIOException e)
     {
-      return "Warning: Failed to delete skill marker file: " + markerFile + ": " + e.getMessage();
+      return "Warning: Failed to delete loaded directory: " + loadedDir + ": " +
+        e.getMessage();
     }
     return "";
   }

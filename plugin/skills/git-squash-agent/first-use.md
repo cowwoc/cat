@@ -90,14 +90,14 @@ docs: update README
 
 **Cross-type example (same topic, different prefixes):**
 ```
-bugfix: fix SkillLoader argument parsing with ShellParser.tokenize()
-refactor: change SkillLoader to accept pre-tokenized arguments
+bugfix: fix GetSkill argument parsing with ShellParser.tokenize()
+refactor: change GetSkill to accept pre-tokenized arguments
 ```
 
-These two commits both change `SkillLoader.java` and `SkillLoaderTest.java` and address the same argument-handling
+These two commits both change `GetSkill.java` and `GetSkillTest.java` and address the same argument-handling
 concern. Squash to one commit, choosing the type that best describes the combined change:
 ```
-bugfix: fix SkillLoader argument parsing and pre-tokenize inputs
+bugfix: fix GetSkill argument parsing and pre-tokenize inputs
 ```
 
 **What is NOT the same topic (keep separate):**

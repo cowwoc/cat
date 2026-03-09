@@ -5,4 +5,4 @@ user-invocable: false
 argument-hint: "<catAgentId>"
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" validate-git-safety-agent "$0"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" validate-git-safety-agent "$0"`

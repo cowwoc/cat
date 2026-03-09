@@ -14,4 +14,4 @@ allowed-tools:
   - AskUserQuestion
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" work-merge-agent "$ARGUMENTS"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" work-merge-agent "$ARGUMENTS"`

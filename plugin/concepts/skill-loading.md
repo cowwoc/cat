@@ -29,12 +29,12 @@ How to register, invoke, and reference skills for main agents and subagents in C
 
 ### Via Skill Tool (recommended for all skill types)
 
-The Skill tool triggers the full SkillLoader pipeline:
+The Skill tool triggers the full GetSkill pipeline:
 
 1. Claude Code routes to the skill's SKILL.md
-2. SKILL.md preprocessor directive (`!` backtick) calls `skill-loader`
-3. `skill-loader` invokes `SkillLoader.java`
-4. SkillLoader checks per-agent marker file, returns full content or a short reference
+2. SKILL.md preprocessor directive (`!` backtick) calls `get-skill`
+3. `get-skill` invokes `GetSkill.java`
+4. GetSkill checks per-agent marker file, returns full content or a short reference
 5. Preprocessor directives are processed, with variable substitution applied inside directive strings
 
 ```
@@ -44,7 +44,7 @@ Skill tool:
 ```
 
 **This works in both main agent and subagents.** The Skill tool is available to all agent types, and
-SkillLoader runs correctly in subagent context.
+GetSkill runs correctly in subagent context.
 
 **CRITICAL: Skill tool execution is SYNCHRONOUS, not asynchronous.** The Skill tool loads the skill
 content into the agent's context in the SAME conversation turn. The skill content is returned immediately
@@ -88,8 +88,8 @@ and preprocessor-based plugin skills.
 ### The `argument-hint` Field
 
 The `argument-hint` frontmatter field documents the arguments passed to the SKILL.md preprocessor command
-(the `!` backtick directive), not the arguments received by `first-use.md`. For skills using `skill-loader`,
-this includes `catAgentId` as the first argument — `skill-loader` consumes `catAgentId` internally and passes
+(the `!` backtick directive), not the arguments received by `first-use.md`. For skills using `get-skill`,
+this includes `catAgentId` as the first argument — `get-skill` consumes `catAgentId` internally and passes
 the remaining arguments to `first-use.md`.
 
 The field is also shown as a display-only hint in the CLI prompt bar when users type the slash command.
@@ -113,7 +113,7 @@ Skills that use `!` backtick preprocessor commands can receive arguments from th
 ### Fixed Arguments (`$N` Pattern)
 
 For skills with a known number of arguments, use `argument-hint` frontmatter to document expected arguments and `$N`
-positional references (`$0`, `$1`, `$2`, ...) in the preprocessor command. SkillLoader splits the caller's args string
+positional references (`$0`, `$1`, `$2`, ...) in the preprocessor command. GetSkill splits the caller's args string
 on whitespace and maps tokens to positional indices.
 
 ```yaml
@@ -131,10 +131,10 @@ is passed through unchanged — this will likely cause errors in the target bina
 ### Variable-Length Arguments (`$ARGUMENTS`)
 
 For skills that accept a variable number of arguments or free-text descriptions, use the unbraced `$ARGUMENTS` variable.
-This bypasses SkillLoader's variable substitution and is expanded by the shell, where Claude Code sets the `ARGUMENTS`
+This bypasses GetSkill's variable substitution and is expanded by the shell, where Claude Code sets the `ARGUMENTS`
 environment variable to the raw args string.
 
-**Do NOT use `${ARGUMENTS}`** (braced form). SkillLoader's variable resolver intercepts braced variables and
+**Do NOT use `${ARGUMENTS}`** (braced form). GetSkill's variable resolver intercepts braced variables and
 `ARGUMENTS` is not a recognized built-in, causing it to resolve to empty. See
 [claude-code#18044](https://github.com/anthropics/claude-code/issues/18044#issuecomment-3928291132).
 
@@ -173,11 +173,11 @@ behavior.
 |-------------|-------------|----------------------|
 | Main agent via Skill tool | `cat:{skill-name}` | Yes — per-agent marker file |
 | Subagent via `skills:` frontmatter | `cat:{skill-name}` | Yes — subagent's own marker file |
-| Subagent via SubagentStartHook | skill listing injected at spawn | On-demand via `skill-loader` |
+| Subagent via SubagentStartHook | skill listing injected at spawn | On-demand via `get-skill` |
 
 ## Session Markers (First-Use vs Reference)
 
-SkillLoader tracks which skills have been loaded via **per-agent** marker files:
+GetSkill tracks which skills have been loaded via **per-agent** marker files:
 
 ```
 ${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/{sessionId}/skills-loaded               ← main agent
@@ -294,10 +294,10 @@ causing skills to misbehave (e.g., first-use check passes for the wrong agent).
 **catAgentId in preprocessor commands:**
 ```yaml
 # User-facing: always the main session
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" add-agent "${CLAUDE_SESSION_ID}"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" add-agent "${CLAUDE_SESSION_ID}"`
 
 # Agent-facing: caller-supplied (may be subagent)
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" add-agent "$0"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" add-agent "$0"`
 ```
 
 **CRITICAL:** `$0` receives the agent ID injected by SubagentStartHook as the first positional argument. It must be a
@@ -333,7 +333,7 @@ per-agent state. Skills that perform stateless operations (e.g., format a docume
 2. Create `SKILL.md` with frontmatter and preprocessor directive
 3. Create `plugin/skills/{skill-name}/first-use.md` with full skill content
 4. If the skill dispatches to a Java handler: register the handler in `client/build-jlink.sh`
-   and invoke the binary launcher in `SKILL.md` (not `skill-loader`)
+   and invoke the binary launcher in `SKILL.md` (not `get-skill`)
 5. The skill is automatically available as `cat:{skill-name}`
 
 **Java handler registration (step 4):** Skills that execute Java code must have two things:
@@ -342,14 +342,14 @@ per-agent state. Skills that perform stateless operations (e.g., format a docume
   ```
   "get-output:skills.GetOutput"
   ```
-- A `SKILL.md` preprocessor that calls the binary launcher — NOT `skill-loader`:
+- A `SKILL.md` preprocessor that calls the binary launcher — NOT `get-skill`:
   ```
   # CORRECT: calls the Java binary launcher directly
   !`"${CLAUDE_PLUGIN_ROOT}/client/target/jlink/bin/get-output" "${CLAUDE_PLUGIN_ROOT}" \
     "${CLAUDE_PROJECT_DIR}" "$0" $ARGUMENTS`
 
-  # WRONG: calls skill-loader, which loads skill content but does NOT invoke Java handlers
-  !`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" get-output "$0" $ARGUMENTS`
+  # WRONG: calls get-skill, which loads skill content but does NOT invoke Java handlers
+  !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" get-output "$0" $ARGUMENTS`
   ```
   **Quoting `$ARGUMENTS`:** The examples above use unquoted `$ARGUMENTS`, which is appropriate when the tool
   expects separate tokens (e.g., keyword lists or flag-style arguments). If the skill's `argument-hint` accepts
@@ -357,8 +357,8 @@ per-agent state. Skills that perform stateless operations (e.g., format a docume
   argument rather than being word-split by the shell. See the [Variable-Length Arguments](#variable-length-arguments-arguments)
   section for the full quoting guide.
 
-`skill-loader` (SkillLoader) reads and returns skill content from `first-use.md`. It does not route to
-Java handlers. Using `skill-loader` when the intent is to invoke a Java handler produces empty or
+`get-skill` (GetSkill) reads and returns skill content from `first-use.md`. It does not route to
+Java handlers. Using `get-skill` when the intent is to invoke a Java handler produces empty or
 incorrect output — the skill appears to work (no error) but generates no computed output.
 
 ### Creating a New Project Skill
@@ -389,60 +389,74 @@ See [workflow-output.md](workflow-output.md) for output format details.
 See `templates/issue-state.md` for the STATE.md template.
 ```
 
-`${CLAUDE_PLUGIN_ROOT}` is not expanded by SkillLoader in content body (only inside `!` directive strings).
+`${CLAUDE_PLUGIN_ROOT}` is not expanded by GetSkill in content body (only inside `!` directive strings).
 Claude resolves it at runtime using the `CLAUDE_PLUGIN_ROOT` environment variable (injected by `InjectEnv.java`).
 
-## Output Tags in Preprocessor Directives
+## Dynamic Output on Every Invocation
 
-**Convention:** Preprocessor commands return `<output>` tags as part of their output. Skill files do not wrap
-preprocessor commands in `<output>` tags.
+Skills that need fresh data on every invocation use a `!` preprocessor directive in `first-use.md`.
+GetSkill re-executes the single directive on subsequent loads and appends the output to the "already
+loaded" reference message.
+
+### Single-Directive Constraint
+
+Each `first-use.md` may contain **at most one** `!` preprocessor directive. If more than one is present,
+GetSkill fails with a validation error on subsequent loads.
 
 ### How It Works
 
-SkillLoader processes skill content in two phases:
+GetSkill uses a two-path load model:
 
-1. **Preprocessor expansion:** `processPreprocessorDirectives()` expands `!` backtick directives by executing the
-   referenced command. The command's stdout replaces the directive in the content.
-2. **Content parsing:** `parseContent()` splits the expanded content on the last `<output>` tag. Content before the tag
-   becomes the instruction body (cached after first load). Content inside becomes the output body (refreshed on every
-   invocation).
-
-Because preprocessing runs before parsing, a Java handler can return content containing `<output>` tags. After
-expansion, `parseContent()` finds the `<output>` tag in the expanded content and splits correctly.
-
-### Why This Matters
-
-Skills that need fresh data on every invocation (not just the first load) must use `<output>` tags. Without them,
-subsequent loads return a short "already loaded" reference and discard the expanded preprocessor output. With
-`<output>` tags, the output body is regenerated fresh every time the skill is invoked.
+1. **First load:** Returns full `first-use.md` content with preprocessor directives expanded inline.
+2. **Subsequent loads:** Returns a short "already loaded" reference message. If the file contains a
+   `!` directive, that directive is re-executed and its output is appended.
 
 ### Pattern
 
-**Java handler returns `<output>` tags:**
-
-```java
-@Override
-public String getOutput(String[] args) throws IOException
-{
-  String json = buildData();
-  return "<output>\n" + json + "\n</output>";
-}
-```
-
-**Skill file uses bare preprocessor directive (no wrapper):**
+**Skill file with a single preprocessor directive:**
 
 ```markdown
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/my-handler"`
+# Skill Title
+
+Instructions for the model...
+
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/my-handler" "$0"`
 ```
 
-**Do NOT wrap preprocessor directives in `<output>` tags in the skill file:**
+**First load:** Returns all content including expanded directive output.
+
+**Subsequent loads:** Returns "already loaded" reference + re-executed directive output.
+
+**Skills without a directive** return only the "already loaded" reference on subsequent loads.
+
+## GetFile — Per-Agent File Deduplication
+
+`get-file` is a companion to `get-skill` for loading reference files with per-agent deduplication.
+
+### How It Works
+
+On the first request for a file path within an agent's session, `get-file` returns the raw file content
+and writes a marker. On subsequent requests within the same agent session, it returns a short reference
+message: `"see your earlier Read result for {filename}"`.
+
+### Tracking
+
+Marker files are stored under `{sessionBasePath}/{catAgentId}/files-loaded/` using the URL-encoded file
+path as the marker filename. Main agents use the session ID as their agent path; subagents use
+`{sessionId}/subagents/{agentId}`. Different file paths produce independent markers.
+
+### Usage in Skill Files
+
+Replace `<execution_context>` file references with `!` preprocessor directives. The first argument must
+be `$0` (the CAT agent ID):
 
 ```markdown
-<!-- WRONG: redundant wrapper -->
-<output>
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/my-handler"`
-</output>
+<!-- Instead of: [concepts](${CLAUDE_PLUGIN_ROOT}/concepts/work.md) in <execution_context> -->
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-file" "$0" "${CLAUDE_PLUGIN_ROOT}/concepts/work.md"`
 ```
+
+**No preprocessing of returned content:** `get-file` returns raw file content without expanding
+`!` directives. Use `get-skill` (not `get-file`) for skills that need preprocessor expansion.
 
 ## Output Path Changes Convention
 

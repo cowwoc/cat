@@ -5,4 +5,4 @@ user-invocable: false
 argument-hint: "<catAgentId>"
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" format-documentation-agent "$0"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" format-documentation-agent "$0"`

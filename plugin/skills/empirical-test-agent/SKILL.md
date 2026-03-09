@@ -8,4 +8,4 @@ user-invocable: false
 argument-hint: "<catAgentId>"
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" empirical-test-agent "$0"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" empirical-test-agent "$0"`

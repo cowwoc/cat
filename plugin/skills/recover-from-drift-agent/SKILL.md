@@ -10,4 +10,4 @@ user-invocable: false
 argument-hint: "<catAgentId>"
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" recover-from-drift-agent "$0"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" recover-from-drift-agent "$0"`

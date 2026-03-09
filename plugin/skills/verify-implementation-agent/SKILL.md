@@ -7,4 +7,4 @@ allowed-tools:
 argument-hint: "<catAgentId>"
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" verify-implementation-agent "$0" "$(pwd)"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" verify-implementation-agent "$0" "$(pwd)"`

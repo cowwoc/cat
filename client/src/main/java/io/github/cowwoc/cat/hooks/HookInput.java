@@ -9,7 +9,7 @@ package io.github.cowwoc.cat.hooks;
 import static io.github.cowwoc.requirements13.jackson.DefaultJacksonValidators.requireThat;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.util.SkillLoader;
+import io.github.cowwoc.cat.hooks.util.GetSkill;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -383,7 +383,7 @@ public final class HookInput
     String nativeAgentId = getAgentId();
     if (nativeAgentId.isEmpty())
       return sessionId;
-    return sessionId + "/" + SkillLoader.SUBAGENTS_DIR + "/" + nativeAgentId;
+    return sessionId + "/" + GetSkill.SUBAGENTS_DIR + "/" + nativeAgentId;
   }
 
   /**

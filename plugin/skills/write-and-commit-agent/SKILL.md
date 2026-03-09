@@ -6,4 +6,4 @@ allowed-tools: Bash, Write
 argument-hint: "<catAgentId>"
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" write-and-commit-agent "$0"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" write-and-commit-agent "$0"`

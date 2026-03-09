@@ -16,4 +16,4 @@ argument-hint: "<catAgentId> [description]"
 user-invocable: false
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" add-agent "$ARGUMENTS"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" add-agent "$ARGUMENTS"`

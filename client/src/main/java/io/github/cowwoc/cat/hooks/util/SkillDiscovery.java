@@ -102,7 +102,7 @@ public final class SkillDiscovery
    * <p>
    * Discovers all model-invocable skills and returns them as a formatted listing string. Each entry
    * uses the format {@code "- name: description"}, matching Claude Code's native skill listing.
-   * The header references {@code skill-loader} as an alternative to the Skill tool for loading skills.
+   * The header references {@code get-skill} as an alternative to the Skill tool for loading skills.
    *
    * @param scope the JVM scope providing environment paths and configuration
    * @return the formatted skill listing, or an empty string if no skills are found
@@ -116,7 +116,7 @@ public final class SkillDiscovery
       return "";
     StringBuilder sb = new StringBuilder(512);
     sb.append("The following skills are available. To load a skill's instructions, run via Bash:\n").
-      append("  \"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader\" " +
+      append("  \"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill\" " +
         "\"<skill-name>\" \"<cat-agent-id>\"\n\n");
     appendSkillEntries(sb, entries);
     return sb.toString();

@@ -7,4 +7,4 @@ user-invocable: false
 argument-hint: "<catAgentId> <issue-path>"
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" get-diff-agent "$0" "$1"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" get-diff-agent "$0" "$1"`
