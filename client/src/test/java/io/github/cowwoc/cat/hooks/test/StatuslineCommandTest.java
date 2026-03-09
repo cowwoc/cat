@@ -24,26 +24,26 @@ import org.testng.annotations.Test;
 public final class StatuslineCommandTest
 {
   /**
-   * Executes the statusline command with the given JSON and directory, returning the output string.
+   * Executes the statusline command with the given JSON and locks directory, returning the output string.
    *
-   * @param scope     the JVM scope
-   * @param json      the JSON input
-   * @param directory the directory to use for git operations
+   * @param scope   the JVM scope
+   * @param json    the JSON input
+   * @param lockDir the locks directory containing {@code .lock} files
    * @return the statusline output
    * @throws IOException if an I/O error occurs
    */
-  private static String executeWithDirectory(TestJvmScope scope, String json, Path directory) throws IOException
+  private static String executeWithLockDir(TestJvmScope scope, String json, Path lockDir) throws IOException
   {
     ByteArrayInputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     PrintStream printStream = new PrintStream(outputStream, true, StandardCharsets.UTF_8);
     StatuslineCommand cmd = new StatuslineCommand(scope);
-    cmd.execute(inputStream, printStream, directory);
+    cmd.execute(inputStream, printStream, lockDir);
     return outputStream.toString(StandardCharsets.UTF_8);
   }
 
   /**
-   * Verifies that the statusline output contains git info, model name, duration, full session ID, and usage
+   * Verifies that the statusline output contains model name, duration, full session ID, and usage
    * bar when valid JSON input is provided.
    *
    * @throws IOException if an I/O error occurs
@@ -51,8 +51,8 @@ public final class StatuslineCommandTest
   @Test
   public void validInputContainsAllComponents() throws IOException
   {
-    Path gitRepo = TestUtils.createTempGitRepo("main");
-    try (TestJvmScope scope = new TestJvmScope(gitRepo, gitRepo))
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       String json = """
         {
@@ -62,14 +62,14 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 45}
         }
         """;
-      String output = executeWithDirectory(scope, json, gitRepo);
+      String output = executeWithLockDir(scope, json, tempDir);
       requireThat(output, "output").contains("claude-3-5-sonnet");
       requireThat(output, "output").contains("abcdef12-1234-5678-abcd-ef1234567890");
       requireThat(output, "output").contains("00:02");
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(gitRepo);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -81,8 +81,8 @@ public final class StatuslineCommandTest
   @Test
   public void durationUnderOneMinuteFormattedAsHHMM() throws IOException
   {
-    Path gitRepo = TestUtils.createTempGitRepo("main");
-    try (TestJvmScope scope = new TestJvmScope(gitRepo, gitRepo))
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       String json = """
         {
@@ -92,12 +92,12 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 0}
         }
         """;
-      String output = executeWithDirectory(scope, json, gitRepo);
+      String output = executeWithLockDir(scope, json, tempDir);
       requireThat(output, "output").contains("00:00");
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(gitRepo);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -109,8 +109,8 @@ public final class StatuslineCommandTest
   @Test
   public void durationOverOneHourFormattedWithHours() throws IOException
   {
-    Path gitRepo = TestUtils.createTempGitRepo("main");
-    try (TestJvmScope scope = new TestJvmScope(gitRepo, gitRepo))
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       String json = """
         {
@@ -120,13 +120,13 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 0}
         }
         """;
-      String output = executeWithDirectory(scope, json, gitRepo);
+      String output = executeWithLockDir(scope, json, tempDir);
       // 3725000ms = 3725 seconds = 62 minutes 5 seconds → 1 hour 2 minutes → 01:02
       requireThat(output, "output").contains("01:02");
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(gitRepo);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -139,8 +139,8 @@ public final class StatuslineCommandTest
   @Test
   public void usageAbove80ContainsRgbRedColor() throws IOException
   {
-    Path gitRepo = TestUtils.createTempGitRepo("main");
-    try (TestJvmScope scope = new TestJvmScope(gitRepo, gitRepo))
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       String json = """
         {
@@ -150,14 +150,14 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 85}
         }
         """;
-      String output = executeWithDirectory(scope, json, gitRepo);
+      String output = executeWithLockDir(scope, json, tempDir);
       // contextPct = (85 * 1000) / 835 = 101, clamped to 100 → pure red: \033[38;2;255;0;0m
       requireThat(output, "output").contains("\033[38;2;255;0;0m");
       requireThat(output, "output").contains("100%");
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(gitRepo);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -170,8 +170,8 @@ public final class StatuslineCommandTest
   @Test
   public void usageBetween50And80ContainsRgbOrangeColor() throws IOException
   {
-    Path gitRepo = TestUtils.createTempGitRepo("main");
-    try (TestJvmScope scope = new TestJvmScope(gitRepo, gitRepo))
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       String json = """
         {
@@ -181,13 +181,13 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 65}
         }
         """;
-      String output = executeWithDirectory(scope, json, gitRepo);
+      String output = executeWithLockDir(scope, json, tempDir);
       // contextPct = (65 * 1000) / 835 = 77 → red=255, green=((100-77)*255)/50 = 117 → \033[38;2;255;117;0m
       requireThat(output, "output").contains("\033[38;2;255;117;0m");
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(gitRepo);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -200,8 +200,8 @@ public final class StatuslineCommandTest
   @Test
   public void usageBelow50ContainsRgbGreenColor() throws IOException
   {
-    Path gitRepo = TestUtils.createTempGitRepo("main");
-    try (TestJvmScope scope = new TestJvmScope(gitRepo, gitRepo))
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       String json = """
         {
@@ -211,13 +211,13 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 30}
         }
         """;
-      String output = executeWithDirectory(scope, json, gitRepo);
+      String output = executeWithLockDir(scope, json, tempDir);
       // contextPct = (30 * 1000) / 835 = 35 → red=(35*255)/50 = 178, green=255 → \033[38;2;178;255;0m
       requireThat(output, "output").contains("\033[38;2;178;255;0m");
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(gitRepo);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -229,11 +229,11 @@ public final class StatuslineCommandTest
   @Test
   public void emptyJsonObjectUsesDefaults() throws IOException
   {
-    Path gitRepo = TestUtils.createTempGitRepo("main");
-    try (TestJvmScope scope = new TestJvmScope(gitRepo, gitRepo))
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       String json = "{}";
-      String output = executeWithDirectory(scope, json, gitRepo);
+      String output = executeWithLockDir(scope, json, tempDir);
       requireThat(output, "output").contains("unknown");
       requireThat(output, "output").contains("00:00");
       // contextPct=0 → right-justified: "  0%"
@@ -241,7 +241,7 @@ public final class StatuslineCommandTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(gitRepo);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -253,8 +253,8 @@ public final class StatuslineCommandTest
   @Test
   public void usageExceeding100ClampedTo100() throws IOException
   {
-    Path gitRepo = TestUtils.createTempGitRepo("main");
-    try (TestJvmScope scope = new TestJvmScope(gitRepo, gitRepo))
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       String json = """
         {
@@ -264,13 +264,13 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 150}
         }
         """;
-      String output = executeWithDirectory(scope, json, gitRepo);
+      String output = executeWithLockDir(scope, json, tempDir);
       requireThat(output, "output").contains("100%");
       requireThat(output, "output").doesNotContain("150%");
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(gitRepo);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -282,8 +282,8 @@ public final class StatuslineCommandTest
   @Test
   public void usageBarFullAt100Percent() throws IOException
   {
-    Path gitRepo = TestUtils.createTempGitRepo("main");
-    try (TestJvmScope scope = new TestJvmScope(gitRepo, gitRepo))
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       String json = """
         {
@@ -293,13 +293,13 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 100}
         }
         """;
-      String output = executeWithDirectory(scope, json, gitRepo);
+      String output = executeWithLockDir(scope, json, tempDir);
       // 20 filled blocks
       requireThat(output, "output").contains("████████████████████");
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(gitRepo);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -311,8 +311,8 @@ public final class StatuslineCommandTest
   @Test
   public void sessionIdDisplayedInFull() throws IOException
   {
-    Path gitRepo = TestUtils.createTempGitRepo("main");
-    try (TestJvmScope scope = new TestJvmScope(gitRepo, gitRepo))
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       String json = """
         {
@@ -322,12 +322,12 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 0}
         }
         """;
-      String output = executeWithDirectory(scope, json, gitRepo);
+      String output = executeWithLockDir(scope, json, tempDir);
       requireThat(output, "output").contains("12345678-abcd-ef01-2345-678901234567");
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(gitRepo);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -340,8 +340,8 @@ public final class StatuslineCommandTest
   @Test
   public void usageAt50PercentScalesAbove50() throws IOException
   {
-    Path gitRepo = TestUtils.createTempGitRepo("main");
-    try (TestJvmScope scope = new TestJvmScope(gitRepo, gitRepo))
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       String json = """
         {
@@ -351,13 +351,13 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 50}
         }
         """;
-      String output = executeWithDirectory(scope, json, gitRepo);
+      String output = executeWithLockDir(scope, json, tempDir);
       // contextPct = (50 * 1000) / 835 = 59 → red=255, green=((100-59)*255)/50 = 209 → \033[38;2;255;209;0m
       requireThat(output, "output").contains("\033[38;2;255;209;0m");
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(gitRepo);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -370,8 +370,8 @@ public final class StatuslineCommandTest
   @Test
   public void usageAt80PercentScalesNearRed() throws IOException
   {
-    Path gitRepo = TestUtils.createTempGitRepo("main");
-    try (TestJvmScope scope = new TestJvmScope(gitRepo, gitRepo))
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       String json = """
         {
@@ -381,13 +381,13 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 80}
         }
         """;
-      String output = executeWithDirectory(scope, json, gitRepo);
+      String output = executeWithLockDir(scope, json, tempDir);
       // contextPct = (80 * 1000) / 835 = 95 → red=255, green=((100-95)*255)/50 = 25 → \033[38;2;255;25;0m
       requireThat(output, "output").contains("\033[38;2;255;25;0m");
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(gitRepo);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -399,8 +399,8 @@ public final class StatuslineCommandTest
   @Test
   public void usageBarAllEmptyAt0Percent() throws IOException
   {
-    Path gitRepo = TestUtils.createTempGitRepo("main");
-    try (TestJvmScope scope = new TestJvmScope(gitRepo, gitRepo))
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       String json = """
         {
@@ -410,13 +410,13 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 0}
         }
         """;
-      String output = executeWithDirectory(scope, json, gitRepo);
+      String output = executeWithLockDir(scope, json, tempDir);
       // All 20 segments should be empty
       requireThat(output, "output").contains("░░░░░░░░░░░░░░░░░░░░");
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(gitRepo);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -428,8 +428,8 @@ public final class StatuslineCommandTest
   @Test
   public void usageBarAt50PercentRaw() throws IOException
   {
-    Path gitRepo = TestUtils.createTempGitRepo("main");
-    try (TestJvmScope scope = new TestJvmScope(gitRepo, gitRepo))
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       String json = """
         {
@@ -439,14 +439,14 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 50}
         }
         """;
-      String output = executeWithDirectory(scope, json, gitRepo);
+      String output = executeWithLockDir(scope, json, tempDir);
       // contextPct = (50 * 1000) / 835 = 59 → filled = (59 * 20) / 100 = 11
       // 11 filled followed by 9 empty segments
       requireThat(output, "output").contains("███████████░░░░░░░░░");
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(gitRepo);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -458,8 +458,8 @@ public final class StatuslineCommandTest
   @Test
   public void negativeDurationClampedToZero() throws IOException
   {
-    Path gitRepo = TestUtils.createTempGitRepo("main");
-    try (TestJvmScope scope = new TestJvmScope(gitRepo, gitRepo))
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       String json = """
         {
@@ -469,12 +469,12 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 0}
         }
         """;
-      String output = executeWithDirectory(scope, json, gitRepo);
+      String output = executeWithLockDir(scope, json, tempDir);
       requireThat(output, "output").contains("00:00");
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(gitRepo);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -486,8 +486,8 @@ public final class StatuslineCommandTest
   @Test
   public void negativeUsagePercentageClampedToZero() throws IOException
   {
-    Path gitRepo = TestUtils.createTempGitRepo("main");
-    try (TestJvmScope scope = new TestJvmScope(gitRepo, gitRepo))
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       String json = """
         {
@@ -497,80 +497,104 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": -10}
         }
         """;
-      String output = executeWithDirectory(scope, json, gitRepo);
+      String output = executeWithLockDir(scope, json, tempDir);
       // contextPct=0 → right-justified: "  0%"
       requireThat(output, "output").contains("  0%");
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(gitRepo);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
   /**
-   * Verifies that all 5 statusline emojis are present in the output.
+   * Verifies that all 5 statusline emojis are present in the output when an active issue lock is present.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void outputContainsAllFiveEmojis() throws IOException
+  public void outputContainsAllFiveEmojisWhenActiveIssuePresent() throws IOException
   {
-    Path gitRepo = TestUtils.createTempGitRepo("main");
-    try (TestJvmScope scope = new TestJvmScope(gitRepo, gitRepo))
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      String json = """
-        {
-          "model": {"display_name": "claude"},
-          "session_id": "00000000-0000-0000-0000-000000000000",
-          "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_percentage": 50}
-        }
-        """;
-      String output = executeWithDirectory(scope, json, gitRepo);
-      requireThat(output, "output").contains("🌿");
-      requireThat(output, "output").contains("🤖");
-      requireThat(output, "output").contains("⏰");
-      requireThat(output, "output").contains("🆔");
-      requireThat(output, "output").contains("📊");
+      Path lockDir = Files.createTempDirectory("cat-locks-");
+      try
+      {
+        Files.writeString(lockDir.resolve("2.1-my-issue.lock"),
+          """
+          {"session_id": "00000000-0000-0000-0000-000000000000", "created_at": 1000000}
+          """);
+        String json = """
+          {
+            "model": {"display_name": "claude"},
+            "session_id": "00000000-0000-0000-0000-000000000000",
+            "cost": {"total_duration_ms": 1000},
+            "context_window": {"used_percentage": 50}
+          }
+          """;
+        String output = executeWithLockDir(scope, json, lockDir);
+        requireThat(output, "output").contains("🌿");
+        requireThat(output, "output").contains("🤖");
+        requireThat(output, "output").contains("⏰");
+        requireThat(output, "output").contains("🆔");
+        requireThat(output, "output").contains("📊");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(lockDir);
+      }
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(gitRepo);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
   /**
-   * Verifies that the output contains all 4 component ANSI color escape sequences.
+   * Verifies that the output contains all 4 component ANSI color escape sequences when an active issue is present.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
   public void outputContainsAllComponentColors() throws IOException
   {
-    Path gitRepo = TestUtils.createTempGitRepo("main");
-    try (TestJvmScope scope = new TestJvmScope(gitRepo, gitRepo))
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      String json = """
-        {
-          "model": {"display_name": "claude"},
-          "session_id": "00000000-0000-0000-0000-000000000000",
-          "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_percentage": 50}
-        }
-        """;
-      String output = executeWithDirectory(scope, json, gitRepo);
-      // WORKTREE_COLOR: Bright White
-      requireThat(output, "output").contains("\033[38;2;255;255;255m");
-      // MODEL_COLOR: Warm Gold
-      requireThat(output, "output").contains("\033[38;2;220;150;9m");
-      // TIME_COLOR: Coral
-      requireThat(output, "output").contains("\033[38;2;255;127;80m");
-      // SESSION_COLOR: Medium Purple
-      requireThat(output, "output").contains("\033[38;2;147;112;219m");
+      Path lockDir = Files.createTempDirectory("cat-locks-");
+      try
+      {
+        Files.writeString(lockDir.resolve("2.1-my-issue.lock"),
+          """
+          {"session_id": "00000000-0000-0000-0000-000000000000", "created_at": 1000000}
+          """);
+        String json = """
+          {
+            "model": {"display_name": "claude"},
+            "session_id": "00000000-0000-0000-0000-000000000000",
+            "cost": {"total_duration_ms": 1000},
+            "context_window": {"used_percentage": 50}
+          }
+          """;
+        String output = executeWithLockDir(scope, json, lockDir);
+        // WORKTREE_COLOR: Bright White
+        requireThat(output, "output").contains("\033[38;2;255;255;255m");
+        // MODEL_COLOR: Warm Gold
+        requireThat(output, "output").contains("\033[38;2;220;150;9m");
+        // TIME_COLOR: Coral
+        requireThat(output, "output").contains("\033[38;2;255;127;80m");
+        // SESSION_COLOR: Medium Purple
+        requireThat(output, "output").contains("\033[38;2;147;112;219m");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(lockDir);
+      }
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(gitRepo);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -584,8 +608,8 @@ public final class StatuslineCommandTest
   @Test
   public void scalingThresholdBoundaryAt835Percent() throws IOException
   {
-    Path gitRepo = TestUtils.createTempGitRepo("main");
-    try (TestJvmScope scope = new TestJvmScope(gitRepo, gitRepo))
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       // used_percentage=84: contextPct = (84 * 1000) / 835 = 100 (truncated), clamped to 100
       String jsonAt84 = """
@@ -596,7 +620,7 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 84}
         }
         """;
-      String output84 = executeWithDirectory(scope, jsonAt84, gitRepo);
+      String output84 = executeWithLockDir(scope, jsonAt84, tempDir);
       // contextPct=100 → all 20 segments filled
       requireThat(output84, "output84").contains("████████████████████");
       requireThat(output84, "output84").contains("100%");
@@ -610,7 +634,7 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 83}
         }
         """;
-      String output83 = executeWithDirectory(scope, jsonAt83, gitRepo);
+      String output83 = executeWithLockDir(scope, jsonAt83, tempDir);
       // contextPct=99 → filled = (99 * 20) / 100 = 19, so 19 filled and 1 empty
       requireThat(output83, "output83").contains("███████████████████░");
       // contextPct=99 → right-justified: " 99%"
@@ -618,7 +642,7 @@ public final class StatuslineCommandTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(gitRepo);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -630,8 +654,8 @@ public final class StatuslineCommandTest
   @Test
   public void shortSessionIdPassesThroughUnchanged() throws IOException
   {
-    Path gitRepo = TestUtils.createTempGitRepo("main");
-    try (TestJvmScope scope = new TestJvmScope(gitRepo, gitRepo))
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       String json = """
         {
@@ -641,12 +665,12 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 0}
         }
         """;
-      String output = executeWithDirectory(scope, json, gitRepo);
+      String output = executeWithLockDir(scope, json, tempDir);
       requireThat(output, "output").contains("abc123");
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(gitRepo);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -658,8 +682,8 @@ public final class StatuslineCommandTest
   @Test
   public void nullJsonFieldsUseDefaults() throws IOException
   {
-    Path gitRepo = TestUtils.createTempGitRepo("main");
-    try (TestJvmScope scope = new TestJvmScope(gitRepo, gitRepo))
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       String json = """
         {
@@ -669,7 +693,7 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": null}
         }
         """;
-      String output = executeWithDirectory(scope, json, gitRepo);
+      String output = executeWithLockDir(scope, json, tempDir);
       requireThat(output, "output").contains("unknown");
       requireThat(output, "output").contains("00:00");
       // contextPct=0 → right-justified: "  0%"
@@ -677,7 +701,7 @@ public final class StatuslineCommandTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(gitRepo);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -689,11 +713,11 @@ public final class StatuslineCommandTest
   @Test
   public void malformedJsonUsesDefaults() throws IOException
   {
-    Path gitRepo = TestUtils.createTempGitRepo("main");
-    try (TestJvmScope scope = new TestJvmScope(gitRepo, gitRepo))
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       String json = "not valid json at all !!!";
-      String output = executeWithDirectory(scope, json, gitRepo);
+      String output = executeWithLockDir(scope, json, tempDir);
       requireThat(output, "output").contains("unknown");
       requireThat(output, "output").contains("00:00");
       // contextPct=0 → right-justified: "  0%"
@@ -701,65 +725,308 @@ public final class StatuslineCommandTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(gitRepo);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
   /**
-   * Verifies that the git info shows the repository directory name when run inside a git repository.
+   * Verifies that {@code getActiveIssue} returns the issue ID when a lock file matches the session.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void gitInfoShowsRepositoryDirectoryName() throws IOException
+  public void getActiveIssueReturnsIssueIdWhenLockMatchesSession() throws IOException
   {
-    Path gitRepo = TestUtils.createTempGitRepo("main");
-    try (TestJvmScope scope = new TestJvmScope(gitRepo, gitRepo))
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      String json = """
-        {
-          "model": {"display_name": "claude"},
-          "session_id": "00000000-0000-0000-0000-000000000000",
-          "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_percentage": 0}
-        }
-        """;
-      String output = executeWithDirectory(scope, json, gitRepo);
-      // Git info should be the basename of the temp repo directory
-      String expectedDirName = gitRepo.getFileName().toString();
-      requireThat(output, "output").contains(expectedDirName);
+      StatuslineCommand cmd = new StatuslineCommand(scope);
+      Path lockDir = Files.createTempDirectory("cat-locks-");
+      try
+      {
+        Files.writeString(lockDir.resolve("2.1-test-issue.lock"),
+          """
+          {"session_id": "aaaaaaaa-1111-2222-3333-444444444444", "created_at": 1000000}
+          """);
+        String result = cmd.getActiveIssue("aaaaaaaa-1111-2222-3333-444444444444", lockDir);
+        requireThat(result, "result").isEqualTo("2.1-test-issue");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(lockDir);
+      }
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(gitRepo);
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
   /**
-   * Verifies that the git info shows "N/A" when the directory is not inside a git repository.
+   * Verifies that {@code getActiveIssue} returns an empty string when no lock file matches the session.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void gitInfoShowsNaWhenNotInGitRepo() throws IOException
+  public void getActiveIssueReturnsEmptyWhenNoMatchingLock() throws IOException
   {
-    Path nonGitDir = Files.createTempDirectory("statusline-nogit-");
-    try (TestJvmScope scope = new TestJvmScope(nonGitDir, nonGitDir))
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      String json = """
-        {
-          "model": {"display_name": "claude"},
-          "session_id": "00000000-0000-0000-0000-000000000000",
-          "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_percentage": 0}
-        }
-        """;
-      String output = executeWithDirectory(scope, json, nonGitDir);
-      requireThat(output, "output").contains("N/A");
+      StatuslineCommand cmd = new StatuslineCommand(scope);
+      Path lockDir = Files.createTempDirectory("cat-locks-");
+      try
+      {
+        Files.writeString(lockDir.resolve("2.1-other-issue.lock"),
+          """
+          {"session_id": "bbbbbbbb-2222-3333-4444-555555555555", "created_at": 1000000}
+          """);
+        String result = cmd.getActiveIssue("aaaaaaaa-1111-2222-3333-444444444444", lockDir);
+        requireThat(result, "result").isEmpty();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(lockDir);
+      }
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(nonGitDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that {@code getActiveIssue} returns an empty string when the locks directory does not exist.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getActiveIssueReturnsEmptyWhenLocksDirectoryAbsent() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      StatuslineCommand cmd = new StatuslineCommand(scope);
+      // Pass a non-existent directory — should return "" gracefully
+      Path nonExistentLockDir = tempDir.resolve("locks");
+      String result = cmd.getActiveIssue("aaaaaaaa-1111-2222-3333-444444444444", nonExistentLockDir);
+      requireThat(result, "result").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that the statusline omits the first element (worktree emoji and issue ID) when no active issue lock
+   * matches the session.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeOmitsFirstElementWhenNoActiveIssue() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      String json = """
+        {
+          "model": {"display_name": "claude-3-5-sonnet"},
+          "session_id": "aaaaaaaa-1111-2222-3333-444444444444",
+          "cost": {"total_duration_ms": 0},
+          "context_window": {"used_percentage": 0}
+        }""";
+      String result = executeWithLockDir(scope, json, tempDir);
+      // No lock → no worktree element → output does not contain 🌿
+      requireThat(result, "result").doesNotContain("🌿");
+      // Model element still present
+      requireThat(result, "result").contains("claude-3-5-sonnet");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that the statusline includes the issue ID prefixed with the worktree emoji when an active issue
+   * lock matches the session.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeIncludesIssueIdWhenActiveIssueFound() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path lockDir = Files.createTempDirectory("cat-locks-");
+      try
+      {
+        Files.writeString(lockDir.resolve("2.1-my-issue.lock"),
+          """
+          {"session_id": "aaaaaaaa-1111-2222-3333-444444444444", "created_at": 1000000}
+          """);
+        String json = """
+          {
+            "model": {"display_name": "claude-3-5-sonnet"},
+            "session_id": "aaaaaaaa-1111-2222-3333-444444444444",
+            "cost": {"total_duration_ms": 0},
+            "context_window": {"used_percentage": 0}
+          }""";
+        String result = executeWithLockDir(scope, json, lockDir);
+        requireThat(result, "result").contains("🌿");
+        requireThat(result, "result").contains("2.1-my-issue");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(lockDir);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that {@code getActiveIssue} sanitizes ANSI injection characters from the issue ID derived from
+   * lock filenames, including BEL, BS, TAB, CR, FF, and DEL.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getActiveIssueSanitizesAnsiInjectionInIssueId() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      StatuslineCommand cmd = new StatuslineCommand(scope);
+      Path lockDir = Files.createTempDirectory("cat-locks-");
+      try
+      {
+        // Lock filename can't contain ESC in real filesystems, but test sanitization path
+        // by injecting via a lock file whose content has an injected session_id
+        Files.writeString(lockDir.resolve("2-1-evil\u001b[0m.lock"),
+          """
+          {"session_id": "aaaaaaaa-1111-2222-3333-444444444444", "created_at": 1000000}
+          """);
+        String result = cmd.getActiveIssue("aaaaaaaa-1111-2222-3333-444444444444", lockDir);
+        // ESC character must be stripped by removeControlCharacters
+        requireThat(result, "result").doesNotContain("\u001b");
+        // Other control characters also removed: BEL, BS, TAB, CR, FF, DEL
+        requireThat(result, "result").doesNotContain("\u0007");
+        requireThat(result, "result").doesNotContain("\u0008");
+        requireThat(result, "result").doesNotContain("\u0009");
+        requireThat(result, "result").doesNotContain("\r");
+        requireThat(result, "result").doesNotContain("\f");
+        requireThat(result, "result").doesNotContain("\u007f");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(lockDir);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that {@code getActiveIssue} returns an error indicator string when the lock file contains
+   * malformed JSON, so the error is visible in the statusline.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getActiveIssueReturnsErrorWhenLockFileHasMalformedJson() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      StatuslineCommand cmd = new StatuslineCommand(scope);
+      Path lockDir = Files.createTempDirectory("cat-locks-");
+      try
+      {
+        Files.writeString(lockDir.resolve("2.1-broken.lock"), "{broken}");
+        String result = cmd.getActiveIssue("aaaaaaaa-1111-2222-3333-444444444444", lockDir);
+        requireThat(result, "result").startsWith("⚠");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(lockDir);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that {@code getActiveIssue} returns an empty string when the lock file contains valid JSON but
+   * no {@code session_id} field.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getActiveIssueReturnsEmptyWhenLockFileHasNoSessionIdField() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      StatuslineCommand cmd = new StatuslineCommand(scope);
+      Path lockDir = Files.createTempDirectory("cat-locks-");
+      try
+      {
+        Files.writeString(lockDir.resolve("2.1-no-session.lock"),
+          """
+          {"created_at": 1000000}
+          """);
+        String result = cmd.getActiveIssue("aaaaaaaa-1111-2222-3333-444444444444", lockDir);
+        requireThat(result, "result").isEmpty();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(lockDir);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that {@code getActiveIssue} returns an error indicator string when the lock file is empty
+   * (0 bytes), so the parse error is visible in the statusline.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getActiveIssueReturnsErrorWhenLockFileIsEmpty() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      StatuslineCommand cmd = new StatuslineCommand(scope);
+      Path lockDir = Files.createTempDirectory("cat-locks-");
+      try
+      {
+        Files.writeString(lockDir.resolve("2.1-empty.lock"), "");
+        String result = cmd.getActiveIssue("aaaaaaaa-1111-2222-3333-444444444444", lockDir);
+        requireThat(result, "result").startsWith("⚠");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(lockDir);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 }

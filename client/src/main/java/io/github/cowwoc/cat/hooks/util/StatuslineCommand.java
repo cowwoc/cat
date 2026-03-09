@@ -18,17 +18,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.StringJoiner;
 
 /**
  * Generates a formatted statusline for Claude Code.
  * <p>
  * Reads JSON from an input stream and produces an ANSI-formatted statusline containing:
  * <ul>
- *   <li>Git worktree/branch name (or "N/A" if not in a git repo)</li>
+ *   <li>Active CAT issue ID (or absent if no issue is locked for this session)</li>
  *   <li>Model display name</li>
  *   <li>Session duration (formatted as human-readable time)</li>
- *   <li>Session ID (first 8 characters)</li>
+ *   <li>Session ID (full UUID)</li>
  *   <li>Color-coded context usage bar (green below 50%, yellow 50-80%, red above 80%)</li>
  * </ul>
  * <p>
@@ -63,6 +66,7 @@ public final class StatuslineCommand
   private static final String SESSION_EMOJI = "🆔";
   private static final String USAGE_EMOJI = "📊";
 
+  private final JvmScope scope;
   private final JsonMapper mapper;
 
   /**
@@ -74,6 +78,7 @@ public final class StatuslineCommand
   public StatuslineCommand(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
     this.mapper = scope.getJsonMapper();
   }
 
@@ -89,7 +94,7 @@ public final class StatuslineCommand
    */
   public void execute(InputStream inputStream, PrintStream outputStream) throws IOException
   {
-    execute(inputStream, outputStream, null);
+    execute(inputStream, outputStream, scope.getProjectCatDir().resolve("locks"));
   }
 
   /**
@@ -99,14 +104,15 @@ public final class StatuslineCommand
    *
    * @param inputStream  the input stream providing JSON data
    * @param outputStream the output stream to write the statusline to
-   * @param directory    the directory to use for git operations, or {@code null} to use the current working directory
-   * @throws NullPointerException if {@code inputStream} or {@code outputStream} are null
+   * @param lockDir      the locks directory containing {@code .lock} files
+   * @throws NullPointerException if {@code inputStream}, {@code outputStream}, or {@code lockDir} are null
    * @throws IOException          if an I/O error occurs reading from the input stream
    */
-  public void execute(InputStream inputStream, PrintStream outputStream, Path directory) throws IOException
+  public void execute(InputStream inputStream, PrintStream outputStream, Path lockDir) throws IOException
   {
     requireThat(inputStream, "inputStream").isNotNull();
     requireThat(outputStream, "outputStream").isNotNull();
+    requireThat(lockDir, "lockDir").isNotNull();
 
     String jsonInput = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
 
@@ -160,17 +166,17 @@ public final class StatuslineCommand
     if (usedPercentage > 100)
       usedPercentage = 100;
 
-    // Get git info (graceful degradation if not in git repo)
-    String gitInfo = getGitInfo(directory);
+    // Get active issue for the current session
+    String activeIssue = getActiveIssue(sessionId, lockDir);
 
     // Format duration
     String duration = formatDuration(totalDurationMs);
 
-    // Session ID, sanitized against ANSI injection
-    String displaySessionId = sanitizeForTerminal(sessionId);
+    // Session ID, with control characters removed to prevent ANSI injection
+    String displaySessionId = removeControlCharacters(sessionId);
 
-    // Sanitize display name against ANSI injection
-    displayName = sanitizeForTerminal(displayName);
+    // Remove control characters from display name to prevent ANSI injection
+    displayName = removeControlCharacters(displayName);
 
     // Calculate scaled usage percentage
     int contextPct = Math.min(100, (usedPercentage * 1000) / 835);
@@ -181,67 +187,74 @@ public final class StatuslineCommand
     // Usage bar
     String usageBar = createUsageBar(usedPercentage);
 
-    // Format the statusline with component emojis and colors
-    String statusline = WORKTREE_COLOR + WORKTREE_EMOJI + " " + gitInfo + RESET + " " +
-      SEPARATOR_COLOR + "|" + RESET + " " +
-      MODEL_COLOR + MODEL_EMOJI + " " + displayName + RESET + " " +
-      SEPARATOR_COLOR + "|" + RESET + " " +
-      TIME_COLOR + TIME_EMOJI + " " + duration + RESET + " " +
-      SEPARATOR_COLOR + "|" + RESET + " " +
-      SESSION_COLOR + SESSION_EMOJI + " " + displaySessionId + RESET + " " +
-      SEPARATOR_COLOR + "|" + RESET + " " +
-      usageColor + USAGE_EMOJI + " " + usageBar + " " + String.format("%3d%%", contextPct) + RESET;
+    // Build statusline segments using StringJoiner with separator delimiter
+    String separator = " " + SEPARATOR_COLOR + "|" + RESET + " ";
+    StringJoiner joiner = new StringJoiner(separator);
 
-    outputStream.println(statusline);
+    // Conditionally prepend the worktree/issue element
+    if (!activeIssue.isEmpty())
+      joiner.add(WORKTREE_COLOR + WORKTREE_EMOJI + " " + activeIssue + RESET);
+
+    joiner.add(MODEL_COLOR + MODEL_EMOJI + " " + displayName + RESET);
+    joiner.add(TIME_COLOR + TIME_EMOJI + " " + duration + RESET);
+    joiner.add(SESSION_COLOR + SESSION_EMOJI + " " + displaySessionId + RESET);
+    joiner.add(usageColor + USAGE_EMOJI + " " + usageBar + " " + String.format("%3d%%", contextPct) + RESET);
+
+    outputStream.println(joiner.toString());
   }
 
   /**
-   * Gets the repository directory name for the given directory (or current directory if null).
+   * Returns the active CAT issue ID for the given session by scanning lock files in the locks directory.
    * <p>
-   * Returns "N/A" if not in a git repository.
+   * Scans {@code lockDir/*.lock} files for one whose {@code session_id} JSON field matches
+   * {@code sessionId}. Returns the matching lock filename without the {@code .lock} suffix, with
+   * control characters removed. Returns {@code ""} if no match is found or the lock directory does not
+   * exist. On I/O or parse failure, returns an error indicator string of the form
+   * {@code "⚠ <ExceptionClass>: <message>"} with control characters removed, so the error is visible in the
+   * statusline.
    *
-   * @param directory the directory to check, or {@code null} to use the current working directory
-   * @return the git info string (repository directory name)
+   * @param sessionId the session ID to look up
+   * @param lockDir   the locks directory containing {@code .lock} files
+   * @return the active issue ID, {@code ""} if none is found, or an error indicator string on failure
+   * @throws NullPointerException if {@code sessionId} or {@code lockDir} are null
    */
-  String getGitInfo(Path directory)
+  public String getActiveIssue(String sessionId, Path lockDir)
   {
+    requireThat(sessionId, "sessionId").isNotNull();
+    requireThat(lockDir, "lockDir").isNotNull();
+    if (!Files.exists(lockDir))
+      return "";
     try
     {
-      // Check if we are inside a git work tree
-      String checkOutput;
-      if (directory != null)
-        checkOutput = GitCommands.runGit(directory, "rev-parse", "--is-inside-work-tree");
-      else
-        checkOutput = GitCommands.runGit("rev-parse", "--is-inside-work-tree");
-      if (!"true".equals(checkOutput))
-        return "N/A";
-
-      // Get the top-level directory of the repository
-      String topLevel;
-      if (directory != null)
-        topLevel = GitCommands.runGit(directory, "rev-parse", "--show-toplevel");
-      else
-        topLevel = GitCommands.runGit("rev-parse", "--show-toplevel");
-
-      if (topLevel.isEmpty())
-        return "N/A";
-
-      // Extract the directory name (basename)
-      int lastSlash = topLevel.lastIndexOf('/');
-      String dirName;
-      if (lastSlash >= 0)
-        dirName = topLevel.substring(lastSlash + 1);
-      else
-        dirName = topLevel;
-
-      if (dirName.isEmpty())
-        return "N/A";
-
-      return dirName;
+      try (DirectoryStream<Path> stream = Files.newDirectoryStream(lockDir, "*.lock"))
+      {
+        for (Path lockFile : stream)
+        {
+          String content = Files.readString(lockFile, StandardCharsets.UTF_8);
+          if (content.isBlank())
+            return removeControlCharacters("⚠ MalformedJson: lock file is empty: " +
+              lockFile.getFileName());
+          JsonNode root = mapper.readTree(content);
+          if (root == null || root.isNull() || root.isMissingNode())
+            return removeControlCharacters("⚠ MalformedJson: lock file parsed to null node: " +
+              lockFile.getFileName());
+          JsonNode sessionIdNode = root.get("session_id");
+          if (sessionIdNode != null && !sessionIdNode.isNull() &&
+            sessionId.equals(sessionIdNode.asString()))
+          {
+            String fileName = lockFile.getFileName().toString();
+            // Strip the ".lock" suffix
+            String issueId = fileName.substring(0, fileName.length() - ".lock".length());
+            return removeControlCharacters(issueId);
+          }
+        }
+      }
+      return "";
     }
-    catch (IOException _)
+    catch (IOException | JacksonException e)
     {
-      return "N/A";
+      String errorMsg = "⚠ " + e.getClass().getSimpleName() + ": " + e.getMessage();
+      return removeControlCharacters(errorMsg);
     }
   }
 
@@ -320,7 +333,7 @@ public final class StatuslineCommand
   }
 
   /**
-   * Strips control characters from a string to prevent ANSI injection in terminal output.
+   * Removes control characters from a string to prevent ANSI injection in terminal output.
    * <p>
    * This method protects against ANSI injection attacks where untrusted input (e.g., model name,
    * session ID from external sources) could contain escape sequences that manipulate terminal behavior.
@@ -337,27 +350,29 @@ public final class StatuslineCommand
    *       legitimate system output by matching the statusline format</li>
    * </ul>
    * <p>
-   * This method removes all C0 control characters (code points U+0000 to U+001F, except newline U+000A)
-   * and DEL (U+007F). This blocks the ESC character (U+001B) which initiates most ANSI escape sequences,
-   * plus other control characters with special terminal meanings (bell, backspace, tab, etc.).
+   * This method removes all C0 control characters (code points U+0000 to U+001F), DEL (U+007F), and C1
+   * control characters (U+0080 to U+009F). This blocks the ESC character (U+001B) which initiates most
+   * ANSI escape sequences, the CSI character (U+009B) used in 8-bit terminal sequences, and other control
+   * characters with special terminal meanings (bell, backspace, tab, newline, carriage return, etc.).
    * <p>
    * Removed characters include:
    * <ul>
    *   <li>U+001B (ESC) - initiates ANSI escape sequences</li>
-   *   <li>U+0000-U+0008, U+000B-U+001F - various C0 controls</li>
+   *   <li>U+0000-U+001F - all C0 control characters</li>
    *   <li>U+007F (DEL) - recognized as control by some terminals</li>
+   *   <li>U+0080-U+009F - C1 control characters (including CSI at U+009B)</li>
    * </ul>
    *
-   * @param value the string to sanitize
-   * @return the sanitized string with control characters removed
+   * @param value the string to process
+   * @return the string with control characters removed
    */
-  private String sanitizeForTerminal(String value)
+  private String removeControlCharacters(String value)
   {
     StringBuilder result = new StringBuilder(value.length());
     for (int i = 0; i < value.length(); ++i)
     {
       char c = value.charAt(i);
-      if (c == '\n' || (c >= 0x20 && c != 0x7F))
+      if ((c >= 0x20 && c < 0x7F) || c >= 0xA0)
         result.append(c);
     }
     return result.toString();
