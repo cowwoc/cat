@@ -56,6 +56,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-work-complete-agent-argument-format
 - fix-get-output-agent-directive
 - fix-retro-counter-reset-recurrence
+- add-tasklist-update-convention
 
 
 ## Issues Closed
