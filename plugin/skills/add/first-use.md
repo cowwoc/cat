@@ -36,10 +36,10 @@ to minimize wizard interactions and reduce user friction.
 
 **Verify planning structure exists:**
 
-Parse HANDLER_DATA from the execution context. The handler has pre-loaded version data.
+Parse `<output type="add">` (hereafter "output") from the execution context. The handler has pre-loaded version data.
 
-If `planning_valid` is false in HANDLER_DATA:
-- Output the error message from HANDLER_DATA
+If output.planning_valid is false:
+- Display output.error_message to the user
 - STOP execution
 
 </step>
@@ -250,17 +250,17 @@ If no concerns are detected at any level, skip silently to step: issue_analyze_v
 
 **Analyze existing versions and suggest best fit:**
 
-Use version data from HANDLER_DATA.versions. The handler has pre-filtered closed versions.
+Use version data from output.versions. The handler has pre-filtered closed versions.
 
 **1. Extract version information:**
 
-For each version in HANDLER_DATA.versions:
+For each version in output.versions:
 - version: Version number (e.g., "2.1")
 - status: Current status (open or in-progress)
 - summary: Brief description from PLAN.md goals
 - issue_count: Number of existing issues
 
-All versions in HANDLER_DATA are already filtered to exclude closed versions.
+All versions in output.versions are already filtered to exclude closed versions.
 
 **2. Build version summaries:**
 
@@ -374,11 +374,11 @@ Use AskUserQuestion:
 
 **Validate selected version exists AND is not completed:**
 
-Verify the selected version exists in HANDLER_DATA.versions:
+Verify the selected version exists in output.versions:
 - Check if version number matches a version in the list
 - Verify status is not "closed" (should already be filtered, but double-check)
 
-If version not found in HANDLER_DATA.versions:
+If version not found in output.versions:
 - Output error: "Version {major}.{minor} does not exist or is closed"
 - STOP execution
 
@@ -427,7 +427,7 @@ Otherwise, capture selected suggestion as ISSUE_NAME.
 
 **Validate issue name:**
 
-Use HANDLER_DATA.versions[selected_version].existing_issues to check both format and uniqueness.
+Use output.versions[selected_version].existing_issues to check both format and uniqueness.
 
 **Format validation:**
 
@@ -440,7 +440,7 @@ If format is invalid:
 
 **Uniqueness check:**
 
-Check if ISSUE_NAME appears in HANDLER_DATA.versions[selected_version].existing_issues list.
+Check if ISSUE_NAME appears in output.versions[selected_version].existing_issues list.
 
 If name already exists:
 - Output error: "Issue '{ISSUE_NAME}' already exists in version {major}.{minor}"
@@ -459,7 +459,7 @@ Initialize UNKNOWNS as empty list.
 
 **1. Check if version has existing issues:**
 
-Use HANDLER_DATA.versions[selected_version].issue_count to determine if this is the first issue.
+Use output.versions[selected_version].issue_count to determine if this is the first issue.
 
 **2. Scope estimation (LLM inference):**
 
@@ -688,7 +688,7 @@ Skip this step entirely. Continue to step: issue_create.
 
 **If EFFORT is "medium":**
 
-Load existing issues from the selected version using HANDLER_DATA.versions[selected_version].existing_issues.
+Load existing issues from the selected version using output.versions[selected_version].existing_issues.
 
 For each existing issue in the version, compare its name and any available STATE.md/PLAN.md summary against
 ISSUE_DESCRIPTION. Identify:
@@ -744,7 +744,7 @@ Apply the medium-level check against existing issues in the selected version.
 
 **2. Cross-version dependency analysis:**
 
-Scan HANDLER_DATA for other open versions. For each, check if ISSUE_DESCRIPTION touches areas those versions depend
+Scan output.versions for other open versions. For each, check if ISSUE_DESCRIPTION touches areas those versions depend
 on. Flag potential backward compatibility breaks or API changes that downstream versions consume.
 
 **3. Feature interaction analysis:**
@@ -795,7 +795,7 @@ Skip silently to step: issue_create.
 
 **Note branching strategy information:**
 
-Use HANDLER_DATA.branch_strategy and HANDLER_DATA.branch_pattern for reference:
+Use output.branch_strategy and output.branch_pattern for reference:
 - branch_strategy: "feature" or "main-only"
 - branch_pattern: Custom pattern if defined, or null
 
@@ -1661,3 +1661,5 @@ fi
 - [ ] All committed to git
 
 </success_criteria>
+
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" add`
