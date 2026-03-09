@@ -28,6 +28,7 @@ Record demo videos showcasing CAT features for marketing and documentation.
 - add-lock-file-concurrency-tests
 - add-lock-schema-validation-tests
 - rename-enforce-worktree-path-isolation
+- fix-retrospective-path-traversal
 
 ## Issues Closed
 (None)
