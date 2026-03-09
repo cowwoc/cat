@@ -1130,31 +1130,10 @@ with the value passed to the skill.
 | User types `/skill-name arg text` | `arg text` captured | Raw, unchanged |
 | Agent invokes `Skill(skill="name", args="value")` | `value` passed | Raw, unchanged |
 | `$ARGUMENTS` in skill markdown | Substituted literally | No transformation |
-| `$ARGUMENTS` in [BANG] shell command | Shell interprets | **Dangerous** |
-
-### Shell Safety with `$ARGUMENTS`
-
-**Critical**: When `$ARGUMENTS` appears inside [BANG]`command` preprocessing, the shell
-interprets special characters:
-
-| Character | In Markdown | In Shell [BANG] |
-|-----------|-------------|--------------|
-| `"` | Preserved | Consumed as quote |
-| `$VAR` | Literal | Expanded (empty if unset) |
-| `` `cmd` `` | Literal | Executed as command |
-| `'` | Preserved | Quote delimiter |
-
-**Test results**:
-```
-Input: it"s complex with $VAR and `backticks`
-
-$ARGUMENTS in markdown: it"s complex with $VAR and `backticks`  ✓ preserved
-$ARGUMENTS in [BANG]`echo`: its complex with andbackticks`"`     ✗ mangled
-```
 
 ### Safe Patterns
 
-**Use `$ARGUMENTS` in markdown only** (no shell):
+**Use `$ARGUMENTS` in markdown** (the placeholder is substituted before the agent reads the skill):
 ```markdown
 ## User Request
 
@@ -1163,27 +1142,12 @@ The user asked: $ARGUMENTS
 Now analyze this request...
 ```
 
-**For shell processing, use controlled inputs**:
-```markdown
-# Instead of passing user text to shell:
-[BANG]`process-input.sh "$ARGUMENTS"`     # ❌ Dangerous
-
-# Have the script read from a known source:
-[BANG]`get-current-issue.sh`                # ✓ Script controls input
-```
-
 **For skill-to-skill calls**: No escaping needed - the Skill tool's `args` parameter
 passes through unchanged:
 ```
 Skill(skill="other-skill", args="text with \"quotes\" and $vars")
 → other-skill receives: text with "quotes" and $vars
 ```
-
-### Checklist
-
-- [ ] `$ARGUMENTS` only appears in markdown context, not inside [BANG] commands
-- [ ] Shell scripts use controlled inputs, not raw user text
-- [ ] If shell processing needed, script validates/sanitizes input first
 
 ---
 
