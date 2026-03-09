@@ -57,6 +57,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-get-output-agent-directive
 - fix-retro-counter-reset-recurrence
 - add-tasklist-update-convention
+- add-skill-builder-batch-review-mode
 
 
 ## Issues Closed
