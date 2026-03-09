@@ -54,6 +54,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - optimize-work-prepare-performance
 - add-adversarial-tdd-to-skill-builder
 - fix-work-prepare-manual-investigation
+- fix-work-with-issue-path-typo
 
 
 ## Issues Closed
