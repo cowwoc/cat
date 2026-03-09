@@ -39,6 +39,22 @@ The main `/cat:work` skill invokes this with positional space-separated argument
 read ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH ESTIMATED_TOKENS TRUST VERIFY <<< "$ARGUMENTS"
 ```
 
+## Path Validation
+
+Before invoking any phase skill, validate that `ISSUE_PATH` is well-formed.
+
+Check that `ISSUE_PATH` contains the substring `/.claude/`. If it does not, STOP immediately and display:
+
+```
+ERROR: issue_path does not contain '/.claude/' — possible path typo.
+Expected: a path containing /.claude/cat/issues/
+Actual:   <value of ISSUE_PATH>
+Did you mean: <ISSUE_PATH with any segment that looks like '.claire' or similar replaced by '.claude'>?
+STOP. Fix the issue_path before re-invoking /cat:work.
+```
+
+Do not proceed to Phase 1 until this check passes.
+
 ## Phase 1: Implement
 
 Invoke the implement phase skill:
