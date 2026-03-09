@@ -77,9 +77,12 @@ files under the directory recursively.
 For each skill file:
 
 1. Read the current file content as `CURRENT_INSTRUCTIONS`.
-2. Run the adversarial TDD loop (RED→BLUE, up to 10 rounds) as defined in Step 4.
-3. Write the hardened content back to the file using the Edit tool.
-4. Commit the file with message: `refactor: harden <relative-skill-path> via adversarial TDD (N rounds)`.
+2. Run the full RED→BLUE loop for this skill (up to 10 rounds) as defined in Step 4. Do NOT commit
+   between rounds — all iterations run in-memory against `CURRENT_INSTRUCTIONS` until convergence
+   (red-team returns `major_loopholes_found: false`) or the round cap is reached.
+3. Write the final hardened content back to the file using the Edit tool.
+4. `git commit` the file exactly once, after convergence, with message:
+   `refactor: harden <relative-skill-path> via adversarial TDD (N rounds, M loopholes closed)`.
 5. Log: skill path, rounds completed, loopholes closed count.
 
 **Termination:**
