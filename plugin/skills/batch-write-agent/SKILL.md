@@ -6,4 +6,4 @@ allowed-tools: Write, Edit, Bash
 argument-hint: "<catAgentId>"
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" batch-write-agent "$0"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" batch-write-agent "$0"`

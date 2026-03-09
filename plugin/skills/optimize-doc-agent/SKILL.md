@@ -9,4 +9,4 @@ model: sonnet
 user-invocable: false
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" optimize-doc-agent "$0" "$1"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" optimize-doc-agent "$0" "$1"`

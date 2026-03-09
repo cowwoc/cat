@@ -11,7 +11,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import io.github.cowwoc.cat.hooks.session.CheckRetrospectiveDue;
 import io.github.cowwoc.cat.hooks.session.CheckUpdateAvailable;
 import io.github.cowwoc.cat.hooks.session.CheckDataMigration;
-import io.github.cowwoc.cat.hooks.session.ClearSkillMarker;
+import io.github.cowwoc.cat.hooks.session.ClearAgentMarkers;
 import io.github.cowwoc.cat.hooks.session.EchoSessionId;
 import io.github.cowwoc.cat.hooks.session.InjectCatAgentId;
 import io.github.cowwoc.cat.hooks.session.InjectMainAgentRules;
@@ -110,7 +110,7 @@ public final class SessionStartHook implements HookHandler
         "session_id is blank. SessionStart hook requires a valid session ID.");
     }
 
-    String clearWarning = new ClearSkillMarker(scope).clearMainAgentMarker(sessionId);
+    String clearWarning = new ClearAgentMarkers(scope).clearMainAgentMarker(sessionId);
     if (!clearWarning.isEmpty())
       warnings.add(clearWarning);
 

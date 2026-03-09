@@ -13,4 +13,4 @@ allowed-tools:
 user-invocable: false
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" feedback-agent "$ARGUMENTS"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" feedback-agent "$ARGUMENTS"`

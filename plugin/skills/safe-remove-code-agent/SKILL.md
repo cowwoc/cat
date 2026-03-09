@@ -6,4 +6,4 @@ allowed-tools: Bash, Read, Edit, Grep, Glob
 argument-hint: "<catAgentId>"
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" safe-remove-code-agent "$0"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" safe-remove-code-agent "$0"`

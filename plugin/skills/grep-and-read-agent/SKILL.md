@@ -6,4 +6,4 @@ allowed-tools: Grep, Read, Bash
 argument-hint: "<catAgentId>"
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" grep-and-read-agent "$0"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" grep-and-read-agent "$0"`

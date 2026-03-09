@@ -11,4 +11,4 @@ allowed-tools:
   - AskUserQuestion
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" work-review-agent "$ARGUMENTS"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" work-review-agent "$ARGUMENTS"`

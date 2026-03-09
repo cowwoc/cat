@@ -8,13 +8,13 @@ package io.github.cowwoc.cat.hooks.session;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.util.SkillLoader;
+import io.github.cowwoc.cat.hooks.util.GetSkill;
 
 /**
  * Builds the CAT agent ID context message for injection into agent context.
  * <p>
  * Agents must pass the CAT agent ID as the first argument ({@code $0}) when invoking any skill via the
- * Skill tool, so SkillLoader can maintain per-agent marker files.
+ * Skill tool, so GetSkill can maintain per-agent marker files.
  * <p>
  * Called by {@code SessionStartHook} for the main agent and by {@code SubagentStartHook} for
  * subagents.
@@ -61,7 +61,7 @@ public final class InjectCatAgentId
   {
     requireThat(sessionId, "sessionId").isNotBlank();
     requireThat(agentId, "agentId").isNotBlank();
-    String catAgentId = sessionId + "/" + SkillLoader.SUBAGENTS_DIR + "/" + agentId;
+    String catAgentId = sessionId + "/" + GetSkill.SUBAGENTS_DIR + "/" + agentId;
     return "Your CAT agent ID is: `" + catAgentId + "`. You MUST pass this as the first argument " +
       "when invoking any skill via the Skill tool.";
   }

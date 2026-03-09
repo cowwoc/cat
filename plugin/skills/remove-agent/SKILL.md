@@ -15,4 +15,4 @@ user-invocable: false
 argument-hint: "<catAgentId>"
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" remove-agent "$0"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" remove-agent "$0"`

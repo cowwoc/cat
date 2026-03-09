@@ -4,4 +4,4 @@ model: sonnet
 disable-model-invocation: true
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" optimize-execution "${CLAUDE_SESSION_ID}"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" optimize-execution "${CLAUDE_SESSION_ID}"`

@@ -9,4 +9,4 @@ user-invocable: false
 argument-hint: "<catAgentId>"
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" learn-agent "$0"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" learn-agent "$0"`

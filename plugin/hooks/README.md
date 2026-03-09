@@ -123,7 +123,7 @@ startup), and Leyden AOT cache for pre-linked classes.
 
 ## Skill Directory Structure
 
-Skills are loaded by `SkillLoader` from the plugin's `skills/` directory. Each skill is a subdirectory containing:
+Skills are loaded by `GetSkill` from the plugin's `skills/` directory. Each skill is a subdirectory containing:
 
 ```
 plugin-root/
@@ -151,7 +151,7 @@ Session tracking uses a temp file (`/tmp/cat-skills-loaded-{session-id}`) to rec
 Inside `!` directive strings, the following variable forms are expanded:
 - `${name}` — resolved via environment variable (`System.getenv(name)`). Includes `CLAUDE_PLUGIN_ROOT`,
   `CLAUDE_SESSION_ID`, `CLAUDE_PROJECT_DIR` (injected by `InjectEnv.java`), and any other env var.
-- `${CLAUDE_SKILL_DIR}` — resolved by SkillLoader to the skill's directory
+- `${CLAUDE_SKILL_DIR}` — resolved by GetSkill to the skill's directory
   (`${CLAUDE_PLUGIN_ROOT}/skills/{skill-name}/`)
 - `$0`, `$1`, ..., `$N` — resolved to skill positional arguments
 - `$ARGUMENTS` — all skill arguments joined with a space

@@ -6,4 +6,4 @@ allowed-tools: Bash
 argument-hint: "<catAgentId>"
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" batch-read-agent "$0"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" batch-read-agent "$0"`

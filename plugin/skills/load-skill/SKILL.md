@@ -4,4 +4,4 @@ model: haiku
 disable-model-invocation: true
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" load-skill "${CLAUDE_SESSION_ID}"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" load-skill "${CLAUDE_SESSION_ID}"`

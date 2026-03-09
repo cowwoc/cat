@@ -23,6 +23,4 @@ Your CAT agent ID was injected into your context at startup by SubagentStartHook
 
 The skill will provide its full instructions on first use and a brief reference on subsequent invocations.
 
-<output>
 Dynamic skill loading active. Use the Skill tool with your CAT agent ID as the first argument.
-</output>
