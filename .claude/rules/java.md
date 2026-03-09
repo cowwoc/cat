@@ -51,6 +51,20 @@ try (java.util.stream.Stream<Path> walk = Files.walk(dir))
 
 **Exception:** FQNs are acceptable in Javadoc `{@link}` / `{@code}` tags when the type is not already imported.
 
+### Naming
+
+Avoid abbreviations in variable names. Use full, descriptive names:
+
+```java
+// Good
+int index = diskContent.indexOf(oldString);
+String message = "Edit rejected";
+
+// Avoid
+int idx = diskContent.indexOf(oldString);
+String msg = "Edit rejected";
+```
+
 ### Static Imports for Common Constants
 
 Use static imports for frequently used constants to reduce verbosity:
@@ -342,14 +356,6 @@ public String process(String input)
     return input.trim();
 }
 ```
-
-### JsonMapper Usage
-- Use `JsonMapper` instead of `ObjectMapper` for JSON parsing
-- Obtain the shared instance from `JvmScope.getJsonMapper()` — never call `JsonMapper.builder().build()` directly
-- The shared instance is configured with pretty print (`SerializationFeature.INDENT_OUTPUT`)
-- In production code, get the mapper from the `JvmScope` passed to your class
-- In tests, create a `TestJvmScope` and call `scope.getJsonMapper()`
-- In CLI `main()` methods, create a `MainJvmScope` and call `scope.getJsonMapper()`
 
 ### Unicode Characters
 Use literal characters instead of unicode escapes:
