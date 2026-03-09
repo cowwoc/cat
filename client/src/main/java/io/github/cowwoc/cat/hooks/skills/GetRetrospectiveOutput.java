@@ -12,11 +12,14 @@ import io.github.cowwoc.cat.hooks.Strings;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -134,7 +137,7 @@ public final class GetRetrospectiveOutput implements SkillOutput
         """.formatted(daysSince, triggerDays, mistakeCount, mistakeThreshold);
     }
 
-    return generateAnalysis(retroDir, root, lastRetro, triggerReason, mapper);
+    return generateAnalysis(retroDir, indexFile, root, lastRetro, triggerReason, mapper);
   }
 
   /**
@@ -176,6 +179,7 @@ public final class GetRetrospectiveOutput implements SkillOutput
    * Generates the full retrospective analysis output as a display box.
    *
    * @param retroDir the retrospectives directory
+   * @param indexFile the path to index.json
    * @param index the index.json root node
    * @param lastRetro the last retrospective timestamp
    * @param triggerReason the reason for triggering
@@ -183,8 +187,8 @@ public final class GetRetrospectiveOutput implements SkillOutput
    * @return the analysis output rendered as a display box
    * @throws IOException if an I/O error occurs
    */
-  private String generateAnalysis(Path retroDir, JsonNode index, String lastRetro, String triggerReason,
-    JsonMapper mapper) throws IOException
+  private String generateAnalysis(Path retroDir, Path indexFile, JsonNode index, String lastRetro,
+    String triggerReason, JsonMapper mapper) throws IOException
   {
     Instant lastRetroTime;
     if (lastRetro.isEmpty() || lastRetro.equals("null"))
@@ -240,7 +244,52 @@ public final class GetRetrospectiveOutput implements SkillOutput
     for (String line : generateActionItemDetailsLines(index))
       contentLines.add("  " + line);
 
-    return display.buildHeaderBox("RETROSPECTIVE ANALYSIS", contentLines);
+    String boxOutput = display.buildHeaderBox("RETROSPECTIVE ANALYSIS", contentLines);
+    if (!(index instanceof ObjectNode objectNode))
+    {
+      throw new IOException("Expected index.json root to be a JSON object but got: " +
+        index.getClass().getSimpleName());
+    }
+    resetRetrospectiveCounter(retroDir, indexFile, objectNode, mapper);
+    return boxOutput;
+  }
+
+  /**
+   * Resets the retrospective counter in index.json after a successful analysis output.
+   * <p>
+   * Sets {@code last_retrospective} to the current UTC timestamp and {@code mistake_count_since_last}
+   * to {@code 0}. Writes atomically via a temp file to prevent corruption on failed writes.
+   *
+   * @param retroDir the retrospectives directory
+   * @param indexFile the path to index.json
+   * @param root the parsed index.json root node
+   * @param mapper the JSON mapper
+   * @throws IOException if writing index.json fails
+   */
+  private void resetRetrospectiveCounter(Path retroDir, Path indexFile, ObjectNode root, JsonMapper mapper)
+    throws IOException
+  {
+    root.put("last_retrospective", Instant.now().toString());
+    root.put("mistake_count_since_last", 0);
+    String updated = mapper.writeValueAsString(root);
+    Path tempFile = Files.createTempFile(retroDir, "index", ".tmp");
+    try
+    {
+      Files.writeString(tempFile, updated);
+      try
+      {
+        Files.move(tempFile, indexFile, StandardCopyOption.ATOMIC_MOVE);
+      }
+      catch (AtomicMoveNotSupportedException _)
+      {
+        Files.move(tempFile, indexFile, StandardCopyOption.REPLACE_EXISTING);
+      }
+    }
+    catch (IOException e)
+    {
+      Files.deleteIfExists(tempFile);
+      throw e;
+    }
   }
 
   /**
