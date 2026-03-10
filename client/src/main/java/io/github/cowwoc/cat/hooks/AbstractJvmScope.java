@@ -57,8 +57,9 @@ public abstract class AbstractJvmScope implements JvmScope
   @SuppressWarnings("this-escape")
   private final ConcurrentLazyReference<UserIssues> userIssues =
     ConcurrentLazyReference.create(() -> new UserIssues(this));
-  private final ConcurrentLazyReference<String> pluginPrefix = ConcurrentLazyReference.create(() ->
-    derivePluginPrefix());
+  @SuppressWarnings("this-escape")
+  private final ConcurrentLazyReference<String> pluginPrefix = ConcurrentLazyReference.create(
+    this::derivePluginPrefix);
 
   /**
    * Creates a new abstract JVM scope.
