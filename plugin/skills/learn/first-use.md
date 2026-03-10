@@ -229,6 +229,7 @@ Learning recorded: {learning_id}
 Category: {category}
 Root Cause: {root_cause}
 RCA Method: {rca_method_name}
+Cause Signature: {cause_signature}
 
 Prevention:
 - Type: {prevention_type} (level {prevention_level})
@@ -251,6 +252,21 @@ options:
   - label: "Skip this cycle"
     action: "Reset counter without running"
 ```
+
+## Cause Signature
+
+Each mistake recorded should include a `cause_signature` field in the analyze phase output JSON. This structured
+triple links mistakes that share the same root cause pattern even when they manifest differently across sessions or
+tools.
+
+**Format:** `<cause_type>:<barrier_type>:<context>`
+
+**Example:** `"cause_signature": "compliance_failure:hook_absent:file_operations"`
+
+When Phase 2 selects a `cause_signature`, it compares it against existing entries in `mistakes-YYYY-MM.json`. A
+matching entry triggers recurrence detection — setting `recurrence_of` to the earliest matching entry ID.
+
+**Full vocabulary, canonical examples, and selection process:** See `rca-methods.md § Cause Signature Vocabulary`.
 
 ## Examples
 

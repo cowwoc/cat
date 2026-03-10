@@ -36,8 +36,8 @@ weaknesses:
 
 ### Method B: Modular Error Taxonomy
 
-Based on [AgentErrorTaxonomy](https://arxiv.org/abs/2509.25370) research showing 24% accuracy
-improvement through modular classification.
+Based on [AgentErrorTaxonomy](https://arxiv.org/abs/2509.25370) research showing 24%
+accuracy improvement through modular classification.
 
 ```yaml
 process:
@@ -113,10 +113,8 @@ weaknesses:
 
 ### Assignment Rule
 
-Mistakes assigned by ID modulo 3:
-- M086, M089, M092, ... → Method A (5-Whys)
-- M087, M090, M093, ... → Method B (Taxonomy)
-- M088, M091, M094, ... → Method C (Causal Barrier)
+See [rca-methods.md § Method Assignment](rca-methods.md) for the modulo-3 assignment rule.
+Example application: M086 → A, M087 → B, M088 → C, M089 → A, ...
 
 ### Success Metrics
 
@@ -134,10 +132,31 @@ Add to each mistake entry in mistakes-YYYY-MM.json:
 {
   "rca_method": "A|B|C",
   "rca_method_name": "5-whys|taxonomy|causal-barrier",
+  "cause_signature": "<cause_type>:<barrier_type>:<context>",
   "analysis_complete": true,
   "recurrence_of": null
 }
 ```
+
+**`cause_signature` field:**
+
+A structured triple `<cause_type>:<barrier_type>:<context>` that identifies the root cause pattern
+across mistakes with different surface descriptions. Used to detect recurrences even when the failure
+manifests differently.
+
+- **Optional field.** Existing entries without it are treated as unclassified and excluded from signature-based
+  recurrence detection.
+- **Vocabulary defined in:** `rca-methods.md § Cause Signature Vocabulary`
+- **Example values:** `compliance_failure:hook_absent:pre_tool_use`,
+  `knowledge_gap:doc_missing:skill_execution`, `context_degradation:process_gap:issue_workflow`
+
+**How cause_signature improves recurrence detection:**
+
+Without signatures, recurrences are detected only when `recurrence_of` is manually set. Two mistakes
+with the same root cause but different descriptions may never be linked. With signatures, the analyze
+phase compares the candidate signature against all existing entries — if a match is found, the agent
+is prompted to confirm the link before recording. This reduces under-counting of recurrences in A/B
+test metrics.
 
 ### Minimum Sample Size
 
@@ -237,6 +256,6 @@ When winner is determined:
 
 - [Where LLM Agents Fail and How They Can Learn](https://arxiv.org/abs/2509.25370) - AgentErrorTaxonomy
 - [Exploring LLM-based Agents for Root Cause Analysis](https://arxiv.org/abs/2403.04123) - ReAct RCA
-- [How Causal Reasoning Addresses LLM Limitations](https://www.infoq.com/articles/causal-reasoning-observability/) -
-  Causal reasoning
+- [How Causal Reasoning Addresses LLM Limitations](https://www.infoq.com/articles/causal-reasoning-observability/)
+  - Causal reasoning
 - [AI Agent Failures in DA-Code](https://www.atla-ai.com/post/da-code) - Error taxonomy + critique

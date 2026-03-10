@@ -20,6 +20,9 @@ You will receive a JSON object with analysis results containing:
 - Mistake description and impact
 - Context metrics
 - Root cause and RCA method
+- `cause_signature` — optional structured triple (`<cause_type>:<barrier_type>:<context>`)
+  from Phase 2 analysis. Null when the root cause was unclassified. Propagated through to
+  RecordLearning as-is for persistence in the mistakes JSON file.
 - Category and recurrence information
 
 ## Step 5: Check for Context Degradation Patterns
@@ -818,6 +821,7 @@ Your final message MUST be ONLY this JSON (no other text):
     "/absolute/path/to/file2"
   ],
   "prevention_description": "What was changed and why",
+  "cause_signature": "<cause_type>:<barrier_type>:<context>",
   "priming_verified": true,
   "related_files_checked": true,
   "files_to_modify": [
