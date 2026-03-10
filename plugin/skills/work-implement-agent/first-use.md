@@ -143,23 +143,21 @@ Capture the output from these skills - the implementation subagent will need the
 
 ### Detect Parallel Execution Waves
 
-Read PLAN.md directly to detect `## Sub-Agent Waves` sections and count the number of `### Wave N` subsections.
+Read PLAN.md directly to count `### Wave N` subsections using the canonical command:
 
-For each wave subsection found, count the top-level bullet items (`- `) that don't start with indentation. Ignore
-sub-items (indented bullets with `  - `).
+```bash
+WAVES_COUNT=$(grep -c '^### Wave ' "$PLAN_MD") && echo "WAVES_COUNT=${WAVES_COUNT}"
+```
 
-**Simplified detection in Bash:**
-
-The PLAN.md path and wave detection are combined in the chained call above (under "Read PLAN.md and Invoke Main Agent Waves").
-The `WAVES_COUNT` variable should be extracted from the same chained bash call together with `MAIN_AGENT_WAVES`.
-
-Where `$PLAN_MD` is the path to the issue's PLAN.md file.
+Use this exact command — do NOT substitute alternative counting logic or Bash constructs. Any other method is
+prohibited. The `echo` is part of the same command; do not split detection and printing into separate Bash
+calls. No further Bash calls are permitted after this step before the prepare phase begins.
 
 **If waves are empty or only one wave is present (`WAVES_COUNT` is 0 or 1):** proceed to single-subagent execution
 (see below). Parse execution items from `## Sub-Agent Waves` / `### Wave 1`.
 
 **If two or more waves are present (`WAVES_COUNT` >= 2):** use parallel execution (see Parallel Subagent Execution
-below). Extract the wave sections from PLAN.md and count items in each wave.
+below). The last wave for STATE.md ownership is `### Wave ${WAVES_COUNT}` (the highest numbered wave).
 
 ### Mid-Work PLAN.md Revision
 
@@ -291,22 +289,55 @@ updates STATE.md; other groups skip it.
 complete, the main agent merges each subagent branch back into the issue branch in order (A, B, C, ...).
 Only the last wave subagent updates STATE.md.
 
-**Step order:** For each group label (A, B, C, ... sorted alphabetically), extract the steps
-belonging to that group from PLAN.md, then spawn the subagent.
+**CRITICAL: Parallel means one API response — not "start Wave 1, then start Wave 2".**
+When `WAVES_COUNT` >= 2, spawn ALL wave subagents in a SINGLE assistant API response by making multiple
+Task tool calls in that same response. An "API response" is one assistant message turn: everything between
+receiving the user/tool input and sending back the next assistant message. Do NOT spawn Wave 1, await its
+result, then spawn Wave 2 in a separate API response — that is sequential execution masquerading as parallel.
 
-**CRITICAL: Parallel means one message — not "start Wave 1, then start Wave 2".**
-When `WAVES_COUNT` >= 2, spawn ALL wave subagents in a SINGLE assistant message by making multiple
-Agent (or Task) tool calls in that same message. Do NOT spawn Wave 1, await its result, then spawn
-Wave 2 in a separate message — that is sequential execution masquerading as parallel.
+**Violation test (observable and unambiguous):** If you issued a Task call and received any tool result
+before all Task calls were issued, you violated the rule — regardless of intent or turn-boundary awareness.
 
-Correct pattern (one message, two Agent/Task calls):
+**No tool calls are permitted between Task spawns.** After issuing the first Task call for Wave 1, the very
+next tool call in that same assistant message must be the Task call for Wave 2 (and Wave 3, if present, and
+so on). No Bash, Read, Grep, Write, Skill, or any other tool call may appear between the Task calls.
+Safety checks, verification reads, status queries, and skill invocations between Task spawns are all
+prohibited.
+
+**All wave prompts are constructable from PLAN.md alone.** PLAN.md is the single authoritative source for
+wave contents. Each wave prompt contains only: the issue configuration variables (already known before
+reading PLAN.md), the `PLAN_MD_PATH` reference, and the `ASSIGNED_WAVE` number. No wave prompt requires
+output from another wave in order to be constructed. Therefore, all prompts can and must be fully drafted
+before any Task call is issued.
+
+**Prepare ALL prompts before issuing ANY tool call in the spawn phase.**
+
+Two-phase execution:
+
+1. **Prepare phase (written in response text, no tool calls):** Write out every wave prompt in the
+   assistant response text, derived from already-in-context variables and PLAN.md content. The prepare
+   phase text must include the complete text of each wave's prompt — it is not complete without the actual
+   prompts. This phase is observable: the prompts appear as text in the response before any Task call.
+   Do NOT issue any tool call (Bash, Read, Grep, Write, Task, Skill, or any other) during this phase.
+
+   **Permitted pre-prepare tool calls (strictly bounded):** Before entering the prepare phase, you may
+   issue tool calls only to satisfy two concrete prerequisites: (a) read PLAN.md into context if it is
+   not already there, and (b) run the canonical `WAVES_COUNT` detection command. No other tool
+   calls are permitted before the prepare phase. Once both prerequisites are satisfied, the very next
+   assistant action must be the prepare phase text (containing the full wave prompts) followed immediately
+   by the spawn phase.
+
+2. **Spawn phase (one API response, all Task calls together, nothing else):** Issue ALL Task tool calls
+   simultaneously in a single assistant message, immediately following the prepare-phase text. The spawn
+   phase contains ONLY Task tool calls — no other tool calls before, between, or after the Task calls
+   within this phase.
+
+Correct pattern (one message, two Task calls, nothing between them):
 
 ```
 Task tool call: Wave 1 subagent
 Task tool call: Wave 2 subagent
 ```
-
-(Both calls appear in the same response turn.)
 
 For each group (example for group A with steps 1, 2, 3):
 

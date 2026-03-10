@@ -50,6 +50,19 @@ public interface JvmScope extends AutoCloseable
   Path getClaudePluginRoot();
 
   /**
+   * Returns the plugin prefix (e.g., {@code "cat"}).
+   * <p>
+   * For production environments, derived from the plugin root path structure
+   * ({@code .../{prefix}/{slug}/{version}/}). The prefix is the directory component
+   * two levels above the version directory.
+   *
+   * @return the plugin prefix, never blank
+   * @throws AssertionError if the prefix cannot be derived from the plugin root path
+   * @throws IllegalStateException if this scope is closed
+   */
+  String getPluginPrefix();
+
+  /**
    * Returns the Claude session ID.
    *
    * @return the session ID

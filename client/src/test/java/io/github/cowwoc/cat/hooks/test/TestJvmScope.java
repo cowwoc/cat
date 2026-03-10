@@ -152,6 +152,13 @@ public final class TestJvmScope extends AbstractJvmScope
   }
 
   @Override
+  public String getPluginPrefix()
+  {
+    ensureOpen();
+    return "cat";
+  }
+
+  @Override
   public Path getClaudeProjectDir()
   {
     ensureOpen();

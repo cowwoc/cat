@@ -1629,7 +1629,7 @@
       "fragility" : "low",
       "catches_variations" : true
     },
-    "correct_behavior" : ""
+    "correct_behavior" : "When WAVES_COUNT >= 2, use two-phase approach: (1) prepare all wave prompts first with no tool calls, (2) issue all Task tool calls simultaneously in one response turn. Never spawn Wave 1, await its result, then spawn Wave 2 in a separate turn."
   }, {
     "id" : "M527",
     "timestamp" : "2026-03-10T07:18:30Z",
@@ -1642,6 +1642,46 @@
     "prevention_path" : "",
     "pattern_keywords" : [ ],
     "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
+  }, {
+    "id" : "M528",
+    "timestamp" : "2026-03-10T07:31:54Z",
+    "category" : "protocol_violation",
+    "description" : "work-review-agent completed the stakeholder review box display and collect-results invocation, then stopped with a conversational text summary instead of outputting its JSON return value — causing the work-with-issue-agent orchestrator to halt without invoking work-merge-agent (Phase 4: Merge)",
+    "root_cause" : "MISSING RETURN STEP: The work-review-agent first-use.md documented the Output Contract (JSON return format) at the top of the file but had no final 'Return Result' step at the end of the execution flow. After completing Steps 5 and 6 (stakeholder review and deferred concern wizard), the agent treated the visible stakeholder review box as the phase completion signal and stopped. The JSON return value was never emitted, so the work-with-issue-agent orchestrator never received the signal to proceed to Phase 4: Merge.",
+    "rca_method" : "A",
+    "rca_method_name" : "5-whys",
+    "prevention_type" : "skill",
+    "prevention_path" : "${CLAUDE_PROJECT_DIR}/plugin/skills/work-review-agent/first-use.md",
+    "pattern_keywords" : [ "review_phase_stop", "missing_return_step", "work_merge_skipped", "output_contract_not_emitted", "completion_bias_review_box" ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : "After completing all review steps (stakeholder review, deferred concern wizard), output the JSON return value defined in the Output Contract. The stakeholder review box is informational output only — the JSON is the phase completion signal that causes the orchestrator to proceed to Phase 4: Merge."
+  }, {
+    "id" : "M529",
+    "timestamp" : "2026-03-10T07:44:56Z",
+    "category" : "protocol_violation",
+    "description" : "",
+    "root_cause" : "MISSING RETURN STEP",
+    "rca_method" : "",
+    "rca_method_name" : "5-whys",
+    "prevention_type" : "skill",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : true,
     "prevention_verified" : false,
     "recurrence_of" : null,
     "prevention_quality" : {
