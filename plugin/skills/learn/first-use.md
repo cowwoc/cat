@@ -277,7 +277,7 @@ matching entry triggers recurrence detection — setting `recurrence_of` to the 
 **For common mistakes when using this skill:** Read `ANTI-PATTERNS.md`.
 
 Key anti-patterns to avoid:
-- Stopping 5-whys too early (missing context degradation as root cause)
+- Stopping barrier analysis too early (missing context degradation as root cause)
 - Blaming context for non-context mistakes
 - Implementing prevention without verification
 - Recording documentation prevention when documentation already failed (escalate to hooks instead)
@@ -289,54 +289,6 @@ Key anti-patterns to avoid:
 - `cat:decompose-issue-agent` - Implements earlier decomposition
 - `cat:get-subagent-status` - Catches context issues early
 - `cat:collect-results-agent` - Preserves progress before intervention
-
-## A/B Test: RCA Method Comparison
-
-**STATUS: ACTIVE** - See [RCA-AB-TEST.md](RCA-AB-TEST.md) for full specification.
-
-### Current Test Parameters
-
-- **Start:** M086
-- **Methods:** A (5-Whys), B (Taxonomy), C (Causal Barrier)
-- **Assignment:** Mistake ID modulo 3
-
-### Milestone Reviews (MANDATORY)
-
-At each milestone, run analysis and document decision:
-
-| Milestone | Trigger | Action |
-|-----------|---------|--------|
-| 30 mistakes | M115 recorded | Run analysis, check for >2x difference |
-| 60 mistakes | M145 recorded | Run analysis, check for >50% difference |
-| 90 mistakes | M175 recorded | Final determination, lock in winner |
-
-### Milestone Review Command
-
-```bash
-# Replace with actual start mistake ID for the A/B test
-START_ID=86
-
-# Uses the root-cause-analyzer jlink tool to analyze RCA method statistics
-"${CLAUDE_PLUGIN_ROOT}/client/bin/root-cause-analyzer" --start-id "$START_ID"
-```
-
-### Early Termination
-
-If at 30 mistakes one method shows **>2x better recurrence rate** than control (Method A):
-
-1. Verify recurrences had >14 days to manifest
-2. Check improvement is consistent across categories
-3. Confirm no confounding factors
-4. If validated: declare winner, proceed to lock-in
-
-### Lock-In Process
-
-When winner determined:
-
-1. Remove A/B test infrastructure from this skill
-2. Keep only winning method as Step 3
-3. Archive RCA-AB-TEST.md to `archive/` subdirectory
-4. Update this section to document final result
 
 ## Error Handling
 

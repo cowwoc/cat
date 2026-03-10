@@ -5,6 +5,39 @@ See LICENSE.md in the project root for license terms.
 -->
 # RCA Method A/B Test Specification
 
+## Test Conclusion
+
+**Status: CONCLUDED (2026-03-10)**
+
+### Final Results
+
+| Method | Cases | Recurrences | Recurrence Rate |
+|--------|-------|-------------|-----------------|
+| A (5-Whys) | 79 | 10 | 12% |
+| B (Modular Error Taxonomy) | 87 | 12 | 13% |
+| C (Causal Barrier Analysis) | 77 | 9 | 11% |
+
+### Decision
+
+No statistically significant winner. All three methods are within the noise margin (11-13% recurrence rate). The test
+ran past the 90-mistake final determination threshold (79 + 87 + 77 = 243 total), satisfying the lock-in condition
+documented in § "Analysis Schedule" below.
+
+**Method C selected as the standard** on structural grounds:
+- Closest alignment with AgentDebug backward-tracing research and the healthcare hierarchy-of-controls framework
+- Multi-factor candidate enumeration avoids the single-chain bias of Method A
+- Explicit symptom vs cause distinction
+- Method B's taxonomy classification value is absorbed as the `module` field already present in Method C candidate
+  enumeration
+- Method A (5-Whys) is strictly weaker: single-chain, no symptom/cause distinction, arbitrary stopping point
+
+### Outcome
+
+A/B routing retired. All new mistakes recorded after 2026-03-10 use Method C (Causal Barrier Analysis).
+Historical mistake records with `rca_method: "A"` or `rca_method: "B"` are preserved unchanged.
+
+---
+
 ## Purpose
 
 Compare three root cause analysis methods to determine which produces the lowest mistake
@@ -246,9 +279,9 @@ When winner is determined:
    - Keep only winning method as Step 3
    - Update JSON schema to remove `rca_method` fields (or keep for historical tracking)
 
-2. Archive test results:
-   - Move RCA-AB-TEST.md to `/workspace/cat/skills/learn/archive/`
-   - Add final analysis summary
+2. Conclude test file:
+   - Keep RCA-AB-TEST.md in-place with CONCLUDED status in the Test Conclusion section
+   - Add final analysis summary to the Test Conclusion section
 
 3. Update mistakes.json schema documentation if needed
 
