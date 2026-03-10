@@ -107,6 +107,25 @@ if (value == null)
 }
 ```
 
+### Positive Conditions First
+In if/else blocks, handle the positive (non-negated) condition first:
+
+```java
+// Good - positive condition first
+if (targetBranch.isEmpty())
+  System.out.println(completedIssue + " merged.");
+else
+  System.out.println(completedIssue + " merged to " + targetBranch + ".");
+
+// Avoid - negated condition first
+if (!targetBranch.isEmpty())
+  System.out.println(completedIssue + " merged to " + targetBranch + ".");
+else
+  System.out.println(completedIssue + " merged.");
+```
+
+**Why:** Positive conditions are easier to read and reason about. Negated conditions require mental inversion.
+
 ### Increment/Decrement Operators
 Prefer prefix increment/decrement (`++i`, `--i`) over compound assignment:
 
