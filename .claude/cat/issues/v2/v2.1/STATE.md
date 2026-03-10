@@ -15,6 +15,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 
 ## Issues Pending
 - fix-skill-loaded-marker-qualified-names
+- update-qualified-names-convention
 - fix-argument-hint-compliance
 - clarify-squash-before-rebase-ordering
 - extract-subagent-common-skills
