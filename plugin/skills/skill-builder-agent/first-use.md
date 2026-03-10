@@ -144,11 +144,14 @@ Task tool:
 
     ## Return Format
     Return the complete designed skill as a markdown code block (the full SKILL.md or first-use.md content).
-    Do NOT spawn subagents. Do NOT invoke the Task tool.
+    Do NOT spawn subagents. Do NOT invoke the Task tool. Do NOT use the Bash, Write, Edit, or any other
+    tool that modifies files or executes external commands. The ONLY permitted tools are Read (to read
+    design methodology and convention files) and returning your response. Nothing else.
 ```
 
 The design subagent should only read files and return SKILL_DRAFT. If the response includes Task tool
-invocations or evidence of subagent spawning, treat as constraint violation and reject the draft.
+invocations, evidence of subagent spawning, or use of Bash/Write/Edit/any file-modifying tool, treat as
+constraint violation and reject the draft.
 
 The subagent will return the designed skill draft as `SKILL_DRAFT`. Validate that:
 - The response is non-empty
@@ -181,7 +184,10 @@ evals, and time/token tradeoffs.
 3. Are you satisfied with the current skill version?
 
 **Iterate if needed:** If the user requests improvement, apply targeted changes to the skill and return
-to the benchmark loop. Repeat until the user is satisfied or pass rate shows no improvement.
+to the benchmark loop. Cap at 5 benchmark iterations total. Stop iterating if the improvement between
+consecutive rounds is less than 5 percentage points — report "Benchmark plateau reached: pass rate
+improvement below 5% threshold" and present the best result to the user. If the iteration cap is reached,
+stop and report "Benchmark iteration cap reached (5 rounds) — presenting best result."
 
 ### Step 4: Adversarial TDD Loop
 
@@ -199,7 +205,10 @@ to seek new attack vectors each round rather than revisiting prior findings.
 issues. Check by reading the findings file from the red-team's returned commit hash. LOW/MEDIUM concerns may
 remain if they require disproportionate instruction complexity to close.
 
-**Termination verification:** Read the `major_loopholes_found` field from findings.json using `git show {RED_TEAM_COMMIT_HASH}:findings.json`. If the field is absent, abort with an error. If the round counter reaches 10 without convergence, stop and report "Loop cap reached at 10 rounds — {N} CRITICAL/HIGH loopholes remain unresolved."
+**Termination verification:** Read findings.json using `git show {RED_TEAM_COMMIT_HASH}:findings.json` and scan
+the `loopholes` array. If any entry has `"severity": "CRITICAL"` or `"severity": "HIGH"`, continue the loop.
+If no such entries exist, STOP — instructions are sufficiently hardened. If the round counter reaches 10 without
+convergence, stop and report "Loop cap reached at 10 rounds — {N} CRITICAL/HIGH loopholes remain unresolved."
 
 **Round 1 — spawn persistent agents:**
 
@@ -208,50 +217,30 @@ Spawn the red-team agent using the Task tool and store its `task_id` as `RED_TEA
 ```
 Task tool:
   description: "Red-team: find loopholes in instructions (round 1)"
-  subagent_type: "general-purpose"
+  subagent_type: "cat:red-team-agent"
   prompt: |
-    You are a red-team agent. Your job: find concrete ways to defeat or circumvent these instructions.
-    You will be resumed in later rounds — seek NEW attack vectors each round, do not revisit prior findings.
-
     ## Instructions to Attack
     {CURRENT_INSTRUCTIONS}
 
-    ## Your Task
-    For each loophole you find, provide:
-    1. **Loophole name**: brief slug (e.g., "bash-file-write-bypass")
-    2. **Severity**: CRITICAL | HIGH | MEDIUM | LOW
-    3. **Attack**: exact agent reasoning or action that defeats the rule (be specific — quote
-       undefined terms, name unlisted tools, describe the rationalization the agent would use)
-    4. **Evidence**: why the current instructions permit this (quote the permissive text or
-       identify the missing prohibition)
+    ## Worktree Root
+    {WORKTREE_ROOT}
 
-    Do NOT suggest fixes. Do NOT be vague. If you cannot find a concrete attack for a concern,
-    do not include it.
-
-    ## Output
-    Write your findings to the file: findings.json
-    Use this JSON format:
-    {
-      "loopholes": [
-        {
-          "name": "bash-file-write-bypass",
-          "severity": "CRITICAL",
-          "attack": "Agent uses Bash sed -i to modify file, bypassing Edit/Write prohibition",
-          "evidence": "Rule says 'MUST NOT use Edit or Write tools' but does not mention Bash"
-        }
-      ],
-      "major_loopholes_found": true
-    }
-    Set major_loopholes_found to true if any CRITICAL or HIGH severity loopholes exist.
-
-    After writing findings.json, run: git add findings.json && git commit -m "red-team: round 1 findings"
-    Return only the commit hash on the last line of your response.
+    ## Round Number
+    1
 ```
 
 After red-team completes, read `RED_TEAM_COMMIT_HASH` from the last line of its response.
-Read `findings.json` at that commit to determine whether `major_loopholes_found` is true.
 
-If `major_loopholes_found: false`: STOP loop — instructions are sufficiently hardened.
+**Commit hash validation:** Before using `RED_TEAM_COMMIT_HASH`, verify it is a valid commit on the current
+branch: run `git branch --contains {RED_TEAM_COMMIT_HASH}` and confirm the current branch is listed. Also
+verify it is newer than the previous round's commit (if any) by running `git log --oneline {PREV_COMMIT}..{RED_TEAM_COMMIT_HASH}`
+and confirming at least one entry exists. If either check fails, abort with "ERROR: red-team returned invalid
+or stale commit hash {RED_TEAM_COMMIT_HASH}".
+
+Read `findings.json` at that commit and scan the `loopholes` array for any entry with `"severity": "CRITICAL"`
+or `"severity": "HIGH"`.
+
+If no CRITICAL or HIGH entries exist: STOP loop — instructions are sufficiently hardened.
 
 Spawn the blue-team agent using the Task tool and store its `task_id` as `BLUE_TEAM_TASK_ID`. The blue-team
 MUST start only after red-team completes (it requires the findings file from red-team's commit).
@@ -259,43 +248,82 @@ MUST start only after red-team completes (it requires the findings file from red
 ```
 Task tool:
   description: "Blue-team: close loopholes in instructions (round 1)"
-  subagent_type: "general-purpose"
+  subagent_type: "cat:blue-team-agent"
   prompt: |
-    You are a blue-team agent. Your job: close specific loopholes in these instructions.
-    You will be resumed in later rounds — apply fixes for the current round's findings only.
-
     ## Current Instructions
     {CURRENT_INSTRUCTIONS}
 
-    ## Loopholes to Close
-    Read findings.json from the red-team's commit using:
-      git show {RED_TEAM_COMMIT_HASH}:findings.json
+    ## Red-Team Commit Hash
+    {RED_TEAM_COMMIT_HASH}
 
-    ## Your Task
-    For each loophole, revise the instructions to close it:
-    - Add explicit prohibitions for unlisted tools/techniques
-    - Define undefined terms that enabled rationalization
-    - Convert permissive-by-omission lists to exhaustive lists with "nothing else" clauses
-    - Add scope boundaries that prevent context-dependent bypass
+    ## Skill File Path
+    {SKILL_FILE_PATH}
 
-    Rules:
-    - Minimal changes: close the specific loophole, do not rewrite unrelated sections
-    - Preserve all existing correct guidance
-    - Do NOT add so many caveats that the instructions become unreadable
-
-    ## Output
-    Write the complete revised instructions to the skill file at {SKILL_FILE_PATH}.
-    Then run: git add {SKILL_FILE_PATH} && git commit -m "blue-team: round 1 patches"
-    Return only the commit hash on the last line of your response.
+    ## Round Number
+    1
 ```
 
 **Error handling:**
 - If red-team does not return a commit hash on its last line: log an error and abort the loop.
 - If `git show {RED_TEAM_COMMIT_HASH}:findings.json` fails or returns empty: log "ERROR: findings.json not readable from commit {RED_TEAM_COMMIT_HASH}" and abort.
-- If findings.json is malformed (not valid JSON or missing `major_loopholes_found` field): log the error and abort. Do not default to true or false.
+- If findings.json is malformed (not valid JSON or missing `loopholes` array): log the error and abort. Do not default to empty.
 - Apply the same commit-hash validation to blue-team: abort if no valid commit hash is returned.
 
 After blue-team completes, read `BLUE_TEAM_COMMIT_HASH` from the last line of its response.
+
+**Diff validation:** Delegate diff validation to the persistent diff-validation subagent. On round 1, spawn
+it and store its `task_id` as `DIFF_VALIDATION_TASK_ID`. On round 2+, resume it using `task_id`.
+
+Round 1 — spawn:
+
+```
+Task tool:
+  description: "Diff validation: round 1"
+  subagent_type: "cat:diff-validation-agent"
+  prompt: |
+    ## Diff Command
+    git diff {PREV_BLUE_COMMIT_OR_ROUND1_START}..{BLUE_TEAM_COMMIT_HASH} -- {SKILL_FILE_PATH}
+
+    ## Findings Commit Hash
+    {RED_TEAM_COMMIT_HASH}
+
+    ## Skill File Path
+    {SKILL_FILE_PATH}
+
+    ## Round Number
+    1
+```
+
+Round 2+ — resume:
+
+```
+Task tool (resume):
+  task_id: {DIFF_VALIDATION_TASK_ID}
+  prompt: |
+    ## Diff Command
+    git diff {PREV_BLUE_COMMIT_OR_ROUND1_START}..{BLUE_TEAM_COMMIT_HASH} -- {SKILL_FILE_PATH}
+
+    ## Findings Commit Hash
+    {RED_TEAM_COMMIT_HASH}
+
+    ## Skill File Path
+    {SKILL_FILE_PATH}
+
+    ## Round Number
+    {N}
+```
+
+Parse the JSON result from the diff-validation agent's last line. If `"status": "INVALID"`:
+
+1. Run `git revert {BLUE_TEAM_COMMIT_HASH} --no-edit` to undo the commit.
+2. Resume the blue-team agent with: "Your round {N} patch was reverted. The following hunks had no
+   correspondence to any listed loophole: {out_of_scope_hunks from validation result}. Rewrite the patch
+   touching only the lines required to close each loophole. Do not modify any other content. Commit and
+   return the new hash."
+3. Re-run diff validation (resume DIFF_VALIDATION_TASK_ID) with the new blue-team commit. If the result
+   is still INVALID, log "ERROR: blue-team introduced out-of-scope changes in round {N} after retry —
+   aborting loop" and stop. Do not retry more than once per round.
+
 Read the skill file at `BLUE_TEAM_COMMIT_HASH` to update `CURRENT_INSTRUCTIONS`.
 Increment round counter. If round < 10: continue to next iteration.
 
@@ -312,9 +340,17 @@ Task tool (resume):
     ## What Changed Since Last Round
     {git diff RED_TEAM_COMMIT_HASH..BLUE_TEAM_COMMIT_HASH -- SKILL_FILE_PATH}
 
-    Focus ONLY on the diff above — analyze whether the blue-team's patches introduced new gaps or
-    failed to fully close prior loopholes. Seek attack vectors not yet explored in previous rounds.
-    Write new findings to findings.json and commit as before, returning only the commit hash.
+    ## Worktree Root
+    {WORKTREE_ROOT}
+
+    ## Round Number
+    {N}
+
+    First, analyze the diff above to determine whether the blue-team's patches introduced new gaps or
+    failed to fully close prior loopholes. Then, re-examine the FULL current instructions (not just the diff)
+    for attack vectors not yet explored in previous rounds — the diff focus must not prevent discovery of
+    loopholes present in unchanged sections.
+    Write new findings to {WORKTREE_ROOT}/findings.json and commit as before, returning only the commit hash.
 ```
 
 ```
@@ -323,8 +359,14 @@ Task tool (resume):
   prompt: |
     Round {N}. Resume your blue-team patching.
 
-    ## What Changed Since Last Round
-    {git diff BLUE_TEAM_COMMIT_HASH..RED_TEAM_COMMIT_HASH -- findings.json}
+    ## Red-Team Commit Hash
+    {RED_TEAM_COMMIT_HASH}
+
+    ## Skill File Path
+    {SKILL_FILE_PATH}
+
+    ## Round Number
+    {N}
 
     Apply fixes for the new loopholes identified in this round's findings.
     Write the revised skill file and commit as before, returning only the commit hash.
@@ -339,10 +381,13 @@ producing one commit per round as the loop progresses.
 
 In-place hardening mode activates when the caller passes a single skill file path inside the current worktree.
 
-1. Read the file content as `CURRENT_INSTRUCTIONS`. Store the file path as `SKILL_FILE_PATH`.
+1. Read the file content as `CURRENT_INSTRUCTIONS`. Store the file path as `SKILL_FILE_PATH`. Determine
+   the worktree root by running `git rev-parse --show-toplevel` from within the worktree; store as
+   `WORKTREE_ROOT`. Pass `WORKTREE_ROOT` to all red-team and blue-team subagent prompts so they use
+   absolute paths (e.g., `{WORKTREE_ROOT}/findings.json`) rather than relative paths.
 2. Run the full RED→BLUE loop (up to 10 rounds) as defined in Step 4. Each round produces two commits:
    one from the red-team (findings.json) and one from the blue-team (patched skill file). The loop
-   continues until convergence (`major_loopholes_found: false`) or the round cap is reached.
+   continues until convergence (no CRITICAL/HIGH entries in the `loopholes` array) or the round cap is reached.
 3. No additional write step is needed — the blue-team commits the hardened content directly each round.
 
 **Secondary workflow — directory / batch mode:**
@@ -410,6 +455,9 @@ implementation details (trust levels, internal architecture, etc.).
 - [ ] No Functions or Prerequisites sections prime manual construction (per priming prevention checklist)
 - [ ] Step 4 uses commit-based handoff: red-team commits findings.json, blue-team commits patched skill file
 - [ ] Step 4 reuses one red-team and one blue-team agent across rounds via task_id resume
+- [ ] Step 4 blue-team uses `subagent_type: "cat:blue-team-agent"` (not `general-purpose` + `model: "opus"`)
+- [ ] Step 4 diff validation uses `cat:diff-validation-agent` Task, not inline orchestrator review
+- [ ] Step 4 DIFF_VALIDATION_TASK_ID is stored and reused via resume in round 2+
 - [ ] Step 4 round 2+ prompts include git diff of previous round's changes for delta-focused analysis
 - [ ] In-place hardening mode produces per-round commits (one from red-team, one from blue-team per round)
 - [ ] If batch mode was used: summary table shows all skills reviewed with round counts
