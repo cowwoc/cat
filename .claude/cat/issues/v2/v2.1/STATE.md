@@ -77,6 +77,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - add-blue-team-dispute-mechanism
 - generalize-adversarial-agents-for-multi-target
 - update-skill-builder-tdd-to-use-adversarial-agents
+- add-subagent-context-minimization-concept
 
 
 ## Issues Closed
