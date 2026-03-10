@@ -69,15 +69,8 @@ directly.
 **Reference:** See [rca-methods.md](rca-methods.md) for detailed method specifications and the method
 assignment rule.
 
-**A/B TEST IN PROGRESS** - See [RCA-AB-TEST.md](RCA-AB-TEST.md) for full specification.
-
-**Quick Reference:**
-
-| Method | Core Approach | When Best |
-|--------|---------------|-----------|
-| A: 5-Whys | Ask "why" 5 times iteratively | General mistakes, process issues |
-| B: Taxonomy | Classify into MEMORY/PLANNING/ACTION/REFLECTION/SYSTEM | Tool misuse, capability failures |
-| C: Causal Barrier | List candidates, verify cause vs symptom | Compliance failures, repeated mistakes |
+**Method: Causal Barrier Analysis (Method C)**
+All new mistakes use Method C. See [rca-methods.md](rca-methods.md) for the full template.
 
 **Common root cause patterns to check:**
 - Assumption without verification?
@@ -92,8 +85,8 @@ assignment rule.
 
 ```json
 {
-  "rca_method": "A|B|C",
-  "rca_method_name": "5-whys|taxonomy|causal-barrier"
+  "rca_method": "C",
+  "rca_method_name": "causal-barrier"
 }
 ```
 
@@ -381,8 +374,8 @@ Your final message MUST be ONLY this JSON (no other text):
     "session_duration_hours": "{from Phase 1 investigation output}"
   },
   "root_cause": "The actual root cause from RCA",
-  "rca_method": "A|B|C",
-  "rca_method_name": "5-whys|taxonomy|causal-barrier",
+  "rca_method": "C",
+  "rca_method_name": "causal-barrier",
   "cause_signature": "<cause_type>:<barrier_type>:<context>",
   "rca_depth_verified": true,
   "rca_depth_check": {
