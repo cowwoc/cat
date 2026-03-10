@@ -10,6 +10,8 @@ import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.GetSkill;
 import org.testng.annotations.Test;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.NoSuchFileException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -1395,6 +1397,99 @@ More content here.
     finally
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Qualified name marker file tests
+  // -------------------------------------------------------------------------
+
+  /**
+   * Verifies that loading a skill by bare name stores the marker file with the qualified name
+   * (URL-encoded prefix:skill-name format).
+   */
+  @Test
+  public void loadStoresQualifiedNameInMarkerFile() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      Files.writeString(companionDir.resolve("first-use.md"), "Skill content\n");
+
+      String agentId = UUID.randomUUID().toString();
+      GetSkill loader = new GetSkill(scope, List.of(agentId));
+      loader.load("test-skill");
+
+      Path agentDir = scope.getSessionBasePath().toAbsolutePath().normalize().resolve(agentId);
+      Path loadedDir = agentDir.resolve(GetSkill.LOADED_DIR);
+      // Qualified name: "cat:test-skill" → URL-encoded: "cat%3Atest-skill"
+      Path expectedMarker = loadedDir.resolve(URLEncoder.encode("cat:test-skill", StandardCharsets.UTF_8));
+      requireThat(Files.exists(expectedMarker), "markerExists").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that a second load call for the same bare-name skill returns the "already loaded"
+   * reference message, confirming that the qualified-name marker is recognized on the second call.
+   */
+  @Test
+  public void loadRecognizesAlreadyLoadedByQualifiedName() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      Files.writeString(companionDir.resolve("first-use.md"), "Skill content\n");
+
+      GetSkill loader = new GetSkill(scope, List.of(UUID.randomUUID().toString()));
+      loader.load("test-skill");
+
+      String secondResult = loader.load("test-skill");
+      requireThat(secondResult, "secondResult").contains("skill instructions were already loaded");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that loading a skill by its qualified name (e.g., "cat:test-skill") stores
+   * the marker without double-qualifying it.
+   */
+  @Test
+  public void loadAcceptsAlreadyQualifiedName() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      Files.writeString(companionDir.resolve("first-use.md"), "Skill content\n");
+
+      String agentId = UUID.randomUUID().toString();
+      GetSkill loader = new GetSkill(scope, List.of(agentId));
+      loader.load("cat:test-skill");
+
+      Path agentDir = scope.getSessionBasePath().toAbsolutePath().normalize().resolve(agentId);
+      Path loadedDir = agentDir.resolve(GetSkill.LOADED_DIR);
+      Path expectedMarker = loadedDir.resolve(URLEncoder.encode("cat:test-skill", StandardCharsets.UTF_8));
+      requireThat(Files.exists(expectedMarker), "markerExists").isTrue();
+      // Verify no double-qualified file exists
+      Path doubleQualifiedMarker = loadedDir.resolve(
+        URLEncoder.encode("cat:cat:test-skill", StandardCharsets.UTF_8));
+      requireThat(Files.exists(doubleQualifiedMarker), "doubleQualifiedExists").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
     }
   }
 }

@@ -57,6 +57,8 @@ public abstract class AbstractJvmScope implements JvmScope
   @SuppressWarnings("this-escape")
   private final ConcurrentLazyReference<UserIssues> userIssues =
     ConcurrentLazyReference.create(() -> new UserIssues(this));
+  private final ConcurrentLazyReference<String> pluginPrefix = ConcurrentLazyReference.create(() ->
+    derivePluginPrefix());
 
   /**
    * Creates a new abstract JVM scope.
@@ -156,6 +158,45 @@ public abstract class AbstractJvmScope implements JvmScope
   public Path getSessionCatDir()
   {
     return getSessionDirectory().resolve("cat");
+  }
+
+  /**
+   * Returns the plugin prefix (e.g., {@code "cat"}).
+   * <p>
+   * Derived from the plugin root path structure ({@code .../{prefix}/{slug}/{version}/}).
+   * The prefix is the directory component two levels above the version directory.
+   *
+   * @return the plugin prefix, never blank
+   * @throws AssertionError if the prefix cannot be derived from the plugin root path
+   * @throws IllegalStateException if this scope is closed
+   */
+  @Override
+  public String getPluginPrefix()
+  {
+    ensureOpen();
+    return pluginPrefix.getValue();
+  }
+
+  /**
+   * Derives the plugin prefix from the plugin root path structure.
+   *
+   * @return the plugin prefix, never blank
+   * @throws AssertionError if the prefix cannot be derived from the plugin root path
+   */
+  private String derivePluginPrefix()
+  {
+    Path pluginRoot = getClaudePluginRoot().toAbsolutePath().normalize();
+    Path slugDir = pluginRoot.getParent();
+    if (slugDir == null)
+      throw new AssertionError("Plugin root has no parent directory: " + pluginRoot);
+    Path prefixDir = slugDir.getParent();
+    if (prefixDir == null)
+      throw new AssertionError("Plugin slug directory has no parent: " + slugDir);
+    Path prefixName = prefixDir.getFileName();
+    if (prefixName == null)
+      throw new AssertionError("Cannot determine plugin prefix from path: " + pluginRoot +
+        ". Expected structure: .../{prefix}/{slug}/{version}/");
+    return prefixName.toString();
   }
 
   @Override
