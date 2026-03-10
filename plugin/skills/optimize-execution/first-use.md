@@ -666,6 +666,7 @@ at 10 cents on the dollar, making delegation highly cost-efficient even when raw
 
 ## Related Concepts
 
-- Session storage format in get-history skill
-- Token budgeting in token-report skill
-- Efficiency patterns in batch-read skill
+- **get-history**: Session storage format and how to access raw session data — `plugin/skills/get-history-agent/first-use.md`
+- **token-report**: Token budgeting and context health metrics — `plugin/skills/token-report-agent/first-use.md`
+- **batch-read**: Efficiency patterns for reading multiple related files in one operation — `plugin/skills/batch-read-agent/first-use.md`
+- **subagent-context-minimization**: When and how to pass file paths instead of file content to subagents — `plugin/concepts/subagent-context-minimization.md`

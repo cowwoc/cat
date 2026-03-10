@@ -530,6 +530,11 @@ implementation details (trust levels, internal architecture, etc.).
 
 ---
 
+## Related Concepts
+
+- **subagent-context-minimization**: When to delegate to subagents and how to pass references instead of
+  content — `plugin/concepts/subagent-context-minimization.md`
+
 ## Verification
 
 - [ ] Design subagent returned a complete skill draft
