@@ -10,6 +10,12 @@ See LICENSE.md in the project root for license terms.
 This document describes the preparation phase algorithm for `/cat:work`. The actual implementation
 is a deterministic Java launcher that performs all steps without LLM decision-making.
 
+**IMPORTANT:** The Resume/Continue Pattern (Step 2) and filter classification rules are **pre-processing
+steps that the agent MUST execute before invoking the Java launcher.** They are not implemented in the
+Java launcher. The agent must apply these rules to transform ARGUMENTS into the correct launcher flags.
+The "algorithm documentation only" disclaimer applies to the launcher internals, not to the agent-side
+pre-processing defined in this document.
+
 ## Input
 
 The main agent provides:
@@ -166,15 +172,102 @@ fi
 
 ### Step 2: Find Available Issue
 
+**Resume/Continue Pattern:** When ARGUMENTS begins with the standalone word `resume` or `continue`
+(case-insensitive) followed by whitespace or end-of-string, strip that prefix word, then extract
+the **best issue-identifier token** from the remaining text as the inclusion filter keyword, using
+the following priority order:
+1. **Versioned issue ID:** Prefer a token matching the pattern `[0-9]+\.[0-9]+-[a-z]` (e.g.,
+   `2.1-close-prevention-gate-loopholes`). If multiple tokens match, use the longest one.
+2. **Last hyphenated token:** If no token matches the versioned pattern, use the last
+   space-separated token that contains at least one hyphen (e.g., `foo-bar` from
+   "resume work on foo-bar").
+3. **Last token (fallback):** If no token matches either pattern above, use the last
+   space-separated token overall.
+
+This ensures that natural-language filler words (e.g., "work on", "working on", "issue", "task",
+"please") that appear after the actual issue identifier are not selected as the keyword. For
+example, `resume work on 2.1-close-prevention-gate-loopholes` yields keyword
+`2.1-close-prevention-gate-loopholes` (versioned issue ID, priority 1). `resume the
+2.1-foo issue` yields `2.1-foo` (versioned issue ID, priority 1), not `issue`. `resume
+close-prevention-gate-loopholes task` yields `close-prevention-gate-loopholes` (last
+hyphenated token, priority 2), not `task`. When only one token remains after stripping the prefix,
+that single token is the keyword (regardless of pattern matching). **Word boundary rule:** `resume` and `continue` are only
+recognized as prefixes when they appear as a standalone word — that is, followed by whitespace or
+at end-of-string. Hyphenated tokens like `continue-integration-tests` or `resume-handler` do NOT
+trigger prefix stripping; they are treated as literal issue name filters. If no text remains after
+stripping the prefix (i.e., ARGUMENTS is exactly `resume` or `continue` with no further content),
+return the following JSON error and stop:
+
+```json
+{"status":"ERROR","message":"Missing issue name after 'resume'/'continue'. Specify which issue to resume.","suggestion":"Use: /cat:work resume <issue-name>"}
+```
+
+**After extracting the keyword via the Resume/Continue Pattern, skip filter classification entirely
+(Step 2 rules 1-3) and always treat the keyword as an inclusion filter.** The user explicitly named
+an issue to resume; exclusion classification must not apply regardless of whether the keyword
+contains words like `not`, `skip`, `without`, etc.
+
+```bash
+# ARGUMENTS = "resume 2.1-close-prevention-gate-loopholes"
+# "resume" is standalone word followed by space → strip prefix
+# Keyword = "2.1-close-prevention-gate-loopholes" (full remaining text)
+# Skip filter classification → always inclusion
+
+# ARGUMENTS = "resume work on 2.1-close-prevention-gate-loopholes"
+# Strip "resume" prefix → remaining = "work on 2.1-close-prevention-gate-loopholes"
+# "2.1-close-prevention-gate-loopholes" matches versioned pattern → keyword (priority 1)
+# Skip filter classification → always inclusion
+#
+# ARGUMENTS = "resume the 2.1-foo issue"
+# Strip "resume" prefix → remaining = "the 2.1-foo issue"
+# "2.1-foo" matches versioned pattern → keyword (priority 1), NOT "issue"
+# Skip filter classification → always inclusion
+#
+# ARGUMENTS = "resume close-prevention-gate-loopholes task"
+# Strip "resume" prefix → remaining = "close-prevention-gate-loopholes task"
+# No versioned pattern match; "close-prevention-gate-loopholes" is last hyphenated → keyword (priority 2)
+# Skip filter classification → always inclusion
+
+# ARGUMENTS = "continue close-prevention-gate-loopholes"
+# "continue" is standalone word followed by space → strip prefix
+# Keyword = "close-prevention-gate-loopholes"
+# Skip filter classification → always inclusion
+
+# ARGUMENTS = "resume 2.1-not-found-handler"
+# Strip "resume" prefix → keyword = "2.1-not-found-handler"
+# Skip filter classification → always inclusion (NOT exclusion despite containing "not")
+
+# ARGUMENTS = "continue-integration-tests"
+# "continue" is NOT standalone (hyphenated) → no prefix stripping
+# Entire string "continue-integration-tests" enters filter classification normally
+
+# ARGUMENTS = "resume"
+# Strip prefix → empty → return ERROR JSON (missing issue name)
+```
+
+**MANDATORY:** When ARGUMENTS begins with standalone `resume` or `continue` (per word boundary rule
+above), the raw ARGUMENTS string including the prefix MUST NOT be passed to filter classification.
+The extracted keyword (best issue-identifier token from the remaining text after stripping the
+prefix word, per the priority order above) bypasses filter classification entirely and is always
+treated as an inclusion filter.
+
 **Filter classification:** User arguments are classified as either an exclusion filter or an inclusion
 filter before calling `work-prepare`. The raw user-provided argument text MUST NOT be normalized,
 extracted, rephrased, or canonicalized at any point — not during classification, not during matching,
 and not at any intermediate step. The exact literal text provided by the user must flow unchanged
-through classification and into the matching predicate. Apply the following rules in order:
+through classification and into the matching predicate (after the `resume` or `continue` prefix has
+been stripped per the Resume/Continue Pattern above, if applicable). Apply the following rules in
+order:
 
-1. **Exclusion** — the argument contains any of these words or phrases (case-insensitive): `skip`,
-   `avoid`, `except`, `not`, `without`, `other than`, `besides`, `rather than`, `leaving out`,
-   `excluding`, `except for`. Use `--exclude-pattern`.
+1. **Exclusion** — the argument contains any of these words or phrases as **whole words**
+   (case-insensitive): `skip`, `avoid`, `except`, `not`, `without`, `other than`, `besides`,
+   `rather than`, `leaving out`, `excluding`, `except for`. Use `--exclude-pattern`.
+   **Whole-word rule:** A keyword matches only when it is bounded on both sides by a space, the
+   start of the string, or the end of the string. Hyphens, underscores, and alphanumeric characters
+   are NOT word boundaries for this check. For example, `2.1-annotate-handler` does NOT contain the
+   whole word `not` (the `not` in `annotate` is surrounded by letters). Similarly, `skip-list` does
+   NOT contain the whole word `skip` (bounded by a hyphen, not a space or string edge). However,
+   `not migration` DOES contain the whole word `not` (bounded by string start and space).
 2. **Inclusion** — the argument expresses a positive constraint (e.g., "only migration", "just
    the sync issues"). Filter results in memory after calling `work-prepare` with no `--exclude-pattern`.
 3. **If still ambiguous after applying rules 1 and 2**, default to treating the filter as **exclusion**.
@@ -186,13 +279,26 @@ through classification and into the matching predicate. Apply the following rule
    classify as inclusion without invoking rule 3.
 
 **Inclusion filter matching:** When filtering results in memory for an inclusion filter, use the raw
-user-provided argument text as the filter keyword — do NOT normalize, extract, rephrase, or canonicalize
-the keyword before matching. A result matches if and only if the issue ID or the goal line from PLAN.md
-contains the raw filter keyword as a case-insensitive substring. No fuzzy, semantic, or stem matching.
+user-provided argument text as the filter keyword (or the extracted keyword if the resume/continue prefix
+was stripped per the Resume/Continue Pattern above, if applicable) — do NOT normalize, extract, rephrase,
+or canonicalize the keyword before matching. A result matches if and only if the issue ID or the goal line
+from PLAN.md contains the raw filter keyword as a case-insensitive substring. No fuzzy, semantic, or stem
+matching.
 No pre-processing of the keyword (e.g., extracting "compress" from "compression stuff" is prohibited).
 If the issue ID or goal does not contain the exact keyword as a literal substring, it does not match.
 
-Use the `work-prepare` Java launcher with `--exclude-pattern` when arguments contain an exclusion filter:
+Use the `work-prepare` Java launcher with `--exclude-pattern` when arguments contain an exclusion filter.
+
+**Glob safety constraint:** The constructed `--exclude-pattern` glob MUST be specific enough to match
+only the intended issues. Globs that would match all or nearly all issues are prohibited. Specifically:
+do NOT construct globs consisting solely of wildcards (e.g., `*`, `**`, `*-*`, `*?*`) or that lack at
+least one literal alphanumeric substring of 3+ consecutive alphanumeric characters (not counting wildcard
+characters `*`, `?`, or `[`). For example, `*e*` and `*ab*` are prohibited (only 1 and 2 alphanumeric
+characters respectively), while `*foo*` is allowed (3 consecutive alphanumeric characters). If the user's
+exclusion text would yield such an overly broad glob (e.g., "skip everything", "skip all", "avoid *",
+"skip e"), do NOT pass `--exclude-pattern`.
+Instead, return `NO_ISSUES` with `"message": "Exclusion filter too broad — would exclude all issues.
+Specify which issues to skip by name or keyword."`.
 
 ```bash
 # Convert exclusion filter to glob pattern:
