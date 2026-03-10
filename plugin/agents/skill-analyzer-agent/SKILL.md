@@ -17,7 +17,10 @@ skill-builder eval loop (analyze and review).
 
 ## Inputs
 
-The invoking agent passes a benchmark JSON object. The benchmark JSON has this structure:
+The invoking agent passes a benchmark SHA+path: a commit SHA and relative file path pointing to the committed
+`benchmark.json` file. Read the benchmark JSON using `git show <SHA>:<path>`.
+
+The benchmark JSON has this structure:
 
 ```json
 {
@@ -77,23 +80,32 @@ cost.
 
 ## Procedure
 
-### Step 1: Detect Non-Discriminating Eval Set
+### Step 1: Read Benchmark JSON from Git
+
+Read the benchmark JSON from git using `git show <SHA>:<path>` where `<SHA>` and `<path>` are the
+values passed by the invoking agent. Parse the JSON content as the benchmark object.
+
+If `git show` returns a non-zero exit code (e.g., SHA not found, path does not exist at that commit,
+permission error), return `{"error": "git show failed: <reason>: SHA=<SHA> path=<path>"}` and stop.
+Do not attempt to proceed with missing or partial benchmark data.
+
+### Step 2: Detect Non-Discriminating Eval Set
 
 Inspect `delta.pass_rate`. If the absolute value is less than 0.10, flag the eval set as
 non-discriminating.
 
-### Step 2: Detect High-Variance Evals
+### Step 3: Detect High-Variance Evals
 
 For each config in `configs`, check the stddev-to-mean ratio for both `duration_ms` and `tokens`.
 Collect all configs and metrics where `stddev > mean * 0.5`.
 
-### Step 3: Detect Time/Token Tradeoffs
+### Step 4: Detect Time/Token Tradeoffs
 
 Inspect `delta.pass_rate`, `delta.mean_duration_ms`, and `delta.mean_tokens`. Determine whether a
 tradeoff is present according to the detection rule above. Compute the magnitude: how much faster
 or cheaper is `without-skill`, and by how much does `with-skill` improve pass rate.
 
-### Step 4: Produce Analysis Report
+### Step 5: Produce Analysis Report
 
 Output the analysis report in this format:
 
@@ -129,8 +141,21 @@ Recommendations:
 - **Time/token tradeoff**: Summarize the tradeoff quantitatively and note that the extra cost may be
   justified by the pass rate improvement; recommend the user decide based on their latency/quality budget.
 
+After producing the analysis report text:
+
+1. Create the directory with `mkdir -p ${EVAL_ARTIFACTS_DIR}` if it does not exist.
+2. Write the compact analysis report text to `${EVAL_ARTIFACTS_DIR}/analysis.txt`.
+3. Commit the file with message `eval: analyze benchmark [session: ${CLAUDE_SESSION_ID}]`.
+4. Return the commit SHA AND the full compact analysis report text as the return value. The compact report
+   text must flow back to the invoking agent for display to the user; the commit SHA is for audit trail only.
+
 ## Error Handling
 
+- **git show fails**: If `git show <SHA>:<path>` returns a non-zero exit code (SHA not found, path absent
+  at that commit, permission denied), return `{"error": "git show failed: <reason>: SHA=<SHA> path=<path>"}` and
+  stop. Do not produce a partial report with empty or default values.
+- **Malformed JSON**: If the output of `git show` is not valid JSON, return
+  `{"error": "benchmark JSON is not valid JSON: <first 200 chars of raw output>"}` and stop.
 - **Missing `delta` field**: If the benchmark JSON has only one config (no `delta` field), skip the
   Non-Discriminating Eval Set and Time/Token Tradeoff sections and report them as "N/A (single config)".
 - **Missing `configs` field**: If `configs` is absent or empty, output an error message stating the
@@ -140,8 +165,12 @@ Recommendations:
 
 ## Verification
 
+- [ ] Benchmark JSON is read from git using `git show <SHA>:<path>` before any analysis begins
+- [ ] If `git show` fails, an error JSON is returned immediately — no partial report is produced
+- [ ] If the JSON is malformed, an error JSON is returned immediately — no partial report is produced
 - [ ] `delta.pass_rate` is evaluated for non-discrimination (absolute value < 0.10)
 - [ ] Every config is evaluated for high variance on both duration and token dimensions
 - [ ] Tradeoff detection uses the `delta` values directly from the benchmark JSON
 - [ ] Recommendations address each pattern found with a specific actionable suggestion
 - [ ] Report sections are present even when no patterns are found (show "Not detected" or "ABSENT")
+- [ ] Compact analysis report text is returned alongside the commit SHA

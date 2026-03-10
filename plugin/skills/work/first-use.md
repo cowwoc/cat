@@ -18,6 +18,7 @@ its own context, keeping main agent context minimal (~5-10K tokens).
 | Version | `/cat:work 2.1` | Work on issues in version 2.1 |
 | Issue ID | `/cat:work 2.1-migrate-api` | Work on specific issue |
 | Bare name | `/cat:work migrate-api` | Work on specific issue by name only (resolves to current branch version) |
+| Resume | `/cat:work resume 2.1-migrate-api` | Resume a specific issue (equivalent to Issue ID; `resume`/`continue` prefix is stripped) |
 | Filter | `/cat:work skip compression` | Filter issue selection (natural language) |
 
 **Flags:**
