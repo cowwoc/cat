@@ -2,7 +2,7 @@
 description: >
   Internal subagent — grades a list of assertions against a single test-case output, assigning pass/fail
   verdicts with evidence quotes. Returns structured grading JSON for aggregation by skill-builder-agent.
-model: sonnet
+model: haiku
 user-invocable: false
 ---
 
