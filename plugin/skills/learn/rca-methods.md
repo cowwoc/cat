@@ -200,12 +200,104 @@ this case — no additional exception logic is needed here.
 | `pending_unloaded` | No new prevention; defer to next cache refresh |
 | No file modified in session | Block marking prevention as applied |
 
+## Cause Signature Vocabulary
+
+A `cause_signature` is a structured triple `<cause_type>:<barrier_type>:<context>` that identifies the root cause
+pattern independently of wording variations. Use this field to link mistakes that share the same underlying failure
+even when they manifest in different tools or sessions.
+
+### Format
+
+```
+cause_signature: "<cause_type>:<barrier_type>:<context>"
+```
+
+### Controlled Vocabulary
+
+**Cause Types** — why the agent took the wrong action:
+
+| Value | Meaning |
+|---|---|
+| `compliance_failure` | Agent knew the rule but did not follow it |
+| `knowledge_gap` | Agent lacked information needed to act correctly |
+| `tool_limitation` | Tool could not perform the needed operation |
+| `environment_mismatch` | Runtime state (cwd, branch, config) did not match expectation |
+| `context_degradation` | Long session caused agent to lose track of earlier constraints |
+| `architectural_conflict` | Task requires the agent to fight its own training |
+
+**Barrier Types** — what prevention mechanism was missing or failed:
+
+| Value | Meaning |
+|---|---|
+| `hook_absent` | No PreToolUse/PostToolUse hook existed to block the wrong action |
+| `hook_bypassed` | Hook existed but was circumvented (e.g., --no-verify, wrong condition) |
+| `doc_missing` | No documentation described the correct behavior |
+| `doc_ignored` | Documentation existed but agent did not follow it |
+| `validation_absent` | No automated check caught the bad state |
+| `config_wrong` | Configuration value was incorrect or absent |
+| `skill_incomplete` | Skill instructions did not cover this scenario |
+| `process_gap` | Workflow steps did not enforce the required ordering |
+
+**Context** — which subsystem or phase produced the failure:
+
+| Value | Meaning |
+|---|---|
+| `pre_tool_use` | Failure occurred in a PreToolUse hook or before tool execution |
+| `post_tool_use` | Failure occurred in a PostToolUse hook or after tool execution |
+| `plugin_rules` | Failure related to plugin behavioral rules (CLAUDE.md, rules/) |
+| `skill_execution` | Failure occurred during skill step execution |
+| `git_operations` | Failure in git commands (commit, rebase, push, etc.) |
+| `file_operations` | Failure in file read/write/edit operations |
+| `subagent_delegation` | Failure in spawning or interpreting subagent results |
+| `issue_workflow` | Failure in issue lifecycle (lock, worktree, merge) |
+| `rca_process` | Failure in the learn/RCA workflow itself |
+
+### Canonical Examples
+
+| Signature | When to Use |
+|---|---|
+| `compliance_failure:hook_absent:pre_tool_use` | Agent violated a rule; no hook existed to block the attempt |
+| `compliance_failure:doc_ignored:plugin_rules` | Rule existed in CLAUDE.md; agent did not follow it |
+| `knowledge_gap:doc_missing:skill_execution` | Skill instructions did not cover the needed scenario |
+| `knowledge_gap:skill_incomplete:subagent_delegation` | Delegation prompt omitted information the subagent needed |
+| `context_degradation:process_gap:issue_workflow` | Late-session context loss caused workflow step to be skipped |
+| `architectural_conflict:hook_absent:plugin_rules` | LLM training conflicts with required verbatim/mechanical output |
+| `environment_mismatch:validation_absent:git_operations` | Git operation ran in wrong worktree; no path check existed |
+| `compliance_failure:hook_bypassed:git_operations` | Agent used --no-verify or equivalent to skip enforcement |
+
+### Selection Process
+
+After completing RCA (any method), select `cause_signature` by answering in sequence:
+
+1. **Cause type:** Why did the agent take the wrong action? (pick from cause types above)
+2. **Barrier type:** What was the weakest or missing prevention mechanism? (pick from barrier types above)
+3. **Context:** In which subsystem did the failure occur? (pick from context values above)
+
+If no single value fits perfectly, choose the closest match and note the discrepancy in `root_cause`.
+
+**Validation responsibility:** Format validation (triple structure, controlled vocabulary values)
+is enforced at the skill level (phase-analyze.md Step 3a). The Java persistence layer
+(RecordLearning) stores the value as-is without re-validating format.
+
+### Recurrence Detection
+
+Before recording a new mistake, compare its candidate `cause_signature` against existing entries in
+`mistakes-YYYY-MM.json`. If any existing entry shares the same signature:
+
+1. This is likely a recurrence of the same root cause.
+2. Set `recurrence_of` to the ID of the earliest matching entry (or the most recent if chain is long).
+3. Apply the Prevention Strength Gate (see above) — the prior prevention failed.
+
 ## Recording Format
 
-Include method in JSON entry:
+Include method and signature in JSON entry:
 ```json
 {
   "rca_method": "A|B|C",
-  "rca_method_name": "5-whys|taxonomy|causal-barrier"
+  "rca_method_name": "5-whys|taxonomy|causal-barrier",
+  "cause_signature": "<cause_type>:<barrier_type>:<context>"
 }
 ```
+
+The `cause_signature` field is optional. Existing entries without it are treated as unclassified and excluded from
+signature-based recurrence detection.

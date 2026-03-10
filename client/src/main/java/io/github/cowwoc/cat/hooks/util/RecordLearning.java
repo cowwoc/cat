@@ -318,6 +318,11 @@ public final class RecordLearning
     entry.put("root_cause", getStringField(phase3Input, "root_cause", ""));
     entry.put("rca_method", getStringField(phase3Input, "rca_method", ""));
     entry.put("rca_method_name", getStringField(phase3Input, "rca_method_name", ""));
+    String causeSignature = getStringField(phase3Input, "cause_signature", null);
+    if (causeSignature == null)
+      entry.putNull("cause_signature");
+    else
+      entry.put("cause_signature", causeSignature);
     entry.put("prevention_type", getStringField(phase3Input, "prevention_type", ""));
     entry.put("prevention_path", getStringField(phase3Input, "prevention_path", ""));
 
