@@ -53,6 +53,13 @@ None
   **Never use** bare file names (e.g., `qualified-issue-names.md`) without their directory path.
   ```
 
+### Wave 2
+
+- Update frontmatter in `plugin/rules/qualified-issue-names.md` to enable subagent injection:
+  - File: `plugin/rules/qualified-issue-names.md`
+  - Change: `subAgents: []` → `subAgents: [all]`
+  - Reason: Post-condition requires rule applies to mainAgent and subagents; empty array excludes all subagents
+
 ## Post-conditions
 
 - [ ] `plugin/rules/qualified-issue-names.md` covers issues, skills, and files
