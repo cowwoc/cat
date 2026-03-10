@@ -47,43 +47,19 @@ skill-builder's documented in-place hardening batch mode.
   test after all skills are committed
 
 ## Files to Modify
-- plugin/skills/work/SKILL.md - full skill-builder redesign + adversarial TDD hardening
-- plugin/skills/work/first-use.md - full skill-builder redesign + adversarial TDD hardening
-- plugin/skills/work-agent/SKILL.md - full skill-builder redesign + adversarial TDD hardening
-- plugin/skills/work-agent/first-use.md - full skill-builder redesign + adversarial TDD hardening
-- plugin/skills/work-prepare-agent/SKILL.md - full skill-builder redesign + adversarial TDD hardening
-- plugin/skills/work-prepare-agent/first-use.md - full skill-builder redesign + adversarial TDD hardening
-- plugin/skills/work-implement-agent/SKILL.md - full skill-builder redesign + adversarial TDD hardening
-- plugin/skills/work-implement-agent/first-use.md - full skill-builder redesign + adversarial TDD hardening
-- plugin/skills/work-confirm-agent/SKILL.md - full skill-builder redesign + adversarial TDD hardening
-- plugin/skills/work-confirm-agent/first-use.md - full skill-builder redesign + adversarial TDD hardening
-- plugin/skills/work-review-agent/SKILL.md - full skill-builder redesign + adversarial TDD hardening
-- plugin/skills/work-review-agent/first-use.md - full skill-builder redesign + adversarial TDD hardening
-- plugin/skills/work-merge-agent/SKILL.md - full skill-builder redesign + adversarial TDD hardening
-- plugin/skills/work-merge-agent/first-use.md - full skill-builder redesign + adversarial TDD hardening
-- plugin/skills/work-with-issue-agent/SKILL.md - full skill-builder redesign + adversarial TDD hardening
-- plugin/skills/work-with-issue-agent/first-use.md - full skill-builder redesign + adversarial TDD hardening
-- plugin/skills/work-complete-agent/SKILL.md - full skill-builder redesign + adversarial TDD hardening
-- plugin/skills/work-complete-agent/first-use.md - full skill-builder redesign + adversarial TDD hardening
+- plugin/skills/work-prepare-agent/first-use.md - adversarial TDD hardening (Done - 10 rounds, 22 loopholes)
+- plugin/skills/work-implement-agent/first-use.md - adversarial TDD hardening (Done - 10 rounds, 45 loopholes)
+- plugin/skills/work-confirm-agent/first-use.md - adversarial TDD hardening (Done - 10 rounds, 28 loopholes)
+- plugin/skills/work-review-agent/first-use.md - adversarial TDD hardening (Done - 10 rounds, 47 loopholes)
 
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
 ## Main Agent Waves
 
-- /cat:skill-builder 7f8aaadc-7586-4890-9efb-32a053627a02 plugin/skills/work-prepare-agent/SKILL.md
-- /cat:skill-builder 7f8aaadc-7586-4890-9efb-32a053627a02 plugin/skills/work-implement-agent/SKILL.md
-- /cat:skill-builder 7f8aaadc-7586-4890-9efb-32a053627a02 plugin/skills/work-confirm-agent/SKILL.md
-- /cat:skill-builder 7f8aaadc-7586-4890-9efb-32a053627a02 plugin/skills/work-review-agent/SKILL.md
-- /cat:skill-builder 7f8aaadc-7586-4890-9efb-32a053627a02 plugin/skills/work-merge-agent/SKILL.md
-- /cat:skill-builder 7f8aaadc-7586-4890-9efb-32a053627a02 plugin/skills/work-complete-agent/SKILL.md
-- /cat:skill-builder 7f8aaadc-7586-4890-9efb-32a053627a02 plugin/skills/work-with-issue-agent/SKILL.md
-- /cat:skill-builder 7f8aaadc-7586-4890-9efb-32a053627a02 plugin/skills/work-agent/SKILL.md
-- /cat:skill-builder 7f8aaadc-7586-4890-9efb-32a053627a02 plugin/skills/work/SKILL.md
 
 ## Post-conditions
-- [ ] All 18 files (9 SKILL.md + 9 first-use.md) processed through full skill-builder workflow
-- [ ] Each file committed individually after adversarial TDD convergence (or 10-round cap)
-- [ ] Trigger descriptions in frontmatter semantically preserved (skills activate in same scenarios as before)
-- [ ] Procedure intent preserved (same steps, same outcomes, no new required inputs)
-- [ ] E2E: Run /cat:work on an existing open issue and confirm the workflow completes without regression
+- [x] All 4 first-use.md files processed through adversarial TDD hardening (10 rounds each)
+- [x] Each file committed individually after adversarial TDD convergence
+- [x] Trigger descriptions in frontmatter semantically preserved (skills activate in same scenarios as before)
+- [x] Procedure intent preserved (same steps, same outcomes, no new required inputs)

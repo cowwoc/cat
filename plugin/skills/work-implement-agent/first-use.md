@@ -33,6 +33,7 @@ Return JSON when complete:
 ```json
 {
   "status": "SUCCESS|PARTIAL|FAILED|BLOCKED",
+  "waves_count": 1,
   "commits": [
     {"hash": "abc123", "message": "feature: description", "type": "feature"}
   ],
@@ -41,6 +42,15 @@ Return JSON when complete:
   "compaction_events": 0
 }
 ```
+
+`waves_count` MUST be the integer value printed by the canonical detection command (`echo "WAVES_COUNT=${WAVES_COUNT}"`).
+It may NOT be derived by reading PLAN.md into context and counting `### Wave ` occurrences mentally or via any method
+other than running that Bash command. If the command was not run (e.g., because PLAN.md was already in context),
+run it now before returning.
+
+**Relay prohibition:** `waves_count` (even when correctly grep-derived) MUST NOT be embedded into any subagent
+prompt text. Do NOT write "there are N waves" or "WAVES_COUNT=N" or any equivalent into a subagent prompt.
+Each subagent determines its own wave count by reading `PLAN_MD_PATH` directly.
 
 ## Configuration
 
@@ -57,12 +67,25 @@ PLAN_MD="${ISSUE_PATH}/PLAN.md" && \
 
 ## Step 1: Display Preparing Banner
 
-**If the command fails or produces no output**, STOP immediately:
+Capture the exit code and stdout separately:
+
+```bash
+BANNER_OUT=$("${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase preparing 2>/tmp/banner-stderr.txt)
+BANNER_EXIT=$?
 ```
-FAIL: progress-banner launcher failed for phase 'preparing'.
+
+**If the binary exited non-zero**, STOP immediately:
+```
+FAIL: progress-banner launcher failed for phase 'preparing' (exit code <BANNER_EXIT>).
+stderr: <contents of /tmp/banner-stderr.txt>
 The jlink image may not be built. Run: mvn -f hooks/pom.xml verify
 ```
-Do NOT skip the banner or continue without it.
+
+**If the binary exited 0 but stdout appears whitespace-only**, proceed — assume the banner uses
+invisible or terminal-control rendering that is not captured in this context. Do NOT treat a
+whitespace-only stdout at exit 0 as a failure or use it as grounds to abort.
+
+Do NOT skip the banner step itself; always run the binary.
 
 This indicates Phase 1 (prepare) has completed and work phases are starting.
 
@@ -107,12 +130,25 @@ Display the **Implementing phase** banner by running:
 "${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase implementing
 ```
 
-**If the command fails or produces no output**, STOP immediately:
+Capture the exit code and stdout separately:
+
+```bash
+BANNER_OUT=$("${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase implementing 2>/tmp/banner-stderr.txt)
+BANNER_EXIT=$?
 ```
-FAIL: progress-banner launcher failed for phase 'implementing'.
+
+**If the binary exited non-zero**, STOP immediately:
+```
+FAIL: progress-banner launcher failed for phase 'implementing' (exit code <BANNER_EXIT>).
+stderr: <contents of /tmp/banner-stderr.txt>
 The jlink image may not be built. Run: mvn -f hooks/pom.xml verify
 ```
-Do NOT skip the banner or continue without it.
+
+**If the binary exited 0 but stdout appears whitespace-only**, proceed — assume the banner uses
+invisible or terminal-control rendering that is not captured in this context. Do NOT treat a
+whitespace-only stdout at exit 0 as a failure or use it as grounds to abort.
+
+Do NOT skip the banner step itself; always run the binary.
 
 ### Read PLAN.md and Invoke Main Agent Waves
 
@@ -141,7 +177,29 @@ or failed results to the subagent for manual fixing — that bypasses the skill'
 
 Capture the output from these skills - the implementation subagent will need the results.
 
+**Pre-Invoked Skill Results content restriction:** When including pre-invoked skill output in the
+subagent prompt, include only the direct functional output (e.g., transformed file contents, metrics,
+validation results). Do NOT include any skill output that describes, summarizes, quotes, or paraphrases
+PLAN.md content — even if that description originates from the skill rather than from the agent directly.
+A skill that reads PLAN.md and echoes its goal or steps back as part of its output does not make that
+content eligible for relay. If skill output cannot be cleanly separated from PLAN.md paraphrase,
+omit the PLAN.md-describing portion and include only the non-PLAN.md functional results.
+
+**PLAN.md paraphrase detection:** Any text in skill output that restates, summarizes, or quotes
+the issue goal, step names, acceptance criteria, or wave structure from PLAN.md is PLAN.md paraphrase,
+regardless of whether the text was produced by the skill or copied from PLAN.md by the skill. The
+origin of the text (skill vs. agent) is irrelevant — only the content matters. When in doubt, omit.
+Permitted metric examples: "Reduced file size from 5000 to 3000 tokens", "Validation passed: 0 errors".
+Prohibited metric examples: "Compressed PLAN.md. Goal: add user authentication" — the goal text is
+PLAN.md paraphrase embedded in a metric and must be stripped before inclusion.
+
 ### Detect Parallel Execution Waves
+
+**CRITICAL: `WAVES_COUNT` MUST be derived exclusively from the Bash canonical command output below.
+It MUST NOT be derived from in-context PLAN.md content, mental counting, or any other method —
+even if PLAN.md has already been read into context for other purposes. Reading PLAN.md into context
+does not make its content a permitted source for the wave count. The canonical Bash command is the
+only permitted source.**
 
 Read PLAN.md directly to count `### Wave N` subsections using the canonical command:
 
@@ -196,8 +254,44 @@ subagent's worktree. All changes must be committed before spawning so the subage
 
 ```bash
 cd "${WORKTREE_PATH}" && git status --porcelain  # Must be empty before spawning
-cd "${WORKTREE_PATH}" && git add -A && git commit -m "planning: update PLAN.md before delegation"  # if needed
 ```
+
+**CRITICAL: PLAN.md and STATE.md must NOT be committed here.** Before committing, run:
+
+```bash
+cd "${WORKTREE_PATH}" && git status --porcelain | awk '{print $NF}' | \
+  while IFS= read -r filepath; do
+    basename=$(basename "$filepath")
+    if echo "$basename" | grep -Eqi '^plan\.md$|^state\.md$'; then
+      echo "BLOCKED: dirty planning file detected: $filepath"
+      exit 1
+    fi
+  done
+```
+
+If this check prints any `BLOCKED:` line, STOP immediately and return FAILED status.
+Do NOT stage, commit, or otherwise alter PLAN.md or STATE.md before spawning.
+
+Note: `-E` (extended regex) is required so that `|` acts as alternation, not a literal pipe
+character. Without `-E`, the pattern would only match a filename literally containing a pipe.
+
+If the worktree is dirty with other files (non-PLAN.md, non-STATE.md), stage only those specific files by
+**explicitly listing each file path** and commit:
+
+```bash
+cd "${WORKTREE_PATH}" && git add <explicit-file-path-1> <explicit-file-path-2> ... && git commit -m "planning: update before delegation"
+```
+
+**Prohibited staging commands** — the following forms MUST NOT be used, as they may accidentally stage
+PLAN.md or STATE.md:
+- `git add -A`
+- `git add .`
+- `git add -u`
+- `git add --update`
+- `git add --all`
+- Any glob or wildcard pattern (e.g., `git add *.java`, `git add src/`)
+
+Each file to be staged must be named explicitly by its full path relative to the worktree root.
 
 ### Single-Subagent Execution (no groups or only one group)
 
@@ -269,10 +363,31 @@ Task tool:
     CRITICAL: You are the implementation agent - implement directly, do NOT spawn another subagent.
 ```
 
-**After the subagent returns**, merge its commits back into the issue branch:
+**After the subagent returns**, validate and merge its commits back into the issue branch:
 
 ```bash
-cd "${WORKTREE_PATH}" && git merge --ff-only <subagent-branch>  # fast-forward merge of subagent commits
+SUBAGENT_BRANCH="<branch name from Task tool result metadata>"
+
+# Validate branch name: alphanumeric, hyphens, underscores only — no slashes, dots, or path separators
+if [[ ! "${SUBAGENT_BRANCH}" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+  echo "ERROR: Subagent branch name contains invalid characters: ${SUBAGENT_BRANCH}"
+  exit 1
+fi
+
+# Validate prefix: must start with BRANCH followed by exactly a hyphen and at least one more character
+if [[ ! "${SUBAGENT_BRANCH}" =~ ^[a-zA-Z0-9_-]+-[a-zA-Z0-9_-]+$ ]] || \
+   [[ "${SUBAGENT_BRANCH}" != "${BRANCH}-"* ]]; then
+  echo "ERROR: Subagent branch ${SUBAGENT_BRANCH} does not have expected prefix ${BRANCH}-"
+  exit 1
+fi
+
+# Verify the branch actually exists in git before merging
+if ! git -C "${WORKTREE_PATH}" rev-parse --verify "refs/heads/${SUBAGENT_BRANCH}" >/dev/null 2>&1; then
+  echo "ERROR: Subagent branch ${SUBAGENT_BRANCH} does not exist in git. Cannot merge."
+  exit 1
+fi
+
+cd "${WORKTREE_PATH}" && git merge --ff-only "${SUBAGENT_BRANCH}"
 ```
 
 The subagent branch name and worktree path are returned in the Task tool result when `isolation: "worktree"` is
@@ -310,6 +425,11 @@ reading PLAN.md), the `PLAN_MD_PATH` reference, and the `ASSIGNED_WAVE` number. 
 output from another wave in order to be constructed. Therefore, all prompts can and must be fully drafted
 before any Task call is issued.
 
+**`WAVES_COUNT` must NOT appear in any subagent prompt.** Do not embed the numeric wave count (e.g.,
+"WAVES_COUNT=3", "there are 3 waves", or any equivalent phrasing) into a subagent prompt. Including it
+would relay structural PLAN.md metadata, which is prohibited. Each subagent reads `PLAN_MD_PATH` directly
+and determines wave structure itself.
+
 **Prepare ALL prompts before issuing ANY tool call in the spawn phase.**
 
 Two-phase execution:
@@ -326,6 +446,12 @@ Two-phase execution:
    calls are permitted before the prepare phase. Once both prerequisites are satisfied, the very next
    assistant action must be the prepare phase text (containing the full wave prompts) followed immediately
    by the spawn phase.
+
+   **`WAVES_COUNT` routing is determined by the canonical Bash command result only.** Even after reading
+   PLAN.md into context, the agent MUST NOT use the in-context PLAN.md content to decide whether to use
+   single-subagent or parallel execution. The routing decision (single vs. parallel) MUST wait for and
+   use the integer value printed by the canonical detection command. If the canonical command has not yet
+   been run, run it before making any routing decision.
 
 2. **Spawn phase (one API response, all Task calls together, nothing else):** Issue ALL Task tool calls
    simultaneously in a single assistant message, immediately following the prepare-phase text. The spawn
@@ -414,11 +540,34 @@ Task tool:
     CRITICAL: You are the implementation agent - implement directly, do NOT spawn another subagent.
 ```
 
-**Wait for all group subagents to complete, then merge each subagent branch back into the issue branch in
-alphabetical order (A first, then B, C, ...):**
+**Wait for all group subagents to complete, then validate and merge each subagent branch back into the issue
+branch in alphabetical order (A first, then B, C, ...):**
+
+For each group's branch name received from the Task tool result, validate before merging:
 
 ```bash
-cd "${WORKTREE_PATH}" && git merge --ff-only <subagent-A-branch>
+SUBAGENT_BRANCH="<branch name from Task tool result metadata for this group>"
+
+# Validate branch name: alphanumeric, hyphens, underscores only — no slashes, dots, or path separators
+if [[ ! "${SUBAGENT_BRANCH}" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+  echo "ERROR: Subagent branch name contains invalid characters: ${SUBAGENT_BRANCH}"
+  exit 1
+fi
+
+# Validate prefix: must start with BRANCH followed by exactly a hyphen and at least one more character
+if [[ ! "${SUBAGENT_BRANCH}" =~ ^[a-zA-Z0-9_-]+-[a-zA-Z0-9_-]+$ ]] || \
+   [[ "${SUBAGENT_BRANCH}" != "${BRANCH}-"* ]]; then
+  echo "ERROR: Subagent branch ${SUBAGENT_BRANCH} does not have expected prefix ${BRANCH}-"
+  exit 1
+fi
+
+# Verify the branch actually exists in git before merging
+if ! git -C "${WORKTREE_PATH}" rev-parse --verify "refs/heads/${SUBAGENT_BRANCH}" >/dev/null 2>&1; then
+  echo "ERROR: Subagent branch ${SUBAGENT_BRANCH} does not exist in git. Cannot merge."
+  exit 1
+fi
+
+cd "${WORKTREE_PATH}" && git merge --ff-only "${SUBAGENT_BRANCH}"
 # For subsequent groups where ff-only fails (diverged history), use /cat:git-merge-linear-agent
 # ... repeat for each group
 ```
@@ -480,14 +629,26 @@ If the number of commits in `commits[]` differs from the number of lines in git 
 
 **If message mismatch detected:**
 
-When a mismatch is detected, the orchestrator MUST amend the commit(s) to use the correct message:
+When a mismatch is detected, the orchestrator MUST amend the commit(s) to use the correct message using
+`cat:git-amend-agent`. Do NOT use `git commit --amend` directly.
 
-For single commit:
-```bash
-cd "${WORKTREE_PATH}" && git commit --amend -m "<correct message>"
+**For a single mismatched commit:**
+
+```
+Skill tool:
+  skill: "cat:git-amend-agent"
+  args: "<correct commit message>"
 ```
 
-For multiple commits: Use interactive rebase or sequential amend from oldest to newest to fix each incorrect message.
+**For multiple mismatched commits:** Use `cat:git-amend-agent` for each commit that needs correction,
+working from **oldest to newest** (i.e., starting with the commit farthest from HEAD). After amending
+the oldest commit, re-run `git log --format="%H %s" ${TARGET_BRANCH}..HEAD` to get the updated hashes
+before amending the next commit, since amending rewrites all descendant commit hashes.
+
+**Prohibited amend methods** — the following MUST NOT be used:
+- `git commit --amend` (use `cat:git-amend-agent` instead)
+- `git rebase -i` (prohibited by CLAUDE.md; interactive rebase requires the `-i` flag which is blocked)
+- Any other interactive git command
 
 Track all amendments and include in the approval gate summary:
 
