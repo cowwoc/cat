@@ -72,6 +72,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - reduce-skillbuilder-context-via-commit-shas
 - skip-concern-gate-above-low-trust
 - fix-issue-discovery-lock-leak
+- block-skill-builder-manual-hardening
 
 
 ## Issues Closed
