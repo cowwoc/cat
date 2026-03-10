@@ -48,8 +48,6 @@ Reference for categorizing mistakes in `/cat:learn`.
   "category": "{see categories above}",
   "description": "{One-line description}",
   "root_cause": "{Root cause from analysis}",
-  "rca_method": "{A|B|C}",
-  "rca_method_name": "{5-whys|taxonomy|causal-barrier}",
   "prevention_type": "{code_fix|hook|validation|config|skill|process|documentation}",
   "prevention_path": "{path/to/file/changed}",
   "pattern_keywords": ["{keyword1}", "{keyword2}"],

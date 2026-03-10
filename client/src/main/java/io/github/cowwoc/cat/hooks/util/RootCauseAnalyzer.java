@@ -11,25 +11,21 @@ import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.skills.JsonHelper;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Computes A/B test RCA method statistics from mistakes-YYYY-MM.json files.
+ * Computes RCA statistics from mistakes-YYYY-MM.json files.
  *
  * <p>
- * Analyzes mistakes data to compute count, recurrences, and recurrence_rate per RCA method.
+ * Analyzes mistakes data to compute count, recurrences, and recurrence_rate.
  * </p>
  */
 public final class RootCauseAnalyzer
@@ -52,24 +48,19 @@ public final class RootCauseAnalyzer
   }
 
   /**
-   * Analyzes mistakes and returns RCA method statistics as JSON.
+   * Analyzes mistakes and returns RCA statistics as JSON.
    *
    * @param startId minimum mistake ID (numeric part) to include in analysis
-   * @return JSON array of RCA method statistics sorted by method name
+   * @return JSON object with count, recurrences, and recurrence_rate; or null when no data exists
    * @throws IOException if reading mistakes files fails
    */
   public String analyze(int startId) throws IOException
   {
     requireThat(startId, "startId").isGreaterThanOrEqualTo(0);
 
-    Map<String, RcaStats> stats = new HashMap<>();
-
     // Read all mistakes-YYYY-MM.json files
     if (!Files.exists(retrospectivesDir))
-    {
-      // Return empty array if retrospectives directory doesn't exist
-      return scope.getJsonMapper().writeValueAsString(new JsonNode[0]);
-    }
+      return null;
 
     List<Path> mistakesFiles;
     try (Stream<Path> files = Files.list(retrospectivesDir))
@@ -79,23 +70,18 @@ public final class RootCauseAnalyzer
         sorted().
         toList();
     }
+
+    if (mistakesFiles.isEmpty())
+      return null;
+
+    RcaStats stats = new RcaStats();
     for (Path path : mistakesFiles)
       processMistakesFile(path, startId, stats);
 
-    // Convert stats to JSON array, sorted by method name
-    ArrayNode result = scope.getJsonMapper().createArrayNode();
-    List<String> sortedMethods = new ArrayList<>(stats.keySet());
-    sortedMethods.sort(null);
-    for (String method : sortedMethods)
-    {
-      RcaStats stat = stats.get(method);
-      ObjectNode entry = scope.getJsonMapper().createObjectNode();
-      entry.put("method", method);
-      entry.put("count", stat.count);
-      entry.put("recurrences", stat.recurrences);
-      entry.put("recurrence_rate", stat.getRecurrenceRate());
-      result.add(entry);
-    }
+    ObjectNode result = scope.getJsonMapper().createObjectNode();
+    result.put("count", stats.count);
+    result.put("recurrences", stats.recurrences);
+    result.put("recurrence_rate", stats.getRecurrenceRate());
 
     return scope.getJsonMapper().writeValueAsString(result);
   }
@@ -105,10 +91,10 @@ public final class RootCauseAnalyzer
    *
    * @param path the file path
    * @param startId minimum mistake ID to include
-   * @param stats accumulator map for statistics
+   * @param stats accumulator for statistics
    * @throws IOException if file reading fails
    */
-  private void processMistakesFile(Path path, int startId, Map<String, RcaStats> stats)
+  private void processMistakesFile(Path path, int startId, RcaStats stats)
     throws IOException
   {
     String content = Files.readString(path);
@@ -126,18 +112,13 @@ public final class RootCauseAnalyzer
       if (numericId < startId)
         continue;
 
-      // Get RCA method (default to "unassigned" if missing)
-      String method = JsonHelper.getStringOrDefault(mistake, "rca_method", "unassigned");
-
       // Check if this is a recurrence
       String recurrenceText = JsonHelper.getStringOrDefault(mistake, "recurrence_of", "");
       boolean isRecurrence = !recurrenceText.isEmpty();
 
-      // Update statistics
-      RcaStats stat = stats.computeIfAbsent(method, _ -> new RcaStats());
-      ++stat.count;
+      ++stats.count;
       if (isRecurrence)
-        ++stat.recurrences;
+        ++stats.recurrences;
     }
   }
 
