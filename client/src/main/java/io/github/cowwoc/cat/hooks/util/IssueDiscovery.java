@@ -780,6 +780,10 @@ public final class IssueDiscovery
     Path worktreePath = getWorktreePath(issueId);
     if (Files.isDirectory(worktreePath))
     {
+      // Update the lock with the actual worktree path so it is not left with an empty worktrees map.
+      // This is best-effort: if the lock was overwritten by a concurrent session, proceed anyway.
+      if (!options.sessionId().isEmpty())
+        issueLock.update(issueId, options.sessionId(), worktreePath.toString());
       return new DiscoveryResult.ExistingWorktree(issueId, major, minor, patch, issueName,
         issueDir.toString(), worktreePath.toString());
     }
@@ -1122,7 +1126,11 @@ public final class IssueDiscovery
 
       // Check for existing worktree
       if (Files.isDirectory(getWorktreePath(issueId)))
+      {
+        if (!options.sessionId().isEmpty())
+          issueLock.release(issueId, options.sessionId());
         continue;
+      }
 
       return new DiscoveryResult.Found(issueId, major, minor, patch, issueName, issueDir.toString(),
         scopeName, stateMdMissing);
