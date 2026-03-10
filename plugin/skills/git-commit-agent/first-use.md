@@ -303,6 +303,57 @@ Files updated:
 - skills/collect-results/SKILL.md
 ```
 
+## Shell Safety for Commit Messages
+
+zsh treats `[...]` sequences in strings as glob patterns (character class expansion). When a commit message contains
+bracket-enclosed words like `[BANG]`, passing the message via `-m "..."` triggers glob expansion. If no files match
+the pattern, zsh fails with:
+
+```
+zsh: no matches found: [BANG]
+```
+
+**MANDATORY: Always use the HEREDOC form below for ALL commit messages, without exception.** This applies to every
+`git commit` invocation, including `--amend`. Never use `-m "..."` directly, regardless of how simple the message
+appears. No alternative flag or pipe form is permitted — the only allowed approach is the HEREDOC form shown below.
+Shell-special characters that cause failures include `[`, `$`, backticks, `` ` ``, `$(...)`, and `!` (history
+expansion) — but this list is not exhaustive. The only safe approach is to always use HEREDOC.
+
+**Wrong — always forbidden, regardless of message content:**
+
+```bash
+git commit -m "refactor: remove false prohibition on $ARGUMENTS in [BANG] commands"
+git commit --amend -m "fix: don't do it!"
+printf '%s' 'message' | git commit -F -
+echo 'message' | git commit -F -
+git commit -F /tmp/msg.txt   # writing to temp file and using -F filepath also forbidden
+git commit -F <(echo 'message')  # process substitution <(...) is also forbidden
+```
+
+**Correct — HEREDOC with single-quoted delimiter, always required:**
+
+```bash
+git commit -m "$(cat <<'EOF'
+refactor: remove false prohibition on $ARGUMENTS in [BANG] commands
+EOF
+)"
+```
+
+For `--amend`, the identical requirement applies — the single-quoted HEREDOC form is mandatory and the unquoted
+delimiter (`<<EOF`) is a **hard gate failure, not a reminder** — the same distinction that applies to base commits
+applies equally here:
+
+```bash
+git commit --amend -m "$(cat <<'EOF'
+refactor: remove false prohibition on $ARGUMENTS in [BANG] commands
+EOF
+)"
+```
+
+The single-quoted delimiter (`<<'EOF'` not `<<EOF`) disables ALL variable substitution and glob expansion inside the
+heredoc body. An unquoted `<<EOF` delimiter still performs variable and command substitution and is also forbidden.
+Using an unquoted delimiter is the same violation as using `-m "..."` — both are prohibited with no exceptions.
+
 ## Pre-Commit Efficiency
 
 When committing changes you just made in the current session, skip redundant checks (`git status`, `git diff`, `git
@@ -347,6 +398,10 @@ is tool misuse.
 - [ ] No file names listed (the diff already shows which files changed)
 - [ ] For squashed commits: synthesized meaningful summary
 - [ ] Message would make sense in git history 6 months from now
+- [ ] Commit message uses HEREDOC form with single-quoted delimiter (`<<'EOF'`) — **always, for every commit (including `--amend`), no exceptions**
+- [ ] The heredoc delimiter is single-quoted (`<<'EOF'`), NOT unquoted (`<<EOF`) — **using an unquoted delimiter is a hard gate failure, not a reminder; this applies equally to base commits and `--amend`**
+- [ ] The `-m "..."` flag form is NOT used — for any `git commit` invocation, including `--amend`
+- [ ] No alternative form is used (`-F -`, `-F filepath`, `-F <(...)`, pipe, `printf`, `echo`, or any form other than the HEREDOC shown above)
 
 ## Worktree Verification
 
