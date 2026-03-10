@@ -2333,6 +2333,161 @@ public class WorkPrepareTest
     }
   }
 
+  // -------------------------------------------------------------------------
+  // parseRawArguments — keyword prefix stripping
+  // -------------------------------------------------------------------------
+
+  /**
+   * Verifies that "resume &lt;issue-id&gt;" strips the "resume" keyword and resolves the issue ID.
+   */
+  @Test
+  public void parseRawArgumentsStripsResumePrefix()
+  {
+    WorkPrepare.ParsedArguments result = WorkPrepare.parseRawArguments("resume 2.1-fix-bug", "", "");
+    requireThat(result.issueId(), "issueId").isEqualTo("2.1-fix-bug");
+    requireThat(result.excludePattern(), "excludePattern").isEmpty();
+  }
+
+  /**
+   * Verifies that "continue &lt;issue-id&gt;" strips the "continue" keyword and resolves the issue ID.
+   */
+  @Test
+  public void parseRawArgumentsStripesContinuePrefix()
+  {
+    WorkPrepare.ParsedArguments result = WorkPrepare.parseRawArguments("continue 2.1-fix-bug", "", "");
+    requireThat(result.issueId(), "issueId").isEqualTo("2.1-fix-bug");
+    requireThat(result.excludePattern(), "excludePattern").isEmpty();
+  }
+
+  /**
+   * Verifies that keyword stripping handles multiple spaces after the keyword.
+   * <p>
+   * "resume  2.1-fix-bug" (two spaces) still matches {@code startsWith("resume ")} because there is at
+   * least one space. After removing the keyword prefix, {@link String#strip()} collapses the extra space,
+   * so the resolved issue ID is "2.1-fix-bug".
+   */
+  @Test
+  public void parseRawArgumentsHandlesMultipleSpacesAfterKeyword()
+  {
+    // "resume  2.1-fix-bug" — two spaces after keyword.
+    // startsWith("resume ") matches (the check only requires one space to be present).
+    // After substring("resume".length()).strip(), the result is "2.1-fix-bug".
+    WorkPrepare.ParsedArguments result = WorkPrepare.parseRawArguments("resume  2.1-fix-bug", "", "");
+    requireThat(result.issueId(), "issueId").isEqualTo("2.1-fix-bug");
+    requireThat(result.excludePattern(), "excludePattern").isEmpty();
+  }
+
+  /**
+   * Verifies that keyword stripping is case-sensitive ("Resume" is not stripped).
+   */
+  @Test
+  public void parseRawArgumentsKeywordStrippingIsCaseSensitive()
+  {
+    // "Resume 2.1-fix-bug" — capital R, not matched
+    WorkPrepare.ParsedArguments result = WorkPrepare.parseRawArguments("Resume 2.1-fix-bug", "", "");
+    requireThat(result.issueId(), "issueId").isEmpty();
+    requireThat(result.excludePattern(), "excludePattern").isEmpty();
+  }
+
+  /**
+   * Verifies that a bare issue ID (no keyword prefix) is resolved correctly.
+   */
+  @Test
+  public void parseRawArgumentsResolvesBarePrefixedIssueId()
+  {
+    WorkPrepare.ParsedArguments result = WorkPrepare.parseRawArguments("2.1-fix-bug", "", "");
+    requireThat(result.issueId(), "issueId").isEqualTo("2.1-fix-bug");
+    requireThat(result.excludePattern(), "excludePattern").isEmpty();
+  }
+
+  /**
+   * Verifies that a bare short-name issue ID (no version prefix) is resolved correctly.
+   */
+  @Test
+  public void parseRawArgumentsResolvesShortNameIssueId()
+  {
+    WorkPrepare.ParsedArguments result = WorkPrepare.parseRawArguments("fix-bug", "", "");
+    requireThat(result.issueId(), "issueId").isEqualTo("fix-bug");
+    requireThat(result.excludePattern(), "excludePattern").isEmpty();
+  }
+
+  /**
+   * Verifies that "resume" alone (no trailing issue ID) is treated as the issue ID itself.
+   * <p>
+   * "resume" does not start with "resume " (no trailing space), so keyword stripping is not applied.
+   * The word "resume" matches the short-name issue ID pattern {@code ^[a-zA-Z][a-zA-Z0-9_-]*$},
+   * so it is resolved as the issue ID.
+   */
+  @Test
+  public void parseRawArgumentsResumeAloneResolvesAsIssueId()
+  {
+    // "resume" without a trailing space: no keyword stripping; matches short-name regex.
+    WorkPrepare.ParsedArguments result = WorkPrepare.parseRawArguments("resume", "", "");
+    requireThat(result.issueId(), "issueId").isEqualTo("resume");
+    requireThat(result.excludePattern(), "excludePattern").isEmpty();
+  }
+
+  /**
+   * Verifies that explicit issueId flag takes precedence over raw arguments.
+   */
+  @Test
+  public void parseRawArgumentsExplicitIssueIdTakesPrecedence()
+  {
+    WorkPrepare.ParsedArguments result =
+      WorkPrepare.parseRawArguments("resume 2.1-other-issue", "2.1-explicit-issue", "");
+    requireThat(result.issueId(), "issueId").isEqualTo("2.1-explicit-issue");
+    requireThat(result.excludePattern(), "excludePattern").isEmpty();
+  }
+
+  /**
+   * Verifies that explicit excludePattern flag takes precedence over raw arguments.
+   */
+  @Test
+  public void parseRawArgumentsExplicitExcludePatternTakesPrecedence()
+  {
+    WorkPrepare.ParsedArguments result =
+      WorkPrepare.parseRawArguments("resume 2.1-fix-bug", "", "*compress*");
+    requireThat(result.issueId(), "issueId").isEmpty();
+    requireThat(result.excludePattern(), "excludePattern").isEqualTo("*compress*");
+  }
+
+  /**
+   * Verifies that blank raw arguments return empty fields without error.
+   */
+  @Test
+  public void parseRawArgumentsBlankInputReturnsEmpty()
+  {
+    WorkPrepare.ParsedArguments result = WorkPrepare.parseRawArguments("", "", "");
+    requireThat(result.issueId(), "issueId").isEmpty();
+    requireThat(result.excludePattern(), "excludePattern").isEmpty();
+  }
+
+  /**
+   * Verifies that "skip &lt;word&gt;" produces an exclude-pattern glob.
+   */
+  @Test
+  public void parseRawArgumentsSkipProducesExcludePattern()
+  {
+    WorkPrepare.ParsedArguments result = WorkPrepare.parseRawArguments("skip compress", "", "");
+    requireThat(result.issueId(), "issueId").isEmpty();
+    requireThat(result.excludePattern(), "excludePattern").isEqualTo("*compress*");
+  }
+
+  /**
+   * Verifies that "resume" followed by a "skip" argument does not strip the resume prefix
+   * (since "skip" does not match the issue-id regex after stripping).
+   */
+  @Test
+  public void parseRawArgumentsResumeWithSkipArgumentStripsKeywordThenProducesEmpty()
+  {
+    // "resume skip compress" — after stripping "resume ", raw = "skip compress"
+    // "skip compress" is not an issue-id match, but starts with "skip " so excludePattern is set
+    WorkPrepare.ParsedArguments result =
+      WorkPrepare.parseRawArguments("resume skip compress", "", "");
+    requireThat(result.issueId(), "issueId").isEmpty();
+    requireThat(result.excludePattern(), "excludePattern").isEqualTo("*compress*");
+  }
+
   /**
    * Cleans up a worktree if it exists (best-effort, errors are swallowed).
    *
