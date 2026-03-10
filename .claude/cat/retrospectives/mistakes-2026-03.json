@@ -1710,5 +1710,25 @@
       "catches_variations" : false
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M531",
+    "timestamp" : "2026-03-10T15:43:51Z",
+    "category" : "misleading_documentation",
+    "description" : "",
+    "root_cause" : "The hook's recovery guidance message primes agents to jump directly to the approval gate. The message says '1. Complete Step 8 (Approval Gate) in work-with-issue - present AskUserQuestion to the user' as the first recovery action, omitting Steps 7 (squash commits by topic) and 8 (rebase onto target branch) that are mandatory prerequisites. When the work-merge-agent Skill failed to load, the agent followed this incomplete guidance and skipped squash and rebase.",
+    "rca_method" : "A",
+    "rca_method_name" : "5-whys",
+    "prevention_type" : "code_fix",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }
