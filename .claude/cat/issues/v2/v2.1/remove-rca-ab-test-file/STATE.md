@@ -1,6 +1,7 @@
 # State
 
-- **Status:** open
-- **Progress:** 0%
+- **Status:** closed
+- **Resolution:** implemented
+- **Progress:** 100%
 - **Dependencies:** [retire-rca-ab-test]
 - **Blocks:** []
