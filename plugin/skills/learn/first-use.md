@@ -225,7 +225,7 @@ Required fields (exhaustive — no others are treated as required):
 - `investigate`: object with ALL required keys from phase-investigate.md output format. Not "at least one" — ALL keys
   must be present. Required keys for investigate (MANDATORY to validate EACH of these): `event_sequence`, `documents_read`, `priming_analysis`, `session_id`.
   If any key is missing, stop with an error naming each missing key.
-- `analyze`: object with ALL required keys. Required keys (MANDATORY to validate EACH using exhaustive field checks): `analysis_text`, `rca_method_name`, `cause_signature`, `prevention_type`, `prevention_level`, `fragility`, `verification_type`. If any key is missing, stop with an error naming each missing key.
+- `analyze`: object with ALL required keys. Required keys (MANDATORY to validate EACH using exhaustive field checks): `analysis_text`, `cause_signature`, `prevention_type`, `prevention_level`, `fragility`, `verification_type`. If any key is missing, stop with an error naming each missing key.
 - `prevent`: object with ALL required keys. Required keys (MANDATORY to validate EACH using exhaustive field checks): `prevention_implemented`, `prevention_commit_hash`, `prevention_path` (when hash is non-null), `issue_creation_info` (when prevention_implemented is false). If any key is missing, stop with an error naming each missing key.
 - `prevent.prevention_implemented`: boolean (true or false — must be explicitly present)
 - `prevent.prevention_commit_hash`: string or null (must be explicitly present)
@@ -574,7 +574,6 @@ Learning recorded: {learning_id}
 
 Category: {category}
 Root Cause: {root_cause}
-RCA Method: {rca_method_name}
 Cause Signature: {cause_signature}
 
 Prevention:
@@ -612,7 +611,7 @@ tools.
 When Phase 2 selects a `cause_signature`, it compares it against existing entries in `mistakes-YYYY-MM.json`. A
 matching entry triggers recurrence detection — setting `recurrence_of` to the earliest matching entry ID.
 
-**Full vocabulary, canonical examples, and selection process:** See `rca-methods.md § Cause Signature Vocabulary`.
+**Full vocabulary, canonical examples, and selection process:** See `rca-method.md § Cause Signature Vocabulary`.
 
 ## Examples
 

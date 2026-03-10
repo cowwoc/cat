@@ -66,11 +66,10 @@ directly.
 
 ## Step 3: Perform Root Cause Analysis
 
-**Reference:** See [rca-methods.md](rca-methods.md) for detailed method specifications and the method
-assignment rule.
+**Reference:** See [rca-method.md](rca-method.md) for the full method template.
 
-**Method: Causal Barrier Analysis (Method C)**
-All new mistakes use Method C. See [rca-methods.md](rca-methods.md) for the full template.
+**Method: Causal Barrier Analysis**
+See [rca-method.md](rca-method.md) for the full template.
 
 **Common root cause patterns to check:**
 - Assumption without verification?
@@ -81,21 +80,12 @@ All new mistakes use Method C. See [rca-methods.md](rca-methods.md) for the full
 - **Documentation priming?** - Did docs teach wrong approach?
 - **Architectural flaw?** - Is LLM being asked to fight its training? (See Step 4d)
 
-**Record the method used** in the final JSON entry:
-
-```json
-{
-  "rca_method": "C",
-  "rca_method_name": "causal-barrier"
-}
-```
-
 ## Step 3a: Select Cause Signature
 
 After completing RCA and before proceeding to the depth-verification gate, select a `cause_signature` from the
-controlled vocabulary in [rca-methods.md § Cause Signature Vocabulary](rca-methods.md).
+controlled vocabulary in [rca-method.md § Cause Signature Vocabulary](rca-method.md).
 
-Select from the controlled vocabulary in `rca-methods.md § Cause Signature Vocabulary`, then
+Select from the controlled vocabulary in `rca-method.md § Cause Signature Vocabulary`, then
 combine into:
 `<cause_type>:<barrier_type>:<context>`
 
@@ -133,7 +123,7 @@ signature_comparison:
 
 1. Compare `candidate_signature` against entries in `mistakes-YYYY-MM.json`
 2. If a match exists: set `recurrence_of` to the earliest matching entry ID
-3. Apply the Prevention Strength Gate (see rca-methods.md § Prevention Strength Gate)
+3. Apply the Prevention Strength Gate (see rca-method.md § Prevention Strength Gate)
 4. Continue to Step 3b
 
 This is an automated analysis step — the agent links recurrences directly without prompting
@@ -374,8 +364,6 @@ Your final message MUST be ONLY this JSON (no other text):
     "session_duration_hours": "{from Phase 1 investigation output}"
   },
   "root_cause": "The actual root cause from RCA",
-  "rca_method": "C",
-  "rca_method_name": "causal-barrier",
   "cause_signature": "<cause_type>:<barrier_type>:<context>",
   "rca_depth_verified": true,
   "rca_depth_check": {

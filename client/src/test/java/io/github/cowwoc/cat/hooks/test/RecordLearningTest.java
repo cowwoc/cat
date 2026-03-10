@@ -1067,8 +1067,6 @@ public final class RecordLearningTest
       m.put("category", "protocol_violation");
       m.put("description", "Test mistake " + id);
       m.put("root_cause", "Test root cause");
-      m.put("rca_method", "A");
-      m.put("rca_method_name", "5-whys");
       if (causeSignature != null)
         m.put("cause_signature", causeSignature);
       else
@@ -1106,8 +1104,6 @@ public final class RecordLearningTest
     input.put("category", "protocol_violation");
     input.put("description", description);
     input.put("root_cause", "Test root cause");
-    input.put("rca_method", "C");
-    input.put("rca_method_name", "causal-barrier");
     if (causeSignature != null)
       input.put("cause_signature", causeSignature);
     else

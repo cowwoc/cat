@@ -3,29 +3,11 @@ Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
-# Root Cause Analysis Methods
+# Root Cause Analysis Method
 
-Reference document for RCA methods used in `/cat:learn`.
+Reference document for the RCA method used in `/cat:learn`.
 
-## Current Standard
-
-All new mistakes use **Method C: Causal Barrier Analysis**.
-Methods A and B are retained as historical reference only and are no longer assigned to new mistakes.
-
-## Method A: 5-Whys (Control)
-
-> **RETIRED** — historical reference only. New mistakes use Method C.
-
-Ask "why" iteratively until reaching fundamental cause. See RCA-AB-TEST.md for the full template.
-
-## Method B: Modular Error Taxonomy
-
-> **RETIRED** — historical reference only. New mistakes use Method C.
-
-Based on [AgentErrorTaxonomy](https://arxiv.org/abs/2509.25370). Classifies mistakes into MEMORY, PLANNING,
-ACTION, REFLECTION, or SYSTEM modules. See RCA-AB-TEST.md for the full template.
-
-## Method C: Causal Barrier Analysis
+## Causal Barrier Analysis
 
 Based on [causal reasoning research](https://www.infoq.com/articles/causal-reasoning-observability/).
 
@@ -71,12 +53,11 @@ causal_barrier_analysis:
 
 root_cause: "..."
 category: "..."
-rca_method: "C"
 ```
 
 ## Prevention Strength Gate
 
-This gate runs **after completing any RCA method** (A, B, or C) and **before entering `phase-prevent.md`**.
+This gate runs **after completing the RCA method** and **before entering `phase-prevent.md`**.
 
 ### Trigger Condition
 
@@ -420,11 +401,9 @@ Before recording a new mistake, compare its candidate `cause_signature` against 
 
 ## Recording Format
 
-Include method and signature in JSON entry:
+Include the signature in the JSON entry:
 ```json
 {
-  "rca_method": "C",
-  "rca_method_name": "causal-barrier",
   "cause_signature": "<cause_type>:<barrier_type>:<context>"
 }
 ```

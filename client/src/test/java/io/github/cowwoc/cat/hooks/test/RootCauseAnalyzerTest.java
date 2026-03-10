@@ -63,12 +63,12 @@ public final class RootCauseAnalyzerTest
   }
 
   /**
-   * Verifies that groups mistakes by rca_method and computes statistics.
+   * Verifies that mistakes are counted and statistics are computed correctly.
    *
    * @throws IOException if test setup fails
    */
   @Test
-  public void groupsByRcaMethodAndComputesStatistics() throws IOException
+  public void computesStatistics() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-rca-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -80,11 +80,11 @@ public final class RootCauseAnalyzerTest
         {
           "period": "2026-01",
           "mistakes": [
-            {"id": "M001", "rca_method": "A"},
-            {"id": "M002", "rca_method": "A"},
-            {"id": "M003", "rca_method": "B"},
-            {"id": "M004", "rca_method": "A", "recurrence_of": "M001"},
-            {"id": "M005", "rca_method": "B", "recurrence_of": "M003"}
+            {"id": "M001"},
+            {"id": "M002"},
+            {"id": "M003"},
+            {"id": "M004", "recurrence_of": "M001"},
+            {"id": "M005", "recurrence_of": "M003"}
           ]
         }
         """);
@@ -92,31 +92,10 @@ public final class RootCauseAnalyzerTest
       RootCauseAnalyzer analyzer = new RootCauseAnalyzer(tempDir, scope);
       String result = analyzer.analyze(0);
 
-      JsonNode[] entries = scope.getJsonMapper().readValue(result, JsonNode[].class);
-
-      requireThat(entries.length, "entriesCount").isEqualTo(2);
-
-      // Find entries by method
-      JsonNode methodA = null;
-      JsonNode methodB = null;
-      for (JsonNode entry : entries)
-      {
-        String method = entry.get("method").asString();
-        if ("A".equals(method))
-          methodA = entry;
-        else if ("B".equals(method))
-          methodB = entry;
-      }
-
-      requireThat(methodA, "methodAEntry").isNotNull();
-      requireThat(methodA.get("count").asInt(), "ACount").isEqualTo(3);
-      requireThat(methodA.get("recurrences").asInt(), "ARecurrences").isEqualTo(1);
-      requireThat(methodA.get("recurrence_rate").asInt(), "ARecurrenceRate").isEqualTo(33);
-
-      requireThat(methodB, "methodBEntry").isNotNull();
-      requireThat(methodB.get("count").asInt(), "BCount").isEqualTo(2);
-      requireThat(methodB.get("recurrences").asInt(), "BRecurrences").isEqualTo(1);
-      requireThat(methodB.get("recurrence_rate").asInt(), "BRecurrenceRate").isEqualTo(50);
+      JsonNode entry = scope.getJsonMapper().readTree(result);
+      requireThat(entry.get("count").asInt(), "count").isEqualTo(5);
+      requireThat(entry.get("recurrences").asInt(), "recurrences").isEqualTo(2);
+      requireThat(entry.get("recurrence_rate").asInt(), "recurrence_rate").isEqualTo(40);
     }
     finally
     {
@@ -125,7 +104,7 @@ public final class RootCauseAnalyzerTest
   }
 
   /**
-   * Verifies that filters mistakes by START_ID (numeric part).
+   * Verifies that mistakes are filtered by startId (numeric part of the ID).
    *
    * @throws IOException if test setup fails
    */
@@ -142,11 +121,11 @@ public final class RootCauseAnalyzerTest
         {
           "period": "2026-01",
           "mistakes": [
-            {"id": "M001", "rca_method": "A"},
-            {"id": "M100", "rca_method": "B"},
-            {"id": "M101", "rca_method": "B"},
-            {"id": "M085", "rca_method": "A"},
-            {"id": "M086", "rca_method": "A"}
+            {"id": "M001"},
+            {"id": "M100"},
+            {"id": "M101"},
+            {"id": "M085"},
+            {"id": "M086"}
           ]
         }
         """);
@@ -154,29 +133,11 @@ public final class RootCauseAnalyzerTest
       RootCauseAnalyzer analyzer = new RootCauseAnalyzer(tempDir, scope);
       String result = analyzer.analyze(86);
 
-      JsonNode[] entries = scope.getJsonMapper().readValue(result, JsonNode[].class);
-
-      requireThat(entries.length, "entriesCount").isEqualTo(2);
-
-      // Find entries
-      JsonNode methodA = null;
-      JsonNode methodB = null;
-      for (JsonNode entry : entries)
-      {
-        String method = entry.get("method").asString();
-        if ("A".equals(method))
-          methodA = entry;
-        else if ("B".equals(method))
-          methodB = entry;
-      }
+      JsonNode entry = scope.getJsonMapper().readTree(result);
 
       // M001 and M085 are < 86, so excluded
-      // M086 is >= 86 (method A), M100 and M101 are >= 86 (method B)
-      requireThat(methodA, "methodAEntry").isNotNull();
-      requireThat(methodA.get("count").asInt(), "ACountAfterFiltering").isEqualTo(1);
-
-      requireThat(methodB, "methodBEntry").isNotNull();
-      requireThat(methodB.get("count").asInt(), "BCountAfterFiltering").isEqualTo(2);
+      // M086 >= 86 (1 item), M100 and M101 >= 86 (2 items)
+      requireThat(entry.get("count").asInt(), "countAfterFiltering").isEqualTo(3);
     }
     finally
     {
@@ -185,7 +146,7 @@ public final class RootCauseAnalyzerTest
   }
 
   /**
-   * Verifies that missing rca_method field shows as "unassigned".
+   * Verifies that mistakes without rca_method field are processed correctly.
    *
    * @throws IOException if test setup fails
    */
@@ -202,10 +163,10 @@ public final class RootCauseAnalyzerTest
         {
           "period": "2026-01",
           "mistakes": [
-            {"id": "M001", "rca_method": "A"},
+            {"id": "M001"},
             {"id": "M002"},
             {"id": "M003"},
-            {"id": "M004", "rca_method": "A", "recurrence_of": "M001"}
+            {"id": "M004", "recurrence_of": "M001"}
           ]
         }
         """);
@@ -213,23 +174,10 @@ public final class RootCauseAnalyzerTest
       RootCauseAnalyzer analyzer = new RootCauseAnalyzer(tempDir, scope);
       String result = analyzer.analyze(0);
 
-      JsonNode[] entries = scope.getJsonMapper().readValue(result, JsonNode[].class);
-
-      requireThat(entries.length, "entriesCount").isEqualTo(2);
-
-      // Find unassigned entry
-      JsonNode unassigned = null;
-      for (JsonNode entry : entries)
-      {
-        String method = entry.get("method").asString();
-        if ("unassigned".equals(method))
-          unassigned = entry;
-      }
-
-      requireThat(unassigned, "unassignedEntry").isNotNull();
-      requireThat(unassigned.get("count").asInt(), "unassignedCount").isEqualTo(2);
-      requireThat(unassigned.get("recurrences").asInt(), "unassignedRecurrences").isEqualTo(0);
-      requireThat(unassigned.get("recurrence_rate").asInt(), "unassignedRecurrenceRate").isEqualTo(0);
+      JsonNode entry = scope.getJsonMapper().readTree(result);
+      requireThat(entry.get("count").asInt(), "count").isEqualTo(4);
+      requireThat(entry.get("recurrences").asInt(), "recurrences").isEqualTo(1);
+      requireThat(entry.get("recurrence_rate").asInt(), "recurrence_rate").isEqualTo(25);
     }
     finally
     {
@@ -238,12 +186,12 @@ public final class RootCauseAnalyzerTest
   }
 
   /**
-   * Verifies that empty input returns empty array.
+   * Verifies that returns null when there are no mistakes files.
    *
    * @throws IOException if test setup fails
    */
   @Test
-  public void emptyInputReturnsEmptyArray() throws IOException
+  public void emptyInputReturnsNull() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-rca-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -254,9 +202,7 @@ public final class RootCauseAnalyzerTest
       RootCauseAnalyzer analyzer = new RootCauseAnalyzer(tempDir, scope);
       String result = analyzer.analyze(0);
 
-      JsonNode[] entries = scope.getJsonMapper().readValue(result, JsonNode[].class);
-
-      requireThat(entries.length, "emptyResult").isEqualTo(0);
+      requireThat(result, "result").isNull();
     }
     finally
     {
@@ -282,8 +228,8 @@ public final class RootCauseAnalyzerTest
         {
           "period": "2026-01",
           "mistakes": [
-            {"id": "M001", "rca_method": "A"},
-            {"id": "M002", "rca_method": "A"}
+            {"id": "M001"},
+            {"id": "M002"}
           ]
         }
         """);
@@ -292,8 +238,8 @@ public final class RootCauseAnalyzerTest
         {
           "period": "2026-02",
           "mistakes": [
-            {"id": "M101", "rca_method": "B"},
-            {"id": "M102", "rca_method": "A", "recurrence_of": "M001"}
+            {"id": "M101"},
+            {"id": "M102", "recurrence_of": "M001"}
           ]
         }
         """);
@@ -301,28 +247,11 @@ public final class RootCauseAnalyzerTest
       RootCauseAnalyzer analyzer = new RootCauseAnalyzer(tempDir, scope);
       String result = analyzer.analyze(0);
 
-      JsonNode[] entries = scope.getJsonMapper().readValue(result, JsonNode[].class);
+      JsonNode entry = scope.getJsonMapper().readTree(result);
 
-      requireThat(entries.length, "entriesCountFrom2Files").isEqualTo(2);
-
-      // Find entries
-      JsonNode methodA = null;
-      JsonNode methodB = null;
-      for (JsonNode entry : entries)
-      {
-        String method = entry.get("method").asString();
-        if ("A".equals(method))
-          methodA = entry;
-        else if ("B".equals(method))
-          methodB = entry;
-      }
-
-      requireThat(methodA, "methodAFromMergedFiles").isNotNull();
-      requireThat(methodA.get("count").asInt(), "ACount").isEqualTo(3);
-      requireThat(methodA.get("recurrences").asInt(), "ARecurrences").isEqualTo(1);
-
-      requireThat(methodB, "methodBFromMergedFiles").isNotNull();
-      requireThat(methodB.get("count").asInt(), "BCount").isEqualTo(1);
+      // M001, M002, M101, M102 = 4 total, with M102 being a recurrence
+      requireThat(entry.get("count").asInt(), "count").isEqualTo(4);
+      requireThat(entry.get("recurrences").asInt(), "recurrences").isEqualTo(1);
     }
     finally
     {
@@ -331,13 +260,12 @@ public final class RootCauseAnalyzerTest
   }
 
   /**
-   * Verifies that new mistake records using Method C (rca_method="C", rca_method_name="causal-barrier") are
-   * processed correctly and that the analyzer handles all three historical methods (A, B, C).
+   * Verifies that mistake records are processed correctly and recurrence rate is computed.
    *
    * @throws IOException if test setup fails
    */
   @Test
-  public void newMistakesUseMethodC() throws IOException
+  public void computesRecurrenceRate() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-rca-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -345,15 +273,13 @@ public final class RootCauseAnalyzerTest
       Path retrospectivesDir = tempDir.resolve(".claude/cat/retrospectives");
       Files.createDirectories(retrospectivesDir);
 
-      // New mistakes recorded after A/B test retirement use Method C
       Files.writeString(retrospectivesDir.resolve("mistakes-2026-03.json"), """
         {
           "period": "2026-03",
           "mistakes": [
-            {"id": "M600", "rca_method": "C", "rca_method_name": "causal-barrier"},
-            {"id": "M601", "rca_method": "C", "rca_method_name": "causal-barrier"},
-            {"id": "M602", "rca_method": "C", "rca_method_name": "causal-barrier",
-             "recurrence_of": "M600"}
+            {"id": "M600"},
+            {"id": "M601"},
+            {"id": "M602", "recurrence_of": "M600"}
           ]
         }
         """);
@@ -361,15 +287,10 @@ public final class RootCauseAnalyzerTest
       RootCauseAnalyzer analyzer = new RootCauseAnalyzer(tempDir, scope);
       String result = analyzer.analyze(0);
 
-      JsonNode[] entries = scope.getJsonMapper().readValue(result, JsonNode[].class);
-
-      requireThat(entries.length, "entriesCount").isEqualTo(1);
-
-      JsonNode methodC = entries[0];
-      requireThat(methodC.get("method").asString(), "methodC").isEqualTo("C");
-      requireThat(methodC.get("count").asInt(), "CCount").isEqualTo(3);
-      requireThat(methodC.get("recurrences").asInt(), "CRecurrences").isEqualTo(1);
-      requireThat(methodC.get("recurrence_rate").asInt(), "CRecurrenceRate").isEqualTo(33);
+      JsonNode entry = scope.getJsonMapper().readTree(result);
+      requireThat(entry.get("count").asInt(), "count").isEqualTo(3);
+      requireThat(entry.get("recurrences").asInt(), "recurrences").isEqualTo(1);
+      requireThat(entry.get("recurrence_rate").asInt(), "recurrence_rate").isEqualTo(33);
     }
     finally
     {
@@ -378,81 +299,12 @@ public final class RootCauseAnalyzerTest
   }
 
   /**
-   * Verifies that the analyzer handles all three historical RCA methods (A, B, C) for backward compatibility
-   * with pre-retirement records.
+   * Verifies that all mistakes are counted regardless of their original rca_method field value.
    *
    * @throws IOException if test setup fails
    */
   @Test
-  public void handlesAllThreeMethodsForBackwardCompatibility() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-rca-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      Path retrospectivesDir = tempDir.resolve(".claude/cat/retrospectives");
-      Files.createDirectories(retrospectivesDir);
-
-      // Historical records may use methods A, B, or C
-      Files.writeString(retrospectivesDir.resolve("mistakes-2026-01.json"), """
-        {
-          "period": "2026-01",
-          "mistakes": [
-            {"id": "M100", "rca_method": "A"},
-            {"id": "M101", "rca_method": "B"},
-            {"id": "M102", "rca_method": "C", "rca_method_name": "causal-barrier"},
-            {"id": "M103", "rca_method": "A", "recurrence_of": "M100"},
-            {"id": "M104", "rca_method": "C", "rca_method_name": "causal-barrier",
-             "recurrence_of": "M102"}
-          ]
-        }
-        """);
-
-      RootCauseAnalyzer analyzer = new RootCauseAnalyzer(tempDir, scope);
-      String result = analyzer.analyze(0);
-
-      JsonNode[] entries = scope.getJsonMapper().readValue(result, JsonNode[].class);
-
-      requireThat(entries.length, "entriesCount").isEqualTo(3);
-
-      JsonNode methodA = null;
-      JsonNode methodB = null;
-      JsonNode methodC = null;
-      for (JsonNode entry : entries)
-      {
-        String method = entry.get("method").asString();
-        if ("A".equals(method))
-          methodA = entry;
-        else if ("B".equals(method))
-          methodB = entry;
-        else if ("C".equals(method))
-          methodC = entry;
-      }
-
-      requireThat(methodA, "methodAEntry").isNotNull();
-      requireThat(methodA.get("count").asInt(), "ACount").isEqualTo(2);
-      requireThat(methodA.get("recurrences").asInt(), "ARecurrences").isEqualTo(1);
-
-      requireThat(methodB, "methodBEntry").isNotNull();
-      requireThat(methodB.get("count").asInt(), "BCount").isEqualTo(1);
-      requireThat(methodB.get("recurrences").asInt(), "BRecurrences").isEqualTo(0);
-
-      requireThat(methodC, "methodCEntry").isNotNull();
-      requireThat(methodC.get("count").asInt(), "CCount").isEqualTo(2);
-      requireThat(methodC.get("recurrences").asInt(), "CRecurrences").isEqualTo(1);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that results are sorted by method name alphabetically.
-   *
-   * @throws IOException if test setup fails
-   */
-  @Test
-  public void sortsByMethodNameAlphabetically() throws IOException
+  public void countsAllMistakesRegardlessOfRcaMethod() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-rca-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -464,9 +316,11 @@ public final class RootCauseAnalyzerTest
         {
           "period": "2026-01",
           "mistakes": [
-            {"id": "M001", "rca_method": "C"},
-            {"id": "M002", "rca_method": "A"},
-            {"id": "M003", "rca_method": "B"}
+            {"id": "M100"},
+            {"id": "M101"},
+            {"id": "M102"},
+            {"id": "M103", "recurrence_of": "M100"},
+            {"id": "M104", "recurrence_of": "M102"}
           ]
         }
         """);
@@ -474,12 +328,9 @@ public final class RootCauseAnalyzerTest
       RootCauseAnalyzer analyzer = new RootCauseAnalyzer(tempDir, scope);
       String result = analyzer.analyze(0);
 
-      JsonNode[] entries = scope.getJsonMapper().readValue(result, JsonNode[].class);
-
-      requireThat(entries.length, "entriesCount").isEqualTo(3);
-      requireThat(entries[0].get("method").asString(), "firstMethod").isEqualTo("A");
-      requireThat(entries[1].get("method").asString(), "secondMethod").isEqualTo("B");
-      requireThat(entries[2].get("method").asString(), "thirdMethod").isEqualTo("C");
+      JsonNode entry = scope.getJsonMapper().readTree(result);
+      requireThat(entry.get("count").asInt(), "count").isEqualTo(5);
+      requireThat(entry.get("recurrences").asInt(), "recurrences").isEqualTo(2);
     }
     finally
     {
@@ -488,7 +339,7 @@ public final class RootCauseAnalyzerTest
   }
 
   /**
-   * Verifies that returns empty JSON array when retrospectives directory doesn't exist.
+   * Verifies that returns null when retrospectives directory doesn't exist.
    *
    * @throws IOException if test setup fails
    */
@@ -502,9 +353,7 @@ public final class RootCauseAnalyzerTest
       RootCauseAnalyzer analyzer = new RootCauseAnalyzer(tempDir, scope);
       String result = analyzer.analyze(0);
 
-      JsonNode[] entries = scope.getJsonMapper().readValue(result, JsonNode[].class);
-
-      requireThat(entries.length, "emptyArrayWhenDirMissing").isEqualTo(0);
+      requireThat(result, "result").isNull();
     }
     finally
     {
