@@ -63,6 +63,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-commit-message-shell-expansion
 - add-parallel-chunked-read-rule
 - document-issue-state-transitions
+- add-rca-prevention-strength-gate
 
 
 ## Issues Closed
