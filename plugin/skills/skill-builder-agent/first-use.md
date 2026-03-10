@@ -188,22 +188,30 @@ to the benchmark loop. Repeat until the user is satisfied or pass rate shows no 
 After the benchmark phase converges, harden the instructions using alternating red-team and blue-team
 subagents. Run until no major loopholes remain or 10 iterations complete.
 
-**Why two separate subagents per round:**
-A single agent playing both roles anchors on its own attack vectors — it knows exactly which
-loopholes it invented, so it subconsciously over-fits the defense to those attacks and under-defends
-against variations. Separate subagents with fresh context eliminate this bias.
+**Why two separate persistent subagents:**
+A single agent playing both roles anchors on its own attack vectors — it knows exactly which loopholes it
+invented, so it subconsciously over-fits the defense to those attacks and under-defends against variations.
+Separate subagents eliminate this bias. Reusing the same agent across rounds (via `resume`) is more efficient
+than spawning fresh agents each round; to counter anchoring risk from reuse, agents are explicitly instructed
+to seek new attack vectors each round rather than revisiting prior findings.
 
-**Termination criteria:** No major loopholes = red-team finds no CRITICAL or HIGH severity issues.
-LOW/MEDIUM concerns may remain if they require disproportionate instruction complexity to close.
+**Termination criteria:** No major loopholes = red-team's findings file contains no CRITICAL or HIGH severity
+issues. Check by reading the findings file from the red-team's returned commit hash. LOW/MEDIUM concerns may
+remain if they require disproportionate instruction complexity to close.
 
-**Red-team subagent** (spawn fresh, no prior round context):
+**Termination verification:** Read the `major_loopholes_found` field from findings.json using `git show {RED_TEAM_COMMIT_HASH}:findings.json`. If the field is absent, abort with an error. If the round counter reaches 10 without convergence, stop and report "Loop cap reached at 10 rounds — {N} CRITICAL/HIGH loopholes remain unresolved."
+
+**Round 1 — spawn persistent agents:**
+
+Spawn the red-team agent using the Task tool and store its `task_id` as `RED_TEAM_TASK_ID`:
 
 ```
 Task tool:
-  description: "Red-team: find loopholes in instructions (round N)"
+  description: "Red-team: find loopholes in instructions (round 1)"
   subagent_type: "general-purpose"
   prompt: |
     You are a red-team agent. Your job: find concrete ways to defeat or circumvent these instructions.
+    You will be resumed in later rounds — seek NEW attack vectors each round, do not revisit prior findings.
 
     ## Instructions to Attack
     {CURRENT_INSTRUCTIONS}
@@ -220,8 +228,9 @@ Task tool:
     Do NOT suggest fixes. Do NOT be vague. If you cannot find a concrete attack for a concern,
     do not include it.
 
-    ## Return Format
-    Return a JSON object:
+    ## Output
+    Write your findings to the file: findings.json
+    Use this JSON format:
     {
       "loopholes": [
         {
@@ -234,27 +243,33 @@ Task tool:
       "major_loopholes_found": true
     }
     Set major_loopholes_found to true if any CRITICAL or HIGH severity loopholes exist.
+
+    After writing findings.json, run: git add findings.json && git commit -m "red-team: round 1 findings"
+    Return only the commit hash on the last line of your response.
 ```
 
-If red-team returns `major_loopholes_found: false`: STOP loop, instructions are sufficiently hardened.
+After red-team completes, read `RED_TEAM_COMMIT_HASH` from the last line of its response.
+Read `findings.json` at that commit to determine whether `major_loopholes_found` is true.
 
-**Blue-team subagent** (spawn fresh, no prior round context — sequential after red-team):
+If `major_loopholes_found: false`: STOP loop — instructions are sufficiently hardened.
 
-The blue-team MUST run after red-team completes because it requires red-team findings as input.
-Inject the red-team's JSON output into `{RED_TEAM_FINDINGS_JSON}` before spawning.
+Spawn the blue-team agent using the Task tool and store its `task_id` as `BLUE_TEAM_TASK_ID`. The blue-team
+MUST start only after red-team completes (it requires the findings file from red-team's commit).
 
 ```
 Task tool:
-  description: "Blue-team: close loopholes in instructions (round N)"
+  description: "Blue-team: close loopholes in instructions (round 1)"
   subagent_type: "general-purpose"
   prompt: |
     You are a blue-team agent. Your job: close specific loopholes in these instructions.
+    You will be resumed in later rounds — apply fixes for the current round's findings only.
 
     ## Current Instructions
     {CURRENT_INSTRUCTIONS}
 
     ## Loopholes to Close
-    {RED_TEAM_FINDINGS_JSON}
+    Read findings.json from the red-team's commit using:
+      git show {RED_TEAM_COMMIT_HASH}:findings.json
 
     ## Your Task
     For each loophole, revise the instructions to close it:
@@ -268,34 +283,67 @@ Task tool:
     - Preserve all existing correct guidance
     - Do NOT add so many caveats that the instructions become unreadable
 
-    ## Return Format
-    Return the complete revised instructions as a markdown code block, followed by:
-    {
-      "changes": [
-        {"loophole": "bash-file-write-bypass", "fix": "Added Bash to the list of prohibited tools"}
-      ]
-    }
+    ## Output
+    Write the complete revised instructions to the skill file at {SKILL_FILE_PATH}.
+    Then run: git add {SKILL_FILE_PATH} && git commit -m "blue-team: round 1 patches"
+    Return only the commit hash on the last line of your response.
 ```
 
-Update `CURRENT_INSTRUCTIONS` with blue-team output. Increment round counter.
-If round < 10 and `major_loopholes_found` was true: continue to next iteration.
+**Error handling:**
+- If red-team does not return a commit hash on its last line: log an error and abort the loop.
+- If `git show {RED_TEAM_COMMIT_HASH}:findings.json` fails or returns empty: log "ERROR: findings.json not readable from commit {RED_TEAM_COMMIT_HASH}" and abort.
+- If findings.json is malformed (not valid JSON or missing `major_loopholes_found` field): log the error and abort. Do not default to true or false.
+- Apply the same commit-hash validation to blue-team: abort if no valid commit hash is returned.
+
+After blue-team completes, read `BLUE_TEAM_COMMIT_HASH` from the last line of its response.
+Read the skill file at `BLUE_TEAM_COMMIT_HASH` to update `CURRENT_INSTRUCTIONS`.
+Increment round counter. If round < 10: continue to next iteration.
+
+**Round 2+ — resume persistent agents:**
+
+In subsequent rounds, `resume` the existing agents by passing `task_id`:
+
+```
+Task tool (resume):
+  task_id: {RED_TEAM_TASK_ID}
+  prompt: |
+    Round {N}. Resume your red-team analysis.
+
+    ## What Changed Since Last Round
+    {git diff RED_TEAM_COMMIT_HASH..BLUE_TEAM_COMMIT_HASH -- SKILL_FILE_PATH}
+
+    Focus ONLY on the diff above — analyze whether the blue-team's patches introduced new gaps or
+    failed to fully close prior loopholes. Seek attack vectors not yet explored in previous rounds.
+    Write new findings to findings.json and commit as before, returning only the commit hash.
+```
+
+```
+Task tool (resume):
+  task_id: {BLUE_TEAM_TASK_ID}
+  prompt: |
+    Round {N}. Resume your blue-team patching.
+
+    ## What Changed Since Last Round
+    {git diff BLUE_TEAM_COMMIT_HASH..RED_TEAM_COMMIT_HASH -- findings.json}
+
+    Apply fixes for the new loopholes identified in this round's findings.
+    Write the revised skill file and commit as before, returning only the commit hash.
+```
 
 ### Step 5: In-Place Hardening Mode (Optional)
 
 In-place hardening mode runs the adversarial TDD loop against a skill file in a worktree in a single session,
-committing the final hardened version exactly once without creating per-round issues.
+producing one commit per round as the loop progresses.
 
 **Primary workflow — single skill file:**
 
 In-place hardening mode activates when the caller passes a single skill file path inside the current worktree.
 
-1. Read the file content as `CURRENT_INSTRUCTIONS`.
-2. Run the full RED→BLUE loop (up to 10 rounds) as defined in Step 4. Do NOT commit between rounds — all
-   iterations run in-memory against `CURRENT_INSTRUCTIONS` until convergence (`major_loopholes_found: false`)
-   or the round cap is reached.
-3. Write the final hardened content back to the file using the Edit tool.
-4. `git commit` the file exactly once, after convergence, with message:
-   `refactor: harden <relative-skill-path> via adversarial TDD (N rounds, M loopholes closed)`.
+1. Read the file content as `CURRENT_INSTRUCTIONS`. Store the file path as `SKILL_FILE_PATH`.
+2. Run the full RED→BLUE loop (up to 10 rounds) as defined in Step 4. Each round produces two commits:
+   one from the red-team (findings.json) and one from the blue-team (patched skill file). The loop
+   continues until convergence (`major_loopholes_found: false`) or the round cap is reached.
+3. No additional write step is needed — the blue-team commits the hardened content directly each round.
 
 **Secondary workflow — directory / batch mode:**
 
@@ -304,9 +352,9 @@ and `first-use.md` files under the directory recursively. Apply the single-skill
 
 By default, process files **sequentially** (safe for all worktrees). Parallel processing is allowed when each
 skill file is independent (no shared skill-to-skill dependencies). In parallel mode, each subagent runs the
-full RED→BLUE loop in-memory for its own file and commits only that file — never touching other skill files.
-Parallel subagents must not commit shared files (e.g., index files or aggregated docs) to avoid merge
-conflicts; those are updated once after all parallel subagents complete.
+full RED→BLUE loop for its own file, committing per-round — never touching other skill files. Parallel
+subagents must not commit shared files (e.g., index files or aggregated docs) to avoid merge conflicts; those
+are updated once after all parallel subagents complete.
 
 Skip files that are not valid skill files (missing Purpose or Procedure sections). If a skill file fails
 validation after blue-team patching, log the failure and continue to the next skill.
@@ -360,5 +408,8 @@ implementation details (trust levels, internal architecture, etc.).
 - [ ] Final skill document includes purpose, procedure, and verification sections
 - [ ] Frontmatter description is trigger-oriented and contains no implementation details
 - [ ] No Functions or Prerequisites sections prime manual construction (per priming prevention checklist)
-- [ ] In-place hardening mode produces a single commit per skill after convergence
+- [ ] Step 4 uses commit-based handoff: red-team commits findings.json, blue-team commits patched skill file
+- [ ] Step 4 reuses one red-team and one blue-team agent across rounds via task_id resume
+- [ ] Step 4 round 2+ prompts include git diff of previous round's changes for delta-focused analysis
+- [ ] In-place hardening mode produces per-round commits (one from red-team, one from blue-team per round)
 - [ ] If batch mode was used: summary table shows all skills reviewed with round counts

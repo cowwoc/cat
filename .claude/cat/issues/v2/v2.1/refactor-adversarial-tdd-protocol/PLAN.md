@@ -22,7 +22,7 @@ None
   Only the internal round-to-round mechanism changes. Test with a sample skill hardening pass after implementation.
 
 ## Files to Modify
-- `plugin/skills/skill-builder-agent/SKILL.md` — Rewrite Step 4 (adversarial TDD loop) and Step 5 (in-place hardening
+- `plugin/skills/skill-builder-agent/first-use.md` — Rewrite Step 4 (adversarial TDD loop) and Step 5 (in-place hardening
   mode) to use commit-based handoff, agent reuse via `resume`, and delta-focused analysis in round 2+
 
 ## Pre-conditions
@@ -31,7 +31,7 @@ None
 ## Sub-Agent Waves
 
 ### Wave 1
-- Rewrite Step 4 adversarial TDD loop in `plugin/skills/skill-builder-agent/SKILL.md`:
+- Rewrite Step 4 adversarial TDD loop in `plugin/skills/skill-builder-agent/first-use.md`:
   - Replace fresh agent spawning with persistent agents: spawn red-team agent once in round 1, `resume` it in
     subsequent rounds; same for blue-team
   - Replace JSON return format with commit-based handoff: red-team commits findings to a file, returns commit hash;
@@ -52,4 +52,18 @@ None
 - [ ] Step 4 includes delta-focus instructions for round 2+ (agents receive diffs, not full document)
 - [ ] Step 5 is consistent with the new Step 4 protocol
 - [ ] All tests pass after refactoring
-- [ ] E2E: Run in-place hardening on a sample skill file and confirm it produces hardened output with per-round commits
+- [ ] E2E: Run in-place hardening on a sample skill file; verify: (a) git log shows alternating red-team/blue-team commits per round, (b) final findings.json has `major_loopholes_found: false` or loop reached 10-round cap, (c) no CRITICAL/HIGH loopholes remain at natural convergence.
+  (Live agent execution is verified manually; validate-adversarial-protocol.sh covers structural correctness automatically.)
+
+### Wave 2 (fix iterations)
+
+- Add a structural validation script (`plugin/scripts/validate-adversarial-protocol.sh`) that statically inspects
+  `plugin/skills/skill-builder-agent/first-use.md` and asserts:
+  - Commit-based handoff is present (red-team and blue-team prompts contain `git commit` and `Return only the commit
+    hash`)
+  - Agent reuse via `resume` is present (round 2+ section contains `resume` and `task_id`)
+  - Delta-focus instructions are present (round 2+ prompts contain `git diff` and `Focus ONLY on the diff`)
+  - Per-round commit confirmation in Step 5 (Step 5 section contains `per-round commits`)
+  - Script exits 0 on success, prints a failure summary and exits 1 on any missing element
+  - Update the E2E post-condition note in PLAN.md to clarify that live agent execution is verified manually during
+    `skill-builder` use; the static validation script covers structural correctness automatically
