@@ -156,3 +156,19 @@ cause-classification.
       confirm gate activates and requires escalation or RCA pipeline review
 - [ ] No regressions to existing RCA workflows (Methods A, B, C structure unchanged)
 - [ ] All lines in modified file are ≤ 120 characters
+
+### Wave 2 (Iteration 1 Fix Items)
+
+- Create an empirical test document `plugin/skills/learn/rca-prevention-gate-test.md` that defines the
+  regression scenario for the Prevention Strength Gate:
+  - **Scenario:** `/cat:learn` is triggered for a compliance failure (`recurrence_of` is non-null, cause
+    type is `unenforced`) where a prior documented rule already exists in CLAUDE.md.
+  - **Expected observable behavior:** Agent classifies recurrence cause, activates the Prevention Strength
+    Gate (Step 2, Case 1 — `unenforced`), blocks documentation-only prevention, and requires escalation to
+    hook-level enforcement (level 2 or stronger) before proceeding to `phase-prevent.md`.
+  - **How to run:** Invoke `/cat:empirical-test-agent` with the scenario defined in this file.
+  - The document must follow the empirical test format used by `cat:empirical-test-agent` (hypothesis,
+    setup, expected agent behavior, pass/fail criteria).
+  - Include a second scenario validating that the gate does NOT activate on a first-time occurrence
+    (`recurrence_of` is null) — confirming no regression to the first-time-occurrence exempt path.
+  - Add the license header (HTML comment format) at the top of the file per `license-header.md`.
