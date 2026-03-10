@@ -56,24 +56,33 @@ TRUST must be one of: `low`, `medium`, `high`. If TRUST is empty or not one of t
 ERROR: Invalid or missing TRUST argument: "${TRUST}". Expected one of: low, medium, high.
 ```
 
-Also cross-check TRUST against cat-config.json:
+Also cross-check TRUST against cat-config.json. **This cross-check is MANDATORY regardless of whether the file
+exists.** If the file is absent, treat the effective trust as `low` (most restrictive) and fail if the argument
+differs. There is no scenario in which a missing file permits the caller-supplied TRUST value to be used unchecked.
+
 ```bash
 CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json"
-CONFIG_TRUST=$(grep -o '"trust"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" | head -1 | \
-    sed 's/.*"trust"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
-# If the trust field is absent from cat-config.json, treat it as "low" (most restrictive).
-# This prevents trust injection via argument tampering when the field has not been explicitly configured.
-if [[ -z "$CONFIG_TRUST" ]]; then
+# File must exist for the cross-check. If absent, the effective trust defaults to "low".
+if [[ ! -f "$CONFIG_FILE" ]]; then
     CONFIG_TRUST="low"
+else
+    CONFIG_TRUST=$(grep -o '"trust"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" | head -1 | \
+        sed 's/.*"trust"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+    # If the trust field is absent from an existing cat-config.json, treat it as "low" (most restrictive).
+    # This prevents trust injection via argument tampering when the field has not been explicitly configured.
+    if [[ -z "$CONFIG_TRUST" ]]; then
+        CONFIG_TRUST="low"
+    fi
 fi
 if [[ "$TRUST" != "$CONFIG_TRUST" ]]; then
-    echo "ERROR: TRUST argument '${TRUST}' differs from cat-config.json '${CONFIG_TRUST}'." >&2
+    echo "ERROR: TRUST argument '${TRUST}' differs from effective trust '${CONFIG_TRUST}'." >&2
     echo "The TRUST argument must match the configured trust level. Update cat-config.json or correct the argument." >&2
     exit 1
 fi
 ```
 
-If TRUST differs from cat-config.json (or its effective default of "low" when absent), STOP immediately. Do NOT proceed with the injected TRUST value.
+If TRUST differs from the effective config trust (file absent → `low`; file present but field absent → `low`; field
+present → its value), STOP immediately. Do NOT proceed with the injected TRUST value under any circumstance.
 
 **Read minSeverity from config:**
 
@@ -164,12 +173,14 @@ current issue began, that is a real concern — apply the patience cost/benefit 
 fix it inline or defer it as a new issue. Never classify a pre-existing concern as a false positive simply because the
 code was not changed in this issue.
 
-**False-positive classification requires user confirmation.** You MUST NOT silently discard any concern by classifying
-it as a false positive on your own judgment. When you believe a concern may be a false positive (i.e., the reviewer
-appears to have read the wrong branch), you MUST present the concern to the user via AskUserQuestion and ask for
-explicit confirmation before discarding it. The question must include: the concern text, the specific evidence that
-suggests the reviewer read the wrong branch, and an option to keep the concern as real. If the user does not confirm
-the false-positive classification, treat the concern as real and process it through the normal pipeline.
+**False-positive classification requires user confirmation, one concern at a time.** You MUST NOT silently discard
+any concern by classifying it as a false positive on your own judgment. When you believe a concern may be a false
+positive (i.e., the reviewer appears to have read the wrong branch), you MUST present **each concern individually**
+via a separate AskUserQuestion and ask for explicit confirmation before discarding it. Grouping multiple concerns into
+a single false-positive confirmation question is prohibited — each concern requires its own question. The question
+must include: the concern text, the specific evidence that suggests the reviewer read the wrong branch, and an option
+to keep the concern as real. If the user does not confirm the false-positive classification for a given concern, treat
+that concern as real and process it through the normal pipeline.
 
 **Parse Review Result:**
 
@@ -214,32 +225,49 @@ fi
 # If PATIENCE_RAW is empty (field absent), PATIENCE_LEVEL remains "medium"
 ```
 
-**Concern Decision Gate (MANDATORY — ALL trust levels):**
+**Concern Decision Gate (trust=low only):**
 
-**MANDATORY at ALL trust levels.** After the patience matrix evaluates FIX/DEFER for each concern, present the
-decisions to the user via AskUserQuestion before running the auto-fix loop. This gate applies regardless of TRUST
-level — no trust level bypasses it. The Step 6 `TRUST == "high"` skip condition applies ONLY to Step 6 (the
-deferred concern wizard) and does NOT affect this gate.
-
-**Per-trust-level procedure:**
+After the patience matrix evaluates FIX/DEFER for each concern, the gate behavior depends on TRUST level:
 
 - **trust=low**: Invoke AskUserQuestion tool with detailed FIX/DEFER summary (all fields: severity, stakeholder,
   location, decision, benefit, cost, threshold) and options:
   - "Proceed with these decisions (Recommended)"
   - "Let me change decisions"
-- **trust=medium**: Invoke AskUserQuestion tool with brief FIX/DEFER summary (severity, stakeholder, description,
-  decision) and options:
-  - "Proceed"
-  - "Request changes"
-- **trust=high**: Invoke AskUserQuestion tool with minimal FIX/DEFER summary (count of FIX vs DEFER) and options:
-  - "Proceed"
-  - "Abort"
+- **trust=medium**: Print a non-interactive FIX/DEFER summary to the conversation, then proceed directly to the
+  auto-fix loop without waiting for any user response. Do NOT use AskUserQuestion — this is informational output
+  only, not a confirmation prompt. The summary MUST be printed before the loop begins; skipping it is a violation.
+
+  **Required summary format (trust=medium):** Print one line per concern, in this exact structure:
+  ```
+  [SEVERITY] [stakeholder] @ [location] → [FIX|DEFER] (benefit=[N], cost=[N], threshold=[N])
+  ```
+  Every concern at or above `MIN_SEVERITY` MUST appear as its own line. A concern omitted from the list is treated
+  as a violation equivalent to skipping the summary entirely. Aggregate placeholders such as "All concerns deferred"
+  or "N concerns to fix" are NOT valid substitutes — each concern requires an individual entry with all six fields
+  (severity, stakeholder, location, decision, benefit, cost, threshold). Missing any field on any line is also a
+  violation.
+
+  **Field value requirements:** Each field must contain the actual value derived from the concern data — not a
+  placeholder, not "N/A", not "unknown", not an empty string. Specifically:
+  - `SEVERITY`: must be one of `LOW`, `MEDIUM`, `HIGH`, `CRITICAL` (from the concern object; default `MEDIUM` if
+    absent from the concern)
+  - `stakeholder`: must be the actual stakeholder name from the concern object
+  - `location`: must be the actual file/line location from the concern object; if the concern object genuinely
+    carries no location, write `(no location)` — this is the only permitted substitute
+  - `FIX|DEFER`: must be the decision produced by the patience matrix for this concern
+  - `benefit`: must be the numeric weight computed from the severity (CRITICAL=10, HIGH=6, MEDIUM=3, LOW=1)
+  - `cost`: must be the numeric scope estimate (0, 1, 4, or 10) computed for this concern
+  - `threshold`: must be `cost × patience_multiplier` computed for this concern
+
+  A line that uses a placeholder value where a real value is required is treated as a missing-field violation.
+- **trust=high**: Proceed directly to the auto-fix loop without printing a summary and without any user confirmation
+  prompt.
 
 A **valid selection** requires the `answer` field to exactly match one of the option strings (case-sensitive).
 Any `answer` that does not exactly match one of the listed options is a **failed attempt**.
 
-**Attempt limit:** Present the gate up to 3 times. If after 3 failed attempts no valid selection is received, STOP
-and return:
+**Attempt limit (trust=low only):** Present the gate up to 3 times. If after 3 failed attempts no valid selection
+is received, STOP and return:
 ```json
 {
   "status": "CONCERNS_FOUND",
@@ -254,8 +282,9 @@ Where `deferred_concerns` is populated with the full contents of `ALL_CONCERNS` 
 deferred since no user decision was obtained). Do NOT return an empty `deferred_concerns` array when `all_concerns`
 is non-empty.
 
-After the user confirms (or modifies and confirms), proceed to the auto-fix loop below with the final FIX/DEFER
-assignments.
+After the user confirms (or modifies and confirms) at trust=low, proceed to the auto-fix loop below with the
+final FIX/DEFER assignments. For trust=medium and trust=high, proceed directly to the auto-fix loop after
+logging the decisions.
 
 **Auto-fix loop for concerns marked as FIX:**
 
@@ -263,19 +292,21 @@ assignments.
 REJECTED, always enter the re-work loop — CRITICAL concerns must be fixed before merge. When review returns
 CONCERNS_FOUND, concerns flow through the pipeline: `MIN_SEVERITY` filter (silently drops concerns strictly below
 threshold) → patience cost/benefit matrix (marks each surviving concern as FIX or DEFER) → Concern Decision Gate
-(ALL trust levels: user confirms/modifies FIX/DEFER assignments via AskUserQuestion). FIX-marked concerns enter
-the auto-fix loop. In all cases, do NOT present options to the user or ask what to do during the auto-fix loop
-itself — spawn fix subagents and continue.
+(trust=low: user confirms/modifies FIX/DEFER assignments via AskUserQuestion; trust=medium/high: decisions applied
+silently). FIX-marked concerns enter the auto-fix loop. In all cases, do NOT present options to the user or ask
+what to do during the auto-fix loop itself — spawn fix subagents and continue.
 
 **CRITICAL: The auto-fix loop applies ONLY to spawning fix subagents. Step 6 (Deferred Concern
 Review) MUST still be executed after the loop completes.**
 
-**`AUTOFIX_ITERATION` is a single shared counter initialized exactly once to 0 before this loop begins and is
-NEVER reset during the entire review phase, including when the cost/benefit evaluation (Evaluate Remaining
-Concerns) adds concerns back into the FIX list.** The cumulative limit is 3 iterations total across all loop
-passes. There is no second counter, no reset on re-entry, and no per-phase counter.
+**`AUTOFIX_ITERATION` is a single shared counter initialized exactly once to 0 before the first loop iteration and
+is NEVER reset or re-initialized at any point during the entire review phase — not after loop exit, not when
+"Evaluate Remaining Concerns" adds concerns back into the FIX list, and not when re-entering any loop construct.
+There is one counter, one initialization, and it persists at its current value through every phase of this skill.**
+The cumulative limit is 3 iterations total across all loop passes. There is no second counter, no reset on re-entry,
+and no per-phase counter.
 
-Initialize loop counter (once, before any looping): `AUTOFIX_ITERATION=0`
+Initialize loop counter (exactly once, before the first iteration, never again): `AUTOFIX_ITERATION=0`
 
 **While FIX-marked concerns exist and AUTOFIX_ITERATION < 3:**
 
@@ -387,13 +418,32 @@ Initialize loop counter (once, before any looping): `AUTOFIX_ITERATION=0`
        }
        ```
    ```
-5. Re-run stakeholder review (encode all commits in compact format `hash:type,hash:type`):
+4a. **Verify implementation subagent made real progress** before re-running review. Extract
+    `concerns_addressed_this_iteration` from the subagent's return value. If
+    `concerns_addressed_this_iteration == 0`, the fix attempt produced no meaningful progress. In this case,
+    do NOT re-run stakeholder review or increment the counter again — immediately reclassify all remaining
+    FIX-marked concerns as `DEFERRED_CONCERNS` (treated as unresolved), set `AUTOFIX_ITERATION = 3` to prevent
+    further iterations, and break out of the loop.
+
+    **`concerns_addressed` is a pre-check hint, not authoritative verification.** The subagent's self-reported
+    value is used only as an early-exit signal to skip the step 5 re-run when progress is clearly zero. The
+    authoritative verification of progress is the stakeholder review re-run in step 5 — concerns that were not
+    actually fixed will re-appear in the review result regardless of what the subagent reported. If the subagent
+    over-reports progress (e.g., returns `concerns_addressed: 1` when nothing was fixed), step 5 will surface the
+    same concerns again and the loop will continue until the iteration limit is reached.
+5. Re-run stakeholder review by invoking the `cat:stakeholder-review-agent` skill via the Skill tool (encode all
+   commits in compact format `hash:type,hash:type`). **PROHIBITION: Do NOT reuse the review result already in
+   context. A new Skill tool invocation is MANDATORY. After the invocation returns, you MUST use the data from
+   the new Skill tool response — not data from any prior invocation or any cached in-context JSON — to populate
+   `REVIEW_STATUS` and `ALL_CONCERNS` for the remainder of this iteration. If the new result is identical in
+   content to the prior result, it is still the new result and must be used as such.**
    ```
    Skill tool:
      skill: "cat:stakeholder-review-agent"
      args: "${ISSUE_ID} ${WORKTREE_PATH} ${VERIFY} ${ALL_COMMITS_COMPACT}"
    ```
-6. Parse new review result
+6. Parse new review result from the Skill tool response above (not from any prior invocation). Assign
+   `REVIEW_STATUS` and `ALL_CONCERNS` from this response before any further processing.
 7. If FIX-marked concerns remain, continue loop (if under iteration limit)
 
 **If FIX-marked concerns persist after 3 iterations:**
@@ -413,6 +463,17 @@ Initialize loop counter (once, before any looping): `AUTOFIX_ITERATION=0`
 User approval is a SEPARATE gate in the merge phase.
 
 ### Evaluate Remaining Concerns (Cost/Benefit)
+
+**SEQUENCING CONSTRAINT: This section MUST NOT be invoked until the auto-fix loop has fully exited.** Running
+"Evaluate Remaining Concerns" while the loop is still iterating — for example, to re-classify DEFERRED concerns
+as FIX and argue that the `AUTOFIX_ITERATION` counter applies only to post-loop calls — is a sequencing violation.
+The constraint that prevents additional loop iterations when `AUTOFIX_ITERATION >= 3` applies equally to concerns
+re-entered via this evaluation. There is one loop, one counter, and one post-loop evaluation point.
+
+**COUNTER CONSTRAINT: `AUTOFIX_ITERATION` is NOT reset when this evaluation adds concerns back into the FIX list
+and the auto-fix loop is re-entered. The counter retains its value from when the loop last exited. If
+`AUTOFIX_ITERATION >= 3`, no further loop iterations are permitted; concerns that would otherwise re-enter the
+loop are immediately reclassified to `DEFERRED_CONCERNS`.**
 
 After the auto-fix loop, apply a cost/benefit analysis to determine whether to fix each remaining concern inline or
 defer it.
@@ -591,13 +652,13 @@ AskUserQuestion tool:
 
 ### Skip conditions
 
-These skip conditions apply ONLY to Step 6 (the deferred concern wizard). They do NOT skip the Concern Decision
-Gate in Step 5, which is MANDATORY at ALL trust levels regardless of these conditions.
-
 Skip this step entirely and proceed to return if ANY of:
 - There are no deferred concerns (all concerns passed the threshold or there were no concerns)
 - All deferred concerns are strictly below `MIN_SEVERITY` (they are silently ignored, not presented to the user)
 - `TRUST == "high"` (high-trust mode auto-creates issues per Step 5 and proceeds without user interaction)
+
+**Note:** trust=medium skips the Concern Decision Gate in Step 5 (FIX/DEFER decisions applied silently) but still
+participates in Step 6 to review deferred concern scheduling interactively. Only trust=high skips Step 6 entirely.
 
 ## Rejection Handling
 
@@ -628,10 +689,11 @@ Output ONLY this JSON (no surrounding text):
 ```
 
 Where:
-- `status` = `REVIEW_PASSED` if all FIX-marked concerns resolved AND no CRITICAL or HIGH concerns remain
-  (including any reclassified to deferred after loop exhaustion); `CONCERNS_FOUND` if any CRITICAL or HIGH
-  concerns remain unresolved after 3 iterations (regardless of whether they are in `fixed_concerns` or
-  `deferred_concerns`)
+- `status` = `REVIEW_PASSED` if all FIX-marked concerns resolved AND no CRITICAL or HIGH concerns appear in
+  ANY output array (`all_concerns`, `fixed_concerns`, or `deferred_concerns`); `CONCERNS_FOUND` if any CRITICAL
+  or HIGH concerns appear in any output array — including concerns deferred by the cost/benefit gate before ever
+  entering the fix loop, and concerns reclassified to deferred after loop exhaustion. Cost/benefit deferral does
+  NOT exempt a CRITICAL or HIGH concern from triggering `CONCERNS_FOUND`.
 - `all_concerns` = the full list of concern objects from the final review pass
 - `fixed_concerns` = concerns that were fixed in the auto-fix loop
 - `deferred_concerns` = concerns deferred by the patience matrix (may have tracking issues created)
