@@ -124,12 +124,12 @@ public final class GetNextIssueOutput implements SkillOutput
     String projectDir = parsed.projectDir();
     String excludePattern = parsed.excludePattern();
 
-    if (sessionId.isEmpty())
+    if (sessionId.isBlank())
       sessionId = scope.getClaudeSessionId();
     if (projectDir.isEmpty())
       projectDir = scope.getClaudeProjectDir().toString();
 
-    if (completedIssue.isEmpty() || targetBranch.isEmpty() || sessionId.isEmpty() || projectDir.isEmpty())
+    if (completedIssue.isEmpty() || targetBranch.isEmpty() || projectDir.isEmpty())
     {
       throw new IOException("GetNextIssueOutput.getOutput() requires --completed-issue, --target-branch, " +
         "--session-id, and --project-dir arguments. Got: " + String.join(" ", args));
@@ -145,9 +145,9 @@ public final class GetNextIssueOutput implements SkillOutput
    */
   public static void main(String[] args)
   {
+    ParsedArgs parsed = parseArgs(args);
     try
     {
-      ParsedArgs parsed = parseArgs(args);
       String completedIssue = parsed.completedIssue();
       String targetBranch = parsed.targetBranch();
       String sessionId = parsed.sessionId();
@@ -174,23 +174,14 @@ public final class GetNextIssueOutput implements SkillOutput
       Logger log = LoggerFactory.getLogger(GetNextIssueOutput.class);
       log.error("ERROR generating next issue box", e);
       System.out.println();
-      if (args.length >= 2)
+      String completedIssue = parsed.completedIssue();
+      String targetBranch = parsed.targetBranch();
+      if (!completedIssue.isEmpty())
       {
-        for (int i = 0; i < args.length; ++i)
-        {
-          if (args[i].equals("--completed-issue") && i + 1 < args.length)
-          {
-            String completedIssue = args[i + 1];
-            String targetBranch = "main";
-            for (int j = 0; j < args.length; ++j)
-            {
-              if (args[j].equals("--target-branch") && j + 1 < args.length)
-                targetBranch = args[j + 1];
-            }
-            System.out.println(completedIssue + " merged to " + targetBranch + ".");
-            break;
-          }
-        }
+        if (targetBranch.isEmpty())
+          System.out.println(completedIssue + " merged.");
+        else
+          System.out.println(completedIssue + " merged to " + targetBranch + ".");
       }
       System.out.println();
       System.exit(1);
@@ -325,17 +316,6 @@ public final class GetNextIssueOutput implements SkillOutput
       return scope;
     }
     return "unknown";
-  }
-
-  /**
-   * Public test helper for extractScope.
-   *
-   * @param completedIssue the completed issue ID
-   * @return the scope name
-   */
-  public String extractScopePublic(String completedIssue)
-  {
-    return extractScope(completedIssue);
   }
 
   /**
