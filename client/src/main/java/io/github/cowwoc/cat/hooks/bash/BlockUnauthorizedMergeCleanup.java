@@ -31,7 +31,7 @@ import java.util.function.Predicate;
  * Block direct invocations of the merge-and-cleanup binary when trust=medium/low without explicit
  * user approval.
  * <p>
- * Agents that skip the work-with-issue approval gate (Step 8) and invoke the merge-and-cleanup binary
+ * Agents that skip the work-with-issue approval gate (Step 9) and invoke the merge-and-cleanup binary
  * directly via Bash tool bypass the Task-tool-level enforcement in EnforceApprovalBeforeMerge. This
  * handler closes that bypass route by enforcing the same approval check at the Bash tool level.
  */
@@ -122,13 +122,15 @@ public final class BlockUnauthorizedMergeCleanup implements BashHandler
     return Result.block("""
       FAIL: Explicit user approval required before merge
 
-      Invoking merge-and-cleanup directly bypasses the Step 8 Approval Gate in work-with-issue.
+      Invoking merge-and-cleanup directly bypasses the work-with-issue workflow.
 
       BLOCKING: No approval detected in session history.
 
       The correct merge path is:
-      1. Complete Step 8 (Approval Gate) in work-with-issue - present AskUserQuestion to the user
-      2. After user selects "Approve and merge", invoke merge via Task tool (subagent_type: cat:work-merge)
+      1. Complete Step 7 (Squash Commits by Topic): invoke cat:git-squash-agent
+      2. Complete Step 8 (Rebase onto Target Branch): invoke cat:git-rebase-agent
+      3. Complete Step 9 (Approval Gate): present AskUserQuestion to the user
+      4. After user selects "Approve and merge", invoke merge via Task tool (subagent_type: cat:work-merge)
          or Skill tool (skill: cat:work-merge)
 
       Do NOT invoke merge-and-cleanup directly via Bash - this bypasses the approval gate.

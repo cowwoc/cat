@@ -227,14 +227,15 @@ public final class BlockUnauthorizedMergeCleanupTest
   }
 
   /**
-   * Verifies that the block message directs the agent to use the correct approval gate.
+   * Verifies that the block message directs the agent to use the correct workflow steps in order.
    * <p>
-   * The error message must mention Step 8 and the correct path through the work-with-issue workflow.
+   * The error message must list Step 7 (squash), Step 8 (rebase), Step 9 (approval gate), and the
+   * Task/Skill tool merge invocation as the four required steps before invoking merge-and-cleanup.
    *
    * @throws IOException if test setup fails
    */
   @Test
-  public void blockMessageMentionsApprovalGate() throws IOException
+  public void blockMessageMentionsAllRequiredSteps() throws IOException
   {
     Path tempDir = Files.createTempDirectory("block-unauthorized-merge-cleanup-test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -249,7 +250,31 @@ public final class BlockUnauthorizedMergeCleanupTest
       BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Step 7");
       requireThat(result.reason(), "reason").contains("Step 8");
+      requireThat(result.reason(), "reason").contains("Step 9");
+      requireThat(result.reason(), "reason").contains("cat:git-squash-agent");
+      requireThat(result.reason(), "reason").contains("cat:git-rebase-agent");
+      requireThat(result.reason(), "reason").contains("AskUserQuestion");
+      requireThat(result.reason(), "reason").contains("cat:work-merge");
+
+      // Verify correct ordering: Step 7 before Step 8 before Step 9
+      String reason = result.reason();
+      int posStep7 = reason.indexOf("Step 7");
+      int posStep8 = reason.indexOf("Step 8");
+      int posStep9 = reason.indexOf("Step 9");
+      requireThat(posStep7 < posStep8, "step7BeforeStep8").isTrue();
+      requireThat(posStep8 < posStep9, "step8BeforeStep9").isTrue();
+
+      // Verify squash agent is between Step 7 and Step 8
+      int squashPos = reason.indexOf("cat:git-squash-agent");
+      requireThat(posStep7 < squashPos && squashPos < posStep8,
+        "squashAgentBetweenStep7AndStep8").isTrue();
+
+      // Verify rebase agent is between Step 8 and Step 9
+      int rebasePos = reason.indexOf("cat:git-rebase-agent");
+      requireThat(posStep8 < rebasePos && rebasePos < posStep9,
+        "rebaseAgentBetweenStep8AndStep9").isTrue();
     }
     finally
     {
