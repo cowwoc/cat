@@ -68,6 +68,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - rebuild-work-skills
 - retire-rca-ab-test
 - add-rca-cause-signatures
+- fix-merge-cleanup-hook-guidance-missing-squash-rebase
 
 
 ## Issues Closed
