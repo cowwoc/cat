@@ -186,7 +186,7 @@ to the benchmark loop. Repeat until the user is satisfied or pass rate shows no 
 ### Step 4: Adversarial TDD Loop
 
 After the benchmark phase converges, harden the instructions using alternating red-team and blue-team
-subagents. Run until no major loopholes remain or 3 iterations complete.
+subagents. Run until no major loopholes remain or 10 iterations complete.
 
 **Why two separate subagents per round:**
 A single agent playing both roles anchors on its own attack vectors — it knows exactly which
@@ -278,7 +278,44 @@ Task tool:
 ```
 
 Update `CURRENT_INSTRUCTIONS` with blue-team output. Increment round counter.
-If round < 3 and `major_loopholes_found` was true: continue to next iteration.
+If round < 10 and `major_loopholes_found` was true: continue to next iteration.
+
+### Step 5: In-Place Hardening Mode (Optional)
+
+In-place hardening mode runs the adversarial TDD loop against a skill file in a worktree in a single session,
+committing the final hardened version exactly once without creating per-round issues.
+
+**Primary workflow — single skill file:**
+
+In-place hardening mode activates when the caller passes a single skill file path inside the current worktree.
+
+1. Read the file content as `CURRENT_INSTRUCTIONS`.
+2. Run the full RED→BLUE loop (up to 10 rounds) as defined in Step 4. Do NOT commit between rounds — all
+   iterations run in-memory against `CURRENT_INSTRUCTIONS` until convergence (`major_loopholes_found: false`)
+   or the round cap is reached.
+3. Write the final hardened content back to the file using the Edit tool.
+4. `git commit` the file exactly once, after convergence, with message:
+   `refactor: harden <relative-skill-path> via adversarial TDD (N rounds, M loopholes closed)`.
+
+**Secondary workflow — directory / batch mode:**
+
+If the caller passes a directory path (or `--batch <dir>`) instead of a single file, enumerate all `SKILL.md`
+and `first-use.md` files under the directory recursively. Apply the single-skill workflow to each file.
+
+By default, process files **sequentially** (safe for all worktrees). Parallel processing is allowed when each
+skill file is independent (no shared skill-to-skill dependencies). In parallel mode, each subagent runs the
+full RED→BLUE loop in-memory for its own file and commits only that file — never touching other skill files.
+Parallel subagents must not commit shared files (e.g., index files or aggregated docs) to avoid merge
+conflicts; those are updated once after all parallel subagents complete.
+
+Skip files that are not valid skill files (missing Purpose or Procedure sections). If a skill file fails
+validation after blue-team patching, log the failure and continue to the next skill.
+
+After all skill files are processed (or user types `abort`), display a batch summary table:
+
+| Skill | Rounds | Loopholes Closed |
+|-------|--------|-----------------|
+| ...   | ...    | ...             |
 
 ---
 
@@ -319,7 +356,9 @@ implementation details (trust levels, internal architecture, etc.).
 - [ ] Design subagent returned a complete skill draft
 - [ ] Benchmark phase ran with 2+ test cases
 - [ ] Benchmark results show meaningful signal (non-zero pass rate differential)
-- [ ] Adversarial TDD loop completed (either converged or 3 iterations reached)
+- [ ] Adversarial TDD loop completed (either converged or 10 iterations reached)
 - [ ] Final skill document includes purpose, procedure, and verification sections
 - [ ] Frontmatter description is trigger-oriented and contains no implementation details
 - [ ] No Functions or Prerequisites sections prime manual construction (per priming prevention checklist)
+- [ ] In-place hardening mode produces a single commit per skill after convergence
+- [ ] If batch mode was used: summary table shows all skills reviewed with round counts
