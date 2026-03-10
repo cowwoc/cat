@@ -59,6 +59,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - add-tasklist-update-convention
 - add-skill-builder-batch-review-mode
 - fix-commit-message-shell-expansion
+- add-parallel-chunked-read-rule
 
 
 ## Issues Closed
