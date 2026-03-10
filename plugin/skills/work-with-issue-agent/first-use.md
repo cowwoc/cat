@@ -15,6 +15,23 @@ delegates each phase to a dedicated skill:
 - Review: `cat:work-review-agent` (stakeholder review, deferred concern wizard)
 - Merge: `cat:work-merge-agent` (squash, rebase, approval gate, merge execution)
 
+## Issue Lifecycle States
+
+An issue passes through three distinct states. Understanding these states prevents misidentifying whether an issue has
+been merged.
+
+| State | Description |
+|-------|-------------|
+| **Implementation running** | Confirm/review/merge phases are active. Worktree exists, lock held. |
+| **Merge complete** | Merge-and-cleanup tool ran. Squashed commit on `TARGET_BRANCH`. Worktree may still exist briefly. |
+| **Issue closed** | Worktree removed, lock released, branch deleted. |
+
+**WARNING:** `STATE.md status: closed` means **implementation is finished** (State 1 done), NOT that the issue was
+merged (State 2/3). Do NOT infer "merged and cleaned up" from STATE.md alone. To determine whether the issue was
+merged, BOTH of the following must be true: (1) the issue branch no longer exists, AND (2) `TARGET_BRANCH` contains
+the squashed commit. A missing branch alone is not sufficient — verify both conditions before concluding the issue
+was merged. If either check cannot be confirmed, treat the issue as not yet merged and run the full merge workflow.
+
 ## MANDATORY STEPS
 
 The following steps are **mandatory** and must not be skipped without explicit user permission. Mandatory steps do not
