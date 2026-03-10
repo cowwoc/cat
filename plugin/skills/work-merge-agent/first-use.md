@@ -28,11 +28,39 @@ PLAN_MD="${ISSUE_PATH}/PLAN.md"
 
 Return JSON: `{"status": "SUCCESS|ABORTED|CHANGES_REQUESTED|FAILED", "issue_id": "...", "commits": [...], "files_changed": N, "merged": true}`
 
+## Issue Lifecycle States
+
+An issue passes through three distinct states during the merge workflow. Misidentifying the state causes errors such
+as refusing to squash commits on an active branch.
+
+| State | Description | Authoritative Indicator |
+|-------|-------------|-------------------------|
+| **Implementation running** | Confirm/review/merge phases are active. The worktree exists and the lock is held. | Worktree present, lock file exists, branch exists |
+| **Merge complete** | The merge-and-cleanup tool ran and produced a squashed commit on `TARGET_BRANCH`. The worktree may still exist briefly during cleanup. | The merge-and-cleanup tool returned `"status": "success"` in the current session |
+| **Issue closed** | Worktree removed, lock released, branch deleted. | No worktree, no lock, no issue branch |
+
+**CRITICAL:** `STATE.md status: closed` means **implementation is done**, NOT that the issue was merged. An issue can
+have `STATE.md status: closed` while the worktree still exists and the merge-and-cleanup tool has not yet run. Always
+verify merge status by checking the git branch state AND the merge-and-cleanup tool result — never by reading STATE.md
+alone.
+
+**Distinguishing State 1 from State 2:** Observable git indicators (worktree present, branch present, commit on
+TARGET_BRANCH) are **insufficient** to distinguish State 1 from State 2 because a stale or missing lock file produces
+identical observations. The only authoritative proof of State 2 is that the merge-and-cleanup tool returned
+`"status": "success"` in the current session. If that result is not in the current session's context, treat the issue
+as State 1 and run the full merge workflow.
+
 ## Step 7: Squash Commits by Topic Before Review (MANDATORY)
 
 **MANDATORY: Delegate rebase, squash, and STATE.md closure verification to a squash subagent.** This step must not be
 skipped — the approval gate (Step 9) checks that squash was executed and blocks proceeding if it was not.
 This keeps the parent agent context lean by offloading git operations to a dedicated haiku-model subagent.
+
+**Note:** It is expected and correct to squash commits on **the current issue's branch** (`${BRANCH}`) where
+STATE.md shows `closed`. This means the implementation subagent finished its work (State 1 complete) and the merge
+preparation phase is now running. The squash operation is part of transitioning from State 1 to State 2. Do NOT skip
+or abort squash due to STATE.md showing `closed`. This authorization applies only to `${BRANCH}` — do NOT squash any
+other branch based on this reasoning, even if that branch's STATE.md also shows `closed`.
 
 Determine the primary commit message from the execution result (the most significant commit's message). If multiple
 topics exist, use the most significant commit's message. Do NOT use generic messages like "squash commit".
@@ -210,9 +238,13 @@ and no explicit user approval is detected in session history.
 
 ### Pre-Gate Squash Verification (BLOCKING)
 
-Before presenting the approval gate, verify that Step 7 (Squash by Topic) was executed. Squashing by topic
-may produce 1-2 commits (e.g., one implementation commit + one config commit), so commit count alone does not
-determine completion. Instead, confirm that `/cat:git-squash` was invoked in Step 7.
+Before presenting the approval gate, verify that Step 7 (Squash by Topic) was executed in the **current session**.
+Squashing by topic may produce 1-2 commits (e.g., one implementation commit + one config commit), so commit count
+alone does not determine completion. Instead, confirm that `/cat:git-squash` was invoked in Step 7.
+
+**CRITICAL:** `STATE.md status: closed` does NOT prove Step 7 ran. STATE.md reflects implementation completion
+(State 1), not squash execution. Do NOT infer that Step 7 was already completed from STATE.md showing `closed`.
+Only a `/cat:git-squash` invocation visible in the current session's context counts as proof Step 7 ran.
 
 **If Step 7 was skipped:** STOP — return to Step 7 and complete the squash by topic before proceeding.
 
