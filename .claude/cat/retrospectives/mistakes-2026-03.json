@@ -1747,5 +1747,47 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M533",
+    "timestamp" : "2026-03-11T00:13:51Z",
+    "category" : "tool_limitation",
+    "description" : "User invoked /cat:work resume 2.1-close-prevention-gate-loopholes but work-prepare ignored the explicit issue ID and selected a different issue. The raw argument parser in WorkPrepare.java did not handle the resume keyword prefix, causing the issue ID extraction to fail silently and fall back to next-available-issue selection.",
+    "root_cause" : "WorkPrepare.java raw argument parser only recognized issue IDs matching bare or version-prefixed regex patterns. The resume keyword prefix caused the pattern to fail silently, leaving issueId empty and selecting the wrong issue.",
+    "rca_method" : "C",
+    "rca_method_name" : "causal-barrier",
+    "cause_signature" : "knowledge_gap:skill_incomplete:issue_workflow",
+    "prevention_type" : "code_fix",
+    "prevention_path" : "client/src/main/java/io/github/cowwoc/cat/hooks/util/WorkPrepare.java",
+    "pattern_keywords" : [ "resume_keyword", "work_prepare", "issue_selection", "argument_parsing", "raw_arguments" ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : "When user passes resume or continue before an issue-id, the modifier keyword is stripped before pattern matching so the issue ID is correctly extracted."
+  }, {
+    "id" : "M534",
+    "timestamp" : "2026-03-11T00:17:31Z",
+    "category" : "tool_limitation",
+    "description" : "",
+    "root_cause" : "",
+    "rca_method" : "",
+    "rca_method_name" : "causal-barrier",
+    "cause_signature" : "knowledge_gap:skill_incomplete:issue_workflow",
+    "prevention_type" : "code_fix",
+    "prevention_path" : "client/src/main/java/io/github/cowwoc/cat/hooks/util/WorkPrepare.java",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }

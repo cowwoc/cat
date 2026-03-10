@@ -166,19 +166,89 @@ re-invoke the design subagent with clarifying instructions.
 After receiving the skill draft from the design subagent, run the benchmark evaluation loop to measure
 the skill's impact quantitatively.
 
-**Generate test cases:** Create 2-3 test cases with assertions to measure the skill's effectiveness.
+At the start of Step 3, compute `EVAL_ARTIFACTS_DIR` as `<worktree-root>/eval-artifacts/${CLAUDE_SESSION_ID}`
+(expanding `${CLAUDE_SESSION_ID}` to its actual value). Pass this resolved path as a literal string to all
+subagents — do NOT pass variable references.
 
-**Spawn parallel benchmark runs:** For each test case, spawn two subagents simultaneously:
-- One with the skill active (`with-skill`)
-- One with the skill inactive (`without-skill`)
+**Context isolation:** `EVAL_ARTIFACTS_DIR` includes the session ID in its path, ensuring that concurrent
+eval-run subagents from different sessions write to separate directories and never collide. Each eval-run
+subagent receives `EVAL_ARTIFACTS_DIR` and `CLAUDE_SESSION_ID` as pre-resolved literal strings, so no
+subagent ever expands these variables independently. Subagents must not derive their own session ID — they
+must use the value passed by the main agent.
 
-**Grade and aggregate results:** Collect all run outputs, grade them against assertions, and aggregate
-the results using the BenchmarkAggregator tool.
+**Generate test cases:** Create 2-3 test cases with assertions. Store the eval set JSON in
+`${EVAL_ARTIFACTS_DIR}/eval-set.json` and commit it with message
+`eval: write test cases [session: ${CLAUDE_SESSION_ID}]`. The SHA is not passed forward (the main agent
+retains the eval set JSON in context for writing grader prompts).
 
-**Analyze patterns:** Invoke skill-analyzer-agent to identify non-discriminating assertions, high-variance
-evals, and time/token tradeoffs.
+**Spawn parallel eval-run subagents:** For each test case, spawn two subagents simultaneously — one with
+the skill active (`with-skill`) and one with the skill inactive (`without-skill`). Each eval-run subagent:
+1. Executes the test case prompt in its configured environment.
+2. Creates the output directory with `mkdir -p ${EVAL_ARTIFACTS_DIR}/run-outputs`.
+3. Writes the full output to `${EVAL_ARTIFACTS_DIR}/run-outputs/<case-id>-<config>.txt`.
+4. Commits the file with message `eval: run <case-id> config=<config> [session: ${CLAUDE_SESSION_ID}]`.
+5. Returns: `{"sha": "<commit-sha>", "path": "eval-artifacts/<SESSION_ID>/run-outputs/<case-id>-<config>.txt",
+   "duration_ms": <elapsed>, "total_tokens": <count>}`.
+   On failure, returns `{"error": "<reason>"}`.
 
-**Display results to user:** Present the benchmark summary table and pattern analysis report. Ask the user:
+The main agent collects only the small SHA+metadata JSON from each run subagent. It does NOT read the run
+output files. If a run subagent returns `{"error": "..."}` (missing `sha` field), log the failure and
+either skip the affected run (partial benchmark) or abort and report the failure to the user.
+
+**Spawn parallel grader subagents:** For each completed run, spawn a skill-grader-agent subagent. Pass it:
+- The run output SHA+path (from the eval-run subagent return value)
+- The assertions array (from the eval set JSON, already in main agent context)
+- The test case ID and config name
+- The `${EVAL_ARTIFACTS_DIR}` path and `${CLAUDE_SESSION_ID}` (both already resolved to literal strings)
+
+**Grader subagent return contract:** Each grader subagent returns only a commit SHA (a bare hex string with
+no JSON wrapper). The grading file path is deterministic: `eval-artifacts/<SESSION_ID>/grading/<case-id>-<config>.json`.
+The main agent reconstructs the full SHA+path pair for the aggregator by combining the returned SHA with
+this naming convention — it does not ask the grader to return the path.
+
+**Concurrent commit safety:** All grader subagents for a single benchmark pass are spawned in the same turn
+(parallel), but they each commit to the same worktree. Git serializes commits internally, so parallel
+subagents may briefly contend for the ref lock. If a grader subagent's `git commit` fails with "cannot lock
+ref" or similar, it must retry up to 3 times with a short delay before returning `{"error": "commit
+failed: <reason>"}`. The main agent does not need to handle this retry — it is the grader's responsibility.
+
+Each grader subagent returns a commit SHA for its `grading/<case-id>-<config>.json` file, or
+`{"error": "..."}` on failure. If the `git show` command used to read the run output fails (e.g., SHA not
+found, path missing), the grader returns `{"error": "git show failed: <reason>"}` and stops — it does not
+produce partial grading. The main agent collects only the commit SHAs from grader subagents. It does NOT
+read the grading JSON files. If a grader subagent returns an error, exclude that test case from the
+aggregation input; if all grading for a config fails, report the failure and ask the user whether to retry.
+
+**Aggregate via BenchmarkAggregator subagent:** Spawn one subagent to perform aggregation. Pass it:
+- All grading file SHAs+paths (the main agent reconstructs each path as
+  `eval-artifacts/<SESSION_ID>/grading/<case-id>-<config>.json` and pairs it with the SHA returned by the
+  grader subagent)
+- The eval-run return metadata for each run (duration_ms, total_tokens), forwarded alongside grading SHAs
+- The `${EVAL_ARTIFACTS_DIR}` path and `${CLAUDE_SESSION_ID}`
+
+This subagent:
+1. Reads each `grading/<case-id>-<config>.json` via `git show <SHA>:<path>`.
+2. Converts each grading JSON to a BenchmarkAggregator input row:
+   `{"config": "<config>", "assertions": [<bool array from assertion_results>], "duration_ms": <N>,
+   "total_tokens": <N>}`.
+3. Invokes the BenchmarkAggregator Java tool with the assembled input array.
+4. Creates the output directory with `mkdir -p ${EVAL_ARTIFACTS_DIR}`.
+5. Writes the resulting benchmark JSON to `${EVAL_ARTIFACTS_DIR}/benchmark.json`.
+6. Commits the file with message `eval: aggregate benchmark [session: ${CLAUDE_SESSION_ID}]`.
+7. Returns: `{"sha": "<commit-sha>", "path": "eval-artifacts/<SESSION_ID>/benchmark.json",
+   "summary_table": "<formatted benchmark table text>"}`, or `{"error": "<reason>"}` on failure.
+
+The main agent receives the commit SHA, the path, and the pre-formatted benchmark summary table text. It
+does NOT read the benchmark JSON file. If the aggregator subagent returns an error, report the failure and
+ask the user whether to retry from the grading step (using the existing grading SHAs) or restart the loop.
+
+**Analyze via skill-analyzer-agent subagent:** Spawn skill-analyzer-agent. Pass it the benchmark SHA+path
+and the `${EVAL_ARTIFACTS_DIR}` path. The subagent returns the analysis commit SHA and the compact analysis
+report text. The main agent receives only the compact analysis report text (~1KB). It does NOT read the
+analysis file.
+
+**Display results to user:** Present the benchmark summary table (from the aggregator subagent return) and
+the analysis report text (from skill-analyzer-agent return). Ask the user:
 1. Are there any assertions to remove or replace based on the pattern analysis?
 2. Would you like to improve the skill and re-run the benchmark?
 3. Are you satisfied with the current skill version?
@@ -449,6 +519,17 @@ implementation details (trust levels, internal architecture, etc.).
 - [ ] Design subagent returned a complete skill draft
 - [ ] Benchmark phase ran with 2+ test cases
 - [ ] Benchmark results show meaningful signal (non-zero pass rate differential)
+- [ ] Step 3 eval-run subagents commit run output files and return SHA+metadata JSON (not raw text)
+- [ ] Step 3 grader subagents receive SHA+path input, commit grading JSON, return SHA only (path is reconstructed by
+  main agent using naming convention `eval-artifacts/<SESSION_ID>/grading/<case-id>-<config>.json`)
+- [ ] Step 3 grader subagents retry `git commit` up to 3 times on ref-lock errors before returning an error
+- [ ] Step 3 grader subagents return `{"error": "git show failed: ..."}` if run output cannot be read; main agent
+  excludes that test case from aggregation
+- [ ] Step 3 EVAL_ARTIFACTS_DIR and CLAUDE_SESSION_ID are passed as resolved literal strings to all subagents — no
+  subagent expands these variables independently
+- [ ] Step 3 BenchmarkAggregator subagent reads grading files via git show, commits benchmark.json, returns SHA+summary_table
+- [ ] Step 3 skill-analyzer-agent receives benchmark SHA+path, returns analysis commit SHA + compact report text
+- [ ] Step 3 main agent context contains only SHAs, small metadata JSON, benchmark summary table, and analysis report — no raw JSON blobs
 - [ ] Adversarial TDD loop completed (either converged or 10 iterations reached)
 - [ ] Final skill document includes purpose, procedure, and verification sections
 - [ ] Frontmatter description is trigger-oriented and contains no implementation details

@@ -1642,6 +1642,61 @@ public final class WorkPrepare
   }
 
   /**
+   * Holds the result of parsing raw {@code --arguments} input into structured fields.
+   *
+   * @param issueId the resolved issue ID, or empty string if not present
+   * @param excludePattern the resolved exclude-pattern glob, or empty string if not present
+   */
+  public record ParsedArguments(String issueId, String excludePattern)
+  {
+  }
+
+  /**
+   * Parses raw {@code --arguments} input into a structured result.
+   * <p>
+   * Leading modifier keywords ({@code resume}, {@code continue}) are stripped before matching,
+   * so {@code "resume 2.1-fix-bug"} resolves to issue ID {@code "2.1-fix-bug"}.
+   * Keyword stripping is case-sensitive and requires at least one space after the keyword;
+   * any extra spaces are collapsed by {@link String#strip()} after the keyword is removed.
+   * <p>
+   * If {@code issueId} or {@code excludePattern} are already set (non-empty), raw arguments are
+   * not parsed (the explicit flags take precedence).
+   *
+   * @param rawArguments the raw user-supplied argument string, or empty string
+   * @param issueId the explicit issue ID already set via {@code --issue-id}, or empty string
+   * @param excludePattern the explicit exclude pattern already set via {@code --exclude-pattern}, or empty string
+   * @return parsed result with resolved issueId and excludePattern (never null; fields may be empty)
+   */
+  public static ParsedArguments parseRawArguments(String rawArguments, String issueId,
+    String excludePattern)
+  {
+    if (rawArguments.isBlank() || !issueId.isEmpty() || !excludePattern.isEmpty())
+      return new ParsedArguments(issueId, excludePattern);
+
+    String raw = rawArguments.strip();
+    // Strip leading modifier keywords that users naturally prepend (e.g. "resume 2.1-fix-bug")
+    for (String keyword : new String[]{"resume", "continue"})
+    {
+      if (raw.startsWith(keyword + " "))
+      {
+        raw = raw.substring(keyword.length()).strip();
+        break;
+      }
+    }
+    if (raw.matches("^[0-9]+\\.[0-9]+(-[a-zA-Z0-9_-]+)?$") ||
+      raw.matches("^[a-zA-Z][a-zA-Z0-9_-]*$"))
+    {
+      return new ParsedArguments(raw, "");
+    }
+    if (raw.startsWith("skip "))
+    {
+      String word = raw.substring(5).strip();
+      return new ParsedArguments("", "*" + word + "*");
+    }
+    return new ParsedArguments("", "");
+  }
+
+  /**
    * Main method for command-line execution.
    * <p>
    * Accepts named arguments:
@@ -1703,20 +1758,9 @@ public final class WorkPrepare
     }
 
     // Parse raw arguments into issue-id or exclude-pattern
-    if (!rawArguments.isBlank() && issueId.isEmpty() && excludePattern.isEmpty())
-    {
-      String raw = rawArguments.strip();
-      if (raw.matches("^[0-9]+\\.[0-9]+(-[a-zA-Z0-9_-]+)?$") ||
-        raw.matches("^[a-zA-Z][a-zA-Z0-9_-]*$"))
-      {
-        issueId = raw;
-      }
-      else if (raw.startsWith("skip "))
-      {
-        String word = raw.substring(5).strip();
-        excludePattern = "*" + word + "*";
-      }
-    }
+    ParsedArguments parsed = parseRawArguments(rawArguments, issueId, excludePattern);
+    issueId = parsed.issueId();
+    excludePattern = parsed.excludePattern();
 
     TrustLevel trustLevel;
     try

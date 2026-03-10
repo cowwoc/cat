@@ -1,7 +1,7 @@
 ---
 description: >
   Internal subagent — grades a list of assertions against a single test-case output, assigning pass/fail
-  verdicts with evidence quotes. Returns structured grading JSON for aggregation by skill-builder-agent.
+  verdicts with evidence quotes. Reads run output via git show, commits grading JSON, returns commit SHA.
 model: haiku
 user-invocable: false
 ---
@@ -19,7 +19,8 @@ quantitative benchmarking in the skill-builder eval loop (Step 11).
 The invoking agent passes:
 
 1. **Test case ID**: A string identifier for this run (e.g., `"case-1-with-skill"`).
-2. **Test case output**: The full text output produced by the subagent for this test case.
+2. **Run output SHA+path**: A commit SHA and relative file path pointing to the committed run output file. Read the
+   file content using `git show <SHA>:<path>` to obtain the test case output.
 3. **Assertions**: A JSON array of assertion strings to evaluate:
    ```json
    [
@@ -29,13 +30,25 @@ The invoking agent passes:
    ]
    ```
 4. **Config name** (optional): `"with-skill"` or `"without-skill"`, used to label the grading result.
+5. **EVAL_ARTIFACTS_DIR**: The fully-resolved path to the session-scoped eval artifacts directory
+   (e.g., `/workspace/.claude/cat/worktrees/my-issue/eval-artifacts/abc123def456`). Used to write the grading JSON
+   output file.
+6. **CLAUDE_SESSION_ID**: The session ID string, used in the commit message.
 
 ## Procedure
 
-### Step 1: Read the Test Case Output
+### Step 1: Read the Run Output from Git
 
-Read the full test-case output provided by the invoking agent. This is the text that the graded
-assertions will be evaluated against.
+Read the run output file using:
+
+```bash
+git show <SHA>:<path>
+```
+
+where `<SHA>` and `<path>` are from the **Run output SHA+path** input. Store the content as the test case output.
+
+If the `git show` command fails (e.g., SHA not found), return `{"error": "git show failed: SHA not found: <SHA>"}` and
+stop.
 
 ### Step 2: Evaluate Each Assertion
 
@@ -53,7 +66,7 @@ For each assertion in the list:
 
 ### Step 3: Produce Grading JSON
 
-Output a JSON object in this exact structure:
+Assemble a grading JSON object in this exact structure:
 
 ```json
 {
@@ -80,21 +93,40 @@ Output a JSON object in this exact structure:
 }
 ```
 
-Rules for the JSON output:
+Rules for the grading JSON:
 - `pass_rate` is `pass_count / total_count`, rounded to two decimal places.
 - `evidence` must be a verbatim quote (or substring) from the output, not a paraphrase. Use
   `"(no relevant text found)"` only when no relevant text exists.
-- Output ONLY the JSON object — no prose before or after it.
+
+### Step 4: Commit the Grading JSON and Return SHA
+
+1. Create the grading output directory if it does not exist:
+   ```bash
+   mkdir -p "${EVAL_ARTIFACTS_DIR}/grading"
+   ```
+2. Write the grading JSON to `${EVAL_ARTIFACTS_DIR}/grading/<test_case_id>.json`.
+3. Stage and commit the file:
+   ```bash
+   git add "${EVAL_ARTIFACTS_DIR}/grading/<test_case_id>.json"
+   git commit -m "eval: grade <test_case_id> [session: ${CLAUDE_SESSION_ID}]"
+   ```
+4. Capture the commit SHA:
+   ```bash
+   git rev-parse HEAD
+   ```
+5. Return the commit SHA as the sole return value — output only the SHA string, with no surrounding prose or JSON
+   wrapper.
 
 ## Error Handling
 
-- **Empty assertions array**: If the assertions array is empty, output a grading JSON with
+- **Empty assertions array**: If the assertions array is empty, write a grading JSON with
   `pass_count: 0`, `fail_count: 0`, `total_count: 0`, `pass_rate: 0.0`, and an empty
-  `assertion_results` array. Do not fail.
-- **No test-case output provided**: If the test-case output is empty or missing, assign FAIL to
-  every assertion with `evidence: "(no relevant text found)"`.
-- **Malformed input**: If the assertions input is not a valid JSON array, or the test-case output
-  is not a string, output an error message and stop — do not produce partial grading JSON.
+  `assertion_results` array. Commit and return the SHA normally. Do not fail.
+- **git show fails**: If `git show <SHA>:<path>` returns a non-zero exit code, return
+  `{"error": "git show failed: SHA not found: <SHA>"}` and stop.
+- **Malformed input**: If the assertions input is not a valid JSON array, return an error message
+  and stop — do not produce partial grading JSON.
+- **Commit fails**: If the `git commit` command fails, return `{"error": "commit failed: <reason>"}` and stop.
 
 ## Verification
 
@@ -102,4 +134,4 @@ Rules for the JSON output:
 - [ ] `pass_count + fail_count == total_count`
 - [ ] `pass_rate == pass_count / total_count` rounded to two decimal places
 - [ ] `evidence` values are verbatim quotes from the output, not paraphrases
-- [ ] Output is valid JSON with no surrounding prose
+- [ ] Commit SHA returned as sole output (no JSON in return value)
