@@ -125,6 +125,81 @@ category: "..."
 rca_method: "C"
 ```
 
+## Prevention Strength Gate
+
+This gate runs **after completing any RCA method** (A, B, or C) and **before entering `phase-prevent.md`**.
+
+### Trigger Condition
+
+The gate activates **only when `recurrence_of` is non-null** — meaning a prior rule or prevention already existed
+for this mistake. First-time occurrences are fully exempt from this gate.
+
+### Step 1 — Classify the Recurrence Cause
+
+Before the gate applies, classify WHY the prior prevention failed. The four valid cause types are:
+
+| Cause Type | Description |
+|---|---|
+| `unenforced` | Prior rule/doc was correct but agent did not follow it |
+| `biased_rca` | Prior RCA was compromised (priming doc, wrong methodology, or misidentified root cause) |
+| `too_weak` | Prior prevention was correctly chosen but insufficient for the violation level |
+| `pending_unloaded` | Prior prevention was applied to source but not yet loaded into the running plugin cache |
+
+**If the cause type cannot be determined:** halt and require explicit classification before continuing.
+Do NOT default to any tier or assume a cause type. Record your uncertainty and ask for input.
+
+### Step 2 — Apply the Cause-Aware Decision Tree
+
+**Case 1 — `unenforced`:** The prior rule or document was correct, but the agent did not follow it.
+
+- Required action: escalate to hook-level enforcement (level 2 or stronger).
+- Documentation-only prevention is **blocked** for this cause type.
+- Rationale: if the agent ignored a documented rule once, documenting it again will not prevent recurrence.
+
+**Case 2 — `biased_rca`:** The prior RCA was compromised by a priming document, incorrect methodology, or
+a misidentified root cause that directed prevention at the wrong target.
+
+- Required action: fix the analysis pipeline — correct the priming source, revise the RCA methodology, or
+  rerun the RCA against the correct evidence.
+- Fixing the analysis pipeline counts as a valid high-strength prevention even when the target is a
+  documentation file, because the failure is in the analysis process itself, not in enforcement level.
+
+**Case 3 — `too_weak`:** The prior prevention was implemented but was categorically weaker than needed
+(e.g., documentation when a hook was required, a hook when a code fix was required).
+
+- Required action: escalate prevention level (e.g., documentation → hook, hook → code_fix).
+- The new prevention must be at least one level stronger than the prior prevention.
+
+**Case 4 — `pending_unloaded`:** The prior prevention was implemented in a previous session and exists on disk,
+but the running plugin instance has not yet loaded it (plugin not reinstalled or reloaded). The recurrence
+occurred because the prevention was never active, not because it was insufficient.
+
+- Required action: no new prevention required. The existing prevention is correct but not yet active.
+- Mark prevention as pending and defer evaluation until after the next plugin cache refresh.
+- If the recurrence persists after the cache is refreshed, reclassify the cause as one of the other three types
+  (`unenforced`, `biased_rca`, or `too_weak`).
+
+### Step 3 — Verify File Modification Before Marking Prevention Applied
+
+Prevention is **not** considered applied in the current session unless at least one file was actually
+modified via an Edit or Write tool call.
+
+**Exception — `pending_unloaded` cause type:** When the cause is classified as `pending_unloaded` in Step 1,
+the file-modification requirement is automatically waived. The decision tree in Step 2 (Case 4) already handles
+this case — no additional exception logic is needed here.
+
+### Gate Summary Table
+
+| Condition | Required Action |
+|---|---|
+| First-time occurrence | Exempt — gate does not activate |
+| Cause type unknown | Halt — require explicit classification |
+| `unenforced` | Escalate to hook-level or stronger; docs blocked |
+| `biased_rca` | Fix analysis pipeline; docs allowed if pipeline is the target |
+| `too_weak` | Escalate at least one prevention level |
+| `pending_unloaded` | No new prevention; defer to next cache refresh |
+| No file modified in session | Block marking prevention as applied |
+
 ## Recording Format
 
 Include method in JSON entry:
