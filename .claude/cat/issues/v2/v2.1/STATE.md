@@ -64,6 +64,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - add-parallel-chunked-read-rule
 - document-issue-state-transitions
 - add-rca-prevention-strength-gate
+- rebuild-work-skills
 
 
 ## Issues Closed
