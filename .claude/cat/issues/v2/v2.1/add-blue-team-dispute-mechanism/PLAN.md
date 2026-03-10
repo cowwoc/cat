@@ -64,6 +64,21 @@ column for disputes.
   "Disputes Upheld: 1" and "Patches Applied: 0" for that round, and (d) the round counter increments correctly.
   - Files: `plugin/skills/skill-builder-agent/SKILL.md`
 
+### Wave 3
+- Add an explicit statement to `plugin/skills/skill-builder-agent/first-use.md` in the round counter / loop
+  continuation section stating that disputed findings count as closed for round-advancement purposes: after the
+  blue-team dispute evaluation step, insert a note such as "Disputed findings count as closed — the round counter
+  advances whether findings were patched, disputed, or both." This makes the implicit increment behavior explicit and
+  satisfies the post-condition verbatim.
+  - Files: `plugin/skills/skill-builder-agent/first-use.md`
+- Run a live E2E trace through the adversarial TDD loop using a controlled false-premise scenario: invoke
+  `cat:skill-builder-agent` on a minimal target skill, instruct the red-team subagent to raise exactly one
+  false-premise finding, let the blue-team dispute it, then capture the resulting `findings.json` and summary output.
+  Record the trace output (findings.json content showing the disputed array populated, summary table excerpt showing
+  "Disputes Upheld: 1") in a file at
+  `plugin/skills/skill-builder-agent/e2e-dispute-trace.md` so the post-condition has verifiable runtime evidence.
+  - Files: `plugin/skills/skill-builder-agent/e2e-dispute-trace.md` (new)
+
 ## Post-conditions
 - [ ] `plugin/skills/skill-builder-agent/SKILL.md` Step 4 blue-team prompt instructs the blue-team to verify each
   finding before patching
