@@ -448,6 +448,134 @@ If name already exists:
 
 </step>
 
+<step name="issue_detect_skill_deps">
+
+**Detect skill dependencies from issue description and suggest dependent issues:**
+
+This step runs only when the new issue involves modifying a skill file. It scans open issues for references to the
+same skill and suggests adding them as dependents (i.e., they should depend on the new issue completing first,
+because the new issue changes the skill they rely on).
+
+**1. Detect target skill names from ISSUE_DESCRIPTION:**
+
+Scan ISSUE_DESCRIPTION for patterns that indicate a skill file is being modified:
+- Explicit skill file path: `plugin/skills/<skill-name>/` (e.g., `plugin/skills/add-agent/first-use.md`)
+- Skill name reference: phrases like "modify the <skill-name> skill", "update <skill-name> skill",
+  "add a step to <skill-name>", "change <skill-name> first-use.md"
+
+Extract all skill names mentioned. Store as SKILL_NAMES list (may be empty).
+
+**If SKILL_NAMES is empty:**
+- Skip to step: issue_discuss_and_requirements (no skill involvement detected)
+
+**2. Scan open issues for skill references:**
+
+The scanning uses a two-level loop structure:
+
+- **Outer loop** — iterates over each skill name in SKILL_NAMES. A single issue description may reference more than
+  one skill (e.g., both `add` and `add-agent`), so every skill name must be checked independently.
+- **Inner loop** — for each skill name, iterates over all STATE.md files found under ISSUES_DIR (excluding the
+  current issue). It reads the STATUS field and, for open issues, checks whether the corresponding PLAN.md contains
+  a reference to `plugin/skills/<skill_name>/`.
+
+Deduplication is handled after the outer loop by collecting all matched issue IDs into a single array and running
+`sort -u`. An issue is included at most once even if its PLAN.md references multiple skills that are all in
+SKILL_NAMES.
+
+```bash
+source "${CLAUDE_PLUGIN_ROOT}/skills/add-agent/skill_dep_helpers.sh"
+
+ISSUES_DIR="${CLAUDE_PROJECT_DIR}/.claude/cat/issues"
+
+# Accumulate all matching issues across all skill names (deduplicated)
+AUTO_DETECTED_DEPS=()
+AUTO_DETECTED_DEP_PATHS=()
+ALL_MATCHED_IDS=()
+ALL_MATCHED_PATHS=()
+
+for SKILL_NAME in "${SKILL_NAMES[@]}"; do
+    # Direct call (not subshell) required to propagate MATCHING_ISSUES and MATCHING_ISSUE_PATHS
+    run_detection "$SKILL_NAME" "$ISSUE_NAME"
+    ALL_MATCHED_IDS+=("${MATCHING_ISSUES[@]+"${MATCHING_ISSUES[@]}"}")
+    ALL_MATCHED_PATHS+=("${MATCHING_ISSUE_PATHS[@]+"${MATCHING_ISSUE_PATHS[@]}"}")
+done
+
+# Deduplicate: build final arrays preserving first occurrence of each issue ID
+seen_ids=()
+for idx in "${!ALL_MATCHED_IDS[@]}"; do
+    ISSUE_ID="${ALL_MATCHED_IDS[$idx]}"
+    already_found=false
+    for existing in "${seen_ids[@]+"${seen_ids[@]}"}"; do
+        if [[ "$existing" == "$ISSUE_ID" ]]; then
+            already_found=true
+            break
+        fi
+    done
+    if [[ "$already_found" == false ]]; then
+        seen_ids+=("$ISSUE_ID")
+        AUTO_DETECTED_DEPS+=("$ISSUE_ID")
+        AUTO_DETECTED_DEP_PATHS+=("${ALL_MATCHED_PATHS[$idx]}")
+    fi
+done
+```
+
+Exclude the current issue being created from results. Collect all matching issue IDs across all skill names into
+AUTO_DETECTED_DEPS (deduplicated list). Collect corresponding full STATE.md paths into AUTO_DETECTED_DEP_PATHS.
+
+**3. Present suggestions if matches found:**
+
+**If AUTO_DETECTED_DEPS is empty:**
+- Skip to step: issue_discuss_and_requirements (no dependent issues found)
+
+**If AUTO_DETECTED_DEPS is non-empty:**
+
+Display context to the user before the question:
+
+```
+Auto-detected: The following open issues reference the skill(s) you are modifying:
+{for each issue in AUTO_DETECTED_DEPS: "  - {issue-id}"}
+
+These issues use the skill being changed. If your change alters the skill's interface
+or behavior, those issues should depend on this one completing first.
+```
+
+Use AskUserQuestion:
+- header: "Skill Dependency Suggestion"
+- question: "Should any of these issues be marked as depending on the new issue?"
+- options:
+  - label: "Yes, mark all as dependents"
+    description: "All listed issues will depend on this new issue"
+  - label: "Yes, let me choose"
+    description: "Show the list and I'll select which ones"
+  - label: "No, skip"
+    description: "None of these issues need to depend on the new issue"
+
+**If "Yes, mark all as dependents":**
+- AUTO_DETECTED_DEPS is already set from the scan above
+- AUTO_DETECTED_DEP_PATHS is already set from the scan above
+- Continue to step: issue_discuss_and_requirements
+
+**If "Yes, let me choose":**
+
+Use AskUserQuestion:
+- header: "Select Dependent Issues"
+- question: "Which issues should depend on this new issue? (Select all that apply)"
+- options: [One entry per issue in AUTO_DETECTED_DEPS with its ID]
+- multiSelect: true
+
+Capture selected issue IDs as AUTO_DETECTED_DEPS. Populate AUTO_DETECTED_DEP_PATHS with the corresponding
+paths from the original AUTO_DETECTED_DEP_PATHS. Always look up each selected ID in the original
+AUTO_DETECTED_DEPS array to find its index, then use that index to get the corresponding path from
+AUTO_DETECTED_DEP_PATHS. Never use positional order of selected items — always resolve by ID match.
+Continue to step: issue_discuss_and_requirements.
+
+**If "No, skip":**
+- Set AUTO_DETECTED_DEPS = []
+- Set AUTO_DETECTED_DEP_PATHS = []
+- Continue to step: issue_discuss_and_requirements
+
+</step>
+
 <step name="issue_discuss_and_requirements">
 
 **Gather additional issue context and requirements in a single batch:**
@@ -867,6 +995,24 @@ The script handles:
 - Git add and commit
 
 Check the JSON output for success status.
+
+**Apply auto-detected skill dependency updates (if any):**
+
+After the issue is fully created, apply STATE.md dependency updates for issues that were flagged in
+`issue_detect_skill_deps`. This is done AFTER creation to ensure that orphaned writes never happen if
+the wizard is abandoned before issue creation completes.
+
+If AUTO_DETECTED_DEPS is non-empty, for each index `i` in AUTO_DETECTED_DEPS:
+
+```bash
+NEW_ISSUE_ID="{new-issue-id}"   # The ID of the newly created issue
+STATE_FILE="${AUTO_DETECTED_DEP_PATHS[$i]}"
+
+update_state_dependency "$STATE_FILE" "$NEW_ISSUE_ID"
+```
+
+After updating all STATE.md files, commit all changes with a `planning:` commit message such as:
+`planning: add {new-issue-id} as dependency of auto-detected dependent issues`
 
 </step>
 
