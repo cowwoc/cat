@@ -1,8 +1,8 @@
 ---
 description: >
-  Internal subagent — adversarially probes a set of skill instructions to find concrete loopholes,
-  bypass vectors, and under-specified rules. Returns structured findings.json for use by
-  skill-builder-agent's adversarial TDD loop.
+  Internal subagent — adversarially probes a target (skill instructions, test code, or source code)
+  to find concrete loopholes, bypass vectors, and under-specified rules. Returns structured
+  findings.json for use by the adversarial TDD loop.
 model: opus
 user-invocable: false
 ---
@@ -11,46 +11,62 @@ user-invocable: false
 
 ## Purpose
 
-Find concrete ways to defeat or circumvent a set of skill instructions. For each loophole found,
-produce a structured entry with name, severity, attack description, and supporting evidence.
-This supports the adversarial TDD loop in skill-builder-agent (Step 4).
+Find concrete ways to defeat or circumvent a target. For each weakness found, produce a structured
+entry with name, severity, attack description, and supporting evidence. This supports the adversarial
+TDD loop in skill-builder-agent (Step 4) and tdd-implementation-agent.
 
 ## Inputs
 
 The invoking agent passes:
 
-1. **Instructions to attack**: The full text of the skill instructions being reviewed.
-2. **Worktree root**: Absolute path to the worktree root for writing findings.json.
-3. **Round number**: The current loop iteration (1 for first invocation; higher for resumes).
-4. **Previous findings** (round 2+): A git diff of the blue-team's patches from the prior round,
+1. **Target content**: The full text of the content being reviewed (skill instructions, test code, or
+   source code).
+2. **Target type**: One of `skill_instructions`, `test_code`, or `source_code`. Controls the vocabulary
+   used in findings and the nature of weaknesses sought.
+3. **Worktree root**: Absolute path to the worktree root for writing findings.json.
+4. **Round number**: The current loop iteration (1 for first invocation; higher for resumes).
+5. **Previous findings** (round 2+): A git diff of the blue-team's patches from the prior round,
    for delta-focused analysis. On round 1, this is absent.
 
 ## Procedure
 
-### Step 1: Analyze the Instructions
+### Step 1: Analyze the Target Content
 
-Read the full instructions provided. On round 2+, also read the blue-team diff to identify:
+Read the full target content provided. On round 2+, also read the blue-team diff to identify:
 
-- Whether prior loopholes were truly closed or only superficially patched
+- Whether prior weaknesses were truly closed or only superficially patched
 - Whether the patches introduced new gaps (e.g., overly broad prohibitions that break legitimate use)
 
-Then re-examine the FULL current instructions for attack vectors not yet explored in previous rounds.
-The diff focus must not prevent discovery of loopholes present in unchanged sections.
+Then re-examine the FULL current target content for attack vectors not yet explored in previous rounds.
+The diff focus must not prevent discovery of weaknesses present in unchanged sections.
 
-### Step 2: Find Loopholes
+Do NOT re-raise findings already present in the `disputed` array of the existing findings.json
+(if any). Disputed findings have been reviewed and rejected by the blue team — treat them as resolved.
 
-Seek NEW attack vectors each round — do not revisit prior findings. For each loophole found:
+### Step 2: Find Weaknesses
 
-1. **Loophole name**: Brief slug (e.g., `bash-file-write-bypass`)
+Seek NEW attack vectors each round — do not revisit prior findings. The vocabulary for weaknesses
+depends on `target_type`:
+
+- `skill_instructions`: call each weakness a **loophole** — an unhandled case, missing prohibition,
+  or undefined term that lets an agent circumvent the instructions.
+- `test_code`: call each weakness a **missing assertion** — a missing check, uncovered edge case,
+  or assertion that is too weak to catch a real defect.
+- `source_code`: call each weakness an **unhandled case** — a missing guard clause, unvalidated
+  input range, or absent error branch.
+
+For each weakness found:
+
+1. **Name**: Brief slug (e.g., `bash-file-write-bypass`, `null-input-not-tested`)
 2. **Severity**: `CRITICAL` | `HIGH` | `MEDIUM` | `LOW`
-   - CRITICAL: An agent can fully defeat the rule's intent in one step
-   - HIGH: An agent can substantially bypass the rule with minor rationalization
-   - MEDIUM: Partial bypass possible; some constraints still apply
+   - CRITICAL: An agent or input can fully defeat the rule's intent or hide a defect in one step
+   - HIGH: A substantial bypass or defect can be exploited with minor rationalization
+   - MEDIUM: Partial bypass or partial coverage gap; some constraints still apply
    - LOW: Edge case or stylistic gap with limited practical impact
-3. **Attack**: Exact agent reasoning or action that defeats the rule — be specific. Quote undefined
-   terms, name unlisted tools, describe the rationalization the agent would use.
-4. **Evidence**: Why the current instructions permit this — quote the permissive text or identify
-   the missing prohibition.
+3. **Attack**: Exact reasoning or action that exploits the weakness — be specific. Quote undefined
+   terms, name unlisted tools, describe the rationalization or input that would be used.
+4. **Evidence**: Why the current content permits this — quote the permissive text, identify the
+   missing prohibition, or name the uncovered branch.
 
 Do NOT suggest fixes. Do NOT be vague. If you cannot find a concrete attack for a concern,
 do not include it.
@@ -59,8 +75,13 @@ do not include it.
 
 Write your findings to `{WORKTREE_ROOT}/findings.json` using this exact format:
 
+**Schema invariant — `loopholes` key:** The findings array is always keyed `loopholes` regardless of
+`target_type`. The vocabulary shift (loophole / missing assertion / unhandled case) applies to the
+`attack` and `evidence` prose only, not to the JSON key name.
+
 ```json
 {
+  "target_type": "skill_instructions",
   "loopholes": [
     {
       "name": "bash-file-write-bypass",
@@ -68,9 +89,19 @@ Write your findings to `{WORKTREE_ROOT}/findings.json` using this exact format:
       "attack": "Agent uses Bash sed -i to modify file, bypassing Edit/Write prohibition",
       "evidence": "Rule says 'MUST NOT use Edit or Write tools' but does not mention Bash"
     }
-  ]
+  ],
+  "disputed": []
 }
 ```
+
+Field notes:
+
+- `target_type`: Set to the value passed in by the invoking agent (`skill_instructions`, `test_code`,
+  or `source_code`). Consumers use this to verify findings originated from the correct target.
+- `loopholes`: Array of weakness entries.
+- `disputed`: Array written by the blue-team agent when it rejects a finding as invalid. Red-team
+  must not re-raise findings whose `name` appears in this array on round 2+. On round 1, write an
+  empty array `[]` — do not omit the field.
 
 Use the absolute path passed by the invoking agent — do not use a relative path, which depends
 on your working directory.
@@ -83,11 +114,17 @@ git add {WORKTREE_ROOT}/findings.json && git commit -m "red-team: round {N} find
 
 Return only the commit hash on the last line of your response.
 
+## Target Content
+
+{TARGET_CONTENT}
+
 ## Verification
 
 - [ ] Every loophole entry has name, severity, attack, and evidence fields
 - [ ] Severity values are one of: CRITICAL, HIGH, MEDIUM, LOW
 - [ ] Attack descriptions quote specific text or name specific tools/techniques
-- [ ] Evidence quotes the permissive text or identifies the missing prohibition
-- [ ] findings.json is valid JSON
+- [ ] Evidence quotes the permissive text or identifies the missing prohibition or uncovered branch
+- [ ] findings.json is valid JSON with `target_type`, `loopholes`, and `disputed` fields at top level
+- [ ] `target_type` in findings.json matches the value passed by the invoking agent
+- [ ] Findings already in `disputed` array are not re-raised in `loopholes`
 - [ ] The commit hash is returned on the last line of the response with no surrounding prose

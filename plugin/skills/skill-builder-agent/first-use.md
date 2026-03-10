@@ -299,6 +299,18 @@ reflects only unresolved findings. If no CRITICAL or HIGH entries exist in `loop
 sufficiently hardened. If the round counter reaches 10 without convergence, stop and report
 "Loop cap reached at 10 rounds — {N} CRITICAL/HIGH loopholes remain unresolved."
 
+> **Invocation variants — target_type:** The examples below use `skill_instructions`. Replace the
+> `target_type` value to match the content being hardened:
+>
+> | `target_type`       | Content being hardened          | `TARGET_FILE_PATH` points to |
+> |---------------------|---------------------------------|------------------------------|
+> | `skill_instructions`| Skill or agent Markdown file    | SKILL.md or agent .md file   |
+> | `test_code`         | Test source file                | *Test.java or *Test.sh       |
+> | `source_code`       | Implementation source file      | *.java, *.sh, etc.           |
+>
+> Replace the `skill_instructions` value in the `## Target Type` prompt field with the appropriate `target_type` from
+> the table above.
+
 **Round 1 — spawn persistent agents:**
 
 Spawn the red-team agent using the Task tool and store its `task_id` as `RED_TEAM_TASK_ID`:
@@ -308,7 +320,10 @@ Task tool:
   description: "Red-team: find loopholes in instructions (round 1)"
   subagent_type: "cat:red-team-agent"
   prompt: |
-    ## Instructions to Attack
+    ## Target Type
+    skill_instructions
+
+    ## Target Content
     {CURRENT_INSTRUCTIONS}
 
     ## Worktree Root
@@ -339,14 +354,20 @@ Task tool:
   description: "Blue-team: close loopholes in instructions (round 1)"
   subagent_type: "cat:blue-team-agent"
   prompt: |
-    ## Current Instructions
+    ## Target Type
+    skill_instructions
+
+    ## Current Content
     {CURRENT_INSTRUCTIONS}
 
     ## Red-Team Commit Hash
     {RED_TEAM_COMMIT_HASH}
 
-    ## Skill File Path
+    ## Target File Path
     {SKILL_FILE_PATH}
+
+    ## Worktree Root
+    {WORKTREE_ROOT}
 
     ## Round Number
     1
@@ -457,14 +478,20 @@ Task tool:
   description: "Diff validation: round 1"
   subagent_type: "cat:diff-validation-agent"
   prompt: |
-    ## Diff Command
-    git diff {PREV_BLUE_COMMIT_OR_ROUND1_START}..{BLUE_TEAM_COMMIT_HASH} -- {SKILL_FILE_PATH}
+    ## Target Type
+    skill_instructions
 
-    ## Findings Commit Hash
+    ## RED_TEAM_COMMIT_HASH
     {RED_TEAM_COMMIT_HASH}
 
-    ## Skill File Path
+    ## BLUE_TEAM_COMMIT_HASH
+    {BLUE_TEAM_COMMIT_HASH}
+
+    ## TARGET_FILE_PATH
     {SKILL_FILE_PATH}
+
+    ## WORKTREE_ROOT
+    {WORKTREE_ROOT}
 
     ## Round Number
     1
@@ -476,28 +503,36 @@ Round 2+ — resume:
 Task tool (resume):
   task_id: {DIFF_VALIDATION_TASK_ID}
   prompt: |
-    ## Diff Command
-    git diff {PREV_BLUE_COMMIT_OR_ROUND1_START}..{BLUE_TEAM_COMMIT_HASH} -- {SKILL_FILE_PATH}
+    ## Target Type
+    skill_instructions
 
-    ## Findings Commit Hash
+    ## RED_TEAM_COMMIT_HASH
     {RED_TEAM_COMMIT_HASH}
 
-    ## Skill File Path
+    ## BLUE_TEAM_COMMIT_HASH
+    {BLUE_TEAM_COMMIT_HASH}
+
+    ## TARGET_FILE_PATH
     {SKILL_FILE_PATH}
+
+    ## WORKTREE_ROOT
+    {WORKTREE_ROOT}
 
     ## Round Number
     {N}
 ```
 
-Parse the JSON result from the diff-validation agent's last line. If `"status": "INVALID"`:
+The diff-validation agent returns a commit hash on its last line and exits non-zero when any non-disputed
+CRITICAL or HIGH finding has no matching patch hunk. If the agent exits non-zero (validation failed):
 
-1. Run `git revert {BLUE_TEAM_COMMIT_HASH} --no-edit` to undo the commit.
-2. Resume the blue-team agent with: "Your round {N} patch was reverted. The following hunks had no
-   correspondence to any listed loophole: {out_of_scope_hunks from validation result}. Rewrite the patch
-   touching only the lines required to close each loophole. Do not modify any other content. Commit and
-   return the new hash."
-3. Re-run diff validation (resume DIFF_VALIDATION_TASK_ID) with the new blue-team commit. If the result
-   is still INVALID, log "ERROR: blue-team introduced out-of-scope changes in round {N} after retry —
+1. Read the `diff-validation-{N}.json` report from the returned commit hash to identify which findings
+   had no matching hunk (those with `"outcome": "FAIL"`).
+2. Run `git revert {BLUE_TEAM_COMMIT_HASH} --no-edit` to undo the commit.
+3. Resume the blue-team agent with: "Your round {N} patch was reverted. The following findings had no
+   corresponding patch hunk: {FAIL findings from diff-validation report}. Rewrite the patch touching only
+   the lines required to close each finding. Do not modify any other content. Commit and return the new hash."
+4. Re-run diff validation (resume DIFF_VALIDATION_TASK_ID) with the new blue-team commit. If validation
+   still fails, log "ERROR: blue-team introduced insufficient patches in round {N} after retry —
    aborting loop" and stop. Do not retry more than once per round.
 
 Read the skill file at `BLUE_TEAM_COMMIT_HASH` to update `CURRENT_INSTRUCTIONS`.
@@ -516,6 +551,9 @@ Task tool (resume):
   task_id: {RED_TEAM_TASK_ID}
   prompt: |
     Round {N}. Resume your red-team analysis.
+
+    ## Target Type
+    skill_instructions
 
     ## What Changed Since Last Round
     {git diff RED_TEAM_COMMIT_HASH..BLUE_TEAM_COMMIT_HASH -- SKILL_FILE_PATH}
@@ -544,11 +582,17 @@ Task tool (resume):
   prompt: |
     Round {N}. Resume your blue-team patching.
 
+    ## Target Type
+    skill_instructions
+
     ## Red-Team Commit Hash
     {RED_TEAM_COMMIT_HASH}
 
-    ## Skill File Path
+    ## Target File Path
     {SKILL_FILE_PATH}
+
+    ## Worktree Root
+    {WORKTREE_ROOT}
 
     ## Round Number
     {N}
@@ -705,5 +749,9 @@ implementation details (trust levels, internal architecture, etc.).
 - [ ] Step 4 `disputed` array contains only arbitration-upheld disputes; rejected disputes are in `loopholes`
 - [ ] Step 4 blue-team round 2+ prompt includes prior rejected disputes so blue-team cannot re-dispute findings arbitration already rejected
 - [ ] findings.json `disputed` array accumulates across rounds and is never reset
+- [ ] Step 4 red-team prompts pass `target_type: skill_instructions` and use `## Target Content` section header
+- [ ] Step 4 blue-team prompts pass `target_type: skill_instructions` and use `## Current Content` and `## Target File Path`
+- [ ] Step 4 diff-validation prompts pass `target_type: skill_instructions` and use `RED_TEAM_COMMIT_HASH`,
+  `BLUE_TEAM_COMMIT_HASH`, `TARGET_FILE_PATH` field names matching the agent interface
 - [ ] In-place hardening mode produces per-round commits (one from red-team, one from blue-team per round)
 - [ ] If batch mode was used: summary table shows Loopholes Closed, Disputes Upheld, and Patches Applied columns
