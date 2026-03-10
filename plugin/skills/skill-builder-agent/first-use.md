@@ -444,6 +444,22 @@ Task tool (resume):
 
 ### Step 5: In-Place Hardening Mode (Optional)
 
+**BLOCKING — Do NOT implement this loop manually.** Reading this section does not authorize direct
+execution of the hardening algorithm. You are NOT the hardening engine — you are the orchestrator.
+
+The ONLY valid execution path is:
+- Spawn red-team and blue-team subagents using the **Task tool** as defined in Step 4
+- Let the subagents read CURRENT_INSTRUCTIONS, execute the loop, and commit changes
+
+**Prohibited paths (will be treated as a protocol violation):**
+- Manually performing the red-team analysis yourself (without a Task tool subagent)
+- Delegating to `cat:work-execute` — this is an implementation subagent, not a hardening subagent
+- Delegating to any non-Task-tool path
+- Announcing "executing skill-builder in-place hardening mode" and then doing it yourself
+
+If you are reading this and thinking "I should now run the loop", stop — you are primed incorrectly.
+Return to Step 4 and spawn Task tool subagents.
+
 In-place hardening mode runs the adversarial TDD loop against a skill file in a worktree in a single session,
 producing one commit per round as the loop progresses.
 
