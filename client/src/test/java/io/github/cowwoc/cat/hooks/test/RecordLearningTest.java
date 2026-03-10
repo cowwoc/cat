@@ -1106,8 +1106,8 @@ public final class RecordLearningTest
     input.put("category", "protocol_violation");
     input.put("description", description);
     input.put("root_cause", "Test root cause");
-    input.put("rca_method", "A");
-    input.put("rca_method_name", "5-whys");
+    input.put("rca_method", "C");
+    input.put("rca_method_name", "causal-barrier");
     if (causeSignature != null)
       input.put("cause_signature", causeSignature);
     else

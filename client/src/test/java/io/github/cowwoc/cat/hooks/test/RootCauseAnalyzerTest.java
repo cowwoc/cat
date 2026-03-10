@@ -331,6 +331,122 @@ public final class RootCauseAnalyzerTest
   }
 
   /**
+   * Verifies that new mistake records using Method C (rca_method="C", rca_method_name="causal-barrier") are
+   * processed correctly and that the analyzer handles all three historical methods (A, B, C).
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void newMistakesUseMethodC() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-rca-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path retrospectivesDir = tempDir.resolve(".claude/cat/retrospectives");
+      Files.createDirectories(retrospectivesDir);
+
+      // New mistakes recorded after A/B test retirement use Method C
+      Files.writeString(retrospectivesDir.resolve("mistakes-2026-03.json"), """
+        {
+          "period": "2026-03",
+          "mistakes": [
+            {"id": "M600", "rca_method": "C", "rca_method_name": "causal-barrier"},
+            {"id": "M601", "rca_method": "C", "rca_method_name": "causal-barrier"},
+            {"id": "M602", "rca_method": "C", "rca_method_name": "causal-barrier",
+             "recurrence_of": "M600"}
+          ]
+        }
+        """);
+
+      RootCauseAnalyzer analyzer = new RootCauseAnalyzer(tempDir, scope);
+      String result = analyzer.analyze(0);
+
+      JsonNode[] entries = scope.getJsonMapper().readValue(result, JsonNode[].class);
+
+      requireThat(entries.length, "entriesCount").isEqualTo(1);
+
+      JsonNode methodC = entries[0];
+      requireThat(methodC.get("method").asString(), "methodC").isEqualTo("C");
+      requireThat(methodC.get("count").asInt(), "CCount").isEqualTo(3);
+      requireThat(methodC.get("recurrences").asInt(), "CRecurrences").isEqualTo(1);
+      requireThat(methodC.get("recurrence_rate").asInt(), "CRecurrenceRate").isEqualTo(33);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that the analyzer handles all three historical RCA methods (A, B, C) for backward compatibility
+   * with pre-retirement records.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void handlesAllThreeMethodsForBackwardCompatibility() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-rca-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path retrospectivesDir = tempDir.resolve(".claude/cat/retrospectives");
+      Files.createDirectories(retrospectivesDir);
+
+      // Historical records may use methods A, B, or C
+      Files.writeString(retrospectivesDir.resolve("mistakes-2026-01.json"), """
+        {
+          "period": "2026-01",
+          "mistakes": [
+            {"id": "M100", "rca_method": "A"},
+            {"id": "M101", "rca_method": "B"},
+            {"id": "M102", "rca_method": "C", "rca_method_name": "causal-barrier"},
+            {"id": "M103", "rca_method": "A", "recurrence_of": "M100"},
+            {"id": "M104", "rca_method": "C", "rca_method_name": "causal-barrier",
+             "recurrence_of": "M102"}
+          ]
+        }
+        """);
+
+      RootCauseAnalyzer analyzer = new RootCauseAnalyzer(tempDir, scope);
+      String result = analyzer.analyze(0);
+
+      JsonNode[] entries = scope.getJsonMapper().readValue(result, JsonNode[].class);
+
+      requireThat(entries.length, "entriesCount").isEqualTo(3);
+
+      JsonNode methodA = null;
+      JsonNode methodB = null;
+      JsonNode methodC = null;
+      for (JsonNode entry : entries)
+      {
+        String method = entry.get("method").asString();
+        if ("A".equals(method))
+          methodA = entry;
+        else if ("B".equals(method))
+          methodB = entry;
+        else if ("C".equals(method))
+          methodC = entry;
+      }
+
+      requireThat(methodA, "methodAEntry").isNotNull();
+      requireThat(methodA.get("count").asInt(), "ACount").isEqualTo(2);
+      requireThat(methodA.get("recurrences").asInt(), "ARecurrences").isEqualTo(1);
+
+      requireThat(methodB, "methodBEntry").isNotNull();
+      requireThat(methodB.get("count").asInt(), "BCount").isEqualTo(1);
+      requireThat(methodB.get("recurrences").asInt(), "BRecurrences").isEqualTo(0);
+
+      requireThat(methodC, "methodCEntry").isNotNull();
+      requireThat(methodC.get("count").asInt(), "CCount").isEqualTo(2);
+      requireThat(methodC.get("recurrences").asInt(), "CRecurrences").isEqualTo(1);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that results are sorted by method name alphabetically.
    *
    * @throws IOException if test setup fails
