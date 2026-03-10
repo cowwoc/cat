@@ -5,135 +5,100 @@ See LICENSE.md in the project root for license terms.
 -->
 # Git Rewrite History Skill
 
-**Purpose**: Safely rewrite git history using `git-filter-repo`, the modern replacement for
-`git filter-branch`.
+**Purpose**: Safely rewrite git history using BFG Repo-Cleaner, a Java-based alternative to git-filter-repo that
+requires no Python dependency.
 
-## Why git-filter-repo over git-filter-branch
+## Why BFG Repo-Cleaner
 
-**Always use `git-filter-repo` instead of `git filter-branch`**. Git itself warns against filter-branch:
+**Always use BFG instead of `git filter-branch`**. Git itself warns against filter-branch:
 
 > git-filter-branch has a glut of gotchas generating mangled history rewrites.
-> Use git-filter-repo instead.
 
-| Feature | git-filter-repo | git-filter-branch |
-|---------|-----------------|-------------------|
-| Speed | 10-50x faster | Slow |
-| Safety | Handles edge cases | Many gotchas |
-| Maintenance | Actively maintained | Deprecated |
-| Syntax | Simple, intuitive | Complex, error-prone |
+| Feature | BFG Repo-Cleaner | git-filter-repo | git-filter-branch |
+|---------|------------------|-----------------|-------------------|
+| Speed | 10-720x faster | Fast | Slow |
+| Safety | Handles edge cases | Good | Many gotchas |
+| Maintenance | Actively maintained | Actively maintained | Deprecated |
+| Runtime | Java (already required by CAT) | Python (not available in CAT) | Bash/shell |
 
 ## Installation
 
+BFG is automatically downloaded on first use. The download script at
+`${CLAUDE_PLUGIN_ROOT}/scripts/download-bfg.sh` handles downloading, SHA256 verification, and caching.
+
+To manually trigger the download or verify the installation:
+
 ```bash
-pip install git-filter-repo
-# or
-pip install --break-system-packages git-filter-repo
+"${CLAUDE_PLUGIN_ROOT}/scripts/download-bfg.sh"
 ```
 
-## Safety Pattern: Backup-Verify-Cleanup
+The JAR is cached at `${CLAUDE_PLUGIN_ROOT}/lib/bfg.jar`.
+
+## Safety Pattern: Clone, Clean, Verify
 
 **ALWAYS follow this pattern:**
 
-1. **Work on a fresh clone** (filter-repo requires this by default)
-2. Create backup of original remote URL
-3. Execute the filter operation **with `--partial`** (preserves reflog for recovery)
-4. **Verify immediately** - check history is correct
-5. Force push only after verification and explicit user approval
-
-### MANDATORY: Always Use --partial Flag
-
-**Always include the `--partial` flag with git-filter-repo**. Without it:
-- Reflog is expired (old commits unrecoverable)
-- Automatic `git gc` runs (objects permanently deleted)
-- No recovery possible after force-push
-
-With `--partial`:
-- Old commits preserved in reflog
-- Recovery via `git reset --hard HEAD@{n}` possible
-- New history is active, old history available as fallback
+```bash
+# BFG requires a bare clone — create one in a unique temp directory
+WORK_DIR=$(mktemp -d)
+BARE_REPO="${WORK_DIR}/repo-clean.git"
+git clone --mirror . "$BARE_REPO"
+cd "$BARE_REPO"
+# Run BFG operation
+BFG_JAR=$("${CLAUDE_PLUGIN_ROOT}/scripts/download-bfg.sh")
+java -jar "$BFG_JAR" [options] .
+# Verify history is correct
+# Then fetch cleaned refs back into the original repo:
+cd -
+git fetch "$BARE_REPO" '+refs/heads/*:refs/heads/*'
+rm -rf "$WORK_DIR"
+```
 
 ## Common Operations
+
+**First, ensure BFG is available:**
+
+```bash
+BFG_JAR=$("${CLAUDE_PLUGIN_ROOT}/scripts/download-bfg.sh")
+```
+
+Then use `java -jar "$BFG_JAR"` in place of `java -jar bfg.jar` for all operations below.
 
 ### Remove a File from All History
 
 ```bash
-# Fresh clone required
-git clone --mirror <url> repo-filter
-cd repo-filter
-
-# Remove file (--partial preserves reflog for recovery)
-git filter-repo --partial --path secrets.txt --invert-paths
-
-# Verify
-git log --all --oneline -- secrets.txt  # Should return nothing
-
-# If wrong, recover: git reflog && git reset --hard HEAD@{n}
-
-# Push only after verification (requires explicit user approval)
-git push origin --force --all
+java -jar "$BFG_JAR" --delete-files secrets.txt .
 ```
 
 ### Remove a Directory from All History
 
 ```bash
-git filter-repo --partial --path vendor/ --invert-paths
-```
-
-### Remove a Submodule from History
-
-```bash
-# This removes the gitlink entry for a submodule
-git filter-repo --partial --path submodule-name --invert-paths
-```
-
-### Rename/Move Files in History
-
-```bash
-# Rename a file across all history
-git filter-repo --partial --path-rename old-name.txt:new-name.txt
-
-# Move directory
-git filter-repo --partial --path-rename old-dir/:new-dir/
+java -jar "$BFG_JAR" --delete-folders vendor .
 ```
 
 ### Remove Large Files
 
 ```bash
-# Remove files larger than 10MB
-git filter-repo --partial --strip-blobs-bigger-than 10M
-```
-
-### Keep Only Specific Paths
-
-```bash
-# Keep only src/ directory (remove everything else)
-git filter-repo --partial --path src/
+java -jar "$BFG_JAR" --strip-blobs-bigger-than 10M .
 ```
 
 ### Filter by Content (Remove Secrets)
 
 ```bash
-# Replace text patterns
-git filter-repo --partial --replace-text expressions.txt
-
-# Where expressions.txt contains:
-# PASSWORD=secret123==>PASSWORD=REDACTED
-# regex:api_key=\w+==>api_key=REDACTED
+# Replace text patterns (expressions.txt format: PASSWORD=secret==>PASSWORD=REDACTED)
+java -jar "$BFG_JAR" --replace-text expressions.txt .
 ```
 
-## Working on Existing Clone
+### Drop Specific Commits
 
-By default, git-filter-repo requires a fresh clone. To work on an existing repo:
-
-```bash
-# --partial preserves reflog, --force allows non-fresh clone
-git filter-repo --partial --force --path file-to-remove --invert-paths
-```
+BFG does not support dropping individual commits by hash. Use the `cat:git-rebase-agent` skill with
+`--onto <parent-of-commit> <commit> <branch>` arguments to replay commits after the dropped commit onto its parent.
+(MANDATORY: always use `cat:git-rebase-agent` instead of running `git rebase` directly.)
 
 ## After Rewriting History
 
 1. **All collaborators must re-clone** or reset their branches
-2. **Force push required**: `git push --force-with-lease origin <branch>`
+2. **Force push required**: Run `cat:validate-git-safety-agent` first, then `git push --force-with-lease origin <branch>`
 3. **Update any CI/CD** that caches the old commits
 4. **GitHub/GitLab**: May need to run garbage collection on server
 
@@ -147,35 +112,22 @@ git filter-repo --partial --force --path file-to-remove --invert-paths
 
 ## Recovery
 
-If something goes wrong (before force-push):
+If something goes wrong (before fetching cleaned refs back):
 
-```bash
-# With --partial, old history is in reflog
-git reflog                           # Find old commit (e.g., HEAD@{2})
-git reset --hard HEAD@{2}            # Restore to pre-filter state
+- **Reflog recovery**: `git reflog` then `git reset --hard HEAD@{n}` (run inside the bare clone)
+- **Re-clone**: If reflog is insufficient, delete the temp directory and start over from the local repo
 
-# If you have original remote (after force-push)
-git fetch origin
-git reset --hard origin/<branch>
-
-# If you kept a backup branch
-git reset --hard backup-before-filter
-```
-
-**CRITICAL**: Recovery from reflog only works if:
-1. You used `--partial` flag
-2. You haven't force-pushed yet (or haven't run `git gc`)
+Since we do not expire the reflog or run aggressive garbage collection, old commits remain
+accessible via `git reflog` indefinitely until a manual cleanup is performed.
 
 ## When to Use This Skill
 
 - Removing accidentally committed secrets
 - Removing large binary files to reduce repo size
-- Removing submodules from history
-- Restructuring repository paths
-- Splitting a repository
+- Removing files or directories from all history
 
 ## References
 
-- [git-filter-repo documentation](https://github.com/newren/git-filter-repo)
-- [GitHub: Removing sensitive
-  data](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository)
+- [BFG Repo-Cleaner](https://rtyley.github.io/bfg-repo-cleaner/)
+- [BFG GitHub](https://github.com/rtyley/bfg-repo-cleaner)
+- [GitHub: Removing sensitive data](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository)
