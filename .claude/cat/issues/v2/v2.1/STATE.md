@@ -74,6 +74,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-issue-discovery-lock-leak
 - block-skill-builder-manual-hardening
 - remove-rca-ab-test-file
+- add-blue-team-dispute-mechanism
 
 
 ## Issues Closed
