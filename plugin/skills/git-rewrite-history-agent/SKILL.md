@@ -1,5 +1,5 @@
 ---
-description: "MANDATORY: Use instead of `git filter-branch` - safer git-filter-repo with recovery"
+description: "MANDATORY: Use instead of git filter-branch or git-filter-repo - BFG Repo-Cleaner (Java-based, no Python required)"
 model: sonnet
 user-invocable: false
 argument-hint: "<catAgentId>"
