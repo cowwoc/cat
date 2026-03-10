@@ -78,6 +78,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - generalize-adversarial-agents-for-multi-target
 - update-skill-builder-tdd-to-use-adversarial-agents
 - add-subagent-context-minimization-concept
+- add-context-minimization-to-skill-builder-analysis
 
 
 ## Issues Closed
