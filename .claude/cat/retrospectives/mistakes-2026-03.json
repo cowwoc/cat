@@ -1690,5 +1690,25 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M530",
+    "timestamp" : "2026-03-10T15:01:19Z",
+    "category" : "environmental_failure",
+    "description" : "",
+    "root_cause" : "Session environment terminated before AskUserQuestion hook completion. The failure is environmental, not in agent logic or decision-making.",
+    "rca_method" : "causal-barrier",
+    "rca_method_name" : "",
+    "prevention_type" : "none",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "N/A",
+      "fragility" : "N/A",
+      "catches_variations" : false
+    },
+    "correct_behavior" : ""
   } ]
 }
