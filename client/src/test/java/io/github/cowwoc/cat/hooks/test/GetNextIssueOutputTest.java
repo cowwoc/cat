@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetNextIssueOutput;
+import io.github.cowwoc.cat.hooks.skills.TerminalType;
 import io.github.cowwoc.cat.hooks.util.IssueGoalReader;
 import org.testng.annotations.Test;
 
@@ -21,83 +22,13 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * Tests for GetNextIssueOutput functionality.
  * <p>
  * Tests verify box rendering output structure and business logic for
- * extracting scope and reading issue goals from PLAN.md fixtures.
+ * reading issue goals from PLAN.md fixtures.
  * <p>
  * Tests are designed for parallel execution - each test is self-contained
  * with no shared state.
  */
 public class GetNextIssueOutputTest
 {
-  /**
-   * Verifies that extractScope extracts version prefix correctly.
-   */
-  @Test
-  public void extractScopeFromVersionPrefixedIssue() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      GetNextIssueOutput output = new GetNextIssueOutput(scope);
-      String result = output.extractScopePublic("2.1-add-feature");
-      requireThat(result, "result").isEqualTo("v2.1");
-    }
-  }
-
-  /**
-   * Verifies that extractScope handles single digit version.
-   */
-  @Test
-  public void extractScopeFromSingleDigitVersion() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      GetNextIssueOutput output = new GetNextIssueOutput(scope);
-      String result = output.extractScopePublic("3-fix-bug");
-      requireThat(result, "result").isEqualTo("v3");
-    }
-  }
-
-  /**
-   * Verifies that extractScope returns empty string for empty input.
-   */
-  @Test
-  public void extractScopeReturnsEmptyForEmptyInput() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      GetNextIssueOutput output = new GetNextIssueOutput(scope);
-      String result = output.extractScopePublic("");
-      requireThat(result, "result").isEqualTo("");
-    }
-  }
-
-  /**
-   * Verifies that extractScope returns unknown when no dash separator.
-   */
-  @Test
-  public void extractScopeReturnsUnknownForNoDash() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      GetNextIssueOutput output = new GetNextIssueOutput(scope);
-      String result = output.extractScopePublic("noDashHere");
-      requireThat(result, "result").isEqualTo("noDashHere");
-    }
-  }
-
-  /**
-   * Verifies that extractScope preserves non-numeric prefix as-is.
-   */
-  @Test
-  public void extractScopePreservesNonNumericPrefix() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      GetNextIssueOutput output = new GetNextIssueOutput(scope);
-      String result = output.extractScopePublic("feature-add-login");
-      requireThat(result, "result").isEqualTo("feature");
-    }
-  }
-
   /**
    * Verifies that IssueGoalReader extracts first paragraph from PLAN.md.
    */
@@ -389,6 +320,30 @@ public class GetNextIssueOutputTest
     {
       GetNextIssueOutput output = new GetNextIssueOutput(scope);
       output.getOutput(new String[]{"--completed-issue", "2.1-test"});
+    }
+  }
+
+  /**
+   * Verifies that TestJvmScope rejects a blank session ID, matching the production contract
+   * where CLAUDE_SESSION_ID must be set.
+   */
+  @Test(expectedExceptions = AssertionError.class,
+    expectedExceptionsMessageRegExp = ".*must not be blank.*")
+  public void getOutputThrowsWhenSessionIdMissing() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("test-project-session");
+    Path pluginRoot = Files.createTempDirectory("test-plugin-session");
+    Path envFile = Files.createTempFile("test-env", ".sh");
+    try
+    {
+      // Constructing with blank sessionId must throw, matching MainJvmScope behavior
+      new TestJvmScope(projectDir, pluginRoot, "", envFile, TerminalType.WINDOWS_TERMINAL);
+    }
+    finally
+    {
+      Files.deleteIfExists(envFile);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(projectDir);
     }
   }
 

@@ -138,6 +138,8 @@ public final class TestJvmScope extends AbstractJvmScope
     requireThat(claudeProjectDir, "claudeProjectDir").isNotNull();
     requireThat(claudePluginRoot, "claudePluginRoot").isNotNull();
     requireThat(claudeSessionId, "claudeSessionId").isNotNull();
+    if (claudeSessionId.isBlank())
+      throw new AssertionError("claudeSessionId must not be blank");
     requireThat(claudeEnvFile, "claudeEnvFile").isNotNull();
     requireThat(terminalType, "terminalType").isNotNull();
     this.claudeProjectDir = claudeProjectDir;
