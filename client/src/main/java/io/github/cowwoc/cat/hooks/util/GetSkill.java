@@ -113,6 +113,7 @@ public final class GetSkill
   private final List<String> skillArgs;
   private final Path loadedDir;
   private final Set<String> loadedSkills;
+  private final String pluginPrefix;
 
   /**
    * Creates a new GetSkill instance.
@@ -201,6 +202,7 @@ public final class GetSkill
           "Ensure CLAUDE_PLUGIN_ROOT points to a valid plugin installation directory.");
     }
     this.skillArgs = List.copyOf(tokens);
+    this.pluginPrefix = scope.getPluginPrefix();
 
     Path baseDir = scope.getSessionBasePath().toAbsolutePath().normalize();
     Path agentDir = resolveAndValidateContainment(baseDir, catAgentId,
@@ -240,13 +242,14 @@ public final class GetSkill
     String rawContent = loadRawContent(skillName);
     String content = stripFrontmatter(rawContent);
 
-    if (loadedSkills.contains(skillName))
+    String qualifiedName = qualifySkillName(skillName);
+    if (loadedSkills.contains(qualifiedName))
     {
       // Subsequent load: return reference + re-execute single directive if present
       return buildSubsequentLoadResponse(skillName, content);
     }
     // First load: return full expanded content
-    markSkillLoaded(skillName);
+    markSkillLoaded(qualifiedName);
     return processPreprocessorDirectives(content, skillName);
   }
 
@@ -682,15 +685,34 @@ public final class GetSkill
 
   /**
    * Marks a skill as loaded by creating an empty marker file in the loaded directory.
+   * <p>
+   * The {@code qualifiedName} must include the plugin prefix (e.g., {@code "cat:git-rebase-agent"}).
    *
-   * @param skillName the skill name
+   * @param qualifiedName the fully-qualified skill name
    * @throws IOException if the marker file cannot be written
    */
-  private void markSkillLoaded(String skillName) throws IOException
+  private void markSkillLoaded(String qualifiedName) throws IOException
   {
-    loadedSkills.add(skillName);
-    String encodedName = URLEncoder.encode(skillName, StandardCharsets.UTF_8);
+    loadedSkills.add(qualifiedName);
+    String encodedName = URLEncoder.encode(qualifiedName, StandardCharsets.UTF_8);
     Files.writeString(loadedDir.resolve(encodedName), "", StandardCharsets.UTF_8);
+  }
+
+  /**
+   * Qualifies a skill name with the plugin prefix if not already qualified.
+   * <p>
+   * For example, {@code "git-rebase-agent"} becomes {@code "cat:git-rebase-agent"}.
+   * Names that already contain {@code ':'} are returned unchanged.
+   *
+   * @param skillName the skill name (bare or qualified)
+   * @return the qualified skill name
+   * @throws NullPointerException if {@code skillName} is null
+   */
+  private String qualifySkillName(String skillName)
+  {
+    if (skillName.contains(":"))
+      return skillName;
+    return pluginPrefix + ":" + skillName;
   }
 
   /**
