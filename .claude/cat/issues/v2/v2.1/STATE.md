@@ -75,6 +75,8 @@ Finalize naming conventions and UI polish before recording demo videos.
 - block-skill-builder-manual-hardening
 - remove-rca-ab-test-file
 - add-blue-team-dispute-mechanism
+- generalize-adversarial-agents-for-multi-target
+- update-skill-builder-tdd-to-use-adversarial-agents
 
 
 ## Issues Closed
