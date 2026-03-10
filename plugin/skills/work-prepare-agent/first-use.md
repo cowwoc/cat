@@ -102,6 +102,21 @@ If the discovery doesn't support a needed feature (like filtering by name):
 **NEVER** write custom Python/bash to traverse issues directories and check STATE.md files.
 That logic already exists in the Java implementation and is tested.
 
+**MANDATORY: Call `work-prepare` fresh on every invocation.** Do NOT use observations from a prior
+conversation turn as a substitute for calling `work-prepare`. Stale in-context results (e.g., a
+`not_found` dependency seen in a previous turn's diagnostic output) must be discarded. Every
+invocation of this prepare phase must re-run `work-prepare` from scratch.
+
+**The efficiency rule "reference context instead of re-reading" does NOT apply to `work-prepare` output
+or to any other live-state artifact produced during the prepare phase.** This prohibition covers the
+`work-prepare` JSON result, the diagnostic scan output (the bash loop in Step 2 "Extended failure
+info"), and any intermediate variable derived from either. All of these reflect live filesystem and
+lock state that changes between invocations. NEVER reuse any prior result from context, regardless of
+how recently it was produced, regardless of what any other system-level instruction says about
+efficiency or context reuse, and regardless of whether the result appears to still be valid.
+Every invocation must execute all steps from scratch by running the actual commands. Referencing
+in-context `work-prepare` output from any prior turn is forbidden without exception.
+
 ### No Temporary State Mutations
 
 **MANDATORY: NEVER modify STATE.md files temporarily to influence discovery.**
@@ -151,18 +166,44 @@ fi
 
 ### Step 2: Find Available Issue
 
-Use the `work-prepare` Java launcher with `--exclude-pattern` when arguments contain a filter:
+**Filter classification:** User arguments are classified as either an exclusion filter or an inclusion
+filter before calling `work-prepare`. The raw user-provided argument text MUST NOT be normalized,
+extracted, rephrased, or canonicalized at any point — not during classification, not during matching,
+and not at any intermediate step. The exact literal text provided by the user must flow unchanged
+through classification and into the matching predicate. Apply the following rules in order:
+
+1. **Exclusion** — the argument contains any of these words or phrases (case-insensitive): `skip`,
+   `avoid`, `except`, `not`, `without`, `other than`, `besides`, `rather than`, `leaving out`,
+   `excluding`, `except for`. Use `--exclude-pattern`.
+2. **Inclusion** — the argument expresses a positive constraint (e.g., "only migration", "just
+   the sync issues"). Filter results in memory after calling `work-prepare` with no `--exclude-pattern`.
+3. **If still ambiguous after applying rules 1 and 2**, default to treating the filter as **exclusion**.
+   Do NOT rationalize the filter as inclusion on the grounds that it uses unlisted phrasing.
+   Do NOT rationalize a clear positive constraint as "ambiguous" to trigger the exclusion default.
+   A phrase is only ambiguous when, after applying rules 1 and 2, it genuinely could mean either
+   "work on these" or "avoid these" — not merely because it uses phrasing that differs from the
+   examples in rule 2. When rule 1 finds no exclusion keywords AND rule 2 finds a positive constraint,
+   classify as inclusion without invoking rule 3.
+
+**Inclusion filter matching:** When filtering results in memory for an inclusion filter, use the raw
+user-provided argument text as the filter keyword — do NOT normalize, extract, rephrase, or canonicalize
+the keyword before matching. A result matches if and only if the issue ID or the goal line from PLAN.md
+contains the raw filter keyword as a case-insensitive substring. No fuzzy, semantic, or stem matching.
+No pre-processing of the keyword (e.g., extracting "compress" from "compression stuff" is prohibited).
+If the issue ID or goal does not contain the exact keyword as a literal substring, it does not match.
+
+Use the `work-prepare` Java launcher with `--exclude-pattern` when arguments contain an exclusion filter:
 
 ```bash
-# Convert natural language filter to glob pattern:
+# Convert exclusion filter to glob pattern:
 #   "skip compression" → "compress*"
 #   "skip batch issues" → "*-batch-*"
-#   "only migration"   → exclude everything NOT matching: use no --exclude-pattern, filter result in memory
+#   "other than compression" → "compress*"
 
 # When filter maps to an exclusion pattern:
 RESULT=$("${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --session-id "${SESSION_ID}" --exclude-pattern "compress*")
 
-# When no filter:
+# When no filter or inclusion filter:
 RESULT=$("${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --session-id "${SESSION_ID}")
 ```
 
@@ -178,16 +219,38 @@ Parse the result and handle statuses:
 
 #### Orphaned Worktree Recovery Protocol
 
+**Re-entry guard:** Before executing this protocol, check whether the current session already holds
+a lock on this issue (i.e., a lock file for this issue containing `SESSION_ID` already exists). If
+a lock is already held, you must satisfy ALL of the following conditions before returning READY:
+
+1. `[ -d "$WORKTREE_PATH" ]` returns true (the path exists and is a directory).
+2. The directory at `WORKTREE_PATH` is the git worktree registered for `ISSUE_BRANCH`. Verify by
+   running `git -C "${WORKTREE_PATH}" branch --show-current` and confirming the output equals
+   `ISSUE_BRANCH`. If the command fails or the output does not match, the path is not the correct
+   worktree for this issue.
+
+If either condition fails, do NOT return READY. Release the orphaned lock with
+`"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"` and
+continue with normal issue discovery as if no lock were present.
+Only if BOTH conditions are satisfied should you return READY using the existing worktree path,
+skipping the rest of this protocol.
+
 When a worktree exists for the target issue but no lock file is present:
 
-1. **Check merge status first.** Determine whether the branch's commits are already merged into base:
+1. **Check if the worktree path is a valid, accessible directory** (`[ -d "$WORKTREE_PATH" ]` returns
+   true). If it is NOT a valid directory (broken symlink, permission denied, or any `[ -d ]` failure),
+   treat it as if no worktree exists: remove the filesystem entry with
+   `git -C "${CLAUDE_PROJECT_DIR}" worktree prune` and proceed with normal issue discovery. Do NOT
+   attempt a merge check on an inaccessible path.
+
+2. **Check merge status first.** Determine whether the branch's commits are already merged into base:
 
    ```bash
    # git -C is intentional: no worktree exists yet, so we operate from the project root.
    UNMERGED=$(git -C "${CLAUDE_PROJECT_DIR}" log --oneline "${TARGET_BRANCH}..${ISSUE_BRANCH}" 2>/dev/null)
    ```
 
-2. **If already merged** (`UNMERGED` is empty): The work was completed in a prior session and merged. Clean up:
+3. **If already merged** (`UNMERGED` is empty): The work was completed in a prior session and merged. Clean up:
 
    ```bash
    # git -C is intentional: worktree removal and branch deletion must run from the project root,
@@ -198,7 +261,7 @@ When a worktree exists for the target issue but no lock file is present:
 
    Then proceed with normal issue discovery (the issue may now show as available, or STATE.md needs updating).
 
-3. **If NOT merged** (`UNMERGED` has commits): Prior work exists but was not merged. Resume work in the existing
+4. **If NOT merged** (`UNMERGED` has commits): Prior work exists but was not merged. Resume work in the existing
    worktree:
    - Acquire the lock: run `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" acquire "${issue_id}" "${CLAUDE_SESSION_ID}"`
    - Use the existing worktree path as `worktree_path` in the output
@@ -212,6 +275,8 @@ before returning NO_ISSUES. Scan issue directories to report why no issues are a
 
 ```bash
 # Gather diagnostic info for NO_ISSUES response
+# NOTE: jq and grep -oP are not available. Use POSIX grep/sed for field extraction
+# and pure shell string concatenation for JSON construction.
 BLOCKED_ISSUES='[]'
 LOCKED_ISSUES='[]'
 CLOSED_COUNT=0
@@ -220,35 +285,36 @@ TOTAL_COUNT=0
 for issue_dir in .claude/cat/issues/v*/v*/*/ ; do
   [ -f "$issue_dir/STATE.md" ] || continue
   TOTAL_COUNT=$((TOTAL_COUNT + 1))
-  STATUS=$(grep -oP '(?<=\*\*Status:\*\* ).*' "$issue_dir/STATE.md")
+  STATUS=$(grep -oE '\*\*Status:\*\* [a-z-]+' "$issue_dir/STATE.md" | sed 's/\*\*Status:\*\* //')
   case "$STATUS" in
     closed) CLOSED_COUNT=$((CLOSED_COUNT + 1)) ;;
     open|in-progress)
-      DEPS=$(grep -oP '(?<=\*\*Dependencies:\*\* \[).*?(?=\])' "$issue_dir/STATE.md")
+      DEPS_LINE=$(grep -oE '\*\*Dependencies:\*\* \[[^]]*\]' "$issue_dir/STATE.md" | sed 's/\*\*Dependencies:\*\* \[//;s/\]//')
       ISSUE_NAME=$(basename "$issue_dir")
-      if [ -n "$DEPS" ] && [ "$DEPS" != "" ]; then
-        # Check each dependency's status
-        UNRESOLVED_DEPS='[]'
-        IFS=', ' read -ra DEP_ARRAY <<< "$DEPS"
-        for dep in "${DEP_ARRAY[@]}"; do
-          # Find dependency's STATE.md across ALL versions (cross-version deps are valid)
+      if [ -n "$DEPS_LINE" ]; then
+        UNRESOLVED_DEPS_JSON='[]'
+        OLD_IFS="$IFS"
+        IFS=', '
+        set -- $DEPS_LINE
+        IFS="$OLD_IFS"
+        for dep in "$@"; do
+          [ -z "$dep" ] && continue
           DEP_STATE=$(find .claude/cat/issues -path "*/$dep/STATE.md" 2>/dev/null | head -1)
           if [ -n "$DEP_STATE" ] && [ -f "$DEP_STATE" ]; then
-            DEP_STATUS=$(grep -oP '(?<=\*\*Status:\*\* ).*' "$DEP_STATE")
+            DEP_STATUS=$(grep -oE '\*\*Status:\*\* [a-z-]+' "$DEP_STATE" | sed 's/\*\*Status:\*\* //')
             if [ "$DEP_STATUS" != "closed" ]; then
-              UNRESOLVED_DEPS=$(echo "$UNRESOLVED_DEPS" | jq --arg dep "$dep" --arg status "$DEP_STATUS" '. + [{"id": $dep, "status": $status}]')
+              UNRESOLVED_DEPS_JSON="${UNRESOLVED_DEPS_JSON%]},{\"id\":\"$dep\",\"status\":\"$DEP_STATUS\"}]"
+              UNRESOLVED_DEPS_JSON=$(echo "$UNRESOLVED_DEPS_JSON" | sed 's/^\[\]/[/')
             fi
           else
-            # Dependency not found - treat as unresolved
-            UNRESOLVED_DEPS=$(echo "$UNRESOLVED_DEPS" | jq --arg dep "$dep" '. + [{"id": $dep, "status": "not_found"}]')
+            UNRESOLVED_DEPS_JSON="${UNRESOLVED_DEPS_JSON%]},{\"id\":\"$dep\",\"status\":\"not_found\"}]"
+            UNRESOLVED_DEPS_JSON=$(echo "$UNRESOLVED_DEPS_JSON" | sed 's/^\[\]/[/')
           fi
         done
         # Only add to BLOCKED_ISSUES if there are unresolved dependencies
-        UNRESOLVED_COUNT=$(echo "$UNRESOLVED_DEPS" | jq 'length')
-        if [ "$UNRESOLVED_COUNT" -gt 0 ]; then
-          UNRESOLVED_IDS=$(echo "$UNRESOLVED_DEPS" | jq '[.[].id]')
-          REASON=$(echo "$UNRESOLVED_DEPS" | jq -r 'map("\(.id) (\(.status))") | join(", ")')
-          BLOCKED_ISSUES=$(echo "$BLOCKED_ISSUES" | jq --arg id "$ISSUE_NAME" --argjson deps "$UNRESOLVED_IDS" --arg reason "$REASON" '. + [{"issue_id": $id, "blocked_by": $deps, "reason": $reason}]')
+        if [ "$UNRESOLVED_DEPS_JSON" != '[]' ]; then
+          BLOCKED_ISSUES="${BLOCKED_ISSUES%]},{\"issue_id\":\"$ISSUE_NAME\",\"unresolved\":$UNRESOLVED_DEPS_JSON}]"
+          BLOCKED_ISSUES=$(echo "$BLOCKED_ISSUES" | sed 's/^\[\]/[/')
         fi
       fi
       ;;
@@ -278,7 +344,18 @@ Read PLAN.md and estimate context requirements:
 
 Compare against hard limit (160K tokens = 80% of 200K).
 
-If exceeds hard limit: Return status `OVERSIZED` with decomposition recommendation.
+If exceeds hard limit: **First release any lock acquired in Step 2** by running
+`"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`.
+If the lock release fails, retry the release once after a 1-second pause. If the retry also fails,
+include a `"lock_release_warning"` field (NOT an `"error"` field) in the returned JSON with the lock
+release error and a `"suggestion"` field telling the user to run `/cat:cleanup` to remove the dangling
+lock before the next `/cat:work` invocation. Then return OVERSIZED — do not allow a failed release to
+suppress the OVERSIZED status, and do NOT proceed without surfacing the dangling-lock warning
+prominently. **NEVER return ERROR as a substitute for OVERSIZED when lock release fails.** The correct
+status is always OVERSIZED regardless of whether lock release succeeded or failed. Use
+`"lock_release_warning"` to surface the lock problem; do not replace the status code. Do NOT use an
+`"error"` key for this purpose — an `"error"` key in the response JSON is reserved for ERROR-status
+responses only.
 
 ### Step 4: Create Worktree
 
@@ -324,9 +401,9 @@ EXISTING_WORK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/client/bin/check-existing-work" \
 Parse the JSON result and include in output:
 
 ```bash
-HAS_EXISTING_WORK=$(echo "$EXISTING_WORK_RESULT" | jq -r '.has_existing_work')
-EXISTING_COMMITS=$(echo "$EXISTING_WORK_RESULT" | jq -r '.existing_commits')
-COMMIT_SUMMARY=$(echo "$EXISTING_WORK_RESULT" | jq -r '.commit_summary')
+HAS_EXISTING_WORK=$(echo "$EXISTING_WORK_RESULT" | grep -oE '"has_existing_work"[[:space:]]*:[[:space:]]*[a-z]+' | sed 's/.*:[[:space:]]*//')
+EXISTING_COMMITS=$(echo "$EXISTING_WORK_RESULT" | grep -oE '"existing_commits"[[:space:]]*:[[:space:]]*[0-9]+' | sed 's/.*:[[:space:]]*//')
+COMMIT_SUMMARY=$(echo "$EXISTING_WORK_RESULT" | grep -oE '"commit_summary"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"commit_summary"[[:space:]]*:[[:space:]]*"\([^"]*\)"/\1/')
 ```
 
 **Why this matters:** Without checking for existing commits, the orchestrator spawns
@@ -355,27 +432,56 @@ Two complementary strategies are used to detect suspicious commits:
 # not inside an issue worktree.
 ISSUE_COMMITS=$(git -C "${CLAUDE_PROJECT_DIR}" log --oneline \
   --grep="${ISSUE_NAME}" "${TARGET_BRANCH}" -5 2>/dev/null)
+GIT_EXIT=$?
+if [[ $GIT_EXIT -ne 0 ]]; then
+  echo "WARNING: git log failed (exit ${GIT_EXIT}) querying ${TARGET_BRANCH} for issue ${ISSUE_NAME}." \
+       "Treating as potentially_complete=unknown; manual verification required." >&2
+  STRATEGY1_FAILED=true
+else
+  STRATEGY1_FAILED=false
+fi
 ```
 
 **Strategy 2 — file-overlap search:** Find recent commits that modified files listed in PLAN.md's
 "Files to Create" or "Files to Modify" sections. This catches implementations whose commit messages
 use descriptive language instead of referencing the issue name.
 
+The matching predicate for Strategy 2 is: a `changed_file` (as output by `git diff-tree`, which
+produces repo-root-relative paths) matches a planned file if and only if the `changed_file` path
+ends with the planned file path as a suffix, after stripping any leading `./` from the planned file
+path. Basename-only matching is prohibited (it produces too many false positives). Exact full-path
+equality is insufficient (it misses relative-path prefix differences). No glob expansion is performed
+on planned file paths at match time.
+
 ```bash
 # Extract planned files from PLAN.md backtick-quoted paths in file list sections
 # Check last 20 commits on base for file overlap
 # git -C is intentional: querying the target branch commit history in the main repo.
-git -C "${CLAUDE_PROJECT_DIR}" log --oneline "${TARGET_BRANCH}" -20 | while read -r hash msg; do
-  git -C "${CLAUDE_PROJECT_DIR}" diff-tree --no-commit-id -r --name-only "$hash" | \
-    while read -r changed_file; do
-      # If changed_file matches any planned file (exact or glob), flag as suspicious
-      echo "suspicious: $hash $msg [touches planned file: $changed_file]"
-    done
-done
+STRATEGY2_FAILED=false
+git -C "${CLAUDE_PROJECT_DIR}" log --oneline "${TARGET_BRANCH}" -20 2>/dev/null
+GIT_EXIT=$?
+if [[ $GIT_EXIT -ne 0 ]]; then
+  echo "WARNING: git log failed (exit ${GIT_EXIT}) for Strategy 2 file-overlap search." >&2
+  STRATEGY2_FAILED=true
+else
+  git -C "${CLAUDE_PROJECT_DIR}" log --oneline "${TARGET_BRANCH}" -20 | while read -r hash msg; do
+    git -C "${CLAUDE_PROJECT_DIR}" diff-tree --no-commit-id -r --name-only "$hash" | \
+      while read -r changed_file; do
+        # A changed_file matches a planned file if changed_file ends with the planned file path
+        # (after stripping leading ./ from the planned path). Basename-only match is prohibited.
+        echo "suspicious: $hash $msg [touches planned file: $changed_file]"
+      done
+  done
+fi
 ```
 
 Both strategies filter out planning commits (`planning:`, `config: add issue`, etc.) as false
 positives.
+
+**Git failure handling:** An empty result from either strategy is only treated as "no suspicious
+commits" when the git command exited with code 0. When a strategy fails (non-zero exit), set
+`"potentially_complete": "unknown"` in output JSON and include the git exit code and error context.
+Do NOT treat a git failure as a clean result.
 
 **Why this matters:** Work may be implemented directly on the target branch without using
 the issue workflow (e.g., previous session implemented work but didn't update STATE.md, or
@@ -403,11 +509,25 @@ STATE_FILE="${WORKTREE_PATH}/.claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${I
 # STATE_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/issues/..."
 ```
 
-Set issue status to `in-progress`:
+**MANDATORY: Before writing, verify the file exists and read its current contents.** The worktree
+must contain the STATE.md file for this issue before any write is attempted. If the file does not
+exist at `STATE_FILE`, return ERROR — do NOT create a new STATE.md from scratch, as doing so
+discards all existing fields (goal, dependencies, plan link, acceptance criteria, etc.).
 
-```yaml
-- **Status:** in-progress
-- **Progress:** 0%
+```bash
+if [[ ! -f "$STATE_FILE" ]]; then
+  echo "{\"status\":\"ERROR\",\"message\":\"STATE.md not found at expected worktree path: ${STATE_FILE}\"}"
+  exit 1
+fi
+```
+
+Update only the `Status` and `Progress` fields in the existing file. All other fields must be
+preserved exactly as they appear in the file. Use a targeted in-place replacement (e.g., `sed -i`)
+for these two fields rather than rewriting the entire file:
+
+```bash
+sed -i 's/\*\*Status:\*\* [a-z-]*/\*\*Status:\*\* in-progress/' "$STATE_FILE"
+sed -i 's/\*\*Progress:\*\* [0-9]*%/\*\*Progress:\*\* 0%/' "$STATE_FILE"
 ```
 
 **Do NOT modify any files in `${CLAUDE_PROJECT_DIR}` directly.** All file modifications
@@ -425,7 +545,7 @@ Output the JSON result with all required fields.
 - Existing worktree with lock file (`existing_worktree` status, lock present): Return LOCKED, do NOT investigate or
   remove the worktree
 - Existing worktree without lock file (orphaned): Apply Orphaned Worktree Recovery Protocol (Step 2)
-- Issue exceeds hard limit: Return OVERSIZED
+- Issue exceeds hard limit: Release lock (Step 3), then return OVERSIZED
 - **Worktree on wrong branch:** Clean up and return ERROR
 
 ## Context Loaded
