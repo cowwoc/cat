@@ -88,3 +88,20 @@
 - client/src/test/java/io/github/cowwoc/cat/hooks/test/WorkPrepareTest.java (add 11 test cases)
 - plugin/skills/skill-builder-agent/first-use.md (Step 3: document contracts and isolation)
 - plugin/agents/skill-analyzer-agent/SKILL.md (Step 1 & error handling: document git show failures)
+
+## Additional Stakeholder Review Fixes Applied (2026-03-11)
+
+**Concerns addressed (3 total):**
+1. **E2E trace header clarity (MEDIUM):** Updated e2e-dispute-trace.md lines 8-9 to accurately describe the
+   document as a "design-time simulation" rather than "runtime evidence" since all commit hashes are fabricated.
+2. **Termination check logic correction (MEDIUM):** Fixed incorrect findings.json read source by inserting Round 2
+   Red-Team Phase section showing red-team finding no new loopholes and returning commit ghi9012. Updated
+   Termination Check to read from round-2 red-team commit (ghi9012) instead of blue-team commit (def5678).
+   Updated Summary section verification item (d) and Conclusion items 6-8 to reflect correct round count.
+3. **Blue-team prompt clarity (LOW):** Updated blue-team prompts in first-use.md (lines 358-359 and 478-479) to
+   conditionally describe writing the skill file: "If any findings were patched, also write the revised skill
+   file" instead of unconditionally implying the skill file is always committed.
+
+**Files modified:**
+- plugin/skills/skill-builder-agent/e2e-dispute-trace.md (header, Round 2 section, Termination Check, Summary verification, Conclusion)
+- plugin/skills/skill-builder-agent/first-use.md (round 1 blue-team prompt, round 2+ blue-team prompt)
