@@ -1692,36 +1692,16 @@
     "correct_behavior" : ""
   }, {
     "id" : "M530",
-    "timestamp" : "2026-03-10T15:01:19Z",
-    "category" : "environmental_failure",
+    "timestamp" : "2026-03-10T15:25:12Z",
+    "category" : "documentation_priming",
     "description" : "",
-    "root_cause" : "Session environment terminated before AskUserQuestion hook completion. The failure is environmental, not in agent logic or decision-making.",
-    "rca_method" : "causal-barrier",
-    "rca_method_name" : "",
-    "prevention_type" : "none",
+    "root_cause" : "first-use.md teaches JSON parsing using jq which is unavailable in plugin runtime",
+    "rca_method" : "C",
+    "rca_method_name" : "causal-barrier",
+    "prevention_type" : "skill",
     "prevention_path" : "",
     "pattern_keywords" : [ ],
-    "prevention_implemented" : false,
-    "prevention_verified" : false,
-    "recurrence_of" : null,
-    "prevention_quality" : {
-      "verification_type" : "N/A",
-      "fragility" : "N/A",
-      "catches_variations" : false
-    },
-    "correct_behavior" : ""
-  }, {
-    "id" : "M531",
-    "timestamp" : "2026-03-10T15:43:51Z",
-    "category" : "misleading_documentation",
-    "description" : "",
-    "root_cause" : "The hook's recovery guidance message primes agents to jump directly to the approval gate. The message says '1. Complete Step 8 (Approval Gate) in work-with-issue - present AskUserQuestion to the user' as the first recovery action, omitting Steps 7 (squash commits by topic) and 8 (rebase onto target branch) that are mandatory prerequisites. When the work-merge-agent Skill failed to load, the agent followed this incomplete guidance and skipped squash and rebase.",
-    "rca_method" : "A",
-    "rca_method_name" : "5-whys",
-    "prevention_type" : "code_fix",
-    "prevention_path" : "",
-    "pattern_keywords" : [ ],
-    "prevention_implemented" : false,
+    "prevention_implemented" : true,
     "prevention_verified" : false,
     "recurrence_of" : null,
     "prevention_quality" : {
@@ -1729,21 +1709,6 @@
       "fragility" : "low",
       "catches_variations" : true
     },
-    "correct_behavior" : ""
-  }, {
-    "id" : "M532",
-    "timestamp" : "2026-03-10T15:57:52Z",
-    "category" : "",
-    "description" : "",
-    "root_cause" : "",
-    "rca_method" : "",
-    "rca_method_name" : "",
-    "prevention_type" : "none_required",
-    "prevention_path" : "",
-    "pattern_keywords" : [ ],
-    "prevention_implemented" : false,
-    "prevention_verified" : false,
-    "recurrence_of" : null,
     "correct_behavior" : ""
   } ]
 }
