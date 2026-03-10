@@ -283,6 +283,25 @@ if (envValue != null)
 return "${" + varName + "}";
 ```
 
+### Positive Conditions First
+In if/else blocks, handle the positive (non-negated) condition first when both branches are present:
+
+```java
+// Good - positive condition first
+if (targetBranch.isEmpty())
+  System.out.println(completedIssue + " merged.");
+else
+  System.out.println(completedIssue + " merged to " + targetBranch + ".");
+
+// Avoid - negated condition first
+if (!targetBranch.isEmpty())
+  System.out.println(completedIssue + " merged to " + targetBranch + ".");
+else
+  System.out.println(completedIssue + " merged.");
+```
+
+**Why:** Positive conditions are easier to read and reason about.
+
 ### Switch Over Chained If-Else
 When comparing the same variable against 3 or more constant values, use a `switch` statement instead of chained
 if-else:

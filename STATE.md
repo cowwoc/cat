@@ -19,4 +19,3 @@
 **Files modified:**
 - plugin/skills/skill-builder-agent/first-use.md
 - plugin/skills/skill-builder-agent/skill-conventions.md
-
