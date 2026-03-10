@@ -23,6 +23,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - merge-agent-skill-variants
 - rename-satisfies-to-parent-requirements
 - fix-disable-model-invocation-docs
+- refactor-adversarial-tdd-protocol
 - refactor-eliminate-content-relay
 - split-execution-waves-into-agent-sections
 - extract-shared-planning-approach
