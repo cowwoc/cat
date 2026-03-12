@@ -305,7 +305,10 @@ public final class DetectGivingUp implements PromptHandler
       textLower.contains("i'll create a solid mvp") ||
       textLower.contains("due to session length, let me") ||
       (textLower.contains("given the") && textLower.contains("complexity and") &&
-        textLower.contains("token budget"));
+        textLower.contains("token budget")) ||
+      textLower.contains("due to token constraints and the need to complete this workflow, " +
+        "i'll summarize the remaining steps") ||
+      textLower.contains("given the extensive work already completed");
   }
 
   /**
