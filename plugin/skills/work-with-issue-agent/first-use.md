@@ -58,19 +58,39 @@ read ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH ESTIMATED_TOKENS TRU
 
 ## Path Validation
 
-Before invoking any phase skill, validate that `ISSUE_PATH` is well-formed.
+Before invoking any phase skill, validate that `ISSUE_PATH`, `WORKTREE_PATH`, and `TARGET_BRANCH` are well-formed.
 
-Check that `ISSUE_PATH` contains the substring `/.claude/`. If it does not, STOP immediately and display:
+**ISSUE_PATH:** Check that `ISSUE_PATH` contains the substring `/.cat/issues/` and does not contain path traversal
+components (`..`). If either check fails, STOP immediately and display:
 
 ```
-ERROR: issue_path does not contain '/.claude/' — possible path typo.
-Expected: a path containing /.cat/issues/
+ERROR: issue_path is not well-formed.
+Expected: a canonical path (no '..') containing /.cat/issues/
 Actual:   <value of ISSUE_PATH>
-Did you mean: <ISSUE_PATH with any segment that looks like '.claire' or similar replaced by '.claude'>?
+```
+
+If the path is missing `/.cat/issues/` but contains a segment that is a common misspelling of `.cat` (e.g., `.cats`,
+`.catt`, `.ca`, `.cart`, `.bat/issues`, `.hat/issues`), include a hint:
+
+```
+Did you mean: <ISSUE_PATH with the misspelled segment replaced by '.cat'>?
+```
+
+Only suggest a replacement when a path segment differs from `.cat` by one character (insertion, deletion, or
+substitution). Do not suggest replacements for unrelated segments like `.catalog` or `.cattle`.
+
+```
 STOP. Fix the issue_path before re-invoking /cat:work.
 ```
 
-Do not proceed to Phase 1 until this check passes.
+**WORKTREE_PATH:** Check that `WORKTREE_PATH` is a non-empty absolute path (starts with `/`). If not, STOP with an
+error. WORKTREE_PATH validation is the caller's responsibility for directory existence; this check guards only against
+obviously malformed values.
+
+**TARGET_BRANCH:** Check that `TARGET_BRANCH` is a non-empty string containing only valid git ref characters (no
+spaces, no `..`, no control characters). If not, STOP with an error.
+
+Do not proceed to Phase 1 until all checks pass.
 
 ## Phase 1: Implement
 
