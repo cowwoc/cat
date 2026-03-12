@@ -1840,5 +1840,24 @@
       "catches_variations" : true
     },
     "correct_behavior" : "At the start of Step 2, verify CLAUDE_PLUGIN_ROOT is non-empty and STOP immediately with a clear error if it is not set. The error must name the missing variable and explain the solution (invoke only from a /cat:work session where CLAUDE_PLUGIN_ROOT is exported)."
+  }, {
+    "id" : "M538",
+    "timestamp" : "2026-03-12T15:58:33Z",
+    "category" : "",
+    "description" : "",
+    "root_cause" : "",
+    "cause_signature" : "compliance_failure:doc_missing:issue_workflow",
+    "prevention_type" : "skill",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : "M538",
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }
