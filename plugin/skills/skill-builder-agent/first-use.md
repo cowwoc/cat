@@ -146,22 +146,31 @@ Task tool:
 
     ## Return Format
     Return the complete designed skill as a markdown code block (the full SKILL.md or first-use.md content).
-    Do NOT spawn subagents. Do NOT invoke the Task tool. Do NOT use Bash, Write, Edit, Glob, WebFetch,
-    WebSearch, or any other tool besides Read. The ONLY permitted tools are Read (to read design
-    methodology and convention files) and returning your response. Nothing else — no exceptions.
+    Do NOT spawn subagents. Do NOT invoke the Task tool. Do NOT use Bash, Write, Edit, NotebookEdit,
+    Glob, Grep, WebFetch, WebSearch, or any other tool besides Read. The ONLY permitted tool is Read —
+    no other tool may be used under any circumstances, regardless of whether it appears in the list above.
+    Nothing else — no exceptions.
+    Only read the two files referenced above (design-methodology.md and skill-conventions.md) and, if
+    updating, the existing skill files at EXISTING_SKILL_PATH. Do NOT read other files.
 ```
 
 The design subagent should only read files and return SKILL_DRAFT. If the response includes Task tool
-invocations, evidence of subagent spawning, or use of Bash/Write/Edit/any file-modifying tool, treat as
-constraint violation and reject the draft.
+invocations, evidence of subagent spawning, or use of Bash/Write/Edit/NotebookEdit/Grep/any non-Read tool,
+treat as constraint violation and reject the draft. Additionally, verify that all Read tool invocations
+targeted only the permitted files (design-methodology.md, skill-conventions.md, and if updating, the
+existing skill files at EXISTING_SKILL_PATH). If the subagent read any file outside this permitted set,
+treat as a constraint violation and reject the draft. If the Task tool response metadata indicates a
+different subagent_type than `general-purpose` was used, reject the draft and re-invoke with the correct
+subagent_type.
 
 The subagent will return the designed skill draft as `SKILL_DRAFT`. Validate that:
 - The response is non-empty
 - The response is a valid markdown code block
 - The content contains Purpose, Procedure, and Verification sections
+- Each required section (Purpose, Procedure, Verification) contains non-empty content (not just a heading)
 
-If the response is empty, not a markdown code block, or missing required sections, reject the draft and
-re-invoke the design subagent with clarifying instructions.
+If the response is empty, not a markdown code block, missing required sections, or has empty sections,
+reject the draft and re-invoke the design subagent with clarifying instructions.
 
 ### Step 3: Benchmark Evaluation Loop
 
@@ -184,15 +193,36 @@ subagent receives `EVAL_ARTIFACTS_DIR` and `CLAUDE_SESSION_ID` as pre-resolved l
 subagent ever expands these variables independently. Subagents must not derive their own session ID — they
 must use the value passed by the main agent.
 
-**Generate test cases:** Create 2-3 test cases with assertions. Store the eval set JSON in
+**Generate test cases:** Create 2-3 test cases with assertions. Each test case must have at least 2
+assertions, and at least one assertion per test case must test the skill's differentiating behavior
+(i.e., something the without-skill configuration is expected to fail). Assertions must test specific
+output properties — generic assertions like "output is non-empty" or "output contains text" are
+prohibited. Store the eval set JSON in
 `${EVAL_ARTIFACTS_DIR}/eval-set.json` and commit it with message
 `eval: write test cases [session: ${CLAUDE_SESSION_ID}]`. Store the commit SHA as `EVAL_SET_SHA`. The main
 agent does NOT retain the eval set JSON in context — grader subagents read assertions from the committed
-file via `git show {EVAL_SET_SHA}:{EVAL_ARTIFACTS_DIR}/eval-set.json` or `cat {EVAL_ARTIFACTS_DIR}/eval-set.json`.
+file via `git show {EVAL_SET_SHA}:eval-artifacts/<SESSION_ID>/eval-set.json` (repo-relative path) or
+`cat {EVAL_ARTIFACTS_DIR}/eval-set.json` (absolute path for direct file access).
 
 **Spawn parallel eval-run subagents:** For each test case, spawn two eval-run subagents simultaneously — one
 with the skill active (`with-skill`, the skill file is present at `SKILL_TEXT_PATH`) and one with the skill
-inactive (`without-skill`, the skill file is absent or disabled). Pass each subagent only scalar references
+inactive (`without-skill`, the skill file content is NOT included in the subagent's prompt context — the
+file remains on disk but the without-skill subagent must NOT read it). Both the with-skill and
+without-skill subagent prompts must include the prohibition against reading eval-artifacts: "Do NOT read
+eval-set.json, grading files, run-output files from other subagents, or any file under eval-artifacts/
+via any mechanism (Read tool, Bash, Grep, or otherwise). This prohibition is absolute — it applies
+regardless of the file's content or purpose, including peer subagent output files." For the with-skill
+subagent, this is the only eval-artifact prohibition needed. The without-skill subagent prompt
+must include an explicit prohibition: "Do NOT read or reference the file at {SKILL_TEXT_PATH} via any
+mechanism — this includes the Read tool, Bash cat/head/tail, Grep, or any other tool. You are
+running in the without-skill configuration. Do NOT read eval-set.json, grading files, or any file under
+eval-artifacts/ via any mechanism (Read tool, Bash, Grep, or otherwise) — these contain information
+about the skill's expected behavior. Do NOT run any git
+command that could reveal the skill's content or purpose — this includes but is not limited to git log,
+git show, git diff, git rev-list, git shortlog, git format-patch, and any other command that outputs
+committed content or commit messages. Your task is to respond using only your baseline capabilities
+without any skill-derived context." Pass each
+subagent only scalar references
 (test case ID, config name, `EVAL_ARTIFACTS_DIR`, `CLAUDE_SESSION_ID`) — do NOT embed test case content or
 assertion arrays inline in the prompt. Each eval-run subagent:
 1. Executes the test case prompt in its configured environment.
@@ -214,16 +244,25 @@ either skip the affected run (partial benchmark) or abort and report the failure
 - The test case ID and config name
 - The `${EVAL_ARTIFACTS_DIR}` path and `${CLAUDE_SESSION_ID}` (both already resolved to literal strings)
 
+The grader subagent prompt must include the prohibition: "Do NOT read the skill file at {SKILL_TEXT_PATH}
+or access its content via any mechanism. Do NOT run any git command that could reveal the skill's content
+or purpose — this includes but is not limited to git log, git show, git diff, git rev-list, git shortlog,
+git format-patch, and any other command that outputs committed content or commit messages. Grade the run
+output solely against the assertions in eval-set.json — do not use skill content to inform grading
+decisions."
+
 **Grader subagent return contract:** Each grader subagent returns only a commit SHA (a bare hex string with
 no JSON wrapper). The grading file path is deterministic: `eval-artifacts/<SESSION_ID>/grading/<case-id>-<config>.json`.
 The main agent reconstructs the full SHA+path pair for the aggregator by combining the returned SHA with
 this naming convention — it does not ask the grader to return the path.
 
-**Concurrent commit safety:** All grader subagents for a single benchmark pass are spawned in the same turn
-(parallel), but they each commit to the same worktree. Git serializes commits internally, so parallel
-subagents may briefly contend for the ref lock. If a grader subagent's `git commit` fails with "cannot lock
-ref" or similar, it must retry up to 3 times with a short delay before returning `{"error": "commit
-failed: <reason>"}`. The main agent does not need to handle this retry — it is the grader's responsibility.
+**Concurrent commit safety:** All parallel subagents (eval-run and grader) for a single benchmark pass are
+spawned in the same turn, but they each commit to the same worktree. Git serializes commits internally, so
+parallel subagents may briefly contend for the ref lock. If any subagent's `git commit` fails with "cannot
+lock ref" or similar, it must retry up to 3 times with exponential backoff and jitter: first retry after
+1-2 seconds (randomized), second after 2-4 seconds, third after 4-8 seconds. If all retries fail, return
+`{"error": "commit failed: <reason>"}`. The main agent does not need to handle this retry — it is the subagent's
+responsibility. This retry protocol applies to both eval-run subagents and grader subagents.
 
 Each grader subagent returns a commit SHA for its `grading/<case-id>-<config>.json` file, or
 `{"error": "..."}` on failure. If the `git show` command used to read the run output fails (e.g., SHA not
@@ -232,7 +271,11 @@ produce partial grading. The main agent collects only the commit SHAs from grade
 read the grading JSON files. If a grader subagent returns an error, exclude that test case from the
 aggregation input; if all grading for a config fails, report the failure and ask the user whether to retry.
 
-**Aggregate via BenchmarkAggregator subagent:** Spawn one subagent to perform aggregation. Pass it:
+**Aggregate via BenchmarkAggregator subagent:** Spawn one subagent to perform aggregation. The aggregator
+subagent prompt must include the restriction: "Do NOT modify grading files, run-output files, the skill
+file, or any existing file in the worktree. You may only create and write to
+${EVAL_ARTIFACTS_DIR}/benchmark.json. Do NOT use the Edit tool. Do NOT use Write or Bash to modify any
+file other than benchmark.json." Pass it:
 - All grading file SHAs+paths (the main agent reconstructs each path as
   `eval-artifacts/<SESSION_ID>/grading/<case-id>-<config>.json` and pairs it with the SHA returned by the
   grader subagent)
@@ -283,6 +326,11 @@ Task tool:
 
     Read the skill text using: cat {WORKTREE_ROOT}/{SKILL_TEXT_PATH}
     (SKILL_TEXT_PATH is worktree-relative; prepend WORKTREE_ROOT for the absolute path.)
+
+    RESTRICTION: This is a read-only analysis task. Do NOT modify the skill file, eval
+    artifacts, findings.json, or any other file in the worktree. Do NOT use the Write or
+    Edit tools. Do NOT use Bash to run commands that modify files (rm, mv, sed -i, tee, etc.).
+    You may only use Read and Bash (read-only commands like git show, cat, grep) to gather data.
 ```
 
 The subagent returns the analysis commit SHA and the compact analysis report text. The main agent receives
@@ -296,386 +344,57 @@ the analysis report text (from skill-analyzer-agent return). Ask the user:
 
 **Iterate if needed:** If the user requests improvement, apply targeted changes to the skill file at
 `SKILL_TEXT_PATH`, commit the updated file, and update `SKILL_DRAFT_SHA` before returning to the benchmark
-loop. Cap at 5 benchmark iterations total. Stop iterating if the improvement between
-consecutive rounds is less than 5 percentage points — report "Benchmark plateau reached: pass rate
-improvement below 5% threshold" and present the best result to the user. If the iteration cap is reached,
-stop and report "Benchmark iteration cap reached (5 rounds) — presenting best result."
+loop. Cap at 5 benchmark iterations total. Track the best-performing iteration by storing `BEST_SCORE`
+and `BEST_SHA` (the commit SHA of the skill file at that iteration). `BEST_SCORE` is defined as the
+**with-skill assertion pass rate** from the benchmark aggregator output — specifically, the percentage of
+assertions that passed in the `with-skill` configuration (number of passed assertions / total assertions
+across all test cases, expressed as a percentage). Do not use the without-skill pass rate, the differential,
+or any other metric. After each benchmark iteration, compare the current with-skill assertion pass rate to
+`BEST_SCORE` and update both if the current score is higher. Stop iterating if the **absolute improvement**
+(current pass rate minus previous pass rate, in percentage points) between consecutive rounds is less than
+5 percentage points — restore the best skill version by running `git checkout {BEST_SHA} -- {SKILL_TEXT_PATH}` and
+committing with message `eval: restore best iteration [session: ${CLAUDE_SESSION_ID}]`, then report
+"Benchmark plateau reached: pass rate improvement below 5% threshold" and present the best result to the
+user. If the iteration cap is reached, apply the same rollback to `BEST_SHA` if the final iteration is not
+the best, then stop and report "Benchmark iteration cap reached (5 rounds) — presenting best result."
 
 ### Step 4: Adversarial TDD Loop
 
 After the benchmark phase converges, harden the instructions using alternating red-team and blue-team
-subagents. Run until no major loopholes remain or 10 iterations complete.
+subagents. Run until convergence (no CRITICAL/HIGH loopholes remain).
 
-**Why two separate persistent subagents:**
-A single agent playing both roles anchors on its own attack vectors — it knows exactly which loopholes it
-invented, so it subconsciously over-fits the defense to those attacks and under-defends against variations.
-Separate subagents eliminate this bias. Reusing the same agent across rounds (via `resume`) is more efficient
-than spawning fresh agents each round; to counter anchoring risk from reuse, agents are explicitly instructed
-to seek new attack vectors each round rather than revisiting prior findings.
+**Effort gate:** Read `effort` from `${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json`. If `effort = low`, skip
+adversarial hardening entirely and proceed to the next step.
 
-**Termination criteria:** No major loopholes = the `loopholes` array in red-team's findings file contains no
-CRITICAL or HIGH severity issues. Only arbitration-upheld disputes (findings where the arbitration agent confirms
-the blue-team's evidence) are excluded from the CRITICAL/HIGH count. Findings pending arbitration or rejected by
-arbitration remain in scope. Check by reading the findings file from the red-team's returned commit hash.
-LOW/MEDIUM concerns may remain if they require disproportionate instruction complexity to close.
+**Protocol:** Follow [plugin/concepts/adversarial-protocol.md](${CLAUDE_PLUGIN_ROOT}/concepts/adversarial-protocol.md)
+for the complete adversarial loop including:
+- Red-team → blue-team → arbitration → diff-validation flow
+- Structured JSON returns from each subagent (commit hash + control flow metadata)
+- Dispute mechanism, arbitration, and convergence criterion
+- Round advancement and error handling
 
-**findings.json schema:** The findings file contains two top-level arrays:
+**findings.json schema:** The red-team and blue-team agents define the authoritative findings.json schema
+in their own agent definitions (fields: `name`, `severity`, `attack`, `evidence`). The generic schema
+shown in adversarial-protocol.md (fields: `file`, `line`, `type`, `description`, `recommendation`) is
+illustrative — the agent-specific schemas take precedence. The blue-team and diff-validation agents must
+process findings using the fields the red-team agent actually writes, not the protocol's generic schema.
 
-- `"loopholes"` — active findings to be patched. Each entry has at minimum `"severity"` (one of CRITICAL, HIGH,
-  MEDIUM, LOW) and a description field.
-- `"disputed"` — findings where the arbitration agent has upheld the blue-team's dispute. Each entry has:
-  - `"false_premise"`: what the red-team claimed (the incorrect assumption)
-  - `"evidence"`: why the premise is false (verifiable facts, documentation references, or test results)
-  - `"arbitration_verdict"`: `"upheld"` (set by the arbitration agent after confirming the evidence)
+**Skill-builder-specific configuration:**
 
-Only arbitration-upheld findings appear in the `"disputed"` array. Findings rejected by arbitration are moved
-back to `"loopholes"` for patching. The `"disputed"` array accumulates across rounds and is never reset.
+| Parameter | Value |
+|-----------|-------|
+| `target_type` | `skill_instructions` |
+| `TARGET_FILE_PATH` | `{SKILL_FILE_PATH}` (the skill's SKILL.md or first-use.md being hardened) |
+| `CURRENT_CONTENT` | Pass `TARGET_FILE_PATH` — subagents read the file from disk themselves. Do NOT embed file content inline in subagent prompts. |
 
-For a complete traced walkthrough of the dispute mechanism including the arbitration step, see
-`plugin/skills/skill-builder-agent/e2e-dispute-trace.md`.
-
-**Termination verification:** Read findings.json using `git show {RED_TEAM_COMMIT_HASH}:findings.json`. Scan only
-the `loopholes` array for entries with `"severity": "CRITICAL"` or `"severity": "HIGH"`. Do not count `disputed`
-entries — red-team is instructed not to re-raise previously disputed findings, so the `loopholes` array already
-reflects only unresolved findings. If no CRITICAL or HIGH entries exist in `loopholes`, STOP — instructions are
-sufficiently hardened. If the round counter reaches 10 without convergence, stop and report
-"Loop cap reached at 10 rounds — {N} CRITICAL/HIGH loopholes remain unresolved."
-
-> **Invocation variants — target_type:** The examples below use `skill_instructions`. Replace the
-> `target_type` value to match the content being hardened:
+> **Invocation variants — target_type:** The default `skill_instructions` can be replaced to match
+> the content being hardened:
 >
 > | `target_type`       | Content being hardened          | `TARGET_FILE_PATH` points to |
 > |---------------------|---------------------------------|------------------------------|
 > | `skill_instructions`| Skill or agent Markdown file    | SKILL.md or agent .md file   |
 > | `test_code`         | Test source file                | *Test.java or *Test.sh       |
 > | `source_code`       | Implementation source file      | *.java, *.sh, etc.           |
->
-> Replace the `skill_instructions` value in the `## Target Type` prompt field with the appropriate `target_type` from
-> the table above.
-
-**Round 1 — spawn persistent agents:**
-
-Spawn the red-team agent using the Task tool and store its `task_id` as `RED_TEAM_TASK_ID`:
-
-```
-Task tool:
-  description: "Red-team: find loopholes in instructions (round 1)"
-  subagent_type: "cat:red-team-agent"
-  prompt: |
-    ## Target Type
-    skill_instructions
-
-    ## Target File Path
-    {SKILL_FILE_PATH}
-
-    ## Worktree Root
-    {WORKTREE_ROOT}
-
-    ## Round Number
-    1
-
-    Read the target content from the file at TARGET_FILE_PATH before beginning analysis.
-    Do NOT expect the content to be provided inline — read it from disk yourself.
-```
-
-After red-team completes, read `RED_TEAM_COMMIT_HASH` from the last line of its response.
-
-**Commit hash validation:** Before using `RED_TEAM_COMMIT_HASH`, verify it is a valid commit on the current
-branch: run `git branch --contains {RED_TEAM_COMMIT_HASH}` and confirm the current branch is listed. Also
-verify it is newer than the previous round's commit (if any) by running `git log --oneline {PREV_COMMIT}..{RED_TEAM_COMMIT_HASH}`
-and confirming at least one entry exists. If either check fails, abort with "ERROR: red-team returned invalid
-or stale commit hash {RED_TEAM_COMMIT_HASH}".
-
-Read `findings.json` at that commit and scan the `loopholes` array for any entry with `"severity": "CRITICAL"`
-or `"severity": "HIGH"`.
-
-If no CRITICAL or HIGH entries exist: STOP loop — instructions are sufficiently hardened.
-
-Spawn the blue-team agent using the Task tool and store its `task_id` as `BLUE_TEAM_TASK_ID`. The blue-team
-MUST start only after red-team completes (it requires the findings file from red-team's commit).
-
-```
-Task tool:
-  description: "Blue-team: close loopholes in instructions (round 1)"
-  subagent_type: "cat:blue-team-agent"
-  prompt: |
-    ## Target Type
-    skill_instructions
-
-    ## Current Content
-    (read from TARGET_FILE_PATH below)
-
-    ## Red-Team Commit Hash
-    {RED_TEAM_COMMIT_HASH}
-
-    ## Target File Path
-    {SKILL_FILE_PATH}
-
-    ## Worktree Root
-    {WORKTREE_ROOT}
-
-    ## Round Number
-    1
-
-    ## Dispute Protocol
-    Before patching any finding, verify its premise. If a finding claims something that is factually incorrect
-    (e.g., claims an env var is unavailable when it is documented as available, misrepresents an API's behavior,
-    or assumes a file does not exist when it does), do NOT patch it. Instead, move it from the `loopholes` array
-    to the `disputed` array in findings.json with two fields:
-    - `"false_premise"`: what the red-team claimed (the incorrect assumption)
-    - `"evidence"`: why the premise is false (cite specific documentation, env var names, actual API behavior)
-    Only patch findings remaining in the `loopholes` array after dispute evaluation. Never patch a finding that
-    has been moved to `disputed`. Write the updated findings.json. If any findings were patched, also write the
-    revised skill file. Commit all modified files and return only the commit hash.
-```
-
-**Error handling:**
-- If red-team does not return a commit hash on its last line: log an error and abort the loop.
-- If `git show {RED_TEAM_COMMIT_HASH}:findings.json` fails or returns empty: log "ERROR: findings.json not readable from commit {RED_TEAM_COMMIT_HASH}" and abort.
-- If findings.json is malformed (not valid JSON or missing `loopholes` array): log the error and abort. Do not default to empty.
-- Apply the same commit-hash validation to blue-team: abort if no valid commit hash is returned.
-
-After blue-team completes, read `BLUE_TEAM_COMMIT_HASH` from the last line of its response.
-
-**Arbitration phase:** If blue-team moved any findings to `disputed`, spawn a separate arbitration agent to
-independently verify each dispute before it is accepted. The arbitration agent is NOT the red-team or blue-team
-agent — it is a fresh general-purpose subagent with no prior context.
-
-Read `findings.json` at `BLUE_TEAM_COMMIT_HASH` and collect all entries in the `"disputed"` array that do not
-yet have `"arbitration_verdict": "upheld"`. If there are no such entries, skip arbitration and proceed to diff
-validation.
-
-Spawn one arbitration subagent per batch of disputed findings (all disputes from this round may be reviewed in
-a single subagent call):
-
-```
-Task tool:
-  description: "Arbitration: verify blue-team disputes (round {N})"
-  subagent_type: "general-purpose"
-  prompt: |
-    You are an independent arbitration agent. Your role is to verify whether the blue-team's evidence
-    actually proves that the red-team's premise is false. You are NOT the red-team or blue-team — do not
-    advocate for either side. Evaluate each dispute on the evidence alone.
-
-    ## Disputed Findings to Review
-    Read the `disputed` array from findings.json at the blue-team commit:
-    git show {BLUE_TEAM_COMMIT_HASH}:findings.json
-    Review only entries that do NOT yet have `"arbitration_verdict": "upheld"`.
-    Do NOT expect the disputed findings to be provided inline — read them from the commit above.
-
-    ## Blue-Team Commit Hash
-    {BLUE_TEAM_COMMIT_HASH}
-
-    ## Worktree Root
-    {WORKTREE_ROOT}
-
-    ## Instructions
-    For each disputed finding:
-    1. Read the `"false_premise"` field — this is what the red-team claimed.
-    2. Read the `"evidence"` field — this is why the blue-team says the premise is false.
-    3. Independently verify the evidence. For example:
-       - If evidence cites documentation, read that documentation file and confirm the claim matches.
-       - If evidence cites an env var being available, check plugin/concepts/skill-loading.md or equivalent.
-       - If evidence cites a test assertion, verify the assertion text matches what is claimed.
-    4. Return a JSON verdict for each finding:
-       - `"upheld"` — the evidence proves the red-team's premise is false; the dispute is valid.
-       - `"rejected"` — the evidence does NOT prove the premise false; the finding is legitimate.
-
-    ## Return Format
-    Return ONLY a JSON array of verdicts on the last line of your response, with no trailing text:
-    [{"finding_id": "...", "verdict": "upheld|rejected", "reasoning": "..."}]
-
-    Do NOT modify any files. Do NOT commit anything. Return only the JSON array.
-```
-
-Parse the JSON verdict array from the last line of the arbitration agent's response.
-
-For each verdict:
-- If `"verdict": "upheld"`: add `"arbitration_verdict": "upheld"` to that entry in `findings.json` (it remains
-  in the `disputed` array and will NOT be patched).
-- If `"verdict": "rejected"`: move the entry back from `disputed` to `loopholes` (removing any
-  `"false_premise"` and `"evidence"` fields added by blue-team). This finding must be patched by blue-team.
-
-If any disputes were rejected by arbitration, write the updated `findings.json`, commit it with message
-`arbitration: reject {N} dispute(s) (round {R})`, and **resume the blue-team agent** with the following prompt:
-
-```
-Task tool (resume):
-  task_id: {BLUE_TEAM_TASK_ID}
-  prompt: |
-    Round {N} arbitration rejected the following disputes — the findings were moved back to loopholes:
-    {list of rejected finding IDs and reasoning}
-
-    Read the current findings.json at {ARBITRATION_COMMIT_HASH}, patch each finding now in `loopholes`,
-    and write the revised skill file. Commit all modified files and return only the commit hash.
-```
-
-After blue-team re-patches, update `BLUE_TEAM_COMMIT_HASH` to the new commit. All upheld disputes remain in
-the `disputed` array with `"arbitration_verdict": "upheld"`.
-
-Write rejected disputes to `{WORKTREE_ROOT}/rejected-disputes.json` (a JSON array of
-`{"finding_id": "...", "reasoning": "..."}`). Append new rejections each round and commit the file with message
-`arbitration: update rejected-disputes.json (round {N})`. Pass the file path to the blue-team round 2+ prompt
-instead of embedding the array inline — the blue-team reads the file from disk.
-
-If all disputes were upheld (no rejections), no additional commit is needed — proceed directly to diff
-validation with the existing `BLUE_TEAM_COMMIT_HASH`.
-
-**Diff validation:** Delegate diff validation to the persistent diff-validation subagent. On round 1, spawn
-it and store its `task_id` as `DIFF_VALIDATION_TASK_ID`. On round 2+, resume it using `task_id`.
-
-Round 1 — spawn:
-
-```
-Task tool:
-  description: "Diff validation: round 1"
-  subagent_type: "cat:diff-validation-agent"
-  prompt: |
-    ## Target Type
-    skill_instructions
-
-    ## RED_TEAM_COMMIT_HASH
-    {RED_TEAM_COMMIT_HASH}
-
-    ## BLUE_TEAM_COMMIT_HASH
-    {BLUE_TEAM_COMMIT_HASH}
-
-    ## TARGET_FILE_PATH
-    {SKILL_FILE_PATH}
-
-    ## WORKTREE_ROOT
-    {WORKTREE_ROOT}
-
-    ## Round Number
-    1
-```
-
-Round 2+ — resume:
-
-```
-Task tool (resume):
-  task_id: {DIFF_VALIDATION_TASK_ID}
-  prompt: |
-    ## Target Type
-    skill_instructions
-
-    ## RED_TEAM_COMMIT_HASH
-    {RED_TEAM_COMMIT_HASH}
-
-    ## BLUE_TEAM_COMMIT_HASH
-    {BLUE_TEAM_COMMIT_HASH}
-
-    ## TARGET_FILE_PATH
-    {SKILL_FILE_PATH}
-
-    ## WORKTREE_ROOT
-    {WORKTREE_ROOT}
-
-    ## Round Number
-    {N}
-```
-
-The diff-validation agent returns a commit hash on its last line and exits non-zero when any non-disputed
-CRITICAL or HIGH finding has no matching patch hunk. If the agent exits non-zero (validation failed):
-
-1. Read the `diff-validation-{N}.json` report from the returned commit hash to identify which findings
-   had no matching hunk (those with `"outcome": "FAIL"`).
-2. Run `git revert {BLUE_TEAM_COMMIT_HASH} --no-edit` to undo the commit.
-3. Resume the blue-team agent with: "Your round {N} patch was reverted. The following findings had no
-   corresponding patch hunk: {FAIL findings from diff-validation report}. Rewrite the patch touching only
-   the lines required to close each finding. Do not modify any other content. Commit and return the new hash."
-4. Re-run diff validation (resume DIFF_VALIDATION_TASK_ID) with the new blue-team commit. If validation
-   still fails, log "ERROR: blue-team introduced insufficient patches in round {N} after retry —
-   aborting loop" and stop. Do not retry more than once per round.
-
-Increment round counter. The blue-team has committed the patched skill file — subagents in the next round
-will read it from `SKILL_FILE_PATH` on disk. Do NOT read the file into a variable for relay.
-If round < 10: continue to next iteration.
-
-> **Note:** Arbitration-upheld disputes count as closed for round-advancement purposes. The round counter
-> increments whether findings were patched, arbitration-upheld, or both. A round where all findings were
-> arbitration-upheld (none patched) still advances the counter normally.
-
-**Round 2+ — resume persistent agents:**
-
-In subsequent rounds, `resume` the existing agents by passing `task_id`:
-
-```
-Task tool (resume):
-  task_id: {RED_TEAM_TASK_ID}
-  prompt: |
-    Round {N}. Resume your red-team analysis.
-
-    ## Target Type
-    skill_instructions
-
-    ## What Changed Since Last Round
-    Run this diff yourself: git diff {RED_TEAM_COMMIT_HASH}..{BLUE_TEAM_COMMIT_HASH} -- {SKILL_FILE_PATH}
-    Do NOT expect the diff output to be provided inline — compute it from the commit hashes above.
-
-    ## Target File Path
-    {SKILL_FILE_PATH}
-
-    ## Worktree Root
-    {WORKTREE_ROOT}
-
-    ## Round Number
-    {N}
-
-    ## Prior Disputed Findings
-    Read the `disputed` array from findings.json at {BLUE_TEAM_COMMIT_HASH} via
-    git show {BLUE_TEAM_COMMIT_HASH}:findings.json. Do NOT re-raise these.
-
-    First, compute the diff using the commit hashes above to determine whether the blue-team's patches
-    introduced new gaps or failed to fully close prior loopholes. Then, re-examine the FULL current
-    instructions (read from TARGET_FILE_PATH, not just the diff) for attack vectors not yet explored in
-    previous rounds — the diff focus must not prevent discovery of loopholes present in unchanged sections.
-    Do NOT re-raise findings that appear in the Prior Disputed Findings — those have been rejected with
-    evidence and must not be re-submitted.
-    Write new findings to {WORKTREE_ROOT}/findings.json and commit as before, returning only the commit hash.
-```
-
-```
-Task tool (resume):
-  task_id: {BLUE_TEAM_TASK_ID}
-  prompt: |
-    Round {N}. Resume your blue-team patching.
-
-    ## Target Type
-    skill_instructions
-
-    ## Red-Team Commit Hash
-    {RED_TEAM_COMMIT_HASH}
-
-    ## Target File Path
-    {SKILL_FILE_PATH}
-
-    ## Worktree Root
-    {WORKTREE_ROOT}
-
-    ## Round Number
-    {N}
-
-    ## Prior Rejected Disputes (do NOT re-dispute these)
-    Read from: {WORKTREE_ROOT}/rejected-disputes.json (or "[]" if file does not exist)
-    Do NOT expect the rejected disputes to be provided inline — read the file from disk.
-
-    Do NOT re-dispute findings listed in that file — arbitration has already reviewed and rejected the
-    evidence. These findings must be patched, not disputed again.
-
-    Apply the dispute protocol before patching: for each finding in `loopholes`, verify its premise. If the
-    premise is false, move the finding to `disputed` with `"false_premise"` and `"evidence"` fields. Only
-    patch findings that remain in `loopholes` after dispute evaluation. Write the updated findings.json. If
-    any findings were patched, also write the revised skill file. Commit all modified files and return only
-    the commit hash.
-
-    Note: Disputes are subject to arbitration — findings you move to `disputed` will be independently
-    verified before they are accepted. If arbitration rejects a dispute, you will be asked to patch it.
-```
-
-After the blue-team returns `BLUE_TEAM_COMMIT_HASH` for round 2+, apply the same arbitration phase as in
-round 1: spawn an arbitration subagent for any new disputes (entries in `disputed` without
-`"arbitration_verdict": "upheld"`), then proceed to diff validation.
 
 ### Step 5: In-Place Hardening Mode (Optional)
 
@@ -687,7 +406,8 @@ The ONLY valid execution path is:
 - Let the subagents read the target file from `SKILL_FILE_PATH` on disk, execute the loop, and commit changes
 
 **Prohibited paths (will be treated as a protocol violation):**
-- Manually performing the red-team analysis yourself (without a Task tool subagent)
+- Manually performing any part of the hardening loop yourself — including red-team analysis, blue-team
+  patching, arbitration, or diff validation — without a Task tool subagent
 - Delegating to `cat:work-execute` — this is an implementation subagent, not a hardening subagent
 - Delegating to any non-Task-tool path
 - Announcing "executing skill-builder in-place hardening mode" and then doing it yourself
@@ -701,15 +421,25 @@ producing one commit per round as the loop progresses.
 **Primary workflow — single skill file:**
 
 In-place hardening mode activates when the caller passes a single skill file path inside the current worktree.
+This mode is intended for hardening existing, already-functional skills — it applies adversarial instruction
+review only and does NOT run the benchmark evaluation loop (Steps 1-3). Before entering in-place mode,
+the orchestrator must verify that a prior benchmark exists for this skill by checking whether
+`eval-artifacts/*/benchmark.json` contains an entry whose skill path matches the target file (search via
+`git log --all --oneline -- 'eval-artifacts/*/benchmark.json'` to find benchmark commits, then verify at
+least one exists). If no prior benchmark is found, the orchestrator must abort in-place mode and fall back
+to the full workflow (Steps 1-4) with the message: "No prior benchmark found for this skill — running
+full workflow including benchmark evaluation."
 
 1. Store the file path as `SKILL_FILE_PATH`. Do NOT read the file into `CURRENT_INSTRUCTIONS` and relay
    it inline to subagents — subagents read the file from `SKILL_FILE_PATH` themselves. Determine
    the worktree root by running `git rev-parse --show-toplevel` from within the worktree; store as
-   `WORKTREE_ROOT`. Pass `WORKTREE_ROOT` to all red-team and blue-team subagent prompts so they use
-   absolute paths (e.g., `{WORKTREE_ROOT}/findings.json`) rather than relative paths.
-2. Run the full RED→BLUE loop (up to 10 rounds) as defined in Step 4. Each round produces two commits:
-   one from the red-team (findings.json) and one from the blue-team (patched skill file). The loop
-   continues until convergence (no CRITICAL/HIGH entries in the `loopholes` array) or the round cap is reached.
+   `WORKTREE_ROOT`. Pass `WORKTREE_ROOT` to all red-team and blue-team subagent prompts so they can
+   construct absolute paths for **direct filesystem operations** (e.g., `cat {WORKTREE_ROOT}/findings.json`,
+   `mkdir -p {WORKTREE_ROOT}/...`). For `git show` commands, subagents must use repo-relative paths
+   (e.g., `git show <sha>:findings.json`) as specified in the shared adversarial protocol.
+2. Run the full RED→BLUE loop as defined in Step 4 and the shared adversarial protocol. Each round
+   produces commits from red-team (findings.json) and blue-team (patched skill file). The loop
+   continues until convergence (red-team returns `has_critical_high: false`).
 3. No additional write step is needed — the blue-team commits the hardened content directly each round.
 
 **Secondary workflow — directory / batch mode:**
@@ -717,11 +447,26 @@ In-place hardening mode activates when the caller passes a single skill file pat
 If the caller passes a directory path (or `--batch <dir>`) instead of a single file, enumerate all `SKILL.md`
 and `first-use.md` files under the directory recursively. Apply the single-skill workflow to each file.
 
-By default, process files **sequentially** (safe for all worktrees). Parallel processing is allowed when each
+By default, process files **sequentially** (safe for all worktrees). Between sequential skills, delete the
+previous skill's `findings.json` (or `findings-<skill-name>.json` if using per-skill paths) before starting
+the next skill to prevent stale disputes from contaminating subsequent red-team analysis. Parallel processing
+is allowed when each
 skill file is independent (no shared skill-to-skill dependencies). In parallel mode, each subagent runs the
-full RED→BLUE loop for its own file, committing per-round — never touching other skill files. Parallel
-subagents must not commit shared files (e.g., index files or aggregated docs) to avoid merge conflicts; those
-are updated once after all parallel subagents complete.
+full RED→BLUE loop for its own file, committing per-round — never touching other skill files. Each
+parallel subagent must use a skill-specific findings path (`{WORKTREE_ROOT}/findings-<skill-name>.json`)
+instead of the shared `{WORKTREE_ROOT}/findings.json` to avoid overwrite collisions between concurrent
+red-team agents. Derive `<skill-name>` as `<directory-name>-<file-stem>` (e.g.,
+`work-agent-first-use` for `plugin/skills/work-agent/first-use.md`, `git-commit-agent-SKILL` for
+`plugin/skills/git-commit-agent/SKILL.md`). This compound key avoids collisions when a single skill
+directory contains both SKILL.md and first-use.md. Pass the skill-specific findings path to the
+red-team and blue-team subagent prompts via a `FINDINGS_PATH` parameter that overrides the default
+`{WORKTREE_ROOT}/findings.json`.
+Parallel subagents must not commit shared files (e.g., index files or aggregated docs) to avoid merge
+conflicts; those are updated once after all parallel subagents complete. The concurrent commit safety
+retry protocol (exponential backoff with jitter, up to 3 retries) from Step 3 also applies to all
+red-team and blue-team commits in batch parallel mode. Each parallel subagent must retry on ref-lock
+contention using the same backoff schedule: first retry after 1-2 seconds (randomized), second after
+2-4 seconds, third after 4-8 seconds.
 
 Skip files that are not valid skill files (missing Purpose or Procedure sections). If a skill file fails
 validation after blue-team patching, log the failure and continue to the next skill.
@@ -795,36 +540,51 @@ implementation details (trust levels, internal architecture, etc.).
 - [ ] Step 3 skill-analyzer-agent reads skill text via `cat` (not `git show` with benchmark SHA, since commits differ)
 - [ ] skill-analyzer-agent report includes Delegation Opportunities and Content Relay Anti-Patterns sections
   when skill_text_path is provided
-- [ ] Adversarial TDD loop completed (either converged or 10 iterations reached)
+- [ ] Step 3 iteration re-writes and re-commits skill file at SKILL_TEXT_PATH before re-running analyzer
+- [ ] Adversarial TDD loop completed (converged)
 - [ ] Final skill document includes purpose, procedure, and verification sections
 - [ ] Frontmatter description is trigger-oriented and contains no implementation details
 - [ ] No Functions or Prerequisites sections prime manual construction (per priming prevention checklist)
-- [ ] Step 3 iteration re-writes and re-commits skill file at SKILL_TEXT_PATH before re-running analyzer
-- [ ] Step 4 uses commit-based handoff: red-team commits findings.json, blue-team commits patched skill file
-- [ ] Step 4 reuses one red-team and one blue-team agent across rounds via task_id resume
-- [ ] Step 4 blue-team uses `subagent_type: "cat:blue-team-agent"` (not `general-purpose` + `model: "opus"`)
-- [ ] Step 4 diff validation uses `cat:diff-validation-agent` Task, not inline orchestrator review
-- [ ] Step 4 DIFF_VALIDATION_TASK_ID is stored and reused via resume in round 2+
-- [ ] Step 4 round 2+ red-team prompt passes commit hashes and instructs subagent to compute diff itself (no inline diff)
-- [ ] Step 4 blue-team prompt includes dispute protocol: verify each finding's premise before patching
-- [ ] Step 4 blue-team moves false-premise findings to `disputed` array with `false_premise` and `evidence` fields
-- [ ] Step 4 blue-team only patches findings remaining in `loopholes` after dispute evaluation
-- [ ] Step 4 arbitration agent spawned after blue-team if any disputes were raised
-- [ ] Step 4 arbitration agent receives BLUE_TEAM_COMMIT_HASH and reads disputed findings from git (no inline relay)
-- [ ] Step 4 arbitration agent is a fresh general-purpose subagent (not red-team or blue-team)
-- [ ] Step 4 arbitration agent returns JSON verdict array: `[{"finding_id": "...", "verdict": "upheld|rejected", "reasoning": "..."}]`
-- [ ] Step 4 upheld disputes receive `"arbitration_verdict": "upheld"` and remain in `disputed` array
-- [ ] Step 4 rejected disputes are moved back to `loopholes` and blue-team is resumed to patch them
-- [ ] Step 4 round 2+ red-team prompt includes prior disputed findings list (only arbitration-upheld entries) so red-team does not re-raise them
-- [ ] Step 4 termination check scans only the `loopholes` array (not `disputed`) for CRITICAL/HIGH entries
-- [ ] Step 4 `disputed` array contains only arbitration-upheld disputes; rejected disputes are in `loopholes`
-- [ ] Step 4 blue-team round 2+ prompt includes prior rejected disputes so blue-team cannot re-dispute findings arbitration already rejected
-- [ ] findings.json `disputed` array accumulates across rounds and is never reset
-- [ ] Step 4 round 1 red-team prompt passes `## Target File Path` (not inline content); subagent reads from disk
-- [ ] Step 4 round 1 blue-team prompt passes `## Current Content` as "(read from TARGET_FILE_PATH below)" (not inline)
-- [ ] Step 4 red-team prompts pass `target_type: skill_instructions`
-- [ ] Step 4 blue-team prompts pass `target_type: skill_instructions` and use `## Current Content` and `## Target File Path`
-- [ ] Step 4 diff-validation prompts pass `target_type: skill_instructions` and use `RED_TEAM_COMMIT_HASH`,
-  `BLUE_TEAM_COMMIT_HASH`, `TARGET_FILE_PATH` field names matching the agent interface
+- [ ] Step 4 follows shared adversarial protocol from plugin/concepts/adversarial-protocol.md
+- [ ] Shared protocol performs final-round MEDIUM/LOW cleanup pass (blue-team only, no arbitration/diff-validation) before loop exit
+- [ ] Step 4 uses target_type: skill_instructions
+- [ ] Step 4 main agent never reads findings.json directly — uses structured JSON returns from subagents
 - [ ] In-place hardening mode produces per-round commits (one from red-team, one from blue-team per round)
 - [ ] If batch mode was used: summary table shows Loopholes Closed, Disputes Upheld, and Patches Applied columns
+- [ ] Step 2 design subagent tool prohibition explicitly lists Grep alongside Bash, Write, Edit, Glob, WebFetch, WebSearch
+- [ ] Step 2 draft validation checks that each required section contains non-empty content (not just headings)
+- [ ] Step 3 without-skill config does not delete or rename the skill file — it omits the file from the subagent's prompt context
+- [ ] Step 4 documents that the agent-specific findings.json schema (name/severity/attack/evidence) takes precedence over the protocol's generic schema
+- [ ] Step 3 concurrent commit safety retry protocol covers both eval-run and grader subagents
+- [ ] Step 5 batch mode uses per-skill findings paths (`findings-<skill-name>.json`) to avoid collisions
+- [ ] Step 4 does not embed file content inline in subagent prompts — subagents read from TARGET_FILE_PATH
+- [ ] Step 2 design subagent Read scope is restricted to methodology, conventions, and existing skill files only
+- [ ] Shared protocol blue-team patch constraints prohibit removing capabilities to close loopholes
+- [ ] Step 3 git show commands for eval artifacts use repo-relative paths (`eval-artifacts/<SESSION_ID>/...`)
+- [ ] Step 5 batch mode skill-name derivation is defined as `<directory-name>-<file-stem>` to avoid collisions
+- [ ] Step 5 batch mode passes `FINDINGS_PATH` parameter to override default findings.json path in subagent prompts
+- [ ] Step 5 distinguishes filesystem operations (use WORKTREE_ROOT prefix) from git show (use repo-relative paths)
+- [ ] Step 3 benchmark plateau tracks BEST_SCORE and BEST_SHA, rolls back to best iteration on plateau or cap
+- [ ] Step 3 without-skill subagent prompt explicitly prohibits reading the skill file via Read tool
+- [ ] Step 2 design subagent tool prohibition explicitly lists NotebookEdit alongside other prohibited tools
+- [ ] Step 3 without-skill subagent prompt prohibits reading eval-artifacts, grading files, and git history
+- [ ] Step 5 prohibited paths cover all hardening loop phases (red-team, blue-team, arbitration, diff validation)
+- [ ] Step 4 arbitration agent scope restriction prohibits modifying any file other than findings.json
+- [ ] Step 3 BEST_SCORE is defined as with-skill assertion pass rate; improvement is absolute percentage points
+- [ ] Step 5 sequential batch mode requires deleting findings.json between skills to prevent contamination
+- [ ] Step 3 without-skill subagent prompt prohibits all git commands that reveal committed content (not just git log/show)
+- [ ] Step 2 design subagent validation verifies Read tool was used only on permitted files
+- [ ] Step 4 blue-team patch constraints explicitly protect verification checklist items from removal or weakening
+- [ ] Step 3 grader subagent prompt prohibits reading the skill file at SKILL_TEXT_PATH
+- [ ] Step 3 concurrent commit retry uses exponential backoff with jitter (not undefined "short delay")
+- [ ] Step 3 without-skill subagent prohibition explicitly names the Read tool alongside Bash/Grep as blocked mechanisms
+- [ ] Step 3 test case assertions require at least 2 per case with at least one testing skill-differentiating behavior
+- [ ] Shared protocol diff-validation includes scope check: every hunk must map to a specific loophole
+- [ ] Step 3 both with-skill and without-skill subagents are prohibited from reading eval-artifacts
+- [ ] Step 4 arbitration agent prompt includes explicit tool restrictions (Write/Edit limited to findings.json, no state-modifying Bash)
+- [ ] Step 5 batch parallel mode extends the concurrent commit retry protocol to red-team and blue-team commits
+- [ ] Step 3 grader subagent prompt prohibits git commands that reveal skill content (matching without-skill exhaustive prohibition)
+- [ ] Step 5 in-place mode verifies prior benchmark existence before skipping Steps 1-3
+- [ ] Step 3 eval-artifacts prohibition explicitly names peer run-output files and uses absolute scope (not rationale-dependent)
+- [ ] Step 3 aggregator subagent prompt includes write restrictions limiting output to benchmark.json only
+- [ ] Step 3 skill-analyzer-agent prompt includes read-only restriction prohibiting Write/Edit tools and file-modifying Bash

@@ -117,6 +117,38 @@ Update the TDD State Machine diagram to reflect the new STEP 3.5 node and its tr
 
 - Files: `plugin/skills/tdd-implementation-agent/first-use.md`
 
+### Wave 2b: Fix TDD State Machine diagram node label
+
+In `plugin/skills/tdd-implementation-agent/first-use.md`, update the TDD State Machine diagram so
+the hardening node is labeled `[STEP 3.5]` instead of `[HARDEN]`, and make the PASS and FAIL
+transitions explicit with labels indicating the target state (STEP 4 for pass, STEP 1 for fail).
+
+The diagram must clearly show:
+- A node labeled `[STEP 3.5]` (not `[HARDEN]`)
+- An explicit transition from `[STEP 3.5]` to `[STEP 4]` (or `[ITERATE OR VERIFY]`) labeled PASS
+- An explicit transition from `[STEP 3.5]` to `[STEP 1]` (or `[RED]`) labeled FAIL
+
+- Files: `plugin/skills/tdd-implementation-agent/first-use.md`
+
+### Wave 2c: Fix inverted PASS/FAIL labels on STEP 3.5 transitions in TDD State Machine diagram
+
+In `plugin/skills/tdd-implementation-agent/first-use.md`, the TDD State Machine diagram currently has the
+PASS and FAIL labels semantically inverted on the STEP 3.5 transitions:
+
+- The label `PASS: impl gap revealed → re-enter STEP 1` is attached to the STEP 1 transition, but "impl gap
+  revealed" is a **FAIL** condition (hardened tests expose an implementation gap), not a PASS.
+- The rightward arrow from `[STEP 3.5]` to `[ITERATE OR VERIFY]` (STEP 4) has no explicit `PASS` label.
+
+Fix the diagram so that:
+1. The arrow from `[STEP 3.5]` to `[STEP 4]` (or `[ITERATE OR VERIFY]`) is explicitly labeled **PASS** (all
+   tests still pass after hardening).
+2. The arrow from `[STEP 3.5]` to `[STEP 1]` (or `[RED]`) is explicitly labeled **FAIL** (hardened tests
+   exposed an implementation gap).
+3. Remove or correct the `PASS: impl gap revealed → re-enter STEP 1` label so it does not misleadingly map
+   PASS to the failure path.
+
+- Files: `plugin/skills/tdd-implementation-agent/first-use.md`
+
 ### Wave 3: Verification
 
 Manual trace through both updated skills:
