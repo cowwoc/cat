@@ -462,8 +462,26 @@ do NOT offer "Fix remaining concerns" again. Instead, present only: ["Approve an
 "Request changes", "Abort"]. This prevents unbounded fix-review loops where each fix introduces new concerns.
 
 1. Extract MEDIUM+ concerns (severity, description, location, recommendation, detail_file)
-2. Spawn `cat:work-execute` subagent: fix each MEDIUM+ concern in `${WORKTREE_PATH}`, commit with
-   same type as primary implementation (e.g., `bugfix:`), return JSON with commits and files_changed
+2. Spawn `cat:work-execute` subagent to fix each MEDIUM+ concern. Pass `ISSUE_PATH` explicitly so the
+   subagent can invoke `cat:collect-results-agent` and update STATE.md without constructing the path
+   from ISSUE_ID (which gets the `v2/v2.1/` nesting wrong):
+   ```
+   Task tool:
+     description: "Fix remaining concerns for ${ISSUE_ID}"
+     subagent_type: "cat:work-execute"
+     prompt: |
+       Fix each MEDIUM+ concern in the worktree and commit with the same type as the primary
+       implementation (e.g., `bugfix:`). Return JSON with commits and files_changed.
+
+       ## Configuration
+       ISSUE_ID: ${ISSUE_ID}
+       ISSUE_PATH: ${ISSUE_PATH}
+       WORKTREE_PATH: ${WORKTREE_PATH}
+       TARGET_BRANCH: ${TARGET_BRANCH}
+
+       ## Concerns to fix
+       ${MEDIUM_PLUS_CONCERNS}
+   ```
 3. **MANDATORY: Re-run stakeholder review** after fixes:
    `Skill("cat:stakeholder-review-agent", "${ISSUE_ID} ${WORKTREE_PATH} ${VERIFY} ${ALL_COMMITS_COMPACT}")`
    The review MUST re-run to verify concerns resolved and detect new concerns introduced by fixes
