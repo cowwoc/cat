@@ -107,6 +107,22 @@ are needed.
 - Update `STATE.md` to reflect implementation complete
   - Files: `.claude/cat/issues/v2.1/add-context-minimization-to-skill-builder-analysis/STATE.md`
 
+### Wave 3
+
+- Create `plugin/agents/skill-analyzer-agent/test-trace.md` — a documented test trace that provides
+  structural evidence for the E2E post-condition "Invoke skill-analyzer-agent with benchmark JSON +
+  skill_text and verify Delegation Opportunities: FOUND". The file must contain:
+  1. A **Sample Input** section with a minimal benchmark JSON envelope plus a `skill_text` excerpt from
+     `plugin/agents/optimize-execution-agent/first-use.md` Step 3 (the manual grep/bash extraction
+     pattern that meets the delegation opportunity detection rule of "3+ tool calls before spawning a
+     Task subagent").
+  2. A **Expected Output** section showing the exact analysis report the agent would produce, including
+     `Delegation Opportunities: FOUND in steps: Step 3 — manual grep/bash extraction …` and the
+     recommendation referencing `plugin/concepts/subagent-context-minimization.md`.
+  3. A **Structural Verification** section explaining which detection rules in `SKILL.md` fire on the
+     sample input and why the output is correct.
+  - Files: `plugin/agents/skill-analyzer-agent/test-trace.md`
+
 ## Detailed Change Specification
 
 ### Changes to `plugin/agents/skill-analyzer-agent/SKILL.md`
