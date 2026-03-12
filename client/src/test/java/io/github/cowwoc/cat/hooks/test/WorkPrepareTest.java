@@ -33,7 +33,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public class WorkPrepareTest
 {
   /**
-   * Verifies that execute returns ERROR when the project has no .claude/cat/cat-config.json.
+   * Verifies that execute returns ERROR when the project has no .cat/cat-config.json.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -139,7 +139,7 @@ public class WorkPrepareTest
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       // Create issue directory with only STATE.md (no PLAN.md) — simulates a corrupt directory
-      Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+      Path issueDir = projectDir.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("corrupt-issue");
       Files.createDirectories(issueDir);
 
@@ -252,7 +252,7 @@ public class WorkPrepareTest
       worktreePath = Path.of(node.path("worktree_path").asString());
 
       // Read the STATE.md from the worktree
-      Path stateFile = worktreePath.resolve(".claude").resolve("cat").resolve("issues").
+      Path stateFile = worktreePath.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("my-feature").resolve("STATE.md");
       String stateContent = Files.readString(stateFile);
 
@@ -502,7 +502,7 @@ public class WorkPrepareTest
       createIssue(projectDir, "2", "1", "no-preconditions", "open");
 
       // Create a PLAN.md without a Pre-conditions section
-      Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+      Path issueDir = projectDir.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("no-preconditions");
       String planContent = """
         # Plan
@@ -751,7 +751,7 @@ public class WorkPrepareTest
       createIssue(projectDir, "2", "1", "no-goal", "open");
 
       // Create a PLAN.md without a Goal section
-      Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+      Path issueDir = projectDir.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("no-goal");
       String planContent = """
         # Plan
@@ -855,7 +855,7 @@ public class WorkPrepareTest
       createIssue(projectDir, "2", "1", "boundary-feature", "open");
 
       // 32 files to create: 32 * 5000 = 160,000 + 10,000 base = 170,000 > 160,000
-      Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+      Path issueDir = projectDir.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("boundary-feature");
       StringBuilder planContent = new StringBuilder(800);
       planContent.append("# Plan\n\n## Files to Create\n\n");
@@ -895,7 +895,7 @@ public class WorkPrepareTest
     try
     {
       Path projectDir = Files.createTempDirectory("work-prepare-test");
-      Path catDir = projectDir.resolve(".claude").resolve("cat");
+      Path catDir = projectDir.resolve(".cat");
       Files.createDirectories(catDir.resolve("issues"));
       Files.writeString(catDir.resolve("cat-config.json"), "{}");
       return projectDir;
@@ -918,7 +918,7 @@ public class WorkPrepareTest
     Path projectDir = TestUtils.createTempGitRepo(branchName);
 
     // Add CAT structure
-    Path catDir = projectDir.resolve(".claude").resolve("cat");
+    Path catDir = projectDir.resolve(".cat");
     Files.createDirectories(catDir.resolve("issues"));
     Files.writeString(catDir.resolve("cat-config.json"), "{}");
 
@@ -942,7 +942,7 @@ public class WorkPrepareTest
   private void createIssue(Path projectDir, String major, String minor, String issueName,
     String status) throws IOException
   {
-    Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+    Path issueDir = projectDir.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
@@ -982,7 +982,7 @@ public class WorkPrepareTest
   private void createIssueWithDependencies(Path projectDir, String major, String minor,
     String issueName, String status, String dependencies) throws IOException
   {
-    Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+    Path issueDir = projectDir.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
@@ -1020,7 +1020,7 @@ public class WorkPrepareTest
   private void createOversizedPlan(Path projectDir, String major, String minor,
     String issueName) throws IOException
   {
-    Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+    Path issueDir = projectDir.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
@@ -1047,7 +1047,7 @@ public class WorkPrepareTest
   private void createSimplePlan(Path projectDir, String major, String minor,
     String issueName) throws IOException
   {
-    Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+    Path issueDir = projectDir.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
@@ -1086,7 +1086,7 @@ public class WorkPrepareTest
   private void createPlanWithGoal(Path projectDir, String major, String minor,
     String issueName, String goalText) throws IOException
   {
-    Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+    Path issueDir = projectDir.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
@@ -1163,7 +1163,7 @@ public class WorkPrepareTest
     {
       createIssue(projectDir, "2", "1", "empty-precond", "open");
 
-      Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+      Path issueDir = projectDir.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("empty-precond");
       String planContent = """
         # Plan
@@ -1217,7 +1217,7 @@ public class WorkPrepareTest
     {
       createIssue(projectDir, "2", "1", "eof-precond", "open");
 
-      Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+      Path issueDir = projectDir.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("eof-precond");
       // No trailing newline after the last item
       String planContent = "# Plan\n\n## Execution Steps\n\n1. Do the work\n\n## Pre-conditions\n\n- [ ] Final check";
@@ -1261,7 +1261,7 @@ public class WorkPrepareTest
   private void createPlanWithPreconditions(Path projectDir, String major, String minor,
     String issueName, String[] preconditions) throws IOException
   {
-    Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+    Path issueDir = projectDir.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
@@ -1288,7 +1288,7 @@ public class WorkPrepareTest
   private void createPlanWithMixedPreconditions(Path projectDir, String major, String minor,
     String issueName, String[] uncheckedItems, String[] checkedItems) throws IOException
   {
-    Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+    Path issueDir = projectDir.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
@@ -2143,7 +2143,7 @@ public class WorkPrepareTest
   private void createDecomposedIssue(Path projectDir, String major, String minor,
     String issueName, String subIssueName) throws IOException
   {
-    Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+    Path issueDir = projectDir.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
@@ -2181,7 +2181,7 @@ public class WorkPrepareTest
   private void createDecomposedIssueWithMalformedEntries(Path projectDir, String major, String minor,
     String issueName, String validSubIssueName) throws IOException
   {
-    Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+    Path issueDir = projectDir.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
@@ -2217,7 +2217,7 @@ public class WorkPrepareTest
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       // Create issue with only PLAN.md - no STATE.md
-      Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+      Path issueDir = projectDir.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("plan-only-issue");
       Files.createDirectories(issueDir);
       Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nTest goal\n");
@@ -2260,7 +2260,7 @@ public class WorkPrepareTest
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       // Create issue with only PLAN.md - no STATE.md
-      Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+      Path issueDir = projectDir.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("plan-only-issue");
       Files.createDirectories(issueDir);
       Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nTest goal\n");
@@ -2280,7 +2280,7 @@ public class WorkPrepareTest
       worktreePath = Path.of(node.path("worktree_path").asString());
 
       // Verify STATE.md was created in the worktree (not in the main workspace)
-      Path worktreeIssueDir = worktreePath.resolve(".claude").resolve("cat").resolve("issues").
+      Path worktreeIssueDir = worktreePath.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("plan-only-issue");
       Path worktreeStateMd = worktreeIssueDir.resolve("STATE.md");
       requireThat(Files.isRegularFile(worktreeStateMd), "worktreeStateMdExists").isTrue();
@@ -2315,7 +2315,7 @@ public class WorkPrepareTest
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
       // Create issue with STATE.md that has no status field
-      Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+      Path issueDir = projectDir.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("no-status-issue");
       Files.createDirectories(issueDir);
       Files.writeString(issueDir.resolve("STATE.md"), """
@@ -2364,7 +2364,7 @@ public class WorkPrepareTest
     Path worktreePath = null;
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+      Path issueDir = projectDir.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("worktree-path-issue");
       Files.createDirectories(issueDir);
       Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nTest goal\n");
@@ -2389,11 +2389,11 @@ public class WorkPrepareTest
 
       // issue_path must end with the correct relative issue directory
       requireThat(issuePath, "issue_path").endsWith(
-        ".claude/cat/issues/v2/v2.1/worktree-path-issue");
+        ".cat/issues/v2/v2.1/worktree-path-issue");
 
       // issue_path must NOT be the main workspace issue directory
       requireThat(issuePath, "issue_path").isNotEqualTo(
-        projectDir.resolve(".claude/cat/issues/v2/v2.1/worktree-path-issue").toString());
+        projectDir.resolve(".cat/issues/v2/v2.1/worktree-path-issue").toString());
     }
     finally
     {

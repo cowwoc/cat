@@ -37,7 +37,7 @@ Before changing an issue from `in-progress` to any other status (`open`, `pendin
 ```bash
 ISSUE_NAME="issue-name-here"
 git log --oneline --grep="$ISSUE_NAME" -5
-git log --oneline -- ".claude/cat/issues/*/v*/$ISSUE_NAME/" -5
+git log --oneline -- ".cat/issues/*/v*/$ISSUE_NAME/" -5
 ```
 
 | Git History Shows | Correct Action |
@@ -155,7 +155,7 @@ else
   continue  # Skip to next worktree — do not include in plan or cleanup
 fi
 # Use exact version directory match (trailing /) to avoid 2.1 matching 2.10
-STATE_FILE=$(find "$WORKTREE_PATH/.claude/cat/issues/" -path "*/${ISSUE_VERSION}/${ISSUE_NAME}/STATE.md" 2>/dev/null | head -1)
+STATE_FILE=$(find "$WORKTREE_PATH/.cat/issues/" -path "*/${ISSUE_VERSION}/${ISSUE_NAME}/STATE.md" 2>/dev/null | head -1)
 TARGET_BRANCH=""
 if [[ -n "$STATE_FILE" ]]; then
   TARGET_BRANCH=$(grep "Target Branch:" "$STATE_FILE" | sed 's/.*\*\*Target Branch:\*\*\s*//')

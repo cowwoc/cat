@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.skills;
 
+import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
@@ -102,13 +103,13 @@ public final class GetAddOutput implements SkillOutput
    */
   private String buildPlanningDataJson(Path projectDir) throws IOException
   {
-    Path issuesDir = projectDir.resolve(".claude/cat/issues");
+    Path issuesDir = projectDir.resolve(Config.CAT_DIR_NAME).resolve("issues");
     if (!Files.isDirectory(issuesDir))
     {
       ObjectNode root = scope.getJsonMapper().createObjectNode();
       root.put("planning_valid", false);
       root.put("error_message",
-        "Planning structure not found: .claude/cat/issues. Run /cat:init to initialize.");
+        "Planning structure not found: " + Config.CAT_DIR_NAME + "/issues. Run /cat:init to initialize.");
       root.put("branch_strategy", "");
       root.put("branch_pattern", "");
       root.set("versions", scope.getJsonMapper().createArrayNode());
@@ -166,7 +167,7 @@ public final class GetAddOutput implements SkillOutput
   /**
    * Reads version data from a version directory.
    *
-   * @param versionDir the version directory (e.g., {@code .claude/cat/issues/v2/v2.1})
+   * @param versionDir the version directory (e.g., {@code .cat/issues/v2/v2.1})
    * @return the version data; returns a version with status {@code "closed"} if STATE.md is missing
    * @throws IOException if an I/O error occurs
    */

@@ -559,7 +559,7 @@ public class GetNextIssueOutputTest
   private void createIssueWithState(Path projectDir, String major, String minor, String issueName,
     String status) throws IOException
   {
-    Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+    Path issueDir = projectDir.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 

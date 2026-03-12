@@ -19,7 +19,7 @@ setup_test_dir() {
     export CLAUDE_PROJECT_DIR="$TEST_TEMP_DIR"
 
     # Create required directories
-    mkdir -p "$TEST_TEMP_DIR/.claude/cat/locks"
+    mkdir -p "$TEST_TEMP_DIR/.cat/locks"
     mkdir -p "$TEST_TEMP_DIR/.git"
 }
 
@@ -44,7 +44,7 @@ setup_git_repo() {
     git commit --quiet -m "Initial commit"
 
     # Create required CAT directories
-    mkdir -p "$TEST_TEMP_DIR/.claude/cat/locks"
+    mkdir -p "$TEST_TEMP_DIR/.cat/locks"
 }
 
 # Clean up temporary test directory

@@ -6,7 +6,7 @@
 
 **Pre-Demo Polish**
 
-*In development - see planned tasks in .claude/cat/issues/v2/v2.1/*
+*In development - see planned tasks in .cat/issues/v2/v2.1/*
 
 **Renames:**
 - `shrink-doc` skill renamed to `optimize-doc` (and `shrink-doc-agent` to `optimize-doc-agent`); all plugin references

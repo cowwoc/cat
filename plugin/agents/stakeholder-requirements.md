@@ -154,7 +154,7 @@ Parent Requirements section?"*
    - The `## Success Criteria` section (issue-local acceptance criteria, if any)
    - The `## Target State` or goal description (what the implementation should produce)
 2. **Read the parent minor version's PLAN.md** to get the full requirement descriptions
-   - Path: `.claude/cat/issues/v{major}/v{major}.{minor}/PLAN.md`
+   - Path: `.cat/issues/v{major}/v{major}.{minor}/PLAN.md`
    - Extract the Requirements table with ID, description, priority, and acceptance criteria
 3. **For each claimed requirement** (REQ-XXX IDs):
    - Locate the requirement definition in the minor version PLAN.md
@@ -228,7 +228,7 @@ Use these domain-specific examples to calibrate your severity ratings against th
 ## Detail File
 
 Before returning your review, write comprehensive analysis to:
-`${WORKTREE_PATH}/.claude/cat/review/requirements-concerns.json`
+`${WORKTREE_PATH}/.cat/review/requirements-concerns.json`
 
 The detail file is consumed by a planning subagent that creates concrete fix steps. Include:
 - Exact file paths and line numbers for each problem
@@ -249,7 +249,7 @@ Return compact JSON inline. Write full details to the detail file, not inline.
       "location": "file:line or component",
       "explanation": "Brief description of the requirements gap",
       "recommendation": "Brief guidance on how to fix or remove from Parent Requirements list",
-      "detail_file": "${WORKTREE_PATH}/.claude/cat/review/requirements-concerns.json"
+      "detail_file": "${WORKTREE_PATH}/.cat/review/requirements-concerns.json"
     }
   ]
 }

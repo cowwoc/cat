@@ -41,14 +41,14 @@ Use ONLY these types when committing in a CAT-managed project:
 
 | File Location | Commit Type | Examples |
 |---------------|-------------|----------|
-| `.claude/cat/*.md` | `planning:` | PROJECT.md, ROADMAP.md |
-| `.claude/cat/issues/v*/` | `planning:` | STATE.md, PLAN.md, CHANGELOG.md |
-| `.claude/cat/retrospectives/` | `config:` | index.json, mistakes-*.json, retrospectives-*.json (Claude-facing) |
+| `.cat/*.md` | `planning:` | PROJECT.md, ROADMAP.md |
+| `.cat/issues/v*/` | `planning:` | STATE.md, PLAN.md, CHANGELOG.md |
+| `.cat/retrospectives/` | `config:` | index.json, mistakes-*.json, retrospectives-*.json (Claude-facing) |
 | `.claude/hooks/`, `.claude/settings.json` | `config:` | hooks, Claude Code settings |
 | `CLAUDE.md`, skills, workflows | `config:` | Claude-facing behavior rules |
 | `README.md`, `docs/`, API docs | `docs:` | User-facing documentation |
 
-**Key test:** Is the file in `.claude/cat/`? → Use `planning:`. Is it Claude behavior config? → Use `config:`. Is it for
+**Key test:** Is the file in `.cat/`? → Use `planning:`. Is it Claude behavior config? → Use `config:`. Is it for
 end users? → Use `docs:`.
 
 **CRITICAL: Commit type = WHAT changed, not WHERE**
@@ -71,8 +71,8 @@ The CAT plugin repo separates plugin source from planning:
 | `plugin/` | `config:` | Plugin source code that ships to users |
 | `plugin/concepts/` | `config:` | Plugin's bundled reference docs |
 | `plugin/skills/` | `config:` | Plugin skills |
-| `.claude/cat/` (root) | `planning:` | CAT's own development planning |
-| `.claude/cat/issues/v*/` (root) | `planning:` | CAT's version/issue structure |
+| `.cat/` (root) | `planning:` | CAT's own development planning |
+| `.cat/issues/v*/` (root) | `planning:` | CAT's version/issue structure |
 
 **Key distinction:** Default type is based on location, but always override with the actual change type (bugfix,
 feature, refactor) when applicable. `config:` is for maintenance/settings changes, not all plugin file edits.
@@ -172,13 +172,13 @@ Implementation commits are tracked via STATE.md file history, not commit footers
 
 ```bash
 # Find all commits that touched this issue
-git log --oneline -- .claude/cat/issues/v2/v2.1/issue-name/
+git log --oneline -- .cat/issues/v2/v2.1/issue-name/
 
 # Find the most recent implementation commit (usually STATE.md completion)
-git log --oneline -1 -- .claude/cat/issues/v2/v2.1/issue-name/STATE.md
+git log --oneline -1 -- .cat/issues/v2/v2.1/issue-name/STATE.md
 
 # See full implementation history with diffs
-git log -p -- .claude/cat/issues/v2/v2.1/issue-name/STATE.md
+git log -p -- .cat/issues/v2/v2.1/issue-name/STATE.md
 ```
 
 **Why this works:**
@@ -191,7 +191,7 @@ git log -p -- .claude/cat/issues/v2/v2.1/issue-name/STATE.md
 
 | Resolution | How to Find Commits |
 |------------|---------------------|
-| `implemented` | `git log -- .claude/cat/issues/v*/v*.*/issue-name/STATE.md` |
+| `implemented` | `git log -- .cat/issues/v*/v*.*/issue-name/STATE.md` |
 | `duplicate` | Check STATE.md for `Duplicate Of`, search for that issue |
 | `obsolete` | No implementation commit exists |
 

@@ -75,7 +75,7 @@ public final class TestUtils
   }
 
   /**
-   * Creates a temporary project directory with a {@code .claude/cat/issues} tree.
+   * Creates a temporary project directory with a {@code .cat/issues} tree.
    *
    * @param prefix the prefix for the temporary directory name
    * @return the path to the created project directory
@@ -87,7 +87,7 @@ public final class TestUtils
     try
     {
       Path projectDir = Files.createTempDirectory(prefix);
-      Files.createDirectories(projectDir.resolve(".claude").resolve("cat").resolve("issues"));
+      Files.createDirectories(projectDir.resolve(".cat").resolve("issues"));
       return projectDir;
     }
     catch (IOException e)

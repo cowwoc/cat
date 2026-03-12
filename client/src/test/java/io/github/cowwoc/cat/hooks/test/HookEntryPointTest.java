@@ -866,7 +866,7 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree(
-        "{\"file_path\": \".claude/cat/v2/v2.1/my-task/STATE.md\", " +
+        "{\"file_path\": \".cat/issues/v2/v2.1/my-task/STATE.md\", " +
         "\"new_string\": \"Status: closed\"}");
       FileWriteHandler.Result result = new EnforceWorkflowCompletion().check(toolInput, "test");
       requireThat(result.blocked(), "blocked").isFalse();
@@ -885,7 +885,7 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree(
-        "{\"file_path\": \".claude/cat/v2/v2.1/my-task/STATE.md\", " +
+        "{\"file_path\": \".cat/issues/v2/v2.1/my-task/STATE.md\", " +
         "\"new_string\": \"status:closed\"}");
       FileWriteHandler.Result result = new EnforceWorkflowCompletion().check(toolInput, "test");
       requireThat(result.blocked(), "blocked").isFalse();
@@ -903,7 +903,7 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
-        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \".claude/cat/v2/v2.1/my-task/STATE.md\"}, " +
+        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \".cat/v2/v2.1/my-task/STATE.md\"}, " +
         "\"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
@@ -924,7 +924,7 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
-        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \".claude/cat/v2/v2.1/fix-bug-123/STATE.md\", " +
+        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \".cat/v2/v2.1/fix-bug-123/STATE.md\", " +
         "\"new_string\": \"Status: in_progress\"}, \"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 

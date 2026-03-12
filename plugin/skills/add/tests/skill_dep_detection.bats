@@ -14,7 +14,7 @@ source "${PLUGIN_ROOT}/skills/add-agent/skill_dep_helpers.sh"
 
 setup() {
     setup_test_dir
-    ISSUES_DIR="${TEST_TEMP_DIR}/.claude/cat/issues"
+    ISSUES_DIR="${TEST_TEMP_DIR}/.cat/issues"
     mkdir -p "$ISSUES_DIR"
 }
 

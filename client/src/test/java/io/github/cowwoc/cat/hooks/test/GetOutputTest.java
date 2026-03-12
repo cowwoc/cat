@@ -40,7 +40,7 @@ public class GetOutputTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       // Create minimal config for config handler to return non-null
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{}");
 
@@ -162,7 +162,7 @@ public class GetOutputTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       // Create minimal config for config handler
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{}");
 
@@ -431,7 +431,7 @@ public class GetOutputTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       // Create minimal config for config handler
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{}");
 

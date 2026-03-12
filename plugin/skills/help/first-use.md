@@ -70,7 +70,7 @@ CAT supports flexible version schemes:
 - **3-level:** MAJOR --> MINOR --> PATCH --> ISSUE (e.g., v1.0.1)
 
 ```
-.claude/cat/
+.cat/
 +-- PROJECT.md              # Project overview
 +-- ROADMAP.md              # Version summaries
 +-- cat-config.json         # Configuration
@@ -161,7 +161,7 @@ Set during `/cat:init` in cat-config.json:
 - **Medium** (default) - Trust routine calls, review key decisions
 - **High** - Full autonomy, auto-merges on issue completion
 
-Change anytime with `/cat:config` or edit `.claude/cat/cat-config.json`
+Change anytime with `/cat:config` or edit `.cat/cat-config.json`
 
 ---
 
@@ -206,7 +206,7 @@ cat-config.json:
 
 ## Getting Help
 
-- Read `.claude/cat/PROJECT.md` for project vision
-- Check `.claude/cat/ROADMAP.md` for version overview
+- Read `.cat/PROJECT.md` for project vision
+- Check `.cat/ROADMAP.md` for version overview
 - Use `/cat:status` to see current state
 - Review individual STATE.md files for detailed progress

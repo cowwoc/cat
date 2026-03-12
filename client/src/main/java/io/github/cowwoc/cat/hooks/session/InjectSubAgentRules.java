@@ -22,7 +22,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * subagent context.
  * <p>
  * Discovers all rule files from both {@code ${CLAUDE_PLUGIN_ROOT}/rules/} (plugin-bundled) and
- * {@code ${projectDir}/.claude/cat/rules/} (project-local), concatenates them (plugin-bundled
+ * {@code ${projectDir}/.cat/rules/} (project-local), concatenates them (plugin-bundled
  * first, project-local second), then filters using the {@code subAgents} frontmatter property.
  * Omitting {@code subAgents} (or providing no frontmatter) reaches all subagents;
  * {@code subAgents: []} excludes all subagents; specific types like
@@ -51,7 +51,7 @@ public final class InjectSubAgentRules implements SubagentStartHandler
    * Reads from two sources in order (plugin-bundled first, project-local second):
    * <ol>
    *   <li>{@code ${CLAUDE_PLUGIN_ROOT}/rules/} — plugin-bundled rules</li>
-   *   <li>{@code ${projectDir}/.claude/cat/rules/} — project-local rules</li>
+   *   <li>{@code ${projectDir}/.cat/rules/} — project-local rules</li>
    * </ol>
    * Both sources are concatenated; no filename-based deduplication is performed.
    *
@@ -70,7 +70,7 @@ public final class InjectSubAgentRules implements SubagentStartHandler
         "subagent type will not match");
 
     Path pluginRulesDir = scope.getClaudePluginRoot().resolve("rules");
-    Path projectRulesDir = scope.getClaudeProjectDir().resolve(".claude/cat/rules");
+    Path projectRulesDir = scope.getCatDir().resolve("rules");
     // Rules with paths: restrictions are injected dynamically by InjectPathRules (PreToolUse hook)
     // when matching files are accessed. For subagents, only non-paths rules are injected at start.
     String rules = RulesDiscovery.getCatRulesForAudience(List.of(pluginRulesDir, projectRulesDir),

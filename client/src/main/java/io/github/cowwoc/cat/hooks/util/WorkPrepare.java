@@ -188,11 +188,11 @@ public final class WorkPrepare
     JsonMapper mapper = scope.getJsonMapper();
 
     // Step 1: Verify CAT structure
-    if (!verifyCatStructure(projectDir))
+    if (!verifyCatStructure())
     {
       return mapper.writeValueAsString(Map.of(
         "status", "ERROR",
-        "message", "No .claude/cat/ directory or cat-config.json found"));
+        "message", "No .cat/ directory or cat-config.json found"));
     }
 
     // Step 2: Find available issue
@@ -227,7 +227,7 @@ public final class WorkPrepare
     {
       preBuiltIssueIndex = new LinkedHashMap<>();
       preBuiltBareNameIndex = new LinkedHashMap<>();
-      Path issuesDir = projectDir.resolve(".claude").resolve("cat").resolve("issues");
+      Path issuesDir = scope.getCatDir().resolve("issues");
       buildIssueIndex(issuesDir, preBuiltIssueIndex, preBuiltBareNameIndex);
     }
     else
@@ -241,7 +241,7 @@ public final class WorkPrepare
     warnings.addAll(discovery.getWarnings());
 
     // Handle non-found statuses
-    String nonFoundResult = handleNonFoundResult(discoveryResult, projectDir, mapper,
+    String nonFoundResult = handleNonFoundResult(discoveryResult, mapper,
       preBuiltIssueIndex, preBuiltBareNameIndex);
     if (!nonFoundResult.isEmpty())
       return nonFoundResult;
@@ -299,7 +299,6 @@ public final class WorkPrepare
    * continue with worktree creation.
    *
    * @param discoveryResult the discovery result to handle
-   * @param projectDir the project root directory
    * @param mapper the JSON mapper for serialization
    * @param preBuiltIssueIndex a pre-built issue index to reuse (may be null to trigger a fresh scan)
    * @param preBuiltBareNameIndex a pre-built bare name index to reuse (may be null)
@@ -307,13 +306,13 @@ public final class WorkPrepare
    * @throws IOException if file operations or JSON serialization fail
    */
   private String handleNonFoundResult(IssueDiscovery.DiscoveryResult discoveryResult,
-    Path projectDir, JsonMapper mapper,
+    JsonMapper mapper,
     Map<String, IssueIndexEntry> preBuiltIssueIndex,
     Map<String, List<String>> preBuiltBareNameIndex) throws IOException
   {
     if (discoveryResult instanceof IssueDiscovery.DiscoveryResult.NotFound)
     {
-      DiagnosticInfo diagnostics = gatherDiagnosticInfo(projectDir, preBuiltIssueIndex,
+      DiagnosticInfo diagnostics = gatherDiagnosticInfo(preBuiltIssueIndex,
         preBuiltBareNameIndex);
 
       Map<String, Object> result = new LinkedHashMap<>();
@@ -569,12 +568,11 @@ public final class WorkPrepare
   /**
    * Verifies that the project has a valid CAT structure.
    *
-   * @param projectDir the project root directory
    * @return true if the structure is valid
    */
-  private boolean verifyCatStructure(Path projectDir)
+  private boolean verifyCatStructure()
   {
-    Path catDir = projectDir.resolve(".claude").resolve("cat");
+    Path catDir = scope.getCatDir();
     Path configFile = catDir.resolve("cat-config.json");
     return Files.isDirectory(catDir) && Files.isRegularFile(configFile);
   }
@@ -588,13 +586,12 @@ public final class WorkPrepare
    * When {@code preBuiltIssueIndex} and {@code preBuiltBareNameIndex} are non-null (pre-built by
    * the caller), they are used directly without rebuilding the index, avoiding a redundant scan.
    *
-   * @param projectDir the project root directory
    * @param preBuiltIssueIndex a pre-built issue index to reuse, or null to trigger a fresh scan
    * @param preBuiltBareNameIndex a pre-built bare name index to reuse, or null to trigger a fresh scan
    * @return the diagnostic info
    * @throws IOException if file operations fail
    */
-  private DiagnosticInfo gatherDiagnosticInfo(Path projectDir,
+  private DiagnosticInfo gatherDiagnosticInfo(
     Map<String, IssueIndexEntry> preBuiltIssueIndex,
     Map<String, List<String>> preBuiltBareNameIndex) throws IOException
   {
@@ -607,7 +604,7 @@ public final class WorkPrepare
     }
     else
     {
-      Path issuesDir = projectDir.resolve(".claude").resolve("cat").resolve("issues");
+      Path issuesDir = scope.getCatDir().resolve("issues");
       issueIndex = new LinkedHashMap<>();
       bareNameIndex = new LinkedHashMap<>();
       buildIssueIndex(issuesDir, issueIndex, bareNameIndex);

@@ -86,7 +86,7 @@ public final class WarnBaseBranchEditTest
       WarnBaseBranchEdit handler = new WarnBaseBranchEdit(scope);
       JsonMapper mapper = scope.getJsonMapper();
       ObjectNode input = mapper.createObjectNode();
-      input.put("file_path", projectDir.resolve(".claude/cat/issues/my-issue/STATE.md").toString());
+      input.put("file_path", projectDir.resolve(".cat/issues/my-issue/STATE.md").toString());
 
       FileWriteHandler.Result result = handler.check(input, SESSION_ID);
 

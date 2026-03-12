@@ -41,6 +41,18 @@ public interface JvmScope extends AutoCloseable
   Path getClaudeProjectDir();
 
   /**
+   * Returns the {@code .cat} directory under the Claude project directory.
+   *
+   * @return the path to the {@code .cat} directory
+   * @throws AssertionError if the project directory is not configured
+   * @throws IllegalStateException if this scope is closed
+   */
+  default Path getCatDir()
+  {
+    return getClaudeProjectDir().resolve(Config.CAT_DIR_NAME);
+  }
+
+  /**
    * Returns the Claude plugin root directory.
    *
    * @return the plugin root directory path

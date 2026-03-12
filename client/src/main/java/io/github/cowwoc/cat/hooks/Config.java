@@ -34,6 +34,10 @@ import tools.jackson.databind.json.JsonMapper;
  */
 public final class Config
 {
+  /**
+   * The name of the CAT directory at the project root.
+   */
+  public static final String CAT_DIR_NAME = ".cat";
   // Type reference for JSON deserialization (avoids unchecked cast)
   private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>()
   {
@@ -80,7 +84,7 @@ public final class Config
    * </ol>
    *
    * @param mapper the JSON mapper to use for parsing
-   * @param projectDir the project root directory containing .claude/cat/
+   * @param projectDir the project root directory containing .cat/
    * @return the loaded configuration
    * @throws IOException if a config file exists but cannot be read or contains invalid JSON
    * @throws NullPointerException if {@code mapper} or {@code projectDir} are null
@@ -90,7 +94,7 @@ public final class Config
   {
     Map<String, Object> merged = new HashMap<>(DEFAULTS);
 
-    Path configDir = projectDir.resolve(".claude").resolve("cat");
+    Path configDir = projectDir.resolve(CAT_DIR_NAME);
 
     // Layer 2: Load cat-config.json
     Path baseConfigPath = configDir.resolve("cat-config.json");

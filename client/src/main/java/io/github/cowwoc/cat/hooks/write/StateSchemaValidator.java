@@ -10,6 +10,7 @@ import static io.github.cowwoc.cat.hooks.skills.JsonHelper.getStringOrDefault;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
 import io.github.cowwoc.cat.hooks.IssueStatus;
 import tools.jackson.databind.JsonNode;
@@ -34,7 +35,7 @@ import java.util.regex.Pattern;
 public final class StateSchemaValidator implements FileWriteHandler
 {
   private static final Pattern STATE_MD_PATTERN =
-    Pattern.compile("\\.claude/cat/issues/v\\d+/v\\d+\\.\\d+/[^/]+/STATE\\.md$");
+    Pattern.compile(Pattern.quote(Config.CAT_DIR_NAME) + "/issues/v\\d+/v\\d+\\.\\d+/[^/]+/STATE\\.md$");
   private static final Pattern KEY_VALUE_PATTERN =
     Pattern.compile("^- \\*\\*([^:]+):\\*\\* (.+)$", Pattern.MULTILINE);
   private static final Pattern PROGRESS_FORMAT = Pattern.compile("^(\\d+)%$");

@@ -21,7 +21,7 @@ import java.util.function.BiFunction;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Discovers and filters rule files from {@code .claude/cat/rules/}.
+ * Discovers and filters rule files from {@code .cat/rules/}.
  * <p>
  * Rule files are Markdown files with optional YAML frontmatter controlling which agent audience
  * receives the content:
@@ -86,7 +86,7 @@ public final class RulesDiscovery
   /**
    * Creates a new RulesDiscovery instance.
    *
-   * @param rulesDir   the directory to discover rules from (typically {@code .claude/cat/rules/})
+   * @param rulesDir   the directory to discover rules from (typically {@code .cat/rules/})
    * @param yamlMapper the YAML mapper for parsing frontmatter
    * @throws NullPointerException if any parameter is null
    */
@@ -323,7 +323,7 @@ public final class RulesDiscovery
    * Delegates to {@link #getCatRulesForAudience(List, YAMLMapper, BiFunction, List)} with a
    * single-element list containing {@code rulesDir}.
    *
-   * @param rulesDir    the directory containing rule files (typically {@code .claude/cat/rules/})
+   * @param rulesDir    the directory containing rule files (typically {@code .cat/rules/})
    * @param yamlMapper  the YAML mapper for parsing frontmatter
    * @param filterFn    function that takes all rules and active files, and returns the filtered rules
    * @param activeFiles the list of files currently active in the session (for paths matching)

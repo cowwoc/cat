@@ -127,7 +127,7 @@ rm -rf "$WORK_DIR"
 
 **Reading shared state:**
 - ✅ Main workspace and shared plugin cache are read-only from worktrees
-- ✅ Multiple instances can read the same `.claude/cat/cat-config.json`
+- ✅ Multiple instances can read the same `.cat/cat-config.json`
 - ❌ Do NOT write shared configuration from a worktree (configuration belongs in main workspace only)
 
 ### Why This Matters
@@ -237,7 +237,7 @@ from `cat-config.json`.
 
 | Value | Source |
 |-------|--------|
-| `trust`, `verify`, `effort` | `.claude/cat/cat-config.json` field values |
+| `trust`, `verify`, `effort` | `.cat/cat-config.json` field values |
 | `target_branch`, `issue_id` | Parameters from `work-prepare` phase output |
 | Current branch | `git branch --show-current` |
 | Worktree path | Parameters from `work-prepare` phase output |
@@ -267,10 +267,10 @@ git rebase "$TARGET_BRANCH"
 **Pattern (WRONG):**
 ```bash
 # WRONG: jq is not available in the plugin runtime environment
-TRUST=$(jq -r '.trust' .claude/cat/cat-config.json)
+TRUST=$(jq -r '.trust' .cat/cat-config.json)
 
 # WRONG: Manually parsing cat-config.json (fragile, no defaults for missing entries)
-TRUST=$(grep -o '"trust"[[:space:]]*:[[:space:]]*"[^"]*"' .claude/cat/cat-config.json \
+TRUST=$(grep -o '"trust"[[:space:]]*:[[:space:]]*"[^"]*"' .cat/cat-config.json \
   | sed 's/.*"trust"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 
 # WRONG: Hardcoded value not from any authoritative source

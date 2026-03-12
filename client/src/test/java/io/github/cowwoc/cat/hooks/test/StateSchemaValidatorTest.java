@@ -48,7 +48,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -84,7 +84,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -120,7 +120,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -157,7 +157,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -194,7 +194,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -231,7 +231,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -267,7 +267,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -302,7 +302,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -337,7 +337,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -372,7 +372,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -407,7 +407,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -444,7 +444,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -480,7 +480,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -516,7 +516,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -552,7 +552,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -588,7 +588,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -624,7 +624,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -660,7 +660,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -697,7 +697,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -734,7 +734,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -763,7 +763,7 @@ public final class StateSchemaValidatorTest
       String content = "Any content here";
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/PLAN.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/PLAN.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -792,7 +792,7 @@ public final class StateSchemaValidatorTest
       String content = "Any content here - version STATE.md has different format";
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -819,7 +819,7 @@ public final class StateSchemaValidatorTest
       StateSchemaValidator validator = new StateSchemaValidator();
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", "");
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -856,7 +856,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -893,7 +893,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -930,7 +930,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -966,7 +966,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1001,7 +1001,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1038,7 +1038,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1075,7 +1075,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1115,7 +1115,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1153,7 +1153,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1191,7 +1191,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1230,7 +1230,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1266,7 +1266,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1303,7 +1303,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1333,7 +1333,7 @@ public final class StateSchemaValidatorTest
         "- **Blocks:** []";
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1369,7 +1369,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1405,7 +1405,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1441,7 +1441,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1477,7 +1477,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1514,7 +1514,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1551,7 +1551,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1587,7 +1587,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1626,7 +1626,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1664,7 +1664,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1704,7 +1704,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1741,7 +1741,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1779,7 +1779,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1817,7 +1817,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1854,7 +1854,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1894,7 +1894,7 @@ public final class StateSchemaValidatorTest
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1933,7 +1933,7 @@ public final class StateSchemaValidatorTest
         """;
 
       // Write a valid STATE.md file to disk at the path expected by the Edit toolInput
-      Path issueDir = tempDir.resolve(".claude/cat/issues/v2/v2.1/test-issue");
+      Path issueDir = tempDir.resolve(".cat/issues/v2/v2.1/test-issue");
       Files.createDirectories(issueDir);
       Path stateMd = issueDir.resolve("STATE.md");
       Files.writeString(stateMd, diskContent, UTF_8);
@@ -1975,7 +1975,7 @@ public final class StateSchemaValidatorTest
         - **Blocks:** []
         """;
 
-      Path issueDir = tempDir.resolve(".claude/cat/issues/v2/v2.1/test-issue");
+      Path issueDir = tempDir.resolve(".cat/issues/v2/v2.1/test-issue");
       Files.createDirectories(issueDir);
       Path stateMd = issueDir.resolve("STATE.md");
       Files.writeString(stateMd, diskContent, UTF_8);
@@ -2008,7 +2008,7 @@ public final class StateSchemaValidatorTest
       StateSchemaValidator validator = new StateSchemaValidator();
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", tempDir.resolve(".claude/cat/issues/v2/v2.1/nonexistent/STATE.md").toString());
+      toolInput.put("file_path", tempDir.resolve(".cat/issues/v2/v2.1/nonexistent/STATE.md").toString());
       toolInput.put("old_string", "- **Blocks:** []");
       toolInput.put("new_string", "- **Blocks:** []\n- **Stakeholder Review:** xyz");
 
@@ -2053,7 +2053,7 @@ public final class StateSchemaValidatorTest
         - **Blocks:** []
         """;
 
-      Path issueDir = tempDir.resolve(".claude/cat/issues/v2/v2.1/test-issue");
+      Path issueDir = tempDir.resolve(".cat/issues/v2/v2.1/test-issue");
       Files.createDirectories(issueDir);
       Path stateMd = issueDir.resolve("STATE.md");
       Files.writeString(stateMd, diskContent, UTF_8);
@@ -2099,7 +2099,7 @@ public final class StateSchemaValidatorTest
         - **Blocks:** []
         """;
 
-      Path issueDir = tempDir.resolve(".claude/cat/issues/v2/v2.1/test-issue");
+      Path issueDir = tempDir.resolve(".cat/issues/v2/v2.1/test-issue");
       Files.createDirectories(issueDir);
       Path stateMd = issueDir.resolve("STATE.md");
       Files.writeString(stateMd, diskContent, UTF_8);
@@ -2143,7 +2143,7 @@ public final class StateSchemaValidatorTest
         - **Blocks:** []
         """;
 
-      Path issueDir = tempDir.resolve(".claude/cat/issues/v2/v2.1/test-issue");
+      Path issueDir = tempDir.resolve(".cat/issues/v2/v2.1/test-issue");
       Files.createDirectories(issueDir);
       Path stateMd = issueDir.resolve("STATE.md");
       Files.writeString(stateMd, diskContent, UTF_8);

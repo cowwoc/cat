@@ -15,7 +15,7 @@ Load this workflow when **all issues in a minor version are closed** (no open/in
 
 ```bash
 # Count pending/in-progress issues in this minor version
-PENDING_COUNT=$(find ".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/" -name "STATE.md" -exec grep -l 'Status.*open\|Status.*in-progress' {} \; 2>/dev/null | wc -l)
+PENDING_COUNT=$(find ".cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/" -name "STATE.md" -exec grep -l 'Status.*open\|Status.*in-progress' {} \; 2>/dev/null | wc -l)
 
 if [[ "$PENDING_COUNT" -eq 0 ]]; then
   MINOR_COMPLETE=true
@@ -77,7 +77,7 @@ fi
 1. **Check CHANGELOG.md exists**:
 
    ```bash
-   VERSION_CHANGELOG=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/CHANGELOG.md"
+   VERSION_CHANGELOG=".cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/CHANGELOG.md"
    if [[ ! -f "$VERSION_CHANGELOG" ]]; then
      echo "ERROR: Version CHANGELOG.md not found at $VERSION_CHANGELOG"
      echo "Create it using the template from plugin/templates/changelog.md"
@@ -190,7 +190,7 @@ Use AskUserQuestion:
   - "View status first" - Show /cat:status before deciding
 
 **If "Run stakeholder review":**
-Invoke `/cat:stakeholder-review-agent .claude/cat/issues/v{major}/v{major}.{minor}`
+Invoke `/cat:stakeholder-review-agent .cat/issues/v{major}/v{major}.{minor}`
 
 **If "Skip review":**
 Continue with next steps.
@@ -203,7 +203,7 @@ Continue with next steps.
 
 ```bash
 # Count incomplete minor versions in this major
-INCOMPLETE_MINORS=$(find ".claude/cat/issues/v${MAJOR}" -maxdepth 1 -name "v${MAJOR}.*" -type d | while read dir; do
+INCOMPLETE_MINORS=$(find ".cat/issues/v${MAJOR}" -maxdepth 1 -name "v${MAJOR}.*" -type d | while read dir; do
   [ -f "$dir/STATE.md" ] && ! grep -q 'Status.*closed' "$dir/STATE.md" && echo "$dir"
 done | wc -l)
 
@@ -234,7 +234,7 @@ their requirements.
 **MANDATORY**: Verify all minor versions in this major have finalized CHANGELOGs.
 
 ```bash
-for MINOR_DIR in .claude/cat/issues/v${MAJOR}/v${MAJOR}.*/; do
+for MINOR_DIR in .cat/issues/v${MAJOR}/v${MAJOR}.*/; do
   MINOR_CHANGELOG="${MINOR_DIR}CHANGELOG.md"
   if [[ ! -f "$MINOR_CHANGELOG" ]]; then
     echo "⚠️ Missing CHANGELOG: $MINOR_CHANGELOG"

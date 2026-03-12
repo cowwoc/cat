@@ -13,7 +13,7 @@ Merge source branch to its target branch using WORKTREE_PATH parameter. Fast-for
 
 ```bash
 # Check if Git Workflow section exists in PROJECT.md
-WORKFLOW_SECTION=$(grep -A30 "^## Git Workflow" .claude/cat/PROJECT.md 2>/dev/null)
+WORKFLOW_SECTION=$(grep -A30 "^## Git Workflow" .cat/PROJECT.md 2>/dev/null)
 
 if [[ -n "$WORKFLOW_SECTION" ]]; then
   # Check if linear merge is allowed by workflow config

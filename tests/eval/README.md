@@ -26,7 +26,7 @@ This eval suite tests whether Claude correctly invokes CAT skills when given rel
 Run a quick 3-case smoke test to verify the harness works before running the full suite:
 
 ```bash
-cd /workspace/.claude/cat/worktrees/2.1-evaluate-skill-activation
+cd /workspace/.cat/worktrees/2.1-evaluate-skill-activation
 python3 tests/eval/smoke_test.py
 ```
 
@@ -35,7 +35,7 @@ This runs one explicit positive, one implicit positive, and one negative test ca
 ### Run Full Eval Suite
 
 ```bash
-cd /workspace/.claude/cat/worktrees/2.1-evaluate-skill-activation
+cd /workspace/.cat/worktrees/2.1-evaluate-skill-activation
 python3 tests/eval/run_evals.py
 ```
 

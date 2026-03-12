@@ -40,7 +40,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("plain.md"), "# Plain rule\nSome content.");
 
@@ -70,7 +70,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("subagent-only.md"), """
         ---
@@ -100,7 +100,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("main-only.md"), """
         ---
@@ -131,7 +131,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("targeted.md"), """
         ---
@@ -165,7 +165,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("java-only.md"), """
         ---
@@ -201,7 +201,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("main-rule.md"), """
         ---
@@ -241,7 +241,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       // No subAgents frontmatter → null → matches all subagents
       Files.writeString(rulesDir.resolve("universal.md"), """
@@ -276,7 +276,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("main-only.md"), """
         ---
@@ -310,7 +310,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("targeted.md"), """
         ---
@@ -350,7 +350,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("always.md"), """
         ---
@@ -388,7 +388,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("java.md"), """
         ---
@@ -432,7 +432,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("java.md"), """
         ---
@@ -470,7 +470,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("main-only.md"), """
         ---
@@ -510,7 +510,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("unclosed.md"), """
         ---
@@ -543,7 +543,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("unknown-key.md"), """
         ---
@@ -577,7 +577,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("yes-value.md"), """
         ---
@@ -653,7 +653,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("java.md"), """
         ---
@@ -693,7 +693,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("src-main.md"), """
         ---
@@ -748,7 +748,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("a-rule.md"), """
         ---
@@ -806,7 +806,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-notail-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       // No newline after the closing ---
       Files.writeString(rulesDir.resolve("notail.md"), "---\nmainAgent: false\n---");
@@ -837,7 +837,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-sort-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       // Create in reverse alphabetical order
       Files.writeString(rulesDir.resolve("z-rule.md"), "# Z Rule");
@@ -871,7 +871,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-unclosed-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       // No closing ---
       String rawContent = "---\nmainAgent: false\nNo closing delimiter here.";
@@ -948,7 +948,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-exact-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("work-only.md"), """
         ---
@@ -994,7 +994,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-quote-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       // Value with a comma inside a quoted string should produce one item
       Files.writeString(rulesDir.resolve("quoted.md"), """
@@ -1030,7 +1030,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-misquote-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       // ["unclosed — mismatched open-quote: invalid YAML
       Files.writeString(rulesDir.resolve("misquote.md"), """
@@ -1060,7 +1060,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-adjacent-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("adjacent.md"), """
         ---
@@ -1094,7 +1094,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-whitespace-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("whitespace.md"), """
         ---
@@ -1142,7 +1142,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-nofilter-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       // Rule is mainAgent:false — filterForMainAgent will exclude it
       Files.writeString(rulesDir.resolve("subagent-only.md"), """
@@ -1174,7 +1174,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-main-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("main-rule.md"), """
         ---
@@ -1208,7 +1208,7 @@ public final class RulesDiscoveryTest
     Path tempDir = Files.createTempDirectory("rules-test-subagent-");
     try
     {
-      Path rulesDir = tempDir.resolve(".claude/cat/rules");
+      Path rulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       // No subAgents frontmatter → null → matches all subagents
       Files.writeString(rulesDir.resolve("universal-rule.md"), """
@@ -1255,7 +1255,7 @@ public final class RulesDiscoveryTest
         From plugin.
         """);
 
-      Path projectRulesDir = tempDir.resolve(".claude/cat/rules");
+      Path projectRulesDir = tempDir.resolve(".cat/rules");
       Files.createDirectories(projectRulesDir);
       Files.writeString(projectRulesDir.resolve("project-rule.md"), """
         ---

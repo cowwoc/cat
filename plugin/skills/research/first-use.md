@@ -366,7 +366,7 @@ AskUserQuestion({
 ```
 
 If yes, ask for PLAN.md path or version identifier:
-- If version provided: `.claude/cat/issues/v{major}/v{major}.{minor}/PLAN.md`
+- If version provided: `.cat/issues/v{major}/v{major}.{minor}/PLAN.md`
 - If path provided: Use specified path
 - If neither: Ask user to specify
 
