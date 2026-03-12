@@ -29,13 +29,13 @@ The version directory varies by scheme, but issue placement is consistent:
 
 | Scheme | Issue Path |
 |--------|-----------|
-| MAJOR only | `.claude/cat/issues/v1/my-issue/` |
-| MAJOR.MINOR | `.claude/cat/issues/v1/v1.0/my-issue/` |
-| MAJOR.MINOR.PATCH | `.claude/cat/issues/v1/v1.0/v1.0.1/my-issue/` |
+| MAJOR only | `.cat/issues/v1/my-issue/` |
+| MAJOR.MINOR | `.cat/issues/v1/v1.0/my-issue/` |
+| MAJOR.MINOR.PATCH | `.cat/issues/v1/v1.0/v1.0.1/my-issue/` |
 
 Example (MAJOR.MINOR scheme):
 ```
-.claude/cat/issues/
+.cat/issues/
 └── v1/
     └── v1.0/
         ├── STATE.md
@@ -53,7 +53,7 @@ Example (MAJOR.MINOR scheme):
 ```bash
 # Detect which versioning scheme a project uses
 detect_version_scheme() {
-  local ISSUES_DIR=".claude/cat/issues"
+  local ISSUES_DIR=".cat/issues"
 
   # Check for patch-level directories (most specific first)
   if find "$ISSUES_DIR" -mindepth 3 -maxdepth 3 -type d -name "v*.*.*" 2>/dev/null | head -1 | grep -q .; then
@@ -81,7 +81,7 @@ get_version_path() {
   local MAJOR="$1"
   local MINOR="$2"
   local PATCH="$3"
-  local BASE=".claude/cat/issues"
+  local BASE=".cat/issues"
 
   if [[ -n "$PATCH" ]]; then
     echo "${BASE}/v${MAJOR}/v${MAJOR}.${MINOR}/v${MAJOR}.${MINOR}.${PATCH}"
@@ -116,7 +116,7 @@ get_issue_path() {
 # Usage: find_minor_versions $MAJOR
 find_minor_versions() {
   local MAJOR="$1"
-  local BASE=".claude/cat/issues/v${MAJOR}"
+  local BASE=".cat/issues/v${MAJOR}"
 
   find "$BASE" -mindepth 1 -maxdepth 1 -type d -name "v${MAJOR}.*" 2>/dev/null | sort -V
 }
@@ -138,9 +138,9 @@ find_issues_in_version() {
 
 | Purpose | Pattern |
 |---------|---------|
-| Major version dir | `.claude/cat/issues/v${MAJOR}` |
-| Minor version dir | `.claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}` |
-| Patch version dir | `.claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/v${MAJOR}.${MINOR}.${PATCH}` |
+| Major version dir | `.cat/issues/v${MAJOR}` |
+| Minor version dir | `.cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}` |
+| Patch version dir | `.cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/v${MAJOR}.${MINOR}.${PATCH}` |
 | Issue dir | `$(get_version_path $MAJOR $MINOR)/${ISSUE_NAME}` |
 | Issue STATE.md | `$(get_issue_path $MAJOR $MINOR $ISSUE_NAME)/STATE.md` |
 | Issue PLAN.md | `$(get_issue_path $MAJOR $MINOR $ISSUE_NAME)/PLAN.md` |
@@ -151,17 +151,17 @@ find_issues_in_version() {
 
 | Purpose | Pattern |
 |---------|---------|
-| All major versions | `.claude/cat/issues/v*` |
-| All minor versions in major | `.claude/cat/issues/v${MAJOR}/v${MAJOR}.*` |
-| All patches in minor | `.claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/v${MAJOR}.${MINOR}.*` |
-| All issues (any version) | `.claude/cat/issues/v*/v*.*/*/STATE.md` |
+| All major versions | `.cat/issues/v*` |
+| All minor versions in major | `.cat/issues/v${MAJOR}/v${MAJOR}.*` |
+| All patches in minor | `.cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/v${MAJOR}.${MINOR}.*` |
+| All issues (any version) | `.cat/issues/v*/v*.*/*/STATE.md` |
 
 ## Usage in Commands/Skills
 
 Instead of hardcoding paths like:
 ```bash
 # WRONG - hardcoded assumption
-ISSUE_DIR=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/$ISSUE_NAME"
+ISSUE_DIR=".cat/issues/v$MAJOR/v$MAJOR.$MINOR/$ISSUE_NAME"
 ```
 
 Use the resolution functions:

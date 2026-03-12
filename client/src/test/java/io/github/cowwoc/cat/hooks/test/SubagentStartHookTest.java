@@ -349,7 +349,7 @@ public final class SubagentStartHookTest
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
     try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
-      Path rulesDir = scope.getClaudeProjectDir().resolve(".claude/cat/rules");
+      Path rulesDir = scope.getClaudeProjectDir().resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       // No subAgents frontmatter → null → matches all subagents
       Files.writeString(rulesDir.resolve("universal.md"), """
@@ -389,7 +389,7 @@ public final class SubagentStartHookTest
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
     try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
-      Path rulesDir = scope.getClaudeProjectDir().resolve(".claude/cat/rules");
+      Path rulesDir = scope.getClaudeProjectDir().resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("typed-rule.md"), """
         ---
@@ -429,7 +429,7 @@ public final class SubagentStartHookTest
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
     try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
-      Path rulesDir = scope.getClaudeProjectDir().resolve(".claude/cat/rules");
+      Path rulesDir = scope.getClaudeProjectDir().resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("typed-rule.md"), """
         ---

@@ -10,6 +10,7 @@ import static io.github.cowwoc.cat.hooks.util.GitCommands.runGit;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.ClaudeEnv;
+import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.Strings;
@@ -110,7 +111,7 @@ public final class RecordLearning
    */
   private String executeWithCommitDir(ObjectNode phase3Input, Path commitDir) throws IOException
   {
-    Path retroDir = commitDir.resolve(".claude").resolve("cat").resolve("retrospectives");
+    Path retroDir = commitDir.resolve(Config.CAT_DIR_NAME).resolve("retrospectives");
     Files.createDirectories(retroDir);
 
     Path indexFile = retroDir.resolve("index.json");

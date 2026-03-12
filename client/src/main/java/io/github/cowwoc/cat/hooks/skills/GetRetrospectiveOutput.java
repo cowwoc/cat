@@ -83,8 +83,7 @@ public final class GetRetrospectiveOutput implements SkillOutput
   public String getOutput(String[] args) throws IOException
   {
     requireThat(args, "args").length().isEqualTo(0);
-    Path projectDir = scope.getClaudeProjectDir();
-    Path retroDir = projectDir.resolve(".claude/cat/retrospectives");
+    Path retroDir = scope.getCatDir().resolve("retrospectives");
 
     if (!Files.isDirectory(retroDir))
     {

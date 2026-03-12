@@ -107,7 +107,7 @@ Parse the subagent result:
   proof — a marker without a valid commit hash is treated as absent:
   ```bash
   ENCODED_PROJECT_DIR=$(printf '%s' "${CLAUDE_PROJECT_DIR}" | sed 's|/|%2F|g; s| |%20|g')
-  SQUASH_MARKER_DIR="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}/.claude/cat"
+  SQUASH_MARKER_DIR="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}/.cat"
   mkdir -p "${SQUASH_MARKER_DIR}"
   SQUASH_COMMIT_HASH=$(cd "${WORKTREE_PATH}" && git rev-parse HEAD)
   echo "squashed:${SQUASH_COMMIT_HASH}" > "${SQUASH_MARKER_DIR}/squash-complete-${ISSUE_ID}"
@@ -159,7 +159,7 @@ Skill("cat:git-rebase-agent", args="{WORKTREE_PATH} {TARGET_BRANCH}")
 - Update the squash marker to reflect the new HEAD after rebase (same as the OK path above):
   ```bash
   ENCODED_PROJECT_DIR=$(printf '%s' "${CLAUDE_PROJECT_DIR}" | sed 's|/|%2F|g; s| |%20|g')
-  SQUASH_MARKER_DIR="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}/.claude/cat"
+  SQUASH_MARKER_DIR="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}/.cat"
   REBASED_HASH=$(cd "${WORKTREE_PATH}" && git rev-parse HEAD)
   echo "squashed:${REBASED_HASH}" > "${SQUASH_MARKER_DIR}/squash-complete-${ISSUE_ID}"
   ```
@@ -170,7 +170,7 @@ Skill("cat:git-rebase-agent", args="{WORKTREE_PATH} {TARGET_BRANCH}")
 - Update the squash marker to reflect the new HEAD after rebase (rebase changes the commit hash):
   ```bash
   ENCODED_PROJECT_DIR=$(printf '%s' "${CLAUDE_PROJECT_DIR}" | sed 's|/|%2F|g; s| |%20|g')
-  SQUASH_MARKER_DIR="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}/.claude/cat"
+  SQUASH_MARKER_DIR="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}/.cat"
   REBASED_HASH=$(cd "${WORKTREE_PATH}" && git rev-parse HEAD)
   echo "squashed:${REBASED_HASH}" > "${SQUASH_MARKER_DIR}/squash-complete-${ISSUE_ID}"
   ```
@@ -206,7 +206,7 @@ and never committed, then invoke the impact analysis skill:
 ```bash
 # Pass session dir so analysis file is written outside the worktree and never committed
 ENCODED_PROJECT_DIR=$(printf '%s' "${CLAUDE_PROJECT_DIR}" | sed 's|/|%2F|g; s| |%20|g')
-SESSION_ANALYSIS_DIR="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}/.claude/cat"
+SESSION_ANALYSIS_DIR="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}/.cat"
 mkdir -p "${SESSION_ANALYSIS_DIR}"
 ```
 
@@ -235,7 +235,7 @@ IMPACT_SEVERITY=$(echo "${IMPACT_JSON}" | grep -o '"severity"[[:space:]]*:[[:spa
 Read `EFFORT` from config and read the full analysis file before invoking the plan builder:
 
 ```bash
-CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json"
+CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.cat/cat-config.json"
 EFFORT=$(grep '"effort"' "$CONFIG_FILE" | sed 's/.*"effort"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 if [[ -z "$EFFORT" ]]; then
   echo "ERROR: 'effort' key not found in $CONFIG_FILE" >&2
@@ -278,7 +278,7 @@ by checking for the durable squash marker file written by Step 7:
 
 ```bash
 ENCODED_PROJECT_DIR=$(printf '%s' "${CLAUDE_PROJECT_DIR}" | sed 's|/|%2F|g; s| |%20|g')
-SQUASH_MARKER="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}/.claude/cat/squash-complete-${ISSUE_ID}"
+SQUASH_MARKER="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}/.cat/squash-complete-${ISSUE_ID}"
 if [[ ! -f "${SQUASH_MARKER}" ]]; then
   echo "ERROR: Squash marker not found — Step 7 was not completed in this session." >&2
   echo "Return to Step 7 and complete the squash by topic before proceeding." >&2
@@ -367,7 +367,7 @@ if ! git diff --cached --quiet 2>/dev/null; then
   # Update squash marker to reflect the new HEAD after amend — the amend changes the commit hash,
   # so the marker must be rewritten to stay consistent with the current branch tip.
   ENCODED_PROJECT_DIR=$(printf '%s' "${CLAUDE_PROJECT_DIR}" | sed 's|/|%2F|g; s| |%20|g')
-  SQUASH_MARKER_DIR="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}/.claude/cat"
+  SQUASH_MARKER_DIR="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}/.cat"
   NEW_SQUASH_HASH=$(git rev-parse HEAD)
   echo "squashed:${NEW_SQUASH_HASH}" > "${SQUASH_MARKER_DIR}/squash-complete-${ISSUE_ID}"
 fi

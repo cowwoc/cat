@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks.util;
 import static io.github.cowwoc.cat.hooks.util.GitCommands.runGit;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.Config;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
@@ -97,7 +98,7 @@ public final class IssueCreator
     else
       commitDesc = "Add issue";
 
-    String issueDirPath = ".claude/cat/issues/v" + major + "/v" + major + "." + minor + "/" + issueName;
+    String issueDirPath = Config.CAT_DIR_NAME + "/issues/v" + major + "/v" + major + "." + minor + "/" + issueName;
     Path issuePath = workingDirectory.resolve(issueDirPath);
     Path parentStatePath = issuePath.getParent().resolve("STATE.md");
 

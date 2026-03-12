@@ -73,7 +73,7 @@ public final class RootCauseAnalyzerTest
     Path tempDir = Files.createTempDirectory("test-rca-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retrospectivesDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retrospectivesDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retrospectivesDir);
 
       Files.writeString(retrospectivesDir.resolve("mistakes-2026-01.json"), """
@@ -114,7 +114,7 @@ public final class RootCauseAnalyzerTest
     Path tempDir = Files.createTempDirectory("test-rca-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retrospectivesDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retrospectivesDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retrospectivesDir);
 
       Files.writeString(retrospectivesDir.resolve("mistakes-2026-01.json"), """
@@ -156,7 +156,7 @@ public final class RootCauseAnalyzerTest
     Path tempDir = Files.createTempDirectory("test-rca-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retrospectivesDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retrospectivesDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retrospectivesDir);
 
       Files.writeString(retrospectivesDir.resolve("mistakes-2026-01.json"), """
@@ -196,7 +196,7 @@ public final class RootCauseAnalyzerTest
     Path tempDir = Files.createTempDirectory("test-rca-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retrospectivesDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retrospectivesDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retrospectivesDir);
 
       RootCauseAnalyzer analyzer = new RootCauseAnalyzer(tempDir, scope);
@@ -221,7 +221,7 @@ public final class RootCauseAnalyzerTest
     Path tempDir = Files.createTempDirectory("test-rca-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retrospectivesDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retrospectivesDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retrospectivesDir);
 
       Files.writeString(retrospectivesDir.resolve("mistakes-2026-01.json"), """
@@ -270,7 +270,7 @@ public final class RootCauseAnalyzerTest
     Path tempDir = Files.createTempDirectory("test-rca-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retrospectivesDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retrospectivesDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retrospectivesDir);
 
       Files.writeString(retrospectivesDir.resolve("mistakes-2026-03.json"), """
@@ -309,7 +309,7 @@ public final class RootCauseAnalyzerTest
     Path tempDir = Files.createTempDirectory("test-rca-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retrospectivesDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retrospectivesDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retrospectivesDir);
 
       Files.writeString(retrospectivesDir.resolve("mistakes-2026-01.json"), """

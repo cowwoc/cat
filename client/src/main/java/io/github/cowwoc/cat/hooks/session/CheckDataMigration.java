@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.hooks.session;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.ProcessRunner;
@@ -28,7 +29,7 @@ import java.util.List;
 /**
  * Checks for CAT version upgrades on session start.
  * <p>
- * Compares the plugin version to the version recorded in {@code .claude/cat/VERSION}.
+ * Compares the plugin version to the version recorded in {@code .cat/VERSION}.
  * On upgrade, backs up state, runs pending migrations, and updates the VERSION file.
  * On downgrade, warns the user.
  */
@@ -60,9 +61,8 @@ public final class CheckDataMigration implements SessionStartHandler
   public Result handle(HookInput input)
   {
     requireThat(input, "input").isNotNull();
-    Path projectDir = scope.getClaudeProjectDir();
 
-    Path configFile = projectDir.resolve(".claude/cat/cat-config.json");
+    Path configFile = scope.getCatDir().resolve("cat-config.json");
     if (!Files.isRegularFile(configFile))
       return Result.empty();
 
@@ -70,7 +70,7 @@ public final class CheckDataMigration implements SessionStartHandler
 
     try
     {
-      String lastMigratedVersion = getLastMigratedVersion(projectDir);
+      String lastMigratedVersion = getLastMigratedVersion();
       String pluginVersion = VersionUtils.getPluginVersion(pluginRoot);
 
       int cmp = VersionUtils.compareVersions(lastMigratedVersion, pluginVersion);
@@ -81,7 +81,7 @@ public final class CheckDataMigration implements SessionStartHandler
       if (cmp > 0)
         return handleDowngrade(lastMigratedVersion, pluginVersion);
 
-      return handleUpgrade(lastMigratedVersion, pluginVersion, pluginRoot, projectDir);
+      return handleUpgrade(lastMigratedVersion, pluginVersion, pluginRoot);
     }
     catch (IOException e)
     {
@@ -90,15 +90,14 @@ public final class CheckDataMigration implements SessionStartHandler
   }
 
   /**
-   * Reads the last migrated version from {@code .claude/cat/VERSION}.
+   * Reads the last migrated version from {@code .cat/VERSION}.
    *
-   * @param projectDir the project root directory
    * @return the version string, or "0.0.0" if the file is absent or empty
    * @throws IOException if reading the VERSION file fails
    */
-  private String getLastMigratedVersion(Path projectDir) throws IOException
+  private String getLastMigratedVersion() throws IOException
   {
-    Path versionFile = projectDir.resolve(".claude/cat/VERSION");
+    Path versionFile = scope.getCatDir().resolve("VERSION");
     if (!Files.isRegularFile(versionFile))
       return "0.0.0";
     String version = Files.readString(versionFile).strip();
@@ -118,12 +117,12 @@ public final class CheckDataMigration implements SessionStartHandler
   {
     String message = "CAT VERSION MISMATCH DETECTED\n" +
       "\n" +
-      ".claude/cat/VERSION contains " + lastMigratedVersion +
+      Config.CAT_DIR_NAME + "/VERSION contains " + lastMigratedVersion +
       " but the plugin is version " + pluginVersion + ".\n" +
       "This appears to be a downgrade.\n" +
       "\n" +
       "**Action Required**: If this is intentional, manually update the version " +
-      "in .claude/cat/VERSION.\n" +
+      "in " + Config.CAT_DIR_NAME + "/VERSION.\n" +
       "Automatic downgrade migration is not supported to prevent data loss.";
     return Result.context(message);
   }
@@ -134,25 +133,24 @@ public final class CheckDataMigration implements SessionStartHandler
    * @param lastMigratedVersion the previous version
    * @param pluginVersion the target version
    * @param pluginRoot the plugin root directory
-   * @param projectDir the project directory
    * @return a result with migration status
    * @throws IOException if reading the migration registry, creating a backup, or updating the VERSION file fails
    */
   private Result handleUpgrade(String lastMigratedVersion, String pluginVersion,
-    Path pluginRoot, Path projectDir) throws IOException
+    Path pluginRoot) throws IOException
   {
     List<Migration> pendingMigrations = getPendingMigrations(lastMigratedVersion, pluginVersion,
       pluginRoot);
 
     if (pendingMigrations.isEmpty())
     {
-      setLastMigratedVersion(projectDir, pluginVersion);
+      setLastMigratedVersion(pluginVersion);
       return Result.context("CAT upgraded: " + lastMigratedVersion + " -> " + pluginVersion +
         " (no migrations required)");
     }
 
     // Create backup before migration
-    String backupPath = backupCatDir(projectDir, "pre-upgrade-" + pluginVersion);
+    String backupPath = backupCatDir("pre-upgrade-" + pluginVersion);
 
     // Run migrations
     StringBuilder migrationLog = new StringBuilder(128);
@@ -210,7 +208,7 @@ public final class CheckDataMigration implements SessionStartHandler
       return Result.context(message);
     }
 
-    setLastMigratedVersion(projectDir, pluginVersion);
+    setLastMigratedVersion(pluginVersion);
 
     String stderrMessage = "\n" +
       "CAT UPGRADED from version " + lastMigratedVersion + " to " + pluginVersion + "\n";
@@ -265,33 +263,31 @@ public final class CheckDataMigration implements SessionStartHandler
   }
 
   /**
-   * Writes the last migrated version to {@code .claude/cat/VERSION}.
+   * Writes the last migrated version to {@code .cat/VERSION}.
    *
-   * @param projectDir the project root directory
    * @param newVersion the new version to set
    * @throws IOException if writing the VERSION file fails
    */
-  private void setLastMigratedVersion(Path projectDir, String newVersion) throws IOException
+  private void setLastMigratedVersion(String newVersion) throws IOException
   {
-    Path versionFile = projectDir.resolve(".claude/cat/VERSION");
+    Path versionFile = scope.getCatDir().resolve("VERSION");
     Files.createDirectories(versionFile.getParent());
     Files.writeString(versionFile, newVersion + "\n");
   }
 
   /**
-   * Creates a backup of the .claude/cat directory in external CAT storage.
+   * Creates a backup of the .cat directory in external CAT storage.
    *
-   * @param projectDir the project root directory
    * @param reason the backup reason (used in directory name)
    * @return the backup directory path as a string
    * @throws IOException if creating the backup directory or copying files fails
    */
-  private String backupCatDir(Path projectDir, String reason) throws IOException
+  private String backupCatDir(String reason) throws IOException
   {
     String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
     Path backupDir = scope.getProjectCatDir().resolve("backups/" + timestamp + "-" +
       sanitizeDirectoryName(reason));
-    Path catDir = projectDir.resolve(".claude/cat");
+    Path catDir = scope.getCatDir();
 
     Files.createDirectories(backupDir);
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(catDir))

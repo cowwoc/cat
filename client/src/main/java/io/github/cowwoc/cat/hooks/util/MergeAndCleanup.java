@@ -10,6 +10,7 @@ import static io.github.cowwoc.cat.hooks.util.GitCommands.runGit;
 import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandSingleLineInDirectory;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import org.slf4j.Logger;
@@ -74,8 +75,8 @@ public final class MergeAndCleanup
     long startTime = System.currentTimeMillis();
 
     Path projectPath = Paths.get(projectDir);
-    if (!Files.isDirectory(projectPath.resolve(".claude/cat")))
-      throw new IOException("Not a CAT project: '" + projectDir + "' (no .claude/cat directory)");
+    if (!Files.isDirectory(projectPath.resolve(Config.CAT_DIR_NAME)))
+      throw new IOException("Not a CAT project: '" + projectDir + "' (no .cat directory)");
 
     String taskBranch = issueId;
 

@@ -58,7 +58,7 @@ public final class CheckDataMigrationTest
   public void versionFileAbsentReturnsDefault() throws IOException
   {
     Path tempDir = Files.createTempDirectory("check-upgrade-test-");
-    Path catDir = tempDir.resolve(".claude/cat");
+    Path catDir = tempDir.resolve(".cat");
     Files.createDirectories(catDir);
     try
     {
@@ -87,7 +87,7 @@ public final class CheckDataMigrationTest
   public void versionFileWithVersionReturnsVersion() throws IOException
   {
     Path tempDir = Files.createTempDirectory("check-upgrade-test-");
-    Path catDir = tempDir.resolve(".claude/cat");
+    Path catDir = tempDir.resolve(".cat");
     Files.createDirectories(catDir);
     try
     {
@@ -113,7 +113,7 @@ public final class CheckDataMigrationTest
   public void versionFileEmptyReturnsDefault() throws IOException
   {
     Path tempDir = Files.createTempDirectory("check-upgrade-test-");
-    Path catDir = tempDir.resolve(".claude/cat");
+    Path catDir = tempDir.resolve(".cat");
     Files.createDirectories(catDir);
     try
     {
@@ -140,7 +140,7 @@ public final class CheckDataMigrationTest
   public void versionFileWithTrailingWhitespaceReturnsStripped() throws IOException
   {
     Path tempDir = Files.createTempDirectory("check-upgrade-test-");
-    Path catDir = tempDir.resolve(".claude/cat");
+    Path catDir = tempDir.resolve(".cat");
     Files.createDirectories(catDir);
     try
     {
@@ -166,7 +166,7 @@ public final class CheckDataMigrationTest
   public void writeVersionFileCreatesCorrectContent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("check-upgrade-test-");
-    Path catDir = tempDir.resolve(".claude/cat");
+    Path catDir = tempDir.resolve(".cat");
     Files.createDirectories(catDir);
     try
     {
@@ -193,7 +193,7 @@ public final class CheckDataMigrationTest
   public void configWithReviewThresholdCanBeValidated() throws IOException
   {
     Path tempDir = Files.createTempDirectory("migration-test-");
-    Path catDir = tempDir.resolve(".claude/cat");
+    Path catDir = tempDir.resolve(".cat");
     Files.createDirectories(catDir);
     try (JvmScope scope = new TestJvmScope())
     {
@@ -243,7 +243,7 @@ public final class CheckDataMigrationTest
   public void migrationFlowConfigLoadFailsThenSucceeds() throws IOException
   {
     Path tempDir = Files.createTempDirectory("migration-test-");
-    Path catDir = tempDir.resolve(".claude/cat");
+    Path catDir = tempDir.resolve(".cat");
     Files.createDirectories(catDir);
     try (JvmScope scope = new TestJvmScope())
     {
@@ -300,7 +300,7 @@ public final class CheckDataMigrationTest
   public void configLoadRejectsReviewThreshold() throws IOException
   {
     Path tempDir = Files.createTempDirectory("migration-test-");
-    Path catDir = tempDir.resolve(".claude/cat");
+    Path catDir = tempDir.resolve(".cat");
     Files.createDirectories(catDir);
     try (JvmScope scope = new TestJvmScope())
     {

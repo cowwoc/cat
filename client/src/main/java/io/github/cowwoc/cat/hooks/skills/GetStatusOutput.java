@@ -84,7 +84,7 @@ public final class GetStatusOutput implements SkillOutput
     requireThat(args, "args").length().isEqualTo(0);
     Path projectDir = scope.getClaudeProjectDir();
 
-    Path catDir = projectDir.resolve(".claude/cat");
+    Path catDir = scope.getCatDir();
     if (!Files.isDirectory(catDir))
       return "No CAT project found. Run /cat:init to initialize.";
 
@@ -128,7 +128,7 @@ public final class GetStatusOutput implements SkillOutput
     StatusData data = new StatusData();
 
     GetCleanupOutput cleanupOutput = new GetCleanupOutput(scope);
-    data.corruptIssues.addAll(cleanupOutput.gatherCorruptIssues(catDir.getParent().getParent()));
+    data.corruptIssues.addAll(cleanupOutput.gatherCorruptIssues(catDir.getParent()));
 
     Path projectFile = catDir.resolve("PROJECT.md");
     data.projectName = "Unknown Project";
@@ -878,7 +878,7 @@ public final class GetStatusOutput implements SkillOutput
     throws IOException
   {
     List<String> lines = executeGitCommand(projectDir, "git", "diff", "--name-only",
-      targetBranch + "..." + branch, "--", ".claude/cat/issues/**/STATE.md");
+      targetBranch + "..." + branch, "--", Config.CAT_DIR_NAME + "/issues/**/STATE.md");
 
     List<String> changedFiles = new ArrayList<>();
     for (String line : lines)
@@ -896,7 +896,7 @@ public final class GetStatusOutput implements SkillOutput
    * <p>
    * Valid paths must:
    * - Not contain ".." sequences (path traversal)
-   * - Start with ".claude/cat/issues/"
+   * - Start with ".cat/issues/"
    * - End with "/STATE.md"
    *
    * @param filePath the file path to validate
@@ -908,7 +908,7 @@ public final class GetStatusOutput implements SkillOutput
       return false;
     if (filePath.contains(".."))
       return false;
-    return filePath.startsWith(".claude/cat/issues/") && filePath.endsWith("/STATE.md");
+    return filePath.startsWith(Config.CAT_DIR_NAME + "/issues/") && filePath.endsWith("/STATE.md");
   }
 
   /**

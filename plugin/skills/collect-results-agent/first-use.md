@@ -175,7 +175,7 @@ If subagent maintained a STATE.md or status file:
 
 ```bash
 # Read subagent's final state
-cat "${WORKTREE}/.claude/cat/issues/${ISSUE}/STATE.md"
+cat "${WORKTREE}/.cat/issues/${ISSUE}/STATE.md"
 
 # Or check for completion report
 cat "${WORKTREE}/COMPLETION_REPORT.md" 2>/dev/null

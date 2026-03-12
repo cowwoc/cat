@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.skills;
 
+import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.util.IssueLock;
@@ -273,7 +274,7 @@ public final class GetCleanupOutput implements SkillOutput
   }
 
   /**
-   * Scans all issue directories under {@code .claude/cat/issues/} for the corrupt condition
+   * Scans all issue directories under {@code .cat/issues/} for the corrupt condition
    * (STATE.md present, PLAN.md absent).
    *
    * @param projectDir the project root directory
@@ -284,7 +285,7 @@ public final class GetCleanupOutput implements SkillOutput
   {
     requireThat(projectDir, "projectDir").isNotNull();
 
-    Path issuesRoot = projectDir.resolve(".claude").resolve("cat").resolve("issues");
+    Path issuesRoot = projectDir.resolve(Config.CAT_DIR_NAME).resolve("issues");
     if (!Files.isDirectory(issuesRoot))
       return List.of();
 

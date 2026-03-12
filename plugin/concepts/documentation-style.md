@@ -26,7 +26,7 @@ to investigate separately to understand when each scenario applies.
 
 ## M-Code References
 
-M-code labels (e.g., `M088`, `M252`) must only appear in `.claude/cat/retrospectives/` files. They must not appear in
+M-code labels (e.g., `M088`, `M252`) must only appear in `.cat/retrospectives/` files. They must not appear in
 any other file — including plugin source, Java source, project rules, configuration, or documentation.
 
 M-codes in agent-visible files consume context tokens without providing value, and create a priming pattern where agents

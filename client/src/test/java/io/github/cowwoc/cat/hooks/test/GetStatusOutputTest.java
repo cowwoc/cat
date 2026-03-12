@@ -101,7 +101,7 @@ public class GetStatusOutputTest
   public void noIssuesDirectoryReturnsErrorMessage() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-no-issues");
-    Path catDir = tempDir.resolve(".claude/cat");
+    Path catDir = tempDir.resolve(".cat");
     Files.createDirectories(catDir);
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -126,7 +126,7 @@ public class GetStatusOutputTest
   public void emptyProjectRendersDisplay() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-empty-project");
-    Path issuesDir = tempDir.resolve(".claude/cat/issues");
+    Path issuesDir = tempDir.resolve(".cat/issues");
     Files.createDirectories(issuesDir);
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -151,7 +151,7 @@ public class GetStatusOutputTest
   public void emptyProjectHasBoxStructure() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-empty-box");
-    Path issuesDir = tempDir.resolve(".claude/cat/issues");
+    Path issuesDir = tempDir.resolve(".cat/issues");
     Files.createDirectories(issuesDir);
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -176,7 +176,7 @@ public class GetStatusOutputTest
   public void progressBarShowsCorrectPercentage() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-progress");
-    Path issuesDir = tempDir.resolve(".claude/cat/issues");
+    Path issuesDir = tempDir.resolve(".cat/issues");
     Path majorDir = issuesDir.resolve("v1");
     Path minorDir = majorDir.resolve("v1.0");
     Path issue1Dir = minorDir.resolve("task-1");
@@ -209,7 +209,7 @@ public class GetStatusOutputTest
   public void singleVersionWithOpenIssuesRendersCorrectly() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-single-version");
-    Path issuesDir = tempDir.resolve(".claude/cat/issues");
+    Path issuesDir = tempDir.resolve(".cat/issues");
     Path majorDir = issuesDir.resolve("v2");
     Path minorDir = majorDir.resolve("v2.0");
     Path issueDir = minorDir.resolve("my-task");
@@ -240,7 +240,7 @@ public class GetStatusOutputTest
   public void inProgressIssueShowsSpinnerEmoji() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-in-progress");
-    Path issuesDir = tempDir.resolve(".claude/cat/issues");
+    Path issuesDir = tempDir.resolve(".cat/issues");
     Path majorDir = issuesDir.resolve("v1");
     Path minorDir = majorDir.resolve("v1.0");
     Path issueDir = minorDir.resolve("active-task");
@@ -270,7 +270,7 @@ public class GetStatusOutputTest
   public void blockedIssueShowsBlockedEmojiAndList() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-blocked");
-    Path issuesDir = tempDir.resolve(".claude/cat/issues");
+    Path issuesDir = tempDir.resolve(".cat/issues");
     Path majorDir = issuesDir.resolve("v1");
     Path minorDir = majorDir.resolve("v1.0");
     Path issue1Dir = minorDir.resolve("task-1");
@@ -307,7 +307,7 @@ public class GetStatusOutputTest
   public void completedTasksShowCheckmarkEmoji() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-completed");
-    Path issuesDir = tempDir.resolve(".claude/cat/issues");
+    Path issuesDir = tempDir.resolve(".cat/issues");
     Path majorDir = issuesDir.resolve("v1");
     Path minorDir = majorDir.resolve("v1.0");
     Path issue1Dir = minorDir.resolve("done-task");
@@ -340,7 +340,7 @@ public class GetStatusOutputTest
   public void openTasksShowUncheckedBoxEmoji() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-open");
-    Path issuesDir = tempDir.resolve(".claude/cat/issues");
+    Path issuesDir = tempDir.resolve(".cat/issues");
     Path majorDir = issuesDir.resolve("v1");
     Path minorDir = majorDir.resolve("v1.0");
     Path issueDir = minorDir.resolve("open-task");
@@ -370,7 +370,7 @@ public class GetStatusOutputTest
   public void currentIssueShowsInFooter() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-current-footer");
-    Path issuesDir = tempDir.resolve(".claude/cat/issues");
+    Path issuesDir = tempDir.resolve(".cat/issues");
     Path majorDir = issuesDir.resolve("v1");
     Path minorDir = majorDir.resolve("v1.0");
     Path issueDir = minorDir.resolve("active-task");
@@ -400,7 +400,7 @@ public class GetStatusOutputTest
   public void nextIssueShowsInFooterWhenNoIssueInProgress() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-next-footer");
-    Path issuesDir = tempDir.resolve(".claude/cat/issues");
+    Path issuesDir = tempDir.resolve(".cat/issues");
     Path majorDir = issuesDir.resolve("v1");
     Path minorDir = majorDir.resolve("v1.0");
     Path issueDir = minorDir.resolve("next-task");
@@ -430,7 +430,7 @@ public class GetStatusOutputTest
   public void footerShowsNoIssuesWhenAllComplete() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-no-tasks");
-    Path issuesDir = tempDir.resolve(".claude/cat/issues");
+    Path issuesDir = tempDir.resolve(".cat/issues");
     Path major1Dir = issuesDir.resolve("v1");
     Path major2Dir = issuesDir.resolve("v2");
     Path minor10Dir = major1Dir.resolve("v1.0");
@@ -472,7 +472,7 @@ public class GetStatusOutputTest
   public void majorVersionShowsCorrectNameFromRoadmap() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-roadmap");
-    Path catDir = tempDir.resolve(".claude/cat");
+    Path catDir = tempDir.resolve(".cat");
     Path issuesDir = catDir.resolve("issues");
     Path majorDir = issuesDir.resolve("v2");
     Files.createDirectories(majorDir);
@@ -504,7 +504,7 @@ public class GetStatusOutputTest
   public void minorVersionShowsDescriptionFromRoadmap() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-minor-desc");
-    Path catDir = tempDir.resolve(".claude/cat");
+    Path catDir = tempDir.resolve(".cat");
     Path issuesDir = catDir.resolve("issues");
     Path majorDir = issuesDir.resolve("v2");
     Path minorDir = majorDir.resolve("v2.1");
@@ -541,7 +541,7 @@ public class GetStatusOutputTest
   public void projectNameIsReadFromProjectMd() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-project-name");
-    Path catDir = tempDir.resolve(".claude/cat");
+    Path catDir = tempDir.resolve(".cat");
     Path issuesDir = catDir.resolve("issues");
     Files.createDirectories(issuesDir);
 
@@ -569,7 +569,7 @@ public class GetStatusOutputTest
   public void activeMinorVersionShowsSpinnerEmoji() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-active-minor");
-    Path issuesDir = tempDir.resolve(".claude/cat/issues");
+    Path issuesDir = tempDir.resolve(".cat/issues");
     Path majorDir = issuesDir.resolve("v1");
     Path minorDir = majorDir.resolve("v1.0");
     Path issueDir = minorDir.resolve("task-1");
@@ -599,7 +599,7 @@ public class GetStatusOutputTest
   public void completedMinorVersionShowsCheckmarkEmoji() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-completed-minor");
-    Path issuesDir = tempDir.resolve(".claude/cat/issues");
+    Path issuesDir = tempDir.resolve(".cat/issues");
     Path majorDir = issuesDir.resolve("v1");
     Path minor1Dir = majorDir.resolve("v1.0");
     Path minor2Dir = majorDir.resolve("v1.1");
@@ -633,7 +633,7 @@ public class GetStatusOutputTest
   public void multipleVersionsAreSortedCorrectly() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-sorted");
-    Path issuesDir = tempDir.resolve(".claude/cat/issues");
+    Path issuesDir = tempDir.resolve(".cat/issues");
     Path major1Dir = issuesDir.resolve("v1");
     Path major2Dir = issuesDir.resolve("v2");
     Path minor10Dir = major1Dir.resolve("v1.0");
@@ -670,7 +670,7 @@ public class GetStatusOutputTest
   public void lockFilePresenceMakesOpenTaskInProgress() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-lock-inprog");
-    Path catDir = tempDir.resolve(".claude/cat");
+    Path catDir = tempDir.resolve(".cat");
     Path issuesDir = catDir.resolve("issues");
     Path majorDir = issuesDir.resolve("v2");
     Path minorDir = majorDir.resolve("v2.1");
@@ -708,7 +708,7 @@ public class GetStatusOutputTest
   public void noLockFileKeepsOpenTaskPending() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-no-lock");
-    Path issuesDir = tempDir.resolve(".claude/cat/issues");
+    Path issuesDir = tempDir.resolve(".cat/issues");
     Path majorDir = issuesDir.resolve("v2");
     Path minorDir = majorDir.resolve("v2.1");
     Path issueDir = minorDir.resolve("pending-task");
@@ -738,7 +738,7 @@ public class GetStatusOutputTest
   public void closedTaskIgnoresLockFile() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-closed-lock");
-    Path catDir = tempDir.resolve(".claude/cat");
+    Path catDir = tempDir.resolve(".cat");
     Path issuesDir = catDir.resolve("issues");
     Path majorDir = issuesDir.resolve("v2");
     Path minorDir = majorDir.resolve("v2.1");
@@ -992,9 +992,9 @@ public class GetStatusOutputTest
       GetStatusOutput handler = new GetStatusOutput(scope);
 
       String[] validPaths = {
-        ".claude/cat/issues/v1/v1.0/task-1/STATE.md",
-        ".claude/cat/issues/v2/v2.1/my-feature/STATE.md",
-        ".claude/cat/issues/v10/v10.5/long_task_name/STATE.md"
+        ".cat/issues/v1/v1.0/task-1/STATE.md",
+        ".cat/issues/v2/v2.1/my-feature/STATE.md",
+        ".cat/issues/v10/v10.5/long_task_name/STATE.md"
       };
 
       for (String path : validPaths)
@@ -1023,9 +1023,9 @@ public class GetStatusOutputTest
       GetStatusOutput handler = new GetStatusOutput(scope);
 
       String[] traversalPaths = {
-        ".claude/cat/issues/../../../etc/passwd",
-        ".claude/cat/issues/v1/../v2/STATE.md",
-        ".claude/cat/issues/v1/v1.0/../v1.1/task/STATE.md"
+        ".cat/issues/../../../etc/passwd",
+        ".cat/issues/v1/../v2/STATE.md",
+        ".cat/issues/v1/v1.0/../v1.1/task/STATE.md"
       };
 
       for (String path : traversalPaths)
@@ -1085,9 +1085,9 @@ public class GetStatusOutputTest
       GetStatusOutput handler = new GetStatusOutput(scope);
 
       String[] wrongSuffixPaths = {
-        ".claude/cat/issues/v1/v1.0/task/PLAN.md",
-        ".claude/cat/issues/v1/v1.0/task/README.md",
-        ".claude/cat/issues/v1/v1.0/task/state.md"
+        ".cat/issues/v1/v1.0/task/PLAN.md",
+        ".cat/issues/v1/v1.0/task/README.md",
+        ".cat/issues/v1/v1.0/task/state.md"
       };
 
       for (String path : wrongSuffixPaths)
@@ -1134,7 +1134,7 @@ public class GetStatusOutputTest
   public void outputIncludesNextStepsTable() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-next-steps");
-    Path issuesDir = tempDir.resolve(".claude/cat/issues");
+    Path issuesDir = tempDir.resolve(".cat/issues");
     Files.createDirectories(issuesDir);
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -1163,7 +1163,7 @@ public class GetStatusOutputTest
   public void innerBoxesHaveUniformWidthAcrossMajorVersions() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-alignment");
-    Path issuesDir = tempDir.resolve(".claude/cat/issues");
+    Path issuesDir = tempDir.resolve(".cat/issues");
 
     // Major v1 has many issues (wider content)
     Path major1Dir = issuesDir.resolve("v1");
@@ -1227,7 +1227,7 @@ public class GetStatusOutputTest
     Path tempDir = TestUtils.createTempGitRepo("main");
     try
     {
-      Path catDir = tempDir.resolve(".claude/cat");
+      Path catDir = tempDir.resolve(".cat");
       Path issuesDir = catDir.resolve("issues");
       Path majorDir = issuesDir.resolve("v1");
       Path minorDir = majorDir.resolve("v1.0");
@@ -1290,7 +1290,7 @@ public class GetStatusOutputTest
     Path tempDir = TestUtils.createTempGitRepo("main");
     try
     {
-      Path catDir = tempDir.resolve(".claude/cat");
+      Path catDir = tempDir.resolve(".cat");
       Path issuesDir = catDir.resolve("issues");
       Path majorDir = issuesDir.resolve("v1");
       Path minorDir = majorDir.resolve("v1.0");
@@ -1339,7 +1339,7 @@ public class GetStatusOutputTest
   {
     Path tempDir = Files.createTempDirectory("test-corrupt-status");
     // Create a normal issue structure
-    Path issuesDir = tempDir.resolve(".claude/cat/issues");
+    Path issuesDir = tempDir.resolve(".cat/issues");
     Path majorDir = issuesDir.resolve("v2");
     Path minorDir = majorDir.resolve("v2.1");
     Path corruptDir = minorDir.resolve("corrupt-issue");

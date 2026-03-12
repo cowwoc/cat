@@ -47,7 +47,7 @@ Determine the output path:
 if [[ -z "${SESSION_ANALYSIS_DIR:-}" ]]; then
   # Derive session directory from environment when caller does not provide it
   ENCODED_PROJECT_DIR=$(printf '%s' "${CLAUDE_PROJECT_DIR}" | sed 's|/|%2F|g; s| |%20|g')
-  SESSION_ANALYSIS_DIR="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}/.claude/cat"
+  SESSION_ANALYSIS_DIR="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}/.cat"
 fi
 mkdir -p "${SESSION_ANALYSIS_DIR}"
 ANALYSIS_PATH="${SESSION_ANALYSIS_DIR}/rebase-impact-analysis.md"
@@ -172,7 +172,7 @@ analysis. The file is ephemeral session output — do NOT commit it to git:
 ```bash
 if [[ -z "${SESSION_ANALYSIS_DIR:-}" ]]; then
   ENCODED_PROJECT_DIR=$(printf '%s' "${CLAUDE_PROJECT_DIR}" | sed 's|/|%2F|g; s| |%20|g')
-  SESSION_ANALYSIS_DIR="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}/.claude/cat"
+  SESSION_ANALYSIS_DIR="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}/.cat"
 fi
 mkdir -p "${SESSION_ANALYSIS_DIR}"
 ANALYSIS_PATH="${SESSION_ANALYSIS_DIR}/rebase-impact-analysis.md"

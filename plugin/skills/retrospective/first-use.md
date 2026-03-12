@@ -275,7 +275,7 @@ At the end of `learn` Step 12 (Update Retrospective Counter), add:
 trigger_check:
   action: "Check if retrospective is needed"
   command: |
-    INDEX_FILE=".claude/cat/retrospectives/index.json"
+    INDEX_FILE=".cat/retrospectives/index.json"
 
     # Increment mistake counter
     jq '.mistake_count_since_last += 1' "$INDEX_FILE" > "$INDEX_FILE.tmp" \

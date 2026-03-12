@@ -42,7 +42,7 @@ CAT checks these locations in priority order, uses first valid key found:
 | Priority | Method | Location | Use case |
 |----------|--------|----------|----------|
 | 1 | Environment variable | `CAT_LICENSE_KEY` | CI/CD, containers |
-| 2 | Project config | `.claude/cat/license.json` | Pro shared config |
+| 2 | Project config | `.cat/license.json` | Pro shared config |
 | 3 | User config | `~/.config/cat/license.json` | Personal machine |
 
 ### Environment Variable
@@ -122,7 +122,7 @@ $ CAT_LICENSE_KEY="CAT-PRO-..." cat:status
 
 | Threat | Mitigation |
 |--------|------------|
-| Key in git history | `.claude/cat/license.json` added to `.gitignore` by default. Warn if committed. |
+| Key in git history | `.cat/license.json` added to `.gitignore` by default. Warn if committed. |
 | Key visible in process list | Env var visible to `ps`. Document that config file is more secure for sensitive environments. |
 | Key sharing across orgs | Server tracks activations per key. Alert on anomalous patterns (50 IPs for 5-seat license). |
 | Offline abuse | 30-day grace window. After that, must connect to validate. |

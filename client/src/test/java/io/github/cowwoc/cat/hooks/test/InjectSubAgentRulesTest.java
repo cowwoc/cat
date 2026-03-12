@@ -100,7 +100,7 @@ public final class InjectSubAgentRulesTest
         This is from the plugin.
         """);
 
-      Path projectRulesDir = scope.getClaudeProjectDir().resolve(".claude/cat/rules");
+      Path projectRulesDir = scope.getClaudeProjectDir().resolve(".cat/rules");
       Files.createDirectories(projectRulesDir);
       Files.writeString(projectRulesDir.resolve("shared-subagent-rule.md"), """
         ---
@@ -142,7 +142,7 @@ public final class InjectSubAgentRulesTest
     Path tempDir = Files.createTempDirectory("inject-subagent-rules-blank-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path rulesDir = scope.getClaudeProjectDir().resolve(".claude/cat/rules");
+      Path rulesDir = scope.getClaudeProjectDir().resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       // No subAgents frontmatter → null → matches all subagents
       Files.writeString(rulesDir.resolve("universal.md"), """
@@ -181,7 +181,7 @@ public final class InjectSubAgentRulesTest
     Path tempDir = Files.createTempDirectory("inject-subagent-rules-specific-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path rulesDir = scope.getClaudeProjectDir().resolve(".claude/cat/rules");
+      Path rulesDir = scope.getClaudeProjectDir().resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("typed-rule.md"), """
         ---
@@ -261,7 +261,7 @@ public final class InjectSubAgentRulesTest
         This plugin content should reach all subagents.
         """);
 
-      Path projectRulesDir = scope.getClaudeProjectDir().resolve(".claude/cat/rules");
+      Path projectRulesDir = scope.getClaudeProjectDir().resolve(".cat/rules");
       Files.createDirectories(projectRulesDir);
       // Project rule with same filename: subAgents:[] → matches no subagent type — filtered out
       Files.writeString(projectRulesDir.resolve("toggled-subagent-rule.md"), """
@@ -340,7 +340,7 @@ public final class InjectSubAgentRulesTest
     Path tempDir = Files.createTempDirectory("inject-subagent-rules-empty-subagents-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path rulesDir = scope.getClaudeProjectDir().resolve(".claude/cat/rules");
+      Path rulesDir = scope.getClaudeProjectDir().resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       // subAgents: [] means no subagent type matches — exclude all
       Files.writeString(rulesDir.resolve("excluded-rule.md"), """
@@ -380,7 +380,7 @@ public final class InjectSubAgentRulesTest
     Path tempDir = Files.createTempDirectory("inject-subagent-rules-type-mismatch-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path rulesDir = scope.getClaudeProjectDir().resolve(".claude/cat/rules");
+      Path rulesDir = scope.getClaudeProjectDir().resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       // Rule targets cat:work-execute only
       Files.writeString(rulesDir.resolve("typed-rule.md"), """

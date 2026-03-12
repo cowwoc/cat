@@ -696,7 +696,7 @@ public class GetIssueCompleteOutputTest
     Path projectDir = TestUtils.createTempCatProject("get-issue-complete-test");
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
     {
-      // Create a patch-version issue under .claude/cat/issues/v2/v2.1/v2.1.3/completed-feature
+      // Create a patch-version issue under .cat/issues/v2/v2.1/v2.1.3/completed-feature
       createIssueWithPlan(projectDir, "2", "1", "3", "completed-feature", "open",
         "## Goal\n\nAlready done.\n");
 
@@ -834,7 +834,7 @@ public class GetIssueCompleteOutputTest
   private void createIssueWithPlan(Path projectDir, String major, String minor, String issueName,
     String status, String planContent) throws IOException
   {
-    Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+    Path issueDir = projectDir.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
@@ -866,7 +866,7 @@ public class GetIssueCompleteOutputTest
   private void createIssueWithPlan(Path projectDir, String major, String minor, String patch,
     String issueName, String status, String planContent) throws IOException
   {
-    Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+    Path issueDir = projectDir.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).
       resolve("v" + major + "." + minor + "." + patch).resolve(issueName);
     Files.createDirectories(issueDir);

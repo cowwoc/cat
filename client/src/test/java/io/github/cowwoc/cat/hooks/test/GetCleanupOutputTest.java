@@ -1639,7 +1639,7 @@ public class GetCleanupOutputTest
     try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       // Create a corrupt issue directory: STATE.md present, PLAN.md absent
-      Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+      Path issueDir = projectDir.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("orphaned-issue");
       Files.createDirectories(issueDir);
       Files.writeString(issueDir.resolve("STATE.md"), "# State\n- **Status:** open\n");
@@ -1669,7 +1669,7 @@ public class GetCleanupOutputTest
     try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       // Create a valid issue directory: both STATE.md and PLAN.md present
-      Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+      Path issueDir = projectDir.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("valid-issue");
       Files.createDirectories(issueDir);
       Files.writeString(issueDir.resolve("STATE.md"), "# State\n- **Status:** open\n");
@@ -1699,7 +1699,7 @@ public class GetCleanupOutputTest
     try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       // Create an issue directory with neither STATE.md nor PLAN.md
-      Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+      Path issueDir = projectDir.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("empty-issue");
       Files.createDirectories(issueDir);
       // Deliberately no STATE.md and no PLAN.md

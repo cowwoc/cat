@@ -147,7 +147,7 @@ public class MergeAndCleanupTest
       Path tempDir = TestUtils.createTempDir("merge-cleanup-test");
       try
       {
-        Path catDir = tempDir.resolve(".claude/cat");
+        Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
 
         MergeAndCleanup cmd = new MergeAndCleanup(scope);
@@ -234,8 +234,8 @@ public class MergeAndCleanupTest
       TestUtils.runGit(issueWorktree, "add", "issue-work.txt");
       TestUtils.runGit(issueWorktree, "commit", "-m", "Issue commit");
 
-      // Set up .claude/cat structure in local repo
-      Path catDir = localRepo.resolve(".claude/cat");
+      // Set up .cat structure in local repo
+      Path catDir = localRepo.resolve(".cat");
       Files.createDirectories(catDir);
 
       try (JvmScope scope = new TestJvmScope(localRepo, pluginRoot))
@@ -336,8 +336,8 @@ public class MergeAndCleanupTest
       TestUtils.runGit(issueWorktree, "add", "issue-work.txt");
       TestUtils.runGit(issueWorktree, "commit", "-m", "Issue commit");
 
-      // Set up .claude/cat structure
-      Path catDir = localRepo.resolve(".claude/cat");
+      // Set up .cat structure
+      Path catDir = localRepo.resolve(".cat");
       Files.createDirectories(catDir);
 
       try (JvmScope scope = new TestJvmScope(localRepo, pluginRoot))
@@ -399,8 +399,8 @@ public class MergeAndCleanupTest
       TestUtils.runGit(issueWorktree, "add", "issue-work.txt");
       TestUtils.runGit(issueWorktree, "commit", "-m", "Issue commit");
 
-      // Set up .claude/cat structure
-      Path catDir = localRepo.resolve(".claude/cat");
+      // Set up .cat structure
+      Path catDir = localRepo.resolve(".cat");
       Files.createDirectories(catDir);
 
       try (JvmScope scope = new TestJvmScope(localRepo, pluginRoot))
@@ -474,8 +474,8 @@ public class MergeAndCleanupTest
       // Also push this advance to origin so syncTargetBranchWithOrigin doesn't fail
       TestUtils.runGit(mainRepo, "push", "origin", "v2.1");
 
-      // Set up .claude/cat structure in main repo
-      Path catDir = mainRepo.resolve(".claude/cat");
+      // Set up .cat structure in main repo
+      Path catDir = mainRepo.resolve(".cat");
       Files.createDirectories(catDir);
 
       // Verify divergence exists before the call
@@ -552,8 +552,8 @@ public class MergeAndCleanupTest
       TestUtils.runGit(issueWorktree, "add", "new-feature.txt");
       TestUtils.runGit(issueWorktree, "commit", "-m", "Add new feature file");
 
-      // Set up .claude/cat structure in main repo
-      Path catDir = mainRepo.resolve(".claude/cat");
+      // Set up .cat structure in main repo
+      Path catDir = mainRepo.resolve(".cat");
       Files.createDirectories(catDir);
 
       // Verify precondition: new-feature.txt does NOT exist in main working tree

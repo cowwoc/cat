@@ -40,7 +40,7 @@ Return JSON on success:
   "major": "2",
   "minor": "1",
   "issue_name": "issue-name",
-  "issue_path": "/workspace/.claude/cat/issues/v2/v2.1/issue-name",
+  "issue_path": "/workspace/.cat/issues/v2/v2.1/issue-name",
   "worktree_path": "${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/2.1-issue-name",
   "issue_branch": "2.1-issue-name",
   "target_branch": "v2.1",
@@ -147,8 +147,8 @@ Temporary mutations that rely on cleanup code are unsafe because:
 ### Step 1: Verify Planning Structure
 
 ```bash
-[ ! -d .claude/cat ] && echo '{"status":"ERROR","message":"No .claude/cat/ directory"}' && exit 1
-[ ! -f .claude/cat/cat-config.json ] && echo '{"status":"ERROR","message":"No cat-config.json"}' && exit 1
+[ ! -d .cat ] && echo '{"status":"ERROR","message":"No .cat/ directory"}' && exit 1
+[ ! -f .cat/cat-config.json ] && echo '{"status":"ERROR","message":"No cat-config.json"}' && exit 1
 ```
 
 **Detect existing session lock before acquiring a new one.** Acquiring a second lock in the same session
@@ -388,7 +388,7 @@ LOCKED_ISSUES='[]'
 CLOSED_COUNT=0
 TOTAL_COUNT=0
 
-for issue_dir in .claude/cat/issues/v*/v*/*/ ; do
+for issue_dir in .cat/issues/v*/v*/*/ ; do
   [ -f "$issue_dir/STATE.md" ] || continue
   TOTAL_COUNT=$((TOTAL_COUNT + 1))
   STATUS=$(grep -oE '\*\*Status:\*\* [a-z-]+' "$issue_dir/STATE.md" | sed 's/\*\*Status:\*\* //')
@@ -405,7 +405,7 @@ for issue_dir in .claude/cat/issues/v*/v*/*/ ; do
         IFS="$OLD_IFS"
         for dep in "$@"; do
           [ -z "$dep" ] && continue
-          DEP_STATE=$(find .claude/cat/issues -path "*/$dep/STATE.md" 2>/dev/null | head -1)
+          DEP_STATE=$(find .cat/issues -path "*/$dep/STATE.md" 2>/dev/null | head -1)
           if [ -n "$DEP_STATE" ] && [ -f "$DEP_STATE" ]; then
             DEP_STATUS=$(grep -oE '\*\*Status:\*\* [a-z-]+' "$DEP_STATE" | sed 's/\*\*Status:\*\* //')
             if [ "$DEP_STATUS" != "closed" ]; then
@@ -609,10 +609,10 @@ The worktree was created in Step 4. Update the STATE.md copy inside it:
 
 ```bash
 # CORRECT: Edit in worktree
-STATE_FILE="${WORKTREE_PATH}/.claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${ISSUE_NAME}/STATE.md"
+STATE_FILE="${WORKTREE_PATH}/.cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${ISSUE_NAME}/STATE.md"
 
 # WRONG: Editing in main workspace (pollutes main branch)
-# STATE_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/issues/..."
+# STATE_FILE="${CLAUDE_PROJECT_DIR}/.cat/issues/..."
 ```
 
 **MANDATORY: Before writing, verify the file exists and read its current contents.** The worktree

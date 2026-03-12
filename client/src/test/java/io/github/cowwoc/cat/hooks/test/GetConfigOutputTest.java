@@ -36,7 +36,7 @@ public class GetConfigOutputTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       // Create a minimal config file so getCurrentSettings doesn't return null
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{}");
 
@@ -62,7 +62,7 @@ public class GetConfigOutputTest
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{\"completionWorkflow\": \"pr\"}");
 
@@ -89,7 +89,7 @@ public class GetConfigOutputTest
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{}");
 
@@ -115,7 +115,7 @@ public class GetConfigOutputTest
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{\"minSeverity\": \"critical\"}");
 
@@ -163,7 +163,7 @@ public class GetConfigOutputTest
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{}");
 
@@ -195,7 +195,7 @@ public class GetConfigOutputTest
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{\"minSeverity\": \"\"}");
 
@@ -229,7 +229,7 @@ public class GetConfigOutputTest
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{\"minSeverity\": \"  \"}");
 
@@ -262,7 +262,7 @@ public class GetConfigOutputTest
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{\"minSeverity\": \"invalid\"}");
 
@@ -296,7 +296,7 @@ public class GetConfigOutputTest
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"),
         "{\"completionWorkflow\": \"pr\", \"minSeverity\": \"medium\"}");
@@ -326,7 +326,7 @@ public class GetConfigOutputTest
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{}");
 
@@ -352,7 +352,7 @@ public class GetConfigOutputTest
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{}");
 
@@ -378,7 +378,7 @@ public class GetConfigOutputTest
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{}");
 
@@ -404,7 +404,7 @@ public class GetConfigOutputTest
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{}");
 
@@ -429,7 +429,7 @@ public class GetConfigOutputTest
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{}");
 
@@ -479,7 +479,7 @@ public class GetConfigOutputTest
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{}");
 
@@ -505,7 +505,7 @@ public class GetConfigOutputTest
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{\"fileWidth\": 80}");
 
@@ -531,7 +531,7 @@ public class GetConfigOutputTest
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{}");
 
@@ -557,7 +557,7 @@ public class GetConfigOutputTest
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 50}");
 
@@ -583,7 +583,7 @@ public class GetConfigOutputTest
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{\"fileWidth\": 100, \"displayWidth\": 60}");
 

@@ -13,7 +13,7 @@ See LICENSE.md in the project root for license terms.
 
 ```bash
 # Check for configured commit format in PROJECT.md
-COMMIT_FORMAT=$(grep -A10 "### Commit Format" .claude/cat/PROJECT.md 2>/dev/null)
+COMMIT_FORMAT=$(grep -A10 "### Commit Format" .cat/PROJECT.md 2>/dev/null)
 
 if [[ -n "$COMMIT_FORMAT" ]]; then
   echo "Using commit format from PROJECT.md:"
@@ -135,10 +135,10 @@ for JDK 14+ switch expressions.
 
 ```bash
 # Find all commits for an issue
-git log --oneline -- .claude/cat/issues/v3/v3.0/add-yield-statement-support/
+git log --oneline -- .cat/issues/v3/v3.0/add-yield-statement-support/
 
 # Find the completion commit
-git log --oneline -1 -- .claude/cat/issues/v3/v3.0/add-yield-statement-support/STATE.md
+git log --oneline -1 -- .cat/issues/v3/v3.0/add-yield-statement-support/STATE.md
 ```
 
 **Why no footer needed:** Git's file history tracking survives rebases automatically and

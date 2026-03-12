@@ -53,10 +53,10 @@ session becomes corrupted (all commands fail with exit code 1).
 
 ## Configuration
 
-Read configuration from `${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json` before invoking work-with-issue:
+Read configuration from `${CLAUDE_PROJECT_DIR}/.cat/cat-config.json` before invoking work-with-issue:
 
 ```bash
-cat "${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json"
+cat "${CLAUDE_PROJECT_DIR}/.cat/cat-config.json"
 ```
 
 Extract these values:

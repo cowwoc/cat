@@ -31,7 +31,7 @@ The invoking agent passes:
    ```
 4. **Config name** (optional): `"with-skill"` or `"without-skill"`, used to label the grading result.
 5. **EVAL_ARTIFACTS_DIR**: The fully-resolved path to the session-scoped eval artifacts directory
-   (e.g., `/workspace/.claude/cat/worktrees/my-issue/eval-artifacts/abc123def456`). Used to write the grading JSON
+   (e.g., `/workspace/.cat/worktrees/my-issue/eval-artifacts/abc123def456`). Used to write the grading JSON
    output file.
 6. **CLAUDE_SESSION_ID**: The session ID string, used in the commit message.
 

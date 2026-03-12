@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.skills;
 
+import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
@@ -267,7 +268,7 @@ public final class GetInitOutput implements SkillOutput
 
     // Pad issue name and location to fit box width
     String issueLine = "  Issue: " + issueName;
-    String locationLine = "  Location: .claude/cat/issues/v0/v0.0/" + issueName + "/";
+    String locationLine = "  Location: " + Config.CAT_DIR_NAME + "/issues/v0/v0.0/" + issueName + "/";
 
     return scope.getDisplayUtils().buildHeaderBox(
       "✅ FIRST ISSUE CREATED",

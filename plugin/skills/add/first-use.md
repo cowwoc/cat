@@ -121,7 +121,7 @@ Capture as ISSUE_DESCRIPTION, then continue to step: issue_read_config.
 Read the `effort` value from cat-config.json and store it for all downstream steps:
 
 ```bash
-CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json"
+CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.cat/cat-config.json"
 if [[ ! -f "$CONFIG_FILE" ]]; then
     echo "ERROR: cat-config.json not found: $CONFIG_FILE" >&2
     echo "Solution: Run /cat:init to initialize the project." >&2
@@ -356,7 +356,7 @@ Set POSTCONDITIONS to standard post-conditions for ISSUE_TYPE, plus any custom a
 List all available minor versions with their focus summaries:
 
 ```bash
-find .claude/cat -maxdepth 2 -type d -name "v[0-9]*.[0-9]*" 2>/dev/null | \
+find .cat -maxdepth 2 -type d -name "v[0-9]*.[0-9]*" 2>/dev/null | \
     sed 's|.*/v\([0-9]*\)/v\1\.\([0-9]*\)|\1.\2|' | sort -V
 ```
 
@@ -485,7 +485,7 @@ SKILL_NAMES.
 ```bash
 source "${CLAUDE_PLUGIN_ROOT}/skills/add-agent/skill_dep_helpers.sh"
 
-ISSUES_DIR="${CLAUDE_PROJECT_DIR}/.claude/cat/issues"
+ISSUES_DIR="${CLAUDE_PROJECT_DIR}/.cat/issues"
 
 # Accumulate all matching issues across all skill names (deduplicated)
 AUTO_DETECTED_DEPS=()
@@ -602,7 +602,7 @@ Store the estimate internally as SCOPE_ESTIMATE (do not ask user).
 
 ```bash
 # VERSION_PLAN is set to the parent version path (works for any level: major, minor, or patch)
-VERSION_PLAN=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/PLAN.md"
+VERSION_PLAN=".cat/issues/v$MAJOR/v$MAJOR.$MINOR/PLAN.md"
 ```
 
 Extract REQ-XXX items from PLAN.md. Store as VERSION_REQUIREMENTS (may be empty).
@@ -1087,7 +1087,7 @@ fi
 - List available major versions:
 
 ```bash
-[ -z "$(ls -d .claude/cat/v[0-9]* 2>/dev/null)" ] && echo "No major versions exist." && exit 0
+[ -z "$(ls -d .cat/v[0-9]* 2>/dev/null)" ] && echo "No major versions exist." && exit 0
 ```
 
 If no major versions exist:
@@ -1096,7 +1096,7 @@ If no major versions exist:
 - Go to step: version_find_next
 
 ```bash
-ls -1d .claude/cat/v[0-9]* 2>/dev/null | sed 's|.claude/cat/v||' | sort -V
+ls -1d .cat/v[0-9]* 2>/dev/null | sed 's|.cat/v||' | sort -V
 ```
 
 Use AskUserQuestion:
@@ -1113,7 +1113,7 @@ If "Create new major version":
 - List available minor versions:
 
 ```bash
-find .claude/cat -maxdepth 2 -type d -name "v[0-9]*.[0-9]*" 2>/dev/null | while read d; do
+find .cat -maxdepth 2 -type d -name "v[0-9]*.[0-9]*" 2>/dev/null | while read d; do
     VERSION=$(basename "$d" | sed 's/v//')
     MAJOR=$(echo "$VERSION" | cut -d. -f1)
     MINOR=$(echo "$VERSION" | cut -d. -f2)
@@ -1143,7 +1143,7 @@ If "Cancel" -> exit command.
 
 ```bash
 MAJOR="{selected_major}"
-PARENT_PATH=".claude/cat/issues/v$MAJOR"
+PARENT_PATH=".cat/issues/v$MAJOR"
 [ ! -d "$PARENT_PATH" ] && echo "ERROR: Major version $MAJOR does not exist" && exit 1
 ```
 
@@ -1152,7 +1152,7 @@ PARENT_PATH=".claude/cat/issues/v$MAJOR"
 ```bash
 MAJOR="{major}"
 MINOR="{minor}"
-PARENT_PATH=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR"
+PARENT_PATH=".cat/issues/v$MAJOR/v$MAJOR.$MINOR"
 [ ! -d "$PARENT_PATH" ] && echo "ERROR: Minor version $MAJOR.$MINOR does not exist" && exit 1
 ```
 
@@ -1165,7 +1165,7 @@ PARENT_PATH=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR"
 **If VERSION_TYPE is "major":**
 
 ```bash
-NEXT_NUMBER=$(ls -1d .claude/cat/v[0-9]* 2>/dev/null | sed 's|.claude/cat/v||' | sort -V | tail -1)
+NEXT_NUMBER=$(ls -1d .cat/v[0-9]* 2>/dev/null | sed 's|.cat/v||' | sort -V | tail -1)
 if [ -z "$NEXT_NUMBER" ]; then
     NEXT_NUMBER=1
 else
@@ -1233,7 +1233,7 @@ If user specified a custom number:
 **If VERSION_TYPE is "major":**
 
 ```bash
-if [ -d ".claude/cat/issues/v$REQUESTED_NUMBER" ]; then
+if [ -d ".cat/issues/v$REQUESTED_NUMBER" ]; then
     echo "Version $REQUESTED_NUMBER already exists."
 fi
 ```
@@ -1285,12 +1285,12 @@ This is a significant operation. Renumber all versions >= REQUESTED_NUMBER by +1
 **If VERSION_TYPE is "major":**
 
 ```bash
-for v in $(ls -1d .claude/cat/v[0-9]* 2>/dev/null | sed 's|.claude/cat/v||' | sort -rV); do
+for v in $(ls -1d .cat/v[0-9]* 2>/dev/null | sed 's|.cat/v||' | sort -rV); do
     if [ "$v" -ge "$REQUESTED_NUMBER" ]; then
         NEW_V=$((v + 1))
         echo "Renumbering v$v -> v$NEW_V"
-        mv ".claude/cat/issues/v$v" ".claude/cat/issues/v$NEW_V"
-        find ".claude/cat/issues/v$NEW_V" -name "*.md" -exec \
+        mv ".cat/issues/v$v" ".cat/issues/v$NEW_V"
+        find ".cat/issues/v$NEW_V" -name "*.md" -exec \
             sed -i "s/v$v\./v$NEW_V./g; s/Major $v/Major $NEW_V/g" {} \;
     fi
 done
@@ -1448,7 +1448,7 @@ Append custom conditions to standard conditions.
 
 ```bash
 MAJOR=$VERSION_NUMBER
-VERSION_PATH=".claude/cat/issues/v$MAJOR"
+VERSION_PATH=".cat/issues/v$MAJOR"
 mkdir -p "$VERSION_PATH/v$MAJOR.0/issue"
 ```
 
@@ -1645,7 +1645,7 @@ EOF
 **Update ROADMAP.md with new version entry:**
 
 ```bash
-ROADMAP=".claude/cat/ROADMAP.md"
+ROADMAP=".cat/ROADMAP.md"
 ```
 
 **If VERSION_TYPE is "major":**
@@ -1729,7 +1729,7 @@ grep -q "v$MAJOR.$MINOR.$PATCH" "$PARENT_STATE" || echo "ERROR: Patch version no
 **If VERSION_TYPE is "major":**
 
 ```bash
-git add ".claude/cat/issues/v$MAJOR/" ".claude/cat/ROADMAP.md" && \
+git add ".cat/issues/v$MAJOR/" ".cat/ROADMAP.md" && \
 git commit -m "$(cat <<'EOF'
 planning: add major version {major}
 
@@ -1743,7 +1743,7 @@ EOF
 **If VERSION_TYPE is "minor":**
 
 ```bash
-git add "$VERSION_PATH/" ".claude/cat/ROADMAP.md" "$PARENT_PATH/STATE.md" && \
+git add "$VERSION_PATH/" ".cat/ROADMAP.md" "$PARENT_PATH/STATE.md" && \
 git commit -m "$(cat <<'EOF'
 planning: add minor version {major}.{minor}
 
@@ -1755,7 +1755,7 @@ EOF
 **If VERSION_TYPE is "patch":**
 
 ```bash
-git add "$VERSION_PATH/" ".claude/cat/ROADMAP.md" "$PARENT_PATH/STATE.md" && \
+git add "$VERSION_PATH/" ".cat/ROADMAP.md" "$PARENT_PATH/STATE.md" && \
 git commit -m "$(cat <<'EOF'
 planning: add patch version {major}.{minor}.{patch}
 

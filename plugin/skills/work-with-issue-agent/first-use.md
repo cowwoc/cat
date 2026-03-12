@@ -64,7 +64,7 @@ Check that `ISSUE_PATH` contains the substring `/.claude/`. If it does not, STOP
 
 ```
 ERROR: issue_path does not contain '/.claude/' — possible path typo.
-Expected: a path containing /.claude/cat/issues/
+Expected: a path containing /.cat/issues/
 Actual:   <value of ISSUE_PATH>
 Did you mean: <ISSUE_PATH with any segment that looks like '.claire' or similar replaced by '.claude'>?
 STOP. Fix the issue_path before re-invoking /cat:work.

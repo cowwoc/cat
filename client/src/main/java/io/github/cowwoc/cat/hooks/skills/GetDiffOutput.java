@@ -259,8 +259,8 @@ public final class GetDiffOutput implements SkillOutput
    * Generates the diff output for this skill.
    * <p>
    * Expects a single positional argument: the absolute path to the issue directory (e.g.,
-   * {@code /path/to/worktree/.claude/cat/issues/v2/v2.1/fix-foo/}). The project root (worktree path)
-   * is derived by stripping everything from {@code .claude/cat/issues/} onward. The target branch is
+   * {@code /path/to/worktree/.cat/issues/v2/v2.1/fix-foo/}). The project root (worktree path)
+   * is derived by stripping everything from {@code .cat/issues/} onward. The target branch is
    * read from the issue's {@code STATE.md} file.
    *
    * @param args the arguments from the preprocessor directive (exactly 1: issue path)
@@ -286,20 +286,20 @@ public final class GetDiffOutput implements SkillOutput
 
   /**
    * Derives the project root (worktree path) from an issue path by finding the
-   * {@code .claude/cat/issues/} segment and returning everything before it.
+   * {@code .cat/issues/} segment and returning everything before it.
    *
    * @param issuePath absolute path to the issue directory
    * @return the project root path
-   * @throws IllegalArgumentException if the path does not contain {@code .claude/cat/issues/}
+   * @throws IllegalArgumentException if the path does not contain {@code .cat/issues/}
    */
   private static Path deriveProjectRoot(Path issuePath)
   {
     String pathStr = issuePath.toString();
-    int index = pathStr.indexOf("/.claude/cat/issues/");
+    int index = pathStr.indexOf("/" + Config.CAT_DIR_NAME + "/issues/");
     if (index < 0)
     {
       throw new IllegalArgumentException(
-        "Issue path does not contain '.claude/cat/issues/': " + issuePath);
+        "Issue path does not contain '" + Config.CAT_DIR_NAME + "/issues/': " + issuePath);
     }
     return Path.of(pathStr.substring(0, index));
   }

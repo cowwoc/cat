@@ -31,25 +31,25 @@ run_hook_with_command() {
 # ============================================================================
 
 @test "block-lock-manipulation: blocks rm of lock file" {
-    run run_hook_with_command "rm .claude/cat/locks/task.lock"
+    run run_hook_with_command "rm .cat/locks/task.lock"
     [ "$status" -eq 0 ]
     [[ "$output" == *"block"* ]] || [[ "$output" == *"BLOCKED"* ]]
 }
 
 @test "block-lock-manipulation: blocks rm -f of lock file" {
-    run run_hook_with_command "rm -f .claude/cat/locks/task.lock"
+    run run_hook_with_command "rm -f .cat/locks/task.lock"
     [ "$status" -eq 0 ]
     [[ "$output" == *"block"* ]] || [[ "$output" == *"BLOCKED"* ]]
 }
 
 @test "block-lock-manipulation: blocks rm -rf of lock file" {
-    run run_hook_with_command "rm -rf .claude/cat/locks/task.lock"
+    run run_hook_with_command "rm -rf .cat/locks/task.lock"
     [ "$status" -eq 0 ]
     [[ "$output" == *"block"* ]] || [[ "$output" == *"BLOCKED"* ]]
 }
 
-@test "block-lock-manipulation: blocks rm with path containing .claude/cat/locks" {
-    run run_hook_with_command "rm /workspace/.claude/cat/locks/some-task.lock"
+@test "block-lock-manipulation: blocks rm with path containing .cat/locks" {
+    run run_hook_with_command "rm /workspace/.cat/locks/some-task.lock"
     [ "$status" -eq 0 ]
     [[ "$output" == *"block"* ]] || [[ "$output" == *"BLOCKED"* ]]
 }
@@ -59,13 +59,13 @@ run_hook_with_command() {
 # ============================================================================
 
 @test "block-lock-manipulation: blocks rm of locks directory" {
-    run run_hook_with_command "rm -rf .claude/cat/locks"
+    run run_hook_with_command "rm -rf .cat/locks"
     [ "$status" -eq 0 ]
     [[ "$output" == *"block"* ]] || [[ "$output" == *"BLOCKED"* ]]
 }
 
 @test "block-lock-manipulation: blocks rm of locks/ with trailing slash" {
-    run run_hook_with_command "rm -rf .claude/cat/locks/"
+    run run_hook_with_command "rm -rf .cat/locks/"
     [ "$status" -eq 0 ]
     [[ "$output" == *"block"* ]] || [[ "$output" == *"BLOCKED"* ]]
 }
@@ -88,13 +88,13 @@ run_hook_with_command() {
 }
 
 @test "block-lock-manipulation: allows non-rm commands" {
-    run run_hook_with_command "ls -la .claude/cat/locks"
+    run run_hook_with_command "ls -la .cat/locks"
     [ "$status" -eq 0 ]
     [[ "$output" == "{}" ]] || [[ "$output" != *"block"* ]]
 }
 
 @test "block-lock-manipulation: allows cat of lock files" {
-    run run_hook_with_command "cat .claude/cat/locks/task.lock"
+    run run_hook_with_command "cat .cat/locks/task.lock"
     [ "$status" -eq 0 ]
     [[ "$output" == "{}" ]] || [[ "$output" != *"block"* ]]
 }
@@ -104,7 +104,7 @@ run_hook_with_command() {
 # ============================================================================
 
 @test "block-lock-manipulation: ignores non-Bash tools" {
-    local json='{"hook_event_name": "PreToolUse", "tool_name": "Read", "tool_input": {"file_path": ".claude/cat/locks/task.lock"}}'
+    local json='{"hook_event_name": "PreToolUse", "tool_name": "Read", "tool_input": {"file_path": ".cat/locks/task.lock"}}'
     run bash -c 'echo "$1" | python3 '"$HOOKS_DIR"'/get-bash-pretool-output.py' -- "$json"
     [ "$status" -eq 0 ]
     # Hook outputs {} for non-Bash tools
@@ -116,14 +116,14 @@ run_hook_with_command() {
 # ============================================================================
 
 @test "block-lock-manipulation: includes guidance in block message" {
-    run run_hook_with_command "rm .claude/cat/locks/task.lock"
+    run run_hook_with_command "rm .cat/locks/task.lock"
     [ "$status" -eq 0 ]
     # Should mention proper alternatives
     [[ "$output" == *"/cat:status"* ]] || [[ "$output" == *"/cat:cleanup"* ]] || [[ "$output" == *"task"* ]]
 }
 
 @test "block-lock-manipulation: warns about concurrent execution risk" {
-    run run_hook_with_command "rm -f .claude/cat/locks/my-task.lock"
+    run run_hook_with_command "rm -f .cat/locks/my-task.lock"
     [ "$status" -eq 0 ]
     # Should explain why this is blocked
     [[ "$output" == *"concurrent"* ]] || [[ "$output" == *"Concurrent"* ]] || [[ "$output" == *"BLOCKED"* ]]

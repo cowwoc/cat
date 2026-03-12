@@ -13,7 +13,7 @@ Collect information needed for the bug report:
 
 1. Get the CAT version:
    ```bash
-   cat "${CLAUDE_PROJECT_DIR}/.claude/cat/VERSION" 2>/dev/null || echo "unknown"
+   cat "${CLAUDE_PROJECT_DIR}/.cat/VERSION" 2>/dev/null || echo "unknown"
    ```
 
 2. Scan recent conversation messages for errors to report. Look for:

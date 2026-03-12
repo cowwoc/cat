@@ -1337,7 +1337,7 @@ public class IssueDiscoveryTest
   private void createIssueWithDependencies(Path projectDir, String major, String minor,
     String issueName, String status, String dependencies) throws IOException
   {
-    Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+    Path issueDir = projectDir.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
@@ -1377,7 +1377,7 @@ public class IssueDiscoveryTest
   private void createDecomposedParent(Path projectDir, String major, String minor,
     String issueName, String status, String subIssueName) throws IOException
   {
-    Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+    Path issueDir = projectDir.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
@@ -1409,7 +1409,7 @@ public class IssueDiscoveryTest
   private void createVersionStateWithDependencies(Path projectDir, String major, String minor,
     String dependencies) throws IOException
   {
-    Path versionDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+    Path versionDir = projectDir.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor);
     Files.createDirectories(versionDir);
 
@@ -1435,7 +1435,7 @@ public class IssueDiscoveryTest
   private void createVersionPlanWithExitGate(Path projectDir, String major, String minor,
     String postconditionIssueName) throws IOException
   {
-    Path versionDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+    Path versionDir = projectDir.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor);
     Files.createDirectories(versionDir);
 
@@ -1462,7 +1462,7 @@ public class IssueDiscoveryTest
   private void createMajorOnlyIssue(Path projectDir, String major, String issueName,
     String status) throws IOException
   {
-    Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+    Path issueDir = projectDir.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve(issueName);
     Files.createDirectories(issueDir);
 
@@ -1492,7 +1492,7 @@ public class IssueDiscoveryTest
   private void createPatchIssue(Path projectDir, String major, String minor, String patch,
     String issueName, String status) throws IOException
   {
-    Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+    Path issueDir = projectDir.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).
       resolve("v" + major + "." + minor + "." + patch).resolve(issueName);
     Files.createDirectories(issueDir);
@@ -1630,8 +1630,8 @@ public class IssueDiscoveryTest
       {
         String sessionId = UUID.randomUUID().toString();
 
-        // Set up the .claude/cat/issues directory structure
-        Path issuesDir = projectDir.resolve(".claude").resolve("cat").resolve("issues");
+        // Set up the .cat/issues directory structure
+        Path issuesDir = projectDir.resolve(".cat").resolve("issues");
         Path minorDir = issuesDir.resolve("v2").resolve("v2.1");
 
         // Create issue-b first (older commit date)
@@ -1646,7 +1646,7 @@ public class IssueDiscoveryTest
           - **Blocks:** []
           """;
         Files.writeString(issueBDir.resolve("STATE.md"), stateContent);
-        TestUtils.runGit(projectDir, "add", ".claude/cat/issues/v2/v2.1/issue-b/STATE.md");
+        TestUtils.runGit(projectDir, "add", ".cat/issues/v2/v2.1/issue-b/STATE.md");
         TestUtils.runGit(projectDir, "commit", "--date=2026-01-01T00:00:01Z",
           "--author=Test User <test@example.com>", "-m", "Add issue-b");
 
@@ -1654,7 +1654,7 @@ public class IssueDiscoveryTest
         Path issueADir = minorDir.resolve("issue-a");
         Files.createDirectories(issueADir);
         Files.writeString(issueADir.resolve("STATE.md"), stateContent);
-        TestUtils.runGit(projectDir, "add", ".claude/cat/issues/v2/v2.1/issue-a/STATE.md");
+        TestUtils.runGit(projectDir, "add", ".cat/issues/v2/v2.1/issue-a/STATE.md");
         TestUtils.runGit(projectDir, "commit", "--date=2026-01-01T00:00:02Z",
           "--author=Test User <test@example.com>", "-m", "Add issue-a");
 
@@ -1725,7 +1725,7 @@ public class IssueDiscoveryTest
       {
         String sessionId = UUID.randomUUID().toString();
 
-        Path issuesDir = projectDir.resolve(".claude").resolve("cat").resolve("issues");
+        Path issuesDir = projectDir.resolve(".cat").resolve("issues");
         Path minorDir = issuesDir.resolve("v2").resolve("v2.1");
 
         String stateContent = """
@@ -1819,7 +1819,7 @@ public class IssueDiscoveryTest
         String sessionId = UUID.randomUUID().toString();
 
         // Create an issue with only PLAN.md - no STATE.md
-        Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+        Path issueDir = projectDir.resolve(".cat").resolve("issues").
           resolve("v2").resolve("v2.1").resolve("plan-only-issue");
         Files.createDirectories(issueDir);
         Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nTest goal\n");
@@ -1860,7 +1860,7 @@ public class IssueDiscoveryTest
         createIssue(projectDir, "2", "1", "closed-issue", "closed");
 
         // Create an issue with only PLAN.md - no STATE.md
-        Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+        Path issueDir = projectDir.resolve(".cat").resolve("issues").
           resolve("v2").resolve("v2.1").resolve("plan-only-issue");
         Files.createDirectories(issueDir);
         Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nTest goal\n");
@@ -1923,7 +1923,7 @@ public class IssueDiscoveryTest
         String sessionId = UUID.randomUUID().toString();
 
         // Create an issue with only PLAN.md - no STATE.md
-        Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+        Path issueDir = projectDir.resolve(".cat").resolve("issues").
           resolve("v2").resolve("v2.1").resolve("plan-only-issue");
         Files.createDirectories(issueDir);
         Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nTest goal\n");
@@ -2056,7 +2056,7 @@ public class IssueDiscoveryTest
         String sessionId = UUID.randomUUID().toString();
 
         // Create issue directory with STATE.md only (no PLAN.md)
-        Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+        Path issueDir = projectDir.resolve(".cat").resolve("issues").
           resolve("v2").resolve("v2.1").resolve("corrupt-feature");
         Files.createDirectories(issueDir);
 
@@ -2149,7 +2149,7 @@ public class IssueDiscoveryTest
         String sessionId = UUID.randomUUID().toString();
 
         // Create issue directory with neither STATE.md nor PLAN.md
-        Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+        Path issueDir = projectDir.resolve(".cat").resolve("issues").
           resolve("v2").resolve("v2.1").resolve("empty-feature");
         Files.createDirectories(issueDir);
         // Deliberately no STATE.md and no PLAN.md

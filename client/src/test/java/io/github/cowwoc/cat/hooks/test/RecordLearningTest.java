@@ -55,7 +55,7 @@ public final class RecordLearningTest
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
       initializeIndex(scope, retroDir, 0, null);
 
@@ -85,7 +85,7 @@ public final class RecordLearningTest
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
       initializeIndex(scope, retroDir, 1, null);
       initializeMistakesFile(scope, retroDir, "2026-03", "M001");
@@ -116,7 +116,7 @@ public final class RecordLearningTest
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
       initializeIndex(scope, retroDir, 2, null);
 
@@ -154,7 +154,7 @@ public final class RecordLearningTest
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
       initializeIndex(scope, retroDir, 0, null);
 
@@ -196,7 +196,7 @@ public final class RecordLearningTest
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
       initializeIndex(scope, retroDir, 1, null);
 
@@ -239,7 +239,7 @@ public final class RecordLearningTest
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
       initializeIndex(scope, retroDir, 3, null);
       initializeMistakesFile(scope, retroDir, "2026-03", "M001", "M002", "M003");
@@ -273,7 +273,7 @@ public final class RecordLearningTest
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
       // Counter says 1 but there are actually 2 existing mistakes
       initializeIndex(scope, retroDir, 1, null);
@@ -312,7 +312,7 @@ public final class RecordLearningTest
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
       // threshold is 10 by default, we're at 4
       initializeIndex(scope, retroDir, 4, null);
@@ -344,7 +344,7 @@ public final class RecordLearningTest
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
       // threshold is 10, after adding M010 we hit it
       initializeIndex(scope, retroDir, 9, null);
@@ -377,7 +377,7 @@ public final class RecordLearningTest
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
       initializeIndex(scope, retroDir, 0, null);
 
@@ -414,7 +414,7 @@ public final class RecordLearningTest
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
       initializeIndex(scope, retroDir, 0, null);
 
@@ -515,7 +515,7 @@ public final class RecordLearningTest
     try (JvmScope scope = new TestJvmScope(mainRepo, pluginRoot, sessionId, envFile,
       io.github.cowwoc.cat.hooks.skills.TerminalType.WINDOWS_TERMINAL))
     {
-      Path retroDir = mainRepo.resolve(".claude/cat/retrospectives");
+      Path retroDir = mainRepo.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
       initializeIndex(scope, retroDir, 0, null);
 
@@ -560,7 +560,7 @@ public final class RecordLearningTest
       String result = cmd.executeInDir(input, tempDir);
       JsonNode json = scope.getJsonMapper().readTree(result);
 
-      Path indexFile = tempDir.resolve(".claude/cat/retrospectives/index.json");
+      Path indexFile = tempDir.resolve(".cat/retrospectives/index.json");
       requireThat(Files.exists(indexFile), "indexFile.exists()").isTrue();
       requireThat(json.get("learning_id").asString(), "learning_id").isEqualTo("M001");
     }
@@ -587,7 +587,7 @@ public final class RecordLearningTest
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
       initializeIndex(scope, retroDir, 1, null);
       initializeMistakesFile(scope, retroDir, "2026-03", "M001");
@@ -637,7 +637,7 @@ public final class RecordLearningTest
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
       initializeIndex(scope, retroDir, 0, null);
 
@@ -673,7 +673,7 @@ public final class RecordLearningTest
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
       initializeIndex(scope, retroDir, 0, null);
 
@@ -725,7 +725,7 @@ public final class RecordLearningTest
       Path pluginRoot = Files.createTempDirectory("plugin-root-");
       try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
       {
-        Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+        Path retroDir = tempDir.resolve(".cat/retrospectives");
         Files.createDirectories(retroDir);
         initializeIndex(scope, retroDir, 0, null);
 
@@ -765,7 +765,7 @@ public final class RecordLearningTest
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       // Set up pre-existing entries: M001 with no cause_signature, M002 with a signature
@@ -824,7 +824,7 @@ public final class RecordLearningTest
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
       initializeIndex(scope, retroDir, 0, null);
 
@@ -874,7 +874,7 @@ public final class RecordLearningTest
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
       initializeIndex(scope, retroDir, 0, null);
 
@@ -946,7 +946,7 @@ public final class RecordLearningTest
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
     try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       // Pre-populate M001 in a prior month file with a specific cause_signature

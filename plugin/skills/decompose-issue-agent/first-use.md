@@ -28,7 +28,7 @@ when a issue exceeds safe context bounds.
 **MANDATORY: Verify issue exists. FAIL immediately if not found.**
 
 ```bash
-ISSUE_DIR=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${ISSUE_NAME}"
+ISSUE_DIR=".cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${ISSUE_NAME}"
 
 # FAIL immediately if issue directory missing
 if [ ! -d "$ISSUE_DIR" ]; then
@@ -83,9 +83,9 @@ Analyze PLAN.md for natural boundaries:
 # New issues: parser-lexer, parser-ast, parser-semantic (within same minor)
 
 # Create directories for new issues
-mkdir -p ".claude/cat/issues/v1/v1.2/parser-lexer"
-mkdir -p ".claude/cat/issues/v1/v1.2/parser-ast"
-mkdir -p ".claude/cat/issues/v1/v1.2/parser-semantic"
+mkdir -p ".cat/issues/v1/v1.2/parser-lexer"
+mkdir -p ".cat/issues/v1/v1.2/parser-ast"
+mkdir -p ".cat/issues/v1/v1.2/parser-semantic"
 ```
 
 ### 4. Create PLAN.md for Each New Issue

@@ -79,7 +79,7 @@ public class LicenseValidatorTest
     {
       try
       {
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.local.json"), """
           {
@@ -719,7 +719,7 @@ public class LicenseValidatorTest
    */
   private void writeConfig(Path projectDir, String token) throws IOException
   {
-    Path catDir = projectDir.resolve(".claude").resolve("cat");
+    Path catDir = projectDir.resolve(".cat");
     Files.createDirectories(catDir);
     Files.writeString(catDir.resolve("cat-config.local.json"),
       "{\"license\":\"" + token + "\"}");

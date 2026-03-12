@@ -145,7 +145,7 @@ public final class VerifyStateInCommitTest
       try
       {
         // Create and stage STATE.md with "open" status (not "closed")
-        Path issueDir = worktreeDir.resolve(".claude").resolve("cat").resolve("issues").resolve("test-issue");
+        Path issueDir = worktreeDir.resolve(".cat").resolve("issues").resolve("test-issue");
         Files.createDirectories(issueDir);
         Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** open\n");
         TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());
@@ -190,7 +190,7 @@ public final class VerifyStateInCommitTest
       try
       {
         // Create and stage STATE.md with "closed" status
-        Path issueDir = worktreeDir.resolve(".claude").resolve("cat").resolve("issues").resolve("test-issue");
+        Path issueDir = worktreeDir.resolve(".cat").resolve("issues").resolve("test-issue");
         Files.createDirectories(issueDir);
         Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** closed\n");
         TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());
@@ -332,7 +332,7 @@ public final class VerifyStateInCommitTest
   }
 
   /**
-   * Verifies that commits in the main workspace (which has a .claude/cat directory) are not blocked
+   * Verifies that commits in the main workspace (which has a .cat directory) are not blocked
    * by the STATE.md check.
    */
   @Test
@@ -341,10 +341,10 @@ public final class VerifyStateInCommitTest
     Path tempDir = TestUtils.createTempGitRepo("test-branch");
     try
     {
-      // Create .claude/cat directory (present in main workspace but not a CAT worktree)
-      // The main workspace has .claude/cat for retrospectives/issues but its git dir parent
+      // Create .cat directory (present in main workspace but not a CAT worktree)
+      // The main workspace has .cat for retrospectives/issues but its git dir parent
       // is not "worktrees", so it is not treated as a CAT worktree
-      Path claudeCat = tempDir.resolve(".claude").resolve("cat");
+      Path claudeCat = tempDir.resolve(".cat");
       Files.createDirectories(claudeCat);
 
       Files.writeString(tempDir.resolve("Foo.java"), "class Foo {}");
@@ -407,7 +407,7 @@ public final class VerifyStateInCommitTest
       try
       {
         // Stage an empty STATE.md — validation should be skipped (empty content guard)
-        Path issueDir = worktreeDir.resolve(".claude").resolve("cat").resolve("issues").resolve("test-issue");
+        Path issueDir = worktreeDir.resolve(".cat").resolve("issues").resolve("test-issue");
         Files.createDirectories(issueDir);
         Files.writeString(issueDir.resolve("STATE.md"), "");
         TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());
@@ -454,7 +454,7 @@ public final class VerifyStateInCommitTest
       try
       {
         // Stage STATE.md with malformed format — STATUS_PATTERN won't match, so validation is skipped
-        Path issueDir = worktreeDir.resolve(".claude").resolve("cat").resolve("issues").resolve("test-issue");
+        Path issueDir = worktreeDir.resolve(".cat").resolve("issues").resolve("test-issue");
         Files.createDirectories(issueDir);
         Files.writeString(issueDir.resolve("STATE.md"), "Status: closed\n");
         TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());
@@ -501,7 +501,7 @@ public final class VerifyStateInCommitTest
       try
       {
         // Stage STATE.md with an empty status value — empty string is not IssueStatus.CLOSED
-        Path issueDir = worktreeDir.resolve(".claude").resolve("cat").resolve("issues").resolve("test-issue");
+        Path issueDir = worktreeDir.resolve(".cat").resolve("issues").resolve("test-issue");
         Files.createDirectories(issueDir);
         Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** \n");
         TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());
@@ -549,7 +549,7 @@ public final class VerifyStateInCommitTest
       try
       {
         // Stage STATE.md with status key but truly no value — pattern requires (.+) so no match occurs
-        Path issueDir = worktreeDir.resolve(".claude").resolve("cat").resolve("issues").resolve("test-issue");
+        Path issueDir = worktreeDir.resolve(".cat").resolve("issues").resolve("test-issue");
         Files.createDirectories(issueDir);
         Files.writeString(issueDir.resolve("STATE.md"), "- **Status:**\n");
         TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());
@@ -595,7 +595,7 @@ public final class VerifyStateInCommitTest
       try
       {
         // Stage STATE.md with valid format but an invalid/unknown status value
-        Path issueDir = worktreeDir.resolve(".claude").resolve("cat").resolve("issues").resolve("test-issue");
+        Path issueDir = worktreeDir.resolve(".cat").resolve("issues").resolve("test-issue");
         Files.createDirectories(issueDir);
         Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** unknown\n");
         TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());
@@ -640,7 +640,7 @@ public final class VerifyStateInCommitTest
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-in-progress-status");
       try
       {
-        Path issueDir = worktreeDir.resolve(".claude").resolve("cat").resolve("issues").resolve("test-issue");
+        Path issueDir = worktreeDir.resolve(".cat").resolve("issues").resolve("test-issue");
         Files.createDirectories(issueDir);
         Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** in-progress\n");
         TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());
@@ -683,7 +683,7 @@ public final class VerifyStateInCommitTest
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-blocked-status");
       try
       {
-        Path issueDir = worktreeDir.resolve(".claude").resolve("cat").resolve("issues").resolve("test-issue");
+        Path issueDir = worktreeDir.resolve(".cat").resolve("issues").resolve("test-issue");
         Files.createDirectories(issueDir);
         Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** blocked\n");
         TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());

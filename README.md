@@ -250,7 +250,7 @@ When trust >= medium, CAT auto-continues to the next task within scope.
 
 ## Configuration
 
-Your CAT settings live in `.claude/cat/cat-config.json`:
+Your CAT settings live in `.cat/cat-config.json`:
 
 ```json
 {
@@ -347,7 +347,7 @@ After `/cat:init`, your project gains a planning structure:
 
 ```
 your-project/
-└── .claude/cat/
+└── .cat/
     ├── PROJECT.md          # Project overview
     ├── ROADMAP.md          # The big picture
     ├── cat-config.json     # Your preferences

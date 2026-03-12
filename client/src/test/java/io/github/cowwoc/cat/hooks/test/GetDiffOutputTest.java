@@ -53,7 +53,7 @@ public class GetDiffOutputTest
       try
       {
         // Create a minimal cat-config.json so Config.load doesn't fail
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
@@ -89,7 +89,7 @@ public class GetDiffOutputTest
         runGit(tempDir, "checkout", "-b", "main");
 
         // Create a cat-config
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
@@ -225,7 +225,7 @@ public class GetDiffOutputTest
         runGit(tempDir, "checkout", "-b", "main");
 
         // Create cat-config
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
@@ -275,7 +275,7 @@ public class GetDiffOutputTest
         runGit(tempDir, "checkout", "-b", "main");
 
         // Create cat-config
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
@@ -327,7 +327,7 @@ public class GetDiffOutputTest
         runGit(tempDir, "checkout", "-b", "main");
 
         // Create cat-config with small width to force wrapping
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 50}");
 
@@ -380,7 +380,7 @@ public class GetDiffOutputTest
         runGit(tempDir, "checkout", "-b", "main");
 
         // Create cat-config
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
@@ -429,7 +429,7 @@ public class GetDiffOutputTest
         runGit(tempDir, "checkout", "-b", "main");
 
         // Create cat-config
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
@@ -479,7 +479,7 @@ public class GetDiffOutputTest
         runGit(tempDir, "checkout", "-b", "main");
 
         // Create cat-config
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
@@ -528,7 +528,7 @@ public class GetDiffOutputTest
         runGit(tempDir, "checkout", "-b", "main");
 
         // Create cat-config
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
@@ -588,7 +588,7 @@ public class GetDiffOutputTest
         runGit(tempDir, "checkout", "-b", "main");
 
         // Create cat-config
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
@@ -637,7 +637,7 @@ public class GetDiffOutputTest
         runGit(tempDir, "checkout", "-b", "main");
 
         // Create cat-config
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
@@ -682,7 +682,7 @@ public class GetDiffOutputTest
         runGit(tempDir, "checkout", "-b", "main");
 
         // Create cat-config
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
@@ -731,7 +731,7 @@ public class GetDiffOutputTest
         runGit(tempDir, "checkout", "-b", "main");
 
         // Create cat-config
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
@@ -781,7 +781,7 @@ public class GetDiffOutputTest
         runGit(mainRepo, "checkout", "-b", "v2.1");
 
         // Create cat-config
-        Path catDir = mainRepo.resolve(".claude").resolve("cat");
+        Path catDir = mainRepo.resolve(".cat");
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
@@ -797,7 +797,7 @@ public class GetDiffOutputTest
         runGit(mainRepo, "worktree", "add", worktree.toString(), "-b", "2.1-my-feature");
 
         // Make a change in the worktree
-        Path catDirWorktree = worktree.resolve(".claude").resolve("cat");
+        Path catDirWorktree = worktree.resolve(".cat");
         Files.createDirectories(catDirWorktree);
         Files.writeString(catDirWorktree.resolve("cat-config.json"), "{\"displayWidth\": 80}");
         Files.writeString(worktree.resolve("file.txt"), "modified\n");
@@ -871,7 +871,7 @@ public class GetDiffOutputTest
     runGit(tempDir, "checkout", "-b", targetBranch);
 
     // Create cat-config
-    Path catDir = tempDir.resolve(".claude").resolve("cat");
+    Path catDir = tempDir.resolve(".cat");
     Files.createDirectories(catDir);
     Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
@@ -946,7 +946,7 @@ public class GetDiffOutputTest
         runGit(tempDir, "checkout", "-b", "main");
 
         // Create cat-config
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
@@ -1003,12 +1003,12 @@ public class GetDiffOutputTest
       runGit(tempDir, "commit", "-m", "feature changes");
 
       // Create cat-config in the repo
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
       // Create issue directory with STATE.md containing target branch
-      Path issuePath = tempDir.resolve(".claude/cat/issues/v2/v2.0/some-feature");
+      Path issuePath = tempDir.resolve(".cat/issues/v2/v2.0/some-feature");
       Files.createDirectories(issuePath);
       Files.writeString(issuePath.resolve("STATE.md"),
         "# State\n\n- **Status:** in-progress\n- **Target Branch:** v2.0\n");
@@ -1046,7 +1046,7 @@ public class GetDiffOutputTest
         runGit(tempDir, "checkout", "-b", "main");
 
         // Create cat-config
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
@@ -1096,7 +1096,7 @@ public class GetDiffOutputTest
         runGit(tempDir, "checkout", "-b", "main");
 
         // Create cat-config
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
@@ -1146,7 +1146,7 @@ public class GetDiffOutputTest
         runGit(tempDir, "checkout", "-b", "main");
 
         // Create cat-config
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
@@ -1226,7 +1226,7 @@ public class GetDiffOutputTest
         runGit(tempDir, "checkout", "-b", "main");
 
         // Create cat-config
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
@@ -1355,7 +1355,7 @@ public class GetDiffOutputTest
         runGit(tempDir, "init");
         runGit(tempDir, "checkout", "-b", "main");
 
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
@@ -1469,7 +1469,7 @@ public class GetDiffOutputTest
         runGit(tempDir, "init");
         runGit(tempDir, "checkout", "-b", "main");
 
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
@@ -1570,7 +1570,7 @@ public class GetDiffOutputTest
         runGit(tempDir, "init");
         runGit(tempDir, "checkout", "-b", "main");
 
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 220}");
 
@@ -1634,7 +1634,7 @@ public class GetDiffOutputTest
         runGit(tempDir, "checkout", "-b", "main");
 
         // Create cat-config
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
@@ -1697,7 +1697,7 @@ public class GetDiffOutputTest
         runGit(mainRepo, "checkout", "-b", "main");
 
         // Create cat-config in main repo
-        Path catDir = mainRepo.resolve(".claude").resolve("cat");
+        Path catDir = mainRepo.resolve(".cat");
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
@@ -1719,7 +1719,7 @@ public class GetDiffOutputTest
         runGit(mainRepo, "worktree", "add", "-b", "2.1-test-feature", worktree.toString());
 
         // Copy cat-config into worktree
-        Path worktreeCatDir = worktree.resolve(".claude").resolve("cat");
+        Path worktreeCatDir = worktree.resolve(".cat");
         Files.createDirectories(worktreeCatDir);
         Files.writeString(worktreeCatDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
@@ -1762,7 +1762,7 @@ public class GetDiffOutputTest
       try
       {
         // Create a minimal cat-config.json so Config.load doesn't fail
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
 
@@ -1810,10 +1810,10 @@ public class GetDiffOutputTest
 
   /**
    * Verifies that getOutput throws IllegalArgumentException when the issue path does not contain
-   * the {@code .claude/cat/issues/} segment.
+   * the {@code .cat/issues/} segment.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*\\.claude/cat/issues/.*")
+    expectedExceptionsMessageRegExp = ".*\\.cat/issues/.*")
   public void testInvalidIssuePathThrowsException() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -1834,7 +1834,7 @@ public class GetDiffOutputTest
     Path tempDir = Files.createTempDirectory("missing-state-test");
     try
     {
-      Path issuePath = tempDir.resolve(".claude/cat/issues/v2/v2.0/some-issue");
+      Path issuePath = tempDir.resolve(".cat/issues/v2/v2.0/some-issue");
       Files.createDirectories(issuePath);
 
       try (JvmScope scope = new TestJvmScope())
@@ -1860,7 +1860,7 @@ public class GetDiffOutputTest
     Path tempDir = Files.createTempDirectory("no-target-branch-test");
     try
     {
-      Path issuePath = tempDir.resolve(".claude/cat/issues/v2/v2.0/some-issue");
+      Path issuePath = tempDir.resolve(".cat/issues/v2/v2.0/some-issue");
       Files.createDirectories(issuePath);
       Files.writeString(issuePath.resolve("STATE.md"),
         "# State\n\n- **Status:** in-progress\n");
@@ -1889,7 +1889,7 @@ public class GetDiffOutputTest
    */
   private Path createIssueDirWithTargetBranch(Path projectRoot, String targetBranch) throws IOException
   {
-    Path issuePath = projectRoot.resolve(".claude/cat/issues/v1/v1.0/test-issue");
+    Path issuePath = projectRoot.resolve(".cat/issues/v1/v1.0/test-issue");
     Files.createDirectories(issuePath);
     Files.writeString(issuePath.resolve("STATE.md"),
       "# State\n\n- **Status:** in-progress\n- **Target Branch:** " + targetBranch + "\n");

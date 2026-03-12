@@ -13,7 +13,7 @@ See LICENSE.md in the project root for license terms.
 
 ```bash
 # Check if Git Workflow section exists in PROJECT.md
-MERGE_POLICY=$(grep -A10 "### Merge Policy" .claude/cat/PROJECT.md 2>/dev/null)
+MERGE_POLICY=$(grep -A10 "### Merge Policy" .cat/PROJECT.md 2>/dev/null)
 
 if echo "$MERGE_POLICY" | grep -qi "MUST.*merge commit"; then
   echo "⚠️ WARNING: PROJECT.md prefers merge commits over rebase"

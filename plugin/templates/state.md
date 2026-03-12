@@ -30,7 +30,7 @@
 
 Changes are tracked via git file history. To find implementation commits:
 
-git log --oneline -- .claude/cat/issues/v{X}/v{X}.{Y}/{issue-name}/STATE.md
+git log --oneline -- .cat/issues/v{X}/v{X}.{Y}/{issue-name}/STATE.md
 ```
 
 ### Duplicate Issue
@@ -81,7 +81,7 @@ List tests that already cover the functionality (if applicable).
 
 No code changes needed. Find verification commit via:
 
-git log --oneline -- .claude/cat/issues/v{X}/v{X}.{Y}/{issue-name}/STATE.md
+git log --oneline -- .cat/issues/v{X}/v{X}.{Y}/{issue-name}/STATE.md
 ```
 
 ## Optional Sections
@@ -142,13 +142,13 @@ Implementation commits are tracked via STATE.md file history:
 
 ```bash
 # Find all commits for this issue
-git log --oneline -- .claude/cat/issues/v{X}/v{X}.{Y}/{issue-name}/
+git log --oneline -- .cat/issues/v{X}/v{X}.{Y}/{issue-name}/
 
 # Find the completion commit
-git log --oneline -1 -- .claude/cat/issues/v{X}/v{X}.{Y}/{issue-name}/STATE.md
+git log --oneline -1 -- .cat/issues/v{X}/v{X}.{Y}/{issue-name}/STATE.md
 
 # View full implementation history
-git log -p -- .claude/cat/issues/v{X}/v{X}.{Y}/{issue-name}/STATE.md
+git log -p -- .cat/issues/v{X}/v{X}.{Y}/{issue-name}/STATE.md
 ```
 
 For duplicate issues, find the original issue's commits using its path.

@@ -17,7 +17,7 @@ Review phase for `/cat:work`. Runs stakeholder review (Step 5) and deferred conc
 |----------|------|---------|
 | 1 | catAgentId | agent ID passed through from parent |
 | 2 | issue_id | `2.1-issue-name` |
-| 3 | issue_path | `/workspace/.claude/cat/issues/v2/v2.1/issue-name` |
+| 3 | issue_path | `/workspace/.cat/issues/v2/v2.1/issue-name` |
 | 4 | worktree_path | `${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/2.1-issue-name` |
 | 5 | issue_branch | `2.1-issue-name` |
 | 6 | target_branch | `v2.1` |
@@ -58,7 +58,7 @@ ERROR: Invalid or missing TRUST argument: "${TRUST}". Expected one of: low, medi
 
 Also cross-check TRUST against cat-config.json:
 ```bash
-CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json"
+CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.cat/cat-config.json"
 CONFIG_TRUST=$(grep -o '"trust"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" | head -1 | \
     sed 's/.*"trust"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 # If the trust field is absent from cat-config.json, treat it as "low" (most restrictive).
@@ -99,7 +99,7 @@ minSeverity=CRITICAL would suppress all non-CRITICAL concerns, defeating the pur
 Read it now, before Step 5:
 
 ```bash
-CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json"
+CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.cat/cat-config.json"
 if [[ ! -f "$CONFIG_FILE" ]]; then
     echo "ERROR: cat-config.json not found at ${CONFIG_FILE}. Cannot proceed." >&2
     exit 1
@@ -152,7 +152,7 @@ ERROR: Invalid or missing VERIFY argument: "${VERIFY}". Expected one of: all, ch
 
 Also cross-check VERIFY against cat-config.json:
 ```bash
-CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json"
+CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.cat/cat-config.json"
 CONFIG_VERIFY=$(grep -o '"verify"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" | head -1 | \
     sed 's/.*"verify"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 # If the verify field is absent from cat-config.json, treat it as "changed" (default).
@@ -299,12 +299,12 @@ prohibited.
 **Read patience from config:**
 
 ```bash
-# Read patience from .claude/cat/cat-config.json
+# Read patience from .cat/cat-config.json
 # Default is "medium" if the config file exists but field is absent
 # FAIL if the config file cannot be read, or if the value is present but invalid
 PATIENCE_LEVEL="medium"
 
-CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json"
+CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.cat/cat-config.json"
 if [[ ! -f "$CONFIG_FILE" ]]; then
     echo "ERROR: cat-config.json not found at ${CONFIG_FILE}. Cannot proceed." >&2
     exit 1
@@ -577,7 +577,7 @@ BEFORE other severities. If any CRITICAL concern is in the FIX list, the subagen
          (e.g., `bugfix:`, `feature:`). These commits will be squashed into the main
          implementation commit in Step 7. Do NOT use `test:` as an independent commit
          type for concern fixes.
-       - **ABSOLUTE PROHIBITION:** You MUST NOT read, write, or modify `.claude/cat/cat-config.json`
+       - **ABSOLUTE PROHIBITION:** You MUST NOT read, write, or modify `.cat/cat-config.json`
          for any reason. This file is locked for the duration of the review phase. Writing
          `verify=none` or any other value to cat-config.json is a critical protocol violation.
          Prohibited mechanisms include but are not limited to: `sed -i`, `echo >`, `tee`, `cat >`,

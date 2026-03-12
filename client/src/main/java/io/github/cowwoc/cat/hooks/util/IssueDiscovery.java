@@ -36,13 +36,13 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 /**
  * Issue discovery for CAT workflow.
  * <p>
- * Java equivalent of {@code get-available-issues.sh}. Scans the {@code .claude/cat/issues} directory for
+ * Java equivalent of {@code get-available-issues.sh}. Scans the {@code .cat/issues} directory for
  * open or in-progress issues, checks dependencies, evaluates exit gates, and integrates with
  * {@link IssueLock} for lock acquisition.
  * <p>
  * The search scope controls which version directories are searched:
  * <ul>
- *   <li>{@code all} - all major version directories under {@code .claude/cat/issues}</li>
+ *   <li>{@code all} - all major version directories under {@code .cat/issues}</li>
  *   <li>{@code major} - a specific major version (e.g., {@code v2})</li>
  *   <li>{@code minor} - a specific minor version (e.g., {@code v2.1})</li>
  *   <li>{@code issue} - a specific issue by fully-qualified ID (e.g., {@code 2.1-fix-bug})</li>
@@ -144,11 +144,11 @@ public final class IssueDiscovery
   {
     this.scope = scope;
     this.projectDir = scope.getClaudeProjectDir();
-    Path catDir = projectDir.resolve(".claude").resolve("cat");
+    Path catDir = scope.getCatDir();
     if (!Files.isDirectory(catDir))
     {
       throw new IllegalArgumentException("Not a CAT project: " + projectDir +
-        " (no .claude/cat directory)");
+        " (no .cat directory)");
     }
     this.issuesDir = catDir.resolve("issues");
     this.issueLock = new IssueLock(scope);

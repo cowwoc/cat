@@ -295,7 +295,7 @@ public class GetInitOutputTest
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getFirstIssueCreated("my-task");
 
-      requireThat(result, "result").contains(".claude/cat/issues/v0/v0.0/my-task/");
+      requireThat(result, "result").contains(".cat/issues/v0/v0.0/my-task/");
     }
   }
 

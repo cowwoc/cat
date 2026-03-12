@@ -363,7 +363,7 @@ the best, then stop and report "Benchmark iteration cap reached (5 rounds) — p
 After the benchmark phase converges, harden the instructions using alternating red-team and blue-team
 subagents. Run until convergence (no CRITICAL/HIGH loopholes remain).
 
-**Effort gate:** Read `effort` from `${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json`. If `effort = low`, skip
+**Effort gate:** Read `effort` from `${CLAUDE_PROJECT_DIR}/.cat/cat-config.json`. If `effort = low`, skip
 adversarial hardening entirely and proceed to the next step.
 
 **Protocol:** Follow [plugin/concepts/adversarial-protocol.md](${CLAUDE_PLUGIN_ROOT}/concepts/adversarial-protocol.md)

@@ -24,7 +24,7 @@ import java.time.temporal.ChronoUnit;
 /**
  * Checks whether a retrospective is due based on time elapsed or mistake count.
  * <p>
- * Reads configuration from {@code .claude/cat/retrospectives/index.json} and checks
+ * Reads configuration from {@code .cat/retrospectives/index.json} and checks
  * two triggers:
  * <ul>
  *   <li>Time-based: days since last retrospective exceeds threshold (default 14)</li>
@@ -62,13 +62,11 @@ public final class CheckRetrospectiveDue implements SessionStartHandler
   public Result handle(HookInput input)
   {
     requireThat(input, "input").isNotNull();
-    Path projectPath = scope.getClaudeProjectDir();
-
     // Early exit if not in a CAT project
-    if (!Files.isDirectory(projectPath.resolve(".planning")))
+    if (!Files.isDirectory(scope.getCatDir()))
       return Result.empty();
 
-    Path retroDir = projectPath.resolve(".claude/cat/retrospectives");
+    Path retroDir = scope.getCatDir().resolve("retrospectives");
     if (!Files.isDirectory(retroDir))
       return Result.empty();
 

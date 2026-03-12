@@ -72,7 +72,7 @@ public final class GetConfigOutput implements SkillOutput
   {
     requireThat(projectRoot, "projectRoot").isNotNull();
 
-    Path configFile = projectRoot.resolve(".claude").resolve("cat").resolve("cat-config.json");
+    Path configFile = projectRoot.resolve(Config.CAT_DIR_NAME).resolve("cat-config.json");
     if (!Files.exists(configFile))
       return null;
 

@@ -195,7 +195,7 @@ SKIPPED=""
 OVERRIDDEN=""
 
 # Read issue PLAN.md
-ISSUE_PLAN=$(cat .claude/cat/issues/*/PLAN.md 2>/dev/null || echo "")
+ISSUE_PLAN=$(cat .cat/issues/*/PLAN.md 2>/dev/null || echo "")
 
 # Check for forced stakeholders
 FORCED=$(echo "$ISSUE_PLAN" | sed -n '/## Force Stakeholders/,/^##/p' | grep '^ *-' | sed 's/^ *- *//')
@@ -260,7 +260,7 @@ if echo "$ISSUE_TEXT" | grep -qE 'ci|cd|pipeline|build|deploy|release|migrat
 fi
 
 # Check version PLAN.md for focus
-VERSION_PLAN=$(cat .claude/cat/versions/*/PLAN.md 2>/dev/null || echo "")
+VERSION_PLAN=$(cat .cat/versions/*/PLAN.md 2>/dev/null || echo "")
 if echo "$VERSION_PLAN" | grep -qi 'commercialization'; then
     SELECTED="$SELECTED legal business"
 fi
@@ -438,7 +438,7 @@ if [[ -f "${CLAUDE_PLUGIN_ROOT}/lang/${PRIMARY_LANG}.md" ]]; then
     LANG_SUPPLEMENT=$(cat "${CLAUDE_PLUGIN_ROOT}/lang/${PRIMARY_LANG}.md")
 fi
 
-CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json"
+CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.cat/cat-config.json"
 EFFORT="medium"  # default
 if [[ -f "$CONFIG_FILE" ]]; then
     EFFORT=$(grep '"effort"' "$CONFIG_FILE" | sed 's/.*"effort"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
@@ -459,8 +459,8 @@ esac
 
 # --- Batch 2: Discover convention files and build per-stakeholder convention map ---
 CONVENTION_MAP=""  # Will store "stakeholder:convention_path" entries
-if [[ -d ".claude/cat/rules" ]]; then
-    for convention_file in .claude/cat/rules/*.md; do
+if [[ -d ".cat/rules" ]]; then
+    for convention_file in .cat/rules/*.md; do
         if [[ -f "$convention_file" ]]; then
             # Parse YAML frontmatter for subAgents field
             # Extract lines between --- delimiters at start of file
@@ -542,7 +542,7 @@ Before spawning, pre-fetch the issue context files using absolute worktree paths
 ```bash
 # Pre-fetch context files using absolute paths so subagents receive content directly
 # and do not need to read these planning files themselves
-ISSUE_DIR=$(ls -d "${WORKTREE_PATH}/.claude/cat/issues/"*/ 2>/dev/null | head -1)
+ISSUE_DIR=$(ls -d "${WORKTREE_PATH}/.cat/issues/"*/ 2>/dev/null | head -1)
 ISSUE_PLAN_CONTENT=""
 VERSION_PLAN_CONTENT=""
 if [[ -n "$ISSUE_DIR" && -f "${ISSUE_DIR}PLAN.md" ]]; then
@@ -552,7 +552,7 @@ if [[ -n "$ISSUE_DIR" && -f "${ISSUE_DIR}PLAN.md" ]]; then
     VERSION_PATTERN=$(echo "$ISSUE_NAME" | grep -oE '^v[0-9]+\.[0-9]+')
     MAJOR_VERSION=$(echo "$VERSION_PATTERN" | grep -oE '^v[0-9]+')
     if [[ -n "$MAJOR_VERSION" && -n "$VERSION_PATTERN" ]]; then
-        VERSION_PLAN="${WORKTREE_PATH}/.claude/cat/issues/${MAJOR_VERSION}/${VERSION_PATTERN}/PLAN.md"
+        VERSION_PLAN="${WORKTREE_PATH}/.cat/issues/${MAJOR_VERSION}/${VERSION_PATTERN}/PLAN.md"
         if [[ -f "$VERSION_PLAN" ]]; then
             VERSION_PLAN_CONTENT=$(cat "$VERSION_PLAN")
         fi
@@ -717,7 +717,7 @@ arrival order:
       "location": "file:line",
       "explanation": "Brief description of the concern",
       "recommendation": "Brief remediation guidance",
-      "detail_file": "${WORKTREE_PATH}/.claude/cat/review/<stakeholder>-concerns.json"
+      "detail_file": "${WORKTREE_PATH}/.cat/review/<stakeholder>-concerns.json"
     }
   ]
 }
@@ -734,7 +734,7 @@ Trust subagents: do not validate evidence fields. Accept reviewer results at fac
 
 **Aggregate and evaluate severity:**
 
-Read `minSeverity` from `.claude/cat/cat-config.json` (default: `"low"`). Filter out any concerns with severity
+Read `minSeverity` from `.cat/cat-config.json` (default: `"low"`). Filter out any concerns with severity
 below `minSeverity` before counting. Filtered concerns are silently dropped — they are never shown to the user,
 never tracked, and never fixed.
 
@@ -870,7 +870,7 @@ The caller parses these fields:
   - `location`: file and line reference (e.g., `"src/UserDao.java:45"`)
   - `explanation`: brief description of the concern
   - `recommendation`: brief remediation guidance
-  - `detail_file`: absolute path to detailed reviewer analysis (e.g., `"${WORKTREE_PATH}/.claude/cat/review/security-concerns.json"`)
+  - `detail_file`: absolute path to detailed reviewer analysis (e.g., `"${WORKTREE_PATH}/.cat/review/security-concerns.json"`)
 - `summary`: brief summary of review outcome
 
 The `detail_file` path points to the comprehensive analysis written by the reviewer subagent. The main agent must NOT
@@ -905,7 +905,7 @@ Review triggering depends on verify level (NOT trust level):
 | `all` | Run stakeholder reviews |
 
 ```bash
-config_file=".claude/cat/cat-config.json"
+config_file=".cat/cat-config.json"
 if [[ -f "$config_file" ]]; then
   VERIFY_LEVEL=$(grep -o '"verify"[[:space:]]*:[[:space:]]*"[^"]*"' "$config_file" | \
     sed 's/.*:[[:space:]]*"\([^"]*\)"/\1/')

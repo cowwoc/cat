@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.hooks.edit;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
 import tools.jackson.databind.JsonNode;
 
@@ -24,7 +25,7 @@ import java.util.regex.Pattern;
 public final class EnforceWorkflowCompletion implements FileWriteHandler
 {
   private static final Pattern STATE_MD_PATTERN =
-    Pattern.compile("\\.claude/cat/v[0-9]+/v[0-9]+\\.[0-9]+/[^/]+/STATE\\.md$");
+    Pattern.compile(Pattern.quote(Config.CAT_DIR_NAME) + "/issues/v[0-9]+/v[0-9]+\\.[0-9]+/[^/]+/STATE\\.md$");
   private static final Pattern STATUS_CLOSED_PATTERN =
     Pattern.compile("[Ss]tatus.*closed");
 

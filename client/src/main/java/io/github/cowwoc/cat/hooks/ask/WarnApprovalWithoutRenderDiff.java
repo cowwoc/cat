@@ -61,7 +61,7 @@ public final class WarnApprovalWithoutRenderDiff implements AskHandler
     if (!toolInputText.toLowerCase(Locale.ROOT).contains("approve"))
       return Result.allow();
 
-    Path catDir = scope.getClaudeProjectDir().resolve(".claude").resolve("cat");
+    Path catDir = scope.getCatDir();
     if (!Files.isDirectory(catDir))
       return Result.allow();
 

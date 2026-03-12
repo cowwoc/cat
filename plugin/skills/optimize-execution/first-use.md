@@ -170,7 +170,7 @@ If session-analyzer is unavailable or you need to inspect raw data, extract dire
 
 ```bash
 # Locate the session JSONL file
-SESSION_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/sessions/${CLAUDE_SESSION_ID}.jsonl"
+SESSION_FILE="${CLAUDE_PROJECT_DIR}/.cat/sessions/${CLAUDE_SESSION_ID}.jsonl"
 
 # Extract main agent assistant turns (no parentToolUseID), deduplicated by message ID
 # Each line has input_tokens, cache_read_input_tokens, cache_creation_input_tokens

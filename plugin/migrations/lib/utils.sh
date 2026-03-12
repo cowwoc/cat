@@ -10,10 +10,11 @@
 #
 # Functions:
 #   version_compare <v1> <v2>         - Returns: -1 (v1<v2), 0 (equal), 1 (v1>v2)
-#   backup_cat_dir <reason>           - Creates timestamped backup of .claude/cat/
-#   get_last_migrated_version         - Returns last_migrated_version from .claude/cat/VERSION (or "0.0.0")
+#   resolve_cat_dir                   - Returns ".cat" if it exists, else ".claude/cat" (pre-migration)
+#   backup_cat_dir <reason>           - Creates timestamped backup of the active CAT directory
+#   get_last_migrated_version         - Returns last_migrated_version from VERSION file (or "0.0.0")
 #   get_plugin_version                - Returns version from plugin.json
-#   set_last_migrated_version <ver>   - Writes last_migrated_version to .claude/cat/VERSION
+#   set_last_migrated_version <ver>   - Writes last_migrated_version to VERSION file
 #   log_migration <message>           - Logs migration progress
 
 set -euo pipefail
@@ -58,7 +59,20 @@ version_compare() {
     fi
 }
 
-# Create a backup of the .claude/cat/ directory in external CAT storage
+# Resolve the active CAT directory path.
+# Returns ".cat" if it exists (post-migration), otherwise ".claude/cat" (pre-migration).
+# NOTE: This function is for use by migration scripts only. Production code should use
+# Config.getCatDir() (Java) or assume .cat already exists (post-2.2 installations).
+# Usage: cat_dir=$(resolve_cat_dir)
+resolve_cat_dir() {
+    if [[ -d ".cat" ]]; then
+        echo ".cat"
+    else
+        echo ".claude/cat"
+    fi
+}
+
+# Create a backup of the active CAT directory in external CAT storage.
 # Usage: backup_cat_dir "pre-migration-2.0"
 backup_cat_dir() {
     local reason="${1:-backup}"
@@ -72,28 +86,33 @@ backup_cat_dir() {
         exit 1
     fi
 
+    local cat_dir
+    cat_dir=$(resolve_cat_dir)
+
     local timestamp
     timestamp=$(date +%Y%m%d-%H%M%S)
     local encoded_project
     encoded_project=$(echo "${CLAUDE_PROJECT_DIR}" | tr '/.' '-')
     local backup_dir="${CLAUDE_CONFIG_DIR}/projects/${encoded_project}/cat/backups/${timestamp}-${reason}"
 
-    if [[ ! -d ".claude/cat" ]]; then
-        log_migration "No .claude/cat directory to backup"
+    if [[ ! -d "$cat_dir" ]]; then
+        log_migration "No $cat_dir directory to backup"
         return 0
     fi
 
     mkdir -p "$backup_dir"
-    find .claude/cat -maxdepth 1 -mindepth 1 -exec cp -r {} "$backup_dir/" \;
+    cp -r "$cat_dir/." "$backup_dir/"
 
     log_migration "Backup created: $backup_dir"
     echo "$backup_dir"
 }
 
-# Get the last migrated version from .claude/cat/VERSION
-# Returns "0.0.0" if file doesn't exist
+# Get the last migrated version from the VERSION file in the active CAT directory.
+# Returns "0.0.0" if file doesn't exist.
 get_last_migrated_version() {
-    local version_file=".claude/cat/VERSION"
+    local cat_dir
+    cat_dir=$(resolve_cat_dir)
+    local version_file="${cat_dir}/VERSION"
 
     if [[ ! -f "$version_file" ]]; then
         echo "0.0.0"
@@ -136,13 +155,15 @@ get_plugin_version() {
     echo "$version"
 }
 
-# Write last migrated version to .claude/cat/VERSION
+# Write last migrated version to the VERSION file in the active CAT directory.
 # Usage: set_last_migrated_version "2.0"
 set_last_migrated_version() {
     local new_version="$1"
-    local version_file=".claude/cat/VERSION"
+    local cat_dir
+    cat_dir=$(resolve_cat_dir)
+    local version_file="${cat_dir}/VERSION"
 
-    mkdir -p ".claude/cat"
+    mkdir -p "$cat_dir"
     printf '%s\n' "$new_version" > "$version_file"
 
     log_migration "Updated last_migrated_version to $new_version"
@@ -175,7 +196,9 @@ log_success() {
 
 # Check if CAT is initialized in current directory
 is_cat_initialized() {
-    [[ -f ".claude/cat/cat-config.json" ]]
+    local cat_dir
+    cat_dir=$(resolve_cat_dir)
+    [[ -f "${cat_dir}/cat-config.json" ]]
 }
 
 # Get list of migrations to run between two versions

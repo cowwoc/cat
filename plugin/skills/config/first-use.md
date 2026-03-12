@@ -21,7 +21,7 @@ users through modifying their preferences.
 **Read current configuration:**
 
 ```bash
-cat .claude/cat/cat-config.json
+cat .cat/cat-config.json
 ```
 
 If file doesn't exist, inform user to run `/cat:init` first.
@@ -248,7 +248,7 @@ Validate input is a number between 40-200. If invalid, show error and re-prompt.
 
 **Update config using the Write tool:**
 
-1. Read the current `.claude/cat/cat-config.json` content using the Read tool.
+1. Read the current `.cat/cat-config.json` content using the Read tool.
 2. Merge the new `fileWidth` or `displayWidth` integer value into the existing config object (update or add the key).
 3. Write the complete updated JSON back using the Write tool.
 
@@ -294,7 +294,7 @@ Map: Merge → `completionWorkflow: "merge"`, Pull Request → `completionWorkfl
 
 **Update config using the Write tool:**
 
-1. Read the current `.claude/cat/cat-config.json` content using the Read tool.
+1. Read the current `.cat/cat-config.json` content using the Read tool.
 2. Merge the new `completionWorkflow` string value into the existing config object (update or add the key).
 3. Write the complete updated JSON back using the Write tool.
 
@@ -341,7 +341,7 @@ Map selections:
 
 **Update config using the Write tool:**
 
-1. Read the current `.claude/cat/cat-config.json` content using the Read tool.
+1. Read the current `.cat/cat-config.json` content using the Read tool.
 2. Merge the new `minSeverity` string value into the existing config object (update or add the key).
 3. Write the complete updated JSON back using the Write tool.
 
@@ -368,8 +368,8 @@ INVOKE: Skill("cat:get-output-agent", args="config.versions")
 
 First, scan for available versions:
 ```bash
-ls -1d .claude/cat/v[0-9]*/v[0-9]*.[0-9]* 2>/dev/null | \
-  sed 's|.claude/cat/v[0-9]*/v||' | sort -V
+ls -1d .cat/v[0-9]*/v[0-9]*.[0-9]* 2>/dev/null | \
+  sed 's|.cat/v[0-9]*/v||' | sort -V
 ```
 
 Determine current minor version from ROADMAP.md (first non-completed).
@@ -396,8 +396,8 @@ Parse input to determine if major (single digit) or minor (X.Y format).
 
 Read the PLAN.md for selected version:
 ```bash
-cat .claude/cat/issues/v{major}/v{major}.{minor}/PLAN.md 2>/dev/null || \
-cat .claude/cat/issues/v{major}/PLAN.md 2>/dev/null
+cat .cat/issues/v{major}/v{major}.{minor}/PLAN.md 2>/dev/null || \
+cat .cat/issues/v{major}/PLAN.md 2>/dev/null
 ```
 
 Extract the `## Pre-conditions` and `## Post-conditions` sections.
@@ -487,7 +487,7 @@ Return to Step 3 (Choose action) to allow further edits or navigation.
 
 **Update configuration file:**
 
-Use the Read tool to read `.claude/cat/cat-config.json`, modify the target setting value, then use the Write tool to
+Use the Read tool to read `.cat/cat-config.json`, modify the target setting value, then use the Write tool to
 write the updated JSON back to the same path.
 
 </step>

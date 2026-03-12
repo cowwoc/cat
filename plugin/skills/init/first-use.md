@@ -8,8 +8,8 @@ See LICENSE.md in the project root for license terms.
 Initialize CAT planning structure for new or existing projects.
 
 <objective>
-Initialize CAT planning structure. Creates `.claude/cat/` with PROJECT.md, ROADMAP.md, cat-config.json,
-`.claude/rules/` for universal rules, and `.claude/cat/rules/` for audience-filtered standards.
+Initialize CAT planning structure. Creates `.cat/` with PROJECT.md, ROADMAP.md, cat-config.json,
+`.claude/rules/` for universal rules, and `.cat/rules/` for audience-filtered standards.
 
 **Reference files** — read on demand as needed:
 - See `${CLAUDE_PLUGIN_ROOT}/templates/project.md` for the PROJECT.md template.
@@ -24,7 +24,7 @@ Initialize CAT planning structure. Creates `.claude/cat/` with PROJECT.md, ROADM
 <step name="verify">
 
 ```bash
-[ -f .claude/cat/PROJECT.md ] && echo "ERROR: CAT already initialized" && exit 1
+[ -f .cat/PROJECT.md ] && echo "ERROR: CAT already initialized" && exit 1
 CODE_COUNT=$(find . -name "*.ts" -o -name "*.js" -o -name "*.py" -o -name "*.go" \
   -o -name "*.rs" -o -name "*.java" -o -name "*.swift" 2>/dev/null \
   | grep -v node_modules | grep -v .git | wc -l)
@@ -93,10 +93,10 @@ AskUserQuestion: header="Project Type", question="What type?", options=["New pro
 <step name="new_setup" condition="New project">
 
 ```bash
-mkdir -p .claude/rules .claude/cat/rules
-if [[ ! -f .claude/cat/.gitignore ]]; then
+mkdir -p .claude/rules .cat/rules
+if [[ ! -f .cat/.gitignore ]]; then
   if [[ -f "${CLAUDE_PLUGIN_ROOT}/templates/gitignore" ]]; then
-    cp "${CLAUDE_PLUGIN_ROOT}/templates/gitignore" .claude/cat/.gitignore
+    cp "${CLAUDE_PLUGIN_ROOT}/templates/gitignore" .cat/.gitignore
   else
     echo "WARNING: .gitignore template not found at ${CLAUDE_PLUGIN_ROOT}/templates/gitignore"
   fi
@@ -115,7 +115,7 @@ fi
 
 <step name="new_project" condition="New project">
 
-Create `.claude/cat/PROJECT.md`:
+Create `.cat/PROJECT.md`:
 ```markdown
 # [Project Name]
 
@@ -142,7 +142,7 @@ Create `.claude/cat/PROJECT.md`:
 | [Choice] | [Why] | Pending |
 ```
 
-Create `.claude/cat/ROADMAP.md`:
+Create `.cat/ROADMAP.md`:
 ```markdown
 # Roadmap
 ## Major 1: [Name]
@@ -183,12 +183,12 @@ proceed to infer_state.
 **Parse STATE.md file history (AUTHORITATIVE source):**
 ```bash
 # Find all issue directories with STATE.md files
-find .claude/cat/issues -name "STATE.md" -type f 2>/dev/null | head -100
+find .cat/issues -name "STATE.md" -type f 2>/dev/null | head -100
 ```
 
 For each STATE.md found:
-- Extract: major, minor, issue-name from path `.claude/cat/issues/v{major}/v{major}.{minor}/{issue-name}/STATE.md`
-- Get commits: `git log --oneline -- ".claude/cat/issues/v{major}/v{major}.{minor}/{issue-name}/"`
+- Extract: major, minor, issue-name from path `.cat/issues/v{major}/v{major}.{minor}/{issue-name}/STATE.md`
+- Get commits: `git log --oneline -- ".cat/issues/v{major}/v{major}.{minor}/{issue-name}/"`
 - Get files: `git diff-tree --no-commit-id --name-status -r <hash>` for each commit
 - Get date: `git log -1 --format="%ci" -- <STATE.md path>`
 
@@ -225,10 +225,10 @@ grep -rl "## Objective\|## Issues" . --include="*.md" 2>/dev/null | head -30
 <step name="existing_create" condition="Existing codebase">
 
 ```bash
-mkdir -p .claude/rules .claude/cat/rules
-if [[ ! -f .claude/cat/.gitignore ]]; then
+mkdir -p .claude/rules .cat/rules
+if [[ ! -f .cat/.gitignore ]]; then
   if [[ -f "${CLAUDE_PLUGIN_ROOT}/templates/gitignore" ]]; then
-    cp "${CLAUDE_PLUGIN_ROOT}/templates/gitignore" .claude/cat/.gitignore
+    cp "${CLAUDE_PLUGIN_ROOT}/templates/gitignore" .cat/.gitignore
   else
     echo "WARNING: .gitignore template not found at ${CLAUDE_PLUGIN_ROOT}/templates/gitignore"
   fi
@@ -249,7 +249,7 @@ Create ROADMAP.md:
 
 Create issue directories:
 ```bash
-mkdir -p ".claude/cat/issues/v{major}/v{major}.{minor}/{issue-name}"
+mkdir -p ".cat/issues/v{major}/v{major}.{minor}/{issue-name}"
 ```
 
 **PLAN.md** (from issue definition source):
@@ -367,8 +367,8 @@ After importing the project structure, research is needed for pending versions.
 
 ```bash
 # Find all pending minor versions
-PENDING_VERSIONS=$(find .claude/cat -name "STATE.md" -exec grep -l "\*\*Status:\*\*.*pending" {} \; \
-  | sed 's|.claude/cat/||; s|/STATE.md||' \
+PENDING_VERSIONS=$(find .cat -name "STATE.md" -exec grep -l "\*\*Status:\*\*.*pending" {} \; \
+  | sed 's|.cat/||; s|/STATE.md||' \
   | grep -E "v[0-9]+/v[0-9]+\.[0-9]+" \
   | sed 's|v\([0-9]*\)/v\([0-9]*\.[0-9]*\)|\2|' \
   | sort -V)
@@ -543,7 +543,7 @@ Get plugin version for config:
 CAT_VERSION=$(grep -o '"version"[[:space:]]*:[[:space:]]*"[^"]*"' "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json" | head -1 | sed 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 ```
 
-Create `.claude/cat/cat-config.json`:
+Create `.cat/cat-config.json`:
 ```json
 {
   "last_migrated_version": "[CAT_VERSION from above]",
@@ -787,7 +787,7 @@ Rules loaded automatically every session (main agent and subagents). Use for:
 
 Keep minimal - everything here costs context on every session.
 
-### Audience-Filtered: `.claude/cat/rules/`
+### Audience-Filtered: `.cat/rules/`
 
 Rules injected by CAT hooks with audience filtering. Use for:
 - Language-specific conventions (java.md, typescript.md, etc.) with `paths:` frontmatter
@@ -805,7 +805,7 @@ paths: ["*.java"]      # default: always (omit to always inject)
 
 **Structure:**
 ```
-.claude/cat/rules/
+.cat/rules/
 ├── INDEX.md              # Summary of all rules with audience information
 ├── common.md             # Common conventions (main + all subagents)
 ├── {language}.md         # Language-specific with paths: frontmatter
@@ -832,7 +832,7 @@ Update anytime with: `/cat:config`
 <step name="commit">
 
 ```bash
-git add .claude/cat/
+git add .cat/
 git commit -m "docs: initialize CAT planning structure"
 ```
 
@@ -885,7 +885,7 @@ INVOKE: Skill("cat:get-output-agent", args="init.first-issue-walkthrough")
 3. Create the issue directory structure:
 ```bash
 ISSUE_NAME="[sanitized-issue-name]"
-mkdir -p ".claude/cat/issues/v0/v0.0/${ISSUE_NAME}"
+mkdir -p ".cat/issues/v0/v0.0/${ISSUE_NAME}"
 ```
 
 4. Create initial PLAN.md for the issue:
@@ -917,7 +917,7 @@ mkdir -p ".claude/cat/issues/v0/v0.0/${ISSUE_NAME}"
 
 6. Commit the new issue:
 ```bash
-git add ".claude/cat/"
+git add ".cat/"
 git commit -m "docs: add first issue - ${ISSUE_NAME}"
 ```
 
@@ -953,7 +953,7 @@ INVOKE: Skill("cat:get-output-agent", args="init.explore-at-your-own-pace")
 | PROJECT.md captures context | ✓ | ✓ (inferred) |
 | ROADMAP.md created | ✓ | ✓ (with history) |
 | .claude/rules/ directory | ✓ | ✓ |
-| .claude/cat/rules/ directory | ✓ | ✓ |
+| .cat/rules/ directory | ✓ | ✓ |
 | Issue dirs with PLAN/STATE | - | ✓ (full content) |
 | Entry/exit gates configured | - | ✓ (or skipped) |
 | cat-config.json | ✓ | ✓ |

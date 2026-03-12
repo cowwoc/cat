@@ -11,7 +11,7 @@ How issues are marked complete and how to trace their resolving commits.
 
 | Resolution | Description | Has Commit? | How to Find |
 |------------|-------------|-------------|-------------|
-| `implemented` | Issue closed normally | Yes | `git log -- .claude/cat/issues/v{x}/v{x}.{y}/{issue-name}/` |
+| `implemented` | Issue closed normally | Yes | `git log -- .cat/issues/v{x}/v{x}.{y}/{issue-name}/` |
 | `duplicate` | Another issue did this work | No | Check STATE.md "Duplicate Of" field |
 | `obsolete` | No longer needed | No | No implementation commit |
 
@@ -27,7 +27,7 @@ When an issue is closed through normal execution:
 
 ```bash
 # Find commits for an issue via STATE.md history
-git log --oneline -- .claude/cat/issues/v1/v1.0/add-feature-x/
+git log --oneline -- .cat/issues/v1/v1.0/add-feature-x/
 ```
 
 ## Duplicate Issues
@@ -70,7 +70,7 @@ The duplicate issue has **no implementation commit**. The work was done by the o
 # 1. Read the duplicate issue's STATE.md
 # 2. Get the "Duplicate Of" value (e.g., v0.5-fix-multi-param-lambda)
 # 3. Find commits for that original issue via STATE.md history
-git log --oneline -- .claude/cat/issues/v0/v0.5/fix-multi-param-lambda/
+git log --oneline -- .cat/issues/v0/v0.5/fix-multi-param-lambda/
 ```
 
 ### Commit for Duplicate Resolution
@@ -78,7 +78,7 @@ git log --oneline -- .claude/cat/issues/v0/v0.5/fix-multi-param-lambda/
 When marking an issue as duplicate, commit only the STATE.md update:
 
 ```bash
-git add .claude/cat/issues/v{major}/v{major}.{minor}/{issue-name}/STATE.md
+git add .cat/issues/v{major}/v{major}.{minor}/{issue-name}/STATE.md
 git commit -m "config: close duplicate issue {issue-name}
 
 Duplicate of {original-issue-name} which was resolved in commit {hash}.
@@ -136,7 +136,7 @@ To find what resolved an issue:
 ```
 1. Read issue's STATE.md
 2. Check Resolution field:
-   - If "implemented": git log -- .claude/cat/issues/v{x}/v{x}.{y}/{issue-name}/
+   - If "implemented": git log -- .cat/issues/v{x}/v{x}.{y}/{issue-name}/
    - If "duplicate": find commits for the "Duplicate Of" issue
    - If "obsolete": no implementation commit exists
 ```
@@ -168,7 +168,7 @@ case "$RESOLUTION" in
     DUP_MAJOR=$(echo "$DUPLICATE_OF" | sed 's/v\([0-9]*\)\..*/\1/')
     DUP_MINOR=$(echo "$DUPLICATE_OF" | sed 's/v\([0-9]*\.[0-9]*\)-.*/\1/')
     DUP_NAME=$(echo "$DUPLICATE_OF" | sed 's/v[0-9]*\.[0-9]*-//')
-    git log --oneline -- ".claude/cat/issues/v${DUP_MAJOR}/v${DUP_MINOR}/${DUP_NAME}/"
+    git log --oneline -- ".cat/issues/v${DUP_MAJOR}/v${DUP_MINOR}/${DUP_NAME}/"
     ;;
   obsolete)
     echo "Issue was obsolete - no implementation commit"

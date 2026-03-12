@@ -52,8 +52,7 @@ public final class RetrospectiveMigratorTest
   public void skipsWhenAlreadyMigrated() throws IOException
   {
     Path tempDir = Files.createTempDirectory("retro-test-");
-    Path claudeDir = tempDir.resolve(".claude");
-    Path catDir = claudeDir.resolve("cat");
+    Path catDir = tempDir.resolve(".cat");
     Path retroDir = catDir.resolve("retrospectives");
     Files.createDirectories(retroDir);
     Path indexFile = retroDir.resolve("index.json");
@@ -83,8 +82,7 @@ public final class RetrospectiveMigratorTest
   public void dryRunShowsStatsWithoutCreatingFiles() throws IOException
   {
     Path tempDir = Files.createTempDirectory("retro-test-");
-    Path claudeDir = tempDir.resolve(".claude");
-    Path catDir = claudeDir.resolve("cat");
+    Path catDir = tempDir.resolve(".cat");
     Path retroDir = catDir.resolve("retrospectives");
     Files.createDirectories(retroDir);
     Path mistakesFile = retroDir.resolve("mistakes.json");
@@ -131,8 +129,7 @@ public final class RetrospectiveMigratorTest
   public void splitsMistakesByMonth() throws IOException
   {
     Path tempDir = Files.createTempDirectory("retro-test-");
-    Path claudeDir = tempDir.resolve(".claude");
-    Path catDir = claudeDir.resolve("cat");
+    Path catDir = tempDir.resolve(".cat");
     Path retroDir = catDir.resolve("retrospectives");
     Files.createDirectories(retroDir);
     Path mistakesFile = retroDir.resolve("mistakes.json");
@@ -191,8 +188,7 @@ public final class RetrospectiveMigratorTest
   public void splitsRetrospectivesByMonth() throws IOException
   {
     Path tempDir = Files.createTempDirectory("retro-test-");
-    Path claudeDir = tempDir.resolve(".claude");
-    Path catDir = claudeDir.resolve("cat");
+    Path catDir = tempDir.resolve(".cat");
     Path retroDir = catDir.resolve("retrospectives");
     Files.createDirectories(retroDir);
     Path retroFile = retroDir.resolve("retrospectives.json");
@@ -250,8 +246,7 @@ public final class RetrospectiveMigratorTest
   public void createsIndexFileWithCorrectStructure() throws IOException
   {
     Path tempDir = Files.createTempDirectory("retro-test-");
-    Path claudeDir = tempDir.resolve(".claude");
-    Path catDir = claudeDir.resolve("cat");
+    Path catDir = tempDir.resolve(".cat");
     Path retroDir = catDir.resolve("retrospectives");
     Files.createDirectories(retroDir);
     Path mistakesFile = retroDir.resolve("mistakes.json");
@@ -323,8 +318,7 @@ public final class RetrospectiveMigratorTest
   public void backsUpOriginalFiles() throws IOException
   {
     Path tempDir = Files.createTempDirectory("retro-test-");
-    Path claudeDir = tempDir.resolve(".claude");
-    Path catDir = claudeDir.resolve("cat");
+    Path catDir = tempDir.resolve(".cat");
     Path retroDir = catDir.resolve("retrospectives");
     Files.createDirectories(retroDir);
     Path mistakesFile = retroDir.resolve("mistakes.json");
@@ -385,8 +379,7 @@ public final class RetrospectiveMigratorTest
   public void migratesEmptyDirectorySuccessfully() throws IOException
   {
     Path tempDir = Files.createTempDirectory("retro-test-");
-    Path claudeDir = tempDir.resolve(".claude");
-    Path catDir = claudeDir.resolve("cat");
+    Path catDir = tempDir.resolve(".cat");
     Path retroDir = catDir.resolve("retrospectives");
     Files.createDirectories(retroDir);
 
@@ -412,8 +405,7 @@ public final class RetrospectiveMigratorTest
   public void handlesVariousTimestampFormats() throws IOException
   {
     Path tempDir = Files.createTempDirectory("retro-test-");
-    Path claudeDir = tempDir.resolve(".claude");
-    Path catDir = claudeDir.resolve("cat");
+    Path catDir = tempDir.resolve(".cat");
     Path retroDir = catDir.resolve("retrospectives");
     Files.createDirectories(retroDir);
     Path mistakesFile = retroDir.resolve("mistakes.json");
@@ -460,8 +452,7 @@ public final class RetrospectiveMigratorTest
   public void sortsMistakesWithinPeriodByTimestamp() throws IOException
   {
     Path tempDir = Files.createTempDirectory("retro-test-");
-    Path claudeDir = tempDir.resolve(".claude");
-    Path catDir = claudeDir.resolve("cat");
+    Path catDir = tempDir.resolve(".cat");
     Path retroDir = catDir.resolve("retrospectives");
     Files.createDirectories(retroDir);
     Path mistakesFile = retroDir.resolve("mistakes.json");

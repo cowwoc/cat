@@ -40,7 +40,7 @@ Find which issue/commit implemented the fix:
 git log --oneline --grep="<related keywords>"
 
 # Check other closed issues in same version
-find .claude/cat/issues/v*/v*.*/ -name "STATE.md" -exec grep -l "closed" {} \;
+find .cat/issues/v*/v*.*/ -name "STATE.md" -exec grep -l "closed" {} \;
 ```
 
 ### 4. Update STATE.md
@@ -57,7 +57,7 @@ find .claude/cat/issues/v*/v*.*/ -name "STATE.md" -exec grep -l "closed" {} \;
 Duplicate issues have no implementation commit - only the STATE.md update:
 
 ```bash
-git add .claude/cat/issues/v{major}/v{major}.{minor}/{issue-name}/STATE.md
+git add .cat/issues/v{major}/v{major}.{minor}/{issue-name}/STATE.md
 git commit -m "$(cat <<'EOF'
 config: close duplicate issue {issue-name}
 

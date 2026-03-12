@@ -45,7 +45,7 @@ Use AskUserQuestion FIRST:
 **Verify planning structure exists:**
 
 ```bash
-[ ! -d .claude/cat ] && echo "ERROR: No planning structure found." && exit 1
+[ ! -d .cat ] && echo "ERROR: No planning structure found." && exit 1
 ```
 
 </step>
@@ -95,7 +95,7 @@ Use AskUserQuestion:
 List all issues:
 
 ```bash
-find .claude/cat/issues/v*/v*.* -mindepth 1 -maxdepth 1 -type d ! -name "v*" 2>/dev/null | while read d; do
+find .cat/issues/v*/v*.* -mindepth 1 -maxdepth 1 -type d ! -name "v*" 2>/dev/null | while read d; do
     [ -f "$d/STATE.md" ] || continue
     ISSUE_NAME=$(basename "$d")
     MAJOR=$(echo "$d" | sed 's|.*/v\([0-9]*\)/v[0-9]*\.[0-9]*/.*|\1|')
@@ -119,7 +119,7 @@ If "Cancel" -> exit command.
 **Validate issue can be removed:**
 
 ```bash
-ISSUE_PATH=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/$ISSUE_NAME"
+ISSUE_PATH=".cat/issues/v$MAJOR/v$MAJOR.$MINOR/$ISSUE_NAME"
 
 [ ! -d "$ISSUE_PATH" ] && echo "ERROR: Issue does not exist" && exit 1
 
@@ -163,7 +163,7 @@ If "No, keep it" -> exit command.
 **Check if other issues depend on this one:**
 
 ```bash
-find .claude/cat/issues/v*/v*.* -mindepth 1 -maxdepth 1 -type d ! -name "v*" \
+find .cat/issues/v*/v*.* -mindepth 1 -maxdepth 1 -type d ! -name "v*" \
     -exec grep -l "Dependencies:.*$ISSUE_NAME" {}/STATE.md \; 2>/dev/null
 ```
 
@@ -213,7 +213,7 @@ rm -rf "$ISSUE_PATH"
 **Update issues that depended on this issue:**
 
 ```bash
-find .claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR -mindepth 1 -maxdepth 1 -type d ! -name "v*" | while read d; do
+find .cat/issues/v$MAJOR/v$MAJOR.$MINOR -mindepth 1 -maxdepth 1 -type d ! -name "v*" | while read d; do
     if grep -q "Dependencies:.*$ISSUE_NAME" "$d/STATE.md" 2>/dev/null; then
         sed -i "s/$ISSUE_NAME, //g; s/, $ISSUE_NAME//g; s/$ISSUE_NAME//g" "$d/STATE.md"
     fi
@@ -227,7 +227,7 @@ done
 **Update parent minor STATE.md - remove issue from list:**
 
 ```bash
-VERSION_STATE=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/STATE.md"
+VERSION_STATE=".cat/issues/v$MAJOR/v$MAJOR.$MINOR/STATE.md"
 
 # Remove issue from Issues Pending section
 sed -i "/^- $ISSUE_NAME$/d" "$VERSION_STATE"
@@ -256,7 +256,7 @@ sed -i "s/Progress:.*$/Progress:** $PROGRESS%/" "$VERSION_STATE"
 **Commit removal:**
 
 ```bash
-git add -A ".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/"
+git add -A ".cat/issues/v$MAJOR/v$MAJOR.$MINOR/"
 git commit -m "$(cat <<'EOF'
 docs: remove issue {issue-name} from {major}.{minor}
 
@@ -301,13 +301,13 @@ Use `/cat:status` to see current state.
 **If VERSION_TYPE is "major":**
 
 ```bash
-[ -z "$(ls -d .claude/cat/v[0-9]* 2>/dev/null)" ] && echo "ERROR: No major versions exist." && exit 1
+[ -z "$(ls -d .cat/v[0-9]* 2>/dev/null)" ] && echo "ERROR: No major versions exist." && exit 1
 ```
 
 List all major versions:
 
 ```bash
-for d in .claude/cat/v[0-9]*/; do
+for d in .cat/v[0-9]*/; do
     MAJOR=$(basename "$d" | sed 's/v//')
     MINOR_COUNT=$(ls -1d "$d"v$MAJOR.[0-9]* 2>/dev/null | wc -l)
     ISSUE_COUNT=$(find "$d" -mindepth 2 -maxdepth 2 -type d ! -name "v*" ! -name "issue" 2>/dev/null | wc -l)
@@ -326,7 +326,7 @@ Use AskUserQuestion:
 List all minor versions:
 
 ```bash
-find .claude/cat -maxdepth 2 -type d -name "v[0-9]*.[0-9]*" 2>/dev/null | while read d; do
+find .cat -maxdepth 2 -type d -name "v[0-9]*.[0-9]*" 2>/dev/null | while read d; do
     VERSION=$(basename "$d" | sed 's/v//')
     MAJOR=$(echo "$VERSION" | cut -d. -f1)
     MINOR=$(echo "$VERSION" | cut -d. -f2)
@@ -345,7 +345,7 @@ Use AskUserQuestion:
 List all patch versions:
 
 ```bash
-find .claude/cat -maxdepth 3 -type d -name "v[0-9]*.[0-9]*.[0-9]*" 2>/dev/null | while read d; do
+find .cat -maxdepth 3 -type d -name "v[0-9]*.[0-9]*.[0-9]*" 2>/dev/null | while read d; do
     VERSION=$(basename "$d" | sed 's/v//')
     MAJOR=$(echo "$VERSION" | cut -d. -f1)
     MINOR=$(echo "$VERSION" | cut -d. -f2)
@@ -372,7 +372,7 @@ If "Cancel" -> exit command.
 **If VERSION_TYPE is "major":**
 
 ```bash
-VERSION_PATH=".claude/cat/issues/v$MAJOR"
+VERSION_PATH=".cat/issues/v$MAJOR"
 [ ! -d "$VERSION_PATH" ] && echo "ERROR: Major version does not exist" && exit 1
 ```
 
@@ -387,7 +387,7 @@ done)
 **If VERSION_TYPE is "minor":**
 
 ```bash
-VERSION_PATH=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR"
+VERSION_PATH=".cat/issues/v$MAJOR/v$MAJOR.$MINOR"
 [ ! -d "$VERSION_PATH" ] && echo "ERROR: Minor version does not exist" && exit 1
 ```
 
@@ -402,7 +402,7 @@ INCOMPLETE=$(find "$VERSION_PATH" -mindepth 1 -maxdepth 1 -type d ! -name "issue
 **If VERSION_TYPE is "patch":**
 
 ```bash
-VERSION_PATH=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/v$MAJOR.$MINOR.$PATCH"
+VERSION_PATH=".cat/issues/v$MAJOR/v$MAJOR.$MINOR/v$MAJOR.$MINOR.$PATCH"
 [ ! -d "$VERSION_PATH" ] && echo "ERROR: Patch version does not exist" && exit 1
 ```
 
@@ -438,7 +438,7 @@ If "Cancel" -> exit command.
 **If VERSION_TYPE is "major":**
 
 ```bash
-LATER_MAJORS=$(find .claude/cat -name "STATE.md" -path ".claude/cat/v[$(($MAJOR+1))-9]*/STATE.md" \
+LATER_MAJORS=$(find .cat -name "STATE.md" -path ".cat/v[$(($MAJOR+1))-9]*/STATE.md" \
     -exec grep -l "Dependencies:.*$MAJOR" {} \; 2>/dev/null)
 ```
 
@@ -470,7 +470,7 @@ Use AskUserQuestion:
 **If VERSION_TYPE is "patch":**
 
 ```bash
-LATER_PATCHES=$(find ".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR" -maxdepth 1 -type d -name "v$MAJOR.$MINOR.*" | \
+LATER_PATCHES=$(find ".cat/issues/v$MAJOR/v$MAJOR.$MINOR" -maxdepth 1 -type d -name "v$MAJOR.$MINOR.*" | \
     sed "s|.*/v$MAJOR.$MINOR.||" | while read p; do
         [ "$p" -gt "$PATCH" ] && echo "v$MAJOR.$MINOR.$p"
     done)
@@ -582,7 +582,7 @@ rm -rf "$VERSION_PATH"
 **Update ROADMAP.md:**
 
 ```bash
-ROADMAP=".claude/cat/ROADMAP.md"
+ROADMAP=".cat/ROADMAP.md"
 ```
 
 **If VERSION_TYPE is "major":**
@@ -623,7 +623,7 @@ sed -i "/^[[:space:]]*- \*\*$MAJOR\.$MINOR\.$PATCH:\*\*/d" "$ROADMAP"
 **If VERSION_TYPE is "minor":**
 
 ```bash
-PARENT_STATE=".claude/cat/issues/v$MAJOR/STATE.md"
+PARENT_STATE=".cat/issues/v$MAJOR/STATE.md"
 
 # Remove minor version from "## Minor Versions" section
 sed -i "/^- v$MAJOR.$MINOR$/d" "$PARENT_STATE"
@@ -632,7 +632,7 @@ sed -i "/^- v$MAJOR.$MINOR$/d" "$PARENT_STATE"
 TOTAL_MINORS=$(grep -c "^- v$MAJOR\." "$PARENT_STATE" 2>/dev/null || echo 0)
 CLOSED_MINORS=0
 for minor_entry in $(grep "^- v$MAJOR\." "$PARENT_STATE" | sed 's/- v//'); do
-  MINOR_STATE=".claude/cat/issues/v$MAJOR/v$minor_entry/STATE.md"
+  MINOR_STATE=".cat/issues/v$MAJOR/v$minor_entry/STATE.md"
   if [ -f "$MINOR_STATE" ] && grep -q "\*\*Status:\*\*.*closed" "$MINOR_STATE"; then
     CLOSED_MINORS=$((CLOSED_MINORS + 1))
   fi
@@ -651,7 +651,7 @@ sed -i "s/- \*\*Progress:\*\* .*$/- **Progress:** $PROGRESS%/" "$PARENT_STATE"
 **If VERSION_TYPE is "patch":**
 
 ```bash
-PARENT_STATE=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/STATE.md"
+PARENT_STATE=".cat/issues/v$MAJOR/v$MAJOR.$MINOR/STATE.md"
 
 # Remove patch version from "## Patch Versions" section
 sed -i "/^- v$MAJOR.$MINOR.$PATCH$/d" "$PARENT_STATE"
@@ -669,7 +669,7 @@ sed -i "/^- v$MAJOR.$MINOR.$PATCH$/d" "$PARENT_STATE"
 **If VERSION_TYPE is "major":**
 
 ```bash
-git add -A ".claude/cat/"
+git add -A ".cat/"
 git commit -m "$(cat <<'EOF'
 docs: remove major version {major}
 
@@ -682,8 +682,8 @@ EOF
 **If VERSION_TYPE is "minor":**
 
 ```bash
-git add -A ".claude/cat/issues/v$MAJOR/"
-git add ".claude/cat/ROADMAP.md"
+git add -A ".cat/issues/v$MAJOR/"
+git add ".cat/ROADMAP.md"
 git commit -m "$(cat <<'EOF'
 docs: remove minor version {major}.{minor}
 
@@ -696,8 +696,8 @@ EOF
 **If VERSION_TYPE is "patch":**
 
 ```bash
-git add -A ".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/"
-git add ".claude/cat/ROADMAP.md"
+git add -A ".cat/issues/v$MAJOR/v$MAJOR.$MINOR/"
+git add ".cat/ROADMAP.md"
 git commit -m "$(cat <<'EOF'
 docs: remove patch version {major}.{minor}.{patch}
 

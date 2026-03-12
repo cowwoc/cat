@@ -170,9 +170,8 @@ public class ParallelSubagentTest
     GitCommands.runGit(projectDir, "config", "user.email", "test@example.com");
     GitCommands.runGit(projectDir, "config", "user.name", "Test User");
 
-    // Create .claude/cat structure
-    Path catDir = projectDir.resolve(".claude").
-      resolve("cat");
+    // Create .cat structure
+    Path catDir = projectDir.resolve(".cat");
     Files.createDirectories(catDir);
     Files.writeString(catDir.resolve("cat-config.json"), "{}");
 
@@ -202,8 +201,7 @@ public class ParallelSubagentTest
   private void createIssue(Path projectDir, String major, String minor, String issueName, String status)
     throws IOException
   {
-    Path issueDir = projectDir.resolve(".claude").
-      resolve("cat").
+    Path issueDir = projectDir.resolve(".cat").
       resolve("issues").
       resolve("v" + major).
       resolve("v" + major + "." + minor).
@@ -227,8 +225,7 @@ public class ParallelSubagentTest
   private void createPlanWithExecutionWaves(Path projectDir, String major, String minor,
     String issueName) throws IOException
   {
-    Path issueDir = projectDir.resolve(".claude").
-      resolve("cat").
+    Path issueDir = projectDir.resolve(".cat").
       resolve("issues").
       resolve("v" + major).
       resolve("v" + major + "." + minor).
@@ -268,8 +265,7 @@ public class ParallelSubagentTest
   private void createPlanWithWaveSubItems(Path projectDir, String major, String minor,
     String issueName) throws IOException
   {
-    Path issueDir = projectDir.resolve(".claude").
-      resolve("cat").
+    Path issueDir = projectDir.resolve(".cat").
       resolve("issues").
       resolve("v" + major).
       resolve("v" + major + "." + minor).
@@ -308,8 +304,7 @@ public class ParallelSubagentTest
   private void createPlanWithoutExecutionSection(Path projectDir, String major, String minor,
     String issueName) throws IOException
   {
-    Path issueDir = projectDir.resolve(".claude").
-      resolve("cat").
+    Path issueDir = projectDir.resolve(".cat").
       resolve("issues").
       resolve("v" + major).
       resolve("v" + major + "." + minor).

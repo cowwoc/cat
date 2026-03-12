@@ -74,7 +74,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
@@ -98,7 +98,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
       Path indexFile = retroDir.resolve("index.json");
       Files.writeString(indexFile, "{ invalid json }");
@@ -121,7 +121,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       Instant yesterday = Instant.now().minus(1, ChronoUnit.DAYS);
@@ -167,7 +167,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       Instant eightDaysAgo = Instant.now().minus(8, ChronoUnit.DAYS);
@@ -215,7 +215,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       Instant yesterday = Instant.now().minus(1, ChronoUnit.DAYS);
@@ -262,7 +262,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       String mistakesContent = """
@@ -324,7 +324,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       Instant eightDaysAgo = Instant.now().minus(8, ChronoUnit.DAYS);
@@ -389,7 +389,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       Instant eightDaysAgo = Instant.now().minus(8, ChronoUnit.DAYS);
@@ -434,7 +434,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       Instant eightDaysAgo = Instant.now().minus(8, ChronoUnit.DAYS);
@@ -480,7 +480,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       Instant eightDaysAgo = Instant.now().minus(8, ChronoUnit.DAYS);
@@ -524,7 +524,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       Path mistakeFile = retroDir.resolve("mistakes-bad.json");
@@ -570,7 +570,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       Instant eightDaysAgo = Instant.now().minus(8, ChronoUnit.DAYS);
@@ -638,7 +638,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       Instant eightDaysAgo = Instant.now().minus(8, ChronoUnit.DAYS);
@@ -742,7 +742,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       Instant eightDaysAgo = Instant.now().minus(8, ChronoUnit.DAYS);
@@ -821,7 +821,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       Instant eightDaysAgo = Instant.now().minus(8, ChronoUnit.DAYS);
@@ -892,7 +892,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       Instant eightDaysAgo = Instant.now().minus(8, ChronoUnit.DAYS);
@@ -945,7 +945,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       Instant yesterday = Instant.now().minus(1, ChronoUnit.DAYS);
@@ -987,7 +987,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       Instant eightDaysAgo = Instant.now().minus(8, ChronoUnit.DAYS);
@@ -1037,7 +1037,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       Instant eightDaysAgo = Instant.now().minus(8, ChronoUnit.DAYS);
@@ -1088,7 +1088,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       Instant eightDaysAgo = Instant.now().minus(8, ChronoUnit.DAYS);
@@ -1128,7 +1128,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       Instant eightDaysAgo = Instant.now().minus(8, ChronoUnit.DAYS);
@@ -1178,7 +1178,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       Path mistakeFile = retroDir.resolve("mistakes-2026-02.json");
@@ -1237,7 +1237,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       Instant eightDaysAgo = Instant.now().minus(8, ChronoUnit.DAYS);
@@ -1293,7 +1293,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       Instant eightDaysAgo = Instant.now().minus(8, ChronoUnit.DAYS);
@@ -1349,7 +1349,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       Instant eightDaysAgo = Instant.now().minus(8, ChronoUnit.DAYS);
@@ -1403,7 +1403,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       Instant eightDaysAgo = Instant.now().minus(8, ChronoUnit.DAYS);
@@ -1456,7 +1456,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       Instant eightDaysAgo = Instant.now().minus(8, ChronoUnit.DAYS);
@@ -1517,7 +1517,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       Instant yesterday = Instant.now().minus(1, ChronoUnit.DAYS);
@@ -1576,7 +1576,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      // No .claude/cat/retrospectives directory created — triggers missing-directory error
+      // No .cat/retrospectives directory created — triggers missing-directory error
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
 
@@ -1604,7 +1604,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       String mistakesContent = """
@@ -1677,7 +1677,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       // Set last_retrospective to yesterday to disable the time trigger (1 day < 7 day threshold)
@@ -1733,7 +1733,7 @@ public final class GetRetrospectiveOutputTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path retroDir = tempDir.resolve(".claude/cat/retrospectives");
+      Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
 
       // retroDir exists but index.json does NOT exist
