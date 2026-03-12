@@ -4,9 +4,9 @@
 - **Progress:** 100%
 - **Dependencies:** []
 - **Blocks:** []
-- **Last Updated:** 2026-03-11
+- **Last Updated:** 2026-03-12
 - **Resolution:** implemented
-- **Completed:** 2026-03-11
+- **Completed:** 2026-03-12
 
 ## Stakeholder Review Fixes Applied (2026-03-09)
 
@@ -125,3 +125,36 @@ the main agent's context instead of letting the subagent read from git directly.
 **Files modified:**
 - plugin/agents/skill-analyzer-agent/SKILL.md (Inputs, Step 1, Steps 5-6, error handling, verification)
 - plugin/skills/skill-builder-agent/first-use.md (analyzer invocation, verification checklist)
+
+## Post-Closure Bugfix (2026-03-12)
+
+**Fixed corrupt issue directory detection logic** to flag directories missing PLAN.md regardless of STATE.md presence.
+
+The original implementation only flagged directories as corrupt when STATE.md existed AND PLAN.md was missing.
+This missed the case where an issue directory had neither STATE.md nor PLAN.md — the directory is corrupt
+and should be flagged, regardless of whether STATE.md is present.
+
+**Changes made:**
+1. **IssueDiscovery.java (line 730, 1074):** Changed `isCorrupt = !statePath AND !planPath` to `isCorrupt = !planPath`
+2. **IssueDiscovery.Found record:** Removed mutual exclusivity constraint between `isCorrupt` and `createStateMd`;
+   both can now be true when a directory has neither file
+3. **GetCleanupOutput.java:** Added `VERSION_DIR_PATTERN` to distinguish version directories (v2, v2.1) from
+   issue directories; flag any non-version directory missing PLAN.md as corrupt
+4. **Tests:** Updated mutual exclusivity test to verify both flags can be true; added tests for directory
+   with neither STATE.md nor PLAN.md being detected as corrupt in both IssueDiscovery and GetCleanupOutput
+
+**Files modified:**
+- client/src/main/java/io/github/cowwoc/cat/hooks/util/IssueDiscovery.java
+- client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetCleanupOutput.java
+- client/src/test/java/io/github/cowwoc/cat/hooks/test/IssueDiscoveryTest.java
+- client/src/test/java/io/github/cowwoc/cat/hooks/test/GetCleanupOutputTest.java
+
+**Test results:** All 2403 tests pass
+
+## Task Completion Cleanup (2026-03-12)
+
+**Removed TDD artifact files** that were committed during development:
+- diff-validation-1.json through diff-validation-7.json
+- findings.json
+
+These test validation files were used during test-driven development but should not remain in the final branch.

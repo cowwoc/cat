@@ -24,6 +24,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
+import static io.github.cowwoc.cat.hooks.test.TestUtils.deleteDirectoryRecursively;
+
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
@@ -55,7 +57,8 @@ public class GetCleanupOutputTest
         List.of(),
         List.of(),
         List.of(),
-        null);
+        null,
+        List.of());
 
       requireThat(result, "result").contains("🔍 Survey Results");
     }
@@ -79,7 +82,8 @@ public class GetCleanupOutputTest
         List.of(),
         List.of(),
         List.of(),
-        null);
+        null,
+        List.of());
 
       requireThat(result, "result").contains("📁 Worktrees");
     }
@@ -103,7 +107,8 @@ public class GetCleanupOutputTest
         List.of(),
         List.of(),
         List.of(),
-        null);
+        null,
+        List.of());
 
       requireThat(result, "result").contains("🔒 Issue Locks");
     }
@@ -127,7 +132,8 @@ public class GetCleanupOutputTest
         List.of(),
         List.of(),
         List.of(),
-        null);
+        null,
+        List.of());
 
       requireThat(result, "result").contains("🌿 CAT Branches");
     }
@@ -151,7 +157,8 @@ public class GetCleanupOutputTest
         List.of(),
         List.of(),
         List.of(),
-        null);
+        null,
+        List.of());
 
       requireThat(result, "result").contains("⏳ Stale Remotes");
     }
@@ -175,7 +182,8 @@ public class GetCleanupOutputTest
         List.of(),
         List.of(),
         List.of(),
-        ".claude/context.md");
+        ".claude/context.md",
+        List.of());
 
       requireThat(result, "result").contains("📝 Context: .claude/context.md");
     }
@@ -199,7 +207,8 @@ public class GetCleanupOutputTest
         List.of(),
         List.of(),
         List.of(),
-        null);
+        null,
+        List.of());
 
       requireThat(result, "result").contains("📝 Context: None");
     }
@@ -227,7 +236,8 @@ public class GetCleanupOutputTest
         List.of(),
         List.of(),
         List.of(),
-        null);
+        null,
+        List.of());
 
       requireThat(result, "result").contains("/path/to/worktree1").contains("branch1").
         contains("[detached]").contains("/path/to/worktree2").contains("branch2");
@@ -255,7 +265,8 @@ public class GetCleanupOutputTest
         locks,
         List.of(),
         List.of(),
-        null);
+        null,
+        List.of());
 
       requireThat(result, "result").contains("v2.0-my-task").contains("session1").
         contains("300s");
@@ -282,7 +293,8 @@ public class GetCleanupOutputTest
         List.of(),
         branches,
         List.of(),
-        null);
+        null,
+        List.of());
 
       requireThat(result, "result").contains("2.0-task1").contains("2.0-task2");
     }
@@ -309,7 +321,8 @@ public class GetCleanupOutputTest
         List.of(),
         List.of(),
         remotes,
-        null);
+        null,
+        List.of());
 
       requireThat(result, "result").contains("2.0-old-task").contains("user123").
         contains("3 days ago");
@@ -334,7 +347,8 @@ public class GetCleanupOutputTest
         List.of(),
         List.of(),
         List.of(),
-        null);
+        null,
+        List.of());
 
       requireThat(result, "result").contains("None found");
     }
@@ -358,7 +372,8 @@ public class GetCleanupOutputTest
         List.of(new Lock("task", "sess", Duration.ofSeconds(10))),
         List.of("branch1", "branch2"),
         List.of(new StaleRemote("old", "user", "1d", "stale")),
-        null);
+        null,
+        List.of());
 
       requireThat(result, "result").contains("Found: 1 worktrees").contains("1 locks").
         contains("2 branches").contains("1 stale remotes");
@@ -801,7 +816,8 @@ public class GetCleanupOutputTest
         List.of(),
         List.of(),
         List.of(),
-        null);
+        null,
+        List.of());
 
       requireThat(result, "result").contains("╭").contains("╰").contains("│");
     }
@@ -879,7 +895,8 @@ public class GetCleanupOutputTest
           new Lock("task-b", "xyz789uvw012", Duration.ofSeconds(7200))),
         List.of("branch-a", "branch-b", "branch-c"),
         List.of(new StaleRemote("old-task", "user@example.com", "3 days ago", "stale")),
-        ".claude/context.md");
+        ".claude/context.md",
+        List.of());
 
       requireThat(result, "result").isNotEmpty();
     }
@@ -1578,5 +1595,124 @@ public class GetCleanupOutputTest
     Duration age = GetCleanupOutput.getLockFileAge(nonExistent, now);
 
     requireThat(age, "age").isEqualTo(Duration.ZERO);
+  }
+
+  /**
+   * Verifies that survey output includes corrupt issue directories section.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void surveyOutputIncludesCorruptIssueDirectories() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
+      GetCleanupOutput handler = new GetCleanupOutput(scope);
+      List<GetCleanupOutput.CorruptIssue> corruptIssues = List.of(
+        new GetCleanupOutput.CorruptIssue("2.1-orphaned-issue", "/path/to/2.1-orphaned-issue"));
+
+      String result = handler.getSurveyOutput(
+        List.of(),
+        List.of(),
+        List.of(),
+        List.of(),
+        null,
+        corruptIssues);
+
+      requireThat(result, "result").contains("⚠ Corrupt Issue Directories");
+      requireThat(result, "result").contains("2.1-orphaned-issue");
+    }
+  }
+
+  /**
+   * Verifies that gatherCorruptIssues detects directories with STATE.md but no PLAN.md.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void gatherCorruptIssuesDetectsStateMdWithoutPlanMd() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
+      // Create a corrupt issue directory: STATE.md present, PLAN.md absent
+      Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+        resolve("v2").resolve("v2.1").resolve("orphaned-issue");
+      Files.createDirectories(issueDir);
+      Files.writeString(issueDir.resolve("STATE.md"), "# State\n- **Status:** open\n");
+
+      GetCleanupOutput handler = new GetCleanupOutput(scope);
+      List<GetCleanupOutput.CorruptIssue> result = handler.gatherCorruptIssues(projectDir);
+
+      requireThat(result, "result").size().isEqualTo(1);
+      requireThat(result.get(0).issueId(), "issueId").isEqualTo("orphaned-issue");
+    }
+    finally
+    {
+      deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that gatherCorruptIssues does not flag directories with both STATE.md and PLAN.md.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void gatherCorruptIssuesIgnoresValidIssueDirectories() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
+      // Create a valid issue directory: both STATE.md and PLAN.md present
+      Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+        resolve("v2").resolve("v2.1").resolve("valid-issue");
+      Files.createDirectories(issueDir);
+      Files.writeString(issueDir.resolve("STATE.md"), "# State\n- **Status:** open\n");
+      Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nDo something.\n");
+
+      GetCleanupOutput handler = new GetCleanupOutput(scope);
+      List<GetCleanupOutput.CorruptIssue> result = handler.gatherCorruptIssues(projectDir);
+
+      requireThat(result, "result").isEmpty();
+    }
+    finally
+    {
+      deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that gatherCorruptIssues detects directories missing PLAN.md even when STATE.md is also absent.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void gatherCorruptIssuesDetectsMissingPlanMdWithNoStateMd() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
+      // Create an issue directory with neither STATE.md nor PLAN.md
+      Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+        resolve("v2").resolve("v2.1").resolve("empty-issue");
+      Files.createDirectories(issueDir);
+      // Deliberately no STATE.md and no PLAN.md
+
+      GetCleanupOutput handler = new GetCleanupOutput(scope);
+      List<GetCleanupOutput.CorruptIssue> result = handler.gatherCorruptIssues(projectDir);
+
+      requireThat(result, "result").size().isEqualTo(1);
+      requireThat(result.get(0).issueId(), "issueId").isEqualTo("empty-issue");
+    }
+    finally
+    {
+      deleteDirectoryRecursively(projectDir);
+    }
   }
 }

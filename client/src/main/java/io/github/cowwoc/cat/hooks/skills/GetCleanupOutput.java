@@ -38,6 +38,7 @@ public final class GetCleanupOutput implements SkillOutput
 {
   private static final Pattern CAT_BRANCH_PATTERN = Pattern.compile("(release/|worktree|\\d+\\.\\d+-)");
   private static final Pattern STALE_REMOTE_PATTERN = Pattern.compile("origin/\\d+\\.\\d+-");
+  private static final Pattern VERSION_DIR_PATTERN = Pattern.compile("^v\\d+(\\.\\d+){0,2}$");
   private static final Duration MIN_STALE_AGE = Duration.ofDays(1);
   private static final Duration MAX_STALE_AGE = Duration.ofDays(7);
 
@@ -166,6 +167,29 @@ public final class GetCleanupOutput implements SkillOutput
   }
 
   /**
+   * Represents a corrupt issue directory entry for display.
+   *
+   * @param issueId the issue ID
+   * @param issuePath the absolute path to the issue directory
+   */
+  public record CorruptIssue(String issueId, String issuePath)
+  {
+    /**
+     * Creates a corrupt issue entry.
+     *
+     * @param issueId the issue ID
+     * @param issuePath the absolute path to the issue directory
+     * @throws NullPointerException if any parameter is null
+     * @throws IllegalArgumentException if issueId or issuePath is blank
+     */
+    public CorruptIssue
+    {
+      requireThat(issueId, "issueId").isNotBlank();
+      requireThat(issuePath, "issuePath").isNotBlank();
+    }
+  }
+
+  /**
    * Represents removed counts for verification display.
    *
    * @param locks the number of locks removed
@@ -243,8 +267,67 @@ public final class GetCleanupOutput implements SkillOutput
     List<String> branches = gatherBranches(projectDir);
     List<StaleRemote> staleRemotes = gatherStaleRemotes(projectDir);
     String contextFile = gatherContextFile(projectDir);
+    List<CorruptIssue> corruptIssues = gatherCorruptIssues(projectDir);
 
-    return getSurveyOutput(worktrees, locks, branches, staleRemotes, contextFile);
+    return getSurveyOutput(worktrees, locks, branches, staleRemotes, contextFile, corruptIssues);
+  }
+
+  /**
+   * Scans all issue directories under {@code .claude/cat/issues/} for the corrupt condition
+   * (STATE.md present, PLAN.md absent).
+   *
+   * @param projectDir the project root directory
+   * @return list of corrupt issue entries (empty if none found or directory does not exist)
+   * @throws NullPointerException if {@code projectDir} is null
+   */
+  public List<CorruptIssue> gatherCorruptIssues(Path projectDir)
+  {
+    requireThat(projectDir, "projectDir").isNotNull();
+
+    Path issuesRoot = projectDir.resolve(".claude").resolve("cat").resolve("issues");
+    if (!Files.isDirectory(issuesRoot))
+      return List.of();
+
+    List<CorruptIssue> result = new ArrayList<>();
+    scanForCorruptIssues(issuesRoot, result);
+    return result;
+  }
+
+  /**
+   * Recursively scans issue directories for the corrupt condition.
+   *
+   * @param dir the directory to scan
+   * @param result the list to append corrupt issue entries to
+   */
+  private void scanForCorruptIssues(Path dir, List<CorruptIssue> result)
+  {
+    try (java.util.stream.Stream<Path> entries = Files.list(dir))
+    {
+      for (Path entry : entries.toList())
+      {
+        if (!Files.isDirectory(entry))
+          continue;
+
+        String dirName = entry.getFileName().toString();
+        if (VERSION_DIR_PATTERN.matcher(dirName).matches())
+        {
+          // Version directory (e.g. v2, v2.1) — recurse into it
+          scanForCorruptIssues(entry, result);
+          continue;
+        }
+
+        Path planMd = entry.resolve("PLAN.md");
+        if (!Files.isRegularFile(planMd))
+        {
+          // Issue directory with PLAN.md absent — corrupt
+          result.add(new CorruptIssue(dirName, entry.toString()));
+        }
+      }
+    }
+    catch (IOException _)
+    {
+      // Skip unreadable directories
+    }
   }
 
   /**
@@ -542,17 +625,19 @@ public final class GetCleanupOutput implements SkillOutput
    * @param branches the list of branch names found
    * @param staleRemotes the list of stale remotes found
    * @param contextFile the context file path (may be null)
+   * @param corruptIssues the list of corrupt issue directories found
    * @return the formatted survey display
    * @throws NullPointerException if any list parameter is null
    */
   public String getSurveyOutput(List<Worktree> worktrees, List<Lock> locks,
                                 List<String> branches, List<StaleRemote> staleRemotes,
-                                String contextFile)
+                                String contextFile, List<CorruptIssue> corruptIssues)
   {
     requireThat(worktrees, "worktrees").isNotNull();
     requireThat(locks, "locks").isNotNull();
     requireThat(branches, "branches").isNotNull();
     requireThat(staleRemotes, "staleRemotes").isNotNull();
+    requireThat(corruptIssues, "corruptIssues").isNotNull();
 
     DisplayUtils display = scope.getDisplayUtils();
     List<String> allInnerBoxes = new ArrayList<>();
@@ -604,6 +689,15 @@ public final class GetCleanupOutput implements SkillOutput
     allInnerBoxes.addAll(display.buildInnerBox(staleRemotesHeader, remoteItems));
     allInnerBoxes.add("");
 
+    // Corrupt issues inner box
+    List<String> corruptItems = new ArrayList<>();
+    for (CorruptIssue corrupt : corruptIssues)
+      corruptItems.add(corrupt.issueId() + ": " + corrupt.issuePath());
+    if (corruptItems.isEmpty())
+      corruptItems.add("None found");
+    allInnerBoxes.addAll(display.buildInnerBox("⚠ Corrupt Issue Directories", corruptItems));
+    allInnerBoxes.add("");
+
     // Context file line
     if (contextFile != null && !contextFile.isEmpty())
       allInnerBoxes.add(DisplayUtils.EMOJI_MEMO + " Context: " + contextFile);
@@ -616,7 +710,8 @@ public final class GetCleanupOutput implements SkillOutput
 
     // Summary counts
     String counts = "Found: " + worktrees.size() + " worktrees, " + locks.size() +
-                    " locks, " + branches.size() + " branches, " + staleRemotes.size() + " stale remotes";
+                    " locks, " + branches.size() + " branches, " + staleRemotes.size() +
+                    " stale remotes, " + corruptIssues.size() + " corrupt issue directories";
 
     return finalBox + "\n" +
            "\n" +

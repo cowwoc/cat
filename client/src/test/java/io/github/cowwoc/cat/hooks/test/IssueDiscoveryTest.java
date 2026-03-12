@@ -566,7 +566,7 @@ public class IssueDiscoveryTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       DiscoveryResult.Found found = new DiscoveryResult.Found(
-        "2.1-my-feature", "2", "1", "", "my-feature", "/path/to/issue", "all", false);
+        "2.1-my-feature", "2", "1", "", "my-feature", "/path/to/issue", "all", false, false);
 
       String json = found.toJson(mapper);
 
@@ -1160,7 +1160,7 @@ public class IssueDiscoveryTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       DiscoveryResult.Found found = new DiscoveryResult.Found(
-        "2.1.3-patch-fix", "2", "1", "3", "patch-fix", "/path/to/issue", "all", false);
+        "2.1.3-patch-fix", "2", "1", "3", "patch-fix", "/path/to/issue", "all", false, false);
 
       String json = found.toJson(mapper);
 
@@ -1291,7 +1291,7 @@ public class IssueDiscoveryTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       DiscoveryResult.Found found = new DiscoveryResult.Found(
-        "2-my-feature", "2", "", "", "my-feature", "/path/to/issue", "all", false);
+        "2-my-feature", "2", "", "", "my-feature", "/path/to/issue", "all", false, false);
 
       String json = found.toJson(mapper);
 
@@ -1351,6 +1351,16 @@ public class IssueDiscoveryTest
       """.formatted(status, dependencies);
 
     Files.writeString(issueDir.resolve("STATE.md"), stateContent);
+
+    String planContent = """
+      # Plan: %s
+
+      ## Goal
+
+      Test issue for %s.
+      """.formatted(issueName, issueName);
+
+    Files.writeString(issueDir.resolve("PLAN.md"), planContent);
   }
 
   /**
@@ -2022,6 +2032,137 @@ public class IssueDiscoveryTest
 
         String lockContent = Files.readString(lockFile);
         requireThat(lockContent, "lockContent").contains(worktreePath.toString());
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that isCorrupt is true when STATE.md exists but PLAN.md is missing.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void foundResultIsCorruptWhenStateMdExistsButNoPlanMd() throws IOException
+  {
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      try
+      {
+        String sessionId = UUID.randomUUID().toString();
+
+        // Create issue directory with STATE.md only (no PLAN.md)
+        Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+          resolve("v2").resolve("v2.1").resolve("corrupt-feature");
+        Files.createDirectories(issueDir);
+
+        String stateContent = """
+          # State
+
+          - **Status:** open
+          - **Progress:** 0%
+          - **Dependencies:** []
+          - **Blocks:** []
+          """;
+        Files.writeString(issueDir.resolve("STATE.md"), stateContent);
+        // Deliberately no PLAN.md — this is the corrupt condition
+
+        IssueDiscovery discovery = new IssueDiscovery(scope);
+        SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
+        DiscoveryResult result = discovery.findNextIssue(options);
+
+        requireThat(result, "result").isInstanceOf(DiscoveryResult.Found.class);
+        DiscoveryResult.Found found = (DiscoveryResult.Found) result;
+        requireThat(found.issueId(), "issueId").isEqualTo("2.1-corrupt-feature");
+        requireThat(found.isCorrupt(), "isCorrupt").isTrue();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that isCorrupt is false when both STATE.md and PLAN.md exist.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void foundResultIsNotCorruptWhenBothStateMdAndPlanMdExist() throws IOException
+  {
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      try
+      {
+        String sessionId = UUID.randomUUID().toString();
+        createIssue(projectDir, "2", "1", "valid-feature", "open");
+
+        IssueDiscovery discovery = new IssueDiscovery(scope);
+        SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
+        DiscoveryResult result = discovery.findNextIssue(options);
+
+        requireThat(result, "result").isInstanceOf(DiscoveryResult.Found.class);
+        DiscoveryResult.Found found = (DiscoveryResult.Found) result;
+        requireThat(found.issueId(), "issueId").isEqualTo("2.1-valid-feature");
+        requireThat(found.isCorrupt(), "isCorrupt").isFalse();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that constructing a Found record with both isCorrupt=true and createStateMd=true
+   * is valid (directory has neither STATE.md nor PLAN.md).
+   */
+  @Test
+  public void foundRecordAllowsIsCorruptAndCreateStateMdBothTrue()
+  {
+    DiscoveryResult.Found found = new DiscoveryResult.Found("2.1-some-issue", "2", "1", "", "some-issue",
+      "/path/to/issue", "all", true, true);
+    requireThat(found.isCorrupt(), "isCorrupt").isTrue();
+    requireThat(found.createStateMd(), "createStateMd").isTrue();
+  }
+
+  /**
+   * Verifies that isCorrupt is true and createStateMd is true when an issue directory has neither
+   * STATE.md nor PLAN.md.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void foundResultIsCorruptAndCreateStateMdWhenNeitherFileExists() throws IOException
+  {
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      try
+      {
+        String sessionId = UUID.randomUUID().toString();
+
+        // Create issue directory with neither STATE.md nor PLAN.md
+        Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+          resolve("v2").resolve("v2.1").resolve("empty-feature");
+        Files.createDirectories(issueDir);
+        // Deliberately no STATE.md and no PLAN.md
+
+        IssueDiscovery discovery = new IssueDiscovery(scope);
+        SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
+        DiscoveryResult result = discovery.findNextIssue(options);
+
+        requireThat(result, "result").isInstanceOf(DiscoveryResult.Found.class);
+        DiscoveryResult.Found found = (DiscoveryResult.Found) result;
+        requireThat(found.issueId(), "issueId").isEqualTo("2.1-empty-feature");
+        requireThat(found.isCorrupt(), "isCorrupt").isTrue();
+        requireThat(found.createStateMd(), "createStateMd").isTrue();
       }
       finally
       {

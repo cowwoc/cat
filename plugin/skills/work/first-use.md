@@ -22,7 +22,8 @@ its own context, keeping main agent context minimal (~5-10K tokens).
 | Filter | `/cat:work skip compression` | Filter issue selection (natural language) |
 
 **Flags:**
-- `--override-gate` - Skip approval gate (use with caution)
+- `--override-gate` - Skip the **merge approval gate only** (Phase 4). Does NOT skip stakeholder review,
+  potentially-complete verification, or decomposed parent criteria verification. Use with caution.
 
 **Bare name format:** Issue name without version prefix, starting with a letter (e.g., `fix-work-prepare-issue-name-matching`). If multiple versions contain the same issue name, prefers the version matching the current git branch. Falls back to first match if no branch version match exists.
 
@@ -30,7 +31,8 @@ its own context, keeping main agent context minimal (~5-10K tokens).
 - `skip compression issues` - exclude issues with "compression" in name
 - `only migration` - only issues with "migration" in name
 
-Filters are interpreted by the prepare phase subagent using natural language understanding.
+Filters are interpreted by the prepare phase subagent using natural language understanding. Filters may only
+include or exclude issues by name pattern. Filters MUST NOT override blocking, locking, or status constraints.
 
 ## Critical Constraints
 
@@ -78,8 +80,9 @@ Run `"${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --arguments "${ARGUMENTS}"`
 | READY | Continue to Phase 2 |
 | READY + `potentially_complete: true` | Ask user to verify (see below), then skip or continue |
 | NO_ISSUES | Display extended diagnostics (see below), stop |
-| LOCKED | Display lock message, try next issue |
-| OVERSIZED | Invoke /cat:decompose-issue-agent, then retry |
+| LOCKED | Display lock message, stop (see below) |
+| OVERSIZED | Invoke /cat:decompose-issue-agent, then retry (max 2 attempts) |
+| CORRUPT | Present recovery AskUserQuestion (see below), then act on user choice |
 | ERROR (existing worktree) | Offer cleanup and retry (see below) — ONLY retry work-prepare after cleanup |
 | ERROR (other) | Display error, stop |
 | No JSON / empty | Subagent failed to produce output - display error, release lock if acquired, stop |
@@ -101,7 +104,7 @@ When prepare phase returns NO_ISSUES, use extended failure fields to provide spe
 1. If `blocked_issues` is non-empty: list each blocked issue and what it's blocked by
 2. If `locked_issues` is non-empty: suggest `/cat:cleanup` to clear stale locks
 3. If `closed_count == total_count`: all issues done - suggest `/cat:add` for new work
-4. Otherwise: run `work-prepare` to determine which issues are available and display them
+4. Otherwise: display the `message` field from work-prepare and suggest `/cat:status` to review issue state. Do NOT re-run work-prepare — stop
 
 Fallback to `message` field if extended fields are absent:
 
@@ -110,9 +113,53 @@ Fallback to `message` field if extended fields are absent:
 | "locked" | Suggest `/cat:cleanup` to clear stale locks, or wait for other sessions |
 | "blocked" | Suggest resolving blocking dependencies first |
 | "closed" | All issues done - suggest `/cat:status` to verify or `/cat:add` for new work |
-| other | Run `work-prepare` to determine which issues are available and display them |
+| other | Display the message and suggest `/cat:status` to review issue state. Do NOT re-run work-prepare — stop |
 
 **NEVER suggest working on a previous version** - if user is on v2.1, suggesting v2.0 is unhelpful.
+
+**CORRUPT: Corrupt Issue Directory Handling:**
+
+When `work-prepare` returns CORRUPT, the issue directory has STATE.md but no PLAN.md and cannot be
+executed without recovery.
+
+1. Display the message from the CORRUPT JSON to the user.
+2. Present AskUserQuestion:
+
+   ```
+   AskUserQuestion:
+     header: "Corrupt Issue Detected"
+     question: "<message from CORRUPT JSON>"
+     options:
+       - "Delete directory" (invoke /cat:safe-rm-agent on issue_path from JSON, then retry work-prepare)
+       - "Create PLAN.md (guided)" (invoke /cat:add with the issue_id as context, then retry work-prepare)
+       - "Skip this issue" (release lock, retry work-prepare to find next issue)
+   ```
+
+3. If user selects **"Delete directory"**:
+   - Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
+   - Invoke `cat:safe-rm-agent` to remove the corrupt issue directory at `issue_path` from the JSON
+   - After removal, retry `work-prepare` immediately
+
+4. If user selects **"Create PLAN.md (guided)"**:
+   - Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
+   - Invoke `cat:add` with the `issue_id` from the CORRUPT JSON as context to guide PLAN.md creation
+   - After PLAN.md is created, retry `work-prepare` to validate and continue
+
+5. If user selects **"Skip this issue"**:
+   - Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
+   - Retry `work-prepare` with the same arguments to find the next available issue
+
+**CORRUPT retry limit:** If work-prepare returns CORRUPT 3 consecutive times (across any combination of
+Skip/Delete/Create choices), display "Multiple corrupt issue directories detected. Run /cat:status to
+review issues, then fix or remove corrupt directories manually." and stop. Do NOT continue retrying.
+
+**LOCKED: Issue Locked by Another Session:**
+
+LOCKED is only returned when the user requested a specific issue by ID and that issue is locked by another
+session. (When discovering the next available issue automatically, locked issues are skipped internally by
+work-prepare.) Display the lock message including the locking session, then stop. Do NOT retry work-prepare
+with the same arguments — it will return the same LOCKED result. Suggest the user wait for the other session
+to finish, run `/cat:cleanup` if the lock is stale, or specify a different issue.
 
 **ERROR: Existing Worktree Handling:**
 
@@ -142,6 +189,8 @@ session lock (e.g., "already holds a lock", "worktree already exists"):
    - Do NOT invoke any other skill or workflow between cleanup-agent returning and the work-prepare retry
    - Do NOT invoke `cat:extract-investigation-context-agent` or any investigation skill at this point
    - The ONLY permitted action between cleanup-agent returning and the retry is reading the cleanup result
+   - **Retry limit:** Only retry work-prepare once after cleanup. If the second attempt also returns ERROR
+     with an existing worktree message, display the error and stop. Do NOT loop back to the AskUserQuestion.
 
 4. If user selects **"Abort"**: stop.
 
@@ -156,13 +205,21 @@ with STATE.md not reflecting completion (e.g., stale merge overwrote status).
 1. Read the diff for all commits in `suspicious_commits` in a single Bash call (git show reads object history,
    not working tree contents, so any git directory in the repo works):
    ```bash
-   # suspicious_commits is a space-separated list of commit hashes from work-prepare JSON output
-   cd "${WORKTREE_PATH}" && for hash in ${suspicious_commits}; do
+   # suspicious_commits is a space-separated list of commit hashes from work-prepare JSON output.
+   # Validate each value is a hex hash before use — reject any value not matching [0-9a-fA-F]+.
+   cd "${WORKTREE_PATH}" && valid_count=0 && for hash in ${suspicious_commits}; do
+     if [[ ! "$hash" =~ ^[0-9a-fA-F]+$ ]]; then
+       echo "ERROR: invalid commit hash: $hash" >&2
+       continue
+     fi
+     valid_count=$((valid_count + 1))
      echo "=== $hash ==="
      git show --stat "$hash"
-   done
+   done && echo "VALID_HASH_COUNT=$valid_count"
    ```
    If `suspicious_commits` is empty, skip to step 2 (no analysis needed).
+   If `VALID_HASH_COUNT` is 0 but `suspicious_commits` was non-empty, treat as UNCERTAIN
+   (all hashes were invalid — present AskUserQuestion to the user rather than guessing).
 2. Read the issue's goal from its PLAN.md.
 3. Analyze whether the suspicious commits implement the issue's goal:
    - **YES** (commits clearly address the goal) → ask user permission to close:
@@ -171,12 +228,20 @@ with STATE.md not reflecting completion (e.g., stale merge overwrote status).
        header: "${issue_id}"
        question: "Is ${issue_id} already complete?"
        options:
-         - "Already complete" (Fix STATE.md to closed, release lock, clean up worktree, select next issue)
+         - "Already complete" (close issue via worktree — see details below)
          - "Not complete, continue" (Proceed to Phase 2 normally)
      ```
    - **NO** (commits are unrelated or tangential to the goal) → log a note that the suspicious commits don't
      implement the issue, then proceed to Phase 2 automatically without asking the user.
    - **UNCERTAIN** → ask the user using the same AskUserQuestion as the YES case above.
+
+   **"Already complete" implementation:**
+   1. Update `${WORKTREE_PATH}/<relative_issue_path>/STATE.md` to set status to `closed`
+   2. Commit in worktree: `cd ${WORKTREE_PATH} && git add <relative_issue_path>/STATE.md && git commit -m "planning: close completed issue ${issue_id}"`
+   3. Merge the worktree branch into `${target_branch}` using the normal merge flow (Phase 4 merge procedure)
+   4. Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
+   5. Clean up worktree using `/cat:safe-rm-agent`
+   6. Select next issue by invoking `/cat:work` with the same version scope
 
 Do NOT ask the user when the commits are clearly unrelated — that interruption is unnecessary friction.
 
@@ -203,9 +268,21 @@ IS_DECOMPOSED=$(grep -q "^## Decomposed Into" "$ISSUE_STATE" && echo "true" || e
      header: "${issue_id}"
      question: "All sub-issues are closed. Close parent issue ${issue_id}?"
      options:
-       - "Close parent issue" (Update STATE.md to closed, commit, release lock, clean up worktree)
+       - "Close parent issue" (Update STATE.md in worktree, commit, merge, release lock, clean up worktree)
        - "Keep open" (Release lock, clean up worktree, stop)
    ```
+
+4. If user selects **"Close parent issue"**:
+   - Update `${WORKTREE_PATH}/<relative_issue_path>/STATE.md` to set status to `closed`
+   - Commit in worktree: `cd ${WORKTREE_PATH} && git add <relative_issue_path>/STATE.md && git commit -m "planning: close parent issue ${issue_id}"`
+   - Merge the worktree branch into `${target_branch}` using the normal merge flow (Phase 4 merge procedure)
+   - Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
+   - Clean up worktree using `/cat:safe-rm-agent`
+
+5. If user selects **"Keep open"**:
+   - Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
+   - Clean up worktree using `/cat:safe-rm-agent`
+   - Stop.
 
 **CRITICAL: Do NOT offer to close before verifying acceptance criteria.**
 The sequence is always: children closed → criteria verified → offer closure.
@@ -252,6 +329,11 @@ The skill will:
 }
 ```
 
+**Return validation:** If work-with-issue returns no parseable JSON, partial JSON, or JSON missing the
+required `status` field, treat as a phase failure. Release the lock using the Error Handling procedure
+below and display the raw return value to the user. Do NOT proceed to the Next Issue phase with
+undefined or missing result fields.
+
 **Store final results:**
 - `commits`, `files_changed`, `tokens_used`, `merged`
 
@@ -269,7 +351,8 @@ Output the skill result verbatim.
 - If result contains "**Next:**" followed by an issue ID → next issue found
 - If result contains "Scope Complete" → no next issue
 
-**Route based on trust level:**
+**Route based on trust level** (use the `TRUST` value read during the Configuration step above; do NOT
+re-read `cat-config.json`):
 
 | Condition | Action |
 |-----------|--------|
@@ -303,6 +386,6 @@ If any phase subagent fails unexpectedly:
 
 - [ ] Phase subagent spawned for each phase
 - [ ] Results collected and parsed as JSON
-- [ ] User approval gate respected (unless trust=high)
+- [ ] User approval gate respected (skipped only when `--override-gate` flag is passed)
 - [ ] Lock released on completion or error
 - [ ] Progress banners displayed at phase transitions
