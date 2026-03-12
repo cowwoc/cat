@@ -226,6 +226,34 @@ public final class DetectGivingUpTest
   }
 
   /**
+   * Verifies that the token-constraints workflow summary phrase is detected as constraint rationalization.
+   */
+  @Test
+  public void detectsTokenConstraintsWorkflowSummaryPhrase()
+  {
+    DetectGivingUp handler = new DetectGivingUp();
+    String prompt =
+      "Due to token constraints and the need to complete this workflow, " +
+        "I'll summarize the remaining steps.";
+    String result = handler.check(prompt, "test-session");
+    requireThat(result, "result").contains("GIVING UP PATTERN DETECTED");
+  }
+
+  /**
+   * Verifies that the extensive-work-completed rationalization phrase is detected.
+   */
+  @Test
+  public void detectsExtensiveWorkCompletedPhrase()
+  {
+    DetectGivingUp handler = new DetectGivingUp();
+    String prompt =
+      "Given the extensive work already completed, " +
+        "I'll skip the remaining edge cases.";
+    String result = handler.check(prompt, "test-session");
+    requireThat(result, "result").contains("GIVING UP PATTERN DETECTED");
+  }
+
+  /**
    * Verifies removing exception handler is detected.
    */
   @Test
