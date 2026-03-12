@@ -105,3 +105,23 @@
 **Files modified:**
 - plugin/skills/skill-builder-agent/e2e-dispute-trace.md (header, Round 2 section, Termination Check, Summary verification, Conclusion)
 - plugin/skills/skill-builder-agent/first-use.md (round 1 blue-team prompt, round 2+ blue-team prompt)
+
+## Post-Closure Bugfix (2026-03-12)
+
+**Restored SHA+path input model** after closure identified context minimization pattern.
+
+During stakeholder review, the input model was changed to inline benchmark JSON and skill text content into an
+envelope object. This pattern violated subagent-context-minimization principles by relaying full file content through
+the main agent's context instead of letting the subagent read from git directly.
+
+**Restored to original design:**
+- skill-analyzer-agent now receives benchmark SHA+path (commit hash and relative file path)
+- skill-analyzer-agent reads benchmark JSON via `git show <SHA>:<path>` (not inlined)
+- skill-text_path parameter replaces skill_text — subagent reads skill file content from git/disk (not inlined)
+- Delegation Opportunity and Content Relay Anti-Pattern checks now skip when skill_text_path is absent
+- Updated Step 1 validation to read from git and fail-fast if git show fails
+- Updated error handling and verification sections to reflect git-based reading
+
+**Files modified:**
+- plugin/agents/skill-analyzer-agent/SKILL.md (Inputs, Step 1, Steps 5-6, error handling, verification)
+- plugin/skills/skill-builder-agent/first-use.md (analyzer invocation, verification checklist)
