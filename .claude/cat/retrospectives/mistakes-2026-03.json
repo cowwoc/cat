@@ -1805,5 +1805,19 @@
     "prevention_verified" : false,
     "recurrence_of" : null,
     "correct_behavior" : ""
+  }, {
+    "id" : "M536",
+    "timestamp" : "2026-03-12T09:11:38Z",
+    "category" : "incorrect_implementation",
+    "description" : "Agent ambiguously reported rebase status when local and origin branches had diverged, prompting the user to ask whether the rebase was onto local or origin/v2.1. The agent did not clearly apply the rule that branch names refer to local branches first.",
+    "root_cause" : "The rule exists in git-operations.md but is not co-located with git-rebase-agent/first-use.md. When performing a rebase, the agent reads git-rebase-agent skill content but not git-operations.md, so the branch resolution rule was unavailable at decision time.",
+    "cause_signature" : "knowledge_gap:doc_missing:git_operations",
+    "prevention_type" : "skill",
+    "prevention_path" : "plugin/skills/git-rebase-agent/first-use.md",
+    "pattern_keywords" : [ "branch", "local", "remote", "origin", "rebase" ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "correct_behavior" : "When TARGET_BRANCH is a plain branch name (e.g. v2.1), resolve to local branch. Report rebase result as rebased onto local v2.1 (not origin/v2.1)."
   } ]
 }
