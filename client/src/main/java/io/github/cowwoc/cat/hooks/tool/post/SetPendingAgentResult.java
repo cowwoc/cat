@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.tool.post;
 
-import static io.github.cowwoc.cat.hooks.Strings.WORK_EXECUTE_SUBAGENT_TYPE;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
@@ -24,14 +23,10 @@ import java.nio.file.Path;
  * Sets a pending-agent-result flag file when the main agent completes an Agent tool invocation
  * in a work-with-issue context.
  * <p>
- * When the main agent (not a subagent) completes an Agent tool invocation with
- * {@code subagent_type: cat:work-execute} and an active worktree lock exists for the session,
- * this handler creates a flag file at
+ * When the main agent (not a subagent) completes an Agent tool invocation and an active worktree
+ * lock exists for the session, this handler creates a flag file at
  * {@code {sessionBasePath}/{sessionId}/pending-agent-result}. The flag signals that
  * {@code collect-results-agent} must be invoked before any subsequent Task or Skill call.
- * <p>
- * Agent invocations with any other {@code subagent_type} (e.g. adversarial agents) do not
- * produce worktree artifacts and are skipped without creating the flag.
  * <p>
  * This handler always returns {@link Result#allow()} — it never blocks the Agent tool itself.
  * Failures during flag file creation are logged but do not propagate.
@@ -75,22 +70,6 @@ public final class SetPendingAgentResult implements PostToolHandler
         agentId = "";
       // agentId is used only as a presence check (non-empty = subagent); no path construction, so no injection risk
       if (!agentId.isEmpty())
-        return Result.allow();
-
-      // Only enforce collect-results gate for cat:work-execute subagents.
-      // Check subagent_type BEFORE the expensive WorktreeContext lookup.
-      // Other agent types (adversarial, red-team, blue-team, diff-validation) produce no worktree artifacts.
-      JsonNode toolInputNode = null;
-      if (hookData != null)
-        toolInputNode = hookData.get("tool_input");
-      boolean isWorkExecute = false;
-      if (toolInputNode != null)
-      {
-        JsonNode subagentTypeNode = toolInputNode.get("subagent_type");
-        if (subagentTypeNode != null && subagentTypeNode.isString())
-          isWorkExecute = WORK_EXECUTE_SUBAGENT_TYPE.equalsIgnoreCase(subagentTypeNode.asString());
-      }
-      if (!isWorkExecute)
         return Result.allow();
 
       // Only applies when an active worktree lock exists (work-with-issue context)

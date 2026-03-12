@@ -18,11 +18,6 @@ public final class Strings
    */
   public static final int DESCRIPTION_MAX_LENGTH = 60;
 
-  /**
-   * The subagent_type identifier for work-execute subagents spawned by the work-with-issue workflow.
-   */
-  public static final String WORK_EXECUTE_SUBAGENT_TYPE = "cat:work-execute";
-
   private Strings()
   {
     // Prevent instantiation
