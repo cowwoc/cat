@@ -82,6 +82,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - add-giving-up-detection-phrases
 - detect-corrupt-issue-directories
 - relocate-claude-cat-to-cat
+- optimize-collect-results-gate
 
 
 ## Issues Closed
