@@ -27,6 +27,7 @@ import io.github.cowwoc.cat.hooks.IssueStatus;
 import io.github.cowwoc.cat.hooks.licensing.LicenseResult;
 import io.github.cowwoc.cat.hooks.licensing.LicenseValidator;
 import io.github.cowwoc.cat.hooks.licensing.Tier;
+import io.github.cowwoc.cat.hooks.skills.GetCleanupOutput.CorruptIssue;
 import io.github.cowwoc.cat.hooks.util.IssueDiscovery;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
@@ -125,6 +126,9 @@ public final class GetStatusOutput implements SkillOutput
 
     IssueDiscovery issueDiscovery = new IssueDiscovery(scope);
     StatusData data = new StatusData();
+
+    GetCleanupOutput cleanupOutput = new GetCleanupOutput(scope);
+    data.corruptIssues.addAll(cleanupOutput.gatherCorruptIssues(catDir.getParent().getParent()));
 
     Path projectFile = catDir.resolve("PROJECT.md");
     data.projectName = "Unknown Project";
@@ -663,6 +667,15 @@ public final class GetStatusOutput implements SkillOutput
       contentItems.add("");
     }
 
+    if (!data.corruptIssues.isEmpty())
+    {
+      contentItems.add("⚠ Corrupt Issue Directories:");
+      for (CorruptIssue corrupt : data.corruptIssues)
+        contentItems.add("   ⚠ CORRUPT  " + corrupt.issueId() + "  — STATE.md present but PLAN.md missing at " +
+                         corrupt.issuePath());
+      contentItems.add("");
+    }
+
     if (!data.inProgressIssue.isEmpty())
     {
       contentItems.add("📋 Current: /cat:work " + data.currentMinor + "-" + data.inProgressIssue);
@@ -1134,6 +1147,7 @@ public final class GetStatusOutput implements SkillOutput
     String nextIssue = "";
     final List<MajorVersion> majors = new ArrayList<>();
     final List<MinorVersion> minors = new ArrayList<>();
+    final List<CorruptIssue> corruptIssues = new ArrayList<>();
   }
 
   /**

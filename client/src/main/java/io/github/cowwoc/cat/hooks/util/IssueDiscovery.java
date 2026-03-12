@@ -222,10 +222,13 @@ public final class IssueDiscovery
      * @param issueName the bare issue name
      * @param issuePath the absolute path to the issue directory
      * @param scope the scope used to find the issue
-     * @param createStateMd true if the issue directory had no STATE.md file
+     * @param createStateMd true if the issue directory had no STATE.md file (STATE.md is absent and must be
+     *   created)
+     * @param isCorrupt true if PLAN.md is absent (the issue cannot be executed without it); both
+     *   {@code isCorrupt} and {@code createStateMd} can be true when neither file is present
      */
     record Found(String issueId, String major, String minor, String patch, String issueName,
-      String issuePath, String scope, boolean createStateMd) implements DiscoveryResult
+      String issuePath, String scope, boolean createStateMd, boolean isCorrupt) implements DiscoveryResult
     {
       /**
        * Creates a new found result.
@@ -237,7 +240,10 @@ public final class IssueDiscovery
        * @param issueName the bare issue name
        * @param issuePath the absolute path to the issue directory
        * @param scope the scope used to find the issue
-       * @param createStateMd true if the issue directory had no STATE.md file
+       * @param createStateMd true if the issue directory had no STATE.md file (STATE.md is absent and must be
+       *   created)
+       * @param isCorrupt true if PLAN.md is absent (the issue cannot be executed without it); both
+       *   {@code isCorrupt} and {@code createStateMd} can be true when neither file is present
        * @throws IllegalArgumentException if {@code issueId}, {@code major}, {@code issueName},
        *   {@code issuePath} or {@code scope} are blank
        * @throws NullPointerException if {@code minor} or {@code patch} are null
@@ -714,7 +720,9 @@ public final class IssueDiscovery
     }
 
     Path statePath = issueDir.resolve("STATE.md");
+    Path issuePlanPath = issueDir.resolve("PLAN.md");
     boolean createStateMd = !Files.isRegularFile(statePath);
+    boolean isCorrupt = !Files.isRegularFile(issuePlanPath);
     List<String> stateLines;
     String status;
     if (createStateMd)
@@ -789,7 +797,7 @@ public final class IssueDiscovery
     }
 
     return new DiscoveryResult.Found(issueId, major, minor, patch, issueName, issueDir.toString(),
-      "issue", createStateMd);
+      "issue", createStateMd, isCorrupt);
   }
 
   /**
@@ -1056,7 +1064,9 @@ public final class IssueDiscovery
     {
       String issueName = issueDir.getFileName().toString();
       Path statePath = issueDir.resolve("STATE.md");
+      Path planPath = issueDir.resolve("PLAN.md");
       boolean stateMdMissing = !Files.isRegularFile(statePath);
+      boolean isCorrupt = !Files.isRegularFile(planPath);
 
       // Read STATE.md once and reuse across all checks to avoid repeated I/O.
       // If STATE.md is absent, treat the issue as open with no content.
@@ -1133,7 +1143,7 @@ public final class IssueDiscovery
       }
 
       return new DiscoveryResult.Found(issueId, major, minor, patch, issueName, issueDir.toString(),
-        scopeName, stateMdMissing);
+        scopeName, stateMdMissing, isCorrupt);
     }
 
     return null;

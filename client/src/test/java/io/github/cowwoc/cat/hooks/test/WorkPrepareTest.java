@@ -128,6 +128,54 @@ public class WorkPrepareTest
   }
 
   /**
+   * Verifies that execute returns CORRUPT when an issue directory has STATE.md but no PLAN.md.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeReturnsCorruptWhenStateMdExistsButNoPlanMd() throws IOException
+  {
+    Path projectDir = createTempGitCatProject("v2.1");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // Create issue directory with only STATE.md (no PLAN.md) — simulates a corrupt directory
+      Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+        resolve("v2").resolve("v2.1").resolve("corrupt-issue");
+      Files.createDirectories(issueDir);
+
+      String stateContent = """
+        # State
+
+        - **Status:** open
+        - **Progress:** 0%
+        - **Dependencies:** []
+        - **Blocks:** []
+        """;
+      Files.writeString(issueDir.resolve("STATE.md"), stateContent);
+      // Deliberately no PLAN.md — this is the corrupt condition
+
+      GitCommands.runGit(projectDir, "add", ".");
+      GitCommands.runGit(projectDir, "commit", "-m", "Add corrupt issue directory");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("CORRUPT");
+      requireThat(node.path("issue_id").asString(), "issueId").isEqualTo("2.1-corrupt-issue");
+      requireThat(node.path("issue_path").asString(), "issuePath").isNotBlank();
+      requireThat(node.path("message").asString(), "message").contains("PLAN.md");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
    * Verifies that execute returns READY with a valid worktree for an open issue in a git repo.
    *
    * @throws IOException if an I/O error occurs
@@ -908,6 +956,16 @@ public class WorkPrepareTest
       """.formatted(status);
 
     Files.writeString(issueDir.resolve("STATE.md"), stateContent);
+
+    String planContent = """
+      # Plan: %s
+
+      ## Goal
+
+      Test issue for %s.
+      """.formatted(issueName, issueName);
+
+    Files.writeString(issueDir.resolve("PLAN.md"), planContent);
   }
 
   /**
@@ -938,6 +996,16 @@ public class WorkPrepareTest
       """.formatted(status, dependencies);
 
     Files.writeString(issueDir.resolve("STATE.md"), stateContent);
+
+    String planContent = """
+      # Plan: %s
+
+      ## Goal
+
+      Test issue for %s.
+      """.formatted(issueName, issueName);
+
+    Files.writeString(issueDir.resolve("PLAN.md"), planContent);
   }
 
   /**
@@ -2257,6 +2325,7 @@ public class WorkPrepareTest
         - **Dependencies:** []
         - **Blocks:** []
         """);
+      Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nTest goal\n");
       GitCommands.runGit(projectDir, "add", ".");
       GitCommands.runGit(projectDir, "commit", "-m", "Add issue with missing status field");
 

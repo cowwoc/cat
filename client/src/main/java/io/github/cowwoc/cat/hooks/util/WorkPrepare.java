@@ -170,6 +170,7 @@ public final class WorkPrepare
    *   <li>{@code NO_ISSUES} - no executable issues found</li>
    *   <li>{@code LOCKED} - selected issue is locked by another session</li>
    *   <li>{@code OVERSIZED} - estimated tokens exceed hard limit</li>
+   *   <li>{@code CORRUPT} - issue directory has STATE.md but no PLAN.md</li>
    *   <li>{@code ERROR} - unexpected error during preparation</li>
    * </ul>
    *
@@ -254,6 +255,18 @@ public final class WorkPrepare
     String minor = found.minor();
     String issueName = found.issueName();
     Path issuePath = Path.of(found.issuePath());
+
+    // Check for corrupt directory (STATE.md present, PLAN.md absent)
+    if (found.isCorrupt())
+    {
+      Map<String, Object> corruptResult = new LinkedHashMap<>();
+      corruptResult.put("status", "CORRUPT");
+      corruptResult.put("issue_id", issueId);
+      corruptResult.put("issue_path", issuePath.toString());
+      corruptResult.put("message", "Issue directory is corrupt: STATE.md exists but PLAN.md is " +
+        "missing at " + issuePath);
+      return mapper.writeValueAsString(corruptResult);
+    }
 
     // Get target branch (current branch in project dir)
     String targetBranch = GitCommands.getCurrentBranch(projectDir.toString());
