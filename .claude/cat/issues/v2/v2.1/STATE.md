@@ -80,6 +80,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - add-subagent-context-minimization-concept
 - add-context-minimization-to-skill-builder-analysis
 - add-giving-up-detection-phrases
+- detect-corrupt-issue-directories
 
 
 ## Issues Closed
