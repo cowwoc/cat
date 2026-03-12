@@ -65,7 +65,7 @@ public final class SetPendingAgentResultTest
   }
 
   /**
-   * Creates a hook data JSON node with the given agent_id.
+   * Creates a hook data JSON node with the given agent_id and no subagent_type.
    *
    * @param mapper the JSON mapper
    * @param agentId the agent ID value (empty string for main agent)
@@ -77,6 +77,70 @@ public final class SetPendingAgentResultTest
     if (agentId.isEmpty())
       return mapper.readTree("{\"session_id\": \"test\"}");
     return mapper.readTree("{\"session_id\": \"test\", \"agent_id\": \"" + agentId + "\"}");
+  }
+
+  /**
+   * Creates a hook data JSON node with the given agent_id and subagent_type in tool_input.
+   *
+   * @param mapper the JSON mapper
+   * @param agentId the agent ID value (empty string for main agent)
+   * @param subagentType the subagent_type value (e.g. "cat:work-execute"), or null to omit subagent_type field
+   * @return the hook data JSON node
+   * @throws IOException if JSON cannot be parsed
+   */
+  private static JsonNode createHookDataWithSubagentType(JsonMapper mapper, String agentId,
+    String subagentType) throws IOException
+  {
+    String toolInput;
+    if (subagentType != null)
+      toolInput = "\"tool_input\": {\"subagent_type\": \"" + subagentType + "\"}";
+    else
+      toolInput = "\"tool_input\": {}";
+    String agentIdField;
+    if (agentId.isEmpty())
+      agentIdField = "";
+    else
+      agentIdField = ", \"agent_id\": \"" + agentId + "\"";
+    return mapper.readTree("{\"session_id\": \"test\"" + agentIdField + ", " + toolInput + "}");
+  }
+
+  /**
+   * Creates a hook data JSON node with the given agent_id and NO tool_input field.
+   *
+   * @param mapper the JSON mapper
+   * @param agentId the agent ID value (empty string for main agent)
+   * @return the hook data JSON node without a tool_input field
+   * @throws IOException if JSON cannot be parsed
+   */
+  private static JsonNode createHookDataWithoutToolInput(JsonMapper mapper, String agentId)
+    throws IOException
+  {
+    String agentIdField;
+    if (agentId.isEmpty())
+      agentIdField = "";
+    else
+      agentIdField = ", \"agent_id\": \"" + agentId + "\"";
+    return mapper.readTree("{\"session_id\": \"test\"" + agentIdField + "}");
+  }
+
+  /**
+   * Creates a hook data JSON node with a non-string subagent_type value in tool_input.
+   *
+   * @param mapper the JSON mapper
+   * @param agentId the agent ID value (empty string for main agent)
+   * @return the hook data JSON node with a non-string subagent_type (JSON number)
+   * @throws IOException if JSON cannot be parsed
+   */
+  private static JsonNode createHookDataWithNonStringSubagentType(JsonMapper mapper, String agentId)
+    throws IOException
+  {
+    String agentIdField;
+    if (agentId.isEmpty())
+      agentIdField = "";
+    else
+      agentIdField = ", \"agent_id\": \"" + agentId + "\"";
+    return mapper.readTree(
+      "{\"session_id\": \"test\"" + agentIdField + ", \"tool_input\": {\"subagent_type\": 42}}");
   }
 
   /**
@@ -100,7 +164,7 @@ public final class SetPendingAgentResultTest
       worktreePath = createWorktreeDir(mainRepo, scope, issueId);
 
       SetPendingAgentResult handler = new SetPendingAgentResult(scope);
-      JsonNode hookData = createHookData(mapper, "");
+      JsonNode hookData = createHookDataWithSubagentType(mapper, "", "cat:work-execute");
       JsonNode toolResult = mapper.readTree("{}");
 
       PostToolHandler.Result result = handler.check("Agent", toolResult, sessionId, hookData);
@@ -259,7 +323,7 @@ public final class SetPendingAgentResultTest
       Files.writeString(sessionDir, "blocking");
 
       SetPendingAgentResult handler = new SetPendingAgentResult(scope);
-      JsonNode hookData = createHookData(mapper, "");
+      JsonNode hookData = createHookDataWithSubagentType(mapper, "", "cat:work-execute");
       JsonNode toolResult = mapper.readTree("{}");
 
       // Should return allow despite the IO error
@@ -271,6 +335,233 @@ public final class SetPendingAgentResultTest
     finally
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that when the main agent completes an Agent tool invocation with no tool_input field
+   * in hookData and an active lock, no flag file is created.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void agentToolWithNoToolInputDoesNotCreateFlagFile() throws IOException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("v2.1");
+    Path worktreePath = null;
+    String sessionId = UUID.randomUUID().toString();
+    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      String issueId = "2.1-test-issue";
+
+      createLockFile(scope, sessionId, issueId);
+      worktreePath = createWorktreeDir(mainRepo, scope, issueId);
+
+      SetPendingAgentResult handler = new SetPendingAgentResult(scope);
+      // hookData has no tool_input field at all
+      JsonNode hookData = createHookDataWithoutToolInput(mapper, "");
+      JsonNode toolResult = mapper.readTree("{}");
+
+      PostToolHandler.Result result = handler.check("Agent", toolResult, sessionId, hookData);
+
+      requireThat(result.warning(), "warning").isEmpty();
+      Path flagPath = scope.getSessionBasePath().resolve(sessionId).resolve("pending-agent-result");
+      requireThat(Files.exists(flagPath), "flagExists").isFalse();
+    }
+    finally
+    {
+      if (worktreePath != null)
+        TestUtils.runGit(mainRepo, "worktree", "remove", "--force", worktreePath.toString());
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+    }
+  }
+
+  /**
+   * Verifies that when the main agent completes an Agent tool invocation with a non-string
+   * subagent_type (e.g. a JSON number) in tool_input and an active lock, no flag file is created.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void agentToolWithNonStringSubagentTypeDoesNotCreateFlagFile() throws IOException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("v2.1");
+    Path worktreePath = null;
+    String sessionId = UUID.randomUUID().toString();
+    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      String issueId = "2.1-test-issue";
+
+      createLockFile(scope, sessionId, issueId);
+      worktreePath = createWorktreeDir(mainRepo, scope, issueId);
+
+      SetPendingAgentResult handler = new SetPendingAgentResult(scope);
+      // subagent_type is a JSON number, not a string
+      JsonNode hookData = createHookDataWithNonStringSubagentType(mapper, "");
+      JsonNode toolResult = mapper.readTree("{}");
+
+      PostToolHandler.Result result = handler.check("Agent", toolResult, sessionId, hookData);
+
+      requireThat(result.warning(), "warning").isEmpty();
+      Path flagPath = scope.getSessionBasePath().resolve(sessionId).resolve("pending-agent-result");
+      requireThat(Files.exists(flagPath), "flagExists").isFalse();
+    }
+    finally
+    {
+      if (worktreePath != null)
+        TestUtils.runGit(mainRepo, "worktree", "remove", "--force", worktreePath.toString());
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+    }
+  }
+
+  /**
+   * Verifies that when the main agent completes an Agent tool invocation with no subagent_type in
+   * tool_input and an active lock, no flag file is created.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void agentToolWithNoSubagentTypeDoesNotCreateFlagFile() throws IOException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("v2.1");
+    Path worktreePath = null;
+    String sessionId = UUID.randomUUID().toString();
+    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      String issueId = "2.1-test-issue";
+
+      createLockFile(scope, sessionId, issueId);
+      worktreePath = createWorktreeDir(mainRepo, scope, issueId);
+
+      SetPendingAgentResult handler = new SetPendingAgentResult(scope);
+      // tool_input present but no subagent_type field
+      JsonNode hookData = createHookDataWithSubagentType(mapper, "", null);
+      JsonNode toolResult = mapper.readTree("{}");
+
+      PostToolHandler.Result result = handler.check("Agent", toolResult, sessionId, hookData);
+
+      requireThat(result.warning(), "warning").isEmpty();
+      Path flagPath = scope.getSessionBasePath().resolve(sessionId).resolve("pending-agent-result");
+      requireThat(Files.exists(flagPath), "flagExists").isFalse();
+    }
+    finally
+    {
+      if (worktreePath != null)
+        TestUtils.runGit(mainRepo, "worktree", "remove", "--force", worktreePath.toString());
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+    }
+  }
+
+  /**
+   * Verifies that when the main agent completes an Agent tool invocation with a non-work-execute
+   * subagent_type (e.g. cat:red-team-agent) and an active lock, no flag file is created.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void agentToolWithNonWorkExecuteSubagentDoesNotCreateFlagFile() throws IOException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("v2.1");
+    Path worktreePath = null;
+    String sessionId = UUID.randomUUID().toString();
+    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      String issueId = "2.1-test-issue";
+
+      createLockFile(scope, sessionId, issueId);
+      worktreePath = createWorktreeDir(mainRepo, scope, issueId);
+
+      SetPendingAgentResult handler = new SetPendingAgentResult(scope);
+      JsonNode hookData = createHookDataWithSubagentType(mapper, "", "cat:red-team-agent");
+      JsonNode toolResult = mapper.readTree("{}");
+
+      PostToolHandler.Result result = handler.check("Agent", toolResult, sessionId, hookData);
+
+      requireThat(result.warning(), "warning").isEmpty();
+      Path flagPath = scope.getSessionBasePath().resolve(sessionId).resolve("pending-agent-result");
+      requireThat(Files.exists(flagPath), "flagExists").isFalse();
+    }
+    finally
+    {
+      if (worktreePath != null)
+        TestUtils.runGit(mainRepo, "worktree", "remove", "--force", worktreePath.toString());
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+    }
+  }
+
+  /**
+   * Verifies that the subagent_type check is case-insensitive: CAT:WORK-EXECUTE creates the flag file.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void agentToolWithWorkExecuteSubagentCaseInsensitiveCreatesFlagFile() throws IOException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("v2.1");
+    Path worktreePath = null;
+    String sessionId = UUID.randomUUID().toString();
+    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      String issueId = "2.1-test-issue";
+
+      createLockFile(scope, sessionId, issueId);
+      worktreePath = createWorktreeDir(mainRepo, scope, issueId);
+
+      SetPendingAgentResult handler = new SetPendingAgentResult(scope);
+      JsonNode hookData = createHookDataWithSubagentType(mapper, "", "CAT:WORK-EXECUTE");
+      JsonNode toolResult = mapper.readTree("{}");
+
+      PostToolHandler.Result result = handler.check("Agent", toolResult, sessionId, hookData);
+
+      requireThat(result.warning(), "warning").isEmpty();
+      Path flagPath = scope.getSessionBasePath().resolve(sessionId).resolve("pending-agent-result");
+      requireThat(Files.exists(flagPath), "flagExists").isTrue();
+    }
+    finally
+    {
+      if (worktreePath != null)
+        TestUtils.runGit(mainRepo, "worktree", "remove", "--force", worktreePath.toString());
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+    }
+  }
+
+  /**
+   * Verifies that when hookData is null, no flag file is created.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void agentToolWithNullHookDataDoesNotCreateFlagFile() throws IOException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("v2.1");
+    Path worktreePath = null;
+    String sessionId = UUID.randomUUID().toString();
+    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    {
+      String issueId = "2.1-test-issue";
+
+      createLockFile(scope, sessionId, issueId);
+      worktreePath = createWorktreeDir(mainRepo, scope, issueId);
+
+      SetPendingAgentResult handler = new SetPendingAgentResult(scope);
+      JsonNode toolResult = scope.getJsonMapper().readTree("{}");
+
+      PostToolHandler.Result result = handler.check("Agent", toolResult, sessionId, null);
+
+      requireThat(result.warning(), "warning").isEmpty();
+      Path flagPath = scope.getSessionBasePath().resolve(sessionId).resolve("pending-agent-result");
+      requireThat(Files.exists(flagPath), "flagExists").isFalse();
+    }
+    finally
+    {
+      if (worktreePath != null)
+        TestUtils.runGit(mainRepo, "worktree", "remove", "--force", worktreePath.toString());
+      TestUtils.deleteDirectoryRecursively(mainRepo);
     }
   }
 }
