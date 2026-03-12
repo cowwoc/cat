@@ -81,6 +81,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - add-context-minimization-to-skill-builder-analysis
 - add-giving-up-detection-phrases
 - detect-corrupt-issue-directories
+- relocate-claude-cat-to-cat
 
 
 ## Issues Closed
