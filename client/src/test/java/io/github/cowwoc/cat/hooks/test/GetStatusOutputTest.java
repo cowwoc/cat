@@ -1327,4 +1327,39 @@ public class GetStatusOutputTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that corrupt issue directories (STATE.md present but PLAN.md missing) appear in
+   * the status display.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void statusDisplayIncludesCorruptIssueDirectories() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-corrupt-status");
+    // Create a normal issue structure
+    Path issuesDir = tempDir.resolve(".claude/cat/issues");
+    Path majorDir = issuesDir.resolve("v2");
+    Path minorDir = majorDir.resolve("v2.1");
+    Path corruptDir = minorDir.resolve("corrupt-issue");
+    Files.createDirectories(corruptDir);
+
+    // Corrupt issue: STATE.md exists but PLAN.md is absent
+    Files.writeString(corruptDir.resolve("STATE.md"), "- **Status:** open\n");
+
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetStatusOutput handler = new GetStatusOutput(scope);
+      String result = handler.getOutput(new String[0]);
+
+      requireThat(result, "result").contains("⚠ Corrupt Issue Directories");
+      requireThat(result, "result").contains("CORRUPT");
+      requireThat(result, "result").contains("corrupt-issue");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }
