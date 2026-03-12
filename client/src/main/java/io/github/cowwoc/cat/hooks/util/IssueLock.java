@@ -807,7 +807,7 @@ public final class IssueLock
    * @param issueId the issue identifier
    * @return the lock file path
    */
-  private Path getLockFile(String issueId)
+  public Path getLockFile(String issueId)
   {
     return lockDir.resolve(sanitizeIssueId(issueId) + ".lock");
   }
