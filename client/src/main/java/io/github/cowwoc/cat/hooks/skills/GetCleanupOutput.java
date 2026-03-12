@@ -327,8 +327,9 @@ public final class GetCleanupOutput implements SkillOutput
   /**
    * Gathers lock information from the external CAT locks directory.
    * <p>
-   * Reads lock files for issue and session IDs, then derives age from the branch's last commit time
-   * via {@code git log -1 --format=%ct <branch>}.
+   * Reads lock files for issue and session IDs, then derives age as
+   * {@code now - max(branch_last_commit_time, lock_file_mtime)} so that a recently-locked worktree
+   * with old branch commits is not misclassified as stale.
    *
    * @param projectDir the project root directory
    * @return list of locks (empty if directory does not exist or on error)
@@ -347,7 +348,14 @@ public final class GetCleanupOutput implements SkillOutput
       List<Lock> locks = new ArrayList<>();
       for (IssueLock.LockListEntry entry : entries)
       {
-        Duration age = getBranchAge(projectDir, entry.issue(), now);
+        Duration branchAge = getBranchAge(projectDir, entry.issue(), now);
+        Path lockFile = lockManager.getLockFile(entry.issue());
+        Duration lockFileAge = getLockFileAge(lockFile, now);
+        Duration age;
+        if (branchAge.compareTo(lockFileAge) <= 0)
+          age = branchAge;
+        else
+          age = lockFileAge;
         locks.add(new Lock(entry.issue(), entry.session(), age));
       }
       return locks;
@@ -364,7 +372,7 @@ public final class GetCleanupOutput implements SkillOutput
    * @param projectDir the project root directory
    * @param branch the branch name
    * @param now the current instant
-   * @return the duration since the branch's last commit
+   * @return the duration since the branch's last commit, or {@link Duration#ZERO} on error
    */
   private static Duration getBranchAge(Path projectDir, String branch, Instant now)
   {
@@ -378,6 +386,30 @@ public final class GetCleanupOutput implements SkillOutput
       return Duration.between(commitTime, now);
     }
     catch (NumberFormatException _)
+    {
+      return Duration.ZERO;
+    }
+  }
+
+  /**
+   * Derives the age of a lock file from its last-modified time.
+   *
+   * @param lockFile the lock file path
+   * @param now the current instant
+   * @return the duration since the lock file was last modified, or {@link Duration#ZERO} if the file
+   *   does not exist or an I/O error occurs
+   */
+  public static Duration getLockFileAge(Path lockFile, Instant now)
+  {
+    try
+    {
+      Instant mtime = Files.getLastModifiedTime(lockFile).toInstant();
+      Duration age = Duration.between(mtime, now);
+      if (age.isNegative())
+        return Duration.ZERO;
+      return age;
+    }
+    catch (IOException _)
     {
       return Duration.ZERO;
     }
