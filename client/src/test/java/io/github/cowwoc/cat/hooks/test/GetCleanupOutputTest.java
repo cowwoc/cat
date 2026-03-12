@@ -19,7 +19,9 @@ import io.github.cowwoc.cat.hooks.skills.GetCleanupOutput.WorktreeToRemove;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.nio.file.attribute.FileTime;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -1501,5 +1503,80 @@ public class GetCleanupOutputTest
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       handler.getOutput(new String[]{"--unknown-flag"});
     }
+  }
+
+  // --- getLockFileAge() staleness regression tests ---
+
+  /**
+   * Verifies that a lock file with a recent mtime returns an age less than STALE_LOCK_THRESHOLD.
+   * <p>
+   * Regression test: old branch commits + recently-created lock file must not be classified as stale.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void lockFileWithRecentMtimeReturnsRecentAge() throws IOException
+  {
+    Path lockFile = Files.createTempFile("test-lock", ".lock");
+    try
+    {
+      // Set lock file mtime to 1 minute ago (recent)
+      Instant recentMtime = Instant.now().minusSeconds(60);
+      Files.setLastModifiedTime(lockFile, FileTime.from(recentMtime));
+
+      Instant now = Instant.now();
+      Duration age = GetCleanupOutput.getLockFileAge(lockFile, now);
+
+      requireThat(age, "age").isLessThan(io.github.cowwoc.cat.hooks.util.IssueLock.STALE_LOCK_THRESHOLD);
+    }
+    finally
+    {
+      Files.deleteIfExists(lockFile);
+    }
+  }
+
+  /**
+   * Verifies that a lock file with an old mtime returns an age at least STALE_LOCK_THRESHOLD.
+   * <p>
+   * Old commits + old lock file must be classified as stale.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void lockFileWithOldMtimeReturnsStaleAge() throws IOException
+  {
+    Path lockFile = Files.createTempFile("test-lock", ".lock");
+    try
+    {
+      // Set lock file mtime to 2 days ago (stale)
+      Instant oldMtime = Instant.now().minus(Duration.ofDays(2));
+      Files.setLastModifiedTime(lockFile, FileTime.from(oldMtime));
+
+      Instant now = Instant.now();
+      Duration age = GetCleanupOutput.getLockFileAge(lockFile, now);
+
+      requireThat(age, "age").
+        isGreaterThanOrEqualTo(io.github.cowwoc.cat.hooks.util.IssueLock.STALE_LOCK_THRESHOLD);
+    }
+    finally
+    {
+      Files.deleteIfExists(lockFile);
+    }
+  }
+
+  /**
+   * Verifies that a non-existent lock file returns Duration.ZERO.
+   * <p>
+   * When the lock file does not exist, age falls back to zero (most recent), so a worktree with
+   * recent branch commits is classified as recent.
+   */
+  @Test
+  public void nonExistentLockFileReturnsZero()
+  {
+    Path nonExistent = Path.of("/tmp/no-such-lock-file-for-test.lock");
+    Instant now = Instant.now();
+    Duration age = GetCleanupOutput.getLockFileAge(nonExistent, now);
+
+    requireThat(age, "age").isEqualTo(Duration.ZERO);
   }
 }
