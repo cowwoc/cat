@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.task;
 
+import static io.github.cowwoc.cat.hooks.Strings.WORK_EXECUTE_SUBAGENT_TYPE;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
@@ -62,7 +63,7 @@ public final class EnforceCommitBeforeSubagentSpawn implements TaskHandler
     else
       subagentType = "";
 
-    if (!subagentType.equals("cat:work-execute"))
+    if (!WORK_EXECUTE_SUBAGENT_TYPE.equalsIgnoreCase(subagentType))
       return Result.allow();
 
     WorktreeContext context;
