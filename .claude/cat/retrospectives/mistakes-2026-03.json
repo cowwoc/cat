@@ -1819,5 +1819,26 @@
     "prevention_verified" : false,
     "recurrence_of" : null,
     "correct_behavior" : "When TARGET_BRANCH is a plain branch name (e.g. v2.1), resolve to local branch. Report rebase result as rebased onto local v2.1 (not origin/v2.1)."
+  }, {
+    "id" : "M537",
+    "timestamp" : "2026-03-12T11:17:46Z",
+    "category" : "protocol_violation",
+    "description" : "work-implement-agent ran lock verification when CLAUDE_PLUGIN_ROOT was empty. The source command silently failed (path resolved to /scripts/cat-env.sh which does not exist), LOCKS_DIR was never set, and the manual lock-path check returned 'No such file or directory'. Instead of stopping, the agent spent many turns investigating the discrepancy, eventually re-running work-prepare and switching to a different issue.",
+    "root_cause" : "SYSTEM: The Step 2 bash code in work-implement-agent/first-use.md uses ${CLAUDE_PLUGIN_ROOT} without a fail-fast guard. When CLAUDE_PLUGIN_ROOT is empty, source silently fails, LOCKS_DIR is never exported, and subsequent lock verification produces a false 'lock not found' state. The skill provides no instruction to stop on this failure, so the agent investigates rather than halting.",
+    "rca_method" : "C",
+    "rca_method_name" : "causal-barrier",
+    "cause_signature" : "knowledge_gap:skill_incomplete:issue_workflow",
+    "prevention_type" : "skill",
+    "prevention_path" : "plugin/skills/work-implement-agent/first-use.md",
+    "pattern_keywords" : [ "CLAUDE_PLUGIN_ROOT", "cat-env", "LOCKS_DIR", "lock_not_found", "wrong_working_directory", "silent_source_failure" ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : "At the start of Step 2, verify CLAUDE_PLUGIN_ROOT is non-empty and STOP immediately with a clear error if it is not set. The error must name the missing variable and explain the solution (invoke only from a /cat:work session where CLAUDE_PLUGIN_ROOT is exported)."
   } ]
 }
