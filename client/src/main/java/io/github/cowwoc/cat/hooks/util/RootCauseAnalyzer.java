@@ -43,7 +43,7 @@ public final class RootCauseAnalyzer
   {
     requireThat(projectRoot, "projectRoot").isNotNull();
     requireThat(scope, "scope").isNotNull();
-    this.retrospectivesDir = projectRoot.resolve(".claude/cat/retrospectives");
+    this.retrospectivesDir = scope.getCatDir().resolve("retrospectives");
     this.scope = scope;
   }
 

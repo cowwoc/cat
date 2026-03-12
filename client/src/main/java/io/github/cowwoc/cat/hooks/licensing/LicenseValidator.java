@@ -56,7 +56,7 @@ public final class LicenseValidator
   /**
    * Validates the license token from the project configuration.
    *
-   * @param projectDir the project root directory containing .claude/cat/
+   * @param projectDir the project root directory containing .cat/
    * @return the validation result
    * @throws NullPointerException if projectDir is null
    */

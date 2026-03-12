@@ -8,10 +8,10 @@ orchestration rules being sent to implementation subagents.
 | Location | Loaded by | Purpose |
 |----------|-----------|---------|
 | `.claude/rules/` | Claude Code (native) | Content for **all** agents unconditionally |
-| `.claude/cat/rules/` | CAT hooks | Content with audience filtering |
+| `.cat/rules/` | CAT hooks | Content with audience filtering |
 
 **Principle:** `.claude/rules/` is for content that targets all agents (main + all subagents), with
-optional `paths:` restrictions. `.claude/cat/rules/` is for content that needs `mainAgent` or
+optional `paths:` restrictions. `.cat/rules/` is for content that needs `mainAgent` or
 `subAgents` audience filtering.
 
 ### Native Claude Code Loading (`.claude/rules/`)
@@ -25,7 +25,7 @@ Claude Code natively loads `.claude/rules/` files for both the main agent and ev
 Use `.claude/rules/` for content that targets all agents. Path restrictions via `paths:` frontmatter
 are handled natively by Claude Code.
 
-### CAT-Managed Loading (`.claude/cat/rules/`)
+### CAT-Managed Loading (`.cat/rules/`)
 
 CAT hooks (`SessionStartHook`, `SubagentStartHook`) discover and inject files from this directory with
 audience filtering. Files here support three frontmatter properties:
@@ -85,7 +85,7 @@ Path matching uses glob patterns:
 - `?` matches any single character (except path separator)
 
 CAT hooks implement `paths` filtering independently of Claude Code's native support, since files in
-`.claude/cat/rules/` are not in `.claude/rules/` and thus not processed by Claude Code natively.
+`.cat/rules/` are not in `.claude/rules/` and thus not processed by Claude Code natively.
 
 Use `paths:` for language-specific conventions (e.g., Java coding style) to avoid injecting them
 into sessions that are not editing those file types.
@@ -99,9 +99,9 @@ Use this table to decide where content belongs:
 | Critical safety rules | All agents, always | `.claude/rules/` |
 | Common coding conventions | All agents, always | `.claude/rules/` |
 | Language-specific conventions | All agents, path-restricted | `.claude/rules/` with `paths:` |
-| Approval gate protocols | Main agent only | `.claude/cat/rules/` with `subAgents: []` |
-| Hook registration procedures | Main agent only | `.claude/cat/rules/` with `subAgents: []` |
-| Subagent-specific instructions | Specific subagent type | `.claude/cat/rules/` with `mainAgent: false` |
+| Approval gate protocols | Main agent only | `.cat/rules/` with `subAgents: []` |
+| Hook registration procedures | Main agent only | `.cat/rules/` with `subAgents: []` |
+| Subagent-specific instructions | Specific subagent type | `.cat/rules/` with `mainAgent: false` |
 
 ## Examples
 
@@ -135,7 +135,7 @@ paths: ["*.java"]
 Files with only `paths:` restrictions belong in `.claude/rules/` — Claude Code natively supports
 `paths:` frontmatter.
 
-### Main-agent-only rule (`.claude/cat/rules/hooks.md`)
+### Main-agent-only rule (`.cat/rules/hooks.md`)
 
 ```yaml
 ---

@@ -100,13 +100,13 @@ Before squashing/merging, update issue STATE.md to closed in the issue branch:
 
 ```bash
 # In issue worktree - update STATE.md
-# .claude/cat/issues/v{major}/v{major}.{minor}/{issue-name}/STATE.md:
+# .cat/issues/v{major}/v{major}.{minor}/{issue-name}/STATE.md:
 #   Status: closed
 #   Progress: 100%
 #   Resolution: implemented   ← REQUIRED for all closed issues
 
 # Include in implementation commit
-git add .claude/cat/issues/v{major}/v{major}.{minor}/{issue-name}/STATE.md
+git add .cat/issues/v{major}/v{major}.{minor}/{issue-name}/STATE.md
 git commit --amend --no-edit
 ```
 

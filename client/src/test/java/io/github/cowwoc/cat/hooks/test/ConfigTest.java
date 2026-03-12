@@ -90,7 +90,7 @@ public class ConfigTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
         {
@@ -122,7 +122,7 @@ public class ConfigTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
         {
@@ -157,7 +157,7 @@ public class ConfigTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{ invalid json }");
 
@@ -208,7 +208,7 @@ public class ConfigTest
     Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope())
     {
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
         {
@@ -248,7 +248,7 @@ public class ConfigTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
         {
@@ -313,7 +313,7 @@ public class ConfigTest
     Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
         {
@@ -368,7 +368,7 @@ public class ConfigTest
     Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{ invalid json }");
 
@@ -411,7 +411,7 @@ public class ConfigTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
         {
@@ -440,7 +440,7 @@ public class ConfigTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
         {
@@ -487,7 +487,7 @@ public class ConfigTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
         {
@@ -516,7 +516,7 @@ public class ConfigTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
         {
@@ -563,7 +563,7 @@ public class ConfigTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
         {
@@ -591,7 +591,7 @@ public class ConfigTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
         {
@@ -621,7 +621,7 @@ public class ConfigTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
         {
@@ -668,7 +668,7 @@ public class ConfigTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
         {
@@ -698,7 +698,7 @@ public class ConfigTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
         {
@@ -745,7 +745,7 @@ public class ConfigTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
         {
@@ -773,7 +773,7 @@ public class ConfigTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
         {
@@ -801,7 +801,7 @@ public class ConfigTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
         {
@@ -830,7 +830,7 @@ public class ConfigTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
         {
@@ -862,7 +862,7 @@ public class ConfigTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
         {
@@ -923,7 +923,7 @@ public class ConfigTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
         {
@@ -954,7 +954,7 @@ public class ConfigTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
         {
@@ -994,7 +994,7 @@ public class ConfigTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
         {
@@ -1022,7 +1022,7 @@ public class ConfigTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{}");
       Files.writeString(catDir.resolve("cat-config.local.json"), """
@@ -1087,7 +1087,7 @@ public class ConfigTest
     Path tempDir = TestUtils.createTempDir("config-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
         {

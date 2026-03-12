@@ -215,7 +215,7 @@ public class IssueCreatorTest
     pb.directory(tempDir.toFile());
     pb.start().waitFor();
 
-    Path versionDir = tempDir.resolve(".claude/cat/issues/v2/v2.1");
+    Path versionDir = tempDir.resolve(".cat/issues/v2/v2.1");
     Files.createDirectories(versionDir);
     Files.writeString(versionDir.resolve("STATE.md"), "# Version 2.1\n");
 
@@ -242,7 +242,7 @@ public class IssueCreatorTest
     Path tempDir = setupGitRepo();
     try
     {
-      Path versionDir = tempDir.resolve(".claude/cat/issues/v2/v2.1");
+      Path versionDir = tempDir.resolve(".cat/issues/v2/v2.1");
 
       IssueCreator creator = new IssueCreator();
       String json = """
@@ -261,7 +261,7 @@ public class IssueCreatorTest
 
       requireThat(resultNode.get("success").asBoolean(), "success").isTrue();
 
-      Path issuePath = tempDir.resolve(".claude/cat/issues/v2/v2.1/test-issue");
+      Path issuePath = tempDir.resolve(".cat/issues/v2/v2.1/test-issue");
       requireThat(Files.exists(issuePath), "issuePathExists").isTrue();
       requireThat(Files.exists(issuePath.resolve("STATE.md")), "stateExists").isTrue();
       requireThat(Files.exists(issuePath.resolve("PLAN.md")), "planExists").isTrue();
@@ -328,7 +328,7 @@ public class IssueCreatorTest
     Path tempDir = setupGitRepo();
     try
     {
-      Path versionDir = tempDir.resolve(".claude/cat/issues/v2/v2.1");
+      Path versionDir = tempDir.resolve(".cat/issues/v2/v2.1");
       String existingState = """
         # Version 2.1
 
@@ -386,7 +386,7 @@ public class IssueCreatorTest
     Path tempDir = Files.createTempDirectory("issue-creator-test-nongit");
     try
     {
-      Path versionDir = tempDir.resolve(".claude/cat/issues/v2/v2.1");
+      Path versionDir = tempDir.resolve(".cat/issues/v2/v2.1");
       Files.createDirectories(versionDir);
       Files.writeString(versionDir.resolve("STATE.md"), "# Version 2.1\n");
 
@@ -418,7 +418,7 @@ public class IssueCreatorTest
   public void executeHandlesReadOnlyDirectory() throws IOException, InterruptedException
   {
     Path tempDir = setupGitRepo();
-    Path versionDir = tempDir.resolve(".claude/cat/issues/v2/v2.1");
+    Path versionDir = tempDir.resolve(".cat/issues/v2/v2.1");
 
     boolean madeReadOnly = versionDir.toFile().setReadOnly();
     try

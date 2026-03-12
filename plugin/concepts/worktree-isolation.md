@@ -175,10 +175,10 @@ TARGET_BRANCH="main"  # Assumption, not from parameters
 git rebase "$TARGET_BRANCH"
 
 # WRONG: Using jq (not available in the plugin runtime environment)
-TRUST=$(jq -r '.trust' .claude/cat/cat-config.json)
+TRUST=$(jq -r '.trust' .cat/cat-config.json)
 
 # WRONG: Manually parsing cat-config.json with grep/sed (fragile, no defaults)
-TRUST=$(grep -o '"trust"[[:space:]]*:[[:space:]]*"[^"]*"' .claude/cat/cat-config.json \
+TRUST=$(grep -o '"trust"[[:space:]]*:[[:space:]]*"[^"]*"' .cat/cat-config.json \
   | sed 's/.*"trust"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 
 # WRONG: Skipping config read and using a stale in-memory value

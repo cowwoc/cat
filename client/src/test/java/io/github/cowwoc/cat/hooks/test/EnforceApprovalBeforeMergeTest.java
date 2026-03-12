@@ -38,7 +38,7 @@ public final class EnforceApprovalBeforeMergeTest
    */
   private static void writeCatConfig(Path projectDir, String trust) throws IOException
   {
-    Path catDir = projectDir.resolve(".claude").resolve("cat");
+    Path catDir = projectDir.resolve(".cat");
     Files.createDirectories(catDir);
     Files.writeString(catDir.resolve("cat-config.json"), """
       {"trust": "%s"}

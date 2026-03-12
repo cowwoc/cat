@@ -39,7 +39,7 @@ This runs both BATS tests (shell scripts) and pytest tests (Python handlers).
 
 ### 2. Validate CAT CHANGELOGs (if CAT-managed project)
 
-If the project uses CAT planning (`.claude/cat/` directory exists), validate that all versions being
+If the project uses CAT planning (`.cat/` directory exists), validate that all versions being
 released have complete CHANGELOG.md files. This ensures release documentation is comprehensive.
 
 **Validation process:**
@@ -50,7 +50,7 @@ released have complete CHANGELOG.md files. This ensures release documentation is
 
 ```bash
 # Detect if CAT-managed project
-if [[ -d ".claude/cat/issues" ]]; then
+if [[ -d ".cat/issues" ]]; then
   echo "CAT project detected - validating changelogs..."
 
   # Parse version from package.json
@@ -59,7 +59,7 @@ if [[ -d ".claude/cat/issues" ]]; then
   MINOR=$(echo "$CURRENT_VERSION" | cut -d. -f2)
 
   # Validate minor version CHANGELOG
-  MINOR_CHANGELOG=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/CHANGELOG.md"
+  MINOR_CHANGELOG=".cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/CHANGELOG.md"
   if [[ ! -f "$MINOR_CHANGELOG" ]]; then
     echo "ERROR: Missing CHANGELOG at $MINOR_CHANGELOG"
     echo "Run: Generate CHANGELOG from closed issues in this version"
@@ -67,7 +67,7 @@ if [[ -d ".claude/cat/issues" ]]; then
   fi
 
   # Validate major version CHANGELOG
-  MAJOR_CHANGELOG=".claude/cat/issues/v${MAJOR}/CHANGELOG.md"
+  MAJOR_CHANGELOG=".cat/issues/v${MAJOR}/CHANGELOG.md"
   if [[ ! -f "$MAJOR_CHANGELOG" ]]; then
     echo "ERROR: Missing CHANGELOG at $MAJOR_CHANGELOG"
     exit 1
@@ -94,7 +94,7 @@ If CHANGELOG is missing or incomplete, offer to auto-populate from STATE.md:
 
 ```bash
 # Find all closed issues in this minor version
-CLOSED_ISSUES=$(find ".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}" \
+CLOSED_ISSUES=$(find ".cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}" \
   -name "STATE.md" -exec grep -l "Status:** closed" {} \; 2>/dev/null \
   | xargs -I {} dirname {} | xargs -I {} basename {})
 
@@ -120,7 +120,7 @@ EOF
 
   # Append each issue
   for issue_name in $CLOSED_ISSUES; do
-    ISSUE_PLAN=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${issue_name}/PLAN.md"
+    ISSUE_PLAN=".cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${issue_name}/PLAN.md"
     if [[ -f "$ISSUE_PLAN" ]]; then
       GOAL=$(grep -A1 "^## Goal" "$ISSUE_PLAN" | tail -1 | head -c 50)
       echo "| ${issue_name} | - | ${GOAL}... | implemented |" >> "$MINOR_CHANGELOG"
@@ -253,7 +253,7 @@ source "${CLAUDE_PLUGIN_ROOT}/migrations/lib/utils.sh"
 
 # Add migration logic here if needed
 # Example: Rename a config field
-# jq '.newField = .oldField | del(.oldField)' .claude/cat/cat-config.json > tmp && mv tmp .claude/cat/cat-config.json
+# jq '.newField = .oldField | del(.oldField)' .cat/cat-config.json > tmp && mv tmp .cat/cat-config.json
 
 log_success "Migration to ${NEXT_VERSION} completed (no structural changes)"
 MIGRATION_EOF
@@ -311,8 +311,8 @@ Releasing v1.4 and preparing v1.5:
 npm run test:all
 
 # 2. Validate CAT CHANGELOGs (if CAT-managed)
-# - Check .claude/cat/issues/v1/v1.4/CHANGELOG.md exists
-# - Check .claude/cat/issues/v1/CHANGELOG.md exists
+# - Check .cat/issues/v1/v1.4/CHANGELOG.md exists
+# - Check .cat/issues/v1/CHANGELOG.md exists
 # - Auto-generate if missing
 
 # 3. Verify versions match

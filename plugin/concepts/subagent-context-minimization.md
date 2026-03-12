@@ -40,7 +40,7 @@ the prompt. The subagent reads the file in its own context at a fraction of the 
 
 ```
 ✅ CORRECT: pass the path
-  "Read PLAN.md at: /workspace/.claude/worktrees/my-issue/.claude/cat/issues/v2/v2.1/my-issue/PLAN.md"
+  "Read PLAN.md at: /workspace/.claude/worktrees/my-issue/.cat/issues/v2/v2.1/my-issue/PLAN.md"
 
 ❌ WRONG: paste the content
   "Here is subagent-delegation.md: [600 lines of content pasted inline]"
@@ -67,7 +67,7 @@ of the files or instructions the subagent will need.
 ```
 ✅ CORRECT: pass the description with references
   "Implement the changes described in PLAN.md Wave 1. PLAN.md is at:
-   /workspace/.claude/worktrees/my-issue/.claude/cat/issues/v2/v2.1/my-issue/PLAN.md"
+   /workspace/.claude/worktrees/my-issue/.cat/issues/v2/v2.1/my-issue/PLAN.md"
 
 ❌ WRONG: expand the plan inline
   "Here are the Wave 1 items: [PLAN.md Wave 1 section pasted verbatim]"
@@ -84,7 +84,7 @@ Task tool:
   model: "sonnet"
   prompt: |
     Implement the changes described in:
-      PLAN.md: ${WORKTREE_PATH}/.claude/cat/issues/v2/v2.1/my-issue/PLAN.md
+      PLAN.md: ${WORKTREE_PATH}/.cat/issues/v2/v2.1/my-issue/PLAN.md
     Read that file yourself before starting. Execute only Wave 1 items.
 ```
 

@@ -462,7 +462,7 @@ public class GetStakeholderOutputTest
       GetStakeholderConcernBox handler = new GetStakeholderConcernBox(scope);
       // Simulates rendering a concern from the compact JSON format:
       // { "severity": "HIGH", "location": "src/Main.java:42", "explanation": "Missing null check",
-      //   "recommendation": "Add null validation", "detail_file": ".claude/cat/review/design-concerns.json" }
+      //   "recommendation": "Add null validation", "detail_file": ".cat/review/design-concerns.json" }
       // The detail_file is used by the orchestrator and not rendered in the box.
       String result = handler.getConcernBox(
         "HIGH", "design", "Missing null check", "src/Main.java:42");
@@ -507,7 +507,7 @@ public class GetStakeholderOutputTest
       GetStakeholderConcernBox handler = new GetStakeholderConcernBox(scope);
       // Simulates a CRITICAL concern from compact JSON:
       // { "severity": "CRITICAL", "stakeholder": "security", "location": "src/Auth.java:10",
-      //   "explanation": "SQL injection vulnerability", "detail_file": ".claude/cat/review/security-concerns.json" }
+      //   "explanation": "SQL injection vulnerability", "detail_file": ".cat/review/security-concerns.json" }
       String result = handler.getConcernBox(
         "CRITICAL", "security", "SQL injection vulnerability", "src/Auth.java:10");
 

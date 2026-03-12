@@ -45,5 +45,5 @@ Issues closed: {count} issues across {count} commits
 
 ```bash
 # Find all commits for this version via STATE.md history:
-git log --oneline -- .claude/cat/issues/v{major}/v{major}.{minor}/
+git log --oneline -- .cat/issues/v{major}/v{major}.{minor}/
 ```

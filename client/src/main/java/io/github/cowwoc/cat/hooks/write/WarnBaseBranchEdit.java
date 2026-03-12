@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.hooks.write;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.WorktreeContext;
@@ -32,7 +33,7 @@ import java.util.List;
  * <p>
  * Allowed without warning:
  * <ul>
- *   <li>.claude/cat/, .claude/rules/, .claude/settings* (orchestration only, not commands/client)</li>
+ *   <li>.cat/, .claude/rules/, .claude/settings* (orchestration only, not commands/client)</li>
  *   <li>STATE.md, PLAN.md, CHANGELOG.md, ROADMAP.md files</li>
  *   <li>CLAUDE.md, PROJECT.md (project instructions)</li>
  *   <li>retrospectives/ directory</li>
@@ -46,7 +47,7 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
   private static final List<String> ALLOWED_PATTERNS = List.of(
     ".claude/settings.json",
     ".claude/settings.local.json",
-    ".claude/cat/",
+    Config.CAT_DIR_NAME + "/",
     ".claude/rules/",
     "STATE.md",
     "PLAN.md",

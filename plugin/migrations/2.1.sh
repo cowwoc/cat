@@ -8,34 +8,35 @@ set -euo pipefail
 # Migration to CAT 2.1
 #
 # Changes (consolidated chronologically):
-# 1. Remove "## Issues In Progress" section from version-level STATE.md files,
+# 1. Move .claude/cat/ directory to .cat/ at workspace root
+# 2. Remove "## Issues In Progress" section from version-level STATE.md files,
 #    merging its entries into "## Issues Pending"
-# 2. Rename issue status values in STATE.md files:
+# 3. Rename issue status values in STATE.md files:
 #    pending → open, completed/complete/done → closed
-# 3. Move version tracking from cat-config.json to .claude/cat/VERSION plain text file
+# 4. Move version tracking from cat-config.json to .cat/VERSION plain text file
 #    (handles both old "version" field and renamed "last_migrated_version" field)
-# 4. Rename sections in PLAN.md files:
+# 5. Rename sections in PLAN.md files:
 #    "## Acceptance Criteria" → "## Post-conditions"
 #    "## Success Criteria" → merged into "## Post-conditions"
 #    "## Gates" / "### Entry" / "### Exit" → "## Pre-conditions" / "## Post-conditions"
 #    "## Entry Gate" / "## Exit Gate" → "## Pre-conditions" / "## Post-conditions"
 #    "## Exit Gate Tasks" → "## Post-conditions"
-# 5. Rename "curiosity" config key to "effort" in existing cat-config.json files
-# 6. Create .claude/cat/.gitignore with patterns for local config files if missing;
+# 6. Rename "curiosity" config key to "effort" in existing cat-config.json files
+# 7. Create .cat/.gitignore with patterns for local config files if missing;
 #    if it exists, add any missing patterns and remove stale ones (/worktrees/, /locks/, /verify/)
 #    including their associated comment and blank lines
-# 7. Migrate ## Execution Steps → ## Execution Waves in PLAN.md files
+# 8. Migrate ## Execution Steps → ## Execution Waves in PLAN.md files
 #    (numbered steps become bullet items under ### Wave 1)
-# 8. Remove reviewThreshold from cat-config.json
-# 9. Remove legacy worktree-locks directory
-# 10. Migrate cross-session dirs (locks/, worktrees/) to external storage; delete stale
+# 9. Remove reviewThreshold from cat-config.json
+# 10. Remove legacy worktree-locks directory
+# 11. Migrate cross-session dirs (locks/, worktrees/) to external storage; delete stale
 #     session-scoped dirs (sessions/, verify/, e2e-config-test/)
-# 11. Migrate terminalWidth to fileWidth + displayWidth in cat-config.json
-# 12. Remove deprecated Last Updated and Completed fields from open issue-level STATE.md files
+# 12. Migrate terminalWidth to fileWidth + displayWidth in cat-config.json
+# 13. Remove deprecated Last Updated and Completed fields from open issue-level STATE.md files
 #     (closed issues are not modified)
-# 13. Rename ## Satisfies → ## Parent Requirements in open issue-level PLAN.md files
+# 14. Rename ## Satisfies → ## Parent Requirements in open issue-level PLAN.md files
 #     (closed issues are not modified)
-# 14. Rename ## Execution Waves → ## Sub-Agent Waves in PLAN.md files
+# 15. Rename ## Execution Waves → ## Sub-Agent Waves in PLAN.md files
 #     (all issues, including closed ones)
 
 trap 'echo "ERROR in 2.1.sh at line $LINENO: $BASH_COMMAND" >&2; exit 1' ERR
@@ -44,23 +45,44 @@ trap 'echo "ERROR in 2.1.sh at line $LINENO: $BASH_COMMAND" >&2; exit 1' ERR
 source "${CLAUDE_PLUGIN_ROOT}/migrations/lib/utils.sh"
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Phase 1: Merge "Issues In Progress" into "Issues Pending" in version STATE.md
+# Phase 1: Move .claude/cat/ directory to .cat/ at workspace root
 # ──────────────────────────────────────────────────────────────────────────────
 
-log_migration "Phase 1: Remove In Progress section from version STATE.md files"
+log_migration "Phase 1: Move .claude/cat/ directory to .cat/"
 
-# Version-level STATE.md files live at .claude/cat/issues/v*/v*.*/STATE.md (depth 4 from issues/).
+if [[ -d ".cat" ]]; then
+    log_migration ".cat/ already exists - skipping phase 1 (already migrated)"
+elif [[ -d ".claude/cat" ]]; then
+    log_migration "Moving .claude/cat/ → .cat/"
+    mv .claude/cat .cat
+    # Clean up empty .claude/ directory if nothing else remains
+    if [[ -d ".claude" ]] && [[ -z "$(ls -A .claude 2>/dev/null)" ]]; then
+        rmdir .claude
+        log_migration "  Removed empty .claude/ directory"
+    fi
+    log_migration "Phase 1 complete: moved .claude/cat/ to .cat/"
+else
+    log_migration "Neither .claude/cat/ nor .cat/ found - skipping phase 1"
+fi
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase 2: Merge "Issues In Progress" into "Issues Pending" in version STATE.md
+# ──────────────────────────────────────────────────────────────────────────────
+
+log_migration "Phase 2: Remove In Progress section from version STATE.md files"
+
+# Version-level STATE.md files live at .cat/issues/v*/v*.*/STATE.md (depth 4 from issues/).
 # Issue-level STATE.md files are one directory deeper (depth 5+) and must be excluded.
-version_state_files=$(find .claude/cat/issues -path "*v*.*/*" -name "STATE.md" -mindepth 4 -maxdepth 4 -type f \
+version_state_files=$(find .cat/issues -path "*v*.*/*" -name "STATE.md" -mindepth 4 -maxdepth 4 -type f \
     2>/dev/null || true)
 
 if [[ -z "$version_state_files" ]]; then
-    log_migration "No version-level STATE.md files found - skipping phase 1"
+    log_migration "No version-level STATE.md files found - skipping phase 2"
 else
     total_count=$(echo "$version_state_files" | wc -l | tr -d ' ')
     log_migration "Found $total_count version-level STATE.md files to check"
 
-    phase1_migrated=0
+    phase2_migrated=0
 
     while IFS= read -r state_file; do
         [[ -z "$state_file" ]] && continue
@@ -168,30 +190,30 @@ else
             ' "$state_file" > "${state_file}.tmp" && mv "${state_file}.tmp" "$state_file"
         fi
 
-        ((phase1_migrated++)) || true
+        ((phase2_migrated++)) || true
         log_migration "    Done: $state_file"
 
     done <<< "$version_state_files"
 
-    log_migration "Phase 1 complete: $phase1_migrated files migrated"
+    log_migration "Phase 2 complete: $phase2_migrated files migrated"
 fi
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Phase 2: Rename issue status values in STATE.md files
+# Phase 3: Rename issue status values in STATE.md files
 # ──────────────────────────────────────────────────────────────────────────────
 
-log_migration "Phase 2: Rename issue status values (pending→open, completed→closed)"
+log_migration "Phase 3: Rename issue status values (pending→open, completed→closed)"
 
-# Find all STATE.md files under .claude/cat/issues/
-all_state_files=$(find .claude/cat/issues -name "STATE.md" -type f 2>/dev/null || true)
+# Find all STATE.md files under .cat/issues/
+all_state_files=$(find .cat/issues -name "STATE.md" -type f 2>/dev/null || true)
 all_state_count=$(echo "$all_state_files" | grep -c "STATE.md" || echo 0)
 
 if [[ "$all_state_count" -eq 0 ]]; then
-    log_migration "No STATE.md files found - skipping phase 2"
+    log_migration "No STATE.md files found - skipping phase 3"
 else
     log_migration "Found $all_state_count STATE.md files to check"
 
-    phase2_changed=0
+    phase3_changed=0
 
     while IFS= read -r state_file; do
         [[ -z "$state_file" ]] && continue
@@ -229,28 +251,28 @@ else
         fi
 
         if [[ "$changed" == "true" ]]; then
-            ((phase2_changed++)) || true
+            ((phase3_changed++)) || true
             log_migration "  Updated: $state_file"
         fi
 
     done <<< "$all_state_files"
 
-    log_migration "Phase 2 complete: $phase2_changed files changed"
+    log_migration "Phase 3 complete: $phase3_changed files changed"
 fi
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Phase 3: Move version tracking to .claude/cat/VERSION plain text file
+# Phase 4: Move version tracking to .cat/VERSION plain text file
 # ──────────────────────────────────────────────────────────────────────────────
 
-log_migration "Phase 3: Move version tracking from cat-config.json to VERSION file"
+log_migration "Phase 4: Move version tracking from cat-config.json to VERSION file"
 
-config_file=".claude/cat/cat-config.json"
-version_file=".claude/cat/VERSION"
+config_file=".cat/cat-config.json"
+version_file=".cat/VERSION"
 
 if [[ ! -f "$config_file" ]]; then
-    log_migration "No config file found - skipping phase 3"
+    log_migration "No config file found - skipping phase 4"
 elif [[ -f "$version_file" ]]; then
-    log_migration "VERSION file already exists - skipping phase 3"
+    log_migration "VERSION file already exists - skipping phase 4"
 else
     # Try last_migrated_version first (renamed in earlier development), then fall back to version
     migrated_version=""
@@ -284,27 +306,27 @@ else
         }' "$config_file" > "$tmp_file"
         mv "$tmp_file" "$config_file"
 
-        log_migration "Phase 3 complete: moved to VERSION file and removed from config"
+        log_migration "Phase 4 complete: moved to VERSION file and removed from config"
     else
-        log_migration "No version field found in config - skipping phase 3"
+        log_migration "No version field found in config - skipping phase 4"
     fi
 fi
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Phase 4: Rename PLAN.md sections to pre-conditions / post-conditions
+# Phase 5: Rename PLAN.md sections to pre-conditions / post-conditions
 # ──────────────────────────────────────────────────────────────────────────────
 
-log_migration "Phase 4: Rename PLAN.md sections to pre-conditions/post-conditions"
+log_migration "Phase 5: Rename PLAN.md sections to pre-conditions/post-conditions"
 
-all_plan_files=$(find .claude/cat/issues -name "PLAN.md" -type f 2>/dev/null || true)
+all_plan_files=$(find .cat/issues -name "PLAN.md" -type f 2>/dev/null || true)
 all_plan_count=$(echo "$all_plan_files" | grep -c "PLAN.md" || echo 0)
 
 if [[ "$all_plan_count" -eq 0 ]]; then
-    log_migration "No PLAN.md files found - skipping phase 4"
+    log_migration "No PLAN.md files found - skipping phase 5"
 else
     log_migration "Found $all_plan_count PLAN.md files to check"
 
-    phase4_changed=0
+    phase5_changed=0
 
     while IFS= read -r plan_file; do
         [[ -z "$plan_file" ]] && continue
@@ -443,41 +465,41 @@ else
         fi
 
         if [[ "$changed" == "true" ]]; then
-            ((phase4_changed++)) || true
+            ((phase5_changed++)) || true
         fi
 
     done <<< "$all_plan_files"
 
-    log_migration "Phase 4 complete: $phase4_changed files changed"
+    log_migration "Phase 5 complete: $phase5_changed files changed"
 fi
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Phase 5: Rename "curiosity" to "effort" in cat-config.json
+# Phase 6: Rename "curiosity" to "effort" in cat-config.json
 # ──────────────────────────────────────────────────────────────────────────────
 
-log_migration "Phase 5: Rename curiosity → effort in cat-config.json"
+log_migration "Phase 6: Rename curiosity → effort in cat-config.json"
 
-config_file=".claude/cat/cat-config.json"
+config_file=".cat/cat-config.json"
 
 if [[ ! -f "$config_file" ]]; then
-    log_migration "No config file found - skipping phase 5"
+    log_migration "No config file found - skipping phase 6"
 else
     if grep -q '"curiosity"' "$config_file" 2>/dev/null; then
         log_migration "Found curiosity key - renaming to effort"
         sed -i 's/"curiosity"/"effort"/g' "$config_file"
-        log_migration "Phase 5 complete: renamed curiosity → effort"
+        log_migration "Phase 6 complete: renamed curiosity → effort"
     else
-        log_migration "No curiosity key found - skipping phase 5"
+        log_migration "No curiosity key found - skipping phase 6"
     fi
 fi
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Phase 6: Create or update .claude/cat/.gitignore with patterns for local config
+# Phase 7: Create or update .cat/.gitignore with patterns for local config
 # ──────────────────────────────────────────────────────────────────────────────
 
-log_migration "Phase 6: Create or update .claude/cat/.gitignore"
+log_migration "Phase 7: Create or update .cat/.gitignore"
 
-gitignore_file=".claude/cat/.gitignore"
+gitignore_file=".cat/.gitignore"
 gitignore_template="${CLAUDE_PLUGIN_ROOT}/templates/gitignore"
 
 if [[ ! -f "$gitignore_template" ]]; then
@@ -489,10 +511,10 @@ fi
 if [[ ! -f "$gitignore_file" ]]; then
     log_migration "No .gitignore found - copying template"
     cp "$gitignore_template" "$gitignore_file"
-    log_migration "Phase 6 complete: created $gitignore_file"
+    log_migration "Phase 7 complete: created $gitignore_file"
 else
     log_migration ".gitignore exists - checking for missing/stale patterns"
-    phase6_changed=0
+    phase7_changed=0
 
     # Remove stale patterns and their associated comment+blank lines above them.
     # We build a set of stale pattern strings, then use awk to walk the file once:
@@ -509,7 +531,7 @@ else
     for stale in "${stale_patterns[@]}"; do
         if grep -qF "$stale" "$gitignore_file" 2>/dev/null; then
             stale_set="${stale_set}${stale}\n"
-            ((phase6_changed++)) || true
+            ((phase7_changed++)) || true
         fi
     done
 
@@ -558,7 +580,7 @@ else
             grep -vF "$stale_comment" "$gitignore_file" > "${gitignore_file}.tmp" \
                 && mv "${gitignore_file}.tmp" "$gitignore_file"
             log_migration "  Removed orphaned stale comment: $stale_comment"
-            ((phase6_changed++)) || true
+            ((phase7_changed++)) || true
         fi
     done
 
@@ -578,29 +600,29 @@ else
         if ! grep -qF "$pattern" "$gitignore_file" 2>/dev/null; then
             printf '%s\n' "$pattern" >> "$gitignore_file"
             log_migration "  Added missing pattern: $pattern"
-            ((phase6_changed++)) || true
+            ((phase7_changed++)) || true
         fi
     done <<< "$patterns"
 
-    if [[ "$phase6_changed" -eq 0 ]]; then
-        log_migration "Phase 6 complete: all patterns up to date"
+    if [[ "$phase7_changed" -eq 0 ]]; then
+        log_migration "Phase 7 complete: all patterns up to date"
     else
-        log_migration "Phase 6 complete: updated $phase6_changed patterns"
+        log_migration "Phase 7 complete: updated $phase7_changed patterns"
     fi
 fi
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Phase 7: Migrate ## Execution Steps to ## Execution Waves in PLAN.md files
+# Phase 8: Migrate ## Execution Steps to ## Execution Waves in PLAN.md files
 # ──────────────────────────────────────────────────────────────────────────────
 
-log_migration "Phase 7: Migrate Execution Steps → Execution Waves in PLAN.md files"
+log_migration "Phase 8: Migrate Execution Steps → Execution Waves in PLAN.md files"
 
-all_plan_files=$(find .claude/cat/issues -name "PLAN.md" -type f 2>/dev/null || true)
+all_plan_files=$(find .cat/issues -name "PLAN.md" -type f 2>/dev/null || true)
 
 if [[ -z "$all_plan_files" ]]; then
-    log_migration "No PLAN.md files found - skipping phase 7"
+    log_migration "No PLAN.md files found - skipping phase 8"
 else
-    phase7_migrated=0
+    phase8_migrated=0
 
     while IFS= read -r plan_file; do
         [[ -z "$plan_file" ]] && continue
@@ -640,24 +662,24 @@ else
         { print; last_blank=($0 == "") }
         ' "$plan_file" > "${plan_file}.tmp" && mv "${plan_file}.tmp" "$plan_file"
 
-        ((phase7_migrated++)) || true
+        ((phase8_migrated++)) || true
         log_migration "    Done: $plan_file"
 
     done <<< "$all_plan_files"
 
-    log_migration "Phase 7 complete: $phase7_migrated files migrated"
+    log_migration "Phase 8 complete: $phase8_migrated files migrated"
 fi
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Phase 8: Remove reviewThreshold from cat-config.json
+# Phase 9: Remove reviewThreshold from cat-config.json
 # ──────────────────────────────────────────────────────────────────────────────
 
-log_migration "Phase 8: Remove reviewThreshold from cat-config.json"
+log_migration "Phase 9: Remove reviewThreshold from cat-config.json"
 
-config_file=".claude/cat/cat-config.json"
+config_file=".cat/cat-config.json"
 
 if [[ ! -f "$config_file" ]]; then
-    log_migration "No config file found - skipping phase 8"
+    log_migration "No config file found - skipping phase 9"
 else
     if grep -q '"reviewThreshold"' "$config_file" 2>/dev/null; then
         log_migration "Found reviewThreshold key - removing"
@@ -709,21 +731,21 @@ else
         if grep -q '"reviewThreshold"' "$config_file" 2>/dev/null; then
             log_migration "WARNING: reviewThreshold still present after removal attempt"
         else
-            log_migration "Phase 8 complete: removed reviewThreshold from config"
+            log_migration "Phase 9 complete: removed reviewThreshold from config"
         fi
     else
-        log_migration "No reviewThreshold key found - skipping phase 8"
+        log_migration "No reviewThreshold key found - skipping phase 9"
     fi
 fi
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Phase 9: Remove legacy worktree-locks directory
+# Phase 10: Remove legacy worktree-locks directory
 # ──────────────────────────────────────────────────────────────────────────────
 
-log_migration "Phase 9: Remove legacy worktree-locks directory"
+log_migration "Phase 10: Remove legacy worktree-locks directory"
 
 # Old in-project location
-old_wt_locks=".claude/cat/worktree-locks"
+old_wt_locks=".cat/worktree-locks"
 if [[ -d "$old_wt_locks" ]]; then
     rm -rf "$old_wt_locks"
     log_migration "  Removed legacy worktree-locks from: $old_wt_locks"
@@ -745,13 +767,13 @@ else
     fi
 fi
 
-log_migration "Phase 9 complete: legacy worktree-locks cleanup done"
+log_migration "Phase 10 complete: legacy worktree-locks cleanup done"
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Phase 10: Migrate or remove directories that moved to external storage
+# Phase 11: Migrate or remove directories that moved to external storage
 # ──────────────────────────────────────────────────────────────────────────────
 
-log_migration "Phase 10: Migrate cross-session directories and delete stale session-scoped dirs"
+log_migration "Phase 11: Migrate cross-session directories and delete stale session-scoped dirs"
 
 config_dir="${CLAUDE_CONFIG_DIR:-${HOME}/.config/claude}"
 encoded_project=$(echo "${CLAUDE_PROJECT_DIR:-$(pwd)}" | sed 's/[\/.]/-/g')
@@ -759,7 +781,7 @@ project_cat_dir="${config_dir}/projects/${encoded_project}/cat"
 
 # Move cross-session directories to external storage
 for dir_name in locks worktrees; do
-    src_dir=".claude/cat/${dir_name}"
+    src_dir=".cat/${dir_name}"
     dst_dir="${project_cat_dir}/${dir_name}"
 
     if [[ -d "$src_dir" ]]; then
@@ -776,7 +798,7 @@ done
 
 # Delete session-scoped directories (always stale after migration)
 for dir_name in sessions verify e2e-config-test; do
-    src_dir=".claude/cat/${dir_name}"
+    src_dir=".cat/${dir_name}"
     if [[ -d "$src_dir" ]]; then
         rm -rf "$src_dir"
         log_migration "  Deleted stale session-scoped dir: ${src_dir}"
@@ -785,21 +807,21 @@ for dir_name in sessions verify e2e-config-test; do
     fi
 done
 
-log_migration "Phase 10 complete"
+log_migration "Phase 11 complete"
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Phase 11: Migrate terminalWidth to fileWidth + displayWidth in cat-config.json
+# Phase 12: Migrate terminalWidth to fileWidth + displayWidth in cat-config.json
 # ──────────────────────────────────────────────────────────────────────────────
 
-log_migration "Phase 11: Migrate terminalWidth to fileWidth + displayWidth in cat-config.json"
+log_migration "Phase 12: Migrate terminalWidth to fileWidth + displayWidth in cat-config.json"
 
-config_file=".claude/cat/cat-config.json"
+config_file=".cat/cat-config.json"
 
 if [[ ! -f "$config_file" ]]; then
-    log_migration "No config file found - skipping phase 11"
+    log_migration "No config file found - skipping phase 12"
 else
     if ! grep -q '"terminalWidth"' "$config_file" 2>/dev/null; then
-        log_migration "No terminalWidth key found - skipping phase 11 (already migrated or not set)"
+        log_migration "No terminalWidth key found - skipping phase 12 (already migrated or not set)"
     else
         log_migration "Found terminalWidth key - migrating to fileWidth and displayWidth"
 
@@ -807,7 +829,7 @@ else
         terminal_width=$(sed -n 's/.*"terminalWidth"[[:space:]]*:[[:space:]]*\([0-9]*\).*/\1/p' "$config_file" | head -1)
 
         if [[ -z "$terminal_width" ]]; then
-            log_migration "WARNING: Could not extract terminalWidth value - skipping phase 11"
+            log_migration "WARNING: Could not extract terminalWidth value - skipping phase 12"
         else
             log_migration "  terminalWidth value: $terminal_width"
 
@@ -872,28 +894,28 @@ else
                 log_migration "WARNING: displayWidth not found after migration"
             fi
 
-            log_migration "Phase 11 complete: migrated terminalWidth to fileWidth and displayWidth"
+            log_migration "Phase 12 complete: migrated terminalWidth to fileWidth and displayWidth"
         fi
     fi
 fi
 
-# Phase 12: Remove deprecated Last Updated, Completed, and Closed fields from open issue-level STATE.md
+# Phase 13: Remove deprecated Last Updated, Completed, and Closed fields from open issue-level STATE.md
 # ──────────────────────────────────────────────────────────────────────────────
 
-log_migration "Phase 12: Remove deprecated Last Updated, Completed, and Closed fields from open issue-level STATE.md"
+log_migration "Phase 13: Remove deprecated Last Updated, Completed, and Closed fields from open issue-level STATE.md"
 
-# Issue-level STATE.md files live at .claude/cat/issues/v*/v*.*/issue-name/STATE.md (depth 5 from issues/).
-issue_state_files=$(find .claude/cat/issues -path "*v*.*/*" -name "STATE.md" -mindepth 5 -maxdepth 5 -type f \
+# Issue-level STATE.md files live at .cat/issues/v*/v*.*/issue-name/STATE.md (depth 5 from issues/).
+issue_state_files=$(find .cat/issues -path "*v*.*/*" -name "STATE.md" -mindepth 5 -maxdepth 5 -type f \
     2>/dev/null || true)
 
 if [[ -z "$issue_state_files" ]]; then
-    log_migration "No issue-level STATE.md files found - skipping phase 12"
+    log_migration "No issue-level STATE.md files found - skipping phase 13"
 else
     total_count=$(echo "$issue_state_files" | wc -l | tr -d ' ')
     log_migration "Found $total_count issue-level STATE.md files to check"
 
-    phase12_changed=0
-    phase12_skipped=0
+    phase13_changed=0
+    phase13_skipped=0
 
     while IFS= read -r state_file; do
         [[ -z "$state_file" ]] && continue
@@ -901,7 +923,7 @@ else
         # Skip closed issues
         if grep -q '^\*\*Status:\*\* closed' "$state_file" 2>/dev/null || \
            grep -q '^- \*\*Status:\*\* closed' "$state_file" 2>/dev/null; then
-            ((phase12_skipped++)) || true
+            ((phase13_skipped++)) || true
             continue
         fi
 
@@ -923,33 +945,33 @@ else
         fi
 
         if [[ "$changed" == "true" ]]; then
-            ((phase12_changed++)) || true
+            ((phase13_changed++)) || true
             log_migration "  Updated: $state_file"
         fi
 
     done <<< "$issue_state_files"
 
-    log_migration "Phase 12 complete: $phase12_changed files changed, $phase12_skipped closed issues skipped"
+    log_migration "Phase 13 complete: $phase13_changed files changed, $phase13_skipped closed issues skipped"
 fi
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Phase 13: Rename ## Satisfies → ## Parent Requirements in open issue PLAN.md files
+# Phase 14: Rename ## Satisfies → ## Parent Requirements in open issue PLAN.md files
 # ──────────────────────────────────────────────────────────────────────────────
 
-log_migration "Phase 13: Rename ## Satisfies → ## Parent Requirements in open issue PLAN.md files"
+log_migration "Phase 14: Rename ## Satisfies → ## Parent Requirements in open issue PLAN.md files"
 
-# Issue-level PLAN.md files live at .claude/cat/issues/v*/v*.*/issue-name/PLAN.md (depth 4 from issues/).
-issue_plan_files=$(find .claude/cat/issues -path "*v*.*/*" -name "PLAN.md" -mindepth 4 -maxdepth 4 -type f \
+# Issue-level PLAN.md files live at .cat/issues/v*/v*.*/issue-name/PLAN.md (depth 4 from issues/).
+issue_plan_files=$(find .cat/issues -path "*v*.*/*" -name "PLAN.md" -mindepth 4 -maxdepth 4 -type f \
     2>/dev/null || true)
 
 if [[ -z "$issue_plan_files" ]]; then
-    log_migration "No issue-level PLAN.md files found - skipping phase 13"
+    log_migration "No issue-level PLAN.md files found - skipping phase 14"
 else
     total_count=$(echo "$issue_plan_files" | wc -l | tr -d ' ')
     log_migration "Found $total_count issue-level PLAN.md files to check"
 
-    phase13_changed=0
-    phase13_skipped=0
+    phase14_changed=0
+    phase14_skipped=0
 
     while IFS= read -r plan_file; do
         [[ -z "$plan_file" ]] && continue
@@ -966,39 +988,39 @@ else
             log_migration "  Warning: STATE.md missing for $plan_file — treating as open issue"
         elif grep -q '^\*\*Status:\*\* closed' "$state_file" 2>/dev/null || \
              grep -q '^- \*\*Status:\*\* closed' "$state_file" 2>/dev/null; then
-            ((phase13_skipped++)) || true
+            ((phase14_skipped++)) || true
             continue
         fi
 
         sed -i 's/^## Satisfies$/## Parent Requirements/' "$plan_file"
-        ((phase13_changed++)) || true
+        ((phase14_changed++)) || true
         log_migration "  Updated: $plan_file"
 
     done <<< "$issue_plan_files"
 
-    log_migration "Phase 13 complete: $phase13_changed files changed, $phase13_skipped closed issues skipped"
+    log_migration "Phase 14 complete: $phase14_changed files changed, $phase14_skipped closed issues skipped"
 fi
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Phase 14: Rename ## Execution Waves → ## Sub-Agent Waves in PLAN.md files
+# Phase 15: Rename ## Execution Waves → ## Sub-Agent Waves in PLAN.md files
 # ──────────────────────────────────────────────────────────────────────────────
 
-log_migration "Phase 14: Rename ## Execution Waves → ## Sub-Agent Waves in PLAN.md files"
+log_migration "Phase 15: Rename ## Execution Waves → ## Sub-Agent Waves in PLAN.md files"
 
-all_plan_files=$(find .claude/cat/issues -name "PLAN.md" -type f 2>/dev/null || true)
+all_plan_files=$(find .cat/issues -name "PLAN.md" -type f 2>/dev/null || true)
 
 if [[ -z "$all_plan_files" ]]; then
-    log_migration "No PLAN.md files found - skipping phase 14"
+    log_migration "No PLAN.md files found - skipping phase 15"
 else
-    phase14_migrated=0
-    phase14_skipped=0
+    phase15_migrated=0
+    phase15_skipped=0
 
     while IFS= read -r plan_file; do
         [[ -z "$plan_file" ]] && continue
 
         # Idempotency: skip files that already use the new section name
         if grep -q "^## Sub-Agent Waves" "$plan_file" 2>/dev/null; then
-            ((phase14_skipped++)) || true
+            ((phase15_skipped++)) || true
             continue
         fi
 
@@ -1008,12 +1030,12 @@ else
         fi
 
         sed -i 's/^## Execution Waves$/## Sub-Agent Waves/' "$plan_file"
-        ((phase14_migrated++)) || true
+        ((phase15_migrated++)) || true
         log_migration "  Updated: $plan_file"
 
     done <<< "$all_plan_files"
 
-    log_migration "Phase 14 complete: $phase14_migrated files migrated, $phase14_skipped already up to date"
+    log_migration "Phase 15 complete: $phase15_migrated files migrated, $phase15_skipped already up to date"
 fi
 
 log_success "Migration to 2.1 completed"

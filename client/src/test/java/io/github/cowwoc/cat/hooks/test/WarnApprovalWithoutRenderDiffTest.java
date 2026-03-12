@@ -25,7 +25,7 @@ import java.nio.file.Path;
  * Tests verify the detection of get-diff usage (or lack thereof) when approval questions are presented.
  * <p>
  * Session files are placed at {@code {claudeConfigDir}/projects/{encodedProjectDir}/{sessionId}.jsonl}, resolved via
- * {@link JvmScope#getSessionBasePath()}. The {@code .claude/cat} directory is resolved via
+ * {@link JvmScope#getSessionBasePath()}. The {@code .cat} directory is resolved via
  * {@link JvmScope#getClaudeProjectDir()}, matching the production code's path resolution.
  */
 public final class WarnApprovalWithoutRenderDiffTest
@@ -45,8 +45,8 @@ public final class WarnApprovalWithoutRenderDiffTest
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-session-no-get-diff";
 
-      // Set up .claude/cat directory so the catDir check passes
-      Path catDir = scope.getClaudeProjectDir().resolve(".claude").resolve("cat");
+      // Set up .cat directory so the catDir check passes
+      Path catDir = scope.getClaudeProjectDir().resolve(".cat");
       Files.createDirectories(catDir);
 
       // Set up session file with content that does NOT contain "get-diff"
@@ -87,8 +87,8 @@ public final class WarnApprovalWithoutRenderDiffTest
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-session-with-get-diff";
 
-      // Set up .claude/cat directory so the catDir check passes
-      Path catDir = scope.getClaudeProjectDir().resolve(".claude").resolve("cat");
+      // Set up .cat directory so the catDir check passes
+      Path catDir = scope.getClaudeProjectDir().resolve(".cat");
       Files.createDirectories(catDir);
 
       // Set up session file with "get-diff" and box characters (more than MIN_BOX_CHARS_WITH_INVOCATION=10)
@@ -131,8 +131,8 @@ public final class WarnApprovalWithoutRenderDiffTest
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-session-reformatted-diff";
 
-      // Set up .claude/cat directory so the catDir check passes
-      Path catDir = scope.getClaudeProjectDir().resolve(".claude").resolve("cat");
+      // Set up .cat directory so the catDir check passes
+      Path catDir = scope.getClaudeProjectDir().resolve(".cat");
       Files.createDirectories(catDir);
 
       // Set up session file with "get-diff" but sparse box chars and many manual diff signs.
@@ -197,7 +197,7 @@ public final class WarnApprovalWithoutRenderDiffTest
   }
 
   /**
-   * Verifies that no warning is triggered when there is no .claude/cat directory.
+   * Verifies that no warning is triggered when there is no .cat directory.
    *
    * @throws IOException if test setup fails
    */
@@ -210,7 +210,7 @@ public final class WarnApprovalWithoutRenderDiffTest
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-session-no-cat-dir";
 
-      // Intentionally do NOT create .claude/cat directory
+      // Intentionally do NOT create .cat directory
 
       WarnApprovalWithoutRenderDiff handler = new WarnApprovalWithoutRenderDiff(scope);
       JsonNode toolInput = mapper.readTree("""

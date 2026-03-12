@@ -315,7 +315,7 @@ public class HandlerOutputTest
         null,
         List.of(),
         "v2",
-        ".claude/cat/issues/v2/v2.1");
+        ".cat/issues/v2/v2.1");
 
       requireThat(result, "result").contains("✅ Version Created");
     }
@@ -339,7 +339,7 @@ public class HandlerOutputTest
         null,
         List.of(),
         "v2",
-        ".claude/cat/issues/v2/v2.1");
+        ".cat/issues/v2/v2.1");
 
       requireThat(result, "result").contains("╭").contains("╰").contains("│");
     }
@@ -363,7 +363,7 @@ public class HandlerOutputTest
         null,
         List.of(),
         "v2",
-        ".claude/cat/issues/v2/v2.1");
+        ".cat/issues/v2/v2.1");
 
       requireThat(result, "result").contains("v2.1: New-Features");
     }
@@ -424,7 +424,7 @@ public class HandlerOutputTest
       Path tempDir = Files.createTempDirectory("handler-test");
       try
       {
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
         Path configFile = catDir.resolve("cat-config.json");
         Files.writeString(configFile, """
@@ -471,9 +471,9 @@ public class HandlerOutputTest
         null,
         List.of(),
         "v2",
-        ".claude/cat/issues/v2/v2.1");
+        ".cat/issues/v2/v2.1");
 
-      requireThat(result, "result").contains("Path: .claude/cat/issues/v2/v2.1");
+      requireThat(result, "result").contains("Path: .cat/issues/v2/v2.1");
     }
   }
 

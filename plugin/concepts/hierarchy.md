@@ -10,7 +10,7 @@ See LICENSE.md in the project root for license terms.
 ## Structure
 
 ```
-.claude/cat/
+.cat/
 ├── PROJECT.md
 ├── ROADMAP.md
 ├── cat-config.json
@@ -120,7 +120,7 @@ dependent issues.
 ## Example Path
 
 ```
-.claude/cat/issues/v1/v1.0/parse-switch-statements/STATE.md
+.cat/issues/v1/v1.0/parse-switch-statements/STATE.md
 ```
 
 Components (using MAJOR.MINOR scheme):

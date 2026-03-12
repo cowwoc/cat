@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks.util;
 import static io.github.cowwoc.cat.hooks.skills.JsonHelper.getStringOrDefault;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import org.slf4j.Logger;
@@ -115,7 +116,7 @@ public final class RetrospectiveMigrator
     requireThat(projectDir, "projectDir").isNotNull();
 
     List<String> messages = new ArrayList<>();
-    Path retroDir = projectDir.resolve(".claude").resolve("cat").resolve("retrospectives");
+    Path retroDir = projectDir.resolve(Config.CAT_DIR_NAME).resolve("retrospectives");
 
     if (!Files.exists(retroDir))
     {

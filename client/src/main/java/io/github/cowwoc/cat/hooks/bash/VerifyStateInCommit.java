@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks.bash;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
+import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.IssueStatus;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
@@ -72,14 +73,14 @@ public final class VerifyStateInCommit implements BashHandler
 
       if (!stateMdStaged)
       {
-        return Result.block("""
-          **BLOCKED: STATE.md not included in bugfix/feature commit**
-
-          When committing bugfix: or feature: changes in a CAT worktree,
-          STATE.md must be updated and staged in the same commit.
-
-          Fix: Update STATE.md to reflect completion status, then stage it:
-            git add .claude/cat/issues/**/STATE.md""");
+        return Result.block(
+          "**BLOCKED: STATE.md not included in bugfix/feature commit**\n" +
+          "\n" +
+          "When committing bugfix: or feature: changes in a CAT worktree,\n" +
+          "STATE.md must be updated and staged in the same commit.\n" +
+          "\n" +
+          "Fix: Update STATE.md to reflect completion status, then stage it:\n" +
+          "  git add " + Config.CAT_DIR_NAME + "/issues/**/STATE.md");
       }
 
       String stateMdContent = readStagedStateMd(stagedFiles, effectiveDirectory);
@@ -133,7 +134,7 @@ public final class VerifyStateInCommit implements BashHandler
    * Checks whether the working directory is inside a CAT worktree.
    * <p>
    * A CAT issue worktree has a git directory ending with {@code worktrees/<branch-name>}
-   * (the path returned by {@code git rev-parse --git-dir}). The {@code .claude/cat} directory
+   * (the path returned by {@code git rev-parse --git-dir}). The {@code .cat} directory
    * exists in the main workspace too, so it cannot be used to detect worktrees.
    *
    * @param workingDirectory the working directory path
