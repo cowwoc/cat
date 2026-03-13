@@ -1,3 +1,9 @@
+---
+name: work-merge-agent
+description: "Internal merge phase (invoked by /cat:work-with-issue) - pre-merge squash/rebase, approval gate, then executes merge and cleanup."
+user-invocable: false
+argument-hint: "<catAgentId> <issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <commits_json> <trust> <verify>"
+---
 <!--
 Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
@@ -14,8 +20,11 @@ commit squashing, branch merging, worktree cleanup, and state updates.
   Step 8 without completing this step
 - **Step 8: Rebase onto Target Branch Before Approval Gate** — always rebase the squashed branch onto the current tip
   of the target branch before the approval gate; do not proceed to Step 9 without completing this step
-- **Step 9 (sub-step): Skill-Builder Review** — always invoke `cat:skill-builder` for modified skill or
+- **Step 9, Pre-Gate Skill-Builder Review** — always invoke `cat:skill-builder` for modified skill or
   command files before presenting the approval gate
+- **Step 9, Re-squash and Re-rebase after Skill-Builder** — if skill-builder added commits, always
+  re-squash and re-rebase before the approval gate; do not present the approval gate on an un-squashed or
+  un-rebased branch
 
 ## Arguments and Configuration
 
@@ -327,13 +336,67 @@ do not proceed to the approval gate without completing skill-builder review for 
 git diff --name-only "${TARGET_BRANCH}..HEAD" | grep -E '^plugin/(skills|commands)/'
 ```
 
-**If skill or command files were modified:** Invoke `/cat:skill-builder` with the path to each modified skill or
-command. Review the output and address any priming issues or structural problems it identifies before proceeding
-to the approval gate.
+**If skill or command files were modified:** Before invoking `/cat:skill-builder`, capture the current HEAD so new
+commits can be detected after it completes:
 
-**If no skill or command files were modified:** Skip this check and proceed to cleanup (Step 9.1) below.
+```bash
+PRE_SKILLBUILDER_HEAD=$(git -C "${WORKTREE_PATH}" rev-parse HEAD)
+```
 
-### Post-Skill-Builder Artifact Cleanup (MANDATORY)
+Invoke `/cat:skill-builder` with the path to each modified skill or command. Review the output and address any
+priming issues or structural problems it identifies before proceeding to the approval gate.
+
+### Re-squash and Re-rebase after Skill-Builder (MANDATORY — BLOCKING)
+
+**MANDATORY:** After skill-builder completes, check whether it added any new commits to the branch. If it did,
+re-squash and re-rebase are REQUIRED before presenting the approval gate. Do NOT present the approval gate on an
+un-squashed or un-rebased branch — the user would be approving a state that does not reflect the actual merge.
+
+**If no skill or command files were modified:** Skip this entire section and proceed to Step 9.1.
+
+```bash
+# Check for new commits since skill-builder ran
+CURRENT_HEAD=$(git -C "${WORKTREE_PATH}" rev-parse HEAD)
+NEW_COMMITS=$( [ "${CURRENT_HEAD}" != "${PRE_SKILLBUILDER_HEAD}" ] && echo "yes" || echo "" )
+```
+
+**If no new commits exist** (skill-builder made no changes): skip re-squash and re-rebase, continue to Step 9.1.
+
+**If new commits exist (skill-builder added commits):**
+
+1. **Re-invoke `cat:git-squash-agent`** with the same primary commit message used in Step 7:
+   ```
+   Skill("cat:git-squash-agent", args="${WORKTREE_PATH} ${TARGET_BRANCH} ${PRIMARY_COMMIT_MESSAGE}")
+   ```
+   Update the squash marker after re-squashing:
+   ```bash
+   ENCODED_PROJECT_DIR=$(printf '%s' "${CLAUDE_PROJECT_DIR}" | sed 's|/|%2F|g; s| |%20|g')
+   SQUASH_MARKER_DIR="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}/.cat"
+   RE_SQUASH_HASH=$(cd "${WORKTREE_PATH}" && git rev-parse HEAD)
+   echo "squashed:${RE_SQUASH_HASH}" > "${SQUASH_MARKER_DIR}/squash-complete-${ISSUE_ID}"
+   ```
+   If `cat:git-squash-agent` returns failure, STOP immediately — do NOT proceed to re-rebase.
+   Return FAILED status with the squash error details (same pattern as Step 7's FAILED handler).
+
+2. **Re-run Step 8 (`cat:git-rebase-agent`)** to rebase onto the target branch after re-squashing:
+   ```
+   Skill("cat:git-rebase-agent", args="${WORKTREE_PATH} ${TARGET_BRANCH}")
+   ```
+   Update the squash marker to reflect the new HEAD after rebase:
+   ```bash
+   RE_REBASED_HASH=$(cd "${WORKTREE_PATH}" && git rev-parse HEAD)
+   echo "squashed:${RE_REBASED_HASH}" > "${SQUASH_MARKER_DIR}/squash-complete-${ISSUE_ID}"
+   ```
+   If `cat:git-rebase-agent` reports CONFLICT: STOP — do NOT proceed to the approval gate. Return FAILED status
+   with the conflict details.
+   If `cat:git-rebase-agent` reports ERROR: STOP — do NOT proceed to the approval gate. Return FAILED status
+   with the error details.
+   (Unlike Step 8b, do not attempt conflict resolution here — fail fast, as conflicts at this stage indicate an
+   unexpected problem introduced by skill-builder commits.)
+
+**CRITICAL:** Do NOT present the approval gate until BOTH re-squash AND re-rebase have completed successfully.
+
+### Step 9.1: Post-Skill-Builder Artifact Cleanup (MANDATORY)
 
 After skill-builder-agent completes its review (if invoked in the Pre-Gate Skill-Builder Review step), clean up all
 temporary artifact files it created. These files (findings.json, diff-validation-*.json) are intermediate outputs of
@@ -375,6 +438,8 @@ fi
 
 **If skill-builder was NOT invoked** (no skill/command files modified): skip this cleanup step entirely and proceed
 directly to Step 9.2.
+
+### Step 9.2: Approval Gate
 
 **trust == "high":** Skip approval gate — UNLESS `REBASE_HAD_CONFLICTS=true`, in which case present the conflict
 resolutions to the user via AskUserQuestion before proceeding. Even at trust=high, silently merged rebase conflicts
