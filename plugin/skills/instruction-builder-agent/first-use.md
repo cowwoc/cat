@@ -191,13 +191,23 @@ At the start of Step 3, compute `BENCHMARK_ARTIFACTS_DIR` as
 `<worktree-root>/benchmark-artifacts/${CLAUDE_SESSION_ID}` (expanding `${CLAUDE_SESSION_ID}` to its actual
 value). Pass this resolved path as a literal string to all subagents — do NOT pass variable references.
 
+**Model selection:** Read the target skill's `model:` frontmatter field to determine which model to use for
+benchmark-run subagents. Run:
+```bash
+BENCHMARK_MODEL=$("${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder-agent/benchmark/benchmark-runner.sh" extract-model \
+  "<absolute-path-to-SKILL_TEXT_PATH>")
+```
+The script prints the model name (e.g., `sonnet`, `haiku`) or falls back to `haiku` when the field is absent.
+Store the result as `BENCHMARK_MODEL` and pass it as a resolved literal string to all benchmark-run and grader
+subagents. Do NOT hardcode `haiku` — always use the value from `extract-model`.
+
 **Context isolation:** `BENCHMARK_ARTIFACTS_DIR` includes the session ID in its path, ensuring that concurrent
 benchmark-run subagents from different sessions write to separate directories and never collide. Each
-benchmark-run subagent receives `BENCHMARK_ARTIFACTS_DIR` and `CLAUDE_SESSION_ID` as pre-resolved literal
-strings, so no subagent ever expands these variables independently. Subagents must not derive their own
-session ID — they must use the value passed by the main agent.
+benchmark-run subagent receives `BENCHMARK_ARTIFACTS_DIR`, `CLAUDE_SESSION_ID`, and `BENCHMARK_MODEL` as
+pre-resolved literal strings, so no subagent ever expands these variables independently. Subagents must not
+derive their own session ID — they must use the value passed by the main agent.
 
-#### Step 3a: Auto-Generate Test Cases
+#### Step 3.1: Auto-Generate Test Cases
 
 Extract semantic units from the skill file using the Nine-Category Extraction Algorithm embedded in
 `${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder-agent/validation-protocol.md` (Section 1). Perform this
@@ -276,7 +286,58 @@ Store the approved test cases in `${BENCHMARK_ARTIFACTS_DIR}/test-cases.json` an
 committed file via `git show {BENCHMARK_SET_SHA}:benchmark-artifacts/<SESSION_ID>/test-cases.json` or
 `cat {BENCHMARK_ARTIFACTS_DIR}/test-cases.json`.
 
-#### Step 3b: SPRT Benchmark
+#### Step 3.2: Incremental Test Case Selection (Re-benchmarking only)
+
+When re-benchmarking an existing skill after an edit (rather than benchmarking a brand-new draft), use
+`benchmark-runner.sh` to identify which test cases need to re-run and which can carry forward from the
+prior benchmark.
+
+**Workflow:**
+
+1. Run change detection to identify modified line ranges:
+   ```bash
+   "${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder-agent/benchmark/benchmark-runner.sh" detect-changes \
+     <SKILL_DRAFT_SHA> <SKILL_TEXT_PATH> "${BENCHMARK_ARTIFACTS_DIR}/test-cases.json"
+   ```
+   Output fields:
+   - `skill_changed`: false → skip re-benchmark entirely (carry all results forward)
+   - `frontmatter_changed`: true → all test cases must re-run (model/config may have changed)
+   - `body_changed` + `changed_ranges`: the line ranges in the updated skill body that changed
+   - `rerun_test_case_ids`: populated when frontmatter changed (all TCs) or no body-only change
+   - `semantic_units_path_hint`: guidance for the next step when body-only changes occurred
+
+2. When `body_changed=true` and `frontmatter_changed=false`, extract semantic units from the updated
+   skill body:
+   ```bash
+   "${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder-agent/benchmark/benchmark-runner.sh" extract-units \
+     <SKILL_TEXT_PATH>
+   ```
+   This outputs the skill body with original file line numbers prepended (tab-separated). Apply the
+   Nine-Category Extraction Algorithm from `validation-protocol.md` Section 1 inline to extract units
+   and their `location` fields (e.g., `"line 42"` or `"lines 42-45"`).
+
+3. Identify which extracted semantic units have locations overlapping the `changed_ranges` from step 1.
+   These are the "changed units". Collect their `id` values.
+
+4. Map changed unit IDs to affected test cases:
+   ```bash
+   "${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder-agent/benchmark/benchmark-runner.sh" map-units \
+     "${BENCHMARK_ARTIFACTS_DIR}/test-cases.json" '["unit_1", "unit_5"]'
+   ```
+   Output: `rerun_test_case_ids` (must re-run SPRT) and `carryforward_test_case_ids` (results preserved).
+
+5. For `carryforward_test_case_ids`, copy the SPRT log_ratio and decision from the prior
+   `benchmark.json` into the new benchmark result. Only `rerun_test_case_ids` go through full SPRT.
+
+**Semantic unit location matching:** A unit with `location: "line 42"` overlaps changed range
+`{"start": 40, "end": 45}` if 40 ≤ 42 ≤ 45. For range locations `"lines 42-45"`, overlap exists
+if the unit range and the changed range share any common line number.
+
+**Carry-forward results:** Preserved results from prior passing test cases are treated as if SPRT
+already Accepted those cases. Do NOT re-run them. Only report that they were carried forward in the
+final benchmark summary.
+
+#### Step 3.3: SPRT Benchmark
 
 Run the SPRT-based benchmark to measure the skill's compliance quantitatively.
 
@@ -305,10 +366,10 @@ After each observation:
 
 **Pipelining control flow:**
 
-1. Main agent spawns up to 4 benchmark-run subagents in parallel (Haiku model, fresh non-resumed)
+1. Main agent spawns up to 4 benchmark-run subagents in parallel (`BENCHMARK_MODEL` model, fresh non-resumed)
 2. As each subagent completes, main agent immediately:
    a. Grades deterministic assertions from the subagent's return value (inline, no subagent overhead)
-   b. If semantic assertions exist, spawns a Haiku grader subagent (counts against the 4-agent limit)
+   b. If semantic assertions exist, spawns a `BENCHMARK_MODEL` grader subagent (counts against the 4-agent limit)
    c. Once all assertions for the run are graded, updates the SPRT log_ratio for that test case
    d. Checks boundaries: if Accept or Reject, stops spawning new subagents for that test case
 3. If any test case rejects, all remaining test cases stop immediately
@@ -320,14 +381,18 @@ Each benchmark-run subagent:
 1. Executes the test case prompt in its configured environment (skill present and active)
 2. Grades all deterministic assertions inline before returning (regex, string_match, structural checks)
 3. Returns per-assertion pass/fail with `null` for semantic assertions (pending grading)
-4. Writes the full output to a temp file: `/tmp/benchmark-runs/<case-id>_run_<N>.txt` (NOT committed)
-5. Returns: `{"run_id": "<TC_id>_run_<N>", "test_case_id": "<TC_id>", "assertion_results":
+4. Records `duration_ms` (elapsed wall-clock time in milliseconds from subagent start to return) and
+   `total_tokens` (sum of input and output tokens consumed by the subagent invocation, including any
+   tool-use overhead)
+5. Writes the full output to a temp file: `/tmp/benchmark-runs/<case-id>_run_<N>.txt` (NOT committed)
+6. Returns: `{"run_id": "<TC_id>_run_<N>", "test_case_id": "<TC_id>", "assertion_results":
    [{"assertion_id": "...", "passed": true|false|null}], "semantic_pending": ["<assertion_id>"],
-   "output_path": "/tmp/benchmark-runs/<case-id>_run_<N>.txt"}`
+   "output_path": "/tmp/benchmark-runs/<case-id>_run_<N>.txt",
+   "duration_ms": <integer>, "total_tokens": <integer>}`
    On failure, returns `{"error": "<reason>"}`.
 
 Pass each subagent only scalar references (test case ID, run index, `BENCHMARK_ARTIFACTS_DIR`,
-`CLAUDE_SESSION_ID`, model: `claude-haiku`) — do NOT embed test case content or assertion arrays inline in
+`CLAUDE_SESSION_ID`, model: `BENCHMARK_MODEL`) — do NOT embed test case content or assertion arrays inline in
 the prompt. The benchmark-run subagent reads assertions from
 `cat {BENCHMARK_ARTIFACTS_DIR}/test-cases.json`.
 
@@ -339,9 +404,9 @@ including peer subagent output files. Do NOT run any git command that could reve
 history — this includes git log, git show, git diff, git rev-list, git shortlog, git format-patch, and any
 other command that outputs committed content or commit messages."
 
-**Spawn Haiku grader subagents** for semantic assertions: When a benchmark-run subagent returns with
-`semantic_pending` entries, spawn one Haiku grader subagent per pending semantic assertion (in parallel,
-each gets its own subagent). Each grader subagent:
+**Spawn `BENCHMARK_MODEL` grader subagents** for semantic assertions: When a benchmark-run subagent returns
+with `semantic_pending` entries, spawn one `BENCHMARK_MODEL` grader subagent per pending semantic assertion
+(in parallel, each gets its own subagent). Each grader subagent:
 - Receives: the assertion object (type, description, instruction, expected), the output file path
   (grader reads the file itself via the Read tool)
 - Is prohibited: "Do NOT read the skill file, test-cases.json, or any file other than the specified
@@ -355,12 +420,65 @@ first retry after 1–2 seconds (randomized), second after 2–4 seconds, third 
 retries fail, return `{"error": "commit failed: <reason>"}`.
 
 **After SPRT completes:** Write results to `${BENCHMARK_ARTIFACTS_DIR}/benchmark.json` with per-test-case
-SPRT log_ratios, pass/fail counts, and final decision (Accept/Reject). Commit with message
-`benchmark: SPRT result [session: ${CLAUDE_SESSION_ID}]`. Store SHA as `BENCHMARK_SHA`.
+SPRT log_ratios, pass/fail counts, final decision (Accept/Reject), and token/timing aggregates. The
+benchmark.json token fields are computed by accumulating `duration_ms` and `total_tokens` from each
+benchmark-run subagent return value:
 
-Display SPRT results to the user: per-test-case decision, log_ratio, and pass/fail counts.
+```json
+{
+  "sprt": {
+    "test_cases": [
+      {
+        "test_case_id": "TC1",
+        "decision": "Accept",
+        "log_ratio": 2.944,
+        "pass_count": 9,
+        "fail_count": 1,
+        "total_runs": 10,
+        "total_tokens": 14800,
+        "total_duration_ms": 42000
+      }
+    ],
+    "overall_decision": "Accept",
+    "total_tokens": 14800,
+    "total_duration_ms": 42000
+  }
+}
+```
 
-#### Step 3c: Analyze via skill-analyzer-agent
+Commit with message `benchmark: SPRT result [session: ${CLAUDE_SESSION_ID}]`. Store SHA as `BENCHMARK_SHA`.
+
+**Persist benchmark artifacts:** After committing benchmark.json, persist the approved test cases and a
+skill-level benchmark metadata record to the skill's own directory:
+```bash
+WORKTREE_ROOT=$(git rev-parse --show-toplevel)
+"${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder-agent/benchmark/benchmark-runner.sh" persist-artifacts \
+  "${SKILL_TEXT_PATH}" \
+  "${BENCHMARK_ARTIFACTS_DIR}" \
+  "${CLAUDE_SESSION_ID}" \
+  "${WORKTREE_ROOT}" \
+  "sprt"
+```
+This copies `test-cases.json` to `<skill-dir>/benchmark/test-cases.json`, writes
+`<skill-dir>/benchmark/benchmark.json` (containing skill SHA-256, test-cases SHA-256, session ID, phase,
+and timestamp), and commits both files with message
+`benchmark: persist artifacts [session: ${CLAUDE_SESSION_ID}, phase: sprt]`.
+
+**Token summary display:** After persisting artifacts, display a token usage summary to the user:
+
+```
+TOKEN USAGE SUMMARY
+===================
+Test Case | Runs | Total Tokens | Total Duration
+--------- | ---- | ------------ | --------------
+TC1       |  10  |     14,800   |    42,000 ms
+TC2       |   8  |     12,400   |    36,000 ms
+TOTAL     |  18  |     27,200   |    78,000 ms
+```
+
+Display SPRT results to the user: per-test-case decision, log_ratio, pass/fail counts, and token summary.
+
+#### Step 3.4: Analyze via skill-analyzer-agent
 
 **Analyze via skill-analyzer-agent subagent:** Spawn skill-analyzer-agent. Pass it the benchmark
 SHA+path (from the SPRT result) and `SKILL_TEXT_PATH` (worktree-relative). The `skill_text_path` must be
@@ -403,7 +521,7 @@ only the compact analysis report text (~1KB). It does NOT read the analysis file
 3. Are you satisfied with the current skill version?
 
 **Iterate if needed:** If the user requests improvement, apply targeted changes to the skill file at
-`SKILL_TEXT_PATH`, commit the updated file, and update `SKILL_DRAFT_SHA` before returning to Step 3b. Cap
+`SKILL_TEXT_PATH`, commit the updated file, and update `SKILL_DRAFT_SHA` before returning to Step 3.3. Cap
 at 5 benchmark iterations total. Track the best-performing iteration by storing `BEST_SCORE` and `BEST_SHA`
 (the commit SHA of the skill file at that iteration). `BEST_SCORE` is defined as the fraction of test cases
 that reached SPRT Accept. After each iteration, compare the current BEST_SCORE and update if higher. Stop
@@ -552,15 +670,15 @@ effort > low.
 3. Re-benchmark to verify compression preserved compliance — Step 6 SPRT re-benchmark
 4. If compliance dropped, mark load-bearing text as protected and retry compression (up to 3 times)
 
-#### Step 6a: Post-Hardening SPRT Re-Benchmark
+#### Step 6.1: Post-Hardening SPRT Re-Benchmark
 
 Before compressing, run a full SPRT benchmark on the hardened skill to confirm compliance. Use the same
-test cases from `${BENCHMARK_ARTIFACTS_DIR}/test-cases.json` and identical SPRT parameters as Step 3b.
+test cases from `${BENCHMARK_ARTIFACTS_DIR}/test-cases.json` and identical SPRT parameters as Step 3.3.
 Commit benchmark results with message `benchmark: post-hardening SPRT [session: ${CLAUDE_SESSION_ID}]`.
 Store SHA as `POST_HARDENING_SHA`. If any test case rejects, return to hardening (Step 4) to address the
 failures before proceeding to compression.
 
-#### Step 6b: Compress
+#### Step 6.2: Compress
 
 Invoke a general-purpose subagent to compress the skill file:
 
@@ -590,7 +708,7 @@ Task tool:
 Commit the compressed file with message `benchmark: compress skill [session: ${CLAUDE_SESSION_ID}]`.
 Store SHA as `COMPRESSED_SHA`.
 
-#### Step 6c: Semantic Pre-Check (Fast Gate)
+#### Step 6.3: Semantic Pre-Check (Fast Gate)
 
 Before running the full SPRT re-benchmark, run a semantic pre-check using the comparison algorithm from
 `${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder-agent/validation-protocol.md` (Section 2):
@@ -602,9 +720,9 @@ Before running the full SPRT re-benchmark, run a semantic pre-check using the co
    retry compression immediately (mark the lost unit's text as protected)
 5. If semantically EQUIVALENT or only MEDIUM/LOW losses → proceed to SPRT re-benchmark
 
-#### Step 6d: Post-Compression SPRT Re-Benchmark
+#### Step 6.4: Post-Compression SPRT Re-Benchmark
 
-Run SPRT re-benchmark on the compressed version using identical test cases and parameters as Step 6a.
+Run SPRT re-benchmark on the compressed version using identical test cases and parameters as Step 6.1.
 
 **Acceptance criterion:** ALL test cases must reach SPRT Accept (log_ratio ≥ A).
 
@@ -693,12 +811,13 @@ implementation details (trust levels, internal architecture, etc.).
 - [ ] SPRT decision logic uses p0=0.95, p1=0.85, α=0.05, β=0.05 with boundaries A≈2.944, B≈-2.944
 - [ ] Each test case runs its own independent SPRT; rejection of any case stops all remaining cases
 - [ ] SPRT check runs after each individual agent completion (pipelined), not batched per wave
-- [ ] Eval-run subagents use Haiku model, fresh (non-resumed) per run
+- [ ] BENCHMARK_MODEL is read from skill frontmatter via `benchmark-runner.sh extract-model` at the start of Step 3
+- [ ] Eval-run subagents use `BENCHMARK_MODEL` (not hardcoded Haiku), fresh (non-resumed) per run
 - [ ] Eval-run subagents grade deterministic assertions inline before returning
-- [ ] Semantic assertions use separate Haiku grader subagents
+- [ ] Semantic assertions use separate `BENCHMARK_MODEL` grader subagents
 - [ ] Run outputs written to temp files (not committed per-run); only benchmark.json is committed
 - [ ] Eval-run subagent return format includes per-assertion pass/fail with null for semantic assertions
-- [ ] BENCHMARK_ARTIFACTS_DIR and CLAUDE_SESSION_ID passed as resolved literal strings to all subagents
+- [ ] BENCHMARK_ARTIFACTS_DIR, CLAUDE_SESSION_ID, and BENCHMARK_MODEL passed as resolved literal strings to all subagents
 - [ ] Benchmark results show meaningful signal (SPRT log_ratios indicate compliance level)
 - [ ] Re-benchmark after hardening uses identical SPRT parameters and same test cases
 - [ ] Effort gate: hardening + benchmarking + compression phase skipped entirely when effort = low
@@ -727,14 +846,21 @@ implementation details (trust levels, internal architecture, etc.).
 - [ ] Step 5 batch mode uses per-skill findings paths (`findings-<skill-name>.json`) to avoid collisions
 - [ ] Step 5 batch mode passes `FINDINGS_PATH` parameter to override default findings.json path in subagent prompts
 - [ ] Step 5 distinguishes filesystem operations (use WORKTREE_ROOT prefix) from git show (use repo-relative paths)
-- [ ] Step 3c skill-analyzer-agent report includes Delegation Opportunities and Content Relay Anti-Patterns sections
+- [ ] Step 3.4 skill-analyzer-agent report includes Delegation Opportunities and Content Relay Anti-Patterns sections
 - [ ] Step 2 design subagent Read scope is restricted to methodology, conventions, and existing skill files only
 - [ ] Step 5 batch mode skill-name derivation is defined as `<directory-name>-<file-stem>` to avoid collisions
 - [ ] Step 5 batch parallel mode extends the concurrent commit retry protocol to red-team and blue-team commits
-- [ ] Step 3b benchmark plateau tracks BEST_SCORE and BEST_SHA, rolls back to best iteration on plateau or cap
+- [ ] Step 3.3 benchmark plateau tracks BEST_SCORE and BEST_SHA, rolls back to best iteration on plateau or cap
 - [ ] Step 4 arbitration agent prompt includes explicit tool restrictions (Write/Edit limited to findings.json, no state-modifying Bash)
 - [ ] Semantic extraction uses embedded Nine-Category algorithm from validation-protocol.md (not subagent invocation)
 - [ ] Extracted units include id, category, original, normalized, quote, and location fields
 - [ ] Non-testable units (REFERENCE, CONJUNCTION) are skipped when generating test cases
 - [ ] Auto-generated test cases are presented to the user for approval before benchmarking
 - [ ] User can add, remove, or modify auto-generated test cases
+- [ ] Benchmark-run subagent return format includes `duration_ms` and `total_tokens` fields
+- [ ] benchmark.json sprt section includes `total_tokens` and `total_duration_ms` per test case and overall
+- [ ] Token usage summary table is displayed after SPRT completes showing per-test-case and aggregate totals
+- [ ] Token counts are accumulated from each benchmark-run subagent return value (not estimated)
+- [ ] `benchmark-runner.sh persist-artifacts` is called after each SPRT commit to persist test cases to `<skill-dir>/benchmark/`
+- [ ] `benchmark-runner.sh persist-artifacts` commits `benchmark/benchmark.json` (with skill SHA, test-case SHA, session, phase, timestamp) to skill directory
+- [ ] `benchmark-runner.sh extract-model` falls back to "haiku" when skill has no model: frontmatter field

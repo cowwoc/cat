@@ -165,6 +165,49 @@ public final class SetPendingAgentResultTest
   }
 
   /**
+   * Verifies that a whitespace-only agent_id is treated as the main agent and the flag file is created.
+   * <p>
+   * A whitespace-only agent_id is semantically blank (no real agent ID), so {@code isBlank()} correctly
+   * identifies it as the main agent. {@code isEmpty()} would incorrectly skip it, treating whitespace-only
+   * as if it were a real agent ID.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void agentToolWithWhitespaceOnlyAgentIdCreatesFlagFile() throws IOException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("v2.1");
+    Path worktreePath = null;
+    String sessionId = UUID.randomUUID().toString();
+    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      String issueId = "2.1-test-issue";
+
+      createLockFile(scope, sessionId, issueId);
+      worktreePath = createWorktreeDir(mainRepo, scope, issueId);
+
+      SetPendingAgentResult handler = new SetPendingAgentResult(scope);
+      // Whitespace-only agent_id is semantically blank — treated as main agent
+      JsonNode hookData = createHookData(mapper, "   ", "cat:work-execute");
+      JsonNode toolResult = mapper.readTree("{}");
+
+      PostToolHandler.Result result = handler.check("Agent", toolResult, sessionId, hookData);
+
+      requireThat(result.warning(), "warning").isEmpty();
+      Path flagPath = scope.getSessionBasePath().resolve(sessionId).resolve("pending-agent-result");
+      // isBlank() treats whitespace-only as blank → main agent path → flag created
+      requireThat(Files.exists(flagPath), "flagExists").isTrue();
+    }
+    finally
+    {
+      if (worktreePath != null)
+        TestUtils.runGit(mainRepo, "worktree", "remove", "--force", worktreePath.toString());
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+    }
+  }
+
+  /**
    * Verifies that when the tool is not the Agent tool, no flag file is created.
    *
    * @throws IOException if test setup fails

@@ -1,0 +1,14 @@
+{
+  "_comment": "Auto-generated snapshot of the last benchmark run. Not a config file.",
+  "session_id": "test-session-12345",
+  "phase": "sprt",
+  "timestamp": "2026-03-13T17:28:41Z",
+  "skill": {
+    "path": "plugin/skills/instruction-builder-agent/first-use.md",
+    "sha256": "3ca439f6e8d68e3f28426447a036c358755cffd79a45ee572c1a9c24456e2c76"
+  },
+  "test_cases": {
+    "path": "plugin/skills/instruction-builder-agent/test/test-cases.json",
+    "sha256": "6eda5fb0677f4413aa2f17c681eb97b9dbbfe13a7ea5a430c863e5f438cbe8d9"
+  }
+}
