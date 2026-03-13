@@ -167,7 +167,62 @@ Goal/Problem section:
    - `medium`: Brief exploration of 2-3 alternatives
    - `high`: Deep research, document rejected alternatives with rationale
 6. Generate PLAN.md content using the appropriate template for `issue_type`
-7. Write PLAN.md to `${CONTEXT_PATH%.json}.plan.md`
+7. Run the iterative completeness review loop (see Step 7 detail below)
+8. Write the final PLAN.md content to `${CONTEXT_PATH%.json}.plan.md`
+
+### Step 7: Iterative Completeness Review (effort: medium or high only)
+
+Skip this step entirely if effort is `low`. Proceed directly to Step 8.
+
+For effort `medium` or `high`, run the following review loop (maximum 3 iterations):
+
+**Iteration setup:**
+- `ITERATION` = 1
+- `PLAN_CONTENT` = full text of the PLAN.md content generated in Step 6
+- `ISSUE_GOAL` = the `description` field from the context JSON
+
+**Review subagent (spawn fresh each iteration):**
+
+Read `plugin/agents/plan-review-agent.md` and inject its full content verbatim into the Task prompt:
+
+```
+Task tool:
+  description: "Plan completeness review (iteration {ITERATION})"
+  subagent_type: "general-purpose"
+  prompt: |
+    Use model claude-sonnet-4-6.
+
+    {content of plugin/agents/plan-review-agent.md — injected verbatim}
+
+    ## Issue Goal
+    {ISSUE_GOAL}
+
+    ## PLAN.md to Review
+    {PLAN_CONTENT}
+```
+
+**On verdict YES:**
+Display progress message: `✓ Plan review passed (iteration {ITERATION})`
+Exit loop. Proceed to Step 8 with current `PLAN_CONTENT`.
+
+**On verdict NO:**
+Display progress message: `⏳ Plan review iteration {ITERATION}: {gap_count} gaps found, refining...`
+Render the gaps to the user so they understand what is being fixed.
+1. Read the `gaps` array from the reviewer's JSON response.
+2. For each gap, apply a targeted fix to the relevant section of `PLAN_CONTENT`. Do NOT rewrite sections
+   unrelated to the reported gaps. Preserve all existing correct content.
+3. Update `PLAN_CONTENT` with the patched content.
+4. Increment `ITERATION`.
+5. If `ITERATION` <= 3: Display progress message `⏳ Spawning review iteration {ITERATION}...` then spawn reviewer again with updated `PLAN_CONTENT`.
+6. If `ITERATION` > 3 (cap reached): Display the following warning message and exit loop:
+
+   ```
+   ⚠️  Plan review cap reached (3 iterations). Proceeding with current PLAN.md.
+   Remaining gaps: {list gaps from last NO verdict}
+   ```
+
+**After loop exits:** `PLAN_CONTENT` holds the final (possibly patched) content. Proceed to Step 8 to write it
+to disk.
 
 ### For Mid-Work Revision (mode=revise)
 
@@ -175,7 +230,9 @@ Goal/Problem section:
 2. Read the revision context (REVISION_CONTEXT argument) to understand what changed
 3. Update PLAN.md sections affected by the revision
 4. Preserve completed work and adjust remaining execution steps
-5. Write updated PLAN.md to `${ISSUE_PATH}/PLAN.md`
+5. Run the iterative completeness review loop (see Step 7 detail above, using `ISSUE_GOAL` from the existing
+   PLAN.md `## Goal` section and `PLAN_CONTENT` as the revised PLAN.md text)
+6. Write updated PLAN.md to `${ISSUE_PATH}/PLAN.md`
 
 ## Output
 
