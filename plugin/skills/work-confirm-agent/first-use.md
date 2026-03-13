@@ -11,7 +11,7 @@ stakeholder quality review. Spawns a verify subagent, handles fix iteration if c
 ## Arguments Format
 
 ```
-<catAgentId> <issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <execution_commits_json> <files_changed> <trust> <verify>
+<catAgentId> <issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <execution_commits_json_path> <files_changed> <trust> <verify>
 ```
 
 | Position | Name | Example |
@@ -22,7 +22,7 @@ stakeholder quality review. Spawns a verify subagent, handles fix iteration if c
 | 4 | worktree_path | `${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name` |
 | 5 | issue_branch | `2.1-issue-name` |
 | 6 | target_branch | `v2.1` |
-| 7 | execution_commits_json | JSON array of commit objects from the implement phase |
+| 7 | execution_commits_json_path | Path to JSON file containing commit objects from the implement phase |
 | 8 | files_changed | integer count of files changed |
 | 9 | trust | `medium` |
 | 10 | verify | `changed` |
@@ -44,9 +44,14 @@ Return JSON when complete:
 Parse arguments and display the **Confirming phase** banner in a chained call:
 
 ```bash
-read CAT_AGENT_ID ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH EXECUTION_COMMITS_JSON FILES_CHANGED TRUST VERIFY <<< "$ARGUMENTS" && \
+read CAT_AGENT_ID ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH EXECUTION_COMMITS_JSON_PATH FILES_CHANGED TRUST VERIFY <<< "$ARGUMENTS" && \
 PLAN_MD="${ISSUE_PATH}/PLAN.md" && \
 "${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase confirming
+```
+
+```bash
+EXECUTION_COMMITS_JSON=$(cat "$EXECUTION_COMMITS_JSON_PATH")
+CURRENT_COMMITS_JSON="$EXECUTION_COMMITS_JSON"
 ```
 
 ## Step 4: Confirm Implementation
