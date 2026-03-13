@@ -30,8 +30,7 @@ import java.time.temporal.ChronoUnit;
  * {@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/locks/}.
  * Tests use {@link JvmScope#getProjectCatDir()} to resolve this path correctly.
  * <p>
- * Session-scoped files (such as {@code session.cwd}) are managed independently by the broader
- * session cleanup pipeline and are not cleaned up by this hook.
+ * Session-scoped files are managed independently by the broader session cleanup pipeline.
  */
 public final class SessionEndHookTest
 {
