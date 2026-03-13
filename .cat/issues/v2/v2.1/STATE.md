@@ -90,6 +90,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-work-merge-gate-timing
 - fix-standalone-cd-in-skill-files
 - fix-post-bash-hook-test-failure-false-positive
+- move-cat-session-files-to-cat-work-path
 
 
 ## Issues Closed
