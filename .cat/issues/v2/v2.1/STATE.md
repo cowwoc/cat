@@ -96,6 +96,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - delegate-plan-patch-to-subagent
 - pass-json-args-via-file
 - migrate-benchmark-runner-to-java
+- add-benchmark-runner-tests
 
 
 ## Issues Closed
