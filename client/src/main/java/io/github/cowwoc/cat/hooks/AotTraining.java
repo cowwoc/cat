@@ -71,7 +71,6 @@ public final class AotTraining
       // Hook handlers with run(HookInput, HookOutput)
       new PreToolUseHook(scope).run(input, output);
       new PostBashHook().run(input, output);
-      new PreCompactHook(scope).run(input, output);
       new PreReadHook(scope).run(input, output);
       new PostReadHook(scope).run(input, output);
       new PostToolUseHook(scope).run(input, output);
