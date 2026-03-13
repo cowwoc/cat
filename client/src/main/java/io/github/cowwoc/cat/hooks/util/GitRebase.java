@@ -21,7 +21,10 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -106,6 +109,15 @@ public final class GitRebase
 
     // Step 2: Detect fork point (always returns a non-null value)
     String forkPoint = detectForkPoint(resolvedTarget);
+
+    // Step 2.5: Validate path consistency before creating backup
+    String mergeBaseForValidation = detectMergeBase(resolvedTarget);
+    if (mergeBaseForValidation != null)
+    {
+      String validationError = validatePathConsistency(resolvedTarget, mergeBaseForValidation);
+      if (validationError != null)
+        return validationError;
+    }
 
     // Step 3: Create timestamped backup branch
     String backup = "backup-before-rebase-" + LocalDateTime.now().format(BACKUP_TIMESTAMP_FORMATTER);
@@ -239,6 +251,229 @@ public final class GitRebase
       return mergeBase;
 
     return forkPointResult.stdout().strip();
+  }
+
+  /**
+   * Detects the merge base between the current branch and the given target.
+   * <p>
+   * Unlike {@link #detectForkPoint(String)}, this method does not use reflog and simply returns the common
+   * ancestor commit. Returns {@code null} if no common ancestor exists (i.e., unrelated histories).
+   *
+   * @param targetBranch the target branch name or commit hash
+   * @return the merge-base commit hash, or {@code null} if not found
+   * @throws IOException if the git command fails unexpectedly
+   */
+  private String detectMergeBase(String targetBranch) throws IOException
+  {
+    ProcessRunner.Result result = runGit("merge-base", targetBranch, "HEAD");
+    if (result.exitCode() != 0)
+      return null;
+    return result.stdout().strip();
+  }
+
+  /**
+   * Validates that the current branch is consistent with path renames introduced on the target branch
+   * since the merge base.
+   * <p>
+   * Finds files renamed on the target branch (between merge base and target tip) and checks whether:
+   * <ul>
+   *   <li>The current branch still tracks files at the old (pre-rename) path</li>
+   *   <li>The current branch has files whose content references the old path string</li>
+   * </ul>
+   * Renames that the current branch has also performed (same old path renamed to a new path) are skipped,
+   * since the branch has already handled those renames. This prevents false positives when the feature
+   * branch's purpose is to perform the same rename as the target.
+   * <p>
+   * If any inconsistency is found, returns an ERROR JSON string. Otherwise returns {@code null}.
+   *
+   * @param targetBranch the target branch to rebase onto
+   * @param mergeBase    the merge-base commit hash between the current branch and target
+   * @return an ERROR JSON string if inconsistencies are found, or {@code null} if everything is consistent
+   * @throws IOException if git commands fail unexpectedly
+   */
+  private String validatePathConsistency(String targetBranch, String mergeBase) throws IOException
+  {
+    // Find renamed files on the target branch since the merge base
+    ProcessRunner.Result renameResult = runGit("diff", "--name-status", "--diff-filter=R",
+      "--find-renames=50%", mergeBase, targetBranch);
+    if (renameResult.exitCode() != 0 || renameResult.stdout().isBlank())
+      return null;
+
+    // Find old path prefixes that the current branch has ALSO renamed since the merge base.
+    // When the current branch performs the same rename as the target, it is not a conflict.
+    Set<String> currentBranchRenamedPrefixes = detectCurrentBranchRenamedPrefixes(mergeBase);
+
+    Set<String> trackedConflicts = new LinkedHashSet<>();
+    // Map from file path to list of old paths it references
+    Map<String, List<String>> contentConflicts = new LinkedHashMap<>();
+
+    for (String line : renameResult.stdout().split("\n"))
+    {
+      String trimmed = line.strip();
+      if (trimmed.isEmpty())
+        continue;
+      // Format: R<score>\t<oldPath>\t<newPath>
+      String[] parts = trimmed.split("\t");
+      if (parts.length < 3)
+        continue;
+      String oldPath = parts[1].strip();
+      String newPath = parts[2].strip();
+
+      // Compute the old directory prefix that changed (for content reference detection).
+      // Example: oldPath=".claude/cat/config.json", newPath=".cat/config.json"
+      //          commonSuffix="/config.json" → oldPrefix=".claude/cat"
+      String oldPrefix = computeChangedPrefix(oldPath, newPath);
+
+      // Skip this rename if the current branch has also renamed the same old prefix.
+      // The current branch has already handled this rename — it is not a conflict.
+      if (currentBranchRenamedPrefixes.contains(oldPrefix))
+        continue;
+
+      // Check if current branch still tracks the old path
+      ProcessRunner.Result lsResult = runGit("ls-files", "--", oldPath);
+      if (lsResult.exitCode() == 0 && !lsResult.stdout().isBlank())
+        trackedConflicts.add(oldPath);
+
+      // Check if any tracked file in the current branch contains the old prefix as text
+      ProcessRunner.Result grepResult = runGit("grep", "-l", "--", oldPrefix);
+      // git grep exits 1 when no matches (not an error); only exit code > 1 is a real error
+      if (grepResult.exitCode() > 1)
+        throw new IOException("git grep failed: " + grepResult.stdout().strip());
+      if (grepResult.exitCode() == 0 && !grepResult.stdout().isBlank())
+      {
+        for (String file : grepResult.stdout().split("\n"))
+        {
+          String fileTrimmed = file.strip();
+          if (!fileTrimmed.isEmpty())
+            contentConflicts.computeIfAbsent(fileTrimmed, _ -> new ArrayList<>()).add(oldPrefix);
+        }
+      }
+    }
+
+    if (trackedConflicts.isEmpty() && contentConflicts.isEmpty())
+      return null;
+
+    String header = "Pre-rebase path consistency check failed. " +
+      "The target branch has renamed paths that conflict with the current branch.\n" +
+      "Update the current branch to use the new paths before rebasing.";
+
+    String trackedSection = buildTrackedSection(trackedConflicts);
+    String contentSection = buildContentSection(contentConflicts);
+
+    String message = header + trackedSection + contentSection;
+    return buildErrorJson(message, null, null);
+  }
+
+  /**
+   * Detects the set of old path prefixes that the current branch has renamed since the merge base.
+   * <p>
+   * Runs {@code git diff --name-status --diff-filter=R --find-renames=50% <mergeBase> HEAD} and collects
+   * the old path prefix (computed via {@link #computeChangedPrefix(String, String)}) for each rename. This
+   * set is used to skip target-branch renames that the current branch has already handled.
+   *
+   * @param mergeBase the merge-base commit hash between the current branch and target
+   * @return set of old path prefixes renamed by the current branch since the merge base
+   * @throws IOException if the git command fails unexpectedly
+   */
+  private Set<String> detectCurrentBranchRenamedPrefixes(String mergeBase) throws IOException
+  {
+    ProcessRunner.Result result = runGit("diff", "--name-status", "--diff-filter=R",
+      "--find-renames=50%", mergeBase, "HEAD");
+    Set<String> prefixes = new HashSet<>();
+    if (result.exitCode() != 0 || result.stdout().isBlank())
+      return prefixes;
+    for (String line : result.stdout().split("\n"))
+    {
+      String trimmed = line.strip();
+      if (trimmed.isEmpty())
+        continue;
+      // Format: R<score>\t<oldPath>\t<newPath>
+      String[] parts = trimmed.split("\t");
+      if (parts.length < 3)
+        continue;
+      String oldPath = parts[1].strip();
+      String newPath = parts[2].strip();
+      prefixes.add(computeChangedPrefix(oldPath, newPath));
+    }
+    return prefixes;
+  }
+
+  /**
+   * Builds the tracked-path section of the path consistency error message.
+   *
+   * @param trackedConflicts set of old paths still tracked in the current branch
+   * @return a multi-line string section, or empty string if no conflicts
+   */
+  private static String buildTrackedSection(Set<String> trackedConflicts)
+  {
+    if (trackedConflicts.isEmpty())
+      return "";
+    List<String> lines = new ArrayList<>();
+    lines.add("\n\nTracked files at renamed (old) paths:");
+    for (String path : trackedConflicts)
+      lines.add("  " + path);
+    return String.join("\n", lines);
+  }
+
+  /**
+   * Builds the content-reference section of the path consistency error message.
+   *
+   * @param contentConflicts map from file path to list of old path strings it references
+   * @return a multi-line string section, or empty string if no conflicts
+   */
+  private static String buildContentSection(Map<String, List<String>> contentConflicts)
+  {
+    if (contentConflicts.isEmpty())
+      return "";
+    List<String> lines = new ArrayList<>();
+    lines.add("\n\nFiles with content references to renamed (old) paths:");
+    for (Map.Entry<String, List<String>> entry : contentConflicts.entrySet())
+      lines.add("  " + entry.getKey() + " references: " + String.join(", ", entry.getValue()));
+    return String.join("\n", lines);
+  }
+
+  /**
+   * Computes the old path prefix that changed in a rename.
+   * <p>
+   * Finds the longest common suffix shared by {@code oldPath} and {@code newPath} (aligned at path
+   * component boundaries), then returns the old path with that suffix removed. This gives the portion of
+   * the old path that no longer exists under the same name.
+   * <p>
+   * Examples:
+   * <ul>
+   *   <li>{@code oldPath=".claude/cat/config.json"}, {@code newPath=".cat/config.json"}
+   *       → common suffix {@code "/config.json"} → returns {@code ".claude/cat"}</li>
+   *   <li>{@code oldPath="src/old/Foo.java"}, {@code newPath="src/new/Foo.java"}
+   *       → common suffix {@code "/Foo.java"} → returns {@code "src/old"}</li>
+   *   <li>{@code oldPath="old.txt"}, {@code newPath="new.txt"} → no common suffix → returns
+   *       {@code "old.txt"}</li>
+   * </ul>
+   *
+   * @param oldPath the old file path before the rename
+   * @param newPath the new file path after the rename
+   * @return the old path prefix up to (but not including) the common suffix
+   */
+  private static String computeChangedPrefix(String oldPath, String newPath)
+  {
+    // Walk backwards through path components to find the longest common suffix
+    String[] oldParts = oldPath.split("/");
+    String[] newParts = newPath.split("/");
+    int commonCount = 0;
+    int oldIdx = oldParts.length - 1;
+    int newIdx = newParts.length - 1;
+    while (oldIdx >= 0 && newIdx >= 0 && oldParts[oldIdx].equals(newParts[newIdx]))
+    {
+      commonCount += 1;
+      oldIdx -= 1;
+      newIdx -= 1;
+    }
+    if (commonCount == 0 || oldIdx < 0)
+      return oldPath;
+    // Build the prefix from oldParts[0..oldIdx] inclusive
+    List<String> prefixParts = new ArrayList<>();
+    for (int i = 0; i <= oldIdx; i += 1)
+      prefixParts.add(oldParts[i]);
+    return String.join("/", prefixParts);
   }
 
   /**
