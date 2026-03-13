@@ -97,6 +97,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - pass-json-args-via-file
 - migrate-benchmark-runner-to-java
 - pass-file-paths-to-subagents
+- fix-skill-invocation-missing-catagentid
 
 
 ## Issues Closed
