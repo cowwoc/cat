@@ -135,6 +135,7 @@ path updates here are for external→internal relocation, not .claude/cat→.cat
 
 ## Pre-conditions
 
+- [ ] 2.1-fix-work-with-issue-path-validation is closed
 - [ ] All dependent issues are closed
 
 ## Sub-Agent Waves
