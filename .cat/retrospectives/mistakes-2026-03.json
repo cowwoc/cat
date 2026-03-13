@@ -1873,5 +1873,33 @@
     "prevention_verified" : false,
     "recurrence_of" : null,
     "correct_behavior" : ""
+  }, {
+    "id" : "M540",
+    "timestamp" : "2026-03-13T22:31:13Z",
+    "category" : "",
+    "description" : "",
+    "root_cause" : "Method uses null as overloaded sentinel value for three different conditions: (1) Legitimate size exceeded, (2) IOException during I/O, (3) Git command failed with non-zero exit code. All null returns are interpreted by call site as 'diff too large', masking genuine errors.",
+    "cause_signature" : null,
+    "prevention_type" : "",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "correct_behavior" : ""
+  }, {
+    "id" : "M541",
+    "timestamp" : "2026-03-13T22:44:35Z",
+    "category" : "",
+    "description" : "",
+    "root_cause" : "Phase 3 subagent hit the Issue Worktree Gate (phase-prevent.md Step 9 lines 417-441), determined it was not in an issue worktree and could not implement a code_fix. It returned prevention_implemented:false but left issue_creation_info fields empty. The main orchestrator's Step 6 (Create Follow-up Issue) then had no data to create a follow-up issue, so the prevention design was lost.",
+    "cause_signature" : null,
+    "prevention_type" : "",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "correct_behavior" : ""
   } ]
 }

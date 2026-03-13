@@ -981,6 +981,36 @@ be fixed, not worked around. Throwing an exception immediately surfaces the prob
 
 **Exception:** Optional parameters may have defaults, but document this clearly in Javadoc.
 
+### Null Return for Errors
+**Methods must NOT return null to signal error conditions** - throw a typed exception instead:
+
+```java
+// Good - throw exception for operation failure
+public String getRawDiff(Path repoRoot) throws IOException
+{
+  ProcessResult result = runGit(repoRoot, "diff");
+  if (result.exitCode() != 0)
+    throw new IOException("git diff failed: " + result.stderr());
+  return result.stdout();
+}
+
+// Avoid - null has multiple meanings; caller cannot distinguish I/O error from "no diff"
+public String getRawDiff(Path repoRoot)
+{
+  ProcessResult result = runGit(repoRoot, "diff");
+  if (result.exitCode() != 0)
+    return null;  // Don't do this - caller may misinterpret null
+  return result.stdout();
+}
+```
+
+**Why:** When null can mean several different things (I/O error, process failure, size exceeded, etc.), callers cannot
+distinguish between them. This leads to silent misinterpretation — the caller handles one meaning while the method
+returns null for another reason.
+
+**Acceptable null return:** Returning null is acceptable only when null has exactly ONE well-documented semantic meaning
+(e.g., "value not present in map" or "no match found"). Document this meaning in Javadoc with `@return`.
+
 ### String Validation - Prefer isNotBlank()
 When validating string parameters, prefer `isNotBlank()` over `isNotNull()` unless empty strings are valid:
 
