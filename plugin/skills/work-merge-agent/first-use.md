@@ -19,11 +19,15 @@ commit squashing, branch merging, worktree cleanup, and state updates.
 
 ## Arguments and Configuration
 
-`<catAgentId> <issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <commits_json> <trust> <verify>`
+`<catAgentId> <issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <commits_json_path> <trust> <verify>`
 
 ```bash
-read CAT_AGENT_ID ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH COMMITS_JSON TRUST VERIFY <<< "$ARGUMENTS"
+read CAT_AGENT_ID ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH COMMITS_JSON_PATH TRUST VERIFY <<< "$ARGUMENTS"
 PLAN_MD="${ISSUE_PATH}/PLAN.md"
+```
+
+```bash
+COMMITS_JSON=$(cat "$COMMITS_JSON_PATH")
 ```
 
 Return JSON: `{"status": "SUCCESS|ABORTED|CHANGES_REQUESTED|FAILED", "issue_id": "...", "commits": [...], "files_changed": N, "merged": true}`

@@ -116,13 +116,18 @@ If the implement phase returns FAILED or BLOCKED, return that status immediately
 
 Invoke the confirm phase skill:
 
+```bash
+EXECUTION_COMMITS_JSON_PATH="/tmp/cat-${ISSUE_ID}-confirm-commits.json"
+printf '%s' "${EXECUTION_COMMITS_JSON}" > "${EXECUTION_COMMITS_JSON_PATH}"
+```
+
 ```
 Skill tool:
   skill: "cat:work-confirm-agent"
-  args: "${CAT_AGENT_ID} ${ISSUE_ID} ${ISSUE_PATH} ${WORKTREE_PATH} ${BRANCH} ${TARGET_BRANCH} ${EXECUTION_COMMITS_JSON} ${FILES_CHANGED} ${TRUST} ${VERIFY}"
+  args: "${CAT_AGENT_ID} ${ISSUE_ID} ${ISSUE_PATH} ${WORKTREE_PATH} ${BRANCH} ${TARGET_BRANCH} ${EXECUTION_COMMITS_JSON_PATH} ${FILES_CHANGED} ${TRUST} ${VERIFY}"
 ```
 
-Where `EXECUTION_COMMITS_JSON` is the JSON array of commits from the implement phase result,
+Where `EXECUTION_COMMITS_JSON_PATH` is the path to the JSON file containing commits from the implement phase result,
 and `FILES_CHANGED` is the integer count from the implement phase result.
 
 If the confirm phase returns FAILED or BLOCKED, return that status immediately.
@@ -151,13 +156,18 @@ If the review phase returns FAILED or BLOCKED, return that status immediately.
 
 Invoke the merge phase skill with the accumulated commits JSON:
 
+```bash
+COMMITS_JSON_PATH="/tmp/cat-${ISSUE_ID}-merge-commits.json"
+printf '%s' "${COMMITS_JSON}" > "${COMMITS_JSON_PATH}"
+```
+
 ```
 Skill tool:
   skill: "cat:work-merge-agent"
-  args: "${CAT_AGENT_ID} ${ISSUE_ID} ${ISSUE_PATH} ${WORKTREE_PATH} ${BRANCH} ${TARGET_BRANCH} ${COMMITS_JSON} ${TRUST} ${VERIFY}"
+  args: "${CAT_AGENT_ID} ${ISSUE_ID} ${ISSUE_PATH} ${WORKTREE_PATH} ${BRANCH} ${TARGET_BRANCH} ${COMMITS_JSON_PATH} ${TRUST} ${VERIFY}"
 ```
 
-Where `COMMITS_JSON` is the full JSON array of all commits accumulated across implement, confirm,
+Where `COMMITS_JSON_PATH` is the path to the JSON file containing all commits accumulated across implement, confirm,
 and review phases.
 
 Capture the final result. The merge skill handles the approval gate and returns when the user
