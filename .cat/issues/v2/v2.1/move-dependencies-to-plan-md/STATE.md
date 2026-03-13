@@ -2,5 +2,4 @@
 
 - **Status:** open
 - **Progress:** 0%
-- **Dependencies:** []
 - **Blocks:** []

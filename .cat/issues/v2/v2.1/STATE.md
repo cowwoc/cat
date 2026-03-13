@@ -86,6 +86,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - detect-path-renames-before-rebase
 - fix-work-with-issue-path-validation
 - move-session-files-to-cat-work
+- move-dependencies-to-plan-md
 
 
 ## Issues Closed
