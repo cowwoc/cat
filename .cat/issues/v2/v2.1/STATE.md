@@ -92,6 +92,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-post-bash-hook-test-failure-false-positive
 - move-cat-session-files-to-cat-work-path
 - add-size-guard-to-get-diff
+- add-empirical-tests-get-output-agent
 
 
 ## Issues Closed
