@@ -575,15 +575,15 @@ in executable code. Use the simple class name in the Javadoc tag:
 
 ```java
 // Good - import added, simple name in {@link}
-import io.github.cowwoc.cat.hooks.session.RestoreCwdAfterCompaction;
+import io.github.cowwoc.cat.hooks.DisplayUtils;
 
 /**
- * This file is consumed by {@link RestoreCwdAfterCompaction}.
+ * This file is consumed by {@link DisplayUtils}.
  */
 
 // Avoid - fully qualified name in {@link}
 /**
- * This file is consumed by {@link io.github.cowwoc.cat.hooks.session.RestoreCwdAfterCompaction}.
+ * This file is consumed by {@link io.github.cowwoc.cat.hooks.DisplayUtils}.
  */
 ```
 

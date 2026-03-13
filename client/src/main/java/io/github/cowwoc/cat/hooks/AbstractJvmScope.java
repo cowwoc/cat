@@ -147,8 +147,6 @@ public abstract class AbstractJvmScope implements JvmScope
    * Returns the per-session CAT directory.
    * <p>
    * Located at {@code {claudeProjectDir}/.cat/work/sessions/{sessionId}/}.
-   * <p>
-   * This directory stores session-internal state such as {@code session.cwd}.
    *
    * @return the session CAT directory path
    * @throws IllegalStateException if this scope is closed
