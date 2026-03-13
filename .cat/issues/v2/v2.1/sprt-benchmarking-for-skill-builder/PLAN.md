@@ -40,6 +40,12 @@ the cost is negligible with Haiku + caching.
 Hardening improves instruction quality (fixes ambiguities). Benchmarking measures whether instructions produce
 compliant output. The workflow is: benchmark → if non-compliant → harden → re-benchmark → repeat until compliant.
 
+### Hardening + benchmarking as atomic unit
+Hardening without benchmarking leaves compliance unmeasured. Benchmarking without hardening means accepting whatever
+compliance rate the first draft achieves. The two must always run together as a single phase — never one without the
+other. When `effort` is `low`, skip this entire phase (accept the skill draft as-is after the single-run sanity check).
+When `effort` is `medium` or `high`, run the full hardening + benchmark loop.
+
 ## Scope
 
 ### In scope
@@ -67,7 +73,7 @@ compliant output. The workflow is: benchmark → if non-compliant → harden →
    - Grade results deterministically (no grader subagents)
    - Feed pass/fail into SPRT decision function after each completion (pipelined)
    - SPRT parameters: H₀ ≥ 0.95, H₁ ≤ 0.85, α = 0.05, β = 0.05
-   - Accept → compliant, Reject → run hardening → re-benchmark
+   - Accept → compliant, Reject → run hardening → re-benchmark (entire phase skipped when effort = low)
 6. Design deterministic assertion format (machine-checkable assertions)
 7. Implement SPRT decision function
 8. Add re-benchmark step after hardening converges
@@ -85,3 +91,5 @@ compliant output. The workflow is: benchmark → if non-compliant → harden →
 - [ ] SPRT check runs after each individual agent completion (pipelined), not batched per wave
 - [ ] After hardening converges, benchmark re-runs to verify compliance improvement
 - [ ] Compliance checklist updated to reflect all changes
+- [ ] Hardening + benchmarking phase only runs when effort > low (skipped entirely at effort = low)
+- [ ] Hardening and benchmarking are always paired — never one without the other
