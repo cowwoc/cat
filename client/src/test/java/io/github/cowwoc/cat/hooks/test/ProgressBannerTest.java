@@ -150,7 +150,7 @@ public class ProgressBannerTest
     {
       ProgressBanner banner = new ProgressBanner(scope);
       String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
-      requireThat(result, "result").contains("◉ Preparing");
+      requireThat(result, "result").contains("◑ Preparing");
       requireThat(result, "result").contains("○ Implementing");
     }
     finally
@@ -173,7 +173,7 @@ public class ProgressBannerTest
       ProgressBanner banner = new ProgressBanner(scope);
       String result = banner.generateBanner("2.1-test-issue", Phase.IMPLEMENTING);
       requireThat(result, "result").contains("● Preparing");
-      requireThat(result, "result").contains("◉ Implementing");
+      requireThat(result, "result").contains("◑ Implementing");
       requireThat(result, "result").contains("○ Confirming");
       requireThat(result, "result").contains("○ Reviewing");
     }
@@ -199,7 +199,7 @@ public class ProgressBannerTest
       requireThat(result, "result").contains("● Preparing");
       requireThat(result, "result").contains("● Implementing");
       requireThat(result, "result").contains("● Confirming");
-      requireThat(result, "result").contains("◉ Reviewing");
+      requireThat(result, "result").contains("◑ Reviewing");
       requireThat(result, "result").contains("○ Merging");
     }
     finally
@@ -225,7 +225,7 @@ public class ProgressBannerTest
       requireThat(result, "result").contains("● Implementing");
       requireThat(result, "result").contains("● Confirming");
       requireThat(result, "result").contains("● Reviewing");
-      requireThat(result, "result").contains("◉ Merging");
+      requireThat(result, "result").contains("◑ Merging");
     }
     finally
     {
@@ -601,7 +601,7 @@ public class ProgressBannerTest
       requireThat(lines[0], "topLine").endsWith("╮");
       requireThat(lines[1], "middleLine").startsWith("│");
       requireThat(lines[1], "middleLine").endsWith("│");
-      requireThat(lines[1], "middleLine").contains("◉ Preparing");
+      requireThat(lines[1], "middleLine").contains("◑ Preparing");
       requireThat(lines[1], "middleLine").contains("○ Implementing");
       requireThat(lines[1], "middleLine").contains("○ Confirming");
       requireThat(lines[1], "middleLine").contains("○ Reviewing");
@@ -636,7 +636,7 @@ public class ProgressBannerTest
       String result = banner.generateBanner("2.1-test-issue", Phase.CONFIRMING);
       requireThat(result, "result").contains("● Preparing");
       requireThat(result, "result").contains("● Implementing");
-      requireThat(result, "result").contains("◉ Confirming");
+      requireThat(result, "result").contains("◑ Confirming");
       requireThat(result, "result").contains("○ Reviewing");
       requireThat(result, "result").contains("○ Merging");
     }
@@ -662,7 +662,7 @@ public class ProgressBannerTest
 
       requireThat(result, "result").contains("● Preparing");
       requireThat(result, "result").contains("● Implementing");
-      requireThat(result, "result").contains("◉ Confirming");
+      requireThat(result, "result").contains("◑ Confirming");
       requireThat(result, "result").contains("○ Reviewing");
       requireThat(result, "result").contains("○ Merging");
     }
