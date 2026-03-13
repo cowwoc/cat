@@ -89,6 +89,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - move-dependencies-to-plan-md
 - fix-work-merge-gate-timing
 - fix-standalone-cd-in-skill-files
+- fix-post-bash-hook-test-failure-false-positive
 
 
 ## Issues Closed
