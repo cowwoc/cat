@@ -10,12 +10,12 @@ commit squashing, branch merging, worktree cleanup, and state updates.
 
 ## MANDATORY STEPS
 
-- **Step 7: Squash Commits by Topic Before Review** — always squash before the approval gate; do not proceed to
-  Step 8 without completing this step
-- **Step 8: Rebase onto Target Branch Before Approval Gate** — always rebase the squashed branch onto the current tip
-  of the target branch before the approval gate; do not proceed to Step 9 without completing this step
-- **Step 9 (sub-step): Skill-Builder Review** — always invoke `cat:skill-builder` for modified skill or
+- **Step 7: Rebase onto Target Branch Before Approval Gate** — always rebase the branch onto the current tip
+  of the target branch before the approval gate; do not proceed to Step 8 without completing this step
+- **Step 8: Skill-Builder Review** — always invoke `cat:skill-builder` for modified skill or
   command files before presenting the approval gate
+- **Step 9: Squash Commits by Topic Before Approval Gate** — always squash commits by topic immediately before
+  presenting the approval gate; do not present the gate on an un-squashed branch
 
 ## Arguments and Configuration
 
@@ -117,13 +117,13 @@ Parse the subagent result:
 - **FAILED** (phase: rebase): Return FAILED status with conflict details. Do NOT proceed.
 - **FAILED** (phase: squash or verify): Return FAILED status with error details. Do NOT proceed.
 
-## Step 8: Rebase onto Target Branch Before Approval Gate (MANDATORY)
+## Step 7: Rebase onto Target Branch Before Approval Gate (MANDATORY)
 
-Before presenting the approval gate, rebase the squashed issue branch onto the current tip of
+Before proceeding to the approval gate, rebase the issue branch onto the current tip of
 the target branch. This ensures the diff shown at the approval gate reflects what the merge will
 actually produce.
 
-### Step 8a: Capture Old Fork Point
+### Step 7a: Capture Old Fork Point
 
 Record the current fork point before the rebase so the impact analysis can compare what changed:
 
@@ -136,7 +136,7 @@ if [[ -z "$OLD_FORK_POINT" ]]; then
 fi
 ```
 
-### Step 8b: Perform Rebase
+### Step 7b: Perform Rebase
 
 **Invoke `cat:git-rebase-agent`:**
 ```
@@ -155,30 +155,18 @@ Skill("cat:git-rebase-agent", args="{WORKTREE_PATH} {TARGET_BRANCH}")
 - Delete the backup branch created by cat:git-rebase-agent after resolution
 - **MANDATORY:** Flag that conflicts were resolved so Step 9 displays them. Set `REBASE_HAD_CONFLICTS=true`
   and retain `CONFLICT_RESOLUTIONS` for the approval gate output
-- Update the squash marker to reflect the new HEAD after rebase (same as the OK path above):
-  ```bash
-  SQUASH_MARKER_DIR="${CLAUDE_PROJECT_DIR}/.cat/work/sessions/${CLAUDE_SESSION_ID}"
-  REBASED_HASH=$(cd "${WORKTREE_PATH}" && git rev-parse HEAD)
-  echo "squashed:${REBASED_HASH}" > "${SQUASH_MARKER_DIR}/squash-complete-${ISSUE_ID}"
-  ```
-- Proceed to Step 8c (Impact Analysis)
+- Proceed to Step 7c (Impact Analysis)
 
 **If rebase reports OK:**
 - Delete the backup branch created by cat:git-rebase-agent
-- Update the squash marker to reflect the new HEAD after rebase (rebase changes the commit hash):
-  ```bash
-  SQUASH_MARKER_DIR="${CLAUDE_PROJECT_DIR}/.cat/work/sessions/${CLAUDE_SESSION_ID}"
-  REBASED_HASH=$(cd "${WORKTREE_PATH}" && git rev-parse HEAD)
-  echo "squashed:${REBASED_HASH}" > "${SQUASH_MARKER_DIR}/squash-complete-${ISSUE_ID}"
-  ```
-- Proceed to Step 8c (Impact Analysis)
+- Proceed to Step 7c (Impact Analysis)
 
 **If rebase reports ERROR:**
 - Output the error message
 - Restore from the backup branch if needed
 - STOP — do not proceed to approval gate until the error is resolved
 
-### Step 8c: Post-Rebase Impact Analysis
+### Step 7c: Post-Rebase Impact Analysis
 
 After a successful rebase (OK or resolved CONFLICT), capture the new fork point and invoke the
 impact analysis skill to determine whether upstream changes affect the current PLAN.md:
@@ -221,9 +209,9 @@ IMPACT_SEVERITY=$(echo "${IMPACT_JSON}" | grep -o '"severity"[[:space:]]*:[[:spa
 
 | `IMPACT_SEVERITY` value | Action |
 |------------------------|--------|
-| `NO_IMPACT` | Continue silently to Step 9 |
-| `LOW` | Continue silently to Step 9 |
-| `MEDIUM` | Auto-revise PLAN.md then continue to Step 9 (see below) |
+| `NO_IMPACT` | Continue silently to Step 8 |
+| `LOW` | Continue silently to Step 8 |
+| `MEDIUM` | Auto-revise PLAN.md then continue to Step 8 (see below) |
 | `HIGH` | Write proposal file then ask user for guidance (see below) |
 
 **MEDIUM: Auto-Revision**
@@ -252,66 +240,15 @@ subagent to apply the revised PLAN.md to the already-implemented code. This ensu
 remains consistent with the updated plan before continuing. The subagent receives the revised PLAN.md and
 the analysis file path as context.
 
-After the plan-builder (and any code-revision subagent) returns, continue to Step 9.
+After the plan-builder (and any code-revision subagent) returns, continue to Step 8.
 
 **HIGH: User Guidance Required**
 
 Write `${ISSUE_PATH}/rebase-conflict-proposal.md` summarizing the conflict (analysis_path, summary from IMPACT_JSON,
 options: revise plan / proceed / abort). Present the file path to the user and invoke `AskUserQuestion`
-before continuing to Step 9.
+before continuing to Step 8.
 
-## Step 9: Approval Gate (MANDATORY)
-
-**CRITICAL: This step is MANDATORY when trust != "high".**
-
-**Enforced by hook M480:** PreToolUse hook on Task tool blocks work-merge spawn when trust=medium/low
-and no explicit user approval is detected in session history.
-
-### Pre-Gate Squash Verification (BLOCKING)
-
-Before presenting the approval gate, verify that Step 7 (Squash by Topic) was executed in the **current session**
-by checking for the durable squash marker file written by Step 7:
-
-```bash
-SQUASH_MARKER="${CLAUDE_PROJECT_DIR}/.cat/work/sessions/${CLAUDE_SESSION_ID}/squash-complete-${ISSUE_ID}"
-if [[ ! -f "${SQUASH_MARKER}" ]]; then
-  echo "ERROR: Squash marker not found — Step 7 was not completed in this session." >&2
-  echo "Return to Step 7 and complete the squash by topic before proceeding." >&2
-  exit 1
-fi
-# Validate marker content: must be "squashed:<commit-hash>" where the hash is a valid git object
-MARKER_CONTENT=$(cat "${SQUASH_MARKER}")
-MARKER_HASH="${MARKER_CONTENT#squashed:}"
-if [[ "${MARKER_CONTENT}" != squashed:* ]] || [[ -z "${MARKER_HASH}" ]]; then
-  echo "ERROR: Squash marker has invalid format — expected 'squashed:<commit-hash>'." >&2
-  echo "Return to Step 7 and re-run the squash." >&2
-  exit 1
-fi
-if ! git -C "${WORKTREE_PATH}" cat-file -e "${MARKER_HASH}" 2>/dev/null; then
-  echo "ERROR: Squash marker references non-existent commit ${MARKER_HASH}." >&2
-  echo "Return to Step 7 and re-run the squash." >&2
-  exit 1
-fi
-# Verify marker hash matches current HEAD — after rebase or amend, the marker must have been updated
-CURRENT_HEAD=$(cd "${WORKTREE_PATH}" && git rev-parse HEAD)
-if [[ "${MARKER_HASH}" != "${CURRENT_HEAD}" ]]; then
-  echo "ERROR: Squash marker hash (${MARKER_HASH}) does not match current HEAD (${CURRENT_HEAD})." >&2
-  echo "The marker was not updated after rebase or amend. Return to Step 7 and re-run the squash." >&2
-  exit 1
-fi
-```
-
-**CRITICAL:** `STATE.md status: closed` does NOT prove Step 7 ran. STATE.md reflects implementation completion
-(State 1), not squash execution. Do NOT infer that Step 7 was already completed from STATE.md showing `closed`.
-Only the presence of the squash marker file (`squash-complete-${ISSUE_ID}`) in the session directory counts as
-proof Step 7 ran. Do NOT rely on session context alone, as context compaction may remove invocation history.
-
-**If Step 7 was skipped (marker file absent):** STOP — return to Step 7 and complete the squash by topic before
-proceeding.
-
-**If Step 7 was completed (marker file present):** Proceed to approval gate below.
-
-### Pre-Gate Skill-Builder Review (MANDATORY — BLOCKING)
+## Step 8: Skill-Builder Review (MANDATORY — BLOCKING)
 
 **MANDATORY:** When the issue modifies files in `plugin/skills/` or `plugin/commands/`, invoke `/cat:skill-builder`
 to review each modified skill or command file before presenting the approval gate. This step must not be skipped —
@@ -323,52 +260,63 @@ git diff --name-only "${TARGET_BRANCH}..HEAD" | grep -E '^plugin/(skills|command
 ```
 
 **If skill or command files were modified:** Invoke `/cat:skill-builder` with the path to each modified skill or
-command. Review the output and address any priming issues or structural problems it identifies before proceeding
-to the approval gate.
+command. Review the output and address any priming issues or structural problems it identifies.
 
-**If no skill or command files were modified:** Skip this check and proceed to cleanup (Step 9.1) below.
+**If no skill or command files were modified:** Skip directly to Post-Skill-Builder Artifact Cleanup below.
 
 ### Post-Skill-Builder Artifact Cleanup (MANDATORY)
 
-After instruction-builder-agent completes its review (if invoked in the Pre-Gate Skill-Builder Review step), clean up all
-temporary artifact files it created. These files (findings.json, diff-validation-*.json) are intermediate outputs of
-the adversarial TDD loop and must not be committed to the issue branch.
-
-**Why:** instruction-builder-agent creates temporary files during its red-team → blue-team → diff-validation cycle to track
-hardening iterations. These files have no value in the final codebase and must be removed before the implementation is
-committed.
+After skill-builder review completes (if invoked), clean up any temporary artifact files it created.
+These files (findings.json, diff-validation-*.json) are intermediate outputs and must not be committed.
 
 ```bash
 cd "${WORKTREE_PATH}"
 
-# Remove skill-builder temporary artifacts that should not be committed
-rm -f findings.json diff-validation-*.json 2>/dev/null
+# Remove skill-builder temporary artifacts
+rm -f findings.json diff-validation-*.json benchmark-artifacts/ 2>/dev/null
 
 # Remove from git index if tracked
 git rm --cached findings.json diff-validation-*.json 2>/dev/null || true
-rm -f findings.json diff-validation-*.json 2>/dev/null
 
-# Verify no skill-builder artifacts remain in git staging or working directory
-if git status --porcelain | grep -qE '(findings\.json|diff-validation-.*\.json)'; then
-  echo "ERROR: Skill-builder artifacts still present after cleanup — cannot proceed." >&2
-  exit 1
-fi
-
-# If the removal changed the index (artifacts were committed during the adversarial TDD loop),
-# amend the squashed commit to exclude them. This is safe because the squash just ran in Step 7
-# and has not been pushed.
-if ! git diff --cached --quiet 2>/dev/null; then
-  git commit --amend --no-edit
-  # Update squash marker to reflect the new HEAD after amend — the amend changes the commit hash,
-  # so the marker must be rewritten to stay consistent with the current branch tip.
-  SQUASH_MARKER_DIR="${CLAUDE_PROJECT_DIR}/.cat/work/sessions/${CLAUDE_SESSION_ID}"
-  NEW_SQUASH_HASH=$(git rev-parse HEAD)
-  echo "squashed:${NEW_SQUASH_HASH}" > "${SQUASH_MARKER_DIR}/squash-complete-${ISSUE_ID}"
+# Verify cleanup
+if git status --porcelain | grep -qE '(findings\.json|diff-validation)'; then
+  echo "WARNING: Skill-builder artifacts remain — attempting cleanup" >&2
 fi
 ```
 
-**If skill-builder was NOT invoked** (no skill/command files modified): skip this cleanup step entirely and proceed
-directly to Step 9.2.
+**If skill-builder was NOT invoked** (no skill/command files modified): skip this cleanup step and proceed
+directly to Step 9.
+
+## Step 9: Squash Commits by Topic Before Approval Gate (MANDATORY)
+
+Before presenting the approval gate, squash all commits by topic into one or more commits grouped by their purpose.
+This ensures the diff shown at the approval gate reflects a properly organized commit structure.
+
+Determine the primary commit message from the execution result (the most significant commit's message). Do NOT use
+generic messages like "squash commit".
+
+```bash
+# Extract the primary commit message from the commits JSON
+PRIMARY_COMMIT_MESSAGE=$(echo "$COMMITS_JSON" | \
+  grep -o '"message"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | \
+  sed 's/"message"[[:space:]]*:[[:space:]]*"\(.*\)"/\1/')
+```
+
+Invoke `cat:git-squash-agent`:
+```
+Skill("cat:git-squash-agent", args="${WORKTREE_PATH} ${TARGET_BRANCH} ${PRIMARY_COMMIT_MESSAGE}")
+```
+
+**After squash completes:** Extract the squashed commit hash for display at the approval gate.
+
+```bash
+FINAL_COMMIT=$(cd "${WORKTREE_PATH}" && git rev-parse HEAD)
+FINAL_DIFF_STAT=$(cd "${WORKTREE_PATH}" && git diff --stat ${TARGET_BRANCH}..HEAD)
+```
+
+**If squash fails:** Return FAILED status. Do NOT proceed to approval gate.
+
+## Approval Gate (MANDATORY)
 
 **trust == "high":** Skip approval gate — UNLESS `REBASE_HAD_CONFLICTS=true`, in which case present the conflict
 resolutions to the user via AskUserQuestion before proceeding. Even at trust=high, silently merged rebase conflicts
