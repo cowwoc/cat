@@ -851,6 +851,58 @@ public class GetDiffOutputTest
   }
 
   /**
+   * Verifies that a raw diff exceeding 2KB returns the brief skip notice.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void rawDiffExceeding2KBReturnsSkipNotice() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      Path tempDir = Files.createTempDirectory("render-diff-large-test");
+      try
+      {
+        // Initialize repo; rename the empty initial branch to v2.0 (same pattern as setupTestRepo)
+        runGit(tempDir, "init");
+        runGit(tempDir, "checkout", "-b", "v2.0");
+
+        // Create minimal cat-config.json so Config.load() does not fail
+        Path catDir = tempDir.resolve(".cat");
+        Files.createDirectories(catDir);
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 80}");
+
+        // Create initial commit on v2.0 branch
+        Files.writeString(tempDir.resolve("readme.txt"), "initial\n");
+        runGit(tempDir, "add", ".");
+        runGit(tempDir, "commit", "-m", "initial commit");
+
+        // Create feature branch and add a file whose raw diff exceeds 2048 bytes.
+        // Each formatted line is ~50 chars; with the diff + prefix and newline, 60 lines
+        // produce approximately 3120 bytes of raw diff, well above the 2048-byte limit.
+        runGit(tempDir, "checkout", "-b", "2.0-large-change");
+        StringBuilder largeContent = new StringBuilder();
+        for (int i = 0; i < 60; ++i)
+          largeContent.append(String.format("line_%04d_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx%n", i));
+        Files.writeString(tempDir.resolve("large.txt"), largeContent.toString());
+        runGit(tempDir, "add", ".");
+        runGit(tempDir, "commit", "-m", "add large file");
+
+        GetDiffOutput handler = new GetDiffOutput(scope);
+        // createIssueDirWithTargetBranch writes STATE.md with "Target Branch: v2.0"
+        Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
+        String result = handler.getOutput(new String[]{issuePath.toString()});
+
+        requireThat(result, "result").contains("too large").contains("2KB");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
    * Sets up a test git repository with specified branch structure and file changes.
    * <p>
    * Creates: targetBranch -> versionBranch (if needed) -> featureBranch with changes
@@ -1553,17 +1605,19 @@ public class GetDiffOutputTest
   }
 
   /**
-   * Verifies that lines with more than 500 tokens on either side fall back to plain escaped
-   * rendering (no bold word-diff markers applied).
+   * Verifies that diffs with very long lines (exceeding 1500 chars per side, which would trigger
+   * the per-line character guard) are intercepted first by the 2KB raw diff size guard and return
+   * the skip notice. Any diff whose lines each exceed 1500 chars necessarily produces a raw diff
+   * exceeding 2KB, so the 2KB guard fires before the per-line guard is reached.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void tokenCountExceedingLimitFallsBackToPlainRendering() throws IOException
+  public void veryLongLineDiffReturnsSkipNotice() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      Path tempDir = Files.createTempDirectory("render-diff-test");
+      Path tempDir = Files.createTempDirectory("render-diff-long-line-test");
       try
       {
         // Initialize git repo
@@ -1574,39 +1628,26 @@ public class GetDiffOutputTest
         Files.createDirectories(catDir);
         Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 220}");
 
-        // Build a line with > 500 tokens.
-        // The tokenizer splits on word/whitespace boundaries: each "word N" = 1 word + 1 space = 2 tokens,
-        // so 260 words yields 520 tokens (> 500 limit).
-        StringBuilder oldLineBuilder = new StringBuilder();
-        StringBuilder newLineBuilder = new StringBuilder();
-        for (int i = 0; i < 260; ++i)
-        {
-          oldLineBuilder.append("word").append(i).append(' ');
-          newLineBuilder.append("word").append(i).append(' ');
-        }
-        // Change only the last word so this qualifies as a modification pair
-        newLineBuilder.replace(newLineBuilder.lastIndexOf("word259"), newLineBuilder.length(), "CHANGED ");
+        // Build a line exceeding 1500 chars. Two such lines produce a raw diff > 2KB,
+        // so the 2KB guard fires first and returns the skip notice.
+        String repeated = "x".repeat(1501);
+        String modified = "y".repeat(1501);
 
-        Files.writeString(tempDir.resolve("tokens.txt"), oldLineBuilder + "\n");
+        Files.writeString(tempDir.resolve("long.txt"), repeated + "\n");
         runGit(tempDir, "add", ".");
         runGit(tempDir, "commit", "-m", "initial");
 
         runGit(tempDir, "checkout", "-b", "v2.0");
-        runGit(tempDir, "checkout", "-b", "2.0-token-limit");
-        Files.writeString(tempDir.resolve("tokens.txt"), newLineBuilder + "\n");
+        runGit(tempDir, "checkout", "-b", "2.0-long-line");
+        Files.writeString(tempDir.resolve("long.txt"), modified + "\n");
         runGit(tempDir, "add", ".");
-        runGit(tempDir, "commit", "-m", "modify last word");
+        runGit(tempDir, "commit", "-m", "change long line");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
         Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
         String result = handler.getOutput(new String[]{issuePath.toString()});
 
-        // Word diff must NOT be applied (line has > 500 tokens)
-        requireThat(result, "result").doesNotContain("**word0**");
-        requireThat(result, "result").doesNotContain("**CHANGED**");
-        // The content must still appear (plain escaped rendering)
-        requireThat(result, "result").contains("word0");
-        requireThat(result, "result").contains("CHANGED");
+        requireThat(result, "result").contains("too large").contains("2KB");
       }
       finally
       {
@@ -1842,6 +1883,35 @@ public class GetDiffOutputTest
         GetDiffOutput handler = new GetDiffOutput(scope);
         handler.getOutput(new String[]{issuePath.toString()});
       }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getRawDiffLimited throws IOException when git diff fails with a non-zero exit code
+   * (e.g., due to an invalid branch reference).
+   *
+   * @throws IOException if an I/O error occurs
+   * @throws InterruptedException if the operation is interrupted
+   */
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*git diff command failed with exit code.*")
+  public void getRawDiffLimitedThrowsOnNonZeroExitCode() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("raw-diff-fail-test");
+    try
+    {
+      runGit(tempDir, "init");
+      runGit(tempDir, "checkout", "-b", "main");
+      Files.writeString(tempDir.resolve("file.txt"), "initial\n");
+      runGit(tempDir, "add", ".");
+      runGit(tempDir, "commit", "-m", "init");
+
+      // Pass a branch that does not exist so git diff exits non-zero
+      GetDiffOutput.GitHelper.getRawDiffLimited(tempDir, "nonexistent-branch-xyz", 4096);
     }
     finally
     {
