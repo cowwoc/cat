@@ -12,7 +12,7 @@ statistical confidence in the true compliance rate (95% CI lower bound ~2.5%). A
 inconsistently alongside "benchmark" — the aggregator, output file, and iteration language already use "benchmark."
 
 This issue combines two changes:
-1. SPRT-based multi-run benchmarking with deterministic grading for statistical confidence
+1. SPRT-based multi-run benchmarking with hybrid grading (deterministic + LLM) for statistical confidence
 2. Consistent "benchmark" terminology throughout
 
 ## Design Decisions
@@ -27,9 +27,12 @@ Benchmark runs test instruction clarity, not model capability. A skill that Haik
 Opus. Haiku runs cost ~10-20x less than Opus, and automatic prompt caching gives 90% discount on input tokens for
 subagents 2-N within each 5-minute window.
 
-### Deterministic grading over LLM grading
-Assertions should be machine-checkable (string matching, regex, structural checks) rather than requiring LLM judgment.
-This eliminates grader subagents entirely, cutting wall-clock time ~50%.
+### Prefer deterministic grading, allow LLM grading
+Assertions should be deterministic where feasible (string match, regex, structural checks) — these are graded inline
+with no subagent overhead. However, since the skill-builder creates skills for arbitrary purposes, some assertions
+require semantic judgment ("explanation is accurate," "code handles edge cases"). These assertions spawn Haiku grader
+subagents. The skill-builder should maximize the ratio of deterministic to LLM-graded assertions when designing test
+cases, but must not prohibit LLM-graded ones.
 
 ### Parallel waves of 4
 Claude Code allows 4 concurrent background agents. SPRT decision logic runs after each agent completes (pipelined, not
@@ -52,7 +55,7 @@ When `effort` is `medium` or `high`, run the full hardening + benchmark loop.
 - `plugin/skills/skill-builder-agent/first-use.md` — primary target
 - `plugin/skills/skill-builder-agent/e2e-dispute-trace.md` — terminology updates
 - SPRT decision logic (Java tool or inline in skill instructions)
-- Deterministic assertion grading (Java tool or Bash script)
+- Hybrid assertion grading: deterministic (Java/Bash) for structural checks, Haiku LLM for semantic checks
 - Benchmark-then-harden feedback loop
 
 ### Out of scope
@@ -70,11 +73,12 @@ When `effort` is `medium` or `high`, run the full hardening + benchmark loop.
 ### SPRT benchmark workflow
 5. Replace single-run benchmark with SPRT loop:
    - Spawn waves of 4 Haiku eval-run subagents (fresh, independent)
-   - Grade results deterministically (no grader subagents)
+   - Grade deterministic assertions inline; spawn Haiku grader subagents for semantic assertions
    - Feed pass/fail into SPRT decision function after each completion (pipelined)
    - SPRT parameters: H₀ ≥ 0.95, H₁ ≤ 0.85, α = 0.05, β = 0.05
    - Accept → compliant, Reject → run hardening → re-benchmark (entire phase skipped when effort = low)
-6. Design deterministic assertion format (machine-checkable assertions)
+6. Design hybrid assertion format: deterministic type (regex, string match, structural) graded inline; semantic type
+   graded by Haiku subagent. Skill-builder should prefer deterministic assertions where possible.
 7. Implement SPRT decision function
 8. Add re-benchmark step after hardening converges
 
@@ -87,7 +91,10 @@ When `effort` is `medium` or `high`, run the full hardening + benchmark loop.
 - [ ] Benchmark runs use Haiku model for eval-run subagents
 - [ ] Each benchmark run uses a fresh (non-resumed) subagent
 - [ ] SPRT decision logic implemented with parameters: H₀ ≥ 0.95, H₁ ≤ 0.85, α = 0.05, β = 0.05
-- [ ] Assertions are deterministic (machine-checkable, no LLM grader subagents)
+- [ ] Assertion format supports both deterministic (machine-checkable) and semantic (LLM-graded) types
+- [ ] Deterministic assertions are graded inline without subagent overhead
+- [ ] Semantic assertions use Haiku grader subagents
+- [ ] Skill-builder maximizes deterministic-to-semantic assertion ratio when generating test cases
 - [ ] SPRT check runs after each individual agent completion (pipelined), not batched per wave
 - [ ] After hardening converges, benchmark re-runs to verify compliance improvement
 - [ ] Compliance checklist updated to reflect all changes
