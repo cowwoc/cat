@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.tool.post;
 
+import static io.github.cowwoc.cat.hooks.Strings.equalsIgnoreCase;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
@@ -23,10 +24,15 @@ import java.nio.file.Path;
  * Sets a pending-agent-result flag file when the main agent completes an Agent tool invocation
  * in a work-with-issue context.
  * <p>
- * When the main agent (not a subagent) completes an Agent tool invocation and an active worktree
- * lock exists for the session, this handler creates a flag file at
+ * When the main agent (not a subagent) completes an Agent tool invocation with
+ * {@code subagent_type: cat:work-execute} and an active worktree lock exists for the session,
+ * this handler creates a flag file at
  * {@code {sessionBasePath}/{sessionId}/pending-agent-result}. The flag signals that
  * {@code collect-results-agent} must be invoked before any subsequent Task or Skill call.
+ * <p>
+ * Other agent types (adversarial, red-team, blue-team, diff-validation) have different
+ * {@code subagent_type} values and produce no worktree artifacts requiring collection.
+ * The gate is skipped for these agents.
  * <p>
  * This handler always returns {@link Result#allow()} — it never blocks the Agent tool itself.
  * Failures during flag file creation are logged but do not propagate.
@@ -76,6 +82,24 @@ public final class SetPendingAgentResult implements PostToolHandler
       WorktreeContext context = WorktreeContext.forSession(
         scope.getProjectCatDir(), scope.getClaudeProjectDir(), scope.getJsonMapper(), sessionId);
       if (context == null)
+        return Result.allow();
+
+      // Only enforce collect-results gate for cat:work-execute subagents.
+      // Other agent types (adversarial, red-team, blue-team, diff-validation) produce no worktree
+      // artifacts, so the gate is unnecessary for them.
+      JsonNode toolInputNode;
+      if (hookData == null)
+        toolInputNode = null;
+      else
+        toolInputNode = hookData.get("tool_input");
+      boolean isWorkExecute = false;
+      if (toolInputNode != null)
+      {
+        JsonNode subagentTypeNode = toolInputNode.get("subagent_type");
+        if (subagentTypeNode != null && subagentTypeNode.isString())
+          isWorkExecute = equalsIgnoreCase(subagentTypeNode.asString(), "cat:work-execute");
+      }
+      if (!isWorkExecute)
         return Result.allow();
 
       // Create the flag file
