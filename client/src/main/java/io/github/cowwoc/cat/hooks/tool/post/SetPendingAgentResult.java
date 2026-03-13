@@ -62,7 +62,7 @@ public final class SetPendingAgentResult implements PostToolHandler
     try
     {
       // Only applies to the Agent tool
-      if (!toolName.equalsIgnoreCase("Agent"))
+      if (!toolName.equals("Agent"))
         return Result.allow();
 
       // Only applies to the main agent (not subagents spawning subagents)
@@ -74,8 +74,8 @@ public final class SetPendingAgentResult implements PostToolHandler
         agentId = agentIdNode.asString();
       else
         agentId = "";
-      // agentId is used only as a presence check (non-empty = subagent); no path construction, so no injection risk
-      if (!agentId.isEmpty())
+      // agentId is used only as a presence check (non-blank = subagent); no path construction, so no injection risk
+      if (!agentId.isBlank())
         return Result.allow();
 
       // Only applies when an active worktree lock exists (work-with-issue context)
