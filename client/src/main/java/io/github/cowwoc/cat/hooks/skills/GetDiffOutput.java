@@ -10,6 +10,8 @@ import com.github.difflib.text.DiffRow;
 import com.github.difflib.text.DiffRowGenerator;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -56,6 +58,11 @@ public final class GetDiffOutput implements SkillOutput
    */
   private static final int MAX_TOTAL_CHANGES = 50_000;
   /**
+   * Maximum raw diff size in bytes before the diff is considered too large to read into context.
+   * Diffs exceeding this threshold return a brief notice instead of the rendered table.
+   */
+  private static final int MAX_RAW_DIFF_BYTES = 2_048;
+  /**
    * Maximum number of files to display in the summary.
    */
   private static final int MAX_FILES_DISPLAYED = 20;
@@ -79,11 +86,18 @@ public final class GetDiffOutput implements SkillOutput
   /**
    * Git helper methods for diff operations.
    */
-  private static final class GitHelper
+  public static final class GitHelper
   {
     private static final Pattern STAT_FILES_PATTERN = Pattern.compile("(\\d+) files? changed");
     private static final Pattern STAT_INS_PATTERN = Pattern.compile("(\\d+) insertions?\\(\\+\\)");
     private static final Pattern STAT_DEL_PATTERN = Pattern.compile("(\\d+) deletions?\\(-\\)");
+
+    /**
+     * Utility class — not instantiable.
+     */
+    private GitHelper()
+    {
+    }
 
     /**
      * Checks if a branch exists in the repository.
@@ -253,6 +267,100 @@ public final class GetDiffOutput implements SkillOutput
         return null;
       }
     }
+
+    /**
+     * Gets the raw diff output between base and HEAD, limited to {@code maxBytes} bytes.
+     * <p>
+     * Reads at most {@code maxBytes + 1} bytes from the git diff process stdout. If the output
+     * exceeds {@code maxBytes}, the process is destroyed immediately and {@code null} is returned
+     * without loading the full diff into memory.
+     *
+     * @param projectRoot the project root path
+     * @param targetBranch the target branch for comparison
+     * @param maxBytes maximum bytes to read; if exceeded, returns null
+     * @return the raw diff content if its byte size is {@code <= maxBytes}, or {@code null} if
+     *         the output exceeded {@code maxBytes}
+     * @throws IOException if the git diff process cannot be started, its output cannot be read,
+     *         or the process exits with a non-zero exit code
+     * @throws InterruptedException if the thread is interrupted while waiting for the process to finish
+     * @throws NullPointerException if {@code projectRoot} or {@code targetBranch} are null
+     */
+    public static String getRawDiffLimited(Path projectRoot, String targetBranch, int maxBytes)
+      throws IOException, InterruptedException
+    {
+      requireThat(projectRoot, "projectRoot").isNotNull();
+      requireThat(targetBranch, "targetBranch").isNotNull();
+
+      ProcessBuilder pb = new ProcessBuilder("git", "-C", projectRoot.toString(),
+        "diff", targetBranch + "..HEAD");
+      pb.redirectErrorStream(false);
+      Process process;
+      try
+      {
+        process = pb.start();
+      }
+      catch (IOException e)
+      {
+        throw new IOException("Failed to start git diff process in directory: " + projectRoot, e);
+      }
+
+      byte[] buffer = new byte[maxBytes + 1];
+      int totalRead = 0;
+      try (InputStream in = process.getInputStream())
+      {
+        int bytesRead;
+        while (totalRead < buffer.length)
+        {
+          bytesRead = in.read(buffer, totalRead, buffer.length - totalRead);
+          if (bytesRead == -1)
+            break;
+          totalRead += bytesRead;
+        }
+      }
+      catch (IOException e)
+      {
+        process.destroyForcibly();
+        try
+        {
+          process.waitFor();
+        }
+        catch (InterruptedException _)
+        {
+          Thread.currentThread().interrupt();
+        }
+        throw new IOException("Failed to read git diff output", e);
+      }
+
+      if (totalRead > maxBytes)
+      {
+        // Diff exceeds the size limit: destroy the process to prevent blocking on unread stdout
+        process.destroyForcibly();
+        try
+        {
+          process.waitFor();
+        }
+        catch (InterruptedException _)
+        {
+          Thread.currentThread().interrupt();
+        }
+        return null;
+      }
+
+      int exitCode;
+      try
+      {
+        exitCode = process.waitFor();
+      }
+      catch (InterruptedException e)
+      {
+        Thread.currentThread().interrupt();
+        throw e;
+      }
+      if (exitCode != 0)
+        throw new IOException("git diff command failed with exit code " + exitCode);
+
+      return new String(buffer, 0, totalRead, StandardCharsets.UTF_8);
+    }
   }
 
   /**
@@ -379,10 +487,25 @@ public final class GetDiffOutput implements SkillOutput
         "`git diff " + targetBranch + "..HEAD -- <file>` to inspect individual files.";
     }
 
-    // Get raw diff output
-    String rawDiff = GitHelper.getRawDiff(projectRoot, targetBranch);
-    if (rawDiff == null || rawDiff.isEmpty())
-      return "No diff output available (git diff command failed or returned empty).";
+    // Get raw diff output, limited to MAX_RAW_DIFF_BYTES to avoid bloating agent context
+    String rawDiff;
+    try
+    {
+      rawDiff = GitHelper.getRawDiffLimited(projectRoot, targetBranch, MAX_RAW_DIFF_BYTES);
+    }
+    catch (IOException e)
+    {
+      return "Failed to generate diff: " + e.getMessage();
+    }
+    catch (InterruptedException _)
+    {
+      Thread.currentThread().interrupt();
+      return "Diff generation was interrupted.";
+    }
+    if (rawDiff == null)
+      return "Diff too large (>2KB), skipped.";
+    if (rawDiff.isEmpty())
+      return "No changes detected in diff output.";
 
 
     // Parse and render diff in Java
