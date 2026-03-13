@@ -93,6 +93,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - move-cat-session-files-to-cat-work-path
 - add-size-guard-to-get-diff
 - add-empirical-tests-get-output-agent
+- delegate-plan-patch-to-subagent
 
 
 ## Issues Closed
