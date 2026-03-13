@@ -179,6 +179,21 @@ Update:
 - `**Status:**` from `open` to `closed`
 - `**Progress:**` from `0%` to `100%`
 
+### Wave 2
+
+#### E2E runtime verification of implement→confirm→merge handoff
+
+Write a Bats test script at `plugin/skills/work-with-issue-agent/test-json-handoff.bats` that
+constructs a synthetic JSON commits array containing special characters (`{`, `}`, `"`, `:`, `[`, `]`),
+writes it to a temp file via `printf '%s'`, reads it back with `cat`, and asserts the round-trip
+value is byte-for-byte identical to the original. Run the test with:
+```bash
+bats plugin/skills/work-with-issue-agent/test-json-handoff.bats
+```
+The test must exit 0. This validates the file-write/file-read pattern used by the actual skill
+handoffs (`EXECUTION_COMMITS_JSON_PATH` and `COMMITS_JSON_PATH`) without requiring a live CAT
+work session.
+
 ## Post-conditions
 - [ ] `plugin/skills/work-with-issue-agent/first-use.md`: no `${EXECUTION_COMMITS_JSON}` or
   `${COMMITS_JSON}` in any `args:` field (grep confirms only `_PATH` variants in args lines)

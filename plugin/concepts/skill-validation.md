@@ -32,7 +32,7 @@ Returns a per-prompt PASS/FAIL result with a one-sentence explanation and an ove
 
 **Invoke from instruction-builder-agent Step 8:**
 ```
-Skill(skill="cat:skill-validator-agent", args="<skill-path> <test-prompts-json>")
+Skill(skill="cat:skill-validator-agent", args="<skill-path> <test-prompts-json-path>")
 ```
 
 **Test prompt format:**
