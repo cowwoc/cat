@@ -432,10 +432,10 @@ SOURCE_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(java|py|ts|js|go|rs|c|cpp|cs)
 TEST_FILES=$(echo "$CHANGED_FILES" | grep -E '(Test|Spec|_test|_spec)\.' || true) && \
 CONFIG_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(json|yaml|yml|xml|properties|toml)$' || true)
 
-# Read language supplement and effort config (chain with above if in same Bash call)
-LANG_SUPPLEMENT=""
+# Read effort config and collect language supplement path (chain with above if in same Bash call)
+LANG_SUPPLEMENT_PATH=""
 if [[ -f "${CLAUDE_PLUGIN_ROOT}/lang/${PRIMARY_LANG}.md" ]]; then
-    LANG_SUPPLEMENT=$(cat "${CLAUDE_PLUGIN_ROOT}/lang/${PRIMARY_LANG}.md")
+    LANG_SUPPLEMENT_PATH="${CLAUDE_PLUGIN_ROOT}/lang/${PRIMARY_LANG}.md"
 fi
 
 CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.cat/cat-config.json"
@@ -537,16 +537,15 @@ $(cat "$conv_path")
 done
 ```
 
-Before spawning, pre-fetch the issue context files using absolute worktree paths:
+Before spawning, collect the issue context file paths:
 
 ```bash
-# Pre-fetch context files using absolute paths so subagents receive content directly
-# and do not need to read these planning files themselves
+# Collect planning file paths — subagents read these files directly
 ISSUE_DIR=$(ls -d "${WORKTREE_PATH}/.cat/issues/"*/ 2>/dev/null | head -1)
-ISSUE_PLAN_CONTENT=""
-VERSION_PLAN_CONTENT=""
+ISSUE_PLAN_PATH=""
+VERSION_PLAN_PATH=""
 if [[ -n "$ISSUE_DIR" && -f "${ISSUE_DIR}PLAN.md" ]]; then
-    ISSUE_PLAN_CONTENT=$(cat "${ISSUE_DIR}PLAN.md")
+    ISSUE_PLAN_PATH="${ISSUE_DIR}PLAN.md"
     # Derive version PLAN.md path from issue directory name (e.g., v2.1-issue-name -> v2.1)
     ISSUE_NAME=$(basename "$ISSUE_DIR")
     VERSION_PATTERN=$(echo "$ISSUE_NAME" | grep -oE '^v[0-9]+\.[0-9]+')
@@ -554,7 +553,7 @@ if [[ -n "$ISSUE_DIR" && -f "${ISSUE_DIR}PLAN.md" ]]; then
     if [[ -n "$MAJOR_VERSION" && -n "$VERSION_PATTERN" ]]; then
         VERSION_PLAN="${WORKTREE_PATH}/.cat/issues/${MAJOR_VERSION}/${VERSION_PATTERN}/PLAN.md"
         if [[ -f "$VERSION_PLAN" ]]; then
-            VERSION_PLAN_CONTENT=$(cat "$VERSION_PLAN")
+            VERSION_PLAN_PATH="$VERSION_PLAN"
         fi
     fi
 fi
@@ -602,16 +601,11 @@ Read each file using the Read tool with absolute paths: prefix each relative pat
 Use Read, Glob, and Grep tools as needed to explore any additional context within the worktree.
 Do NOT access files outside {WORKTREE_PATH}.
 
-## Issue Context (Pre-fetched)
+## Issue Context
 
-The following context has been pre-fetched from the worktree. Use this content directly
-rather than reading these files yourself.
-
-### Issue PLAN.md ({ISSUE_DIR}PLAN.md)
-{ISSUE_PLAN_CONTENT}
-
-### Version PLAN.md
-{VERSION_PLAN_CONTENT}
+Read the following files for issue context (skip any path that is empty):
+- Issue PLAN.md: {ISSUE_PLAN_PATH}
+- Version PLAN.md: {VERSION_PLAN_PATH}
 
 ## Domain Knowledge
 
@@ -621,10 +615,10 @@ evaluating whether there are better alternatives to the approaches chosen.
 {DOMAIN_KNOWLEDGE if non-empty, otherwise "No domain-specific knowledge provided for this review."}
 
 ## Your Role
-{content of agents/stakeholder-{stakeholder}.md}
+Read and follow: ${CLAUDE_PLUGIN_ROOT}/agents/stakeholder-{stakeholder}.md
 
 ## Language-Specific Patterns
-{content of LANG_SUPPLEMENT if available, otherwise "No language supplement loaded."}
+{if LANG_SUPPLEMENT_PATH non-empty: "Read and follow: {LANG_SUPPLEMENT_PATH}", otherwise "No language supplement loaded."}
 
 ## Project Conventions
 {STAKEHOLDER_CONVENTIONS if any match this stakeholder, otherwise "No project conventions assigned to this stakeholder."}
