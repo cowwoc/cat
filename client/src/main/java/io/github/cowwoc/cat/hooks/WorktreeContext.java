@@ -44,7 +44,7 @@ public record WorktreeContext(Path absoluteWorktreePath, Path absoluteProjectDir
    * Returns {@code null} if no active worktree is found for the session (no lock file or
    * worktree directory does not exist).
    *
-   * @param projectCatDir the project CAT directory ({@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/})
+   * @param projectCatDir the project CAT directory ({@code {claudeProjectDir}/.cat/work/})
    * @param projectDir the project root directory
    * @param mapper the JSON mapper for reading lock files
    * @param sessionId the session ID to look up

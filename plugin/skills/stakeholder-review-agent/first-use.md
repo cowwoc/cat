@@ -40,7 +40,7 @@ Positional space-separated arguments:
 | Position | Name | Example |
 |----------|------|---------|
 | 1 | issue_id | `2.1-issue-name` |
-| 2 | worktree_path | `${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/2.1-issue-name` |
+| 2 | worktree_path | `${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name` |
 | 3 | verify_level | `quick` or `changed` or `all` |
 | 4 | commits_compact | `hash:type,hash:type` (e.g., `abc123:bugfix,def456:test`) |
 
@@ -409,7 +409,7 @@ specifies the correct location. Running git commands from `/workspace/` reads th
 ```bash
 # CRITICAL: Set working directory to worktree if provided in arguments
 # WORKTREE_PATH comes from the skill's positional arguments
-# (e.g., ${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/2.1-issue-name)
+# (e.g., ${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name)
 # All subsequent git commands and file reads MUST use this directory
 if [[ -n "${WORKTREE_PATH}" ]]; then
     cd "${WORKTREE_PATH}" || { echo "ERROR: Cannot cd to worktree: ${WORKTREE_PATH}"; exit 1; }
