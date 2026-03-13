@@ -1,0 +1,16 @@
+{
+  "version": "1.0",
+  "test_cases": [
+    {
+      "test_case_id": "TC1",
+      "semantic_unit_id": "unit_1",
+      "category": "REQUIREMENT",
+      "prompt": "You are given a goal: improve the performance of a Python web service that handles 10,000 requests per second. Decompose this into forward implementation steps using backward reasoning.",
+      "assertions": [
+        "Response decomposes the goal into concrete, ordered steps",
+        "Steps reference specific techniques (profiling, caching, async, etc.)",
+        "Backward reasoning is evident: steps trace from goal back to starting conditions"
+      ]
+    }
+  ]
+}
