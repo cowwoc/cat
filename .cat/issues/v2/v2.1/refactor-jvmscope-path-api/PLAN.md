@@ -4,10 +4,11 @@
 
 `JvmScope` and `AbstractJvmScope` expose five path methods with inconsistent naming:
 - `getEncodedProjectDir()` — helper used only internally by derived methods
+- `getClaudeProjectDir()` — returns the project's root directory (the workspace root)
 - `getSessionBasePath()` — returns `{configDir}/projects/{encodedProject}/`
 - `getSessionDirectory()` — returns `{configDir}/projects/{encodedProject}/{sessionId}/`
-- `getProjectCatDir()` — returns `{configDir}/projects/{encodedProject}/cat/`
-- `getSessionCatDir()` — returns `{configDir}/projects/{encodedProject}/{sessionId}/cat/`
+- `getProjectCatDir()` — returns `{claudeProjectDir}/.cat/work/`
+- `getSessionCatDir()` — returns `{claudeProjectDir}/.cat/work/sessions/{sessionId}/`
 
 There is also no `getWorkDir()` method exposing the working directory.
 
@@ -16,10 +17,12 @@ There is also no `getWorkDir()` method exposing the working directory.
 The interface and abstract class are renamed to:
 - `getWorkDir()` added — returns the working directory (`Path.of(System.getProperty("user.dir"))` in
   `MainJvmScope`, injectable in `TestJvmScope`)
-- `getEncodedProjectDir()` inlined into `getClaudeProjectPath()` and removed from the interface
-- `getSessionBasePath()` → `getClaudeProjectPath()` — same path, clearer name
+- `getEncodedProjectDir()` inlined into `getClaudeSessionsPath()` and removed from the interface
+- `getClaudeProjectDir()` → `getProjectRoot()` — same path, clearer name; Javadoc: "Returns the project's root
+  directory."
+- `getSessionBasePath()` → `getClaudeSessionsPath()` — same path, clearer name
 - `getSessionDirectory()` → `getClaudeSessionPath()` — same path, clearer name
-- `getProjectCatDir()` → `getCatProjectPath()` — same path, clearer name
+- `getProjectCatDir()` → `getCatWorkPath()` — same path, clearer name
 - `getSessionCatDir()` → `getCatSessionPath()` — same path, clearer name
 
 All ~65 production call sites and ~224 test call sites are updated to the new names.
@@ -42,7 +45,7 @@ None (internal tech debt refactor)
 - `client/src/main/java/io/github/cowwoc/cat/hooks/JvmScope.java` — rename methods, add
   `getWorkDir()`, remove `getEncodedProjectDir()`
 - `client/src/main/java/io/github/cowwoc/cat/hooks/AbstractJvmScope.java` — rename overrides,
-  inline `getEncodedProjectDir()` into `getClaudeProjectPath()`, remove separate override
+  inline `getEncodedProjectDir()` into `getClaudeSessionsPath()`, remove separate override
 - `client/src/main/java/io/github/cowwoc/cat/hooks/MainJvmScope.java` — add `getWorkDir()`
   implementation (reads `user.dir` system property)
 - `client/src/test/java/io/github/cowwoc/cat/hooks/test/TestJvmScope.java` — add `getWorkDir()`
@@ -100,23 +103,25 @@ renamed methods (see grep output above for the full list).
 
 - Rename methods in `JvmScope.java`:
   - Remove `getEncodedProjectDir()` from the interface
-  - Rename `getSessionBasePath()` → `getClaudeProjectPath()`
+  - Rename `getClaudeProjectDir()` → `getProjectRoot()`; update Javadoc to "Returns the project's root directory."
+  - Rename `getSessionBasePath()` → `getClaudeSessionsPath()`
   - Rename `getSessionDirectory()` → `getClaudeSessionPath()`
-  - Rename `getProjectCatDir()` → `getCatProjectPath()`
+  - Rename `getProjectCatDir()` → `getCatWorkPath()`
   - Rename `getSessionCatDir()` → `getCatSessionPath()`
   - Add `getWorkDir()` with Javadoc: "Returns the current working directory."
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/JvmScope.java`
 
 - Update `AbstractJvmScope.java`:
-  - Remove `getEncodedProjectDir()` override; inline its logic directly into `getClaudeProjectPath()`
-  - Rename `getSessionBasePath()` override to `getClaudeProjectPath()`; body:
-    `return getClaudeConfigDir().resolve("projects").resolve(encodeProjectPath(getClaudeProjectDir().toString()));`
+  - Remove `getEncodedProjectDir()` override; inline its logic directly into `getClaudeSessionsPath()`
+  - Rename `getClaudeProjectDir()` override to `getProjectRoot()`
+  - Rename `getSessionBasePath()` override to `getClaudeSessionsPath()`; body:
+    `return getClaudeConfigDir().resolve("projects").resolve(encodeProjectPath(getProjectRoot().toString()));`
   - Rename `getSessionDirectory()` override to `getClaudeSessionPath()`; body:
-    `return getClaudeProjectPath().resolve(getClaudeSessionId());`
-  - Rename `getProjectCatDir()` override to `getCatProjectPath()`; body:
-    `return getClaudeProjectPath().resolve("cat");`
+    `return getClaudeSessionsPath().resolve(getClaudeSessionId());`
+  - Rename `getProjectCatDir()` override to `getCatWorkPath()`; body:
+    `return getProjectRoot().resolve(".cat").resolve("work");`
   - Rename `getSessionCatDir()` override to `getCatSessionPath()`; body:
-    `return getClaudeSessionPath().resolve("cat");`
+    `return getCatWorkPath().resolve("sessions").resolve(getClaudeSessionId());`
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/AbstractJvmScope.java`
 
 - Update `MainJvmScope.java`:
@@ -142,18 +147,20 @@ renamed methods (see grep output above for the full list).
 - Update all production call sites — perform the following renames across all main source files listed
   in "Files to Modify":
   - `getEncodedProjectDir()` → remove; any site calling this directly should instead use
-    `AbstractJvmScope.encodeProjectPath(scope.getClaudeProjectDir().toString())`
-  - `getSessionBasePath()` → `getClaudeProjectPath()`
+    `AbstractJvmScope.encodeProjectPath(scope.getProjectRoot().toString())`
+  - `getClaudeProjectDir()` → `getProjectRoot()`
+  - `getSessionBasePath()` → `getClaudeSessionsPath()`
   - `getSessionDirectory()` → `getClaudeSessionPath()`
-  - `getProjectCatDir()` → `getCatProjectPath()`
+  - `getProjectCatDir()` → `getCatWorkPath()`
   - `getSessionCatDir()` → `getCatSessionPath()`
   - Files: all production files listed above under "Production call sites"
 
 - Update all test call sites — perform the same renames across all test files listed in the grep
   output:
-  - `getSessionBasePath()` → `getClaudeProjectPath()`
+  - `getClaudeProjectDir()` → `getProjectRoot()`
+  - `getSessionBasePath()` → `getClaudeSessionsPath()`
   - `getSessionDirectory()` → `getClaudeSessionPath()`
-  - `getProjectCatDir()` → `getCatProjectPath()`
+  - `getProjectCatDir()` → `getCatWorkPath()`
   - `getSessionCatDir()` → `getCatSessionPath()`
   - Files: all test files that contain the old method names
 
@@ -171,8 +178,9 @@ renamed methods (see grep output above for the full list).
 
 ## Post-conditions
 
-- [ ] `JvmScope` interface contains `getWorkDir()`, `getClaudeProjectPath()`, `getClaudeSessionPath()`,
-  `getCatProjectPath()`, `getCatSessionPath()` and does NOT contain `getEncodedProjectDir()`,
-  `getSessionBasePath()`, `getSessionDirectory()`, `getProjectCatDir()`, or `getSessionCatDir()`
+- [ ] `JvmScope` interface contains `getWorkDir()`, `getProjectRoot()`, `getClaudeSessionsPath()`,
+  `getClaudeSessionPath()`, `getCatWorkPath()`, `getCatSessionPath()` and does NOT contain
+  `getEncodedProjectDir()`, `getClaudeProjectDir()`, `getSessionBasePath()`, `getSessionDirectory()`,
+  `getProjectCatDir()`, or `getSessionCatDir()`
 - [ ] No occurrences of old method names remain in any `.java` file under `client/src/`
 - [ ] `mvn -f client/pom.xml test` exits with code 0 (all tests pass)
