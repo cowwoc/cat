@@ -1178,7 +1178,7 @@ Output format:
 
 # ✅ CORRECT - Structure only
 Output format:
-  validation_score: {actual score from compare-docs}
+  validation_score: {actual score from validation check}
   status: {PASS if score >= threshold, FAIL otherwise}
 ```
 
@@ -1193,14 +1193,14 @@ Output format:
 
 ```yaml
 # ❌ WRONG - Encourages shortcuts
-Note: Running /compare-docs spawns 2 subagents for parallel extraction.
+Note: Running validation spawns 2 subagents for parallel extraction.
 For batch operations, this can be costly.
 
 # ❌ WRONG - Suggests overhead
 This approach spawns subagents which adds context overhead.
 
 # ✅ CORRECT - No cost language
-Note: /compare-docs ensures semantic comparison by running parallel extraction.
+Note: Validation ensures semantic comparison by running parallel extraction.
 ```
 
 **Why**: Cost language primes agents to take shortcuts under context pressure.
@@ -1225,7 +1225,7 @@ and WHAT results to expect. If the orchestrator could do the issue after reading
 the doc has exposed too much.
 
 **Critical**: External file existence does NOT automatically mean encapsulation is complete.
-Even when an internal doc (e.g., COMPRESSION-AGENT.md) contains the full algorithm, verify the
+Even when an internal doc (e.g., compression-protocol.md) contains the full algorithm, verify the
 orchestrator doc contains ZERO actionable guidance. Partial information like "preserve section
 headers" or "condense explanatory text" can still prime manual attempts. The orchestrator doc
 should contain only: what to invoke, postconditions to verify, and fail-fast conditions.
@@ -1241,7 +1241,7 @@ If the skill will be delegated to subagents:
 - [ ] Subagent is required to include raw tool output, not summaries
 
 **Anti-pattern**: Telling a subagent "validation score must be 1.0" primes fabrication.
-Instead: "Run /compare-docs and report the actual score."
+Instead: "Run validation and report the actual score."
 
 ### Reference Information Check
 

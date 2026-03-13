@@ -30,7 +30,7 @@ Accepts a skill path and a JSON object with two arrays:
 
 Returns a per-prompt PASS/FAIL result with a one-sentence explanation and an overall calibration verdict.
 
-**Invoke from skill-builder-agent Step 8:**
+**Invoke from instruction-builder-agent Step 8:**
 ```
 Skill(skill="cat:skill-validator-agent", args="<skill-path> <test-prompts-json>")
 ```

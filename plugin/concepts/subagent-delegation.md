@@ -28,7 +28,7 @@ orchestrating agent needs to know the exact blocker to adjust its delegation str
 
 **General-purpose subagents have access to ALL tools**, including Task and Skill.
 
-If a PLAN.md or delegation prompt specifies using a skill (e.g., `/cat:optimize-doc-agent`), invoke it directly via the Skill
+If a PLAN.md or delegation prompt specifies using a skill (e.g., `cat:instruction-builder-agent`), invoke it directly via the Skill
 tool. Do not assume tool limitations exist - subagents have full tool access.
 
 ## Spawning Subagents: Task vs TaskCreate
@@ -113,8 +113,8 @@ should be delegated at all. Work requiring Opus-level reasoning often benefits f
 ```
 ❌ Task tool: subagent_type: "general-purpose" (missing model - uses expensive default)
 ❌ Task tool: model: "haiku" for code refactoring (will likely fail)
-❌ Task tool: model: "haiku" for "/cat:optimize-doc file.md" (skill exposes algorithm)
-✅ Task tool: model: "sonnet" for "/cat:optimize-doc file.md" (skill doc shows HOW, needs reasoning)
+❌ Task tool: model: "haiku" for "cat:instruction-builder-agent file.md" (skill exposes algorithm)
+✅ Task tool: model: "sonnet" for "cat:instruction-builder-agent file.md" (skill doc shows HOW, needs reasoning)
 ✅ Task tool: model: "sonnet" for "refactor these 4 handlers" (needs reasoning)
 ✅ Task tool: model: "haiku" for "/cat:status" (pure orchestration, no algorithm exposed)
 ```
@@ -203,10 +203,10 @@ Acceptance criteria define what specific outputs validate successful completion.
 4. On subagent completion, verify each criterion has evidence in output
 
 ```yaml
-# Example: PLAN.md says "Execution equivalence verified (score = 1.0 from /compare-docs)"
+# Example: PLAN.md says "Execution equivalence verified (score = 1.0 from validation protocol)"
 subagent_prompt_must_include: |
   ACCEPTANCE CRITERIA:
-  - Run /compare-docs on compressed file
+  - Run validation protocol from cat:instruction-builder-agent on compressed file
   - Required score: 1.0
   - Include score in your output
 ```
@@ -238,7 +238,7 @@ Action: Re-run validation or adjust approach.
 ```
 
 **Why this exists:** When subagent prompts bypass skill-mandated validations (e.g., custom
-compression prompt without /compare-docs), criteria go unchecked. Requiring explicit criteria
+compression prompt without validation), criteria go unchecked. Requiring explicit criteria
 in the delegation catches these gaps at spawn time rather than after completion.
 
 ### Independent Validation Requirement
@@ -252,7 +252,7 @@ the validation tool directly.
 | Subagent Claims | Orchestrator Must |
 |-----------------|-------------------|
 | "All tests pass" | Run `./gradlew test` and check exit code |
-| "Score = 1.0" | Run `/compare-docs` and read actual score |
+| "Score = 1.0" | Run validation protocol from `cat:instruction-builder-agent` and read actual score |
 | "Build succeeds" | Run build command and verify |
 | "N files changed" | Run `git diff --stat` and count |
 
@@ -358,7 +358,7 @@ the user can't review. Separating them lets the main agent (with user access) ma
 
 # ✅ RIGHT: Output format specifies structure only
 "OUTPUT FORMAT:
- - validation_score: {actual score from compare-docs}
+ - validation_score: {actual score from instruction-builder-agent validation}
  - status: {success if score >= threshold, else failed}"
 ```
 
@@ -378,12 +378,12 @@ When a subagent creates/modifies content that requires validation:
 ```
 # ❌ WRONG: Same subagent produces AND validates
 "Compress these 40 files.
- Verify each scores 1.0 on /compare-docs."
+ Verify each scores 1.0 via validation protocol."
 # Subagent may skip validation or fabricate scores
 
 # ✅ RIGHT: Separate production from validation
 STEP 1: Subagent A compresses files (NO validation instruction)
-STEP 2: Main agent OR Subagent B runs /compare-docs on each file
+STEP 2: Main agent OR Subagent B runs validation protocol from cat:instruction-builder-agent on each file
 STEP 3: Main agent reviews actual scores, decides next action
 ```
 
@@ -397,7 +397,7 @@ STEP 3: Main agent reviews actual scores, decides next action
 
 | Issue Type | Producer | Validator |
 |------------|----------|-----------|
-| Document compression | Compression subagent | Main agent via /compare-docs |
+| Document compression | Compression subagent | Main agent via `cat:instruction-builder-agent` validation protocol |
 | Code generation | Implementation subagent | Test runner (separate step) |
 | File transformation | Transform subagent | Diff/verification subagent |
 
@@ -418,8 +418,8 @@ If so, use that format - don't compose your own.
 
 | Source | Format Location | Example |
 |--------|-----------------|---------|
-| /optimize-doc | SKILL.md lines 308-311 | Table with "Tokens" header |
-| /compare-docs | SKILL.md output section | Comparison report format |
+| cat:instruction-builder-agent | SKILL.md output section | Table with "Tokens" header |
+| cat:instruction-builder-agent validation | validation-protocol.md | Comparison report format |
 | /cat:status | Handler preprocessing | Status box (skill output) |
 
 **Pattern for presenting skill results:**
@@ -431,7 +431,7 @@ You present: "| Before | After |" (units unclear)
 
 # ✅ RIGHT: Use source skill's format
 Subagent returns: {"tokens_before": 1598, "tokens_after": 1278}
-Check /optimize-doc format specification
+Check cat:instruction-builder-agent format specification
 Present: "| Tokens (Before) | Tokens (After) |" (matches skill spec)
 ```
 

@@ -182,7 +182,7 @@ Read the skill file and apply skill-builder's Priming Prevention Checklist:
 - No Embedded Box Drawings (does skill show visual examples that prime manual construction?)
 ```
 
-**Reference:** See `/cat:skill-builder-agent` § "Priming Prevention Checklist" for the complete checklist.
+**Reference:** See `/cat:instruction-builder-agent` § "Priming Prevention Checklist" for the complete checklist.
 If skill has structural issues, fix the SKILL as part of prevention, not just add behavioral guidance.
 
 **MANDATORY CHECK:** After checking documents read, ALSO ask:
