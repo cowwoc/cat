@@ -159,21 +159,30 @@ and should be flagged, regardless of whether STATE.md is present.
 
 These test validation files were used during test-driven development but should not remain in the final branch.
 
-## Stakeholder Review Fixes Applied (2026-03-13)
+## Critical Stakeholder Review Fixes (2026-03-13)
 
-**Concerns addressed (4 total):**
-1. **Legal header exemption violation (CRITICAL):** Removed HTML comment license header from plugin/agents/plan-review-agent.md
-   (exemption: agents/*.md files are injected into subagent context verbatim; license headers waste tokens)
-2. **Agent frontmatter completeness (DESIGN):** Added required frontmatter fields to plan-review-agent.md
-   - `name: plan-review-agent` for agent identification
-   - `description: "Plan completeness reviewer..."` for agent purpose documentation
-   - Changed `model: claude-sonnet-4-6` to `model: sonnet` to match convention
-3. **UX progress visibility (MEDIUM):** Added explicit progress message instructions to plan-builder-agent/first-use.md
-   - Verdict YES: Display `✓ Plan review passed (iteration {ITERATION})`
-   - Verdict NO: Display `⏳ Plan review iteration {ITERATION}: {gap_count} gaps found, refining...` with rendered gaps
-   - Loop continuation: Display `⏳ Spawning review iteration {ITERATION}...`
-   - Iteration cap: Display warning message when 3-iteration cap is reached
+**Architecture CRITICAL fixes applied (1 total):**
+1. **Git worktree registry repair (Phase 6):** After migration moves directories under `.cat/work/worktrees/`,
+   added `git worktree repair` invocation to rebuild git's internal registry, preventing dangling references
+   in `.git/worktrees` that would cause future checkout failures.
+
+**Architecture MEDIUM fixes applied (1 total):**
+1. **Idempotency cleanup:** Added removal of empty old external directory after Phase 8 completion, ensuring
+   idempotency check on re-run properly detects already-migrated state (Phase 2).
+
+**Performance/Correctness fixes applied (1 total):**
+1. **Process substitution in Phase 8:** Replaced pipe-to-while-read with process substitution (`< <(...)`)
+   to ensure error propagation under `set -euo pipefail`.
+
+**Deployment/Testing MEDIUM fixes applied (1 total):**
+1. **E2E smoke test cleanup:** Added EXIT trap to clean up temporary project directory, preventing accumulation
+   of test artifacts.
+
+**Design MEDIUM fixes applied (1 total):**
+1. **Rule path reference:** Updated `plugin/rules/issue-lock-checking.md` path reference from
+   `/workspace/.cat/locks/` to `/workspace/.cat/work/locks/`.
 
 **Files modified:**
-- plugin/agents/plan-review-agent.md (lines 1-9: removed license header, updated frontmatter)
-- plugin/skills/plan-builder-agent/first-use.md (lines 204-219: added progress messages for verdict outcomes and iteration loop)
+- plugin/migrations/2.3.sh (Phases 6, 8, 9)
+- plugin/tests/e2e-work-paths-smoke-test.sh (EXIT trap)
+- plugin/rules/issue-lock-checking.md (path reference)

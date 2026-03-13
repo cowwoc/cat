@@ -28,7 +28,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
  * Restores the agent's working directory to the active worktree on session resume.
  * <p>
  * When a session is resumed ({@code source} is {@code "resume"}), this handler scans lock files
- * in {@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/locks/} for one matching the current session ID.
+ * in {@code {claudeProjectDir}/.cat/work/locks/} for one matching the current session ID.
  * If a matching lock is found
  * and its worktree directory still exists on disk, additional context is injected instructing the agent
  * to {@code cd} into that worktree.

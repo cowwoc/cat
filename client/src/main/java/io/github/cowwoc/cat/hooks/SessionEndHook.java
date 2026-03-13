@@ -22,8 +22,8 @@ import java.util.List;
  * <p>
  * TRIGGER: SessionEnd
  * <p>
- * Handles session cleanup operations including lock removal from the external CAT storage location
- * ({@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/locks/}):
+ * Handles session cleanup operations including lock removal from the project CAT work directory
+ * ({@code {claudeProjectDir}/.cat/work/locks/}):
  * <ul>
  *   <li>Project lock file</li>
  *   <li>Task locks owned by the current session</li>

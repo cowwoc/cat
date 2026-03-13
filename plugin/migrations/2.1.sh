@@ -29,8 +29,7 @@ set -euo pipefail
 #    (numbered steps become bullet items under ### Wave 1)
 # 9. Remove reviewThreshold from cat-config.json
 # 10. Remove legacy worktree-locks directory
-# 11. Migrate cross-session dirs (locks/, worktrees/) to external storage; delete stale
-#     session-scoped dirs (sessions/, verify/, e2e-config-test/)
+# 11. Migrate cross-session dirs (locks/, worktrees/, verify/) to .cat/work/ inside project workspace
 # 12. Migrate terminalWidth to fileWidth + displayWidth in cat-config.json
 # 13. Remove deprecated Last Updated and Completed fields from open issue-level STATE.md files
 #     (closed issues are not modified)
@@ -511,6 +510,10 @@ fi
 if [[ ! -f "$gitignore_file" ]]; then
     log_migration "No .gitignore found - copying template"
     cp "$gitignore_template" "$gitignore_file"
+    # work/ contains runtime data (locks/, worktrees/, verify/) and must not be committed
+    if ! grep -qF "work/" "$gitignore_file" 2>/dev/null; then
+        printf '%s\n' "work/" >> "$gitignore_file"
+    fi
     log_migration "Phase 7 complete: created $gitignore_file"
 else
     log_migration ".gitignore exists - checking for missing/stale patterns"
@@ -603,6 +606,13 @@ else
             ((phase7_changed++)) || true
         fi
     done <<< "$patterns"
+
+    # Ensure work/ is present (runtime data: locks/, worktrees/, verify/)
+    if ! grep -qF "work/" "$gitignore_file" 2>/dev/null; then
+        printf '%s\n' "work/" >> "$gitignore_file"
+        log_migration "  Added missing pattern: work/"
+        ((phase7_changed++)) || true
+    fi
 
     if [[ "$phase7_changed" -eq 0 ]]; then
         log_migration "Phase 7 complete: all patterns up to date"
@@ -770,42 +780,166 @@ fi
 log_migration "Phase 10 complete: legacy worktree-locks cleanup done"
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Phase 11: Migrate or remove directories that moved to external storage
+# Phase 11: Migrate cross-session dirs (locks/, worktrees/, verify/) to .cat/work/
 # ──────────────────────────────────────────────────────────────────────────────
 
-log_migration "Phase 11: Migrate cross-session directories and delete stale session-scoped dirs"
+log_migration "Phase 11: Migrate cross-session directories to .cat/work/"
 
 config_dir="${CLAUDE_CONFIG_DIR:-${HOME}/.config/claude}"
-encoded_project=$(echo "${CLAUDE_PROJECT_DIR:-$(pwd)}" | sed 's/[\/.]/-/g')
-project_cat_dir="${config_dir}/projects/${encoded_project}/cat"
+project_dir="${CLAUDE_PROJECT_DIR:-$(pwd)}"
+ENCODED_PROJECT_DIR=$(echo "${project_dir}" | tr '/.' '-')
+ext_project_cat_dir="${config_dir}/projects/${ENCODED_PROJECT_DIR}/cat"
 
-# Move cross-session directories to external storage
-for dir_name in locks worktrees; do
-    src_dir=".cat/${dir_name}"
-    dst_dir="${project_cat_dir}/${dir_name}"
+new_locks_dir=".cat/work/locks"
+new_worktrees_dir=".cat/work/worktrees"
+new_verify_base=".cat/work/verify"
 
-    if [[ -d "$src_dir" ]]; then
-        log_migration "  Moving ${src_dir} → ${dst_dir}"
-        mkdir -p "$dst_dir"
-        # Move all contents including dotfiles; find does nothing if directory is empty
-        find "$src_dir" -maxdepth 1 -mindepth 1 -exec mv -t "$dst_dir/" {} +
-        rm -rf "$src_dir"
-        log_migration "  Done: ${dir_name} moved to external storage"
-    else
-        log_migration "  ${src_dir} not present - skipping"
+# Idempotency: if .cat/work/locks already exists and old locations are absent, skip
+phase11_needs_work=false
+if [[ ! -d "$new_locks_dir" ]]; then
+    phase11_needs_work=true
+elif [[ -d ".cat/locks" ]] || [[ -d "${ext_project_cat_dir}/locks" ]]; then
+    phase11_needs_work=true
+fi
+
+if [[ "$phase11_needs_work" == "false" ]]; then
+    log_migration "Phase 11: .cat/work/locks/ already exists and no old locations found — skipping (already migrated)"
+else
+
+    # Check for active worktrees before moving
+    for wt_src in ".cat/worktrees" "${ext_project_cat_dir}/worktrees"; do
+        if [[ -d "$wt_src" ]]; then
+            active_worktrees=$(find "$wt_src" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | head -5 || true)
+            if [[ -n "$active_worktrees" ]]; then
+                echo "ERROR: Active worktrees found under ${wt_src}/:" >&2
+                echo "$active_worktrees" >&2
+                echo "Migration aborted. Remove or complete all active worktrees before migrating." >&2
+                echo "Run: /cat:cleanup to remove abandoned worktrees" >&2
+                exit 1
+            fi
+        fi
+    done
+
+    # Check for active lock files before moving
+    for lock_src in ".cat/locks" "${ext_project_cat_dir}/locks"; do
+        if [[ -d "$lock_src" ]]; then
+            active_locks=$(find "$lock_src" -mindepth 1 -maxdepth 1 -name "*.lock" 2>/dev/null | head -5 || true)
+            if [[ -n "$active_locks" ]]; then
+                echo "ERROR: Active lock files found under ${lock_src}/:" >&2
+                echo "$active_locks" >&2
+                echo "Migration aborted. Remove active lock files before migrating." >&2
+                echo "Run: /cat:cleanup to remove stale locks" >&2
+                exit 1
+            fi
+        fi
+    done
+
+    # Move locks from .cat/locks/ (users who ran Phase 1 but not old Phase 11)
+    if [[ -d ".cat/locks" ]]; then
+        log_migration "  Moving .cat/locks/ → ${new_locks_dir}"
+        mkdir -p "$new_locks_dir"
+        find ".cat/locks" -maxdepth 1 -mindepth 1 -exec mv -t "${new_locks_dir}/" {} +
+        rm -rf ".cat/locks"
+        log_migration "  Done: locks moved from .cat/locks/"
     fi
-done
 
-# Delete session-scoped directories (always stale after migration)
-for dir_name in sessions verify e2e-config-test; do
-    src_dir=".cat/${dir_name}"
-    if [[ -d "$src_dir" ]]; then
-        rm -rf "$src_dir"
-        log_migration "  Deleted stale session-scoped dir: ${src_dir}"
-    else
-        log_migration "  ${src_dir} not present - skipping"
+    # Move locks from external storage (users who ran old Phase 11)
+    if [[ -d "${ext_project_cat_dir}/locks" ]]; then
+        log_migration "  Moving ${ext_project_cat_dir}/locks/ → ${new_locks_dir}"
+        mkdir -p "$new_locks_dir"
+        find "${ext_project_cat_dir}/locks" -maxdepth 1 -mindepth 1 -exec mv -t "${new_locks_dir}/" {} +
+        rmdir "${ext_project_cat_dir}/locks" 2>/dev/null || true
+        log_migration "  Done: locks moved from external storage"
     fi
-done
+
+    # Ensure new locks dir exists even if no old data was present
+    mkdir -p "$new_locks_dir"
+
+    # Move worktrees from .cat/worktrees/ (users who ran Phase 1 but not old Phase 11)
+    if [[ -d ".cat/worktrees" ]]; then
+        log_migration "  Moving .cat/worktrees/ → ${new_worktrees_dir}"
+        mkdir -p "$new_worktrees_dir"
+        find ".cat/worktrees" -maxdepth 1 -mindepth 1 -exec mv -t "${new_worktrees_dir}/" {} +
+        rm -rf ".cat/worktrees"
+        if [[ -d "$new_worktrees_dir" ]]; then
+            git -C "${project_dir}" worktree repair "${new_worktrees_dir}" 2>/dev/null || true
+            log_migration "  Repaired git worktree registry for new paths"
+        fi
+        log_migration "  Done: worktrees moved from .cat/worktrees/"
+    fi
+
+    # Move worktrees from external storage (users who ran old Phase 11)
+    if [[ -d "${ext_project_cat_dir}/worktrees" ]]; then
+        log_migration "  Moving ${ext_project_cat_dir}/worktrees/ → ${new_worktrees_dir}"
+        mkdir -p "$new_worktrees_dir"
+        find "${ext_project_cat_dir}/worktrees" -maxdepth 1 -mindepth 1 -exec mv -t "${new_worktrees_dir}/" {} +
+        rmdir "${ext_project_cat_dir}/worktrees" 2>/dev/null || true
+        if [[ -d "$new_worktrees_dir" ]]; then
+            git -C "${project_dir}" worktree repair "${new_worktrees_dir}" 2>/dev/null || true
+            log_migration "  Repaired git worktree registry for new paths"
+        fi
+        log_migration "  Done: worktrees moved from external storage"
+    fi
+
+    # Ensure new worktrees dir exists even if no old data was present
+    mkdir -p "$new_worktrees_dir"
+
+    # Migrate session-scoped verify dirs from external storage
+    # Path structure: <config_dir>/projects/<encoded>/<session-uuid>/cat/verify
+    ext_session_base="${config_dir}/projects/${ENCODED_PROJECT_DIR}"
+    if [[ -d "${ext_session_base}" ]]; then
+        while IFS= read -r verify_dir; do
+            session_dir=$(dirname "$(dirname "$verify_dir")")
+            SESSION_ID=$(basename "$session_dir")
+            if [[ ! "${SESSION_ID}" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]]; then
+                log_migration "  Skipping verify dir with non-UUID name: ${SESSION_ID}"
+                continue
+            fi
+            new_verify_dir="${new_verify_base}/${SESSION_ID}"
+            mkdir -p "${new_verify_dir}"
+            find "$verify_dir" -mindepth 1 -maxdepth 1 -exec mv -t "${new_verify_dir}/" {} +
+            rmdir "$verify_dir" 2>/dev/null || true
+            log_migration "  Moved verify dir for session ${SESSION_ID}"
+        done < <(find "${ext_session_base}" -mindepth 3 -maxdepth 3 -name "verify" -type d 2>/dev/null || true)
+    fi
+
+    # Update worktree path references in STATE.md files (from both old locations)
+    old_dot_cat_worktrees_prefix="${project_dir}/.cat/worktrees/"
+    old_ext_worktrees_prefix="${ext_project_cat_dir}/worktrees/"
+    new_worktrees_prefix="${project_dir}/.cat/work/worktrees/"
+    if [[ -d ".cat/issues" ]]; then
+        while IFS= read -r state_file; do
+            changed=false
+            if grep -qF "${old_dot_cat_worktrees_prefix}" "$state_file" 2>/dev/null; then
+                tmp=$(mktemp)
+                sed "s|${old_dot_cat_worktrees_prefix}|${new_worktrees_prefix}|g" "$state_file" > "$tmp" \
+                    && mv "$tmp" "$state_file"
+                log_migration "  Updated .cat/worktrees/ refs in: $state_file"
+                changed=true
+            fi
+            if grep -qF "${old_ext_worktrees_prefix}" "$state_file" 2>/dev/null; then
+                tmp=$(mktemp)
+                sed "s|${old_ext_worktrees_prefix}|${new_worktrees_prefix}|g" "$state_file" > "$tmp" \
+                    && mv "$tmp" "$state_file"
+                log_migration "  Updated external storage refs in: $state_file"
+                changed=true
+            fi
+        done < <(find ".cat/issues" -name "STATE.md" -type f 2>/dev/null || true)
+    fi
+
+    # Clean up empty old external directory
+    rmdir "${ext_project_cat_dir}" 2>/dev/null || true
+
+    # Delete stale session-scoped directories that are no longer used
+    for dir_name in sessions e2e-config-test; do
+        src_dir=".cat/${dir_name}"
+        if [[ -d "$src_dir" ]]; then
+            rm -rf "$src_dir"
+            log_migration "  Deleted stale session-scoped dir: ${src_dir}"
+        fi
+    done
+
+fi
 
 log_migration "Phase 11 complete"
 

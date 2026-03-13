@@ -21,8 +21,8 @@ import java.nio.file.Path;
  * <p>
  * TRIGGER: PreCompact
  * <p>
- * Reads the {@code cwd} field from the hook input and writes it to the session CAT storage location
- * ({@code {claudeConfigDir}/projects/{encodedProjectDir}/{sessionId}/cat/session.cwd}), but only when the path
+ * Reads the {@code cwd} field from the hook input and writes it to the session CAT work directory
+ * ({@code {claudeProjectDir}/.cat/work/verify/{sessionId}/session.cwd}), but only when the path
  * is non-blank and differs from the project root. This file is consumed by
  * {@link RestoreCwdAfterCompaction} to restore the working directory after context compaction.
  */

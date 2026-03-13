@@ -27,8 +27,8 @@ import java.util.Optional;
  *   <li>Injects an instruction to batch-load all commonly-needed deferred tools in a single
  *       ToolSearch call, avoiding the 7-10 sequential round-trips that occur without this
  *       instruction.</li>
- *   <li>Reads the session's CWD file from the session CAT storage location
- *       ({@code {claudeConfigDir}/projects/{encodedProjectDir}/{sessionId}/cat/session.cwd}) written
+ *   <li>Reads the session's CWD file from the session CAT work directory
+ *       ({@code {claudeProjectDir}/.cat/work/verify/{sessionId}/session.cwd}) written
  *       by {@link PreCompactHook}. If the file exists and the recorded path is still a live
  *       directory, additional context is injected instructing the agent to {@code cd} back into that
  *       path.</li>

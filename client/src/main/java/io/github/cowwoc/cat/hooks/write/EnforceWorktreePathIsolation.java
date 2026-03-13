@@ -35,8 +35,8 @@ import java.util.Optional;
  *     already owns that file path.</li>
  * </ol>
  * <p>
- * Uses session ID to find the matching lock file in the external CAT storage location
- * ({@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/locks/}), derives the issue_id from the lock filename,
+ * Uses session ID to find the matching lock file in the project CAT work directory
+ * ({@code {claudeProjectDir}/.cat/work/locks/}), derives the issue_id from the lock filename,
  * and checks whether the file being accessed falls within the corresponding worktree.
  */
 public final class EnforceWorktreePathIsolation implements FileWriteHandler, ReadHandler
