@@ -13,7 +13,7 @@ user-invocable: false
 
 Find concrete ways to defeat or circumvent a target. For each weakness found, produce a structured
 entry with name, severity, attack description, and supporting evidence. This supports the adversarial
-TDD loop in skill-builder-agent (Step 4) and tdd-implementation-agent.
+TDD loop in instruction-builder-agent (Step 4) and tdd-implementation-agent.
 
 ## Inputs
 

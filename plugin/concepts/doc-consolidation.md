@@ -11,13 +11,13 @@ Two skills address documentation quality, with different goals:
 
 | Concern | Skill | Goal |
 |---------|-------|------|
-| File is too large | `cat:optimize-doc` | Reduce token count while preserving meaning |
-| Content is scattered or redundant | `cat:consolidate-doc-agent` | Reorganize into coherent, non-redundant form |
+| File is too large | `cat:instruction-builder-agent` | Reduce token count while preserving meaning |
+| Content is scattered or redundant | `cat:instruction-organizer-agent` | Reorganize into coherent, non-redundant form |
 
-**Use optimize-doc** when the document says what it needs to say but takes too many tokens to say it. Size is the
+**Use instruction-builder-agent** when the document says what it needs to say but takes too many tokens to say it. Size is the
 problem; organization is not.
 
-**Use consolidate-doc-agent** when the same information appears in multiple sections, or when workflow steps are
+**Use instruction-organizer-agent** when the same information appears in multiple sections, or when workflow steps are
 scattered across subsections, notes, and reminders rather than organized sequentially. Organization is the problem;
 size may or may not also be an issue.
 
@@ -81,7 +81,7 @@ include orchestrator + subagent pairs, caller + implementation pairs, and public
 
 **Consolidation strategy**: Do NOT consolidate. These files exist as separate documents because the separation is a
 design invariant, not a documentation defect. Consolidating them exposes internals to the caller, violating
-encapsulation. In the `optimize-doc` skill, the compression algorithm is intentionally hidden from the orchestrator
+encapsulation. In the `instruction-builder-agent` skill, the compression algorithm is intentionally hidden from the orchestrator
 to prevent manual bypass — consolidating would defeat this design.
 
 ---
@@ -105,7 +105,7 @@ as subsections in the consolidated document, not dissolved into adjacent steps.
 Files with explicit audience separation (orchestrator, subagent, public caller, private implementation) cannot be
 merged without violating the architectural invariant that motivated the separation.
 
-**Evidence**: Wave 2 — `first-use.md` and `COMPRESSION-AGENT.md` are separated specifically because the orchestrator
+**Evidence**: Wave 2 — `first-use.md` and `compression-protocol.md` are separated specifically because the orchestrator
 should not know compression internals. Merging them would allow the orchestrator to bypass the skill and compress
 manually.
 
@@ -116,7 +116,7 @@ manually.
 As the combined unit count grows, consolidation pressure increases and individual precision requirements are dropped.
 Wave 1 (56 units): 6 lost. Wave 2 File A (59 units in combined 101): 3 lost from File A despite correct strategy.
 
-**Evidence**: The requirement "report the ACTUAL score from /compare-docs — do not summarize or interpret" was dropped
+**Evidence**: The requirement "report the ACTUAL score from the validation protocol — do not summarize or interpret" was dropped
 when condensing the combined wave 2 content.
 
 **Prevention**: Consolidate one file at a time unless files have the same audience and topic. The binary equivalence
@@ -148,7 +148,7 @@ clustering.
 
 ## Binary Execution-Equivalence Gate
 
-All consolidation attempts must pass a binary equivalence check using `cat:compare-docs` before changes are applied.
+All consolidation attempts must pass a binary equivalence check using the validation protocol (see `instruction-builder-agent/validation-protocol.md`) before changes are applied.
 
 **EQUIVALENT**: All semantic units preserved. Apply the consolidated version.
 
@@ -166,7 +166,8 @@ File B does not compensate for NOT_EQUIVALENT on File A.
 
 ## See Also
 
-- `cat:optimize-doc` — reduce token count while preserving meaning
-- `cat:compare-docs` — validate semantic equivalence; provides the binary verdict used as the consolidation gate
-- `plugin/skills/consolidate-doc-agent/first-use.md` — full methodology, phase-by-phase instructions, and
+- `cat:instruction-builder-agent` — reduce token count while preserving meaning
+- `instruction-builder-agent/validation-protocol.md` — validate semantic equivalence; provides the binary verdict used
+  as the consolidation gate
+- `plugin/skills/instruction-organizer-agent/first-use.md` — full methodology, phase-by-phase instructions, and
   validation evidence from Waves 1–3
