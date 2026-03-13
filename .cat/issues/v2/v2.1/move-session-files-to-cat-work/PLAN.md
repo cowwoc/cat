@@ -280,6 +280,100 @@ path updates here are for external→internal relocation, not .claude/cat→.cat
   mvn -f client/pom.xml test
   ```
 
+### Wave 5 — Smoke test: verify path variables resolve to new locations
+
+- Build the jlink image in the worktree so the updated Java binaries are available:
+  ```bash
+  mvn -f "${WORKTREE_PATH}/client/pom.xml" verify -DskipTests
+  ```
+
+- Source `cat-env.sh` from the worktree with `CLAUDE_PROJECT_DIR` set to the workspace root and confirm
+  `LOCKS_DIR` and `WORKTREES_DIR` point to the new `.cat/work/` paths:
+  ```bash
+  export CLAUDE_PROJECT_DIR="/workspace"
+  source "${WORKTREE_PATH}/plugin/scripts/cat-env.sh"
+  echo "LOCKS_DIR=${LOCKS_DIR}"
+  echo "WORKTREES_DIR=${WORKTREES_DIR}"
+  ```
+  Expected output:
+  ```
+  LOCKS_DIR=/workspace/.cat/work/locks
+  WORKTREES_DIR=/workspace/.cat/work/worktrees
+  ```
+
+- Confirm the variable values are correct by asserting both paths contain `.cat/work/`:
+  ```bash
+  [[ "${LOCKS_DIR}" == *"/.cat/work/locks" ]] || { echo "FAIL: LOCKS_DIR=${LOCKS_DIR}"; exit 1; }
+  [[ "${WORKTREES_DIR}" == *"/.cat/work/worktrees" ]] || { echo "FAIL: WORKTREES_DIR=${WORKTREES_DIR}"; exit 1; }
+  echo "PASS: Both path variables resolve to .cat/work/ locations"
+  ```
+
+### Wave 6 — E2E artifact test: invoke binaries and confirm artifacts appear under .cat/work/
+
+Write and execute a bash smoke test script that uses the updated jlink binaries to create real runtime artifacts
+(lock file and worktree directory) in a temporary isolated project dir, then verifies those artifacts appear under
+`.cat/work/locks/` and `.cat/work/worktrees/` relative to the project dir.
+
+- Create `plugin/tests/e2e-work-paths-smoke-test.sh`:
+  - Standard license header (shell script format per `license-header.md`)
+  - `set -euo pipefail`
+  - **Setup:** create a temp dir (`TMPDIR=$(mktemp -d)`); register a trap to `rm -rf "$TMPDIR"` on EXIT
+  - Initialize a bare git repo in `$TMPDIR/project` so the binaries have a valid project root:
+    ```bash
+    PROJECT_DIR="$TMPDIR/project"
+    mkdir -p "$PROJECT_DIR/.cat/work"
+    cd "$PROJECT_DIR"
+    git init
+    git commit --allow-empty -m "init"
+    ```
+  - **Locate binaries** from the plugin cache or worktree jlink output:
+    ```bash
+    BIN_DIR="/home/node/.config/claude/plugins/cache/cat/cat/2.1/client/bin"
+    ```
+  - **Lock file artifact test:** invoke `issue-lock` (or equivalent binary) via a subshell with
+    `CLAUDE_PROJECT_DIR="$PROJECT_DIR"` and `CLAUDE_SESSION_ID="test-session-e2e"` to acquire a lock for a
+    synthetic issue ID (e.g., `test-issue-e2e`); then assert the lock file appears at
+    `$PROJECT_DIR/.cat/work/locks/test-issue-e2e.lock`:
+    ```bash
+    export CLAUDE_PROJECT_DIR="$PROJECT_DIR"
+    export CLAUDE_SESSION_ID="test-session-e2e"
+    "$BIN_DIR/issue-lock" acquire test-issue-e2e || true
+    LOCK_FILE="$PROJECT_DIR/.cat/work/locks/test-issue-e2e.lock"
+    [[ -f "$LOCK_FILE" ]] || { echo "FAIL: lock file not found at $LOCK_FILE"; exit 1; }
+    echo "PASS: lock file created at $LOCK_FILE"
+    ```
+  - **Worktree path test:** using `git worktree add` inside `$PROJECT_DIR`, create a test worktree branch at
+    `$PROJECT_DIR/.cat/work/worktrees/test-issue-e2e`; verify the directory exists:
+    ```bash
+    git -C "$PROJECT_DIR" worktree add "$PROJECT_DIR/.cat/work/worktrees/test-issue-e2e" -b test-issue-e2e
+    [[ -d "$PROJECT_DIR/.cat/work/worktrees/test-issue-e2e" ]] || \
+      { echo "FAIL: worktree not found under .cat/work/worktrees/"; exit 1; }
+    echo "PASS: worktree created under $PROJECT_DIR/.cat/work/worktrees/"
+    ```
+  - **Verify dir test:** create the verify dir and a sample file to simulate what `work-verify.md` would produce;
+    assert it exists under `$PROJECT_DIR/.cat/work/verify/test-session-e2e/`:
+    ```bash
+    VERIFY_DIR="$PROJECT_DIR/.cat/work/verify/test-session-e2e"
+    mkdir -p "$VERIFY_DIR"
+    echo '{"result":"ok"}' > "$VERIFY_DIR/criteria-analysis.json"
+    [[ -f "$VERIFY_DIR/criteria-analysis.json" ]] || \
+      { echo "FAIL: verify output not under .cat/work/verify/"; exit 1; }
+    echo "PASS: verify dir exists at $VERIFY_DIR"
+    ```
+  - **Cleanup assertion:** cleanup the git worktree before the temp dir is removed:
+    ```bash
+    git -C "$PROJECT_DIR" worktree remove "$PROJECT_DIR/.cat/work/worktrees/test-issue-e2e" --force
+    ```
+  - Print `ALL E2E PATH ASSERTIONS PASSED` on success
+  - Files: `plugin/tests/e2e-work-paths-smoke-test.sh`
+
+- Execute the smoke test and confirm it exits 0:
+  ```bash
+  chmod +x "${WORKTREE_PATH}/plugin/tests/e2e-work-paths-smoke-test.sh"
+  bash "${WORKTREE_PATH}/plugin/tests/e2e-work-paths-smoke-test.sh"
+  ```
+  The test must print `ALL E2E PATH ASSERTIONS PASSED` and exit with code 0.
+
 ## Post-conditions
 
 - [ ] `plugin/scripts/cat-env.sh` defines `LOCKS_DIR` as `${CLAUDE_PROJECT_DIR}/.cat/work/locks` and `WORKTREES_DIR`

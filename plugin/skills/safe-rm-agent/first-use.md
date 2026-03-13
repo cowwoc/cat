@@ -77,11 +77,11 @@ subsequent commands will fail.
 
 ```bash
 # SAFE - cd to main workspace first
-cd /workspace && git worktree remove ${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/issue-name --force
+cd /workspace && git worktree remove ${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/issue-name --force
 
 # DANGEROUS - removing worktree while inside it
-# pwd: ${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/issue-name
-git worktree remove ${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/issue-name --force  # Shell breaks!
+# pwd: ${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/issue-name
+git worktree remove ${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/issue-name --force  # Shell breaks!
 ```
 
 **When merging issue work:**
@@ -102,10 +102,10 @@ General guidance says "avoid `cd` to maintain working directory" - but this skil
 ```bash
 # WRONG - git -C changes git's cwd, NOT the shell's cwd
 # Shell still breaks when worktree is deleted!
-git -C /workspace worktree remove ${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/task --force
+git -C /workspace worktree remove ${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/task --force
 
 # RIGHT - cd changes the shell's cwd
-cd /workspace && git worktree remove ${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/task --force
+cd /workspace && git worktree remove ${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/task --force
 ```
 
 The `git -C` flag tells git to run from a different directory, but it doesn't change where

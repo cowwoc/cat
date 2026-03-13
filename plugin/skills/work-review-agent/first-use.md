@@ -18,7 +18,7 @@ Review phase for `/cat:work`. Runs stakeholder review (Step 5) and deferred conc
 | 1 | catAgentId | agent ID passed through from parent |
 | 2 | issue_id | `2.1-issue-name` |
 | 3 | issue_path | `/workspace/.cat/issues/v2/v2.1/issue-name` |
-| 4 | worktree_path | `${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/2.1-issue-name` |
+| 4 | worktree_path | `${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name` |
 | 5 | issue_branch | `2.1-issue-name` |
 | 6 | target_branch | `v2.1` |
 | 7 | all_commits_compact | compact format `hash:type,hash:type` |

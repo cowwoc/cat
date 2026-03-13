@@ -37,7 +37,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * Locks never expire automatically - user must explicitly release or force-release.
  * Prevents multiple Claude instances from executing the same issue simultaneously.
  * <p>
- * Lock files are stored in {@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/locks/<issue-id>.lock}
+ * Lock files are stored in {@code {claudeProjectDir}/.cat/work/locks/<issue-id>.lock}
  * with JSON format:
  * {@code {"session_id": "uuid", "worktrees": {"/path": "sessionId"}, "created_at": epochSeconds,}
  * {@code "created_iso": "ISO-8601"}}

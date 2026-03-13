@@ -19,7 +19,7 @@ stakeholder quality review. Spawns a verify subagent, handles fix iteration if c
 | 1 | catAgentId | agent ID passed through from parent |
 | 2 | issue_id | `2.1-issue-name` |
 | 3 | issue_path | `/workspace/.cat/issues/v2/v2.1/issue-name` |
-| 4 | worktree_path | `${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/cat/worktrees/2.1-issue-name` |
+| 4 | worktree_path | `${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name` |
 | 5 | issue_branch | `2.1-issue-name` |
 | 6 | target_branch | `v2.1` |
 | 7 | execution_commits_json | JSON array of commit objects from the implement phase |
@@ -132,7 +132,7 @@ Task tool:
     3. Create the verify output directory and write detailed analysis files:
        ```bash
        source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
-       VERIFY_DIR="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/${CLAUDE_SESSION_ID}/cat/verify"
+       VERIFY_DIR="${CLAUDE_PROJECT_DIR}/.cat/work/verify/${CLAUDE_SESSION_ID}"
        mkdir -p "${VERIFY_DIR}"
        ```
        - Write criterion-level details to: ${VERIFY_DIR}/criteria-analysis.json

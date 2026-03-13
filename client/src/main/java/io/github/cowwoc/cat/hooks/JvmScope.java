@@ -127,8 +127,7 @@ public interface JvmScope extends AutoCloseable
   /**
    * Returns the cross-session project CAT directory.
    * <p>
-   * Located at {@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/}, where {@code {encodedProjectDir}} is the
-   * project directory path with {@code /} and {@code .} replaced by {@code -}.
+   * Located at {@code {claudeProjectDir}/.cat/work/}.
    * <p>
    * This directory stores cross-session files such as {@code locks/} and {@code worktrees/}.
    *
@@ -140,10 +139,9 @@ public interface JvmScope extends AutoCloseable
   /**
    * Returns the per-session CAT directory.
    * <p>
-   * Located at {@code {claudeConfigDir}/projects/{encodedProjectDir}/{sessionId}/cat/}, where
-   * {@code {encodedProjectDir}} is the project directory path with {@code /} and {@code .} replaced by {@code -}.
+   * Located at {@code {claudeProjectDir}/.cat/work/sessions/{sessionId}/}.
    * <p>
-   * This directory stores session-scoped files such as {@code verify/} and {@code e2e-config-test/}.
+   * This directory stores session-internal state such as {@code session.cwd}.
    *
    * @return the session CAT directory path
    * @throws IllegalStateException if this scope is closed

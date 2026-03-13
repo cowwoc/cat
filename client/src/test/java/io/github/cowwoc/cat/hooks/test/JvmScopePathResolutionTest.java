@@ -28,8 +28,7 @@ public final class JvmScopePathResolutionTest
   /**
    * Verifies that getProjectCatDir() returns the correct path for a project directory.
    * <p>
-   * The result must be {@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/} where {@code {encodedProjectDir}} is
-   * the project directory path with {@code /} and {@code .} replaced by {@code -}.
+   * The result must be {@code {claudeProjectDir}/.cat/work/}.
    *
    * @throws IOException if temporary directory creation fails
    */
@@ -40,9 +39,7 @@ public final class JvmScopePathResolutionTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       Path result = scope.getProjectCatDir();
-      // In TestJvmScope(2-arg), claudeConfigDir = claudeProjectDir = tempDir
-      String encoded = AbstractJvmScope.encodeProjectPath(tempDir.toString());
-      Path expected = tempDir.resolve("projects").resolve(encoded).resolve("cat");
+      Path expected = tempDir.resolve(".cat").resolve("work");
       requireThat(result, "result").isEqualTo(expected);
     }
     finally
@@ -54,7 +51,7 @@ public final class JvmScopePathResolutionTest
   /**
    * Verifies that getSessionCatDir() returns the correct path including the session ID.
    * <p>
-   * The result must be {@code {claudeConfigDir}/projects/{encodedProjectDir}/{sessionId}/cat/}.
+   * The result must be {@code {claudeProjectDir}/.cat/work/sessions/{sessionId}/}.
    *
    * @throws IOException if temporary directory creation fails
    */
@@ -65,9 +62,8 @@ public final class JvmScopePathResolutionTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       Path result = scope.getSessionCatDir();
-      String encoded = AbstractJvmScope.encodeProjectPath(tempDir.toString());
       String sessionId = scope.getClaudeSessionId();
-      Path expected = tempDir.resolve("projects").resolve(encoded).resolve(sessionId).resolve("cat");
+      Path expected = tempDir.resolve(".cat").resolve("work").resolve("sessions").resolve(sessionId);
       requireThat(result, "result").isEqualTo(expected);
     }
     finally

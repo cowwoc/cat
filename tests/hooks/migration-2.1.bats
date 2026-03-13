@@ -489,3 +489,254 @@ EOF
     run grep "^## Post-conditions" "$plan_file"
     [ "$status" -eq 0 ]
 }
+
+# ─── Phase 1 (move .claude/cat → .cat): actual directory move ────────────────
+
+@test "2.1.sh phase 1: moves .claude/cat to .cat when .cat does not exist" {
+    # Start fresh without the .cat directory setup_test_dir created
+    rm -rf "$TEST_TEMP_DIR/.cat"
+    mkdir -p "$TEST_TEMP_DIR/.claude/cat/issues/v2/v2.1/test-issue"
+    echo '{"trust": "medium"}' > "$TEST_TEMP_DIR/.claude/cat/cat-config.json"
+    cat > "$TEST_TEMP_DIR/.claude/cat/issues/v2/v2.1/test-issue/STATE.md" <<'EOF'
+# State
+
+- **Status:** open
+EOF
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    [ -d ".cat" ]
+    [ ! -d ".claude/cat" ]
+    [ -f ".cat/cat-config.json" ]
+}
+
+@test "2.1.sh phase 1: updates STATE.md path references after .claude/cat move" {
+    rm -rf "$TEST_TEMP_DIR/.cat"
+    mkdir -p "$TEST_TEMP_DIR/.claude/cat/issues/v2/v2.1/test-issue"
+    echo '{"trust": "medium"}' > "$TEST_TEMP_DIR/.claude/cat/cat-config.json"
+    cat > "$TEST_TEMP_DIR/.claude/cat/issues/v2/v2.1/test-issue/STATE.md" <<'EOF'
+# State
+
+- **Status:** open
+- **Worktree path:** /workspace/.claude/cat/worktrees/test-issue
+EOF
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    run grep '\.claude/cat' ".cat/issues/v2/v2.1/test-issue/STATE.md"
+    [ "$status" -ne 0 ]
+    run grep '\.cat/worktrees' ".cat/issues/v2/v2.1/test-issue/STATE.md"
+    [ "$status" -eq 0 ]
+}
+
+# ─── Phase 7 (.gitignore): work/ pattern ──────────────────────────────────────
+
+@test "2.1.sh phase 7: adds work/ to .gitignore when .gitignore already exists" {
+    echo '{"trust": "medium"}' > "$TEST_TEMP_DIR/.cat/cat-config.json"
+    # Create .gitignore without work/ entry
+    printf 'cat-config.local.json\n' > "$TEST_TEMP_DIR/.cat/.gitignore"
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    run grep 'work/' ".cat/.gitignore"
+    [ "$status" -eq 0 ]
+}
+
+@test "2.1.sh phase 7: does not duplicate work/ when already in .gitignore" {
+    echo '{"trust": "medium"}' > "$TEST_TEMP_DIR/.cat/cat-config.json"
+    printf 'cat-config.local.json\nwork/\n' > "$TEST_TEMP_DIR/.cat/.gitignore"
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    count=$(grep -c 'work/' ".cat/.gitignore" || true)
+    [ "$count" -eq 1 ]
+}
+
+# ─── Phase 11: Migrate cross-session dirs to .cat/work/ ───────────────────────
+
+# Helper to set up external storage path for Phase 11 tests.
+# Requires CLAUDE_CONFIG_DIR and CLAUDE_PROJECT_DIR to be exported.
+setup_phase11() {
+    export CLAUDE_CONFIG_DIR="$TEST_TEMP_DIR/fake-config"
+    ENCODED_PROJECT=$(echo "${CLAUDE_PROJECT_DIR}" | tr '/.' '-')
+    OLD_PROJECT_CAT_DIR="${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT}/cat"
+    export OLD_PROJECT_CAT_DIR
+    export ENCODED_PROJECT
+}
+
+@test "2.1.sh phase 11: idempotent when old locations absent and .cat/work/locks exists" {
+    echo '{"trust": "medium"}' > "$TEST_TEMP_DIR/.cat/cat-config.json"
+    # .cat/work/locks already exists (setup_test_dir creates it)
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    [ -d ".cat/work/locks" ]
+}
+
+@test "2.1.sh phase 11: creates .cat/work/locks when .cat/locks is absent and no external dir" {
+    echo '{"trust": "medium"}' > "$TEST_TEMP_DIR/.cat/cat-config.json"
+    # Remove the pre-existing work/locks so we test the mkdir path
+    rm -rf "$TEST_TEMP_DIR/.cat/work"
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    [ -d ".cat/work/locks" ]
+    [ -d ".cat/work/worktrees" ]
+}
+
+@test "2.1.sh phase 11: moves .cat/locks/ to .cat/work/locks/" {
+    echo '{"trust": "medium"}' > "$TEST_TEMP_DIR/.cat/cat-config.json"
+    rm -rf "$TEST_TEMP_DIR/.cat/work"
+    mkdir -p "$TEST_TEMP_DIR/.cat/locks"
+    printf '{"session_id":"test"}\n' > "$TEST_TEMP_DIR/.cat/locks/test-issue.lock"
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    [ -f ".cat/work/locks/test-issue.lock" ]
+    [ ! -d ".cat/locks" ]
+}
+
+@test "2.1.sh phase 11: aborts when active locks exist in .cat/locks/" {
+    echo '{"trust": "medium"}' > "$TEST_TEMP_DIR/.cat/cat-config.json"
+    rm -rf "$TEST_TEMP_DIR/.cat/work"
+    mkdir -p "$TEST_TEMP_DIR/.cat/locks"
+    touch "$TEST_TEMP_DIR/.cat/locks/active.lock"
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -ne 0 ]
+    [ -f ".cat/locks/active.lock" ]
+}
+
+@test "2.1.sh phase 11: moves external storage locks to .cat/work/locks/" {
+    setup_phase11
+    echo '{"trust": "medium"}' > "$TEST_TEMP_DIR/.cat/cat-config.json"
+    rm -rf "$TEST_TEMP_DIR/.cat/work"
+    mkdir -p "${OLD_PROJECT_CAT_DIR}/locks"
+    printf '{"session_id":"test"}\n' > "${OLD_PROJECT_CAT_DIR}/locks/test-issue.lock"
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    [ -f ".cat/work/locks/test-issue.lock" ]
+    [ ! -f "${OLD_PROJECT_CAT_DIR}/locks/test-issue.lock" ]
+}
+
+@test "2.1.sh phase 11: aborts when active locks exist in external storage" {
+    setup_phase11
+    echo '{"trust": "medium"}' > "$TEST_TEMP_DIR/.cat/cat-config.json"
+    rm -rf "$TEST_TEMP_DIR/.cat/work"
+    mkdir -p "${OLD_PROJECT_CAT_DIR}/locks"
+    touch "${OLD_PROJECT_CAT_DIR}/locks/active.lock"
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -ne 0 ]
+    [ -f "${OLD_PROJECT_CAT_DIR}/locks/active.lock" ]
+}
+
+@test "2.1.sh phase 11: moves external storage worktrees to .cat/work/worktrees/" {
+    setup_phase11
+    echo '{"trust": "medium"}' > "$TEST_TEMP_DIR/.cat/cat-config.json"
+    rm -rf "$TEST_TEMP_DIR/.cat/work"
+    mkdir -p "${OLD_PROJECT_CAT_DIR}/worktrees/feature-branch"
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    [ -d ".cat/work/worktrees/feature-branch" ]
+    [ ! -d "${OLD_PROJECT_CAT_DIR}/worktrees/feature-branch" ]
+}
+
+@test "2.1.sh phase 11: aborts when active worktrees exist in external storage" {
+    setup_phase11
+    echo '{"trust": "medium"}' > "$TEST_TEMP_DIR/.cat/cat-config.json"
+    rm -rf "$TEST_TEMP_DIR/.cat/work"
+    mkdir -p "${OLD_PROJECT_CAT_DIR}/worktrees/active-task"
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -ne 0 ]
+    [ -d "${OLD_PROJECT_CAT_DIR}/worktrees/active-task" ]
+}
+
+@test "2.1.sh phase 11: migrates session-scoped verify dirs from external storage" {
+    setup_phase11
+    SESSION_ID="aaaabbbb-cccc-dddd-eeee-ffffaaaabbbb"
+    echo '{"trust": "medium"}' > "$TEST_TEMP_DIR/.cat/cat-config.json"
+    rm -rf "$TEST_TEMP_DIR/.cat/work"
+    mkdir -p "${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT}/${SESSION_ID}/cat/verify"
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    [ -d ".cat/work/verify/${SESSION_ID}" ]
+    [ ! -d "${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT}/${SESSION_ID}/cat/verify" ]
+}
+
+@test "2.1.sh phase 11: skips verify dir with non-UUID session name" {
+    setup_phase11
+    echo '{"trust": "medium"}' > "$TEST_TEMP_DIR/.cat/cat-config.json"
+    rm -rf "$TEST_TEMP_DIR/.cat/work"
+    mkdir -p "${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT}/not-a-uuid/cat/verify"
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    [ -d "${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT}/not-a-uuid/cat/verify" ]
+    [ ! -d ".cat/work/verify/not-a-uuid" ]
+}
+
+@test "2.1.sh phase 11: updates STATE.md worktree path refs from external storage" {
+    setup_phase11
+    echo '{"trust": "medium"}' > "$TEST_TEMP_DIR/.cat/cat-config.json"
+    rm -rf "$TEST_TEMP_DIR/.cat/work"
+    mkdir -p "${OLD_PROJECT_CAT_DIR}/locks"
+    mkdir -p "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue"
+    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/STATE.md" <<EOF
+# State
+
+- **Status:** open
+- **Worktree path:** ${OLD_PROJECT_CAT_DIR}/worktrees/test-issue
+EOF
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    run grep '.cat/work/worktrees/test-issue' ".cat/issues/v2/v2.1/test-issue/STATE.md"
+    [ "$status" -eq 0 ]
+}
+
+@test "2.1.sh phase 11: removes empty old external directory" {
+    setup_phase11
+    echo '{"trust": "medium"}' > "$TEST_TEMP_DIR/.cat/cat-config.json"
+    rm -rf "$TEST_TEMP_DIR/.cat/work"
+    mkdir -p "${OLD_PROJECT_CAT_DIR}/locks"
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    [ ! -d "${OLD_PROJECT_CAT_DIR}" ]
+}
+
+@test "2.1.sh phase 11: idempotent on second run" {
+    setup_phase11
+    echo '{"trust": "medium"}' > "$TEST_TEMP_DIR/.cat/cat-config.json"
+    rm -rf "$TEST_TEMP_DIR/.cat/work"
+    mkdir -p "${OLD_PROJECT_CAT_DIR}/locks"
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"already migrated"* ]]
+}

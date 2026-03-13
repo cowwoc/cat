@@ -33,7 +33,9 @@ import java.util.List;
  * <p>
  * Allowed without warning:
  * <ul>
- *   <li>.cat/, .claude/rules/, .claude/settings* (orchestration only, not commands/client)</li>
+ *   <li>.cat/issues/, .cat/rules/, .cat/retrospectives/, .cat/migrations/ and similar planning
+ *       directories (not .cat/work/ which contains runtime-only data)</li>
+ *   <li>.claude/rules/, .claude/settings* (orchestration only, not commands/client)</li>
  *   <li>STATE.md, PLAN.md, CHANGELOG.md, ROADMAP.md files</li>
  *   <li>CLAUDE.md, PROJECT.md (project instructions)</li>
  *   <li>retrospectives/ directory</li>
@@ -47,7 +49,13 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
   private static final List<String> ALLOWED_PATTERNS = List.of(
     ".claude/settings.json",
     ".claude/settings.local.json",
-    Config.CAT_DIR_NAME + "/",
+    Config.CAT_DIR_NAME + "/issues/",
+    Config.CAT_DIR_NAME + "/rules/",
+    Config.CAT_DIR_NAME + "/retrospectives/",
+    Config.CAT_DIR_NAME + "/migrations/",
+    Config.CAT_DIR_NAME + "/.gitignore",
+    Config.CAT_DIR_NAME + "/cat-config",
+    Config.CAT_DIR_NAME + "/VERSION",
     ".claude/rules/",
     "STATE.md",
     "PLAN.md",

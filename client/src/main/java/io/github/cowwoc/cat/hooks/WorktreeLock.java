@@ -19,8 +19,8 @@ import java.nio.file.Path;
 /**
  * Utility for looking up the worktree lock associated with a session.
  * <p>
- * Scans the lock files under the external CAT storage location
- * ({@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/locks/}) to find which
+ * Scans the lock files under the project CAT work directory
+ * ({@code {claudeProjectDir}/.cat/work/locks/}) to find which
  * issue ID (if any) is currently checked out for a given session.
  */
 public final class WorktreeLock
@@ -37,7 +37,7 @@ public final class WorktreeLock
    * <p>
    * Returns {@code null} if no matching lock file is found.
    *
-   * @param projectCatDir the project CAT directory ({@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/})
+   * @param projectCatDir the project CAT directory ({@code {claudeProjectDir}/.cat/work/})
    * @param jsonMapper the JSON mapper for reading lock files
    * @param sessionId the session ID to search for
    * @return the issue ID extracted from the lock filename, or {@code null} if not found
