@@ -39,6 +39,22 @@ Claude Code allows 4 concurrent background agents. SPRT decision logic runs afte
 batched per wave). If the likelihood ratio crosses a boundary mid-wave, remaining agents in that wave are wasted but
 the cost is negligible with Haiku + caching.
 
+### Early rejection across test cases
+Each test case runs its own independent SPRT. As soon as any test case rejects (non-compliant), all remaining test
+cases stop immediately and the workflow proceeds to hardening. For non-compliant skills, this typically catches the
+problem within 3-5 runs of the weakest test case rather than completing ~35 runs across all cases.
+
+### Inline deterministic grading
+Eval-run subagents grade their own deterministic assertions (regex, string match, structural checks) before returning,
+eliminating a separate grader subagent round-trip per run. Only semantic assertions that require judgment spawn a
+separate Haiku grader subagent. The eval-run subagent returns pass/fail results for deterministic assertions alongside
+its output metadata.
+
+### Ephemeral run outputs
+Individual run output files are written to temp files (no git commit), not committed per-run. Only the final
+`benchmark.json` is committed after SPRT completes. This eliminates git lock contention across parallel agents and
+reduces per-run latency. Run outputs are ephemeral — they exist only for grading, which happens immediately.
+
 ### Hardening and benchmarking are complementary
 Hardening improves instruction quality (fixes ambiguities). Benchmarking measures whether instructions produce
 compliant output. The workflow is: benchmark → if non-compliant → harden → re-benchmark → repeat until compliant.
@@ -73,10 +89,14 @@ When `effort` is `medium` or `high`, run the full hardening + benchmark loop.
 ### SPRT benchmark workflow
 5. Replace single-run benchmark with SPRT loop:
    - Spawn waves of 4 Haiku eval-run subagents (fresh, independent)
-   - Grade deterministic assertions inline; spawn Haiku grader subagents for semantic assertions
-   - Feed pass/fail into SPRT decision function after each completion (pipelined)
+   - Each subagent grades deterministic assertions inline and returns pass/fail with output
+   - Spawn Haiku grader subagents only for semantic assertions
+   - Write run outputs to temp files (no per-run git commits)
+   - Feed pass/fail into per-test-case SPRT decision function after each completion (pipelined)
    - SPRT parameters: H₀ ≥ 0.95, H₁ ≤ 0.85, α = 0.05, β = 0.05
-   - Accept → compliant, Reject → run hardening → re-benchmark (entire phase skipped when effort = low)
+   - Early rejection: if any test case rejects, stop all cases and proceed to hardening
+   - Accept (all cases) → compliant, Reject (any case) → harden → re-benchmark
+   - Entire phase skipped when effort = low
 6. Design hybrid assertion format: deterministic type (regex, string match, structural) graded inline; semantic type
    graded by Haiku subagent. Skill-builder should prefer deterministic assertions where possible.
 7. Implement SPRT decision function
@@ -98,5 +118,8 @@ When `effort` is `medium` or `high`, run the full hardening + benchmark loop.
 - [ ] SPRT check runs after each individual agent completion (pipelined), not batched per wave
 - [ ] After hardening converges, benchmark re-runs to verify compliance improvement
 - [ ] Compliance checklist updated to reflect all changes
+- [ ] Each test case runs its own independent SPRT; rejection of any case stops all remaining cases
+- [ ] Eval-run subagents grade deterministic assertions inline and return pass/fail results
+- [ ] Run outputs are written to temp files, not committed per-run; only benchmark.json is committed
 - [ ] Hardening + benchmarking phase only runs when effort > low (skipped entirely at effort = low)
 - [ ] Hardening and benchmarking are always paired — never one without the other
