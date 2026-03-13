@@ -59,7 +59,7 @@ public final class ProgressBanner implements SkillOutput
 
   private static final String PENDING = "○";
   private static final String COMPLETE = "●";
-  private static final String ACTIVE = "◉";
+  private static final String ACTIVE = "◑";
   private static final String CAT_EMOJI = "🐱";
 
   private final JvmScope scope;
