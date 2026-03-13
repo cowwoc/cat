@@ -16,10 +16,11 @@ This means the main agent (which should act as orchestrator only) performs direc
 plan content, consuming its own context.
 
 ## Target State
-The NO-verdict handler delegates patching to a Task subagent. The main agent passes gaps + current
-`PLAN_CONTENT` to a general-purpose subagent, which returns the corrected plan text. The main agent
-only receives the result and updates `PLAN_CONTENT`. If the subagent fails or returns empty content,
-the main agent logs a warning and retains the current `PLAN_CONTENT`.
+The iterative completeness review delegates the entire review-and-fix loop to a single subagent.
+The main agent passes file paths (`PLAN_OUTPUT_PATH`, `ISSUE_GOAL`) to one general-purpose subagent
+which reads the draft from disk, reviews it, fixes gaps directly in the file, iterates until
+convergence, and returns only the iteration count (`{"iterations":N}`). No plan content, gap arrays,
+or patched text flow back through the main agent's context.
 
 ## Parent Requirements
 None
@@ -128,11 +129,12 @@ infrastructure needed.
   The remainder of the NO-verdict block (the cap-reached warning text) is unchanged.
 
 ## Post-conditions
-- [ ] `plugin/skills/plan-builder-agent/first-use.md` NO-verdict handler contains a Task tool invocation
-  for patching (verify: `grep -A 5 "verdict NO" plugin/skills/plan-builder-agent/first-use.md` shows
-  "Task tool" in the output)
-- [ ] `plugin/skills/plan-builder-agent/first-use.md` NO-verdict handler does NOT contain "apply a targeted
-  fix to the relevant section" self-editing language (verify: `grep "apply a targeted fix" plugin/skills/plan-builder-agent/first-use.md` returns no output)
+- [ ] `plugin/skills/plan-builder-agent/first-use.md` Iterative Completeness Review spawns a single
+  review-and-fix subagent (verify: the section contains ONE Task tool invocation, not separate
+  reviewer + patcher invocations)
+- [ ] `plugin/skills/plan-builder-agent/first-use.md` does NOT pass PLAN_CONTENT back to the main
+  agent from the review loop (verify: no `PATCHED_CONTENT` variable assignment in the Iterative
+  Completeness Review section)
 - [ ] All existing tests pass with no regressions (`mvn -f client/pom.xml test` exits 0)
 - [ ] User-visible behavior unchanged: PLAN.md output quality is same or better (no functional regression
   in the planning workflow)

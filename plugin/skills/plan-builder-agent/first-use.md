@@ -96,14 +96,14 @@ cat "${CLAUDE_PLUGIN_ROOT}/concepts/issue-plan.md"
 ```
 
 **CRITICAL:** Follow template guidance to separate Execution Waves/Steps (actions only) from Success Criteria
-(measurable outcomes). Do NOT include expected values like "score = 1.0" in Execution sections as this primes subagents
-to fabricate results.
+(measurable outcomes). Do NOT include expected values like "score = 1.0" in Execution sections as this primes
+subagents to fabricate results.
 
 ## Sub-Agent Waves for Parallel Execution
 
 When the issue has clearly independent work that can run simultaneously, use `## Sub-Agent Waves` with `### Wave N`
-sections to enable parallel subagent spawning. Use sparingly — only when items genuinely don't depend on each other and
-won't modify the same files.
+sections to enable parallel subagent spawning. Use sparingly — only when items genuinely don't depend on each other
+and won't modify the same files.
 
 Rules for sub-agent waves:
 - Create `## Sub-Agent Waves` section (replaces `## Execution Steps`)
@@ -158,84 +158,93 @@ Goal/Problem section:
 
 ### For Initial Planning (mode=initial)
 
-1. Read the context JSON from `${CONTEXT_PATH}`
-2. Read `${CLAUDE_PLUGIN_ROOT}/concepts/issue-plan.md` for PLAN.md templates
-3. If `research_findings` is non-empty, incorporate into a `## Research Findings` section
-4. If `impact_notes` is non-empty, incorporate into an `## Impact Notes` section
-5. Based on EFFORT level, research approaches:
-   - `low`: Skip research, use obvious approach
-   - `medium`: Brief exploration of 2-3 alternatives
-   - `high`: Deep research, document rejected alternatives with rationale
-6. Generate PLAN.md content using the appropriate template for `issue_type`
-7. Run the iterative completeness review loop (see Step 7 detail below)
-8. Write the final PLAN.md content to `${CONTEXT_PATH%.json}.plan.md`
+**Step 1:** Read the context JSON from `${CONTEXT_PATH}`.
 
-### Step 7: Iterative Completeness Review (effort: medium or high only)
+**Step 2:** Read `${CLAUDE_PLUGIN_ROOT}/concepts/issue-plan.md` for PLAN.md templates.
 
-Skip this step entirely if effort is `low`. Proceed directly to Step 8.
+**Step 3:** If `research_findings` is non-empty, incorporate into a `## Research Findings` section.
 
-For effort `medium` or `high`, run the following review loop (maximum 3 iterations):
+**Step 4:** If `impact_notes` is non-empty, incorporate into an `## Impact Notes` section.
 
-**Iteration setup:**
-- `ITERATION` = 1
-- `PLAN_CONTENT` = full text of the PLAN.md content generated in Step 6
-- `ISSUE_GOAL` = the `description` field from the context JSON
+**Step 5:** Based on EFFORT level, research approaches:
+- `low`: Skip research, use obvious approach
+- `medium`: Brief exploration of 2-3 alternatives
+- `high`: Deep research, document rejected alternatives with rationale
 
-**Review subagent (spawn fresh each iteration):**
+**Step 6:** Generate PLAN.md content using the appropriate template for `issue_type`.
 
-Read `plugin/agents/plan-review-agent.md` and inject its full content verbatim into the Task prompt:
+**Step 7:** Write the draft PLAN.md content to `PLAN_OUTPUT_PATH` = `${CONTEXT_PATH%.json}.plan.md` (delegate the
+file write to a subagent).
+
+**Step 8:** Run the Iterative Completeness Review (see section below), passing `PLAN_OUTPUT_PATH` and `ISSUE_GOAL`.
+
+**Step 9:** Verify the file at `PLAN_OUTPUT_PATH` exists.
+
+### For Mid-Work Revision (mode=revise)
+
+**Step 1:** Read the existing `${ISSUE_PATH}/PLAN.md`.
+
+**Step 2:** Read the revision context (`REVISION_CONTEXT` argument) to understand what changed.
+
+**Step 3:** Update PLAN.md sections affected by the revision.
+
+**Step 4:** Preserve completed work and adjust remaining execution steps.
+
+**Step 5:** Write the revised PLAN.md content to `PLAN_OUTPUT_PATH` = `${ISSUE_PATH}/PLAN.md` (delegate the
+file write to a subagent).
+
+**Step 6:** Run the Iterative Completeness Review (see section below), passing `PLAN_OUTPUT_PATH` and `ISSUE_GOAL`
+(from the existing PLAN.md `## Goal` section).
+
+**Step 7:** Verify the file at `PLAN_OUTPUT_PATH` exists.
+
+## Iterative Completeness Review
+
+Skip this section entirely if effort is `low`. The draft is already written to `PLAN_OUTPUT_PATH`.
+
+For effort `medium` or `high`, delegate the entire review-and-fix loop to a single subagent. The subagent
+reads the draft from disk, reviews it, fixes gaps directly in the file, and returns only the iteration count.
+No plan content flows through the main agent's context.
+
+**Prerequisite:** The draft PLAN.md must already be written to `PLAN_OUTPUT_PATH` before invoking the
+review subagent.
+
+Spawn the review-and-fix subagent:
 
 ```
 Task tool:
-  description: "Plan completeness review (iteration {ITERATION})"
+  description: "Plan completeness review"
   subagent_type: "general-purpose"
   prompt: |
     Use model claude-sonnet-4-6.
 
-    {content of plugin/agents/plan-review-agent.md — injected verbatim}
+    You are a plan review-and-fix agent. Read the draft PLAN.md from disk, review it for
+    completeness, fix any gaps, and re-verify. Iterate until the plan passes review.
 
-    ## Issue Goal
-    {ISSUE_GOAL}
+    Read `plugin/agents/plan-review-agent.md` for the review methodology and verdict criteria.
 
-    ## PLAN.md to Review
-    {PLAN_CONTENT}
+    ## Review Loop
+
+    1. Read the plan from PLAN_PATH.
+    2. Apply the review methodology. Produce a verdict (YES or NO with gaps).
+    3. If YES: return success.
+    4. If NO: apply targeted fixes directly to the file at PLAN_PATH (fix ONLY sections identified
+       in each gap's "location" field, preserve all unrelated content), then return to step 1.
+
+    ## Inputs
+    PLAN_PATH: {PLAN_OUTPUT_PATH}
+    ISSUE_GOAL: {ISSUE_GOAL}
+
+    ## Return Format
+    Return ONLY compact JSON — no other text:
+    {"iterations": N}
 ```
 
-**On verdict YES:**
-Display progress message: `✓ Plan review passed (iteration {ITERATION})`
-Exit loop. Proceed to Step 8 with current `PLAN_CONTENT`.
-
-**On verdict NO:**
-Display progress message: `⏳ Plan review iteration {ITERATION}: {gap_count} gaps found, refining...`
-Render the gaps to the user so they understand what is being fixed.
-1. Read the `gaps` array from the reviewer's JSON response.
-2. For each gap, apply a targeted fix to the relevant section of `PLAN_CONTENT`. Do NOT rewrite sections
-   unrelated to the reported gaps. Preserve all existing correct content.
-3. Update `PLAN_CONTENT` with the patched content.
-4. Increment `ITERATION`.
-5. If `ITERATION` <= 3: Display progress message `⏳ Spawning review iteration {ITERATION}...` then spawn reviewer again with updated `PLAN_CONTENT`.
-6. If `ITERATION` > 3 (cap reached): Display the following warning message and exit loop:
-
-   ```
-   ⚠️  Plan review cap reached (3 iterations). Proceeding with current PLAN.md.
-   Remaining gaps: {list gaps from last NO verdict}
-   ```
-
-**After loop exits:** `PLAN_CONTENT` holds the final (possibly patched) content. Proceed to Step 8 to write it
-to disk.
-
-### For Mid-Work Revision (mode=revise)
-
-1. Read the existing `${ISSUE_PATH}/PLAN.md`
-2. Read the revision context (REVISION_CONTEXT argument) to understand what changed
-3. Update PLAN.md sections affected by the revision
-4. Preserve completed work and adjust remaining execution steps
-5. Run the iterative completeness review loop (see Step 7 detail above, using `ISSUE_GOAL` from the existing
-   PLAN.md `## Goal` section and `PLAN_CONTENT` as the revised PLAN.md text)
-6. Write updated PLAN.md to `${ISSUE_PATH}/PLAN.md`
+Handle the result:
+- Display `✓ Plan review passed ({iterations} iterations)`
 
 ## Output
 
-- **initial mode**: Writes PLAN.md to `${CONTEXT_PATH%.json}.plan.md`. The caller reads this file and passes the
-  content to `create-issue`.
-- **revise mode**: Writes updated PLAN.md in place at `${ISSUE_PATH}/PLAN.md`.
+- **initial mode**: Draft written to `${CONTEXT_PATH%.json}.plan.md` in Step 7, reviewed in Step 8. The caller
+  reads this file and passes the content to `create-issue`.
+- **revise mode**: Draft written to `${ISSUE_PATH}/PLAN.md` in Step 5, reviewed in Step 6.
