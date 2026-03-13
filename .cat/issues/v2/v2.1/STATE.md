@@ -94,6 +94,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - add-size-guard-to-get-diff
 - add-empirical-tests-get-output-agent
 - delegate-plan-patch-to-subagent
+- pass-json-args-via-file
 
 
 ## Issues Closed
