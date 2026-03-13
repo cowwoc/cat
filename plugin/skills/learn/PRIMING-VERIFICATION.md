@@ -27,7 +27,7 @@ priming_check:
     action: "Replace with descriptive placeholders"
     examples:
       wrong: "| file1.md | 1.0 | PASS |"
-      right: "| {filename} | {actual score from /compare-docs} | {PASS|FAIL} |"
+      right: "| {filename} | {actual score from validation} | {PASS|FAIL} |"
 ```
 
 ## Common Priming Patterns to Avoid
@@ -43,4 +43,4 @@ priming_check:
 M370: When fixing M369, example result tables were added with concrete values (1.0, 0.87),
 which would prime agents to produce those values instead of running actual validation.
 
-**Reference:** See `/cat:skill-builder-agent` § "Priming Prevention Checklist" for complete patterns.
+**Reference:** See `/cat:instruction-builder-agent` § "Priming Prevention Checklist" for complete patterns.

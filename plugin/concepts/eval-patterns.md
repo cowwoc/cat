@@ -98,12 +98,12 @@ The report contains five sections:
 5. **Recommendation**: What to adopt, what to carry forward from the losing version, and what additional
    changes would improve the winning version.
 
-## Integrating with skill-builder-agent
+## Integrating with instruction-builder-agent
 
 The typical workflow when revising a skill:
 
-1. Write the revised skill (skill-builder-agent Steps 1-7).
-2. Validate the revised description with test prompts (skill-builder-agent Step 8).
+1. Write the revised skill (instruction-builder-agent Steps 1-7).
+2. Validate the revised description with test prompts (instruction-builder-agent Step 8).
 3. Compare the old and new versions with `skill-comparison-agent`.
 4. If the new version wins, commit it.
 5. If TIE or the old version wins, apply the specific improvements identified in the weaknesses section

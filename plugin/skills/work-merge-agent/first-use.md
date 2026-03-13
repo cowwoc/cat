@@ -330,11 +330,11 @@ to the approval gate.
 
 ### Post-Skill-Builder Artifact Cleanup (MANDATORY)
 
-After skill-builder-agent completes its review (if invoked in the Pre-Gate Skill-Builder Review step), clean up all
+After instruction-builder-agent completes its review (if invoked in the Pre-Gate Skill-Builder Review step), clean up all
 temporary artifact files it created. These files (findings.json, diff-validation-*.json) are intermediate outputs of
 the adversarial TDD loop and must not be committed to the issue branch.
 
-**Why:** skill-builder-agent creates temporary files during its red-team → blue-team → diff-validation cycle to track
+**Why:** instruction-builder-agent creates temporary files during its red-team → blue-team → diff-validation cycle to track
 hardening iterations. These files have no value in the final codebase and must be removed before the implementation is
 committed.
 

@@ -114,14 +114,14 @@ Rules for sub-agent waves:
 - The last wave is responsible for updating STATE.md
 
 **Main Agent Waves (optional):** If the issue requires skills that spawn their own subagents (e.g.,
-`/cat:optimize-doc`, `/cat:compare-docs`, `/cat:stakeholder-review-agent`), add a `## Main Agent Waves` section
+`/cat:instruction-builder-agent`, `/cat:stakeholder-review-agent`), add a `## Main Agent Waves` section
 **above** `## Sub-Agent Waves`. The main agent executes these skills directly before spawning implementation
 subagents. Each bullet is a skill invocation:
 
 ```markdown
 ## Main Agent Waves
 
-- /cat:optimize-doc path/to/file.md
+- /cat:instruction-builder-agent goal="create or update skill"
 ```
 
 Omit `## Main Agent Waves` entirely when the issue has no pre-delegation skills.

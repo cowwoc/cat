@@ -3,11 +3,11 @@ Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
-# Document Consolidation via Extract-Backward-Chain-Verify
+# Instruction Organization via Extract-Backward-Chain-Verify
 
 ## Overview
 
-The consolidate-doc-agent skill reorganizes scattered documentation into a coherent, non-redundant form using a
+The instruction-organizer-agent skill reorganizes scattered documentation into a coherent, non-redundant form using a
 four-phase pipeline: **Phase 0 (Classify)** → **Phase 1 (Extract)** → **Phase 2 (Reconstruct)** → **Phase 3
 (Verify)**. The pipeline was validated across three document types; results determined the scope and strategy
 selection rules documented here.
@@ -19,7 +19,7 @@ Use this skill when a document (or set of documents) has:
 - Workflow steps scattered across subsections, headers, and notes rather than organized sequentially
 - Redundant restatements of the same requirement in "Notes", "CRITICAL", and "Reminder" sections
 
-**Do NOT use to reduce file size.** Use `cat:optimize-doc` for size reduction; use this skill only when content
+**Do NOT use to reduce file size.** Use the `instruction-builder-agent` compression protocol for size reduction; use this skill only when content
 organization is the problem.
 
 ### When NOT to Use
@@ -89,7 +89,7 @@ Extract all execution-relevant semantic units from the source document(s). Tag e
 For multi-file consolidation: extract independently per file (use separate unit ID prefixes, e.g., A1–An, B1–Bn),
 then merge into a combined extraction set. Preserve file-of-origin for each unit through the full pipeline.
 
-**Cross-reference preservation rule**: Cross-file references (e.g., "subagent reads COMPRESSION-AGENT.md") are
+**Cross-reference preservation rule**: Cross-file references (e.g., "subagent reads compression-protocol.md") are
 semantic units in their own right. Do not merge a reference with the content it references — the reference is an
 architectural boundary marker.
 
@@ -133,7 +133,7 @@ procedures" branch would be dropped if backward-chaining from "select correct co
 
 ## Phase 3: Verification (Binary Equivalence Gate)
 
-Run `cat:compare-docs` on original vs. consolidated document. The binary verdict MUST be EQUIVALENT.
+Validate the consolidated document against the original using the semantic extraction algorithm from `../instruction-builder-agent/validation-protocol.md`. The binary verdict MUST be EQUIVALENT.
 
 - **EQUIVALENT**: Consolidation preserved all semantic units. Apply changes.
 - **NOT_EQUIVALENT**: Consolidation lost content. Do NOT apply. Examine the LOST section to identify which units
@@ -143,8 +143,42 @@ Run `cat:compare-docs` on original vs. consolidated document. The binary verdict
 is non-negotiable. If repeated revision cycles cannot achieve EQUIVALENT, document the failure mode and return the
 original unchanged.
 
-For multi-file consolidation: run compare-docs against EACH original file independently. All files must return
+For multi-file consolidation: validate against EACH original file independently using the validation protocol. All files must return
 EQUIVALENT.
+
+---
+
+## Phase 4: Quality Verification (SPRT Compliance Gate)
+
+After Phase 3 returns EQUIVALENT and changes are applied, verify that the reorganized document produces compliant
+agent behavior using the SPRT-based benchmark from `../instruction-builder-agent/validation-protocol.md`.
+
+**When to run Phase 4:**
+- Only when the reorganized document is an instruction file (skill first-use.md, agent instructions)
+- Skip Phase 4 for reference/lookup documents (commit type tables, configuration option listings) — these do not
+  produce agent behavior and SPRT benchmarking does not apply
+
+**SPRT parameters:**
+- H₀ (null hypothesis): compliance rate ≥ 0.95
+- H₁ (alternative hypothesis): compliance rate ≤ 0.85
+- α (false positive rate): 0.05
+- β (false negative rate): 0.05
+
+**Acceptance criterion:** ALL test cases must reach SPRT Accept (log_ratio ≥ A, where A ≈ 2.944).
+
+**Procedure:**
+
+1. Run the SPRT benchmark per the protocol in `../instruction-builder-agent/validation-protocol.md` (Section 1),
+   using the same test cases used before reorganization (or generate new ones if none exist).
+2. If ALL test cases Accept → reorganization is complete. Commit the reorganized file.
+3. If ANY test case Rejects → the reorganization altered observable behavior despite passing Phase 3. Revert to
+   the original, examine which assertions failed, identify what semantic change caused the failure, and revise
+   the reconstruction.
+
+**Relationship to Phase 3:** Phase 3 (Binary Equivalence Gate) checks that all semantic units are preserved.
+Phase 4 checks that those semantic units produce the intended agent behavior when followed. Both gates are required:
+a document can pass Phase 3 (no units lost) but still fail Phase 4 if the reorganization changes the emphasis or
+ordering such that agents misinterpret the instructions.
 
 ---
 
@@ -211,9 +245,9 @@ Wave 3 analysis: the "discovery procedures" branch (u59–u67) would have been l
 
 | Wave | Document | Type | Strategy | Units | Lost | Verdict |
 |------|----------|------|----------|-------|------|---------|
-| 1 | optimize-doc/first-use.md | Procedural | Backward chaining | 56 | 6 | NOT_EQUIVALENT |
-| 2 | first-use.md (File A) | Procedural orchestrator | Backward chaining | 59 | 3 | NOT_EQUIVALENT |
-| 2 | COMPRESSION-AGENT.md (File B) | Procedural subagent | Backward chaining | 42 | 0 | EQUIVALENT |
+| 1 | instruction-builder-agent/first-use.md | Procedural | Backward chaining | 56 | 6 | NOT_EQUIVALENT |
+| 2 | instruction-builder-agent/first-use.md (File A) | Procedural orchestrator | Backward chaining | 59 | 3 | NOT_EQUIVALENT |
+| 2 | instruction-builder-agent/compression-protocol.md (File B) | Procedural subagent | Backward chaining | 42 | 0 | EQUIVALENT |
 | 3 | commit-types.md | Reference | Topical clustering | 67 | 0 | EQUIVALENT |
 
 **Overall pipeline status**: Partially validated. Reference docs consolidate cleanly with topical clustering.
@@ -226,15 +260,12 @@ prevents the most harmful consolidation failures.
 
 ### Document Selected
 
-**Target**: `plugin/skills/optimize-doc/first-use.md` (582 lines)
+**Target**: `plugin/skills/instruction-builder-agent/first-use.md` (582 lines)
 
 **Rationale**: Large skill first-use.md with identified scattered content:
-- "CRITICAL: Always Use This Skill" section (lines 27-46) duplicates what Step 6 (Iteration)
-  handles procedurally
-- "MANDATORY: Validation Gate" subsection within Step 4 (lines 375-404) duplicates Step 5
-  (Decision Logic) and contains procedural decision rules
-- "Implementation Notes" section (lines 496-527) duplicates tool specifications and iteration
-  state management already covered in Steps 2-4
+- "CRITICAL: Always Use This Skill" section duplicates what Step 6 (Iteration) handles procedurally
+- "MANDATORY: Validation Gate" subsection within Step 4 duplicates Step 5 (Decision Logic) and contains procedural decision rules
+- "Implementation Notes" section duplicates tool specifications and iteration state management already covered in Steps 2-4
 
 Expected consolidation: Move scattered validation/iteration logic into cohesive execution flow
 by eliminating redundant sections and integrating their unique content into the main workflow
@@ -254,7 +285,7 @@ Extracted **56 semantic units** from original document, categorized as:
 | CONDITIONAL | 8 | If EQUIVALENT then approve, if NOT_EQUIVALENT then iterate |
 | CONSEQUENCE | 2 | Manual compression bypasses iteration loop |
 | DEPENDENCY | 3 | Baseline prerequisite for subsequent validations |
-| REFERENCE | 4 | Links to COMPRESSION-AGENT.md, EXTRACTION-AGENT.md |
+| REFERENCE | 4 | Links to compression-protocol.md, validation-protocol.md |
 | CONJUNCTION | 2 | All requirements for validation gate |
 | EXCLUSION | 1 | Mutual exclusivity in handling EQUIVALENT vs NOT_EQUIVALENT |
 
@@ -281,7 +312,7 @@ GOAL: Complete compression with validation and optional iteration
       ←  Reach EQUIVALENT status (final gate)
           ←  If NOT_EQUIVALENT: iterate up to 3 times
           ←  If EQUIVALENT: apply changes, ask user for more iterations
-              ←  Validate each version via /compare-docs
+              ←  Validate each version
                   ←  Have baseline and versioned compressions saved
                       ←  Invoke compression subagent
                           ←  Know document type is Claude-facing
@@ -313,11 +344,11 @@ GOAL: Complete compression with validation and optional iteration
 into the step-by-step workflow. Removed the "MANDATORY: Validation Gate" subsection from
 Step 4 and merged its logic into Step 5 as explicit conditional branches.
 
-**Result**: Created `/tmp/consolidated-optimize-doc-first-use.md` (499 lines, 14% reduction)
+**Result**: Created consolidated version (499 lines, 14% reduction)
 
 ---
 
-### Compare-Docs Binary Verdict
+### Binary Validation Verdict
 
 **Status: NOT_EQUIVALENT (50/56 preserved, 6 lost)**
 
@@ -332,24 +363,20 @@ Status: NOT_EQUIVALENT (50/56 preserved, 6 lost)
 LOST (in original, missing in consolidated)
 ───────────────────────────────────────────────────────────────────────────────
 - [REQUIREMENT] When reporting to the user, explicitly state: Status:
-  {EQUIVALENT|NOT_EQUIVALENT} compares the compressed version against the
-  ORIGINAL document state from before /optimize-doc was invoked.
-- [REQUIREMENT] On second, third, etc. invocations: REUSE /tmp/original-{{filename}}
-  from first invocation; Always compare against original baseline (not intermediate
-  versions); The baseline is set ONCE on first invocation and REUSED for all
+  {EQUIVALENT|NOT_EQUIVALENT} compares the consolidated version against the
+  ORIGINAL document state from before consolidation was invoked.
+- [REQUIREMENT] On second, third, etc. invocations: Always compare against original baseline
+  (not intermediate versions); The baseline is set ONCE on first invocation and REUSED for all
   subsequent invocations
 - [CONDITIONAL] if Status contains "EQUIVALENT" and NOT "NOT_EQUIVALENT":
   DECISION = APPROVE; else: DECISION = ITERATE
 - [SEQUENCE] If DECISION=ITERATE: STOP - do not ask user for approval; Extract the
   LOST section from the report; Proceed directly to Step 6 (Iteration Loop) with
   that feedback
-- [REQUIREMENT] File Operations: Read original (Read tool); Save original baseline
-  (Write tool to /tmp/original-{filename}, once per session); Save versioned
-  compressed (Write tool to /tmp/compressed-{filename}-v*.md); Overwrite original
-  (Write tool to {{arg}}, only after approval); Cleanup after approval (rm)
-- [REQUIREMENT] If latest version unsatisfactory, previous versions available at
-  /tmp/compressed-{filename}-v{N}.md for rollback; Versions automatically cleaned up
-  after successful approval
+- [REQUIREMENT] File Operations: Read original; Save original baseline (once per session);
+  Save versioned consolidated output; Overwrite original (only after approval); Cleanup after approval
+- [REQUIREMENT] If latest version unsatisfactory, previous versions available for rollback;
+  Versions automatically cleaned up after successful approval
 
 ───────────────────────────────────────────────────────────────────────────────
 ADDED (in consolidated, not in original)
@@ -424,7 +451,7 @@ ADDED (in consolidated, not in original)
 
 ### Approach Limitations
 
-1. **Backward chaining works for procedural content**: Shrink-doc is a procedural skill
+1. **Backward chaining works for procedural content**: The compression workflow is a procedural skill
    (step-by-step workflow with decision gates). Backward chaining naturally reconstructs
    the execution sequence.
 
@@ -459,7 +486,7 @@ execution order. This is ideal for backward chaining.
 ### Wave 2 Recommendation
 
 **Test on multi-file document**: Select a skill + its first-use.md that have overlapping
-content (e.g., `skill-builder-agent/SKILL.md` and `skill-builder-agent/first-use.md`).
+content (e.g., `instruction-builder-agent/SKILL.md` and `instruction-builder-agent/first-use.md`).
 This will test whether cross-file extraction and merging preserves inter-document context.
 
 **Expected risk**: The consolidated version might inadvertently merge distinct purposes
@@ -480,7 +507,7 @@ Based on these findings:
   procedural vs non-procedural content
 - **Scope limitation**: Mark consolidation as recommended for procedural documents only,
   with warning for conceptual/reference documents
-- **Validation requirement**: Make compare-docs EQUIVALENT status a hard gate (as originally
+- **Validation requirement**: Make validation-protocol EQUIVALENT status a hard gate (as originally
   planned)
 - **Editorial structure preservation**: Consider optional "editorial clustering" phase before
   consolidation to group related content intentionally
@@ -510,7 +537,7 @@ revealed that **"scattered documentation" requires distinguishing between**:
 2. **Separated-for-editorial-reasons information** (distinct purposes - should NOT consolidate)
 3. **Execution-prerequisite information** (found via backward chaining - properly ordered)
 
-For procedural documents like optimize-doc, the approach works IF the consolidation also
+For procedural documents like instruction-builder, the approach works IF the consolidation also
 respects editorial concerns alongside execution order. Simply following backward chaining
 order loses content that was intentionally grouped separately.
 
@@ -523,12 +550,12 @@ applies more broadly.
 
 ### Documents Selected
 
-**Candidate pair**: `plugin/skills/optimize-doc/first-use.md` (orchestrator, 582 lines) and
-`plugin/skills/optimize-doc/COMPRESSION-AGENT.md` (compression subagent, 199 lines).
+**Candidate pair**: `plugin/skills/instruction-builder-agent/first-use.md` (orchestrator, 582 lines) and
+`plugin/skills/instruction-builder-agent/compression-protocol.md` (compression subagent, 199 lines).
 
 **Rationale**: Both describe document compression but serve DIFFERENT audiences:
 - `first-use.md`: Main agent orchestrating the compression workflow
-- `COMPRESSION-AGENT.md`: Compression subagent performing the actual compression
+- `compression-protocol.md`: Compression subagent performing the actual compression
 
 Both files share overlapping concepts (what to preserve, what to remove, CLAUDE.md special
 handling) while containing audience-specific content (orchestrator workflow vs. subagent
@@ -548,10 +575,10 @@ execution). This is the ideal multi-file test: overlapping concepts with audienc
 | CONDITIONAL | 8 | If EQUIVALENT: APPROVE; if NOT_EQUIVALENT: ITERATE; if YAML missing: warn |
 | CONSEQUENCE | 2 | Manual compression bypasses iteration loop |
 | REASON | 2 | Historical context (2025-12-19), encapsulation rationale |
-| REFERENCE | 2 | COMPRESSION-AGENT.md (algorithm), delegate skill |
+| REFERENCE | 2 | compression-protocol.md (algorithm), delegate skill |
 | PRINCIPLE | 2 | No "close enough", report actual score |
 
-**File B (COMPRESSION-AGENT.md)**: Extracted **42 semantic units**
+**File B (compression-protocol.md)**: Extracted **42 semantic units**
 
 | Category | Count | Examples |
 |----------|-------|---------|
@@ -567,15 +594,15 @@ execution). This is the ideal multi-file test: overlapping concepts with audienc
 
 **Overlapping content between files** (same concept expressed in both):
 
-| Concept | In first-use.md | In COMPRESSION-AGENT.md |
+| Concept | In first-use.md | In compression-protocol.md |
 |---------|-----------------|------------------------|
 | What to preserve | Step 1 special handling references | Full preserve list (B9-B14) |
 | What to remove | Implied by "subagent handles it" | Full remove list (B15-B19) |
-| CLAUDE.md special | Step 1: reorganization algorithm in COMPRESSION-AGENT.md | Full algorithm (B35-B39) |
-| Style docs special | Step 1: follow rules in COMPRESSION-AGENT.md | Full rules (B40-B42) |
+| CLAUDE.md special | Step 1: reorganization algorithm in compression-protocol.md | Full algorithm (B35-B39) |
+| Style docs special | Step 1: follow rules in compression-protocol.md | Full rules (B40-B42) |
 | Execution equivalence | Goal statement | Definition (B8) |
 
-**Key structural observation**: The overlap is NOT redundant. `first-use.md` says "COMPRESSION-AGENT.md
+**Key structural observation**: The overlap is NOT redundant. `first-use.md` says "compression-protocol.md
 has the algorithm" — it uses cross-references as encapsulation boundaries. The overlapping concepts
 are at DIFFERENT abstraction levels:
 - Orchestrator: knows WHAT exists (references)
@@ -594,7 +621,7 @@ This is **architectural encapsulation**, not accidental duplication.
 ```
 GOAL: Document compressed with EQUIVALENT validation
   ← Orchestrator: iterate if NOT_EQUIVALENT (A40-A45)
-  ← Orchestrator: run /compare-docs validation (A24-A27)
+  ← Orchestrator: run validation via validation-protocol (A24-A27)
     ← Orchestrator: save baseline + versioned compression (A18-A22)
       ← Subagent: write compressed file (B33-B34)
         ← Subagent: apply normalization (B25-B30)
@@ -614,8 +641,7 @@ a single unified flow without destroying the invocation boundary.
 
 ### Phase 4: Consolidated Version
 
-**Consolidation attempt**: Combined into Part 1 (orchestrator) + Part 2 (subagent) in
-`/tmp/consolidated-optimize-doc-wave2.md`.
+**Consolidation attempt**: Combined into Part 1 (orchestrator) + Part 2 (subagent) in temporary file.
 
 ---
 
@@ -628,15 +654,15 @@ Lost units (3/59):
   intentionally-added style rule section" — editorial provenance, removed as meta-commentary
 - [REASON] Encapsulation rationale: "If you can see HOW to compress, you might bypass the
   skill and do it manually" — removed as elaboration
-- [REQUIREMENT] "Report the ACTUAL score from /compare-docs. Do not summarize or interpret" —
+- [REQUIREMENT] "Report the ACTUAL score from validation. Do not summarize or interpret" —
   dropped when condensing the version comparison table section
 
 **Status: NOT_EQUIVALENT (56/59 preserved, 3 lost)**
 
-The third lost unit (do not summarize compare-docs score) IS execution-critical: an agent
+The third lost unit (do not summarize validation score) IS execution-critical: an agent
 that summarizes rather than reports verbatim produces different outcomes.
 
-**Compare against COMPRESSION-AGENT.md (42 units)**:
+**Compare against compression-protocol.md (42 units)**:
 
 All 42 units preserved.
 
@@ -652,11 +678,11 @@ All 42 units preserved.
    split into orchestrator units (A) and subagent units (B). Backward chaining naturally kept
    them separate.
 
-2. **Cross-file references are NOT redundant**: `first-use.md` referencing COMPRESSION-AGENT.md
+2. **Cross-file references are NOT redundant**: `first-use.md` referencing compression-protocol.md
    is architectural encapsulation. The reference itself is a semantic unit (A16, A9, A10) that
    must be preserved, not merged with the referenced content.
 
-3. **Subagent content consolidated cleanly (42/42)**: COMPRESSION-AGENT.md content has no
+3. **Subagent content consolidated cleanly (42/42)**: compression-protocol.md content has no
    scattered structure — it follows a clear hierarchy. Full preservation achieved for File B.
 
 #### What Failed
@@ -666,8 +692,7 @@ All 42 units preserved.
    content. When two large files are merged, individual requirements get crowded out.
 
 2. **Volume-induced loss**: With 59+42=101 units to fit into one document, consolidation
-   pressure dropped a specific precision requirement (A31: report ACTUAL score, not summary).
-   This didn't happen in Wave 1 with one 56-unit file.
+   pressure dropped a specific precision requirement (A31: report ACTUAL score, not summary). This didn't happen in Wave 1 with one 56-unit file.
 
 3. **Structural encapsulation creates a consolidation paradox**: The files exist as separate
    documents BECAUSE the orchestrator should NOT know compression internals (prevents manual
@@ -691,7 +716,7 @@ All 42 units preserved.
 - Rule: Each additional file increases loss risk quadratically, not linearly
 
 **Failure Mode 3: Reference-as-Architecture**
-- Cross-file references (A16: "subagent reads COMPRESSION-AGENT.md") are semantic units
+- Cross-file references (A16: "subagent reads compression-protocol.md") are semantic units
 - Consolidating the referenced content makes the reference dangling/obsolete
 - Merged document must choose: keep reference OR inline content, not both
 - Rule: Verify cross-file references remain valid after consolidation
@@ -721,14 +746,14 @@ All 42 units preserved.
 
 ### Wave 2 Conclusion
 
-**Wave 2 Status**: NOT_EQUIVALENT for File A (first-use.md), EQUIVALENT for File B (COMPRESSION-AGENT.md)
+**Wave 2 Status**: NOT_EQUIVALENT for File A (first-use.md), EQUIVALENT for File B (compression-protocol.md)
 
 The three-phase pipeline correctly identified the audience boundary during extraction and
 backward chaining — but the consolidation step STILL lost 3 units from File A due to
 volume-induced compression pressure.
 
-**New rule discovered**: Files with explicit architectural encapsulation (audience separation,
-"INTERNAL" markers, "intentionally not here" language) MUST NOT be consolidated. The separation
+**New rule discovered**: Files with architectural encapsulation (audience separation,
+explicit boundary markers, intentional structural separation) MUST NOT be consolidated. The separation
 is a design invariant, not a documentation defect to be fixed.
 
 **When multi-file consolidation CAN work**: Two files covering the same topic for the same

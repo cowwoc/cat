@@ -162,11 +162,11 @@ PLAN_MD="${ISSUE_PATH}/PLAN.md" && MAIN_AGENT_WAVES=$(sed -n '/^## Main Agent Wa
 (`- /cat:skill-name args`) and invoke the corresponding skill NOW at the main agent level
 using the Skill tool.
 
-Example: If `## Main Agent Waves` contains `- /cat:optimize-doc path/to/file.md`, then:
+Example: If `## Main Agent Waves` contains `- /cat:example-skill path/to/file.md`, then:
 
 ```
 Skill tool:
-  skill: "cat:optimize-doc-agent"
+  skill: "cat:example-skill-agent"
   args: "path/to/file.md"
 ```
 

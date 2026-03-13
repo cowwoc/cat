@@ -379,7 +379,7 @@ action: "STOP. Escalate to hook, validation, or code_fix instead."
 If the mistake involves a **skill file**, use skill-builder's Priming Prevention Checklist to analyze it:
 
 ```
-/cat:skill-builder-agent analyze {path-to-skill}
+/cat:instruction-builder-agent analyze {path-to-skill}
 ```
 
 The checklist covers:
@@ -397,21 +397,21 @@ The checklist covers:
 | Are there "for reference only" sections? | Move to preprocessing |
 | Could agent do the task after reading this doc? | Too much exposed |
 
-**Reference:** See `/cat:skill-builder-agent` § "Priming Prevention Checklist" for detailed patterns.
+**Reference:** See `/cat:instruction-builder-agent` § "Priming Prevention Checklist" for detailed patterns.
 
 ## Step 9: Implement Prevention
 
 ### Skill-Builder Gate
 
-**MANDATORY: Invoke `/cat:skill-builder-agent` before editing any skill or command file.**
+**MANDATORY: Invoke `/cat:instruction-builder-agent` before editing any skill or command file.**
 
 If `prevention_type` is `skill` and the fix involves editing a skill or command file:
 
-1. Invoke `/cat:skill-builder-agent` with the target file path before making any edits
+1. Invoke `/cat:instruction-builder-agent` with the target file path before making any edits
 2. Follow skill-builder's backward reasoning to decompose the change into forward steps
 3. Only proceed to edit the file after skill-builder has been invoked
 
-**BLOCKING CONDITION:** Do NOT edit a skill or command file without first invoking `/cat:skill-builder-agent`. Skipping
+**BLOCKING CONDITION:** Do NOT edit a skill or command file without first invoking `/cat:instruction-builder-agent`. Skipping
 skill-builder bypasses the backward-reasoning decomposition that ensures the change is correct and complete.
 
 ### Issue Worktree Gate
@@ -555,7 +555,7 @@ When choosing WHERE to implement a fix, prefer the lowest-level document that ad
 | Level | Example | Benefit |
 |-------|---------|---------|
 | Concept doc | `concepts/subagent-delegation.md` | All skills/workflows referencing it inherit the fix |
-| Skill doc | `skills/optimize-doc/SKILL.md` | All invocations of that skill get the fix |
+| Skill doc | `skills/example-skill/SKILL.md` | All invocations of that skill get the fix |
 | Workflow doc | `concepts/work.md` | Specific workflow improved |
 | Command doc | `commands/work.md` | Single entry point fixed |
 
@@ -563,8 +563,8 @@ When choosing WHERE to implement a fix, prefer the lowest-level document that ad
 and workflow that references it. A fix in a command document benefits only that command. Apply fixes
 at the deepest level where they're relevant to maximize fix propagation.
 
-**Example:** M277 (validation separation) belongs in `optimize-doc/SKILL.md` (skill-specific validation)
-not `work.md` (generic workflow) because the per-file subagent pattern is optimize-doc-specific.
+**Example:** A validation rule belongs in a skill's SKILL.md (skill-specific validation)
+not in a generic workflow file because the pattern is skill-specific.
 
 **Verification question:** Before committing a fix, ask: "Is this rule specific to one skill/context,
 or genuinely applies to all issues?" If specific → find the skill doc. If generic → workflow doc is correct.
@@ -575,13 +575,12 @@ triggered the problem. The fix should cover all similar cases.
 
 | Fix Location | Prevention Wording |
 |--------------|-------------------|
-| Skill-specific doc (e.g., `optimize-doc/SKILL.md`) | May reference that skill's specific behavior |
+| Skill-specific doc (e.g., skill SKILL.md) | May reference that skill's specific behavior |
 | General doc (e.g., `work-with-issue/SKILL.md`) | Must apply to ALL skills handled by that doc |
 | Concept doc (e.g., `concepts/subagent-delegation.md`) | Must apply to ALL contexts using that concept |
 
-Example: If optimize-doc's iteration loop was bypassed, and the fix goes in work-with-issue (which handles
-all skills), write "complete each skill fully before delegation" — not "complete optimize-doc's iteration
-loop before delegation."
+Example: If a skill's iteration loop was bypassed, and the fix goes in a general workflow document,
+write "complete each skill fully before delegation" — not skill-specific instructions.
 
 **Language requirements for documentation/prompt changes:**
 

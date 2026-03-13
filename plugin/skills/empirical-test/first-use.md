@@ -369,4 +369,4 @@ Present a summary report to the user:
 ## Related Skills
 
 - `/cat:learn` - Record the mistake and root cause analysis
-- `/cat:skill-builder-agent` - Create or update skills with compliance-tested patterns
+- `/cat:instruction-builder-agent` - Create or update skills with compliance-tested patterns

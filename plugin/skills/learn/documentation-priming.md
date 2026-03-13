@@ -95,14 +95,14 @@ priming_sequence:
 4. Write compressed version
 
 ## Procedure
-Step 1: Invoke /cat:optimize-doc-agent...
+Step 1: Invoke a compression skill...
 ```
 
 **Fix**: Move algorithm to internal-only document
 
 ```markdown
 ## Procedure
-Step 1: Invoke /cat:optimize-doc-agent (handles compression internally)
+Step 1: Invoke the compression skill (handles compression internally)
 Step 2: Verify postcondition (score = 1.0)
 ```
 
@@ -125,8 +125,8 @@ Step 2: Verify postcondition (score = 1.0)
 
 ```markdown
 ## Note
-Running /compare-docs spawns 2 subagents for parallel extraction.
-For batch operations, this can be costly.
+Running a validation tool may spawn multiple subagents for parallel processing.
+For batch operations, consider the resource impact.
 ```
 
 **Fix**: Remove cost concerns that might encourage shortcuts

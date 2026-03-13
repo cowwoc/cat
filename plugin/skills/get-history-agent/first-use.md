@@ -73,7 +73,7 @@ AGENT_ID="ad630cb"  # Example agentId
 "$SESSION_ANALYZER" analyze "${CLAUDE_SESSION_ID}/subagents/agent-$AGENT_ID"
 
 # Search for specific skill invocation
-"$SESSION_ANALYZER" search "${CLAUDE_SESSION_ID}/subagents/agent-$AGENT_ID" "compare-docs"
+"$SESSION_ANALYZER" search "${CLAUDE_SESSION_ID}/subagents/agent-$AGENT_ID" "instruction-builder-agent"
 ```
 
 **Note:** The agentId is included in the Task tool result output. Look for patterns like:
