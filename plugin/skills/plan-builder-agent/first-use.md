@@ -221,7 +221,7 @@ Task tool:
     You are a plan review-and-fix agent. Read the draft PLAN.md from disk, review it for
     completeness, fix any gaps, and re-verify. Iterate until the plan passes review.
 
-    Read `plugin/agents/plan-review-agent.md` for the review methodology and verdict criteria.
+    Read and follow: ${CLAUDE_PLUGIN_ROOT}/agents/plan-review-agent.md
 
     ## Review Loop
 
