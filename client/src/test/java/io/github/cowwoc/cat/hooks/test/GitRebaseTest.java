@@ -769,4 +769,258 @@ public class GitRebaseTest
       }
     }
   }
+
+  /**
+   * Verifies that rebase fails with ERROR when the target branch renames a tracked path that still exists
+   * in the current branch.
+   * <p>
+   * Scenario: main renames {@code .claude/cat/} to {@code .cat/} via {@code git mv}. Feature branch still
+   * tracks {@code .claude/cat/config.json} (the old path). The rebase should fail with ERROR before creating
+   * a backup, reporting the old path as a tracked-path conflict.
+   */
+  @Test
+  public void executeFailsWhenTargetBranchRenamesTrackedPath() throws IOException
+  {
+    Path repoDir = TestUtils.createTempGitRepo("main");
+    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    {
+      try
+      {
+        // Set up the old directory structure on main
+        Path oldDir = repoDir.resolve(".claude").resolve("cat");
+        Files.createDirectories(oldDir);
+        Files.writeString(oldDir.resolve("config.json"), "{\"key\": \"value\"}");
+        TestUtils.runGit(repoDir, "add", ".claude/");
+        TestUtils.runGit(repoDir, "commit", "-m", "add .claude/cat/config.json");
+
+        // Create feature branch from here (still has old path)
+        TestUtils.runGit(repoDir, "checkout", "-b", "feature");
+        Files.writeString(repoDir.resolve("feature.txt"), "feature content");
+        TestUtils.runGit(repoDir, "add", "feature.txt");
+        TestUtils.runGit(repoDir, "commit", "-m", "feature commit");
+
+        // Go back to main and rename .claude/cat to .cat
+        TestUtils.runGit(repoDir, "checkout", "main");
+        TestUtils.runGit(repoDir, "mv", ".claude/cat", ".cat");
+        TestUtils.runGit(repoDir, "commit", "-m", "rename .claude/cat to .cat");
+
+        // Switch to feature branch (still tracks .claude/cat/config.json)
+        TestUtils.runGit(repoDir, "checkout", "feature");
+
+        GitRebase cmd = new GitRebase(scope, repoDir);
+        String result = cmd.execute("main");
+
+        requireThat(result, "result").contains("\"status\"");
+        requireThat(result, "result").contains("\"ERROR\"");
+        requireThat(result, "result").contains(".claude/cat");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(repoDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that rebase fails with ERROR when the current branch has file content referencing a path that
+   * was renamed on the target branch.
+   * <p>
+   * Scenario: main adds and renames {@code .claude/cat/} to {@code .cat/}. Feature branch (forked before
+   * the rename) has only {@code skill.md} containing the text {@code .claude/cat} — the old tracked config
+   * file is removed from the feature branch so only the content reference remains. The rebase should fail
+   * with ERROR before creating a backup, reporting {@code skill.md} and the old path {@code .claude/cat}.
+   */
+  @Test
+  public void executeFailsWhenCurrentBranchHasContentReferencingRenamedPath() throws IOException
+  {
+    Path repoDir = TestUtils.createTempGitRepo("main");
+    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    {
+      try
+      {
+        // Set up the old directory structure on main and create a feature branch at this point
+        Path oldDir = repoDir.resolve(".claude").resolve("cat");
+        Files.createDirectories(oldDir);
+        Files.writeString(oldDir.resolve("config.json"), "{\"key\": \"value\"}");
+        TestUtils.runGit(repoDir, "add", ".claude/");
+        TestUtils.runGit(repoDir, "commit", "-m", "add .claude/cat/config.json");
+
+        // Create feature branch — remove the tracked config file, add skill.md with old path reference
+        // (simulates a branch that only has a documentation reference, not the actual config file)
+        TestUtils.runGit(repoDir, "checkout", "-b", "feature");
+        TestUtils.runGit(repoDir, "rm", "-r", ".claude/cat");
+        Files.writeString(repoDir.resolve("skill.md"), "See .claude/cat for configuration");
+        TestUtils.runGit(repoDir, "add", "skill.md");
+        TestUtils.runGit(repoDir, "commit", "-m", "remove config file, add skill.md referencing .claude/cat");
+
+        // Go back to main and rename .claude/cat to .cat
+        TestUtils.runGit(repoDir, "checkout", "main");
+        TestUtils.runGit(repoDir, "mv", ".claude/cat", ".cat");
+        TestUtils.runGit(repoDir, "commit", "-m", "rename .claude/cat to .cat");
+
+        // Switch to feature branch
+        TestUtils.runGit(repoDir, "checkout", "feature");
+
+        GitRebase cmd = new GitRebase(scope, repoDir);
+        String result = cmd.execute("main");
+
+        requireThat(result, "result").contains("\"status\"");
+        requireThat(result, "result").contains("\"ERROR\"");
+        requireThat(result, "result").contains("skill.md");
+        requireThat(result, "result").contains(".claude/cat");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(repoDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that rebase succeeds (no false positive) when the target branch has no renames.
+   * <p>
+   * The feature branch adds a new file. The path consistency validation should find no renamed paths and
+   * allow the rebase to proceed normally.
+   */
+  @Test
+  public void executeSucceedsWithNoPathRenamesOnTarget() throws IOException
+  {
+    Path repoDir = TestUtils.createTempGitRepo("main");
+    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    {
+      try
+      {
+        // Add a commit on main with no renames
+        Files.writeString(repoDir.resolve("main-file.txt"), "main content");
+        TestUtils.runGit(repoDir, "add", "main-file.txt");
+        TestUtils.runGit(repoDir, "commit", "-m", "add main-file.txt");
+
+        // Feature branch adds a new file
+        TestUtils.runGit(repoDir, "checkout", "-b", "feature");
+        Files.writeString(repoDir.resolve("feature.txt"), "feature content");
+        TestUtils.runGit(repoDir, "add", "feature.txt");
+        TestUtils.runGit(repoDir, "commit", "-m", "add feature.txt");
+
+        // Add another commit on main (no rename)
+        TestUtils.runGit(repoDir, "checkout", "main");
+        Files.writeString(repoDir.resolve("main-file2.txt"), "more main content");
+        TestUtils.runGit(repoDir, "add", "main-file2.txt");
+        TestUtils.runGit(repoDir, "commit", "-m", "add main-file2.txt");
+
+        TestUtils.runGit(repoDir, "checkout", "feature");
+
+        GitRebase cmd = new GitRebase(scope, repoDir);
+        String result = cmd.execute("main");
+
+        requireThat(result, "result").contains("\"status\"");
+        requireThat(result, "result").contains("\"OK\"");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(repoDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that rebase succeeds (no false positive) when the feature branch performs the same rename
+   * as the target branch, including documentation files that mention the old path.
+   * <p>
+   * Scenario: main renames {@code .claude/cat/} to {@code .cat/} via {@code git mv}. The feature branch
+   * independently performs the same rename AND has a {@code PLAN.md} that mentions the old path
+   * {@code .claude/cat} in its content (because the feature branch's purpose is to do the rename).
+   * The current branch has already handled the rename, so the rebase should NOT flag it as an error.
+   * This prevents false positives when the feature branch's purpose is to do the same rename as the target.
+   */
+  @Test
+  public void executeSucceedsWhenFeatureBranchPerformsSameRenameAsTarget() throws IOException
+  {
+    Path repoDir = TestUtils.createTempGitRepo("main");
+    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    {
+      try
+      {
+        // Set up the old directory structure on main
+        Path oldDir = repoDir.resolve(".claude").resolve("cat");
+        Files.createDirectories(oldDir);
+        Files.writeString(oldDir.resolve("config.json"), "{\"key\": \"value\"}");
+        TestUtils.runGit(repoDir, "add", ".claude/");
+        TestUtils.runGit(repoDir, "commit", "-m", "add .claude/cat/config.json");
+
+        // Create feature branch from this point, perform the same rename, and add PLAN.md that
+        // mentions the old path (simulating the feature branch's purpose being the rename itself)
+        TestUtils.runGit(repoDir, "checkout", "-b", "feature");
+        TestUtils.runGit(repoDir, "mv", ".claude/cat", ".cat");
+        Files.writeString(repoDir.resolve("PLAN.md"), "Rename .claude/cat to .cat");
+        TestUtils.runGit(repoDir, "add", "PLAN.md");
+        TestUtils.runGit(repoDir, "commit", "-m", "feature: rename .claude/cat to .cat");
+
+        // On main: also perform the same rename independently
+        TestUtils.runGit(repoDir, "checkout", "main");
+        TestUtils.runGit(repoDir, "mv", ".claude/cat", ".cat");
+        TestUtils.runGit(repoDir, "commit", "-m", "main: rename .claude/cat to .cat");
+
+        // Switch to feature branch and attempt rebase
+        TestUtils.runGit(repoDir, "checkout", "feature");
+
+        GitRebase cmd = new GitRebase(scope, repoDir);
+        String result = cmd.execute("main");
+
+        // Should NOT return ERROR — the feature branch already handled the rename
+        requireThat(result, "result").doesNotContain("\"ERROR\"");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(repoDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that rebase succeeds (no false positive) when the feature branch has no content references
+   * to the old path after a rename on the target branch.
+   * <p>
+   * Scenario: main renames directory {@code old-config/} to {@code new-config/}. Feature branch has
+   * {@code feature.txt} that mentions only {@code new-config/} (not {@code old-config/}). Since the
+   * feature branch has no stale references, rebase should succeed with no validation error.
+   */
+  @Test
+  public void executeSucceedsWhenContentReferencesAlreadyUpdated() throws IOException
+  {
+    Path repoDir = TestUtils.createTempGitRepo("main");
+    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    {
+      try
+      {
+        // Feature branch adds feature.txt — it only references new-config/ (no old-config/ reference)
+        TestUtils.runGit(repoDir, "checkout", "-b", "feature");
+        Files.writeString(repoDir.resolve("feature.txt"), "See new-config/ for configuration");
+        TestUtils.runGit(repoDir, "add", "feature.txt");
+        TestUtils.runGit(repoDir, "commit", "-m", "add feature.txt referencing new-config/");
+
+        // Main adds old-config/settings.txt and then renames old-config/ to new-config/
+        TestUtils.runGit(repoDir, "checkout", "main");
+        Path oldConfigDir = repoDir.resolve("old-config");
+        Files.createDirectories(oldConfigDir);
+        Files.writeString(oldConfigDir.resolve("settings.txt"), "settings content");
+        TestUtils.runGit(repoDir, "add", "old-config/");
+        TestUtils.runGit(repoDir, "commit", "-m", "add old-config/settings.txt");
+        TestUtils.runGit(repoDir, "mv", "old-config", "new-config");
+        TestUtils.runGit(repoDir, "commit", "-m", "rename old-config to new-config");
+
+        // Switch to feature branch — has no reference to old-config, so validation should pass
+        TestUtils.runGit(repoDir, "checkout", "feature");
+
+        GitRebase cmd = new GitRebase(scope, repoDir);
+        String result = cmd.execute("main");
+
+        requireThat(result, "result").contains("\"status\"");
+        requireThat(result, "result").contains("\"OK\"");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(repoDir);
+      }
+    }
+  }
 }

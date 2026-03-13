@@ -30,6 +30,24 @@ if echo "$MERGE_POLICY" | grep -qi "MUST.*merge commit"; then
 fi
 ```
 
+## Pre-Rebase Path Consistency Validation
+
+Before creating a backup or starting the rebase, the `git-rebase` tool automatically validates that the worktree's
+tracked paths and content references are consistent with the target branch.
+
+If inconsistencies are detected, the tool returns `ERROR` status **before any rebase begins**. No backup is created.
+The error message identifies two categories of problems:
+
+- **Tracked-path renames:** Files or directories that were renamed in the worktree branch differ from the target branch
+  (e.g., `.claude/cat` → `.cat`). Rebasing with mismatched paths causes pervasive conflicts.
+- **Content references:** File contents reference old path names that no longer exist (e.g., scripts or docs that
+  hardcode the old directory name).
+
+The error message lists each affected file and the expected path. Review and correct the listed paths before retrying.
+
+**Example:** If the target branch renamed `.claude/cat/` to `.cat/`, the worktree branch must also use `.cat/` in both
+tracked paths and file contents. The validation catches this before any history is rewritten.
+
 ## Common Operations
 
 ### Rebase onto target branch (Deterministic Script)
