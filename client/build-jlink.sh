@@ -49,7 +49,6 @@ readonly -a HANDLERS=(
   "pre-write:PreWriteHook"
   "subagent-start:SubagentStartHook"
   "pre-issue:PreIssueHook"
-  "pre-compact:PreCompactHook"
   "session-end:SessionEndHook"
   "get-checkpoint-box:skills.GetCheckpointOutput"
   "get-issue-complete-box:skills.GetIssueCompleteOutput"
