@@ -88,6 +88,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - move-session-files-to-cat-work
 - move-dependencies-to-plan-md
 - fix-work-merge-gate-timing
+- fix-standalone-cd-in-skill-files
 
 
 ## Issues Closed
