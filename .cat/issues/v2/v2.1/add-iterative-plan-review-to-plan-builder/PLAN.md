@@ -198,6 +198,71 @@ file. Then proceed to the commit step.
 - Confirm the commit step (previously last) is renumbered if needed.
 - Confirm the effort gate (`low` = skip) is clearly stated at the top of the step.
 
+### Wave 3: Create structural validation script for the review loop
+
+Create `plugin/scripts/validate-plan-builder-review-loop.sh` that statically validates the review loop implementation
+in `plugin/skills/plan-builder-agent/first-use.md` and `plugin/agents/plan-review-agent.md`. This script provides
+the automatable portion of the E2E smoke check by verifying that all required structural elements are present and
+correctly ordered in the source files.
+
+The script must:
+
+1. Accept a single optional argument: the workspace root (defaults to the directory two levels above the script's
+   location, i.e., `$(dirname "$0")/../..`).
+
+2. Verify `plugin/agents/plan-review-agent.md` contains each of the following strings (fail with a descriptive
+   error message if any are absent):
+   - `model: claude-sonnet-4-6` (frontmatter model)
+   - `"verdict"` (JSON response field)
+   - `"gaps"` (JSON response field)
+   - `"YES"` and `"NO"` (verdict values)
+   - `Haiku` (pass criterion reference)
+
+3. Verify `plugin/skills/plan-builder-agent/first-use.md` contains each of the following strings (fail with a
+   descriptive error message if any are absent):
+   - `Iterative Completeness Review` (step heading)
+   - `low` (effort gate keyword)
+   - `ITERATION` (loop counter variable)
+   - `PLAN_CONTENT` (plan content variable)
+   - `ISSUE_GOAL` (goal variable)
+   - `3 iterations` or `3` adjacent to `iteration` (cap value — accept either pattern)
+   - `cap reached` (cap warning text)
+   - `YES` (exit-on-YES logic)
+   - `NO` (gap-fix-on-NO logic)
+
+4. Verify that in `first-use.md`, the line containing `Iterative Completeness Review` appears BEFORE the line
+   containing the commit step. Detect the commit step by searching for a line matching `git commit` or
+   `## Commit` or `commit the PLAN.md` (use whichever pattern is present). If the review step line number is
+   greater than the commit step line number, fail with:
+   `ERROR: Review loop step appears after the commit step in first-use.md — insertion order is wrong.`
+
+5. Print `PASS: plan-builder review loop structure validated.` on success and exit 0.
+   Print `FAIL: <reason>` on any check failure and exit 1.
+
+**File placement:** `plugin/scripts/validate-plan-builder-review-loop.sh`
+
+**License header:** Required. Hash comments after the shebang line:
+```bash
+#!/usr/bin/env bash
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+set -euo pipefail
+```
+
+**Make the script executable:**
+```bash
+chmod +x plugin/scripts/validate-plan-builder-review-loop.sh
+```
+
+**Run the script from the worktree root to confirm it exits 0:**
+```bash
+bash plugin/scripts/validate-plan-builder-review-loop.sh
+```
+
+If the script exits non-zero, fix the failing check in `first-use.md` or `plan-review-agent.md` until it passes.
+
 ## Post-conditions
 
 - [ ] `plugin/agents/plan-review-agent.md` exists with `model: claude-sonnet-4-6` in YAML frontmatter
