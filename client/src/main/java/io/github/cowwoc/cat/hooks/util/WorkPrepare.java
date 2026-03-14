@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -1361,9 +1362,11 @@ public final class WorkPrepare
       {
         if (plannedFile.contains("*"))
         {
-          String regexPattern = plannedFile.
-            replace(".", "\\.").
-            replace("*", "[^/]*");
+          String[] parts = plannedFile.split("\\*", -1);
+          StringJoiner regexJoiner = new StringJoiner("[^/]*");
+          for (String part : parts)
+            regexJoiner.add(Pattern.quote(part));
+          String regexPattern = regexJoiner.toString();
           globPatterns.put(plannedFile, Pattern.compile(".*" + regexPattern));
         }
       }
