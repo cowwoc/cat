@@ -1939,5 +1939,24 @@
       "catches_variations" : true
     },
     "correct_behavior" : "WorkPrepare.execute() must release the lock before returning any early-exit status (OVERSIZED, CORRUPT, etc.) when a lock was acquired by IssueDiscovery. The fix should add lock release in all early-return paths after discovery returns Found, or restructure to not acquire the lock until the worktree is ready to be created."
+  }, {
+    "id" : "M544",
+    "timestamp" : "2026-03-14T14:14:12Z",
+    "category" : "",
+    "description" : "",
+    "root_cause" : "",
+    "cause_signature" : "tool_limitation:validation_absent:issue_workflow",
+    "prevention_type" : "code_fix",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }
