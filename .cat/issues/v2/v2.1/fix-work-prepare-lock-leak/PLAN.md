@@ -59,8 +59,8 @@ purpose — it just isn't called in these two paths.
 
 ## Test Cases
 
-- [ ] OVERSIZED return releases the lock (no lock file remains after the call returns)
-- [ ] CORRUPT return releases the lock (no lock file remains after the call returns)
+- [x] OVERSIZED return releases the lock (no lock file remains after the call returns)
+- [x] CORRUPT return releases the lock (no lock file remains after the call returns)
 - [ ] After OVERSIZED return, a second `work-prepare` call on the same issue does not throw
 - [ ] After CORRUPT return, a second `work-prepare` call on the same issue does not throw
 
