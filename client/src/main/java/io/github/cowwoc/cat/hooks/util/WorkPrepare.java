@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringJoiner;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -1361,7 +1360,12 @@ public final class WorkPrepare
       for (String plannedFile : plannedFiles)
       {
         if (plannedFile.contains("*"))
-          globPatterns.put(plannedFile, Pattern.compile(".*" + globToRegex(plannedFile)));
+        {
+          String regexPattern = plannedFile.
+            replace(".", "\\.").
+            replace("*", "[^/]*");
+          globPatterns.put(plannedFile, Pattern.compile(".*" + regexPattern));
+        }
       }
 
       try
@@ -1700,26 +1704,6 @@ public final class WorkPrepare
       return new ParsedArguments("", "*" + word + "*");
     }
     return new ParsedArguments("", "");
-  }
-
-  /**
-   * Converts a glob pattern containing {@code *} wildcards into a regex fragment.
-   * <p>
-   * Each {@code *} is translated to {@code [^/]*} so that wildcards match within a single
-   * path segment. All literal characters are quoted via {@link Pattern#quote} to prevent
-   * regex metacharacters in the input from causing a {@link java.util.regex.PatternSyntaxException}.
-   *
-   * @param glob the glob pattern to convert (typically contains {@code *} wildcards; literal paths are also accepted)
-   * @return a regex string suitable for use inside {@link Pattern#compile}
-   * @throws NullPointerException if {@code glob} is null
-   */
-  public static String globToRegex(String glob)
-  {
-    String[] parts = glob.split("\\*", -1);
-    StringJoiner regexJoiner = new StringJoiner("[^/]*");
-    for (String part : parts)
-      regexJoiner.add(Pattern.quote(part));
-    return regexJoiner.toString();
   }
 
   /**
