@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -2555,6 +2556,142 @@ public class WorkPrepareTest
       WorkPrepare.parseRawArguments("resume skip compress", "", "");
     requireThat(result.issueId(), "issueId").isEmpty();
     requireThat(result.excludePattern(), "excludePattern").isEqualTo("*compress*");
+  }
+
+  /**
+   * Verifies that a PLAN.md containing backtick-quoted text with regex metacharacters
+   * (e.g., "[]") does not cause a PatternSyntaxException during execute.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void globToRegexHandlesMetacharacters() throws IOException
+  {
+    Path projectDir = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      createIssue(projectDir, "2", "1", "my-feature", "open");
+
+      // Overwrite the PLAN.md with a "## Files to Modify" section whose backtick entry
+      // contains * and [] — these are regex metacharacters that trigger the bug
+      Path planPath = projectDir.resolve(".cat").resolve("issues").
+        resolve("v2").resolve("v2.1").resolve("my-feature").resolve("PLAN.md");
+      Files.writeString(planPath, """
+        # Plan: my-feature
+
+        ## Goal
+
+        Test regex metacharacter handling.
+
+        ## Files to Modify
+
+        - Remove the line `- **Dependencies:** []`
+        """);
+
+      GitCommands.runGit(projectDir, "add", ".");
+      GitCommands.runGit(projectDir, "commit", "-m", "Add issue with metacharacter PLAN.md");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+
+      worktreePath = Path.of(node.path("worktree_path").asString());
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectDir, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that globToRegex safely handles all regex metacharacters: (, ), [, ], {, }, +, ?, ^, $, |.
+   * The produced regex pattern must compile without throwing PatternSyntaxException, must match a
+   * literal file path containing those characters, and must not match an unrelated path.
+   */
+  @Test
+  public void globToRegexHandlesAllMetacharacters()
+  {
+    // All 11 regex metacharacters, including [ and ] which are the original bug trigger characters.
+    // Each entry uses a glob with * and the metacharacter in a literal segment.
+    String[] metacharacters = {"(", ")", "[", "]", "{", "}", "+", "?", "^", "$", "|"};
+    for (String metachar : metacharacters)
+    {
+      String glob = "plugin/hooks/handle" + metachar + "*.java";
+      String regex = WorkPrepare.globToRegex(glob);
+      // Must not throw PatternSyntaxException
+      Pattern pattern = Pattern.compile(".*" + regex);
+      // Must match a file path containing the literal metacharacter
+      String samplePath = "plugin/hooks/handle" + metachar + "Event.java";
+      requireThat(pattern.matcher(samplePath).matches(), "matchesForMetachar").isTrue();
+      // Must not match an unrelated path
+      requireThat(pattern.matcher("unrelated/NonMatchPath.java").matches(), "noMatchForMetachar").isFalse();
+    }
+  }
+
+  /**
+   * Verifies end-to-end that a PLAN.md "Files to Modify" glob with regex metacharacters does not
+   * cause a PatternSyntaxException and that WorkPrepare.execute() returns READY.
+   * <p>
+   * This is a defense-in-depth regression test for Pattern.quote: the glob passed to globToRegex
+   * contains bracket characters ({@code [} and {@code ]}) which are regex metacharacters. Without
+   * Pattern.quote, compiling the resulting regex would throw PatternSyntaxException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void globPatternMatchesCorrectFiles() throws IOException
+  {
+    Path projectDir = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      createIssue(projectDir, "2", "1", "my-feature", "open");
+
+      // The glob uses a natural project path with * wildcards. The backtick-enclosed glob text
+      // contains [ and ] characters, which are regex metacharacters. Pattern.quote must protect
+      // these so Pattern.compile does not throw PatternSyntaxException.
+      Path planPath = projectDir.resolve(".cat").resolve("issues").
+        resolve("v2").resolve("v2.1").resolve("my-feature").resolve("PLAN.md");
+      Files.writeString(planPath, """
+        # Plan: my-feature
+
+        ## Goal
+
+        Test regex metacharacter handling with natural project paths.
+
+        ## Files to Modify
+
+        - `client/src/main/java/io/github/cowwoc/cat/hooks/util/Work*.java`
+        """);
+
+      GitCommands.runGit(projectDir, "add", ".");
+      GitCommands.runGit(projectDir, "commit", "-m", "Add issue with glob in PLAN.md");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+
+      worktreePath = Path.of(node.path("worktree_path").asString());
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectDir, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
   }
 
   /**
