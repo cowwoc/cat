@@ -95,6 +95,35 @@ Files:
 ### Java Tests
 - Update any tests that assert stderr output for these CLI tools to assert stdout instead
 
+## Sub-Agent Waves
+
+### Wave 2 — Fix Remaining Violations
+
+- In `client/src/main/java/io/github/cowwoc/cat/hooks/util/WorkPrepare.java`, replace the inline JSON string in the
+  `main()` RuntimeException/AssertionError catch block (around line 1805) with `HookOutput.block()` so it uses the
+  standard hook output format via the `HookOutput` utility instead of a hand-constructed JSON string.
+- In `client/src/main/java/io/github/cowwoc/cat/hooks/util/GitAmend.java`, replace the `buildErrorJson()` method
+  (which returns `{"status":"ERROR","message":"..."}`) and all its call sites with `HookOutput.block()` so that all
+  error results flowing to stdout from `main()` use the standard Claude Code hook JSON output format
+  (`decision`/`reason` fields).
+- Run `mvn -f client/pom.xml test` and confirm all tests pass (exit code 0). Update any existing tests that asserted
+  the old `{"status":"ERROR"}` format from `GitAmend` to assert the new `HookOutput` (`decision`/`reason`) format.
+- In `client/src/main/java/io/github/cowwoc/cat/hooks/util/BatchReader.java`, replace the custom
+  `{"status":"ERROR","message":"..."}` JSON strings written to `System.err` at lines 159 and 230 with
+  `HookOutput.block()` written to `System.out`, and change all `System.exit(1)` calls that follow structured JSON
+  output (lines 164, 188, 201, 235) to `System.exit(0)`.
+- In `client/src/main/java/io/github/cowwoc/cat/hooks/util/WriteAndCommit.java`, replace the custom
+  `{"status":"error",...}` JSON strings written to `System.err` at lines 183-187 and 206-210 with `HookOutput.block()`
+  written to `System.out`, and change the corresponding `System.exit(1)` calls at lines 188 and 211 to
+  `System.exit(0)`.
+- In `client/src/main/java/io/github/cowwoc/cat/hooks/util/RecordLearning.java`, replace all custom
+  `{"status":"error",...}` JSON strings written to `System.err` at lines 561, 587, 604, and 624 with
+  `HookOutput.block()` written to `System.out`, and change all corresponding `System.exit(1)` calls in those error
+  paths to `System.exit(0)`.
+- Run `mvn -f client/pom.xml test` and confirm all tests pass (exit code 0). Update any existing tests for
+  `BatchReader`, `WriteAndCommit`, and `RecordLearning` that asserted the old `{"status":"ERROR"}` or
+  `{"status":"error"}` format or stderr output to assert the new `HookOutput` (`decision`/`reason`) format on stdout.
+
 ## Pre-conditions
 - [ ] All dependent issues are closed
 

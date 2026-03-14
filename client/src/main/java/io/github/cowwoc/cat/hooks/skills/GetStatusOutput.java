@@ -16,11 +16,13 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import io.github.cowwoc.cat.hooks.Config;
+import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.IssueStatus;
@@ -1219,7 +1221,11 @@ public final class GetStatusOutput implements SkillOutput
     {
       Logger log = LoggerFactory.getLogger(GetStatusOutput.class);
       log.error("Unexpected error", e);
-      throw e;
+      try (MainJvmScope errorScope = new MainJvmScope())
+      {
+        System.out.println(new HookOutput(errorScope).block(
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
     }
   }
 }

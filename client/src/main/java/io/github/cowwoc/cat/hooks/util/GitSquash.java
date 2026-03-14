@@ -10,6 +10,7 @@ import static io.github.cowwoc.cat.hooks.util.GitCommands.runGit;
 import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandSingleLineInDirectory;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import org.slf4j.Logger;
@@ -17,12 +18,14 @@ import org.slf4j.LoggerFactory;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -200,7 +203,7 @@ public final class GitSquash
    * appropriate JSON.
    *
    * @param rebaseResult the failed rebase result
-   * @return JSON string with REBASE_CONFLICT or ERROR status
+   * @return JSON string with REBASE_CONFLICT status, or a HookOutput block response on non-conflict failure
    * @throws IOException if git operations fail during error handling
    */
   private String handleRebaseFailure(ProcessRunner.Result rebaseResult) throws IOException
@@ -234,11 +237,7 @@ public final class GitSquash
       }
     }
     else
-    {
-      json.put("status", "ERROR");
-      json.put("backup_branch", rebaseBackup);
-      json.put("message", "Rebase failed: " + rebaseResult.stdout().strip());
-    }
+      return new HookOutput(scope).block("Rebase failed: " + rebaseResult.stdout().strip());
     return scope.getJsonMapper().writeValueAsString(json);
   }
 
@@ -333,18 +332,48 @@ public final class GitSquash
    * Main method for command-line execution.
    *
    * @param args command-line arguments: TARGET_BRANCH COMMIT_MESSAGE [WORKTREE_PATH]
-   * @throws IOException if the operation fails
    */
-  public static void main(String[] args) throws IOException
+  public static void main(String[] args)
   {
+    try (JvmScope scope = new MainJvmScope())
+    {
+      run(scope, args, System.out);
+    }
+    catch (RuntimeException | AssertionError e)
+    {
+      Logger log = LoggerFactory.getLogger(GitSquash.class);
+      log.error("Unexpected error", e);
+      try (MainJvmScope errorScope = new MainJvmScope())
+      {
+        System.out.println(new HookOutput(errorScope).block(
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+    }
+  }
+
+  /**
+   * Executes the git-squash logic with a caller-provided output stream.
+   * <p>
+   * Separated from {@link #main(String[])} to allow unit testing without JVM exit.
+   * IllegalArgumentException and IOException are converted to block responses on {@code out}.
+   *
+   * @param scope the JVM scope
+   * @param args  command-line arguments
+   * @param out   the output stream to write JSON to
+   * @throws NullPointerException if {@code scope}, {@code args}, or {@code out} are null
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out)
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+
+    HookOutput hookOutput = new HookOutput(scope);
     if (args.length < 2)
     {
-      System.err.println("""
-        {
-          "status": "error",
-          "message": "Usage: git-squash <TARGET_BRANCH> <COMMIT_MESSAGE> [WORKTREE_PATH]"
-        }""");
-      System.exit(1);
+      out.println(hookOutput.block(
+        "Usage: git-squash <TARGET_BRANCH> <COMMIT_MESSAGE> [WORKTREE_PATH]"));
+      return;
     }
 
     String targetBranch = args[0];
@@ -355,35 +384,15 @@ public final class GitSquash
     else
       directory = ".";
 
-    try (JvmScope scope = new MainJvmScope())
+    GitSquash cmd = new GitSquash(scope, directory);
+    try
     {
-      GitSquash cmd = new GitSquash(scope, directory);
-      try
-      {
-        String result = cmd.execute(targetBranch, commitMessage);
-        System.out.println(result);
-      }
-      catch (IllegalArgumentException e)
-      {
-        // Commit message validation failure - print plain text to stderr (matching bash behavior)
-        System.err.println(e.getMessage());
-        System.exit(1);
-      }
-      catch (IOException e)
-      {
-        System.err.println("""
-          {
-            "status": "error",
-            "message": "%s"
-          }""".formatted(e.getMessage().replace("\"", "\\\"")));
-        System.exit(1);
-      }
+      String result = cmd.execute(targetBranch, commitMessage);
+      out.println(result);
     }
-    catch (RuntimeException | AssertionError e)
+    catch (IllegalArgumentException | IOException e)
     {
-      Logger log = LoggerFactory.getLogger(GitSquash.class);
-      log.error("Unexpected error", e);
-      throw e;
+      out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 }

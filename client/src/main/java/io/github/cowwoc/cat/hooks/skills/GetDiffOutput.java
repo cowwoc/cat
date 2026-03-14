@@ -11,6 +11,7 @@ import com.github.difflib.text.DiffRowGenerator;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 
 import java.nio.file.Files;
@@ -20,20 +21,19 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.github.cowwoc.cat.hooks.Config;
+import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 /**
  * Output generator for render-diff skill.
  * <p>
@@ -2261,17 +2261,43 @@ public final class GetDiffOutput implements SkillOutput
   {
     try (JvmScope scope = new MainJvmScope())
     {
-      GetDiffOutput generator = new GetDiffOutput(scope);
+      run(scope, args, System.out);
+    }
+  }
+
+  /**
+   * Executes the diff-output logic with a caller-provided output stream.
+   * <p>
+   * Separated from {@link #main(String[])} to allow unit testing without JVM exit.
+   * IllegalArgumentException and IOException are converted to block responses on {@code out}.
+   *
+   * @param scope the JVM scope
+   * @param args  command-line arguments
+   * @param out   the output stream to write output to
+   * @throws NullPointerException if {@code scope}, {@code args}, or {@code out} are null
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out)
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+
+    HookOutput hookOutput = new HookOutput(scope);
+    GetDiffOutput generator = new GetDiffOutput(scope);
+    try
+    {
       String output = generator.getOutput(args);
       if (output != null)
-        System.out.print(output);
+        out.print(output);
     }
-    catch (IOException | RuntimeException | AssertionError e)
+    catch (IllegalArgumentException e)
     {
-      Logger log = LoggerFactory.getLogger(GetDiffOutput.class);
-      log.error("Unexpected error", e);
-      System.err.println("Error generating diff: " + e.getMessage());
-      System.exit(1);
+      out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+    }
+    catch (IOException e)
+    {
+      out.println(hookOutput.block(
+        "Error generating diff: " + Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 }

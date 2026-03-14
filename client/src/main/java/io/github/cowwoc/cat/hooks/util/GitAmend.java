@@ -6,16 +6,18 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
+import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tools.jackson.core.JacksonException;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandSingleLineInDirectory;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -56,12 +58,13 @@ public final class GitAmend
    *   <li>Check push status — fail-fast if already pushed</li>
    *   <li>Perform git commit --amend with appropriate flags</li>
    *   <li>Post-amend TOCTOU check: detect if OLD_HEAD was pushed during amend</li>
-   *   <li>Return JSON result (OK or RACE_DETECTED on success; ALREADY_PUSHED or ERROR on failure)</li>
+   *   <li>Return JSON result (OK or RACE_DETECTED on success; ALREADY_PUSHED on conflict; block decision on error)</li>
    * </ol>
    *
    * @param message the new commit message, or empty string to use --no-edit or keep existing message
    * @param noEdit  if true, amend without opening editor (--no-edit flag)
-   * @return JSON string with operation result (to stdout on success, stderr on failure)
+   * @return JSON string with operation result; domain status for OK/RACE_DETECTED/ALREADY_PUSHED,
+   *   or standard hook block decision on error
    * @throws NullPointerException if {@code message} is null
    * @throws IOException          if the operation fails
    */
@@ -83,7 +86,8 @@ public final class GitAmend
    * @param noEdit     if true, amend without opening editor (--no-edit flag)
    * @param afterAmend a hook that runs after the amend completes but before the TOCTOU check;
    *                   production callers pass a no-op
-   * @return JSON string with operation result (to stdout on success, stderr on failure)
+   * @return JSON string with operation result; domain status for OK/RACE_DETECTED/ALREADY_PUSHED,
+   *   or standard hook block decision on error
    * @throws NullPointerException if {@code message} or {@code afterAmend} are null
    * @throws IOException          if the operation fails
    */
@@ -91,6 +95,8 @@ public final class GitAmend
   {
     requireThat(message, "message").isNotNull();
     requireThat(afterAmend, "afterAmend").isNotNull();
+
+    HookOutput hookOutput = new HookOutput(scope);
 
     // Step 1: Record OLD_HEAD before amend
     String oldHead;
@@ -100,7 +106,7 @@ public final class GitAmend
     }
     catch (IOException e)
     {
-      return buildErrorJson(null, "Failed to resolve HEAD: " + e.getMessage());
+      return hookOutput.block("Failed to resolve HEAD: " + e.getMessage());
     }
 
     // Step 2: Check push status — if commit already pushed, fail-fast
@@ -146,7 +152,7 @@ public final class GitAmend
 
     ProcessRunner.Result amendResult = ProcessRunner.run(amendCmd.toArray(new String[0]));
     if (amendResult.exitCode() != 0)
-      return buildErrorJson(oldHead, "Amend failed: " + amendResult.stdout().strip());
+      return hookOutput.block("Amend failed: " + amendResult.stdout().strip());
 
     // Step 4: Record NEW_HEAD after amend
     String newHead = runGitCommandSingleLineInDirectory(directory, "rev-parse", "HEAD");
@@ -227,37 +233,51 @@ public final class GitAmend
   }
 
   /**
-   * Builds an ERROR JSON response.
-   *
-   * @param oldHead the commit hash before the error occurred, or null if HEAD could not be resolved
-   * @param message the error message
-   * @return JSON string with ERROR status
-   * @throws IOException if JSON serialization fails
-   */
-  private String buildErrorJson(String oldHead, String message) throws IOException
-  {
-    ObjectNode json = scope.getJsonMapper().createObjectNode();
-    json.put("status", "ERROR");
-    if (oldHead != null)
-      json.put("old_head", oldHead);
-    json.put("message", message);
-    return scope.getJsonMapper().writeValueAsString(json);
-  }
-
-  /**
    * Main method for command-line execution.
    * <p>
    * Usage: git-amend [--message "new message"] [--no-edit] [WORKTREE_PATH]
    * <p>
-   * Outputs JSON to stdout on success (OK, RACE_DETECTED).
-   * Outputs JSON to stderr on failure (ERROR, ALREADY_PUSHED).
-   * Exit code 0 for success/race, 1 for errors.
+   * Outputs JSON to stdout on all outcomes (OK, RACE_DETECTED, ALREADY_PUSHED, block decision on error).
+   * Always exits with code 0 so Claude Code parses stdout as JSON.
    *
    * @param args command-line arguments
-   * @throws IOException if the operation fails
    */
-  public static void main(String[] args) throws IOException
+  public static void main(String[] args)
   {
+    try (JvmScope scope = new MainJvmScope())
+    {
+      run(scope, args, System.out);
+    }
+    catch (RuntimeException | AssertionError e)
+    {
+      Logger log = LoggerFactory.getLogger(GitAmend.class);
+      log.error("Unexpected error", e);
+      try (MainJvmScope errorScope = new MainJvmScope())
+      {
+        System.out.println(new HookOutput(errorScope).block(
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+    }
+  }
+
+  /**
+   * Executes the git-amend logic with a caller-provided output stream.
+   * <p>
+   * Separated from {@link #main(String[])} to allow unit testing without JVM exit.
+   * IOException is converted to a block response on {@code out}.
+   *
+   * @param scope the JVM scope
+   * @param args  command-line arguments
+   * @param out   the output stream to write JSON to
+   * @throws NullPointerException if {@code scope}, {@code args}, or {@code out} are null
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out)
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+
+    HookOutput hookOutput = new HookOutput(scope);
     String amendMessage = "";
     boolean noEdit = false;
     String worktreePath = ".";
@@ -272,12 +292,8 @@ public final class GitAmend
         {
           if (index + 1 >= args.length)
           {
-            System.err.println("""
-              {
-                "status": "ERROR",
-                "message": "--message requires an argument"
-              }""");
-            System.exit(1);
+            out.println(hookOutput.block("--message requires an argument"));
+            return;
           }
           amendMessage = args[index + 1];
           index += 2;
@@ -295,53 +311,15 @@ public final class GitAmend
       }
     }
 
-    final String finalWorktreePath = worktreePath;
-    final String finalAmendMessage = amendMessage;
-    final boolean finalNoEdit = noEdit;
-
-    try (JvmScope scope = new MainJvmScope())
+    GitAmend cmd = new GitAmend(scope, worktreePath);
+    try
     {
-      GitAmend cmd = new GitAmend(scope, finalWorktreePath);
-      try
-      {
-        String result = cmd.execute(finalAmendMessage, finalNoEdit);
-        // Determine output stream based on status field
-        String status;
-        try
-        {
-          ObjectNode resultJson = (ObjectNode) scope.getJsonMapper().readTree(result);
-          status = resultJson.get("status").asString();
-        }
-        catch (JacksonException _)
-        {
-          // If JSON parsing fails, treat as error
-          status = "ERROR";
-        }
-        if (status.equals("ALREADY_PUSHED") || status.equals("ERROR"))
-        {
-          System.err.println(result);
-          System.exit(1);
-        }
-        else
-        {
-          System.out.println(result);
-        }
-      }
-      catch (IOException e)
-      {
-        System.err.println("""
-          {
-            "status": "ERROR",
-            "message": "%s"
-          }""".formatted(e.getMessage().replace("\"", "\\\"")));
-        System.exit(1);
-      }
+      String result = cmd.execute(amendMessage, noEdit);
+      out.println(result);
     }
-    catch (RuntimeException | AssertionError e)
+    catch (IOException e)
     {
-      Logger log = LoggerFactory.getLogger(GitAmend.class);
-      log.error("Unexpected error", e);
-      throw e;
+      out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 }

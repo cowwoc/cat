@@ -10,10 +10,15 @@ import static io.github.cowwoc.cat.hooks.util.GitCommands.runGit;
 import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandSingleLine;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.jackson.databind.node.ObjectNode;
+
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,10 +26,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.Set;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 /**
  * Atomic write and commit operation.
  * <p>
@@ -174,18 +177,48 @@ public final class WriteAndCommit
    * Main method for command-line execution.
    *
    * @param args command-line arguments
-   * @throws IOException if the operation fails
    */
-  public static void main(String[] args) throws IOException
+  public static void main(String[] args)
   {
+    try (JvmScope scope = new MainJvmScope())
+    {
+      run(scope, args, System.out);
+    }
+    catch (RuntimeException | AssertionError e)
+    {
+      Logger log = LoggerFactory.getLogger(WriteAndCommit.class);
+      log.error("Unexpected error", e);
+      try (MainJvmScope errorScope = new MainJvmScope())
+      {
+        System.out.println(new HookOutput(errorScope).block(
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+    }
+  }
+
+  /**
+   * Executes the write-and-commit logic with a caller-provided output stream.
+   * <p>
+   * Separated from {@link #main(String[])} to allow unit testing without JVM exit.
+   * IllegalArgumentException and IOException are converted to block responses on {@code out}.
+   *
+   * @param scope the JVM scope
+   * @param args  command-line arguments
+   * @param out   the output stream to write output to
+   * @throws NullPointerException if {@code scope}, {@code args}, or {@code out} are null
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out)
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+
+    HookOutput hookOutput = new HookOutput(scope);
     if (args.length < 3 || args.length > 4)
     {
-      System.err.println("""
-        {
-          "status": "error",
-          "message": "Usage: write-and-commit <file-path> <content-file> <commit-msg-file> [--executable]"
-        }""");
-      System.exit(1);
+      out.println(hookOutput.block(
+        "Usage: write-and-commit <file-path> <content-file> <commit-msg-file> [--executable]"));
+      return;
     }
 
     String filePath = args[0];
@@ -193,29 +226,15 @@ public final class WriteAndCommit
     String commitMsgFile = args[2];
     boolean executable = args.length == 4 && args[3].equals("--executable");
 
-    try (JvmScope scope = new MainJvmScope())
+    WriteAndCommit cmd = new WriteAndCommit(scope);
+    try
     {
-      WriteAndCommit cmd = new WriteAndCommit(scope);
-      try
-      {
-        String result = cmd.execute(filePath, contentFile, commitMsgFile, executable);
-        System.out.println(result);
-      }
-      catch (IOException e)
-      {
-        System.err.println("""
-          {
-            "status": "error",
-            "message": "%s"
-          }""".formatted(e.getMessage().replace("\"", "\\\"")));
-        System.exit(1);
-      }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(WriteAndCommit.class);
-      log.error("Unexpected error", e);
-      throw e;
+      String result = cmd.execute(filePath, contentFile, commitMsgFile, executable);
+      out.println(result);
     }
+    catch (IOException e)
+    {
+      out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 }
