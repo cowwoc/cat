@@ -219,7 +219,7 @@ below). The last wave for STATE.md ownership is `### Wave ${WAVES_COUNT}` (the h
 
 ### Mid-Work PLAN.md Revision
 
-If requirements change, read `EFFORT` from `${CLAUDE_PROJECT_DIR}/.cat/cat-config.json`, then invoke:
+If requirements change, read `EFFORT` from `${CLAUDE_PROJECT_DIR}/.cat/config.json`, then invoke:
 `Skill("cat:plan-builder-agent", "${CAT_AGENT_ID} ${EFFORT} revise ${ISSUE_PATH} <description of what changed>")`
 
 After revision, re-read the updated PLAN.md and adjust remaining execution accordingly.

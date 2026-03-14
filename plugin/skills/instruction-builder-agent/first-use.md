@@ -181,7 +181,7 @@ Commit the file with message `benchmark: write skill draft [session: ${CLAUDE_SE
 commit SHA as `SKILL_DRAFT_SHA`. The skill text is now on disk and committed, so subagents can read it via
 `git show <SHA>:<SKILL_TEXT_PATH>` or `cat <SKILL_TEXT_PATH>`.
 
-**Effort gate:** Read `effort` from `${CLAUDE_PROJECT_DIR}/.cat/cat-config.json`. If `effort = low`, skip
+**Effort gate:** Read `effort` from `${CLAUDE_PROJECT_DIR}/.cat/config.json`. If `effort = low`, skip
 the benchmark evaluation loop (Steps 3aâ€“3g), adversarial hardening (Step 4), and compression phase (Step 6)
 entirely. Proceed directly to ## Output Format with a single-run sanity check: spawn one benchmark-run
 subagent with the skill active on a simple test scenario, verify it produces non-empty output, and report
@@ -536,7 +536,7 @@ not the best, then stop and report "Benchmark iteration cap reached (5 rounds) â
 After the benchmark phase converges, harden the instructions using alternating red-team and blue-team
 subagents. Run until convergence (no CRITICAL/HIGH loopholes remain).
 
-**Effort gate:** Read `effort` from `${CLAUDE_PROJECT_DIR}/.cat/cat-config.json`. If `effort = low`, skip
+**Effort gate:** Read `effort` from `${CLAUDE_PROJECT_DIR}/.cat/config.json`. If `effort = low`, skip
 adversarial hardening entirely and proceed to Step 5.
 
 **Protocol:** Follow [plugin/concepts/adversarial-protocol.md](${CLAUDE_PLUGIN_ROOT}/concepts/adversarial-protocol.md)
@@ -655,7 +655,7 @@ After all skill files are processed (or user types `abort`), display a batch sum
 
 ### Step 6: Compression Phase
 
-**Effort gate:** Read `effort` from `${CLAUDE_PROJECT_DIR}/.cat/cat-config.json`. If `effort = low`, skip
+**Effort gate:** Read `effort` from `${CLAUDE_PROJECT_DIR}/.cat/config.json`. If `effort = low`, skip
 this entire step. The compression phase runs only when `effort = medium` or `high`.
 
 After hardening achieves compliance (Step 4 converges and SPRT re-benchmark accepts), compress the skill

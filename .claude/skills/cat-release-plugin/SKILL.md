@@ -253,7 +253,7 @@ source "${CLAUDE_PLUGIN_ROOT}/migrations/lib/utils.sh"
 
 # Add migration logic here if needed
 # Example: Rename a config field
-# jq '.newField = .oldField | del(.oldField)' .cat/cat-config.json > tmp && mv tmp .cat/cat-config.json
+# jq '.newField = .oldField | del(.oldField)' .cat/config.json > tmp && mv tmp .cat/config.json
 
 log_success "Migration to ${NEXT_VERSION} completed (no structural changes)"
 MIGRATION_EOF

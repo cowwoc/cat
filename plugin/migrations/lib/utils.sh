@@ -198,7 +198,7 @@ log_success() {
 is_cat_initialized() {
     local cat_dir
     cat_dir=$(resolve_cat_dir)
-    [[ -f "${cat_dir}/cat-config.json" ]]
+    [[ -f "${cat_dir}/config.json" ]]
 }
 
 # Get list of migrations to run between two versions

@@ -127,7 +127,7 @@ rm -rf "$WORK_DIR"
 
 **Reading shared state:**
 - ✅ Main workspace and shared plugin cache are read-only from worktrees
-- ✅ Multiple instances can read the same `.cat/cat-config.json`
+- ✅ Multiple instances can read the same `.cat/config.json`
 - ❌ Do NOT write shared configuration from a worktree (configuration belongs in main workspace only)
 
 ### Why This Matters
@@ -229,15 +229,15 @@ if (!SESSION_ID_PATTERN.matcher(value).matches()) {
 
 ## Configuration Reads in Worktrees
 
-**MANDATORY:** Agents must read `cat-config.json` from disk **BEFORE** using behavioral configuration values (trust
+**MANDATORY:** Agents must read `config.json` from disk **BEFORE** using behavioral configuration values (trust
 level, verify level, effort, patience). Branch names and issue paths come from the preparation phase parameters, not
-from `cat-config.json`.
+from `config.json`.
 
 **Sources of truth:**
 
 | Value | Source |
 |-------|--------|
-| `trust`, `verify`, `effort` | `.cat/cat-config.json` field values |
+| `trust`, `verify`, `effort` | `.cat/config.json` field values |
 | `target_branch`, `issue_id` | Parameters from `work-prepare` phase output |
 | Current branch | `git branch --show-current` |
 | Worktree path | Parameters from `work-prepare` phase output |
@@ -256,7 +256,7 @@ fi
 TRUST=$(echo "$CONFIG" | grep -o '"trust"[[:space:]]*:[[:space:]]*"[^"]*"' \
   | sed 's/.*"trust"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 
-# 2. Use target_branch from parameter (not from cat-config.json)
+# 2. Use target_branch from parameter (not from config.json)
 if [[ -z "${TARGET_BRANCH:-}" ]]; then
   echo "ERROR: target_branch parameter is missing" >&2
   exit 1
@@ -267,10 +267,10 @@ git rebase "$TARGET_BRANCH"
 **Pattern (WRONG):**
 ```bash
 # WRONG: jq is not available in the plugin runtime environment
-TRUST=$(jq -r '.trust' .cat/cat-config.json)
+TRUST=$(jq -r '.trust' .cat/config.json)
 
-# WRONG: Manually parsing cat-config.json (fragile, no defaults for missing entries)
-TRUST=$(grep -o '"trust"[[:space:]]*:[[:space:]]*"[^"]*"' .cat/cat-config.json \
+# WRONG: Manually parsing config.json (fragile, no defaults for missing entries)
+TRUST=$(grep -o '"trust"[[:space:]]*:[[:space:]]*"[^"]*"' .cat/config.json \
   | sed 's/.*"trust"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 
 # WRONG: Hardcoded value not from any authoritative source

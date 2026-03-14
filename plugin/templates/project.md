@@ -65,4 +65,4 @@ After:  feature: add login with validation
 
 ## Related Documentation
 - [ROADMAP.md](ROADMAP.md) - Version roadmap
-- [cat-config.json](cat-config.json) - CAT configuration
+- [config.json](config.json) - CAT configuration

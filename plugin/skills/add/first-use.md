@@ -118,19 +118,19 @@ Capture as ISSUE_DESCRIPTION, then continue to step: issue_read_config.
 
 **Read and validate configuration:**
 
-Read the `effort` value from cat-config.json and store it for all downstream steps:
+Read the `effort` value from config.json and store it for all downstream steps:
 
 ```bash
-CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.cat/cat-config.json"
+CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.cat/config.json"
 if [[ ! -f "$CONFIG_FILE" ]]; then
-    echo "ERROR: cat-config.json not found: $CONFIG_FILE" >&2
+    echo "ERROR: config.json not found: $CONFIG_FILE" >&2
     echo "Solution: Run /cat:init to initialize the project." >&2
     exit 1
 fi
 EFFORT=$(grep '"effort"' "$CONFIG_FILE" | sed 's/.*"effort"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 if [[ -z "$EFFORT" ]]; then
     echo "ERROR: 'effort' key not found in $CONFIG_FILE." >&2
-    echo "Add: \"effort\": \"low|medium|high\" to cat-config.json" >&2
+    echo "Add: \"effort\": \"low|medium|high\" to config.json" >&2
     exit 1
 fi
 if [[ "$EFFORT" != "low" && "$EFFORT" != "medium" && "$EFFORT" != "high" ]]; then

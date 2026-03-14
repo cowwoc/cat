@@ -53,10 +53,10 @@ session becomes corrupted (all commands fail with exit code 1).
 
 ## Configuration
 
-Read configuration from `${CLAUDE_PROJECT_DIR}/.cat/cat-config.json` before invoking work-with-issue:
+Read configuration from `${CLAUDE_PROJECT_DIR}/.cat/config.json` before invoking work-with-issue:
 
 ```bash
-cat "${CLAUDE_PROJECT_DIR}/.cat/cat-config.json"
+cat "${CLAUDE_PROJECT_DIR}/.cat/config.json"
 ```
 
 Extract these values:
@@ -352,7 +352,7 @@ Output the skill result verbatim.
 - If result contains "Scope Complete" → no next issue
 
 **Route based on trust level** (use the `TRUST` value read during the Configuration step above; do NOT
-re-read `cat-config.json`):
+re-read `config.json`):
 
 | Condition | Action |
 |-----------|--------|

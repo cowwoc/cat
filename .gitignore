@@ -7,7 +7,7 @@ plugin/node_modules/
 *.log
 
 # User-specific configuration, kept local and not committed
-cat-config.local.json
+config.local.json
 
 # Local directories not tracked in git
 demo-recording/

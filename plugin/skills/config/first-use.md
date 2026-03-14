@@ -21,7 +21,7 @@ users through modifying their preferences.
 **Read current configuration:**
 
 ```bash
-cat .cat/cat-config.json
+cat .cat/config.json
 ```
 
 If file doesn't exist, inform user to run `/cat:init` first.
@@ -248,7 +248,7 @@ Validate input is a number between 40-200. If invalid, show error and re-prompt.
 
 **Update config using the Write tool:**
 
-1. Read the current `.cat/cat-config.json` content using the Read tool.
+1. Read the current `.cat/config.json` content using the Read tool.
 2. Merge the new `fileWidth` or `displayWidth` integer value into the existing config object (update or add the key).
 3. Write the complete updated JSON back using the Write tool.
 
@@ -294,7 +294,7 @@ Map: Merge → `completionWorkflow: "merge"`, Pull Request → `completionWorkfl
 
 **Update config using the Write tool:**
 
-1. Read the current `.cat/cat-config.json` content using the Read tool.
+1. Read the current `.cat/config.json` content using the Read tool.
 2. Merge the new `completionWorkflow` string value into the existing config object (update or add the key).
 3. Write the complete updated JSON back using the Write tool.
 
@@ -341,7 +341,7 @@ Map selections:
 
 **Update config using the Write tool:**
 
-1. Read the current `.cat/cat-config.json` content using the Read tool.
+1. Read the current `.cat/config.json` content using the Read tool.
 2. Merge the new `minSeverity` string value into the existing config object (update or add the key).
 3. Write the complete updated JSON back using the Write tool.
 
@@ -487,7 +487,7 @@ Return to Step 3 (Choose action) to allow further edits or navigation.
 
 **Update configuration file:**
 
-Use the Read tool to read `.cat/cat-config.json`, modify the target setting value, then use the Write tool to
+Use the Read tool to read `.cat/config.json`, modify the target setting value, then use the Write tool to
 write the updated JSON back to the same path.
 
 </step>
@@ -575,7 +575,7 @@ INVOKE: Skill("cat:get-output-agent", args="config.no-changes")
 
 - [ ] Current configuration displayed
 - [ ] User navigated wizard successfully
-- [ ] Settings updated in cat-config.json using Write tool
+- [ ] Settings updated in config.json using Write tool
 - [ ] Version conditions viewable and editable via wizard
 - [ ] Gate changes saved to version PLAN.md files
 - [ ] Changes confirmed with before/after values

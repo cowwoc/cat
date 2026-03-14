@@ -35,7 +35,7 @@ grep -l '!\`' plugin/skills/*/SKILL.md
 find plugin/hooks -name "*.py" -exec grep -l "similar_pattern" {} \;
 
 # Config files with same structure
-find . -name "cat-config.json"
+find . -name "config.json"
 ```
 
 ### 3. Check Each Related File

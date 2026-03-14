@@ -181,7 +181,7 @@ git commit -m "refactor: clean up [feature]
 
 ## STEP 3.5: ADVERSARIAL TEST HARDENING
 
-**Effort gate:** Read `effort` from `${CLAUDE_PROJECT_DIR}/.cat/cat-config.json`. If `effort = low`, skip
+**Effort gate:** Read `effort` from `${CLAUDE_PROJECT_DIR}/.cat/config.json`. If `effort = low`, skip
 STEP 3.5 entirely and proceed to STEP 4.
 
 ### Capture Baseline Test Results

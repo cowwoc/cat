@@ -62,7 +62,7 @@ concern raised → minSeverity filter → patience fix/defer decision
 - **DEFER** — The concern should be tracked for a future version. DEFER concerns are created as follow-up issues
   instead of being fixed inline.
 
-Configure `patience` in `.cat/cat-config.json`:
+Configure `patience` in `.cat/config.json`:
 
 ```json
 {

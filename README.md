@@ -250,7 +250,7 @@ When trust >= medium, CAT auto-continues to the next task within scope.
 
 ## Configuration
 
-Your CAT settings live in `.cat/cat-config.json`:
+Your CAT settings live in `.cat/config.json`:
 
 ```json
 {
@@ -350,7 +350,7 @@ your-project/
 └── .cat/
     ├── PROJECT.md          # Project overview
     ├── ROADMAP.md          # The big picture
-    ├── cat-config.json     # Your preferences
+    ├── config.json         # Your preferences
     └── v1/                 # Major version 1
         ├── STATE.md        # Chapter progress
         ├── PLAN.md         # Chapter objectives

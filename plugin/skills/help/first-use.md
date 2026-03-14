@@ -73,7 +73,7 @@ CAT supports flexible version schemes:
 .cat/
 +-- PROJECT.md              # Project overview
 +-- ROADMAP.md              # Version summaries
-+-- cat-config.json         # Configuration
++-- config.json             # Configuration
 +-- v{major}/
     +-- STATE.md            # Major version state
     +-- PLAN.md             # Business-level plan
@@ -95,7 +95,7 @@ Issue changelog content is embedded in commit messages.
 <summary>/cat:init Details</summary>
 
 Initialize CAT planning structure (new or existing project).
-- Creates PROJECT.md, ROADMAP.md, cat-config.json
+- Creates PROJECT.md, ROADMAP.md, config.json
 - Asks for trust level (how much autonomy your partner has)
 - For new projects: Deep questioning to gather project context
 - For existing codebases: Detects patterns and infers current state
@@ -153,7 +153,7 @@ Initialize CAT planning structure (new or existing project).
 
 ## Workflow Modes
 
-Set during `/cat:init` in cat-config.json:
+Set during `/cat:init` in config.json:
 
 **Trust Levels**
 
@@ -161,7 +161,7 @@ Set during `/cat:init` in cat-config.json:
 - **Medium** (default) - Trust routine calls, review key decisions
 - **High** - Full autonomy, auto-merges on issue completion
 
-Change anytime with `/cat:config` or edit `.cat/cat-config.json`
+Change anytime with `/cat:config` or edit `.cat/config.json`
 
 ---
 
@@ -192,7 +192,7 @@ Change anytime with `/cat:config` or edit `.cat/cat-config.json`
 
 ## Configuration Options
 
-cat-config.json:
+config.json:
 ```json
 {
   "trust": "medium",            // low | medium | high (autonomy level)

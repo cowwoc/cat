@@ -7,7 +7,7 @@ subAgents: []
 
 **Response pattern**: "I'll create a task for this so it's tracked properly."
 
-**Trust-level behavior** (read from .cat/cat-config.json):
+**Trust-level behavior** (read from .cat/config.json):
 - **low**: Always ask before any work
 - **medium**: Propose task for non-trivial work; ask permission for trivial fixes
 - **high**: Create task automatically, proceed to /cat:work

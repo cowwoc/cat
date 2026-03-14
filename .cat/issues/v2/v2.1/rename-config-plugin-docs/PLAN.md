@@ -39,6 +39,14 @@ Update all plugin skill files, concepts, rules, templates, gitignore files, and 
 - `docs/severity.md` - Update config filename references
 - `docs/patience.md` - Update config filename references
 
+## Sub-Agent Waves
+
+### Wave 1 — Fix remaining live references
+
+- Update `plugin/migrations/lib/utils.sh` `is_cat_initialized()` function (line 201): replace
+  `[[ -f "${cat_dir}/cat-config.json" ]]` with `[[ -f "${cat_dir}/config.json" ]]` so the live utility function
+  checks for the renamed config file rather than the old filename.
+
 ## Pre-conditions
 - [ ] Parent issue 2.1-rename-cat-config-files is open
 

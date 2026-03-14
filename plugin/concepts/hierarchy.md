@@ -13,7 +13,7 @@ See LICENSE.md in the project root for license terms.
 .cat/
 ├── PROJECT.md
 ├── ROADMAP.md
-├── cat-config.json
+├── config.json
 └── v<n>/
     ├── STATE.md
     ├── PLAN.md
