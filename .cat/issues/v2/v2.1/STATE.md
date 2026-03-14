@@ -103,6 +103,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-work-prepare-lock-leak
 - add-double-star-glob-support
 - fix-lock-worktree-path-at-acquire
+- upgrade-recover-from-drift-model
 
 
 ## Issues Closed
