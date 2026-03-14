@@ -145,7 +145,7 @@ will eventually be addressed. Ignored concerns are permanently dropped.
 | `high` | CRITICAL, HIGH | MEDIUM, LOW | MVPs, internal tools, time-boxed sprints. Ignores MEDIUM improvements (cyclomatic complexity, missing edge case tests) to focus on significant issues. Acceptable when shipping speed outweighs polish. |
 | `critical` | CRITICAL | HIGH, MEDIUM, LOW | Quick prototypes, throwaway spikes, proof-of-concept work. Only blocks on release-blocking issues (data loss, security breach, system crash). Not suitable for any code deployed to users. |
 
-Configure `minSeverity` in `.cat/cat-config.json`:
+Configure `minSeverity` in `.cat/config.json`:
 
 ```json
 {

@@ -9,10 +9,13 @@ Project-type aware verification before review.
 
 ## Verify Configuration (MANDATORY)
 
-**CRITICAL: Check `.cat/cat-config.json` "verify" setting BEFORE proposing merge.**
+**CRITICAL: Check `.cat/config.json` "verify" setting BEFORE proposing merge.**
 
 ```bash
-VERIFY_SETTING=$(jq -r '.verify // "all"' .cat/cat-config.json 2>/dev/null || echo "all")
+CONFIG=$("${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output" effective)
+VERIFY_SETTING=$(echo "$CONFIG" | grep -o '"verify"[[:space:]]*:[[:space:]]*"[^"]*"' \
+  | sed 's/.*"verify"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+VERIFY_SETTING="${VERIFY_SETTING:-all}"
 ```
 
 | Setting | Behavior |

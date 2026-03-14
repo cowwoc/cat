@@ -148,7 +148,7 @@ Temporary mutations that rely on cleanup code are unsafe because:
 
 ```bash
 [ ! -d .cat ] && echo '{"status":"ERROR","message":"No .cat/ directory"}' && exit 1
-[ ! -f .cat/cat-config.json ] && echo '{"status":"ERROR","message":"No cat-config.json"}' && exit 1
+[ ! -f .cat/config.json ] && echo '{"status":"ERROR","message":"No config.json"}' && exit 1
 ```
 
 **Detect existing session lock before acquiring a new one.** Acquiring a second lock in the same session

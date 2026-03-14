@@ -59,14 +59,14 @@ This returns JSON with all defaults applied (missing entries filled in automatic
 ```
 
 **Fail-fast rule:** If the tool exits with a non-zero status, abort immediately with the error output. The tool itself
-validates that `cat-config.json` exists and contains valid JSON.
+validates that `config.json` exists and contains valid JSON.
 
 **Note:** The target branch (`target_branch`) and issue ID are passed as explicit parameters to skill invocations,
-not stored in `cat-config.json`. Do not attempt to read target branch names from this file.
+not stored in `config.json`. Do not attempt to read target branch names from this file.
 
 ### Step 3: Verify Base Branch Before Merge Operations
 
-The `target_branch` is provided as a parameter when invoking merge skills. It is **not** stored in `cat-config.json`.
+The `target_branch` is provided as a parameter when invoking merge skills. It is **not** stored in `config.json`.
 
 Before any merge or rebase operation:
 
@@ -175,10 +175,10 @@ TARGET_BRANCH="main"  # Assumption, not from parameters
 git rebase "$TARGET_BRANCH"
 
 # WRONG: Using jq (not available in the plugin runtime environment)
-TRUST=$(jq -r '.trust' .cat/cat-config.json)
+TRUST=$(jq -r '.trust' .cat/config.json)
 
-# WRONG: Manually parsing cat-config.json with grep/sed (fragile, no defaults)
-TRUST=$(grep -o '"trust"[[:space:]]*:[[:space:]]*"[^"]*"' .cat/cat-config.json \
+# WRONG: Manually parsing config.json with grep/sed (fragile, no defaults)
+TRUST=$(grep -o '"trust"[[:space:]]*:[[:space:]]*"[^"]*"' .cat/config.json \
   | sed 's/.*"trust"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 
 # WRONG: Skipping config read and using a stale in-memory value
@@ -194,14 +194,14 @@ When a worktree is created, the following context is established:
 | `WORKTREE_PATH` | `/cat:work` preparation output | `/workspace/.cat/work/worktrees/2.1-issue` | Directory to `cd` into |
 | `ISSUE_ID` | `/cat:work` preparation output | `2.1-issue-name` | Identifying the issue |
 | `TARGET_BRANCH` | `/cat:work` preparation output | `v2.1` | Merge target |
-| `TRUST` | `cat-config.json` field `"trust"` | `medium` | Approval gate behavior |
-| `VERIFY` | `cat-config.json` field `"verify"` | `all` | Review level |
+| `TRUST` | `config.json` field `"trust"` | `medium` | Approval gate behavior |
+| `VERIFY` | `config.json` field `"verify"` | `all` | Review level |
 
 **Do not assume any of these values.** Always read them from authoritative sources:
 - Directory path: from preparation phase output passed as parameter
 - Branch name: `git branch --show-current` (for verification) or from preparation phase output (for operations)
 - Behavioral config: use `get-config-output effective` tool (returns JSON with defaults applied)
-- Target branch: from preparation phase `target_branch` parameter (not from cat-config.json)
+- Target branch: from preparation phase `target_branch` parameter (not from config.json)
 
 ## Abort Semantics
 

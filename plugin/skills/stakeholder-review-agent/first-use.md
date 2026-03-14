@@ -438,7 +438,7 @@ if [[ -f "${CLAUDE_PLUGIN_ROOT}/lang/${PRIMARY_LANG}.md" ]]; then
     LANG_SUPPLEMENT_PATH="${CLAUDE_PLUGIN_ROOT}/lang/${PRIMARY_LANG}.md"
 fi
 
-CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.cat/cat-config.json"
+CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.cat/config.json"
 EFFORT="medium"  # default
 if [[ -f "$CONFIG_FILE" ]]; then
     EFFORT=$(grep '"effort"' "$CONFIG_FILE" | sed 's/.*"effort"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
@@ -728,7 +728,7 @@ Trust subagents: do not validate evidence fields. Accept reviewer results at fac
 
 **Aggregate and evaluate severity:**
 
-Read `minSeverity` from `.cat/cat-config.json` (default: `"low"`). Filter out any concerns with severity
+Read `minSeverity` from `.cat/config.json` (default: `"low"`). Filter out any concerns with severity
 below `minSeverity` before counting. Filtered concerns are silently dropped — they are never shown to the user,
 never tracked, and never fixed.
 
@@ -737,7 +737,7 @@ Severity ordering (highest to lowest): CRITICAL > HIGH > MEDIUM > LOW.
 Count concerns across all stakeholders after filtering:
 
 ```bash
-MIN_SEVERITY=$(read "minSeverity" from cat-config.json, default "low")
+MIN_SEVERITY=$(read "minSeverity" from config.json, default "low")
 CRITICAL_COUNT=0
 HIGH_COUNT=0
 MEDIUM_COUNT=0
@@ -899,7 +899,7 @@ Review triggering depends on verify level (NOT trust level):
 | `all` | Run stakeholder reviews |
 
 ```bash
-config_file=".cat/cat-config.json"
+config_file=".cat/config.json"
 if [[ -f "$config_file" ]]; then
   VERIFY_LEVEL=$(grep -o '"verify"[[:space:]]*:[[:space:]]*"[^"]*"' "$config_file" | \
     sed 's/.*:[[:space:]]*"\([^"]*\)"/\1/')

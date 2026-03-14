@@ -223,7 +223,7 @@ IMPACT_SEVERITY=$(echo "${IMPACT_JSON}" | grep -o '"severity"[[:space:]]*:[[:spa
 Read `EFFORT` from config and read the full analysis file before invoking the plan builder:
 
 ```bash
-CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.cat/cat-config.json"
+CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.cat/config.json"
 EFFORT=$(grep '"effort"' "$CONFIG_FILE" | sed 's/.*"effort"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 if [[ -z "$EFFORT" ]]; then
   echo "ERROR: 'effort' key not found in $CONFIG_FILE" >&2

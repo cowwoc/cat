@@ -8,13 +8,13 @@ See LICENSE.md in the project root for license terms.
 Initialize CAT planning structure for new or existing projects.
 
 <objective>
-Initialize CAT planning structure. Creates `.cat/` with PROJECT.md, ROADMAP.md, cat-config.json,
+Initialize CAT planning structure. Creates `.cat/` with PROJECT.md, ROADMAP.md, config.json,
 `.claude/rules/` for universal rules, and `.cat/rules/` for audience-filtered standards.
 
 **Reference files** — read on demand as needed:
 - See `${CLAUDE_PLUGIN_ROOT}/templates/project.md` for the PROJECT.md template.
 - See `${CLAUDE_PLUGIN_ROOT}/templates/roadmap.md` for the ROADMAP.md template.
-- See `${CLAUDE_PLUGIN_ROOT}/templates/config.json` for the cat-config.json template.
+- See `${CLAUDE_PLUGIN_ROOT}/templates/config.json` for the config.json template.
 </objective>
 
 
@@ -543,7 +543,7 @@ Get plugin version for config:
 CAT_VERSION=$(grep -o '"version"[[:space:]]*:[[:space:]]*"[^"]*"' "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json" | head -1 | sed 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 ```
 
-Create `.cat/cat-config.json`:
+Create `.cat/config.json`:
 ```json
 {
   "last_migrated_version": "[CAT_VERSION from above]",
@@ -846,7 +846,7 @@ Replace `{trust}`, `{effort}`, `{patience}` with actual preference values.
 
 **New projects:**
 ```
-Initialized: PROJECT.md, ROADMAP.md, cat-config.json, rules/, conventions/
+Initialized: PROJECT.md, ROADMAP.md, config.json, rules/, conventions/
 Next: /clear -> /cat:add-major-version
 ```
 
@@ -956,7 +956,7 @@ INVOKE: Skill("cat:get-output-agent", args="init.explore-at-your-own-pace")
 | .cat/rules/ directory | ✓ | ✓ |
 | Issue dirs with PLAN/STATE | - | ✓ (full content) |
 | Entry/exit gates configured | - | ✓ (or skipped) |
-| cat-config.json | ✓ | ✓ |
+| config.json | ✓ | ✓ |
 | Git committed | ✓ | ✓ |
 | First issue guide offered | ✓ | ✓ |
 

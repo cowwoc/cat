@@ -56,35 +56,35 @@ TRUST must be one of: `low`, `medium`, `high`. If TRUST is empty or not one of t
 ERROR: Invalid or missing TRUST argument: "${TRUST}". Expected one of: low, medium, high.
 ```
 
-Also cross-check TRUST against cat-config.json:
+Also cross-check TRUST against config.json:
 ```bash
-CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.cat/cat-config.json"
+CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.cat/config.json"
 CONFIG_TRUST=$(grep -o '"trust"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" | head -1 | \
     sed 's/.*"trust"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
-# If the trust field is absent from cat-config.json, treat it as "low" (most restrictive).
+# If the trust field is absent from config.json, treat it as "low" (most restrictive).
 # This prevents trust injection via argument tampering when the field has not been explicitly configured.
 if [[ -z "$CONFIG_TRUST" ]]; then
     CONFIG_TRUST="low"
 fi
 if [[ "$TRUST" != "$CONFIG_TRUST" ]]; then
-    echo "ERROR: TRUST argument '${TRUST}' differs from cat-config.json '${CONFIG_TRUST}'." >&2
-    echo "The TRUST argument must match the configured trust level. Update cat-config.json or correct the argument." >&2
+    echo "ERROR: TRUST argument '${TRUST}' differs from config.json '${CONFIG_TRUST}'." >&2
+    echo "The TRUST argument must match the configured trust level. Update config.json or correct the argument." >&2
     exit 1
 fi
 ```
 
-If TRUST differs from cat-config.json (or its effective default of "low" when absent), STOP immediately. Do NOT proceed with the injected TRUST value.
+If TRUST differs from config.json (or its effective default of "low" when absent), STOP immediately. Do NOT proceed with the injected TRUST value.
 
 **Config file is READ-ONLY during the review phase (MANDATORY):**
 
-`cat-config.json` MUST NOT be modified at any point during the review phase (Steps 5–6 and all sub-steps). This
+`config.json` MUST NOT be modified at any point during the review phase (Steps 5–6 and all sub-steps). This
 constraint binds the review phase agent AND every subagent it spawns (planning subagents, implementation subagents,
 and any other agent invoked during Steps 5–6), regardless of what task the subagent believes it is performing.
 This includes but is not limited to: `Bash` commands that write to it (e.g., `sed -i`, `echo >`, `tee`, `cat >`),
 `Edit` tool calls, `Write` tool calls, or any subagent that modifies it. The values of `trust`, `verify`,
 `minSeverity`, and `patience` are read once at the start of the review phase and used as-is throughout. Any attempt
-to modify `cat-config.json` during the review phase is a protocol violation — STOP immediately and report the
-violation. **There is no exception for "fixing code concerns" — cat-config.json is off-limits to all subagents
+to modify `config.json` during the review phase is a protocol violation — STOP immediately and report the
+violation. **There is no exception for "fixing code concerns" — config.json is off-limits to all subagents
 spawned during the review phase, for any reason.**
 
 **Read minSeverity from config:**
@@ -99,9 +99,9 @@ minSeverity=CRITICAL would suppress all non-CRITICAL concerns, defeating the pur
 Read it now, before Step 5:
 
 ```bash
-CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.cat/cat-config.json"
+CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.cat/config.json"
 if [[ ! -f "$CONFIG_FILE" ]]; then
-    echo "ERROR: cat-config.json not found at ${CONFIG_FILE}. Cannot proceed." >&2
+    echo "ERROR: config.json not found at ${CONFIG_FILE}. Cannot proceed." >&2
     exit 1
 fi
 
@@ -150,30 +150,30 @@ VERIFY must be one of: `all`, `changed`, `none`. If VERIFY is empty or not one o
 ERROR: Invalid or missing VERIFY argument: "${VERIFY}". Expected one of: all, changed, none.
 ```
 
-Also cross-check VERIFY against cat-config.json:
+Also cross-check VERIFY against config.json:
 ```bash
-CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.cat/cat-config.json"
+CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.cat/config.json"
 CONFIG_VERIFY=$(grep -o '"verify"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" | head -1 | \
     sed 's/.*"verify"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
-# If the verify field is absent from cat-config.json, treat it as "changed" (default).
+# If the verify field is absent from config.json, treat it as "changed" (default).
 if [[ -z "$CONFIG_VERIFY" ]]; then
     CONFIG_VERIFY="changed"
 fi
 if [[ "$VERIFY" != "$CONFIG_VERIFY" ]]; then
-    echo "ERROR: VERIFY argument '${VERIFY}' differs from cat-config.json '${CONFIG_VERIFY}'." >&2
-    echo "The VERIFY argument must match the configured verify level. Update cat-config.json or correct the argument." >&2
+    echo "ERROR: VERIFY argument '${VERIFY}' differs from config.json '${CONFIG_VERIFY}'." >&2
+    echo "The VERIFY argument must match the configured verify level. Update config.json or correct the argument." >&2
     exit 1
 fi
 ```
 
-If VERIFY differs from cat-config.json (or its effective default of "changed" when absent), STOP immediately. Do NOT
+If VERIFY differs from config.json (or its effective default of "changed" when absent), STOP immediately. Do NOT
 proceed with the injected VERIFY value.
 
-Skip if: `VERIFY == "none"` (after validation above confirms it matches cat-config.json)
+Skip if: `VERIFY == "none"` (after validation above confirms it matches config.json)
 
-**Note:** `verify=none` is an explicit user choice made via `cat-config.json`. The user is responsible for their own
+**Note:** `verify=none` is an explicit user choice made via `config.json`. The user is responsible for their own
 configuration. The informational warning below for sensitive changes is the intended guardrail — no additional
-enforcement is applied. If a prior phase modified `cat-config.json` to set `verify=none`, that modification would have
+enforcement is applied. If a prior phase modified `config.json` to set `verify=none`, that modification would have
 been committed and is visible in git history, so the user can audit it.
 
 If skipping, check whether the commits include potentially sensitive changes before outputting the skip message:
@@ -299,14 +299,14 @@ prohibited.
 **Read patience from config:**
 
 ```bash
-# Read patience from .cat/cat-config.json
+# Read patience from .cat/config.json
 # Default is "medium" if the config file exists but field is absent
 # FAIL if the config file cannot be read, or if the value is present but invalid
 PATIENCE_LEVEL="medium"
 
-CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.cat/cat-config.json"
+CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.cat/config.json"
 if [[ ! -f "$CONFIG_FILE" ]]; then
-    echo "ERROR: cat-config.json not found at ${CONFIG_FILE}. Cannot proceed." >&2
+    echo "ERROR: config.json not found at ${CONFIG_FILE}. Cannot proceed." >&2
     exit 1
 fi
 
@@ -577,9 +577,9 @@ BEFORE other severities. If any CRITICAL concern is in the FIX list, the subagen
          (e.g., `bugfix:`, `feature:`). These commits will be squashed into the main
          implementation commit in Step 7. Do NOT use `test:` as an independent commit
          type for concern fixes.
-       - **ABSOLUTE PROHIBITION:** You MUST NOT read, write, or modify `.cat/cat-config.json`
+       - **ABSOLUTE PROHIBITION:** You MUST NOT read, write, or modify `.cat/config.json`
          for any reason. This file is locked for the duration of the review phase. Writing
-         `verify=none` or any other value to cat-config.json is a critical protocol violation.
+         `verify=none` or any other value to config.json is a critical protocol violation.
          Prohibited mechanisms include but are not limited to: `sed -i`, `echo >`, `tee`, `cat >`,
          `Edit` tool, `Write` tool, `mv` (rename/replace), `cp` (overwrite via copy), and `ln`
          (replace via symlink). Fix only the code concerns listed above — nothing else.
