@@ -4,8 +4,8 @@
     "mistake_count_threshold" : 10,
     "trigger_interval_days" : 7
   },
-  "last_retrospective" : "2026-03-10T20:03:44Z",
-  "mistake_count_since_last" : 11,
+  "last_retrospective" : "2026-03-14T00:30:00.000000000Z",
+  "mistake_count_since_last" : 0,
   "files" : {
     "mistakes" : [ "mistakes-2026-01.json", "mistakes-2026-02.json", "mistakes-2026-03.json" ],
     "retrospectives" : [ "retrospectives-2026-01.json", "retrospectives-2026-02.json", "retrospectives-2026-03.json" ]
@@ -309,6 +309,19 @@
     "preventions" : [ "M461", "M466" ],
     "related_action_items" : [ "A027" ],
     "note" : "AutoLearnMistakes hook triggers false positives on benign content: documentation severity tables matching CRITICAL ISSUE regex, embedded JSON strings in session-analyzer output containing build_failure/test_failure keywords."
+  }, {
+    "pattern_id" : "PATTERN-024",
+    "pattern" : "error_output_priming",
+    "occurrences_total" : 2,
+    "occurrences_after_fix" : 0,
+    "first_seen" : "2026-03-12T15:58:33Z",
+    "last_seen" : "2026-03-14T00:15:06Z",
+    "last_action_date" : null,
+    "status" : "new",
+    "effectiveness" : "pending",
+    "preventions" : [ "M538", "M542" ],
+    "related_action_items" : [ "A028" ],
+    "note" : "Embedded action suggestions in error messages and stack traces prime agents to take action (e.g., run /cat:cleanup) when the prescribed response is STOP. Cognitive anchor from error output text overrides explicit skill-level STOP instructions. Cause signature: compliance_failure:doc_missing:issue_workflow."
   } ],
   "action_items" : [ {
     "id" : "A001",
@@ -813,6 +826,22 @@
     "related_mistakes" : [ "M461", "M466" ],
     "effectiveness_check" : null,
     "implementation" : "Addressed by 2.1-fix-autolearn-pattern2-false-positive (closed). Removed ^(FAIL:|FAILED\\s) sub-pattern from Pattern 2 in AutoLearnMistakes.java."
+  }, {
+    "id" : "A028",
+    "priority" : "high",
+    "description" : "Remove or neutralize embedded action suggestions from error messages and skill error paths. Error output must not contain runnable commands or links that prime agents to act. STOP instructions must be reinforced structurally: add STOP banner immediately before error output in skill No-result handlers.",
+    "category" : "protocol_violation",
+    "pattern_id" : "PATTERN-024",
+    "status" : "open",
+    "created_date" : "2026-03-14T00:24:39Z",
+    "completed_date" : null,
+    "related_mistakes" : [ "M538", "M542" ],
+    "effectiveness_check" : {
+      "mistakes_before" : 2,
+      "mistakes_after" : null,
+      "post_fix_mistakes" : [ ],
+      "verdict" : "pending"
+    }
   } ],
   "escalations" : [ {
     "id" : "ESCALATE-2026-03-10-001",
@@ -873,6 +902,66 @@
       "layers" : [ "Hook fix: validate answers object is non-empty in PreToolUse enforcement", "Hook fix: require explicit approval answer key, not just any non-empty answers", "Skill fix: work-with-issue Step 8 must explicitly check answers before spawning work-merge", "Regression test: add test case for empty-answers bypass scenario" ]
     },
     "priority" : "high",
+    "status" : "open"
+  }, {
+    "id" : "ESCALATE-2026-03-14-001",
+    "original_action_id" : "A001",
+    "retrospective_id" : "R029",
+    "created_date" : "2026-03-14T00:24:39Z",
+    "original_fix_description" : "Enforce validation separation: subagents that PRODUCE output must NOT validate it. ESCALATE-2026-03-10-001 proposed PostToolUse hook to block Task completions claiming validation without tool evidence.",
+    "failure_analysis" : {
+      "expected_result" : "ESCALATE-2026-03-10-001 hook proposal would eliminate new PATTERN-001 recurrences",
+      "actual_result" : "Hook was proposed but not yet implemented. Current period (M532-M542) shows PATTERN-001 IMPROVING (9 total, 5 remaining) but not resolved. Escalation-level fix has not been built.",
+      "root_cause" : "The previous escalation correctly identified the gap (structural enforcement needed) but remained in 'proposed' state — no implementation issue was created. Proposals without implementation issues are not tracked to completion.",
+      "gap_identified" : "No CAT issue exists to implement the PostToolUse validation-evidence hook. Escalation stalled at analysis stage."
+    },
+    "proposed_solution" : {
+      "approach" : "force-implementation",
+      "description" : "Create a CAT issue (2.1-validation-evidence-hook) to implement the PostToolUse hook that verifies subagent Task completions include tool-invocation evidence before accepting any validation claim. Assign high priority. Block retrospective closure until issue is created.",
+      "prevention_type" : "hook",
+      "layers" : [ "Create issue: 2.1-validation-evidence-hook", "Hook: PostToolUse on Task tool — scan completion message for validation claim keywords", "Validation claim without prior skill invocation evidence fails with STOP", "Test: fabricated validation vs real skill invocation" ]
+    },
+    "priority" : "critical",
+    "status" : "open"
+  }, {
+    "id" : "ESCALATE-2026-03-14-002",
+    "original_action_id" : "A003",
+    "retrospective_id" : "R029",
+    "created_date" : "2026-03-14T00:24:39Z",
+    "original_fix_description" : "Document path and config verification requirements. ESCALATE-2026-03-10-002 proposed expanding hook coverage to Bash tool calls with absolute /workspace/ paths and mandatory worktree-context checks at subagent start.",
+    "failure_analysis" : {
+      "expected_result" : "ESCALATE-2026-03-10-002 hook expansion would stop path_config_assumption recurrences",
+      "actual_result" : "PATTERN-003 status is WORSENING — 3 occurrences before fix, 5 after fix. Current period analysis confirms it remains worsening. The hook expansion was proposed but not implemented.",
+      "root_cause" : "Same implementation gap as ESCALATE-2026-03-10-001: proposed solutions without corresponding CAT issues are never built. Additionally, M537 (CLAUDE_PLUGIN_ROOT empty without fail-fast guard) shows a new vector: missing environment variable guards in skill bash blocks, distinct from path/config assumption in commit routing.",
+      "gap_identified" : "Two uncovered vectors: (1) commit routing assumptions in learn skill (proposed but unimplemented), (2) missing env-var fail-fast guards in work-implement-agent/first-use.md bash blocks. Both allow agents to proceed with incorrect context silently."
+    },
+    "proposed_solution" : {
+      "approach" : "split-and-implement",
+      "description" : "Split into two targeted fixes: (A) Add CLAUDE_PLUGIN_ROOT fail-fast guard to work-implement-agent/first-use.md Step 2 as a skill fix (low effort, directly prevents M537 recurrence). (B) Create issue for learn skill commit-destination check. Both must be CAT issues, not proposals.",
+      "prevention_type" : "skill",
+      "layers" : [ "Skill fix: work-implement-agent/first-use.md Step 2 — add guard: if [[ -z ${CLAUDE_PLUGIN_ROOT:-} ]]; then ERROR + STOP", "Issue: 2.1-learn-skill-commit-destination-check", "Hook: expand warn-base-branch-edit.sh to detect absolute /workspace/ in Bash tool calls from worktrees" ]
+    },
+    "priority" : "critical",
+    "status" : "open"
+  }, {
+    "id" : "ESCALATE-2026-03-14-003",
+    "original_action_id" : "A020",
+    "retrospective_id" : "R029",
+    "created_date" : "2026-03-14T00:24:39Z",
+    "original_fix_description" : "Enforce approval gate: PreToolUse hook must validate answers content (non-empty, correct key). ESCALATE-2026-03-10-003 proposed hook fix plus work-with-issue Step 8 skill fix.",
+    "failure_analysis" : {
+      "expected_result" : "ESCALATE-2026-03-10-003 hook + skill fix eliminates approval gate bypass",
+      "actual_result" : "PATTERN-017 (approval_gate_bypass) is IMPROVING (9 total, 6 remaining) but not resolved. The specific fix for answers content validation has not been implemented — the hook still only checks presence, not content.",
+      "root_cause" : "Same pattern: escalation proposed a solution but no implementation issue was created. The fix requires changes to the PreToolUse hook Java code (ApprovalGateEnforcer.java or equivalent) plus work-with-issue.md Step 8 documentation change.",
+      "gap_identified" : "The hook validator accepts an empty answers object {} as 'passed'. This is the primary bypass vector identified in M489, M446, M459, M462, M463, M464. Fix is well-understood but not in any open issue."
+    },
+    "proposed_solution" : {
+      "approach" : "direct-hook-fix",
+      "description" : "Create issue 2.1-fix-approval-gate-answers-validation to implement: (1) Hook change — reject Task(work-merge) when answers is null or empty object, (2) Hook change — require answers to contain the approval question key with truthy value, (3) Test — add regression test for empty-answers bypass.",
+      "prevention_type" : "hook",
+      "layers" : [ "Create issue: 2.1-fix-approval-gate-answers-validation", "Hook fix: reject empty answers {} at PreToolUse gate for work-merge tasks", "Hook fix: validate approval answer key presence and value", "Test: empty-answers bypass regression test", "Skill fix: work-with-issue Step 8 documentation update" ]
+    },
+    "priority" : "critical",
     "status" : "open"
   } ]
 }
