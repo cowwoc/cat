@@ -29,7 +29,6 @@ Record demo videos showcasing CAT features for marketing and documentation.
 - add-lock-schema-validation-tests
 - rename-enforce-worktree-path-isolation
 - fix-retrospective-path-traversal
-- fix-github-actions-sha-pinning
 
 ## Issues Closed
 (None)
