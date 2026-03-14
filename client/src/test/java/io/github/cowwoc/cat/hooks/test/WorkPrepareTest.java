@@ -2558,6 +2558,59 @@ public class WorkPrepareTest
   }
 
   /**
+   * Verifies that a PLAN.md containing backtick-quoted text with regex metacharacters
+   * (e.g., "[]") does not cause a PatternSyntaxException during execute.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void globToRegexHandlesMetacharacters() throws IOException
+  {
+    Path projectDir = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      createIssue(projectDir, "2", "1", "my-feature", "open");
+
+      // Overwrite the PLAN.md with a "## Files to Modify" section whose backtick entry
+      // contains * and [] — these are regex metacharacters that trigger the bug
+      Path planPath = projectDir.resolve(".cat").resolve("issues").
+        resolve("v2").resolve("v2.1").resolve("my-feature").resolve("PLAN.md");
+      Files.writeString(planPath, """
+        # Plan: my-feature
+
+        ## Goal
+
+        Test regex metacharacter handling.
+
+        ## Files to Modify
+
+        - Remove the line `- **Dependencies:** []`
+        """);
+
+      GitCommands.runGit(projectDir, "add", ".");
+      GitCommands.runGit(projectDir, "commit", "-m", "Add issue with metacharacter PLAN.md");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isNotEqualTo("ERROR");
+
+      worktreePath = Path.of(node.path("worktree_path").asString());
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectDir, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
    * Cleans up a worktree if it exists (best-effort, errors are swallowed).
    *
    * @param projectDir the project root directory
