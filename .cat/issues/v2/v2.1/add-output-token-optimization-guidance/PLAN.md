@@ -4,7 +4,7 @@
 
 Update `cat:optimize-execution` and `cat:instruction-builder` to surface output-token
 optimization opportunities — both in post-session analysis reports and in guidance for
-writing new skills. Correctness always takes priority over compactness.
+writing new skills. Correctness always takes priority over compactness — this includes both semantic correctness (meaning/parsing) and visual correctness (user-facing output alignment and readability).
 
 ## Scope
 
@@ -31,6 +31,8 @@ When creating or updating a skill, add a "compact output" pass after the draft i
 - Inside Makefile targets (tabs are required, spaces are wrong)
 - Inside fenced code blocks where indentation is part of the example
 - In any context where changing whitespace would change meaning or break parsing
+- In any user-facing output where compactness would degrade visual alignment or readability
+- In display tables, boxes, or formatted reports where spacing is part of the visual design
 
 ## Requirements
 
@@ -38,7 +40,7 @@ When creating or updating a skill, add a "compact output" pass after the draft i
 - REQ-002: optimize-execution estimates output-token savings for each flagged pattern
 - REQ-003: instruction-builder applies a compact-output pass before finalizing a skill draft
 - REQ-004: instruction-builder lists explicit correctness exemptions for semantic-whitespace contexts
-- REQ-005: Both skills document that correctness takes priority over cost reduction
+- REQ-005: Both skills document that both semantic and visual correctness take priority over cost reduction
 
 ## Pre-conditions
 
