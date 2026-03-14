@@ -99,6 +99,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - add-benchmark-runner-tests
 - pass-file-paths-to-subagents
 - fix-skill-invocation-missing-catagentid
+- fix-glob-to-regex-in-work-prepare
 
 
 ## Issues Closed
