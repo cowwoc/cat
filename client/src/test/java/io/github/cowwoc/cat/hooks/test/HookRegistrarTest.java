@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.HookRegistrar;
 import io.github.cowwoc.cat.hooks.util.HookRegistrar.Config;
 import io.github.cowwoc.cat.hooks.util.HookRegistrar.HookTrigger;
@@ -15,7 +16,9 @@ import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -371,5 +374,88 @@ public class HookRegistrarTest
       "cmd",
       "2024-01-01T00:00:00Z");
     requireThat(result.matcher(), "matcher").isEmpty();
+  }
+
+  /**
+   * Verifies that run() writes a block response to stdout when registration fails (duplicate hook).
+   * Non-success results must use HookOutput.block() format, not the custom Result JSON.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void runWritesBlockResponseOnNonSuccess() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("hook-registrar-run-test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      try
+      {
+        // Register the hook once successfully first
+        Config config = new Config(
+          "test-hook",
+          HookTrigger.PRE_TOOL_USE,
+          "",
+          false,
+          "#!/bin/bash\necho test");
+        HookRegistrar.register(config, tempDir.toString(), scope.getJsonMapper());
+
+        // Now try to register the same hook again — should fail with ERROR status
+        ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
+        PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
+
+        String[] args = {
+          "--name", "test-hook",
+          "--trigger", "PreToolUse",
+          "--script-content", "#!/bin/bash\necho test",
+          "--claude-dir", tempDir.toString()
+        };
+        HookRegistrar.run(scope, args, out);
+
+        String output = outBytes.toString(StandardCharsets.UTF_8);
+        // Non-success must produce block response, not custom status JSON
+        requireThat(output, "output").contains("\"decision\"");
+        requireThat(output, "output").contains("\"block\"");
+        requireThat(output, "output").contains("\"reason\"");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that run() writes success JSON to stdout when registration succeeds.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void runWritesSuccessJsonOnSuccess() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("hook-registrar-run-test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      try
+      {
+        ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
+        PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
+
+        String[] args = {
+          "--name", "test-hook",
+          "--trigger", "PreToolUse",
+          "--script-content", "#!/bin/bash\necho test",
+          "--claude-dir", tempDir.toString()
+        };
+        HookRegistrar.run(scope, args, out);
+
+        String output = outBytes.toString(StandardCharsets.UTF_8);
+        requireThat(output, "output").contains("\"status\"");
+        requireThat(output, "output").contains("\"success\"");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
   }
 }

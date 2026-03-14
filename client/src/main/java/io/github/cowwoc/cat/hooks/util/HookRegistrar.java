@@ -8,7 +8,11 @@ package io.github.cowwoc.cat.hooks.util;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.HookOutput;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ArrayNode;
@@ -17,6 +21,7 @@ import tools.jackson.databind.node.ObjectNode;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,6 +29,7 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -208,13 +214,48 @@ public final class HookRegistrar
    * Usage: {@code register-hook --name NAME --trigger EVENT [--matcher PATTERN] [--can-block]
    * --script-content CONTENT [--claude-dir DIR]}
    * <p>
-   * Registers a hook script and outputs JSON result to stdout.
+   * Outputs JSON to stdout on all outcomes (SUCCESS, ERROR).
+   * Always exits with code 0 so Claude Code parses stdout as JSON.
    *
    * @param args command-line arguments
-   * @throws IOException if file operations fail
    */
-  public static void main(String[] args) throws IOException
+  public static void main(String[] args)
   {
+    try (MainJvmScope scope = new MainJvmScope())
+    {
+      run(scope, args, System.out);
+    }
+    catch (RuntimeException | AssertionError e)
+    {
+      Logger log = LoggerFactory.getLogger(HookRegistrar.class);
+      log.error("Unexpected error", e);
+      try (MainJvmScope errorScope = new MainJvmScope())
+      {
+        System.out.println(new HookOutput(errorScope).block(
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+    }
+  }
+
+  /**
+   * Executes the register-hook logic with a caller-provided output stream.
+   * <p>
+   * Separated from {@link #main(String[])} to allow unit testing without JVM exit.
+   * IOException is converted to a block response on {@code out}.
+   * On non-success registration results, a block response is written instead of custom JSON.
+   *
+   * @param scope the JVM scope
+   * @param args  command-line arguments
+   * @param out   the output stream to write JSON to
+   * @throws NullPointerException if {@code scope}, {@code args}, or {@code out} are null
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out)
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+
+    HookOutput hookOutput = new HookOutput(scope);
     String name = "";
     String trigger = "";
     String matcher = "";
@@ -268,13 +309,9 @@ public final class HookRegistrar
 
     if (name.isEmpty() || trigger.isEmpty() || scriptContent.isEmpty())
     {
-      System.err.println("""
-        {
-          "status": "ERROR",
-          "message": "Usage: register-hook --name NAME --trigger EVENT --script-content CONTENT \
-[--matcher PATTERN] [--can-block] [--claude-dir DIR]"
-        }""");
-      System.exit(1);
+      out.println(hookOutput.block(
+        "Usage: register-hook --name NAME --trigger EVENT --script-content CONTENT " +
+          "[--matcher PATTERN] [--can-block] [--claude-dir DIR]"));
       return;
     }
 
@@ -295,31 +332,22 @@ public final class HookRegistrar
     }
     catch (IllegalArgumentException e)
     {
-      System.err.println("""
-        {
-          "status": "ERROR",
-          "message": "%s"
-        }""".formatted(e.getMessage().replace("\"", "\\\"")));
-      System.exit(1);
+      out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       return;
     }
 
     Config config = new Config(name, hookTrigger, matcher, canBlock, scriptContent);
-    try (MainJvmScope scope = new MainJvmScope())
+    try
     {
       Result result = register(config, claudeDir, scope.getJsonMapper());
-      System.out.println(result.toJson(scope.getJsonMapper()));
       if (result.status() != OperationStatus.SUCCESS)
-        System.exit(1);
+        out.println(hookOutput.block(result.message()));
+      else
+        out.println(result.toJson(scope.getJsonMapper()));
     }
     catch (IOException e)
     {
-      System.err.println("""
-        {
-          "status": "ERROR",
-          "message": "%s"
-        }""".formatted(e.getMessage().replace("\"", "\\\"")));
-      System.exit(1);
+      out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 

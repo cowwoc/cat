@@ -24,11 +24,12 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * <p>
  * Tests verify argument parsing, output format, and exit behavior for all subcommands.
  * Uses injectable streams and scopes to avoid System.exit() calls during tests.
+ * All output (success and error) is written to stdout using HookOutput.block() format.
  */
 public class IssueLockCliTest
 {
   /**
-   * Verifies that acquire with valid arguments writes acquired status to stdout and returns true.
+   * Verifies that acquire with valid arguments writes acquired status to stdout.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -41,20 +42,14 @@ public class IssueLockCliTest
       try
       {
         ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-        ByteArrayOutputStream errBytes = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
-        PrintStream err = new PrintStream(errBytes, true, StandardCharsets.UTF_8);
 
         String sessionId = UUID.randomUUID().toString();
-        boolean success = IssueLock.run(new String[]{"acquire", "test-issue", sessionId},
-          scope, out, err);
+        IssueLock.run(new String[]{"acquire", "test-issue", sessionId}, scope, out);
 
-        requireThat(success, "success").isTrue();
         String output = outBytes.toString(StandardCharsets.UTF_8);
         requireThat(output, "output").contains("\"status\"");
         requireThat(output, "output").contains("\"acquired\"");
-        String errOutput = errBytes.toString(StandardCharsets.UTF_8);
-        requireThat(errOutput, "errOutput").isEmpty();
       }
       finally
       {
@@ -64,12 +59,12 @@ public class IssueLockCliTest
   }
 
   /**
-   * Verifies that acquire with missing session ID writes error to stderr and returns false.
+   * Verifies that acquire with missing session ID writes a block error response to stdout.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void acquireWithMissingSessionIdWritesErrorToStderr() throws IOException
+  public void acquireWithMissingSessionIdWritesBlockErrorToStdout() throws IOException
   {
     Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -77,16 +72,14 @@ public class IssueLockCliTest
       try
       {
         ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-        ByteArrayOutputStream errBytes = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
-        PrintStream err = new PrintStream(errBytes, true, StandardCharsets.UTF_8);
 
-        boolean success = IssueLock.run(new String[]{"acquire", "test-issue"}, scope, out, err);
+        IssueLock.run(new String[]{"acquire", "test-issue"}, scope, out);
 
-        requireThat(success, "success").isFalse();
-        String errOutput = errBytes.toString(StandardCharsets.UTF_8);
-        requireThat(errOutput, "errOutput").contains("error");
-        requireThat(errOutput, "errOutput").contains("Usage");
+        String output = outBytes.toString(StandardCharsets.UTF_8);
+        requireThat(output, "output").contains("\"decision\"");
+        requireThat(output, "output").contains("\"block\"");
+        requireThat(output, "output").contains("Usage");
       }
       finally
       {
@@ -96,12 +89,12 @@ public class IssueLockCliTest
   }
 
   /**
-   * Verifies that acquire with an invalid UUID session ID writes error mentioning UUID and returns false.
+   * Verifies that acquire with an invalid UUID session ID writes a block error response to stdout.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void acquireWithInvalidUuidSessionIdWritesUuidErrorToStderr() throws IOException
+  public void acquireWithInvalidUuidSessionIdWritesBlockErrorToStdout() throws IOException
   {
     Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -109,16 +102,14 @@ public class IssueLockCliTest
       try
       {
         ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-        ByteArrayOutputStream errBytes = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
-        PrintStream err = new PrintStream(errBytes, true, StandardCharsets.UTF_8);
 
-        boolean success = IssueLock.run(new String[]{"acquire", "test-issue", "not-a-uuid"},
-          scope, out, err);
+        IssueLock.run(new String[]{"acquire", "test-issue", "not-a-uuid"}, scope, out);
 
-        requireThat(success, "success").isFalse();
-        String errOutput = errBytes.toString(StandardCharsets.UTF_8);
-        requireThat(errOutput, "errOutput").contains("UUID");
+        String output = outBytes.toString(StandardCharsets.UTF_8);
+        requireThat(output, "output").contains("\"decision\"");
+        requireThat(output, "output").contains("\"block\"");
+        requireThat(output, "output").contains("UUID");
       }
       finally
       {
@@ -128,7 +119,7 @@ public class IssueLockCliTest
   }
 
   /**
-   * Verifies that release with valid arguments writes released status to stdout and returns true.
+   * Verifies that release with valid arguments writes released status to stdout.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -141,18 +132,14 @@ public class IssueLockCliTest
       try
       {
         ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-        ByteArrayOutputStream errBytes = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
-        PrintStream err = new PrintStream(errBytes, true, StandardCharsets.UTF_8);
 
         String sessionId = UUID.randomUUID().toString();
         IssueLock lock = new IssueLock(scope);
         lock.acquire("test-issue", sessionId, "");
 
-        boolean success = IssueLock.run(new String[]{"release", "test-issue", sessionId}, scope, out,
-          err);
+        IssueLock.run(new String[]{"release", "test-issue", sessionId}, scope, out);
 
-        requireThat(success, "success").isTrue();
         String output = outBytes.toString(StandardCharsets.UTF_8);
         requireThat(output, "output").contains("\"status\"");
         requireThat(output, "output").contains("\"released\"");
@@ -165,7 +152,7 @@ public class IssueLockCliTest
   }
 
   /**
-   * Verifies that update with valid arguments writes updated status to stdout and returns true.
+   * Verifies that update with valid arguments writes updated status to stdout.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -178,18 +165,14 @@ public class IssueLockCliTest
       try
       {
         ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-        ByteArrayOutputStream errBytes = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
-        PrintStream err = new PrintStream(errBytes, true, StandardCharsets.UTF_8);
 
         String sessionId = UUID.randomUUID().toString();
         IssueLock lock = new IssueLock(scope);
         lock.acquire("test-issue", sessionId, "");
 
-        boolean success = IssueLock.run(new String[]{"update", "test-issue", sessionId, "/new/worktree"}, scope,
-          out, err);
+        IssueLock.run(new String[]{"update", "test-issue", sessionId, "/new/worktree"}, scope, out);
 
-        requireThat(success, "success").isTrue();
         String output = outBytes.toString(StandardCharsets.UTF_8);
         requireThat(output, "output").contains("\"status\"");
         requireThat(output, "output").contains("\"updated\"");
@@ -202,7 +185,7 @@ public class IssueLockCliTest
   }
 
   /**
-   * Verifies that check with a valid issue returns JSON with "locked" field and returns true.
+   * Verifies that check with a valid issue returns JSON with "locked" field.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -215,13 +198,10 @@ public class IssueLockCliTest
       try
       {
         ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-        ByteArrayOutputStream errBytes = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
-        PrintStream err = new PrintStream(errBytes, true, StandardCharsets.UTF_8);
 
-        boolean success = IssueLock.run(new String[]{"check", "unlocked-issue"}, scope, out, err);
+        IssueLock.run(new String[]{"check", "unlocked-issue"}, scope, out);
 
-        requireThat(success, "success").isTrue();
         String output = outBytes.toString(StandardCharsets.UTF_8);
         requireThat(output, "output").contains("\"locked\"");
         requireThat(output, "output").contains("false");
@@ -234,7 +214,7 @@ public class IssueLockCliTest
   }
 
   /**
-   * Verifies that list returns a JSON array and returns true.
+   * Verifies that list returns a JSON array.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -247,13 +227,10 @@ public class IssueLockCliTest
       try
       {
         ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-        ByteArrayOutputStream errBytes = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
-        PrintStream err = new PrintStream(errBytes, true, StandardCharsets.UTF_8);
 
-        boolean success = IssueLock.run(new String[]{"list"}, scope, out, err);
+        IssueLock.run(new String[]{"list"}, scope, out);
 
-        requireThat(success, "success").isTrue();
         String output = outBytes.toString(StandardCharsets.UTF_8);
         requireThat(output, "output").contains("[");
         requireThat(output, "output").contains("]");
@@ -266,12 +243,12 @@ public class IssueLockCliTest
   }
 
   /**
-   * Verifies that an unknown command writes error to stderr and returns false.
+   * Verifies that an unknown command writes a block error response to stdout.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void unknownCommandWritesErrorToStderr() throws IOException
+  public void unknownCommandWritesBlockErrorToStdout() throws IOException
   {
     Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -279,16 +256,15 @@ public class IssueLockCliTest
       try
       {
         ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-        ByteArrayOutputStream errBytes = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
-        PrintStream err = new PrintStream(errBytes, true, StandardCharsets.UTF_8);
 
-        boolean success = IssueLock.run(new String[]{"invalid-command"}, scope, out, err);
+        IssueLock.run(new String[]{"invalid-command"}, scope, out);
 
-        requireThat(success, "success").isFalse();
-        String errOutput = errBytes.toString(StandardCharsets.UTF_8);
-        requireThat(errOutput, "errOutput").contains("Unknown command");
-        requireThat(errOutput, "errOutput").contains("invalid-command");
+        String output = outBytes.toString(StandardCharsets.UTF_8);
+        requireThat(output, "output").contains("\"decision\"");
+        requireThat(output, "output").contains("\"block\"");
+        requireThat(output, "output").contains("Unknown command");
+        requireThat(output, "output").contains("invalid-command");
       }
       finally
       {
@@ -298,7 +274,7 @@ public class IssueLockCliTest
   }
 
   /**
-   * Verifies that force-release with valid arguments writes released status to stdout and returns true.
+   * Verifies that force-release with valid arguments writes released status to stdout.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -311,17 +287,14 @@ public class IssueLockCliTest
       try
       {
         ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-        ByteArrayOutputStream errBytes = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
-        PrintStream err = new PrintStream(errBytes, true, StandardCharsets.UTF_8);
 
         String sessionId = UUID.randomUUID().toString();
         IssueLock lock = new IssueLock(scope);
         lock.acquire("test-issue", sessionId, "");
 
-        boolean success = IssueLock.run(new String[]{"force-release", "test-issue"}, scope, out, err);
+        IssueLock.run(new String[]{"force-release", "test-issue"}, scope, out);
 
-        requireThat(success, "success").isTrue();
         String output = outBytes.toString(StandardCharsets.UTF_8);
         requireThat(output, "output").contains("\"released\"");
       }
@@ -333,12 +306,12 @@ public class IssueLockCliTest
   }
 
   /**
-   * Verifies that no-args invocation writes usage error to stderr and returns false.
+   * Verifies that no-args invocation writes a block error response to stdout.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void noArgsWritesUsageErrorToStderr() throws IOException
+  public void noArgsWritesBlockErrorToStdout() throws IOException
   {
     Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -346,16 +319,14 @@ public class IssueLockCliTest
       try
       {
         ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-        ByteArrayOutputStream errBytes = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
-        PrintStream err = new PrintStream(errBytes, true, StandardCharsets.UTF_8);
 
-        boolean success = IssueLock.run(new String[]{}, scope, out, err);
+        IssueLock.run(new String[]{}, scope, out);
 
-        requireThat(success, "success").isFalse();
-        String errOutput = errBytes.toString(StandardCharsets.UTF_8);
-        requireThat(errOutput, "errOutput").contains("error");
-        requireThat(errOutput, "errOutput").contains("Usage");
+        String output = outBytes.toString(StandardCharsets.UTF_8);
+        requireThat(output, "output").contains("\"decision\"");
+        requireThat(output, "output").contains("\"block\"");
+        requireThat(output, "output").contains("Usage");
       }
       finally
       {

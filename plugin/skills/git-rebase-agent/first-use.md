@@ -62,11 +62,25 @@ TARGET_BRANCH is required. The tool outputs JSON.
 
 #### Result Handling
 
+The tool outputs one of three JSON formats:
+
+**Success (`status: OK` or `status: CONFLICT`):**
+```json
+{"status": "OK", "backup_branch": "backup-before-rebase-...", "commits_rebased": 3}
+{"status": "CONFLICT", "backup_branch": "backup-before-rebase-...", "conflicting_files": [...]}
+```
+
+**Error (`decision: block`):**
+```json
+{"decision": "block", "reason": "error message\nbackup_branch: backup-before-rebase-..."}
+```
+When a backup_branch was created before the error, its name appears on a `backup_branch:` line within the reason.
+
 | Status | Meaning | Agent Recovery Action |
 |--------|---------|----------------------|
 | `OK` | Rebase completed successfully | Report commits rebased, verify no content changes. Delete backup branch (see below). |
 | `CONFLICT` | Rebase stopped due to conflicts | Agent examines conflicting_files and decides: manual resolution, alternative strategy, or abort. Backup preserved at backup_branch. Delete backup after resolution is complete. |
-| `ERROR` | Rebase failed (not a conflict) | Check backup_branch and error message. Restore from backup if needed. Delete backup after the error is handled. |
+| `block` decision | Rebase failed (not a conflict) | Parse backup_branch from the reason field if present. Restore from backup if needed. Delete backup after the error is handled. |
 
 **On OK status:** After a successful rebase:
 - Delete the backup: `git branch -D <backup_branch>`
@@ -80,9 +94,9 @@ TARGET_BRANCH is required. The tool outputs JSON.
 - If uncertain, abort and restore from backup
 - After resolution is complete (or error handled): `git branch -D <backup_branch>`
 
-**On ERROR status:** After handling the error (investigation complete, alternative approach taken, or
+**On block decision:** After handling the error (investigation complete, alternative approach taken, or
 issue escalated to user):
-- Delete the backup: `git branch -D <backup_branch>`
+- If the reason contains `backup_branch:`, delete it: `git branch -D <branch-name-from-reason>`
 - The backup exists only during investigation — leaving it permanently clutters the repository
 
 ### Interactive rebase (reorder, edit, squash)

@@ -6,15 +6,16 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
+import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tools.jackson.core.JacksonException;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -25,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -86,7 +88,7 @@ public final class GitRebase
    *   <li>Return OK JSON</li>
    * </ol>
    * <p>
-   * Success JSON is written to stdout; error/conflict JSON to stderr.
+   * Success JSON is written to stdout; error/conflict JSON to stdout.
    *
    * @param targetBranch the branch or commit hash to rebase onto (must not be empty)
    * @return JSON string with operation result
@@ -101,7 +103,7 @@ public final class GitRebase
     String resolvedTarget = targetBranch;
     if (resolvedTarget.isEmpty())
     {
-      return buildErrorJson(
+      return buildBlockResponse(
         "Usage: git-rebase <SOURCE_DIR> <TARGET_BRANCH>\n" +
           "TARGET_BRANCH is required. Provide the branch or commit hash to rebase onto.",
         null, null);
@@ -123,14 +125,14 @@ public final class GitRebase
     String backup = "backup-before-rebase-" + LocalDateTime.now().format(BACKUP_TIMESTAMP_FORMATTER);
     ProcessRunner.Result branchResult = runGit("branch", backup);
     if (branchResult.exitCode() != 0)
-      return buildErrorJson("Failed to create backup branch: " + branchResult.stdout().strip(), null, null);
+      return buildBlockResponse("Failed to create backup branch: " + branchResult.stdout().strip(), null, null);
 
     // Verify backup was created (fail-fast)
     ProcessRunner.Result verifyResult = runGit("show-ref", "--verify", "--quiet",
       "refs/heads/" + backup);
     if (verifyResult.exitCode() != 0)
     {
-      return buildErrorJson(
+      return buildBlockResponse(
         "Backup branch '" + backup + "' was not created. Do NOT proceed with rebase without backup.",
         null, null);
     }
@@ -184,7 +186,7 @@ public final class GitRebase
         diffStat = diffStatResult.stdout().strip();
       else
         diffStat = "";
-      return new RebaseOutcome(buildContentChangedErrorJson(resolvedTarget, backup, diffStat), List.of());
+      return new RebaseOutcome(buildContentChangedBlockResponse(resolvedTarget, backup, diffStat), List.of());
     }
 
     Set<String> untrackedAfter = getUntrackedFiles();
@@ -361,7 +363,7 @@ public final class GitRebase
     String contentSection = buildContentSection(contentConflicts);
 
     String message = header + trackedSection + contentSection;
-    return buildErrorJson(message, null, null);
+    return buildBlockResponse(message, null, null);
   }
 
   /**
@@ -512,7 +514,7 @@ public final class GitRebase
 
     if (!conflictingFiles.isEmpty())
       return buildConflictJson(resolvedTarget, backup, conflictingFiles);
-    return buildErrorJson("Rebase failed: " + rebaseResult.stdout().strip(), resolvedTarget, backup);
+    return buildBlockResponse("Rebase failed: " + rebaseResult.stdout().strip(), resolvedTarget, backup);
   }
 
   /**
@@ -648,47 +650,42 @@ public final class GitRebase
   }
 
   /**
-   * Builds an ERROR JSON response.
+   * Builds a block response for an error condition.
    *
    * @param message      the error message
    * @param target       the pinned target commit hash, or null if resolution failed before pinning
    * @param backupBranch the backup branch name, or null if backup was not created
-   * @return JSON string with ERROR status
-   * @throws IOException if JSON serialization fails
+   * @return JSON string with block decision
    */
-  private String buildErrorJson(String message, String target, String backupBranch) throws IOException
+  private String buildBlockResponse(String message, String target, String backupBranch)
   {
-    ObjectNode json = scope.getJsonMapper().createObjectNode();
-    json.put("status", "ERROR");
+    HookOutput hookOutput = new HookOutput(scope);
+    StringBuilder reason = new StringBuilder(message);
     if (target != null)
-      json.put("target_branch", target);
+    {
+      reason.append("\ntarget_branch: ").append(target);
+    }
     if (backupBranch != null)
-      json.put("backup_branch", backupBranch);
-    else
-      json.putNull("backup_branch");
-    json.put("message", message);
-    return scope.getJsonMapper().writeValueAsString(json);
+      reason.append("\nbackup_branch: ").append(backupBranch);
+    return hookOutput.block(reason.toString());
   }
 
   /**
-   * Builds an ERROR JSON response for when content changed unexpectedly during rebase.
+   * Builds a block response for when content changed unexpectedly during rebase.
    *
    * @param target       the pinned target commit hash
    * @param backupBranch the backup branch name
    * @param diffStat     the diff stat output
-   * @return JSON string with ERROR status
-   * @throws IOException if JSON serialization fails
+   * @return JSON string with block decision
    */
-  private String buildContentChangedErrorJson(String target, String backupBranch,
-    String diffStat) throws IOException
+  private String buildContentChangedBlockResponse(String target, String backupBranch, String diffStat)
   {
-    ObjectNode json = scope.getJsonMapper().createObjectNode();
-    json.put("status", "ERROR");
-    json.put("target_branch", target);
-    json.put("backup_branch", backupBranch);
-    json.put("message", "Content changed during rebase - backup preserved for investigation");
-    json.put("diff_stat", diffStat);
-    return scope.getJsonMapper().writeValueAsString(json);
+    HookOutput hookOutput = new HookOutput(scope);
+    String reason = "Content changed during rebase - backup preserved for investigation" +
+      "\ntarget_branch: " + target +
+      "\nbackup_branch: " + backupBranch +
+      "\ndiff_stat:\n" + diffStat;
+    return hookOutput.block(reason);
   }
 
   /**
@@ -696,24 +693,51 @@ public final class GitRebase
    * <p>
    * Usage: git-rebase SOURCE_DIR TARGET_BRANCH
    * <p>
-   * Outputs JSON to stdout on success (OK).
-   * Outputs JSON to stderr on failure (CONFLICT, ERROR).
-   * Exit code 0 for success, 1 for errors.
+   * Outputs JSON to stdout on all outcomes (OK, CONFLICT, ERROR).
+   * Always exits with code 0 so Claude Code parses stdout as JSON.
    *
    * @param args command-line arguments
-   * @throws IOException if the operation fails
    */
-  public static void main(String[] args) throws IOException
+  public static void main(String[] args)
   {
+    try (JvmScope scope = new MainJvmScope())
+    {
+      run(scope, args, System.out);
+    }
+    catch (RuntimeException | AssertionError e)
+    {
+      Logger log = LoggerFactory.getLogger(GitRebase.class);
+      log.error("Unexpected error", e);
+      try (MainJvmScope errorScope = new MainJvmScope())
+      {
+        System.out.println(new HookOutput(errorScope).block(
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+    }
+  }
+
+  /**
+   * Executes the git-rebase logic with a caller-provided output stream.
+   * <p>
+   * Separated from {@link #main(String[])} to allow unit testing without JVM exit.
+   * IOException is converted to a block response on {@code out}.
+   *
+   * @param scope the JVM scope
+   * @param args  command-line arguments
+   * @param out   the output stream to write JSON to
+   * @throws NullPointerException if {@code scope}, {@code args}, or {@code out} are null
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out)
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+
+    HookOutput hookOutput = new HookOutput(scope);
     if (args.length < 1)
     {
-      System.err.println("""
-        {
-          "status": "ERROR",
-          "message": "Usage: git-rebase <SOURCE_DIR> <TARGET_BRANCH>",
-          "backup_branch": null
-        }""");
-      System.exit(1);
+      out.println(hookOutput.block("Usage: git-rebase <SOURCE_DIR> <TARGET_BRANCH>"));
+      return;
     }
 
     Path workingDirectory = Path.of(args[0]);
@@ -721,50 +745,15 @@ public final class GitRebase
     if (args.length > 1)
       targetBranch = args[1];
 
-    try (JvmScope scope = new MainJvmScope())
+    GitRebase cmd = new GitRebase(scope, workingDirectory);
+    try
     {
-      GitRebase cmd = new GitRebase(scope, workingDirectory);
-      try
-      {
-        String result = cmd.execute(targetBranch);
-        // Determine output stream based on status field
-        String status;
-        try
-        {
-          ObjectNode resultJson = (ObjectNode) scope.getJsonMapper().readTree(result);
-          status = resultJson.get("status").asString();
-        }
-        catch (JacksonException _)
-        {
-          // If JSON parsing fails, treat as error
-          status = "ERROR";
-        }
-        if (status.equals("ERROR") || status.equals("CONFLICT"))
-        {
-          System.err.println(result);
-          System.exit(1);
-        }
-        else
-        {
-          System.out.println(result);
-        }
-      }
-      catch (IOException e)
-      {
-        System.err.println("""
-          {
-            "status": "ERROR",
-            "message": "%s",
-            "backup_branch": null
-          }""".formatted(e.getMessage().replace("\"", "\\\"")));
-        System.exit(1);
-      }
+      String result = cmd.execute(targetBranch);
+      out.println(result);
     }
-    catch (RuntimeException | AssertionError e)
+    catch (IOException e)
     {
-      Logger log = LoggerFactory.getLogger(GitRebase.class);
-      log.error("Unexpected error", e);
-      throw e;
+      out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 }

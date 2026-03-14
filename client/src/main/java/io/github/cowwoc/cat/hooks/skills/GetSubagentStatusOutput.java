@@ -9,9 +9,12 @@ package io.github.cowwoc.cat.hooks.skills;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
 
+import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ArrayNode;
@@ -26,6 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -251,6 +255,7 @@ public final class GetSubagentStatusOutput implements SkillOutput
 
     try (MainJvmScope scope = new MainJvmScope())
     {
+      HookOutput hookOutput = new HookOutput(scope);
       // Use scope-provided session base path if not overridden via --session-base
       String sessionBase;
       if (!sessionBaseOverride.isEmpty())
@@ -266,22 +271,18 @@ public final class GetSubagentStatusOutput implements SkillOutput
       }
       catch (IOException e)
       {
-        System.err.println("""
-          {
-            "status": "ERROR",
-            "message": "%s"
-          }""".formatted(e.getMessage().replace("\"", "\\\"")));
-        System.exit(1);
+        System.out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
     catch (RuntimeException | AssertionError e)
     {
-      System.err.println("""
-        {
-          "status": "ERROR",
-          "message": "Unexpected error: %s"
-        }""".formatted(e.getMessage().replace("\"", "\\\"")));
-      System.exit(1);
+      Logger log = LoggerFactory.getLogger(GetSubagentStatusOutput.class);
+      log.error("Unexpected error", e);
+      try (MainJvmScope errorScope = new MainJvmScope())
+      {
+        System.out.println(new HookOutput(errorScope).block(
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
     }
   }
 
