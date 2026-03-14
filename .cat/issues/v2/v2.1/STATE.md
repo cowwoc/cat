@@ -100,6 +100,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-skill-invocation-missing-catagentid
 - fix-glob-to-regex-in-work-prepare
 - update-github-actions-versions
+- fix-work-prepare-lock-leak
 
 
 ## Issues Closed
