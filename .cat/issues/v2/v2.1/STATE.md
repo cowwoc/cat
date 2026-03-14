@@ -102,6 +102,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - update-github-actions-versions
 - fix-work-prepare-lock-leak
 - add-double-star-glob-support
+- fix-lock-worktree-path-at-acquire
 
 
 ## Issues Closed
