@@ -104,6 +104,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - add-double-star-glob-support
 - fix-lock-worktree-path-at-acquire
 - upgrade-recover-from-drift-model
+- add-output-token-optimization-guidance
 
 
 ## Issues Closed
