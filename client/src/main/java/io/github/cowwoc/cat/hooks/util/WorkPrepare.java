@@ -46,7 +46,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
  */
 public final class WorkPrepare
 {
-  private static final Logger LOG = LoggerFactory.getLogger(WorkPrepare.class);
   /**
    * Matches the status line in STATE.md: {@code - **Status:** open}.
    */
@@ -96,6 +95,7 @@ public final class WorkPrepare
   {
   };
 
+  private final Logger log = LoggerFactory.getLogger(getClass());
   private final JvmScope scope;
   private final int diagnosticScanSafetyThreshold;
   private final int maxCycleDetectionDepth;
@@ -266,6 +266,8 @@ public final class WorkPrepare
     // Check for corrupt directory (STATE.md present, PLAN.md absent)
     if (found.isCorrupt())
     {
+      if (!input.sessionId().isEmpty())
+        releaseLock(issueId, input.sessionId());
       Map<String, Object> corruptResult = new LinkedHashMap<>();
       corruptResult.put("status", "CORRUPT");
       corruptResult.put("issue_id", issueId);
@@ -285,12 +287,15 @@ public final class WorkPrepare
     // Check if oversized
     if (estimatedTokens > TOKEN_LIMIT)
     {
-      return mapper.writeValueAsString(Map.of(
-        "status", "OVERSIZED",
-        "message", "Issue estimated at " + estimatedTokens + " tokens (limit: " + TOKEN_LIMIT + ")",
-        "suggestion", "Use /cat:decompose-issue to break into smaller issues",
-        "issue_id", issueId,
-        "estimated_tokens", estimatedTokens));
+      if (!input.sessionId().isEmpty())
+        releaseLock(issueId, input.sessionId());
+      Map<String, Object> oversizedResult = new LinkedHashMap<>();
+      oversizedResult.put("status", "OVERSIZED");
+      oversizedResult.put("message", "Issue estimated at " + estimatedTokens + " tokens (limit: " + TOKEN_LIMIT + ")");
+      oversizedResult.put("suggestion", "Use /cat:decompose-issue to break into smaller issues");
+      oversizedResult.put("issue_id", issueId);
+      oversizedResult.put("estimated_tokens", estimatedTokens);
+      return mapper.writeValueAsString(oversizedResult);
     }
 
     // Steps 5-10: Create worktree and build READY result
@@ -1636,9 +1641,9 @@ public final class WorkPrepare
       IssueLock issueLock = new IssueLock(scope);
       issueLock.release(issueId, sessionId);
     }
-    catch (Exception _)
+    catch (Exception e)
     {
-      // Best-effort
+      log.warn("Failed to release lock for issue {}: {}", issueId, e.getMessage());
     }
   }
 
@@ -1737,7 +1742,7 @@ public final class WorkPrepare
     }
     catch (RuntimeException | AssertionError e)
     {
-      LOG.error("Unexpected error", e);
+      LoggerFactory.getLogger(WorkPrepare.class).error("Unexpected error", e);
       try (MainJvmScope errorScope = new MainJvmScope())
       {
         System.out.println(new HookOutput(errorScope).block(

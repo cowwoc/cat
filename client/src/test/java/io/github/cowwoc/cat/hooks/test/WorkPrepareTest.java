@@ -176,6 +176,192 @@ public class WorkPrepareTest
   }
 
   /**
+   * Verifies that execute releases the lock when returning OVERSIZED.
+   * <p>
+   * After an OVERSIZED return the lock file must not remain on disk, so that a
+   * subsequent work-prepare call does not fail with "empty worktrees map".
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeReleasesLockOnOversizedReturn() throws IOException
+  {
+    Path projectDir = createTempGitCatProject("v2.1");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      createIssue(projectDir, "2", "1", "huge-feature", "open");
+      createOversizedPlan(projectDir, "2", "1", "huge-feature");
+      GitCommands.runGit(projectDir, "add", ".");
+      GitCommands.runGit(projectDir, "commit", "-m", "Add oversized issue");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("OVERSIZED");
+
+      // The lock file must not remain after an OVERSIZED early return
+      Path lockFile = scope.getProjectCatDir().resolve("locks").resolve("2.1-huge-feature.lock");
+      requireThat(Files.notExists(lockFile), "lockFileAbsent").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that execute releases the lock when returning CORRUPT.
+   * <p>
+   * After a CORRUPT return the lock file must not remain on disk, so that a
+   * subsequent work-prepare call does not fail with "empty worktrees map".
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeReleasesLockOnCorruptReturn() throws IOException
+  {
+    Path projectDir = createTempGitCatProject("v2.1");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // Create issue directory with only STATE.md (no PLAN.md) — simulates a corrupt directory
+      Path issueDir = projectDir.resolve(".cat").resolve("issues").
+        resolve("v2").resolve("v2.1").resolve("corrupt-issue");
+      Files.createDirectories(issueDir);
+
+      String stateContent = """
+        # State
+
+        - **Status:** open
+        - **Progress:** 0%
+        - **Dependencies:** []
+        - **Blocks:** []
+        """;
+      Files.writeString(issueDir.resolve("STATE.md"), stateContent);
+      // Deliberately no PLAN.md — this is the corrupt condition
+
+      GitCommands.runGit(projectDir, "add", ".");
+      GitCommands.runGit(projectDir, "commit", "-m", "Add corrupt issue directory");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("CORRUPT");
+
+      // The lock file must not remain after a CORRUPT early return
+      Path lockFile = scope.getProjectCatDir().resolve("locks").resolve("2.1-corrupt-issue.lock");
+      requireThat(Files.notExists(lockFile), "lockFileAbsent").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that a second call to execute after OVERSIZED return does not throw an exception.
+   * <p>
+   * After a first call returns OVERSIZED and releases the lock, a second call on the same issue
+   * must succeed without throwing IOException due to "empty worktrees map" or other lock-related errors.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeDoesNotThrowWhenCalledTwiceOnOversizedIssue() throws IOException
+  {
+    Path projectDir = createTempGitCatProject("v2.1");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      createIssue(projectDir, "2", "1", "huge-feature", "open");
+      createOversizedPlan(projectDir, "2", "1", "huge-feature");
+      GitCommands.runGit(projectDir, "add", ".");
+      GitCommands.runGit(projectDir, "commit", "-m", "Add oversized issue");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+
+      // First call should return OVERSIZED
+      String json1 = prepare.execute(input);
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node1 = mapper.readTree(json1);
+      requireThat(node1.path("status").asString(), "firstStatus").isEqualTo("OVERSIZED");
+
+      // Second call with same sessionId should also return OVERSIZED (not throw)
+      String json2 = prepare.execute(input);
+      JsonNode node2 = mapper.readTree(json2);
+      requireThat(node2.path("status").asString(), "secondStatus").isEqualTo("OVERSIZED");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that a second call to execute after CORRUPT return does not throw an exception.
+   * <p>
+   * After a first call returns CORRUPT and releases the lock, a second call on the same issue
+   * must succeed without throwing IOException due to "empty worktrees map" or other lock-related errors.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeDoesNotThrowWhenCalledTwiceOnCorruptIssue() throws IOException
+  {
+    Path projectDir = createTempGitCatProject("v2.1");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // Create issue directory with only STATE.md (no PLAN.md) — simulates a corrupt directory
+      Path issueDir = projectDir.resolve(".cat").resolve("issues").
+        resolve("v2").resolve("v2.1").resolve("corrupt-issue");
+      Files.createDirectories(issueDir);
+
+      String stateContent = """
+        # State
+
+        - **Status:** open
+        - **Progress:** 0%
+        - **Dependencies:** []
+        - **Blocks:** []
+        """;
+      Files.writeString(issueDir.resolve("STATE.md"), stateContent);
+      // Deliberately no PLAN.md — this is the corrupt condition
+
+      GitCommands.runGit(projectDir, "add", ".");
+      GitCommands.runGit(projectDir, "commit", "-m", "Add corrupt issue directory");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+
+      // First call should return CORRUPT
+      String json1 = prepare.execute(input);
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node1 = mapper.readTree(json1);
+      requireThat(node1.path("status").asString(), "firstStatus").isEqualTo("CORRUPT");
+
+      // Second call with same sessionId should also return CORRUPT (not throw)
+      String json2 = prepare.execute(input);
+      JsonNode node2 = mapper.readTree(json2);
+      requireThat(node2.path("status").asString(), "secondStatus").isEqualTo("CORRUPT");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
    * Verifies that execute returns READY with a valid worktree for an open issue in a git repo.
    *
    * @throws IOException if an I/O error occurs
