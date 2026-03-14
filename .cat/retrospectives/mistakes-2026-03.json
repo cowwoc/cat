@@ -1920,5 +1920,24 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M543",
+    "timestamp" : "2026-03-14T14:05:41Z",
+    "category" : "code_bug",
+    "description" : "WorkPrepare returns OVERSIZED status without releasing the lock acquired by IssueDiscovery.findIssueInDir(). The lock is created with an empty worktrees map (worktree path is empty string at acquisition time). On the next work-prepare invocation, IssueLock.acquire() reads the existing lock, finds an empty worktrees map, and throws IOException blocking all subsequent work.",
+    "root_cause" : "In IssueDiscovery.findIssueInDir(), the lock is acquired with an empty worktree path (worktree not yet created). WorkPrepare.execute() then estimates tokens and returns OVERSIZED early — but this return path does not release the lock. The lock file persists with an empty worktrees map, and IssueLock.acquire() treats an empty worktrees map as a corrupt lock (IOException), blocking all subsequent work-prepare invocations for that issue.",
+    "cause_signature" : "tool_limitation:validation_absent:issue_workflow",
+    "prevention_type" : "code_fix",
+    "prevention_path" : "/workspace/client/src/main/java/io/github/cowwoc/cat/hooks/util/WorkPrepare.java",
+    "pattern_keywords" : [ "IssueLock", "worktrees_map", "oversized", "lock_leak", "empty_worktrees", "IOException" ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : "WorkPrepare.execute() must release the lock before returning any early-exit status (OVERSIZED, CORRUPT, etc.) when a lock was acquired by IssueDiscovery. The fix should add lock release in all early-return paths after discovery returns Found, or restructure to not acquire the lock until the worktree is ready to be created."
   } ]
 }
