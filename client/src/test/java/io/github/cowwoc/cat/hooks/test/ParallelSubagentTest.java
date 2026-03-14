@@ -173,7 +173,7 @@ public class ParallelSubagentTest
     // Create .cat structure
     Path catDir = projectDir.resolve(".cat");
     Files.createDirectories(catDir);
-    Files.writeString(catDir.resolve("cat-config.json"), "{}");
+    Files.writeString(catDir.resolve("config.json"), "{}");
 
     // Create version and issues directories
     Path versionDir = catDir.resolve("issues").

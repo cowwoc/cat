@@ -79,7 +79,7 @@ public class ConfigTest
   }
 
   /**
-   * Verifies that Config reads values from cat-config.json when it exists.
+   * Verifies that Config reads values from config.json when it exists.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -92,7 +92,7 @@ public class ConfigTest
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), """
+      Files.writeString(catDir.resolve("config.json"), """
         {
           "trust": "high",
           "verify": "all"
@@ -124,7 +124,7 @@ public class ConfigTest
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), """
+      Files.writeString(catDir.resolve("config.json"), """
         {
           "trust": "low"
         }
@@ -159,7 +159,7 @@ public class ConfigTest
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), "{ invalid json }");
+      Files.writeString(catDir.resolve("config.json"), "{ invalid json }");
 
       Config.load(mapper, tempDir);
     }
@@ -210,7 +210,7 @@ public class ConfigTest
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), """
+      Files.writeString(catDir.resolve("config.json"), """
         {
           "trust": "high",
           "verify": "all",
@@ -237,7 +237,7 @@ public class ConfigTest
 
 
   /**
-   * Verifies that cat-config.local.json overrides values from cat-config.json.
+   * Verifies that config.local.json overrides values from config.json.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -250,12 +250,12 @@ public class ConfigTest
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), """
+      Files.writeString(catDir.resolve("config.json"), """
         {
           "trust": "medium"
         }
         """);
-      Files.writeString(catDir.resolve("cat-config.local.json"), """
+      Files.writeString(catDir.resolve("config.local.json"), """
         {
           "trust": "high"
         }
@@ -303,7 +303,7 @@ public class ConfigTest
   }
 
   /**
-   * Verifies that getOutput returns settings box when a cat-config.json file exists.
+   * Verifies that getOutput returns settings box when a config.json file exists.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -315,7 +315,7 @@ public class ConfigTest
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), """
+      Files.writeString(catDir.resolve("config.json"), """
         {
           "trust": "medium",
           "verify": "changed"
@@ -335,7 +335,7 @@ public class ConfigTest
   }
 
   /**
-   * Verifies that getOutput returns null for settings page when no cat-config.json file exists.
+   * Verifies that getOutput returns null for settings page when no config.json file exists.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -370,7 +370,7 @@ public class ConfigTest
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), "{ invalid json }");
+      Files.writeString(catDir.resolve("config.json"), "{ invalid json }");
 
       GetConfigOutput handler = new GetConfigOutput(scope);
       handler.getOutput(new String[]{"settings"});
@@ -413,7 +413,7 @@ public class ConfigTest
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), """
+      Files.writeString(catDir.resolve("config.json"), """
         {
           "trust": "high"
         }
@@ -442,7 +442,7 @@ public class ConfigTest
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), """
+      Files.writeString(catDir.resolve("config.json"), """
         {
           "trust": "unknown"
         }
@@ -489,7 +489,7 @@ public class ConfigTest
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), """
+      Files.writeString(catDir.resolve("config.json"), """
         {
           "verify": "all"
         }
@@ -518,7 +518,7 @@ public class ConfigTest
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), """
+      Files.writeString(catDir.resolve("config.json"), """
         {
           "verify": "unknown"
         }
@@ -565,7 +565,7 @@ public class ConfigTest
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), """
+      Files.writeString(catDir.resolve("config.json"), """
         {
           "effort": "high"
         }
@@ -593,7 +593,7 @@ public class ConfigTest
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), """
+      Files.writeString(catDir.resolve("config.json"), """
         {
           "effort": "medium"
         }
@@ -623,7 +623,7 @@ public class ConfigTest
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), """
+      Files.writeString(catDir.resolve("config.json"), """
         {
           "effort": "unknown"
         }
@@ -670,7 +670,7 @@ public class ConfigTest
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), """
+      Files.writeString(catDir.resolve("config.json"), """
         {
           "patience": "low"
         }
@@ -700,7 +700,7 @@ public class ConfigTest
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), """
+      Files.writeString(catDir.resolve("config.json"), """
         {
           "patience": "unknown"
         }
@@ -747,7 +747,7 @@ public class ConfigTest
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), """
+      Files.writeString(catDir.resolve("config.json"), """
         {
           "minSeverity": "medium"
         }
@@ -775,7 +775,7 @@ public class ConfigTest
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), """
+      Files.writeString(catDir.resolve("config.json"), """
         {
           "minSeverity": "high"
         }
@@ -803,7 +803,7 @@ public class ConfigTest
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), """
+      Files.writeString(catDir.resolve("config.json"), """
         {
           "minSeverity": "critical"
         }
@@ -832,7 +832,7 @@ public class ConfigTest
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), """
+      Files.writeString(catDir.resolve("config.json"), """
         {
           "minSeverity": "unknown"
         }
@@ -864,7 +864,7 @@ public class ConfigTest
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), """
+      Files.writeString(catDir.resolve("config.json"), """
         {
           "trust": "high",
           "minSeverity": "medium"
@@ -925,7 +925,7 @@ public class ConfigTest
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), """
+      Files.writeString(catDir.resolve("config.json"), """
         {
           "trust": "medium",
           "reviewThreshold": "medium"
@@ -956,7 +956,7 @@ public class ConfigTest
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), """
+      Files.writeString(catDir.resolve("config.json"), """
         {
           "unknownKey": "value"
         }
@@ -981,13 +981,13 @@ public class ConfigTest
   }
 
   /**
-   * Verifies that Config.load() rejects "license" in cat-config.json because it is developer-specific
-   * and must only appear in cat-config.local.json.
+   * Verifies that Config.load() rejects "license" in config.json because it is developer-specific
+   * and must only appear in config.local.json.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*license.*user-specific.*cat-config\\.local\\.json.*")
+    expectedExceptionsMessageRegExp = ".*license.*user-specific.*config\\.local\\.json.*")
   public void configRejectsLicenseInBaseConfig() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
@@ -996,7 +996,7 @@ public class ConfigTest
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), """
+      Files.writeString(catDir.resolve("config.json"), """
         {
           "license": "some-key"
         }
@@ -1011,7 +1011,7 @@ public class ConfigTest
   }
 
   /**
-   * Verifies that Config.load() accepts "license" in cat-config.local.json.
+   * Verifies that Config.load() accepts "license" in config.local.json.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -1024,8 +1024,8 @@ public class ConfigTest
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), "{}");
-      Files.writeString(catDir.resolve("cat-config.local.json"), """
+      Files.writeString(catDir.resolve("config.json"), "{}");
+      Files.writeString(catDir.resolve("config.local.json"), """
         {
           "license": "some-key"
         }
@@ -1089,7 +1089,7 @@ public class ConfigTest
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), """
+      Files.writeString(catDir.resolve("config.json"), """
         {
           "trust": "high",
           "verify": "all"

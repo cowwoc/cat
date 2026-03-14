@@ -200,7 +200,7 @@ public final class CheckDataMigrationTest
       JsonMapper mapper = scope.getJsonMapper();
 
       // Create a config with reviewThreshold (simulating pre-migration state)
-      Path configFile = catDir.resolve("cat-config.json");
+      Path configFile = catDir.resolve("config.json");
       Files.writeString(configFile, """
         {
           "trust": "medium",
@@ -248,7 +248,7 @@ public final class CheckDataMigrationTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Path configFile = catDir.resolve("cat-config.json");
+      Path configFile = catDir.resolve("config.json");
 
       // Pre-migration: config with reviewThreshold
       Files.writeString(configFile, """
@@ -305,7 +305,7 @@ public final class CheckDataMigrationTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Path configFile = catDir.resolve("cat-config.json");
+      Path configFile = catDir.resolve("config.json");
       Files.writeString(configFile, """
         {
           "trust": "medium",

@@ -25,7 +25,7 @@ public final class BlockUnauthorizedMergeCleanupTest
   private static final String SESSION_ID = "test-session";
 
   /**
-   * Writes a cat-config.json with the given trust level to the project directory.
+   * Writes a config.json with the given trust level to the project directory.
    *
    * @param projectDir the project root directory
    * @param trust the trust level ("high", "medium", or "low")
@@ -35,7 +35,7 @@ public final class BlockUnauthorizedMergeCleanupTest
   {
     Path catDir = projectDir.resolve(".cat");
     Files.createDirectories(catDir);
-    Files.writeString(catDir.resolve("cat-config.json"), """
+    Files.writeString(catDir.resolve("config.json"), """
       {"trust": "%s"}
       """.formatted(trust));
   }

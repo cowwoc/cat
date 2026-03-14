@@ -81,7 +81,7 @@ public class LicenseValidatorTest
       {
         Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
-        Files.writeString(catDir.resolve("cat-config.local.json"), """
+        Files.writeString(catDir.resolve("config.local.json"), """
           {
             "license": ""
           }
@@ -721,7 +721,7 @@ public class LicenseValidatorTest
   {
     Path catDir = projectDir.resolve(".cat");
     Files.createDirectories(catDir);
-    Files.writeString(catDir.resolve("cat-config.local.json"),
+    Files.writeString(catDir.resolve("config.local.json"),
       "{\"license\":\"" + token + "\"}");
   }
 }

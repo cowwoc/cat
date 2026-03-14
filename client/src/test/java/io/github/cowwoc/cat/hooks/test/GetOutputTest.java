@@ -42,7 +42,7 @@ public class GetOutputTest
       // Create minimal config for config handler to return non-null
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), "{}");
+      Files.writeString(catDir.resolve("config.json"), "{}");
 
       GetOutput handler = new GetOutput(scope);
       String result = handler.getOutput(new String[]{"config.settings"});
@@ -164,7 +164,7 @@ public class GetOutputTest
       // Create minimal config for config handler
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), "{}");
+      Files.writeString(catDir.resolve("config.json"), "{}");
 
       GetOutput handler = new GetOutput(scope);
       // config.conditions-for-version version pre post
@@ -433,7 +433,7 @@ public class GetOutputTest
       // Create minimal config for config handler
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), "{}");
+      Files.writeString(catDir.resolve("config.json"), "{}");
 
       GetOutput handler = new GetOutput(scope);
       String agentId = UUID.randomUUID() + "/subagents/abc123";

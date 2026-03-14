@@ -62,7 +62,7 @@ public final class CheckDataMigration implements SessionStartHandler
   {
     requireThat(input, "input").isNotNull();
 
-    Path configFile = scope.getCatDir().resolve("cat-config.json");
+    Path configFile = scope.getCatDir().resolve("config.json");
     if (!Files.isRegularFile(configFile))
       return Result.empty();
 

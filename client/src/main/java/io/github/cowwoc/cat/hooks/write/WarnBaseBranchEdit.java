@@ -54,7 +54,7 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
     Config.CAT_DIR_NAME + "/retrospectives/",
     Config.CAT_DIR_NAME + "/migrations/",
     Config.CAT_DIR_NAME + "/.gitignore",
-    Config.CAT_DIR_NAME + "/cat-config",
+    Config.CAT_DIR_NAME + "/config",
     Config.CAT_DIR_NAME + "/VERSION",
     ".claude/rules/",
     "STATE.md",

@@ -38,7 +38,7 @@ public class GetConfigOutputTest
       // Create a minimal config file so getCurrentSettings doesn't return null
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), "{}");
+      Files.writeString(catDir.resolve("config.json"), "{}");
 
       GetConfigOutput handler = new GetConfigOutput(scope);
       String result = handler.getCurrentSettings(tempDir);
@@ -64,7 +64,7 @@ public class GetConfigOutputTest
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), "{\"completionWorkflow\": \"pr\"}");
+      Files.writeString(catDir.resolve("config.json"), "{\"completionWorkflow\": \"pr\"}");
 
       GetConfigOutput handler = new GetConfigOutput(scope);
       String result = handler.getCurrentSettings(tempDir);
@@ -91,7 +91,7 @@ public class GetConfigOutputTest
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), "{}");
+      Files.writeString(catDir.resolve("config.json"), "{}");
 
       GetConfigOutput handler = new GetConfigOutput(scope);
       String result = handler.getCurrentSettings(tempDir);
@@ -117,7 +117,7 @@ public class GetConfigOutputTest
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), "{\"minSeverity\": \"critical\"}");
+      Files.writeString(catDir.resolve("config.json"), "{\"minSeverity\": \"critical\"}");
 
       GetConfigOutput handler = new GetConfigOutput(scope);
       String result = handler.getCurrentSettings(tempDir);
@@ -165,7 +165,7 @@ public class GetConfigOutputTest
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), "{}");
+      Files.writeString(catDir.resolve("config.json"), "{}");
 
       GetConfigOutput handler = new GetConfigOutput(scope);
       String result = handler.getCurrentSettings(tempDir);
@@ -197,7 +197,7 @@ public class GetConfigOutputTest
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), "{\"minSeverity\": \"\"}");
+      Files.writeString(catDir.resolve("config.json"), "{\"minSeverity\": \"\"}");
 
       GetConfigOutput handler = new GetConfigOutput(scope);
       // Empty string should trigger validation error in Config.getMinSeverity
@@ -231,7 +231,7 @@ public class GetConfigOutputTest
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), "{\"minSeverity\": \"  \"}");
+      Files.writeString(catDir.resolve("config.json"), "{\"minSeverity\": \"  \"}");
 
       GetConfigOutput handler = new GetConfigOutput(scope);
       try
@@ -264,7 +264,7 @@ public class GetConfigOutputTest
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), "{\"minSeverity\": \"invalid\"}");
+      Files.writeString(catDir.resolve("config.json"), "{\"minSeverity\": \"invalid\"}");
 
       GetConfigOutput handler = new GetConfigOutput(scope);
       try
@@ -298,7 +298,7 @@ public class GetConfigOutputTest
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"),
+      Files.writeString(catDir.resolve("config.json"),
         "{\"completionWorkflow\": \"pr\", \"minSeverity\": \"medium\"}");
 
       GetConfigOutput handler = new GetConfigOutput(scope);
@@ -328,7 +328,7 @@ public class GetConfigOutputTest
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), "{}");
+      Files.writeString(catDir.resolve("config.json"), "{}");
 
       GetConfigOutput handler = new GetConfigOutput(scope);
       handler.getOutput(new String[]{"invalid-page"});
@@ -354,7 +354,7 @@ public class GetConfigOutputTest
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), "{}");
+      Files.writeString(catDir.resolve("config.json"), "{}");
 
       GetConfigOutput handler = new GetConfigOutput(scope);
       handler.getOutput(new String[]{"conditions-for-version", "v1.0"});
@@ -380,7 +380,7 @@ public class GetConfigOutputTest
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), "{}");
+      Files.writeString(catDir.resolve("config.json"), "{}");
 
       GetConfigOutput handler = new GetConfigOutput(scope);
       handler.getOutput(new String[]{"setting-updated", "trust", "low"});
@@ -406,7 +406,7 @@ public class GetConfigOutputTest
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), "{}");
+      Files.writeString(catDir.resolve("config.json"), "{}");
 
       GetConfigOutput handler = new GetConfigOutput(scope);
       handler.getOutput(new String[]{"conditions-updated", "v1.0"});
@@ -431,7 +431,7 @@ public class GetConfigOutputTest
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), "{}");
+      Files.writeString(catDir.resolve("config.json"), "{}");
 
       GetConfigOutput handler = new GetConfigOutput(scope);
       String result = handler.getOutput(new String[]{"settings"});
@@ -481,7 +481,7 @@ public class GetConfigOutputTest
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), "{}");
+      Files.writeString(catDir.resolve("config.json"), "{}");
 
       GetConfigOutput handler = new GetConfigOutput(scope);
       String result = handler.getCurrentSettings(tempDir);
@@ -507,7 +507,7 @@ public class GetConfigOutputTest
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), "{\"fileWidth\": 80}");
+      Files.writeString(catDir.resolve("config.json"), "{\"fileWidth\": 80}");
 
       GetConfigOutput handler = new GetConfigOutput(scope);
       String result = handler.getCurrentSettings(tempDir);
@@ -533,7 +533,7 @@ public class GetConfigOutputTest
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), "{}");
+      Files.writeString(catDir.resolve("config.json"), "{}");
 
       GetConfigOutput handler = new GetConfigOutput(scope);
       String result = handler.getCurrentSettings(tempDir);
@@ -559,7 +559,7 @@ public class GetConfigOutputTest
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), "{\"displayWidth\": 50}");
+      Files.writeString(catDir.resolve("config.json"), "{\"displayWidth\": 50}");
 
       GetConfigOutput handler = new GetConfigOutput(scope);
       String result = handler.getCurrentSettings(tempDir);
@@ -585,7 +585,7 @@ public class GetConfigOutputTest
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.json"), "{\"fileWidth\": 100, \"displayWidth\": 60}");
+      Files.writeString(catDir.resolve("config.json"), "{\"fileWidth\": 100, \"displayWidth\": 60}");
 
       GetConfigOutput handler = new GetConfigOutput(scope);
       String result = handler.getCurrentSettings(tempDir);
