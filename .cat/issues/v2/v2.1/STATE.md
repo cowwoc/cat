@@ -101,6 +101,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-glob-to-regex-in-work-prepare
 - update-github-actions-versions
 - fix-work-prepare-lock-leak
+- add-double-star-glob-support
 
 
 ## Issues Closed
