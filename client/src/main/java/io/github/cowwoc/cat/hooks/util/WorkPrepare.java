@@ -6,12 +6,16 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
+import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -22,6 +26,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.ExecutionException;
@@ -41,6 +46,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
  */
 public final class WorkPrepare
 {
+  private static final Logger LOG = LoggerFactory.getLogger(WorkPrepare.class);
   /**
    * Matches the status line in STATE.md: {@code - **Status:** open}.
    */
@@ -1722,10 +1728,41 @@ public final class WorkPrepare
    * </ul>
    *
    * @param args command-line arguments
-   * @throws IOException if execution fails
    */
-  public static void main(String[] args) throws IOException
+  public static void main(String[] args)
   {
+    try (MainJvmScope scope = new MainJvmScope())
+    {
+      run(scope, args, System.out);
+    }
+    catch (RuntimeException | AssertionError e)
+    {
+      LOG.error("Unexpected error", e);
+      try (MainJvmScope errorScope = new MainJvmScope())
+      {
+        System.out.println(new HookOutput(errorScope).block(
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+    }
+  }
+
+  /**
+   * Executes the work-prepare logic with a caller-provided output stream.
+   * <p>
+   * Separated from {@link #main(String[])} to allow unit testing without JVM exit.
+   *
+   * @param scope the JVM scope
+   * @param args  command-line arguments
+   * @param out   the output stream to write JSON to
+   * @throws NullPointerException if {@code scope}, {@code args}, or {@code out} are null
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out)
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+
+    HookOutput hookOutput = new HookOutput(scope);
     String sessionIdOverride = "";
     String excludePattern = "";
     String issueId = "";
@@ -1782,37 +1819,27 @@ public final class WorkPrepare
     }
     catch (IllegalArgumentException e)
     {
-      System.out.println("""
-        {
-          "status": "ERROR",
-          "message": "%s"
-        }""".formatted(e.getMessage().replace("\"", "\\\"")));
-      System.exit(1);
+      out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       return;
     }
 
-    try (MainJvmScope scope = new MainJvmScope())
-    {
-      // Use scope-provided session ID if not overridden via --session-id
-      String sessionId;
-      if (!sessionIdOverride.isEmpty())
-        sessionId = sessionIdOverride;
-      else
-        sessionId = scope.getClaudeSessionId();
+    // Use scope-provided session ID if not overridden via --session-id
+    String sessionId;
+    if (!sessionIdOverride.isEmpty())
+      sessionId = sessionIdOverride;
+    else
+      sessionId = scope.getClaudeSessionId();
 
-      PrepareInput input = new PrepareInput(sessionId, excludePattern, issueId, trustLevel);
-      WorkPrepare wp = new WorkPrepare(scope);
-      String result = wp.execute(input);
-      System.out.println(result);
-    }
-    catch (RuntimeException | AssertionError e)
+    PrepareInput input = new PrepareInput(sessionId, excludePattern, issueId, trustLevel);
+    WorkPrepare wp = new WorkPrepare(scope);
+    try
     {
-      System.err.println("""
-        {
-          "status": "ERROR",
-          "message": "Unexpected error: %s"
-        }""".formatted(e.getMessage().replace("\"", "\\\"")));
-      System.exit(1);
+      String result = wp.execute(input);
+      out.println(result);
+    }
+    catch (IOException e)
+    {
+      out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 

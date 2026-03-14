@@ -10,6 +10,7 @@ import static io.github.cowwoc.cat.hooks.util.GitCommands.runGit;
 import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandSingleLineInDirectory;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import tools.jackson.databind.node.ObjectNode;
@@ -17,8 +18,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.io.PrintStream;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -214,7 +217,7 @@ public final class GitMergeLinear
         String line = reader.readLine();
         while (line != null)
         {
-          if (output.length() > 0)
+          if (!output.isEmpty())
             output.append('\n');
           output.append(line);
           line = reader.readLine();
@@ -277,18 +280,48 @@ public final class GitMergeLinear
    * Main method for command-line execution.
    *
    * @param args command-line arguments
-   * @throws IOException if the operation fails
    */
-  public static void main(String[] args) throws IOException
+  public static void main(String[] args)
   {
+    try (JvmScope scope = new MainJvmScope())
+    {
+      run(scope, args, System.out);
+    }
+    catch (RuntimeException | AssertionError e)
+    {
+      Logger log = LoggerFactory.getLogger(GitMergeLinear.class);
+      log.error("Unexpected error", e);
+      try (MainJvmScope errorScope = new MainJvmScope())
+      {
+        System.out.println(new HookOutput(errorScope).block(
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+    }
+  }
+
+  /**
+   * Executes the git-merge-linear logic with a caller-provided output stream.
+   * <p>
+   * Separated from {@link #main(String[])} to allow unit testing without JVM exit.
+   * IOException is converted to a block response on {@code out}.
+   *
+   * @param scope the JVM scope
+   * @param args  command-line arguments
+   * @param out   the output stream to write JSON to
+   * @throws NullPointerException if {@code scope}, {@code args}, or {@code out} are null
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out)
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+
+    HookOutput hookOutput = new HookOutput(scope);
     if (args.length == 0)
     {
-      System.err.println("""
-        {
-          "status": "error",
-          "message": "Usage: git-merge-linear <issue-branch> --target <branch>"
-        }""");
-      System.exit(1);
+      out.println(hookOutput.block(
+        "Usage: git-merge-linear <issue-branch> --target <branch>"));
+      return;
     }
 
     String sourceBranch = args[0];
@@ -303,49 +336,28 @@ public final class GitMergeLinear
       }
       else
       {
-        System.err.println("""
-          {
-            "status": "error",
-            "message": "Unknown argument: %s"
-          }""".formatted(args[i]));
-        System.exit(1);
+        out.println(hookOutput.block("Unknown argument: " + args[i]));
+        return;
       }
     }
 
     if (targetBranch.isEmpty())
     {
-      System.err.println("""
-        {
-          "status": "error",
-          "message": "Missing required argument: --target <branch>. \
-Usage: git-merge-linear <issue-branch> --target <branch>"
-        }""");
-      System.exit(1);
+      out.println(hookOutput.block(
+        "Missing required argument: --target <branch>. " +
+        "Usage: git-merge-linear <issue-branch> --target <branch>"));
+      return;
     }
 
-    try (JvmScope scope = new MainJvmScope())
+    GitMergeLinear cmd = new GitMergeLinear(scope, ".");
+    try
     {
-      GitMergeLinear cmd = new GitMergeLinear(scope, ".");
-      try
-      {
-        String result = cmd.execute(sourceBranch, targetBranch);
-        System.out.println(result);
-      }
-      catch (IOException e)
-      {
-        System.err.println("""
-          {
-            "status": "error",
-            "message": "%s"
-          }""".formatted(e.getMessage().replace("\"", "\\\"")));
-        System.exit(1);
-      }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(GitMergeLinear.class);
-      log.error("Unexpected error", e);
-      throw e;
+      String result = cmd.execute(sourceBranch, targetBranch);
+      out.println(result);
     }
+    catch (IOException e)
+    {
+      out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 }

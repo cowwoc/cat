@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.hooks.util;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.Strings;
@@ -18,6 +19,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 
 /**
  * Installs the CAT statusline configuration.
@@ -176,21 +178,19 @@ public final class StatuslineInstall
    */
   public static void main(String[] args)
   {
-    if (args.length < 2)
-    {
-      System.err.println("""
-        {
-          "status": "ERROR",
-          "message": "Usage: statusline-install <projectDir> <pluginRoot>"
-        }""");
-      System.exit(1);
-    }
-
-    Path projectDir = Path.of(args[0]);
-    Path pluginRoot = Path.of(args[1]);
-
     try (JvmScope scope = new MainJvmScope())
     {
+      HookOutput hookOutput = new HookOutput(scope);
+      if (args.length < 2)
+      {
+        System.out.println(hookOutput.block(
+          "Usage: statusline-install <projectDir> <pluginRoot>"));
+        return;
+      }
+
+      Path projectDir = Path.of(args[0]);
+      Path pluginRoot = Path.of(args[1]);
+
       StatuslineInstall installer = new StatuslineInstall(scope);
       try
       {
@@ -199,12 +199,7 @@ public final class StatuslineInstall
       }
       catch (IOException e)
       {
-        System.err.println("""
-          {
-            "status": "ERROR",
-            "message": "%s"
-          }""".formatted(Strings.escapeJson(e.getMessage())));
-        System.exit(1);
+        System.out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
   }

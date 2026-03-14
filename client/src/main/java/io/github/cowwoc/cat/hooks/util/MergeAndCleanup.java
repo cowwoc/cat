@@ -11,6 +11,7 @@ import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandSingleLin
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.Config;
+import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import org.slf4j.Logger;
@@ -23,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 /**
  * Merge issue branch and clean up worktree, branch, and lock.
@@ -436,34 +438,31 @@ public final class MergeAndCleanup
    */
   public static void main(String[] args) throws IOException
   {
-    if (args.length < 4)
-    {
-      System.err.println("""
-        {
-          "status": "error",
-          "message": "Usage: merge-and-cleanup <project-dir> <issue-id> <session-id> <target-branch> \\
-[--worktree <path>]"
-        }""");
-      System.exit(1);
-    }
-
-    String projectDir = args[0];
-    String issueId = args[1];
-    String sessionId = args[2];
-    String targetBranch = args[3];
-    String worktreePath = "";
-
-    for (int i = 4; i < args.length; ++i)
-    {
-      if (args[i].equals("--worktree") && i + 1 < args.length)
-      {
-        worktreePath = args[i + 1];
-        ++i;
-      }
-    }
-
     try (JvmScope scope = new MainJvmScope())
     {
+      HookOutput hookOutput = new HookOutput(scope);
+      if (args.length < 4)
+      {
+        System.out.println(hookOutput.block(
+          "Usage: merge-and-cleanup <project-dir> <issue-id> <session-id> <target-branch> [--worktree <path>]"));
+        return;
+      }
+
+      String projectDir = args[0];
+      String issueId = args[1];
+      String sessionId = args[2];
+      String targetBranch = args[3];
+      String worktreePath = "";
+
+      for (int i = 4; i < args.length; ++i)
+      {
+        if (args[i].equals("--worktree") && i + 1 < args.length)
+        {
+          worktreePath = args[i + 1];
+          ++i;
+        }
+      }
+
       String pluginRoot = scope.getClaudePluginRoot().toString();
       MergeAndCleanup cmd = new MergeAndCleanup(scope);
       try
@@ -473,19 +472,18 @@ public final class MergeAndCleanup
       }
       catch (IOException e)
       {
-        System.err.println("""
-          {
-            "status": "error",
-            "message": "%s"
-          }""".formatted(e.getMessage().replace("\"", "\\\"")));
-        System.exit(1);
+        System.out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
     catch (RuntimeException | AssertionError e)
     {
       Logger log = LoggerFactory.getLogger(MergeAndCleanup.class);
       log.error("Unexpected error", e);
-      throw e;
+      try (MainJvmScope errorScope = new MainJvmScope())
+      {
+        System.out.println(new HookOutput(errorScope).block(
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
     }
   }
 }

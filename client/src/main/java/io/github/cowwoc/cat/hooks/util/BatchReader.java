@@ -8,6 +8,8 @@ package io.github.cowwoc.cat.hooks.util;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.HookOutput;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
@@ -15,6 +17,7 @@ import tools.jackson.databind.node.ObjectNode;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,6 +25,7 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Batch file search and read utility.
@@ -150,18 +154,39 @@ public final class BatchReader
    * Usage: {@code batch-read <pattern> [--max-files N] [--context-lines N] [--file-type TYPE]}
    *
    * @param args command-line arguments
-   * @throws IOException if file operations fail
    */
-  public static void main(String[] args) throws IOException
+  public static void main(String[] args)
   {
+    try (MainJvmScope scope = new MainJvmScope())
+    {
+      run(scope, args, System.out);
+    }
+  }
+
+  /**
+   * Executes the batch-read logic with a caller-provided output stream.
+   * <p>
+   * Separated from {@link #main(String[])} to allow unit testing without JVM exit.
+   * IOException from file operations is converted to a block response on {@code out}.
+   *
+   * @param scope the JVM scope
+   * @param args  command-line arguments
+   * @param out   the output stream to write output to
+   * @throws NullPointerException if {@code scope}, {@code args}, or {@code out} are null
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out)
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+
+    HookOutput hookOutput = new HookOutput(scope);
+
     if (args.length < 1)
     {
-      System.err.println("""
-        {
-          "status": "ERROR",
-          "message": "Usage: batch-read <pattern> [--max-files N] [--context-lines N] [--file-type TYPE]"
-        }""");
-      System.exit(1);
+      out.println(hookOutput.block(
+        "Usage: batch-read <pattern> [--max-files N] [--context-lines N] [--file-type TYPE]"));
+      return;
     }
 
     String pattern = args[0];
@@ -184,8 +209,9 @@ public final class BatchReader
           }
           catch (IllegalArgumentException e)
           {
-            System.err.println(e.getMessage());
-            System.exit(1);
+            out.println(hookOutput.block(
+              Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+            return;
           }
         }
         case "--context-lines" ->
@@ -197,8 +223,9 @@ public final class BatchReader
           }
           catch (IllegalArgumentException e)
           {
-            System.err.println(e.getMessage());
-            System.exit(1);
+            out.println(hookOutput.block(
+              Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+            return;
           }
         }
         case "--file-type" ->
@@ -214,25 +241,27 @@ public final class BatchReader
     }
 
     Config config = new Config(pattern, maxFiles, contextLines, fileType);
-    Result result = read(config);
+    Result result;
+    try
+    {
+      result = read(config);
+    }
+    catch (IOException e)
+    {
+      out.println(hookOutput.block(
+        Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      return;
+    }
 
-    // Print file contents to stdout for consumption
     if (result.status() == OperationStatus.SUCCESS)
-      System.out.print(result.outputContent());
-
-    // Print JSON metadata to stderr for diagnostics
-    try (MainJvmScope scope = new MainJvmScope())
     {
-      System.err.println(result.toJson(scope.getJsonMapper()));
+      // Print file contents to stdout for consumption
+      out.print(result.outputContent());
     }
-    catch (RuntimeException | AssertionError e)
+    else
     {
-      System.err.println("{\"status\": \"ERROR\", \"message\": \"" +
-        e.getMessage().replace("\"", "\\\"") + "\"}");
+      out.println(hookOutput.block(result.message()));
     }
-
-    if (result.status() != OperationStatus.SUCCESS)
-      System.exit(1);
   }
 
   /**

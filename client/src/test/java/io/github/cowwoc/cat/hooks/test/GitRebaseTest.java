@@ -162,7 +162,7 @@ public class GitRebaseTest
   }
 
   /**
-   * Verifies that rebase fails with ERROR when target branch is not provided.
+   * Verifies that rebase fails with a block response when target branch is not provided.
    */
   @Test
   public void executeFailsWhenTargetBranchAbsent() throws IOException
@@ -175,8 +175,8 @@ public class GitRebaseTest
         GitRebase cmd = new GitRebase(scope, repoDir);
         String result = cmd.execute("");
 
-        requireThat(result, "result").contains("\"status\"");
-        requireThat(result, "result").contains("\"ERROR\"");
+        requireThat(result, "result").contains("\"decision\"");
+        requireThat(result, "result").contains("\"block\"");
         requireThat(result, "result").contains("TARGET_BRANCH is required");
       }
       finally
@@ -771,11 +771,11 @@ public class GitRebaseTest
   }
 
   /**
-   * Verifies that rebase fails with ERROR when the target branch renames a tracked path that still exists
-   * in the current branch.
+   * Verifies that rebase fails with a block response when the target branch renames a tracked path that still
+   * exists in the current branch.
    * <p>
    * Scenario: main renames {@code .claude/cat/} to {@code .cat/} via {@code git mv}. Feature branch still
-   * tracks {@code .claude/cat/config.json} (the old path). The rebase should fail with ERROR before creating
+   * tracks {@code .claude/cat/config.json} (the old path). The rebase should fail before creating
    * a backup, reporting the old path as a tracked-path conflict.
    */
   @Test
@@ -810,8 +810,8 @@ public class GitRebaseTest
         GitRebase cmd = new GitRebase(scope, repoDir);
         String result = cmd.execute("main");
 
-        requireThat(result, "result").contains("\"status\"");
-        requireThat(result, "result").contains("\"ERROR\"");
+        requireThat(result, "result").contains("\"decision\"");
+        requireThat(result, "result").contains("\"block\"");
         requireThat(result, "result").contains(".claude/cat");
       }
       finally
@@ -822,13 +822,13 @@ public class GitRebaseTest
   }
 
   /**
-   * Verifies that rebase fails with ERROR when the current branch has file content referencing a path that
-   * was renamed on the target branch.
+   * Verifies that rebase fails with a block response when the current branch has file content referencing a
+   * path that was renamed on the target branch.
    * <p>
    * Scenario: main adds and renames {@code .claude/cat/} to {@code .cat/}. Feature branch (forked before
    * the rename) has only {@code skill.md} containing the text {@code .claude/cat} — the old tracked config
    * file is removed from the feature branch so only the content reference remains. The rebase should fail
-   * with ERROR before creating a backup, reporting {@code skill.md} and the old path {@code .claude/cat}.
+   * before creating a backup, reporting {@code skill.md} and the old path {@code .claude/cat}.
    */
   @Test
   public void executeFailsWhenCurrentBranchHasContentReferencingRenamedPath() throws IOException
@@ -864,8 +864,8 @@ public class GitRebaseTest
         GitRebase cmd = new GitRebase(scope, repoDir);
         String result = cmd.execute("main");
 
-        requireThat(result, "result").contains("\"status\"");
-        requireThat(result, "result").contains("\"ERROR\"");
+        requireThat(result, "result").contains("\"decision\"");
+        requireThat(result, "result").contains("\"block\"");
         requireThat(result, "result").contains("skill.md");
         requireThat(result, "result").contains(".claude/cat");
       }
@@ -966,8 +966,8 @@ public class GitRebaseTest
         GitRebase cmd = new GitRebase(scope, repoDir);
         String result = cmd.execute("main");
 
-        // Should NOT return ERROR — the feature branch already handled the rename
-        requireThat(result, "result").doesNotContain("\"ERROR\"");
+        // Should NOT return a block response — the feature branch already handled the rename
+        requireThat(result, "result").doesNotContain("\"block\"");
       }
       finally
       {

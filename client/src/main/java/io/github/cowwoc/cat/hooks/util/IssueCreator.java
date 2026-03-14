@@ -10,6 +10,9 @@ import static io.github.cowwoc.cat.hooks.util.GitCommands.runGit;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.Config;
+import io.github.cowwoc.cat.hooks.HookOutput;
+import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
@@ -18,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 /**
  * Creates CAT issue directory structure with STATE.md, PLAN.md, and git commit.
@@ -203,40 +207,35 @@ public final class IssueCreator
    */
   public static void main(String[] args) throws IOException
   {
-    String jsonInput;
-    if (args.length == 2 && args[0].equals("--json"))
+    try (JvmScope scope = new MainJvmScope())
     {
-      jsonInput = args[1];
-    }
-    else if (args.length == 0)
-    {
-      jsonInput = new String(System.in.readAllBytes(), StandardCharsets.UTF_8);
-    }
-    else
-    {
-      System.err.println("""
-        {
-          "status": "error",
-          "message": "Usage: create-issue [--json <json-string>] (or read from stdin)"
-        }""");
-      System.exit(1);
-      return;
-    }
+      HookOutput hookOutput = new HookOutput(scope);
+      String jsonInput;
+      if (args.length == 2 && args[0].equals("--json"))
+      {
+        jsonInput = args[1];
+      }
+      else if (args.length == 0)
+      {
+        jsonInput = new String(System.in.readAllBytes(), StandardCharsets.UTF_8);
+      }
+      else
+      {
+        System.out.println(hookOutput.block(
+          "Usage: create-issue [--json <json-string>] (or read from stdin)"));
+        return;
+      }
 
-    IssueCreator creator = new IssueCreator();
-    try
-    {
-      String result = creator.execute(jsonInput);
-      System.out.println(result);
-    }
-    catch (IOException e)
-    {
-      System.err.println("""
-        {
-          "status": "error",
-          "message": "%s"
-        }""".formatted(e.getMessage().replace("\"", "\\\"")));
-      System.exit(1);
+      IssueCreator creator = new IssueCreator();
+      try
+      {
+        String result = creator.execute(jsonInput);
+        System.out.println(result);
+      }
+      catch (IOException e)
+      {
+        System.out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
     }
   }
 }

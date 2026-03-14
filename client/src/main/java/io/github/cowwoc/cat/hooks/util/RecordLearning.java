@@ -11,6 +11,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.ClaudeEnv;
 import io.github.cowwoc.cat.hooks.Config;
+import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.Strings;
@@ -23,10 +24,13 @@ import tools.jackson.databind.node.ObjectNode;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -540,10 +544,44 @@ public final class RecordLearning
    * Reads Phase 3 JSON from stdin and writes the JSON result to stdout.
    *
    * @param args command-line arguments (none required)
-   * @throws IOException if the operation fails
    */
-  public static void main(String[] args) throws IOException
+  public static void main(String[] args)
   {
+    try (MainJvmScope scope = new MainJvmScope())
+    {
+      run(scope, System.in, System.out);
+    }
+    catch (RuntimeException | AssertionError e)
+    {
+      Logger log = LoggerFactory.getLogger(RecordLearning.class);
+      log.error("Unexpected error", e);
+      try (MainJvmScope errorScope = new MainJvmScope())
+      {
+        System.out.println(new HookOutput(errorScope).block(
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+    }
+  }
+
+  /**
+   * Executes the record-learning logic with caller-provided streams.
+   * <p>
+   * Separated from {@link #main(String[])} to allow unit testing without JVM exit.
+   * IOException is converted to a block response on {@code out}.
+   *
+   * @param scope the JVM scope
+   * @param in    the input stream to read Phase 3 JSON from
+   * @param out   the output stream to write JSON to
+   * @throws NullPointerException if {@code scope}, {@code in}, or {@code out} are null
+   */
+  public static void run(JvmScope scope, InputStream in, PrintStream out)
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(in, "in").isNotNull();
+    requireThat(out, "out").isNotNull();
+
+    HookOutput hookOutput = new HookOutput(scope);
+
     String projectDirStr;
     try
     {
@@ -558,19 +596,15 @@ public final class RecordLearning
       }
       catch (IOException _)
       {
-        System.err.println("""
-          {
-            "status": "error",
-            "message": "CLAUDE_PROJECT_DIR is not set and git rev-parse --show-toplevel failed"
-          }""");
-        System.exit(1);
+        out.println(hookOutput.block(
+          "CLAUDE_PROJECT_DIR is not set and git rev-parse --show-toplevel failed"));
         return;
       }
     }
 
     String stdinJson;
     try (BufferedReader reader = new BufferedReader(
-      new InputStreamReader(System.in, StandardCharsets.UTF_8)))
+      new InputStreamReader(in, StandardCharsets.UTF_8)))
     {
       StringBuilder sb = new StringBuilder();
       String line = reader.readLine();
@@ -581,59 +615,44 @@ public final class RecordLearning
       }
       stdinJson = sb.toString().strip();
     }
+    catch (IOException e)
+    {
+      out.println(hookOutput.block(
+        "Failed to read stdin: " + Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      return;
+    }
 
     if (stdinJson.isEmpty())
     {
-      System.err.println("""
-        {
-          "status": "error",
-          "message": "No input provided on stdin. Expected Phase 3 JSON."
-        }""");
-      System.exit(1);
+      out.println(hookOutput.block("No input provided on stdin. Expected Phase 3 JSON."));
+      return;
     }
 
-    try (JvmScope scope = new MainJvmScope())
+    ObjectNode phase3Input;
+    try
     {
-      ObjectNode phase3Input;
-      try
-      {
-        phase3Input = (ObjectNode) scope.getJsonMapper().readTree(stdinJson);
-      }
-      catch (Exception e)
-      {
-        System.err.println("""
-          {
-            "status": "error",
-            "message": "Failed to parse stdin as JSON: %s"
-          }""".formatted(e.getMessage().replace("\"", "\\\"")));
-        System.exit(1);
-        return;
-      }
+      phase3Input = (ObjectNode) scope.getJsonMapper().readTree(stdinJson);
+    }
+    catch (Exception e)
+    {
+      out.println(hookOutput.block(
+        "Failed to parse stdin as JSON: " + Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      return;
+    }
 
-      Path projectDir = Path.of(projectDirStr);
-      String sessionId = new ClaudeEnv().getClaudeSessionId();
-      RecordLearning cmd = new RecordLearning(scope, projectDir, Clock.systemUTC());
+    Path projectDir = Path.of(projectDirStr);
+    String sessionId = new ClaudeEnv().getClaudeSessionId();
+    RecordLearning cmd = new RecordLearning(scope, projectDir, Clock.systemUTC());
 
-      try
-      {
-        String result = cmd.execute(phase3Input, sessionId);
-        System.out.println(result);
-      }
-      catch (IOException e)
-      {
-        System.err.println("""
-          {
-            "status": "error",
-            "message": "%s"
-          }""".formatted(e.getMessage().replace("\"", "\\\"")));
-        System.exit(1);
-      }
-      catch (RuntimeException | AssertionError e)
-      {
-        Logger log = LoggerFactory.getLogger(RecordLearning.class);
-        log.error("Unexpected error", e);
-        throw e;
-      }
+    try
+    {
+      String result = cmd.execute(phase3Input, sessionId);
+      out.println(result);
+    }
+    catch (IOException e)
+    {
+      out.println(hookOutput.block(
+        Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 }

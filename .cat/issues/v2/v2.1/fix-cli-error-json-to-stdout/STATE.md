@@ -1,25 +1,27 @@
 # State
 
 - **Status:** closed
+- **Resolution:** implemented
 - **Progress:** 100%
 - **Dependencies:** []
 - **Blocks:** []
-- **Resolution:** implemented
+- **Target Branch:** v2.1
 
-## Implementation Summary
+## Completion Notes
 
-**Updated 22 CLI tool main() methods to convert RuntimeException/AssertionError to HookOutput JSON.**
+Fixed all stakeholder review concerns (iteration 3 - final):
 
-All CLI tools invoked by skills now properly handle unexpected exceptions by:
-1. Catching RuntimeException and AssertionError in main() methods
-2. Logging the error for debugging
-3. Converting to HookOutput.block() JSON response
-4. Writing to stdout with exit code 0 for proper skill JSON parsing
+**CRITICAL concerns:**
+- Fixed e.getMessage() null risk in 10 files (GitAmend, Feedback, GitRebase, GitSquash, GitMergeLinear, HookRegistrar, IssueCreator, MergeAndCleanup, StatuslineInstall, GetSubagentStatusOutput) using Objects.toString() fallback
+- Moved RuntimeException|AssertionError catch from WorkPrepare.run() to main() to match established pattern
 
-This ensures skills receive structured JSON error responses instead of unhandled exceptions or malformed output.
+**HIGH concerns:**
+- Replaced GitSquash.handleRebaseFailure() ERROR branch custom JSON with HookOutput.block() for consistent format
+- Extracted run(JvmScope, String[], PrintStream) methods from GitAmend, GitRebase, GitSquash, GitMergeLinear main() methods
+- Created 4 new test classes with parameter validation and error handling tests (GitAmendMainTest, GitRebaseMainTest, GitSquashMainTest, GitMergeLinearMainTest)
 
-**Files modified:**
-- 22 Java CLI tools (hooks and skills) main() methods
-- .claude/rules/hooks.md - Added pattern documentation for error handling in main()
+**MEDIUM concerns:**
+- Renamed GitRebase buildErrorJson() → buildBlockResponse() and buildContentChangedErrorJson() → buildContentChangedBlockResponse()
+- Strengthened WorkPrepareMainTest.noArgsProducesJsonOutputOnStdout assertion to verify output structure
 
-**Test results:** All 2431 tests pass with no regressions
+All 2429 tests pass (2425 existing + 4 new test classes)

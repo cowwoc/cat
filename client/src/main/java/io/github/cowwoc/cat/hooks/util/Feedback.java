@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.hooks.util;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import tools.jackson.databind.JsonNode;
@@ -23,6 +24,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.StringJoiner;
 
 /**
@@ -270,28 +272,13 @@ public final class Feedback
   }
 
   /**
-   * Prints an error JSON message to stderr and exits with code 1.
-   *
-   * @param message the error message
-   */
-  @SuppressWarnings("PMD.DoNotTerminateVM")
-  private static void exitWithError(String message)
-  {
-    System.err.println("""
-      {
-        "status": "error",
-        "message": "%s"
-      }""".formatted(message.replace("\"", "\\\"")));
-    System.exit(1);
-  }
-
-  /**
    * Runs the "search" subcommand.
    *
    * @param feedback the feedback instance
+   * @param hookOutput the hook output helper for writing block responses
    * @param args the command-line arguments
    */
-  private static void runSearch(Feedback feedback, String[] args)
+  private static void runSearch(Feedback feedback, HookOutput hookOutput, String[] args)
   {
     String query = args[1];
     try
@@ -301,7 +288,7 @@ public final class Feedback
     }
     catch (IOException e)
     {
-      exitWithError(e.getMessage());
+      System.out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 
@@ -309,13 +296,14 @@ public final class Feedback
    * Runs the "open" subcommand.
    *
    * @param feedback the feedback instance
+   * @param hookOutput the hook output helper for writing block responses
    * @param args the command-line arguments
    */
-  private static void runOpen(Feedback feedback, String[] args)
+  private static void runOpen(Feedback feedback, HookOutput hookOutput, String[] args)
   {
     if (args.length < 3)
     {
-      exitWithError("Usage: feedback open <title> <body> [labels]");
+      System.out.println(hookOutput.block("Usage: feedback open <title> <body> [labels]"));
       return;
     }
     String title = args[1];
@@ -339,7 +327,7 @@ public final class Feedback
     catch (IOException e)
     {
       // openIssue() only throws IOException for JSON serialization failures, not browser errors
-      exitWithError(e.getMessage());
+      System.out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 
@@ -357,29 +345,26 @@ public final class Feedback
    */
   public static void main(String[] args) throws IOException
   {
-    if (args.length < 2)
-    {
-      System.err.println("""
-        {
-          "status": "error",
-          "message": "Usage: feedback search <query> | feedback open <title> <body> [labels]"
-        }""");
-      System.exit(1);
-      return;
-    }
-
-    String subcommand = args[0];
-
     try (JvmScope scope = new MainJvmScope())
     {
+      HookOutput hookOutput = new HookOutput(scope);
+      if (args.length < 2)
+      {
+        System.out.println(hookOutput.block(
+          "Usage: feedback search <query> | feedback open <title> <body> [labels]"));
+        return;
+      }
+
+      String subcommand = args[0];
+
       Feedback feedback = new Feedback(scope);
 
       switch (subcommand)
       {
-        case "search" -> runSearch(feedback, args);
-        case "open" -> runOpen(feedback, args);
-        default -> exitWithError(
-          "Unknown subcommand: %s. Use 'search' or 'open'.".formatted(subcommand));
+        case "search" -> runSearch(feedback, hookOutput, args);
+        case "open" -> runOpen(feedback, hookOutput, args);
+        default -> System.out.println(hookOutput.block(
+          "Unknown subcommand: %s. Use 'search' or 'open'.".formatted(subcommand)));
       }
     }
   }
