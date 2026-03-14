@@ -74,7 +74,7 @@ public final class GetConfigOutput implements SkillOutput
   {
     requireThat(projectRoot, "projectRoot").isNotNull();
 
-    Path configFile = projectRoot.resolve(Config.CAT_DIR_NAME).resolve("cat-config.json");
+    Path configFile = projectRoot.resolve(Config.CAT_DIR_NAME).resolve("config.json");
     if (!Files.exists(configFile))
       return null;
 
@@ -230,7 +230,7 @@ public final class GetConfigOutput implements SkillOutput
       "CONFIGURATION SAVED",
       List.of(
         "",
-        "Changes committed to cat-config.json"));
+        "Changes committed to config.json"));
   }
 
   /**
@@ -251,7 +251,7 @@ public final class GetConfigOutput implements SkillOutput
   /**
    * Get the effective configuration as JSON with all defaults applied.
    * <p>
-   * Loads {@code cat-config.json} and {@code cat-config.local.json}, merges them with defaults,
+   * Loads {@code config.json} and {@code config.local.json}, merges them with defaults,
    * and returns the effective configuration as a JSON object. This eliminates the need for agents
    * to parse config files with {@code grep}/{@code sed} and figure out default values for missing entries.
    *

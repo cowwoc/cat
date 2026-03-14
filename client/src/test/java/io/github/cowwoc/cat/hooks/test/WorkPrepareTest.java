@@ -33,7 +33,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public class WorkPrepareTest
 {
   /**
-   * Verifies that execute returns ERROR when the project has no .cat/cat-config.json.
+   * Verifies that execute returns ERROR when the project has no .cat/config.json.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -52,7 +52,7 @@ public class WorkPrepareTest
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("ERROR");
       requireThat(node.path("message").asString(), "message").
-        contains("cat-config.json");
+        contains("config.json");
     }
     finally
     {
@@ -1083,7 +1083,7 @@ public class WorkPrepareTest
       Path projectDir = Files.createTempDirectory("work-prepare-test");
       Path catDir = projectDir.resolve(".cat");
       Files.createDirectories(catDir.resolve("issues"));
-      Files.writeString(catDir.resolve("cat-config.json"), "{}");
+      Files.writeString(catDir.resolve("config.json"), "{}");
       return projectDir;
     }
     catch (IOException e)
@@ -1106,7 +1106,7 @@ public class WorkPrepareTest
     // Add CAT structure
     Path catDir = projectDir.resolve(".cat");
     Files.createDirectories(catDir.resolve("issues"));
-    Files.writeString(catDir.resolve("cat-config.json"), "{}");
+    Files.writeString(catDir.resolve("config.json"), "{}");
 
     // Commit the CAT structure so worktrees have it
     GitCommands.runGit(projectDir, "add", ".");

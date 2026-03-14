@@ -932,7 +932,7 @@ public class SessionStartHookTest
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
     try
     {
-      // No cat-config.json in projectDir → handler returns empty
+      // No config.json in projectDir → handler returns empty
       try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot))
       {
         JsonMapper mapper = scope.getJsonMapper();

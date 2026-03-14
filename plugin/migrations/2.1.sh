@@ -37,6 +37,7 @@ set -euo pipefail
 #     (closed issues are not modified)
 # 15. Rename ## Execution Waves → ## Sub-Agent Waves in PLAN.md files
 #     (all issues, including closed ones)
+# 16. Rename cat-config.json → config.json and cat-config.local.json → config.local.json
 
 trap 'echo "ERROR in 2.1.sh at line $LINENO: $BASH_COMMAND" >&2; exit 1' ERR
 
@@ -1170,6 +1171,50 @@ else
     done <<< "$all_plan_files"
 
     log_migration "Phase 15 complete: $phase15_migrated files migrated, $phase15_skipped already up to date"
+fi
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase 16: Rename cat-config.json → config.json and cat-config.local.json → config.local.json
+# ──────────────────────────────────────────────────────────────────────────────
+
+log_migration "Phase 16: Rename cat-config.json → config.json and cat-config.local.json → config.local.json"
+
+cat_dir=".cat"
+
+if [[ ! -d "$cat_dir" ]]; then
+    log_migration "No .cat/ directory found - skipping phase 16"
+else
+    phase16_changed=0
+
+    if [[ -f "${cat_dir}/cat-config.json" ]] && [[ ! -f "${cat_dir}/config.json" ]]; then
+        mv "${cat_dir}/cat-config.json" "${cat_dir}/config.json"
+        ((phase16_changed++)) || true
+        log_migration "  Renamed: ${cat_dir}/cat-config.json → ${cat_dir}/config.json"
+    elif [[ -f "${cat_dir}/cat-config.json" ]] && [[ -f "${cat_dir}/config.json" ]]; then
+        log_migration "  Skipped: both ${cat_dir}/cat-config.json and ${cat_dir}/config.json exist - manual resolution required"
+    else
+        log_migration "  Skipped: ${cat_dir}/cat-config.json already absent"
+    fi
+
+    if [[ -f "${cat_dir}/cat-config.local.json" ]] && [[ ! -f "${cat_dir}/config.local.json" ]]; then
+        mv "${cat_dir}/cat-config.local.json" "${cat_dir}/config.local.json"
+        ((phase16_changed++)) || true
+        log_migration "  Renamed: ${cat_dir}/cat-config.local.json → ${cat_dir}/config.local.json"
+    elif [[ -f "${cat_dir}/cat-config.local.json" ]] && [[ -f "${cat_dir}/config.local.json" ]]; then
+        log_migration "  Skipped: both ${cat_dir}/cat-config.local.json and ${cat_dir}/config.local.json exist - manual resolution required"
+    else
+        log_migration "  Skipped: ${cat_dir}/cat-config.local.json already absent"
+    fi
+
+    # Update .gitignore to replace cat-config.local.json pattern with config.local.json
+    gitignore_path="${cat_dir}/.gitignore"
+    if [[ -f "$gitignore_path" ]] && grep -qF "cat-config.local.json" "$gitignore_path" 2>/dev/null; then
+        sed -i 's/cat-config\.local\.json/config.local.json/g' "$gitignore_path"
+        ((phase16_changed++)) || true
+        log_migration "  Updated: ${gitignore_path} — replaced cat-config.local.json with config.local.json"
+    fi
+
+    log_migration "Phase 16 complete: $phase16_changed files changed"
 fi
 
 log_success "Migration to 2.1 completed"

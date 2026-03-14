@@ -199,7 +199,7 @@ public final class WorkPrepare
     {
       return mapper.writeValueAsString(Map.of(
         "status", "ERROR",
-        "message", "No .cat/ directory or cat-config.json found"));
+        "message", "No .cat/ directory or config.json found"));
     }
 
     // Step 2: Find available issue
@@ -585,7 +585,7 @@ public final class WorkPrepare
   private boolean verifyCatStructure()
   {
     Path catDir = scope.getCatDir();
-    Path configFile = catDir.resolve("cat-config.json");
+    Path configFile = catDir.resolve("config.json");
     return Files.isDirectory(catDir) && Files.isRegularFile(configFile);
   }
 

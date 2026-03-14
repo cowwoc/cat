@@ -426,7 +426,7 @@ public class HandlerOutputTest
       {
         Path catDir = tempDir.resolve(".cat");
         Files.createDirectories(catDir);
-        Path configFile = catDir.resolve("cat-config.json");
+        Path configFile = catDir.resolve("config.json");
         Files.writeString(configFile, """
           {
             "trust": "high",

@@ -29,8 +29,8 @@ import tools.jackson.databind.json.JsonMapper;
  *
  * Implements three-layer config loading:
  * 1. Defaults (hardcoded)
- * 2. cat-config.json (project settings)
- * 3. cat-config.local.json (user overrides, gitignored)
+ * 2. config.json (project settings)
+ * 3. config.local.json (user overrides, gitignored)
  */
 public final class Config
 {
@@ -79,8 +79,8 @@ public final class Config
    * Loading order (later overrides earlier):
    * <ol>
    * <li>Default values</li>
-   * <li>cat-config.json (project settings)</li>
-   * <li>cat-config.local.json (user overrides)</li>
+   * <li>config.json (project settings)</li>
+   * <li>config.local.json (user overrides)</li>
    * </ol>
    *
    * @param mapper the JSON mapper to use for parsing
@@ -96,21 +96,21 @@ public final class Config
 
     Path configDir = projectDir.resolve(CAT_DIR_NAME);
 
-    // Layer 2: Load cat-config.json
-    Path baseConfigPath = configDir.resolve("cat-config.json");
+    // Layer 2: Load config.json
+    Path baseConfigPath = configDir.resolve("config.json");
     if (Files.exists(baseConfigPath))
     {
       Map<String, Object> baseConfig = loadJsonFile(mapper, baseConfigPath);
       if (baseConfig.containsKey("license"))
       {
         throw new IllegalArgumentException(
-          "\"license\" is a user-specific value. Move it to cat-config.local.json instead.");
+          "\"license\" is a user-specific value. Move it to config.local.json instead.");
       }
       merged.putAll(baseConfig);
     }
 
-    // Layer 3: Load cat-config.local.json (overrides base)
-    Path localConfigPath = configDir.resolve("cat-config.local.json");
+    // Layer 3: Load config.local.json (overrides base)
+    Path localConfigPath = configDir.resolve("config.local.json");
     if (Files.exists(localConfigPath))
     {
       Map<String, Object> localConfig = loadJsonFile(mapper, localConfigPath);

@@ -139,7 +139,7 @@ public final class BlockUnauthorizedMergeCleanup implements BashHandler
   }
 
   /**
-   * Get the trust level from cat-config.json.
+   * Get the trust level from config.json.
    *
    * @return the trust level
    * @throws IOException if the config file cannot be read or contains invalid JSON
