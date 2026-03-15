@@ -2074,5 +2074,19 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M551",
+    "timestamp" : "2026-03-15T15:27:45Z",
+    "category" : "test",
+    "description" : "a test mistake",
+    "root_cause" : "testing",
+    "cause_signature" : null,
+    "prevention_type" : "rule",
+    "prevention_path" : ".claude/rules/test.md",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : true,
+    "prevention_verified" : true,
+    "recurrence_of" : null,
+    "correct_behavior" : "do the right thing"
   } ]
 }
