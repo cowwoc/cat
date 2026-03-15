@@ -107,6 +107,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - add-output-token-optimization-guidance
 - fix-enforce-collect-agent-scope
 - add-worktree-redirect-to-isolation-hook
+- add-guidance-to-hooks
 
 
 ## Issues Closed
