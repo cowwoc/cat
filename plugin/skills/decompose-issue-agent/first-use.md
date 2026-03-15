@@ -21,6 +21,20 @@ when a issue exceeds safe context bounds.
 - Partial collection indicates significant remaining work
 - Pre-emptive decomposition during planning phase
 
+## Naming Convention
+
+**CRITICAL: All sub-issue references must use fully-qualified names.**
+
+A fully-qualified issue name matches the pattern `\d+\.\d+[a-z]?-\S+` (e.g., `2.1-rename-config-java-core`).
+
+When decomposing parent issue `{VERSION_PREFIX}{parent-bare-name}` (e.g., `2.1-rename-cat-config-files`):
+- The version prefix is `2.1-` (extracted from the parent issue ID)
+- Sub-issue qualified names = `{VERSION_PREFIX}{sub-issue-bare-name}` (e.g., `2.1-rename-config-java-core`)
+- Directory names = `{sub-issue-bare-name}` (e.g., `rename-config-java-core`)
+
+**NEVER use bare names in the "Decomposed Into" section.** Bare names (e.g., `rename-config-java-core`) cause
+`allSubissuesClosed()` to silently skip the entry and incorrectly conclude all sub-issues are closed.
+
 ## Workflow
 
 ### 1. Analyze Current Issue Scope
@@ -93,9 +107,9 @@ mkdir -p ".cat/issues/v1/v1.2/parser-semantic"
 Each new issue gets its own focused PLAN.md:
 
 ```yaml
-# 1.2a-parser-lexer/PLAN.md
+# parser-lexer/PLAN.md  (directory name is bare; qualified ID is 1.2-parser-lexer)
 ---
-issue: 1.2a-parser-lexer
+issue: 1.2-parser-lexer
 parent: 1.2-implement-parser
 sequence: 1 of 3
 ---
@@ -122,13 +136,13 @@ Implement the lexical analysis phase of the parser.
 ### 5. Define Dependencies Between New Issues
 
 ```yaml
-# Dependency graph
+# Dependency graph (use fully-qualified names: VERSION_PREFIX + bare-name)
 dependencies:
-  1.2a-parser-lexer: []  # No dependencies
-  1.2b-parser-ast:
-    - 1.2a-parser-lexer  # Depends on lexer
-  1.2c-parser-semantic:
-    - 1.2b-parser-ast    # Depends on AST
+  1.2-parser-lexer: []  # No dependencies
+  1.2-parser-ast:
+    - 1.2-parser-lexer  # Depends on lexer
+  1.2-parser-semantic:
+    - 1.2-parser-ast    # Depends on AST
 ```
 
 ### 6. Update STATE.md Files
@@ -168,13 +182,16 @@ Original issue STATE.md:
 - **Reason:** Issue exceeded context threshold (85K tokens used)
 
 ## Decomposed Into
-- 1.2a-parser-lexer
-- 1.2b-parser-ast
-- 1.2c-parser-semantic
+
+<!-- IMPORTANT: Use fully-qualified names (VERSION_PREFIX + bare-name). -->
+<!-- For parent "1.2-implement-parser", VERSION_PREFIX="1.2-", so entries are: -->
+- 1.2-parser-lexer
+- 1.2-parser-ast
+- 1.2-parser-semantic
 
 ## Progress Preserved
 - Lexer implementation 80% complete in subagent work
-- Will be merged to 1.2a branch
+- Will be merged to 1.2-parser-lexer branch
 ```
 
 **Note:** Parent stays `in-progress` until ALL sub-issues are implemented and tested. Progress is calculated from sub-issue
@@ -183,7 +200,7 @@ completion (e.g., 1/3 sub-issues = 33%).
 New issue STATE.md:
 
 ```markdown
-# 1.2a-parser-lexer/STATE.md
+# parser-lexer/STATE.md  (directory name is bare; qualified ID is 1.2-parser-lexer)
 
 - **Status:** open
 - **Progress:** 0%
@@ -204,7 +221,7 @@ collect-results "${SUBAGENT_ID}"
 # Usually the first or most complete component
 
 # Merge subagent work to appropriate new issue branch
-git checkout "1.2a-parser-lexer"
+git checkout "1.2-parser-lexer"
 git merge "${SUBAGENT_BRANCH}" -m "Inherit partial progress from decomposed parent"
 ```
 
@@ -217,15 +234,15 @@ dependency-ordered group of sub-issues that can execute in parallel. All sub-iss
 sub-issue in Wave N+1 can begin.
 
 ```yaml
-# Dependency analysis
+# Dependency analysis (use fully-qualified names: VERSION_PREFIX + bare-name)
 sub-issues:
-  - id: 1.2a-parser-lexer
+  - id: 1.2-parser-lexer
     dependencies: []
     estimated_tokens: 25000
-  - id: 1.2b-parser-ast
-    dependencies: [1.2a-parser-lexer]
+  - id: 1.2-parser-ast
+    dependencies: [1.2-parser-lexer]
     estimated_tokens: 30000
-  - id: 1.2c-parser-tests
+  - id: 1.2-parser-tests
     dependencies: []
     estimated_tokens: 20000
 
@@ -233,15 +250,15 @@ sub-issues:
 parallel_execution_plan:
   wave_1:
     # Issues with no dependencies - can run concurrently
-    issues: [1.2a-parser-lexer, 1.2c-parser-tests]
+    issues: [1.2-parser-lexer, 1.2-parser-tests]
     max_concurrent: 2
     reason: "Both have no dependencies, can execute in parallel"
 
   wave_2:
     # Issues that depend on wave_1 completion
-    issues: [1.2b-parser-ast]
+    issues: [1.2-parser-ast]
     depends_on: [wave_1]
-    reason: "Depends on 1.2a-parser-lexer from wave_1"
+    reason: "Depends on 1.2-parser-lexer from wave_1"
 
 execution_order:
   1. Spawn subagents for wave_1 issues (parallel)
@@ -260,13 +277,13 @@ execution_order:
 ### Wave 1 (Concurrent)
 | Issue | Est. Tokens | Dependencies |
 |------|-------------|--------------|
-| 1.2a-parser-lexer | 25K | None |
-| 1.2c-parser-tests | 20K | None |
+| 1.2-parser-lexer | 25K | None |
+| 1.2-parser-tests | 20K | None |
 
 ### Wave 2 (After Wave 1)
 | Issue | Est. Tokens | Dependencies |
 |------|-------------|--------------|
-| 1.2b-parser-ast | 30K | 1.2a-parser-lexer |
+| 1.2-parser-ast | 30K | 1.2-parser-lexer |
 
 **Total sub-issues:** 3
 **Max concurrent subagents:** 2 (in wave 1)
@@ -278,9 +295,9 @@ Ensure no parallel issues within the same wave modify the same files:
 
 ```yaml
 conflict_check:
-  issue_1: 1.2a-parser-lexer
+  issue_1: 1.2-parser-lexer
     files: [src/parser/Lexer.java, test/parser/LexerTest.java]
-  issue_2: 1.2c-parser-tests
+  issue_2: 1.2-parser-tests
     files: [test/parser/ParserIntegrationTest.java]
 
   overlap: []  # No conflicts - safe to parallelize in same wave
@@ -298,10 +315,11 @@ conflict_check:
 
 ```bash
 # Update original PLAN.md with decomposition info
+# IMPORTANT: Use fully-qualified names (VERSION_PREFIX + bare-name), not bare names
 echo "---
 decomposed: true
-decomposed_into: [1.2a, 1.2b, 1.2c]
-parallel_plan: wave_1=[1.2a, 1.2c], wave_2=[1.2b]
+decomposed_into: [1.2-parser-lexer, 1.2-parser-ast, 1.2-parser-semantic]
+parallel_plan: wave_1=[1.2-parser-lexer, 1.2-parser-semantic], wave_2=[1.2-parser-ast]
 ---" >> "${ISSUE_DIR}/PLAN.md"
 
 # Update STATE.md - status stays in-progress, add Decomposed field
@@ -329,14 +347,15 @@ components:
   - Email verification
 
 # Too many components - decompose before starting
+# (qualified names = parent version prefix + bare name, e.g., 1.5- + auth-user-model)
 decompose_to:
-  - 1.5a-auth-user-model
-  - 1.5b-auth-password-service
-  - 1.5c-auth-jwt-tokens
-  - 1.5d-auth-endpoints
-  - 1.5e-auth-sessions
-  - 1.5f-auth-password-reset
-  - 1.5g-auth-email-verify
+  - 1.5-auth-user-model
+  - 1.5-auth-password-service
+  - 1.5-auth-jwt-tokens
+  - 1.5-auth-endpoints
+  - 1.5-auth-sessions
+  - 1.5-auth-password-reset
+  - 1.5-auth-email-verify
 ```
 
 ### Mid-Execution Decomposition
@@ -357,12 +376,12 @@ decomposition_trigger:
     - Multi-line string handling
 
 decomposition_result:
-  - issue: 1.3a-formatter-core
+  - issue: 1.3-formatter-core
     inherits: subagent work
     status: nearly_complete
-  - issue: 1.3b-formatter-wrapping
+  - issue: 1.3-formatter-wrapping
     status: ready
-  - issue: 1.3c-formatter-comments
+  - issue: 1.3-formatter-comments
     status: ready
 ```
 
@@ -390,26 +409,26 @@ emergency_decomposition:
 
 ```yaml
 # ❌ Splitting at arbitrary points
-1.2a: "Lines 1-100 of Parser.java"
-1.2b: "Lines 101-200 of Parser.java"
+1.2-part-one: "Lines 1-100 of Parser.java"
+1.2-part-two: "Lines 101-200 of Parser.java"
 
 # ✅ Split at logical boundaries
-1.2a: "Lexer component"
-1.2b: "AST builder component"
+1.2-lexer: "Lexer component"
+1.2-ast-builder: "AST builder component"
 ```
 
 ### Model actual dependencies accurately
 
 ```yaml
 # ❌ Treating all sub-issues as independent
-1.2a-parser-lexer: []
-1.2b-parser-ast: []    # Actually needs lexer!
-1.2c-parser-semantic: []  # Actually needs AST!
+1.2-parser-lexer: []
+1.2-parser-ast: []    # Actually needs lexer!
+1.2-parser-semantic: []  # Actually needs AST!
 
-# ✅ Model actual dependencies
-1.2a-parser-lexer: []
-1.2b-parser-ast: [1.2a]
-1.2c-parser-semantic: [1.2b]
+# ✅ Model actual dependencies (use fully-qualified names in dependency lists)
+1.2-parser-lexer: []
+1.2-parser-ast: [1.2-parser-lexer]
+1.2-parser-semantic: [1.2-parser-ast]
 ```
 
 ### Preserve partial progress when decomposing
@@ -429,27 +448,30 @@ merge_to_appropriate_sub-issue "${SUBAGENT_WORK}"
 
 ```yaml
 # ❌ Too granular
-1.2a: "Define Token class"
-1.2b: "Define TokenType enum"
-1.2c: "Implement nextToken method"
-1.2d: "Implement peek method"
+1.2-define-token: "Define Token class"
+1.2-define-tokentype: "Define TokenType enum"
+1.2-implement-next-token: "Implement nextToken method"
+1.2-implement-peek: "Implement peek method"
 # ...20 more tiny issues
 
 # ✅ Meaningful chunks
-1.2a: "Implement Lexer (tokens, types, core methods)"
-1.2b: "Implement Parser (AST, expressions, statements)"
+1.2-lexer: "Implement Lexer (tokens, types, core methods)"
+1.2-parser: "Implement Parser (AST, expressions, statements)"
 ```
 
 ### Always update orchestration when decomposing
 
 ```yaml
 # ❌ Create sub-issues, forget to track
-mkdir 1.2a 1.2b 1.2c
-# Parent doesn't know about them!
+mkdir parser-lexer parser-ast parser-semantic
+# Parent doesn't know about them! Also used bare names in STATE.md!
 
-# ✅ Full state update
-create_sub-issues "1.2a" "1.2b" "1.2c"
-update_parent_state "decomposed" "1.2a,1.2b,1.2c"
+# ✅ Full state update (use qualified names: VERSION_PREFIX + bare-name)
+create_sub-issues "parser-lexer" "parser-ast" "parser-semantic"
+# In parent STATE.md "Decomposed Into", list qualified names:
+# - 1.2-parser-lexer
+# - 1.2-parser-ast
+# - 1.2-parser-semantic
 update_orchestration_plan
 ```
 
@@ -461,14 +483,14 @@ For code extraction/refactoring issues, runtime method calls are NOT issue depen
 # ❌ Confusing runtime calls with issue dependencies
 # "parseUnary calls parsePostfix, so extract-unary must run before extract-postfix"
 sub-issues:
-  extract-unary: []
-  extract-postfix: [extract-unary]  # Wrong! Just copying code, not executing it
+  1.2-extract-unary: []
+  1.2-extract-postfix: [1.2-extract-unary]  # Wrong! Just copying code, not executing it
 
 # ✅ Extraction issues that write to different sections can run in parallel
 # Methods call each other at RUNTIME, but extraction is just copying text
 sub-issues:
-  extract-unary: [setup-interface]      # Both depend on interface setup
-  extract-postfix: [setup-interface]    # Both can run concurrently
+  1.2-extract-unary: [1.2-setup-interface]      # Both depend on interface setup
+  1.2-extract-postfix: [1.2-setup-interface]    # Both can run concurrently
 
 # Key insight: "Does method A call method B?" is irrelevant for extraction order.
 # Ask instead: "Do both issues write to the same file section?"
