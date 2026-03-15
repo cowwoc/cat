@@ -30,3 +30,17 @@ Update all Java and Bats test files to reference the new config filenames, and v
 - [ ] All Java tests pass: `mvn -f client/pom.xml test`
 - [ ] No remaining references to `cat-config.json` or `cat-config.local.json` in any test file
 - [ ] E2E: Run `get-config-output effective` and confirm it reads from `.cat/config.json` successfully
+
+## Fix Steps (iteration 1)
+
+### Fix 1: Update migration-2.1.bats to use `config.json` as the output filename in Phase 16 rename tests
+In `tests/hooks/migration-2.1.bats`, the Phase 16 migration tests set up `cat-config.json` as pre-condition input and
+assert that the migration renames it to `config.json`. Update all fixture assertions and helper calls in the Phase 16
+section so the expected output filename is `config.json` and residual references to `cat-config.json` appear only where
+they represent the pre-migration input state (i.e., the file being renamed FROM). Remove any remaining post-migration
+references to `cat-config.json` that are not the pre-condition input fixture.
+
+### Fix 2: Rename `.cat/cat-config.json` to `.cat/config.json` in the main workspace
+Run `git mv .cat/cat-config.json .cat/config.json` in the main workspace so that `get-config-output effective` reads
+from `.cat/config.json`. This satisfies the E2E post-condition that the tool reads from the new filename. Commit the
+rename with a `config:` commit.
