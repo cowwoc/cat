@@ -2144,5 +2144,39 @@
     "prevention_verified" : false,
     "recurrence_of" : null,
     "correct_behavior" : ""
+  }, {
+    "id" : "M555",
+    "timestamp" : "2026-03-15T20:52:29Z",
+    "category" : "detection_gap",
+    "description" : "AutoLearnMistakes false-positive (third recurrence of M461/M466): reading Java source code of hook files via Bash triggers Pattern 3 (PROTOCOL VIOLATION|VIOLATION) and Pattern 1 (BUILD FAILURE) because the hook's own string literals and Javadoc contain those keywords. filterJsonContent() does not filter Java source code lines.",
+    "root_cause" : "FILTER GAP (third recurrence of M461 root cause): AutoLearnMistakes.filterJsonContent() only strips JSON-structured lines (starting with '{' or '[{' with JSON markers). It does not strip Java source code output. When the agent reads hook source files (e.g., DetectTokenThreshold.java, AutoLearnMistakes.java, DetectAssistantGivingUp.java) via Bash sed/grep/cat, the stdout contains Java string literals like 'PROTOCOL VIOLATION', 'BUILD FAILURE', 'test failures' from the hook's own comment strings and pattern definitions. These pass through filterJsonContent() unchanged and match Patterns 1, 2, and 3, producing spurious mistake detections even though no real mistake occurred.",
+    "rca_method" : "C",
+    "rca_method_name" : "causal-barrier",
+    "cause_signature" : "tool_limitation:validation_absent:post_tool_use",
+    "prevention_type" : "code_fix",
+    "prevention_path" : "${CLAUDE_PROJECT_DIR}/client/src/main/java/io/github/cowwoc/cat/hooks/tool/post/AutoLearnMistakes.java",
+    "pattern_keywords" : [ "auto_learn_mistakes", "false_positive", "java_source_code", "filter_gap", "protocol_violation", "build_failure", "hook_source_code", "self_referential" ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : "M466",
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : "filterJsonContent() must also strip lines that appear to be Java source code output — lines containing Java-specific syntax markers such as 'return Result.', 'Pattern.compile(', 'if (', '* @', 'public final class', 'private static final'. Alternatively, implement a source-code content filter that detects Java file output patterns and strips the entire block. Real mistakes (from Maven output, git operations, etc.) use different formatting that would not be filtered.",
+    "issue_creation_info" : {
+      "suggested_title" : "Fix AutoLearnMistakes false-positives on Java source code reads (M555)",
+      "suggested_description" : "AutoLearnMistakes.filterJsonContent() does not filter Java source code output. When the agent reads hook source files via Bash (sed/grep/cat on .java files), stdout contains Java string literals like 'PROTOCOL VIOLATION' and 'BUILD FAILURE' from the hook's own pattern definitions. These pass through filterJsonContent() and match Patterns 1, 2, and 3, producing false-positive mistake detections. This is the third recurrence of the M461 root cause (insufficient output filtering). The fix should extend filterJsonContent() to detect and strip Java source code content lines, preventing self-referential false positives while preserving detection of real Maven build failures, test failures, and protocol violations.",
+      "suggested_acceptance_criteria" : [
+        "filterJsonContent() strips lines that match Java source code patterns (e.g., lines containing 'return Result.', 'Pattern.compile(', '* @param', 'public final class')",
+        "Pattern 3 (protocol_violation) does NOT trigger when Bash reads DetectAssistantGivingUp.java or similar hook source files",
+        "Pattern 1 (build_failure) does NOT trigger when Bash reads AutoLearnMistakes.java or similar files containing 'BUILD FAILURE' in string literals",
+        "Real Maven BUILD FAILURE output (from mvn compile/test) still triggers Pattern 1",
+        "Real protocol violations from non-Java-source output still trigger Pattern 3",
+        "Tests in AutoLearnMistakesTest verify all false-positive and true-positive cases for Java source code reads",
+        "No regression in other AutoLearnMistakes patterns"
+      ]
+    }
   } ]
 }
