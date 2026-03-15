@@ -465,10 +465,24 @@ Two-phase execution:
    use the integer value printed by the canonical detection command. If the canonical command has not yet
    been run, run it before making any routing decision.
 
+   **BLOCKING GATE — Write a wave spawn checklist before issuing the first Task call.** After writing all
+   wave prompts in the response text, write this checklist as plain prose (not in a code block):
+
+   Wave spawn checklist (WAVES_COUNT = N):
+   - Wave 1 prompt: written above ✓
+   - Wave 2 prompt: written above ✓
+   ... (one entry per wave, from 1 to WAVES_COUNT)
+   All N wave prompts written. Spawning all N Task calls now.
+
+   Every wave from 1 to WAVES_COUNT must have a corresponding checklist entry. If any wave prompt is
+   missing from the response text above the checklist, write it before completing the entry. Only after
+   the checklist is complete may the spawn phase begin. This gate makes it structurally visible when a
+   wave prompt was omitted — the gap appears in the checklist before any Task call is issued.
+
 2. **Spawn phase (one API response, all Task calls together, nothing else):** Issue ALL Task tool calls
-   simultaneously in a single assistant message, immediately following the prepare-phase text. The spawn
-   phase contains ONLY Task tool calls — no other tool calls before, between, or after the Task calls
-   within this phase.
+   simultaneously in a single assistant message, immediately following the prepare-phase text and the
+   wave spawn checklist. The spawn phase contains ONLY Task tool calls — no other tool calls before,
+   between, or after the Task calls within this phase.
 
 Correct pattern (one message, two Task calls, nothing between them):
 
