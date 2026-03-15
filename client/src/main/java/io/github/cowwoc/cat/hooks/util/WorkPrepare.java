@@ -1550,6 +1550,10 @@ public final class WorkPrepare
     }
 
     Files.writeString(stateFile, content);
+
+    // Commit STATE.md to keep the worktree clean
+    Path relativeStateFile = relativeIssuePath.resolve("STATE.md");
+    commitStateFile(worktreePath, relativeStateFile, "planning: update STATE.md to in-progress");
   }
 
   /**
@@ -1624,12 +1628,35 @@ public final class WorkPrepare
     // Commit STATE.md to the issue branch
     Path relativeIssuePath = projectDir.relativize(issuePath);
     Path relativeStateFile = relativeIssuePath.resolve("STATE.md");
+    commitStateFile(worktreePath, relativeStateFile, "planning: create STATE.md for new issue");
+  }
 
+  /**
+   * Stages STATE.md and commits it if the file has staged changes.
+   * <p>
+   * After staging, checks whether STATE.md itself has staged changes (as opposed to any
+   * other staged file) before committing. This prevents bundling unrelated staged changes into
+   * the STATE.md commit.
+   *
+   * @param worktreePath the path to the worktree
+   * @param relativeStateFile the path to STATE.md relative to the worktree root
+   * @param commitMessage the commit message to use
+   * @throws IOException if git operations fail
+   */
+  private void commitStateFile(Path worktreePath, Path relativeStateFile, String commitMessage)
+    throws IOException
+  {
     try
     {
       GitCommands.runGit(worktreePath, "add", relativeStateFile.toString());
-      GitCommands.runGit(worktreePath, "commit", "-m",
-        "planning: create STATE.md for new issue");
+      // Check whether STATE.md itself has staged changes; git diff --cached --name-only exits 0
+      // regardless of whether files are staged, and returns the names of staged files.
+      // We filter to just the STATE.md path rather than using "git status --porcelain" which
+      // would detect unrelated staged files and bundle them into this commit.
+      String stagedFiles = GitCommands.runGit(worktreePath, "diff", "--cached", "--name-only",
+        "--", relativeStateFile.toString());
+      if (!stagedFiles.isBlank())
+        GitCommands.runGit(worktreePath, "commit", "-m", commitMessage);
     }
     catch (IOException e)
     {

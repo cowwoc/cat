@@ -83,8 +83,7 @@ Run `"${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --arguments "${ARGUMENTS}"`
 | LOCKED | Display lock message, stop (see below) |
 | OVERSIZED | Invoke /cat:decompose-issue-agent, then retry (max 2 attempts) |
 | CORRUPT | Present recovery AskUserQuestion (see below), then act on user choice |
-| EXISTING_WORKTREE | Offer Resume, Clean up and retry, or Abort (see below) |
-| ERROR (existing worktree) | Legacy: offer cleanup and retry (see below) — ONLY retry work-prepare after cleanup |
+| ERROR (existing worktree) | Offer cleanup and retry (see below) — ONLY retry work-prepare after cleanup |
 | ERROR (other) | Display error, stop |
 | No JSON / empty | Subagent failed to produce output - display error, release lock if acquired, stop |
 
@@ -162,51 +161,7 @@ work-prepare.) Display the lock message including the locking session, then stop
 with the same arguments — it will return the same LOCKED result. Suggest the user wait for the other session
 to finish, run `/cat:cleanup` if the lock is stale, or specify a different issue.
 
-**EXISTING_WORKTREE: Existing Worktree Handling:**
-
-When `work-prepare` returns `EXISTING_WORKTREE`, the issue already has a worktree (from a prior session).
-The result includes: `issue_id`, `issue_path`, `worktree_path`, `issue_branch`, `target_branch`,
-`estimated_tokens`.
-
-1. Present AskUserQuestion with three options:
-
-   ```
-   AskUserQuestion:
-     header: "Existing Worktree Detected"
-     question: "Issue <issue_id> has an existing worktree at: <worktree_path>"
-     options:
-       - "Resume" (continue Phase 2 using the existing worktree — do NOT re-run work-prepare)
-       - "Clean up and retry" (invoke cat:cleanup-agent, then immediately retry work-prepare)
-       - "Abort" (stop)
-   ```
-
-   **Do NOT investigate worktree state before presenting the AskUserQuestion.**
-   Do NOT run `git worktree list`, `ls`, or any filesystem/git commands to inspect existing worktree
-   state. The result from `work-prepare` is sufficient context. Go directly to the AskUserQuestion.
-
-2. If user selects **"Resume"**:
-   - Extract `issue_id`, `issue_path`, `worktree_path`, `issue_branch`, `target_branch`,
-     `estimated_tokens` from the `EXISTING_WORKTREE` result
-   - Store phase 1 results (same fields as READY case)
-   - Proceed directly to Phase 2 (work-with-issue) using these fields — do NOT re-run work-prepare
-
-3. If user selects **"Clean up and retry"**:
-   - Invoke `cat:cleanup-agent` (no arguments needed)
-   - **IMMEDIATELY after cleanup-agent returns, call work-prepare again** using the same subprocess
-     invocation from Phase 1: `"${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --arguments
-     "${ARGUMENTS}"`. Parse the result and resume Phase 1 error handling logic.
-   - Do NOT invoke any other skill or workflow between cleanup-agent returning and the work-prepare retry
-   - Do NOT invoke `cat:extract-investigation-context-agent` or any investigation skill at this point
-   - The ONLY permitted action between cleanup-agent returning and the retry is reading the cleanup result
-   - **Retry limit:** Only retry work-prepare once after cleanup. If the second attempt also returns
-     `EXISTING_WORKTREE`, display the error and stop. Do NOT loop back to the AskUserQuestion.
-
-4. If user selects **"Abort"**: stop.
-
-**CRITICAL:** After cleanup-agent returns, the next action MUST be retrying `work-prepare`. Any other
-skill invocation at this point is a control-flow error.
-
-**ERROR: Existing Worktree Handling (legacy):**
+**ERROR: Existing Worktree Handling:**
 
 When `work-prepare` returns ERROR and the `message` field references an existing worktree or an existing
 session lock (e.g., "already holds a lock", "worktree already exists"):
@@ -219,20 +174,45 @@ session lock (e.g., "already holds a lock", "worktree already exists"):
      header: "Existing Worktree Detected"
      question: "<error message from work-prepare>"
      options:
+       - "Resume on existing worktree" (retry work-prepare immediately — see below)
        - "Clean up and retry" (invoke cat:cleanup-agent, then immediately retry work-prepare)
        - "Abort" (stop)
    ```
 
-3. If user selects **"Clean up and retry"**: follow the same procedure as EXISTING_WORKTREE step 3.
-4. If user selects **"Abort"**: stop.
+   **Do NOT investigate worktree state between steps 1–2 and presenting the AskUserQuestion.**
+   Do NOT run `git worktree list`, `ls`, or any filesystem/git commands to inspect existing worktree
+   state. The error message from `work-prepare` is sufficient context. Go directly to the
+   AskUserQuestion.
+
+3. If user selects **"Resume on existing worktree"**:
+   - **IMMEDIATELY retry work-prepare** using the same subprocess invocation from Phase 1:
+     `"${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --arguments "${ARGUMENTS}"`. Parse the result
+     and resume Phase 1 error handling logic.
+   - Do NOT run any filesystem, git, or investigation commands before the retry
+   - Do NOT manually construct issue paths or worktree paths — work-prepare returns these in its JSON
+     output when it returns READY
+
+4. If user selects **"Clean up and retry"**:
+   - Invoke `cat:cleanup-agent` (no arguments needed)
+   - **IMMEDIATELY after cleanup-agent returns, call work-prepare again** using the same subprocess invocation from Phase 1: `"${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --arguments "${ARGUMENTS}"`. Parse the result and resume Phase 1 error handling logic.
+   - Do NOT invoke any other skill or workflow between cleanup-agent returning and the work-prepare retry
+   - Do NOT invoke `cat:extract-investigation-context-agent` or any investigation skill at this point
+   - The ONLY permitted action between cleanup-agent returning and the retry is reading the cleanup result
+   - **Retry limit:** Only retry work-prepare once after cleanup. If the second attempt also returns ERROR
+     with an existing worktree message, display the error and stop. Do NOT loop back to the AskUserQuestion.
+
+5. If user selects **"Abort"**: stop.
+
+**CRITICAL:** After cleanup-agent returns or the user selects "Resume", the next action MUST be retrying
+`work-prepare`. Any other skill invocation at this point is a control-flow error.
 
 **Potentially Complete Handling:**
 
 When prepare returns READY with `potentially_complete: true`, work may already exist on the target branch
 with STATE.md not reflecting completion (e.g., stale merge overwrote status).
 
-1. Read the diff for all commits in `suspicious_commits` in a single Bash call (git show reads object history,
-   not working tree contents, so any git directory in the repo works):
+1. Read the full diff for all commits in `suspicious_commits` in a single Bash call (git show reads
+   object history, not working tree contents, so any git directory in the repo works):
    ```bash
    # suspicious_commits is a space-separated list of commit hashes from work-prepare JSON output.
    # Validate each value is a hex hash before use — reject any value not matching [0-9a-fA-F]+.
@@ -243,9 +223,11 @@ with STATE.md not reflecting completion (e.g., stale merge overwrote status).
      fi
      valid_count=$((valid_count + 1))
      echo "=== $hash ==="
-     git show --stat "$hash"
+     git show "$hash"
    done && echo "VALID_HASH_COUNT=$valid_count"
    ```
+   Use `git show` (full diff), not `git show --stat`. File names alone are insufficient to determine
+   whether a commit implements the issue's goal — the actual code changes must be visible.
    If `suspicious_commits` is empty, skip to step 2 (no analysis needed).
    If `VALID_HASH_COUNT` is 0 but `suspicious_commits` was non-empty, treat as UNCERTAIN
    (all hashes were invalid — present AskUserQuestion to the user rather than guessing).
