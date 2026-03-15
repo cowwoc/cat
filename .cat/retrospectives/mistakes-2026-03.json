@@ -2088,5 +2088,26 @@
     "prevention_verified" : true,
     "recurrence_of" : null,
     "correct_behavior" : "do the right thing"
+  }, {
+    "id" : "M552",
+    "timestamp" : "2026-03-15T15:25:00Z",
+    "category" : "protocol_violation",
+    "description" : "work-implement-agent spawned Wave 1 in one API response, awaited its result, then spawned Wave 2 in a separate API response — violating the rule that all parallel waves must be issued simultaneously in a single response",
+    "root_cause" : "The work-implement-agent skill clearly documents that WAVES_COUNT >= 2 requires all wave Task calls in a single API response. The agent derived WAVES_COUNT=2 from the canonical Bash command but issued only one Task call in the spawn message. The prepare-phase two-step protocol (write all prompts as text, then spawn all in one message) was not followed — the agent skipped the prepare phase and spawned Wave 1 alone, recognizing the violation only after Wave 1 returned.",
+    "cause_signature" : "compliance_failure:doc_ignored:subagent_delegation",
+    "rca_method" : "C",
+    "rca_method_name" : "causal-barrier",
+    "prevention_type" : "skill",
+    "prevention_path" : "plugin/skills/work-implement-agent/first-use.md",
+    "pattern_keywords" : [ "parallel_wave", "sequential_spawn", "wave_checklist", "single_api_response" ],
+    "prevention_implemented" : true,
+    "prevention_verified" : true,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : "When WAVES_COUNT >= 2, write all wave prompts as text in the response, complete the wave spawn checklist confirming every wave from 1 to WAVES_COUNT is written, then issue all Task calls simultaneously in that same response with no other tool calls between them."
   } ]
 }

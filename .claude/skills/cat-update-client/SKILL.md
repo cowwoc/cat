@@ -5,13 +5,22 @@ disable-model-invocation: true
 
 # Update Client
 
-Reinstall the CAT plugin to pick up changes to hooks, skills, and agents, then build and install the jlink runtime.
+Build the Java client first, then reinstall the CAT plugin and install the updated jlink runtime. This ordering minimizes plugin downtime by doing the longest-running build step first.
 
 **IMPORTANT:** All `claude` CLI commands below require unsetting `CLAUDECODE` to avoid the nested-session guard.
 
 ## Steps
 
-### 1. Reinstall the Plugin
+### 1. Build with Maven
+
+```bash
+mvn -f /workspace/client/pom.xml verify
+```
+
+This builds the client JAR, patches automatic modules, creates the jlink image with launchers, and generates the AOT cache.
+If the build fails, stop and report the error.
+
+### 2. Reinstall the Plugin
 
 Uninstall the old plugin (if installed) and install the current version from the local workspace marketplace:
 
@@ -21,15 +30,6 @@ CLAUDECODE= claude plugin uninstall cat@cat 2>/dev/null; CLAUDECODE= claude plug
 
 The uninstall uses `;` instead of `&&` so that a missing plugin does not block the install.
 If the install command fails, stop and report the error.
-
-### 2. Build with Maven
-
-```bash
-mvn -f /workspace/client/pom.xml verify
-```
-
-This builds the client JAR, patches automatic modules, creates the jlink image with launchers, and generates the AOT cache.
-If the build fails, stop and report the error.
 
 ### 3. Install jlink Runtime Image to Plugin Cache
 
