@@ -42,8 +42,9 @@ Determine execution mode before spawning the subagent:
 
 - **BACKGROUND:** Learn was triggered mid-operation (while working on an issue via `/cat:work`) AND the learn results
   (recording to mistakes JSON, updating counter, committing prevention) do not affect the current issue's remaining git
-  operations. Since prevention commits go to the cat fork point branch (not the issue worktree), background is always safe
-  mid-operation.
+  operations. Note: `record-learning` commits to the active worktree branch (not the main workspace), so the counter
+  increment and prevention commit are isolated to the worktree until merge. Background is safe mid-operation as long as
+  the retrospective post-handler (counter reset) is deferred until after the worktree is merged and closed.
 - **FOREGROUND:** Learn was explicitly invoked standalone (no issue work in progress).
 
 **Default:** Use background when mid-operation. Use foreground when standalone.

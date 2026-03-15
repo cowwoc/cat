@@ -2864,6 +2864,50 @@ public class WorkPrepareTest
   }
 
   /**
+   * Verifies that the worktree has no uncommitted files after execute returns READY.
+   * <p>
+   * The STATE.md update must be committed to the issue branch so that the implement phase
+   * does not detect a dirty planning file and block with "BLOCKED: dirty planning file detected."
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeCommitsStateMdUpdateSoWorktreeIsClean() throws IOException
+  {
+    Path projectDir = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      createIssue(projectDir, "2", "1", "my-feature", "open");
+      GitCommands.runGit(projectDir, "add", ".");
+      GitCommands.runGit(projectDir, "commit", "-m", "Add issue");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+
+      worktreePath = Path.of(node.path("worktree_path").asString());
+
+      // The worktree must be clean (no uncommitted changes) so the implement phase can proceed.
+      // If updateStateMd() writes STATE.md without committing it, git status --porcelain
+      // returns non-empty output and the implement phase blocks with "dirty planning file".
+      String gitStatus = GitCommands.runGit(worktreePath, "status", "--porcelain");
+      requireThat(gitStatus.strip(), "gitStatus").isEmpty();
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectDir, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
    * Cleans up a worktree if it exists (best-effort, errors are swallowed).
    *
    * @param projectDir the project root directory
