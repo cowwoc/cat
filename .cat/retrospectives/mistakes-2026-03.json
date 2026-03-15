@@ -2227,5 +2227,43 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M559",
+    "timestamp" : "2026-03-15T22:00:00Z",
+    "category" : "protocol_violation",
+    "description" : "When cat:git-squash-agent was invoked to correct a squash-by-topic violation before git-merge-linear, it only fixed the immediate problem (squashed the commits) without implementing systemic prevention. No rule or hook enforces squash-by-topic as a mandatory prerequisite before invoking git-merge-linear.",
+    "root_cause" : "DOCUMENTATION GAP: git-merge-linear-agent/first-use.md's Prerequisites section listed 'User approval obtained' and 'Working directory is clean' but did not mandate cat:git-squash-agent execution before invoking the merge. Agents read the prerequisites and proceeded to merge without squashing. The result table row 'Source branch must have exactly 1 commit -> Squash commits first' was insufficient: it triggered only on error, not proactively before the first invocation.",
+    "cause_signature" : "compliance_failure:doc_missing:git_operations",
+    "prevention_type" : "skill",
+    "prevention_path" : "plugin/skills/git-merge-linear-agent/first-use.md",
+    "pattern_keywords" : [ "git-merge-linear", "squash", "prerequisite", "before merge", "squash-by-topic" ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : "Invoke cat:git-squash-agent before cat:git-merge-linear-agent. The git-merge-linear-agent first-use.md now has a mandatory 'Squash-by-Topic First' section that explicitly requires squash completion as a prerequisite, along with guidance on the full squash resolution when the binary reports a commit count error."
+  }, {
+    "id" : "M560",
+    "timestamp" : "2026-03-15T22:04:32Z",
+    "category" : "",
+    "description" : "",
+    "root_cause" : "",
+    "cause_signature" : "compliance_failure:doc_missing:git_operations",
+    "prevention_type" : "skill",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }
