@@ -109,6 +109,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - add-worktree-redirect-to-isolation-hook
 - add-guidance-to-hooks
 - fix-autolearn-java-source-false-positive
+- add-bfg-filename-only-warning
 
 
 ## Issues Closed
