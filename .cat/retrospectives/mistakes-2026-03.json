@@ -1996,5 +1996,24 @@
       "catches_variations" : true
     },
     "correct_behavior" : "allSubissuesClosed() must handle bare sub-issue names by resolving them against the parent version directory. When a sub-issue name lacks the version prefix, derive the directory path directly from the bare name (e.g., 'rename-config-tests' -> parentVersionDir/rename-config-tests/STATE.md). If the sub-issue STATE.md does not exist or is not closed, return false. This ensures the decomposed parent is skipped and work-prepare selects the available sub-issue instead."
+  }, {
+    "id" : "M547",
+    "timestamp" : "2026-03-15T12:44:01Z",
+    "category" : "",
+    "description" : "",
+    "root_cause" : "",
+    "cause_signature" : "environment_mismatch:validation_absent:issue_workflow",
+    "prevention_type" : "code_fix",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }
