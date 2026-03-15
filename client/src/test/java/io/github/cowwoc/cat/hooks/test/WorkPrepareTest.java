@@ -2489,6 +2489,73 @@ public class WorkPrepareTest
   }
 
   /**
+   * Verifies that execute returns READY when STATE.md exists on disk in the main workspace but is
+   * untracked by git (not committed), so it is absent from the worktree.
+   * <p>
+   * This is the scenario where a new issue directory was created and STATE.md written to disk, but
+   * neither file was committed. IssueDiscovery sees STATE.md on disk and sets createStateMd=false.
+   * When the worktree is created from the branch, the untracked STATE.md is absent, causing
+   * updateStateMd() to fail. The fix falls back to createStateMd() in this case.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeReturnsReadyWhenStateMdExistsOnDiskButIsUntrackedByGit() throws IOException
+  {
+    Path projectDir = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // Commit PLAN.md but NOT STATE.md — simulates an untracked issue directory
+      Path issueDir = projectDir.resolve(".cat").resolve("issues").
+        resolve("v2").resolve("v2.1").resolve("untracked-state-issue");
+      Files.createDirectories(issueDir);
+      Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nTest goal\n");
+      // Write STATE.md to disk but do NOT commit it — it remains untracked
+      Files.writeString(issueDir.resolve("STATE.md"), """
+        # State
+
+        - **Status:** open
+        - **Progress:** 0%
+        - **Dependencies:** []
+        - **Blocks:** []
+        """);
+      // Only add and commit PLAN.md — STATE.md stays untracked
+      GitCommands.runGit(projectDir, "add", issueDir.resolve("PLAN.md").toString());
+      GitCommands.runGit(projectDir, "commit", "-m", "Add PLAN.md only (STATE.md untracked)");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      // Must return READY, not ERROR
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+      requireThat(node.path("issue_id").asString(), "issueId").isEqualTo("2.1-untracked-state-issue");
+
+      worktreePath = Path.of(node.path("worktree_path").asString());
+
+      // STATE.md must exist in the worktree with in-progress status
+      Path worktreeIssueDir = worktreePath.resolve(".cat").resolve("issues").
+        resolve("v2").resolve("v2.1").resolve("untracked-state-issue");
+      Path worktreeStateMd = worktreeIssueDir.resolve("STATE.md");
+      requireThat(Files.isRegularFile(worktreeStateMd), "worktreeStateMdExists").isTrue();
+
+      String stateMdContent = Files.readString(worktreeStateMd);
+      requireThat(stateMdContent, "content").contains("**Status:** in-progress");
+      requireThat(stateMdContent, "content").contains("**Progress:** 0%");
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectDir, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
    * Verifies that execute treats a STATE.md with a missing status field as open and returns READY.
    *
    * @throws IOException if an I/O error occurs
