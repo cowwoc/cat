@@ -105,6 +105,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-lock-worktree-path-at-acquire
 - upgrade-recover-from-drift-model
 - add-output-token-optimization-guidance
+- fix-enforce-collect-agent-scope
 
 
 ## Issues Closed
