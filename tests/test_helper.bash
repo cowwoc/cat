@@ -1,4 +1,8 @@
 #!/bin/bash
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
 # Test helper for CAT plugin tests
 # Source this file in all test files
 
@@ -84,40 +88,9 @@ assert_file_contains() {
     fi
 }
 
-# Assert JSON field value (handles multi-line output by extracting JSON object)
-assert_json_field() {
-    local output="$1"
-    local field="$2"
-    local expected="$3"
-
-    # Extract JSON block - look for { to } spanning potentially multiple lines
-    local json
-    # Try to extract last complete JSON object from output
-    json=$(echo "$output" | awk '/^{/,/^}/' | tail -n +1)
-
-    # If that didn't work, try single-line JSON
-    if ! echo "$json" | jq -e '.' > /dev/null 2>&1; then
-        json=$(echo "$output" | grep '^{' | head -1)
-    fi
-
-    # If still no valid JSON, show error
-    if [[ -z "$json" ]] || ! echo "$json" | jq -e '.' > /dev/null 2>&1; then
-        echo "No valid JSON found in output"
-        echo "Output was: $output"
-        return 1
-    fi
-
-    local actual
-    actual=$(echo "$json" | jq -r "$field" 2>/dev/null) || {
-        echo "Failed to parse JSON: $json"
-        return 1
-    }
-
-    if [[ "$actual" != "$expected" ]]; then
-        echo "Expected $field to be '$expected', got '$actual'"
-        echo "JSON: $json"
-        return 1
-    fi
+# Set up config fixture with default trust level
+setup_config_fixture() {
+    echo '{"trust": "medium"}' > "$TEST_TEMP_DIR/.cat/cat-config.json"
 }
 
 # Run a script with timeout
@@ -127,16 +100,3 @@ run_with_timeout() {
     timeout "$timeout_seconds" "$@"
 }
 
-# Mock jq for testing fallback paths
-mock_jq_unavailable() {
-    # Create a function that shadows jq
-    jq() {
-        return 127
-    }
-    export -f jq
-}
-
-# Restore real jq
-restore_jq() {
-    unset -f jq
-}
