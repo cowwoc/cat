@@ -2170,4 +2170,131 @@ public class IssueDiscoveryTest
       }
     }
   }
+
+  /**
+   * Verifies that a decomposed parent with fully-qualified sub-issue names is processed correctly.
+   * <p>
+   * When all sub-issues are closed, the parent becomes eligible. The qualified name format
+   * (e.g., {@code 2.1-parser-lexer}) allows {@code allSubissuesClosed()} to locate the sub-issue
+   * directory and read its status.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void decomposedParentWithQualifiedSubissueNamesIsProcessed() throws IOException
+  {
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      try
+      {
+        String sessionId = UUID.randomUUID().toString();
+        // Create a closed sub-issue using qualified name format
+        createIssue(projectDir, "2", "1", "parser-lexer", "closed");
+        // Create a decomposed parent referencing the sub-issue by qualified name
+        createDecomposedParent(projectDir, "2", "1", "parent-task", "in-progress",
+          "2.1-parser-lexer");
+
+        IssueDiscovery discovery = new IssueDiscovery(scope);
+        SearchOptions options = new SearchOptions(Scope.ISSUE, "2.1-parent-task", sessionId, "", false);
+        DiscoveryResult result = discovery.findNextIssue(options);
+
+        // Parent should be eligible since the qualified sub-issue is closed
+        requireThat(result, "result").isInstanceOf(DiscoveryResult.Found.class);
+        DiscoveryResult.Found found = (DiscoveryResult.Found) result;
+        requireThat(found.issueId(), "issueId").isEqualTo("2.1-parent-task");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that bare names in the "Decomposed Into" section are silently skipped by
+   * {@code allSubissuesClosed()}.
+   * <p>
+   * Bare names (e.g., {@code parser-lexer} without a version prefix) do not match
+   * {@code QUALIFIED_NAME_PATTERN} and are ignored. The parent is treated as if those entries
+   * do not exist. If all remaining qualified entries are closed (or there are none), the parent
+   * becomes eligible.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void decomposedParentWithBareSubissueNamesSkipsBareEntries() throws IOException
+  {
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      try
+      {
+        String sessionId = UUID.randomUUID().toString();
+        // Create a decomposed parent referencing only bare names (no version prefix)
+        // Bare names are silently skipped — the parent is treated as if no sub-issues are listed
+        createDecomposedParent(projectDir, "2", "1", "parent-task", "in-progress",
+          "parser-lexer");
+
+        IssueDiscovery discovery = new IssueDiscovery(scope);
+        SearchOptions options = new SearchOptions(Scope.ISSUE, "2.1-parent-task", sessionId, "", false);
+        DiscoveryResult result = discovery.findNextIssue(options);
+
+        // Bare names are skipped; no qualified sub-issues remain to check, so parent is eligible
+        requireThat(result, "result").isInstanceOf(DiscoveryResult.Found.class);
+        DiscoveryResult.Found found = (DiscoveryResult.Found) result;
+        requireThat(found.issueId(), "issueId").isEqualTo("2.1-parent-task");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that letter-suffixed version prefixes (e.g., {@code 2.1a-}) are treated as qualified
+   * names by {@code allSubissuesClosed()}.
+   * <p>
+   * The pattern {@code QUALIFIED_NAME_PATTERN} accepts an optional lowercase letter after the minor
+   * version number (e.g., {@code 2.1a-sub-issue}). Such entries are processed the same way as
+   * standard qualified names — the sub-issue directory is resolved and its status is checked.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void decomposedParentWithLetterSuffixedVersionPrefixIsHandled() throws IOException
+  {
+    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      try
+      {
+        String sessionId = UUID.randomUUID().toString();
+        // Create a closed sub-issue in v2.1 (standard minor version)
+        createIssue(projectDir, "2", "1", "sub-issue", "closed");
+        // Create a decomposed parent that references the sub-issue with a letter-suffixed prefix
+        // Note: the parent lives in v2.1; the sub-issue reference uses "2.1a-" prefix.
+        // Since "2.1a-sub-issue" is a qualified name, allSubissuesClosed() tries to look it up
+        // in the parent's version directory. The directory "sub-issue" exists and is closed,
+        // so the parent becomes eligible.
+        createDecomposedParent(projectDir, "2", "1", "parent-task", "in-progress",
+          "2.1a-sub-issue");
+
+        IssueDiscovery discovery = new IssueDiscovery(scope);
+        SearchOptions options = new SearchOptions(Scope.ISSUE, "2.1-parent-task", sessionId, "", false);
+        DiscoveryResult result = discovery.findNextIssue(options);
+
+        // "2.1a-sub-issue" is a qualified name so the directory "sub-issue" is checked.
+        // The directory exists and is closed, so the parent should be eligible.
+        requireThat(result, "result").isInstanceOf(DiscoveryResult.Found.class);
+        DiscoveryResult.Found found = (DiscoveryResult.Found) result;
+        requireThat(found.issueId(), "issueId").isEqualTo("2.1-parent-task");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+      }
+    }
+  }
 }
