@@ -4,7 +4,8 @@
 
 | Path | Commit Type | Reason |
 |------|-------------|--------|
-| `plugin/**` (except README.md) | `feature:` / `refactor:` / `bugfix:` | Plugin source code and skills |
+| `plugin/**` (except README.md, concepts/) | `feature:` / `refactor:` / `bugfix:` | Plugin source code and skills |
+| `plugin/concepts/` | `config:` | Plugin's bundled reference docs (Claude-facing) |
 | `.cat/issues/` | `planning:` | Issue tracking |
 | `.claude/**` (other), `CLAUDE.md` | `config:` | Project configuration |
 | `**/README.md`, `docs/` | `docs:` | User-facing documentation |
@@ -42,6 +43,25 @@ as an immediate action.
 
 **Exception:** If the user explicitly asks for a "quick fix" or "one-line change" AND the change is trivial
 enough to fit in a single commit, create a minimal worktree branch (still not direct edits to main workspace).
+
+## Approval Gate Workflow (M560)
+
+**MANDATORY: Squash commits by topic before EVERY approval gate, even after making code changes in response to user feedback.**
+
+When presenting an issue for the approval gate (merge):
+1. All implementation commits must be squashed by topic into logical groups
+2. If the user provides feedback and additional changes are made, the squashed commits must be re-squashed before returning to the approval gate
+3. Do NOT present an approval gate with a higher commit count than the previous squash attempt, even if individual commits are "correct"
+4. The rule applies whether this is the first time presenting the approval gate or a re-presentation after addressing user feedback
+
+**Why:** The merge workflow enforces exactly 1 commit ahead of the target branch. Squashing before the approval gate ensures the commits are final and properly organized. Re-squashing after changes maintains this invariant and prevents the approval gate workflow from being bypassed by incremental commits.
+
+**Pattern:**
+- Initial implementation: multiple commits → squash by topic → present approval gate
+- User feedback: make changes → re-squash ALL commits (not just new ones) → present approval gate
+- Additional feedback: make changes → re-squash ALL commits → present approval gate
+
+The squashing is not a one-time operation; it is part of every approval gate presentation.
 
 ## Plugin Development
 

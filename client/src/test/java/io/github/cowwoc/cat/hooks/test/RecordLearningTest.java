@@ -57,10 +57,10 @@ public final class RecordLearningTest
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
-      initializeIndex(scope, retroDir, 0, null);
+      RecordLearningTestUtils.initializeIndex(scope, retroDir, 0, null);
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
-      ObjectNode input = buildPhase3Input(scope, "Test mistake", null, null);
+      ObjectNode input = RecordLearningTestUtils.buildPhase3Input(scope, "Test mistake", null, null);
       String result = cmd.executeInDir(input, tempDir);
       JsonNode json = scope.getJsonMapper().readTree(result);
 
@@ -87,11 +87,11 @@ public final class RecordLearningTest
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
-      initializeIndex(scope, retroDir, 1, null);
+      RecordLearningTestUtils.initializeIndex(scope, retroDir, 1, null);
       initializeMistakesFile(scope, retroDir, "2026-03", "M001");
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
-      ObjectNode input = buildPhase3Input(scope, "Second mistake", null, null);
+      ObjectNode input = RecordLearningTestUtils.buildPhase3Input(scope, "Second mistake", null, null);
       String result = cmd.executeInDir(input, tempDir);
       JsonNode json = scope.getJsonMapper().readTree(result);
 
@@ -118,14 +118,14 @@ public final class RecordLearningTest
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
-      initializeIndex(scope, retroDir, 2, null);
+      RecordLearningTestUtils.initializeIndex(scope, retroDir, 2, null);
 
       // Mistakes from two different months
       initializeMistakesFile(scope, retroDir, "2026-01", "M001");
       initializeMistakesFile(scope, retroDir, "2026-02", "M002");
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
-      ObjectNode input = buildPhase3Input(scope, "Third mistake", null, null);
+      ObjectNode input = RecordLearningTestUtils.buildPhase3Input(scope, "Third mistake", null, null);
       String result = cmd.executeInDir(input, tempDir);
       JsonNode json = scope.getJsonMapper().readTree(result);
 
@@ -156,10 +156,10 @@ public final class RecordLearningTest
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
-      initializeIndex(scope, retroDir, 0, null);
+      RecordLearningTestUtils.initializeIndex(scope, retroDir, 0, null);
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
-      ObjectNode input = buildPhase3Input(scope, "Test mistake description", null, null);
+      ObjectNode input = RecordLearningTestUtils.buildPhase3Input(scope, "Test mistake description", null, null);
       cmd.executeInDir(input, tempDir);
 
       // Check that the current month file exists and has the entry
@@ -198,14 +198,14 @@ public final class RecordLearningTest
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
-      initializeIndex(scope, retroDir, 1, null);
+      RecordLearningTestUtils.initializeIndex(scope, retroDir, 1, null);
 
       // Create a file for the current month with M001 already in it
       String yearMonth = ZonedDateTime.now(FIXED_CLOCK).format(YEAR_MONTH_FORMAT);
       initializeMistakesFile(scope, retroDir, yearMonth, "M001");
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
-      ObjectNode input = buildPhase3Input(scope, "Second mistake", null, null);
+      ObjectNode input = RecordLearningTestUtils.buildPhase3Input(scope, "Second mistake", null, null);
       cmd.executeInDir(input, tempDir);
 
       Path mistakesFile = retroDir.resolve("mistakes-" + yearMonth + ".json");
@@ -241,11 +241,11 @@ public final class RecordLearningTest
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
-      initializeIndex(scope, retroDir, 3, null);
+      RecordLearningTestUtils.initializeIndex(scope, retroDir, 3, null);
       initializeMistakesFile(scope, retroDir, "2026-03", "M001", "M002", "M003");
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
-      ObjectNode input = buildPhase3Input(scope, "Fourth mistake", null, null);
+      ObjectNode input = RecordLearningTestUtils.buildPhase3Input(scope, "Fourth mistake", null, null);
       cmd.executeInDir(input, tempDir);
 
       // Read updated index
@@ -276,11 +276,11 @@ public final class RecordLearningTest
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
       // Counter says 1 but there are actually 2 existing mistakes
-      initializeIndex(scope, retroDir, 1, null);
+      RecordLearningTestUtils.initializeIndex(scope, retroDir, 1, null);
       initializeMistakesFile(scope, retroDir, "2026-03", "M001", "M002");
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
-      ObjectNode input = buildPhase3Input(scope, "Third mistake", null, null);
+      ObjectNode input = RecordLearningTestUtils.buildPhase3Input(scope, "Third mistake", null, null);
       cmd.executeInDir(input, tempDir);
 
       // After fixing mismatch (counter becomes actual=2+1new=3), not 1+1=2
@@ -315,11 +315,11 @@ public final class RecordLearningTest
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
       // threshold is 10 by default, we're at 4
-      initializeIndex(scope, retroDir, 4, null);
+      RecordLearningTestUtils.initializeIndex(scope, retroDir, 4, null);
       initializeMistakesFile(scope, retroDir, "2026-03", "M001", "M002", "M003", "M004");
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
-      ObjectNode input = buildPhase3Input(scope, "Fifth mistake", null, null);
+      ObjectNode input = RecordLearningTestUtils.buildPhase3Input(scope, "Fifth mistake", null, null);
       String result = cmd.executeInDir(input, tempDir);
       JsonNode json = scope.getJsonMapper().readTree(result);
 
@@ -347,12 +347,12 @@ public final class RecordLearningTest
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
       // threshold is 10, after adding M010 we hit it
-      initializeIndex(scope, retroDir, 9, null);
+      RecordLearningTestUtils.initializeIndex(scope, retroDir, 9, null);
       initializeMistakesFile(scope, retroDir, "2026-03",
         "M001", "M002", "M003", "M004", "M005", "M006", "M007", "M008", "M009");
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
-      ObjectNode input = buildPhase3Input(scope, "Tenth mistake", null, null);
+      ObjectNode input = RecordLearningTestUtils.buildPhase3Input(scope, "Tenth mistake", null, null);
       String result = cmd.executeInDir(input, tempDir);
       JsonNode json = scope.getJsonMapper().readTree(result);
 
@@ -379,10 +379,10 @@ public final class RecordLearningTest
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
-      initializeIndex(scope, retroDir, 0, null);
+      RecordLearningTestUtils.initializeIndex(scope, retroDir, 0, null);
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
-      ObjectNode input = buildPhase3Input(scope, "Test mistake", null, null);
+      ObjectNode input = RecordLearningTestUtils.buildPhase3Input(scope, "Test mistake", null, null);
       String result = cmd.executeInDir(input, tempDir);
       JsonNode json = scope.getJsonMapper().readTree(result);
 
@@ -416,10 +416,10 @@ public final class RecordLearningTest
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
-      initializeIndex(scope, retroDir, 0, null);
+      RecordLearningTestUtils.initializeIndex(scope, retroDir, 0, null);
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
-      ObjectNode input = buildPhase3Input(scope, "Test mistake", null, null);
+      ObjectNode input = RecordLearningTestUtils.buildPhase3Input(scope, "Test mistake", null, null);
       String result = cmd.executeInDir(input, tempDir);
       JsonNode json = scope.getJsonMapper().readTree(result);
 
@@ -477,7 +477,7 @@ public final class RecordLearningTest
 
       // No pre-existing retrospectives — RecordLearning will create them in the worktree
       RecordLearning cmd = new RecordLearning(scope, mainRepo, FIXED_CLOCK);
-      ObjectNode input = buildPhase3Input(scope, "Test mistake", null, null);
+      ObjectNode input = RecordLearningTestUtils.buildPhase3Input(scope, "Test mistake", null, null);
 
       // execute() uses lock-based detection: session -> issue -> worktree path
       String result = cmd.execute(input, sessionId);
@@ -517,11 +517,11 @@ public final class RecordLearningTest
     {
       Path retroDir = mainRepo.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
-      initializeIndex(scope, retroDir, 0, null);
+      RecordLearningTestUtils.initializeIndex(scope, retroDir, 0, null);
 
       // No lock file — session has no active worktree
       RecordLearning cmd = new RecordLearning(scope, mainRepo, FIXED_CLOCK);
-      ObjectNode input = buildPhase3Input(scope, "Test mistake", null, null);
+      ObjectNode input = RecordLearningTestUtils.buildPhase3Input(scope, "Test mistake", null, null);
       String result = cmd.execute(input, sessionId);
       JsonNode json = scope.getJsonMapper().readTree(result);
 
@@ -556,7 +556,7 @@ public final class RecordLearningTest
     {
       // Do NOT create the retrospectives directory or index.json
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
-      ObjectNode input = buildPhase3Input(scope, "First mistake in fresh repo", null, null);
+      ObjectNode input = RecordLearningTestUtils.buildPhase3Input(scope, "First mistake in fresh repo", null, null);
       String result = cmd.executeInDir(input, tempDir);
       JsonNode json = scope.getJsonMapper().readTree(result);
 
@@ -589,11 +589,11 @@ public final class RecordLearningTest
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
-      initializeIndex(scope, retroDir, 1, null);
+      RecordLearningTestUtils.initializeIndex(scope, retroDir, 1, null);
       initializeMistakesFile(scope, retroDir, "2026-03", "M001");
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
-      ObjectNode input = buildPhase3Input(scope, "Recurring mistake", "M001", null);
+      ObjectNode input = RecordLearningTestUtils.buildPhase3Input(scope, "Recurring mistake", "M001", null);
       cmd.executeInDir(input, tempDir);
 
       String yearMonth = ZonedDateTime.now(FIXED_CLOCK).format(YEAR_MONTH_FORMAT);
@@ -639,10 +639,10 @@ public final class RecordLearningTest
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
-      initializeIndex(scope, retroDir, 0, null);
+      RecordLearningTestUtils.initializeIndex(scope, retroDir, 0, null);
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
-      ObjectNode input = buildPhase3Input(scope, "Compliance failure", null,
+      ObjectNode input = RecordLearningTestUtils.buildPhase3Input(scope, "Compliance failure", null,
         "compliance_failure:hook_absent:file_operations");
       cmd.executeInDir(input, tempDir);
 
@@ -675,10 +675,10 @@ public final class RecordLearningTest
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
-      initializeIndex(scope, retroDir, 0, null);
+      RecordLearningTestUtils.initializeIndex(scope, retroDir, 0, null);
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
-      ObjectNode input = buildPhase3Input(scope, "Test mistake", null, null);
+      ObjectNode input = RecordLearningTestUtils.buildPhase3Input(scope, "Test mistake", null, null);
       cmd.executeInDir(input, tempDir);
 
       String yearMonth = ZonedDateTime.now(FIXED_CLOCK).format(YEAR_MONTH_FORMAT);
@@ -727,10 +727,11 @@ public final class RecordLearningTest
       {
         Path retroDir = tempDir.resolve(".cat/retrospectives");
         Files.createDirectories(retroDir);
-        initializeIndex(scope, retroDir, 0, null);
+        RecordLearningTestUtils.initializeIndex(scope, retroDir, 0, null);
 
         RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
-        ObjectNode input = buildPhase3Input(scope, "Test mistake with signature " + signature, null, signature);
+        ObjectNode input = RecordLearningTestUtils.buildPhase3Input(scope,
+          "Test mistake with signature " + signature, null, signature);
         cmd.executeInDir(input, tempDir);
 
         String yearMonth = ZonedDateTime.now(FIXED_CLOCK).format(YEAR_MONTH_FORMAT);
@@ -769,14 +770,14 @@ public final class RecordLearningTest
       Files.createDirectories(retroDir);
 
       // Set up pre-existing entries: M001 with no cause_signature, M002 with a signature
-      initializeIndex(scope, retroDir, 2, null);
+      RecordLearningTestUtils.initializeIndex(scope, retroDir, 2, null);
       initializeMistakesFileWithSignatures(scope, retroDir, "2026-03",
         new String[]{"M001", null, null},
         new String[]{"M002", null, "compliance_failure:hook_absent:file_operations"});
 
       // Record new entry without cause_signature
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
-      ObjectNode input = buildPhase3Input(scope, "New mistake without signature", null, null);
+      ObjectNode input = RecordLearningTestUtils.buildPhase3Input(scope, "New mistake without signature", null, null);
       cmd.executeInDir(input, tempDir);
 
       String yearMonth = ZonedDateTime.now(FIXED_CLOCK).format(YEAR_MONTH_FORMAT);
@@ -826,12 +827,13 @@ public final class RecordLearningTest
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
-      initializeIndex(scope, retroDir, 0, null);
+      RecordLearningTestUtils.initializeIndex(scope, retroDir, 0, null);
 
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
 
       // Case 1: null signature (unclassifiable) — must not crash
-      ObjectNode input1 = buildPhase3Input(scope, "Ambiguous mistake with no clear cause", null, null);
+      ObjectNode input1 = RecordLearningTestUtils.buildPhase3Input(scope,
+        "Ambiguous mistake with no clear cause", null, null);
       String result1 = cmd.executeInDir(input1, tempDir);
       JsonNode json1 = scope.getJsonMapper().readTree(result1);
       requireThat(json1.get("learning_id").asString(), "learning_id").isEqualTo("M001");
@@ -845,7 +847,8 @@ public final class RecordLearningTest
 
       // Case 2: closest-match signature for an ambiguous case — must be stored as-is
       // (e.g., mistake where both compliance_failure and knowledge_gap apply; agent picks closest)
-      ObjectNode input2 = buildPhase3Input(scope, "Ambiguous: both compliance and knowledge gap apply",
+      ObjectNode input2 = RecordLearningTestUtils.buildPhase3Input(scope,
+        "Ambiguous: both compliance and knowledge gap apply",
         null, "compliance_failure:doc_ignored:plugin_rules");
       String result2 = cmd.executeInDir(input2, tempDir);
       JsonNode json2 = scope.getJsonMapper().readTree(result2);
@@ -876,17 +879,18 @@ public final class RecordLearningTest
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
-      initializeIndex(scope, retroDir, 0, null);
+      RecordLearningTestUtils.initializeIndex(scope, retroDir, 0, null);
 
       String signature = "compliance_failure:hook_absent:file_operations";
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
 
       // Record M001 with a specific cause_signature
-      ObjectNode input1 = buildPhase3Input(scope, "First compliance failure", null, signature);
+      ObjectNode input1 = RecordLearningTestUtils.buildPhase3Input(scope, "First compliance failure", null, signature);
       cmd.executeInDir(input1, tempDir);
 
       // Record M002 with the same signature, explicitly linking to M001 (recurrence_of)
-      ObjectNode input2 = buildPhase3Input(scope, "Same compliance failure recurs", "M001", signature);
+      ObjectNode input2 = RecordLearningTestUtils.buildPhase3Input(scope,
+        "Same compliance failure recurs", "M001", signature);
       cmd.executeInDir(input2, tempDir);
 
       String yearMonth = ZonedDateTime.now(FIXED_CLOCK).format(YEAR_MONTH_FORMAT);
@@ -950,14 +954,14 @@ public final class RecordLearningTest
       Files.createDirectories(retroDir);
 
       // Pre-populate M001 in a prior month file with a specific cause_signature
-      initializeIndex(scope, retroDir, 1, null);
+      RecordLearningTestUtils.initializeIndex(scope, retroDir, 1, null);
       initializeMistakesFileWithSignatures(scope, retroDir, "2026-02",
         new String[]{"M001", null, "compliance_failure:doc_ignored:plugin_rules"});
 
       // Record M002 in current month with the same signature, explicitly linking to M001
       // (The analyze phase agent would detect the match and set recurrence_of before calling RecordLearning)
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
-      ObjectNode input = buildPhase3Input(scope, "Same compliance failure in different month",
+      ObjectNode input = RecordLearningTestUtils.buildPhase3Input(scope, "Same compliance failure in different month",
         "M001", "compliance_failure:doc_ignored:plugin_rules");
       cmd.executeInDir(input, tempDir);
 
@@ -984,38 +988,6 @@ public final class RecordLearningTest
   // ============================================================================
   // Helper methods
   // ============================================================================
-
-  /**
-   * Initializes the index.json file in the retrospectives directory.
-   *
-   * @param scope the JVM scope
-   * @param retroDir the retrospectives directory
-   * @param count the mistake_count_since_last value
-   * @param lastRetrospective the last retrospective ISO timestamp, or null
-   * @throws IOException if file writing fails
-   */
-  private void initializeIndex(JvmScope scope, Path retroDir, int count, String lastRetrospective)
-    throws IOException
-  {
-    ObjectNode index = scope.getJsonMapper().createObjectNode();
-    index.put("version", "2.0");
-    ObjectNode config = scope.getJsonMapper().createObjectNode();
-    config.put("mistake_count_threshold", 10);
-    config.put("trigger_interval_days", 7);
-    index.set("config", config);
-    if (lastRetrospective != null)
-      index.put("last_retrospective", lastRetrospective);
-    else
-      index.putNull("last_retrospective");
-    index.put("mistake_count_since_last", count);
-    ObjectNode files = scope.getJsonMapper().createObjectNode();
-    files.set("mistakes", scope.getJsonMapper().createArrayNode());
-    files.set("retrospectives", scope.getJsonMapper().createArrayNode());
-    index.set("files", files);
-
-    Files.writeString(retroDir.resolve("index.json"),
-      scope.getJsonMapper().writerWithDefaultPrettyPrinter().writeValueAsString(index));
-  }
 
   /**
    * Initializes a mistakes-YYYY-MM.json file with the given mistake IDs.
@@ -1086,45 +1058,5 @@ public final class RecordLearningTest
     data.set("mistakes", mistakes);
     Files.writeString(retroDir.resolve("mistakes-" + yearMonth + ".json"),
       scope.getJsonMapper().writerWithDefaultPrettyPrinter().writeValueAsString(data));
-  }
-
-  /**
-   * Builds a Phase 3 input JSON object for testing.
-   *
-   * @param scope the JVM scope
-   * @param description the mistake description
-   * @param recurrenceOf the ID of the original mistake if recurrence, or null
-   * @param causeSignature the cause signature triple, or null if not classified
-   * @return an ObjectNode representing Phase 3 output
-   */
-  private ObjectNode buildPhase3Input(JvmScope scope, String description, String recurrenceOf,
-    String causeSignature)
-  {
-    ObjectNode input = scope.getJsonMapper().createObjectNode();
-    input.put("category", "protocol_violation");
-    input.put("description", description);
-    input.put("root_cause", "Test root cause");
-    if (causeSignature != null)
-      input.put("cause_signature", causeSignature);
-    else
-      input.putNull("cause_signature");
-    input.put("prevention_type", "skill");
-    input.put("prevention_path", "/workspace/test.md");
-    ArrayNode keywords = scope.getJsonMapper().createArrayNode();
-    keywords.add("test");
-    input.set("pattern_keywords", keywords);
-    input.put("prevention_implemented", true);
-    input.put("prevention_verified", true);
-    if (recurrenceOf != null)
-      input.put("recurrence_of", recurrenceOf);
-    else
-      input.putNull("recurrence_of");
-    ObjectNode quality = scope.getJsonMapper().createObjectNode();
-    quality.put("verification_type", "positive");
-    quality.put("fragility", "low");
-    quality.put("catches_variations", true);
-    input.set("prevention_quality", quality);
-    input.put("correct_behavior", "Do the right thing");
-    return input;
   }
 }
