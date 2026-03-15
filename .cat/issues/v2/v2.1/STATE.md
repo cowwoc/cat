@@ -108,6 +108,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-enforce-collect-agent-scope
 - add-worktree-redirect-to-isolation-hook
 - add-guidance-to-hooks
+- fix-autolearn-java-source-false-positive
 
 
 ## Issues Closed
