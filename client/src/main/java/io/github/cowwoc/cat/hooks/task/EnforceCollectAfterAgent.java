@@ -10,6 +10,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.TaskHandler;
+import io.github.cowwoc.cat.hooks.WorktreeContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
@@ -54,6 +55,22 @@ public final class EnforceCollectAfterAgent implements TaskHandler
     Path flagPath = scope.getSessionBasePath().resolve(sessionId).resolve("pending-agent-result");
     if (!Files.exists(flagPath))
       return Result.allow();
+
+    if (WorktreeContext.forSession(
+      scope.getProjectCatDir(), scope.getClaudeProjectDir(), scope.getJsonMapper(), sessionId) == null)
+    {
+      // No active worktree lock — flag is stale; clean up and allow
+      try
+      {
+        Files.deleteIfExists(flagPath);
+      }
+      catch (IOException e)
+      {
+        log.warn("EnforceCollectAfterAgent: failed to delete stale flag file {}: {}", flagPath,
+          e.getMessage());
+      }
+      return Result.allow();
+    }
 
     // Read skill and subagent_type from tool input
     JsonNode skillNode = toolInput.get("skill");

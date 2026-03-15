@@ -43,6 +43,29 @@ public final class EnforceCollectAfterAgentTest
   }
 
   /**
+   * Creates a worktree lock and worktree directory, simulating an active worktree context.
+   * <p>
+   * The lock file is written to {@code {projectCatDir}/locks/{issueId}.lock} and the
+   * worktree directory is created at {@code {projectCatDir}/worktrees/{issueId}/}.
+   *
+   * @param scope the JVM scope
+   * @param sessionId the session ID to record in the lock file
+   * @param issueId the issue ID to use for the lock and worktree directory names
+   * @throws IOException if lock or directory creation fails
+   */
+  private static void createWorktreeLock(JvmScope scope, String sessionId, String issueId)
+    throws IOException
+  {
+    Path projectCatDir = scope.getProjectCatDir();
+    Path locksDir = projectCatDir.resolve("locks");
+    Files.createDirectories(locksDir);
+    Path lockFile = locksDir.resolve(issueId + ".lock");
+    Files.writeString(lockFile, "{\"session_id\": \"" + sessionId + "\"}");
+    Path worktreeDir = projectCatDir.resolve("worktrees").resolve(issueId);
+    Files.createDirectories(worktreeDir);
+  }
+
+  /**
    * Creates a tool input for a Skill invocation.
    *
    * @param mapper the JSON mapper
@@ -157,7 +180,7 @@ public final class EnforceCollectAfterAgentTest
 
   /**
    * Verifies that when the flag exists and the Skill is work-merge-agent (not a collect skill),
-   * the call is blocked.
+   * the call is blocked when an active worktree lock is present.
    *
    * @throws IOException if test setup fails
    */
@@ -166,10 +189,12 @@ public final class EnforceCollectAfterAgentTest
   {
     Path tempDir = Files.createTempDirectory("enforce-collect-after-agent-test-");
     String sessionId = UUID.randomUUID().toString();
+    String issueId = "v2.1-test-issue";
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       createFlagFile(scope, sessionId);
+      createWorktreeLock(scope, sessionId, issueId);
 
       EnforceCollectAfterAgent handler = new EnforceCollectAfterAgent(scope);
       JsonNode toolInput = createSkillInput(mapper, "cat:work-merge-agent");
@@ -187,7 +212,8 @@ public final class EnforceCollectAfterAgentTest
   }
 
   /**
-   * Verifies that when the flag exists and a Task for cat:work-execute is attempted, the call is blocked.
+   * Verifies that when the flag exists and a Task for cat:work-execute is attempted, the call is
+   * blocked when an active worktree lock is present.
    *
    * @throws IOException if test setup fails
    */
@@ -196,10 +222,12 @@ public final class EnforceCollectAfterAgentTest
   {
     Path tempDir = Files.createTempDirectory("enforce-collect-after-agent-test-");
     String sessionId = UUID.randomUUID().toString();
+    String issueId = "v2.1-test-issue";
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       createFlagFile(scope, sessionId);
+      createWorktreeLock(scope, sessionId, issueId);
 
       EnforceCollectAfterAgent handler = new EnforceCollectAfterAgent(scope);
       JsonNode toolInput = createTaskInput(mapper, "cat:work-execute");
@@ -217,7 +245,8 @@ public final class EnforceCollectAfterAgentTest
   }
 
   /**
-   * Verifies that block reason contains "collect-results-agent", "BLOCKED", and the attempted tool name.
+   * Verifies that block reason contains "collect-results-agent", "BLOCKED", and the attempted tool
+   * name when an active worktree lock is present.
    *
    * @throws IOException if test setup fails
    */
@@ -226,10 +255,12 @@ public final class EnforceCollectAfterAgentTest
   {
     Path tempDir = Files.createTempDirectory("enforce-collect-after-agent-test-");
     String sessionId = UUID.randomUUID().toString();
+    String issueId = "v2.1-test-issue";
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       createFlagFile(scope, sessionId);
+      createWorktreeLock(scope, sessionId, issueId);
 
       EnforceCollectAfterAgent handler = new EnforceCollectAfterAgent(scope);
       JsonNode toolInput = createSkillInput(mapper, "cat:status-agent");
@@ -248,8 +279,8 @@ public final class EnforceCollectAfterAgentTest
   }
 
   /**
-   * Verifies that the block reason contains the composite agent ID construction formula so the main agent
-   * knows how to form the correct cat_agent_id argument.
+   * Verifies that the block reason contains the composite agent ID construction formula so the
+   * main agent knows how to form the correct cat_agent_id argument.
    *
    * @throws IOException if test setup fails
    */
@@ -258,10 +289,12 @@ public final class EnforceCollectAfterAgentTest
   {
     Path tempDir = Files.createTempDirectory("enforce-collect-after-agent-test-");
     String sessionId = UUID.randomUUID().toString();
+    String issueId = "v2.1-test-issue";
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       createFlagFile(scope, sessionId);
+      createWorktreeLock(scope, sessionId, issueId);
 
       EnforceCollectAfterAgent handler = new EnforceCollectAfterAgent(scope);
       JsonNode toolInput = createSkillInput(mapper, "cat:status-agent");
@@ -271,6 +304,37 @@ public final class EnforceCollectAfterAgentTest
       String reason = result.reason();
       requireThat(reason, "reason").contains("{CLAUDE_SESSION_ID}/subagents/{rawAgentId}");
       requireThat(reason, "reason").contains("rawAgentId");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that when the flag exists but no active worktree lock is present (stale flag),
+   * the handler allows the call and deletes the stale flag file.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void flagExistsButNoWorktreeLockAllows() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("enforce-collect-after-agent-test-");
+    String sessionId = UUID.randomUUID().toString();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      createFlagFile(scope, sessionId);
+      // No lock file or worktree directory created — stale flag scenario
+
+      EnforceCollectAfterAgent handler = new EnforceCollectAfterAgent(scope);
+      JsonNode toolInput = createSkillInput(mapper, "cat:work-merge-agent");
+      TaskHandler.Result result = handler.check(toolInput, sessionId, "");
+
+      requireThat(result.blocked(), "blocked").isFalse();
+      Path flagPath = scope.getSessionBasePath().resolve(sessionId).resolve("pending-agent-result");
+      requireThat(Files.notExists(flagPath), "flagDeleted").isTrue();
     }
     finally
     {
