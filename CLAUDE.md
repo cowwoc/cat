@@ -26,6 +26,23 @@ mistake IDs. See `common.md` § "No retrospective commentary".
 - **Do not update closed issue files:** Never modify PLAN.md or STATE.md of closed issues unless the user explicitly
   instructs you to. Closed issues are historical records.
 
+## Issue Workflow vs Direct Implementation (M553)
+
+When a user says "update skill X to do Y" or "modify plugin Z to support W", treat this as a feature request
+requiring the CAT issue workflow — do NOT directly read, analyze, or edit plugin source files.
+
+**Correct interpretation:** Create an issue via `/cat:add` that captures the requested change as work to be
+done. The issue's PLAN.md describes what to update and why. Implementation happens later via `/cat:work`.
+
+**Wrong interpretation:** Reading skill source code, analyzing it, and proposing or making edits inline.
+
+**The distinction:** Direct edits bypass worktree isolation and skip the planning, review, and merge process
+that protects the codebase. Every plugin change goes through an issue — even when the user frames the request
+as an immediate action.
+
+**Exception:** If the user explicitly asks for a "quick fix" or "one-line change" AND the change is trivial
+enough to fit in a single commit, create a minimal worktree branch (still not direct edits to main workspace).
+
 ## Plugin Development
 
 When editing CAT plugin files, always edit the source files in `/workspace/plugin/`, NOT the cached installation in
