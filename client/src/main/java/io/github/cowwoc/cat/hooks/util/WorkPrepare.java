@@ -301,7 +301,7 @@ public final class WorkPrepare
     // Steps 5-10: Create worktree and build READY result
     String issueBranch = buildIssueBranch(major, minor, found.patch(), issueName);
     return executeWithLock(input, projectDir, mapper, issueId, major, minor, issueName,
-      issuePath, targetBranch, planPath, estimatedTokens, issueBranch, found.createStateMd());
+      issuePath, targetBranch, planPath, estimatedTokens, issueBranch);
   }
 
   /**
@@ -429,14 +429,13 @@ public final class WorkPrepare
    * @param planPath the path to PLAN.md
    * @param estimatedTokens the estimated token count
    * @param issueBranch the issue branch name
-   * @param createStateMd true if the issue had no STATE.md in the main workspace
    * @return JSON string with READY or ERROR result
    * @throws IOException if file operations fail
    */
   private String executeWithLock(PrepareInput input, Path projectDir, JsonMapper mapper,
     String issueId, String major, String minor,
     String issueName, Path issuePath, String targetBranch, Path planPath, int estimatedTokens,
-    String issueBranch, boolean createStateMd) throws IOException
+    String issueBranch) throws IOException
   {
     // Step 5: Create worktree
     Path worktreePath;
@@ -450,6 +449,25 @@ public final class WorkPrepare
       return mapper.writeValueAsString(Map.of(
         "status", "ERROR",
         "message", "Failed to create worktree: " + e.getMessage()));
+    }
+
+    // Step 5.5: Create and commit STATE.md in worktree if needed
+    // Ensures STATE.md is always tracked in the issue branch, preventing the case where
+    // STATE.md exists untracked in the main workspace but is absent from the worktree.
+    try
+    {
+      if (!stateFileExistsInWorktree(worktreePath, issuePath, projectDir))
+      {
+        createStateFileAndCommit(worktreePath, issuePath, projectDir, targetBranch);
+      }
+    }
+    catch (IOException e)
+    {
+      cleanupWorktree(projectDir, worktreePath);
+      releaseLock(issueId, input.sessionId());
+      return mapper.writeValueAsString(Map.of(
+        "status", "ERROR",
+        "message", "Failed to create and commit STATE.md: " + e.getMessage()));
     }
 
     // Step 6: Verify worktree branch
@@ -507,13 +525,11 @@ public final class WorkPrepare
     // Step 8: Check target branch for suspicious commits
     String suspiciousCommits = checkTargetBranchCommits(projectDir, targetBranch, issueName, planPath);
 
-    // Step 9: Create or update STATE.md in worktree
+    // Step 9: Update STATE.md in worktree
+    // STATE.md now always exists in the worktree (created in Step 5.5 if needed)
     try
     {
-      if (createStateMd)
-        createStateMd(worktreePath, issuePath, projectDir, targetBranch);
-      else
-        updateStateMd(worktreePath, issuePath, projectDir, targetBranch);
+      updateStateMd(worktreePath, issuePath, projectDir, targetBranch);
     }
     catch (IOException e)
     {
@@ -1567,6 +1583,58 @@ public final class WorkPrepare
       """.formatted(targetBranch);
 
     Files.writeString(stateFile, content);
+  }
+
+  /**
+   * Checks whether STATE.md exists and is tracked in the worktree.
+   *
+   * @param worktreePath the path to the worktree
+   * @param issuePath the absolute path to the issue directory in the main working tree
+   * @param projectDir the project root directory
+   * @return true if STATE.md exists in the worktree, false otherwise
+   * @throws IOException if file operations fail
+   */
+  private boolean stateFileExistsInWorktree(Path worktreePath, Path issuePath, Path projectDir)
+    throws IOException
+  {
+    Path relativeIssuePath = projectDir.relativize(issuePath);
+    Path stateFile = worktreePath.resolve(relativeIssuePath).resolve("STATE.md");
+    return Files.isRegularFile(stateFile);
+  }
+
+  /**
+   * Creates STATE.md in the worktree and commits it to the issue branch.
+   * <p>
+   * This ensures STATE.md is established as a committed file in the issue branch,
+   * preventing the case where STATE.md exists untracked in the main workspace but
+   * is absent from the worktree.
+   *
+   * @param worktreePath the path to the worktree
+   * @param issuePath the absolute path to the issue directory in the main working tree
+   * @param projectDir the project root directory
+   * @param targetBranch the target branch name for this issue
+   * @throws IOException if file operations or git operations fail
+   */
+  private void createStateFileAndCommit(Path worktreePath, Path issuePath, Path projectDir,
+    String targetBranch) throws IOException
+  {
+    // Create the STATE.md file in the worktree
+    createStateMd(worktreePath, issuePath, projectDir, targetBranch);
+
+    // Commit STATE.md to the issue branch
+    Path relativeIssuePath = projectDir.relativize(issuePath);
+    Path relativeStateFile = relativeIssuePath.resolve("STATE.md");
+
+    try
+    {
+      GitCommands.runGit(worktreePath, "add", relativeStateFile.toString());
+      GitCommands.runGit(worktreePath, "commit", "-m",
+        "planning: create STATE.md for new issue");
+    }
+    catch (IOException e)
+    {
+      throw new IOException("Failed to commit STATE.md to git: " + e.getMessage(), e);
+    }
   }
 
   /**

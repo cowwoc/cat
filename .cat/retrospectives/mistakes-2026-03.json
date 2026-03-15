@@ -2034,5 +2034,45 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M549",
+    "timestamp" : "2026-03-15T14:14:36Z",
+    "category" : "missing_documentation",
+    "description" : "work-with-issue-agent tried to invoke cat:work-confirm-agent immediately after work-implement-agent returned, without calling cat:collect-results-agent first. The EnforceCollectAfterAgent hook blocked the confirm invocation because the pending-agent-result flag was still set from the implementation subagent Task tool completion.",
+    "root_cause" : "MISSING STEP: work-implement-agent/first-use.md instructs agents to validate and merge subagent commits after the Task tool returns, but never instructs them to call cat:collect-results-agent first. The EnforceCollectAfterAgent hook requires collect-results-agent to be called after any Agent/Task tool completion before any subsequent Skill or Task call. The missing step caused the agent to skip collect-results-agent and attempt to proceed directly to the confirm phase.",
+    "cause_signature" : "knowledge_gap:skill_incomplete:skill_execution",
+    "rca_method" : "A",
+    "rca_method_name" : "5-whys",
+    "prevention_type" : "skill",
+    "prevention_path" : "${CLAUDE_PROJECT_DIR}/plugin/skills/work-implement-agent/first-use.md",
+    "pattern_keywords" : [ "collect-results", "pending-agent-result", "work-implement", "work-confirm", "EnforceCollectAfterAgent" ],
+    "prevention_implemented" : true,
+    "prevention_verified" : true,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : "After Task tool subagent completes (single or parallel), invoke cat:collect-results-agent before any Skill or Task tool calls. Only after collect-results-agent clears the pending-agent-result flag can the agent proceed to the next phase (confirm, merge, etc.)."
+  }, {
+    "id" : "M550",
+    "timestamp" : "2026-03-15T14:36:07Z",
+    "category" : "",
+    "description" : "",
+    "root_cause" : "",
+    "cause_signature" : "knowledge_gap:skill_incomplete:skill_execution",
+    "prevention_type" : "skill",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }

@@ -363,7 +363,19 @@ Task tool:
     CRITICAL: You are the implementation agent - implement directly, do NOT spawn another subagent.
 ```
 
-**After the subagent returns**, validate and merge its commits back into the issue branch:
+**After the subagent returns**, invoke `cat:collect-results-agent` before any further Skill or Task tool calls.
+The `EnforceCollectAfterAgent` hook blocks all Skill and Task calls until collect-results-agent is invoked.
+
+```
+Skill tool:
+  skill: "cat:collect-results-agent"
+  args: "${CAT_AGENT_ID}/${SUBAGENT_RAW_ID} ${ISSUE_PATH} <subagent_commits_json_path>"
+```
+
+Where `SUBAGENT_RAW_ID` is the `agentId:` value from the Task tool result footer, and
+`subagent_commits_json_path` is a temp file path to write the collected commits JSON.
+
+Then validate and merge its commits back into the issue branch:
 
 ```bash
 SUBAGENT_BRANCH="<branch name from Task tool result metadata>"
@@ -540,8 +552,22 @@ Task tool:
     CRITICAL: You are the implementation agent - implement directly, do NOT spawn another subagent.
 ```
 
-**Wait for all group subagents to complete, then validate and merge each subagent branch back into the issue
-branch in alphabetical order (A first, then B, C, ...):**
+**Wait for all group subagents to complete. Then invoke `cat:collect-results-agent` for each subagent
+before any further Skill or Task tool calls. The `EnforceCollectAfterAgent` hook blocks all Skill and Task
+calls until collect-results-agent is invoked for each completed Agent tool result.**
+
+For each completed subagent, call collect-results-agent:
+
+```
+Skill tool:
+  skill: "cat:collect-results-agent"
+  args: "${CAT_AGENT_ID}/${SUBAGENT_RAW_ID} ${ISSUE_PATH} <subagent_commits_json_path>"
+```
+
+Where `SUBAGENT_RAW_ID` is the `agentId:` value from that group's Task tool result footer.
+
+Then validate and merge each subagent branch back into the issue branch in alphabetical order
+(A first, then B, C, ...):
 
 For each group's branch name received from the Task tool result, validate before merging:
 
