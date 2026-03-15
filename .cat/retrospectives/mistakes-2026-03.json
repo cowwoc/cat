@@ -1977,5 +1977,24 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M546",
+    "timestamp" : "2026-03-15T12:25:00Z",
+    "category" : "environment_mismatch",
+    "description" : "work-prepare returned OVERSIZED for a decomposed parent issue (2.1-rename-cat-config-files) instead of skipping it and selecting the available sub-issue (2.1-rename-config-tests). The agent correctly invoked decompose-issue-agent then retried, but work-prepare still returned OVERSIZED because the underlying bug was not fixed. The skill provided no guidance for when OVERSIZED persists after 2 attempts, so the agent improvised by trying to specify the sub-issue directly, finding it locked by another session.",
+    "root_cause" : "SYSTEM BUG: IssueDiscovery.allSubissuesClosed() uses QUALIFIED_NAME_PATTERN to resolve sub-issue names from the 'Decomposed Into' section of STATE.md. When sub-issue names are stored as bare names (e.g., 'rename-config-tests') rather than qualified names (e.g., '2.1-rename-config-tests'), the pattern fails to match and the sub-issue is silently skipped via 'continue'. With all sub-issues skipped, the method returns true (falsely claiming all sub-issues are closed), causing the decomposed parent to be treated as an executable issue rather than being skipped. Work-prepare then selected the OVERSIZED parent instead of the available sub-issue.",
+    "cause_signature" : "environment_mismatch:validation_absent:issue_workflow",
+    "prevention_type" : "code_fix",
+    "prevention_path" : "client/src/main/java/io/github/cowwoc/cat/hooks/util/IssueDiscovery.java",
+    "pattern_keywords" : [ "decomposed_parent", "bare_name", "qualified_name", "allSubissuesClosed", "OVERSIZED", "issue_discovery" ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : "allSubissuesClosed() must handle bare sub-issue names by resolving them against the parent version directory. When a sub-issue name lacks the version prefix, derive the directory path directly from the bare name (e.g., 'rename-config-tests' -> parentVersionDir/rename-config-tests/STATE.md). If the sub-issue STATE.md does not exist or is not closed, return false. This ensures the decomposed parent is skipped and work-prepare selects the available sub-issue instead."
   } ]
 }
