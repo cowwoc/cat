@@ -2208,5 +2208,24 @@
       "catches_variations" : true
     },
     "correct_behavior" : "When loadOrCreateMistakesFile() encounters a JacksonException parsing the existing mistakes file, it wraps the exception with an IOException whose message names the file path and instructs the user to inspect and repair it: 'Failed to parse mistakes file at <path>: <original message>. The file contains malformed JSON. Inspect and fix the file, then retry.'"
+  }, {
+    "id" : "M558",
+    "timestamp" : "2026-03-15T21:50:56Z",
+    "category" : "",
+    "description" : "",
+    "root_cause" : "",
+    "cause_signature" : "tool_limitation:validation_absent:file_operations",
+    "prevention_type" : "code_fix",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }
