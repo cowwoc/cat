@@ -119,6 +119,7 @@ rm -rf "$WORK_DIR"
 - Lock files must include session ID: `${LOCKS_DIR}/${ISSUE_ID}.lock` (not shared)
 - Marker files must be per-session: `${SESSION_DIR}/marker-name` (not in worktree/main workspace)
 - Use `${CLAUDE_SESSION_ID}` as part of any file path that tracks instance state
+- **CRITICAL:** When you encounter a lock file with a session_id different from your own (`${CLAUDE_SESSION_ID}`), it is **NOT necessarily stale** — it belongs to another active Claude instance. Do NOT assume it is old or try to delete it. Multiple instances run concurrently, each with its own session ID. A lock file containing a different session_id is evidence of concurrent work, not abandoned work.
 
 **Build artifacts:**
 - Worktree builds must NOT write to the main workspace `target/` directory
