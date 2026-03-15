@@ -2168,15 +2168,26 @@
     "issue_creation_info" : {
       "suggested_title" : "Fix AutoLearnMistakes false-positives on Java source code reads (M555)",
       "suggested_description" : "AutoLearnMistakes.filterJsonContent() does not filter Java source code output. When the agent reads hook source files via Bash (sed/grep/cat on .java files), stdout contains Java string literals like 'PROTOCOL VIOLATION' and 'BUILD FAILURE' from the hook's own pattern definitions. These pass through filterJsonContent() and match Patterns 1, 2, and 3, producing false-positive mistake detections. This is the third recurrence of the M461 root cause (insufficient output filtering). The fix should extend filterJsonContent() to detect and strip Java source code content lines, preventing self-referential false positives while preserving detection of real Maven build failures, test failures, and protocol violations.",
-      "suggested_acceptance_criteria" : [
-        "filterJsonContent() strips lines that match Java source code patterns (e.g., lines containing 'return Result.', 'Pattern.compile(', '* @param', 'public final class')",
-        "Pattern 3 (protocol_violation) does NOT trigger when Bash reads DetectAssistantGivingUp.java or similar hook source files",
-        "Pattern 1 (build_failure) does NOT trigger when Bash reads AutoLearnMistakes.java or similar files containing 'BUILD FAILURE' in string literals",
-        "Real Maven BUILD FAILURE output (from mvn compile/test) still triggers Pattern 1",
-        "Real protocol violations from non-Java-source output still trigger Pattern 3",
-        "Tests in AutoLearnMistakesTest verify all false-positive and true-positive cases for Java source code reads",
-        "No regression in other AutoLearnMistakes patterns"
-      ]
+      "suggested_acceptance_criteria" : [ "filterJsonContent() strips lines that match Java source code patterns (e.g., lines containing 'return Result.', 'Pattern.compile(', '* @param', 'public final class')", "Pattern 3 (protocol_violation) does NOT trigger when Bash reads DetectAssistantGivingUp.java or similar hook source files", "Pattern 1 (build_failure) does NOT trigger when Bash reads AutoLearnMistakes.java or similar files containing 'BUILD FAILURE' in string literals", "Real Maven BUILD FAILURE output (from mvn compile/test) still triggers Pattern 1", "Real protocol violations from non-Java-source output still trigger Pattern 3", "Tests in AutoLearnMistakesTest verify all false-positive and true-positive cases for Java source code reads", "No regression in other AutoLearnMistakes patterns" ]
     }
+  }, {
+    "id" : "M556",
+    "timestamp" : "2026-03-15T21:09:25Z",
+    "category" : "",
+    "description" : "",
+    "root_cause" : "",
+    "cause_signature" : "knowledge_gap:doc_missing:issue_workflow",
+    "prevention_type" : "documentation",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }
