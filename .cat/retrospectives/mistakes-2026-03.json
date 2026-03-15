@@ -2189,5 +2189,24 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M557",
+    "timestamp" : "2026-03-15T21:49:22Z",
+    "category" : "incorrect_implementation",
+    "description" : "record-learning CLI failed with raw Jackson StreamReadException (Source: REDACTED) when the existing mistakes-2026-03.json had literal newline characters in string values. The opaque error gave no indication of which file was corrupt or how to fix it. The agent could not distinguish input JSON corruption from existing mistakes file corruption.",
+    "root_cause" : "RecordLearning.java loadOrCreateMistakesFile() propagated the raw Jackson JacksonException without wrapping it in an IOException that names the file being parsed. The caller received an opaque StreamReadException with Source: REDACTED and no file path, making it impossible to identify or fix the corrupted file.",
+    "cause_signature" : "tool_limitation:validation_absent:file_operations",
+    "prevention_type" : "code_fix",
+    "prevention_path" : "client/src/main/java/io/github/cowwoc/cat/hooks/util/RecordLearning.java",
+    "pattern_keywords" : [ "record_learning", "jackson_exception", "mistakes_file", "malformed_json", "error_diagnosis" ],
+    "prevention_implemented" : true,
+    "prevention_verified" : true,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : "When loadOrCreateMistakesFile() encounters a JacksonException parsing the existing mistakes file, it wraps the exception with an IOException whose message names the file path and instructs the user to inspect and repair it: 'Failed to parse mistakes file at <path>: <original message>. The file contains malformed JSON. Inspect and fix the file, then retry.'"
   } ]
 }
