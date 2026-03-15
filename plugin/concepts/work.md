@@ -91,6 +91,19 @@ those criteria, it must be fixed — regardless of when it was introduced.
 **Example:** If an issue's goal is "remove all Python from the project" and pre-existing shell scripts contain inline
 `python3` calls, those must be addressed.
 
+**When editing any file, actively scan for cross-cutting rule violations in surrounding code** — not just the
+lines relevant to the PLAN.md goal. Common violations to look for in every file you read:
+
+- **Fail-fast violations:** Silent fallbacks (`catch (X _) { return fallback; }`, `|| "default"`, `getOrDefault`
+  returning non-error values for required config). Every required value must block with a clear error, never silently
+  use a fallback.
+- **Null return for errors:** Methods that return `null` to signal failure instead of throwing a typed exception.
+- **Fallback comments as hints:** Comments like `// fall back to X`, `// fallback:`, or `// default to` are red flags.
+  Each one is a potential fail-fast violation — read the surrounding code to determine if the fallback masks an error.
+
+Treat these like compilation errors: they must be fixed before the issue closes, regardless of whether they were
+introduced before the current session.
+
 ## CRITICAL: Worktree Isolation
 
 **ALL issue implementation work MUST happen in the issue worktree, NEVER in `/workspace` main.**
@@ -152,6 +165,31 @@ Main agent tracks lock status but doesn't manage locks directly.
 | Merge conflict | work-merge returns CONFLICT, main agent asks user |
 | Lock unavailable | work-prepare returns LOCKED, main agent tries next issue |
 | Token limit exceeded | Implementation subagent returns warning, main agent offers decomposition |
+
+## Work-Phase Output File Paths
+
+Work phases write output files to two distinct locations based on ownership and lifecycle:
+
+**Verify files** — `${CLAUDE_PROJECT_DIR}/.cat/work/verify/${CLAUDE_SESSION_ID}/`
+- Owner: verify subagent; Scope: session-scoped
+- Ephemeral scratch files (`criteria-analysis.json`, `e2e-test-output.json`) written during confirm phase
+- Read by fix subagents to understand what failed; never committed to the issue branch
+
+**Review files** — `${WORKTREE_PATH}/.cat/review/`
+- Owner: stakeholder agents; Scope: worktree-scoped
+- Stakeholder concern detail files (e.g., `security-concerns.json`)
+- Belong to the issue's worktree context; accessed by the work-review phase
+
+**Why two locations?**
+
+- **Verify files** are session-scoped because they are transient scratch space for a single confirm iteration. They
+  don't represent issue work — they represent the result of inspecting it. Multiple verify iterations in the same
+  session reuse the same directory (files are overwritten). They are never committed to the branch.
+- **Review files** are worktree-scoped because they represent reviewer analysis of this specific issue's changes.
+  Placing them inside `${WORKTREE_PATH}` keeps them with the issue context.
+
+**Do NOT conflate these paths.** Review files do NOT go in `.cat/work/review/`. Verify files do NOT go in
+the worktree's `.cat/` directory.
 
 ## Parallel Execution
 

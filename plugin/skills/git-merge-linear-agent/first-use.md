@@ -43,8 +43,23 @@ fi
 - When merging completed work to target branch (main, v1.10, etc.)
 - To maintain clean, linear git history
 
+## Squash-by-Topic First (MANDATORY)
+
+**Invoke `cat:git-squash-agent` before invoking this skill.** Squashing after the merge is not possible.
+
+The squash-by-topic step ensures the branch contains a clean, well-organized commit structure:
+
+- All implementation commits for the issue consolidated into one commit per topic
+- Learning/retrospective commits kept separate from implementation
+- Planning commits kept separate from implementation
+
+The `git-merge-linear` binary enforces exactly 1 commit ahead of the target branch. When the binary reports
+`"Source branch must have exactly 1 commit"`, the correct resolution is to squash ALL commits into a single commit
+(not just reduce the count by one). Squash by topic first using `cat:git-squash-agent`, then retry.
+
 ## Prerequisites
 
+- [ ] `cat:git-squash-agent` invoked and squash completed (see Squash-by-Topic First above)
 - [ ] User approval obtained
 - [ ] Working directory is clean (commit or stash changes)
 - [ ] WORKTREE_PATH is set to the source worktree path

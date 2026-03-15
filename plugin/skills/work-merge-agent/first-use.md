@@ -15,7 +15,8 @@ commit squashing, branch merging, worktree cleanup, and state updates.
 - **Step 8: Skill-Builder Review** — always invoke `cat:skill-builder` for modified skill or
   command files before presenting the approval gate
 - **Step 9: Squash Commits by Topic Before Approval Gate** — always squash commits by topic immediately before
-  presenting the approval gate; do not present the gate on an un-squashed branch
+  presenting the approval gate; do not present the gate on an un-squashed branch. **This applies on EVERY
+  presentation, including after user feedback: re-squash ALL commits before re-presenting the gate.**
 
 ## Arguments and Configuration
 
@@ -431,7 +432,10 @@ do NOT offer "Fix remaining concerns" again. Instead, present only: ["Approve an
 3. **MANDATORY: Re-run stakeholder review** after fixes:
    `Skill("cat:stakeholder-review-agent", "${ISSUE_ID} ${WORKTREE_PATH} ${VERIFY} ${ALL_COMMITS_COMPACT}")`
    The review MUST re-run to verify concerns resolved and detect new concerns introduced by fixes
-4. Increment `FIX_ITERATION`. Return to Step 9 approval gate with updated results
+4. **Re-squash all commits by topic** (MANDATORY, M560): Before returning to Step 9, invoke
+   `cat:git-squash-agent` again with all commits (original + fix commits). Do NOT return to the approval
+   gate without re-squashing — the approval gate must never see more commits than the previous squash attempt.
+5. Increment `FIX_ITERATION`. Return to Step 9 approval gate with updated results
 
 **If changes requested:** Return to user with feedback for iteration. Return status:
 ```json
