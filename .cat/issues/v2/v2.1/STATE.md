@@ -116,6 +116,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - strengthen-squash-comment-verification
 - fix-agent-skill-directory-placement
 - defer-plan-generation-to-work-phase
+- fix-session-end-jvmscope-methods
 
 
 ## Issues Closed
