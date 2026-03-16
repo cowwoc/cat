@@ -41,7 +41,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * Locks never expire automatically - user must explicitly release or force-release.
  * Prevents multiple Claude instances from executing the same issue simultaneously.
  * <p>
- * Lock files are stored in {@code {claudeProjectDir}/.cat/work/locks/<issue-id>.lock}
+ * Lock files are stored in {@code {claudeProjectPath}/.cat/work/locks/<issue-id>.lock}
  * with JSON format:
  * {@code {"session_id": "uuid", "worktrees": {"/path": "sessionId"}, "created_at": epochSeconds,}
  * {@code "created_iso": "ISO-8601"}}
@@ -113,7 +113,7 @@ public final class IssueLock
     this.scope = scope;
     this.clock = clock;
     this.warnings = warnings;
-    this.lockDir = scope.getProjectCatDir().resolve("locks");
+    this.lockDir = scope.getCatWorkPath().resolve("locks");
   }
 
   /**

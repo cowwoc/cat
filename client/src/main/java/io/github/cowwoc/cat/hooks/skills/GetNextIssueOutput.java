@@ -66,7 +66,7 @@ public final class GetNextIssueOutput implements SkillOutput
     String completedIssue = "";
     String targetBranch = "";
     String sessionId = "";
-    String projectDir = "";
+    String projectPath = "";
     String excludePattern = "";
 
     for (int i = 0; i + 1 < args.length; i += 2)
@@ -76,14 +76,14 @@ public final class GetNextIssueOutput implements SkillOutput
         case "--completed-issue" -> completedIssue = args[i + 1];
         case "--target-branch" -> targetBranch = args[i + 1];
         case "--session-id" -> sessionId = args[i + 1];
-        case "--project-dir" -> projectDir = args[i + 1];
+        case "--project-dir" -> projectPath = args[i + 1];
         case "--exclude-pattern" -> excludePattern = args[i + 1];
         default ->
         {
         }
       }
     }
-    return new ParsedArgs(completedIssue, targetBranch, sessionId, projectDir, excludePattern);
+    return new ParsedArgs(completedIssue, targetBranch, sessionId, projectPath, excludePattern);
   }
 
   /**
@@ -92,10 +92,10 @@ public final class GetNextIssueOutput implements SkillOutput
    * @param completedIssue the value of {@code --completed-issue}, or empty if absent
    * @param targetBranch the value of {@code --target-branch}, or empty if absent
    * @param sessionId the value of {@code --session-id}, or empty if absent
-   * @param projectDir the value of {@code --project-dir}, or empty if absent
+   * @param projectPath the value of {@code --project-dir}, or empty if absent
    * @param excludePattern the value of {@code --exclude-pattern}, or empty if absent
    */
-  private record ParsedArgs(String completedIssue, String targetBranch, String sessionId, String projectDir,
+  private record ParsedArgs(String completedIssue, String targetBranch, String sessionId, String projectPath,
     String excludePattern)
   {
   }
@@ -121,21 +121,21 @@ public final class GetNextIssueOutput implements SkillOutput
     String completedIssue = parsed.completedIssue();
     String targetBranch = parsed.targetBranch();
     String sessionId = parsed.sessionId();
-    String projectDir = parsed.projectDir();
+    String projectPath = parsed.projectPath();
     String excludePattern = parsed.excludePattern();
 
     if (sessionId.isBlank())
       sessionId = scope.getClaudeSessionId();
-    if (projectDir.isEmpty())
-      projectDir = scope.getClaudeProjectDir().toString();
+    if (projectPath.isEmpty())
+      projectPath = scope.getProjectPath().toString();
 
-    if (completedIssue.isEmpty() || targetBranch.isEmpty() || projectDir.isEmpty())
+    if (completedIssue.isEmpty() || targetBranch.isEmpty() || projectPath.isEmpty())
     {
       throw new IOException("GetNextIssueOutput.getOutput() requires --completed-issue, --target-branch, " +
         "--session-id, and --project-dir arguments. Got: " + String.join(" ", args));
     }
 
-    return getNextIssueBox(completedIssue, targetBranch, sessionId, projectDir, excludePattern);
+    return getNextIssueBox(completedIssue, targetBranch, sessionId, projectPath, excludePattern);
   }
 
   /**
@@ -151,10 +151,10 @@ public final class GetNextIssueOutput implements SkillOutput
       String completedIssue = parsed.completedIssue();
       String targetBranch = parsed.targetBranch();
       String sessionId = parsed.sessionId();
-      String projectDir = parsed.projectDir();
+      String projectPath = parsed.projectPath();
       String excludePattern = parsed.excludePattern();
 
-      if (completedIssue.isEmpty() || targetBranch.isEmpty() || sessionId.isEmpty() || projectDir.isEmpty())
+      if (completedIssue.isEmpty() || targetBranch.isEmpty() || sessionId.isEmpty() || projectPath.isEmpty())
       {
         System.err.println("Usage: GetNextIssueOutput --completed-issue ID --target-branch BRANCH " +
           "--session-id ID --project-dir DIR [--exclude-pattern GLOB]");
@@ -165,7 +165,7 @@ public final class GetNextIssueOutput implements SkillOutput
       try (JvmScope scope = new MainJvmScope())
       {
         GetNextIssueOutput output = new GetNextIssueOutput(scope);
-        String box = output.getNextIssueBox(completedIssue, targetBranch, sessionId, projectDir, excludePattern);
+        String box = output.getNextIssueBox(completedIssue, targetBranch, sessionId, projectPath, excludePattern);
         System.out.println(box);
       }
     }
@@ -197,19 +197,19 @@ public final class GetNextIssueOutput implements SkillOutput
    * @param completedIssue the ID of the completed issue
    * @param targetBranch the target branch that was merged to
    * @param sessionId the current session ID
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param excludePattern optional glob pattern to exclude issues (may be empty)
    * @return the formatted box
    * @throws NullPointerException if any parameter is null
    * @throws IllegalArgumentException if any required parameter is blank
    */
-  public String getNextIssueBox(String completedIssue, String targetBranch, String sessionId, String projectDir,
+  public String getNextIssueBox(String completedIssue, String targetBranch, String sessionId, String projectPath,
                                 String excludePattern)
   {
     requireThat(completedIssue, "completedIssue").isNotBlank();
     requireThat(targetBranch, "targetBranch").isNotBlank();
     requireThat(sessionId, "sessionId").isNotBlank();
-    requireThat(projectDir, "projectDir").isNotBlank();
+    requireThat(projectPath, "projectPath").isNotBlank();
     requireThat(excludePattern, "excludePattern").isNotNull();
 
     List<String> warnings = new ArrayList<>();

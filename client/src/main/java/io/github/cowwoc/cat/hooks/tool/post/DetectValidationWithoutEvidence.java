@@ -56,7 +56,7 @@ public final class DetectValidationWithoutEvidence implements PostToolHandler
   public DetectValidationWithoutEvidence(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
-    this.sessionBasePath = scope.getSessionBasePath();
+    this.sessionBasePath = scope.getClaudeSessionsPath();
     this.mapper = scope.getJsonMapper();
   }
 

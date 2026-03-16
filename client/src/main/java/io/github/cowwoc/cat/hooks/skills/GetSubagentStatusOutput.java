@@ -225,7 +225,7 @@ public final class GetSubagentStatusOutput implements SkillOutput
     requireThat(args, "args").isNotNull();
 
     JsonMapper mapper = scope.getJsonMapper();
-    String sessionBase = scope.getSessionBasePath().toString();
+    String sessionBase = scope.getClaudeSessionsPath().toString();
     StatusResult result = getStatus(sessionBase, mapper);
     return result.toJson(mapper);
   }
@@ -261,7 +261,7 @@ public final class GetSubagentStatusOutput implements SkillOutput
       if (!sessionBaseOverride.isEmpty())
         sessionBase = sessionBaseOverride;
       else
-        sessionBase = scope.getSessionBasePath().toString();
+        sessionBase = scope.getClaudeSessionsPath().toString();
 
       try
       {

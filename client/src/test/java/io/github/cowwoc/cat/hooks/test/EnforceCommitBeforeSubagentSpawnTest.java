@@ -64,7 +64,7 @@ public final class EnforceCommitBeforeSubagentSpawnTest
    */
   private static void createLockFile(JvmScope scope, String sessionId, String issueId) throws IOException
   {
-    Path lockDir = scope.getProjectCatDir().resolve("locks");
+    Path lockDir = scope.getCatWorkPath().resolve("locks");
     Files.createDirectories(lockDir);
     String lockContent = """
       {
@@ -85,7 +85,7 @@ public final class EnforceCommitBeforeSubagentSpawnTest
    */
   private static Path createWorktree(Path mainRepo, JvmScope scope, String issueId) throws IOException
   {
-    Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+    Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
     Files.createDirectories(worktreesDir);
     return TestUtils.createWorktree(mainRepo, worktreesDir, issueId);
   }

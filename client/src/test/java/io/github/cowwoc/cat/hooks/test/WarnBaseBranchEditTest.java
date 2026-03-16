@@ -25,7 +25,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * Tests verify that the handler warns when editing source files on a base branch, and uses
  * {@link io.github.cowwoc.cat.hooks.WorktreeContext#forSession} to detect worktree path bypass.
  * <p>
- * Lock and worktree files are created via {@link JvmScope#getProjectCatDir()} to match
+ * Lock and worktree files are created via {@link JvmScope#getCatWorkPath()} to match
  * the external CAT storage location used by the production code.
  * <p>
  * Each test is self-contained with its own temporary directory structure.
@@ -45,7 +45,7 @@ public final class WarnBaseBranchEditTest
    */
   private static void writeLockFile(JvmScope scope, String issueId, String sessionId) throws IOException
   {
-    Path lockDir = scope.getProjectCatDir().resolve("locks");
+    Path lockDir = scope.getCatWorkPath().resolve("locks");
     Files.createDirectories(lockDir);
     String content = """
       {"session_id": "%s", "worktrees": {}, "created_at": 1000000, "created_iso": "2026-01-01T00:00:00Z"}
@@ -63,7 +63,7 @@ public final class WarnBaseBranchEditTest
    */
   private static Path createWorktreeDir(JvmScope scope, String issueId) throws IOException
   {
-    Path worktreeDir = scope.getProjectCatDir().resolve("worktrees").resolve(issueId);
+    Path worktreeDir = scope.getCatWorkPath().resolve("worktrees").resolve(issueId);
     Files.createDirectories(worktreeDir);
     return worktreeDir;
   }
@@ -79,14 +79,14 @@ public final class WarnBaseBranchEditTest
   @Test
   public void allowedPatternIsNotWarned() throws IOException
   {
-    Path projectDir = TestUtils.createTempGitRepo("main");
+    Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("wbbe-test-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       WarnBaseBranchEdit handler = new WarnBaseBranchEdit(scope);
       JsonMapper mapper = scope.getJsonMapper();
       ObjectNode input = mapper.createObjectNode();
-      input.put("file_path", projectDir.resolve(".cat/issues/my-issue/STATE.md").toString());
+      input.put("file_path", projectPath.resolve(".cat/issues/my-issue/STATE.md").toString());
 
       FileWriteHandler.Result result = handler.check(input, SESSION_ID);
 
@@ -95,7 +95,7 @@ public final class WarnBaseBranchEditTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -111,16 +111,16 @@ public final class WarnBaseBranchEditTest
   @Test
   public void editOnBaseBranchProducesWarning() throws IOException
   {
-    Path projectDir = TestUtils.createTempGitRepo("main");
+    Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("wbbe-test-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       // No lock file — session has no active worktree (main context)
       WarnBaseBranchEdit handler = new WarnBaseBranchEdit(scope);
       JsonMapper mapper = scope.getJsonMapper();
       ObjectNode input = mapper.createObjectNode();
       // A source file that would typically be blocked
-      input.put("file_path", projectDir.resolve("SomeClass.java").toString());
+      input.put("file_path", projectPath.resolve("SomeClass.java").toString());
 
       FileWriteHandler.Result result = handler.check(input, SESSION_ID);
 
@@ -130,7 +130,7 @@ public final class WarnBaseBranchEditTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -196,7 +196,7 @@ public final class WarnBaseBranchEditTest
     try (JvmScope scope = new TestJvmScope(mainRepo, pluginRoot))
     {
       // Create a real git worktree so branch detection works
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
       Path worktree = TestUtils.createWorktree(mainRepo, worktreesDir, ISSUE_ID);
       writeLockFile(scope, ISSUE_ID, SESSION_ID);
@@ -228,9 +228,9 @@ public final class WarnBaseBranchEditTest
   @Test
   public void missingFilePathIsAllowed() throws IOException
   {
-    Path projectDir = TestUtils.createTempGitRepo("main");
+    Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("wbbe-test-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       WarnBaseBranchEdit handler = new WarnBaseBranchEdit(scope);
       JsonMapper mapper = scope.getJsonMapper();
@@ -244,7 +244,7 @@ public final class WarnBaseBranchEditTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }

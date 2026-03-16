@@ -68,12 +68,12 @@ public final class ClaudeEnv
   }
 
   /**
-   * Returns the Claude project directory.
+   * Returns the project's root directory.
    *
    * @return the project directory path
    * @throws AssertionError if {@code CLAUDE_PROJECT_DIR} is not set in the environment
    */
-  public Path getClaudeProjectDir()
+  public Path getProjectPath()
   {
     String value = env.get("CLAUDE_PROJECT_DIR");
     if (value == null || value.isEmpty())

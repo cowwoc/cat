@@ -1952,14 +1952,14 @@ public class GetDiffOutputTest
    * and returns the issue path. Used by tests to call getOutput(String[]) with the
    * issue path interface.
    *
-   * @param projectRoot  the project root directory in which to create the issue directory
+   * @param projectPath  the project root directory in which to create the issue directory
    * @param targetBranch the target branch value to write into STATE.md
    * @return the path to the created issue directory
    * @throws IOException if an I/O error occurs
    */
-  private Path createIssueDirWithTargetBranch(Path projectRoot, String targetBranch) throws IOException
+  private Path createIssueDirWithTargetBranch(Path projectPath, String targetBranch) throws IOException
   {
-    Path issuePath = projectRoot.resolve(".cat/issues/v1/v1.0/test-issue");
+    Path issuePath = projectPath.resolve(".cat/issues/v1/v1.0/test-issue");
     Files.createDirectories(issuePath);
     Files.writeString(issuePath.resolve("STATE.md"),
       "# State\n\n- **Status:** in-progress\n- **Target Branch:** " + targetBranch + "\n");

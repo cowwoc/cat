@@ -53,7 +53,7 @@ public final class GetCheckpointOutput implements SkillOutput
    * Generates the output for this skill.
    * <p>
    * Parses {@code --project-dir PATH} from {@code args} if present; otherwise falls back to
-   * {@code scope.getClaudeProjectDir()}.
+   * {@code scope.getProjectPath()}.
    *
    * @param args the arguments from the preprocessor directive
    * @return the generated output
@@ -65,22 +65,22 @@ public final class GetCheckpointOutput implements SkillOutput
   public String getOutput(String[] args) throws IOException
   {
     requireThat(args, "args").isNotNull();
-    Path projectDir = null;
+    Path projectPath = null;
     for (int i = 0; i < args.length; ++i)
     {
       if (args[i].equals("--project-dir"))
       {
         if (i + 1 >= args.length)
           throw new IllegalArgumentException("Missing PATH argument for --project-dir");
-        projectDir = Path.of(args[i + 1]);
+        projectPath = Path.of(args[i + 1]);
         ++i;
       }
       else
         throw new IllegalArgumentException("Unknown argument: " + args[i]);
     }
-    if (projectDir == null)
-      projectDir = scope.getClaudeProjectDir();
-    return "GetCheckpointOutput: project-dir=" + projectDir;
+    if (projectPath == null)
+      projectPath = scope.getProjectPath();
+    return "GetCheckpointOutput: project-dir=" + projectPath;
   }
 
   /**

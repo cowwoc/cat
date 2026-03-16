@@ -61,7 +61,7 @@ public final class ClearAgentMarkers
   public String clearMainAgentMarker(String sessionId)
   {
     requireThat(sessionId, "sessionId").isNotBlank();
-    Path baseDir = scope.getSessionBasePath().toAbsolutePath().normalize();
+    Path baseDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize();
     Path sessionDir = GetSkill.resolveAndValidateContainment(baseDir, sessionId, "sessionId");
     if (!Files.isDirectory(sessionDir))
       return "";
@@ -81,7 +81,7 @@ public final class ClearAgentMarkers
   {
     requireThat(sessionId, "sessionId").isNotBlank();
     requireThat(agentId, "agentId").isNotBlank();
-    Path baseDir = scope.getSessionBasePath().toAbsolutePath().normalize();
+    Path baseDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize();
     String subagentPath = sessionId + "/" + GetSkill.SUBAGENTS_DIR + "/" + agentId;
     Path agentDir = GetSkill.resolveAndValidateContainment(baseDir, subagentPath,
       "sessionId or agentId");

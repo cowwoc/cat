@@ -32,13 +32,13 @@ public final class EnforceApprovalBeforeMergeTest
   /**
    * Writes a config.json with the given trust level to the project directory.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param trust the trust level ("high", "medium", or "low")
    * @throws IOException if the config file cannot be written
    */
-  private static void writeCatConfig(Path projectDir, String trust) throws IOException
+  private static void writeCatConfig(Path projectPath, String trust) throws IOException
   {
-    Path catDir = projectDir.resolve(".cat");
+    Path catDir = projectPath.resolve(".cat");
     Files.createDirectories(catDir);
     Files.writeString(catDir.resolve("config.json"), """
       {"trust": "%s"}
@@ -56,7 +56,7 @@ public final class EnforceApprovalBeforeMergeTest
   private static void writeSessionFile(JvmScope scope, String sessionId, String content)
     throws IOException
   {
-    Path sessionDir = scope.getSessionBasePath();
+    Path sessionDir = scope.getClaudeSessionsPath();
     Files.createDirectories(sessionDir);
     Files.writeString(sessionDir.resolve(sessionId + ".jsonl"), content);
   }

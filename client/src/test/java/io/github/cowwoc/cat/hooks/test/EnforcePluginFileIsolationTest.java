@@ -136,7 +136,7 @@ public class EnforcePluginFileIsolationTest
     Path mainDir = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainDir, mainDir))
     {
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       Path worktreeDir = TestUtils.createWorktree(mainDir, worktreesDir, "2.1-fix-bug");
@@ -177,7 +177,7 @@ public class EnforcePluginFileIsolationTest
     {
       try (JvmScope scope = new TestJvmScope(mainDir, mainDir))
       {
-        Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+        Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
         Files.createDirectories(worktreesDir);
 
         Path worktreeDir = TestUtils.createWorktree(mainDir, worktreesDir, "2.1-test-task");
@@ -326,7 +326,7 @@ public class EnforcePluginFileIsolationTest
     Path mainDir = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainDir, mainDir))
     {
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       Path worktreeDir = TestUtils.createWorktree(mainDir, worktreesDir, "2.1-fix-bug");

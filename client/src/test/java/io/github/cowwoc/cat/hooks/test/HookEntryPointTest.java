@@ -774,7 +774,7 @@ public class HookEntryPointTest
       EnforceWorktreeSafetyBeforeMerge handler =
         new EnforceWorktreeSafetyBeforeMerge();
       TaskHandler.Result result = handler.check(toolInput, "test-session",
-        scope.getProjectCatDir().resolve("worktrees").resolve("2.1-my-task").toString());
+        scope.getCatWorkPath().resolve("worktrees").resolve("2.1-my-task").toString());
       requireThat(result.blocked(), "blocked").isFalse();
     }
   }
@@ -792,7 +792,7 @@ public class HookEntryPointTest
       EnforceWorktreeSafetyBeforeMerge handler =
         new EnforceWorktreeSafetyBeforeMerge();
       String worktreePath =
-        scope.getProjectCatDir().resolve("worktrees").resolve("2.1-my-task").toString();
+        scope.getCatWorkPath().resolve("worktrees").resolve("2.1-my-task").toString();
       TaskHandler.Result result = handler.check(toolInput, "test-session", worktreePath);
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("BLOCKED");
@@ -847,7 +847,7 @@ public class HookEntryPointTest
       EnforceWorktreeSafetyBeforeMerge handler =
         new EnforceWorktreeSafetyBeforeMerge();
       String subdirPath =
-        scope.getProjectCatDir().resolve("worktrees").resolve("2.1-my-task").resolve("src/main/java").toString();
+        scope.getCatWorkPath().resolve("worktrees").resolve("2.1-my-task").resolve("src/main/java").toString();
       TaskHandler.Result result = handler.check(toolInput, "test-session", subdirPath);
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("BLOCKED");

@@ -102,19 +102,19 @@ public final class GetDiffOutput implements SkillOutput
     /**
      * Checks if a branch exists in the repository.
      *
-     * @param projectRoot the project root path
+     * @param projectPath the project root path
      * @param branch the branch name to check
      * @return true if the branch exists
-     * @throws NullPointerException if {@code projectRoot} or {@code branch} are null
+     * @throws NullPointerException if {@code projectPath} or {@code branch} are null
      */
-    static boolean branchExists(Path projectRoot, String branch)
+    static boolean branchExists(Path projectPath, String branch)
     {
-      requireThat(projectRoot, "projectRoot").isNotNull();
+      requireThat(projectPath, "projectPath").isNotNull();
       requireThat(branch, "branch").isNotNull();
 
       try
       {
-        GitCommands.runGit(projectRoot, "rev-parse", "--verify", branch);
+        GitCommands.runGit(projectPath, "rev-parse", "--verify", branch);
         return true;
       }
       catch (IOException _)
@@ -126,19 +126,19 @@ public final class GetDiffOutput implements SkillOutput
     /**
      * Gets the list of changed files between target and HEAD.
      *
-     * @param projectRoot the project root path
+     * @param projectPath the project root path
      * @param targetBranch the target branch for comparison
      * @return the list of changed file paths
-     * @throws NullPointerException if {@code projectRoot} or {@code targetBranch} are null
+     * @throws NullPointerException if {@code projectPath} or {@code targetBranch} are null
      */
-    static List<String> getChangedFiles(Path projectRoot, String targetBranch)
+    static List<String> getChangedFiles(Path projectPath, String targetBranch)
     {
-      requireThat(projectRoot, "projectRoot").isNotNull();
+      requireThat(projectPath, "projectPath").isNotNull();
       requireThat(targetBranch, "targetBranch").isNotNull();
 
       try
       {
-        String output = GitCommands.runGit(projectRoot, "diff", "--name-only",
+        String output = GitCommands.runGit(projectPath, "diff", "--name-only",
           targetBranch + "..HEAD");
         List<String> result = new ArrayList<>();
         for (String line : output.split("\n"))
@@ -157,14 +157,14 @@ public final class GetDiffOutput implements SkillOutput
     /**
      * Gets diff statistics between target and HEAD.
      *
-     * @param projectRoot the project root path
+     * @param projectPath the project root path
      * @param targetBranch the target branch for comparison
      * @return the diff statistics
-     * @throws NullPointerException if {@code projectRoot} or {@code targetBranch} are null
+     * @throws NullPointerException if {@code projectPath} or {@code targetBranch} are null
      */
-    static DiffStats getDiffStats(Path projectRoot, String targetBranch)
+    static DiffStats getDiffStats(Path projectPath, String targetBranch)
     {
-      requireThat(projectRoot, "projectRoot").isNotNull();
+      requireThat(projectPath, "projectPath").isNotNull();
       requireThat(targetBranch, "targetBranch").isNotNull();
 
       int filesChanged = 0;
@@ -173,7 +173,7 @@ public final class GetDiffOutput implements SkillOutput
 
       try
       {
-        String output = GitCommands.runGit(projectRoot, "diff", "--stat",
+        String output = GitCommands.runGit(projectPath, "diff", "--stat",
           targetBranch + "..HEAD");
         if (!output.isEmpty())
         {
@@ -204,17 +204,17 @@ public final class GetDiffOutput implements SkillOutput
     /**
      * Gets the current branch name for a directory.
      *
-     * @param projectRoot the project root path
+     * @param projectPath the project root path
      * @return the branch name, or null on error
-     * @throws NullPointerException if {@code projectRoot} is null
+     * @throws NullPointerException if {@code projectPath} is null
      */
-    static String getCurrentBranch(Path projectRoot)
+    static String getCurrentBranch(Path projectPath)
     {
-      requireThat(projectRoot, "projectRoot").isNotNull();
+      requireThat(projectPath, "projectPath").isNotNull();
 
       try
       {
-        return GitCommands.runGitCommandSingleLineInDirectory(projectRoot.toString(), "rev-parse", "--abbrev-ref",
+        return GitCommands.runGitCommandSingleLineInDirectory(projectPath.toString(), "rev-parse", "--abbrev-ref",
           "HEAD");
       }
       catch (IOException _)
@@ -226,17 +226,17 @@ public final class GetDiffOutput implements SkillOutput
     /**
      * Gets the upstream tracking branch for a directory.
      *
-     * @param projectRoot the project root path
+     * @param projectPath the project root path
      * @return the upstream branch name, or null on error
-     * @throws NullPointerException if {@code projectRoot} is null
+     * @throws NullPointerException if {@code projectPath} is null
      */
-    static String getUpstreamBranch(Path projectRoot)
+    static String getUpstreamBranch(Path projectPath)
     {
-      requireThat(projectRoot, "projectRoot").isNotNull();
+      requireThat(projectPath, "projectPath").isNotNull();
 
       try
       {
-        return GitCommands.runGitCommandSingleLineInDirectory(projectRoot.toString(), "rev-parse", "--abbrev-ref",
+        return GitCommands.runGitCommandSingleLineInDirectory(projectPath.toString(), "rev-parse", "--abbrev-ref",
           "@{upstream}");
       }
       catch (IOException _)
@@ -248,19 +248,19 @@ public final class GetDiffOutput implements SkillOutput
     /**
      * Gets the raw diff output between base and HEAD.
      *
-     * @param projectRoot the project root path
+     * @param projectPath the project root path
      * @param targetBranch the target branch for comparison
      * @return the raw diff output, or null on error
-     * @throws NullPointerException if {@code projectRoot} or {@code targetBranch} are null
+     * @throws NullPointerException if {@code projectPath} or {@code targetBranch} are null
      */
-    static String getRawDiff(Path projectRoot, String targetBranch)
+    static String getRawDiff(Path projectPath, String targetBranch)
     {
-      requireThat(projectRoot, "projectRoot").isNotNull();
+      requireThat(projectPath, "projectPath").isNotNull();
       requireThat(targetBranch, "targetBranch").isNotNull();
 
       try
       {
-        return GitCommands.runGit(projectRoot, "diff", targetBranch + "..HEAD");
+        return GitCommands.runGit(projectPath, "diff", targetBranch + "..HEAD");
       }
       catch (IOException _)
       {
@@ -275,7 +275,7 @@ public final class GetDiffOutput implements SkillOutput
      * exceeds {@code maxBytes}, the process is destroyed immediately and {@code null} is returned
      * without loading the full diff into memory.
      *
-     * @param projectRoot the project root path
+     * @param projectPath the project root path
      * @param targetBranch the target branch for comparison
      * @param maxBytes maximum bytes to read; if exceeded, returns null
      * @return the raw diff content if its byte size is {@code <= maxBytes}, or {@code null} if
@@ -283,15 +283,15 @@ public final class GetDiffOutput implements SkillOutput
      * @throws IOException if the git diff process cannot be started, its output cannot be read,
      *         or the process exits with a non-zero exit code
      * @throws InterruptedException if the thread is interrupted while waiting for the process to finish
-     * @throws NullPointerException if {@code projectRoot} or {@code targetBranch} are null
+     * @throws NullPointerException if {@code projectPath} or {@code targetBranch} are null
      */
-    public static String getRawDiffLimited(Path projectRoot, String targetBranch, int maxBytes)
+    public static String getRawDiffLimited(Path projectPath, String targetBranch, int maxBytes)
       throws IOException, InterruptedException
     {
-      requireThat(projectRoot, "projectRoot").isNotNull();
+      requireThat(projectPath, "projectPath").isNotNull();
       requireThat(targetBranch, "targetBranch").isNotNull();
 
-      ProcessBuilder pb = new ProcessBuilder("git", "-C", projectRoot.toString(),
+      ProcessBuilder pb = new ProcessBuilder("git", "-C", projectPath.toString(),
         "diff", targetBranch + "..HEAD");
       pb.redirectErrorStream(false);
       Process process;
@@ -301,7 +301,7 @@ public final class GetDiffOutput implements SkillOutput
       }
       catch (IOException e)
       {
-        throw new IOException("Failed to start git diff process in directory: " + projectRoot, e);
+        throw new IOException("Failed to start git diff process in directory: " + projectPath, e);
       }
 
       byte[] buffer = new byte[maxBytes + 1];
@@ -387,9 +387,9 @@ public final class GetDiffOutput implements SkillOutput
         "Expected exactly 1 argument (issue path), got " + args.length);
     }
     Path issuePath = Path.of(args[0]);
-    Path projectDir = deriveProjectRoot(issuePath);
+    Path projectPath = deriveProjectRoot(issuePath);
     String targetBranch = readTargetBranch(issuePath);
-    return getOutput(projectDir, targetBranch);
+    return getOutput(projectPath, targetBranch);
   }
 
   /**
@@ -444,37 +444,37 @@ public final class GetDiffOutput implements SkillOutput
   /**
    * Renders the diff between the target branch and HEAD.
    *
-   * @param projectRoot  the project root path (worktree directory)
+   * @param projectPath  the project root path (worktree directory)
    * @param targetBranch the target branch for the diff
    * @return the formatted diff output
    * @throws IOException          if the config file cannot be read or contains invalid JSON
-   * @throws NullPointerException if {@code projectRoot} or {@code targetBranch} is null
+   * @throws NullPointerException if {@code projectPath} or {@code targetBranch} is null
    */
-  private String getOutput(Path projectRoot, String targetBranch) throws IOException
+  private String getOutput(Path projectPath, String targetBranch) throws IOException
   {
-    requireThat(projectRoot, "projectRoot").isNotNull();
+    requireThat(projectPath, "projectPath").isNotNull();
     requireThat(targetBranch, "targetBranch").isNotNull();
 
     // Load config for display width
-    Config config = Config.load(scope.getJsonMapper(), projectRoot);
+    Config config = Config.load(scope.getJsonMapper(), projectPath);
     int displayWidth = config.getInt("displayWidth", 120);
 
     // Check if target branch exists
-    if (!GitHelper.branchExists(projectRoot, targetBranch))
+    if (!GitHelper.branchExists(projectPath, targetBranch))
     {
       // Try with origin/ prefix
       targetBranch = "origin/" + targetBranch;
-      if (!GitHelper.branchExists(projectRoot, targetBranch))
+      if (!GitHelper.branchExists(projectPath, targetBranch))
         return "Target branch not found in repository (tried local and origin/ prefix).";
     }
 
     // Get changed files list
-    List<String> changedFiles = GitHelper.getChangedFiles(projectRoot, targetBranch);
+    List<String> changedFiles = GitHelper.getChangedFiles(projectPath, targetBranch);
     if (changedFiles.isEmpty())
       return "No changes detected between " + targetBranch + " and HEAD.";
 
     // Get diff stats
-    DiffStats stats = GitHelper.getDiffStats(projectRoot, targetBranch);
+    DiffStats stats = GitHelper.getDiffStats(projectPath, targetBranch);
 
     // Guard against excessively large diffs that would cause OutOfMemoryError
     int totalChanges = stats.insertions() + stats.deletions();
@@ -491,7 +491,7 @@ public final class GetDiffOutput implements SkillOutput
     String rawDiff;
     try
     {
-      rawDiff = GitHelper.getRawDiffLimited(projectRoot, targetBranch, MAX_RAW_DIFF_BYTES);
+      rawDiff = GitHelper.getRawDiffLimited(projectPath, targetBranch, MAX_RAW_DIFF_BYTES);
     }
     catch (IOException e)
     {

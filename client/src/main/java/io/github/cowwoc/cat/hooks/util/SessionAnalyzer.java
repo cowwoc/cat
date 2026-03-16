@@ -89,7 +89,7 @@ public final class SessionAnalyzer
    */
   public Path resolveSessionPath(String sessionId)
   {
-    Path basePath = scope.getSessionBasePath();
+    Path basePath = scope.getClaudeSessionsPath();
     Path resolved = basePath.resolve(sessionId + ".jsonl");
     if (Files.exists(resolved))
       return resolved;

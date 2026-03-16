@@ -32,25 +32,30 @@ public interface JvmScope extends AutoCloseable
   DisplayUtils getDisplayUtils();
 
   /**
-   * Returns the Claude project directory.
+   * Returns the current working directory.
+   *
+   * @return the current working directory path
+   * @throws IllegalStateException if this scope is closed
+   */
+  Path getWorkDir();
+
+  /**
+   * Returns the project's root directory.
    *
    * @return the project directory path
    * @throws AssertionError if the directory is not configured
    * @throws IllegalStateException if this scope is closed
    */
-  Path getClaudeProjectDir();
+  Path getProjectPath();
 
   /**
-   * Returns the {@code .cat} directory under the Claude project directory.
+   * Returns the {@code .cat} directory under the project's root directory.
    *
    * @return the path to the {@code .cat} directory
    * @throws AssertionError if the project directory is not configured
    * @throws IllegalStateException if this scope is closed
    */
-  default Path getCatDir()
-  {
-    return getClaudeProjectDir().resolve(Config.CAT_DIR_NAME);
-  }
+  Path getCatDir();
 
   /**
    * Returns the Claude plugin root directory.
@@ -94,57 +99,46 @@ public interface JvmScope extends AutoCloseable
   Path getClaudeConfigDir();
 
   /**
-   * Returns the encoded project directory name.
-   * <p>
-   * Applies the Claude Code project directory encoding: replaces {@code /} and {@code .} with {@code -}.
-   * For example, {@code /workspace} encodes to {@code -workspace}.
-   *
-   * @return the encoded project directory name
-   * @throws IllegalStateException if this scope is closed
-   */
-  String getEncodedProjectDir();
-
-  /**
    * Returns the base directory for session JSONL files.
    * <p>
-   * Session files are stored at {@code {sessionBasePath}/{sessionId}.jsonl}.
+   * Session files are stored at {@code {claudeSessionsPath}/{sessionId}.jsonl}.
    *
    * @return the session base directory path
    * @throws IllegalStateException if this scope is closed
    */
-  Path getSessionBasePath();
+  Path getClaudeSessionsPath();
 
   /**
    * Returns the directory for the current session's tracking files.
    * <p>
-   * Located at {@code {claudeConfigDir}/projects/{encodedProjectDir}/{sessionId}/}.
+   * Located at {@code {claudeConfigDir}/projects/{encodedProjectRoot}/{sessionId}/}.
    *
    * @return the session directory path
    * @throws IllegalStateException if this scope is closed
    */
-  Path getSessionDirectory();
+  Path getClaudeSessionPath();
 
   /**
    * Returns the cross-session project CAT directory.
    * <p>
-   * Located at {@code {claudeProjectDir}/.cat/work/}.
+   * Located at {@code {projectPath}/.cat/work/}.
    * <p>
    * This directory stores cross-session files such as {@code locks/} and {@code worktrees/}.
    *
    * @return the project CAT directory path
    * @throws IllegalStateException if this scope is closed
    */
-  Path getProjectCatDir();
+  Path getCatWorkPath();
 
   /**
    * Returns the per-session CAT directory.
    * <p>
-   * Located at {@code {claudeProjectDir}/.cat/work/sessions/{sessionId}/}.
+   * Located at {@code {projectPath}/.cat/work/sessions/{sessionId}/}.
    *
    * @return the session CAT directory path
    * @throws IllegalStateException if this scope is closed
    */
-  Path getSessionCatDir();
+  Path getCatSessionPath();
 
   /**
    * Returns the path to the Claude environment file.

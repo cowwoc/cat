@@ -149,7 +149,7 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
                        "If working on an issue:\n" +
                        "1. Run /cat:work to create a worktree\n" +
                        "2. Or manually: git worktree add " +
-                       scope.getProjectCatDir().resolve("worktrees").resolve("issue-name") +
+                       scope.getCatWorkPath().resolve("worktrees").resolve("issue-name") +
                        " -b issue-branch\n" +
                        "\n" +
                        "If this is intentional infrastructure work (not a task), proceed.\n" +
@@ -159,9 +159,9 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
     }
 
     WorktreeContext worktreeContext = WorktreeContext.forSession(
-      scope.getProjectCatDir(), scope.getClaudeProjectDir(), scope.getJsonMapper(), sessionId);
+      scope.getCatWorkPath(), scope.getProjectPath(), scope.getJsonMapper(), sessionId);
     boolean inTaskWorktree = worktreeContext != null;
-    if (inTaskWorktree && filePath.startsWith(scope.getClaudeProjectDir().toString()))
+    if (inTaskWorktree && filePath.startsWith(scope.getProjectPath().toString()))
     {
       Path absoluteFilePath = Path.of(filePath).toAbsolutePath().normalize();
       if (!absoluteFilePath.startsWith(worktreeContext.absoluteWorktreePath()))
@@ -175,7 +175,7 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
                          "You are in an issue worktree but editing the main workspace.\n" +
                          "\n" +
                          "Fix: Use the path within your current worktree.\n" +
-                         "Example: Instead of " + scope.getClaudeProjectDir() + "/plugin/... use " +
+                         "Example: Instead of " + scope.getProjectPath() + "/plugin/... use " +
                          worktreeContext.absoluteWorktreePath() + "/plugin/...\n" +
                          "\n" +
                          "Ref: plugin/concepts/worktree-isolation.md\n" +

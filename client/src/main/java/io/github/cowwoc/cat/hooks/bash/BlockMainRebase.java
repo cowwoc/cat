@@ -34,7 +34,7 @@ public final class BlockMainRebase implements BashHandler
     Pattern.compile("^cd\\s+['\"]?([^'\";&|]+)['\"]?");
 
   private final JvmScope scope;
-  private final Path projectDir;
+  private final Path projectPath;
   private final Pattern cdProjectPattern;
 
   /**
@@ -46,8 +46,8 @@ public final class BlockMainRebase implements BashHandler
   public BlockMainRebase(JvmScope scope)
   {
     this.scope = scope;
-    this.projectDir = scope.getClaudeProjectDir();
-    String escaped = Pattern.quote(projectDir.toString());
+    this.projectPath = scope.getProjectPath();
+    String escaped = Pattern.quote(projectPath.toString());
     this.cdProjectPattern =
       Pattern.compile("cd\\s+(" + escaped + "|['\"]+" + escaped + "['\"]*)([\\s]|&&|;|$)");
   }
@@ -82,7 +82,7 @@ public final class BlockMainRebase implements BashHandler
     }
     if (currentBranch.equals("main"))
     {
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       return Result.block(String.format("""
         REBASE ON MAIN BLOCKED
 
@@ -119,7 +119,7 @@ public final class BlockMainRebase implements BashHandler
       String target = extractCheckoutTarget(command);
       if (!isCheckoutFlag(target))
       {
-        Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+        Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
         return Result.block(String.format("""
           GIT CHECKOUT IN MAIN WORKTREE BLOCKED
 
@@ -134,12 +134,12 @@ public final class BlockMainRebase implements BashHandler
           WHAT TO DO INSTEAD:
           - For issue work: Use the issue worktree at %s/<branch>
           - For cleanup: Delete the worktree directory, don't checkout in main""",
-          target, projectDir, worktreesDir));
+          target, projectPath, worktreesDir));
       }
     }
 
     WorktreeContext context = WorktreeContext.forSession(
-      scope.getProjectCatDir(), projectDir, scope.getJsonMapper(), sessionId);
+      scope.getCatWorkPath(), projectPath, scope.getJsonMapper(), sessionId);
     if (context == null)
     {
       // No active worktree for this session — this is the main context; block checkout
@@ -210,13 +210,13 @@ public final class BlockMainRebase implements BashHandler
 
     // Use lock-based worktree context to determine branch
     WorktreeContext context = WorktreeContext.forSession(
-      scope.getProjectCatDir(), projectDir, scope.getJsonMapper(), sessionId);
+      scope.getCatWorkPath(), projectPath, scope.getJsonMapper(), sessionId);
     if (context == null)
     {
       // No active worktree for this session — commands run in main context
       try
       {
-        return GitCommands.getCurrentBranch(projectDir.toString());
+        return GitCommands.getCurrentBranch(projectPath.toString());
       }
       catch (IOException _)
       {

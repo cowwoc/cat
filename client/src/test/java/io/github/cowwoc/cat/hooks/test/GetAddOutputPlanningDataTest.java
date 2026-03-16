@@ -63,7 +63,7 @@ public class GetAddOutputPlanningDataTest
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
-      Path projectDir = scope.getClaudeProjectDir();
+      Path projectPath = scope.getProjectPath();
 
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -74,7 +74,7 @@ public class GetAddOutputPlanningDataTest
       requireThat(root.get("planning_valid").asBoolean(), "planning_valid").isFalse();
       String errorMessage = root.get("error_message").asString();
       requireThat(errorMessage, "error_message").contains(".cat/issues");
-      requireThat(errorMessage, "error_message").doesNotContain(projectDir.toString());
+      requireThat(errorMessage, "error_message").doesNotContain(projectPath.toString());
     }
   }
 
@@ -91,8 +91,8 @@ public class GetAddOutputPlanningDataTest
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
-      Path projectDir = scope.getClaudeProjectDir();
-      Path issuesDir = projectDir.resolve(".cat/issues");
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
 
@@ -141,8 +141,8 @@ public class GetAddOutputPlanningDataTest
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
-      Path projectDir = scope.getClaudeProjectDir();
-      Path issuesDir = projectDir.resolve(".cat/issues");
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v1/v1.0");
       Files.createDirectories(versionDir);
       Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** closed\n");
@@ -169,8 +169,8 @@ public class GetAddOutputPlanningDataTest
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
-      Path projectDir = scope.getClaudeProjectDir();
-      Path issuesDir = projectDir.resolve(".cat/issues");
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.0");
       Files.createDirectories(versionDir);
       // No STATE.md written
@@ -200,8 +200,8 @@ public class GetAddOutputPlanningDataTest
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
-      Path projectDir = scope.getClaudeProjectDir();
-      Path issuesDir = projectDir.resolve(".cat/issues");
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
 
       Path v1Dir = issuesDir.resolve("v1/v1.0");
       Files.createDirectories(v1Dir);
@@ -240,8 +240,8 @@ public class GetAddOutputPlanningDataTest
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
-      Path projectDir = scope.getClaudeProjectDir();
-      Path issuesDir = projectDir.resolve(".cat/issues");
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
 
       Path v1p10Dir = issuesDir.resolve("v1/v1.10");
       Files.createDirectories(v1p10Dir);
@@ -279,8 +279,8 @@ public class GetAddOutputPlanningDataTest
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
-      Path projectDir = scope.getClaudeProjectDir();
-      Path issuesDir = projectDir.resolve(".cat/issues");
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
       Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
@@ -307,8 +307,8 @@ public class GetAddOutputPlanningDataTest
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
-      Path projectDir = scope.getClaudeProjectDir();
-      Path issuesDir = projectDir.resolve(".cat/issues");
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
       Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
@@ -340,8 +340,8 @@ public class GetAddOutputPlanningDataTest
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
-      Path projectDir = scope.getClaudeProjectDir();
-      Path issuesDir = projectDir.resolve(".cat/issues");
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
       Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
@@ -373,8 +373,8 @@ public class GetAddOutputPlanningDataTest
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
-      Path projectDir = scope.getClaudeProjectDir();
-      Path issuesDir = projectDir.resolve(".cat/issues");
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
       Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
@@ -406,8 +406,8 @@ public class GetAddOutputPlanningDataTest
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
-      Path projectDir = scope.getClaudeProjectDir();
-      Path issuesDir = projectDir.resolve(".cat/issues");
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
       Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
@@ -436,8 +436,8 @@ public class GetAddOutputPlanningDataTest
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
-      Path projectDir = scope.getClaudeProjectDir();
-      Path issuesDir = projectDir.resolve(".cat/issues");
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
       Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
@@ -463,8 +463,8 @@ public class GetAddOutputPlanningDataTest
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
-      Path projectDir = scope.getClaudeProjectDir();
-      Path issuesDir = projectDir.resolve(".cat/issues");
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
       Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
@@ -490,8 +490,8 @@ public class GetAddOutputPlanningDataTest
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
-      Path projectDir = scope.getClaudeProjectDir();
-      Path issuesDir = projectDir.resolve(".cat/issues");
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
       Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
@@ -518,8 +518,8 @@ public class GetAddOutputPlanningDataTest
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
-      Path projectDir = scope.getClaudeProjectDir();
-      Path issuesDir = projectDir.resolve(".cat/issues");
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
       Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
@@ -549,8 +549,8 @@ public class GetAddOutputPlanningDataTest
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
-      Path projectDir = scope.getClaudeProjectDir();
-      Path issuesDir = projectDir.resolve(".cat/issues");
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
       Files.writeString(versionDir.resolve("STATE.md"), "# State\n\nNo status field here.\n");
@@ -576,8 +576,8 @@ public class GetAddOutputPlanningDataTest
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
-      Path projectDir = scope.getClaudeProjectDir();
-      Path issuesDir = projectDir.resolve(".cat/issues");
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
       Files.writeString(versionDir.resolve("STATE.md"),
@@ -603,8 +603,8 @@ public class GetAddOutputPlanningDataTest
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
-      Path projectDir = scope.getClaudeProjectDir();
-      Path issuesDir = projectDir.resolve(".cat/issues");
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
       Files.writeString(versionDir.resolve("STATE.md"),
@@ -633,8 +633,8 @@ public class GetAddOutputPlanningDataTest
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
-      Path projectDir = scope.getClaudeProjectDir();
-      Path issuesDir = projectDir.resolve(".cat/issues");
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v3/v3.0");
       Files.createDirectories(versionDir);
       Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
@@ -663,8 +663,8 @@ public class GetAddOutputPlanningDataTest
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
-      Path projectDir = scope.getClaudeProjectDir();
-      Path issuesDir = projectDir.resolve(".cat/issues");
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v3/v3.0");
       Files.createDirectories(versionDir);
       Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
@@ -694,8 +694,8 @@ public class GetAddOutputPlanningDataTest
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
-      Path projectDir = scope.getClaudeProjectDir();
-      Path issuesDir = projectDir.resolve(".cat/issues");
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v3/v3.0");
       Files.createDirectories(versionDir);
       Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
@@ -726,8 +726,8 @@ public class GetAddOutputPlanningDataTest
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
-      Path projectDir = scope.getClaudeProjectDir();
-      Path issuesDir = projectDir.resolve(".cat/issues");
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
       Path invalidDir = issuesDir.resolve("v2/invalid-dir");
       Files.createDirectories(invalidDir);
       Files.writeString(invalidDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
@@ -751,8 +751,8 @@ public class GetAddOutputPlanningDataTest
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
-      Path projectDir = scope.getClaudeProjectDir();
-      Path issuesDir = projectDir.resolve(".cat/issues");
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
       Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
@@ -778,8 +778,8 @@ public class GetAddOutputPlanningDataTest
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
-      Path projectDir = scope.getClaudeProjectDir();
-      Path issuesDir = projectDir.resolve(".cat/issues");
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
       // v2 directly under issuesDir is depth 1, not depth 2 - excluded by filter
       Path majorDir = issuesDir.resolve("v2");
       Files.createDirectories(majorDir);
@@ -806,8 +806,8 @@ public class GetAddOutputPlanningDataTest
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
-      Path projectDir = scope.getClaudeProjectDir();
-      Path issuesDir = projectDir.resolve(".cat/issues");
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
       Files.createDirectories(issuesDir);
 
       GetAddOutput handler = new GetAddOutput(scope);
@@ -835,8 +835,8 @@ public class GetAddOutputPlanningDataTest
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
-      Path projectDir = scope.getClaudeProjectDir();
-      Path issuesDir = projectDir.resolve(".cat/issues");
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
       Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");

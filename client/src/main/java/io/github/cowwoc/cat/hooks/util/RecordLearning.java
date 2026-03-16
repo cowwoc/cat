@@ -65,24 +65,24 @@ public final class RecordLearning
   private static final int MAX_STDIN_BYTES = 10 * 1024 * 1024;
 
   private final JvmScope scope;
-  private final Path projectDir;
+  private final Path projectPath;
   private final Clock clock;
 
   /**
    * Creates a new RecordLearning instance.
    *
    * @param scope the JVM scope providing JSON mapper
-   * @param projectDir the project root directory (CLAUDE_PROJECT_DIR)
+   * @param projectPath the project root directory (CLAUDE_PROJECT_DIR)
    * @param clock the clock to use for timestamp generation
    * @throws NullPointerException if any parameter is null
    */
-  public RecordLearning(JvmScope scope, Path projectDir, Clock clock)
+  public RecordLearning(JvmScope scope, Path projectPath, Clock clock)
   {
     requireThat(scope, "scope").isNotNull();
-    requireThat(projectDir, "projectDir").isNotNull();
+    requireThat(projectPath, "projectPath").isNotNull();
     requireThat(clock, "clock").isNotNull();
     this.scope = scope;
-    this.projectDir = projectDir;
+    this.projectPath = projectPath;
     this.clock = clock;
   }
 
@@ -531,10 +531,10 @@ public final class RecordLearning
   private Path determineCommitLocation(String sessionId)
   {
     WorktreeContext context = WorktreeContext.forSession(
-      scope.getProjectCatDir(), projectDir, scope.getJsonMapper(), sessionId);
+      scope.getCatWorkPath(), projectPath, scope.getJsonMapper(), sessionId);
     if (context != null)
       return context.absoluteWorktreePath();
-    return projectDir;
+    return projectPath;
   }
 
   /**
@@ -594,7 +594,7 @@ public final class RecordLearning
   {
     try (MainJvmScope scope = new MainJvmScope())
     {
-      run(scope, System.in, System.out, () -> scope.getClaudeProjectDir().toString());
+      run(scope, System.in, System.out, () -> scope.getProjectPath().toString());
     }
     catch (RuntimeException | AssertionError e)
     {
@@ -617,24 +617,24 @@ public final class RecordLearning
    * @param scope the JVM scope
    * @param in    the input stream to read Phase 3 JSON from
    * @param out   the output stream to write JSON to
-   * @param projectDirProvider supplier that provides CLAUDE_PROJECT_DIR
-   * @throws NullPointerException if {@code scope}, {@code in}, {@code out}, or {@code projectDirProvider} are null
+   * @param projectPathProvider supplier that provides CLAUDE_PROJECT_DIR
+   * @throws NullPointerException if {@code scope}, {@code in}, {@code out}, or {@code projectPathProvider} are null
    */
   public static void run(JvmScope scope, InputStream in, PrintStream out,
-    Supplier<String> projectDirProvider)
+    Supplier<String> projectPathProvider)
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(in, "in").isNotNull();
     requireThat(out, "out").isNotNull();
-    requireThat(projectDirProvider, "projectDirProvider").isNotNull();
+    requireThat(projectPathProvider, "projectPathProvider").isNotNull();
 
     HookOutput hookOutput = new HookOutput(scope);
 
-    Path projectDir;
+    Path projectPath;
     try
     {
-      String projectDirStr = projectDirProvider.get();
-      projectDir = Path.of(projectDirStr);
+      String projectPathStr = projectPathProvider.get();
+      projectPath = Path.of(projectPathStr);
     }
     catch (AssertionError _)
     {
@@ -694,7 +694,7 @@ public final class RecordLearning
     }
 
     String sessionId = scope.getClaudeSessionId();
-    RecordLearning cmd = new RecordLearning(scope, projectDir, Clock.systemUTC());
+    RecordLearning cmd = new RecordLearning(scope, projectPath, Clock.systemUTC());
 
     try
     {

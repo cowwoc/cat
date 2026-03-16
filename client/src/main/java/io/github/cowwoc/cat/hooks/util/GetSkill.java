@@ -130,7 +130,7 @@ public final class GetSkill
    * {@code "$0"}) and the constructor fails fast.
    * <p>
    * The plugin root and project directory are read from {@code scope} via
-   * {@link JvmScope#getClaudePluginRoot()} and {@link JvmScope#getClaudeProjectDir()}.
+   * {@link JvmScope#getClaudePluginRoot()} and {@link JvmScope#getProjectPath()}.
    *
    * @param scope the JVM scope for accessing shared services and environment paths
    * @param skillArgs pre-tokenized positional arguments; the first element ({@code $0}) is the CAT agent ID,
@@ -206,7 +206,7 @@ public final class GetSkill
     this.skillArgs = List.copyOf(tokens);
     this.pluginPrefix = scope.getPluginPrefix();
 
-    Path baseDir = scope.getSessionBasePath().toAbsolutePath().normalize();
+    Path baseDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize();
     Path agentDir = resolveAndValidateContainment(baseDir, catAgentId,
       "catAgentId");
     this.loadedDir = agentDir.resolve(LOADED_DIR);

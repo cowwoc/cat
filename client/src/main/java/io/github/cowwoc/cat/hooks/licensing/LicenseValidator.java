@@ -56,19 +56,19 @@ public final class LicenseValidator
   /**
    * Validates the license token from the project configuration.
    *
-   * @param projectDir the project root directory containing .cat/
+   * @param projectPath the project root directory containing .cat/
    * @return the validation result
-   * @throws NullPointerException if projectDir is null
+   * @throws NullPointerException if projectPath is null
    */
-  public LicenseResult validate(Path projectDir)
+  public LicenseResult validate(Path projectPath)
   {
-    requireThat(projectDir, "projectDir").isNotNull();
+    requireThat(projectPath, "projectPath").isNotNull();
 
     // Load config
     Config config;
     try
     {
-      config = Config.load(scope.getJsonMapper(), projectDir);
+      config = Config.load(scope.getJsonMapper(), projectPath);
     }
     catch (Exception _)
     {

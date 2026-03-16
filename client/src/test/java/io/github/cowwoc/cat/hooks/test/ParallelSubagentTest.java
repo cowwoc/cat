@@ -40,14 +40,14 @@ public class ParallelSubagentTest
   @Test
   public void tokenEstimationCountsWaveItems() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssue(projectDir, "2", "1", "wave-estimate", "open");
-      createPlanWithExecutionWaves(projectDir, "2", "1", "wave-estimate");
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add issue with execution waves");
+      createIssue(projectPath, "2", "1", "wave-estimate", "open");
+      createPlanWithExecutionWaves(projectPath, "2", "1", "wave-estimate");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue with execution waves");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -66,8 +66,8 @@ public class ParallelSubagentTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -81,14 +81,14 @@ public class ParallelSubagentTest
   @Test
   public void tokenEstimationIgnoresSubItems() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssue(projectDir, "2", "1", "sub-items", "open");
-      createPlanWithWaveSubItems(projectDir, "2", "1", "sub-items");
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add issue with wave sub-items");
+      createIssue(projectPath, "2", "1", "sub-items", "open");
+      createPlanWithWaveSubItems(projectPath, "2", "1", "sub-items");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue with wave sub-items");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -108,8 +108,8 @@ public class ParallelSubagentTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -122,14 +122,14 @@ public class ParallelSubagentTest
   @Test
   public void tokenEstimationReturnsDefaultWhenNoExecutionSection() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssue(projectDir, "2", "1", "no-execution", "open");
-      createPlanWithoutExecutionSection(projectDir, "2", "1", "no-execution");
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add issue without execution section");
+      createIssue(projectPath, "2", "1", "no-execution", "open");
+      createPlanWithoutExecutionSection(projectPath, "2", "1", "no-execution");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue without execution section");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -149,8 +149,8 @@ public class ParallelSubagentTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -165,13 +165,13 @@ public class ParallelSubagentTest
    */
   private Path createTempGitCatProject(String versionName) throws IOException
   {
-    Path projectDir = Files.createTempDirectory("cat-project-");
-    GitCommands.runGit(projectDir, "init");
-    GitCommands.runGit(projectDir, "config", "user.email", "test@example.com");
-    GitCommands.runGit(projectDir, "config", "user.name", "Test User");
+    Path projectPath = Files.createTempDirectory("cat-project-");
+    GitCommands.runGit(projectPath, "init");
+    GitCommands.runGit(projectPath, "config", "user.email", "test@example.com");
+    GitCommands.runGit(projectPath, "config", "user.name", "Test User");
 
     // Create .cat structure
-    Path catDir = projectDir.resolve(".cat");
+    Path catDir = projectPath.resolve(".cat");
     Files.createDirectories(catDir);
     Files.writeString(catDir.resolve("config.json"), "{}");
 
@@ -181,27 +181,27 @@ public class ParallelSubagentTest
     Files.createDirectories(versionDir);
 
     // Create initial commit
-    Files.writeString(projectDir.resolve("README.md"), "# Test Project\n");
-    GitCommands.runGit(projectDir, "add", ".");
-    GitCommands.runGit(projectDir, "commit", "-m", "Initial commit");
+    Files.writeString(projectPath.resolve("README.md"), "# Test Project\n");
+    GitCommands.runGit(projectPath, "add", ".");
+    GitCommands.runGit(projectPath, "commit", "-m", "Initial commit");
 
-    return projectDir;
+    return projectPath;
   }
 
   /**
    * Creates an issue directory with STATE.md.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param major the major version
    * @param minor the minor version
    * @param issueName the issue name
    * @param status the issue status
    * @throws IOException if an I/O error occurs
    */
-  private void createIssue(Path projectDir, String major, String minor, String issueName, String status)
+  private void createIssue(Path projectPath, String major, String minor, String issueName, String status)
     throws IOException
   {
-    Path issueDir = projectDir.resolve(".cat").
+    Path issueDir = projectPath.resolve(".cat").
       resolve("issues").
       resolve("v" + major).
       resolve("v" + major + "." + minor).
@@ -216,16 +216,16 @@ public class ParallelSubagentTest
   /**
    * Creates a PLAN.md with ## Execution Waves section.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param major the major version
    * @param minor the minor version
    * @param issueName the issue name
    * @throws IOException if an I/O error occurs
    */
-  private void createPlanWithExecutionWaves(Path projectDir, String major, String minor,
+  private void createPlanWithExecutionWaves(Path projectPath, String major, String minor,
     String issueName) throws IOException
   {
-    Path issueDir = projectDir.resolve(".cat").
+    Path issueDir = projectPath.resolve(".cat").
       resolve("issues").
       resolve("v" + major).
       resolve("v" + major + "." + minor).
@@ -256,16 +256,16 @@ public class ParallelSubagentTest
   /**
    * Creates a PLAN.md with execution waves containing sub-items.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param major the major version
    * @param minor the minor version
    * @param issueName the issue name
    * @throws IOException if an I/O error occurs
    */
-  private void createPlanWithWaveSubItems(Path projectDir, String major, String minor,
+  private void createPlanWithWaveSubItems(Path projectPath, String major, String minor,
     String issueName) throws IOException
   {
-    Path issueDir = projectDir.resolve(".cat").
+    Path issueDir = projectPath.resolve(".cat").
       resolve("issues").
       resolve("v" + major).
       resolve("v" + major + "." + minor).
@@ -295,16 +295,16 @@ public class ParallelSubagentTest
   /**
    * Creates a PLAN.md without execution section.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param major the major version
    * @param minor the minor version
    * @param issueName the issue name
    * @throws IOException if an I/O error occurs
    */
-  private void createPlanWithoutExecutionSection(Path projectDir, String major, String minor,
+  private void createPlanWithoutExecutionSection(Path projectPath, String major, String minor,
     String issueName) throws IOException
   {
-    Path issueDir = projectDir.resolve(".cat").
+    Path issueDir = projectPath.resolve(".cat").
       resolve("issues").
       resolve("v" + major).
       resolve("v" + major + "." + minor).
@@ -326,15 +326,15 @@ public class ParallelSubagentTest
   /**
    * Cleans up a worktree if it exists.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param worktreePath the worktree path to clean up
    * @throws IOException if an I/O error occurs
    */
-  private void cleanupWorktreeIfExists(Path projectDir, Path worktreePath) throws IOException
+  private void cleanupWorktreeIfExists(Path projectPath, Path worktreePath) throws IOException
   {
     if (worktreePath != null && Files.exists(worktreePath))
     {
-      GitCommands.runGit(projectDir, "worktree", "remove", "--force", worktreePath.toString());
+      GitCommands.runGit(projectPath, "worktree", "remove", "--force", worktreePath.toString());
     }
   }
 }

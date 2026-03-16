@@ -142,7 +142,7 @@ public final class RequireSkillForCommand implements BashHandler
 
     String sessionId = input.getSessionId();
     String catAgentId = input.getCatAgentId(sessionId);
-    Path baseDir = scope.getSessionBasePath().toAbsolutePath().normalize();
+    Path baseDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize();
     Set<String> loadedSkills;
     try
     {

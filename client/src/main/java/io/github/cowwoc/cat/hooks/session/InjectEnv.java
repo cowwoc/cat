@@ -91,12 +91,12 @@ public final class InjectEnv implements SessionStartHandler
     if (!source.equals("startup"))
       return Result.empty();
 
-    String projectDir = scope.getClaudeProjectDir().toString();
+    String projectPath = scope.getProjectPath().toString();
     String pluginRoot = scope.getClaudePluginRoot().toString();
-    validateEnvValue(projectDir, "CLAUDE_PROJECT_DIR");
+    validateEnvValue(projectPath, "CLAUDE_PROJECT_DIR");
     validateEnvValue(pluginRoot, "CLAUDE_PLUGIN_ROOT");
     validateEnvValue(sessionId, "CLAUDE_SESSION_ID");
-    String content = "export CLAUDE_PROJECT_DIR=\"" + projectDir + "\"\n" +
+    String content = "export CLAUDE_PROJECT_DIR=\"" + projectPath + "\"\n" +
       "export CLAUDE_PLUGIN_ROOT=\"" + pluginRoot + "\"\n" +
       "export CLAUDE_SESSION_ID=\"" + sessionId + "\"\n";
 

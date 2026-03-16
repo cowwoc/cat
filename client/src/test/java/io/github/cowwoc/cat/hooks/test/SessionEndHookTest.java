@@ -28,7 +28,7 @@ import java.time.temporal.ChronoUnit;
  * <p>
  * Lock files are stored in the external CAT storage location:
  * {@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/locks/}.
- * Tests use {@link JvmScope#getProjectCatDir()} to resolve this path correctly.
+ * Tests use {@link JvmScope#getCatWorkPath()} to resolve this path correctly.
  * <p>
  * Session-scoped files are managed independently by the broader session cleanup pipeline.
  */
@@ -56,7 +56,7 @@ public final class SessionEndHookTest
       Path tempDir = Files.createTempDirectory("session-end-hook-test");
       try
       {
-        Path lockDir = scope.getProjectCatDir().resolve("locks");
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
         Files.createDirectories(lockDir);
 
         String projectName = tempDir.getFileName().toString();
@@ -88,7 +88,7 @@ public final class SessionEndHookTest
       Path tempDir = Files.createTempDirectory("session-end-hook-test");
       try
       {
-        Path lockDir = scope.getProjectCatDir().resolve("locks");
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
         Files.createDirectories(lockDir);
 
         Path taskLock1 = lockDir.resolve("task1.lock");
@@ -124,7 +124,7 @@ public final class SessionEndHookTest
       Path tempDir = Files.createTempDirectory("session-end-hook-test");
       try
       {
-        Path lockDir = scope.getProjectCatDir().resolve("locks");
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
         Files.createDirectories(lockDir);
 
         Path staleLock = lockDir.resolve("stale.lock");
@@ -161,7 +161,7 @@ public final class SessionEndHookTest
       Path tempDir = Files.createTempDirectory("session-end-hook-test");
       try
       {
-        Path taskLockDir = scope.getProjectCatDir().resolve("locks");
+        Path taskLockDir = scope.getCatWorkPath().resolve("locks");
         Files.createDirectories(taskLockDir);
 
         Path taskLock = taskLockDir.resolve("task1.lock");
@@ -192,7 +192,7 @@ public final class SessionEndHookTest
       Path tempDir = Files.createTempDirectory("session-end-hook-test");
       try
       {
-        Path lockDir = scope.getProjectCatDir().resolve("locks");
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
         Files.createDirectories(lockDir);
 
         Path justWithinBoundary = lockDir.resolve("fresh.lock");
@@ -240,7 +240,7 @@ public final class SessionEndHookTest
         io.github.cowwoc.cat.hooks.HookResult result = createSessionEndHook(scope).
           runWithProjectDir(input, output, tempDir);
 
-        Path lockDir = scope.getProjectCatDir().resolve("locks");
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
         requireThat(Files.exists(lockDir), "lockDirExists").isFalse();
         requireThat(result.output(), "output").contains("{}");
       }
@@ -262,7 +262,7 @@ public final class SessionEndHookTest
       Path tempDir = Files.createTempDirectory("session-end-hook-test");
       try
       {
-        Path lockDir = scope.getProjectCatDir().resolve("locks");
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
         Files.createDirectories(lockDir);
 
         Path lockA = lockDir.resolve("taskA.lock");
@@ -385,7 +385,7 @@ public final class SessionEndHookTest
       Path tempDir = Files.createTempDirectory("session-end-hook-test");
       try
       {
-        Path lockDir = scope.getProjectCatDir().resolve("locks");
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
         Files.createDirectories(lockDir);
 
         Path directoryLock = lockDir.resolve("directory.lock");
@@ -418,7 +418,7 @@ public final class SessionEndHookTest
       Path tempDir = Files.createTempDirectory("session-end-hook-test");
       try
       {
-        Path lockDir = scope.getProjectCatDir().resolve("locks");
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
         Files.createDirectories(lockDir);
 
         // Create a directory where the lock file should be — Files.delete() will throw IOException
@@ -454,7 +454,7 @@ public final class SessionEndHookTest
       Path tempDir = Files.createTempDirectory("session-end-hook-test");
       try
       {
-        Path lockDir = scope.getProjectCatDir().resolve("locks");
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
         Files.createDirectories(lockDir);
 
         // Create a directory where a lock file should be — stale lock deletion will throw IOException

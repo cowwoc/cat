@@ -44,19 +44,19 @@ public record WorktreeContext(Path absoluteWorktreePath, Path absoluteProjectDir
    * Returns {@code null} if no active worktree is found for the session (no lock file or
    * worktree directory does not exist).
    *
-   * @param projectCatDir the project CAT directory ({@code {claudeProjectDir}/.cat/work/})
-   * @param projectDir the project root directory
+   * @param projectCatDir the project CAT directory ({@code {claudeProjectPath}/.cat/work/})
+   * @param projectPath the project root directory
    * @param mapper the JSON mapper for reading lock files
    * @param sessionId the session ID to look up
    * @return the resolved worktree context, or {@code null} if no active worktree exists
    * @throws NullPointerException if any parameter is null
    * @throws IllegalArgumentException if {@code sessionId} is blank
    */
-  public static WorktreeContext forSession(Path projectCatDir, Path projectDir, JsonMapper mapper,
+  public static WorktreeContext forSession(Path projectCatDir, Path projectPath, JsonMapper mapper,
     String sessionId)
   {
     requireThat(projectCatDir, "projectCatDir").isNotNull();
-    requireThat(projectDir, "projectDir").isNotNull();
+    requireThat(projectPath, "projectPath").isNotNull();
     requireThat(mapper, "mapper").isNotNull();
     requireThat(sessionId, "sessionId").isNotBlank();
 
@@ -71,7 +71,7 @@ public record WorktreeContext(Path absoluteWorktreePath, Path absoluteProjectDir
         return null;
 
       Path absoluteWorktreePath = worktreePath.toAbsolutePath().normalize();
-      Path absoluteProjectDirectory = projectDir.toAbsolutePath().normalize();
+      Path absoluteProjectDirectory = projectPath.toAbsolutePath().normalize();
       return new WorktreeContext(absoluteWorktreePath, absoluteProjectDirectory);
     }
     catch (IOException e)

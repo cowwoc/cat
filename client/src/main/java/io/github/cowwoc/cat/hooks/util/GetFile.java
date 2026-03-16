@@ -90,7 +90,7 @@ public final class GetFile implements SkillOutput
     String fileName = path.getFileName().toString();
 
     // Resolve per-agent marker directory using catAgentId
-    Path baseDir = scope.getSessionBasePath().toAbsolutePath().normalize();
+    Path baseDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize();
     Path agentDir = GetSkill.resolveAndValidateContainment(baseDir, catAgentId, "catAgentId");
 
     // Marker file: URL-encoded path to avoid collisions between different file paths

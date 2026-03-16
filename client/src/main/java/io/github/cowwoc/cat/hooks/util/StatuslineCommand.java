@@ -94,7 +94,7 @@ public final class StatuslineCommand
    */
   public void execute(InputStream inputStream, PrintStream outputStream) throws IOException
   {
-    execute(inputStream, outputStream, scope.getProjectCatDir().resolve("locks"));
+    execute(inputStream, outputStream, scope.getCatWorkPath().resolve("locks"));
   }
 
   /**

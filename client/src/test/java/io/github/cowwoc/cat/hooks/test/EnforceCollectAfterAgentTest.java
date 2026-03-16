@@ -37,7 +37,7 @@ public final class EnforceCollectAfterAgentTest
    */
   private static void createFlagFile(JvmScope scope, String sessionId) throws IOException
   {
-    Path flagPath = scope.getSessionBasePath().resolve(sessionId).resolve("pending-agent-result");
+    Path flagPath = scope.getClaudeSessionsPath().resolve(sessionId).resolve("pending-agent-result");
     Files.createDirectories(flagPath.getParent());
     Files.writeString(flagPath, "");
   }
@@ -56,7 +56,7 @@ public final class EnforceCollectAfterAgentTest
   private static void createWorktreeLock(JvmScope scope, String sessionId, String issueId)
     throws IOException
   {
-    Path projectCatDir = scope.getProjectCatDir();
+    Path projectCatDir = scope.getCatWorkPath();
     Path locksDir = projectCatDir.resolve("locks");
     Files.createDirectories(locksDir);
     Path lockFile = locksDir.resolve(issueId + ".lock");
@@ -139,7 +139,7 @@ public final class EnforceCollectAfterAgentTest
       TaskHandler.Result result = handler.check(toolInput, sessionId, "");
 
       requireThat(result.blocked(), "blocked").isFalse();
-      Path flagPath = scope.getSessionBasePath().resolve(sessionId).resolve("pending-agent-result");
+      Path flagPath = scope.getClaudeSessionsPath().resolve(sessionId).resolve("pending-agent-result");
       requireThat(Files.exists(flagPath), "flagExists").isFalse();
     }
     finally
@@ -169,7 +169,7 @@ public final class EnforceCollectAfterAgentTest
       TaskHandler.Result result = handler.check(toolInput, sessionId, "");
 
       requireThat(result.blocked(), "blocked").isFalse();
-      Path flagPath = scope.getSessionBasePath().resolve(sessionId).resolve("pending-agent-result");
+      Path flagPath = scope.getClaudeSessionsPath().resolve(sessionId).resolve("pending-agent-result");
       requireThat(Files.exists(flagPath), "flagExists").isFalse();
     }
     finally
@@ -333,7 +333,7 @@ public final class EnforceCollectAfterAgentTest
       TaskHandler.Result result = handler.check(toolInput, sessionId, "");
 
       requireThat(result.blocked(), "blocked").isFalse();
-      Path flagPath = scope.getSessionBasePath().resolve(sessionId).resolve("pending-agent-result");
+      Path flagPath = scope.getClaudeSessionsPath().resolve(sessionId).resolve("pending-agent-result");
       requireThat(Files.notExists(flagPath), "flagDeleted").isTrue();
     }
     finally

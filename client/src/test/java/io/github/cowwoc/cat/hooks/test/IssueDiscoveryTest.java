@@ -40,13 +40,13 @@ public class IssueDiscoveryTest
   @Test
   public void findsOpenIssueWhenScanningAll() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
-        createIssue(projectDir, "2", "1", "my-feature", "open");
+        createIssue(projectPath, "2", "1", "my-feature", "open");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
@@ -61,7 +61,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -74,13 +74,13 @@ public class IssueDiscoveryTest
   @Test
   public void findsInProgressIssue() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
-        createIssue(projectDir, "2", "1", "my-feature", "in-progress");
+        createIssue(projectPath, "2", "1", "my-feature", "in-progress");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
@@ -90,7 +90,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -103,13 +103,13 @@ public class IssueDiscoveryTest
   @Test
   public void doesNotReturnClosedIssue() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
-        createIssue(projectDir, "2", "1", "done-feature", "closed");
+        createIssue(projectPath, "2", "1", "done-feature", "closed");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
@@ -119,7 +119,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -132,13 +132,13 @@ public class IssueDiscoveryTest
   @Test
   public void doesNotReturnBlockedStatusIssue() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
-        createIssue(projectDir, "2", "1", "blocked-feature", "blocked");
+        createIssue(projectPath, "2", "1", "blocked-feature", "blocked");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
@@ -148,7 +148,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -161,13 +161,13 @@ public class IssueDiscoveryTest
   @Test
   public void findsSpecificIssueById() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
-        createIssue(projectDir, "2", "1", "my-feature", "open");
+        createIssue(projectPath, "2", "1", "my-feature", "open");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ISSUE, "2.1-my-feature", sessionId, "", false);
@@ -180,7 +180,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -193,13 +193,13 @@ public class IssueDiscoveryTest
   @Test
   public void specificIssueAlreadyClosedReturnsAlreadyComplete() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
-        createIssue(projectDir, "2", "1", "done-feature", "closed");
+        createIssue(projectPath, "2", "1", "done-feature", "closed");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ISSUE, "2.1-done-feature", sessionId, "", false);
@@ -211,7 +211,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -224,8 +224,8 @@ public class IssueDiscoveryTest
   @Test
   public void specificIssueNotFoundReturnsNotFound() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
@@ -239,7 +239,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -252,16 +252,16 @@ public class IssueDiscoveryTest
   @Test
   public void issueWithUnsatisfiedDependenciesIsSkipped() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
         // Create a dep issue that is open (not closed)
-        createIssue(projectDir, "2", "1", "dep-issue", "open");
+        createIssue(projectPath, "2", "1", "dep-issue", "open");
         // Create a feature that depends on dep-issue
-        createIssueWithDependencies(projectDir, "2", "1", "my-feature", "open",
+        createIssueWithDependencies(projectPath, "2", "1", "my-feature", "open",
           "[2.1-dep-issue]");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
@@ -275,7 +275,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -288,16 +288,16 @@ public class IssueDiscoveryTest
   @Test
   public void issueWithSatisfiedDependenciesIsEligible() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
         // Create a closed dep issue
-        createIssue(projectDir, "2", "1", "dep-issue", "closed");
+        createIssue(projectPath, "2", "1", "dep-issue", "closed");
         // Create a feature that depends on dep-issue (which is closed)
-        createIssueWithDependencies(projectDir, "2", "1", "my-feature", "open",
+        createIssueWithDependencies(projectPath, "2", "1", "my-feature", "open",
           "[2.1-dep-issue]");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
@@ -309,7 +309,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -322,16 +322,16 @@ public class IssueDiscoveryTest
   @Test
   public void specificIssueWithUnsatisfiedDependenciesReturnsBlocked() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
         // Create an open dep issue (not closed)
-        createIssue(projectDir, "2", "1", "dep-issue", "open");
+        createIssue(projectPath, "2", "1", "dep-issue", "open");
         // Create a feature with dependency on open issue
-        createIssueWithDependencies(projectDir, "2", "1", "my-feature", "open",
+        createIssueWithDependencies(projectPath, "2", "1", "my-feature", "open",
           "[2.1-dep-issue]");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
@@ -345,7 +345,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -358,16 +358,16 @@ public class IssueDiscoveryTest
   @Test
   public void decomposedParentWithOpenSubissuesIsSkipped() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
         // Create a sub-issue
-        createIssue(projectDir, "2", "1", "sub-task", "open");
+        createIssue(projectPath, "2", "1", "sub-task", "open");
         // Create a decomposed parent
-        createDecomposedParent(projectDir, "2", "1", "parent-task", "open",
+        createDecomposedParent(projectPath, "2", "1", "parent-task", "open",
           "2.1-sub-task");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
@@ -381,7 +381,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -394,16 +394,16 @@ public class IssueDiscoveryTest
   @Test
   public void decomposedParentWithAllSubissuesClosedIsEligible() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
         // Create a closed sub-issue
-        createIssue(projectDir, "2", "1", "sub-task", "closed");
+        createIssue(projectPath, "2", "1", "sub-task", "closed");
         // Create a decomposed parent with in-progress status (all sub-issues closed)
-        createDecomposedParent(projectDir, "2", "1", "parent-task", "in-progress",
+        createDecomposedParent(projectPath, "2", "1", "parent-task", "in-progress",
           "2.1-sub-task");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
@@ -414,7 +414,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -427,13 +427,13 @@ public class IssueDiscoveryTest
   @Test
   public void issuesMatchingExcludePatternAreSkipped() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
-        createIssue(projectDir, "2", "1", "compress-docs", "open");
+        createIssue(projectPath, "2", "1", "compress-docs", "open");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "2.1-compress*", false);
@@ -445,7 +445,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -458,14 +458,14 @@ public class IssueDiscoveryTest
   @Test
   public void minorScopeSearchesOnlySpecifiedVersion() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
-        createIssue(projectDir, "2", "1", "v21-feature", "open");
-        createIssue(projectDir, "2", "2", "v22-feature", "open");
+        createIssue(projectPath, "2", "1", "v21-feature", "open");
+        createIssue(projectPath, "2", "2", "v22-feature", "open");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.VERSION, "2.2", sessionId, "", false);
@@ -477,7 +477,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -490,13 +490,13 @@ public class IssueDiscoveryTest
   @Test
   public void bareNameScopeFindsIssueByBaseName() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
-        createIssue(projectDir, "2", "1", "my-feature", "open");
+        createIssue(projectPath, "2", "1", "my-feature", "open");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.BARE_NAME, "my-feature", sessionId, "", false);
@@ -508,7 +508,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -521,8 +521,8 @@ public class IssueDiscoveryTest
   @Test
   public void returnsNotFoundWhenNoIssuesExist() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
@@ -536,7 +536,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -654,17 +654,17 @@ public class IssueDiscoveryTest
   @Test
   public void issueWithExistingWorktreeIsSkipped() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
-        createIssue(projectDir, "2", "1", "my-feature", "open");
-        createIssue(projectDir, "2", "1", "other-feature", "open");
+        createIssue(projectPath, "2", "1", "my-feature", "open");
+        createIssue(projectPath, "2", "1", "other-feature", "open");
 
         // Create a fake worktree for my-feature
-        Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+        Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
         Files.createDirectories(worktreesDir.resolve("2.1-my-feature"));
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
@@ -678,7 +678,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -691,16 +691,16 @@ public class IssueDiscoveryTest
   @Test
   public void specificIssueWithExistingWorktreeReturnsExistingWorktree() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
-        createIssue(projectDir, "2", "1", "my-feature", "open");
+        createIssue(projectPath, "2", "1", "my-feature", "open");
 
         // Create a fake worktree
-        Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+        Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
         Files.createDirectories(worktreesDir.resolve("2.1-my-feature"));
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
@@ -713,7 +713,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -726,18 +726,18 @@ public class IssueDiscoveryTest
   @Test
   public void postconditionIssueIsEnforcedWhenPrerequisitesAreOpen() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
         // Create a regular open issue
-        createIssue(projectDir, "2", "1", "regular-feature", "open");
+        createIssue(projectPath, "2", "1", "regular-feature", "open");
         // Create post-condition issue
-        createIssue(projectDir, "2", "1", "exit-gate-issue", "open");
+        createIssue(projectPath, "2", "1", "exit-gate-issue", "open");
         // Create a PLAN.md marking exit-gate-issue as a post-condition issue
-        createVersionPlanWithExitGate(projectDir, "2", "1", "exit-gate-issue");
+        createVersionPlanWithExitGate(projectPath, "2", "1", "exit-gate-issue");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         // Verify the scan skips the post-condition issue when regular-feature is still open
@@ -751,7 +751,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -764,14 +764,14 @@ public class IssueDiscoveryTest
   @Test
   public void majorScopeSearchesOnlySpecifiedVersion() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
-        createIssue(projectDir, "2", "1", "v2-feature", "open");
-        createIssue(projectDir, "3", "1", "v3-feature", "open");
+        createIssue(projectPath, "2", "1", "v2-feature", "open");
+        createIssue(projectPath, "3", "1", "v3-feature", "open");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.VERSION, "3", sessionId, "", false);
@@ -783,7 +783,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -796,18 +796,18 @@ public class IssueDiscoveryTest
   @Test
   public void postconditionIssueSkippedWhenOverridePostconditionsIsTrue() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
         // Create a regular open issue (unsatisfied prerequisite for post-condition issue)
-        createIssue(projectDir, "2", "1", "regular-feature", "open");
+        createIssue(projectPath, "2", "1", "regular-feature", "open");
         // Create a post-condition issue
-        createIssue(projectDir, "2", "1", "exit-gate-issue", "open");
+        createIssue(projectPath, "2", "1", "exit-gate-issue", "open");
         // Mark exit-gate-issue as a post-condition issue in PLAN.md
-        createVersionPlanWithExitGate(projectDir, "2", "1", "exit-gate-issue");
+        createVersionPlanWithExitGate(projectPath, "2", "1", "exit-gate-issue");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
 
@@ -826,7 +826,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -906,18 +906,18 @@ public class IssueDiscoveryTest
   @Test
   public void versionWithUnsatisfiedDependenciesIsSkipped() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
         // Create v2.0 with an open issue (the dependency that is not yet closed)
-        createIssue(projectDir, "2", "0", "prev-release", "open");
+        createIssue(projectPath, "2", "0", "prev-release", "open");
         // Create v2.1 STATE.md with a dependency on v2.0 (not closed)
-        createVersionStateWithDependencies(projectDir, "2", "1", "[2.0-prev-release]");
+        createVersionStateWithDependencies(projectPath, "2", "1", "[2.0-prev-release]");
         // Create an open issue in v2.1
-        createIssue(projectDir, "2", "1", "blocked-issue", "open");
+        createIssue(projectPath, "2", "1", "blocked-issue", "open");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
@@ -930,7 +930,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -944,18 +944,18 @@ public class IssueDiscoveryTest
   @Test
   public void blockedResultContainsAllUnsatisfiedDependencies() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
         // Create dep-a (closed), dep-b (open), dep-c (open)
-        createIssue(projectDir, "2", "1", "dep-a", "closed");
-        createIssue(projectDir, "2", "1", "dep-b", "open");
-        createIssue(projectDir, "2", "1", "dep-c", "open");
+        createIssue(projectPath, "2", "1", "dep-a", "closed");
+        createIssue(projectPath, "2", "1", "dep-b", "open");
+        createIssue(projectPath, "2", "1", "dep-c", "open");
         // Create issue depending on all three
-        createIssueWithDependencies(projectDir, "2", "1", "my-feature", "open",
+        createIssueWithDependencies(projectPath, "2", "1", "my-feature", "open",
           "[2.1-dep-a, 2.1-dep-b, 2.1-dep-c]");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
@@ -972,7 +972,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -986,15 +986,15 @@ public class IssueDiscoveryTest
   @Test
   public void bareNameWithMultipleMatchesSelectsFirstVersionInSortOrder() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
         // Create the same issue name in v2.1 and v3.1
-        createIssue(projectDir, "2", "1", "shared-feature", "open");
-        createIssue(projectDir, "3", "1", "shared-feature", "open");
+        createIssue(projectPath, "2", "1", "shared-feature", "open");
+        createIssue(projectPath, "3", "1", "shared-feature", "open");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.BARE_NAME, "shared-feature", sessionId, "", false);
@@ -1007,7 +1007,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -1021,15 +1021,15 @@ public class IssueDiscoveryTest
   @Test
   public void excludePatternWithRegexSpecialCharsWorksCorrectly() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
         // Issue name contains characters that are regex-special in some contexts
-        createIssue(projectDir, "2", "1", "fix-bug-v1.0", "open");
-        createIssue(projectDir, "2", "1", "other-feature", "open");
+        createIssue(projectPath, "2", "1", "fix-bug-v1.0", "open");
+        createIssue(projectPath, "2", "1", "other-feature", "open");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         // Pattern with a dot (regex wildcard) and glob wildcard - should treat as glob
@@ -1043,7 +1043,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -1056,13 +1056,13 @@ public class IssueDiscoveryTest
   @Test
   public void findsPatchLevelIssue() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
-        createPatchIssue(projectDir, "2", "1", "3", "patch-fix", "open");
+        createPatchIssue(projectPath, "2", "1", "3", "patch-fix", "open");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
@@ -1078,7 +1078,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -1091,13 +1091,13 @@ public class IssueDiscoveryTest
   @Test
   public void specificPatchLevelIssueById() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
-        createPatchIssue(projectDir, "2", "1", "3", "patch-fix", "open");
+        createPatchIssue(projectPath, "2", "1", "3", "patch-fix", "open");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ISSUE, "2.1.3-patch-fix", sessionId, "", false);
@@ -1111,7 +1111,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -1124,13 +1124,13 @@ public class IssueDiscoveryTest
   @Test
   public void bareNameResolvesPatchLevelIssue() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
-        createPatchIssue(projectDir, "2", "1", "3", "patch-fix", "open");
+        createPatchIssue(projectPath, "2", "1", "3", "patch-fix", "open");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.BARE_NAME, "patch-fix", sessionId, "", false);
@@ -1143,7 +1143,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -1184,13 +1184,13 @@ public class IssueDiscoveryTest
   @Test
   public void findsMajorOnlyIssue() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
-        createMajorOnlyIssue(projectDir, "2", "my-feature", "open");
+        createMajorOnlyIssue(projectPath, "2", "my-feature", "open");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
@@ -1206,7 +1206,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -1219,13 +1219,13 @@ public class IssueDiscoveryTest
   @Test
   public void specificMajorOnlyIssueById() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
-        createMajorOnlyIssue(projectDir, "2", "my-feature", "open");
+        createMajorOnlyIssue(projectPath, "2", "my-feature", "open");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ISSUE, "2-my-feature", sessionId, "", false);
@@ -1241,7 +1241,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -1254,13 +1254,13 @@ public class IssueDiscoveryTest
   @Test
   public void bareNameResolvesMajorOnlyIssue() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
-        createMajorOnlyIssue(projectDir, "2", "my-feature", "open");
+        createMajorOnlyIssue(projectPath, "2", "my-feature", "open");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.BARE_NAME, "my-feature", sessionId, "", false);
@@ -1274,7 +1274,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -1310,23 +1310,23 @@ public class IssueDiscoveryTest
   /**
    * Creates an issue directory with STATE.md in the specified project.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param major the major version number
    * @param minor the minor version number
    * @param issueName the issue name
    * @param status the issue status
    * @throws IOException if file creation fails
    */
-  private void createIssue(Path projectDir, String major, String minor, String issueName,
+  private void createIssue(Path projectPath, String major, String minor, String issueName,
     String status) throws IOException
   {
-    createIssueWithDependencies(projectDir, major, minor, issueName, status, "[]");
+    createIssueWithDependencies(projectPath, major, minor, issueName, status, "[]");
   }
 
   /**
    * Creates an issue directory with STATE.md and specified dependencies.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param major the major version number
    * @param minor the minor version number
    * @param issueName the issue name
@@ -1334,10 +1334,10 @@ public class IssueDiscoveryTest
    * @param dependencies the dependencies in array notation (e.g., {@code [dep1, dep2]})
    * @throws IOException if file creation fails
    */
-  private void createIssueWithDependencies(Path projectDir, String major, String minor,
+  private void createIssueWithDependencies(Path projectPath, String major, String minor,
     String issueName, String status, String dependencies) throws IOException
   {
-    Path issueDir = projectDir.resolve(".cat").resolve("issues").
+    Path issueDir = projectPath.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
@@ -1366,7 +1366,7 @@ public class IssueDiscoveryTest
   /**
    * Creates a decomposed parent issue with a sub-issue reference in STATE.md.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param major the major version number
    * @param minor the minor version number
    * @param issueName the parent issue name
@@ -1374,10 +1374,10 @@ public class IssueDiscoveryTest
    * @param subIssueName the sub-issue name to reference
    * @throws IOException if file creation fails
    */
-  private void createDecomposedParent(Path projectDir, String major, String minor,
+  private void createDecomposedParent(Path projectPath, String major, String minor,
     String issueName, String status, String subIssueName) throws IOException
   {
-    Path issueDir = projectDir.resolve(".cat").resolve("issues").
+    Path issueDir = projectPath.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
@@ -1400,16 +1400,16 @@ public class IssueDiscoveryTest
   /**
    * Creates a version-level STATE.md with the specified dependencies.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param major the major version number
    * @param minor the minor version number
    * @param dependencies the dependencies in array notation (e.g., {@code [dep1, dep2]})
    * @throws IOException if file creation fails
    */
-  private void createVersionStateWithDependencies(Path projectDir, String major, String minor,
+  private void createVersionStateWithDependencies(Path projectPath, String major, String minor,
     String dependencies) throws IOException
   {
-    Path versionDir = projectDir.resolve(".cat").resolve("issues").
+    Path versionDir = projectPath.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor);
     Files.createDirectories(versionDir);
 
@@ -1426,16 +1426,16 @@ public class IssueDiscoveryTest
   /**
    * Creates a version PLAN.md marking an issue as a post-condition issue.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param major the major version number
    * @param minor the minor version number
    * @param postconditionIssueName the name of the post-condition issue
    * @throws IOException if file creation fails
    */
-  private void createVersionPlanWithExitGate(Path projectDir, String major, String minor,
+  private void createVersionPlanWithExitGate(Path projectPath, String major, String minor,
     String postconditionIssueName) throws IOException
   {
-    Path versionDir = projectDir.resolve(".cat").resolve("issues").
+    Path versionDir = projectPath.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor);
     Files.createDirectories(versionDir);
 
@@ -1453,16 +1453,16 @@ public class IssueDiscoveryTest
   /**
    * Creates a major-only issue directory with STATE.md directly under the major version directory.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param major the major version number
    * @param issueName the issue name
    * @param status the issue status
    * @throws IOException if file creation fails
    */
-  private void createMajorOnlyIssue(Path projectDir, String major, String issueName,
+  private void createMajorOnlyIssue(Path projectPath, String major, String issueName,
     String status) throws IOException
   {
-    Path issueDir = projectDir.resolve(".cat").resolve("issues").
+    Path issueDir = projectPath.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve(issueName);
     Files.createDirectories(issueDir);
 
@@ -1481,7 +1481,7 @@ public class IssueDiscoveryTest
   /**
    * Creates a patch-level issue directory with STATE.md in the specified project.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param major the major version number
    * @param minor the minor version number
    * @param patch the patch version number
@@ -1489,10 +1489,10 @@ public class IssueDiscoveryTest
    * @param status the issue status
    * @throws IOException if file creation fails
    */
-  private void createPatchIssue(Path projectDir, String major, String minor, String patch,
+  private void createPatchIssue(Path projectPath, String major, String minor, String patch,
     String issueName, String status) throws IOException
   {
-    Path issueDir = projectDir.resolve(".cat").resolve("issues").
+    Path issueDir = projectPath.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).
       resolve("v" + major + "." + minor + "." + patch).resolve(issueName);
     Files.createDirectories(issueDir);
@@ -1518,14 +1518,14 @@ public class IssueDiscoveryTest
   @Test
   public void issueInSimpleCircularDependencyIsBlocked() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
-        createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "[2.1-issue-b]");
-        createIssueWithDependencies(projectDir, "2", "1", "issue-b", "open", "[2.1-issue-a]");
+        createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "[2.1-issue-b]");
+        createIssueWithDependencies(projectPath, "2", "1", "issue-b", "open", "[2.1-issue-a]");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
@@ -1536,7 +1536,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -1550,15 +1550,15 @@ public class IssueDiscoveryTest
   @Test
   public void issueInComplexCircularDependencyIsBlocked() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
-        createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "[2.1-issue-b]");
-        createIssueWithDependencies(projectDir, "2", "1", "issue-b", "open", "[2.1-issue-c]");
-        createIssueWithDependencies(projectDir, "2", "1", "issue-c", "open", "[2.1-issue-a]");
+        createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "[2.1-issue-b]");
+        createIssueWithDependencies(projectPath, "2", "1", "issue-b", "open", "[2.1-issue-c]");
+        createIssueWithDependencies(projectPath, "2", "1", "issue-c", "open", "[2.1-issue-a]");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
@@ -1569,7 +1569,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -1583,17 +1583,17 @@ public class IssueDiscoveryTest
   @Test
   public void issueNotInCycleIsFoundDespiteExistingCycle() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
         // Create a cycle
-        createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "[2.1-issue-b]");
-        createIssueWithDependencies(projectDir, "2", "1", "issue-b", "open", "[2.1-issue-a]");
+        createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "[2.1-issue-b]");
+        createIssueWithDependencies(projectPath, "2", "1", "issue-b", "open", "[2.1-issue-a]");
         // Create an unrelated open issue
-        createIssue(projectDir, "2", "1", "unrelated-feature", "open");
+        createIssue(projectPath, "2", "1", "unrelated-feature", "open");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
@@ -1606,7 +1606,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -1623,15 +1623,15 @@ public class IssueDiscoveryTest
   @Test
   public void selectsOldestIssueFirst() throws IOException
   {
-    Path projectDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempGitRepo("main");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
 
         // Set up the .cat/issues directory structure
-        Path issuesDir = projectDir.resolve(".cat").resolve("issues");
+        Path issuesDir = projectPath.resolve(".cat").resolve("issues");
         Path minorDir = issuesDir.resolve("v2").resolve("v2.1");
 
         // Create issue-b first (older commit date)
@@ -1646,16 +1646,16 @@ public class IssueDiscoveryTest
           - **Blocks:** []
           """;
         Files.writeString(issueBDir.resolve("STATE.md"), stateContent);
-        TestUtils.runGit(projectDir, "add", ".cat/issues/v2/v2.1/issue-b/STATE.md");
-        TestUtils.runGit(projectDir, "commit", "--date=2026-01-01T00:00:01Z",
+        TestUtils.runGit(projectPath, "add", ".cat/issues/v2/v2.1/issue-b/STATE.md");
+        TestUtils.runGit(projectPath, "commit", "--date=2026-01-01T00:00:01Z",
           "--author=Test User <test@example.com>", "-m", "Add issue-b");
 
         // Create issue-a second (newer commit date, but alphabetically first)
         Path issueADir = minorDir.resolve("issue-a");
         Files.createDirectories(issueADir);
         Files.writeString(issueADir.resolve("STATE.md"), stateContent);
-        TestUtils.runGit(projectDir, "add", ".cat/issues/v2/v2.1/issue-a/STATE.md");
-        TestUtils.runGit(projectDir, "commit", "--date=2026-01-01T00:00:02Z",
+        TestUtils.runGit(projectPath, "add", ".cat/issues/v2/v2.1/issue-a/STATE.md");
+        TestUtils.runGit(projectPath, "commit", "--date=2026-01-01T00:00:02Z",
           "--author=Test User <test@example.com>", "-m", "Add issue-a");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
@@ -1669,7 +1669,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -1683,15 +1683,15 @@ public class IssueDiscoveryTest
   @Test
   public void nonGitEnvironmentFallsBackToAlphabeticalSort() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
         // Create two issues in a non-git directory; no git history available
-        createIssue(projectDir, "2", "1", "issue-b", "open");
-        createIssue(projectDir, "2", "1", "issue-a", "open");
+        createIssue(projectPath, "2", "1", "issue-b", "open");
+        createIssue(projectPath, "2", "1", "issue-a", "open");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
@@ -1704,7 +1704,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -1718,14 +1718,14 @@ public class IssueDiscoveryTest
   @Test
   public void tiedTimestampsUsesAlphabeticalTiebreaker() throws IOException
   {
-    Path projectDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempGitRepo("main");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
 
-        Path issuesDir = projectDir.resolve(".cat").resolve("issues");
+        Path issuesDir = projectPath.resolve(".cat").resolve("issues");
         Path minorDir = issuesDir.resolve("v2").resolve("v2.1");
 
         String stateContent = """
@@ -1746,8 +1746,8 @@ public class IssueDiscoveryTest
         Files.createDirectories(issueADir);
         Files.writeString(issueADir.resolve("STATE.md"), stateContent);
 
-        TestUtils.runGit(projectDir, "add", ".");
-        TestUtils.runGit(projectDir, "commit", "--date=2026-01-01T00:00:01Z",
+        TestUtils.runGit(projectPath, "add", ".");
+        TestUtils.runGit(projectPath, "commit", "--date=2026-01-01T00:00:01Z",
           "--author=Test User <test@example.com>", "-m", "Add both issues");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
@@ -1761,7 +1761,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -1776,15 +1776,15 @@ public class IssueDiscoveryTest
   @Test
   public void gitCommandFailureFallsBackToAlphabeticalSort() throws IOException
   {
-    Path projectDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempGitRepo("main");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
         // Create issues but do NOT commit them — git log will return empty output
-        createIssue(projectDir, "2", "1", "issue-b", "open");
-        createIssue(projectDir, "2", "1", "issue-a", "open");
+        createIssue(projectPath, "2", "1", "issue-b", "open");
+        createIssue(projectPath, "2", "1", "issue-a", "open");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
@@ -1797,7 +1797,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -1811,15 +1811,15 @@ public class IssueDiscoveryTest
   @Test
   public void findIssueInDirIncludesPlanMdOnlyDir() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
 
         // Create an issue with only PLAN.md - no STATE.md
-        Path issueDir = projectDir.resolve(".cat").resolve("issues").
+        Path issueDir = projectPath.resolve(".cat").resolve("issues").
           resolve("v2").resolve("v2.1").resolve("plan-only-issue");
         Files.createDirectories(issueDir);
         Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nTest goal\n");
@@ -1835,7 +1835,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -1849,18 +1849,18 @@ public class IssueDiscoveryTest
   @Test
   public void hasOpenIssuesReturnsTrueForPlanMdOnlyDir() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
 
         // Create a closed issue (normally would prevent hasOpenIssues from returning true)
-        createIssue(projectDir, "2", "1", "closed-issue", "closed");
+        createIssue(projectPath, "2", "1", "closed-issue", "closed");
 
         // Create an issue with only PLAN.md - no STATE.md
-        Path issueDir = projectDir.resolve(".cat").resolve("issues").
+        Path issueDir = projectPath.resolve(".cat").resolve("issues").
           resolve("v2").resolve("v2.1").resolve("plan-only-issue");
         Files.createDirectories(issueDir);
         Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nTest goal\n");
@@ -1874,7 +1874,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -1915,15 +1915,15 @@ public class IssueDiscoveryTest
   @Test
   public void findSpecificIssueWithNullStateMdTreatsAsOpen() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
 
         // Create an issue with only PLAN.md - no STATE.md
-        Path issueDir = projectDir.resolve(".cat").resolve("issues").
+        Path issueDir = projectPath.resolve(".cat").resolve("issues").
           resolve("v2").resolve("v2.1").resolve("plan-only-issue");
         Files.createDirectories(issueDir);
         Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nTest goal\n");
@@ -1940,7 +1940,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -1958,17 +1958,17 @@ public class IssueDiscoveryTest
   @Test
   public void allScopeDiscoveryReleasesLockWhenWorktreeExists() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
-        createIssue(projectDir, "2", "1", "my-feature", "open");
-        createIssue(projectDir, "2", "1", "other-feature", "open");
+        createIssue(projectPath, "2", "1", "my-feature", "open");
+        createIssue(projectPath, "2", "1", "other-feature", "open");
 
         // Create a fake worktree for my-feature so it is skipped during discovery
-        Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+        Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
         Files.createDirectories(worktreesDir.resolve("2.1-my-feature"));
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
@@ -1981,13 +1981,13 @@ public class IssueDiscoveryTest
         requireThat(found.issueId(), "issueId").isEqualTo("2.1-other-feature");
 
         // The lock for my-feature must NOT exist — it should have been released before the skip
-        Path lockDir = scope.getProjectCatDir().resolve("locks");
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
         Path lockFile = lockDir.resolve("2.1-my-feature.lock");
         requireThat(Files.exists(lockFile), "lockFileExists").isFalse();
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -2005,16 +2005,16 @@ public class IssueDiscoveryTest
   @Test
   public void specificIssueDiscoveryUpdatesLockWithWorktreePathWhenWorktreeExists() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
-        createIssue(projectDir, "2", "1", "my-feature", "open");
+        createIssue(projectPath, "2", "1", "my-feature", "open");
 
         // Create a fake worktree for my-feature
-        Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+        Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
         Path worktreePath = worktreesDir.resolve("2.1-my-feature");
         Files.createDirectories(worktreePath);
 
@@ -2026,7 +2026,7 @@ public class IssueDiscoveryTest
         requireThat(result, "result").isInstanceOf(DiscoveryResult.ExistingWorktree.class);
 
         // The lock file must exist and have the worktree path registered (not empty worktrees map)
-        Path lockDir = scope.getProjectCatDir().resolve("locks");
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
         Path lockFile = lockDir.resolve("2.1-my-feature.lock");
         requireThat(Files.exists(lockFile), "lockFileExists").isTrue();
 
@@ -2035,7 +2035,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -2048,15 +2048,15 @@ public class IssueDiscoveryTest
   @Test
   public void foundResultIsCorruptWhenStateMdExistsButNoPlanMd() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
 
         // Create issue directory with STATE.md only (no PLAN.md)
-        Path issueDir = projectDir.resolve(".cat").resolve("issues").
+        Path issueDir = projectPath.resolve(".cat").resolve("issues").
           resolve("v2").resolve("v2.1").resolve("corrupt-feature");
         Files.createDirectories(issueDir);
 
@@ -2082,7 +2082,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -2095,13 +2095,13 @@ public class IssueDiscoveryTest
   @Test
   public void foundResultIsNotCorruptWhenBothStateMdAndPlanMdExist() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
-        createIssue(projectDir, "2", "1", "valid-feature", "open");
+        createIssue(projectPath, "2", "1", "valid-feature", "open");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
@@ -2114,7 +2114,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -2141,15 +2141,15 @@ public class IssueDiscoveryTest
   @Test
   public void foundResultIsCorruptAndCreateStateMdWhenNeitherFileExists() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
 
         // Create issue directory with neither STATE.md nor PLAN.md
-        Path issueDir = projectDir.resolve(".cat").resolve("issues").
+        Path issueDir = projectPath.resolve(".cat").resolve("issues").
           resolve("v2").resolve("v2.1").resolve("empty-feature");
         Files.createDirectories(issueDir);
         // Deliberately no STATE.md and no PLAN.md
@@ -2166,7 +2166,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -2183,16 +2183,16 @@ public class IssueDiscoveryTest
   @Test
   public void decomposedParentWithQualifiedSubissueNamesIsProcessed() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
         // Create a closed sub-issue using qualified name format
-        createIssue(projectDir, "2", "1", "parser-lexer", "closed");
+        createIssue(projectPath, "2", "1", "parser-lexer", "closed");
         // Create a decomposed parent referencing the sub-issue by qualified name
-        createDecomposedParent(projectDir, "2", "1", "parent-task", "in-progress",
+        createDecomposedParent(projectPath, "2", "1", "parent-task", "in-progress",
           "2.1-parser-lexer");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
@@ -2206,7 +2206,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -2225,15 +2225,15 @@ public class IssueDiscoveryTest
   @Test
   public void decomposedParentWithBareSubissueNamesSkipsBareEntries() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
         // Create a decomposed parent referencing only bare names (no version prefix)
         // Bare names are silently skipped — the parent is treated as if no sub-issues are listed
-        createDecomposedParent(projectDir, "2", "1", "parent-task", "in-progress",
+        createDecomposedParent(projectPath, "2", "1", "parent-task", "in-progress",
           "parser-lexer");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
@@ -2247,7 +2247,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -2265,20 +2265,20 @@ public class IssueDiscoveryTest
   @Test
   public void decomposedParentWithLetterSuffixedVersionPrefixIsHandled() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       try
       {
         String sessionId = UUID.randomUUID().toString();
         // Create a closed sub-issue in v2.1 (standard minor version)
-        createIssue(projectDir, "2", "1", "sub-issue", "closed");
+        createIssue(projectPath, "2", "1", "sub-issue", "closed");
         // Create a decomposed parent that references the sub-issue with a letter-suffixed prefix
         // Note: the parent lives in v2.1; the sub-issue reference uses "2.1a-" prefix.
         // Since "2.1a-sub-issue" is a qualified name, allSubissuesClosed() tries to look it up
         // in the parent's version directory. The directory "sub-issue" exists and is closed,
         // so the parent becomes eligible.
-        createDecomposedParent(projectDir, "2", "1", "parent-task", "in-progress",
+        createDecomposedParent(projectPath, "2", "1", "parent-task", "in-progress",
           "2.1a-sub-issue");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
@@ -2293,7 +2293,7 @@ public class IssueDiscoveryTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }

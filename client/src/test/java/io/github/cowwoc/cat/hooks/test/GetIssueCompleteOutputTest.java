@@ -443,10 +443,10 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getOutputTwoArgDiscoveriesNextIssue() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("get-issue-complete-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("get-issue-complete-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssueWithPlan(projectDir, "2", "1", "next-feature", "open",
+      createIssueWithPlan(projectPath, "2", "1", "next-feature", "open",
         "## Goal\n\nImplement the next feature.\n");
 
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
@@ -457,7 +457,7 @@ public class GetIssueCompleteOutputTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -469,8 +469,8 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getOutputTwoArgNoNextIssueRendersScope() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("get-issue-complete-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("get-issue-complete-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getOutput(new String[]{"2.1-current-issue", "v2.1"});
@@ -480,7 +480,7 @@ public class GetIssueCompleteOutputTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -571,8 +571,8 @@ public class GetIssueCompleteOutputTest
   @Test
   public void discoverAndRenderNotFoundRendersScope() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("get-issue-complete-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("get-issue-complete-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       String result = new GetIssueCompleteOutput(scope).discoverAndRender("2.1-done-issue", "v2.1");
       requireThat(result, "result").contains("Scope Complete");
@@ -580,7 +580,7 @@ public class GetIssueCompleteOutputTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -593,10 +593,10 @@ public class GetIssueCompleteOutputTest
   @Test
   public void discoverAndRenderSuccessPathRendersIssueComplete() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("get-issue-complete-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("get-issue-complete-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssueWithPlan(projectDir, "2", "1", "next-issue", "open",
+      createIssueWithPlan(projectPath, "2", "1", "next-issue", "open",
         "## Goal\n\nBuild the API layer.\n");
 
       String result = new GetIssueCompleteOutput(scope).discoverAndRender("2.1-previous-issue",
@@ -609,7 +609,7 @@ public class GetIssueCompleteOutputTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -624,11 +624,11 @@ public class GetIssueCompleteOutputTest
   @Test
   public void discoverAndRenderExcludesCompletedIssue() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("get-issue-complete-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("get-issue-complete-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // Only the completed issue exists; no other open issues in this version
-      createIssueWithPlan(projectDir, "2", "1", "completed-feature", "open",
+      createIssueWithPlan(projectPath, "2", "1", "completed-feature", "open",
         "## Goal\n\nAlready done.\n");
 
       String result = new GetIssueCompleteOutput(scope).discoverAndRender("2.1-completed-feature",
@@ -643,7 +643,7 @@ public class GetIssueCompleteOutputTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -658,12 +658,12 @@ public class GetIssueCompleteOutputTest
   @Test
   public void discoverAndRenderSkipsCompletedAndFindsOtherIssue() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("get-issue-complete-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("get-issue-complete-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssueWithPlan(projectDir, "2", "1", "done-feature", "open",
+      createIssueWithPlan(projectPath, "2", "1", "done-feature", "open",
         "## Goal\n\nAlready merged.\n");
-      createIssueWithPlan(projectDir, "2", "1", "pending-feature", "open",
+      createIssueWithPlan(projectPath, "2", "1", "pending-feature", "open",
         "## Goal\n\nNext thing to build.\n");
 
       String result = new GetIssueCompleteOutput(scope).discoverAndRender("2.1-done-feature", "v2.1");
@@ -677,7 +677,7 @@ public class GetIssueCompleteOutputTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -693,11 +693,11 @@ public class GetIssueCompleteOutputTest
   @Test
   public void discoverAndRenderExcludesCompletedIssueWithPatchVersion() throws IOException
   {
-    Path projectDir = TestUtils.createTempCatProject("get-issue-complete-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = TestUtils.createTempCatProject("get-issue-complete-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // Create a patch-version issue under .cat/issues/v2/v2.1/v2.1.3/completed-feature
-      createIssueWithPlan(projectDir, "2", "1", "3", "completed-feature", "open",
+      createIssueWithPlan(projectPath, "2", "1", "3", "completed-feature", "open",
         "## Goal\n\nAlready done.\n");
 
       String result = new GetIssueCompleteOutput(scope).discoverAndRender("2.1.3-completed-feature",
@@ -710,7 +710,7 @@ public class GetIssueCompleteOutputTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -823,7 +823,7 @@ public class GetIssueCompleteOutputTest
   /**
    * Creates an issue directory with STATE.md and a PLAN.md with the given content.
    *
-   * @param projectDir  the project root
+   * @param projectPath  the project root
    * @param major       the major version string
    * @param minor       the minor version string
    * @param issueName   the bare issue name
@@ -831,10 +831,10 @@ public class GetIssueCompleteOutputTest
    * @param planContent the full content to write into PLAN.md
    * @throws IOException if file creation fails
    */
-  private void createIssueWithPlan(Path projectDir, String major, String minor, String issueName,
+  private void createIssueWithPlan(Path projectPath, String major, String minor, String issueName,
     String status, String planContent) throws IOException
   {
-    Path issueDir = projectDir.resolve(".cat").resolve("issues").
+    Path issueDir = projectPath.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
@@ -854,7 +854,7 @@ public class GetIssueCompleteOutputTest
   /**
    * Creates a patch-version issue directory with STATE.md and a PLAN.md with the given content.
    *
-   * @param projectDir  the project root
+   * @param projectPath  the project root
    * @param major       the major version string
    * @param minor       the minor version string
    * @param patch       the patch version string
@@ -863,10 +863,10 @@ public class GetIssueCompleteOutputTest
    * @param planContent the full content to write into PLAN.md
    * @throws IOException if file creation fails
    */
-  private void createIssueWithPlan(Path projectDir, String major, String minor, String patch,
+  private void createIssueWithPlan(Path projectPath, String major, String minor, String patch,
     String issueName, String status, String planContent) throws IOException
   {
-    Path issueDir = projectDir.resolve(".cat").resolve("issues").
+    Path issueDir = projectPath.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).
       resolve("v" + major + "." + minor + "." + patch).resolve(issueName);
     Files.createDirectories(issueDir);

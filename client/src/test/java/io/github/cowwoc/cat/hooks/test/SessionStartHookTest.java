@@ -106,12 +106,12 @@ public class SessionStartHookTest
   @Test
   public void clearAgentMarkersDeletesMainAgentMarker() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("cat-test-clear-marker-");
+    Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       String sessionId = "test-session-" + System.nanoTime();
-      Path sessionDir = scope.getSessionBasePath().resolve(sessionId);
+      Path sessionDir = scope.getClaudeSessionsPath().resolve(sessionId);
       Path loadedDir = sessionDir.resolve(GetSkill.LOADED_DIR);
       Files.createDirectories(loadedDir);
       Files.writeString(loadedDir.resolve("cat%3Awork"), "");
@@ -122,7 +122,7 @@ public class SessionStartHookTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -133,12 +133,12 @@ public class SessionStartHookTest
   @Test
   public void clearAgentMarkersDeletesSubagentMarker() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("cat-test-clear-marker-");
+    Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       String sessionId = "test-session-" + System.nanoTime();
-      Path markerDir = scope.getSessionBasePath().resolve(sessionId + "/subagents/agent-1");
+      Path markerDir = scope.getClaudeSessionsPath().resolve(sessionId + "/subagents/agent-1");
       Path loadedDir = markerDir.resolve(GetSkill.LOADED_DIR);
       Files.createDirectories(loadedDir);
       Files.writeString(loadedDir.resolve("cat%3Awork"), "");
@@ -149,7 +149,7 @@ public class SessionStartHookTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -195,11 +195,11 @@ public class SessionStartHookTest
       Files.createDirectories(siblingDir);
       Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
 
-      Path projectDir = Files.createTempDirectory("cat-test-project-");
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot, "test-session",
+        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, "test-session",
           envFile, TerminalType.WINDOWS_TERMINAL))
         {
           JsonMapper mapper = scope.getJsonMapper();
@@ -214,7 +214,7 @@ public class SessionStartHookTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
         TestUtils.deleteDirectoryRecursively(pluginRoot);
       }
     }
@@ -242,11 +242,11 @@ public class SessionStartHookTest
       Files.createDirectories(nonUuidDir);
       Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
 
-      Path projectDir = Files.createTempDirectory("cat-test-project-");
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot, "test-session",
+        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, "test-session",
           envFile, TerminalType.WINDOWS_TERMINAL))
         {
           JsonMapper mapper = scope.getJsonMapper();
@@ -259,7 +259,7 @@ public class SessionStartHookTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
         TestUtils.deleteDirectoryRecursively(pluginRoot);
       }
     }
@@ -285,11 +285,11 @@ public class SessionStartHookTest
       Files.createDirectories(startupDir);
       Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
 
-      Path projectDir = Files.createTempDirectory("cat-test-project-");
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot, "test-session",
+        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, "test-session",
           envFile, TerminalType.WINDOWS_TERMINAL))
         {
           JsonMapper mapper = scope.getJsonMapper();
@@ -313,7 +313,7 @@ public class SessionStartHookTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
         TestUtils.deleteDirectoryRecursively(pluginRoot);
       }
     }
@@ -340,11 +340,11 @@ public class SessionStartHookTest
       Files.createDirectories(startupDir);
       Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
 
-      Path projectDir = Files.createTempDirectory("cat-test-project-");
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot, "test-session",
+        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, "test-session",
           envFile, TerminalType.WINDOWS_TERMINAL))
         {
           JsonMapper mapper = scope.getJsonMapper();
@@ -357,7 +357,7 @@ public class SessionStartHookTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
         TestUtils.deleteDirectoryRecursively(pluginRoot);
       }
     }
@@ -384,11 +384,11 @@ public class SessionStartHookTest
       Files.createDirectories(startupDir);
       Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
 
-      Path projectDir = Files.createTempDirectory("cat-test-project-");
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot, "test-session",
+        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, "test-session",
           envFile, TerminalType.WINDOWS_TERMINAL))
         {
           JsonMapper mapper = scope.getJsonMapper();
@@ -402,7 +402,7 @@ public class SessionStartHookTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
         TestUtils.deleteDirectoryRecursively(pluginRoot);
       }
     }
@@ -433,11 +433,11 @@ public class SessionStartHookTest
       Files.createSymbolicLink(symlinkDir, realTarget);
       Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
 
-      Path projectDir = Files.createTempDirectory("cat-test-project-");
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot, "test-session",
+        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, "test-session",
           envFile, TerminalType.WINDOWS_TERMINAL))
         {
           JsonMapper mapper = scope.getJsonMapper();
@@ -450,7 +450,7 @@ public class SessionStartHookTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
         TestUtils.deleteDirectoryRecursively(pluginRoot);
       }
     }
@@ -461,7 +461,7 @@ public class SessionStartHookTest
   }
 
   /**
-   * Verifies that InjectEnv.handle() throws IllegalArgumentException when the projectDir path contains
+   * Verifies that InjectEnv.handle() throws IllegalArgumentException when the projectPath path contains
    * a dangerous shell character such as {@code $}.
    * <p>
    * Since validateEnvValue is private, this test exercises it indirectly by injecting a path containing
@@ -482,7 +482,7 @@ public class SessionStartHookTest
       Files.createDirectories(startupDir);
       Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
 
-      // Inject a projectDir path that contains '$' - a dangerous shell character
+      // Inject a projectPath path that contains '$' - a dangerous shell character
       // Path.of() allows this without touching the filesystem
       Path dangerousProjectDir = Path.of("/tmp/test-$INJECTED");
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -493,7 +493,7 @@ public class SessionStartHookTest
         {
           JsonMapper mapper = scope.getJsonMapper();
           HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}");
-          // validateEnvValue is called with projectDir.toString() which contains '$'
+          // validateEnvValue is called with projectPath.toString() which contains '$'
           new InjectEnv(scope).handle(input);
         }
       }
@@ -509,7 +509,7 @@ public class SessionStartHookTest
   }
 
   /**
-   * Verifies that InjectEnv.handle() throws IllegalArgumentException when the projectDir path contains
+   * Verifies that InjectEnv.handle() throws IllegalArgumentException when the projectPath path contains
    * a double quote character.
    * <p>
    * Since validateEnvValue is private, this test exercises it indirectly by injecting a path containing
@@ -528,7 +528,7 @@ public class SessionStartHookTest
       Files.createDirectories(startupDir);
       Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
 
-      // Inject a projectDir path that contains '"' - a dangerous shell character
+      // Inject a projectPath path that contains '"' - a dangerous shell character
       // Path.of() allows this without touching the filesystem
       Path dangerousProjectDir = Path.of("/tmp/test-\"INJECTED");
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -554,7 +554,7 @@ public class SessionStartHookTest
   }
 
   /**
-   * Verifies that InjectEnv.handle() throws IllegalArgumentException when the projectDir path contains
+   * Verifies that InjectEnv.handle() throws IllegalArgumentException when the projectPath path contains
    * a backtick character.
    * <p>
    * Since validateEnvValue is private, this test exercises it indirectly by injecting a path containing
@@ -573,7 +573,7 @@ public class SessionStartHookTest
       Files.createDirectories(startupDir);
       Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
 
-      // Inject a projectDir path that contains '`' - a dangerous shell character
+      // Inject a projectPath path that contains '`' - a dangerous shell character
       // Path.of() allows this without touching the filesystem
       Path dangerousProjectDir = Path.of("/tmp/test-`INJECTED");
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -599,7 +599,7 @@ public class SessionStartHookTest
   }
 
   /**
-   * Verifies that InjectEnv.handle() throws IllegalArgumentException when the projectDir path contains
+   * Verifies that InjectEnv.handle() throws IllegalArgumentException when the projectPath path contains
    * a newline character.
    * <p>
    * Since validateEnvValue is private, this test exercises it indirectly by injecting a path containing
@@ -618,7 +618,7 @@ public class SessionStartHookTest
       Files.createDirectories(startupDir);
       Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
 
-      // Inject a projectDir path that contains '\n' - a dangerous shell character
+      // Inject a projectPath path that contains '\n' - a dangerous shell character
       // Path.of() allows this without touching the filesystem
       Path dangerousProjectDir = Path.of("/tmp/test-\nINJECTED");
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -671,11 +671,11 @@ public class SessionStartHookTest
       Path resumedEnvFile = resumedSessionDir.resolve("sessionstart-hook-1.sh");
       Files.createSymbolicLink(resumedEnvFile, realEnvTarget);
 
-      Path projectDir = Files.createTempDirectory("cat-test-project-");
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot, "test-session",
+        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, "test-session",
           envFile, TerminalType.WINDOWS_TERMINAL))
         {
           JsonMapper mapper = scope.getJsonMapper();
@@ -687,7 +687,7 @@ public class SessionStartHookTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
         TestUtils.deleteDirectoryRecursively(pluginRoot);
       }
     }
@@ -720,11 +720,11 @@ public class SessionStartHookTest
       Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
       Files.createSymbolicLink(envFile, realTarget);
 
-      Path projectDir = Files.createTempDirectory("cat-test-project-");
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot, "test-session",
+        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, "test-session",
           envFile, TerminalType.WINDOWS_TERMINAL))
         {
           JsonMapper mapper = scope.getJsonMapper();
@@ -735,7 +735,7 @@ public class SessionStartHookTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
         TestUtils.deleteDirectoryRecursively(pluginRoot);
       }
     }
@@ -768,10 +768,10 @@ public class SessionStartHookTest
       // Inject a pluginRoot path that contains '$' - a dangerous shell character
       // Path.of() allows this without touching the filesystem
       Path dangerousPluginRoot = Path.of("/tmp/test-$INJECTED");
-      Path projectDir = Files.createTempDirectory("cat-test-project-");
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(projectDir, dangerousPluginRoot, "test-session",
+        try (TestJvmScope scope = new TestJvmScope(projectPath, dangerousPluginRoot, "test-session",
           envFile, TerminalType.WINDOWS_TERMINAL))
         {
           JsonMapper mapper = scope.getJsonMapper();
@@ -781,7 +781,7 @@ public class SessionStartHookTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
     finally
@@ -810,11 +810,11 @@ public class SessionStartHookTest
       Files.createDirectories(startupDir);
       Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
 
-      Path projectDir = Files.createTempDirectory("cat-test-project-");
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot, "test-session",
+        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, "test-session",
           envFile, TerminalType.WINDOWS_TERMINAL))
         {
           JsonMapper mapper = scope.getJsonMapper();
@@ -825,7 +825,7 @@ public class SessionStartHookTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
         TestUtils.deleteDirectoryRecursively(pluginRoot);
       }
     }
@@ -863,11 +863,11 @@ public class SessionStartHookTest
       Path siblingEnvFile = siblingDir.resolve("sessionstart-hook-1.sh");
       Files.createSymbolicLink(siblingEnvFile, realTarget);
 
-      Path projectDir = Files.createTempDirectory("cat-test-project-");
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot, "test-session",
+        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, "test-session",
           envFile, TerminalType.WINDOWS_TERMINAL))
         {
           JsonMapper mapper = scope.getJsonMapper();
@@ -879,7 +879,7 @@ public class SessionStartHookTest
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
         TestUtils.deleteDirectoryRecursively(pluginRoot);
       }
     }
@@ -897,14 +897,14 @@ public class SessionStartHookTest
   @Test
   public void checkUpdateAvailableRunsWithEnvironment() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("cat-test-update-");
+    Path projectPath = Files.createTempDirectory("cat-test-update-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
     try
     {
       Path clientDir = pluginRoot.resolve("client");
       Files.createDirectories(clientDir);
       Files.writeString(clientDir.resolve("VERSION"), "99.0.0\n");
-      try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+      try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot))
       {
         JsonMapper mapper = scope.getJsonMapper();
         HookInput input = createInput(mapper, "{}");
@@ -916,7 +916,7 @@ public class SessionStartHookTest
     finally
     {
       TestUtils.deleteDirectoryRecursively(pluginRoot);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -928,12 +928,12 @@ public class SessionStartHookTest
   @Test
   public void checkUpgradeRunsWithEnvironment() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("cat-test-upgrade-");
+    Path projectPath = Files.createTempDirectory("cat-test-upgrade-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
     try
     {
-      // No config.json in projectDir → handler returns empty
-      try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+      // No config.json in projectPath → handler returns empty
+      try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot))
       {
         JsonMapper mapper = scope.getJsonMapper();
         HookInput input = createInput(mapper, "{}");
@@ -945,7 +945,7 @@ public class SessionStartHookTest
     finally
     {
       TestUtils.deleteDirectoryRecursively(pluginRoot);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -957,12 +957,12 @@ public class SessionStartHookTest
   @Test
   public void checkRetrospectiveDueRunsWithEnvironment() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("cat-test-retro-");
+    Path projectPath = Files.createTempDirectory("cat-test-retro-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
     try
     {
       // No .planning directory → handler returns empty (not a CAT project)
-      try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+      try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot))
       {
         JsonMapper mapper = scope.getJsonMapper();
         HookInput input = createInput(mapper, "{}");
@@ -974,7 +974,7 @@ public class SessionStartHookTest
     finally
     {
       TestUtils.deleteDirectoryRecursively(pluginRoot);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 

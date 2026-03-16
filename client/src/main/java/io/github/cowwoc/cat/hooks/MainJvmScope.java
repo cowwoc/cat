@@ -20,12 +20,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class MainJvmScope extends AbstractJvmScope
 {
-  private final ConcurrentLazyReference<Path> claudeProjectDir = ConcurrentLazyReference.create(() ->
+  private final ConcurrentLazyReference<Path> claudeProjectPath = ConcurrentLazyReference.create(() ->
   {
-    String projectDir = System.getenv("CLAUDE_PROJECT_DIR");
-    if (projectDir == null || projectDir.isEmpty())
+    String projectPath = System.getenv("CLAUDE_PROJECT_DIR");
+    if (projectPath == null || projectPath.isEmpty())
       throw new AssertionError("CLAUDE_PROJECT_DIR is not set");
-    return Path.of(projectDir);
+    return Path.of(projectPath);
   });
   private final ConcurrentLazyReference<Path> claudePluginRoot = ConcurrentLazyReference.create(() ->
   {
@@ -74,10 +74,17 @@ public final class MainJvmScope extends AbstractJvmScope
   }
 
   @Override
-  public Path getClaudeProjectDir()
+  public Path getProjectPath()
   {
     ensureOpen();
-    return claudeProjectDir.getValue();
+    return claudeProjectPath.getValue();
+  }
+
+  @Override
+  public Path getWorkDir()
+  {
+    ensureOpen();
+    return Path.of(System.getProperty("user.dir"));
   }
 
   @Override

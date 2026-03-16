@@ -64,7 +64,7 @@ public final class GetAddOutput implements SkillOutput
    * The JSON is wrapped in {@code <output type="add">} tags by GetOutput (the centralized dispatcher).
    * <p>
    * Parses {@code --project-dir PATH} from {@code args} if present; otherwise falls back to
-   * {@code scope.getClaudeProjectDir()}.
+   * {@code scope.getProjectPath()}.
    *
    * @param args the arguments from the preprocessor directive
    * @return the generated output as raw JSON (output tag wrapping happens in GetOutput)
@@ -76,34 +76,34 @@ public final class GetAddOutput implements SkillOutput
   public String getOutput(String[] args) throws IOException
   {
     requireThat(args, "args").isNotNull();
-    Path projectDir = null;
+    Path projectPath = null;
     for (int i = 0; i < args.length; ++i)
     {
       if (args[i].equals("--project-dir"))
       {
         if (i + 1 >= args.length)
           throw new IllegalArgumentException("Missing PATH argument for --project-dir");
-        projectDir = Path.of(args[i + 1]);
+        projectPath = Path.of(args[i + 1]);
         ++i;
       }
       else
         throw new IllegalArgumentException("Unknown argument: " + args[i]);
     }
-    if (projectDir == null)
-      projectDir = scope.getClaudeProjectDir();
-    return buildPlanningDataJson(projectDir);
+    if (projectPath == null)
+      projectPath = scope.getProjectPath();
+    return buildPlanningDataJson(projectPath);
   }
 
   /**
    * Builds the planning data JSON by scanning the planning directory structure.
    *
-   * @param projectDir the project directory to scan
+   * @param projectPath the project directory to scan
    * @return the planning data JSON (without output tag wrapping; GetOutput handles the wrapper)
    * @throws IOException if an I/O error occurs
    */
-  private String buildPlanningDataJson(Path projectDir) throws IOException
+  private String buildPlanningDataJson(Path projectPath) throws IOException
   {
-    Path issuesDir = projectDir.resolve(Config.CAT_DIR_NAME).resolve("issues");
+    Path issuesDir = projectPath.resolve(Config.CAT_DIR_NAME).resolve("issues");
     if (!Files.isDirectory(issuesDir))
     {
       ObjectNode root = scope.getJsonMapper().createObjectNode();

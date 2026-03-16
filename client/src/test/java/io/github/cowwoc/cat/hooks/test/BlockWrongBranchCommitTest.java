@@ -92,7 +92,7 @@ public final class BlockWrongBranchCommitTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-my-issue");
@@ -133,7 +133,7 @@ public final class BlockWrongBranchCommitTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       // Create a second branch "wrong-branch" in mainRepo
@@ -184,7 +184,7 @@ public final class BlockWrongBranchCommitTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-cd-issue");
@@ -221,7 +221,7 @@ public final class BlockWrongBranchCommitTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-push-test");
@@ -286,7 +286,7 @@ public final class BlockWrongBranchCommitTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       // Create two worktrees: one we'll end up in (correct), one we start from (wrong)
@@ -327,7 +327,7 @@ public final class BlockWrongBranchCommitTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
       TestUtils.runGit(mainRepo, "branch", "wrong-amend");
       Path wrongWorktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-amend-test");
@@ -396,7 +396,7 @@ public final class BlockWrongBranchCommitTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       // Create two sibling worktrees: cwd starts in "sibling-a", cd relative to "sibling-b"
@@ -469,7 +469,7 @@ public final class BlockWrongBranchCommitTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       TestUtils.runGit(mainRepo, "branch", "wrong-branch");

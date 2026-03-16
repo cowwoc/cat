@@ -69,7 +69,7 @@ public final class BlockWorktreeIsolationViolation implements BashHandler
     Pattern.compile("(?:^|[;&|\\s])mv(?:\\s|$)");
 
   private final JvmScope scope;
-  private final Path projectDir;
+  private final Path projectPath;
   private final JsonMapper mapper;
 
   /**
@@ -81,7 +81,7 @@ public final class BlockWorktreeIsolationViolation implements BashHandler
   public BlockWorktreeIsolationViolation(JvmScope scope)
   {
     this.scope = scope;
-    this.projectDir = scope.getClaudeProjectDir();
+    this.projectPath = scope.getProjectPath();
     this.mapper = scope.getJsonMapper();
   }
 
@@ -95,7 +95,7 @@ public final class BlockWorktreeIsolationViolation implements BashHandler
     requireThat(workingDirectory, "workingDirectory").isNotNull();
     requireThat(sessionId, "sessionId").isNotBlank();
 
-    WorktreeContext context = WorktreeContext.forSession(scope.getProjectCatDir(), projectDir, mapper, sessionId);
+    WorktreeContext context = WorktreeContext.forSession(scope.getCatWorkPath(), projectPath, mapper, sessionId);
     if (context == null)
       return Result.allow();
 

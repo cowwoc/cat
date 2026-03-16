@@ -74,20 +74,20 @@ public final class RetrospectiveMigrator
   public static void main(String[] args) throws IOException
   {
     boolean dryRun = false;
-    String projectDir = ".";
+    String projectPath = ".";
 
     for (String arg : args)
     {
       if (arg.equals("--dry-run"))
         dryRun = true;
       else
-        projectDir = arg;
+        projectPath = arg;
     }
 
     try (MainJvmScope scope = new MainJvmScope())
     {
       RetrospectiveMigrator migrator = new RetrospectiveMigrator(scope);
-      MigrationResult result = migrator.migrate(Path.of(projectDir), dryRun);
+      MigrationResult result = migrator.migrate(Path.of(projectPath), dryRun);
       for (String message : result.messages())
         System.out.println(message);
       System.out.println(scope.getJsonMapper().writeValueAsString(result.stats()));
@@ -111,18 +111,18 @@ public final class RetrospectiveMigrator
    * Returns a result with output messages and migration stats. If dry run is enabled, shows what would be done
    * without making changes.
    *
-   * @param projectDir path to project root directory
+   * @param projectPath path to project root directory
    * @param dryRun if true, show what would be done without making changes
    * @return migration result containing output messages and JSON statistics
-   * @throws NullPointerException if projectDir is null
+   * @throws NullPointerException if projectPath is null
    * @throws IOException if file operations fail
    */
-  public MigrationResult migrate(Path projectDir, boolean dryRun) throws IOException
+  public MigrationResult migrate(Path projectPath, boolean dryRun) throws IOException
   {
-    requireThat(projectDir, "projectDir").isNotNull();
+    requireThat(projectPath, "projectPath").isNotNull();
 
     List<String> messages = new ArrayList<>();
-    Path retroDir = projectDir.resolve(Config.CAT_DIR_NAME).resolve("retrospectives");
+    Path retroDir = projectPath.resolve(Config.CAT_DIR_NAME).resolve("retrospectives");
 
     if (!Files.exists(retroDir))
     {

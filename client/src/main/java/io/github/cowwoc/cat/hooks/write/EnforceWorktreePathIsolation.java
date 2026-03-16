@@ -36,13 +36,13 @@ import java.util.Optional;
  * </ol>
  * <p>
  * Uses session ID to find the matching lock file in the project CAT work directory
- * ({@code {claudeProjectDir}/.cat/work/locks/}), derives the issue_id from the lock filename,
+ * ({@code {claudeProjectPath}/.cat/work/locks/}), derives the issue_id from the lock filename,
  * and checks whether the file being accessed falls within the corresponding worktree.
  */
 public final class EnforceWorktreePathIsolation implements FileWriteHandler, ReadHandler
 {
   private final JvmScope scope;
-  private final Path projectDir;
+  private final Path projectPath;
   private final JsonMapper mapper;
 
   /**
@@ -53,7 +53,7 @@ public final class EnforceWorktreePathIsolation implements FileWriteHandler, Rea
   public EnforceWorktreePathIsolation(JvmScope scope)
   {
     this.scope = scope;
-    this.projectDir = scope.getClaudeProjectDir();
+    this.projectPath = scope.getProjectPath();
     this.mapper = scope.getJsonMapper();
   }
 
@@ -147,7 +147,7 @@ public final class EnforceWorktreePathIsolation implements FileWriteHandler, Rea
    */
   private String isolationCheckReason(Path absoluteFilePath, String sessionId)
   {
-    WorktreeContext context = WorktreeContext.forSession(scope.getProjectCatDir(), projectDir, mapper, sessionId);
+    WorktreeContext context = WorktreeContext.forSession(scope.getCatWorkPath(), projectPath, mapper, sessionId);
     if (context != null)
     {
       FileWriteHandler.Result writeResult = checkAgainstContext(context, absoluteFilePath);
@@ -184,7 +184,7 @@ public final class EnforceWorktreePathIsolation implements FileWriteHandler, Rea
    */
   private WorktreeContext findCoveringWorktree(Path absoluteFilePath)
   {
-    Path lockDir = scope.getProjectCatDir().resolve("locks");
+    Path lockDir = scope.getCatWorkPath().resolve("locks");
     if (!Files.isDirectory(lockDir))
       return null;
 
@@ -194,14 +194,14 @@ public final class EnforceWorktreePathIsolation implements FileWriteHandler, Rea
       {
         String filename = lockFile.getFileName().toString();
         String issueId = filename.substring(0, filename.length() - ".lock".length());
-        Path worktreePath = scope.getProjectCatDir().resolve("worktrees").resolve(issueId);
+        Path worktreePath = scope.getCatWorkPath().resolve("worktrees").resolve(issueId);
         if (!Files.isDirectory(worktreePath))
           continue;
 
         Path absoluteWorktreePath = worktreePath.toAbsolutePath().normalize();
         if (absoluteFilePath.startsWith(absoluteWorktreePath))
         {
-          Path absoluteProjectDirectory = projectDir.toAbsolutePath().normalize();
+          Path absoluteProjectDirectory = projectPath.toAbsolutePath().normalize();
           return new WorktreeContext(absoluteWorktreePath, absoluteProjectDirectory);
         }
       }

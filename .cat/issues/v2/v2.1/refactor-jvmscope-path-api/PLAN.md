@@ -7,8 +7,8 @@
 - `getClaudeProjectDir()` — returns the project's root directory (the workspace root)
 - `getSessionBasePath()` — returns `{configDir}/projects/{encodedProject}/`
 - `getSessionDirectory()` — returns `{configDir}/projects/{encodedProject}/{sessionId}/`
-- `getProjectCatDir()` — returns `{claudeProjectDir}/.cat/work/`
-- `getSessionCatDir()` — returns `{claudeProjectDir}/.cat/work/sessions/{sessionId}/`
+- `getProjectCatDir()` — returns `{claudeProjectPath}/.cat/work/`
+- `getSessionCatDir()` — returns `{claudeProjectPath}/.cat/work/sessions/{sessionId}/`
 
 There is also no `getWorkDir()` method exposing the working directory.
 
@@ -137,7 +137,7 @@ renamed methods (see grep output above for the full list).
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/MainJvmScope.java`
 
 - Update `TestJvmScope.java`:
-  - Add a `workDir` field (injectable via constructor); default to `claudeProjectDir` in existing
+  - Add a `workDir` field (injectable via constructor); default to `claudeProjectPath` in existing
     constructors that do not accept it
   - Add `getWorkDir()` override returning the injected `workDir`
   - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/TestJvmScope.java`

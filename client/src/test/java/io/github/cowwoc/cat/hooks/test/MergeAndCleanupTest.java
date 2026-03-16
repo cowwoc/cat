@@ -24,17 +24,17 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public class MergeAndCleanupTest
 {
   /**
-   * Verifies that execute rejects null projectDir.
+   * Verifies that execute rejects null projectPath.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = NullPointerException.class,
-    expectedExceptionsMessageRegExp = ".*projectDir.*")
+    expectedExceptionsMessageRegExp = ".*projectPath.*")
   public void executeRejectsNullProjectDir() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       Path tempDir = TestUtils.createTempDir("merge-cleanup-test");
       try
@@ -51,17 +51,17 @@ public class MergeAndCleanupTest
   }
 
   /**
-   * Verifies that execute rejects blank projectDir.
+   * Verifies that execute rejects blank projectPath.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*projectDir.*")
+    expectedExceptionsMessageRegExp = ".*projectPath.*")
   public void executeRejectsBlankProjectDir() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       Path tempDir = TestUtils.createTempDir("merge-cleanup-test");
       try
@@ -86,9 +86,9 @@ public class MergeAndCleanupTest
     expectedExceptionsMessageRegExp = ".*issueId.*")
   public void executeRejectsNullIssueId() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       Path tempDir = TestUtils.createTempDir("merge-cleanup-test");
       try
@@ -113,9 +113,9 @@ public class MergeAndCleanupTest
     expectedExceptionsMessageRegExp = ".*Not a CAT project.*")
   public void executeRejectsNonCatProject() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       Path tempDir = TestUtils.createTempDir("merge-cleanup-test");
       try
@@ -140,9 +140,9 @@ public class MergeAndCleanupTest
   @Test
   public void executeAcceptsEmptyWorktreePath() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       Path tempDir = TestUtils.createTempDir("merge-cleanup-test");
       try

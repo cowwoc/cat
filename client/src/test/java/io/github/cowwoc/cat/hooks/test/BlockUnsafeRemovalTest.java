@@ -230,9 +230,9 @@ public final class BlockUnsafeRemovalTest
     {
       Path gitDir = tempDir.resolve(".git");
       Files.createDirectory(gitDir);
-      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Path locksDir = scope.getCatWorkPath().resolve("locks");
       Files.createDirectories(locksDir);
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
       Path worktreePath = worktreesDir.resolve("task-123");
       Files.createDirectories(worktreePath);
@@ -278,9 +278,9 @@ public final class BlockUnsafeRemovalTest
     {
       Path gitDir = tempDir.resolve(".git");
       Files.createDirectory(gitDir);
-      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Path locksDir = scope.getCatWorkPath().resolve("locks");
       Files.createDirectories(locksDir);
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
       Path worktreePath = worktreesDir.resolve("task-456");
       Files.createDirectories(worktreePath);
@@ -321,9 +321,9 @@ public final class BlockUnsafeRemovalTest
     {
       Path gitDir = tempDir.resolve(".git");
       Files.createDirectory(gitDir);
-      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Path locksDir = scope.getCatWorkPath().resolve("locks");
       Files.createDirectories(locksDir);
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
       Path worktreePath = worktreesDir.resolve("task-789");
       Files.createDirectories(worktreePath);
@@ -398,9 +398,9 @@ public final class BlockUnsafeRemovalTest
     {
       Path gitDir = tempDir.resolve(".git");
       Files.createDirectory(gitDir);
-      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Path locksDir = scope.getCatWorkPath().resolve("locks");
       Files.createDirectories(locksDir);
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
       Path worktreePath = worktreesDir.resolve("stale-task");
       Files.createDirectories(worktreePath);
@@ -444,9 +444,9 @@ public final class BlockUnsafeRemovalTest
     {
       Path gitDir = tempDir.resolve(".git");
       Files.createDirectory(gitDir);
-      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Path locksDir = scope.getCatWorkPath().resolve("locks");
       Files.createDirectories(locksDir);
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
       Path worktreePath = worktreesDir.resolve("fresh-task");
       Files.createDirectories(worktreePath);
@@ -493,9 +493,9 @@ public final class BlockUnsafeRemovalTest
     {
       Path gitDir = tempDir.resolve(".git");
       Files.createDirectory(gitDir);
-      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Path locksDir = scope.getCatWorkPath().resolve("locks");
       Files.createDirectories(locksDir);
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
       Path worktreePath = worktreesDir.resolve("my-stale-task");
       Files.createDirectories(worktreePath);
@@ -700,9 +700,9 @@ public final class BlockUnsafeRemovalTest
     {
       Path gitDir = tempDir.resolve(".git");
       Files.createDirectory(gitDir);
-      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Path locksDir = scope.getCatWorkPath().resolve("locks");
       Files.createDirectories(locksDir);
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
       Path worktreePath = worktreesDir.resolve("boundary-task");
       Files.createDirectories(worktreePath);
@@ -746,9 +746,9 @@ public final class BlockUnsafeRemovalTest
     {
       Path gitDir = tempDir.resolve(".git");
       Files.createDirectory(gitDir);
-      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Path locksDir = scope.getCatWorkPath().resolve("locks");
       Files.createDirectories(locksDir);
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
       Path worktreePath = worktreesDir.resolve("fresh-boundary-task");
       Files.createDirectories(worktreePath);
@@ -792,9 +792,9 @@ public final class BlockUnsafeRemovalTest
     {
       Path gitDir = tempDir.resolve(".git");
       Files.createDirectory(gitDir);
-      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Path locksDir = scope.getCatWorkPath().resolve("locks");
       Files.createDirectories(locksDir);
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
       Path worktreePath = worktreesDir.resolve("stale-boundary-task");
       Files.createDirectories(worktreePath);
@@ -838,9 +838,9 @@ public final class BlockUnsafeRemovalTest
     {
       Path gitDir = tempDir.resolve(".git");
       Files.createDirectory(gitDir);
-      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Path locksDir = scope.getCatWorkPath().resolve("locks");
       Files.createDirectories(locksDir);
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
       Path worktreePath = worktreesDir.resolve("no-created-at-task");
       Files.createDirectories(worktreePath);
@@ -882,9 +882,9 @@ public final class BlockUnsafeRemovalTest
     {
       Path gitDir = tempDir.resolve(".git");
       Files.createDirectory(gitDir);
-      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Path locksDir = scope.getCatWorkPath().resolve("locks");
       Files.createDirectories(locksDir);
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
       Path worktreePath = worktreesDir.resolve("no-session-id-task");
       Files.createDirectories(worktreePath);
@@ -1066,9 +1066,9 @@ public final class BlockUnsafeRemovalTest
     {
       Path gitDir = tempDir.resolve(".git");
       Files.createDirectory(gitDir);
-      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Path locksDir = scope.getCatWorkPath().resolve("locks");
       Files.createDirectories(locksDir);
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
       Path worktreePath = worktreesDir.resolve("task-agentA");
       Files.createDirectories(worktreePath);
@@ -1116,9 +1116,9 @@ public final class BlockUnsafeRemovalTest
     {
       Path gitDir = tempDir.resolve(".git");
       Files.createDirectory(gitDir);
-      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Path locksDir = scope.getCatWorkPath().resolve("locks");
       Files.createDirectories(locksDir);
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
       Path worktreePath = worktreesDir.resolve("task-agentB");
       Files.createDirectories(worktreePath);
@@ -1167,9 +1167,9 @@ public final class BlockUnsafeRemovalTest
     {
       Path gitDir = tempDir.resolve(".git");
       Files.createDirectory(gitDir);
-      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Path locksDir = scope.getCatWorkPath().resolve("locks");
       Files.createDirectories(locksDir);
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
       Path worktreePath = worktreesDir.resolve("task-agentC");
       Files.createDirectories(worktreePath);
@@ -1218,7 +1218,7 @@ public final class BlockUnsafeRemovalTest
     {
       Path gitDir = tempDir.resolve(".git");
       Files.createDirectory(gitDir);
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
       Path worktreePath = worktreesDir.resolve("task-agentD");
       Files.createDirectories(worktreePath);
@@ -1252,9 +1252,9 @@ public final class BlockUnsafeRemovalTest
     {
       Path gitDir = tempDir.resolve(".git");
       Files.createDirectory(gitDir);
-      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Path locksDir = scope.getCatWorkPath().resolve("locks");
       Files.createDirectories(locksDir);
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
       Path worktreePath = worktreesDir.resolve("task-agentE");
       Files.createDirectories(worktreePath);
@@ -1309,9 +1309,9 @@ public final class BlockUnsafeRemovalTest
     {
       Path gitDir = tempDir.resolve(".git");
       Files.createDirectory(gitDir);
-      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Path locksDir = scope.getCatWorkPath().resolve("locks");
       Files.createDirectories(locksDir);
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
       Path worktreePath = worktreesDir.resolve("task-agentF");
       Files.createDirectories(worktreePath);
@@ -1358,9 +1358,9 @@ public final class BlockUnsafeRemovalTest
     {
       Path gitDir = tempDir.resolve(".git");
       Files.createDirectory(gitDir);
-      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Path locksDir = scope.getCatWorkPath().resolve("locks");
       Files.createDirectories(locksDir);
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
       Path worktreePath = worktreesDir.resolve("task-agentG");
       Files.createDirectories(worktreePath);
@@ -1409,9 +1409,9 @@ public final class BlockUnsafeRemovalTest
     {
       Path gitDir = tempDir.resolve(".git");
       Files.createDirectory(gitDir);
-      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Path locksDir = scope.getCatWorkPath().resolve("locks");
       Files.createDirectories(locksDir);
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
       Path worktreePath = worktreesDir.resolve("task-agentH");
       Files.createDirectories(worktreePath);

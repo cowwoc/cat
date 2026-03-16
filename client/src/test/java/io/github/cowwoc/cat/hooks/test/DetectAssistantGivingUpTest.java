@@ -275,7 +275,7 @@ public final class DetectAssistantGivingUpTest
    */
   private Path createConversationLog(JvmScope scope, String sessionId, String content) throws IOException
   {
-    Path sessionBasePath = scope.getSessionBasePath();
+    Path sessionBasePath = scope.getClaudeSessionsPath();
     Files.createDirectories(sessionBasePath);
     Path logFile = sessionBasePath.resolve(sessionId + ".jsonl");
     Files.writeString(logFile, content);

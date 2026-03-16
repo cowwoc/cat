@@ -84,17 +84,17 @@ public final class Config
    * </ol>
    *
    * @param mapper the JSON mapper to use for parsing
-   * @param projectDir the project root directory containing .cat/
+   * @param projectPath the project root directory containing .cat/
    * @return the loaded configuration
    * @throws IOException if a config file exists but cannot be read or contains invalid JSON
-   * @throws NullPointerException if {@code mapper} or {@code projectDir} are null
+   * @throws NullPointerException if {@code mapper} or {@code projectPath} are null
    * @throws IllegalArgumentException if the configuration contains unknown keys
    */
-  public static Config load(JsonMapper mapper, Path projectDir) throws IOException
+  public static Config load(JsonMapper mapper, Path projectPath) throws IOException
   {
     Map<String, Object> merged = new HashMap<>(DEFAULTS);
 
-    Path configDir = projectDir.resolve(CAT_DIR_NAME);
+    Path configDir = projectPath.resolve(CAT_DIR_NAME);
 
     // Layer 2: Load config.json
     Path baseConfigPath = configDir.resolve("config.json");
