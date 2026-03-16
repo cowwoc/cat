@@ -2,25 +2,106 @@
   "period": "2026-03",
   "retrospectives": [
     {
+      "id": "R030",
+      "timestamp": "2026-03-16T18:30:00Z",
+      "trigger": "count_based",
+      "period_analyzed": "2026-03-14T00:30:00Z to 2026-03-16T18:30:00Z",
+      "mistakes_analyzed": 22,
+      "summary": "22 mistakes analyzed (M543-M564). Substantive entries: M543 (lock leak on OVERSIZED exit), M546 (bare sub-issue name resolution failure in IssueDiscovery), M549 (missing collect-results step), M552 (sequential parallel wave spawn), M553 (direct plugin edit bypass), M555/M563 (AutoLearnMistakes false positives on Java source / git diff \u2014 3rd/4th recurrence), M557 (opaque JacksonException), M559 (missing squash prerequisite), M561 (investigation file in main workspace), M562 (BFG --delete-files filename-only misuse). 5 new patterns (PATTERN-025 through PATTERN-029). 7 new action items (A029-A035). 3 escalations created for persistently ineffective A001, A003, A020. PATTERN-023 (autolearn_false_positive) now worsening (4th+ recurrence). PATTERN-003 (path_config_assumption) continues worsening. PATTERN-001 and PATTERN-017 showing improvement with 0 new recurrences this period.",
+      "findings": {
+        "category_breakdown": {
+          "code_bug": 2,
+          "protocol_violation": 2,
+          "detection_gap": 2,
+          "missing_documentation": 2,
+          "tool_misuse": 1,
+          "incorrect_implementation": 1,
+          "logical_error": 1
+        },
+        "worsening_patterns": [
+          "PATTERN-003",
+          "PATTERN-023"
+        ],
+        "no_improvement_patterns": [],
+        "improving_patterns": [
+          "PATTERN-001",
+          "PATTERN-017"
+        ],
+        "new_patterns": [
+          "PATTERN-025",
+          "PATTERN-026",
+          "PATTERN-027",
+          "PATTERN-028",
+          "PATTERN-029"
+        ],
+        "new_action_items": [
+          "A029",
+          "A030",
+          "A031",
+          "A032",
+          "A033",
+          "A034",
+          "A035"
+        ],
+        "open_action_items": [
+          "A001",
+          "A003",
+          "A020",
+          "A028"
+        ],
+        "escalations_created": [
+          "ESCALATE-2026-03-16-001",
+          "ESCALATE-2026-03-16-002",
+          "ESCALATE-2026-03-16-003"
+        ]
+      }
+    },
+    {
       "id": "R029",
       "timestamp": "2026-03-14T00:30:00Z",
       "trigger": "count_based",
       "period_analyzed": "2026-03-10T20:03:44Z to 2026-03-14T00:24:39Z",
       "mistakes_analyzed": 11,
-      "summary": "11 mistakes analyzed (M532-M542). Category breakdown: tool_limitation 2, incorrect_implementation 1, protocol_violation 1, remainder sparse/empty. PATTERN-003 (path_config_assumption) WORSENING, PATTERN-002 (task_status_lifecycle_violation) NO IMPROVEMENT. New pattern PATTERN-024 (error_output_priming) created from M538+M542 (compliance_failure:doc_missing:issue_workflow — embedded action suggestions in error output prime STOP bypass). Three second-round escalations created for A001, A003, A020 (all previously escalated in R028 but fixes not implemented). All three escalated to critical priority requiring CAT issue creation.",
+      "summary": "11 mistakes analyzed (M532-M542). Category breakdown: tool_limitation 2, incorrect_implementation 1, protocol_violation 1, remainder sparse/empty. PATTERN-003 (path_config_assumption) WORSENING, PATTERN-002 (task_status_lifecycle_violation) NO IMPROVEMENT. New pattern PATTERN-024 (error_output_priming) created from M538+M542 (compliance_failure:doc_missing:issue_workflow \u2014 embedded action suggestions in error output prime STOP bypass). Three second-round escalations created for A001, A003, A020 (all previously escalated in R028 but fixes not implemented). All three escalated to critical priority requiring CAT issue creation.",
       "findings": {
         "category_breakdown": {
           "tool_limitation": 2,
           "incorrect_implementation": 1,
           "protocol_violation": 1
         },
-        "worsening_patterns": ["PATTERN-003"],
-        "no_improvement_patterns": ["PATTERN-002"],
-        "improving_patterns": ["PATTERN-001", "PATTERN-004", "PATTERN-005", "PATTERN-008", "PATTERN-013", "PATTERN-015", "PATTERN-016", "PATTERN-017", "PATTERN-018"],
-        "new_patterns": ["PATTERN-024"],
-        "new_action_items": ["A028"],
-        "open_action_items": ["A001", "A003", "A020"],
-        "escalations_created": ["ESCALATE-2026-03-14-001", "ESCALATE-2026-03-14-002", "ESCALATE-2026-03-14-003"]
+        "worsening_patterns": [
+          "PATTERN-003"
+        ],
+        "no_improvement_patterns": [
+          "PATTERN-002"
+        ],
+        "improving_patterns": [
+          "PATTERN-001",
+          "PATTERN-004",
+          "PATTERN-005",
+          "PATTERN-008",
+          "PATTERN-013",
+          "PATTERN-015",
+          "PATTERN-016",
+          "PATTERN-017",
+          "PATTERN-018"
+        ],
+        "new_patterns": [
+          "PATTERN-024"
+        ],
+        "new_action_items": [
+          "A028"
+        ],
+        "open_action_items": [
+          "A001",
+          "A003",
+          "A020"
+        ],
+        "escalations_created": [
+          "ESCALATE-2026-03-14-001",
+          "ESCALATE-2026-03-14-002",
+          "ESCALATE-2026-03-14-003"
+        ]
       }
     },
     {
@@ -29,7 +110,7 @@
       "trigger": "count_based",
       "period_analyzed": "2026-03-08T14:27:29Z to 2026-03-10T20:03:44Z",
       "mistakes_analyzed": 19,
-      "summary": "19 mistakes analyzed. Protocol violations dominant (5/19, 26%). PATTERN-003 (path_config_assumption) worsening — occurrences_after_fix=5 exceeds pre-fix count of 3. PATTERN-002 (task_status_lifecycle_violation) no improvement. A001, A003, A020 all confirmed ineffective and escalated to ESCALATE-2026-03-10-001/002/003. M531 (tool_misuse: work-prepare wrong issue selection) is first occurrence — no new pattern created yet.",
+      "summary": "19 mistakes analyzed. Protocol violations dominant (5/19, 26%). PATTERN-003 (path_config_assumption) worsening \u2014 occurrences_after_fix=5 exceeds pre-fix count of 3. PATTERN-002 (task_status_lifecycle_violation) no improvement. A001, A003, A020 all confirmed ineffective and escalated to ESCALATE-2026-03-10-001/002/003. M531 (tool_misuse: work-prepare wrong issue selection) is first occurrence \u2014 no new pattern created yet.",
       "findings": {
         "category_breakdown": {
           "protocol_violation": 5,
@@ -38,12 +119,24 @@
           "incorrect_implementation": 1,
           "tool_misuse": 1
         },
-        "worsening_patterns": ["PATTERN-003"],
-        "no_improvement_patterns": ["PATTERN-002"],
+        "worsening_patterns": [
+          "PATTERN-003"
+        ],
+        "no_improvement_patterns": [
+          "PATTERN-002"
+        ],
         "new_patterns": [],
         "new_action_items": [],
-        "open_action_items": ["A001", "A003", "A020"],
-        "escalations_created": ["ESCALATE-2026-03-10-001", "ESCALATE-2026-03-10-002", "ESCALATE-2026-03-10-003"]
+        "open_action_items": [
+          "A001",
+          "A003",
+          "A020"
+        ],
+        "escalations_created": [
+          "ESCALATE-2026-03-10-001",
+          "ESCALATE-2026-03-10-002",
+          "ESCALATE-2026-03-10-003"
+        ]
       }
     },
     {
@@ -65,8 +158,20 @@
           "skill_priming": 1,
           "tool_misuse": 2
         },
-        "new_patterns": ["PATTERN-014", "PATTERN-015", "PATTERN-019", "PATTERN-020", "PATTERN-021", "PATTERN-022", "PATTERN-023"],
-        "open_action_items": ["A001", "A003", "A020"]
+        "new_patterns": [
+          "PATTERN-014",
+          "PATTERN-015",
+          "PATTERN-019",
+          "PATTERN-020",
+          "PATTERN-021",
+          "PATTERN-022",
+          "PATTERN-023"
+        ],
+        "open_action_items": [
+          "A001",
+          "A003",
+          "A020"
+        ]
       }
     },
     {
@@ -75,7 +180,7 @@
       "trigger": "count_based",
       "period_analyzed": "2026-02-28T16:57:40Z to 2026-03-05T19:06:46Z",
       "mistakes_analyzed": 37,
-      "summary": "37 mistakes analyzed. Protocol violations dominant (12/37, 32%). New patterns: PATTERN-023 (autolearn false positives, 2 occurrences), plus 7 recurrences of existing patterns. A020 escalated: implementation was incomplete—hook checks AskUserQuestion was called but does not validate answers are non-empty. M459, M462, M463, M464 all bypass approval gate via empty answers object.",
+      "summary": "37 mistakes analyzed. Protocol violations dominant (12/37, 32%). New patterns: PATTERN-023 (autolearn false positives, 2 occurrences), plus 7 recurrences of existing patterns. A020 escalated: implementation was incomplete\u2014hook checks AskUserQuestion was called but does not validate answers are non-empty. M459, M462, M463, M464 all bypass approval gate via empty answers object.",
       "findings": {
         "category_breakdown": {
           "protocol_violation": 12,
