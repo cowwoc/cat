@@ -78,12 +78,6 @@ public final class SetPendingAgentResult implements PostToolHandler
       if (!agentId.isBlank())
         return Result.allow();
 
-      // Only applies when an active worktree lock exists (work-with-issue context)
-      WorktreeContext context = WorktreeContext.forSession(
-        scope.getCatWorkPath(), scope.getProjectPath(), scope.getJsonMapper(), sessionId);
-      if (context == null)
-        return Result.allow();
-
       // Only enforce collect-results gate for cat:work-execute subagents.
       // Other agent types (adversarial, red-team, blue-team, diff-validation) produce no worktree
       // artifacts, so the gate is unnecessary for them.
@@ -100,6 +94,12 @@ public final class SetPendingAgentResult implements PostToolHandler
           isWorkExecute = equalsIgnoreCase(subagentTypeNode.asString(), "cat:work-execute");
       }
       if (!isWorkExecute)
+        return Result.allow();
+
+      // Only applies when an active worktree lock exists (work-with-issue context)
+      WorktreeContext context = WorktreeContext.forSession(
+        scope.getCatWorkPath(), scope.getProjectPath(), scope.getJsonMapper(), sessionId);
+      if (context == null)
         return Result.allow();
 
       // Create the flag file
