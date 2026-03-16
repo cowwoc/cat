@@ -30,8 +30,8 @@ import java.util.StringJoiner;
  * appropriate rules for their type without relying on static frontmatter preloading.
  * <p>
  * Each skill entry uses the format {@code "- name: description"}, matching Claude Code's native skill
- * listing. The header instructs subagents to use the Skill tool for invoking skills and includes
- * behavioral instructions about when to invoke them.
+ * listing. Behavioral instructions about when and how to invoke skills are provided separately via
+ * {@code plugin/rules/subagent-skill-instructions.md}.
  * <p>
  * CAT rules are filtered using the {@code subAgents} frontmatter property: omitting {@code subAgents}
  * (or not providing frontmatter) reaches all subagents, {@code subAgents: []} excludes all subagents,

@@ -1460,6 +1460,44 @@ More content here.
     }
   }
 
+  // -------------------------------------------------------------------------
+  // End-to-end: subagent catAgentId format accepted by GetSkill constructor
+  // -------------------------------------------------------------------------
+
+  /**
+   * Verifies that GetSkill construction succeeds when the catAgentId uses the subagent format
+   * ({sessionId}/subagents/{agentId}) injected by SubagentStartHook — confirming that the
+   * args-guidance fix in {@code SkillDiscovery.getSubagentSkillListing()} produces an invocation
+   * path that does not throw IllegalArgumentException when the agent follows instructions.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void constructorAcceptsSubagentFormatCatAgentIdForStakeholderReviewAgent() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      // Use the format injected by SubagentStartHook: {sessionId}/subagents/{agentId}
+      String sessionId = UUID.randomUUID().toString();
+      String agentId = "a20546c3cd3fdecbb";
+      String catAgentId = sessionId + "/subagents/" + agentId;
+
+      // Constructor must succeed without throwing IllegalArgumentException
+      GetSkill loader = new GetSkill(scope, List.of(catAgentId));
+      requireThat(loader, "loader").isNotNull();
+
+      // Verify the marker directory was created under the subagent path
+      Path baseDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize();
+      Path expectedAgentDir = baseDir.resolve(catAgentId);
+      requireThat(Files.isDirectory(expectedAgentDir), "agentDirExists").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
   /**
    * Verifies that loading a skill by its qualified name (e.g., "cat:test-skill") stores
    * the marker without double-qualifying it.
