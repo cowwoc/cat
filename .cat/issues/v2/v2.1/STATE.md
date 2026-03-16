@@ -111,6 +111,9 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-autolearn-java-source-false-positive
 - add-bfg-filename-only-warning
 - fix-oversized-decomposed-parent
+- unify-giving-up-detection
+- fix-work-implement-agent-state-section-guidance
+- strengthen-squash-comment-verification
 
 
 ## Issues Closed
