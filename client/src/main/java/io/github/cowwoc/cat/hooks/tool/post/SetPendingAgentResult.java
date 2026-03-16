@@ -10,6 +10,7 @@ import static io.github.cowwoc.cat.hooks.Strings.equalsIgnoreCase;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.skills.JsonHelper;
 import io.github.cowwoc.cat.hooks.PostToolHandler;
 import io.github.cowwoc.cat.hooks.WorktreeContext;
 import org.slf4j.Logger;
@@ -58,6 +59,7 @@ public final class SetPendingAgentResult implements PostToolHandler
   public Result check(String toolName, JsonNode toolResult, String sessionId, JsonNode hookData)
   {
     requireThat(sessionId, "sessionId").isNotBlank();
+    requireThat(hookData, "hookData").isNotNull();
 
     try
     {
@@ -66,14 +68,7 @@ public final class SetPendingAgentResult implements PostToolHandler
         return Result.allow();
 
       // Only applies to the main agent (not subagents spawning subagents)
-      JsonNode agentIdNode = null;
-      if (hookData != null)
-        agentIdNode = hookData.get("agent_id");
-      String agentId;
-      if (agentIdNode == null)
-        agentId = "";
-      else
-        agentId = agentIdNode.asString();
+      String agentId = JsonHelper.getStringOrDefault(hookData, "agent_id", "");
       // agentId is used only as a presence check (non-blank = subagent); no path construction, so no injection risk
       if (!agentId.isBlank())
         return Result.allow();
@@ -81,11 +76,7 @@ public final class SetPendingAgentResult implements PostToolHandler
       // Only enforce collect-results gate for cat:work-execute subagents.
       // Other agent types (adversarial, red-team, blue-team, diff-validation) produce no worktree
       // artifacts, so the gate is unnecessary for them.
-      JsonNode toolInputNode;
-      if (hookData == null)
-        toolInputNode = null;
-      else
-        toolInputNode = hookData.get("tool_input");
+      JsonNode toolInputNode = hookData.get("tool_input");
       boolean isWorkExecute = false;
       if (toolInputNode != null)
       {
