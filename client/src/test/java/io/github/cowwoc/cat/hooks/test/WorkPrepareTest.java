@@ -16,7 +16,10 @@ import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -1110,6 +1113,57 @@ public class WorkPrepareTest
       requireThat(node.path("status").asString(), "status").isEqualTo("OVERSIZED");
       // 32 * 5000 + 1 * 2000 + 10000 = 172000
       requireThat(node.path("estimated_tokens").asInt(), "estimatedTokens").isGreaterThan(160_000);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that run() returns JSON with status=ERROR when execute() throws IOException.
+   * <p>
+   * When a lock file with an empty worktrees map exists for an issue, IssueLock.acquire() throws
+   * IOException. run() must catch this and produce a business-format JSON result (status=ERROR)
+   * so that the work skill can parse and display the error rather than treating it as missing output.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void runReturnsErrorStatusWhenExecuteThrowsIOException() throws IOException
+  {
+    Path projectPath = createTempGitCatProject("v2.1");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    {
+      // Create an issue so execute() attempts lock acquisition
+      createIssue(projectPath, "2", "1", "my-feature", "open");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue");
+
+      // Create a corrupt lock file with an empty worktrees map — this causes IssueLock.acquire() to
+      // throw IOException with a message containing actionable guidance (e.g. "run /cat:cleanup").
+      Path locksDir = projectPath.resolve(".cat").resolve("work").resolve("locks");
+      Files.createDirectories(locksDir);
+      String lockContent = """
+        {"session_id":"%s","worktrees":{},"created_at":%d}""".
+        formatted(UUID.randomUUID(), Instant.now().getEpochSecond());
+      Files.writeString(locksDir.resolve("2.1-my-feature.lock"), lockContent);
+
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+
+      // Pass a valid UUID as session-id — TestJvmScope returns "test-session" which IssueLock
+      // rejects as non-UUID. run() uses --session-id when present, overriding the scope value.
+      String sessionId = UUID.randomUUID().toString();
+      WorkPrepare.run(scope, new String[]{"--session-id", sessionId}, out);
+
+      String output = buffer.toString(StandardCharsets.UTF_8).strip();
+      requireThat(output, "output").isNotBlank();
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode json = mapper.readTree(output);
+      requireThat(json.path("status").asString(), "status").isEqualTo("ERROR");
+      requireThat(json.path("message").asString(), "message").isNotBlank();
     }
     finally
     {
@@ -3018,6 +3072,102 @@ public class WorkPrepareTest
     {
       cleanupWorktreeIfExists(projectPath, worktreePath);
       TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that toErrorJson produces valid JSON with correctly escaped embedded double-quote.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void toErrorJsonEscapesEmbeddedDoubleQuote() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("work-prepare-json-test");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      String json = WorkPrepare.toErrorJson(scope, "error: field \"name\" is invalid");
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("ERROR");
+      requireThat(node.path("message").asString(), "message").isEqualTo("error: field \"name\" is invalid");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that toErrorJson produces valid JSON with correctly escaped embedded backslash.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void toErrorJsonEscapesEmbeddedBackslash() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("work-prepare-json-test");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      String json = WorkPrepare.toErrorJson(scope, "path: C:\\Users\\foo");
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("ERROR");
+      requireThat(node.path("message").asString(), "message").isEqualTo("path: C:\\Users\\foo");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that toErrorJson produces valid JSON with correctly escaped embedded newline.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void toErrorJsonEscapesEmbeddedNewline() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("work-prepare-json-test");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      String json = WorkPrepare.toErrorJson(scope, "line1\nline2");
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("ERROR");
+      requireThat(node.path("message").asString(), "message").isEqualTo("line1\nline2");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that toErrorJson produces valid JSON with correctly escaped embedded tab.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void toErrorJsonEscapesEmbeddedTab() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("work-prepare-json-test");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      String json = WorkPrepare.toErrorJson(scope, "col1\tcol2");
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("ERROR");
+      requireThat(node.path("message").asString(), "message").isEqualTo("col1\tcol2");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
