@@ -280,6 +280,14 @@ public final class WorkPrepare
     // Get target branch (current branch in project dir)
     String targetBranch = GitCommands.getCurrentBranch(projectDir.toString());
 
+    // Decomposed parents with all sub-issues closed require only closure work — skip OVERSIZED check
+    if (found.isDecomposedComplete())
+    {
+      String issueBranch = buildIssueBranch(major, minor, found.patch(), issueName);
+      return executeWhileLocked(input, projectDir, mapper, issueId, major, minor, issueName,
+        issuePath, targetBranch, issuePath.resolve("PLAN.md"), 5000, issueBranch);
+    }
+
     // Step 4: Estimate tokens
     Path planPath = issuePath.resolve("PLAN.md");
     int estimatedTokens = estimateTokens(planPath);
@@ -300,7 +308,7 @@ public final class WorkPrepare
 
     // Steps 5-10: Create worktree and build READY result
     String issueBranch = buildIssueBranch(major, minor, found.patch(), issueName);
-    return executeWithLock(input, projectDir, mapper, issueId, major, minor, issueName,
+    return executeWhileLocked(input, projectDir, mapper, issueId, major, minor, issueName,
       issuePath, targetBranch, planPath, estimatedTokens, issueBranch);
   }
 
@@ -432,7 +440,7 @@ public final class WorkPrepare
    * @return JSON string with READY or ERROR result
    * @throws IOException if file operations fail
    */
-  private String executeWithLock(PrepareInput input, Path projectDir, JsonMapper mapper,
+  private String executeWhileLocked(PrepareInput input, Path projectDir, JsonMapper mapper,
     String issueId, String major, String minor,
     String issueName, Path issuePath, String targetBranch, Path planPath, int estimatedTokens,
     String issueBranch) throws IOException

@@ -566,7 +566,7 @@ public class IssueDiscoveryTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       DiscoveryResult.Found found = new DiscoveryResult.Found(
-        "2.1-my-feature", "2", "1", "", "my-feature", "/path/to/issue", "all", false, false);
+        "2.1-my-feature", "2", "1", "", "my-feature", "/path/to/issue", "all", false, false, false);
 
       String json = found.toJson(mapper);
 
@@ -1160,7 +1160,7 @@ public class IssueDiscoveryTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       DiscoveryResult.Found found = new DiscoveryResult.Found(
-        "2.1.3-patch-fix", "2", "1", "3", "patch-fix", "/path/to/issue", "all", false, false);
+        "2.1.3-patch-fix", "2", "1", "3", "patch-fix", "/path/to/issue", "all", false, false, false);
 
       String json = found.toJson(mapper);
 
@@ -1291,7 +1291,7 @@ public class IssueDiscoveryTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       DiscoveryResult.Found found = new DiscoveryResult.Found(
-        "2-my-feature", "2", "", "", "my-feature", "/path/to/issue", "all", false, false);
+        "2-my-feature", "2", "", "", "my-feature", "/path/to/issue", "all", false, false, false);
 
       String json = found.toJson(mapper);
 
@@ -2127,7 +2127,7 @@ public class IssueDiscoveryTest
   public void foundRecordAllowsIsCorruptAndCreateStateMdBothTrue()
   {
     DiscoveryResult.Found found = new DiscoveryResult.Found("2.1-some-issue", "2", "1", "", "some-issue",
-      "/path/to/issue", "all", true, true);
+      "/path/to/issue", "all", true, true, false);
     requireThat(found.isCorrupt(), "isCorrupt").isTrue();
     requireThat(found.createStateMd(), "createStateMd").isTrue();
   }
