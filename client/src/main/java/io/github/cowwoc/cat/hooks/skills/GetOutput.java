@@ -146,10 +146,13 @@ public final class GetOutput implements SkillOutput
 
       ## Procedure
 
-      ### Step 1: Locate the rendered output
+      ### Step 1: Locate the current output tag
 
-      Find the `<output>` tag injected above by the preprocessor directive. It contains the complete pre-rendered %s
-      display.
+      Scan the conversation from the **end** toward the beginning. Find the **last** (most recently appearing)
+      `<output>` tag. This is the current output injected by the preprocessor directive above.
+
+      **CRITICAL:** Prior invocations of this skill may have left earlier `<output>` tags earlier in the
+      conversation. Those are stale. Only the LAST `<output>` tag is current.
 
       If the `<output>` tag is missing, empty, or contains error content: report "%s display unavailable." and stop. \
       Do not investigate the cause, run commands, or construct/infer/approximate the %s display by any means.
@@ -170,13 +173,14 @@ public final class GetOutput implements SkillOutput
       ## Verification
 
       - [ ] The rendered %s display from the `<output>` tag is printed completely and without modification
+      - [ ] The output matches the content of the LAST `<output>` tag in context, not an earlier one
       - [ ] No additional text, commentary, or formatting was added
       - [ ] No project files were read and no tools or commands were run
       - [ ] The agent stopped after outputting without offering follow-up or next steps
 
       <output type="%s">
       %s
-      </output>""".formatted(skill, skill, skill, skill, skill, skill, skill, sanitizedType, content);
+      </output>""".formatted(skill, skill, skill, skill, skill, skill, sanitizedType, content);
   }
 
   /**

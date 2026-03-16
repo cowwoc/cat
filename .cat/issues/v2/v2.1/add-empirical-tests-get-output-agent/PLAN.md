@@ -35,7 +35,8 @@ None
   must match ONLY the latest output text and explicitly exclude the earlier content string.
 
 ## Files to Modify
-- `plugin/skills/get-output-agent/SKILL.md` — improved by `cat:instruction-builder-agent`
+- `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetOutput.java` — update Step 1 and Verification to reference the LAST `<output>` tag (prevents staleness when the skill is invoked multiple times)
+- `plugin/skills/get-output-agent/SKILL.md` — remove appended instructions (staleness guidance now lives in GetOutput.java)
 - `plugin/skills/get-output-agent/first-use.md` — may be improved by `cat:instruction-builder-agent`
 
 ## Pre-conditions
