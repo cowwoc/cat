@@ -6,9 +6,9 @@
 - **Blocks:** []
 
 ## Decomposed Into
-- rename-config-java-core
-- rename-config-plugin-docs
-- rename-config-tests
+- 2.1-rename-config-java-core
+- 2.1-rename-config-plugin-docs
+- 2.1-rename-config-tests
 
 ## Parallel Execution Plan
 
@@ -21,4 +21,4 @@
 ### Wave 2 (After Wave 1)
 | Issue | Dependencies |
 |-------|-------------|
-| 2.1-rename-config-tests | rename-config-java-core, rename-config-plugin-docs |
+| 2.1-rename-config-tests | 2.1-rename-config-java-core, 2.1-rename-config-plugin-docs |
