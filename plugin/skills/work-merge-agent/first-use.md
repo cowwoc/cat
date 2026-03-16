@@ -495,12 +495,6 @@ The jlink image may not be built. Run: mvn -f hooks/pom.xml verify
 ```
 Do NOT skip the banner or continue without it.
 
-**Exit the worktree directory before the merge operation:**
-
-```bash
-cd "${CLAUDE_PROJECT_DIR}"
-```
-
 **Pre-merge approval verification (when trust != "high"):**
 
 Before the merge, verify that user approval was obtained in Step 9. This proactive check
@@ -671,8 +665,7 @@ or invoke `work-complete` without explicit user selection. Unknown consent = No 
 If any phase fails:
 
 1. Capture error message and phase name
-2. Restore working directory: `cd "${CLAUDE_PROJECT_DIR}"`
-3. **Classify the error as transient or permanent using this decision tree (in order):**
+2. **Classify the error as transient or permanent using this decision tree (in order):**
    1. If the user explicitly aborted or rejected: **permanent** — release the lock.
    2. If the error message contains `index.lock`, `shallow.lock`, or `Unable to create.*lock`: **transient**.
    3. If the error message contains `Connection refused`, `Connection timed out`, `SSL`, or `Could not resolve host`: **transient**.
@@ -684,7 +677,7 @@ If any phase fails:
    - **Transient errors** (rules 2-3): do NOT release the lock. Hold it so the user can retry.
    - **Permanent errors** (rules 1, 4-7): release the lock:
      `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${ISSUE_ID}" "$CLAUDE_SESSION_ID"`
-4. Return FAILED status with actual error details, including whether the lock was retained or released
+3. Return FAILED status with actual error details, including whether the lock was retained or released
 
 ```json
 {
