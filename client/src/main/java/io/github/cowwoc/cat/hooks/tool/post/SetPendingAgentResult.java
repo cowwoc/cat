@@ -70,10 +70,10 @@ public final class SetPendingAgentResult implements PostToolHandler
       if (hookData != null)
         agentIdNode = hookData.get("agent_id");
       String agentId;
-      if (agentIdNode != null)
-        agentId = agentIdNode.asString();
-      else
+      if (agentIdNode == null)
         agentId = "";
+      else
+        agentId = agentIdNode.asString();
       // agentId is used only as a presence check (non-blank = subagent); no path construction, so no injection risk
       if (!agentId.isBlank())
         return Result.allow();
