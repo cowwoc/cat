@@ -17,6 +17,10 @@ commit squashing, branch merging, worktree cleanup, and state updates.
 - **Step 9: Squash Commits by Topic Before Approval Gate** — always squash commits by topic immediately before
   presenting the approval gate; do not present the gate on an un-squashed branch. **This applies on EVERY
   presentation, including after user feedback: re-squash ALL commits before re-presenting the gate.**
+- **Step 9 (sub-step): Background Task Completion** — before presenting the approval gate
+  (AskUserQuestion), ALL tasks launched with `run_in_background: true` during Steps 7-9 must
+  have returned their results via `<task-notification>`. Do NOT invoke AskUserQuestion while
+  any background task is still executing.
 
 ## Arguments and Configuration
 
@@ -342,6 +346,27 @@ constitutes genuine approval, do NOT skip — present AskUserQuestion to obtain 
 **MANDATORY:** Patience matrix (Steps 5-6) MUST have already executed before the approval gate. The gate DISPLAYS
 `ALL_CONCERNS`, `FIXED_CONCERNS`, `DEFERRED_CONCERNS` — it does NOT drive concern handling. Do NOT ask the user how
 to handle concerns. If patience matrix hasn't run: STOP and return to Step 5 first.
+
+### Pre-Gate Background Task Completion (MANDATORY — BLOCKING)
+
+**Before presenting any pre-gate output or the approval gate, ensure ALL background tasks have
+completed.** This applies to any task started with `run_in_background: true` via the Agent tool
+during Steps 7-9 (including skill-builder review if invoked in the background).
+
+**How to verify completion:** Background Agent tasks deliver results exclusively via
+`<task-notification>` system messages. A background task is complete when its
+`<task-notification>` has appeared in the session. Do NOT assume a background task is complete
+based on elapsed time or conversation turns.
+
+**If any background task has not yet completed:**
+1. DO NOT invoke `cat:get-diff-agent` or any other pre-gate output step
+2. DO NOT invoke AskUserQuestion
+3. Wait until the `<task-notification>` arrives for each outstanding background task
+4. Process the task result BEFORE proceeding to pre-gate output
+
+**Why this matters:** The approval gate must reflect the results of ALL completed work,
+including skill-builder findings. A gate presented before background tasks complete is missing
+information the user needs to make an informed approval decision.
 
 ### Present Changes Before Approval Gate (BLOCKING)
 
