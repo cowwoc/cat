@@ -402,8 +402,8 @@ Initialize loop counter (once, before any looping): `AUTOFIX_ITERATION=0`
 
 **Priority ordering (MANDATORY):** The auto-fix loop MUST address CRITICAL concerns first, then HIGH, then
 MEDIUM, then LOW. When constructing `concerns_formatted` below, order concerns by severity (CRITICAL first).
-When spawning planning and implementation subagents, the prompt MUST instruct them to address CRITICAL concerns
-BEFORE other severities. If any CRITICAL concern is in the FIX list, the subagent prompts MUST explicitly state:
+When spawning planning and fix subagents, the prompt MUST instruct them to address CRITICAL concerns BEFORE
+other severities. If any CRITICAL concern is in the FIX list, the subagent prompts MUST explicitly state:
 "CRITICAL concerns MUST be addressed first, before any other severity."
 
 1. Increment iteration counter: `AUTOFIX_ITERATION++`
@@ -427,14 +427,16 @@ BEFORE other severities. If any CRITICAL concern is in the FIX list, the subagen
    paths using their `${WORKTREE_PATH}`). Include the path only if the file exists on disk. Omit concerns with no
    `detail_file` or a non-existent file — this is normal when a reviewer found no detailed concerns worth recording.
 
-3. Spawn a planning subagent to analyze the concerns and produce a fix strategy:
+3. Spawn a shared planning subagent to produce a per-concern fix plan:
    ```
    Task tool:
-     description: "Plan fixes for review concerns (iteration ${AUTOFIX_ITERATION})"
+     description: "Plan per-concern fixes (iteration ${AUTOFIX_ITERATION})"
      subagent_type: "cat:work-execute"
      model: "sonnet"
      prompt: |
-       Analyze the following stakeholder review concerns for issue ${ISSUE_ID} and produce a fix strategy.
+       Analyze the following stakeholder review concerns for issue ${ISSUE_ID} and produce a
+       per-concern fix plan. Each concern MUST have a self-contained section with all information
+       a separate subagent would need to implement the fix without additional context.
 
        ## Issue Configuration
        ISSUE_ID: ${ISSUE_ID}
@@ -442,63 +444,50 @@ BEFORE other severities. If any CRITICAL concern is in the FIX list, the subagen
        BRANCH: ${BRANCH}
        TARGET_BRANCH: ${TARGET_BRANCH}
 
-       ## Concerns to Analyze
+       ## Concerns to Analyze (CRITICAL first)
        ${concerns_formatted}
 
        ## Concern Detail Files
-       For comprehensive analysis, read these detail files (if present):
        ${detail_file_paths}
 
        ## Instructions
-       - CRITICAL concerns MUST be addressed first, before any other severity.
-       - Read the concern detail files to understand the full context of each concern
-       - For each concern, determine:
-         1. What specific code changes are needed
-         2. Which files need to be modified
-         3. What the correct implementation should look like
-       - Produce a concrete fix plan listing exact changes needed for each concern, ordered by severity (CRITICAL first)
-       - Do NOT implement the fixes yet — only plan them
+       - CRITICAL concerns MUST be addressed first (list them first in the plan).
+       - For each concern produce a self-contained section with:
+         1. Exact file path(s) to modify
+         2. What the current code does (quote the relevant lines if possible)
+         3. What the fixed code must look like (write out the replacement)
+         4. Why this fixes the concern
+       - If a concern cannot be fixed with a code change, mark it UNFIXABLE and explain why.
+       - Do NOT implement the fixes — only plan them.
 
        ## Return Format
-       Return a fix plan in this format:
-       ```
-       ## Fix Plan
+       Return a fix plan with one section per concern:
 
-       ### Concern 1: [severity] [brief description]
-       - File: [file path]
-       - Change: [what needs to change and why]
-       - Approach: [how to implement the fix]
-
-       ### Concern 2: ...
-       ```
-
-       ## Validation Requirement
-       Each concern in the fix plan MUST have at least one concrete file change (a specific file path
-       and a description of what code to add, modify, or remove). If a concern cannot be addressed
-       with a code change, state why explicitly and mark it as UNFIXABLE.
+       ### Concern N: [severity] [brief description]
+       - Files: [exact file paths]
+       - Current code: [quote or describe]
+       - Fixed code: [replacement or description of change]
+       - Rationale: [why this fixes the concern]
+       [or: UNFIXABLE: [reason]]
    ```
+
+   Capture the planning subagent's full output as `fix_plan_from_planning_subagent` for use in step 4 (single-concern path) and step 6 scope isolation validation.
 
    **Fix plan validation (MANDATORY):** After receiving the planning subagent's output, verify that each
    FIX-marked concern has at least one actionable file change (a file path and a concrete modification).
    If the plan contains only observations, commentary, or states that a concern is "already addressed"
    without any code change, treat that concern as UNFIXABLE for this iteration: move it to
-   `DEFERRED_CONCERNS` and do NOT pass it to the implementation subagent. A fix plan that contains
+   `DEFERRED_CONCERNS` and do NOT pass it to the implementation subagent(s). A fix plan that contains
    zero actionable changes across all concerns is treated as a complete planning failure — skip the
-   implementation subagent for this iteration and decrement no concerns from the FIX list.
+   implementation subagent(s) for this iteration and decrement no concerns from the FIX list.
 
    **Noop and partial-noop detection (MANDATORY):** Track two counters, both initialized to 0 before the loop:
    - `NOOP_ITERATIONS`: iterations that produce zero actionable changes (complete planning failures).
-   - `PARTIAL_NOOP_ITERATIONS`: iterations that produce actionable changes for fewer than half of the FIX-marked
-     concerns. Specifically, if `concerns_with_actionable_changes < ceil(total_fix_concerns / 2)`, the iteration
-     is a partial noop. (A full noop is also counted as a partial noop.)
-
-   Increment the appropriate counter(s) after each iteration. If `NOOP_ITERATIONS + PARTIAL_NOOP_ITERATIONS >= 2`,
-   STOP the auto-fix loop immediately and report:
-   `"WARNING: ${NOOP_ITERATIONS} full noop(s) and ${PARTIAL_NOOP_ITERATIONS} partial noop(s) in ${AUTOFIX_ITERATION} iterations. Possible planning failure."`
-   Move all remaining FIX-marked concerns to `DEFERRED_CONCERNS` and continue to the Evaluate Remaining Concerns
-   step. Note: alternating noop/trivial iterations do NOT reset either counter — totals are tracked across the
-   entire loop. A single trivial change across many concerns does NOT constitute meaningful progress when CRITICAL
-   concerns remain unaddressed.
+   - `PARTIAL_NOOP_ITERATIONS`: iterations where fewer than half of the FIX-marked concerns had at least one
+     concern fix subagent return SUCCESS. Specifically, if `successful_concern_count < ceil(total_fix_concerns / 2)`,
+     the iteration is a partial noop. (A full noop is also counted as a partial noop.) Concerns retried
+     sequentially that succeed count as successful. Concerns that fail both the parallel and sequential attempts
+     count as non-successful.
 
    **UNFIXABLE status (MANDATORY):** Reclassifying a concern as UNFIXABLE does NOT count as resolving the concern
    for status purposes. UNFIXABLE concerns moved to `DEFERRED_CONCERNS` retain their original severity. If any
@@ -520,7 +509,7 @@ BEFORE other severities. If any CRITICAL concern is in the FIX list, the subagen
    unlimited number of MEDIUM concerns without user confirmation.
 
    **Repeated UNFIXABLE escalation (MANDATORY):** Track UNFIXABLE declarations per concern using the match key
-   `stakeholder` + normalized `location` (same normalization as step 8: strip line numbers, remove leading `./`,
+   `stakeholder` + normalized `location` (same normalization as step 14: strip line numbers, remove leading `./`,
    remove trailing `/`). If the planning subagent declares the SAME CRITICAL or HIGH concern as UNFIXABLE for the
    SECOND time, halt auto-fix attempts for that concern immediately and escalate to the user:
    ```
@@ -544,13 +533,17 @@ BEFORE other severities. If any CRITICAL concern is in the FIX list, the subagen
      moved to `deferred_concerns`.
    This escalation prevents wasting iteration budget on concerns the planner cannot resolve.
 
-4. Spawn implementation subagent to execute the fix plan:
+4. **Single-concern optimization:** When there is exactly ONE FIX-marked concern in the current iteration, skip
+   the parallel worktree protocol entirely. Instead, spawn one implementation subagent running in the original
+   issue worktree `${WORKTREE_PATH}` on the main `${BRANCH}`:
+
    ```
    Task tool:
-     description: "Fix review concerns (iteration ${AUTOFIX_ITERATION})"
+     description: "Fix concern 1: ${concern_brief_description} (iteration ${AUTOFIX_ITERATION})"
      subagent_type: "cat:work-execute"
+     model: "sonnet"
      prompt: |
-       Fix the following stakeholder review concerns for issue ${ISSUE_ID}.
+       Fix the following stakeholder review concern for issue ${ISSUE_ID}.
 
        ## Issue Configuration
        ISSUE_ID: ${ISSUE_ID}
@@ -558,7 +551,7 @@ BEFORE other severities. If any CRITICAL concern is in the FIX list, the subagen
        BRANCH: ${BRANCH}
        TARGET_BRANCH: ${TARGET_BRANCH}
 
-       ## HIGH+ Concerns to Fix
+       ## Concern to Fix
        ${concerns_formatted}
 
        ## Concern Detail Files
@@ -569,20 +562,17 @@ BEFORE other severities. If any CRITICAL concern is in the FIX list, the subagen
        ${fix_plan_from_planning_subagent}
 
        ## Instructions
-       - CRITICAL concerns MUST be addressed first, before any other severity.
        - Work in the worktree at ${WORKTREE_PATH}
-       - Fix each concern according to the fix plan and recommendation, in severity order (CRITICAL first)
-       - Read the concern detail files for full context on each concern
-       - Commit your fixes using the same commit type as the primary implementation
-         (e.g., `bugfix:`, `feature:`). These commits will be squashed into the main
-         implementation commit in Step 7. Do NOT use `test:` as an independent commit
-         type for concern fixes.
+       - Fix the concern according to the fix plan and recommendation
+       - Read the concern detail file for full context (if path provided and file exists)
+       - Commit your fix using the same commit type as the primary implementation
+         (e.g., `bugfix:`, `feature:`). Do NOT use `test:` as an independent commit type.
+       - Use git commit without `--no-verify` to ensure hooks run.
        - **ABSOLUTE PROHIBITION:** You MUST NOT read, write, or modify `.cat/config.json`
-         for any reason. This file is locked for the duration of the review phase. Writing
-         `verify=none` or any other value to config.json is a critical protocol violation.
+         for any reason. This file is locked for the duration of the review phase.
          Prohibited mechanisms include but are not limited to: `sed -i`, `echo >`, `tee`, `cat >`,
          `Edit` tool, `Write` tool, `mv` (rename/replace), `cp` (overwrite via copy), and `ln`
-         (replace via symlink). Fix only the code concerns listed above — nothing else.
+         (replace via symlink). Fix only the concern listed above — nothing else.
        - Return JSON status when complete
 
        ## Return Format
@@ -591,50 +581,256 @@ BEFORE other severities. If any CRITICAL concern is in the FIX list, the subagen
          "status": "SUCCESS|PARTIAL|FAILED",
          "commits": [{"hash": "...", "message": "...", "type": "..."}],
          "files_changed": N,
-         "concerns_addressed": N
+         "concern_addressed": true|false
        }
        ```
    ```
-5. **Validate implementation subagent output (MANDATORY):** After the implementation subagent returns, verify:
-   - For each concern in `concerns_formatted`, check that the subagent's commits touch at least one file mentioned
+
+   Proceed directly to step 11 (validate fix subagent output) using commits from the fix subagent's return
+   value. Skip steps 5–10.
+
+   **When there are TWO OR MORE FIX-marked concerns**, use the full parallel worktree protocol (steps 5–10):
+
+5. **Spawn N parallel concern fix subagents (one per FIX-marked concern):**
+
+    **Worktree naming convention:** For each concern N (1-indexed, ordered by severity CRITICAL first), create
+    a temporary branch name: `fix-concern-${AUTOFIX_ITERATION}-${N}-${BRANCH}`.
+
+    Before spawning subagents, create one isolated worktree per concern using the main agent's Bash tool:
+
+    ```bash
+    # For each concern N (1-indexed):
+    CONCERN_BRANCH="fix-concern-${AUTOFIX_ITERATION}-${N}-${BRANCH}"
+    CONCERN_WORKTREE="${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/${CONCERN_BRANCH}"
+    cd "${WORKTREE_PATH}" && \
+      git worktree add -b "${CONCERN_BRANCH}" "${CONCERN_WORKTREE}" HEAD
+    ```
+
+    Run worktree creation for all N concerns in a single chained Bash call (create all before spawning any
+    subagent). If worktree creation fails for concern N, do NOT spawn that concern's subagent — mark it as
+    FAILED immediately and include it in the failed-concerns list.
+
+    **Spawn all N concern fix subagents in a single message** (not sequentially — use N simultaneous Task tool
+    calls in one response):
+
+    For each concern N, the delegation prompt is:
+
+    ```
+    Task tool:
+      description: "Fix concern ${N}: ${concern_brief_description} (iteration ${AUTOFIX_ITERATION})"
+      subagent_type: "cat:work-execute"
+      model: "sonnet"
+      prompt: |
+        Fix the following stakeholder review concern for issue ${ISSUE_ID}.
+
+        ## Issue Configuration
+        ISSUE_ID: ${ISSUE_ID}
+        WORKTREE_PATH: ${CONCERN_WORKTREE_N}
+        BRANCH: ${CONCERN_BRANCH_N}
+        TARGET_BRANCH: ${TARGET_BRANCH}
+
+        ## Your Assigned Concern (ONLY fix this concern — do NOT modify files unrelated to it)
+        ${concern_N_formatted}
+
+        ## Fix Plan for This Concern
+        ${fix_plan_section_N}
+
+        ## Concern Detail File (if applicable)
+        ${concern_N_detail_file_path}
+
+        ## Instructions
+        - Work exclusively in the worktree at ${CONCERN_WORKTREE_N}.
+        - Fix ONLY the files listed in the fix plan for this concern.
+        - Do NOT modify any file not referenced in the fix plan section above.
+        - Read concern detail file for full context (if path provided and file exists).
+        - Commit your fix using the same commit type as the primary implementation (e.g., bugfix:,
+          feature:). These commits will be merged into the main implementation branch.
+        - Use git commit without `--no-verify` to ensure hooks run.
+        - **ABSOLUTE PROHIBITION:** Do NOT read, write, or modify `.cat/config.json` for any reason.
+          This file is locked for the duration of the review phase. Prohibited mechanisms include but are not
+          limited to: `sed -i`, `echo >`, `tee`, `cat >`, `Edit` tool, `Write` tool, `mv` (rename/replace),
+          `cp` (overwrite via copy), and `ln` (replace via symlink). Fix only the concern listed above — nothing else.
+
+        ## Return Format
+        ```json
+        {
+          "status": "SUCCESS|PARTIAL|FAILED",
+          "commits": [{"hash": "...", "message": "...", "type": "..."}],
+          "files_changed": N,
+          "concern_addressed": true|false
+        }
+        ```
+    ```
+
+    Each subagent receives only the fix plan section for its assigned concern (not the full plan). The
+    `${CONCERN_WORKTREE_N}` and `${CONCERN_BRANCH_N}` values are specific to concern N.
+
+6. **Wait for all N concern fix subagents to complete.**
+
+    Collect results from all N subagents. For each subagent result:
+    - `SUCCESS`: subagent produced at least one commit touching concern-relevant files.
+    - `PARTIAL`: subagent produced some commits but not all concern files were touched.
+    - `FAILED` or no commits: subagent failed to produce any useful change.
+
+    **Scope isolation validation (MANDATORY):** After all subagents complete, validate that each subagent
+    only modified files allowed by the fix plan. The allowed files for concern N are extracted from the
+    planning subagent's output by parsing lines matching `- Files: <paths>` within the `### Concern N:`
+    section:
+
+    ```bash
+    # For each concern N that returned SUCCESS or PARTIAL:
+    CONCERN_BRANCH="fix-concern-${AUTOFIX_ITERATION}-${N}-${BRANCH}"
+    # Extract "- Files: ..." line(s) from the planning subagent's Concern N section
+    # (grep between "### Concern N:" and the next "### Concern" or end of plan output)
+    ALLOWED_FILES=$(echo "${fix_plan_from_planning_subagent}" | \
+      awk "/^### Concern ${N}:/,/^### Concern [0-9]/" | \
+      grep "^- Files:" | sed 's/- Files:[[:space:]]*//' | tr ',' '\n' | tr -d ' ')
+    ACTUAL_FILES=$(cd "${WORKTREE_PATH}" && git diff --name-only HEAD "${CONCERN_BRANCH}")
+    # For each file in ACTUAL_FILES, check if it appears in ALLOWED_FILES:
+    while IFS= read -r actual_file; do
+      if ! echo "${ALLOWED_FILES}" | grep -qF "${actual_file}"; then
+        echo "WARNING: Concern ${N} fix subagent modified out-of-scope file: ${actual_file}. Allowed: ${ALLOWED_FILES}"
+      fi
+    done <<< "${ACTUAL_FILES}"
+    ```
+
+    Out-of-scope file warnings do NOT block the merge — they are logged for auditability.
+
+7. **Merge concern worktree branches into the issue branch:**
+
+    Perform all merges sequentially from the ISSUE branch (not from individual concern worktrees). Use the
+    main agent's Bash tool:
+
+    ```bash
+    cd "${WORKTREE_PATH}"
+    # For each concern N whose subagent returned SUCCESS or PARTIAL (in severity order: CRITICAL first):
+    CONCERN_BRANCH="fix-concern-${AUTOFIX_ITERATION}-${N}-${BRANCH}"
+    if ! git merge --no-ff "${CONCERN_BRANCH}" \
+      -m "merge: concern ${N} fixes (${CONCERN_BRANCH})"; then
+      # Conflict detected — apply last-write-wins strategy per file
+      git checkout --theirs . && git add -A
+      git commit -m "merge: concern ${N} fixes (conflict resolved via --theirs)"
+      echo "WARNING: Merge conflict for concern ${N} resolved via last-write-wins (--theirs)."
+    fi
+    ```
+
+    Log a warning for every conflict resolved via `--theirs`. After all merges complete, the issue worktree
+    (`WORKTREE_PATH`) has all concern fixes applied.
+
+    If a concern's subagent returned FAILED or produced no commits, do NOT attempt to merge its branch.
+    Instead, apply the fallback strategy for that concern (see step 8).
+
+8. **Fallback for failed concern fix subagents:**
+
+    For each concern whose fix subagent returned FAILED or produced no commits:
+    - Retry the concern ONCE using a sequential fix subagent (same Task tool format as step 4 single-concern
+      path above, running in the ORIGINAL issue worktree `${WORKTREE_PATH}` on the main `${BRANCH}`).
+    - If the sequential retry also fails, escalate to the user via AskUserQuestion:
+      ```
+      AskUserQuestion tool:
+        question: "Concern fix subagent failed twice for concern:
+
+        [concern_N_formatted]
+
+        How should this be handled?"
+        options:
+          - "Skip this concern (add to deferred)"
+          - "Abort review phase"
+      ```
+    - "Skip this concern": move concern N to `DEFERRED_CONCERNS`. If severity is CRITICAL or HIGH, create a
+      tracking issue via `/cat:add-agent` per the severity × patience matrix.
+    - "Abort review phase": STOP and return `status: "CONCERNS_FOUND"`, all unresolved FIX concerns moved to
+      `deferred_concerns`.
+
+9. **Clean up temporary worktrees and branches:**
+
+    After all merges (and fallback handling) complete — whether successful or not — clean up ALL temporary
+    worktrees created for this iteration:
+
+    ```bash
+    cd "${WORKTREE_PATH}"
+    # For each concern N in this iteration:
+    CONCERN_BRANCH="fix-concern-${AUTOFIX_ITERATION}-${N}-${BRANCH}"
+    CONCERN_WORKTREE="${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/${CONCERN_BRANCH}"
+    git worktree remove --force "${CONCERN_WORKTREE}" 2>/dev/null || true
+    git branch -D "${CONCERN_BRANCH}" 2>/dev/null || true
+    ```
+
+    Run cleanup for all N concerns in a single chained Bash call. Cleanup failures are non-fatal (use `|| true`)
+    but should be logged as warnings:
+    `"WARNING: Failed to clean up worktree/branch for concern ${N}: ${CONCERN_BRANCH}"`
+
+    Push the issue branch after all merges and cleanup:
+    ```bash
+    cd "${WORKTREE_PATH}" && git push origin "${BRANCH}"
+    ```
+    Apply the same push retry protocol as other worktree push operations (3 attempts with `git pull --rebase`
+    on non-fast-forward rejection).
+
+10. **Collect all new commits for `ALL_COMMITS_COMPACT` update:**
+
+    After pushing, run:
+    ```bash
+    cd "${WORKTREE_PATH}" && git log --oneline "${TARGET_BRANCH}..HEAD"
+    ```
+    Parse the new commit hashes and append them to `ALL_COMMITS_COMPACT` (format: `hash:type`). The commit type
+    for concern fix merges is `bugfix:` (or the primary implementation type if known).
+
+    Compute `successful_concern_count` = number of concerns for which either the parallel fix subagent returned
+    SUCCESS, or the sequential retry in step 8 succeeded. Compute `total_fix_concerns` = count of concerns in
+    `concerns_formatted` this iteration. Then apply the NOOP_ITERATIONS and PARTIAL_NOOP_ITERATIONS formula:
+    increment `NOOP_ITERATIONS` if `successful_concern_count == 0` (complete planning failure, zero actionable
+    changes), otherwise increment `PARTIAL_NOOP_ITERATIONS` if
+    `successful_concern_count < ceil(total_fix_concerns / 2)`. If `NOOP_ITERATIONS + PARTIAL_NOOP_ITERATIONS >= 2`,
+    STOP the auto-fix loop immediately and report:
+    `"WARNING: ${NOOP_ITERATIONS} full noop(s) and ${PARTIAL_NOOP_ITERATIONS} partial noop(s) in ${AUTOFIX_ITERATION} iterations. Possible planning failure."`
+    Move all remaining FIX-marked concerns to `DEFERRED_CONCERNS` and continue to the Evaluate Remaining Concerns
+    step. Note: alternating noop/trivial iterations do NOT reset either counter — totals are tracked across the
+    entire loop. A single trivial change across many concerns does NOT constitute meaningful progress when CRITICAL
+    concerns remain unaddressed.
+
+11. **Validate fix subagent output (MANDATORY):** After fix subagent(s) return (either the single-concern
+   implementation subagent from step 4, or after step 9 merges all concern branches into the issue branch),
+   verify using commits in the issue worktree (`WORKTREE_PATH`):
+   - For each concern in `concerns_formatted`, check that the commits touch at least one file mentioned
      in that concern's `location` field. Run `git diff --name-only` on each commit hash and confirm overlap with
      the concern's location. If a concern's location file was not touched by any commit, log a warning:
      `"WARNING: Concern '[description]' references [location] but no commit touched that file."` and treat the
      concern as unresolved for this iteration (do NOT count it in `concerns_addressed`).
    - The self-reported `concerns_addressed` count MUST match the number of concerns in `concerns_formatted` that
      had at least one file touched. If the self-reported count exceeds the validated count, use the validated
-     (lower) count and log: `"WARNING: Implementation subagent reported ${reported} concerns addressed but only ${validated} were validated by file changes."`
+     (lower) count and log: `"WARNING: Fix subagent(s) reported ${reported} concerns addressed but only ${validated} were validated by file changes."`
    - **File-touch is necessary but NOT sufficient for CRITICAL/HIGH concerns (MANDATORY):** For CRITICAL and HIGH
      severity concerns, the file-level overlap check above is a necessary pre-condition only. A CRITICAL or HIGH
-     concern is only considered resolved when the re-review in step 7 no longer flags it (same stakeholder +
+     concern is only considered resolved when the re-review in step 13 no longer flags it (same stakeholder +
      location + severity combination absent from the new review result). Until re-review confirms resolution,
      CRITICAL/HIGH concerns remain in the FIX list regardless of file-touch validation results.
-6. **Persistent concern tracking (MANDATORY):** Before re-running stakeholder review, snapshot ALL CRITICAL and HIGH
+12. **Persistent concern tracking (MANDATORY):** Before re-running stakeholder review, snapshot ALL CRITICAL and HIGH
    concerns from `ALL_CONCERNS` into `PRIOR_UNRESOLVED_CONCERNS` — regardless of file-touch validation status.
-   File-touch validation is "necessary but NOT sufficient" for CRITICAL/HIGH (see step 5 above), so passing
-   file-touch does NOT mean the concern is resolved. Only the re-review result (step 7–8) is authoritative for
+   File-touch validation is "necessary but NOT sufficient" for CRITICAL/HIGH (see step 11 above), so passing
+   file-touch does NOT mean the concern is resolved. Only the re-review result (step 13–14) is authoritative for
    resolving CRITICAL/HIGH concerns. A CRITICAL/HIGH concern is removed from `PRIOR_UNRESOLVED_CONCERNS` ONLY
    when the re-review result contains no matching concern (same stakeholder + normalized location — see matching
-   rules in step 8).
+   rules in step 14).
 
-7. Re-run stakeholder review (encode all commits in compact format `hash:type,hash:type`):
+13. Re-run stakeholder review (encode all commits in compact format `hash:type,hash:type`):
    ```
    Skill tool:
      skill: "cat:stakeholder-review-agent"
      args: "${ISSUE_ID} ${WORKTREE_PATH} ${VERIFY} ${ALL_COMMITS_COMPACT}"
    ```
-8. **Merge prior unresolved concerns (MANDATORY):** After parsing the new review result into `ALL_CONCERNS`, merge
+14. **Merge prior unresolved concerns (MANDATORY):** After parsing the new review result into `ALL_CONCERNS`, merge
    `PRIOR_UNRESOLVED_CONCERNS` back: for each concern in `PRIOR_UNRESOLVED_CONCERNS`, check whether a concern with
    the same `stakeholder` + normalized `location` combination exists in the new `ALL_CONCERNS`. If NOT present,
    re-add the prior concern to `ALL_CONCERNS`. This prevents non-deterministic LLM reviewer behavior from silently
    dropping real concerns between review rounds.
 
    **Location shell-game protection (MANDATORY):** When a CRITICAL or HIGH concern from `PRIOR_UNRESOLVED_CONCERNS`
-   is absent from the re-review AND the implementation subagent's commits include any of the following — file
-   renames (`R` entries), new file additions (`A` entries), or deletions of existing files (`D` entries) — the
-   concern is NOT removed from `PRIOR_UNRESOLVED_CONCERNS`. Check via `git diff --name-status` for entries
-   starting with `R`, `A`, or `D`. This covers copy-then-delete patterns (where vulnerable code is copied to a
-   new file and deleted from the original, without appearing as a rename) in addition to direct renames and
+   is absent from the re-review AND the fix subagent commits (as merged into the issue branch) include any of the
+   following — file renames (`R` entries), new file additions (`A` entries), or deletions of existing files (`D`
+   entries) — the concern is NOT removed from `PRIOR_UNRESOLVED_CONCERNS`. Check via `git diff --name-status` for
+   entries starting with `R`, `A`, or `D`. This covers copy-then-delete patterns (where vulnerable code is copied to
+   a new file and deleted from the original, without appearing as a rename) in addition to direct renames and
    additions. If any such entry is detected, log a warning:
    `"WARNING: CRITICAL/HIGH concern '[stakeholder] at [location]' absent from re-review but commits include file renames/additions/deletions — concern may have been relocated or the vulnerable code copied to a new file. Keeping in PRIOR_UNRESOLVED."`
    The concern remains in `PRIOR_UNRESOLVED_CONCERNS` until it either matches a concern in a subsequent re-review
@@ -642,9 +838,9 @@ BEFORE other severities. If any CRITICAL concern is in the FIX list, the subagen
 
    **Trivial-change guard for CRITICAL removal (MANDATORY):** Re-review non-determinism is an acknowledged limitation
    of LLM-based review. As mitigation: when a CRITICAL concern was in `PRIOR_UNRESOLVED_CONCERNS` and is absent from
-   re-review, check the implementation subagent's commits for the concern's file (the file referenced in the
-   concern's `location` field) using `git diff --stat`. If the commits changed fewer than 5 lines in that file, log
-   a warning:
+   re-review, check the fix subagent commits (as merged into the issue branch) for the concern's file (the file
+   referenced in the concern's `location` field) using `git diff --stat`. If the commits changed fewer than 5 lines
+   in that file, log a warning:
    `"WARNING: CRITICAL concern '[stakeholder] at [location]' absent from re-review but only [N] lines changed in [file] — possible non-deterministic drop. Keeping in PRIOR_UNRESOLVED."`
    and keep the concern in `PRIOR_UNRESOLVED_CONCERNS`. Only remove a CRITICAL concern from persistent tracking when
    the fix commits include substantial changes (5+ lines) to the concern's file. This guard does NOT apply to HIGH
@@ -662,8 +858,8 @@ BEFORE other severities. If any CRITICAL concern is in the FIX list, the subagen
    severity floor, use the prior concern's severity but the new concern's other fields (explanation, recommendation,
    etc.).
 
-9. Parse new review result (with merged concerns)
-10. If FIX-marked concerns remain, continue loop (if under iteration limit)
+15. Parse new review result (with merged concerns)
+16. If FIX-marked concerns remain, continue loop (if under iteration limit)
 
 **If FIX-marked concerns persist after 3 iterations:**
 - Any remaining CRITICAL or HIGH concerns move to `DEFERRED_CONCERNS` (NOT to `FIXED_CONCERNS`). Do NOT add them
