@@ -1,7 +1,7 @@
 # State
 
 - **Target Branch:** v2.1
-- **Dependencies:** []
+- **Dependencies:** [2.1-defer-plan-generation-to-work-phase]
 - **Blocks:** []
 
 ## Status
