@@ -51,6 +51,26 @@ try (java.util.stream.Stream<Path> walk = Files.walk(dir))
 
 **Exception:** FQNs are acceptable in Javadoc `{@link}` / `{@code}` tags when the type is not already imported.
 
+**Nested Classes:** Import nested classes directly to reduce verbosity in instanceof checks and other code:
+
+```java
+// Good - import nested class directly
+import io.github.cowwoc.cat.hooks.util.IssueDiscovery.DiscoveryResult.ExistingWorktree;
+
+if (discoveryResult instanceof ExistingWorktree existingWorktree)
+{
+  // ...
+}
+
+// Avoid - long fully-qualified name in code
+if (discoveryResult instanceof IssueDiscovery.DiscoveryResult.ExistingWorktree existingWorktree)
+{
+  // ...
+}
+```
+
+Java allows importing nested classes at any nesting depth, and using direct imports keeps code readable while maintaining clarity about the type origin.
+
 ### Naming
 
 Avoid abbreviations in variable names. Use full, descriptive names:

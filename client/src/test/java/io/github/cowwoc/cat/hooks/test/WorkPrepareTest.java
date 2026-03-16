@@ -883,6 +883,52 @@ public class WorkPrepareTest
   }
 
   /**
+   * Verifies that execute returns READY when the current session already holds the lock and the
+   * worktree directory already exists — resuming work seamlessly instead of returning ERROR.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeReturnsReadyWhenSessionOwnsLockAndWorktreeExists() throws IOException
+  {
+    Path projectDir = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      createIssue(projectDir, "2", "1", "resume-feature", "open");
+      GitCommands.runGit(projectDir, "add", ".");
+      GitCommands.runGit(projectDir, "commit", "-m", "Add issue");
+
+      // First call creates the worktree and acquires the lock
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "2.1-resume-feature", TrustLevel.MEDIUM);
+
+      String json1 = prepare.execute(input);
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node1 = mapper.readTree(json1);
+      requireThat(node1.path("status").asString(), "firstStatus").isEqualTo("READY");
+      worktreePath = Path.of(node1.path("worktree_path").asString());
+
+      // Second call with same session ID — worktree exists, lock is still held by this session
+      // Must return READY (resume), not ERROR
+      String json2 = prepare.execute(input);
+      JsonNode node2 = mapper.readTree(json2);
+
+      requireThat(node2.path("status").asString(), "secondStatus").isEqualTo("READY");
+      requireThat(node2.path("issue_id").asString(), "issueId").isEqualTo("2.1-resume-feature");
+      requireThat(node2.path("worktree_path").asString(), "worktreePath").
+        isEqualTo(worktreePath.toString());
+      requireThat(node2.path("lock_acquired").asBoolean(), "lockAcquired").isTrue();
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectDir, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
    * Verifies that execute detects suspicious commits on the target branch and populates
    * potentially_complete and suspicious_commits fields in the READY result.
    *

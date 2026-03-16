@@ -156,6 +156,84 @@ Multiple Claude instances may run concurrently, each with its own session ID. Th
 - Run `mvn -f client/pom.xml test` to verify all tests pass
   - Files: (build only)
 
+### Wave 2 (Fix: Test Coverage and Design Gaps)
+
+- Add missing test `sessionEndContinuesOnConcurrentDeletion` to `SessionEndHandlerTest.java`:
+  - Simulate a directory that is deleted by another thread/process between the listing step and the
+    `deleteSessionWorkDirectory()` call
+  - Verify the handler returns success (continues) rather than throwing or returning an error result
+  - This exercises the IOException catch block in the concurrent-deletion path
+  - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/SessionEndHandlerTest.java`
+- Add test for partial-deletion failure path in `SessionEndHandlerTest.java`:
+  - Create two stale session directories; make one undeletable (e.g., set permissions so deletion fails)
+  - Verify the handler logs a warning for the failed deletion and still processes the other directory
+  - Verify `deletionFullySucceeded` is `false` when any delete fails, and success is NOT logged
+  - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/SessionEndHandlerTest.java`
+- Add nested directory structure test in `SessionEndHandlerTest.java`:
+  - Create a stale session directory with at least 3 levels of nested subdirectories and files
+  - Verify `Files.walk().sorted(Comparator.reverseOrder())` deletes all contents before removing
+    the root directory (no `DirectoryNotEmptyException`)
+  - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/SessionEndHandlerTest.java`
+- Fix path traversal risk in `SessionEndHandler.java`:
+  - After reading subdirectory names from `.cat/work/sessions/` (line ~77), validate each name
+    against `SESSION_ID_PATTERN` (UUID regex) before using it in `Path.resolve()`
+  - Reject (log and skip) any directory name that does not match the expected session ID format
+  - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/session/SessionEndHandler.java`
+- Fix `isLockOwnedBySession()` to use line-exact match instead of substring match:
+  - Replace `content.contains(sessionId)` with a check that matches the sessionId as a complete
+    line (e.g., split on newlines and compare trimmed tokens, or use a Pattern with `^sessionId$`)
+  - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/session/SessionEndHandler.java`
+- Fix `TestUtils.MAPPER` Jackson convention violation in `TestUtils.java`:
+  - Remove the static `JsonMapper.builder().build()` field
+  - Change `bashInput()` (and any other method using the static field) to accept a `JvmScope`
+    parameter and call `scope.getJsonMapper()` instead
+  - `dummyInput()` already follows this pattern; align `bashInput()` to match
+  - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/TestUtils.java`
+- Run `mvn -f client/pom.xml test` to verify all tests pass after Wave 2 fixes
+  - Files: (build only)
+
+### Wave 3 (Fix: Missing Test Coverage for Post-conditions)
+
+- Add test `sessionEndContinuesOnConcurrentDeletion` to `SessionEndHandlerTest.java`:
+  - Create a stale session directory (no corresponding Claude session directory)
+  - Use a separate thread that deletes the stale directory between when the handler lists it and when
+    `deleteSessionWorkDirectory()` is called (simulate concurrent deletion by a second session)
+  - Invoke the handler and verify it returns a success result (no exception thrown, `continueProcessing` is true)
+  - This directly exercises the `IOException` catch block that silently ignores concurrent-deletion failures
+  - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/SessionEndHandlerTest.java`
+- Add integration test `sessionEndCleansMultipleStaleSessionsLeavingOnlyActive` to `SessionEndHandlerTest.java`:
+  - Create 5 fake session directories under `.cat/work/sessions/` (using temp directories)
+  - Create Claude session directories for only 2 of the 5 sessions (simulating 2 active, 3 stale sessions)
+  - Invoke the handler with the current session set to one of the 2 active sessions
+  - Verify: the 3 stale session directories are deleted; the 2 active session directories remain; handler
+    returns success
+  - This is the E2E verification that `.cat/work/sessions/` retains only active session directories after cleanup
+  - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/SessionEndHandlerTest.java`
+- Run `mvn -f client/pom.xml test` to verify all tests pass after Wave 3 additions
+  - Files: (build only)
+
+### Wave 4 (Fix: Stakeholder Review Concerns)
+
+- Fix `clean()` to use `scope.getClaudeSessionId()` as the canonical source for the current session ID instead of
+  reading it from `input.getSessionId()`:
+  - In `SessionEndHandler.java`, locate the `clean()` method (~line 79) and replace `input.getSessionId()` with
+    `scope.getClaudeSessionId()` to align with the pattern used by all other session-scoped operations in the class
+  - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/session/SessionEndHandler.java`
+- Add test `sessionEndRejectsNonUuidSessionIds()` to `SessionEndHandlerTest.java`:
+  - Create a directory under `.cat/work/sessions/` whose name is NOT a valid UUID (e.g., `../../../etc/passwd`,
+    `not-a-uuid`, or `.`)
+  - Invoke the handler and verify that the non-UUID directory is skipped (not deleted, no exception thrown)
+  - This explicitly validates the security boundary enforced by `SESSION_ID_PATTERN`
+  - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/SessionEndHandlerTest.java`
+- Add test `sessionEndHandlesPermissionErrors()` to `SessionEndHandlerTest.java`:
+  - Create a stale session directory (no corresponding Claude session directory)
+  - Make the directory read-only so that `Files.delete()` will fail with a permission error
+  - Invoke the handler and verify it completes gracefully (returns success, logs a warning, no exception thrown)
+  - This exercises the `IOException` catch block for the non-concurrent-deletion failure path
+  - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/SessionEndHandlerTest.java`
+- Run `mvn -f client/pom.xml test` to verify all tests pass after Wave 4 fixes
+  - Files: (build only)
+
 ## Post-conditions
 
 - [ ] `SessionEndHandlerTest.sessionEndDeletesStaleSessionWorkFiles` passes: when a session directory
