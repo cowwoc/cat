@@ -110,6 +110,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - add-guidance-to-hooks
 - fix-autolearn-java-source-false-positive
 - add-bfg-filename-only-warning
+- fix-oversized-decomposed-parent
 
 
 ## Issues Closed
