@@ -90,7 +90,7 @@ assert_file_contains() {
 
 # Set up config fixture with default trust level
 setup_config_fixture() {
-    echo '{"trust": "medium"}' > "$TEST_TEMP_DIR/.cat/cat-config.json"
+    echo '{"trust": "medium"}' > "$TEST_TEMP_DIR/.cat/config.json"
 }
 
 # Run a script with timeout

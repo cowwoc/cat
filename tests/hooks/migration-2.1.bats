@@ -18,8 +18,8 @@ teardown() {
 }
 
 # ─── Phase 1: Merge In Progress into Pending ─────────────────────────────────
-# NOTE: Phases 1–15 use cat-config.json as the input config filename (the pre-migration state).
-# Phase 16 renames cat-config.json to config.json. All assertions post-Phase 16 verify config.json.
+# NOTE: setup_config_fixture creates config.json (post-migration state).
+# Phase 3 tests that need a pre-migration state create cat-config.json directly.
 
 @test "2.1.sh phase 1: skips when no version STATE.md files exist" {
     setup_config_fixture
@@ -747,20 +747,20 @@ EOF
 # ─── Phase 16: Rename cat-config.json → config.json ──────────────────────────
 
 @test "2.1.sh phase 16: renames cat-config.json to config.json" {
-    setup_config_fixture
+    echo '{"trust": "medium"}' > "$TEST_TEMP_DIR/.cat/cat-config.json"
 
     cd "$TEST_TEMP_DIR"
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
     [ -f ".cat/config.json" ]
     [ ! -f ".cat/cat-config.json" ]
-    # Verify content preservation: config.json contains expected JSON from setup_config_fixture
+    # Verify content preservation: config.json contains expected JSON from pre-migration cat-config.json
     run grep '"trust".*"medium"' ".cat/config.json"
     [ "$status" -eq 0 ]
 }
 
 @test "2.1.sh phase 16: renames cat-config.local.json to config.local.json" {
-    setup_config_fixture
+    echo '{"trust": "medium"}' > "$TEST_TEMP_DIR/.cat/cat-config.json"
     echo '{"displayWidth": 100}' > "$TEST_TEMP_DIR/.cat/cat-config.local.json"
 
     cd "$TEST_TEMP_DIR"
@@ -774,7 +774,7 @@ EOF
 }
 
 @test "2.1.sh phase 16: updates .gitignore cat-config.local.json entry to config.local.json" {
-    setup_config_fixture
+    echo '{"trust": "medium"}' > "$TEST_TEMP_DIR/.cat/cat-config.json"
     printf 'cat-config.local.json\n' > "$TEST_TEMP_DIR/.cat/.gitignore"
 
     cd "$TEST_TEMP_DIR"
@@ -787,7 +787,7 @@ EOF
 }
 
 @test "2.1.sh phase 16: skips rename when config.json already exists" {
-    setup_config_fixture
+    echo '{"trust": "medium"}' > "$TEST_TEMP_DIR/.cat/cat-config.json"
     echo '{"trust": "high"}' > "$TEST_TEMP_DIR/.cat/config.json"
 
     cd "$TEST_TEMP_DIR"
@@ -808,7 +808,7 @@ EOF
 }
 
 @test "2.1.sh phase 16: E2E verify get-config-output effective reads migrated config.json" {
-    setup_config_fixture
+    echo '{"trust": "medium"}' > "$TEST_TEMP_DIR/.cat/cat-config.json"
 
     cd "$TEST_TEMP_DIR"
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"

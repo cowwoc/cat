@@ -1,7 +1,8 @@
 # State
 
-- **Status:** in-progress
-- **Progress:** 0%
+- **Status:** closed
+- **Progress:** 100%
+- **Resolution:** implemented
 - **Dependencies:** []
 - **Blocks:** []
 
@@ -22,3 +23,4 @@
 | Issue | Dependencies |
 |-------|-------------|
 | 2.1-rename-config-tests | 2.1-rename-config-java-core, 2.1-rename-config-plugin-docs |
+- **Target Branch:** v2.1
