@@ -1944,14 +1944,14 @@ public final class WorkPrepare
   {
     try (MainJvmScope scope = new MainJvmScope())
     {
-      run(scope, args, System.out);
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      LoggerFactory.getLogger(WorkPrepare.class).error("Unexpected error", e);
-      try (MainJvmScope errorScope = new MainJvmScope())
+      try
       {
-        System.out.println(new HookOutput(errorScope).block(
+        run(scope, args, System.out);
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        LoggerFactory.getLogger(WorkPrepare.class).error("Unexpected error", e);
+        System.out.println(new HookOutput(scope).block(
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
@@ -1959,8 +1959,6 @@ public final class WorkPrepare
 
   /**
    * Executes the work-prepare logic with a caller-provided output stream.
-   * <p>
-   * Separated from {@link #main(String[])} to allow unit testing without JVM exit.
    *
    * @param scope the JVM scope
    * @param args  command-line arguments
@@ -2050,8 +2048,39 @@ public final class WorkPrepare
     }
     catch (IOException e)
     {
-      out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      // Use business-format JSON (status + message) because the work skill parses this output directly,
+      // not via Claude Code's hook output parser.
+      String message = Objects.toString(e.getMessage(), e.getClass().getSimpleName());
+      try
+      {
+        out.println(toErrorJson(scope, message));
+      }
+      catch (IOException jsonException)
+      {
+        LoggerFactory.getLogger(WorkPrepare.class).error("Failed to serialize error message", jsonException);
+        out.println("{\"status\":\"ERROR\",\"message\":\"serialization failed\"}");
+      }
     }
+  }
+
+  /**
+   * Produces a business-format JSON error string with properly escaped {@code message}.
+   * <p>
+   * Uses {@link JsonMapper#writeValueAsString(Object)} for correct JSON encoding of all control
+   * characters (newlines, tabs, carriage returns) in addition to {@code "} and {@code \}.
+   *
+   * @param scope   the JVM scope providing the shared {@link JsonMapper}
+   * @param message the error message to include in the JSON
+   * @return a JSON string of the form {@code {"status":"ERROR","message":"..."}}
+   * @throws NullPointerException if {@code scope} or {@code message} are null
+   * @throws IOException if JSON serialization fails
+   */
+  public static String toErrorJson(JvmScope scope, String message) throws IOException
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(message, "message").isNotNull();
+    String escapedMessage = scope.getJsonMapper().writeValueAsString(message);
+    return "{\"status\":\"ERROR\",\"message\":" + escapedMessage + "}";
   }
 
   /**

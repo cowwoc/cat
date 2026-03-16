@@ -8,16 +8,14 @@ CAT uses two distinct hook registration systems. See `.cat/rules/hooks.md` for f
 | **Project hooks** | `.claude/settings.json` |
 | **Plugin hooks** | `plugin/hooks/hooks.json` |
 
-## CLI Tool Output Convention
+## Two Categories of CLI Tool Output
 
-CLI tools invoked by skills (via `main()` methods) must:
+CAT has two categories of Java CLI tools, each with a different output contract:
 
-1. Write ALL structured JSON output to `System.out` — including error responses
-2. Exit with code 0 so Claude Code parses stdout as JSON
-3. Use the standard Claude Code hook JSON output format via `HookOutput` utility
+### Hook Handlers (PreToolUse, PostToolUse, etc.)
 
-`System.err` is reserved for non-structured diagnostics (e.g., debug logging, stack traces during development) that are
-not intended for skill consumption.
+Hook handlers are invoked directly by Claude Code's hook execution engine. They must produce
+Claude Code's hook JSON format via `HookOutput`. Claude Code's hook engine parses this format.
 
 **Standard hook JSON output fields:**
 - `decision` (string) — e.g., `"block"` to indicate a blocked operation
@@ -28,10 +26,9 @@ not intended for skill consumption.
 - `systemMessage` (string) — message for the system context
 
 **Why:** Skills parse JSON from stdout. Exit code 0 tells Claude Code to parse stdout as JSON. Non-zero exit codes
-cause stderr to be fed to Claude as plain text, losing the structured error. Custom JSON formats like
-`{"status":"ERROR","message":"..."}` are not recognized by Claude Code's hook output parsing.
+cause stderr to be fed to Claude as plain text, losing the structured error.
 
-**Pattern for expected errors (IOException, IllegalArgumentException):**
+**Pattern for expected errors (IOException, IllegalArgumentException) in hook handlers:**
 ```java
 // Good — use HookOutput, write to stdout, exit 0
 catch (IOException e)
@@ -53,6 +50,27 @@ catch (IOException e)
 }
 ```
 
+### Skill CLI Tools (invoked by skills via `main()`)
+
+Skill CLI tools are invoked by skill scripts (e.g., `work-prepare-output`). Their output is parsed
+by the **skill itself**, not by Claude Code's hook engine. These tools may use a business-format JSON
+schema (e.g., `{"status":"...", "message":"..."}`) that the skill Markdown defines and parses.
+
+`{"status":"ERROR","message":"..."}` is correct for skill CLI tools — the skill parser reads `status`
+and `message` fields directly. `HookOutput.block()` would produce `{"decision":"block",...}` which
+skill parsers do not recognize.
+
+**Pattern for expected errors (IOException) in skill CLI tools:**
+```java
+catch (IOException e)
+{
+  // Use business-format JSON (status + message) because the skill parses this output directly,
+  // not via Claude Code's hook output parser.
+  String message = Objects.toString(e.getMessage(), e.getClass().getSimpleName());
+  out.println(WorkPrepare.toErrorJson(scope, message));
+}
+```
+
 **Pattern for unexpected errors (RuntimeException | AssertionError) in `main()`:**
 
 Unexpected errors in `main()` must be caught, logged, and converted to a `HookOutput.block()` response on stdout.
@@ -63,15 +81,15 @@ public static void main(String[] args)
 {
   try (MainJvmScope scope = new MainJvmScope())
   {
-    run(scope, args, System.out);
-  }
-  catch (RuntimeException | AssertionError e)
-  {
-    Logger log = LoggerFactory.getLogger(ClassName.class);
-    log.error("Unexpected error", e);
-    try (MainJvmScope errorScope = new MainJvmScope())
+    try
     {
-      System.out.println(new HookOutput(errorScope).block(
+      run(scope, args, System.out);
+    }
+    catch (RuntimeException | AssertionError e)
+    {
+      Logger log = LoggerFactory.getLogger(ClassName.class);
+      log.error("Unexpected error", e);
+      System.out.println(new HookOutput(scope).block(
         Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
