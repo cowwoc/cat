@@ -125,8 +125,8 @@ public final class SkillDiscovery
   /**
    * Formats the skill listing for injection into subagent context.
    * <p>
-   * Uses the Skill tool as the primary invocation mechanism (subagents have access to the Skill tool)
-   * and includes behavioral instructions so subagents know when to invoke skills, not just how.
+   * Returns only the dynamic skill list. Behavioral instructions about when and how to invoke skills
+   * are provided separately via {@code plugin/rules/subagent-skill-instructions.md}.
    *
    * @param scope the JVM scope providing environment paths and configuration
    * @return the formatted skill listing, or an empty string if no skills are found
@@ -138,21 +138,8 @@ public final class SkillDiscovery
     List<SkillEntry> entries = new SkillDiscovery(scope).discoverAll();
     if (entries.isEmpty())
       return "";
-    StringBuilder sb = new StringBuilder(1024);
-    sb.append("""
-      ## Skill Instructions
-
-      You have access to skills via the Skill tool. Before performing any action, check if a skill \
-      below matches what you are about to do. If it matches, this is a BLOCKING REQUIREMENT: invoke \
-      the Skill tool BEFORE performing that action.
-
-      **How to invoke:** Use the Skill tool with the skill name (e.g., `skill: "cat:git-commit"`).
-
-      NEVER perform an action that a skill covers without invoking the skill first. NEVER mention a \
-      skill without actually calling the Skill tool.
-
-      **Available skills:**
-      """);
+    StringBuilder sb = new StringBuilder(512);
+    sb.append("**Available skills:**\n");
     appendSkillEntries(sb, entries);
     return sb.toString();
   }

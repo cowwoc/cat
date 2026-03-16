@@ -179,8 +179,7 @@ public final class SubagentStartHookTest
 
         requireThat(result.output(), "output").contains("hookSpecificOutput");
         requireThat(result.output(), "output").contains("SubagentStart");
-        requireThat(result.output(), "output").contains("Skill Instructions");
-        requireThat(result.output(), "output").contains("Skill tool");
+        requireThat(result.output(), "output").contains("Available skills");
         requireThat(result.output(), "output").contains("my-test-skill");
         requireThat(result.output(), "output").contains("A test skill for unit testing.");
         requireThat(result.warnings(), "warnings").isEmpty();
@@ -191,6 +190,39 @@ public final class SubagentStartHookTest
       TestUtils.deleteDirectoryRecursively(configDir);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
+  }
+
+  /**
+   * Verifies that plugin/rules/skill-invocation-args.md contains catAgentId argument guidance so
+   * agents know to pass the injected catAgentId as the first argument when invoking skills.
+   * <p>
+   * This prevents agents from passing branch names, skill names, or other wrong values as the
+   * first argument to skills that require a catAgentId.
+   */
+  @Test
+  public void skillInvocationArgsRuleContainsCatAgentIdGuidance() throws IOException
+  {
+    // Find workspace root (contains plugin/ and client/ directories)
+    Path current = Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize();
+    Path workspaceRoot = null;
+    while (current != null)
+    {
+      if (Files.exists(current.resolve("plugin")) && Files.exists(current.resolve("client")))
+      {
+        workspaceRoot = current;
+        break;
+      }
+      current = current.getParent();
+    }
+    requireThat(workspaceRoot, "workspaceRoot").isNotNull();
+
+    Path rulesFile = workspaceRoot.resolve("plugin/rules/skill-invocation-args.md");
+    requireThat(Files.exists(rulesFile), "rulesFileExists").isTrue();
+
+    String content = Files.readString(rulesFile);
+    requireThat(content, "content").contains("args");
+    requireThat(content, "content").contains("catAgentId");
+    requireThat(content, "content").contains("first argument");
   }
 
   /**
@@ -219,7 +251,7 @@ public final class SubagentStartHookTest
         String hookEventName = hookOutput.get("hookEventName").asString();
         requireThat(hookEventName, "hookEventName").isEqualTo("SubagentStart");
         String additionalContext = hookOutput.get("additionalContext").asString();
-        requireThat(additionalContext, "additionalContext").contains("Skill Instructions");
+        requireThat(additionalContext, "additionalContext").contains("Available skills");
       }
     }
     finally
@@ -332,6 +364,66 @@ public final class SubagentStartHookTest
       TestUtils.deleteDirectoryRecursively(configDir);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
+  }
+
+  /**
+   * Verifies that SkillDiscovery.getSubagentSkillListing returns only the skill list without
+   * behavioral preamble text. Behavioral instructions are in plugin/rules/subagent-skill-instructions.md.
+   */
+  @Test
+  public void getSubagentSkillListingReturnsOnlySkillListNoBehavioralPreamble() throws IOException
+  {
+    Path configDir = Files.createTempDirectory("cat-test-subagent-config-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try
+    {
+      setupFakePlugin(configDir, "sub", "sub-test-skill", "A subagent test skill.", true);
+      try (JvmScope scope = new TestJvmScope(configDir, pluginRoot))
+      {
+        String listing = SkillDiscovery.getSubagentSkillListing(scope);
+        requireThat(listing, "listing").contains("**Available skills:**");
+        requireThat(listing, "listing").contains("sub:sub-test-skill");
+        requireThat(listing, "listing").contains("A subagent test skill.");
+        requireThat(listing, "listing").doesNotContain("BLOCKING REQUIREMENT");
+        requireThat(listing, "listing").doesNotContain("NEVER mention a skill");
+        requireThat(listing, "listing").doesNotContain("How to invoke");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(configDir);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that plugin/rules/subagent-skill-instructions.md exists and contains the behavioral
+   * instructions for subagents about when and how to invoke skills.
+   */
+  @Test
+  public void subagentSkillInstructionsRuleContainsBehavioralGuidance() throws IOException
+  {
+    // Find workspace root (contains plugin/ and client/ directories)
+    Path current = Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize();
+    Path workspaceRoot = null;
+    while (current != null)
+    {
+      if (Files.exists(current.resolve("plugin")) && Files.exists(current.resolve("client")))
+      {
+        workspaceRoot = current;
+        break;
+      }
+      current = current.getParent();
+    }
+    requireThat(workspaceRoot, "workspaceRoot").isNotNull();
+
+    Path rulesFile = workspaceRoot.resolve("plugin/rules/subagent-skill-instructions.md");
+    requireThat(Files.exists(rulesFile), "rulesFileExists").isTrue();
+
+    String content = Files.readString(rulesFile);
+    requireThat(content, "content").contains("BLOCKING REQUIREMENT");
+    requireThat(content, "content").contains("NEVER mention a skill");
+    requireThat(content, "content").contains("Skill tool");
   }
 
   // ---- getCatRules behavior: blank vs populated subagent_type ----

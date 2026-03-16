@@ -62,6 +62,13 @@ To be determined during investigation — likely skill instruction files and/or 
 - Identify root cause: where agents get the wrong value from
 - Update skill instructions or session hook to fix the pattern
 
+### Wave 2
+- Add an integration test in `GetSkillTest` (or a new `SkillInvocationE2ETest`) that constructs a
+  `GetSkill` call with a valid UUID catAgentId (matching the format injected by SubagentStartHook) and a
+  skill name of `cat:stakeholder-review-agent`, and asserts the call succeeds without throwing
+  `IllegalArgumentException` — confirming that the args-guidance fix produces a valid invocation path
+  end-to-end without requiring plugin-cache deployment
+
 ## Post-conditions
 
 - [ ] All affected skill invocations receive valid UUID catAgentId
