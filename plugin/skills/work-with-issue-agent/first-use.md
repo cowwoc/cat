@@ -193,9 +193,8 @@ Return the final status to the `/cat:work` skill:
 If any phase fails:
 
 1. Capture error message and phase name
-2. Restore working directory: `cd "${CLAUDE_PROJECT_DIR}"`
-3. Attempt lock release: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${ISSUE_ID}" "$CLAUDE_SESSION_ID"`
-4. Return FAILED status with actual error details
+2. Attempt lock release: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${ISSUE_ID}" "$CLAUDE_SESSION_ID"`
+3. Return FAILED status with actual error details
 
 ```json
 {

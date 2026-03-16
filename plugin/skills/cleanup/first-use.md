@@ -199,12 +199,6 @@ If uncommitted:
   4. Skip this worktree
 ```
 
-**After inspecting each worktree, return to the main workspace before proceeding:**
-
-```bash
-cd /workspace
-```
-
 **BLOCKING: Do NOT proceed with removal until user confirms action for each worktree with uncommitted work.**
 
 ---
