@@ -579,25 +579,7 @@ public final class GitRebase
    */
   private static void deleteDirectoryRecursively(Path directory) throws IOException
   {
-    Files.walkFileTree(directory, new java.nio.file.SimpleFileVisitor<>()
-    {
-      @Override
-      public java.nio.file.FileVisitResult visitFile(Path file,
-        java.nio.file.attribute.BasicFileAttributes attrs) throws IOException
-      {
-        Files.delete(file);
-        return java.nio.file.FileVisitResult.CONTINUE;
-      }
-
-      @Override
-      public java.nio.file.FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException
-      {
-        if (exc != null)
-          throw exc;
-        Files.delete(dir);
-        return java.nio.file.FileVisitResult.CONTINUE;
-      }
-    });
+    FileUtils.deleteDirectoryRecursively(directory);
   }
 
   /**

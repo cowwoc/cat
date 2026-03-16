@@ -8,8 +8,8 @@ package io.github.cowwoc.cat.hooks.session;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.util.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,10 +17,9 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 /**
  * Cleans up stale session work directories at session end.
@@ -64,21 +63,15 @@ public final class SessionEndHandler
    * <p>
    * A session directory is stale if its corresponding Claude session directory no longer exists.
    * The current session's directory (identified by {@code scope.getClaudeSessionId()}) is always skipped.
-   *
-   * @param input the hook input
-   * @throws NullPointerException if {@code input} is null
    */
-  public void clean(HookInput input)
+  public void clean()
   {
-    requireThat(input, "input").isNotNull();
-
     Path sessionsDir = scope.getCatWorkPath().resolve("sessions");
     if (Files.notExists(sessionsDir))
       return;
 
     String currentSessionId = scope.getClaudeSessionId();
-    String encodedProjectDir = scope.getEncodedProjectDir();
-    Path claudeProjectsDir = scope.getClaudeConfigDir().resolve("projects").resolve(encodedProjectDir);
+    Path claudeProjectsDir = scope.getClaudeSessionPath().getParent();
 
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(sessionsDir))
     {
@@ -119,31 +112,14 @@ public final class SessionEndHandler
    */
   private void deleteSessionWorkDirectory(Path sessionWorkDir)
   {
-    try (Stream<Path> walk = Files.walk(sessionWorkDir))
+    List<IOException> failures = new ArrayList<>();
+    FileUtils.deleteDirectoryRecursively(sessionWorkDir, failures);
+    if (failures.isEmpty())
+      LOG.debug("Deleted stale session work directory: {}", sessionWorkDir);
+    else
     {
-      // Collect and sort deepest paths first so files are deleted before their parent directories
-      List<Path> paths = walk.sorted(Comparator.reverseOrder()).toList();
-      boolean deletionFullySucceeded = true;
-      for (Path path : paths)
-      {
-        try
-        {
-          Files.delete(path);
-        }
-        catch (IOException e)
-        {
-          deletionFullySucceeded = false;
-          LOG.debug("Could not delete {}: {}", path, e.getMessage());
-        }
-      }
-      // Only log success when all individual deletions completed without error
-      if (deletionFullySucceeded)
-        LOG.debug("Deleted stale session work directory: {}", sessionWorkDir);
-    }
-    catch (IOException e)
-    {
-      // Concurrent deletion or permission error — log and continue
-      LOG.debug("Could not walk or delete {}: {}", sessionWorkDir, e.getMessage());
+      for (IOException failure : failures)
+        LOG.debug("Could not delete in {}: {}", sessionWorkDir, failure.getMessage());
     }
   }
 }

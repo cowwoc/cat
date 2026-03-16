@@ -76,7 +76,7 @@ public final class SessionEndHook implements HookHandler
   {
     requireThat(input, "input").isNotNull();
     requireThat(output, "output").isNotNull();
-    return runWithProjectDir(input, output, scope.getClaudeProjectDir());
+    return runWithProjectDir(input, output, scope.getProjectPath());
   }
 
   /**
@@ -114,7 +114,7 @@ public final class SessionEndHook implements HookHandler
 
       cleanStaleLocks(messages);
 
-      new SessionEndHandler(scope).clean(input);
+      new SessionEndHandler(scope).clean();
 
       return new HookResult(output.empty(), messages);
     }
