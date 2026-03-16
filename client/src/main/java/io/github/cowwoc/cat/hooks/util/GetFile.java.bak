@@ -126,6 +126,12 @@ public final class GetFile implements SkillOutput
    */
   public static void main(String[] args)
   {
+    if (args.length < 2)
+    {
+      System.err.println("Usage: get-file <catAgentId> <file-path>");
+      System.exit(1);
+    }
+
     try (JvmScope scope = new MainJvmScope())
     {
       GetFile getFile = new GetFile(scope);
@@ -134,12 +140,8 @@ public final class GetFile implements SkillOutput
     }
     catch (IOException e)
     {
-      Logger log = LoggerFactory.getLogger(GetFile.class);
-      log.error("Error reading file", e);
-      try (MainJvmScope errorScope = new MainJvmScope())
-      {
-        System.out.println(new HookOutput(errorScope).block(e.getMessage()));
-      }
+      System.err.println("Error reading file: " + e.getMessage());
+      System.exit(1);
     }
     catch (RuntimeException | AssertionError e)
     {
