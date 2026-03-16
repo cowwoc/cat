@@ -114,6 +114,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - unify-giving-up-detection
 - fix-work-implement-agent-state-section-guidance
 - strengthen-squash-comment-verification
+- fix-agent-skill-directory-placement
 
 
 ## Issues Closed
