@@ -115,6 +115,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-work-implement-agent-state-section-guidance
 - strengthen-squash-comment-verification
 - fix-agent-skill-directory-placement
+- defer-plan-generation-to-work-phase
 
 
 ## Issues Closed
