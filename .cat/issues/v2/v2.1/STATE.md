@@ -117,6 +117,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-agent-skill-directory-placement
 - defer-plan-generation-to-work-phase
 - fix-session-end-jvmscope-methods
+- parallelize-review-concern-fixing
 
 
 ## Issues Closed
