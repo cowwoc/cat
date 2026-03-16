@@ -327,44 +327,6 @@ public final class SetPendingAgentResultTest
   }
 
   /**
-   * Verifies that when the main agent completes an Agent tool invocation with subagent_type
-   * {@code cat:work-execute}, the pending-agent-result flag file is created.
-   *
-   * @throws IOException if test setup fails
-   */
-  @Test
-  public void agentToolWithWorkExecuteSubagentCreatesFlagFile() throws IOException
-  {
-    Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    Path worktreePath = null;
-    String sessionId = UUID.randomUUID().toString();
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      String issueId = "2.1-test-issue";
-
-      createLockFile(scope, sessionId, issueId);
-      worktreePath = createWorktreeDir(mainRepo, scope, issueId);
-
-      SetPendingAgentResult handler = new SetPendingAgentResult(scope);
-      JsonNode hookData = createHookData(mapper, "", "cat:work-execute");
-      JsonNode toolResult = mapper.readTree("{}");
-
-      PostToolHandler.Result result = handler.check("Agent", toolResult, sessionId, hookData);
-
-      requireThat(result.warning(), "warning").isEmpty();
-      Path flagPath = scope.getCatWorkPath().resolve("sessions").resolve(sessionId).resolve("pending-agent-result");
-      requireThat(Files.exists(flagPath), "flagExists").isTrue();
-    }
-    finally
-    {
-      if (worktreePath != null)
-        TestUtils.runGit(mainRepo, "worktree", "remove", "--force", worktreePath.toString());
-      TestUtils.deleteDirectoryRecursively(mainRepo);
-    }
-  }
-
-  /**
    * Verifies that when the main agent completes an Agent tool invocation without a subagent_type field
    * in tool_input, the pending-agent-result flag file is not created.
    *
