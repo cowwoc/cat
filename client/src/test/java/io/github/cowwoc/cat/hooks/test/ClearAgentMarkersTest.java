@@ -187,7 +187,7 @@ public class ClearAgentMarkersTest
     try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       String sessionId = "test-session-" + System.nanoTime();
-      Path sessionDir = scope.getClaudeSessionsPath().resolve(sessionId);
+      Path sessionDir = scope.getCatWorkPath().resolve("sessions").resolve(sessionId);
       Files.createDirectories(sessionDir);
       // No loaded/ directory exists
 
@@ -218,7 +218,7 @@ public class ClearAgentMarkersTest
     {
       String sessionId = "test-session-" + System.nanoTime();
       String agentId = "agent-" + System.nanoTime();
-      Path agentDir = scope.getClaudeSessionsPath().resolve(sessionId).
+      Path agentDir = scope.getCatWorkPath().resolve("sessions").resolve(sessionId).
         resolve(GetSkill.SUBAGENTS_DIR).resolve(agentId);
       Files.createDirectories(agentDir);
       // No loaded/ directory exists in agent dir
@@ -248,7 +248,7 @@ public class ClearAgentMarkersTest
     try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       String sessionId = "test-session-" + System.nanoTime();
-      Path sessionDir = scope.getClaudeSessionsPath().resolve(sessionId);
+      Path sessionDir = scope.getCatWorkPath().resolve("sessions").resolve(sessionId);
       Path loadedDir = sessionDir.resolve(GetSkill.LOADED_DIR);
       Files.createDirectories(loadedDir);
       Files.writeString(loadedDir.resolve("cat%3Awork"), "", StandardCharsets.UTF_8);
@@ -281,12 +281,81 @@ public class ClearAgentMarkersTest
     {
       String sessionId = "test-session-" + System.nanoTime();
       String agentId = "agent456";
-      Path agentDir = scope.getClaudeSessionsPath().resolve(sessionId).
+      Path agentDir = scope.getCatWorkPath().resolve("sessions").resolve(sessionId).
         resolve(GetSkill.SUBAGENTS_DIR).resolve(agentId);
       Path loadedDir = agentDir.resolve(GetSkill.LOADED_DIR);
       Files.createDirectories(loadedDir);
       Files.writeString(loadedDir.resolve("cat%3Awork"), "", StandardCharsets.UTF_8);
       Files.writeString(loadedDir.resolve("%2Fsome%2Ffile.md"), "", StandardCharsets.UTF_8);
+
+      ClearAgentMarkers clearer = new ClearAgentMarkers(scope);
+      String warning = clearer.clearSubagentMarker(sessionId, agentId);
+
+      requireThat(warning, "warning").isEmpty();
+      requireThat(Files.exists(loadedDir), "loadedDirExists").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that clearMainAgentMarker operates on {@code {catSessionPath}/loaded/},
+   * not under {@code {sessionBasePath}/{sessionId}/loaded/}.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void clearMainAgentMarkerDeletesLoadedDirectoryUnderCatSessionPath() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    {
+      String sessionId = "test-session-" + System.nanoTime();
+      // Place markers under the NEW path: {catWorkPath}/sessions/{sessionId}/loaded/
+      Path catSessionPath = scope.getCatWorkPath().resolve("sessions").resolve(sessionId);
+      Path loadedDir = catSessionPath.resolve(GetSkill.LOADED_DIR);
+      Files.createDirectories(loadedDir);
+      Files.writeString(loadedDir.resolve("cat%3Awork"), "", StandardCharsets.UTF_8);
+
+      ClearAgentMarkers clearer = new ClearAgentMarkers(scope);
+      String warning = clearer.clearMainAgentMarker(sessionId);
+
+      requireThat(warning, "warning").isEmpty();
+      requireThat(Files.exists(loadedDir), "loadedDirExists").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that clearSubagentMarker operates on
+   * {@code {catSessionPath}/subagents/{agentId}/loaded/}, not under
+   * {@code {sessionBasePath}/{sessionId}/subagents/{agentId}/loaded/}.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void clearSubagentMarkerDeletesLoadedDirectoryUnderCatSessionPath() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    {
+      String sessionId = "test-session-" + System.nanoTime();
+      String agentId = "agent789";
+      // Place markers under the NEW path: {catWorkPath}/sessions/{sessionId}/subagents/{agentId}/loaded/
+      Path catSessionPath = scope.getCatWorkPath().resolve("sessions").resolve(sessionId);
+      Path agentSubdir = catSessionPath.resolve(GetSkill.SUBAGENTS_DIR).resolve(agentId);
+      Path loadedDir = agentSubdir.resolve(GetSkill.LOADED_DIR);
+      Files.createDirectories(loadedDir);
+      Files.writeString(loadedDir.resolve("cat%3Awork"), "", StandardCharsets.UTF_8);
 
       ClearAgentMarkers clearer = new ClearAgentMarkers(scope);
       String warning = clearer.clearSubagentMarker(sessionId, agentId);

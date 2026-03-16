@@ -24,8 +24,8 @@ import java.util.List;
  * The {@code loaded/} directory tracks which skills and files have been loaded by each agent.
  * Deleting the directory forces a fresh load on the next invocation. Marker paths:
  * <ul>
- *   <li>Main agent: {@code {sessionBasePath}/{sessionId}/loaded/}</li>
- *   <li>Subagent: {@code {sessionBasePath}/{sessionId}/subagents/{agentId}/loaded/}</li>
+ *   <li>Main agent: {@code {catSessionPath}/loaded/}</li>
+ *   <li>Subagent: {@code {catSessionPath}/subagents/{agentId}/loaded/}</li>
  * </ul>
  * <p>
  * Called by {@code SessionStartHook} for the main agent (on session startup and after context
@@ -61,7 +61,7 @@ public final class ClearAgentMarkers
   public String clearMainAgentMarker(String sessionId)
   {
     requireThat(sessionId, "sessionId").isNotBlank();
-    Path baseDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize();
+    Path baseDir = scope.getCatWorkPath().resolve("sessions").toAbsolutePath().normalize();
     Path sessionDir = GetSkill.resolveAndValidateContainment(baseDir, sessionId, "sessionId");
     if (!Files.isDirectory(sessionDir))
       return "";
@@ -81,7 +81,7 @@ public final class ClearAgentMarkers
   {
     requireThat(sessionId, "sessionId").isNotBlank();
     requireThat(agentId, "agentId").isNotBlank();
-    Path baseDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize();
+    Path baseDir = scope.getCatWorkPath().resolve("sessions").toAbsolutePath().normalize();
     String subagentPath = sessionId + "/" + GetSkill.SUBAGENTS_DIR + "/" + agentId;
     Path agentDir = GetSkill.resolveAndValidateContainment(baseDir, subagentPath,
       "sessionId or agentId");

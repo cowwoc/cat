@@ -111,7 +111,7 @@ public class SessionStartHookTest
     try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       String sessionId = "test-session-" + System.nanoTime();
-      Path sessionDir = scope.getClaudeSessionsPath().resolve(sessionId);
+      Path sessionDir = scope.getCatWorkPath().resolve("sessions").resolve(sessionId);
       Path loadedDir = sessionDir.resolve(GetSkill.LOADED_DIR);
       Files.createDirectories(loadedDir);
       Files.writeString(loadedDir.resolve("cat%3Awork"), "");
@@ -138,7 +138,8 @@ public class SessionStartHookTest
     try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       String sessionId = "test-session-" + System.nanoTime();
-      Path markerDir = scope.getClaudeSessionsPath().resolve(sessionId + "/subagents/agent-1");
+      Path markerDir = scope.getCatWorkPath().resolve("sessions").resolve(sessionId).
+        resolve(GetSkill.SUBAGENTS_DIR).resolve("agent-1");
       Path loadedDir = markerDir.resolve(GetSkill.LOADED_DIR);
       Files.createDirectories(loadedDir);
       Files.writeString(loadedDir.resolve("cat%3Awork"), "");

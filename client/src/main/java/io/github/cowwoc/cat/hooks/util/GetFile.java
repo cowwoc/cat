@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
  * message directing the model to reuse the earlier Read result.
  * <p>
  * <b>Agent tracking:</b> Marker files are stored under
- * {@code {sessionBasePath}/{catAgentId}/loaded/} using the URL-encoded file path as the marker
+ * {@code {catWorkPath}/sessions/{catAgentId}/loaded/} using the URL-encoded file path as the marker
  * filename. Main agents use the session ID as their agent path; subagents use
  * {@code {sessionId}/subagents/{agentId}}.
  * <p>
@@ -90,7 +90,7 @@ public final class GetFile implements SkillOutput
     String fileName = path.getFileName().toString();
 
     // Resolve per-agent marker directory using catAgentId
-    Path baseDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize();
+    Path baseDir = scope.getCatWorkPath().resolve("sessions").toAbsolutePath().normalize();
     Path agentDir = GetSkill.resolveAndValidateContainment(baseDir, catAgentId, "catAgentId");
 
     // Marker file: URL-encoded path to avoid collisions between different file paths

@@ -75,7 +75,7 @@ public final class PostToolUseFailureHook implements HookHandler
 
     String sessionId = input.getSessionId();
     // Create handlers using sessionId from HookInput
-    Path sessionDirectory = scope.getClaudeSessionsPath().resolve(sessionId);
+    Path sessionDirectory = scope.getCatSessionPath();
     List<PostToolHandler> handlers = List.of(
       new DetectRepeatedFailures(Clock.systemUTC(), sessionDirectory),
       new DetectPreprocessorFailure());
