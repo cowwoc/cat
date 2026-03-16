@@ -9,8 +9,8 @@ and test-related text from the hook's own pattern definitions and Javadoc. These
 filterJsonContent() unfiltered and match AutoLearnMistakes Patterns 1, 2, and 3, producing spurious
 mistake detections that interrupt workflow and pollute the mistake record.
 
-This is the **third recurrence** of M461/M466 (insufficient output filtering in AutoLearnMistakes).
-Previous recurrences: M461, M466. Current: M555.
+This is the **fourth recurrence** of M461/M466/M555 (insufficient output filtering in AutoLearnMistakes).
+Previous recurrences: M461, M466, M555. Current: M563.
 
 ## Parent Requirements
 
@@ -19,17 +19,22 @@ None
 ## Reproduction Code
 
 ```bash
-# Read a hook source file containing pattern keywords in string literals
+# Trigger 1: Read a hook source file containing pattern keywords in string literals
 sed -n '65,90p' client/src/main/java/io/github/cowwoc/cat/hooks/tool/post/DetectAssistantGivingUp.java
 # → stdout contains "PROTOCOL VIOLATION" from hook's Javadoc/string literals
 # → AutoLearnMistakes Pattern 3 fires: false positive protocol_violation
+
+# Trigger 2: Run git diff that includes deleted file content containing pattern keywords
+git diff v2.1..HEAD
+# → stdout includes deleted PLAN.md content containing "violation types"
+# → AutoLearnMistakes Pattern 3 fires: false positive protocol_violation (M563)
 ```
 
 ## Expected vs Actual
 
-- **Expected:** Reading Java source files via Bash does not trigger AutoLearnMistakes patterns
-- **Actual:** AutoLearnMistakes Pattern 3 (`PROTOCOL_VIOLATION|VIOLATION`) fires when stdout contains
-  `'VIOLATION'` from Java source code string literals (not from actual agent protocol violations)
+- **Expected:** Reading Java source files or git diffs via Bash does not trigger AutoLearnMistakes patterns
+- **Actual:** AutoLearnMistakes Pattern 3 (`PROTOCOL VIOLATION|VIOLATION`) fires when stdout contains
+  `'VIOLATION'` from Java source code string literals or from deleted file content in git diffs
 
 ## Root Cause
 
@@ -51,18 +56,19 @@ non-agent-action content types (JSON, Java source, Maven output metadata), not j
 ## Files to Modify
 
 - `client/src/main/java/io/github/cowwoc/cat/hooks/tool/post/AutoLearnMistakes.java` — extend
-  `filterJsonContent()` to detect and strip Java source code lines using Java-specific syntax patterns:
-  - Lines matching `^\s*(return Result\.|Pattern\.compile\(|if \(|public final class|private static final|\* @param|/\*\*|\*/\s*$|\s*\*\s)`
-  - Lines matching standard Java code structure that cannot appear in Maven output or agent text
+  `filterJsonContent()` to detect and strip lines that are not agent-generated output:
+  - Java source code lines: `^\s*(return Result\.|Pattern\.compile\(|if \(|public final class|private static final|\* @param|/\*\*|\*/\s*$|\s*\*\s)`
+  - Git diff lines: lines starting with `+`, `-`, or `@@` (diff hunks and changed content)
 - `client/src/test/java/io/github/cowwoc/cat/hooks/test/` (AutoLearnMistakesTest or new test file) —
   add test cases per the TDD-first acceptance criteria
 
 ## Test Cases
 
-Per M555 learn task acceptance criteria (TDD order: write failing tests first):
+Per M555/M563 learn task acceptance criteria (TDD order: write failing tests first):
 - [ ] `Pattern 3 (protocol_violation) does NOT trigger when stdout contains DetectAssistantGivingUp.java source`
 - [ ] `Pattern 1 (build_failure) does NOT trigger when stdout contains AutoLearnMistakes.java 'BUILD FAILURE' string literal`
 - [ ] `Pattern 2 (test_failure) does NOT trigger when stdout contains hook source with 'test failures' in Javadoc`
+- [ ] `Pattern 3 (protocol_violation) does NOT trigger when stdout is a git diff containing deleted PLAN.md with 'violation types'`
 - [ ] `Real Maven BUILD FAILURE output still triggers Pattern 1` (true positive preserved)
 - [ ] `Real protocol violations from non-Java-source output still trigger Pattern 3` (true positive preserved)
 - [ ] `No regression in other AutoLearnMistakes patterns`
@@ -98,10 +104,13 @@ Per M555 learn task acceptance criteria (TDD order: write failing tests first):
 ## Post-conditions
 
 - [ ] `filterJsonContent()` strips lines matching Java source code syntax patterns
+- [ ] `filterJsonContent()` strips git diff lines (starting with `+`, `-`, or `@@`)
 - [ ] Pattern 3 does NOT trigger when Bash reads DetectAssistantGivingUp.java or similar hook source files
+- [ ] Pattern 3 does NOT trigger when Bash runs git diff containing deleted PLAN.md with 'violation types'
 - [ ] Pattern 1 does NOT trigger when Bash reads AutoLearnMistakes.java containing 'BUILD FAILURE' in string literals
 - [ ] Real Maven `BUILD FAILURE` output still triggers Pattern 1 (true positive preserved)
 - [ ] Real protocol violations from non-Java-source output still trigger Pattern 3 (true positive preserved)
 - [ ] Tests in AutoLearnMistakesTest (or equivalent) cover all false-positive and true-positive cases
 - [ ] No regression in other AutoLearnMistakes patterns
 - [ ] E2E: Run the exact reproduction step (read DetectAssistantGivingUp.java via sed) — confirm no protocol_violation hook fires
+- [ ] E2E: Run git diff containing deleted PLAN.md with 'violation' keyword — confirm no protocol_violation hook fires

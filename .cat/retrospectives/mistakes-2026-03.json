@@ -2690,6 +2690,43 @@
           "first-use.md includes bash command to pre-check for files sharing the same name before using --delete-files"
         ]
       }
+    },
+    {
+      "id": "M563",
+      "timestamp": "2026-03-16T01:44:12Z",
+      "category": "detection_gap",
+      "type": "false_positive",
+      "description": "AutoLearnMistakes false-positive (fourth recurrence of M461/M466/M555): git diff output containing deleted PLAN.md content matched Pattern 3 (PROTOCOL VIOLATION|VIOLATION) because filterJsonContent() does not filter git diff lines (lines starting with -). The deleted unify-giving-up-detection/PLAN.md contained the phrase \"4 violation types\" which triggered a spurious protocol_violation detection during stakeholder review diff gathering.",
+      "root_cause": "FILTER GAP (fourth recurrence of M461 root cause): AutoLearnMistakes.filterJsonContent() only strips JSON-structured lines. It does not strip git diff lines (lines starting with +, -, or @@). When a git diff includes deleted file content (lines starting with -), keyword-matching patterns in that content can match AutoLearnMistakes detection patterns even though no actual mistake occurred. Specifically, deleted PLAN.md content containing \"violation types\" matched Pattern 3 (PROTOCOL VIOLATION|VIOLATION).",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "cause_signature": "tool_limitation:validation_absent:post_tool_use",
+      "prevention_type": "code_fix",
+      "prevention_path": "/workspace/client/src/main/java/io/github/cowwoc/cat/hooks/tool/post/AutoLearnMistakes.java",
+      "pattern_keywords": [
+        "auto_learn_mistakes",
+        "false_positive",
+        "git_diff",
+        "filter_gap",
+        "protocol_violation",
+        "deleted_content",
+        "plan_md",
+        "filter_json_content",
+        "diff_lines"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": "M555",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "filterJsonContent() must also strip git diff lines (lines starting with +, -, or @@) so that deleted/added file content in diff output does not trigger false-positive mistake detection. The existing open issue fix-autolearn-java-source-false-positive should be extended to cover this additional filter gap.",
+      "issue_creation_info": {
+        "existing_issue": "v2.1/fix-autolearn-java-source-false-positive",
+        "note": "This recurrence adds git diff lines as an additional filter gap to the existing open issue. The structural fix to filterJsonContent() should include stripping diff lines (starting with +, -, @@) in addition to the Java source code filtering already planned."
+      }
     }
   ]
 }

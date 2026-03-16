@@ -8,6 +8,8 @@ package io.github.cowwoc.cat.hooks;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.session.SessionEndHandler;
+
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -22,12 +24,16 @@ import java.util.List;
  * <p>
  * TRIGGER: SessionEnd
  * <p>
- * Handles session cleanup operations including lock removal from the project CAT work directory
- * ({@code {claudeProjectPath}/.cat/work/locks/}):
+ * Handles session cleanup operations:
  * <ul>
- *   <li>Project lock file</li>
- *   <li>Task locks owned by the current session</li>
- *   <li>Stale locks older than 24 hours</li>
+ *   <li>Lock removal from the project CAT work directory
+ *     ({@code {claudeProjectDir}/.cat/work/locks/}):
+ *     project lock file, task locks owned by the current session, and stale locks older than 24 hours
+ *   </li>
+ *   <li>Stale session work directory removal from
+ *     {@code {claudeProjectDir}/.cat/work/sessions/} for sessions whose corresponding Claude
+ *     session directory no longer exists
+ *   </li>
  * </ul>
  */
 public final class SessionEndHook implements HookHandler
@@ -70,7 +76,7 @@ public final class SessionEndHook implements HookHandler
   {
     requireThat(input, "input").isNotNull();
     requireThat(output, "output").isNotNull();
-    return runWithProjectDir(input, output, scope.getProjectPath());
+    return runWithProjectDir(input, output, scope.getClaudeProjectDir());
   }
 
   /**
@@ -107,6 +113,8 @@ public final class SessionEndHook implements HookHandler
       }
 
       cleanStaleLocks(messages);
+
+      new SessionEndHandler(scope).clean(input);
 
       return new HookResult(output.empty(), messages);
     }

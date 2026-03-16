@@ -44,14 +44,19 @@ public final class TestUtils
   /**
    * Creates a HookInput with a dummy session ID for tests that need a valid input but don't depend on the
    * session ID value.
+   * <p>
+   * The dummy session ID ({@code "00000000-0000-0000-0000-000000000001"}) is intentionally distinct from the
+   * session ID returned by {@code TestJvmScope.getClaudeSessionId()}, so that handlers which skip the current
+   * session (e.g., {@link io.github.cowwoc.cat.hooks.session.SessionEndHandler}) treat it as an
+   * external (non-current) session.
    *
    * @param mapper the JSON mapper
-   * @return a HookInput with a hard-coded session ID
+   * @return a HookInput with a hard-coded session ID that differs from any {@code TestJvmScope} session ID
    */
   static HookInput dummyInput(JsonMapper mapper)
   {
     return HookInput.readFrom(mapper, new java.io.ByteArrayInputStream(
-      "{\"session_id\": \"test-session\"}".getBytes(StandardCharsets.UTF_8)));
+      "{\"session_id\": \"00000000-0000-0000-0000-000000000001\"}".getBytes(StandardCharsets.UTF_8)));
   }
 
   /**
