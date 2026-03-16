@@ -37,7 +37,7 @@ public final class EnforceCollectAfterAgentTest
    */
   private static void createFlagFile(JvmScope scope, String sessionId) throws IOException
   {
-    Path flagPath = scope.getClaudeSessionsPath().resolve(sessionId).resolve("pending-agent-result");
+    Path flagPath = scope.getCatWorkPath().resolve("sessions").resolve(sessionId).resolve("pending-agent-result");
     Files.createDirectories(flagPath.getParent());
     Files.writeString(flagPath, "");
   }
@@ -139,7 +139,7 @@ public final class EnforceCollectAfterAgentTest
       TaskHandler.Result result = handler.check(toolInput, sessionId, "");
 
       requireThat(result.blocked(), "blocked").isFalse();
-      Path flagPath = scope.getClaudeSessionsPath().resolve(sessionId).resolve("pending-agent-result");
+      Path flagPath = scope.getCatWorkPath().resolve("sessions").resolve(sessionId).resolve("pending-agent-result");
       requireThat(Files.exists(flagPath), "flagExists").isFalse();
     }
     finally
@@ -169,7 +169,7 @@ public final class EnforceCollectAfterAgentTest
       TaskHandler.Result result = handler.check(toolInput, sessionId, "");
 
       requireThat(result.blocked(), "blocked").isFalse();
-      Path flagPath = scope.getClaudeSessionsPath().resolve(sessionId).resolve("pending-agent-result");
+      Path flagPath = scope.getCatWorkPath().resolve("sessions").resolve(sessionId).resolve("pending-agent-result");
       requireThat(Files.exists(flagPath), "flagExists").isFalse();
     }
     finally
@@ -333,7 +333,7 @@ public final class EnforceCollectAfterAgentTest
       TaskHandler.Result result = handler.check(toolInput, sessionId, "");
 
       requireThat(result.blocked(), "blocked").isFalse();
-      Path flagPath = scope.getClaudeSessionsPath().resolve(sessionId).resolve("pending-agent-result");
+      Path flagPath = scope.getCatWorkPath().resolve("sessions").resolve(sessionId).resolve("pending-agent-result");
       requireThat(Files.notExists(flagPath), "flagDeleted").isTrue();
     }
     finally

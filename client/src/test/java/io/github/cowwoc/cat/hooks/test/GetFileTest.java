@@ -280,7 +280,7 @@ More content.
    * Verifies that getOutput places the marker file in the main agent directory.
    * <p>
    * Main agents use the session ID as catAgentId, so the marker should appear at
-   * {@code {sessionBasePath}/{sessionId}/loaded/}.
+   * {@code {catWorkPath}/sessions/{sessionId}/loaded/}.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -298,8 +298,8 @@ More content.
       GetFile getFile = new GetFile(scope);
       getFile.getOutput(new String[]{sessionId, targetFile.toString()});
 
-      // Marker should be in {sessionBasePath}/{sessionId}/loaded/
-      Path sessionBasePath = scope.getClaudeSessionsPath().toAbsolutePath().normalize();
+      // Marker should be in {catWorkPath}/sessions/{sessionId}/loaded/
+      Path sessionBasePath = scope.getCatWorkPath().resolve("sessions").toAbsolutePath().normalize();
       Path expectedDir = sessionBasePath.resolve(sessionId).resolve(GetSkill.LOADED_DIR);
       String encodedPath = URLEncoder.encode(targetFile.toString(), StandardCharsets.UTF_8);
       Path expectedMarker = expectedDir.resolve(encodedPath);
@@ -316,7 +316,7 @@ More content.
    * Verifies that getOutput places the marker file in the correct per-subagent directory.
    * <p>
    * Subagents use a composite ID {@code {sessionId}/subagents/{agentId}}, so the marker should
-   * appear at {@code {sessionBasePath}/{sessionId}/subagents/{agentId}/loaded/}.
+   * appear at {@code {catWorkPath}/sessions/{sessionId}/subagents/{agentId}/loaded/}.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -336,14 +336,85 @@ More content.
       GetFile getFile = new GetFile(scope);
       getFile.getOutput(new String[]{catAgentId, targetFile.toString()});
 
-      // Marker should be in {sessionBasePath}/{sessionId}/subagents/{agentId}/loaded/
-      Path sessionBasePath = scope.getClaudeSessionsPath().toAbsolutePath().normalize();
+      // Marker should be in {catWorkPath}/sessions/{sessionId}/subagents/{agentId}/loaded/
+      Path sessionBasePath = scope.getCatWorkPath().resolve("sessions").toAbsolutePath().normalize();
       Path agentPath = sessionBasePath.resolve(sessionId).resolve(GetSkill.SUBAGENTS_DIR).resolve(agentId);
       Path expectedDir = agentPath.resolve(GetSkill.LOADED_DIR);
       String encodedPath = URLEncoder.encode(targetFile.toString(), StandardCharsets.UTF_8);
       Path expectedMarker = expectedDir.resolve(encodedPath);
 
       requireThat(Files.exists(expectedMarker), "markerExists").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getOutput places the main agent marker under {@code {catWorkPath}/sessions/{sessionId}/loaded/},
+   * not under {@code {sessionBasePath}/{sessionId}/loaded/}.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getOutputPlacesMainAgentMarkerUnderCatWorkPath() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("get-file-test");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path targetFile = tempDir.resolve("target.md");
+      Files.writeString(targetFile, "content");
+
+      String sessionId = UUID.randomUUID().toString();
+      GetFile getFile = new GetFile(scope);
+      getFile.getOutput(new String[]{sessionId, targetFile.toString()});
+
+      // Marker must be in {catWorkPath}/sessions/{sessionId}/loaded/
+      Path expectedDir = scope.getCatWorkPath().resolve("sessions").resolve(sessionId).
+        resolve(GetSkill.LOADED_DIR);
+      String encodedPath = URLEncoder.encode(targetFile.toString(), StandardCharsets.UTF_8);
+      Path expectedMarker = expectedDir.resolve(encodedPath);
+
+      requireThat(Files.exists(expectedMarker), "markerExistsUnderCatWorkPath").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getOutput places the subagent marker under
+   * {@code {catWorkPath}/sessions/{sessionId}/subagents/{agentId}/loaded/},
+   * not under {@code {sessionBasePath}/{sessionId}/subagents/{agentId}/loaded/}.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getOutputPlacesSubagentMarkerUnderCatWorkPath() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("get-file-test");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path targetFile = tempDir.resolve("target.md");
+      Files.writeString(targetFile, "content");
+
+      String sessionId = UUID.randomUUID().toString();
+      String agentId = "agent-xyz789";
+      String catAgentId = sessionId + "/" + GetSkill.SUBAGENTS_DIR + "/" + agentId;
+
+      GetFile getFile = new GetFile(scope);
+      getFile.getOutput(new String[]{catAgentId, targetFile.toString()});
+
+      // Marker must be in {catWorkPath}/sessions/{sessionId}/subagents/{agentId}/loaded/
+      Path catSessions = scope.getCatWorkPath().resolve("sessions");
+      Path expectedDir = catSessions.resolve(sessionId).resolve(GetSkill.SUBAGENTS_DIR).
+        resolve(agentId).resolve(GetSkill.LOADED_DIR);
+      String encodedPath = URLEncoder.encode(targetFile.toString(), StandardCharsets.UTF_8);
+      Path expectedMarker = expectedDir.resolve(encodedPath);
+
+      requireThat(Files.exists(expectedMarker), "markerExistsUnderCatWorkPath").isTrue();
     }
     finally
     {

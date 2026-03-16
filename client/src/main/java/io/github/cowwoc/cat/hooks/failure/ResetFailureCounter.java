@@ -16,9 +16,9 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 /**
  * Resets the consecutive failure counter after a successful tool execution.
  * <p>
- * On each successful PostToolUse event, deletes the tracking file
- * ({@code cat-failure-tracking-<sessionId>.count}) to reset the consecutive failure count tracked by
- * {@link DetectRepeatedFailures}.
+ * On each successful PostToolUse event, deletes the tracking file at
+ * {@code {catSessionPath}/cat-failure-tracking-<sessionId>.count} to reset the consecutive failure
+ * count tracked by {@link DetectRepeatedFailures}.
  */
 public final class ResetFailureCounter implements PostToolHandler
 {

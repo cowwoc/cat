@@ -24,7 +24,7 @@ import java.nio.file.Path;
  * <p>
  * After the main agent completes an Agent tool invocation in a work-with-issue context,
  * {@link io.github.cowwoc.cat.hooks.tool.post.SetPendingAgentResult} creates a flag file at
- * {@code {sessionBasePath}/{sessionId}/pending-agent-result}. This handler blocks all subsequent
+ * {@code {catSessionPath}/pending-agent-result}. This handler blocks all subsequent
  * Task and Skill calls until {@code cat:collect-results-agent} or {@code cat:merge-subagent-agent}
  * is invoked, at which point the flag is deleted and the call is allowed through.
  */
@@ -52,7 +52,7 @@ public final class EnforceCollectAfterAgent implements TaskHandler
     requireThat(sessionId, "sessionId").isNotBlank();
     requireThat(cwd, "cwd").isNotNull();
 
-    Path flagPath = scope.getClaudeSessionsPath().resolve(sessionId).resolve("pending-agent-result");
+    Path flagPath = scope.getCatWorkPath().resolve("sessions").resolve(sessionId).resolve("pending-agent-result");
     if (!Files.exists(flagPath))
       return Result.allow();
 

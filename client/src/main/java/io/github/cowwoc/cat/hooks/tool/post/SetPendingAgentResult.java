@@ -27,7 +27,7 @@ import java.nio.file.Path;
  * When the main agent (not a subagent) completes an Agent tool invocation with
  * {@code subagent_type: cat:work-execute} and an active worktree lock exists for the session,
  * this handler creates a flag file at
- * {@code {sessionBasePath}/{sessionId}/pending-agent-result}. The flag signals that
+ * {@code {catSessionPath}/pending-agent-result}. The flag signals that
  * {@code collect-results-agent} must be invoked before any subsequent Task or Skill call.
  * <p>
  * Other agent types (adversarial, red-team, blue-team, diff-validation) have different
@@ -103,7 +103,8 @@ public final class SetPendingAgentResult implements PostToolHandler
         return Result.allow();
 
       // Create the flag file
-      Path flagPath = scope.getClaudeSessionsPath().resolve(sessionId).resolve("pending-agent-result");
+      Path flagPath = scope.getCatWorkPath().resolve("sessions").resolve(sessionId).
+        resolve("pending-agent-result");
       Files.createDirectories(flagPath.getParent());
       Files.writeString(flagPath, "");
     }

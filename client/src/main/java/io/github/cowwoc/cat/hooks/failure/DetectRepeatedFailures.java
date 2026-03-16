@@ -30,7 +30,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * Tracks consecutive PostToolUseFailure events per session. When 2 or more consecutive failures are
  * detected, injects a system-reminder suggesting {@code /cat:recover-from-drift}.
  * <p>
- * Failure counts are persisted in {@code {sessionDirectory}/cat-failure-tracking-<sessionId>.count}.
+ * Failure counts are persisted in {@code {catSessionPath}/cat-failure-tracking-<sessionId>.count}.
  * Files older than 1 day are cleaned up at most every 6 hours.
  */
 public final class DetectRepeatedFailures implements PostToolHandler
