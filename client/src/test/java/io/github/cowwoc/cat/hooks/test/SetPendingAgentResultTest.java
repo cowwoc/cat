@@ -77,12 +77,12 @@ public final class SetPendingAgentResultTest
     throws IOException
   {
     String toolInputJson;
-    if (subagentType.isEmpty())
+    if (subagentType.isBlank())
       toolInputJson = "";
     else
       toolInputJson = ", \"tool_input\": {\"subagent_type\": \"" + subagentType + "\"}";
 
-    if (agentId.isEmpty())
+    if (agentId.isBlank())
       return mapper.readTree("{\"session_id\": \"test\"" + toolInputJson + "}");
     return mapper.readTree("{\"session_id\": \"test\", \"agent_id\": \"" + agentId + "\"" +
       toolInputJson + "}");

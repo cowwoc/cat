@@ -45,7 +45,7 @@ public final class JsonHelper
     if (child != null && child.isString())
     {
       String value = child.asString();
-      if (value != null && !value.isEmpty())
+      if (!value.isBlank())
         return value;
     }
     return defaultValue;
