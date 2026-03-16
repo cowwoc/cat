@@ -285,7 +285,7 @@ public final class CheckDataMigration implements SessionStartHandler
   private String backupCatDir(String reason) throws IOException
   {
     String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
-    Path backupDir = scope.getProjectCatDir().resolve("backups/" + timestamp + "-" +
+    Path backupDir = scope.getCatWorkPath().resolve("backups/" + timestamp + "-" +
       sanitizeDirectoryName(reason));
     Path catDir = scope.getCatDir();
 

@@ -44,16 +44,16 @@ public class ClearAgentMarkersTest
     expectedExceptionsMessageRegExp = ".*sessionId.*")
   public void clearMainAgentMarkerRejectsNullSessionId() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("cat-test-clear-marker-");
+    Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       ClearAgentMarkers clearer = new ClearAgentMarkers(scope);
       clearer.clearMainAgentMarker(null);
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -67,16 +67,16 @@ public class ClearAgentMarkersTest
     expectedExceptionsMessageRegExp = ".*sessionId.*")
   public void clearMainAgentMarkerRejectsBlankSessionId() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("cat-test-clear-marker-");
+    Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       ClearAgentMarkers clearer = new ClearAgentMarkers(scope);
       clearer.clearMainAgentMarker("   ");
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -90,16 +90,16 @@ public class ClearAgentMarkersTest
     expectedExceptionsMessageRegExp = ".*sessionId.*")
   public void clearSubagentMarkerRejectsNullSessionId() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("cat-test-clear-marker-");
+    Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       ClearAgentMarkers clearer = new ClearAgentMarkers(scope);
       clearer.clearSubagentMarker(null, "agent123");
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -113,16 +113,16 @@ public class ClearAgentMarkersTest
     expectedExceptionsMessageRegExp = ".*sessionId.*")
   public void clearSubagentMarkerRejectsBlankSessionId() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("cat-test-clear-marker-");
+    Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       ClearAgentMarkers clearer = new ClearAgentMarkers(scope);
       clearer.clearSubagentMarker("   ", "agent123");
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -136,16 +136,16 @@ public class ClearAgentMarkersTest
     expectedExceptionsMessageRegExp = ".*agentId.*")
   public void clearSubagentMarkerRejectsNullAgentId() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("cat-test-clear-marker-");
+    Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       ClearAgentMarkers clearer = new ClearAgentMarkers(scope);
       clearer.clearSubagentMarker("session123", null);
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -159,16 +159,16 @@ public class ClearAgentMarkersTest
     expectedExceptionsMessageRegExp = ".*agentId.*")
   public void clearSubagentMarkerRejectsBlankAgentId() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("cat-test-clear-marker-");
+    Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       ClearAgentMarkers clearer = new ClearAgentMarkers(scope);
       clearer.clearSubagentMarker("session123", "   ");
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -182,12 +182,12 @@ public class ClearAgentMarkersTest
   @Test
   public void clearMainAgentMarkerSucceedsWhenNoMarkersExist() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("cat-test-clear-marker-");
+    Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       String sessionId = "test-session-" + System.nanoTime();
-      Path sessionDir = scope.getSessionBasePath().resolve(sessionId);
+      Path sessionDir = scope.getClaudeSessionsPath().resolve(sessionId);
       Files.createDirectories(sessionDir);
       // No loaded/ directory exists
 
@@ -198,7 +198,7 @@ public class ClearAgentMarkersTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -212,13 +212,13 @@ public class ClearAgentMarkersTest
   @Test
   public void clearSubagentMarkerSucceedsWhenNoMarkersExist() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("cat-test-clear-marker-");
+    Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       String sessionId = "test-session-" + System.nanoTime();
       String agentId = "agent-" + System.nanoTime();
-      Path agentDir = scope.getSessionBasePath().resolve(sessionId).
+      Path agentDir = scope.getClaudeSessionsPath().resolve(sessionId).
         resolve(GetSkill.SUBAGENTS_DIR).resolve(agentId);
       Files.createDirectories(agentDir);
       // No loaded/ directory exists in agent dir
@@ -230,7 +230,7 @@ public class ClearAgentMarkersTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -243,12 +243,12 @@ public class ClearAgentMarkersTest
   @Test
   public void clearMainAgentMarkerDeletesLoadedDirectory() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("cat-test-clear-marker-");
+    Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       String sessionId = "test-session-" + System.nanoTime();
-      Path sessionDir = scope.getSessionBasePath().resolve(sessionId);
+      Path sessionDir = scope.getClaudeSessionsPath().resolve(sessionId);
       Path loadedDir = sessionDir.resolve(GetSkill.LOADED_DIR);
       Files.createDirectories(loadedDir);
       Files.writeString(loadedDir.resolve("cat%3Awork"), "", StandardCharsets.UTF_8);
@@ -262,7 +262,7 @@ public class ClearAgentMarkersTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -275,13 +275,13 @@ public class ClearAgentMarkersTest
   @Test
   public void clearSubagentMarkerDeletesLoadedDirectory() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("cat-test-clear-marker-");
+    Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       String sessionId = "test-session-" + System.nanoTime();
       String agentId = "agent456";
-      Path agentDir = scope.getSessionBasePath().resolve(sessionId).
+      Path agentDir = scope.getClaudeSessionsPath().resolve(sessionId).
         resolve(GetSkill.SUBAGENTS_DIR).resolve(agentId);
       Path loadedDir = agentDir.resolve(GetSkill.LOADED_DIR);
       Files.createDirectories(loadedDir);
@@ -296,7 +296,7 @@ public class ClearAgentMarkersTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }

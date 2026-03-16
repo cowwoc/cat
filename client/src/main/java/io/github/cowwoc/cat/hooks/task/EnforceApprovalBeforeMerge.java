@@ -111,7 +111,7 @@ public final class EnforceApprovalBeforeMerge implements TaskHandler
     if (trust == TrustLevel.HIGH)
       return Result.allow();
 
-    Path sessionFile = scope.getSessionBasePath().resolve(sessionId + ".jsonl");
+    Path sessionFile = scope.getClaudeSessionsPath().resolve(sessionId + ".jsonl");
 
     if (!Files.exists(sessionFile))
     {
@@ -155,7 +155,7 @@ public final class EnforceApprovalBeforeMerge implements TaskHandler
    */
   private TrustLevel getTrustLevel() throws IOException
   {
-    Config config = Config.load(scope.getJsonMapper(), scope.getClaudeProjectDir());
+    Config config = Config.load(scope.getJsonMapper(), scope.getProjectPath());
     return config.getTrust();
   }
 

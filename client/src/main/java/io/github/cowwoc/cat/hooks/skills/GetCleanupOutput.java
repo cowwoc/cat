@@ -219,7 +219,7 @@ public final class GetCleanupOutput implements SkillOutput
    * Generates the survey output for this skill.
    * <p>
    * Parses {@code --project-dir PATH} from {@code args} if present; otherwise falls back to
-   * {@code scope.getClaudeProjectDir()}.
+   * {@code scope.getProjectPath()}.
    *
    * @param args the arguments from the preprocessor directive
    * @return the formatted survey display
@@ -231,22 +231,22 @@ public final class GetCleanupOutput implements SkillOutput
   public String getOutput(String[] args) throws IOException
   {
     requireThat(args, "args").isNotNull();
-    Path projectDir = null;
+    Path projectPath = null;
     for (int i = 0; i < args.length; ++i)
     {
       if (args[i].equals("--project-dir"))
       {
         if (i + 1 >= args.length)
           throw new IllegalArgumentException("Missing PATH argument for --project-dir");
-        projectDir = Path.of(args[i + 1]);
+        projectPath = Path.of(args[i + 1]);
         ++i;
       }
       else
         throw new IllegalArgumentException("Unknown argument: " + args[i]);
     }
-    if (projectDir == null)
-      projectDir = scope.getClaudeProjectDir();
-    return gatherAndFormatSurveyOutput(projectDir);
+    if (projectPath == null)
+      projectPath = scope.getProjectPath();
+    return gatherAndFormatSurveyOutput(projectPath);
   }
 
   /**
@@ -254,21 +254,21 @@ public final class GetCleanupOutput implements SkillOutput
    * <p>
    * This is the main entry point that orchestrates data gathering and display formatting.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @return the formatted survey display
-   * @throws NullPointerException if {@code projectDir} is null
+   * @throws NullPointerException if {@code projectPath} is null
    * @throws IOException if data gathering fails
    */
-  public String gatherAndFormatSurveyOutput(Path projectDir) throws IOException
+  public String gatherAndFormatSurveyOutput(Path projectPath) throws IOException
   {
-    requireThat(projectDir, "projectDir").isNotNull();
+    requireThat(projectPath, "projectPath").isNotNull();
 
-    List<Worktree> worktrees = gatherWorktrees(projectDir);
-    List<Lock> locks = gatherLocks(projectDir);
-    List<String> branches = gatherBranches(projectDir);
-    List<StaleRemote> staleRemotes = gatherStaleRemotes(projectDir);
-    String contextFile = gatherContextFile(projectDir);
-    List<CorruptIssue> corruptIssues = gatherCorruptIssues(projectDir);
+    List<Worktree> worktrees = gatherWorktrees(projectPath);
+    List<Lock> locks = gatherLocks(projectPath);
+    List<String> branches = gatherBranches(projectPath);
+    List<StaleRemote> staleRemotes = gatherStaleRemotes(projectPath);
+    String contextFile = gatherContextFile(projectPath);
+    List<CorruptIssue> corruptIssues = gatherCorruptIssues(projectPath);
 
     return getSurveyOutput(worktrees, locks, branches, staleRemotes, contextFile, corruptIssues);
   }
@@ -277,15 +277,15 @@ public final class GetCleanupOutput implements SkillOutput
    * Scans all issue directories under {@code .cat/issues/} for the corrupt condition
    * (STATE.md present, PLAN.md absent).
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @return list of corrupt issue entries (empty if none found or directory does not exist)
-   * @throws NullPointerException if {@code projectDir} is null
+   * @throws NullPointerException if {@code projectPath} is null
    */
-  public List<CorruptIssue> gatherCorruptIssues(Path projectDir)
+  public List<CorruptIssue> gatherCorruptIssues(Path projectPath)
   {
-    requireThat(projectDir, "projectDir").isNotNull();
+    requireThat(projectPath, "projectPath").isNotNull();
 
-    Path issuesRoot = projectDir.resolve(Config.CAT_DIR_NAME).resolve("issues");
+    Path issuesRoot = projectPath.resolve(Config.CAT_DIR_NAME).resolve("issues");
     if (!Files.isDirectory(issuesRoot))
       return List.of();
 
@@ -336,15 +336,15 @@ public final class GetCleanupOutput implements SkillOutput
    * <p>
    * Parses {@code git worktree list --porcelain} output to extract worktree paths, branches, and states.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @return list of worktrees (empty if git command fails)
-   * @throws NullPointerException if {@code projectDir} is null
+   * @throws NullPointerException if {@code projectPath} is null
    */
-  public List<Worktree> gatherWorktrees(Path projectDir)
+  public List<Worktree> gatherWorktrees(Path projectPath)
   {
-    requireThat(projectDir, "projectDir").isNotNull();
+    requireThat(projectPath, "projectPath").isNotNull();
 
-    ProcessRunner.Result result = ProcessRunner.run("git", "-C", projectDir.toString(),
+    ProcessRunner.Result result = ProcessRunner.run("git", "-C", projectPath.toString(),
       "worktree", "list", "--porcelain");
 
     if (result.exitCode() != 0)
@@ -415,13 +415,13 @@ public final class GetCleanupOutput implements SkillOutput
    * {@code now - max(branch_last_commit_time, lock_file_mtime)} so that a recently-locked worktree
    * with old branch commits is not misclassified as stale.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @return list of locks (empty if directory does not exist or on error)
-   * @throws NullPointerException if {@code projectDir} is null
+   * @throws NullPointerException if {@code projectPath} is null
    */
-  public List<Lock> gatherLocks(Path projectDir)
+  public List<Lock> gatherLocks(Path projectPath)
   {
-    requireThat(projectDir, "projectDir").isNotNull();
+    requireThat(projectPath, "projectPath").isNotNull();
 
     try
     {
@@ -432,7 +432,7 @@ public final class GetCleanupOutput implements SkillOutput
       List<Lock> locks = new ArrayList<>();
       for (IssueLock.LockListEntry entry : entries)
       {
-        Duration branchAge = getBranchAge(projectDir, entry.issue(), now);
+        Duration branchAge = getBranchAge(projectPath, entry.issue(), now);
         Path lockFile = lockManager.getLockFile(entry.issue());
         Duration lockFileAge = getLockFileAge(lockFile, now);
         Duration age;
@@ -453,14 +453,14 @@ public final class GetCleanupOutput implements SkillOutput
   /**
    * Derives the age of a branch from its last commit time.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param branch the branch name
    * @param now the current instant
    * @return the duration since the branch's last commit, or {@link Duration#ZERO} on error
    */
-  private static Duration getBranchAge(Path projectDir, String branch, Instant now)
+  private static Duration getBranchAge(Path projectPath, String branch, Instant now)
   {
-    ProcessRunner.Result result = ProcessRunner.run("git", "-C", projectDir.toString(),
+    ProcessRunner.Result result = ProcessRunner.run("git", "-C", projectPath.toString(),
       "log", "-1", "--format=%ct", branch);
     if (result.exitCode() != 0)
       return Duration.ZERO;
@@ -504,15 +504,15 @@ public final class GetCleanupOutput implements SkillOutput
    * <p>
    * Filters branches matching patterns: release/, worktree, or version-prefixed (e.g., 2.1-).
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @return list of branch names (empty if git command fails)
-   * @throws NullPointerException if {@code projectDir} is null
+   * @throws NullPointerException if {@code projectPath} is null
    */
-  public List<String> gatherBranches(Path projectDir)
+  public List<String> gatherBranches(Path projectPath)
   {
-    requireThat(projectDir, "projectDir").isNotNull();
+    requireThat(projectPath, "projectPath").isNotNull();
 
-    ProcessRunner.Result result = ProcessRunner.run("git", "-C", projectDir.toString(),
+    ProcessRunner.Result result = ProcessRunner.run("git", "-C", projectPath.toString(),
       "branch", "-a");
 
     if (result.exitCode() != 0)
@@ -536,17 +536,17 @@ public final class GetCleanupOutput implements SkillOutput
    * <p>
    * Fetches with --prune, then checks commit dates for origin/ branches matching version pattern.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @return list of stale remotes (empty if git commands fail)
-   * @throws NullPointerException if {@code projectDir} is null
+   * @throws NullPointerException if {@code projectPath} is null
    */
-  public List<StaleRemote> gatherStaleRemotes(Path projectDir)
+  public List<StaleRemote> gatherStaleRemotes(Path projectPath)
   {
-    requireThat(projectDir, "projectDir").isNotNull();
+    requireThat(projectPath, "projectPath").isNotNull();
 
-    ProcessRunner.run("git", "-C", projectDir.toString(), "fetch", "--prune");
+    ProcessRunner.run("git", "-C", projectPath.toString(), "fetch", "--prune");
 
-    ProcessRunner.Result branchResult = ProcessRunner.run("git", "-C", projectDir.toString(),
+    ProcessRunner.Result branchResult = ProcessRunner.run("git", "-C", projectPath.toString(),
       "branch", "-r");
 
     if (branchResult.exitCode() != 0)
@@ -562,7 +562,7 @@ public final class GetCleanupOutput implements SkillOutput
       if (!STALE_REMOTE_PATTERN.matcher(branch).find())
         continue;
 
-      ProcessRunner.Result dateResult = ProcessRunner.run("git", "-C", projectDir.toString(),
+      ProcessRunner.Result dateResult = ProcessRunner.run("git", "-C", projectPath.toString(),
         "log", "-1", "--format=%ct", branch);
 
       if (dateResult.exitCode() != 0)
@@ -575,9 +575,9 @@ public final class GetCleanupOutput implements SkillOutput
 
         if (age.compareTo(MIN_STALE_AGE) >= 0 && age.compareTo(MAX_STALE_AGE) <= 0)
         {
-          ProcessRunner.Result authorResult = ProcessRunner.run("git", "-C", projectDir.toString(),
+          ProcessRunner.Result authorResult = ProcessRunner.run("git", "-C", projectPath.toString(),
             "log", "-1", "--format=%an", branch);
-          ProcessRunner.Result relativeResult = ProcessRunner.run("git", "-C", projectDir.toString(),
+          ProcessRunner.Result relativeResult = ProcessRunner.run("git", "-C", projectPath.toString(),
             "log", "-1", "--format=%cr", branch);
 
           String author = "";
@@ -604,15 +604,15 @@ public final class GetCleanupOutput implements SkillOutput
   /**
    * Checks for execution context file.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @return the context file path if it exists, otherwise null
-   * @throws NullPointerException if {@code projectDir} is null
+   * @throws NullPointerException if {@code projectPath} is null
    */
-  public String gatherContextFile(Path projectDir)
+  public String gatherContextFile(Path projectPath)
   {
-    requireThat(projectDir, "projectDir").isNotNull();
+    requireThat(projectPath, "projectPath").isNotNull();
 
-    Path contextPath = projectDir.resolve(".cat-execution-context");
+    Path contextPath = projectPath.resolve(".cat-execution-context");
     if (Files.exists(contextPath))
       return contextPath.toString();
     return null;
@@ -959,7 +959,7 @@ public final class GetCleanupOutput implements SkillOutput
    */
   public static void main(String[] args)
   {
-    String projectDirArg = "";
+    String projectPathArg = "";
     String phase = "survey";
     for (int i = 0; i < args.length; ++i)
     {
@@ -970,7 +970,7 @@ public final class GetCleanupOutput implements SkillOutput
           System.err.println("Error: --project-dir flag requires a PATH argument.");
           System.exit(1);
         }
-        projectDirArg = args[i + 1];
+        projectPathArg = args[i + 1];
         ++i;
       }
       else if (args[i].equals("--phase"))
@@ -993,12 +993,12 @@ public final class GetCleanupOutput implements SkillOutput
       {
         case "survey" ->
         {
-          Path projectDir;
-          if (!projectDirArg.isEmpty())
-            projectDir = Path.of(projectDirArg);
+          Path projectPath;
+          if (!projectPathArg.isEmpty())
+            projectPath = Path.of(projectPathArg);
           else
-            projectDir = scope.getClaudeProjectDir();
-          result = output.gatherAndFormatSurveyOutput(projectDir);
+            projectPath = scope.getProjectPath();
+          result = output.gatherAndFormatSurveyOutput(projectPath);
         }
         case "plan" ->
         {

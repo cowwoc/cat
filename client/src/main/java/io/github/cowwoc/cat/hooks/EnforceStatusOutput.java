@@ -69,7 +69,7 @@ public final class EnforceStatusOutput
         String transcriptPath = input.getString("transcript_path");
         boolean stopHookActive = input.getBoolean("stop_hook_active", false);
         String sessionId = input.getSessionId();
-        Path sessionBasePath = scope.getSessionBasePath();
+        Path sessionBasePath = scope.getClaudeSessionsPath();
         output = check(mapper, transcriptPath, stopHookActive, hookOutput, sessionId, sessionBasePath);
       }
       catch (Exception e)

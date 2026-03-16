@@ -111,7 +111,7 @@ public final class IssueDiscovery
   private static final Pattern EXIT_ISSUE_PATTERN = Pattern.compile("^- \\[issue\\] (.+)$");
 
   private final JvmScope scope;
-  private final Path projectDir;
+  private final Path projectPath;
   private final Path issuesDir;
   private final IssueLock issueLock;
   /**
@@ -143,11 +143,11 @@ public final class IssueDiscovery
   public IssueDiscovery(JvmScope scope)
   {
     this.scope = scope;
-    this.projectDir = scope.getClaudeProjectDir();
+    this.projectPath = scope.getProjectPath();
     Path catDir = scope.getCatDir();
     if (!Files.isDirectory(catDir))
     {
-      throw new IllegalArgumentException("Not a CAT project: " + projectDir +
+      throw new IllegalArgumentException("Not a CAT project: " + projectPath +
         " (no .cat directory)");
     }
     this.issuesDir = catDir.resolve("issues");
@@ -1597,7 +1597,7 @@ public final class IssueDiscovery
    */
   private Path getWorktreePath(String issueId)
   {
-    return scope.getProjectCatDir().resolve("worktrees").resolve(issueId);
+    return scope.getCatWorkPath().resolve("worktrees").resolve(issueId);
   }
 
   /**
@@ -1886,8 +1886,8 @@ public final class IssueDiscovery
     if (cached != null)
       return cached;
     Path statePath = issueDir.resolve("STATE.md");
-    Path relativePath = projectDir.relativize(statePath);
-    String firstLine = ProcessRunner.runAndCaptureFirstLine(List.of("git", "-C", projectDir.toString(),
+    Path relativePath = projectPath.relativize(statePath);
+    String firstLine = ProcessRunner.runAndCaptureFirstLine(List.of("git", "-C", projectPath.toString(),
       "log", "--diff-filter=A", "--format=%at", "--reverse", "--", relativePath.toString()));
     long timestamp;
     if (firstLine == null || firstLine.isBlank())

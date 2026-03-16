@@ -28,7 +28,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  */
 public final class GetStatuslineOutput implements SkillOutput
 {
-  private final Path projectDir;
+  private final Path projectPath;
   private final JsonMapper mapper;
 
   /**
@@ -38,7 +38,7 @@ public final class GetStatuslineOutput implements SkillOutput
    */
   public GetStatuslineOutput(JvmScope scope)
   {
-    this.projectDir = scope.getClaudeProjectDir();
+    this.projectPath = scope.getProjectPath();
     this.mapper = scope.getJsonMapper();
   }
 
@@ -55,7 +55,7 @@ public final class GetStatuslineOutput implements SkillOutput
   public String getOutput(String[] args) throws IOException
   {
     requireThat(args, "args").length().isEqualTo(0);
-    Path settingsFile = projectDir.resolve(".claude/settings.json");
+    Path settingsFile = projectPath.resolve(".claude/settings.json");
 
     if (!Files.exists(settingsFile))
     {

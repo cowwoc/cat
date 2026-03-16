@@ -44,18 +44,18 @@ public final class ClaudeEnvTest
   }
 
   /**
-   * Verifies that getClaudeProjectDir() returns the project directory path from a supplied environment map.
+   * Verifies that getProjectPath() returns the project directory path from a supplied environment map.
    */
   @Test
-  public void projectDirIsReturnedFromEnvironment()
+  public void projectPathIsReturnedFromEnvironment()
   {
     Map<String, String> env = Map.of("CLAUDE_PROJECT_DIR", "/workspace");
     ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(env);
-    requireThat(claudeEnv.getClaudeProjectDir(), "projectDir").isEqualTo(Path.of("/workspace"));
+    requireThat(claudeEnv.getProjectPath(), "projectPath").isEqualTo(Path.of("/workspace"));
   }
 
   /**
-   * Verifies that getClaudeProjectDir() throws AssertionError when CLAUDE_PROJECT_DIR is not set.
+   * Verifies that getProjectPath() throws AssertionError when CLAUDE_PROJECT_DIR is not set.
    */
   @Test(expectedExceptions = AssertionError.class,
     expectedExceptionsMessageRegExp = ".*CLAUDE_PROJECT_DIR.*")
@@ -63,7 +63,7 @@ public final class ClaudeEnvTest
   {
     Map<String, String> env = Map.of();
     ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(env);
-    claudeEnv.getClaudeProjectDir();
+    claudeEnv.getProjectPath();
   }
 
   /**

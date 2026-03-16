@@ -713,13 +713,13 @@ public class LicenseValidatorTest
   /**
    * Writes a config file with the license token.
    *
-   * @param projectDir the project directory
+   * @param projectPath the project directory
    * @param token the license token
    * @throws IOException if writing fails
    */
-  private void writeConfig(Path projectDir, String token) throws IOException
+  private void writeConfig(Path projectPath, String token) throws IOException
   {
-    Path catDir = projectDir.resolve(".cat");
+    Path catDir = projectPath.resolve(".cat");
     Files.createDirectories(catDir);
     Files.writeString(catDir.resolve("config.local.json"),
       "{\"license\":\"" + token + "\"}");

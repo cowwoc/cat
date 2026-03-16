@@ -23,7 +23,7 @@ import java.util.List;
  * TRIGGER: SessionEnd
  * <p>
  * Handles session cleanup operations including lock removal from the project CAT work directory
- * ({@code {claudeProjectDir}/.cat/work/locks/}):
+ * ({@code {claudeProjectPath}/.cat/work/locks/}):
  * <ul>
  *   <li>Project lock file</li>
  *   <li>Task locks owned by the current session</li>
@@ -70,7 +70,7 @@ public final class SessionEndHook implements HookHandler
   {
     requireThat(input, "input").isNotNull();
     requireThat(output, "output").isNotNull();
-    return runWithProjectDir(input, output, scope.getClaudeProjectDir());
+    return runWithProjectDir(input, output, scope.getProjectPath());
   }
 
   /**
@@ -124,7 +124,7 @@ public final class SessionEndHook implements HookHandler
    */
   private void removeProjectLock(String projectName, List<String> messages)
   {
-    Path lockDir = scope.getProjectCatDir().resolve("locks");
+    Path lockDir = scope.getCatWorkPath().resolve("locks");
     Path lockFile = lockDir.resolve(projectName + ".lock");
     if (Files.exists(lockFile))
     {
@@ -148,7 +148,7 @@ public final class SessionEndHook implements HookHandler
    */
   private void cleanTaskLocks(String sessionId, List<String> messages)
   {
-    Path lockDir = scope.getProjectCatDir().resolve("locks");
+    Path lockDir = scope.getCatWorkPath().resolve("locks");
     cleanLocksInDirectory(lockDir, sessionId, messages, "Task lock released");
   }
 
@@ -217,7 +217,7 @@ public final class SessionEndHook implements HookHandler
    */
   private void cleanStaleLocks(List<String> messages)
   {
-    Path lockDir = scope.getProjectCatDir().resolve("locks");
+    Path lockDir = scope.getCatWorkPath().resolve("locks");
     if (!Files.isDirectory(lockDir))
       return;
 

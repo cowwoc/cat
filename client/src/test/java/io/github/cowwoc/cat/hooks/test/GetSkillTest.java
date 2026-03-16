@@ -125,7 +125,7 @@ public class GetSkillTest
   }
 
   /**
-   * Verifies that constructor succeeds when projectDir does not exist.
+   * Verifies that constructor succeeds when projectPath does not exist.
    * <p>
    * The project directory is stored as a string for variable substitution only; it is not
    * validated as an existing path during construction.
@@ -139,7 +139,7 @@ public class GetSkillTest
     Path nonExistentProjectDir = tempPluginRoot.resolve("does-not-exist");
     try (JvmScope scope = new TestJvmScope(nonExistentProjectDir, tempPluginRoot))
     {
-      // Constructor should succeed even when projectDir does not point to an existing directory
+      // Constructor should succeed even when projectPath does not point to an existing directory
       GetSkill loader = new GetSkill(scope, List.of(UUID.randomUUID().toString()));
       requireThat(loader, "loader").isNotNull();
     }
@@ -1336,7 +1336,7 @@ More content here.
       GetSkill loader = new GetSkill(scope, List.of(combinedFirst, "existing-arg"));
       requireThat(loader, "loader").isNotNull();
       // The marker directory should be under the session ID (not the combined string)
-      Path baseDir = scope.getSessionBasePath().toAbsolutePath().normalize();
+      Path baseDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize();
       Path expectedAgentDir = baseDir.resolve(sessionId);
       // Directory should have been created
       requireThat(Files.isDirectory(expectedAgentDir), "agentDirExists").isTrue();
@@ -1365,7 +1365,7 @@ More content here.
       GetSkill loader = new GetSkill(scope, List.of(combinedFirst));
       requireThat(loader, "loader").isNotNull();
       // Marker directory should be under sessionId (the part before the first space)
-      Path baseDir = scope.getSessionBasePath().toAbsolutePath().normalize();
+      Path baseDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize();
       Path expectedAgentDir = baseDir.resolve(sessionId);
       requireThat(Files.isDirectory(expectedAgentDir), "agentDirExists").isTrue();
     }
@@ -1422,7 +1422,7 @@ More content here.
       GetSkill loader = new GetSkill(scope, List.of(agentId));
       loader.load("test-skill");
 
-      Path agentDir = scope.getSessionBasePath().toAbsolutePath().normalize().resolve(agentId);
+      Path agentDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize().resolve(agentId);
       Path loadedDir = agentDir.resolve(GetSkill.LOADED_DIR);
       // Qualified name: "cat:test-skill" → URL-encoded: "cat%3Atest-skill"
       Path expectedMarker = loadedDir.resolve(URLEncoder.encode("cat:test-skill", StandardCharsets.UTF_8));
@@ -1478,7 +1478,7 @@ More content here.
       GetSkill loader = new GetSkill(scope, List.of(agentId));
       loader.load("cat:test-skill");
 
-      Path agentDir = scope.getSessionBasePath().toAbsolutePath().normalize().resolve(agentId);
+      Path agentDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize().resolve(agentId);
       Path loadedDir = agentDir.resolve(GetSkill.LOADED_DIR);
       Path expectedMarker = loadedDir.resolve(URLEncoder.encode("cat:test-skill", StandardCharsets.UTF_8));
       requireThat(Files.exists(expectedMarker), "markerExists").isTrue();

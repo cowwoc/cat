@@ -65,7 +65,7 @@ public final class WarnMainWorkspaceCommitTest
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
       String sessionId = UUID.randomUUID().toString();
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-cwd-issue");
@@ -185,7 +185,7 @@ public final class WarnMainWorkspaceCommitTest
       requireThat(reason, "reason").contains("2.1-active-issue");
 
       // Verify worktree path is included
-      Path worktreePath = scope.getProjectCatDir().resolve("worktrees").resolve("2.1-active-issue");
+      Path worktreePath = scope.getCatWorkPath().resolve("worktrees").resolve("2.1-active-issue");
       requireThat(reason, "reason").contains(worktreePath.toString());
 
       // Verify routing guidance
@@ -216,7 +216,7 @@ public final class WarnMainWorkspaceCommitTest
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
       String sessionId = UUID.randomUUID().toString();
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-active-issue");
@@ -289,7 +289,7 @@ public final class WarnMainWorkspaceCommitTest
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
       String sessionId = UUID.randomUUID().toString();
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-cd-issue");
@@ -469,7 +469,7 @@ public final class WarnMainWorkspaceCommitTest
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
       String sessionId = UUID.randomUUID().toString();
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-semicolon-issue");
@@ -511,7 +511,7 @@ public final class WarnMainWorkspaceCommitTest
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
       String sessionId = UUID.randomUUID().toString();
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-pipe-issue");
@@ -551,7 +551,7 @@ public final class WarnMainWorkspaceCommitTest
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
       String sessionId = UUID.randomUUID().toString();
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-quoted-issue");

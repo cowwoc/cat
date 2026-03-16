@@ -59,27 +59,27 @@ public final class GetConfigOutput implements SkillOutput
    */
   public String getCurrentSettings() throws IOException
   {
-    return getCurrentSettings(scope.getClaudeProjectDir());
+    return getCurrentSettings(scope.getProjectPath());
   }
 
   /**
    * Get current settings display box.
    *
-   * @param projectRoot the project root path
+   * @param projectPath the project root path
    * @return the formatted settings box, or null if config file not found
    * @throws IOException if the config file cannot be read or contains invalid JSON
-   * @throws NullPointerException if {@code projectRoot} is null
+   * @throws NullPointerException if {@code projectPath} is null
    */
-  public String getCurrentSettings(Path projectRoot) throws IOException
+  public String getCurrentSettings(Path projectPath) throws IOException
   {
-    requireThat(projectRoot, "projectRoot").isNotNull();
+    requireThat(projectPath, "projectPath").isNotNull();
 
-    Path configFile = projectRoot.resolve(Config.CAT_DIR_NAME).resolve("config.json");
+    Path configFile = projectPath.resolve(Config.CAT_DIR_NAME).resolve("config.json");
     if (!Files.exists(configFile))
       return null;
 
     // Load config using the Config class
-    Config config = Config.load(scope.getJsonMapper(), projectRoot);
+    Config config = Config.load(scope.getJsonMapper(), projectPath);
 
     String trust = config.getTrust().toString();
     String verify = config.getVerify().toString();
@@ -260,21 +260,21 @@ public final class GetConfigOutput implements SkillOutput
    */
   public String getEffectiveConfig() throws IOException
   {
-    return getEffectiveConfig(scope.getClaudeProjectDir());
+    return getEffectiveConfig(scope.getProjectPath());
   }
 
   /**
    * Get the effective configuration as JSON with all defaults applied.
    *
-   * @param projectRoot the project root path
+   * @param projectPath the project root path
    * @return the effective configuration as a JSON string
    * @throws IOException if the config file cannot be read or contains invalid JSON
-   * @throws NullPointerException if {@code projectRoot} is null
+   * @throws NullPointerException if {@code projectPath} is null
    */
-  public String getEffectiveConfig(Path projectRoot) throws IOException
+  public String getEffectiveConfig(Path projectPath) throws IOException
   {
-    requireThat(projectRoot, "projectRoot").isNotNull();
-    Config config = Config.load(scope.getJsonMapper(), projectRoot);
+    requireThat(projectPath, "projectPath").isNotNull();
+    Config config = Config.load(scope.getJsonMapper(), projectPath);
     JsonMapper mapper = scope.getJsonMapper();
     return mapper.writeValueAsString(config.asMap());
   }

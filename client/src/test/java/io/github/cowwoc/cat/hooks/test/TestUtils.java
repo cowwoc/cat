@@ -86,9 +86,9 @@ public final class TestUtils
     requireThat(prefix, "prefix").isNotNull();
     try
     {
-      Path projectDir = Files.createTempDirectory(prefix);
-      Files.createDirectories(projectDir.resolve(".cat").resolve("issues"));
-      return projectDir;
+      Path projectPath = Files.createTempDirectory(prefix);
+      Files.createDirectories(projectPath.resolve(".cat").resolve("issues"));
+      return projectPath;
     }
     catch (IOException e)
     {

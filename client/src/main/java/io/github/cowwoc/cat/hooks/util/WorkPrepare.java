@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks.util;
 import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.util.IssueDiscovery.DiscoveryResult.ExistingWorktree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.core.type.TypeReference;
@@ -191,7 +192,7 @@ public final class WorkPrepare
     requireThat(input, "input").isNotNull();
     warnings.clear();
 
-    Path projectDir = scope.getClaudeProjectDir();
+    Path projectPath = scope.getProjectPath();
     JsonMapper mapper = scope.getJsonMapper();
 
     // Step 1: Verify CAT structure
@@ -248,7 +249,7 @@ public final class WorkPrepare
     warnings.addAll(discovery.getWarnings());
 
     // Handle non-found statuses
-    String nonFoundResult = handleNonFoundResult(discoveryResult, mapper,
+    String nonFoundResult = handleNonFoundResult(input, discoveryResult, mapper,
       preBuiltIssueIndex, preBuiltBareNameIndex);
     if (!nonFoundResult.isEmpty())
       return nonFoundResult;
@@ -278,13 +279,13 @@ public final class WorkPrepare
     }
 
     // Get target branch (current branch in project dir)
-    String targetBranch = GitCommands.getCurrentBranch(projectDir.toString());
+    String targetBranch = GitCommands.getCurrentBranch(projectPath.toString());
 
     // Decomposed parents with all sub-issues closed require only closure work — skip OVERSIZED check
     if (found.isDecomposedComplete())
     {
       String issueBranch = buildIssueBranch(major, minor, found.patch(), issueName);
-      return executeWhileLocked(input, projectDir, mapper, issueId, major, minor, issueName,
+      return executeWhileLocked(input, projectPath, mapper, issueId, major, minor, issueName,
         issuePath, targetBranch, issuePath.resolve("PLAN.md"), 5000, issueBranch);
     }
 
@@ -308,7 +309,7 @@ public final class WorkPrepare
 
     // Steps 5-10: Create worktree and build READY result
     String issueBranch = buildIssueBranch(major, minor, found.patch(), issueName);
-    return executeWhileLocked(input, projectDir, mapper, issueId, major, minor, issueName,
+    return executeWhileLocked(input, projectPath, mapper, issueId, major, minor, issueName,
       issuePath, targetBranch, planPath, estimatedTokens, issueBranch);
   }
 
@@ -317,7 +318,14 @@ public final class WorkPrepare
    * <p>
    * Returns an empty string if the result is {@code Found}, indicating the caller should
    * continue with worktree creation.
+   * <p>
+   * For {@code ExistingWorktree} results, if the current session owns the lock, this method
+   * returns a {@code READY} response using the existing worktree path (resume semantics).
+   * If a different session owns the lock, the lock check fires first in {@code IssueDiscovery}
+   * and returns {@code NotExecutable}, so this branch is only reached when the lock is unlocked
+   * or owned by the current session.
    *
+   * @param input the preparation input parameters
    * @param discoveryResult the discovery result to handle
    * @param mapper the JSON mapper for serialization
    * @param preBuiltIssueIndex a pre-built issue index to reuse (may be null to trigger a fresh scan)
@@ -325,7 +333,8 @@ public final class WorkPrepare
    * @return a JSON response string if the result is not Found, or an empty string if Found
    * @throws IOException if file operations or JSON serialization fail
    */
-  private String handleNonFoundResult(IssueDiscovery.DiscoveryResult discoveryResult,
+  private String handleNonFoundResult(PrepareInput input,
+    IssueDiscovery.DiscoveryResult discoveryResult,
     JsonMapper mapper,
     Map<String, IssueIndexEntry> preBuiltIssueIndex,
     Map<String, List<String>> preBuiltBareNameIndex) throws IOException
@@ -397,8 +406,19 @@ public final class WorkPrepare
           String.join(", ", blocked.blockingIssues())));
     }
 
-    if (discoveryResult instanceof IssueDiscovery.DiscoveryResult.ExistingWorktree existingWorktree)
+    if (discoveryResult instanceof ExistingWorktree existingWorktree)
     {
+      // When the lock check in IssueDiscovery fires before the worktree check, a different-session
+      // lock returns NotExecutable (LOCKED). Reaching this branch means the lock is either unlocked
+      // or owned by the current session. Check for current-session ownership to enable seamless resume.
+      IssueLock issueLock = new IssueLock(scope);
+      IssueLock.LockResult lockCheck = issueLock.check(existingWorktree.issueId());
+      Path projectPath = scope.getProjectPath();
+      if (lockCheck instanceof IssueLock.LockResult.CheckLocked locked &&
+        locked.sessionId().equals(input.sessionId()))
+      {
+        return resumeWithExistingWorktree(existingWorktree, projectPath, mapper);
+      }
       return mapper.writeValueAsString(Map.of(
         "status", "ERROR",
         "message", "Issue " + existingWorktree.issueId() + " has an existing worktree at: " +
@@ -426,7 +446,7 @@ public final class WorkPrepare
    * Executes the worktree creation and metadata collection steps after a Found result.
    *
    * @param input the preparation input parameters
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param mapper the JSON mapper for serialization
    * @param issueId the qualified issue ID
    * @param major the major version number
@@ -440,7 +460,7 @@ public final class WorkPrepare
    * @return JSON string with READY or ERROR result
    * @throws IOException if file operations fail
    */
-  private String executeWhileLocked(PrepareInput input, Path projectDir, JsonMapper mapper,
+  private String executeWhileLocked(PrepareInput input, Path projectPath, JsonMapper mapper,
     String issueId, String major, String minor,
     String issueName, Path issuePath, String targetBranch, Path planPath, int estimatedTokens,
     String issueBranch) throws IOException
@@ -449,7 +469,7 @@ public final class WorkPrepare
     Path worktreePath;
     try
     {
-      worktreePath = createWorktree(projectDir, issueBranch);
+      worktreePath = createWorktree(projectPath, issueBranch);
     }
     catch (IOException e)
     {
@@ -464,14 +484,14 @@ public final class WorkPrepare
     // STATE.md exists untracked in the main workspace but is absent from the worktree.
     try
     {
-      if (!stateFileExistsInWorktree(worktreePath, issuePath, projectDir))
+      if (!stateFileExistsInWorktree(worktreePath, issuePath, projectPath))
       {
-        createStateFileAndCommit(worktreePath, issuePath, projectDir, targetBranch);
+        createStateFileAndCommit(worktreePath, issuePath, projectPath, targetBranch);
       }
     }
     catch (IOException e)
     {
-      cleanupWorktree(projectDir, worktreePath);
+      cleanupWorktree(projectPath, worktreePath);
       releaseLock(issueId, input.sessionId());
       return mapper.writeValueAsString(Map.of(
         "status", "ERROR",
@@ -484,7 +504,7 @@ public final class WorkPrepare
       String actualBranch = GitCommands.getCurrentBranch(worktreePath.toString());
       if (!actualBranch.equals(issueBranch))
       {
-        cleanupWorktree(projectDir, worktreePath);
+        cleanupWorktree(projectPath, worktreePath);
         releaseLock(issueId, input.sessionId());
         return mapper.writeValueAsString(Map.of(
           "status", "ERROR",
@@ -494,7 +514,7 @@ public final class WorkPrepare
     }
     catch (IOException e)
     {
-      cleanupWorktree(projectDir, worktreePath);
+      cleanupWorktree(projectPath, worktreePath);
       releaseLock(issueId, input.sessionId());
       return mapper.writeValueAsString(Map.of(
         "status", "ERROR",
@@ -508,7 +528,7 @@ public final class WorkPrepare
     }
     catch (IOException e)
     {
-      cleanupWorktree(projectDir, worktreePath);
+      cleanupWorktree(projectPath, worktreePath);
       releaseLock(issueId, input.sessionId());
       return mapper.writeValueAsString(Map.of(
         "status", "ERROR",
@@ -523,7 +543,7 @@ public final class WorkPrepare
     }
     catch (IOException e)
     {
-      cleanupWorktree(projectDir, worktreePath);
+      cleanupWorktree(projectPath, worktreePath);
       releaseLock(issueId, input.sessionId());
       return mapper.writeValueAsString(Map.of(
         "status", "ERROR",
@@ -531,17 +551,17 @@ public final class WorkPrepare
     }
 
     // Step 8: Check target branch for suspicious commits
-    String suspiciousCommits = checkTargetBranchCommits(projectDir, targetBranch, issueName, planPath);
+    String suspiciousCommits = checkTargetBranchCommits(projectPath, targetBranch, issueName, planPath);
 
     // Step 9: Update STATE.md in worktree
     // STATE.md now always exists in the worktree (created in Step 5.5 if needed)
     try
     {
-      updateStateMd(worktreePath, issuePath, projectDir, targetBranch);
+      updateStateMd(worktreePath, issuePath, projectPath, targetBranch);
     }
     catch (IOException e)
     {
-      cleanupWorktree(projectDir, worktreePath);
+      cleanupWorktree(projectPath, worktreePath);
       releaseLock(issueId, input.sessionId());
       return mapper.writeValueAsString(Map.of(
         "status", "ERROR",
@@ -559,7 +579,7 @@ public final class WorkPrepare
     }
     catch (IOException e)
     {
-      cleanupWorktree(projectDir, worktreePath);
+      cleanupWorktree(projectPath, worktreePath);
       releaseLock(issueId, input.sessionId());
       return mapper.writeValueAsString(Map.of(
         "status", "ERROR",
@@ -574,9 +594,92 @@ public final class WorkPrepare
     result.put("major", major);
     result.put("minor", minor);
     result.put("issue_name", issueName);
-    Path relativeIssuePath = projectDir.relativize(issuePath);
+    Path relativeIssuePath = projectPath.relativize(issuePath);
     result.put("issue_path", worktreePath.resolve(relativeIssuePath).toString());
     result.put("worktree_path", worktreePath.toString());
+    result.put("issue_branch", issueBranch);
+    result.put("target_branch", targetBranch);
+    result.put("estimated_tokens", estimatedTokens);
+    result.put("percent_of_threshold", (int) ((estimatedTokens / (double) TOKEN_LIMIT) * 100));
+    result.put("goal", goal);
+    result.put("preconditions", preconditions);
+    result.put("approach_selected", "auto");
+    result.put("lock_acquired", true);
+    result.put("has_existing_work", existingWork.hasExistingWork());
+    result.put("existing_commits", existingWork.existingCommits());
+    result.put("commit_summary", existingWork.commitSummary());
+
+    if (!suspiciousCommits.isEmpty())
+    {
+      result.put("potentially_complete", true);
+      result.put("suspicious_commits", suspiciousCommits);
+    }
+
+    if (!warnings.isEmpty())
+      result.put("warnings", warnings);
+
+    return mapper.writeValueAsString(result);
+  }
+
+  /**
+   * Builds a READY JSON response by reusing an already-existing worktree owned by the current session.
+   * <p>
+   * Called when {@code IssueDiscovery} returns an {@code ExistingWorktree} result and the lock is
+   * confirmed to be owned by the current session. All metadata (tokens, goal, preconditions,
+   * existing work) is recomputed from the existing worktree path using the same helpers used during
+   * initial worktree creation.
+   *
+   * @param existing the existing-worktree discovery result
+   * @param projectPath the main project root directory
+   * @param mapper the JSON mapper for serialization
+   * @return JSON string with READY result or OVERSIZED result if token limit exceeded
+   * @throws IOException if file operations or JSON serialization fail
+   */
+  private String resumeWithExistingWorktree(
+    IssueDiscovery.DiscoveryResult.ExistingWorktree existing,
+    Path projectPath,
+    JsonMapper mapper) throws IOException
+  {
+    String issueBranch = buildIssueBranch(existing.major(), existing.minor(), existing.patch(),
+      existing.issueName());
+    String targetBranch = GitCommands.getCurrentBranch(projectPath.toString());
+
+    // The issuePath from IssueDiscovery points to the main-workspace issue directory.
+    // Recompute the equivalent path inside the existing worktree so PLAN.md can be read.
+    Path mainIssuePath = Path.of(existing.issuePath());
+    Path relativeIssuePath = projectPath.relativize(mainIssuePath);
+    Path worktreePath = Path.of(existing.worktreePath());
+    Path planPath = worktreePath.resolve(relativeIssuePath).resolve("PLAN.md");
+
+    int estimatedTokens = estimateTokens(planPath);
+
+    if (estimatedTokens > TOKEN_LIMIT)
+    {
+      Map<String, Object> oversizedResult = new LinkedHashMap<>();
+      oversizedResult.put("status", "OVERSIZED");
+      oversizedResult.put("message", "Issue estimated at " + estimatedTokens +
+        " tokens (limit: " + TOKEN_LIMIT + ")");
+      oversizedResult.put("suggestion", "Use /cat:decompose-issue to break into smaller issues");
+      oversizedResult.put("issue_id", existing.issueId());
+      oversizedResult.put("estimated_tokens", estimatedTokens);
+      return mapper.writeValueAsString(oversizedResult);
+    }
+
+    ExistingWorkChecker.CheckResult existingWork =
+      ExistingWorkChecker.check(existing.worktreePath(), targetBranch);
+    String suspiciousCommits =
+      checkTargetBranchCommits(projectPath, targetBranch, existing.issueName(), planPath);
+    String goal = IssueGoalReader.readGoalFromPlan(planPath);
+    List<String> preconditions = readPreconditionsFromPlan(planPath);
+
+    Map<String, Object> result = new LinkedHashMap<>();
+    result.put("status", "READY");
+    result.put("issue_id", existing.issueId());
+    result.put("major", existing.major());
+    result.put("minor", existing.minor());
+    result.put("issue_name", existing.issueName());
+    result.put("issue_path", worktreePath.resolve(relativeIssuePath).toString());
+    result.put("worktree_path", existing.worktreePath());
     result.put("issue_branch", issueBranch);
     result.put("target_branch", targetBranch);
     result.put("estimated_tokens", estimatedTokens);
@@ -1162,7 +1265,7 @@ public final class WorkPrepare
   private List<Map<String, Object>> findLockedIssues() throws IOException
   {
     List<Map<String, Object>> lockedIssues = new ArrayList<>();
-    Path locksDir = scope.getProjectCatDir().resolve("locks");
+    Path locksDir = scope.getCatWorkPath().resolve("locks");
 
     if (!Files.isDirectory(locksDir))
       return lockedIssues;
@@ -1289,21 +1392,21 @@ public final class WorkPrepare
    * <p>
    * If the branch already exists (stale from a previous session), it is deleted first.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param issueBranch the branch name for the issue
    * @return the path to the created worktree
    * @throws IOException if worktree creation fails
    */
-  private Path createWorktree(Path projectDir, String issueBranch) throws IOException
+  private Path createWorktree(Path projectPath, String issueBranch) throws IOException
   {
-    Path worktreePath = scope.getProjectCatDir().resolve("worktrees").resolve(issueBranch);
+    Path worktreePath = scope.getCatWorkPath().resolve("worktrees").resolve(issueBranch);
 
     // Check if branch already exists (stale from previous session)
     try
     {
-      GitCommands.runGit(projectDir, "rev-parse", "--verify", issueBranch);
+      GitCommands.runGit(projectPath, "rev-parse", "--verify", issueBranch);
       // Branch exists - delete it first
-      GitCommands.runGit(projectDir, "branch", "-D", issueBranch);
+      GitCommands.runGit(projectPath, "branch", "-D", issueBranch);
     }
     catch (IOException _)
     {
@@ -1311,7 +1414,7 @@ public final class WorkPrepare
     }
 
     // Create worktree
-    GitCommands.runGit(projectDir, "worktree", "add", "-b", issueBranch, worktreePath.toString(),
+    GitCommands.runGit(projectPath, "worktree", "add", "-b", issueBranch, worktreePath.toString(),
       "HEAD");
 
     return worktreePath;
@@ -1328,13 +1431,13 @@ public final class WorkPrepare
    * </ol>
    * Planning commits (e.g., {@code planning: add issue ...}) are filtered out as false positives.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param targetBranch the target branch to search
    * @param issueName the issue name to search for in commit messages
    * @param planPath the path to PLAN.md, used to extract planned files for overlap detection
    * @return a newline-separated list of suspicious commit lines, or empty string if none found
    */
-  private String checkTargetBranchCommits(Path projectDir, String targetBranch, String issueName,
+  private String checkTargetBranchCommits(Path projectPath, String targetBranch, String issueName,
     Path planPath)
   {
     List<String> planningPrefixes = List.of(
@@ -1346,7 +1449,7 @@ public final class WorkPrepare
     // Strategy 1: message-based search
     try
     {
-      String logOutput = GitCommands.runGit(projectDir, "log", "--oneline",
+      String logOutput = GitCommands.runGit(projectPath, "log", "--oneline",
         "--grep=" + issueName, targetBranch, "-5");
 
       for (String line : logOutput.split("\n"))
@@ -1409,7 +1512,7 @@ public final class WorkPrepare
       try
       {
         // Get the last 20 commits on base to check for file overlap
-        String logOutput = GitCommands.runGit(projectDir, "log", "--oneline", targetBranch, "-20");
+        String logOutput = GitCommands.runGit(projectPath, "log", "--oneline", targetBranch, "-20");
         for (String line : logOutput.split("\n"))
         {
           if (line.isBlank())
@@ -1436,7 +1539,7 @@ public final class WorkPrepare
             continue;
 
           // Check if this commit touched any of the planned files
-          String changedFiles = GitCommands.runGit(projectDir, "diff-tree", "--no-commit-id",
+          String changedFiles = GitCommands.runGit(projectPath, "diff-tree", "--no-commit-id",
             "-r", "--name-only", hash);
           for (String changedFile : changedFiles.split("\n"))
           {
@@ -1530,15 +1633,15 @@ public final class WorkPrepare
    *
    * @param worktreePath the path to the worktree
    * @param issuePath the absolute path to the issue directory in the main working tree
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param targetBranch the target branch name for this issue
    * @throws IOException if file operations fail
    */
-  private void updateStateMd(Path worktreePath, Path issuePath, Path projectDir, String targetBranch)
+  private void updateStateMd(Path worktreePath, Path issuePath, Path projectPath, String targetBranch)
     throws IOException
   {
     // STATE.md is in the worktree's copy of the issue directory
-    Path relativeIssuePath = projectDir.relativize(issuePath);
+    Path relativeIssuePath = projectPath.relativize(issuePath);
     Path stateFile = worktreePath.resolve(relativeIssuePath).resolve("STATE.md");
 
     if (!Files.isRegularFile(stateFile))
@@ -1572,14 +1675,14 @@ public final class WorkPrepare
    *
    * @param worktreePath the path to the worktree
    * @param issuePath the absolute path to the issue directory in the main working tree
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param targetBranch the target branch name for this issue
    * @throws IOException if file operations fail
    */
-  private void createStateMd(Path worktreePath, Path issuePath, Path projectDir, String targetBranch)
+  private void createStateMd(Path worktreePath, Path issuePath, Path projectPath, String targetBranch)
     throws IOException
   {
-    Path relativeIssuePath = projectDir.relativize(issuePath);
+    Path relativeIssuePath = projectPath.relativize(issuePath);
     Path issueDir = worktreePath.resolve(relativeIssuePath);
     Files.createDirectories(issueDir);
     Path stateFile = issueDir.resolve("STATE.md");
@@ -1602,14 +1705,14 @@ public final class WorkPrepare
    *
    * @param worktreePath the path to the worktree
    * @param issuePath the absolute path to the issue directory in the main working tree
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @return true if STATE.md exists in the worktree, false otherwise
    * @throws IOException if file operations fail
    */
-  private boolean stateFileExistsInWorktree(Path worktreePath, Path issuePath, Path projectDir)
+  private boolean stateFileExistsInWorktree(Path worktreePath, Path issuePath, Path projectPath)
     throws IOException
   {
-    Path relativeIssuePath = projectDir.relativize(issuePath);
+    Path relativeIssuePath = projectPath.relativize(issuePath);
     Path stateFile = worktreePath.resolve(relativeIssuePath).resolve("STATE.md");
     return Files.isRegularFile(stateFile);
   }
@@ -1623,18 +1726,18 @@ public final class WorkPrepare
    *
    * @param worktreePath the path to the worktree
    * @param issuePath the absolute path to the issue directory in the main working tree
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param targetBranch the target branch name for this issue
    * @throws IOException if file operations or git operations fail
    */
-  private void createStateFileAndCommit(Path worktreePath, Path issuePath, Path projectDir,
+  private void createStateFileAndCommit(Path worktreePath, Path issuePath, Path projectPath,
     String targetBranch) throws IOException
   {
     // Create the STATE.md file in the worktree
-    createStateMd(worktreePath, issuePath, projectDir, targetBranch);
+    createStateMd(worktreePath, issuePath, projectPath, targetBranch);
 
     // Commit STATE.md to the issue branch
-    Path relativeIssuePath = projectDir.relativize(issuePath);
+    Path relativeIssuePath = projectPath.relativize(issuePath);
     Path relativeStateFile = relativeIssuePath.resolve("STATE.md");
     commitStateFile(worktreePath, relativeStateFile, "planning: create STATE.md for new issue");
   }
@@ -1753,14 +1856,14 @@ public final class WorkPrepare
   /**
    * Removes a worktree on failure (best-effort, errors are swallowed).
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param worktreePath the path to the worktree to remove
    */
-  private void cleanupWorktree(Path projectDir, Path worktreePath)
+  private void cleanupWorktree(Path projectPath, Path worktreePath)
   {
     try
     {
-      GitCommands.runGit(projectDir, "worktree", "remove", worktreePath.toString(), "--force");
+      GitCommands.runGit(projectPath, "worktree", "remove", worktreePath.toString(), "--force");
     }
     catch (IOException _)
     {

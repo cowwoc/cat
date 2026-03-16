@@ -47,7 +47,7 @@ public final class PreReadHookTest
    */
   private static void writeLockFile(JvmScope scope, String issueId, String sessionId) throws IOException
   {
-    Path lockDir = scope.getProjectCatDir().resolve("locks");
+    Path lockDir = scope.getCatWorkPath().resolve("locks");
     Files.createDirectories(lockDir);
     String content = """
       {"session_id": "%s", "worktrees": {}, "created_at": 1000000, "created_iso": "2026-01-01T00:00:00Z"}
@@ -65,7 +65,7 @@ public final class PreReadHookTest
    */
   private static Path createWorktreeDir(JvmScope scope, String issueId) throws IOException
   {
-    Path worktreeDir = scope.getProjectCatDir().resolve("worktrees").resolve(issueId);
+    Path worktreeDir = scope.getCatWorkPath().resolve("worktrees").resolve(issueId);
     Files.createDirectories(worktreeDir);
     return worktreeDir;
   }
@@ -104,16 +104,16 @@ public final class PreReadHookTest
   @Test
   public void readToMainWorkspaceIsBlockedWhenWorktreeActive() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("prh-test-");
+    Path projectPath = Files.createTempDirectory("prh-test-");
     Path pluginRoot = Files.createTempDirectory("prh-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       writeLockFile(scope, ISSUE_ID, SESSION_ID);
       createWorktreeDir(scope, ISSUE_ID);
 
       JsonMapper mapper = scope.getJsonMapper();
       // Attempt to read a file in the main workspace (outside worktree)
-      Path mainWorkspaceFile = projectDir.resolve("plugin/SomeClass.java");
+      Path mainWorkspaceFile = projectPath.resolve("plugin/SomeClass.java");
       HookInput input = readToolInput(mapper, "Read", mainWorkspaceFile.toString(), SESSION_ID);
       HookOutput output = new HookOutput(scope);
 
@@ -127,7 +127,7 @@ public final class PreReadHookTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -140,9 +140,9 @@ public final class PreReadHookTest
   @Test
   public void readInsideWorktreeIsAllowed() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("prh-test-");
+    Path projectPath = Files.createTempDirectory("prh-test-");
     Path pluginRoot = Files.createTempDirectory("prh-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       writeLockFile(scope, ISSUE_ID, SESSION_ID);
       Path worktreeDir = createWorktreeDir(scope, ISSUE_ID);
@@ -164,7 +164,7 @@ public final class PreReadHookTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -179,9 +179,9 @@ public final class PreReadHookTest
   @Test
   public void globToolIsNotBlockedByPreReadHook() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("prh-test-");
+    Path projectPath = Files.createTempDirectory("prh-test-");
     Path pluginRoot = Files.createTempDirectory("prh-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       writeLockFile(scope, ISSUE_ID, SESSION_ID);
       createWorktreeDir(scope, ISSUE_ID);
@@ -193,7 +193,7 @@ public final class PreReadHookTest
           "tool_name": "Glob",
           "tool_input": {"pattern": "%s"},
           "session_id": "%s"
-        }""".formatted(projectDir.resolve("**/*.java").toString(), SESSION_ID);
+        }""".formatted(projectPath.resolve("**/*.java").toString(), SESSION_ID);
       HookInput input = HookInput.readFrom(mapper,
         new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
       HookOutput output = new HookOutput(scope);
@@ -208,7 +208,7 @@ public final class PreReadHookTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -221,13 +221,13 @@ public final class PreReadHookTest
   @Test
   public void readIsAllowedWhenNoLockExists() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("prh-test-");
+    Path projectPath = Files.createTempDirectory("prh-test-");
     Path pluginRoot = Files.createTempDirectory("prh-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       // No lock file created — no active worktree
       JsonMapper mapper = scope.getJsonMapper();
-      Path anyFile = projectDir.resolve("plugin/SomeClass.java");
+      Path anyFile = projectPath.resolve("plugin/SomeClass.java");
       HookInput input = readToolInput(mapper, "Read", anyFile.toString(), SESSION_ID);
       HookOutput output = new HookOutput(scope);
 
@@ -240,7 +240,7 @@ public final class PreReadHookTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }

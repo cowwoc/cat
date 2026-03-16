@@ -47,7 +47,7 @@ public final class RemindGitSquashTest
     try (JvmScope scope = new TestJvmScope())
     {
       RemindGitSquash handler = new RemindGitSquash();
-      String worktreePath = scope.getProjectCatDir().resolve("worktrees").resolve("2.1-my-issue").toString();
+      String worktreePath = scope.getCatWorkPath().resolve("worktrees").resolve("2.1-my-issue").toString();
       String command = "git -C " + worktreePath + " reset --soft v2.1";
 
       BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));

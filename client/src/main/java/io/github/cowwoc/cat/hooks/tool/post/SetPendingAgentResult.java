@@ -80,7 +80,7 @@ public final class SetPendingAgentResult implements PostToolHandler
 
       // Only applies when an active worktree lock exists (work-with-issue context)
       WorktreeContext context = WorktreeContext.forSession(
-        scope.getProjectCatDir(), scope.getClaudeProjectDir(), scope.getJsonMapper(), sessionId);
+        scope.getCatWorkPath(), scope.getProjectPath(), scope.getJsonMapper(), sessionId);
       if (context == null)
         return Result.allow();
 
@@ -103,7 +103,7 @@ public final class SetPendingAgentResult implements PostToolHandler
         return Result.allow();
 
       // Create the flag file
-      Path flagPath = scope.getSessionBasePath().resolve(sessionId).resolve("pending-agent-result");
+      Path flagPath = scope.getClaudeSessionsPath().resolve(sessionId).resolve("pending-agent-result");
       Files.createDirectories(flagPath.getParent());
       Files.writeString(flagPath, "");
     }

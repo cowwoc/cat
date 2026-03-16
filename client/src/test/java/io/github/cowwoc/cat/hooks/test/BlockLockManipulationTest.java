@@ -31,7 +31,7 @@ public final class BlockLockManipulationTest
     try (JvmScope scope = new TestJvmScope())
     {
       BlockLockManipulation handler = new BlockLockManipulation();
-      String locksPath = scope.getProjectCatDir().resolve("locks").resolve("task-123.lock").toString();
+      String locksPath = scope.getCatWorkPath().resolve("locks").resolve("task-123.lock").toString();
       String command = "rm -f " + locksPath;
 
       BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
@@ -52,7 +52,7 @@ public final class BlockLockManipulationTest
     try (JvmScope scope = new TestJvmScope())
     {
       BlockLockManipulation handler = new BlockLockManipulation();
-      String locksPath = scope.getProjectCatDir().resolve("locks").resolve("my-issue.lock").toString();
+      String locksPath = scope.getCatWorkPath().resolve("locks").resolve("my-issue.lock").toString();
       String command = "rm " + locksPath;
 
       BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
@@ -73,7 +73,7 @@ public final class BlockLockManipulationTest
     try (JvmScope scope = new TestJvmScope())
     {
       BlockLockManipulation handler = new BlockLockManipulation();
-      String locksDir = scope.getProjectCatDir().resolve("locks").toString() + "/";
+      String locksDir = scope.getCatWorkPath().resolve("locks").toString() + "/";
       String command = "rm -rf " + locksDir;
 
       BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
@@ -95,7 +95,7 @@ public final class BlockLockManipulationTest
     try (JvmScope scope = new TestJvmScope())
     {
       BlockLockManipulation handler = new BlockLockManipulation();
-      String locksDir = scope.getProjectCatDir().resolve("locks").toString() + "/";
+      String locksDir = scope.getCatWorkPath().resolve("locks").toString() + "/";
       String command = "rm -rf " + locksDir;
 
       BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
@@ -130,7 +130,7 @@ public final class BlockLockManipulationTest
     try (JvmScope scope = new TestJvmScope())
     {
       BlockLockManipulation handler = new BlockLockManipulation();
-      String locksPath = scope.getProjectCatDir().resolve("locks").resolve("task-456.lock").toString();
+      String locksPath = scope.getCatWorkPath().resolve("locks").resolve("task-456.lock").toString();
       String command = "rm -rf " + locksPath;
 
       BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
@@ -151,7 +151,7 @@ public final class BlockLockManipulationTest
     try (JvmScope scope = new TestJvmScope())
     {
       BlockLockManipulation handler = new BlockLockManipulation();
-      String locksDir = scope.getProjectCatDir().resolve("locks").toString();
+      String locksDir = scope.getCatWorkPath().resolve("locks").toString();
       String command = "rm -r " + locksDir;
 
       BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
@@ -173,7 +173,7 @@ public final class BlockLockManipulationTest
     try (JvmScope scope = new TestJvmScope())
     {
       BlockLockManipulation handler = new BlockLockManipulation();
-      String locksPath = scope.getProjectCatDir().resolve("locks").resolve("task-123.lock").toString();
+      String locksPath = scope.getCatWorkPath().resolve("locks").resolve("task-123.lock").toString();
       String command = "rm -f " + locksPath;
 
       BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
@@ -194,7 +194,7 @@ public final class BlockLockManipulationTest
     try (JvmScope scope = new TestJvmScope())
     {
       BlockLockManipulation handler = new BlockLockManipulation();
-      String locksDir = scope.getProjectCatDir().resolve("locks").toString() + "/";
+      String locksDir = scope.getCatWorkPath().resolve("locks").toString() + "/";
       String command = "rm -rf " + locksDir;
 
       BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));

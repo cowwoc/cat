@@ -132,9 +132,9 @@ public final class SubagentStartHookTest
   @Test
   public void subagentStartHookReturnsEmptyWhenNoSkills() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("cat-test-subagent-");
+    Path projectPath = Files.createTempDirectory("cat-test-subagent-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
@@ -148,7 +148,7 @@ public final class SubagentStartHookTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -163,7 +163,7 @@ public final class SubagentStartHookTest
   @Test
   public void subagentStartHookInjectsSkillListingWhenSkillsPresent() throws IOException
   {
-    // claudeConfigDir == claudeProjectDir in TestJvmScope(projectDir, pluginRoot)
+    // claudeConfigDir == claudeProjectPath in TestJvmScope(projectPath, pluginRoot)
     Path configDir = Files.createTempDirectory("cat-test-subagent-config-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
     try
@@ -235,16 +235,16 @@ public final class SubagentStartHookTest
   @Test
   public void getMainAgentSkillListingReturnsEmptyStringWhenNoSkills() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("cat-test-subagent-");
+    Path projectPath = Files.createTempDirectory("cat-test-subagent-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       String listing = SkillDiscovery.getMainAgentSkillListing(scope);
       requireThat(listing, "listing").isEmpty();
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -345,11 +345,11 @@ public final class SubagentStartHookTest
   @Test
   public void getCatRulesBlankSubagentTypeMatchesAllRule() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("cat-test-getrules-blank-");
+    Path projectPath = Files.createTempDirectory("cat-test-getrules-blank-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
-      Path rulesDir = scope.getClaudeProjectDir().resolve(".cat/rules");
+      Path rulesDir = scope.getProjectPath().resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       // No subAgents frontmatter → null → matches all subagents
       Files.writeString(rulesDir.resolve("universal.md"), """
@@ -371,7 +371,7 @@ public final class SubagentStartHookTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -385,11 +385,11 @@ public final class SubagentStartHookTest
   @Test
   public void getCatRulesPopulatedSubagentTypeMatchesSpecificRule() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("cat-test-getrules-specific-");
+    Path projectPath = Files.createTempDirectory("cat-test-getrules-specific-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
-      Path rulesDir = scope.getClaudeProjectDir().resolve(".cat/rules");
+      Path rulesDir = scope.getProjectPath().resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("typed-rule.md"), """
         ---
@@ -411,7 +411,7 @@ public final class SubagentStartHookTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -425,11 +425,11 @@ public final class SubagentStartHookTest
   @Test
   public void getCatRulesPopulatedSubagentTypeExcludesNonMatchingRule() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("cat-test-getrules-nomatch-");
+    Path projectPath = Files.createTempDirectory("cat-test-getrules-nomatch-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
-      Path rulesDir = scope.getClaudeProjectDir().resolve(".cat/rules");
+      Path rulesDir = scope.getProjectPath().resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("typed-rule.md"), """
         ---
@@ -452,7 +452,7 @@ public final class SubagentStartHookTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -468,9 +468,9 @@ public final class SubagentStartHookTest
   @Test
   public void getAgentIdContextIncludedWhenAgentIdAndSessionIdPresent() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("cat-test-agent-id-present-");
+    Path projectPath = Files.createTempDirectory("cat-test-agent-id-present-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
@@ -484,7 +484,7 @@ public final class SubagentStartHookTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -498,9 +498,9 @@ public final class SubagentStartHookTest
     expectedExceptionsMessageRegExp = ".*agent_id.*")
   public void getAgentIdContextAbsentWhenAgentIdBlank() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("cat-test-agent-id-blank-");
+    Path projectPath = Files.createTempDirectory("cat-test-agent-id-blank-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
@@ -510,7 +510,7 @@ public final class SubagentStartHookTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -524,16 +524,16 @@ public final class SubagentStartHookTest
     expectedExceptionsMessageRegExp = ".*sessionId is empty.*")
   public void getAgentIdContextAbsentWhenSessionIdBlank() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("cat-test-session-id-blank-");
+    Path projectPath = Files.createTempDirectory("cat-test-session-id-blank-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       JsonMapper mapper = scope.getJsonMapper();
       createInput(mapper, "{\"session_id\": \"\", \"agent_id\": \"subagent-xyz\"}");
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }

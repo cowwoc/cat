@@ -47,9 +47,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputContainsHeader() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -72,9 +72,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputContainsWorktreesSection() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -97,9 +97,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputContainsLocksSection() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -122,9 +122,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputContainsBranchesSection() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -147,9 +147,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputContainsStaleRemotesSection() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -172,9 +172,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputShowsContextFile() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -197,9 +197,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputShowsNoneForMissingContext() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -222,9 +222,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputIncludesWorktreeData() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<Worktree> worktrees = List.of(
@@ -252,9 +252,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputIncludesLockData() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<Lock> locks = List.of(
@@ -281,9 +281,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputIncludesBranchData() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<String> branches = List.of("2.0-task1", "2.0-task2");
@@ -308,9 +308,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputIncludesStaleRemoteData() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<StaleRemote> remotes = List.of(
@@ -337,9 +337,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputShowsNoneForEmptyWorktrees() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -362,9 +362,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputIncludesCounts() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -388,9 +388,9 @@ public class GetCleanupOutputTest
   @Test
   public void planOutputContainsHeader() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getPlanOutput(
@@ -411,9 +411,9 @@ public class GetCleanupOutputTest
   @Test
   public void planOutputIncludesWorktreesToRemove() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<WorktreeToRemove> worktrees = List.of(
@@ -437,9 +437,9 @@ public class GetCleanupOutputTest
   @Test
   public void planOutputIncludesBranchesToRemove() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<String> branches = List.of("2.0-old-branch");
@@ -462,9 +462,9 @@ public class GetCleanupOutputTest
   @Test
   public void planOutputIncludesStaleRemotes() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<StaleRemote> remotes = List.of(
@@ -488,9 +488,9 @@ public class GetCleanupOutputTest
   @Test
   public void planOutputContainsConfirmationPrompt() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getPlanOutput(
@@ -511,9 +511,9 @@ public class GetCleanupOutputTest
   @Test
   public void planOutputContainsTotalCount() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getPlanOutput(
@@ -535,9 +535,9 @@ public class GetCleanupOutputTest
   @Test
   public void planOutputShowsNoneForEmptySections() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getPlanOutput(
@@ -558,9 +558,9 @@ public class GetCleanupOutputTest
   @Test
   public void planOutputContainsLocksToRemoveSection() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getPlanOutput(
@@ -581,9 +581,9 @@ public class GetCleanupOutputTest
   @Test
   public void planOutputLabelsStaleLockAsStale() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       // 14_400 seconds = exactly 4 hours (stale threshold)
@@ -605,9 +605,9 @@ public class GetCleanupOutputTest
   @Test
   public void planOutputLabelsRecentLockAsRecent() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       // 3600 seconds = 1 hour (below stale threshold)
@@ -629,9 +629,9 @@ public class GetCleanupOutputTest
   @Test
   public void planOutputDisplaysLockSessionAndAge() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       // Use a full UUID-style session ID; output should show only first 8 chars
@@ -656,9 +656,9 @@ public class GetCleanupOutputTest
   @Test
   public void planOutputDisplaysWorktreeAgeAndClassification() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       // 18_000 seconds = 5 hours (stale)
@@ -683,9 +683,9 @@ public class GetCleanupOutputTest
   @Test
   public void planOutputShowsStaleAndRecentCounts() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getPlanOutput(
@@ -708,9 +708,9 @@ public class GetCleanupOutputTest
   @Test
   public void planOutputFormatsAgeInHoursAndMinutes() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       // 5h 30m = 19_800 seconds
@@ -733,9 +733,9 @@ public class GetCleanupOutputTest
   @Test
   public void verifyOutputContainsHeader() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -756,9 +756,9 @@ public class GetCleanupOutputTest
   @Test
   public void verifyOutputShowsRemovedCounts() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -780,9 +780,9 @@ public class GetCleanupOutputTest
   @Test
   public void verifyOutputShowsZeroCounts() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -806,9 +806,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputHasBoxStructure() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -831,9 +831,9 @@ public class GetCleanupOutputTest
   @Test
   public void planOutputContainsBoxStructure() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getPlanOutput(
@@ -854,9 +854,9 @@ public class GetCleanupOutputTest
   @Test
   public void verifyOutputContainsBoxStructure() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -883,9 +883,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputIsNonEmpty() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -914,9 +914,9 @@ public class GetCleanupOutputTest
   @Test
   public void planOutputIsNonEmpty() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getPlanOutput(
@@ -942,9 +942,9 @@ public class GetCleanupOutputTest
   @Test
   public void verifyOutputIsNonEmpty() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -965,9 +965,9 @@ public class GetCleanupOutputTest
   @Test
   public void verifyOutputShowsRemainingWorktrees() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -988,9 +988,9 @@ public class GetCleanupOutputTest
   @Test
   public void verifyOutputShowsRemainingBranches() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -1011,9 +1011,9 @@ public class GetCleanupOutputTest
   @Test
   public void verifyOutputShowsNoneForEmptyRemainingLocks() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -1037,9 +1037,9 @@ public class GetCleanupOutputTest
   @Test
   public void verifyOutputShowsNoneForAllEmptyRemaining() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -1063,9 +1063,9 @@ public class GetCleanupOutputTest
   @Test
   public void parseWorktreesPorcelainHandlesEmptyInput() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<Worktree> result = handler.parseWorktreesPorcelain("");
@@ -1082,9 +1082,9 @@ public class GetCleanupOutputTest
   @Test
   public void parseWorktreesPorcelainParsesSingleWorktree() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String input = """
@@ -1110,9 +1110,9 @@ public class GetCleanupOutputTest
   @Test
   public void parseWorktreesPorcelainParsesMultipleWorktrees() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String input = """
@@ -1142,9 +1142,9 @@ public class GetCleanupOutputTest
   @Test
   public void parseWorktreesPorcelainHandlesDetachedState() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String input = """
@@ -1169,9 +1169,9 @@ public class GetCleanupOutputTest
   @Test
   public void parseWorktreesPorcelainHandlesBareState() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String input = """
@@ -1196,9 +1196,9 @@ public class GetCleanupOutputTest
   @Test
   public void parseWorktreesPorcelainExtractsBranchName() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String input = """
@@ -1222,9 +1222,9 @@ public class GetCleanupOutputTest
   @Test
   public void parseWorktreesPorcelainHandlesNoTrailingBlankLine() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String input = """
@@ -1247,9 +1247,9 @@ public class GetCleanupOutputTest
   @Test
   public void gatherLocksReturnsEmptyForNonCatProject() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<Lock> result = handler.gatherLocks(Path.of("/nonexistent"));
@@ -1266,12 +1266,12 @@ public class GetCleanupOutputTest
   @Test
   public void gatherContextFileReturnsNullWhenMissing() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
-      String result = handler.gatherContextFile(projectDir);
+      String result = handler.gatherContextFile(projectPath);
 
       requireThat(result, "result").isNull();
     }
@@ -1289,12 +1289,12 @@ public class GetCleanupOutputTest
   @Test
   public void formatPlanFromJsonProducesOutput() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
-      String worktreePath = scope.getProjectCatDir().resolve("worktrees").resolve("2.1-issue-name").toString();
+      String worktreePath = scope.getCatWorkPath().resolve("worktrees").resolve("2.1-issue-name").toString();
       String json = """
         {
           "handler": "cleanup",
@@ -1325,9 +1325,9 @@ public class GetCleanupOutputTest
   @Test
   public void formatPlanFromJsonHandlesEmptyLists() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String json = """
@@ -1359,9 +1359,9 @@ public class GetCleanupOutputTest
   @Test
   public void formatVerifyFromJsonProducesOutput() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String json = """
@@ -1394,9 +1394,9 @@ public class GetCleanupOutputTest
   @Test
   public void formatVerifyFromJsonHandlesEmptyRemaining() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String json = """
@@ -1458,7 +1458,7 @@ public class GetCleanupOutputTest
   }
 
   /**
-   * Verifies that getOutput(new String[]{}) falls back to scope.getClaudeProjectDir() and returns non-null.
+   * Verifies that getOutput(new String[]{}) falls back to scope.getProjectPath() and returns non-null.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -1481,11 +1481,11 @@ public class GetCleanupOutputTest
   @Test
   public void getOutputWithProjectDirUsesProvidedPath() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     try (JvmScope scope = new TestJvmScope())
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
-      String result = handler.getOutput(new String[]{"--project-dir", projectDir.toString()});
+      String result = handler.getOutput(new String[]{"--project-dir", projectPath.toString()});
       requireThat(result, "result").isNotNull();
     }
   }
@@ -1605,9 +1605,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputIncludesCorruptIssueDirectories() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<GetCleanupOutput.CorruptIssue> corruptIssues = List.of(
@@ -1634,25 +1634,25 @@ public class GetCleanupOutputTest
   @Test
   public void gatherCorruptIssuesDetectsStateMdWithoutPlanMd() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       // Create a corrupt issue directory: STATE.md present, PLAN.md absent
-      Path issueDir = projectDir.resolve(".cat").resolve("issues").
+      Path issueDir = projectPath.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("orphaned-issue");
       Files.createDirectories(issueDir);
       Files.writeString(issueDir.resolve("STATE.md"), "# State\n- **Status:** open\n");
 
       GetCleanupOutput handler = new GetCleanupOutput(scope);
-      List<GetCleanupOutput.CorruptIssue> result = handler.gatherCorruptIssues(projectDir);
+      List<GetCleanupOutput.CorruptIssue> result = handler.gatherCorruptIssues(projectPath);
 
       requireThat(result, "result").size().isEqualTo(1);
       requireThat(result.get(0).issueId(), "issueId").isEqualTo("orphaned-issue");
     }
     finally
     {
-      deleteDirectoryRecursively(projectDir);
+      deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -1664,25 +1664,25 @@ public class GetCleanupOutputTest
   @Test
   public void gatherCorruptIssuesIgnoresValidIssueDirectories() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       // Create a valid issue directory: both STATE.md and PLAN.md present
-      Path issueDir = projectDir.resolve(".cat").resolve("issues").
+      Path issueDir = projectPath.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("valid-issue");
       Files.createDirectories(issueDir);
       Files.writeString(issueDir.resolve("STATE.md"), "# State\n- **Status:** open\n");
       Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nDo something.\n");
 
       GetCleanupOutput handler = new GetCleanupOutput(scope);
-      List<GetCleanupOutput.CorruptIssue> result = handler.gatherCorruptIssues(projectDir);
+      List<GetCleanupOutput.CorruptIssue> result = handler.gatherCorruptIssues(projectPath);
 
       requireThat(result, "result").isEmpty();
     }
     finally
     {
-      deleteDirectoryRecursively(projectDir);
+      deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -1694,25 +1694,25 @@ public class GetCleanupOutputTest
   @Test
   public void gatherCorruptIssuesDetectsMissingPlanMdWithNoStateMd() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("test-project");
+    Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       // Create an issue directory with neither STATE.md nor PLAN.md
-      Path issueDir = projectDir.resolve(".cat").resolve("issues").
+      Path issueDir = projectPath.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("empty-issue");
       Files.createDirectories(issueDir);
       // Deliberately no STATE.md and no PLAN.md
 
       GetCleanupOutput handler = new GetCleanupOutput(scope);
-      List<GetCleanupOutput.CorruptIssue> result = handler.gatherCorruptIssues(projectDir);
+      List<GetCleanupOutput.CorruptIssue> result = handler.gatherCorruptIssues(projectPath);
 
       requireThat(result, "result").size().isEqualTo(1);
       requireThat(result.get(0).issueId(), "issueId").isEqualTo("empty-issue");
     }
     finally
     {
-      deleteDirectoryRecursively(projectDir);
+      deleteDirectoryRecursively(projectPath);
     }
   }
 }

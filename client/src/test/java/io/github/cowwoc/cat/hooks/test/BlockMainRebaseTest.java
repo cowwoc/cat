@@ -24,7 +24,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * using {@link io.github.cowwoc.cat.hooks.WorktreeContext#forSession} for lock-based context
  * determination.
  * <p>
- * Lock and worktree files are created via {@link JvmScope#getProjectCatDir()} to match
+ * Lock and worktree files are created via {@link JvmScope#getCatWorkPath()} to match
  * the external CAT storage location used by the production code.
  * <p>
  * Each test is self-contained with its own temporary directory structure.
@@ -44,7 +44,7 @@ public final class BlockMainRebaseTest
    */
   private static void writeLockFile(JvmScope scope, String issueId, String sessionId) throws IOException
   {
-    Path lockDir = scope.getProjectCatDir().resolve("locks");
+    Path lockDir = scope.getCatWorkPath().resolve("locks");
     Files.createDirectories(lockDir);
     String content = """
       {"session_id": "%s", "worktrees": {}, "created_at": 1000000, "created_iso": "2026-01-01T00:00:00Z"}
@@ -62,7 +62,7 @@ public final class BlockMainRebaseTest
    */
   private static Path createWorktreeDir(JvmScope scope, String issueId) throws IOException
   {
-    Path worktreeDir = scope.getProjectCatDir().resolve("worktrees").resolve(issueId);
+    Path worktreeDir = scope.getCatWorkPath().resolve("worktrees").resolve(issueId);
     Files.createDirectories(worktreeDir);
     return worktreeDir;
   }
@@ -78,23 +78,23 @@ public final class BlockMainRebaseTest
   @Test
   public void rebaseOnMainIsBlockedWhenNoLock() throws IOException
   {
-    Path projectDir = TestUtils.createTempGitRepo("main");
+    Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       BlockMainRebase handler = new BlockMainRebase(scope);
       // No lock file — session has no active worktree, so commands run in main context
       String command = "git rebase origin/main";
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(command, projectDir.toString(), SESSION_ID));
+        TestUtils.bashInput(command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("REBASE ON MAIN BLOCKED");
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -116,7 +116,7 @@ public final class BlockMainRebaseTest
     try (JvmScope scope = new TestJvmScope(mainRepo, pluginRoot))
     {
       // Create a worktree on a feature branch
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
       Path worktree = TestUtils.createWorktree(mainRepo, worktreesDir, ISSUE_ID);
 
@@ -150,22 +150,22 @@ public final class BlockMainRebaseTest
   @Test
   public void checkoutInMainWorktreeIsBlockedWhenNoLock() throws IOException
   {
-    Path projectDir = TestUtils.createTempGitRepo("main");
+    Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       BlockMainRebase handler = new BlockMainRebase(scope);
       // No lock — session is in main context; checkout must be blocked
       String command = "git checkout feature-branch";
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(command, projectDir.toString(), SESSION_ID));
+        TestUtils.bashInput(command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -214,16 +214,16 @@ public final class BlockMainRebaseTest
     expectedExceptionsMessageRegExp = ".*session_id.*")
   public void emptySessionIdThrowsForCheckout() throws IOException
   {
-    Path projectDir = TestUtils.createTempGitRepo("main");
+    Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       BlockMainRebase handler = new BlockMainRebase(scope);
-      handler.check(TestUtils.bashInput("git checkout feature-branch", projectDir.toString(), ""));
+      handler.check(TestUtils.bashInput("git checkout feature-branch", projectPath.toString(), ""));
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -237,16 +237,16 @@ public final class BlockMainRebaseTest
     expectedExceptionsMessageRegExp = ".*session_id.*")
   public void emptySessionIdThrowsForRebase() throws IOException
   {
-    Path projectDir = TestUtils.createTempGitRepo("main");
+    Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       BlockMainRebase handler = new BlockMainRebase(scope);
-      handler.check(TestUtils.bashInput("git rebase origin/main", projectDir.toString(), ""));
+      handler.check(TestUtils.bashInput("git rebase origin/main", projectPath.toString(), ""));
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
@@ -259,21 +259,21 @@ public final class BlockMainRebaseTest
   @Test
   public void nonCheckoutNonRebaseCommandIsAllowed() throws IOException
   {
-    Path projectDir = TestUtils.createTempGitRepo("main");
+    Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       BlockMainRebase handler = new BlockMainRebase(scope);
       String command = "git log --oneline -10";
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(command, projectDir.toString(), SESSION_ID));
+        TestUtils.bashInput(command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }

@@ -65,21 +65,21 @@ public final class TestJvmScopeTest
   }
 
   /**
-   * Verifies that getClaudeProjectDir() throws IllegalStateException after scope is closed.
+   * Verifies that getProjectPath() throws IllegalStateException after scope is closed.
    *
    * @throws IOException if temporary directory creation fails
    */
   @SuppressWarnings("try")
   @Test(expectedExceptions = IllegalStateException.class,
     expectedExceptionsMessageRegExp = ".*closed.*")
-  public void getClaudeProjectDirThrowsAfterClose() throws IOException
+  public void getProjectPathThrowsAfterClose() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       scope.close();
 
-      scope.getClaudeProjectDir();
+      scope.getProjectPath();
     }
     finally
     {
@@ -88,10 +88,10 @@ public final class TestJvmScopeTest
   }
 
   /**
-   * Verifies that constructor rejects null claudeProjectDir.
+   * Verifies that constructor rejects null claudeProjectPath.
    */
   @Test(expectedExceptions = NullPointerException.class,
-    expectedExceptionsMessageRegExp = ".*claudeProjectDir.*")
+    expectedExceptionsMessageRegExp = ".*claudeProjectPath.*")
   public void constructorRejectsNullClaudeProjectDir()
   {
     Path validPath = Path.of("/tmp");

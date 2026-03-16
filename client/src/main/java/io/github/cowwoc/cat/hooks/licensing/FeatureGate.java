@@ -56,19 +56,19 @@ public final class FeatureGate
   /**
    * Checks if a feature is allowed for the project's license.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param feature the feature to check
    * @return the gate result
-   * @throws NullPointerException if projectDir or feature is null
+   * @throws NullPointerException if projectPath or feature is null
    * @throws IllegalArgumentException if feature is blank
    */
-  public GateResult check(Path projectDir, String feature)
+  public GateResult check(Path projectPath, String feature)
   {
-    requireThat(projectDir, "projectDir").isNotNull();
+    requireThat(projectPath, "projectPath").isNotNull();
     requireThat(feature, "feature").isNotBlank();
 
     // Validate license
-    LicenseResult licenseResult = validator.validate(projectDir);
+    LicenseResult licenseResult = validator.validate(projectPath);
     Tier tier = licenseResult.tier();
     String warning = licenseResult.warning();
 

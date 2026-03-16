@@ -60,7 +60,7 @@ public final class RequireSkillForCommandTest
    */
   private static void writeSkillsLoaded(JvmScope scope, String sessionId, String skills) throws IOException
   {
-    Path agentDir = scope.getSessionBasePath().toAbsolutePath().normalize().resolve(sessionId);
+    Path agentDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize().resolve(sessionId);
     Path loadedDir = agentDir.resolve(GetSkill.LOADED_DIR);
     Files.createDirectories(loadedDir);
     for (String line : skills.split("\n"))
@@ -88,7 +88,7 @@ public final class RequireSkillForCommandTest
   private static void writeSubagentSkillsLoaded(JvmScope scope, String sessionId, String nativeAgentId,
     String skills) throws IOException
   {
-    Path agentDir = scope.getSessionBasePath().toAbsolutePath().normalize().
+    Path agentDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize().
       resolve(sessionId).resolve("subagents").resolve(nativeAgentId);
     Path loadedDir = agentDir.resolve(GetSkill.LOADED_DIR);
     Files.createDirectories(loadedDir);

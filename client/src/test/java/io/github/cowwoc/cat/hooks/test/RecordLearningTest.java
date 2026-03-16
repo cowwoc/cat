@@ -460,7 +460,7 @@ public final class RecordLearningTest
       // {projectCatDir}/worktrees/{issueId}
       String issueId = "2.1-test-feature";
 
-      Path projectCatDir = scope.getProjectCatDir();
+      Path projectCatDir = scope.getCatWorkPath();
       Path worktreesDir = projectCatDir.resolve("worktrees");
       Files.createDirectories(worktreesDir);
 

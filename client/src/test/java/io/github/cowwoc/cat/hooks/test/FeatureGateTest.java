@@ -31,14 +31,14 @@ public final class FeatureGateTest
   public void noLicenseDefaultsToCore() throws IOException
   {
     Path pluginRoot = createTempPluginRoot();
-    Path projectDir = Files.createTempDirectory("project-");
+    Path projectPath = Files.createTempDirectory("project-");
 
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       try
       {
         FeatureGate gate = FeatureGate.create(scope);
-        FeatureGate.GateResult result = gate.check(projectDir, "single-agent-execution");
+        FeatureGate.GateResult result = gate.check(projectPath, "single-agent-execution");
 
         requireThat(result.tier(), "tier").isEqualTo(Tier.CORE);
         requireThat(result.allowed(), "allowed").isTrue();
@@ -46,7 +46,7 @@ public final class FeatureGateTest
       finally
       {
         TestUtils.deleteDirectoryRecursively(pluginRoot);
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -60,14 +60,14 @@ public final class FeatureGateTest
   public void coreTierBlockedFromProFeatures() throws IOException
   {
     Path pluginRoot = createTempPluginRoot();
-    Path projectDir = Files.createTempDirectory("project-");
+    Path projectPath = Files.createTempDirectory("project-");
 
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       try
       {
         FeatureGate gate = FeatureGate.create(scope);
-        FeatureGate.GateResult result = gate.check(projectDir, "multi-agent-orchestration");
+        FeatureGate.GateResult result = gate.check(projectPath, "multi-agent-orchestration");
 
         requireThat(result.tier(), "tier").isEqualTo(Tier.CORE);
         requireThat(result.allowed(), "allowed").isFalse();
@@ -77,7 +77,7 @@ public final class FeatureGateTest
       finally
       {
         TestUtils.deleteDirectoryRecursively(pluginRoot);
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -91,14 +91,14 @@ public final class FeatureGateTest
   public void allowedFeaturesHaveEmptyMessage() throws IOException
   {
     Path pluginRoot = createTempPluginRoot();
-    Path projectDir = Files.createTempDirectory("project-");
+    Path projectPath = Files.createTempDirectory("project-");
 
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       try
       {
         FeatureGate gate = FeatureGate.create(scope);
-        FeatureGate.GateResult result = gate.check(projectDir, "single-agent-execution");
+        FeatureGate.GateResult result = gate.check(projectPath, "single-agent-execution");
 
         requireThat(result.allowed(), "allowed").isTrue();
         requireThat(result.message(), "message").isEqualTo("");
@@ -108,7 +108,7 @@ public final class FeatureGateTest
       finally
       {
         TestUtils.deleteDirectoryRecursively(pluginRoot);
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -122,14 +122,14 @@ public final class FeatureGateTest
   public void nonexistentFeaturesBlocked() throws IOException
   {
     Path pluginRoot = createTempPluginRoot();
-    Path projectDir = Files.createTempDirectory("project-");
+    Path projectPath = Files.createTempDirectory("project-");
 
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       try
       {
         FeatureGate gate = FeatureGate.create(scope);
-        FeatureGate.GateResult result = gate.check(projectDir, "nonexistent-feature");
+        FeatureGate.GateResult result = gate.check(projectPath, "nonexistent-feature");
 
         requireThat(result.allowed(), "allowed").isFalse();
         requireThat(result.message(), "message").contains("not available in any tier");
@@ -137,7 +137,7 @@ public final class FeatureGateTest
       finally
       {
         TestUtils.deleteDirectoryRecursively(pluginRoot);
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }
@@ -152,20 +152,20 @@ public final class FeatureGateTest
   public void nullFeatureThrowsException() throws IOException
   {
     Path pluginRoot = createTempPluginRoot();
-    Path projectDir = Files.createTempDirectory("project-");
+    Path projectPath = Files.createTempDirectory("project-");
 
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       try
       {
         FeatureGate gate = FeatureGate.create(scope);
 
-        gate.check(projectDir, null);
+        gate.check(projectPath, null);
       }
       finally
       {
         TestUtils.deleteDirectoryRecursively(pluginRoot);
-        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
   }

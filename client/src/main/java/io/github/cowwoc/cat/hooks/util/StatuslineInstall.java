@@ -52,18 +52,18 @@ public final class StatuslineInstall
    * {@code .claude/settings.json} with the {@code statusLine} configuration pointing to the
    * Java statusline-command tool in the plugin's jlink bundle.
    *
-   * @param projectDir the Claude project directory where the statusline is to be installed
+   * @param projectPath the Claude project directory where the statusline is to be installed
    * @param pluginRoot the CAT plugin root directory containing the jlink bundle
    * @return a JSON string with status "OK" and the settings/script paths, or status "ERROR" with a message
-   * @throws NullPointerException if {@code projectDir} or {@code pluginRoot} are null
+   * @throws NullPointerException if {@code projectPath} or {@code pluginRoot} are null
    * @throws IOException          if an I/O error occurs
    */
-  public String install(Path projectDir, Path pluginRoot) throws IOException
+  public String install(Path projectPath, Path pluginRoot) throws IOException
   {
-    requireThat(projectDir, "projectDir").isNotNull();
+    requireThat(projectPath, "projectPath").isNotNull();
     requireThat(pluginRoot, "pluginRoot").isNotNull();
 
-    Path claudeDir = projectDir.resolve(".claude");
+    Path claudeDir = projectPath.resolve(".claude");
     try
     {
       Files.createDirectories(claudeDir);
@@ -172,7 +172,7 @@ public final class StatuslineInstall
   /**
    * Main entry point.
    * <p>
-   * Usage: statusline-install {@code <projectDir>} {@code <pluginRoot>}
+   * Usage: statusline-install {@code <projectPath>} {@code <pluginRoot>}
    *
    * @param args command-line arguments: project directory, plugin root
    */
@@ -184,17 +184,17 @@ public final class StatuslineInstall
       if (args.length < 2)
       {
         System.out.println(hookOutput.block(
-          "Usage: statusline-install <projectDir> <pluginRoot>"));
+          "Usage: statusline-install <projectPath> <pluginRoot>"));
         return;
       }
 
-      Path projectDir = Path.of(args[0]);
+      Path projectPath = Path.of(args[0]);
       Path pluginRoot = Path.of(args[1]);
 
       StatuslineInstall installer = new StatuslineInstall(scope);
       try
       {
-        String result = installer.install(projectDir, pluginRoot);
+        String result = installer.install(projectPath, pluginRoot);
         System.out.println(result);
       }
       catch (IOException e)

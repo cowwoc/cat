@@ -29,7 +29,7 @@ import java.util.stream.Stream;
  * Sources:
  * <ul>
  *   <li>All installed plugins via {@code ${claudeConfigDir}/plugins/installed_plugins.json}</li>
- *   <li>Project commands in {@code ${projectDir}/.claude/commands/}</li>
+ *   <li>Project commands in {@code ${projectPath}/.claude/commands/}</li>
  *   <li>User skills in {@code ${claudeConfigDir}/skills/}</li>
  * </ul>
  * Each discovered skill is represented as a {@link SkillEntry} containing the qualified name and
@@ -87,7 +87,7 @@ public final class SkillDiscovery
     {
       List<SkillEntry> entries = new ArrayList<>();
       entries.addAll(discoverPluginSkills(scope.getClaudeConfigDir(), scope.getJsonMapper()));
-      entries.addAll(discoverProjectCommands(scope.getClaudeProjectDir()));
+      entries.addAll(discoverProjectCommands(scope.getProjectPath()));
       entries.addAll(discoverUserSkills(scope.getClaudeConfigDir()));
       return entries;
     }
@@ -236,18 +236,18 @@ public final class SkillDiscovery
   /**
    * Discovers model-invocable commands with descriptions from the project's commands directory.
    * <p>
-   * Scans {@code ${projectDir}/.claude/commands/} for {@code .md} files. If the file has YAML
+   * Scans {@code ${projectPath}/.claude/commands/} for {@code .md} files. If the file has YAML
    * frontmatter with a {@code description:} field, that description is used. Files without a
    * description are excluded.
    *
-   * @param projectDir the Claude project directory
+   * @param projectPath the Claude project directory
    * @return list of discovered skill entries
    * @throws IOException if discovery fails
    */
-  private static List<SkillEntry> discoverProjectCommands(Path projectDir) throws IOException
+  private static List<SkillEntry> discoverProjectCommands(Path projectPath) throws IOException
   {
     List<SkillEntry> entries = new ArrayList<>();
-    Path commandsDir = projectDir.resolve(".claude/commands");
+    Path commandsDir = projectPath.resolve(".claude/commands");
     if (!Files.isDirectory(commandsDir))
       return entries;
 

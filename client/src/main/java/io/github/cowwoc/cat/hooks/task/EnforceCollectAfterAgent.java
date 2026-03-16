@@ -52,12 +52,12 @@ public final class EnforceCollectAfterAgent implements TaskHandler
     requireThat(sessionId, "sessionId").isNotBlank();
     requireThat(cwd, "cwd").isNotNull();
 
-    Path flagPath = scope.getSessionBasePath().resolve(sessionId).resolve("pending-agent-result");
+    Path flagPath = scope.getClaudeSessionsPath().resolve(sessionId).resolve("pending-agent-result");
     if (!Files.exists(flagPath))
       return Result.allow();
 
     if (WorktreeContext.forSession(
-      scope.getProjectCatDir(), scope.getClaudeProjectDir(), scope.getJsonMapper(), sessionId) == null)
+      scope.getCatWorkPath(), scope.getProjectPath(), scope.getJsonMapper(), sessionId) == null)
     {
       // No active worktree lock — flag is stale; clean up and allow
       try

@@ -84,19 +84,19 @@ public final class GetStatusOutput implements SkillOutput
   public String getOutput(String[] args) throws IOException
   {
     requireThat(args, "args").length().isEqualTo(0);
-    Path projectDir = scope.getClaudeProjectDir();
+    Path projectPath = scope.getProjectPath();
 
     Path catDir = scope.getCatDir();
     if (!Files.isDirectory(catDir))
       return "No CAT project found. Run /cat:init to initialize.";
 
     LicenseValidator validator = new LicenseValidator(scope);
-    LicenseResult licenseResult = validator.validate(projectDir);
+    LicenseResult licenseResult = validator.validate(projectPath);
 
     Path issuesDir = catDir.resolve("issues");
 
     if (licenseResult.tier().compareTo(Tier.PRO) >= 0)
-      branchStatusCache = loadBranchStatuses(projectDir);
+      branchStatusCache = loadBranchStatuses(projectPath);
     else
       branchStatusCache = Map.of();
     StatusData statusData = collectStatusData(issuesDir, catDir, licenseResult);
@@ -350,8 +350,8 @@ public final class GetStatusOutput implements SkillOutput
       if (licenseResult.tier().compareTo(Tier.PRO) >= 0)
       {
         Path issueRelPath = stateFile.getParent();
-        Path projectRoot = catDir.getParent().getParent();
-        String relPath = projectRoot.relativize(issueRelPath).toString();
+        Path projectPath = catDir.getParent().getParent();
+        String relPath = projectPath.relativize(issueRelPath).toString();
         String branchStatus = branchStatusCache.get(relPath);
         if ("in-progress".equals(branchStatus))
           return "in-progress";
@@ -394,15 +394,15 @@ public final class GetStatusOutput implements SkillOutput
    * <p>
    * Handles process lifecycle, stream reading, and cleanup.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param args the git command arguments
    * @return list of output lines (empty list on failure)
    * @throws IOException if an I/O error occurs
    */
-  private List<String> executeGitCommand(Path projectDir, String... args) throws IOException
+  private List<String> executeGitCommand(Path projectPath, String... args) throws IOException
   {
     ProcessBuilder pb = new ProcessBuilder(args);
-    pb.directory(projectDir.toFile());
+    pb.directory(projectPath.toFile());
     pb.redirectErrorStream(true);
 
     Process process = pb.start();
@@ -500,8 +500,8 @@ public final class GetStatusOutput implements SkillOutput
    */
   private String generateStatusDisplay(StatusData data, Path catDir) throws IOException
   {
-    Path projectDir = catDir.getParent().getParent();
-    Config config = Config.load(scope.getJsonMapper(), projectDir);
+    Path projectPath = catDir.getParent().getParent();
+    Config config = Config.load(scope.getJsonMapper(), projectPath);
     // displayWidth is the total terminal columns; box borders add 2 chars (│ on each side)
     int displayWidth = config.getInt("displayWidth", 120);
     int maxBoxContentWidth = displayWidth - 2;
@@ -774,33 +774,33 @@ public final class GetStatusOutput implements SkillOutput
    * For each branch, finds STATE.md files that differ from the target branch,
    * reads their status, and builds a map of issue path to status.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @return map from issue relative path to status on branch
    * @throws IOException if git command fails
    */
-  private Map<String, String> loadBranchStatuses(Path projectDir) throws IOException
+  private Map<String, String> loadBranchStatuses(Path projectPath) throws IOException
   {
     Map<String, String> statusMap = new HashMap<>();
 
-    String targetBranch = getTargetBranch(projectDir);
+    String targetBranch = getTargetBranch(projectPath);
     if (targetBranch.isEmpty())
       return Map.of();
 
-    List<String> branches = getAllBranches(projectDir);
+    List<String> branches = getAllBranches(projectPath);
 
     for (String branch : branches)
     {
       if (branch.equals(targetBranch))
         continue;
 
-      List<String> changedStateFiles = getChangedStateFiles(projectDir, targetBranch, branch);
+      List<String> changedStateFiles = getChangedStateFiles(projectPath, targetBranch, branch);
 
       for (String stateFilePath : changedStateFiles)
       {
         String status;
         try
         {
-          status = getStatusFromBranch(projectDir, branch, stateFilePath);
+          status = getStatusFromBranch(projectPath, branch, stateFilePath);
         }
         catch (IOException e)
         {
@@ -821,13 +821,13 @@ public final class GetStatusOutput implements SkillOutput
   /**
    * Gets the target branch for the current repository.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @return the target branch name, or empty string if not found
    * @throws IOException if git command fails
    */
-  private String getTargetBranch(Path projectDir) throws IOException
+  private String getTargetBranch(Path projectPath) throws IOException
   {
-    List<String> lines = executeGitCommand(projectDir, "git", "rev-parse", "--abbrev-ref", "HEAD");
+    List<String> lines = executeGitCommand(projectPath, "git", "rev-parse", "--abbrev-ref", "HEAD");
     if (lines.isEmpty())
       return "";
 
@@ -844,13 +844,13 @@ public final class GetStatusOutput implements SkillOutput
    * Branch names are validated to ensure they match the expected pattern.
    * Invalid branch names are skipped.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @return list of valid branch names
    * @throws IOException if git command fails
    */
-  private List<String> getAllBranches(Path projectDir) throws IOException
+  private List<String> getAllBranches(Path projectPath) throws IOException
   {
-    List<String> lines = executeGitCommand(projectDir, "git", "branch", "--format=%(refname:short)");
+    List<String> lines = executeGitCommand(projectPath, "git", "branch", "--format=%(refname:short)");
     List<String> branches = new ArrayList<>();
 
     Pattern validBranchPattern = Pattern.compile("[a-zA-Z0-9._/-]+");
@@ -870,16 +870,16 @@ public final class GetStatusOutput implements SkillOutput
    * File paths are validated to ensure they are within the expected directory
    * and do not contain path traversal sequences.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param targetBranch the target branch name
    * @param branch the branch to compare
    * @return list of valid changed STATE.md file paths relative to project root
    * @throws IOException if git command fails
    */
-  private List<String> getChangedStateFiles(Path projectDir, String targetBranch, String branch)
+  private List<String> getChangedStateFiles(Path projectPath, String targetBranch, String branch)
     throws IOException
   {
-    List<String> lines = executeGitCommand(projectDir, "git", "diff", "--name-only",
+    List<String> lines = executeGitCommand(projectPath, "git", "diff", "--name-only",
       targetBranch + "..." + branch, "--", Config.CAT_DIR_NAME + "/issues/**/STATE.md");
 
     List<String> changedFiles = new ArrayList<>();
@@ -918,18 +918,18 @@ public final class GetStatusOutput implements SkillOutput
    * <p>
    * Branch names are validated before use in git commands.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param branch the branch name
    * @param filePath the file path relative to project root
    * @return the normalized status, or empty string if not found
    * @throws IOException if git command fails
    */
-  private String getStatusFromBranch(Path projectDir, String branch, String filePath) throws IOException
+  private String getStatusFromBranch(Path projectPath, String branch, String filePath) throws IOException
   {
     if (!isValidBranchName(branch))
       return "";
 
-    List<String> lines = executeGitCommand(projectDir, "git", "show", branch + ":" + filePath);
+    List<String> lines = executeGitCommand(projectPath, "git", "show", branch + ":" + filePath);
     if (lines.isEmpty())
       return "";
 

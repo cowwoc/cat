@@ -39,8 +39,8 @@ public final class InjectMainAgentRulesTest
     Path tempDir = Files.createTempDirectory("inject-rules-test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      // Create the rules directory inside the project dir (scope.getClaudeProjectDir())
-      Path rulesDir = scope.getClaudeProjectDir().resolve(".cat/rules");
+      // Create the rules directory inside the project dir (scope.getProjectPath())
+      Path rulesDir = scope.getProjectPath().resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("main-rule.md"), """
         ---
@@ -80,9 +80,9 @@ public final class InjectMainAgentRulesTest
   @Test
   public void handleWithPluginRuleDirReturnsContext() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("inject-rules-plugin-project-");
+    Path projectPath = Files.createTempDirectory("inject-rules-plugin-project-");
     Path pluginDir = Files.createTempDirectory("inject-rules-plugin-root-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginDir))
     {
       Path pluginRulesDir = scope.getClaudePluginRoot().resolve("rules");
       Files.createDirectories(pluginRulesDir);
@@ -112,7 +112,7 @@ public final class InjectMainAgentRulesTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginDir);
     }
   }
@@ -126,9 +126,9 @@ public final class InjectMainAgentRulesTest
   @Test
   public void handleBothPluginAndProjectRulesIncludedOnFilenameCollision() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("inject-rules-override-project-");
+    Path projectPath = Files.createTempDirectory("inject-rules-override-project-");
     Path pluginDir = Files.createTempDirectory("inject-rules-override-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginDir))
     {
       Path pluginRulesDir = scope.getClaudePluginRoot().resolve("rules");
       Files.createDirectories(pluginRulesDir);
@@ -140,7 +140,7 @@ public final class InjectMainAgentRulesTest
         This is from the plugin.
         """);
 
-      Path projectRulesDir = scope.getClaudeProjectDir().resolve(".cat/rules");
+      Path projectRulesDir = scope.getProjectPath().resolve(".cat/rules");
       Files.createDirectories(projectRulesDir);
       Files.writeString(projectRulesDir.resolve("shared-rule.md"), """
         ---
@@ -169,7 +169,7 @@ public final class InjectMainAgentRulesTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginDir);
     }
   }
@@ -217,7 +217,7 @@ public final class InjectMainAgentRulesTest
     Path tempDir = Files.createTempDirectory("inject-rules-subonly-test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path rulesDir = scope.getClaudeProjectDir().resolve(".cat/rules");
+      Path rulesDir = scope.getProjectPath().resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       // No subAgents frontmatter → null → targets all subagents; mainAgent: false excludes main agent
       Files.writeString(rulesDir.resolve("subagent-only.md"), """
@@ -255,9 +255,9 @@ public final class InjectMainAgentRulesTest
   @Test
   public void handlePluginRuleIncludedProjectRuleFilteredWhenMainAgentFalse() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("inject-rules-override-main-false-project-");
+    Path projectPath = Files.createTempDirectory("inject-rules-override-main-false-project-");
     Path pluginDir = Files.createTempDirectory("inject-rules-override-main-false-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectDir, pluginDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginDir))
     {
       Path pluginRulesDir = scope.getClaudePluginRoot().resolve("rules");
       Files.createDirectories(pluginRulesDir);
@@ -270,7 +270,7 @@ public final class InjectMainAgentRulesTest
         This plugin content should reach the main agent.
         """);
 
-      Path projectRulesDir = scope.getClaudeProjectDir().resolve(".cat/rules");
+      Path projectRulesDir = scope.getProjectPath().resolve(".cat/rules");
       Files.createDirectories(projectRulesDir);
       // Project rule with same filename: mainAgent=false — filtered out by main-agent filter
       Files.writeString(projectRulesDir.resolve("toggled-rule.md"), """
@@ -303,7 +303,7 @@ public final class InjectMainAgentRulesTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginDir);
     }
   }
@@ -349,7 +349,7 @@ public final class InjectMainAgentRulesTest
     Path tempDir = Files.createTempDirectory("inject-rules-mixed-test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path rulesDir = scope.getClaudeProjectDir().resolve(".cat/rules");
+      Path rulesDir = scope.getProjectPath().resolve(".cat/rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("main-only.md"), """
         ---

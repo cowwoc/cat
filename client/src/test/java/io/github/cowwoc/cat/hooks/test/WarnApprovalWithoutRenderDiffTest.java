@@ -25,8 +25,8 @@ import java.nio.file.Path;
  * Tests verify the detection of get-diff usage (or lack thereof) when approval questions are presented.
  * <p>
  * Session files are placed at {@code {claudeConfigDir}/projects/{encodedProjectDir}/{sessionId}.jsonl}, resolved via
- * {@link JvmScope#getSessionBasePath()}. The {@code .cat} directory is resolved via
- * {@link JvmScope#getClaudeProjectDir()}, matching the production code's path resolution.
+ * {@link JvmScope#getClaudeSessionsPath()}. The {@code .cat} directory is resolved via
+ * {@link JvmScope#getProjectPath()}, matching the production code's path resolution.
  */
 public final class WarnApprovalWithoutRenderDiffTest
 {
@@ -46,11 +46,11 @@ public final class WarnApprovalWithoutRenderDiffTest
       String sessionId = "test-session-no-get-diff";
 
       // Set up .cat directory so the catDir check passes
-      Path catDir = scope.getClaudeProjectDir().resolve(".cat");
+      Path catDir = scope.getProjectPath().resolve(".cat");
       Files.createDirectories(catDir);
 
       // Set up session file with content that does NOT contain "get-diff"
-      Path sessionDir = scope.getSessionBasePath();
+      Path sessionDir = scope.getClaudeSessionsPath();
       Files.createDirectories(sessionDir);
       Path sessionFile = sessionDir.resolve(sessionId + ".jsonl");
       Files.writeString(sessionFile, """
@@ -88,11 +88,11 @@ public final class WarnApprovalWithoutRenderDiffTest
       String sessionId = "test-session-with-get-diff";
 
       // Set up .cat directory so the catDir check passes
-      Path catDir = scope.getClaudeProjectDir().resolve(".cat");
+      Path catDir = scope.getProjectPath().resolve(".cat");
       Files.createDirectories(catDir);
 
       // Set up session file with "get-diff" and box characters (more than MIN_BOX_CHARS_WITH_INVOCATION=10)
-      Path sessionDir = scope.getSessionBasePath();
+      Path sessionDir = scope.getClaudeSessionsPath();
       Files.createDirectories(sessionDir);
       Path sessionFile = sessionDir.resolve(sessionId + ".jsonl");
       // Include get-diff invocation and sufficient box chars (╭╮╰╯│ characters)
@@ -132,7 +132,7 @@ public final class WarnApprovalWithoutRenderDiffTest
       String sessionId = "test-session-reformatted-diff";
 
       // Set up .cat directory so the catDir check passes
-      Path catDir = scope.getClaudeProjectDir().resolve(".cat");
+      Path catDir = scope.getProjectPath().resolve(".cat");
       Files.createDirectories(catDir);
 
       // Set up session file with "get-diff" but sparse box chars and many manual diff signs.
@@ -140,7 +140,7 @@ public final class WarnApprovalWithoutRenderDiffTest
       // MIN_MANUAL_DIFF_SIGNS=5 so we need more than 5 matches of ^+++|^---|^@@.
       // The MANUAL_DIFF_SIGNS pattern uses MULTILINE, so each literal JSONL line can start
       // with a diff marker to trigger the pattern.
-      Path sessionDir = scope.getSessionBasePath();
+      Path sessionDir = scope.getClaudeSessionsPath();
       Files.createDirectories(sessionDir);
       Path sessionFile = sessionDir.resolve(sessionId + ".jsonl");
       Files.writeString(sessionFile, """

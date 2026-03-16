@@ -80,7 +80,7 @@ public final class WarnMainWorkspaceCommit implements BashHandler
     String issueId;
     try
     {
-      issueId = WorktreeLock.findIssueIdForSession(scope.getProjectCatDir(), mapper, sessionId);
+      issueId = WorktreeLock.findIssueIdForSession(scope.getCatWorkPath(), mapper, sessionId);
     }
     catch (IOException _)
     {
@@ -102,7 +102,7 @@ public final class WarnMainWorkspaceCommit implements BashHandler
     if (isInsideCatWorktree(effectiveDirectory))
       return Result.allow();
 
-    Path worktreePath = scope.getProjectCatDir().resolve("worktrees").resolve(issueId);
+    Path worktreePath = scope.getCatWorkPath().resolve("worktrees").resolve(issueId);
     String warning = """
       ⚠️ MAIN WORKSPACE COMMIT DETECTED (A003/PATTERN-003)
 

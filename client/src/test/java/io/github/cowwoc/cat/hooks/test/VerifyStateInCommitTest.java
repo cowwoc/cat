@@ -99,7 +99,7 @@ public final class VerifyStateInCommitTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-fix-thing");
@@ -138,7 +138,7 @@ public final class VerifyStateInCommitTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-new-feature");
@@ -183,7 +183,7 @@ public final class VerifyStateInCommitTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-closed-feature");
@@ -230,7 +230,7 @@ public final class VerifyStateInCommitTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       // worktreeDir is a real CAT worktree with git dir ending in "worktrees/<branch>"
@@ -276,7 +276,7 @@ public final class VerifyStateInCommitTest
     Path secondDir = TestUtils.createTempGitRepo("second-branch");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       // firstDir is a real CAT worktree but NOT the last cd target
@@ -400,7 +400,7 @@ public final class VerifyStateInCommitTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-empty-state");
@@ -447,7 +447,7 @@ public final class VerifyStateInCommitTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-malformed-state");
@@ -494,7 +494,7 @@ public final class VerifyStateInCommitTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-empty-status-value");
@@ -542,7 +542,7 @@ public final class VerifyStateInCommitTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-no-value-status");
@@ -588,7 +588,7 @@ public final class VerifyStateInCommitTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-invalid-status");
@@ -634,7 +634,7 @@ public final class VerifyStateInCommitTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-in-progress-status");
@@ -677,7 +677,7 @@ public final class VerifyStateInCommitTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-blocked-status");

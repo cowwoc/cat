@@ -38,7 +38,7 @@ public final class SetPendingAgentResultTest
    */
   private static void createLockFile(JvmScope scope, String sessionId, String issueId) throws IOException
   {
-    Path lockDir = scope.getProjectCatDir().resolve("locks");
+    Path lockDir = scope.getCatWorkPath().resolve("locks");
     Files.createDirectories(lockDir);
     String lockContent = """
       {
@@ -59,7 +59,7 @@ public final class SetPendingAgentResultTest
    */
   private static Path createWorktreeDir(Path mainRepo, JvmScope scope, String issueId) throws IOException
   {
-    Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+    Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
     Files.createDirectories(worktreesDir);
     return TestUtils.createWorktree(mainRepo, worktreesDir, issueId);
   }
@@ -115,7 +115,7 @@ public final class SetPendingAgentResultTest
       PostToolHandler.Result result = handler.check("Agent", toolResult, sessionId, hookData);
 
       requireThat(result.warning(), "warning").isEmpty();
-      Path flagPath = scope.getSessionBasePath().resolve(sessionId).resolve("pending-agent-result");
+      Path flagPath = scope.getClaudeSessionsPath().resolve(sessionId).resolve("pending-agent-result");
       requireThat(Files.exists(flagPath), "flagExists").isTrue();
     }
     finally
@@ -153,7 +153,7 @@ public final class SetPendingAgentResultTest
       PostToolHandler.Result result = handler.check("Agent", toolResult, sessionId, hookData);
 
       requireThat(result.warning(), "warning").isEmpty();
-      Path flagPath = scope.getSessionBasePath().resolve(sessionId).resolve("pending-agent-result");
+      Path flagPath = scope.getClaudeSessionsPath().resolve(sessionId).resolve("pending-agent-result");
       requireThat(Files.exists(flagPath), "flagExists").isFalse();
     }
     finally
@@ -195,7 +195,7 @@ public final class SetPendingAgentResultTest
       PostToolHandler.Result result = handler.check("Agent", toolResult, sessionId, hookData);
 
       requireThat(result.warning(), "warning").isEmpty();
-      Path flagPath = scope.getSessionBasePath().resolve(sessionId).resolve("pending-agent-result");
+      Path flagPath = scope.getClaudeSessionsPath().resolve(sessionId).resolve("pending-agent-result");
       // isBlank() treats whitespace-only as blank → main agent path → flag created
       requireThat(Files.exists(flagPath), "flagExists").isTrue();
     }
@@ -234,7 +234,7 @@ public final class SetPendingAgentResultTest
       PostToolHandler.Result result = handler.check("Bash", toolResult, sessionId, hookData);
 
       requireThat(result.warning(), "warning").isEmpty();
-      Path flagPath = scope.getSessionBasePath().resolve(sessionId).resolve("pending-agent-result");
+      Path flagPath = scope.getClaudeSessionsPath().resolve(sessionId).resolve("pending-agent-result");
       requireThat(Files.exists(flagPath), "flagExists").isFalse();
     }
     finally
@@ -266,7 +266,7 @@ public final class SetPendingAgentResultTest
       PostToolHandler.Result result = handler.check("Agent", toolResult, sessionId, hookData);
 
       requireThat(result.warning(), "warning").isEmpty();
-      Path flagPath = scope.getSessionBasePath().resolve(sessionId).resolve("pending-agent-result");
+      Path flagPath = scope.getClaudeSessionsPath().resolve(sessionId).resolve("pending-agent-result");
       requireThat(Files.exists(flagPath), "flagExists").isFalse();
     }
     finally
@@ -292,20 +292,20 @@ public final class SetPendingAgentResultTest
       JsonMapper mapper = scope.getJsonMapper();
 
       // Create a lock file so worktree context is established
-      Path lockDir = scope.getProjectCatDir().resolve("locks");
+      Path lockDir = scope.getCatWorkPath().resolve("locks");
       Files.createDirectories(lockDir);
       Files.writeString(lockDir.resolve("2.1-test-io-issue.lock"),
         "{\"session_id\": \"" + sessionId + "\"}");
 
       // Create the worktrees directory with a regular file named after the issue
       // to simulate a directory that exists but where the flag file parent is not a directory
-      Path worktreesDir = scope.getProjectCatDir().resolve("worktrees");
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
       // Create a valid worktree directory (otherwise WorktreeContext.forSession returns null)
       Files.createDirectories(worktreesDir.resolve("2.1-test-io-issue"));
 
       // Block flag file creation by making the session directory a regular file
-      Path sessionDir = scope.getSessionBasePath().resolve(sessionId);
+      Path sessionDir = scope.getClaudeSessionsPath().resolve(sessionId);
       Files.createDirectories(sessionDir.getParent());
       // Write sessionDir as a regular file so creating the child "pending-agent-result" fails
       Files.writeString(sessionDir, "blocking");
@@ -353,7 +353,7 @@ public final class SetPendingAgentResultTest
       PostToolHandler.Result result = handler.check("Agent", toolResult, sessionId, hookData);
 
       requireThat(result.warning(), "warning").isEmpty();
-      Path flagPath = scope.getSessionBasePath().resolve(sessionId).resolve("pending-agent-result");
+      Path flagPath = scope.getClaudeSessionsPath().resolve(sessionId).resolve("pending-agent-result");
       requireThat(Files.exists(flagPath), "flagExists").isTrue();
     }
     finally
@@ -392,7 +392,7 @@ public final class SetPendingAgentResultTest
       PostToolHandler.Result result = handler.check("Agent", toolResult, sessionId, hookData);
 
       requireThat(result.warning(), "warning").isEmpty();
-      Path flagPath = scope.getSessionBasePath().resolve(sessionId).resolve("pending-agent-result");
+      Path flagPath = scope.getClaudeSessionsPath().resolve(sessionId).resolve("pending-agent-result");
       requireThat(Files.notExists(flagPath), "flagNotExists").isTrue();
     }
     finally
@@ -431,7 +431,7 @@ public final class SetPendingAgentResultTest
       PostToolHandler.Result result = handler.check("Agent", toolResult, sessionId, hookData);
 
       requireThat(result.warning(), "warning").isEmpty();
-      Path flagPath = scope.getSessionBasePath().resolve(sessionId).resolve("pending-agent-result");
+      Path flagPath = scope.getClaudeSessionsPath().resolve(sessionId).resolve("pending-agent-result");
       requireThat(Files.notExists(flagPath), "flagNotExists").isTrue();
     }
     finally
@@ -469,7 +469,7 @@ public final class SetPendingAgentResultTest
       PostToolHandler.Result result = handler.check("Agent", toolResult, sessionId, hookData);
 
       requireThat(result.warning(), "warning").isEmpty();
-      Path flagPath = scope.getSessionBasePath().resolve(sessionId).resolve("pending-agent-result");
+      Path flagPath = scope.getClaudeSessionsPath().resolve(sessionId).resolve("pending-agent-result");
       requireThat(Files.exists(flagPath), "flagExists").isTrue();
     }
     finally

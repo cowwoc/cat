@@ -20,7 +20,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * agent context.
  * <p>
  * Discovers all rule files from both {@code ${CLAUDE_PLUGIN_ROOT}/rules/} (plugin-bundled) and
- * {@code ${projectDir}/.cat/rules/} (project-local), concatenates them (plugin-bundled
+ * {@code ${projectPath}/.cat/rules/} (project-local), concatenates them (plugin-bundled
  * first, project-local second), filters to those with {@code mainAgent: true}, applies any
  * {@code paths} restrictions, and injects matching content as additional context.
  */
@@ -46,7 +46,7 @@ public final class InjectMainAgentRules implements SessionStartHandler
    * Reads from two sources in order (plugin-bundled first, project-local second):
    * <ol>
    *   <li>{@code ${CLAUDE_PLUGIN_ROOT}/rules/} — plugin-bundled rules</li>
-   *   <li>{@code ${projectDir}/.cat/rules/} — project-local rules</li>
+   *   <li>{@code ${projectPath}/.cat/rules/} — project-local rules</li>
    * </ol>
    * Both sources are concatenated; no filename-based deduplication is performed.
    *

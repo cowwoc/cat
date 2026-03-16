@@ -36,12 +36,12 @@ public final class RootCauseAnalyzer
   /**
    * Creates a new root cause analyzer.
    *
-   * @param projectRoot the project root directory
+   * @param projectPath the project root directory
    * @param scope the JVM scope for accessing shared services
    */
-  public RootCauseAnalyzer(Path projectRoot, JvmScope scope)
+  public RootCauseAnalyzer(Path projectPath, JvmScope scope)
   {
-    requireThat(projectRoot, "projectRoot").isNotNull();
+    requireThat(projectPath, "projectPath").isNotNull();
     requireThat(scope, "scope").isNotNull();
     this.retrospectivesDir = scope.getCatDir().resolve("retrospectives");
     this.scope = scope;
@@ -233,8 +233,8 @@ public final class RootCauseAnalyzer
       }
 
       ClaudeEnv env = new ClaudeEnv();
-      Path projectRoot = env.getClaudeProjectDir();
-      RootCauseAnalyzer analyzer = new RootCauseAnalyzer(projectRoot, scope);
+      Path projectPath = env.getProjectPath();
+      RootCauseAnalyzer analyzer = new RootCauseAnalyzer(projectPath, scope);
       String result = analyzer.analyze(startId);
       System.out.println(result);
     }

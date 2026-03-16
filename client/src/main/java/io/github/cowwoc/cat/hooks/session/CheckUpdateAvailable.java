@@ -69,7 +69,7 @@ public final class CheckUpdateAvailable implements SessionStartHandler
     {
       String currentVersion = VersionUtils.getPluginVersion(pluginRoot);
 
-      Path cacheDir = scope.getProjectCatDir().resolve("cache/update-check");
+      Path cacheDir = scope.getCatWorkPath().resolve("cache/update-check");
       Path cacheFile = cacheDir.resolve("latest_version.json");
 
       String latestVersion = getLatestVersion(cacheFile, cacheDir);

@@ -69,10 +69,24 @@ public abstract class AbstractJvmScope implements JvmScope
   }
 
   /**
+   * Returns the {@code .cat} directory under the project's root directory.
+   *
+   * @return the path to the {@code .cat} directory
+   * @throws AssertionError if the project directory is not configured
+   * @throws IllegalStateException if this scope is closed
+   */
+  @Override
+  public Path getCatDir()
+  {
+    return getProjectPath().resolve(Config.CAT_DIR_NAME);
+  }
+
+  /**
    * Encodes a project directory path using Claude Code's encoding algorithm.
    * <p>
-   * Replaces {@code /} and {@code .} with {@code -}. For example,
-   * {@code /workspace} encodes to {@code -workspace}, and {@code /home/user/my.project}
+   * Replaces {@code /}, {@code .}, and spaces with {@code -}. For example,
+   * {@code /workspace} encodes to {@code -workspace}, {@code /home/user/my.project}
+   * encodes to {@code -home-user-my-project}, and {@code /home/user/my project}
    * encodes to {@code -home-user-my-project}.
    *
    * @param projectPath the project directory path to encode
@@ -81,56 +95,41 @@ public abstract class AbstractJvmScope implements JvmScope
    */
   public static String encodeProjectPath(String projectPath)
   {
-    return projectPath.replace("/", "-").replace(".", "-");
-  }
-
-  /**
-   * Returns the encoded project directory name.
-   * <p>
-   * Applies the Claude Code project directory encoding: replaces {@code /} and {@code .} with {@code -}.
-   * For example, {@code /workspace} encodes to {@code -workspace}.
-   *
-   * @return the encoded project directory name
-   * @throws IllegalStateException if this scope is closed
-   */
-  @Override
-  public String getEncodedProjectDir()
-  {
-    return encodeProjectPath(getClaudeProjectDir().toString());
+    return projectPath.replace("/", "-").replace(".", "-").replace(" ", "-");
   }
 
   /**
    * Returns the base directory for session JSONL files.
    * <p>
-   * Session files are stored at {@code {sessionBasePath}/{sessionId}.jsonl}.
+   * Session files are stored at {@code {claudeSessionsPath}/{sessionId}.jsonl}.
    *
    * @return the session base directory path
    * @throws IllegalStateException if this scope is closed
    */
   @Override
-  public Path getSessionBasePath()
+  public Path getClaudeSessionsPath()
   {
-    return getClaudeConfigDir().resolve("projects").resolve(getEncodedProjectDir());
+    return getClaudeConfigDir().resolve("projects").resolve(encodeProjectPath(getProjectPath().toString()));
   }
 
   /**
    * Returns the directory for the current session's tracking files.
    * <p>
-   * Located at {@code {claudeConfigDir}/projects/{encodedProjectDir}/{sessionId}/}.
+   * Located at {@code {claudeConfigDir}/projects/{encodedProjectRoot}/{sessionId}/}.
    *
    * @return the session directory path
    * @throws IllegalStateException if this scope is closed
    */
   @Override
-  public Path getSessionDirectory()
+  public Path getClaudeSessionPath()
   {
-    return getSessionBasePath().resolve(getClaudeSessionId());
+    return getClaudeSessionsPath().resolve(getClaudeSessionId());
   }
 
   /**
    * Returns the cross-session project CAT directory.
    * <p>
-   * Located at {@code {claudeProjectDir}/.cat/work/}.
+   * Located at {@code {projectPath}/.cat/work/}.
    * <p>
    * This directory stores cross-session files such as {@code locks/} and {@code worktrees/}.
    *
@@ -138,23 +137,23 @@ public abstract class AbstractJvmScope implements JvmScope
    * @throws IllegalStateException if this scope is closed
    */
   @Override
-  public Path getProjectCatDir()
+  public Path getCatWorkPath()
   {
-    return getClaudeProjectDir().resolve(".cat").resolve("work");
+    return getProjectPath().resolve(".cat").resolve("work");
   }
 
   /**
    * Returns the per-session CAT directory.
    * <p>
-   * Located at {@code {claudeProjectDir}/.cat/work/sessions/{sessionId}/}.
+   * Located at {@code {projectPath}/.cat/work/sessions/{sessionId}/}.
    *
    * @return the session CAT directory path
    * @throws IllegalStateException if this scope is closed
    */
   @Override
-  public Path getSessionCatDir()
+  public Path getCatSessionPath()
   {
-    return getClaudeProjectDir().resolve(".cat").resolve("work").resolve("sessions").resolve(getClaudeSessionId());
+    return getCatWorkPath().resolve("sessions").resolve(getClaudeSessionId());
   }
 
   /**

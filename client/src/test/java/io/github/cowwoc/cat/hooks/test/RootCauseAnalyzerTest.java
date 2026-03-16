@@ -23,12 +23,12 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public final class RootCauseAnalyzerTest
 {
   /**
-   * Verifies that constructor rejects null projectRoot.
+   * Verifies that constructor rejects null projectPath.
    *
    * @throws IOException if test setup fails
    */
   @Test(expectedExceptions = NullPointerException.class,
-    expectedExceptionsMessageRegExp = ".*projectRoot.*")
+    expectedExceptionsMessageRegExp = ".*projectPath.*")
   public void constructorRejectsNullProjectRoot() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-rca-");

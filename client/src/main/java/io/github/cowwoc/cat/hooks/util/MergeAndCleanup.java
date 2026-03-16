@@ -55,7 +55,7 @@ public final class MergeAndCleanup
   /**
    * Executes the merge and cleanup operation.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param issueId the issue identifier
    * @param sessionId the Claude session UUID
    * @param targetBranch the target branch name to merge to
@@ -64,10 +64,10 @@ public final class MergeAndCleanup
    * @return JSON string with operation result
    * @throws IOException if the operation fails
    */
-  public String execute(String projectDir, String issueId, String sessionId, String targetBranch,
+  public String execute(String projectPath, String issueId, String sessionId, String targetBranch,
     String worktreePath, String pluginRoot) throws IOException
   {
-    requireThat(projectDir, "projectDir").isNotBlank();
+    requireThat(projectPath, "projectPath").isNotBlank();
     requireThat(issueId, "issueId").isNotBlank();
     requireThat(sessionId, "sessionId").isNotBlank();
     requireThat(targetBranch, "targetBranch").isNotBlank();
@@ -76,14 +76,14 @@ public final class MergeAndCleanup
 
     long startTime = System.currentTimeMillis();
 
-    Path projectPath = Paths.get(projectDir);
-    if (!Files.isDirectory(projectPath.resolve(Config.CAT_DIR_NAME)))
-      throw new IOException("Not a CAT project: '" + projectDir + "' (no .cat directory)");
+    Path projectRootPath = Paths.get(projectPath);
+    if (!Files.isDirectory(projectRootPath.resolve(Config.CAT_DIR_NAME)))
+      throw new IOException("Not a CAT project: '" + projectPath + "' (no .cat directory)");
 
     String taskBranch = issueId;
 
     if (worktreePath.isEmpty())
-      worktreePath = findWorktreeForBranch(projectDir, taskBranch);
+      worktreePath = findWorktreeForBranch(projectPath, taskBranch);
 
     if (worktreePath.isEmpty() || !Files.isDirectory(Paths.get(worktreePath)))
       throw new IOException("Worktree not found for issue branch: " + taskBranch);
@@ -94,7 +94,7 @@ public final class MergeAndCleanup
         ". Commit or stash changes first.");
     }
 
-    syncTargetBranchWithOrigin(projectDir, targetBranch);
+    syncTargetBranchWithOrigin(projectPath, targetBranch);
 
     int diverged = getDivergenceCount(worktreePath, targetBranch);
     if (diverged > 0)
@@ -107,10 +107,10 @@ public final class MergeAndCleanup
     }
 
     String commitSha = getCommitSha(worktreePath, "HEAD");
-    fastForwardMerge(projectDir, taskBranch);
+    fastForwardMerge(projectPath, taskBranch);
 
-    removeWorktree(projectDir, worktreePath);
-    deleteBranch(projectDir, taskBranch);
+    removeWorktree(projectPath, worktreePath);
+    deleteBranch(projectPath, taskBranch);
 
     boolean lockReleased = false;
     try
@@ -133,14 +133,14 @@ public final class MergeAndCleanup
   /**
    * Finds the worktree path for a branch.
    *
-   * @param projectDir the project directory
+   * @param projectPath the project directory
    * @param branch the branch name
    * @return the worktree path, or empty string if not found
    * @throws IOException if the operation fails
    */
-  private String findWorktreeForBranch(String projectDir, String branch) throws IOException
+  private String findWorktreeForBranch(String projectPath, String branch) throws IOException
   {
-    String output = runGit(Path.of(projectDir), "worktree", "list", "--porcelain");
+    String output = runGit(Path.of(projectPath), "worktree", "list", "--porcelain");
     String[] lines = output.split("\n");
 
     String currentWorktree = "";
@@ -173,28 +173,28 @@ public final class MergeAndCleanup
    * Fetches the target branch from origin and fast-forwards the local target branch to match
    * using {@code git merge --ff-only}. This updates the ref, index, and working tree atomically.
    *
-   * @param projectDir the project root directory (main worktree)
+   * @param projectPath the project root directory (main worktree)
    * @param targetBranch the target branch name
    * @throws IOException if fetch fails (network/remote unavailable) or fast-forward fails
    *   (local branch has diverged from origin)
    */
-  private void syncTargetBranchWithOrigin(String projectDir, String targetBranch) throws IOException
+  private void syncTargetBranchWithOrigin(String projectPath, String targetBranch) throws IOException
   {
     try
     {
-      runGit(Path.of(projectDir), "fetch", "origin", targetBranch);
+      runGit(Path.of(projectPath), "fetch", "origin", targetBranch);
     }
     catch (IOException e)
     {
       throw new IOException(
-        "Failed to fetch origin/" + targetBranch + " in directory: " + projectDir +
+        "Failed to fetch origin/" + targetBranch + " in directory: " + projectPath +
           ". Check network connectivity and that 'origin' remote is available. " +
           "Original error: " + e.getMessage(), e);
     }
 
-    mergeWithRetry(projectDir, "origin/" + targetBranch,
+    mergeWithRetry(projectPath, "origin/" + targetBranch,
       "Failed to update local " + targetBranch + " to match origin/" + targetBranch +
-        " in directory: " + projectDir + ". The local " + targetBranch +
+        " in directory: " + projectPath + ". The local " + targetBranch +
         " branch has diverged from origin and cannot be fast-forwarded. " +
         "Resolve the divergence before merging.");
   }
@@ -287,17 +287,17 @@ public final class MergeAndCleanup
   /**
    * Fast-forward merges the issue branch into the target branch using {@code git merge --ff-only}.
    * <p>
-   * This is run in the main worktree ({@code projectDir}), which atomically updates the ref,
+   * This is run in the main worktree ({@code projectPath}), which atomically updates the ref,
    * index, and working tree. Retries up to 3 times on index.lock contention.
    *
-   * @param projectDir the project root directory (main worktree)
+   * @param projectPath the project root directory (main worktree)
    * @param issueBranch the issue branch to merge
    * @throws IOException if the merge fails
    */
-  private void fastForwardMerge(String projectDir, String issueBranch) throws IOException
+  private void fastForwardMerge(String projectPath, String issueBranch) throws IOException
   {
-    mergeWithRetry(projectDir, issueBranch,
-      "Fast-forward merge of " + issueBranch + " failed in directory: " + projectDir +
+    mergeWithRetry(projectPath, issueBranch,
+      "Fast-forward merge of " + issueBranch + " failed in directory: " + projectPath +
         ". The target branch may have diverged.");
   }
 
@@ -381,25 +381,25 @@ public final class MergeAndCleanup
   /**
    * Removes a worktree.
    *
-   * @param projectDir the project directory
+   * @param projectPath the project directory
    * @param worktreePath the worktree path
    * @throws IOException if the operation fails
    */
-  private void removeWorktree(String projectDir, String worktreePath) throws IOException
+  private void removeWorktree(String projectPath, String worktreePath) throws IOException
   {
-    runGit(Path.of(projectDir), "worktree", "remove", worktreePath);
+    runGit(Path.of(projectPath), "worktree", "remove", worktreePath);
   }
 
   /**
    * Deletes a branch.
    *
-   * @param projectDir the project directory
+   * @param projectPath the project directory
    * @param branch the branch name
    * @throws IOException if the operation fails
    */
-  private void deleteBranch(String projectDir, String branch) throws IOException
+  private void deleteBranch(String projectPath, String branch) throws IOException
   {
-    runGit(Path.of(projectDir), "branch", "-d", branch);
+    runGit(Path.of(projectPath), "branch", "-d", branch);
   }
 
 
@@ -448,7 +448,7 @@ public final class MergeAndCleanup
         return;
       }
 
-      String projectDir = args[0];
+      String projectPath = args[0];
       String issueId = args[1];
       String sessionId = args[2];
       String targetBranch = args[3];
@@ -467,7 +467,7 @@ public final class MergeAndCleanup
       MergeAndCleanup cmd = new MergeAndCleanup(scope);
       try
       {
-        String result = cmd.execute(projectDir, issueId, sessionId, targetBranch, worktreePath, pluginRoot);
+        String result = cmd.execute(projectPath, issueId, sessionId, targetBranch, worktreePath, pluginRoot);
         System.out.println(result);
       }
       catch (IOException e)

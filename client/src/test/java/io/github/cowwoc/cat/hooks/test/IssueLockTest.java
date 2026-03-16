@@ -570,7 +570,7 @@ public class IssueLockTest
 
         lock.acquire("valid-issue", sessionId, "/path/to/worktree");
 
-        Path lockDir = scope.getProjectCatDir().resolve("locks");
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
         Path corruptedLock = lockDir.resolve("corrupted.lock");
         Files.writeString(corruptedLock, "this is not valid JSON");
 
@@ -602,7 +602,7 @@ public class IssueLockTest
     {
       try
       {
-        Path lockDir = scope.getProjectCatDir().resolve("locks");
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
         Files.createDirectories(lockDir);
 
         Path lockFile = lockDir.resolve("test-issue.lock");
@@ -637,7 +637,7 @@ public class IssueLockTest
 
         lock.acquire("v2.1/fix-bug", sessionId, "/path/to/worktree");
 
-        Path lockDir = scope.getProjectCatDir().resolve("locks");
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
         Path lockFile = lockDir.resolve("v2.1-fix-bug.lock");
 
         requireThat(Files.exists(lockFile), "lockFileExists").isTrue();
@@ -757,7 +757,7 @@ public class IssueLockTest
 
         lock.acquire("test-issue", sessionId, "/initial/worktree");
 
-        Path lockFile = scope.getProjectCatDir().resolve("locks").
+        Path lockFile = scope.getCatWorkPath().resolve("locks").
           resolve("test-issue.lock");
         String beforeContent = Files.readString(lockFile);
         @SuppressWarnings("unchecked")
@@ -801,7 +801,7 @@ public class IssueLockTest
 
         lock.acquire("v2.1\\fix-bug", sessionId, "/path/to/worktree");
 
-        Path lockDir = scope.getProjectCatDir().resolve("locks");
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
         Path lockFile = lockDir.resolve("v2.1-fix-bug.lock");
 
         requireThat(Files.exists(lockFile), "lockFileExists").isTrue();
@@ -831,7 +831,7 @@ public class IssueLockTest
 
         lock.acquire("issue:123", sessionId, "/path/to/worktree");
 
-        Path lockDir = scope.getProjectCatDir().resolve("locks");
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
         Path lockFile = lockDir.resolve("issue:123.lock");
 
         requireThat(Files.exists(lockFile), "lockFileExists").isTrue();
@@ -861,7 +861,7 @@ public class IssueLockTest
 
         lock.acquire("test-issue", sessionId, "/path/to/worktree");
 
-        Path lockDir = scope.getProjectCatDir().resolve("locks");
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
         Path lockFile = lockDir.resolve("test-issue.lock");
         String content = Files.readString(lockFile);
 
@@ -895,7 +895,7 @@ public class IssueLockTest
         lock.acquire("test-issue", sessionId, "/path/to/worktree");
         lock.update("test-issue", sessionId, "/new/path/to/worktree");
 
-        Path lockDir = scope.getProjectCatDir().resolve("locks");
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
         Path lockFile = lockDir.resolve("test-issue.lock");
         String content = Files.readString(lockFile);
 
@@ -928,7 +928,7 @@ public class IssueLockTest
         lock.acquire("test-issue", sessionId, "");
         lock.update("test-issue", sessionId, "/new/worktree");
 
-        Path lockFile = scope.getProjectCatDir().resolve("locks").
+        Path lockFile = scope.getCatWorkPath().resolve("locks").
           resolve("test-issue.lock");
         String content = Files.readString(lockFile);
         @SuppressWarnings("unchecked")
@@ -965,7 +965,7 @@ public class IssueLockTest
         Instant staleLockTime = now.minusSeconds(4 * 3600 + 1);
 
         JsonMapper mapper = scope.getJsonMapper();
-        Path lockDirPath = scope.getProjectCatDir().resolve("locks");
+        Path lockDirPath = scope.getCatWorkPath().resolve("locks");
         Files.createDirectories(lockDirPath);
         Path lockFile = lockDirPath.resolve("test-issue.lock");
 
@@ -1026,7 +1026,7 @@ public class IssueLockTest
         Instant staleLockTime = now.minusSeconds(4 * 3600 + 1);  // 4 hours + 1 second old
 
         JsonMapper mapper = scope.getJsonMapper();
-        Path lockDir = scope.getProjectCatDir().resolve("locks");
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
         Files.createDirectories(lockDir);
         Path lockFile = lockDir.resolve("test-issue.lock");
 
@@ -1087,7 +1087,7 @@ public class IssueLockTest
         Instant recentLockTime = now.minusSeconds(3600);  // 1 hour old (non-stale)
 
         JsonMapper mapper = scope.getJsonMapper();
-        Path lockDir = scope.getProjectCatDir().resolve("locks");
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
         Files.createDirectories(lockDir);
         Path lockFile = lockDir.resolve("test-issue.lock");
 

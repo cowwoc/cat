@@ -57,7 +57,7 @@ public final class WarnUnknownTerminal implements SessionStartHandler
     if (!display.isUsingFallbackWidths())
       return Result.empty();
 
-    Path sessionDir = scope.getSessionDirectory();
+    Path sessionDir = scope.getClaudeSessionPath();
     Path markerFile = sessionDir.resolve(MARKER_FILE);
     if (Files.exists(markerFile))
       return Result.empty();

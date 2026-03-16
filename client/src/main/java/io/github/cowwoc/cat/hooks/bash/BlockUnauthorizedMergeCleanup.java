@@ -104,7 +104,7 @@ public final class BlockUnauthorizedMergeCleanup implements BashHandler
         BLOCKING: This merge attempt is blocked until user approval can be verified.""");
     }
 
-    Path sessionFile = scope.getSessionBasePath().resolve(sessionId + ".jsonl");
+    Path sessionFile = scope.getClaudeSessionsPath().resolve(sessionId + ".jsonl");
 
     if (!Files.exists(sessionFile))
     {
@@ -146,7 +146,7 @@ public final class BlockUnauthorizedMergeCleanup implements BashHandler
    */
   private TrustLevel getTrustLevel() throws IOException
   {
-    Config config = Config.load(scope.getJsonMapper(), scope.getClaudeProjectDir());
+    Config config = Config.load(scope.getJsonMapper(), scope.getProjectPath());
     return config.getTrust();
   }
 

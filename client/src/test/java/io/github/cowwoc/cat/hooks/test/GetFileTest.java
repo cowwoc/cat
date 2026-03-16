@@ -299,7 +299,7 @@ More content.
       getFile.getOutput(new String[]{sessionId, targetFile.toString()});
 
       // Marker should be in {sessionBasePath}/{sessionId}/loaded/
-      Path sessionBasePath = scope.getSessionBasePath().toAbsolutePath().normalize();
+      Path sessionBasePath = scope.getClaudeSessionsPath().toAbsolutePath().normalize();
       Path expectedDir = sessionBasePath.resolve(sessionId).resolve(GetSkill.LOADED_DIR);
       String encodedPath = URLEncoder.encode(targetFile.toString(), StandardCharsets.UTF_8);
       Path expectedMarker = expectedDir.resolve(encodedPath);
@@ -337,7 +337,7 @@ More content.
       getFile.getOutput(new String[]{catAgentId, targetFile.toString()});
 
       // Marker should be in {sessionBasePath}/{sessionId}/subagents/{agentId}/loaded/
-      Path sessionBasePath = scope.getSessionBasePath().toAbsolutePath().normalize();
+      Path sessionBasePath = scope.getClaudeSessionsPath().toAbsolutePath().normalize();
       Path agentPath = sessionBasePath.resolve(sessionId).resolve(GetSkill.SUBAGENTS_DIR).resolve(agentId);
       Path expectedDir = agentPath.resolve(GetSkill.LOADED_DIR);
       String encodedPath = URLEncoder.encode(targetFile.toString(), StandardCharsets.UTF_8);

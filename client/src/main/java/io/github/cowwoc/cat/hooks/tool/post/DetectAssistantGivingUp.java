@@ -43,7 +43,7 @@ public final class DetectAssistantGivingUp implements PostToolHandler
   public DetectAssistantGivingUp(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
-    this.sessionBasePath = scope.getSessionBasePath();
+    this.sessionBasePath = scope.getClaudeSessionsPath();
     this.mapper = scope.getJsonMapper();
   }
 

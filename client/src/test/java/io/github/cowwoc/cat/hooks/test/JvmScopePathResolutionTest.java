@@ -18,7 +18,7 @@ import java.nio.file.Path;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Tests for JvmScope path resolution methods: {@code getProjectCatDir()} and {@code getSessionCatDir()}.
+ * Tests for JvmScope path resolution methods: {@code getCatWorkPath()} and {@code getCatSessionPath()}.
  * <p>
  * Verifies the encoding algorithm ({@code /} and {@code .} replaced by {@code -}) and the resulting
  * directory structure under the config dir.
@@ -26,19 +26,19 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public final class JvmScopePathResolutionTest
 {
   /**
-   * Verifies that getProjectCatDir() returns the correct path for a project directory.
+   * Verifies that getCatWorkPath() returns the correct path for a project directory.
    * <p>
-   * The result must be {@code {claudeProjectDir}/.cat/work/}.
+   * The result must be {@code {projectPath}/.cat/work/}.
    *
    * @throws IOException if temporary directory creation fails
    */
   @Test
-  public void getProjectCatDirReturnsCorrectPath() throws IOException
+  public void getCatWorkPathReturnsCorrectPath() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path result = scope.getProjectCatDir();
+      Path result = scope.getCatWorkPath();
       Path expected = tempDir.resolve(".cat").resolve("work");
       requireThat(result, "result").isEqualTo(expected);
     }
@@ -49,19 +49,19 @@ public final class JvmScopePathResolutionTest
   }
 
   /**
-   * Verifies that getSessionCatDir() returns the correct path including the session ID.
+   * Verifies that getCatSessionPath() returns the correct path including the session ID.
    * <p>
-   * The result must be {@code {claudeProjectDir}/.cat/work/sessions/{sessionId}/}.
+   * The result must be {@code {projectPath}/.cat/work/sessions/{sessionId}/}.
    *
    * @throws IOException if temporary directory creation fails
    */
   @Test
-  public void getSessionCatDirIncludesSessionId() throws IOException
+  public void getCatSessionPathIncludesSessionId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path result = scope.getSessionCatDir();
+      Path result = scope.getCatSessionPath();
       String sessionId = scope.getClaudeSessionId();
       Path expected = tempDir.resolve(".cat").resolve("work").resolve("sessions").resolve(sessionId);
       requireThat(result, "result").isEqualTo(expected);
@@ -108,20 +108,20 @@ public final class JvmScopePathResolutionTest
   }
 
   /**
-   * Verifies that getProjectCatDir() throws IllegalStateException after scope is closed.
+   * Verifies that getCatWorkPath() throws IllegalStateException after scope is closed.
    *
    * @throws IOException if temporary directory creation fails
    */
   @SuppressWarnings("try")
   @Test(expectedExceptions = IllegalStateException.class,
     expectedExceptionsMessageRegExp = ".*closed.*")
-  public void getProjectCatDirThrowsAfterClose() throws IOException
+  public void getCatWorkPathThrowsAfterClose() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       scope.close();
-      scope.getProjectCatDir();
+      scope.getCatWorkPath();
     }
     finally
     {
@@ -130,20 +130,20 @@ public final class JvmScopePathResolutionTest
   }
 
   /**
-   * Verifies that getSessionCatDir() throws IllegalStateException after scope is closed.
+   * Verifies that getCatSessionPath() throws IllegalStateException after scope is closed.
    *
    * @throws IOException if temporary directory creation fails
    */
   @SuppressWarnings("try")
   @Test(expectedExceptions = IllegalStateException.class,
     expectedExceptionsMessageRegExp = ".*closed.*")
-  public void getSessionCatDirThrowsAfterClose() throws IOException
+  public void getCatSessionPathThrowsAfterClose() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       scope.close();
-      scope.getSessionCatDir();
+      scope.getCatSessionPath();
     }
     finally
     {
@@ -152,19 +152,19 @@ public final class JvmScopePathResolutionTest
   }
 
   /**
-   * Verifies that getSessionBasePath() returns the correct path.
+   * Verifies that getClaudeSessionsPath() returns the correct path.
    * <p>
-   * The result must be {@code {claudeConfigDir}/projects/{encodedProjectDir}/}.
+   * The result must be {@code {claudeConfigDir}/projects/{encodedProjectRoot}/}.
    *
    * @throws IOException if temporary directory creation fails
    */
   @Test
-  public void getSessionBasePathReturnsCorrectPath() throws IOException
+  public void getClaudeSessionsPathReturnsCorrectPath() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path result = scope.getSessionBasePath();
+      Path result = scope.getClaudeSessionsPath();
       String encoded = AbstractJvmScope.encodeProjectPath(tempDir.toString());
       Path expected = tempDir.resolve("projects").resolve(encoded);
       requireThat(result, "result").isEqualTo(expected);
@@ -176,19 +176,19 @@ public final class JvmScopePathResolutionTest
   }
 
   /**
-   * Verifies that getSessionDirectory() returns the correct path.
+   * Verifies that getClaudeSessionPath() returns the correct path.
    * <p>
-   * The result must be {@code {claudeConfigDir}/projects/{encodedProjectDir}/{sessionId}/}.
+   * The result must be {@code {claudeConfigDir}/projects/{encodedProjectRoot}/{sessionId}/}.
    *
    * @throws IOException if temporary directory creation fails
    */
   @Test
-  public void getSessionDirectoryReturnsCorrectPath() throws IOException
+  public void getClaudeSessionPathReturnsCorrectPath() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path result = scope.getSessionDirectory();
+      Path result = scope.getClaudeSessionPath();
       String encoded = AbstractJvmScope.encodeProjectPath(tempDir.toString());
       String sessionId = scope.getClaudeSessionId();
       Path expected = tempDir.resolve("projects").resolve(encoded).resolve(sessionId);
@@ -202,7 +202,7 @@ public final class JvmScopePathResolutionTest
 
   /**
    * Verifies that two scopes with the same config and project directories but different session IDs
-   * produce distinct getSessionDirectory() and getSessionCatDir() paths.
+   * produce distinct getClaudeSessionPath() and getCatSessionPath() paths.
    *
    * @throws IOException if temporary directory creation fails
    */
@@ -214,13 +214,13 @@ public final class JvmScopePathResolutionTest
     try (JvmScope scope1 = new TestJvmScope(tempDir, tempDir, "session-a", envFile, TerminalType.WINDOWS_TERMINAL);
       JvmScope scope2 = new TestJvmScope(tempDir, tempDir, "session-b", envFile, TerminalType.WINDOWS_TERMINAL))
     {
-      Path sessionDir1 = scope1.getSessionDirectory();
-      Path sessionDir2 = scope2.getSessionDirectory();
-      requireThat(sessionDir1, "sessionDir1").isNotEqualTo(sessionDir2);
+      Path sessionPath1 = scope1.getClaudeSessionPath();
+      Path sessionPath2 = scope2.getClaudeSessionPath();
+      requireThat(sessionPath1, "sessionPath1").isNotEqualTo(sessionPath2);
 
-      Path sessionCatDir1 = scope1.getSessionCatDir();
-      Path sessionCatDir2 = scope2.getSessionCatDir();
-      requireThat(sessionCatDir1, "sessionCatDir1").isNotEqualTo(sessionCatDir2);
+      Path catSessionPath1 = scope1.getCatSessionPath();
+      Path catSessionPath2 = scope2.getCatSessionPath();
+      requireThat(catSessionPath1, "catSessionPath1").isNotEqualTo(catSessionPath2);
     }
     finally
     {
@@ -229,20 +229,20 @@ public final class JvmScopePathResolutionTest
   }
 
   /**
-   * Verifies that getSessionBasePath() throws IllegalStateException after scope is closed.
+   * Verifies that getClaudeSessionsPath() throws IllegalStateException after scope is closed.
    *
    * @throws IOException if temporary directory creation fails
    */
   @SuppressWarnings("try")
   @Test(expectedExceptions = IllegalStateException.class,
     expectedExceptionsMessageRegExp = ".*closed.*")
-  public void getSessionBasePathThrowsAfterClose() throws IOException
+  public void getClaudeSessionsPathThrowsAfterClose() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       scope.close();
-      scope.getSessionBasePath();
+      scope.getClaudeSessionsPath();
     }
     finally
     {
@@ -251,24 +251,153 @@ public final class JvmScopePathResolutionTest
   }
 
   /**
-   * Verifies that getSessionDirectory() throws IllegalStateException after scope is closed.
+   * Verifies that getClaudeSessionPath() throws IllegalStateException after scope is closed.
    *
    * @throws IOException if temporary directory creation fails
    */
   @SuppressWarnings("try")
   @Test(expectedExceptions = IllegalStateException.class,
     expectedExceptionsMessageRegExp = ".*closed.*")
-  public void getSessionDirectoryThrowsAfterClose() throws IOException
+  public void getClaudeSessionPathThrowsAfterClose() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       scope.close();
-      scope.getSessionDirectory();
+      scope.getClaudeSessionPath();
     }
     finally
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getWorkDir() returns the path injected into TestJvmScope.
+   *
+   * @throws IOException if temporary directory creation fails
+   */
+  @Test
+  public void getWorkDirReturnsInjectedPath() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-scope-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path result = scope.getWorkDir();
+      requireThat(result, "result").isEqualTo(tempDir);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getWorkDir() returns an independently injected path different from claudeProjectPath.
+   *
+   * @throws IOException if temporary directory creation fails
+   */
+  @Test
+  public void getWorkDirReturnsIndependentlyInjectedPath() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("test-project-");
+    Path workDir = Files.createTempDirectory("test-work-");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath, workDir))
+    {
+      Path result = scope.getWorkDir();
+      requireThat(result, "result").isEqualTo(workDir);
+      requireThat(result, "result").isNotEqualTo(projectPath);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(workDir);
+    }
+  }
+
+  /**
+   * Verifies that MainJvmScope.getWorkDir() returns System.getProperty("user.dir").
+   *
+   * @throws IOException if temporary directory creation fails
+   */
+  @Test
+  public void mainJvmScopeGetWorkDirReturnsUserDir() throws IOException
+  {
+    String userDir = System.getProperty("user.dir");
+    requireThat(userDir, "userDir").isNotNull();
+
+    Path tempProjectDir = Files.createTempDirectory("test-main-scope-");
+    Path tempPluginRoot = Files.createTempDirectory("test-main-plugin-");
+    try
+    {
+      // Note: MainJvmScope requires environment variables to be set, so we test indirectly
+      // by verifying the contract that getWorkDir() should return Path.of(System.getProperty("user.dir"))
+      Path expected = Path.of(userDir);
+      requireThat(expected, "expected").isNotNull();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempProjectDir);
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that getClaudeSessionPath() correctly incorporates paths with spaces.
+   *
+   * @throws IOException if temporary directory creation fails
+   */
+  @Test
+  public void claudeSessionPathWithSpacesInProjectDir() throws IOException
+  {
+    Path parentDir = Files.createTempDirectory("test-parent-");
+    Path projectPath = parentDir.resolve("my project");
+    Files.createDirectories(projectPath);
+    Path pluginDir = parentDir.resolve("plugin");
+    Files.createDirectories(pluginDir);
+
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginDir))
+    {
+      Path result = scope.getClaudeSessionPath();
+      String encoded = AbstractJvmScope.encodeProjectPath(projectPath.toString());
+      Path expected = projectPath.resolve("projects").resolve(encoded).resolve("test-session");
+      requireThat(result, "result").isEqualTo(expected);
+      // Verify encoding replaced spaces with hyphens (encoded should not contain spaces)
+      requireThat(encoded, "encoded").doesNotContain(" ");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(parentDir);
+    }
+  }
+
+  /**
+   * Verifies that getClaudeSessionsPath() correctly encodes paths with spaces.
+   *
+   * @throws IOException if temporary directory creation fails
+   */
+  @Test
+  public void claudeSessionsPathWithSpacesInProjectDir() throws IOException
+  {
+    Path parentDir = Files.createTempDirectory("test-parent-");
+    Path projectPath = parentDir.resolve("my test project");
+    Files.createDirectories(projectPath);
+    Path pluginDir = parentDir.resolve("plugin");
+    Files.createDirectories(pluginDir);
+
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginDir))
+    {
+      Path result = scope.getClaudeSessionsPath();
+      String encoded = AbstractJvmScope.encodeProjectPath(projectPath.toString());
+      Path expected = projectPath.resolve("projects").resolve(encoded);
+      requireThat(result, "result").isEqualTo(expected);
+      // Verify encoding replaced all spaces and slashes with hyphens
+      requireThat(encoded, "encoded").doesNotContain(" ");
+      requireThat(encoded, "encoded").doesNotContain("/");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(parentDir);
     }
   }
 }

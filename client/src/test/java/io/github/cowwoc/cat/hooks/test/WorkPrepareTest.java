@@ -40,8 +40,8 @@ public class WorkPrepareTest
   @Test
   public void executeReturnsErrorWhenNoCatStructure() throws IOException
   {
-    Path projectDir = Files.createTempDirectory("work-prepare-test");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = Files.createTempDirectory("work-prepare-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       WorkPrepare prepare = new WorkPrepare(scope);
       PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "", "", TrustLevel.MEDIUM);
@@ -56,7 +56,7 @@ public class WorkPrepareTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -68,11 +68,11 @@ public class WorkPrepareTest
   @Test
   public void executeReturnsNoIssuesWhenNoExecutableIssues() throws IOException
   {
-    Path projectDir = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // Create a closed issue only
-      createIssue(projectDir, "2", "1", "done-feature", "closed");
+      createIssue(projectPath, "2", "1", "done-feature", "closed");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "", "", TrustLevel.MEDIUM);
@@ -88,7 +88,7 @@ public class WorkPrepareTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -100,15 +100,15 @@ public class WorkPrepareTest
   @Test
   public void executeReturnsOversizedWhenTokensExceedLimit() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = createTempGitCatProject("v2.1");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssue(projectDir, "2", "1", "huge-feature", "open");
-      createOversizedPlan(projectDir, "2", "1", "huge-feature");
+      createIssue(projectPath, "2", "1", "huge-feature", "open");
+      createOversizedPlan(projectPath, "2", "1", "huge-feature");
 
       // Commit the issue so it's visible in the git repo
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add oversized issue");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add oversized issue");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "", "", TrustLevel.MEDIUM);
@@ -123,7 +123,7 @@ public class WorkPrepareTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -135,11 +135,11 @@ public class WorkPrepareTest
   @Test
   public void executeReturnsCorruptWhenStateMdExistsButNoPlanMd() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = createTempGitCatProject("v2.1");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // Create issue directory with only STATE.md (no PLAN.md) — simulates a corrupt directory
-      Path issueDir = projectDir.resolve(".cat").resolve("issues").
+      Path issueDir = projectPath.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("corrupt-issue");
       Files.createDirectories(issueDir);
 
@@ -154,8 +154,8 @@ public class WorkPrepareTest
       Files.writeString(issueDir.resolve("STATE.md"), stateContent);
       // Deliberately no PLAN.md — this is the corrupt condition
 
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add corrupt issue directory");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add corrupt issue directory");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "", "", TrustLevel.MEDIUM);
@@ -171,7 +171,7 @@ public class WorkPrepareTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -186,13 +186,13 @@ public class WorkPrepareTest
   @Test
   public void executeReleasesLockOnOversizedReturn() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = createTempGitCatProject("v2.1");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssue(projectDir, "2", "1", "huge-feature", "open");
-      createOversizedPlan(projectDir, "2", "1", "huge-feature");
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add oversized issue");
+      createIssue(projectPath, "2", "1", "huge-feature", "open");
+      createOversizedPlan(projectPath, "2", "1", "huge-feature");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add oversized issue");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -205,12 +205,12 @@ public class WorkPrepareTest
       requireThat(node.path("status").asString(), "status").isEqualTo("OVERSIZED");
 
       // The lock file must not remain after an OVERSIZED early return
-      Path lockFile = scope.getProjectCatDir().resolve("locks").resolve("2.1-huge-feature.lock");
+      Path lockFile = scope.getCatWorkPath().resolve("locks").resolve("2.1-huge-feature.lock");
       requireThat(Files.notExists(lockFile), "lockFileAbsent").isTrue();
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -225,11 +225,11 @@ public class WorkPrepareTest
   @Test
   public void executeReleasesLockOnCorruptReturn() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = createTempGitCatProject("v2.1");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // Create issue directory with only STATE.md (no PLAN.md) — simulates a corrupt directory
-      Path issueDir = projectDir.resolve(".cat").resolve("issues").
+      Path issueDir = projectPath.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("corrupt-issue");
       Files.createDirectories(issueDir);
 
@@ -244,8 +244,8 @@ public class WorkPrepareTest
       Files.writeString(issueDir.resolve("STATE.md"), stateContent);
       // Deliberately no PLAN.md — this is the corrupt condition
 
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add corrupt issue directory");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add corrupt issue directory");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -258,12 +258,12 @@ public class WorkPrepareTest
       requireThat(node.path("status").asString(), "status").isEqualTo("CORRUPT");
 
       // The lock file must not remain after a CORRUPT early return
-      Path lockFile = scope.getProjectCatDir().resolve("locks").resolve("2.1-corrupt-issue.lock");
+      Path lockFile = scope.getCatWorkPath().resolve("locks").resolve("2.1-corrupt-issue.lock");
       requireThat(Files.notExists(lockFile), "lockFileAbsent").isTrue();
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -278,13 +278,13 @@ public class WorkPrepareTest
   @Test
   public void executeDoesNotThrowWhenCalledTwiceOnOversizedIssue() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = createTempGitCatProject("v2.1");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssue(projectDir, "2", "1", "huge-feature", "open");
-      createOversizedPlan(projectDir, "2", "1", "huge-feature");
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add oversized issue");
+      createIssue(projectPath, "2", "1", "huge-feature", "open");
+      createOversizedPlan(projectPath, "2", "1", "huge-feature");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add oversized issue");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -303,7 +303,7 @@ public class WorkPrepareTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -318,11 +318,11 @@ public class WorkPrepareTest
   @Test
   public void executeDoesNotThrowWhenCalledTwiceOnCorruptIssue() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = createTempGitCatProject("v2.1");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // Create issue directory with only STATE.md (no PLAN.md) — simulates a corrupt directory
-      Path issueDir = projectDir.resolve(".cat").resolve("issues").
+      Path issueDir = projectPath.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("corrupt-issue");
       Files.createDirectories(issueDir);
 
@@ -337,8 +337,8 @@ public class WorkPrepareTest
       Files.writeString(issueDir.resolve("STATE.md"), stateContent);
       // Deliberately no PLAN.md — this is the corrupt condition
 
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add corrupt issue directory");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add corrupt issue directory");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -357,7 +357,7 @@ public class WorkPrepareTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -369,13 +369,13 @@ public class WorkPrepareTest
   @Test
   public void executeReturnsReadyAndCreatesWorktree() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssue(projectDir, "2", "1", "my-feature", "open");
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add issue");
+      createIssue(projectPath, "2", "1", "my-feature", "open");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -404,8 +404,8 @@ public class WorkPrepareTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -417,13 +417,13 @@ public class WorkPrepareTest
   @Test
   public void executeUpdatesStateMdToInProgress() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssue(projectDir, "2", "1", "my-feature", "open");
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add issue");
+      createIssue(projectPath, "2", "1", "my-feature", "open");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -446,8 +446,8 @@ public class WorkPrepareTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -459,14 +459,14 @@ public class WorkPrepareTest
   @Test
   public void executeUsesSpecificIssueIdWhenProvided() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssue(projectDir, "2", "1", "first-feature", "open");
-      createIssue(projectDir, "2", "1", "second-feature", "open");
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add issues");
+      createIssue(projectPath, "2", "1", "first-feature", "open");
+      createIssue(projectPath, "2", "1", "second-feature", "open");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issues");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -484,8 +484,8 @@ public class WorkPrepareTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -497,13 +497,13 @@ public class WorkPrepareTest
   @Test
   public void executeResolvesBareBugNameToQualifiedIssueId() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssue(projectDir, "2", "1", "fix-bug", "open");
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add fix-bug issue");
+      createIssue(projectPath, "2", "1", "fix-bug", "open");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add fix-bug issue");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -520,8 +520,8 @@ public class WorkPrepareTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -533,10 +533,10 @@ public class WorkPrepareTest
   @Test
   public void executeReturnsNoIssuesWhenAllIssuesExcluded() throws IOException
   {
-    Path projectDir = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssue(projectDir, "2", "1", "compress-feature", "open");
+      createIssue(projectPath, "2", "1", "compress-feature", "open");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*compress*", "", TrustLevel.MEDIUM);
@@ -549,7 +549,7 @@ public class WorkPrepareTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -561,14 +561,14 @@ public class WorkPrepareTest
   @Test
   public void executeIncludesEstimatedTokensInReadyResult() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssue(projectDir, "2", "1", "my-feature", "open");
-      createSimplePlan(projectDir, "2", "1", "my-feature");
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add issue with plan");
+      createIssue(projectPath, "2", "1", "my-feature", "open");
+      createSimplePlan(projectPath, "2", "1", "my-feature");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue with plan");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -587,8 +587,8 @@ public class WorkPrepareTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -600,14 +600,14 @@ public class WorkPrepareTest
   @Test
   public void executeIncludesGoalFromPlanMd() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssue(projectDir, "2", "1", "my-feature", "open");
-      createPlanWithGoal(projectDir, "2", "1", "my-feature", "Implement the best feature ever");
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add issue with goal");
+      createIssue(projectPath, "2", "1", "my-feature", "open");
+      createPlanWithGoal(projectPath, "2", "1", "my-feature", "Implement the best feature ever");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue with goal");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -625,8 +625,8 @@ public class WorkPrepareTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -638,15 +638,15 @@ public class WorkPrepareTest
   @Test
   public void executeIncludesPreconditionsFromPlanMd() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssue(projectDir, "2", "1", "my-feature", "open");
-      createPlanWithPreconditions(projectDir, "2", "1", "my-feature",
+      createIssue(projectPath, "2", "1", "my-feature", "open");
+      createPlanWithPreconditions(projectPath, "2", "1", "my-feature",
         new String[]{"All tests pass", "Branch is up to date"});
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add issue with preconditions");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue with preconditions");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -668,8 +668,8 @@ public class WorkPrepareTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -681,14 +681,14 @@ public class WorkPrepareTest
   @Test
   public void executeReturnsEmptyPreconditionsWhenSectionMissing() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssue(projectDir, "2", "1", "no-preconditions", "open");
+      createIssue(projectPath, "2", "1", "no-preconditions", "open");
 
       // Create a PLAN.md without a Pre-conditions section
-      Path issueDir = projectDir.resolve(".cat").resolve("issues").
+      Path issueDir = projectPath.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("no-preconditions");
       String planContent = """
         # Plan
@@ -703,8 +703,8 @@ public class WorkPrepareTest
         """;
       Files.writeString(issueDir.resolve("PLAN.md"), planContent);
 
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add issue without preconditions");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue without preconditions");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -724,8 +724,8 @@ public class WorkPrepareTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -739,15 +739,15 @@ public class WorkPrepareTest
   @Test
   public void executeReturnsLockedWhenReasonContainsLocked() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = createTempGitCatProject("v2.1");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssue(projectDir, "2", "1", "locked-feature", "open");
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add issue");
+      createIssue(projectPath, "2", "1", "locked-feature", "open");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue");
 
       // Create a lock file owned by a different session with recent timestamp (non-stale)
-      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Path locksDir = scope.getCatWorkPath().resolve("locks");
       Files.createDirectories(locksDir);
       String otherSession = UUID.randomUUID().toString();
       long recentTimestamp = Instant.now().getEpochSecond();
@@ -774,7 +774,7 @@ public class WorkPrepareTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -790,16 +790,16 @@ public class WorkPrepareTest
   @Test
   public void executeReturnsLockedWhenIssueIsLockedAndWorktreeExists() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssue(projectDir, "2", "1", "locked-with-wt", "open");
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add issue");
+      createIssue(projectPath, "2", "1", "locked-with-wt", "open");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue");
 
       // Create a lock file owned by a different session with a recent timestamp (non-stale)
-      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Path locksDir = scope.getCatWorkPath().resolve("locks");
       Files.createDirectories(locksDir);
       String otherSession = UUID.randomUUID().toString();
       long recentTimestamp = Instant.now().getEpochSecond();
@@ -813,9 +813,9 @@ public class WorkPrepareTest
       Files.writeString(locksDir.resolve("2.1-locked-with-wt.lock"), lockContent);
 
       // Create an actual git worktree for the issue branch so the worktree directory exists
-      worktreePath = scope.getProjectCatDir().resolve("worktrees").resolve("2.1-locked-with-wt");
+      worktreePath = scope.getCatWorkPath().resolve("worktrees").resolve("2.1-locked-with-wt");
       Files.createDirectories(worktreePath.getParent());
-      GitCommands.runGit(projectDir, "worktree", "add", "-b", "2.1-locked-with-wt",
+      GitCommands.runGit(projectPath, "worktree", "add", "-b", "2.1-locked-with-wt",
         worktreePath.toString(), "HEAD");
 
       WorkPrepare prepare = new WorkPrepare(scope);
@@ -831,8 +831,54 @@ public class WorkPrepareTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that execute returns READY when the current session already holds the lock and the
+   * worktree directory already exists — resuming work seamlessly instead of returning ERROR.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeReturnsReadyWhenSessionOwnsLockAndWorktreeExists() throws IOException
+  {
+    Path projectPath = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    {
+      createIssue(projectPath, "2", "1", "resume-feature", "open");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue");
+
+      // First call creates the worktree and acquires the lock
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "2.1-resume-feature", TrustLevel.MEDIUM);
+
+      String json1 = prepare.execute(input);
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node1 = mapper.readTree(json1);
+      requireThat(node1.path("status").asString(), "firstStatus").isEqualTo("READY");
+      worktreePath = Path.of(node1.path("worktree_path").asString());
+
+      // Second call with same session ID — worktree exists, lock is still held by this session
+      // Must return READY (resume), not ERROR
+      String json2 = prepare.execute(input);
+      JsonNode node2 = mapper.readTree(json2);
+
+      requireThat(node2.path("status").asString(), "secondStatus").isEqualTo("READY");
+      requireThat(node2.path("issue_id").asString(), "issueId").isEqualTo("2.1-resume-feature");
+      requireThat(node2.path("worktree_path").asString(), "worktreePath").
+        isEqualTo(worktreePath.toString());
+      requireThat(node2.path("lock_acquired").asBoolean(), "lockAcquired").isTrue();
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -845,18 +891,18 @@ public class WorkPrepareTest
   @Test
   public void executeDetectsSuspiciousCommitsOnTargetBranch() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssue(projectDir, "2", "1", "suspicious-feature", "open");
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add suspicious-feature issue");
+      createIssue(projectPath, "2", "1", "suspicious-feature", "open");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add suspicious-feature issue");
 
       // Create a non-planning commit on the target branch that mentions the issue name
-      Files.writeString(projectDir.resolve("impl.txt"), "implementation work");
-      GitCommands.runGit(projectDir, "add", "impl.txt");
-      GitCommands.runGit(projectDir, "commit", "-m",
+      Files.writeString(projectPath.resolve("impl.txt"), "implementation work");
+      GitCommands.runGit(projectPath, "add", "impl.txt");
+      GitCommands.runGit(projectPath, "commit", "-m",
         "feature: implement suspicious-feature changes");
 
       WorkPrepare prepare = new WorkPrepare(scope);
@@ -875,8 +921,8 @@ public class WorkPrepareTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -890,13 +936,13 @@ public class WorkPrepareTest
   @Test
   public void executeIncludesExistingWorkFieldsInReadyResult() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssue(projectDir, "2", "1", "fresh-feature", "open");
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add issue");
+      createIssue(projectPath, "2", "1", "fresh-feature", "open");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -917,8 +963,8 @@ public class WorkPrepareTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -930,14 +976,14 @@ public class WorkPrepareTest
   @Test
   public void executeReturnsReadyWhenGoalSectionMissing() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssue(projectDir, "2", "1", "no-goal", "open");
+      createIssue(projectPath, "2", "1", "no-goal", "open");
 
       // Create a PLAN.md without a Goal section
-      Path issueDir = projectDir.resolve(".cat").resolve("issues").
+      Path issueDir = projectPath.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("no-goal");
       String planContent = """
         # Plan
@@ -948,8 +994,8 @@ public class WorkPrepareTest
         """;
       Files.writeString(issueDir.resolve("PLAN.md"), planContent);
 
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add issue without goal");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue without goal");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -966,8 +1012,8 @@ public class WorkPrepareTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -980,18 +1026,18 @@ public class WorkPrepareTest
   @Test
   public void executeReturnsNoIssuesWithBlockedIssuesDiagnostic() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = createTempGitCatProject("v2.1");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // Create a dependency issue that is open (not closed)
-      createIssue(projectDir, "2", "1", "dependency-issue", "open");
+      createIssue(projectPath, "2", "1", "dependency-issue", "open");
 
       // Create a blocked issue with dependencies
-      createIssueWithDependencies(projectDir, "2", "1", "blocked-feature", "open",
+      createIssueWithDependencies(projectPath, "2", "1", "blocked-feature", "open",
         "2.1-dependency-issue");
 
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add blocked issues");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add blocked issues");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       // Exclude all issues so IssueDiscovery returns NotFound, triggering diagnostics
@@ -1022,7 +1068,7 @@ public class WorkPrepareTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -1035,13 +1081,13 @@ public class WorkPrepareTest
   @Test
   public void executeReturnsOversizedAtTokenBoundary() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = createTempGitCatProject("v2.1");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssue(projectDir, "2", "1", "boundary-feature", "open");
+      createIssue(projectPath, "2", "1", "boundary-feature", "open");
 
       // 32 files to create: 32 * 5000 = 160,000 + 10,000 base = 170,000 > 160,000
-      Path issueDir = projectDir.resolve(".cat").resolve("issues").
+      Path issueDir = projectPath.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("boundary-feature");
       StringBuilder planContent = new StringBuilder(800);
       planContent.append("# Plan\n\n## Files to Create\n\n");
@@ -1051,8 +1097,8 @@ public class WorkPrepareTest
       planContent.append("\n## Execution Steps\n\n1. Implement\n");
       Files.writeString(issueDir.resolve("PLAN.md"), planContent.toString());
 
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add boundary issue");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add boundary issue");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "", "", TrustLevel.MEDIUM);
@@ -1067,7 +1113,7 @@ public class WorkPrepareTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -1080,11 +1126,11 @@ public class WorkPrepareTest
   {
     try
     {
-      Path projectDir = Files.createTempDirectory("work-prepare-test");
-      Path catDir = projectDir.resolve(".cat");
+      Path projectPath = Files.createTempDirectory("work-prepare-test");
+      Path catDir = projectPath.resolve(".cat");
       Files.createDirectories(catDir.resolve("issues"));
       Files.writeString(catDir.resolve("config.json"), "{}");
-      return projectDir;
+      return projectPath;
     }
     catch (IOException e)
     {
@@ -1101,34 +1147,34 @@ public class WorkPrepareTest
    */
   private Path createTempGitCatProject(String branchName) throws IOException
   {
-    Path projectDir = TestUtils.createTempGitRepo(branchName);
+    Path projectPath = TestUtils.createTempGitRepo(branchName);
 
     // Add CAT structure
-    Path catDir = projectDir.resolve(".cat");
+    Path catDir = projectPath.resolve(".cat");
     Files.createDirectories(catDir.resolve("issues"));
     Files.writeString(catDir.resolve("config.json"), "{}");
 
     // Commit the CAT structure so worktrees have it
-    GitCommands.runGit(projectDir, "add", ".");
-    GitCommands.runGit(projectDir, "commit", "-m", "Add CAT structure");
+    GitCommands.runGit(projectPath, "add", ".");
+    GitCommands.runGit(projectPath, "commit", "-m", "Add CAT structure");
 
-    return projectDir;
+    return projectPath;
   }
 
   /**
    * Creates an issue directory with a minimal STATE.md.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param major the major version number
    * @param minor the minor version number
    * @param issueName the issue name
    * @param status the issue status
    * @throws IOException if file creation fails
    */
-  private void createIssue(Path projectDir, String major, String minor, String issueName,
+  private void createIssue(Path projectPath, String major, String minor, String issueName,
     String status) throws IOException
   {
-    Path issueDir = projectDir.resolve(".cat").resolve("issues").
+    Path issueDir = projectPath.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
@@ -1157,7 +1203,7 @@ public class WorkPrepareTest
   /**
    * Creates an issue directory with a STATE.md that has dependencies.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param major the major version number
    * @param minor the minor version number
    * @param issueName the issue name
@@ -1165,10 +1211,10 @@ public class WorkPrepareTest
    * @param dependencies comma-separated dependency IDs
    * @throws IOException if file creation fails
    */
-  private void createIssueWithDependencies(Path projectDir, String major, String minor,
+  private void createIssueWithDependencies(Path projectPath, String major, String minor,
     String issueName, String status, String dependencies) throws IOException
   {
-    Path issueDir = projectDir.resolve(".cat").resolve("issues").
+    Path issueDir = projectPath.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
@@ -1197,16 +1243,16 @@ public class WorkPrepareTest
   /**
    * Creates a PLAN.md with enough files and steps to produce an oversized estimate (&gt; 160000 tokens).
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param major the major version number
    * @param minor the minor version number
    * @param issueName the issue name
    * @throws IOException if file creation fails
    */
-  private void createOversizedPlan(Path projectDir, String major, String minor,
+  private void createOversizedPlan(Path projectPath, String major, String minor,
     String issueName) throws IOException
   {
-    Path issueDir = projectDir.resolve(".cat").resolve("issues").
+    Path issueDir = projectPath.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
@@ -1224,16 +1270,16 @@ public class WorkPrepareTest
   /**
    * Creates a simple PLAN.md with a few files and steps.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param major the major version number
    * @param minor the minor version number
    * @param issueName the issue name
    * @throws IOException if file creation fails
    */
-  private void createSimplePlan(Path projectDir, String major, String minor,
+  private void createSimplePlan(Path projectPath, String major, String minor,
     String issueName) throws IOException
   {
-    Path issueDir = projectDir.resolve(".cat").resolve("issues").
+    Path issueDir = projectPath.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
@@ -1262,17 +1308,17 @@ public class WorkPrepareTest
   /**
    * Creates a PLAN.md with a specific goal text.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param major the major version number
    * @param minor the minor version number
    * @param issueName the issue name
    * @param goalText the goal text to include
    * @throws IOException if file creation fails
    */
-  private void createPlanWithGoal(Path projectDir, String major, String minor,
+  private void createPlanWithGoal(Path projectPath, String major, String minor,
     String issueName, String goalText) throws IOException
   {
-    Path issueDir = projectDir.resolve(".cat").resolve("issues").
+    Path issueDir = projectPath.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
@@ -1300,16 +1346,16 @@ public class WorkPrepareTest
   @Test
   public void executeIncludesPreconditionsWithCheckedItems() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssue(projectDir, "2", "1", "my-feature", "open");
-      createPlanWithMixedPreconditions(projectDir, "2", "1", "my-feature",
+      createIssue(projectPath, "2", "1", "my-feature", "open");
+      createPlanWithMixedPreconditions(projectPath, "2", "1", "my-feature",
         new String[]{"Unchecked item"},
         new String[]{"Checked item"});
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add issue with checked preconditions");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue with checked preconditions");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -1329,8 +1375,8 @@ public class WorkPrepareTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -1343,13 +1389,13 @@ public class WorkPrepareTest
   @Test
   public void executeReturnsEmptyPreconditionsWhenSectionHasNoItems() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssue(projectDir, "2", "1", "empty-precond", "open");
+      createIssue(projectPath, "2", "1", "empty-precond", "open");
 
-      Path issueDir = projectDir.resolve(".cat").resolve("issues").
+      Path issueDir = projectPath.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("empty-precond");
       String planContent = """
         # Plan
@@ -1362,8 +1408,8 @@ public class WorkPrepareTest
         """;
       Files.writeString(issueDir.resolve("PLAN.md"), planContent);
 
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add issue with empty preconditions section");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue with empty preconditions section");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -1383,8 +1429,8 @@ public class WorkPrepareTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -1397,20 +1443,20 @@ public class WorkPrepareTest
   @Test
   public void executeIncludesPreconditionsWhenSectionAtEndOfFile() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssue(projectDir, "2", "1", "eof-precond", "open");
+      createIssue(projectPath, "2", "1", "eof-precond", "open");
 
-      Path issueDir = projectDir.resolve(".cat").resolve("issues").
+      Path issueDir = projectPath.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("eof-precond");
       // No trailing newline after the last item
       String planContent = "# Plan\n\n## Execution Steps\n\n1. Do the work\n\n## Pre-conditions\n\n- [ ] Final check";
       Files.writeString(issueDir.resolve("PLAN.md"), planContent);
 
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add issue with preconditions at EOF");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue with preconditions at EOF");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -1429,25 +1475,25 @@ public class WorkPrepareTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
   /**
    * Creates a PLAN.md with a Pre-conditions section containing the given checkbox items.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param major the major version number
    * @param minor the minor version number
    * @param issueName the issue name
    * @param preconditions the pre-condition text items to include as unchecked checkboxes
    * @throws IOException if file creation fails
    */
-  private void createPlanWithPreconditions(Path projectDir, String major, String minor,
+  private void createPlanWithPreconditions(Path projectPath, String major, String minor,
     String issueName, String[] preconditions) throws IOException
   {
-    Path issueDir = projectDir.resolve(".cat").resolve("issues").
+    Path issueDir = projectPath.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
@@ -1463,7 +1509,7 @@ public class WorkPrepareTest
   /**
    * Creates a PLAN.md with a Pre-conditions section containing both unchecked and checked checkbox items.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param major the major version number
    * @param minor the minor version number
    * @param issueName the issue name
@@ -1471,10 +1517,10 @@ public class WorkPrepareTest
    * @param checkedItems the checked pre-condition items to include as checked checkboxes
    * @throws IOException if file creation fails
    */
-  private void createPlanWithMixedPreconditions(Path projectDir, String major, String minor,
+  private void createPlanWithMixedPreconditions(Path projectPath, String major, String minor,
     String issueName, String[] uncheckedItems, String[] checkedItems) throws IOException
   {
-    Path issueDir = projectDir.resolve(".cat").resolve("issues").
+    Path issueDir = projectPath.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
@@ -1498,14 +1544,14 @@ public class WorkPrepareTest
   @Test
   public void executeBareIssueNameResolvedToBareNameScope() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // Create an issue with a bare name
-      createIssue(projectDir, "2", "1", "fix-bug", "open");
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add bare-named issue");
+      createIssue(projectPath, "2", "1", "fix-bug", "open");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add bare-named issue");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -1525,8 +1571,8 @@ public class WorkPrepareTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -1542,15 +1588,15 @@ public class WorkPrepareTest
   @Test
   public void executeScopeDetectionForBareVsQualifiedNames() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath1 = null;
     Path worktreePath2 = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // Create a bare-named issue
-      createIssue(projectDir, "2", "1", "fix-bug", "open");
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add fix-bug issue");
+      createIssue(projectPath, "2", "1", "fix-bug", "open");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add fix-bug issue");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -1568,11 +1614,11 @@ public class WorkPrepareTest
       // Release the lock by removing the worktree and lock file so we can test qualified name
       if (worktreePath1 != null && Files.exists(worktreePath1))
       {
-        GitCommands.runGit(projectDir, "worktree", "remove", worktreePath1.toString(), "--force");
+        GitCommands.runGit(projectPath, "worktree", "remove", worktreePath1.toString(), "--force");
         worktreePath1 = null;
       }
       // Clean up the lock file for the bare name issue
-      Path locksDir = scope.getProjectCatDir().resolve("locks");
+      Path locksDir = scope.getCatWorkPath().resolve("locks");
       Path lockFile = locksDir.resolve("2.1-fix-bug.lock");
       if (Files.exists(lockFile))
         Files.delete(lockFile);
@@ -1589,9 +1635,9 @@ public class WorkPrepareTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath1);
-      cleanupWorktreeIfExists(projectDir, worktreePath2);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath1);
+      cleanupWorktreeIfExists(projectPath, worktreePath2);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -1607,14 +1653,14 @@ public class WorkPrepareTest
   @Test
   public void executeBareNameDetectionViaArguments() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // Create an issue with a bare name
-      createIssue(projectDir, "2", "1", "fix-bug", "open");
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add fix-bug issue");
+      createIssue(projectPath, "2", "1", "fix-bug", "open");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add fix-bug issue");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -1638,8 +1684,8 @@ public class WorkPrepareTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -1655,20 +1701,20 @@ public class WorkPrepareTest
   @Test
   public void diagnosticAccurateWithMoreThan333Issues() throws IOException
   {
-    Path projectDir = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // Create 350 issues to exceed the old 1000-entry limit (each issue has ~3 files)
       // Issues are distributed across multiple minor versions for realism
       for (int i = 0; i < 350; ++i)
       {
         String minor = String.valueOf(i / 50 + 1);
-        createIssue(projectDir, "2", minor, "issue-" + i, "closed");
+        createIssue(projectPath, "2", minor, "issue-" + i, "closed");
       }
 
       // Create a dependency issue that would be pushed past entry 999 in the old limit
-      createIssue(projectDir, "2", "8", "dependency-far", "closed");
-      createIssueWithDependencies(projectDir, "2", "8", "blocked-by-far", "open",
+      createIssue(projectPath, "2", "8", "dependency-far", "closed");
+      createIssueWithDependencies(projectPath, "2", "8", "blocked-by-far", "open",
         "2.8-dependency-far");
 
       WorkPrepare prepare = new WorkPrepare(scope);
@@ -1694,7 +1740,7 @@ public class WorkPrepareTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -1708,14 +1754,14 @@ public class WorkPrepareTest
   @Test
   public void diagnosticScanCompletesWithoutErrorFor400Issues() throws IOException
   {
-    Path projectDir = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // Create 400 issues — enough to have exceeded the old 1000 file limit
       for (int i = 0; i < 400; ++i)
       {
         String minor = String.valueOf(i / 50 + 1);
-        createIssue(projectDir, "2", minor, "issue-" + i, "closed");
+        createIssue(projectPath, "2", minor, "issue-" + i, "closed");
       }
 
       WorkPrepare prepare = new WorkPrepare(scope);
@@ -1731,7 +1777,7 @@ public class WorkPrepareTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -1744,12 +1790,12 @@ public class WorkPrepareTest
   @Test
   public void diagnosticReportsSimpleCircularDependency() throws IOException
   {
-    Path projectDir = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // A depends on B, B depends on A — simple cycle
-      createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "2.1-issue-b");
-      createIssueWithDependencies(projectDir, "2", "1", "issue-b", "open", "2.1-issue-a");
+      createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "2.1-issue-b");
+      createIssueWithDependencies(projectPath, "2", "1", "issue-b", "open", "2.1-issue-a");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
@@ -1780,7 +1826,7 @@ public class WorkPrepareTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -1793,13 +1839,13 @@ public class WorkPrepareTest
   @Test
   public void diagnosticReportsComplexCircularDependency() throws IOException
   {
-    Path projectDir = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // A -> B -> C -> A (3-node cycle)
-      createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "2.1-issue-b");
-      createIssueWithDependencies(projectDir, "2", "1", "issue-b", "open", "2.1-issue-c");
-      createIssueWithDependencies(projectDir, "2", "1", "issue-c", "open", "2.1-issue-a");
+      createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "2.1-issue-b");
+      createIssueWithDependencies(projectPath, "2", "1", "issue-b", "open", "2.1-issue-c");
+      createIssueWithDependencies(projectPath, "2", "1", "issue-c", "open", "2.1-issue-a");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
@@ -1830,7 +1876,7 @@ public class WorkPrepareTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -1843,13 +1889,13 @@ public class WorkPrepareTest
   @Test
   public void diagnosticDoesNotReportNonCircularDependencies() throws IOException
   {
-    Path projectDir = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // Linear chain: A depends on B, B depends on C (no cycle)
-      createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "2.1-issue-b");
-      createIssueWithDependencies(projectDir, "2", "1", "issue-b", "open", "2.1-issue-c");
-      createIssue(projectDir, "2", "1", "issue-c", "open");
+      createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "2.1-issue-b");
+      createIssueWithDependencies(projectPath, "2", "1", "issue-b", "open", "2.1-issue-c");
+      createIssue(projectPath, "2", "1", "issue-c", "open");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
@@ -1867,7 +1913,7 @@ public class WorkPrepareTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -1884,12 +1930,12 @@ public class WorkPrepareTest
     expectedExceptionsMessageRegExp = ".*safety threshold.*")
   public void buildIssueIndexThrowsWhenScanLimitExceeded() throws IOException
   {
-    Path projectDir = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // Create 2 issues sharing the same version dirs: issuesDir + v2 + v2.1 + 2*(dir+STATE.md) = 7 entries
-      createIssue(projectDir, "2", "1", "issue-alpha", "closed");
-      createIssue(projectDir, "2", "1", "issue-beta", "closed");
+      createIssue(projectPath, "2", "1", "issue-alpha", "closed");
+      createIssue(projectPath, "2", "1", "issue-beta", "closed");
 
       // Use threshold=5 so that 7 entries > 5 triggers the error
       WorkPrepare prepare = new WorkPrepare(scope, 5, 1000);
@@ -1899,7 +1945,7 @@ public class WorkPrepareTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -1916,12 +1962,12 @@ public class WorkPrepareTest
     expectedExceptionsMessageRegExp = ".*maximum recursion depth.*")
   public void detectCyclesThrowsWhenDepthLimitExceeded() throws IOException
   {
-    Path projectDir = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // issue-a depends on issue-b; with maxDepth=0 the first recursive call (depth=1) triggers
-      createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "2.1-issue-b");
-      createIssue(projectDir, "2", "1", "issue-b", "open");
+      createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "2.1-issue-b");
+      createIssue(projectPath, "2", "1", "issue-b", "open");
 
       // Use maxCycleDetectionDepth=0 so any recursive call (depth=1 > 0) triggers the error
       WorkPrepare prepare = new WorkPrepare(scope, 100_000, 0);
@@ -1931,7 +1977,7 @@ public class WorkPrepareTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -1944,16 +1990,16 @@ public class WorkPrepareTest
   @Test
   public void detectCyclesSucceedsAtDepthLimit() throws IOException
   {
-    Path projectDir = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // Build a linear chain: issue-0 -> ... -> issue-5 (6 nodes, max depth = 5 == limit, no throw)
-      createIssueWithDependencies(projectDir, "2", "1", "issue-0", "open", "2.1-issue-1");
-      createIssueWithDependencies(projectDir, "2", "1", "issue-1", "open", "2.1-issue-2");
-      createIssueWithDependencies(projectDir, "2", "1", "issue-2", "open", "2.1-issue-3");
-      createIssueWithDependencies(projectDir, "2", "1", "issue-3", "open", "2.1-issue-4");
-      createIssueWithDependencies(projectDir, "2", "1", "issue-4", "open", "2.1-issue-5");
-      createIssue(projectDir, "2", "1", "issue-5", "open");
+      createIssueWithDependencies(projectPath, "2", "1", "issue-0", "open", "2.1-issue-1");
+      createIssueWithDependencies(projectPath, "2", "1", "issue-1", "open", "2.1-issue-2");
+      createIssueWithDependencies(projectPath, "2", "1", "issue-2", "open", "2.1-issue-3");
+      createIssueWithDependencies(projectPath, "2", "1", "issue-3", "open", "2.1-issue-4");
+      createIssueWithDependencies(projectPath, "2", "1", "issue-4", "open", "2.1-issue-5");
+      createIssue(projectPath, "2", "1", "issue-5", "open");
 
       // Use maxCycleDetectionDepth=5 so depth 5 == limit, should NOT throw
       WorkPrepare prepare = new WorkPrepare(scope, 100_000, 5);
@@ -1968,7 +2014,7 @@ public class WorkPrepareTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -1983,13 +2029,13 @@ public class WorkPrepareTest
   @Test
   public void diagnosticDetectsCycleThroughDecomposedParent() throws IOException
   {
-    Path projectDir = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // A depends on decomposed B (which has sub-issue C depending on A)
-      createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "2.1-issue-b");
-      createDecomposedIssue(projectDir, "2", "1", "issue-b", "issue-c");
-      createIssueWithDependencies(projectDir, "2", "1", "issue-c", "open", "2.1-issue-a");
+      createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "2.1-issue-b");
+      createDecomposedIssue(projectPath, "2", "1", "issue-b", "issue-c");
+      createIssueWithDependencies(projectPath, "2", "1", "issue-c", "open", "2.1-issue-a");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
@@ -2019,7 +2065,7 @@ public class WorkPrepareTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -2034,14 +2080,14 @@ public class WorkPrepareTest
   @Test
   public void diagnosticDetectsCycleThroughNestedDecomposedParents() throws IOException
   {
-    Path projectDir = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // A -> B(decomposed->C) -> C(decomposed->D) -> D -> A
-      createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "2.1-issue-b");
-      createDecomposedIssue(projectDir, "2", "1", "issue-b", "issue-c");
-      createDecomposedIssue(projectDir, "2", "1", "issue-c", "issue-d");
-      createIssueWithDependencies(projectDir, "2", "1", "issue-d", "open", "2.1-issue-a");
+      createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "2.1-issue-b");
+      createDecomposedIssue(projectPath, "2", "1", "issue-b", "issue-c");
+      createDecomposedIssue(projectPath, "2", "1", "issue-c", "issue-d");
+      createIssueWithDependencies(projectPath, "2", "1", "issue-d", "open", "2.1-issue-a");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
@@ -2071,7 +2117,7 @@ public class WorkPrepareTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -2084,13 +2130,13 @@ public class WorkPrepareTest
   @Test
   public void diagnosticNoFalsePositiveWithDecomposedParent() throws IOException
   {
-    Path projectDir = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // A depends on decomposed B; B has sub-issue C; C has no further deps
-      createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "2.1-issue-b");
-      createDecomposedIssue(projectDir, "2", "1", "issue-b", "issue-c");
-      createIssue(projectDir, "2", "1", "issue-c", "open");
+      createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "2.1-issue-b");
+      createDecomposedIssue(projectPath, "2", "1", "issue-b", "issue-c");
+      createIssue(projectPath, "2", "1", "issue-c", "open");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
@@ -2107,7 +2153,7 @@ public class WorkPrepareTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -2119,17 +2165,17 @@ public class WorkPrepareTest
   @Test
   public void diagnosticDetectsBothDirectAndDecomposedCycles() throws IOException
   {
-    Path projectDir = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // Direct cycle: issue-x depends on issue-y, issue-y depends on issue-x
-      createIssueWithDependencies(projectDir, "2", "1", "issue-x", "open", "2.1-issue-y");
-      createIssueWithDependencies(projectDir, "2", "1", "issue-y", "open", "2.1-issue-x");
+      createIssueWithDependencies(projectPath, "2", "1", "issue-x", "open", "2.1-issue-y");
+      createIssueWithDependencies(projectPath, "2", "1", "issue-y", "open", "2.1-issue-x");
 
       // Decomposed cycle: issue-a depends on decomposed issue-b, issue-b's sub-issue issue-c depends on issue-a
-      createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "2.1-issue-b");
-      createDecomposedIssue(projectDir, "2", "1", "issue-b", "issue-c");
-      createIssueWithDependencies(projectDir, "2", "1", "issue-c", "open", "2.1-issue-a");
+      createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "2.1-issue-b");
+      createDecomposedIssue(projectPath, "2", "1", "issue-b", "issue-c");
+      createIssueWithDependencies(projectPath, "2", "1", "issue-c", "open", "2.1-issue-a");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
@@ -2164,7 +2210,7 @@ public class WorkPrepareTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -2180,14 +2226,14 @@ public class WorkPrepareTest
   @Test
   public void diagnosticResolvesAmbiguousSubIssueToAllCandidates() throws IOException
   {
-    Path projectDir = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // A depends on decomposed B; B lists fully-qualified "2.1-issue-sub" which cycles back to A
-      createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "2.1-issue-b");
-      createDecomposedIssue(projectDir, "2", "1", "issue-b", "issue-sub");
-      createIssue(projectDir, "2", "0", "issue-sub", "open");
-      createIssueWithDependencies(projectDir, "2", "1", "issue-sub", "open", "2.1-issue-a");
+      createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "2.1-issue-b");
+      createDecomposedIssue(projectPath, "2", "1", "issue-b", "issue-sub");
+      createIssue(projectPath, "2", "0", "issue-sub", "open");
+      createIssueWithDependencies(projectPath, "2", "1", "issue-sub", "open", "2.1-issue-a");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
@@ -2215,7 +2261,7 @@ public class WorkPrepareTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -2234,15 +2280,15 @@ public class WorkPrepareTest
   @Test
   public void diagnosticDetectsDirectCycleThroughAmbiguousDependency() throws IOException
   {
-    Path projectDir = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // issue-a depends on bare name "shared-dep" (ambiguous: matches both 2.0 and 2.1 versions)
-      createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "shared-dep");
+      createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "shared-dep");
       // Two issues share the bare name "shared-dep"
-      createIssue(projectDir, "2", "0", "shared-dep", "open");
+      createIssue(projectPath, "2", "0", "shared-dep", "open");
       // Only the 2.1 variant cycles back to issue-a
-      createIssueWithDependencies(projectDir, "2", "1", "shared-dep", "open", "2.1-issue-a");
+      createIssueWithDependencies(projectPath, "2", "1", "shared-dep", "open", "2.1-issue-a");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
@@ -2269,7 +2315,7 @@ public class WorkPrepareTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -2285,13 +2331,13 @@ public class WorkPrepareTest
   @Test
   public void diagnosticSkipsMalformedDecomposedEntries() throws IOException
   {
-    Path projectDir = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    Path projectPath = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // B is a decomposed parent with one valid and several malformed entries
-      createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "2.1-issue-b");
-      createDecomposedIssueWithMalformedEntries(projectDir, "2", "1", "issue-b", "issue-c");
-      createIssue(projectDir, "2", "1", "issue-c", "open");
+      createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "2.1-issue-b");
+      createDecomposedIssueWithMalformedEntries(projectPath, "2", "1", "issue-b", "issue-c");
+      createIssue(projectPath, "2", "1", "issue-c", "open");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
@@ -2307,7 +2353,7 @@ public class WorkPrepareTest
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -2318,7 +2364,7 @@ public class WorkPrepareTest
    * using its fully-qualified name (e.g., {@code 2.1-issue-c}).
    * No PLAN.md is created, so the parent is treated as a decomposed parent only.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param major the major version number
    * @param minor the minor version number
    * @param issueName the parent issue name
@@ -2326,10 +2372,10 @@ public class WorkPrepareTest
    *         a fully-qualified name in the "Decomposed Into" section
    * @throws IOException if file creation fails
    */
-  private void createDecomposedIssue(Path projectDir, String major, String minor,
+  private void createDecomposedIssue(Path projectPath, String major, String minor,
     String issueName, String subIssueName) throws IOException
   {
-    Path issueDir = projectDir.resolve(".cat").resolve("issues").
+    Path issueDir = projectPath.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
@@ -2356,7 +2402,7 @@ public class WorkPrepareTest
    * <p>
    * The malformed entries should be silently skipped by the sub-issue resolver.
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param major the major version number
    * @param minor the minor version number
    * @param issueName the parent issue name
@@ -2364,10 +2410,10 @@ public class WorkPrepareTest
    *         version to form a fully-qualified name
    * @throws IOException if file creation fails
    */
-  private void createDecomposedIssueWithMalformedEntries(Path projectDir, String major, String minor,
+  private void createDecomposedIssueWithMalformedEntries(Path projectPath, String major, String minor,
     String issueName, String validSubIssueName) throws IOException
   {
-    Path issueDir = projectDir.resolve(".cat").resolve("issues").
+    Path issueDir = projectPath.resolve(".cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
@@ -2398,17 +2444,17 @@ public class WorkPrepareTest
   @Test
   public void executeReturnsReadyForPlanMdOnlyIssue() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // Create issue with only PLAN.md - no STATE.md
-      Path issueDir = projectDir.resolve(".cat").resolve("issues").
+      Path issueDir = projectPath.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("plan-only-issue");
       Files.createDirectories(issueDir);
       Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nTest goal\n");
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add PLAN.md-only issue");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add PLAN.md-only issue");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -2426,8 +2472,8 @@ public class WorkPrepareTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -2441,17 +2487,17 @@ public class WorkPrepareTest
   @Test
   public void executeCreatesStateMdInWorktreeForPlanMdOnlyIssue() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // Create issue with only PLAN.md - no STATE.md
-      Path issueDir = projectDir.resolve(".cat").resolve("issues").
+      Path issueDir = projectPath.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("plan-only-issue");
       Files.createDirectories(issueDir);
       Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nTest goal\n");
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add PLAN.md-only issue");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add PLAN.md-only issue");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -2483,8 +2529,8 @@ public class WorkPrepareTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -2502,12 +2548,12 @@ public class WorkPrepareTest
   @Test
   public void executeReturnsReadyWhenStateMdExistsOnDiskButIsUntrackedByGit() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // Commit PLAN.md but NOT STATE.md — simulates an untracked issue directory
-      Path issueDir = projectDir.resolve(".cat").resolve("issues").
+      Path issueDir = projectPath.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("untracked-state-issue");
       Files.createDirectories(issueDir);
       Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nTest goal\n");
@@ -2521,8 +2567,8 @@ public class WorkPrepareTest
         - **Blocks:** []
         """);
       // Only add and commit PLAN.md — STATE.md stays untracked
-      GitCommands.runGit(projectDir, "add", issueDir.resolve("PLAN.md").toString());
-      GitCommands.runGit(projectDir, "commit", "-m", "Add PLAN.md only (STATE.md untracked)");
+      GitCommands.runGit(projectPath, "add", issueDir.resolve("PLAN.md").toString());
+      GitCommands.runGit(projectPath, "commit", "-m", "Add PLAN.md only (STATE.md untracked)");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -2550,8 +2596,8 @@ public class WorkPrepareTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -2563,12 +2609,12 @@ public class WorkPrepareTest
   @Test
   public void executeReturnsReadyWhenStateMdHasMissingStatusField() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       // Create issue with STATE.md that has no status field
-      Path issueDir = projectDir.resolve(".cat").resolve("issues").
+      Path issueDir = projectPath.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("no-status-issue");
       Files.createDirectories(issueDir);
       Files.writeString(issueDir.resolve("STATE.md"), """
@@ -2579,8 +2625,8 @@ public class WorkPrepareTest
         - **Blocks:** []
         """);
       Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nTest goal\n");
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add issue with missing status field");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue with missing status field");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -2597,8 +2643,8 @@ public class WorkPrepareTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -2613,16 +2659,16 @@ public class WorkPrepareTest
   @Test
   public void executeReturnsIssuePathInsideWorktree() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      Path issueDir = projectDir.resolve(".cat").resolve("issues").
+      Path issueDir = projectPath.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("worktree-path-issue");
       Files.createDirectories(issueDir);
       Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nTest goal\n");
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add worktree-path-issue");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add worktree-path-issue");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -2646,12 +2692,12 @@ public class WorkPrepareTest
 
       // issue_path must NOT be the main workspace issue directory
       requireThat(issuePath, "issue_path").isNotEqualTo(
-        projectDir.resolve(".cat/issues/v2/v2.1/worktree-path-issue").toString());
+        projectPath.resolve(".cat/issues/v2/v2.1/worktree-path-issue").toString());
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -2819,15 +2865,15 @@ public class WorkPrepareTest
   @Test
   public void globToRegexHandlesMetacharacters() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssue(projectDir, "2", "1", "my-feature", "open");
+      createIssue(projectPath, "2", "1", "my-feature", "open");
 
       // Overwrite the PLAN.md with a "## Files to Modify" section whose backtick entry
       // contains * and [] — these are regex metacharacters that trigger the bug
-      Path planPath = projectDir.resolve(".cat").resolve("issues").
+      Path planPath = projectPath.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("my-feature").resolve("PLAN.md");
       Files.writeString(planPath, """
         # Plan: my-feature
@@ -2841,8 +2887,8 @@ public class WorkPrepareTest
         - Remove the line `- **Dependencies:** []`
         """);
 
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add issue with metacharacter PLAN.md");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue with metacharacter PLAN.md");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -2858,8 +2904,8 @@ public class WorkPrepareTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -2874,13 +2920,13 @@ public class WorkPrepareTest
   @Test
   public void executeCommitsStateMdUpdateSoWorktreeIsClean() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
-      createIssue(projectDir, "2", "1", "my-feature", "open");
-      GitCommands.runGit(projectDir, "add", ".");
-      GitCommands.runGit(projectDir, "commit", "-m", "Add issue");
+      createIssue(projectPath, "2", "1", "my-feature", "open");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -2902,8 +2948,8 @@ public class WorkPrepareTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
@@ -2919,17 +2965,17 @@ public class WorkPrepareTest
   @Test
   public void decomposedParentWithAllSubIssuesClosedReturnsReady() throws IOException
   {
-    Path projectDir = createTempGitCatProject("v2.1");
+    Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
     try
     {
-      try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+      try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
       {
         // Create only the PLAN.md for the parent (createOversizedPlan writes only PLAN.md)
-        createOversizedPlan(projectDir, "2", "1", "big-parent");
+        createOversizedPlan(projectPath, "2", "1", "big-parent");
 
         // Write the parent's STATE.md manually with a Decomposed Into section
-        Path issueDir = projectDir.resolve(".cat").resolve("issues").
+        Path issueDir = projectPath.resolve(".cat").resolve("issues").
           resolve("v2").resolve("v2.1").resolve("big-parent");
         Files.writeString(issueDir.resolve("STATE.md"), """
           # State
@@ -2944,11 +2990,11 @@ public class WorkPrepareTest
           """);
 
         // Create the sub-issue with Status: closed
-        createIssue(projectDir, "2", "1", "closed-sub", "closed");
+        createIssue(projectPath, "2", "1", "closed-sub", "closed");
 
         // Commit everything so IssueDiscovery can find the issues
-        GitCommands.runGit(projectDir, "add", ".");
-        GitCommands.runGit(projectDir, "commit", "-m", "Add decomposed parent issue");
+        GitCommands.runGit(projectPath, "add", ".");
+        GitCommands.runGit(projectPath, "commit", "-m", "Add decomposed parent issue");
 
         WorkPrepare prepare = new WorkPrepare(scope);
         PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "", "", TrustLevel.MEDIUM);
@@ -2970,24 +3016,24 @@ public class WorkPrepareTest
     }
     finally
     {
-      cleanupWorktreeIfExists(projectDir, worktreePath);
-      TestUtils.deleteDirectoryRecursively(projectDir);
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
   /**
    * Cleans up a worktree if it exists (best-effort, errors are swallowed).
    *
-   * @param projectDir the project root directory
+   * @param projectPath the project root directory
    * @param worktreePath the path to the worktree to remove, or null if no worktree was created
    */
-  private void cleanupWorktreeIfExists(Path projectDir, Path worktreePath)
+  private void cleanupWorktreeIfExists(Path projectPath, Path worktreePath)
   {
     if (worktreePath != null && Files.exists(worktreePath))
     {
       try
       {
-        GitCommands.runGit(projectDir, "worktree", "remove", worktreePath.toString(), "--force");
+        GitCommands.runGit(projectPath, "worktree", "remove", worktreePath.toString(), "--force");
       }
       catch (IOException _)
       {
