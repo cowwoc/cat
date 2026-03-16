@@ -7,6 +7,7 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.HookInput;
+import io.github.cowwoc.cat.hooks.util.FileUtils;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -15,11 +16,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.List;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -309,7 +309,7 @@ public final class TestUtils
   }
 
   /**
-   * Deletes a directory and all its contents recursively using {@code Files.walkFileTree}.
+   * Deletes a directory and all its contents recursively.
    * <p>
    * Prints to stderr on failure so issues are visible in test output.
    *
@@ -317,39 +317,11 @@ public final class TestUtils
    */
   public static void deleteDirectoryRecursively(Path directory)
   {
-    if (!Files.exists(directory))
+    if (Files.notExists(directory))
       return;
-    try
-    {
-      Files.walkFileTree(directory, new SimpleFileVisitor<>()
-      {
-        @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException
-        {
-          Files.delete(file);
-          return FileVisitResult.CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult visitFileFailed(Path file, IOException exc)
-        {
-          System.err.println("Failed to visit file during cleanup: " + file + " - " + exc.getMessage());
-          return FileVisitResult.CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException
-        {
-          if (exc != null)
-            System.err.println("Error traversing directory during cleanup: " + dir + " - " + exc.getMessage());
-          Files.delete(dir);
-          return FileVisitResult.CONTINUE;
-        }
-      });
-    }
-    catch (IOException e)
-    {
-      System.err.println("Failed to delete directory: " + directory + " - " + e.getMessage());
-    }
+    List<IOException> failures = new ArrayList<>();
+    FileUtils.deleteDirectoryRecursively(directory, failures);
+    for (IOException failure : failures)
+      System.err.println("Failed to delete during cleanup: " + directory + " - " + failure.getMessage());
   }
 }

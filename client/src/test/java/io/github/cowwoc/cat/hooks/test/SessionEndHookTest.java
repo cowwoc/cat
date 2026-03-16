@@ -291,6 +291,43 @@ public final class SessionEndHookTest
   }
 
   /**
+   * Verifies that {@link SessionEndHook#run(HookInput, HookOutput)} uses
+   * {@code scope.getProjectPath()} to derive the project lock file name.
+   * <p>
+   * The hook must delete a lock file named after the project directory's last path component
+   * (i.e., {@code {projectName}.lock} where {@code projectName = scope.getProjectPath().getFileName()}).
+   * This verifies that {@code run()} calls {@code scope.getProjectPath()} rather than any other
+   * path accessor.
+   */
+  @Test
+  public void runUsesGetProjectPathForLockFileName() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path lockDir = scope.getCatWorkPath().resolve("locks");
+      Files.createDirectories(lockDir);
+
+      // Create a lock file named after the project path (scope.getProjectPath().getFileName())
+      String projectName = scope.getProjectPath().getFileName().toString();
+      Path lockFile = lockDir.resolve(projectName + ".lock");
+      Files.writeString(lockFile, "locked");
+
+      HookInput input = TestUtils.dummyInput(scope.getJsonMapper());
+      HookOutput output = new HookOutput(scope);
+
+      // run() derives the project name from scope.getProjectPath() and must delete this lock file
+      createSessionEndHook(scope).run(input, output);
+
+      requireThat(Files.exists(lockFile), "lockFileExists").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that null input throws NullPointerException.
    */
   @Test(expectedExceptions = NullPointerException.class,

@@ -9,14 +9,14 @@ package io.github.cowwoc.cat.hooks.session;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.util.FileUtils;
 import io.github.cowwoc.cat.hooks.util.GetSkill;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Deletes a single agent's loaded marker directory so that skills and files reload with full content.
@@ -98,28 +98,11 @@ public final class ClearAgentMarkers
   {
     if (!Files.isDirectory(loadedDir))
       return "";
-    try
-    {
-      try (Stream<Path> stream = Files.walk(loadedDir))
-      {
-        stream.sorted(Comparator.reverseOrder()).forEach(p ->
-        {
-          try
-          {
-            Files.delete(p);
-          }
-          catch (IOException e)
-          {
-            throw new UncheckedIOException(e);
-          }
-        });
-      }
-    }
-    catch (IOException | UncheckedIOException e)
-    {
-      return "Warning: Failed to delete loaded directory: " + loadedDir + ": " +
-        e.getMessage();
-    }
-    return "";
+    List<IOException> failures = new ArrayList<>();
+    FileUtils.deleteDirectoryRecursively(loadedDir, failures);
+    if (failures.isEmpty())
+      return "";
+    return "Warning: Failed to delete loaded directory: " + loadedDir + ": " +
+      failures.getFirst().getMessage();
   }
 }
