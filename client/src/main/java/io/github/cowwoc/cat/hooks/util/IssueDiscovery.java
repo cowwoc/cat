@@ -226,9 +226,11 @@ public final class IssueDiscovery
      *   created)
      * @param isCorrupt true if PLAN.md is absent (the issue cannot be executed without it); both
      *   {@code isCorrupt} and {@code createStateMd} can be true when neither file is present
+     * @param isDecomposedComplete true if this is a decomposed parent with all sub-issues closed
      */
     record Found(String issueId, String major, String minor, String patch, String issueName,
-      String issuePath, String scope, boolean createStateMd, boolean isCorrupt) implements DiscoveryResult
+      String issuePath, String scope, boolean createStateMd, boolean isCorrupt,
+      boolean isDecomposedComplete) implements DiscoveryResult
     {
       /**
        * Creates a new found result.
@@ -244,6 +246,7 @@ public final class IssueDiscovery
        *   created)
        * @param isCorrupt true if PLAN.md is absent (the issue cannot be executed without it); both
        *   {@code isCorrupt} and {@code createStateMd} can be true when neither file is present
+       * @param isDecomposedComplete true if this is a decomposed parent with all sub-issues closed
        * @throws IllegalArgumentException if {@code issueId}, {@code major}, {@code issueName},
        *   {@code issuePath} or {@code scope} are blank
        * @throws NullPointerException if {@code minor} or {@code patch} are null
@@ -796,8 +799,9 @@ public final class IssueDiscovery
         issueDir.toString(), worktreePath.toString());
     }
 
+    boolean isDecomposedComplete = isDecomposedParent(stateLines);
     return new DiscoveryResult.Found(issueId, major, minor, patch, issueName, issueDir.toString(),
-      "issue", createStateMd, isCorrupt);
+      "issue", createStateMd, isCorrupt, isDecomposedComplete);
   }
 
   /**
@@ -1142,8 +1146,9 @@ public final class IssueDiscovery
         continue;
       }
 
+      boolean isDecomposedComplete = isDecomposedParent(stateLines);
       return new DiscoveryResult.Found(issueId, major, minor, patch, issueName, issueDir.toString(),
-        scopeName, stateMdMissing, isCorrupt);
+        scopeName, stateMdMissing, isCorrupt, isDecomposedComplete);
     }
 
     return null;

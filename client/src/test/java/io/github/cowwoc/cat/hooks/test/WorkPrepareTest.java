@@ -2908,6 +2908,74 @@ public class WorkPrepareTest
   }
 
   /**
+   * Verifies that a decomposed parent issue whose sub-issues are all closed returns READY (not OVERSIZED),
+   * even when the parent PLAN.md is large enough to normally trigger the OVERSIZED threshold.
+   * <p>
+   * Regression test for the bug where the token estimation check ran before decomposed-parent detection,
+   * causing the large parent PLAN.md to trigger the size limit even though only closure work is needed.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void decomposedParentWithAllSubIssuesClosedReturnsReady() throws IOException
+  {
+    Path projectDir = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try
+    {
+      try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+      {
+        // Create only the PLAN.md for the parent (createOversizedPlan writes only PLAN.md)
+        createOversizedPlan(projectDir, "2", "1", "big-parent");
+
+        // Write the parent's STATE.md manually with a Decomposed Into section
+        Path issueDir = projectDir.resolve(".cat").resolve("issues").
+          resolve("v2").resolve("v2.1").resolve("big-parent");
+        Files.writeString(issueDir.resolve("STATE.md"), """
+          # State
+
+          - **Status:** open
+          - **Progress:** 0%
+          - **Dependencies:** []
+          - **Blocks:** []
+
+          ## Decomposed Into
+          - 2.1-closed-sub
+          """);
+
+        // Create the sub-issue with Status: closed
+        createIssue(projectDir, "2", "1", "closed-sub", "closed");
+
+        // Commit everything so IssueDiscovery can find the issues
+        GitCommands.runGit(projectDir, "add", ".");
+        GitCommands.runGit(projectDir, "commit", "-m", "Add decomposed parent issue");
+
+        WorkPrepare prepare = new WorkPrepare(scope);
+        PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "", "", TrustLevel.MEDIUM);
+
+        String json = prepare.execute(input);
+
+        JsonMapper mapper = scope.getJsonMapper();
+        JsonNode node = mapper.readTree(json);
+
+        // A decomposed parent with all sub-issues closed needs only closure work — must be READY
+        requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+        // Token estimate must be the minimal closure estimate (at most 5000), not the large PLAN.md size
+        requireThat(node.path("estimated_tokens").asInt(), "estimatedTokens").
+          isLessThanOrEqualTo(5000);
+
+        if (!node.path("worktree_path").isMissingNode())
+          worktreePath = Path.of(node.path("worktree_path").asString());
+      }
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectDir, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
    * Cleans up a worktree if it exists (best-effort, errors are swallowed).
    *
    * @param projectDir the project root directory
