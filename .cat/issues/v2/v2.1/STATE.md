@@ -121,6 +121,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - parallelize-review-concern-fixing
 - add-failure-investigation-to-skill-builder
 - fix-skill-builder-fresh-subagent-per-run
+- refactor-learn-skill-files
 
 
 ## Issues Closed
