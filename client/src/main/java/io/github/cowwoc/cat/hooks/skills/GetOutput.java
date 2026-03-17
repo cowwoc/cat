@@ -149,19 +149,28 @@ public final class GetOutput implements SkillOutput
       ### Step 1: Locate the current output tag
 
       Scan the conversation from the **end** toward the beginning. Find the **last** (most recently appearing)
-      `<output>` tag. This is the current output injected by the preprocessor directive above.
+      `<output type="%s">` tag. This is the current output injected by the
+      preprocessor directive above.
 
-      **CRITICAL:** Prior invocations of this skill may have left earlier `<output>` tags earlier in the
-      conversation. Those are stale. Only the LAST `<output>` tag is current.
+      **CRITICAL:** Prior invocations of this skill may have left earlier `<output type="%s">` tags earlier in the
+      conversation. Those are stale. Only the LAST matching-type tag is current. Ignore `<output>` tags with a
+      different `type` even if they appear later in the conversation.
 
-      If the `<output>` tag is missing, empty, or contains error content: report "%s display unavailable." and stop. \
-      Do not investigate the cause, run commands, or construct/infer/approximate the %s display by any means.
+      If the matching `<output type="%s">` tag is missing, empty, or contains error content: report "%s display \
+      unavailable." and stop. Do not investigate the cause, run commands, or construct/infer/approximate the %s \
+      display by any means.
+
+      **Error content** means the tag body consists entirely of: a Java stack trace, a JSON error object \
+      (`"status":"ERROR"` or `"error":...`), a plain-text error message starting with `ERROR:`, `FATAL:`, or \
+      `FAILURE:`, an HTTP status line, a bare exception class name, or any unrecognized format that is clearly not \
+      normal rendered display. Normal output containing the word "error" as display data is NOT error content. \
+      Whitespace-only content is treated as empty.
 
       ### Step 2: Output verbatim
 
-      Print the complete `<output>` tag content exactly as-is. Do not modify, reformat, reword, truncate, summarize, or
-      selectively output any portion. Do not add commentary, headers, or preambles. Do not read project files or run \
-      tools.
+      Print the complete `<output type="%s">` tag content exactly as-is. Do not modify, reformat, reword, truncate, \
+      summarize, or selectively output any portion. Do not add commentary, headers, or preambles. Do not read project \
+      files or run tools.
 
       ### Step 3: Stop
 
@@ -172,15 +181,17 @@ public final class GetOutput implements SkillOutput
 
       ## Verification
 
-      - [ ] The rendered %s display from the `<output>` tag is printed completely and without modification
-      - [ ] The output matches the content of the LAST `<output>` tag in context, not an earlier one
+      - [ ] The rendered %s display from the `<output type="%s">` tag is printed completely and without modification
+      - [ ] The output matches the content of the LAST `<output type="%s">` tag in context, not an earlier one
+      - [ ] `<output>` tags with a different `type` were not selected
       - [ ] No additional text, commentary, or formatting was added
       - [ ] No project files were read and no tools or commands were run
       - [ ] The agent stopped after outputting without offering follow-up or next steps
 
       <output type="%s">
       %s
-      </output>""".formatted(skill, skill, skill, skill, skill, skill, sanitizedType, content);
+      </output>""".formatted(skill, skill, skill, skill, skill, skill, skill, skill, skill, skill, skill, skill,
+        sanitizedType, content);
   }
 
   /**

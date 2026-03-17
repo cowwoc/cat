@@ -9,8 +9,8 @@ package io.github.cowwoc.cat.hooks.test;
 import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.bash.post.DetectFailures;
 import org.testng.annotations.Test;
-import tools.jackson.databind.node.ObjectNode;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
