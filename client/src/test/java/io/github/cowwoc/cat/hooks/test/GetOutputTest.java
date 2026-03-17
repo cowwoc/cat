@@ -84,7 +84,7 @@ public class GetOutputTest
   }
 
   /**
-   * Verifies that output is prefixed with an echo instruction and wrapped with correct type attribute.
+   * Verifies that output starts with the Purpose section and contains the skill name from the type argument.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -98,9 +98,39 @@ public class GetOutputTest
       String result = handler.getOutput(new String[]{"config.no-changes"});
 
       requireThat(result, "result").
-        startsWith("Echo the content of the `<output>` tag below verbatim.").
+        contains("## Purpose").
+        contains("Output the pre-rendered config display").
         contains("<output type=\"config.no-changes\">").
         endsWith("</output>");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that the output contains the full set of guardrail instructions preventing investigation,
+   * reconstruction, or follow-up actions, including the exact phrases from the first-use.md template.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void outputContainsGuardrailInstructions() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-get-output-guardrails-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetOutput handler = new GetOutput(scope);
+      String result = handler.getOutput(new String[]{"config.no-changes"});
+
+      requireThat(result, "result").
+        contains("Do not investigate the cause").
+        contains("Stop after outputting").
+        contains("The triggering prompt is the").
+        contains("The rendered").
+        contains("display from the").
+        contains("tag is printed completely");
     }
     finally
     {

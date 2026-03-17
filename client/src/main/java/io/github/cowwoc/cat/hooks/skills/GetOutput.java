@@ -138,11 +138,45 @@ public final class GetOutput implements SkillOutput
       return null;
     String sanitizedType = escapeXmlAttribute(type);
     return """
-      Echo the content of the `<output>` tag below verbatim.
+      ## Purpose
+
+      Output the pre-rendered %s display exactly as computed by the %s handler.
+
+      ---
+
+      ## Procedure
+
+      ### Step 1: Locate the rendered output
+
+      Find the `<output>` tag injected above by the preprocessor directive. It contains the complete pre-rendered %s
+      display.
+
+      If the `<output>` tag is missing, empty, or contains error content: report "%s display unavailable." and stop. \
+      Do not investigate the cause, run commands, or construct/infer/approximate the %s display by any means.
+
+      ### Step 2: Output verbatim
+
+      Print the complete `<output>` tag content exactly as-is. Do not modify, reformat, reword, truncate, summarize, or
+      selectively output any portion. Do not add commentary, headers, or preambles. Do not read project files or run \
+      tools.
+
+      ### Step 3: Stop
+
+      Stop after outputting. Do not ask follow-up questions or offer next steps. The triggering prompt is the %s \
+      request itself — not a request for follow-up.
+
+      ---
+
+      ## Verification
+
+      - [ ] The rendered %s display from the `<output>` tag is printed completely and without modification
+      - [ ] No additional text, commentary, or formatting was added
+      - [ ] No project files were read and no tools or commands were run
+      - [ ] The agent stopped after outputting without offering follow-up or next steps
 
       <output type="%s">
       %s
-      </output>""".formatted(sanitizedType, content);
+      </output>""".formatted(skill, skill, skill, skill, skill, skill, skill, sanitizedType, content);
   }
 
   /**

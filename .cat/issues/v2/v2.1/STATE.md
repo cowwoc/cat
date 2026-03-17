@@ -24,6 +24,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - rename-satisfies-to-parent-requirements
 - fix-disable-model-invocation-docs
 - refactor-adversarial-tdd-protocol
+- refactor-benchmark-artifact-storage
 - refactor-eliminate-content-relay
 - split-execution-waves-into-agent-sections
 - extract-shared-planning-approach
@@ -118,6 +119,8 @@ Finalize naming conventions and UI polish before recording demo videos.
 - defer-plan-generation-to-work-phase
 - fix-session-end-jvmscope-methods
 - parallelize-review-concern-fixing
+- add-failure-investigation-to-skill-builder
+- fix-skill-builder-fresh-subagent-per-run
 
 
 ## Issues Closed
