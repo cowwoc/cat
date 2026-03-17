@@ -14,13 +14,17 @@ retrospective counter in `index.json`, and committing everything in a single ope
 Save the Phase 3 JSON output to a temporary file, then invoke the CLI tool:
 
 ```bash
-# Save Phase 3 output to temp file
-cat > /tmp/phase3-output.json << 'PHASE3_EOF'
-{...Phase 3 JSON output...}
-PHASE3_EOF
+# Save Phase 3 output to temp file using variable assignment (safest pattern)
+# This prevents heredoc injection and ensures complete JSON is written
+PHASE3_JSON="{...Phase 3 JSON output...}"
+PHASE3_TMP=$(mktemp /tmp/phase3-output.XXXXXX.json)
+printf '%s' "$PHASE3_JSON" > "$PHASE3_TMP"
 
 # Run the record-learning tool
-"$CLIENT_BIN/record-learning" < /tmp/phase3-output.json
+"$CLIENT_BIN/record-learning" < "$PHASE3_TMP"
+RESULT=$?
+rm -f "$PHASE3_TMP"
+exit $RESULT
 ```
 
 The tool reads Phase 3 JSON from stdin and outputs a JSON result to stdout.
