@@ -7,10 +7,10 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.FileUtils;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -45,12 +45,12 @@ public final class TestUtils
    * session (e.g., {@link io.github.cowwoc.cat.hooks.session.SessionEndHandler}) treat it as an
    * external (non-current) session.
    *
-   * @param scope the JVM scope
+   * @param mapper the JSON mapper
    * @return a HookInput with a hard-coded session ID that differs from any {@code TestJvmScope} session ID
    */
-  static HookInput dummyInput(JvmScope scope)
+  static HookInput dummyInput(JsonMapper mapper)
   {
-    return HookInput.readFrom(scope.getJsonMapper(), new java.io.ByteArrayInputStream(
+    return HookInput.readFrom(mapper, new java.io.ByteArrayInputStream(
       "{\"session_id\": \"00000000-0000-0000-0000-000000000001\"}".getBytes(StandardCharsets.UTF_8)));
   }
 
@@ -97,49 +97,56 @@ public final class TestUtils
   }
 
   /**
-   * Builds a HookInput for bash command tests with a JvmScope.
+   * Builds a HookInput for bash command tests.
    *
-   * @param scope the JvmScope
+   * @param mapper the JSON mapper to use for constructing the input
    * @param command the bash command string
    * @param workingDirectory the working directory, or empty string if unavailable
    * @param sessionId the session ID
    * @return a HookInput with the given values and no tool result
+   * @throws NullPointerException if {@code mapper}, {@code command}, {@code workingDirectory}, or
+   *   {@code sessionId} are null
    */
-  public static HookInput bashInput(JvmScope scope, String command, String workingDirectory, String sessionId)
+  public static HookInput bashInput(JsonMapper mapper, String command, String workingDirectory,
+    String sessionId)
   {
-    return HookInput.forBash(scope.getJsonMapper(), command, workingDirectory, sessionId, null, null);
+    return HookInput.forBash(mapper, command, workingDirectory, sessionId, null, null);
   }
 
   /**
-   * Builds a HookInput for bash command tests with a JvmScope and tool result.
+   * Builds a HookInput for bash command tests with a tool result.
    *
-   * @param scope the JvmScope
+   * @param mapper the JSON mapper to use for constructing the input
    * @param command the bash command string
    * @param workingDirectory the working directory, or empty string if unavailable
    * @param sessionId the session ID
    * @param toolResult the tool result node (for PostToolUse handlers)
    * @return a HookInput with the given values
+   * @throws NullPointerException if {@code mapper}, {@code command}, {@code workingDirectory}, or
+   *   {@code sessionId} are null
    */
-  public static HookInput bashInput(JvmScope scope, String command, String workingDirectory, String sessionId,
-    JsonNode toolResult)
+  public static HookInput bashInput(JsonMapper mapper, String command, String workingDirectory,
+    String sessionId, JsonNode toolResult)
   {
-    return HookInput.forBash(scope.getJsonMapper(), command, workingDirectory, sessionId, null, toolResult);
+    return HookInput.forBash(mapper, command, workingDirectory, sessionId, null, toolResult);
   }
 
   /**
-   * Builds a HookInput for bash command tests with a JvmScope and native agent ID.
+   * Builds a HookInput for bash command tests with a native agent ID.
    *
-   * @param scope the JvmScope
+   * @param mapper the JSON mapper to use for constructing the input
    * @param command the bash command string
    * @param workingDirectory the working directory, or empty string if unavailable
    * @param sessionId the session ID
    * @param nativeAgentId the native (non-composite) agent ID, or null if not a subagent
    * @return a HookInput with the given values and no tool result
+   * @throws NullPointerException if {@code mapper}, {@code command}, {@code workingDirectory}, or
+   *   {@code sessionId} are null
    */
-  public static HookInput bashInputWithAgentId(JvmScope scope, String command, String workingDirectory,
-    String sessionId, String nativeAgentId)
+  public static HookInput bashInputWithAgentId(JsonMapper mapper, String command,
+    String workingDirectory, String sessionId, String nativeAgentId)
   {
-    return HookInput.forBash(scope.getJsonMapper(), command, workingDirectory, sessionId, nativeAgentId, null);
+    return HookInput.forBash(mapper, command, workingDirectory, sessionId, nativeAgentId, null);
   }
 
   /**

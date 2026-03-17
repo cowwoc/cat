@@ -530,11 +530,10 @@ public final class RecordLearning
    */
   private Path determineCommitLocation(String sessionId)
   {
-    WorktreeContext context = WorktreeContext.forSession(
-      scope.getCatWorkPath(), projectPath, scope.getJsonMapper(), sessionId);
-    if (context != null)
-      return context.absoluteWorktreePath();
-    return projectPath;
+    return WorktreeContext.forSession(
+        scope.getCatWorkPath(), projectPath, scope.getJsonMapper(), sessionId).
+      map(WorktreeContext::absoluteWorktreePath).
+      orElse(projectPath);
   }
 
   /**

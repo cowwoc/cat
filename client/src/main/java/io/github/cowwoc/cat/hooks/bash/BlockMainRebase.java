@@ -14,6 +14,7 @@ import io.github.cowwoc.cat.hooks.util.GitCommands;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -138,20 +139,18 @@ public final class BlockMainRebase implements BashHandler
       }
     }
 
-    WorktreeContext context = WorktreeContext.forSession(
+    Optional<WorktreeContext> context = WorktreeContext.forSession(
       scope.getCatWorkPath(), projectPath, scope.getJsonMapper(), sessionId);
-    if (context == null)
+    if (context.isPresent())
+      return null;
+    // No active worktree for this session — this is the main context; block checkout
+    String target = extractCheckoutTarget(command);
+    if (!isCheckoutFlag(target))
     {
-      // No active worktree for this session — this is the main context; block checkout
-      String target = extractCheckoutTarget(command);
-      if (!isCheckoutFlag(target))
-      {
-        return Result.block(String.format(
-          "Blocked: Cannot checkout '%s' in main worktree. Use issue worktrees instead.",
-          target));
-      }
+      return Result.block(String.format(
+        "Blocked: Cannot checkout '%s' in main worktree. Use issue worktrees instead.",
+        target));
     }
-
     return null;
   }
 
@@ -209,24 +208,13 @@ public final class BlockMainRebase implements BashHandler
     }
 
     // Use lock-based worktree context to determine branch
-    WorktreeContext context = WorktreeContext.forSession(
-      scope.getCatWorkPath(), projectPath, scope.getJsonMapper(), sessionId);
-    if (context == null)
-    {
-      // No active worktree for this session — commands run in main context
-      try
-      {
-        return GitCommands.getCurrentBranch(projectPath.toString());
-      }
-      catch (IOException _)
-      {
-        return null;
-      }
-    }
-    // In a worktree — determine branch from worktree directory
+    Path branchDir = WorktreeContext.forSession(
+        scope.getCatWorkPath(), projectPath, scope.getJsonMapper(), sessionId).
+      map(WorktreeContext::absoluteWorktreePath).
+      orElse(projectPath);
     try
     {
-      return GitCommands.getCurrentBranch(context.absoluteWorktreePath().toString());
+      return GitCommands.getCurrentBranch(branchDir.toString());
     }
     catch (IOException _)
     {

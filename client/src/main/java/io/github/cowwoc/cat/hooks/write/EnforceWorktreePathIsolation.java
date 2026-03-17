@@ -147,10 +147,13 @@ public final class EnforceWorktreePathIsolation implements FileWriteHandler, Rea
    */
   private String isolationCheckReason(Path absoluteFilePath, String sessionId)
   {
-    WorktreeContext context = WorktreeContext.forSession(scope.getCatWorkPath(), projectPath, mapper, sessionId);
-    if (context != null)
+    WorktreeContext sessionContext = WorktreeContext.forSession(
+      scope.getCatWorkPath(), projectPath, mapper, sessionId).orElse(null);
+    if (sessionContext != null)
     {
-      FileWriteHandler.Result writeResult = checkAgainstContext(context, absoluteFilePath);
+      if (absoluteFilePath.startsWith(sessionContext.absoluteWorktreePath()))
+        return null;
+      FileWriteHandler.Result writeResult = checkAgainstContext(sessionContext, absoluteFilePath);
       if (writeResult.blocked())
         return writeResult.reason();
       return null;

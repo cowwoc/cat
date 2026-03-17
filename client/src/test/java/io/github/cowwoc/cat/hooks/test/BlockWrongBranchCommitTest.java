@@ -12,6 +12,7 @@ import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.bash.BlockWrongBranchCommit;
 import org.testng.annotations.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -41,10 +42,11 @@ public final class BlockWrongBranchCommitTest
     Path tempDir = Files.createTempDirectory("bwbc-test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWrongBranchCommit handler = new BlockWrongBranchCommit();
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, "git status", tempDir.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, "git status", tempDir.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -65,11 +67,12 @@ public final class BlockWrongBranchCommitTest
     Path tempDir = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWrongBranchCommit handler = new BlockWrongBranchCommit();
 
       // Regular repo: git dir parent is not "worktrees", so not a CAT worktree
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, "git commit -m \"feature: add something\"", tempDir.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, "git commit -m \"feature: add something\"", tempDir.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -99,11 +102,12 @@ public final class BlockWrongBranchCommitTest
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-my-issue");
       try
       {
+        JsonMapper mapper = scope.getJsonMapper();
         BlockWrongBranchCommit handler = new BlockWrongBranchCommit();
 
         // Working in the worktree directory — current branch is "2.1-my-issue"
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput(scope, "git commit -m \"feature: implement the feature\"",
+          TestUtils.bashInput(mapper, "git commit -m \"feature: implement the feature\"",
             worktreeDir.toString(), SESSION_ID));
 
         requireThat(result.blocked(), "blocked").isFalse();
@@ -147,10 +151,11 @@ public final class BlockWrongBranchCommitTest
         // git dir name is "2.1-wrong-test"
         TestUtils.runGit(wrongWorktreeDir, "checkout", "wrong-branch");
 
+        JsonMapper mapper = scope.getJsonMapper();
         BlockWrongBranchCommit handler = new BlockWrongBranchCommit();
 
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput(scope, "git commit -m \"feature: wrong branch commit\"",
+          TestUtils.bashInput(mapper, "git commit -m \"feature: wrong branch commit\"",
             wrongWorktreeDir.toString(), SESSION_ID));
 
         requireThat(result.blocked(), "blocked").isTrue();
@@ -191,11 +196,13 @@ public final class BlockWrongBranchCommitTest
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-cd-issue");
       try
       {
+        JsonMapper mapper = scope.getJsonMapper();
         BlockWrongBranchCommit handler = new BlockWrongBranchCommit();
 
         // cwd is mainRepo but command cd's into the worktree
         String command = "cd " + worktreeDir + " && git commit -m \"feature: test\"";
-        BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, mainRepo.toString(), SESSION_ID));
+        BashHandler.Result result = handler.check(
+          TestUtils.bashInput(mapper, command, mainRepo.toString(), SESSION_ID));
 
         requireThat(result.blocked(), "blocked").isFalse();
       }
@@ -228,11 +235,12 @@ public final class BlockWrongBranchCommitTest
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-push-test");
       try
       {
+        JsonMapper mapper = scope.getJsonMapper();
         BlockWrongBranchCommit handler = new BlockWrongBranchCommit();
 
         // git push — not a commit
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput(scope, "git push origin 2.1-push-test", worktreeDir.toString(), SESSION_ID));
+          TestUtils.bashInput(mapper, "git push origin 2.1-push-test", worktreeDir.toString(), SESSION_ID));
 
         requireThat(result.blocked(), "blocked").isFalse();
       }
@@ -261,11 +269,12 @@ public final class BlockWrongBranchCommitTest
     Path tempDir = Files.createTempDirectory("bwbc-test-no-git-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWrongBranchCommit handler = new BlockWrongBranchCommit();
 
       // This will throw IOException because tempDir is not a git repo
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, "git commit -m \"feature: something\"", tempDir.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, "git commit -m \"feature: something\"", tempDir.toString(), SESSION_ID));
 
       // Should allow because IOException → fail-open
       requireThat(result.blocked(), "blocked").isFalse();
@@ -295,12 +304,14 @@ public final class BlockWrongBranchCommitTest
       Path wrongWorktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-wrong-issue");
       try
       {
+        JsonMapper mapper = scope.getJsonMapper();
         BlockWrongBranchCommit handler = new BlockWrongBranchCommit();
 
         // Command starts in wrong worktree but ends in the correct one
         String command = "cd " + wrongWorktreeDir + " && cd " + correctWorktreeDir +
           " && git commit -m \"feature: test\"";
-        BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, mainRepo.toString(), SESSION_ID));
+        BashHandler.Result result = handler.check(
+          TestUtils.bashInput(mapper, command, mainRepo.toString(), SESSION_ID));
 
         // Should allow because the LAST cd target (correctWorktreeDir) is on the correct branch
         requireThat(result.blocked(), "blocked").isFalse();
@@ -335,10 +346,11 @@ public final class BlockWrongBranchCommitTest
       try
       {
         TestUtils.runGit(wrongWorktreeDir, "checkout", "wrong-amend");
+        JsonMapper mapper = scope.getJsonMapper();
         BlockWrongBranchCommit handler = new BlockWrongBranchCommit();
 
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput(scope, "git commit --amend --no-edit", wrongWorktreeDir.toString(), SESSION_ID));
+          TestUtils.bashInput(mapper, "git commit --amend --no-edit", wrongWorktreeDir.toString(), SESSION_ID));
 
         requireThat(result.blocked(), "blocked").isTrue();
       }
@@ -368,11 +380,12 @@ public final class BlockWrongBranchCommitTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWrongBranchCommit handler = new BlockWrongBranchCommit();
 
       // Main repo: .git dir parent is mainRepo itself, which is NOT named "worktrees"
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, "git commit -m \"feature: something\"", mainRepo.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, "git commit -m \"feature: something\"", mainRepo.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -405,11 +418,13 @@ public final class BlockWrongBranchCommitTest
       Path siblingB = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-sibling-b");
       try
       {
+        JsonMapper mapper = scope.getJsonMapper();
         BlockWrongBranchCommit handler = new BlockWrongBranchCommit();
 
         // Relative cd from siblingA to siblingB using "../sibling-b"
         String command = "cd ../2.1-sibling-b && git commit -m \"feature: test\"";
-        BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, siblingA.toString(), SESSION_ID));
+        BashHandler.Result result = handler.check(
+          TestUtils.bashInput(mapper, command, siblingA.toString(), SESSION_ID));
 
         // siblingB is a CAT worktree on the correct branch → should be allowed
         requireThat(result.blocked(), "blocked").isFalse();
@@ -442,11 +457,12 @@ public final class BlockWrongBranchCommitTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWrongBranchCommit handler = new BlockWrongBranchCommit();
 
       // Command with whitespace-only cd target — should fall back to cwd (mainRepo, not a CAT worktree)
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, "cd   && git commit -m \"feature: something\"", mainRepo.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, "cd   && git commit -m \"feature: something\"", mainRepo.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -478,24 +494,23 @@ public final class BlockWrongBranchCommitTest
       try
       {
         TestUtils.runGit(worktreeDir, "checkout", "wrong-branch");
+        JsonMapper mapper = scope.getJsonMapper();
         BlockWrongBranchCommit handler = new BlockWrongBranchCommit();
 
         // Test: git commit -a
         BashHandler.Result result1 = handler.check(
-          TestUtils.bashInput(scope, "git commit -a", worktreeDir.toString(), SESSION_ID));
+          TestUtils.bashInput(mapper, "git commit -a", worktreeDir.toString(), SESSION_ID));
         requireThat(result1.blocked(), "blockedForDashA").isTrue();
 
         // Test: git commit -am "message"
         BashHandler.Result result2 = handler.check(
-          TestUtils.bashInput(scope, "git commit -am \"feature: add something\"", worktreeDir.toString(), SESSION_ID));
+          TestUtils.bashInput(mapper, "git commit -am \"feature: add something\"", worktreeDir.toString(), SESSION_ID));
         requireThat(result2.blocked(), "blockedForDashAm").isTrue();
 
         // Test: git commit --message="message"
         BashHandler.Result result3 = handler.check(
-          TestUtils.bashInput(scope,
-            "git commit --message=\"feature: long form\"",
-            worktreeDir.toString(),
-            SESSION_ID));
+          TestUtils.bashInput(mapper, "git commit --message=\"feature: long form\"",
+            worktreeDir.toString(), SESSION_ID));
         requireThat(result3.blocked(), "blockedForMessageFlag").isTrue();
       }
       finally

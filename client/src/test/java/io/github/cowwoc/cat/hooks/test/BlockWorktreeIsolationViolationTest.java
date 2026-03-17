@@ -10,6 +10,7 @@ import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.bash.BlockWorktreeIsolationViolation;
 import org.testng.annotations.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -81,12 +82,13 @@ public final class BlockWorktreeIsolationViolationTest
     Path projectPath = Files.createTempDirectory("bwiv-test-");
     try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       String outsidePath = projectPath.resolve("plugin/file.txt").toString();
       String command = "echo \"text\" > " + outsidePath;
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -110,12 +112,13 @@ public final class BlockWorktreeIsolationViolationTest
     try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
     {
       writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       String outsidePath = projectPath.resolve("plugin/file.txt").toString();
       String command = "echo \"text\" > " + outsidePath;
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -141,9 +144,10 @@ public final class BlockWorktreeIsolationViolationTest
       String insidePath = worktreeDir.resolve("plugin/file.txt").toString();
       String command = "echo \"text\" > " + insidePath;
 
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -172,9 +176,10 @@ public final class BlockWorktreeIsolationViolationTest
       Path outsidePath = projectPath.resolve("plugin/file.txt");
       String command = "echo \"text\" > " + outsidePath;
 
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -203,9 +208,10 @@ public final class BlockWorktreeIsolationViolationTest
       Path outsidePath = projectPath.resolve("plugin/file.txt");
       String command = "echo \"text\" >> " + outsidePath;
 
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -232,9 +238,10 @@ public final class BlockWorktreeIsolationViolationTest
       Path outsidePath = projectPath.resolve("plugin/file.txt");
       String command = "cat source.txt | tee " + outsidePath;
 
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -261,9 +268,10 @@ public final class BlockWorktreeIsolationViolationTest
       Path outsidePath = projectPath.resolve("plugin/file.txt");
       String command = "echo \"text\" | tee -a " + outsidePath;
 
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -290,9 +298,10 @@ public final class BlockWorktreeIsolationViolationTest
       String insidePath = worktreeDir.resolve("plugin/file.txt").toString();
       String command = "cat source.txt | tee " + insidePath;
 
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -319,9 +328,10 @@ public final class BlockWorktreeIsolationViolationTest
       Path destPath = projectPath.resolve("plugin/file.txt");
       String command = "cp " + sourcePath + " " + destPath;
 
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -349,9 +359,10 @@ public final class BlockWorktreeIsolationViolationTest
       Path destPath = worktreeDir.resolve("plugin/file.txt");
       String command = "cp " + sourcePath + " " + destPath;
 
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -378,9 +389,10 @@ public final class BlockWorktreeIsolationViolationTest
       Path destPath = projectPath.resolve("plugin/file.txt");
       String command = "mv " + sourcePath + " " + destPath;
 
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -408,9 +420,10 @@ public final class BlockWorktreeIsolationViolationTest
       Path destPath = worktreeDir.resolve("plugin/file.txt");
       String command = "mv " + sourcePath + " " + destPath;
 
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -438,9 +451,10 @@ public final class BlockWorktreeIsolationViolationTest
       createWorktreeDir(scope, ISSUE_ID);
       String command = "echo \"text\" > /tmp/output.txt";
 
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -470,9 +484,10 @@ public final class BlockWorktreeIsolationViolationTest
       // Working directory is projectPath; relative path resolves to projectPath/plugin/file.txt
       String command = "echo \"text\" > plugin/file.txt";
 
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -499,9 +514,10 @@ public final class BlockWorktreeIsolationViolationTest
       Path outsidePath = projectPath.resolve("plugin/file.txt");
       String command = "echo \"text\" | tee --append " + outsidePath;
 
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -531,9 +547,10 @@ public final class BlockWorktreeIsolationViolationTest
       Path outsidePath = projectPath.resolve("plugin/file2.txt");
       String command = "echo x | tee " + insidePath + " " + outsidePath;
 
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -561,9 +578,10 @@ public final class BlockWorktreeIsolationViolationTest
       String insidePath2 = worktreeDir.resolve("plugin/file2.txt").toString();
       String command = "echo x | tee " + insidePath1 + " " + insidePath2;
 
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -590,9 +608,10 @@ public final class BlockWorktreeIsolationViolationTest
       Path worktreeDir = createWorktreeDir(scope, ISSUE_ID);
       String command = "echo \"text\" > $CLAUDE_PROJECT_DIR/plugin/file.txt";
 
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("variable-expanded");
@@ -622,9 +641,10 @@ public final class BlockWorktreeIsolationViolationTest
       Path worktreeDir = createWorktreeDir(scope, ISSUE_ID);
       String command = "echo \"text\" > `echo /some/path`";
 
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("variable-expanded");
@@ -655,9 +675,10 @@ public final class BlockWorktreeIsolationViolationTest
       Path outsidePath = projectPath.resolve("plugin/path with spaces/file.txt");
       String command = "echo \"text\" > \"" + outsidePath + "\"";
 
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -685,9 +706,10 @@ public final class BlockWorktreeIsolationViolationTest
       createWorktreeDir(scope, ISSUE_ID);
       String command = "cat " + projectPath.resolve("plugin/file.txt") + " | grep pattern";
 
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -716,9 +738,10 @@ public final class BlockWorktreeIsolationViolationTest
       Path outsidePath = projectPath.resolve("plugin/file.txt");
       String command = "echo \"text\" > " + outsidePath;
 
+      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
 
       Path expectedCorrected = worktreeDir.resolve("plugin/file.txt").toAbsolutePath().normalize();
       requireThat(result.blocked(), "blocked").isTrue();

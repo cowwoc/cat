@@ -14,6 +14,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 
 /**
  * Resolved worktree context for a session.
@@ -41,18 +42,18 @@ public record WorktreeContext(Path absoluteWorktreePath, Path absoluteProjectDir
    * Resolves the worktree context for a session by looking up the session's lock file and
    * deriving the worktree path.
    * <p>
-   * Returns {@code null} if no active worktree is found for the session (no lock file or
-   * worktree directory does not exist).
+   * A session holds at most one active lock at a time. Returns an empty optional if no
+   * active worktree is found for the session (no lock file or worktree directory does not exist).
    *
    * @param projectCatDir the project CAT directory ({@code {claudeProjectPath}/.cat/work/})
    * @param projectPath the project root directory
    * @param mapper the JSON mapper for reading lock files
    * @param sessionId the session ID to look up
-   * @return the resolved worktree context, or {@code null} if no active worktree exists
+   * @return the resolved worktree context, or empty if no active worktree exists
    * @throws NullPointerException if any parameter is null
    * @throws IllegalArgumentException if {@code sessionId} is blank
    */
-  public static WorktreeContext forSession(Path projectCatDir, Path projectPath, JsonMapper mapper,
+  public static Optional<WorktreeContext> forSession(Path projectCatDir, Path projectPath, JsonMapper mapper,
     String sessionId)
   {
     requireThat(projectCatDir, "projectCatDir").isNotNull();
@@ -64,15 +65,15 @@ public record WorktreeContext(Path absoluteWorktreePath, Path absoluteProjectDir
     {
       String issueId = WorktreeLock.findIssueIdForSession(projectCatDir, mapper, sessionId);
       if (issueId == null)
-        return null;
+        return Optional.empty();
 
       Path worktreePath = projectCatDir.resolve("worktrees").resolve(issueId);
       if (!Files.isDirectory(worktreePath))
-        return null;
+        return Optional.empty();
 
       Path absoluteWorktreePath = worktreePath.toAbsolutePath().normalize();
       Path absoluteProjectDirectory = projectPath.toAbsolutePath().normalize();
-      return new WorktreeContext(absoluteWorktreePath, absoluteProjectDirectory);
+      return Optional.of(new WorktreeContext(absoluteWorktreePath, absoluteProjectDirectory));
     }
     catch (IOException e)
     {

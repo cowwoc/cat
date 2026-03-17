@@ -20,6 +20,7 @@ import tools.jackson.databind.JsonNode;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 
 /**
  * Sets a pending-agent-result flag file when the main agent completes an Agent tool invocation
@@ -88,9 +89,9 @@ public final class SetPendingAgentResult implements PostToolHandler
         return Result.allow();
 
       // Only applies when an active worktree lock exists (work-with-issue context)
-      WorktreeContext context = WorktreeContext.forSession(
+      Optional<WorktreeContext> context = WorktreeContext.forSession(
         scope.getCatWorkPath(), scope.getProjectPath(), scope.getJsonMapper(), sessionId);
-      if (context == null)
+      if (context.isEmpty())
         return Result.allow();
 
       // Create the flag file

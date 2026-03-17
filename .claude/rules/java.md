@@ -275,6 +275,112 @@ else
 String command = commandNode != null ? commandNode.asString() : "";
 ```
 
+### Optional Unwrapping
+When an `Optional` is used only once — immediately in a single method chain like `map().orElse()` or `isPresent()` — inline the constructor call rather than storing it in a named variable:
+
+```java
+// Good — no intermediate variable needed
+Path branchDir = WorktreeContext.forSession(
+    scope.getCatWorkPath(), projectPath, scope.getJsonMapper(), sessionId).
+  map(WorktreeContext::absoluteWorktreePath).
+  orElse(projectPath);
+
+// Avoid — intermediate variable adds no information
+Optional<WorktreeContext> context = WorktreeContext.forSession(
+  scope.getCatWorkPath(), projectPath, scope.getJsonMapper(), sessionId);
+Path branchDir = context.map(WorktreeContext::absoluteWorktreePath).orElse(projectPath);
+```
+
+When extracting a value from an `Optional` with a fallback, use `map().orElse()` instead of an `if (isPresent()) / get()`
+block:
+
+```java
+// Good - concise, idiomatic
+return context.map(WorktreeContext::absoluteWorktreePath).orElse(projectPath);
+
+// Avoid - verbose, error-prone
+if (context.isPresent())
+  return context.get().absoluteWorktreePath();
+return projectPath;
+```
+
+Branch on an `Optional` to select a **value**, not a code path. When both branches perform the same operation on
+different values, extract the `Optional` to a single variable and call the operation once:
+
+```java
+// Good — extract the path, call the operation once
+Path branchDir = context.map(WorktreeContext::absoluteWorktreePath).orElse(projectPath);
+try
+{
+  return GitCommands.getCurrentBranch(branchDir.toString());
+}
+catch (IOException _)
+{
+  return null;
+}
+
+// Avoid — same operation duplicated in both branches
+if (context.isEmpty())
+{
+  try
+  {
+    return GitCommands.getCurrentBranch(projectPath.toString());
+  }
+  catch (IOException _)
+  {
+    return null;
+  }
+}
+try
+{
+  return GitCommands.getCurrentBranch(context.get().absoluteWorktreePath().toString());
+}
+catch (IOException _)
+{
+  return null;
+}
+```
+
+When only the **empty** case has work to do, return early on `isPresent()` rather than wrapping the work in an
+`isEmpty()` block. This avoids a gratuitous level of nesting:
+
+```java
+// Good — early return eliminates nesting
+if (context.isPresent())
+  return null;
+String target = extractCheckoutTarget(command);
+if (!isCheckoutFlag(target))
+  return Result.block("Blocked: Cannot checkout '%s' in main worktree.".formatted(target));
+return null;
+
+// Avoid — work buried inside isEmpty() block
+if (context.isEmpty())
+{
+  String target = extractCheckoutTarget(command);
+  if (!isCheckoutFlag(target))
+    return Result.block("Blocked: Cannot checkout '%s' in main worktree.".formatted(target));
+}
+return null;
+```
+
+When the present-case requires multiple statements (a block body), extract the value using `orElse(null)` and test
+for null rather than using a two-step `isEmpty()` check followed by `.get()`:
+
+```java
+// Good — single null check, no isEmpty/get split
+WorktreeContext context = WorktreeContext.forSession(...).orElse(null);
+if (context == null)
+  return Result.allow();
+// use context directly
+context.absoluteWorktreePath();
+
+// Avoid — isEmpty check followed by separate .get() call
+Optional<WorktreeContext> contextOptional = WorktreeContext.forSession(...);
+if (contextOptional.isEmpty())
+  return Result.allow();
+WorktreeContext context = contextOptional.get();
+```
+
 ### Null-First Conditionals
 When a conditional handles both the null and non-null case, test the null case first. This applies to explicit
 if/else and to early-return patterns:

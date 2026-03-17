@@ -159,9 +159,8 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
     }
 
     WorktreeContext worktreeContext = WorktreeContext.forSession(
-      scope.getCatWorkPath(), scope.getProjectPath(), scope.getJsonMapper(), sessionId);
-    boolean inTaskWorktree = worktreeContext != null;
-    if (inTaskWorktree && filePath.startsWith(scope.getProjectPath().toString()))
+      scope.getCatWorkPath(), scope.getProjectPath(), scope.getJsonMapper(), sessionId).orElse(null);
+    if (worktreeContext != null && filePath.startsWith(scope.getProjectPath().toString()))
     {
       Path absoluteFilePath = Path.of(filePath).toAbsolutePath().normalize();
       if (!absoluteFilePath.startsWith(worktreeContext.absoluteWorktreePath()))
@@ -185,11 +184,11 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
       }
     }
 
-    String worktreeNote = "";
-    if (inTaskWorktree)
-    {
+    String worktreeNote;
+    if (worktreeContext == null)
+      worktreeNote = "";
+    else
       worktreeNote = "\n(In issue worktree - proper isolation, but main agent should still delegate)";
-    }
 
     String warning = "⚠️ MAIN AGENT SOURCE EDIT DETECTED (A003/M097/M302)\n" +
                      "\n" +

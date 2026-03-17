@@ -12,6 +12,7 @@ import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.bash.BlockUnauthorizedMergeCleanup;
 import org.testng.annotations.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -68,9 +69,10 @@ public final class BlockUnauthorizedMergeCleanupTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       writeCatConfig(tempDir, "medium");
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, "git status", "/workspace", SESSION_ID));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, "git status", "/workspace", SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -92,10 +94,11 @@ public final class BlockUnauthorizedMergeCleanupTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       writeCatConfig(tempDir, "high");
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
       String command = "/path/to/merge-and-cleanup session-id issue-id";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "/workspace", SESSION_ID));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -120,10 +123,11 @@ public final class BlockUnauthorizedMergeCleanupTest
       writeSessionFile(scope, SESSION_ID, """
         {"type":"user","message":{"content":[{"type":"text","text":"looks good"}]}}
         """);
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
       String command = "/path/to/merge-and-cleanup session-id issue-id";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "/workspace", SESSION_ID));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -148,10 +152,11 @@ public final class BlockUnauthorizedMergeCleanupTest
       writeSessionFile(scope, SESSION_ID, """
         {"type":"user","message":{"content":[{"type":"text","text":"approve and merge"}]}}
         """);
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
       String command = "/path/to/merge-and-cleanup session-id issue-id";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "/workspace", SESSION_ID));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -176,10 +181,11 @@ public final class BlockUnauthorizedMergeCleanupTest
       writeSessionFile(scope, SESSION_ID, """
         {"type":"user","message":{"content":[{"type":"text","text":"looks good"}]}}
         """);
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
       String command = "merge-and-cleanup session-id issue-id";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "/workspace", SESSION_ID));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -213,10 +219,11 @@ public final class BlockUnauthorizedMergeCleanupTest
         "[{\"type\":\"tool_result\",\"tool_use_id\":\"tu1\"," +
         "\"content\":\"User answered: Approve and merge\"}]}}";
       writeSessionFile(scope, SESSION_ID, assistantLine + "\n" + userLine + "\n");
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
       String command = "merge-and-cleanup session-id issue-id";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "/workspace", SESSION_ID));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -244,10 +251,11 @@ public final class BlockUnauthorizedMergeCleanupTest
       writeSessionFile(scope, SESSION_ID, """
         {"type":"user","message":{"content":[{"type":"text","text":"looks good"}]}}
         """);
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
       String command = "merge-and-cleanup session-id issue-id";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "/workspace", SESSION_ID));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Step 7");
@@ -295,10 +303,11 @@ public final class BlockUnauthorizedMergeCleanupTest
     {
       writeCatConfig(tempDir, "medium");
       // No session file written intentionally
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
       String command = "merge-and-cleanup session-id issue-id";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "/workspace", SESSION_ID));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
     }

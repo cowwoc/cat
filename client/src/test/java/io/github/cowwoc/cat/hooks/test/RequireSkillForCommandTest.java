@@ -14,6 +14,7 @@ import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.bash.RequireSkillForCommand;
 import io.github.cowwoc.cat.hooks.util.GetSkill;
 import org.testng.annotations.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -120,10 +121,11 @@ public final class RequireSkillForCommandTest
     {
       writeRegistry(tempPluginRoot);
       // No skills-loaded marker written — skill is not loaded
+      JsonMapper mapper = scope.getJsonMapper();
       RequireSkillForCommand handler = new RequireSkillForCommand(scope);
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, "git rebase origin/main", "/workspace", "test-session-id"));
+        TestUtils.bashInput(mapper, "git rebase origin/main", "/workspace", "test-session-id"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("BLOCKED");
@@ -154,10 +156,11 @@ public final class RequireSkillForCommandTest
     {
       writeRegistry(tempPluginRoot);
       writeSkillsLoaded(scope, "test-session-id", "cat:git-rebase-agent\n");
+      JsonMapper mapper = scope.getJsonMapper();
       RequireSkillForCommand handler = new RequireSkillForCommand(scope);
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, "git rebase origin/main", "/workspace", "test-session-id"));
+        TestUtils.bashInput(mapper, "git rebase origin/main", "/workspace", "test-session-id"));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -185,10 +188,11 @@ public final class RequireSkillForCommandTest
     {
       writeRegistry(tempPluginRoot);
       // No skills-loaded marker — but command doesn't match any guard
+      JsonMapper mapper = scope.getJsonMapper();
       RequireSkillForCommand handler = new RequireSkillForCommand(scope);
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, "git status", "/workspace", "test-session-id"));
+        TestUtils.bashInput(mapper, "git status", "/workspace", "test-session-id"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -216,10 +220,11 @@ public final class RequireSkillForCommandTest
     {
       writeRegistry(tempPluginRoot);
       // No subagent skills-loaded marker written
+      JsonMapper mapper = scope.getJsonMapper();
       RequireSkillForCommand handler = new RequireSkillForCommand(scope);
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInputWithAgentId(scope, "git rebase origin/v2.1", "/workspace", "test-session-id",
+        TestUtils.bashInputWithAgentId(mapper, "git rebase origin/v2.1", "/workspace", "test-session-id",
           "subagent-abc123"));
 
       requireThat(result.blocked(), "blocked").isTrue();
@@ -253,10 +258,11 @@ public final class RequireSkillForCommandTest
       writeRegistry(tempPluginRoot);
       writeSubagentSkillsLoaded(scope, "test-session-id", "subagent-abc123",
         "cat:git-rebase-agent\n");
+      JsonMapper mapper = scope.getJsonMapper();
       RequireSkillForCommand handler = new RequireSkillForCommand(scope);
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInputWithAgentId(scope, "git rebase origin/v2.1", "/workspace", "test-session-id",
+        TestUtils.bashInputWithAgentId(mapper, "git rebase origin/v2.1", "/workspace", "test-session-id",
           "subagent-abc123"));
 
       requireThat(result.blocked(), "blocked").isFalse();
@@ -286,10 +292,11 @@ public final class RequireSkillForCommandTest
     {
       writeRegistry(tempPluginRoot);
       writeSkillsLoaded(scope, "test-session-id", "");
+      JsonMapper mapper = scope.getJsonMapper();
       RequireSkillForCommand handler = new RequireSkillForCommand(scope);
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, "git rebase origin/main", "/workspace", "test-session-id"));
+        TestUtils.bashInput(mapper, "git rebase origin/main", "/workspace", "test-session-id"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("cat:git-rebase-agent");
@@ -318,10 +325,11 @@ public final class RequireSkillForCommandTest
     {
       writeRegistry(tempPluginRoot);
       writeSkillsLoaded(scope, "test-session-id", "   \n  \n\t\n");
+      JsonMapper mapper = scope.getJsonMapper();
       RequireSkillForCommand handler = new RequireSkillForCommand(scope);
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, "git rebase origin/main", "/workspace", "test-session-id"));
+        TestUtils.bashInput(mapper, "git rebase origin/main", "/workspace", "test-session-id"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("cat:git-rebase-agent");
@@ -348,10 +356,11 @@ public final class RequireSkillForCommandTest
     try (JvmScope scope = new TestJvmScope(tempProjectDir, tempPluginRoot))
     {
       writeRegistry(tempPluginRoot);
+      JsonMapper mapper = scope.getJsonMapper();
       RequireSkillForCommand handler = new RequireSkillForCommand(scope);
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, "", "/workspace", "test-session-id"));
+        TestUtils.bashInput(mapper, "", "/workspace", "test-session-id"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }

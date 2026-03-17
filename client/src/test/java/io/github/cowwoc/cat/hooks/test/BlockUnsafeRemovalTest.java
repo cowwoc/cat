@@ -10,6 +10,7 @@ import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.bash.BlockUnsafeRemoval;
 import org.testng.annotations.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -42,11 +43,12 @@ public final class BlockUnsafeRemovalTest
 
     try (JvmScope scope = new TestJvmScope())
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
       String workingDirectory = tempDir.toString();
       String command = "git worktree remove -f " + worktreePath;
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -72,11 +74,12 @@ public final class BlockUnsafeRemovalTest
 
     try (JvmScope scope = new TestJvmScope())
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
       String workingDirectory = worktreePath.toString();
       String command = "git worktree remove --force " + worktreePath;
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
@@ -104,11 +107,12 @@ public final class BlockUnsafeRemovalTest
 
     try (JvmScope scope = new TestJvmScope())
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
       String workingDirectory = targetPath.toString();
       String command = "rm -rf " + targetPath;
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
@@ -136,11 +140,12 @@ public final class BlockUnsafeRemovalTest
 
     try (JvmScope scope = new TestJvmScope())
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
       String workingDirectory = tempDir.toString();
       String command = "git worktree remove --force " + worktreePath;
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -166,11 +171,12 @@ public final class BlockUnsafeRemovalTest
 
     try (JvmScope scope = new TestJvmScope())
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
       String workingDirectory = subDir.toString();
       String command = "rm -rf " + tempDir;
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
@@ -200,11 +206,12 @@ public final class BlockUnsafeRemovalTest
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
       String workingDirectory = safeDir.toString();  // CWD is outside the deletion target
       String command = "rm -rf " + tempDir;
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
@@ -249,11 +256,12 @@ public final class BlockUnsafeRemovalTest
         }""".formatted(worktreePath.toString(), lockCreatedAt));
 
       Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)), ZoneOffset.UTC);
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
       String workingDirectory = tempDir.toString();
       String command = "rm -rf " + worktreePath;
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
@@ -294,11 +302,12 @@ public final class BlockUnsafeRemovalTest
           "created_at": 1771266833
         }""".formatted(worktreePath.toString()));
 
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
       String workingDirectory = tempDir.toString();
       String command = "git worktree remove " + worktreePath + " --force";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "my-session"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "my-session"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -340,11 +349,12 @@ public final class BlockUnsafeRemovalTest
         }""".formatted(worktreePath.toString(), lockCreatedAt));
 
       Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)), ZoneOffset.UTC);
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
       String workingDirectory = tempDir.toString();
       String command = "git worktree remove " + worktreePath + " --force";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "my-session"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "my-session"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
@@ -371,11 +381,12 @@ public final class BlockUnsafeRemovalTest
 
     try (JvmScope scope = new TestJvmScope())
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
       String workingDirectory = tempDir.toString();
       String command = "rm -rf " + safeDir;
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -417,11 +428,12 @@ public final class BlockUnsafeRemovalTest
 
       // Clock is fixed 5 hours after lock creation, making the lock stale
       Clock staleClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(5)), ZoneOffset.UTC);
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, staleClock);
       String workingDirectory = tempDir.toString();
       String command = "rm -rf " + worktreePath;
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "my-session"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "my-session"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -463,11 +475,12 @@ public final class BlockUnsafeRemovalTest
 
       // Clock is fixed 1 hour after lock creation, making the lock fresh (< 4 hours old)
       Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)), ZoneOffset.UTC);
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
       String workingDirectory = tempDir.toString();
       String command = "rm -rf " + worktreePath;
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "my-session"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "my-session"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
@@ -512,11 +525,12 @@ public final class BlockUnsafeRemovalTest
 
       // Clock is fixed 5 hours after lock creation (stale), but session matches so already excluded
       Clock staleClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(5)), ZoneOffset.UTC);
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, staleClock);
       String workingDirectory = tempDir.toString();
       String command = "rm -rf " + worktreePath;
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "my-session"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "my-session"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -542,11 +556,12 @@ public final class BlockUnsafeRemovalTest
 
     try (JvmScope scope = new TestJvmScope())
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
       String workingDirectory = targetPath.toString();
       String command = "rm -r -f " + targetPath;
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
@@ -574,11 +589,12 @@ public final class BlockUnsafeRemovalTest
 
     try (JvmScope scope = new TestJvmScope())
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
       String workingDirectory = targetPath.toString();
       String command = "rm " + targetPath + " -rf";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
@@ -606,11 +622,12 @@ public final class BlockUnsafeRemovalTest
 
     try (JvmScope scope = new TestJvmScope())
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
       String workingDirectory = targetPath.toString();
       String command = "rm -f " + targetPath + " -r";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
@@ -638,11 +655,12 @@ public final class BlockUnsafeRemovalTest
 
     try (JvmScope scope = new TestJvmScope())
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
       String workingDirectory = targetPath.toString();
       String command = "rm --recursive " + targetPath;
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
@@ -670,11 +688,12 @@ public final class BlockUnsafeRemovalTest
 
     try (JvmScope scope = new TestJvmScope())
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
       String workingDirectory = targetPath.toString();
       String command = "rm -Rf " + targetPath;
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
@@ -719,11 +738,12 @@ public final class BlockUnsafeRemovalTest
       // Clock is fixed exactly 14400 seconds (4 hours) after lock creation
       // age.compareTo(threshold) == 0, so isStale() returns false → lock is protected
       Clock boundaryClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(4)), ZoneOffset.UTC);
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, boundaryClock);
       String workingDirectory = tempDir.toString();
       String command = "rm -rf " + worktreePath;
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "my-session"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "my-session"));
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -765,11 +785,12 @@ public final class BlockUnsafeRemovalTest
       // Clock is fixed 14399 seconds (4 hours minus 1 second) after lock creation
       Instant boundaryInstant = Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(4)).minusSeconds(1);
       Clock boundaryClock = Clock.fixed(boundaryInstant, ZoneOffset.UTC);
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, boundaryClock);
       String workingDirectory = tempDir.toString();
       String command = "rm -rf " + worktreePath;
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "my-session"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "my-session"));
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -811,11 +832,12 @@ public final class BlockUnsafeRemovalTest
       // Clock is fixed 14401 seconds (4 hours plus 1 second) after lock creation
       Instant boundaryInstant = Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(4)).plusSeconds(1);
       Clock boundaryClock = Clock.fixed(boundaryInstant, ZoneOffset.UTC);
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, boundaryClock);
       String workingDirectory = tempDir.toString();
       String command = "rm -rf " + worktreePath;
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "my-session"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "my-session"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -853,11 +875,12 @@ public final class BlockUnsafeRemovalTest
           "worktrees": {"%s": ""}
         }""".formatted(worktreePath.toString()));
 
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
       String workingDirectory = tempDir.toString();
       String command = "rm -rf " + worktreePath;
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "my-session"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "my-session"));
 
       // No created_at means isStale() returns false, so the lock is treated as fresh and the removal is blocked
       requireThat(result.blocked(), "blocked").isTrue();
@@ -900,11 +923,12 @@ public final class BlockUnsafeRemovalTest
 
       // Clock is fixed 1 hour after lock creation so the lock appears fresh (< 4 hours old)
       Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)), ZoneOffset.UTC);
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
       String workingDirectory = tempDir.toString();
       String command = "rm -rf " + worktreePath;
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "my-session"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "my-session"));
 
       // Missing session_id means isOwnedBySession() returns false (not mine),
       // and since the lock is fresh, isStale() returns false, so the removal is blocked.
@@ -936,12 +960,13 @@ public final class BlockUnsafeRemovalTest
 
     try (JvmScope scope = new TestJvmScope())
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
       // CWD is inside the real directory, but deletion is via symlink path
       String workingDirectory = realTarget.toString();
       String command = "rm -rf " + symlink;
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
@@ -971,12 +996,13 @@ public final class BlockUnsafeRemovalTest
 
     try (JvmScope scope = new TestJvmScope())
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
       // CWD is the tempDir (the main worktree root), not the symlink target
       String workingDirectory = tempDir.toString();
       String command = "rm -rf " + symlink;
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -1002,11 +1028,12 @@ public final class BlockUnsafeRemovalTest
 
     try (JvmScope scope = new TestJvmScope())
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
       String workingDirectory = targetPath.toString();
       String command = "rm -rf " + targetPath;
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       // Verify working directory label is present in the error message (with the working directory value)
@@ -1038,11 +1065,12 @@ public final class BlockUnsafeRemovalTest
 
     try (JvmScope scope = new TestJvmScope())
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
       String workingDirectory = targetPath.toString();
       String command = "rm -f " + targetPath;
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -1084,13 +1112,14 @@ public final class BlockUnsafeRemovalTest
 
       Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)),
         ZoneOffset.UTC);
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
       String workingDirectory = tempDir.toString();
       String command = "git worktree remove " + worktreePath;
       // Empty agentId simulates missing agent_id in hook input (fail-safe)
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, workingDirectory, "aaaaaaaa-0000-0000-0000-000000000001"));
+        TestUtils.bashInput(mapper, command, workingDirectory, "aaaaaaaa-0000-0000-0000-000000000001"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       String reason = result.reason();
@@ -1135,6 +1164,7 @@ public final class BlockUnsafeRemovalTest
 
       Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)),
         ZoneOffset.UTC);
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
       String workingDirectory = tempDir.toString();
       // Agent ID comes from hook input, not command prefix
@@ -1142,7 +1172,7 @@ public final class BlockUnsafeRemovalTest
 
       // ownerAgentId = "aaaaaaaa-0000-0000-0000-000000000001/subagents/abc123"; native part is "abc123"
       BashHandler.Result result = handler.check(
-        TestUtils.bashInputWithAgentId(scope, command, workingDirectory,
+        TestUtils.bashInputWithAgentId(mapper, command, workingDirectory,
           "aaaaaaaa-0000-0000-0000-000000000001", "abc123"));
 
       requireThat(result.blocked(), "blocked").isFalse();
@@ -1186,6 +1216,7 @@ public final class BlockUnsafeRemovalTest
 
       Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)),
         ZoneOffset.UTC);
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
       String workingDirectory = tempDir.toString();
       // Different agent_id in hook input than in lock
@@ -1193,7 +1224,7 @@ public final class BlockUnsafeRemovalTest
 
       // commandAgentId = "aaaaaaaa-0000-0000-0000-000000000001/subagents/siblingY"; native part is "siblingY"
       BashHandler.Result result = handler.check(
-        TestUtils.bashInputWithAgentId(scope, command, workingDirectory,
+        TestUtils.bashInputWithAgentId(mapper, command, workingDirectory,
           "aaaaaaaa-0000-0000-0000-000000000001", "siblingY"));
 
       requireThat(result.blocked(), "blocked").isTrue();
@@ -1223,12 +1254,13 @@ public final class BlockUnsafeRemovalTest
       Path worktreePath = worktreesDir.resolve("task-agentD");
       Files.createDirectories(worktreePath);
 
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope);
       String workingDirectory = tempDir.toString();
       // No lock file
       String command = "git worktree remove " + worktreePath;
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, "session1"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -1271,6 +1303,7 @@ public final class BlockUnsafeRemovalTest
 
       Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)),
         ZoneOffset.UTC);
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
       // CWD is INSIDE the target (shell corruption scenario)
       String workingDirectory = worktreePath.toString();
@@ -1279,7 +1312,7 @@ public final class BlockUnsafeRemovalTest
 
       // ownerAgentId = "aaaaaaaa-0000-0000-0000-000000000001/subagents/abc"; native part is "abc"
       BashHandler.Result result = handler.check(
-        TestUtils.bashInputWithAgentId(scope, command, workingDirectory,
+        TestUtils.bashInputWithAgentId(mapper, command, workingDirectory,
           "aaaaaaaa-0000-0000-0000-000000000001", "abc"));
 
       requireThat(result.blocked(), "blocked").isTrue();
@@ -1329,12 +1362,13 @@ public final class BlockUnsafeRemovalTest
 
       Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)),
         ZoneOffset.UTC);
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
       String workingDirectory = tempDir.toString();
       String command = "git worktree remove " + worktreePath;
 
       // Same session as lock → allowed (backward compat fallback)
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, workingDirectory, mySessionId));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, workingDirectory, mySessionId));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -1377,12 +1411,13 @@ public final class BlockUnsafeRemovalTest
 
       Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)),
         ZoneOffset.UTC);
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
       String workingDirectory = tempDir.toString();
       String command = "rm -rf " + worktreePath;
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, workingDirectory, "aaaaaaaa-0000-0000-0000-000000000001"));
+        TestUtils.bashInput(mapper, command, workingDirectory, "aaaaaaaa-0000-0000-0000-000000000001"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       String reason = result.reason();
@@ -1429,6 +1464,7 @@ public final class BlockUnsafeRemovalTest
 
       Clock freshClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(1)),
         ZoneOffset.UTC);
+      JsonMapper mapper = scope.getJsonMapper();
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, freshClock);
       String workingDirectory = tempDir.toString();
       // Called from a DIFFERENT session
@@ -1436,7 +1472,7 @@ public final class BlockUnsafeRemovalTest
       String differentSessionId = "bbbbbbbb-1111-1111-1111-111111111111";
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, workingDirectory, differentSessionId));
+        TestUtils.bashInput(mapper, command, workingDirectory, differentSessionId));
 
       requireThat(result.blocked(), "blocked").isTrue();
       String reason = result.reason();

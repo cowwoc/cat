@@ -95,7 +95,8 @@ public final class BlockWorktreeIsolationViolation implements BashHandler
     requireThat(workingDirectory, "workingDirectory").isNotNull();
     requireThat(sessionId, "sessionId").isNotBlank();
 
-    WorktreeContext context = WorktreeContext.forSession(scope.getCatWorkPath(), projectPath, mapper, sessionId);
+    WorktreeContext context = WorktreeContext.forSession(
+      scope.getCatWorkPath(), projectPath, mapper, sessionId).orElse(null);
     if (context == null)
       return Result.allow();
 

@@ -18,6 +18,7 @@ import tools.jackson.databind.JsonNode;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 
 /**
  * Blocks Task and Skill tool calls when a pending-agent-result flag exists.
@@ -56,8 +57,9 @@ public final class EnforceCollectAfterAgent implements TaskHandler
     if (!Files.exists(flagPath))
       return Result.allow();
 
-    if (WorktreeContext.forSession(
-      scope.getCatWorkPath(), scope.getProjectPath(), scope.getJsonMapper(), sessionId) == null)
+    Optional<WorktreeContext> worktreeContext = WorktreeContext.forSession(
+      scope.getCatWorkPath(), scope.getProjectPath(), scope.getJsonMapper(), sessionId);
+    if (worktreeContext.isEmpty())
     {
       // No active worktree lock — flag is stale; clean up and allow
       try
