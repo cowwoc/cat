@@ -86,6 +86,7 @@ readonly -a HANDLERS=(
   "statusline-command:util.StatuslineCommand"
   "statusline-install:util.StatuslineInstall"
   "record-learning:util.RecordLearning"
+  "benchmark-runner:skills.BenchmarkRunner"
 )
 
 # --- Logging ---

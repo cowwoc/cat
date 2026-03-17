@@ -1236,6 +1236,25 @@ public final class RenderDiffCommand  // Don't create this
 }
 ```
 
+### No System.exit(0) at End of main() Catch Blocks
+Do not call `System.exit(0)` at the end of a `main()` catch block when returning from the block achieves the same
+result. The JVM exits with code 0 when the main thread returns normally, making a trailing `System.exit(0)` redundant.
+
+```java
+// Good - catch block ends naturally, JVM exits 0
+catch (IOException e)
+{
+  System.out.println(errorJson);
+}
+
+// Avoid - System.exit(0) is redundant when it's the last statement
+catch (IOException e)
+{
+  System.out.println(errorJson);
+  System.exit(0);  // Unnecessary
+}
+```
+
 ## Warnings Suppression
 
 ### @SuppressWarnings("unchecked")

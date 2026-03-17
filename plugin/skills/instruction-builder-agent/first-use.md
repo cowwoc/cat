@@ -194,7 +194,7 @@ value). Pass this resolved path as a literal string to all subagents — do NOT 
 **Model selection:** Read the target skill's `model:` frontmatter field to determine which model to use for
 benchmark-run subagents. Run:
 ```bash
-BENCHMARK_MODEL=$("${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder-agent/benchmark/benchmark-runner.sh" extract-model \
+BENCHMARK_MODEL=$("${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner" extract-model \
   "<absolute-path-to-SKILL_TEXT_PATH>")
 ```
 The script prints the model name (e.g., `sonnet`, `haiku`) or falls back to `haiku` when the field is absent.
@@ -289,14 +289,14 @@ committed file via `git show {BENCHMARK_SET_SHA}:benchmark-artifacts/<SESSION_ID
 #### Step 3.2: Incremental Test Case Selection (Re-benchmarking only)
 
 When re-benchmarking an existing skill after an edit (rather than benchmarking a brand-new draft), use
-`benchmark-runner.sh` to identify which test cases need to re-run and which can carry forward from the
+`${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner` to identify which test cases need to re-run and which can carry forward from the
 prior benchmark.
 
 **Workflow:**
 
 1. Run change detection to identify modified line ranges:
    ```bash
-   "${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder-agent/benchmark/benchmark-runner.sh" detect-changes \
+   "${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner" detect-changes \
      <SKILL_DRAFT_SHA> <SKILL_TEXT_PATH> "${BENCHMARK_ARTIFACTS_DIR}/test-cases.json"
    ```
    Output fields:
@@ -309,7 +309,7 @@ prior benchmark.
 2. When `body_changed=true` and `frontmatter_changed=false`, extract semantic units from the updated
    skill body:
    ```bash
-   "${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder-agent/benchmark/benchmark-runner.sh" extract-units \
+   "${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner" extract-units \
      <SKILL_TEXT_PATH>
    ```
    This outputs the skill body with original file line numbers prepended (tab-separated). Apply the
@@ -321,7 +321,7 @@ prior benchmark.
 
 4. Map changed unit IDs to affected test cases:
    ```bash
-   "${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder-agent/benchmark/benchmark-runner.sh" map-units \
+   "${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner" map-units \
      "${BENCHMARK_ARTIFACTS_DIR}/test-cases.json" '["unit_1", "unit_5"]'
    ```
    Output: `rerun_test_case_ids` (must re-run SPRT) and `carryforward_test_case_ids` (results preserved).
@@ -452,7 +452,7 @@ Commit with message `benchmark: SPRT result [session: ${CLAUDE_SESSION_ID}]`. St
 skill-level benchmark metadata record to the skill's own directory:
 ```bash
 WORKTREE_ROOT=$(git rev-parse --show-toplevel)
-"${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder-agent/benchmark/benchmark-runner.sh" persist-artifacts \
+"${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner" persist-artifacts \
   "${SKILL_TEXT_PATH}" \
   "${BENCHMARK_ARTIFACTS_DIR}" \
   "${CLAUDE_SESSION_ID}" \
@@ -811,7 +811,7 @@ implementation details (trust levels, internal architecture, etc.).
 - [ ] SPRT decision logic uses p0=0.95, p1=0.85, α=0.05, β=0.05 with boundaries A≈2.944, B≈-2.944
 - [ ] Each test case runs its own independent SPRT; rejection of any case stops all remaining cases
 - [ ] SPRT check runs after each individual agent completion (pipelined), not batched per wave
-- [ ] BENCHMARK_MODEL is read from skill frontmatter via `benchmark-runner.sh extract-model` at the start of Step 3
+- [ ] BENCHMARK_MODEL is read from skill frontmatter via `${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner extract-model` at the start of Step 3
 - [ ] Eval-run subagents use `BENCHMARK_MODEL` (not hardcoded Haiku), fresh (non-resumed) per run
 - [ ] Eval-run subagents grade deterministic assertions inline before returning
 - [ ] Semantic assertions use separate `BENCHMARK_MODEL` grader subagents
@@ -861,6 +861,6 @@ implementation details (trust levels, internal architecture, etc.).
 - [ ] benchmark.json sprt section includes `total_tokens` and `total_duration_ms` per test case and overall
 - [ ] Token usage summary table is displayed after SPRT completes showing per-test-case and aggregate totals
 - [ ] Token counts are accumulated from each benchmark-run subagent return value (not estimated)
-- [ ] `benchmark-runner.sh persist-artifacts` is called after each SPRT commit to persist test cases to `<skill-dir>/benchmark/`
-- [ ] `benchmark-runner.sh persist-artifacts` commits `benchmark/benchmark.json` (with skill SHA, test-case SHA, session, phase, timestamp) to skill directory
-- [ ] `benchmark-runner.sh extract-model` falls back to "haiku" when skill has no model: frontmatter field
+- [ ] `${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner persist-artifacts` is called after each SPRT commit to persist test cases to `<skill-dir>/benchmark/`
+- [ ] `${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner persist-artifacts` commits `benchmark/benchmark.json` (with skill SHA, test-case SHA, session, phase, timestamp) to skill directory
+- [ ] `${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner extract-model` falls back to "haiku" when skill has no model: frontmatter field

@@ -399,4 +399,42 @@ public final class SkillDiscovery
     }
     return null;
   }
+
+  /**
+   * Returns {@code true} if {@code value} is surrounded by matching single or double quotes.
+   *
+   * @param value a string of length >= 2
+   * @return {@code true} if the first and last characters are matching quote characters
+   */
+  private static boolean isQuoted(String value)
+  {
+    char first = value.charAt(0);
+    char last = value.charAt(value.length() - 1);
+    return (first == '"' && last == '"') || (first == '\'' && last == '\'');
+  }
+
+  /**
+   * Extracts the value of a named field from YAML frontmatter.
+   *
+   * @param frontmatter the YAML frontmatter text
+   * @param fieldName   the field name to extract
+   * @return the field value (with surrounding quotes removed if present), or an empty string if not found
+   */
+  public static String extractField(String frontmatter, String fieldName)
+  {
+    for (String line : frontmatter.split("\n"))
+    {
+      if (line.startsWith(fieldName + ":"))
+      {
+        String value = line.substring(fieldName.length() + 1).strip();
+        // Strip surrounding single or double quotes
+        if (value.length() >= 2 && isQuoted(value))
+        {
+          value = value.substring(1, value.length() - 1);
+        }
+        return value;
+      }
+    }
+    return "";
+  }
 }

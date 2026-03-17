@@ -87,7 +87,7 @@ public final class BlockMainRebaseTest
       String command = "git rebase origin/main";
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("REBASE ON MAIN BLOCKED");
@@ -127,7 +127,7 @@ public final class BlockMainRebaseTest
       String command = "git rebase main";
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(command, worktree.toString(), SESSION_ID));
+        TestUtils.bashInput(scope, command, worktree.toString(), SESSION_ID));
 
       // The worktree is on feature branch, not main — rebase must be allowed
       requireThat(result.blocked(), "blocked").isFalse();
@@ -159,7 +159,7 @@ public final class BlockMainRebaseTest
       String command = "git checkout feature-branch";
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -193,7 +193,7 @@ public final class BlockMainRebaseTest
       String command = "git checkout -b new-branch";
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(command, mainRepo.toString(), SESSION_ID));
+        TestUtils.bashInput(scope, command, mainRepo.toString(), SESSION_ID));
 
       // -b is a flag, not a branch name — even in main context this would be a flag checkout
       requireThat(result.blocked(), "blocked").isFalse();
@@ -219,7 +219,7 @@ public final class BlockMainRebaseTest
     try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       BlockMainRebase handler = new BlockMainRebase(scope);
-      handler.check(TestUtils.bashInput("git checkout feature-branch", projectPath.toString(), ""));
+      handler.check(TestUtils.bashInput(scope, "git checkout feature-branch", projectPath.toString(), ""));
     }
     finally
     {
@@ -242,7 +242,7 @@ public final class BlockMainRebaseTest
     try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
       BlockMainRebase handler = new BlockMainRebase(scope);
-      handler.check(TestUtils.bashInput("git rebase origin/main", projectPath.toString(), ""));
+      handler.check(TestUtils.bashInput(scope, "git rebase origin/main", projectPath.toString(), ""));
     }
     finally
     {
@@ -267,7 +267,7 @@ public final class BlockMainRebaseTest
       String command = "git log --oneline -10";
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }

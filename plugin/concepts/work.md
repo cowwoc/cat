@@ -175,7 +175,7 @@ Work phases write output files to two distinct locations based on ownership and 
 - Ephemeral scratch files (`criteria-analysis.json`, `e2e-test-output.json`) written during confirm phase
 - Read by fix subagents to understand what failed; never committed to the issue branch
 
-**Review files** — `${WORKTREE_PATH}/.cat/review/`
+**Review files** — `${WORKTREE_PATH}/.cat/work/review/`
 - Owner: stakeholder agents; Scope: worktree-scoped
 - Stakeholder concern detail files (e.g., `security-concerns.json`)
 - Belong to the issue's worktree context; accessed by the work-review phase

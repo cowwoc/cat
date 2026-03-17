@@ -29,11 +29,12 @@ public final class VerifyStateInCommitTest
   public void allowsNonCommitCommands() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       VerifyStateInCommit handler = new VerifyStateInCommit();
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput("git status", tempDir.toString(), "test-session"));
+      BashHandler.Result result = handler.check(
+        TestUtils.bashInput(scope, "git status", tempDir.toString(), "test-session"));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -51,12 +52,12 @@ public final class VerifyStateInCommitTest
   public void allowsNonBugfixFeatureCommits() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       VerifyStateInCommit handler = new VerifyStateInCommit();
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput("git commit -m \"refactor: clean up code\"", tempDir.toString(), "test-session"));
+        TestUtils.bashInput(scope, "git commit -m \"refactor: clean up code\"", tempDir.toString(), "test-session"));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -74,12 +75,15 @@ public final class VerifyStateInCommitTest
   public void allowsAmendCommits() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       VerifyStateInCommit handler = new VerifyStateInCommit();
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput("git commit --amend -m \"feature: updated feature\"", tempDir.toString(), "test-session"));
+        TestUtils.bashInput(scope,
+          "git commit --amend -m \"feature: updated feature\"",
+          tempDir.toString(),
+          "test-session"));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -112,7 +116,10 @@ public final class VerifyStateInCommitTest
         VerifyStateInCommit handler = new VerifyStateInCommit();
 
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput("git commit -m \"bugfix: fix the thing\"", worktreeDir.toString(), "test-session"));
+          TestUtils.bashInput(scope,
+            "git commit -m \"bugfix: fix the thing\"",
+            worktreeDir.toString(),
+            "test-session"));
 
         requireThat(result.blocked(), "blocked").isTrue();
         requireThat(result.reason(), "reason").contains("STATE.md not included");
@@ -157,7 +164,10 @@ public final class VerifyStateInCommitTest
         VerifyStateInCommit handler = new VerifyStateInCommit();
 
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput("git commit -m \"feature: add new feature\"", worktreeDir.toString(), "test-session"));
+          TestUtils.bashInput(scope,
+            "git commit -m \"feature: add new feature\"",
+            worktreeDir.toString(),
+            "test-session"));
 
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").contains("closed");
@@ -202,7 +212,10 @@ public final class VerifyStateInCommitTest
         VerifyStateInCommit handler = new VerifyStateInCommit();
 
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput("git commit -m \"feature: add new feature\"", worktreeDir.toString(), "test-session"));
+          TestUtils.bashInput(scope,
+            "git commit -m \"feature: add new feature\"",
+            worktreeDir.toString(),
+            "test-session"));
 
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").isEmpty();
@@ -246,7 +259,8 @@ public final class VerifyStateInCommitTest
         // workingDirectory is mainRepo (not a CAT worktree), but command has "cd worktreeDir"
         // The handler should detect worktreeDir as the effective directory via cd extraction
         String command = "cd " + worktreeDir + " && git commit -m \"bugfix: fix something\"";
-        BashHandler.Result result = handler.check(TestUtils.bashInput(command, mainRepo.toString(), "test-session"));
+        BashHandler.Result result = handler.check(
+          TestUtils.bashInput(scope, command, mainRepo.toString(), "test-session"));
 
         // Since worktreeDir is a CAT worktree and STATE.md is not staged, it should be blocked
         requireThat(result.blocked(), "blocked").isTrue();
@@ -289,7 +303,8 @@ public final class VerifyStateInCommitTest
         // The last cd (secondDir) should be used, so not in a CAT worktree → allowed
         String command = "cd " + firstDir + " && cd " + secondDir +
           " && git commit -m \"bugfix: fix something\"";
-        BashHandler.Result result = handler.check(TestUtils.bashInput(command, firstDir.toString(), "test-session"));
+        BashHandler.Result result = handler.check(
+          TestUtils.bashInput(scope, command, firstDir.toString(), "test-session"));
 
         // secondDir is not a CAT worktree, so no STATE.md check → allowed
         requireThat(result.blocked(), "blocked").isFalse();
@@ -314,14 +329,14 @@ public final class VerifyStateInCommitTest
   public void fallsBackToWorkingDirectoryWhenNoCd() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("test-branch");
-    try
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       // Regular repo: git dir parent is not "worktrees" → not a CAT worktree → should allow
       VerifyStateInCommit handler = new VerifyStateInCommit();
 
       // No cd in command — working directory is used
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput("git commit -m \"bugfix: fix something\"", tempDir.toString(), "test-session"));
+        TestUtils.bashInput(scope, "git commit -m \"bugfix: fix something\"", tempDir.toString(), "test-session"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -339,7 +354,7 @@ public final class VerifyStateInCommitTest
   public void allowsMainWorkspaceCommitsWithClaudeCatDirectory() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("test-branch");
-    try
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       // Create .cat directory (present in main workspace but not a CAT worktree)
       // The main workspace has .cat for retrospectives/issues but its git dir parent
@@ -353,7 +368,7 @@ public final class VerifyStateInCommitTest
       VerifyStateInCommit handler = new VerifyStateInCommit();
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput("git commit -m \"bugfix: fix something\"", tempDir.toString(), "test-session"));
+        TestUtils.bashInput(scope, "git commit -m \"bugfix: fix something\"", tempDir.toString(), "test-session"));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -371,7 +386,7 @@ public final class VerifyStateInCommitTest
   public void allowsNonWorktreeCommits() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("test-branch");
-    try
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       // Regular repo: git dir parent is not "worktrees" → not a CAT worktree
       Files.writeString(tempDir.resolve("Foo.java"), "class Foo {}");
@@ -380,7 +395,7 @@ public final class VerifyStateInCommitTest
       VerifyStateInCommit handler = new VerifyStateInCommit();
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput("git commit -m \"feature: add feature\"", tempDir.toString(), "test-session"));
+        TestUtils.bashInput(scope, "git commit -m \"feature: add feature\"", tempDir.toString(), "test-session"));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -419,7 +434,7 @@ public final class VerifyStateInCommitTest
         VerifyStateInCommit handler = new VerifyStateInCommit();
 
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput("git commit -m \"feature: add feature\"", worktreeDir.toString(), "test-session"));
+          TestUtils.bashInput(scope, "git commit -m \"feature: add feature\"", worktreeDir.toString(), "test-session"));
 
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").isEmpty();
@@ -466,7 +481,7 @@ public final class VerifyStateInCommitTest
         VerifyStateInCommit handler = new VerifyStateInCommit();
 
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput("git commit -m \"feature: add feature\"", worktreeDir.toString(), "test-session"));
+          TestUtils.bashInput(scope, "git commit -m \"feature: add feature\"", worktreeDir.toString(), "test-session"));
 
         // Malformed format: pattern doesn't match, isClosed=false, so a warning is issued
         requireThat(result.blocked(), "blocked").isFalse();
@@ -513,7 +528,7 @@ public final class VerifyStateInCommitTest
         VerifyStateInCommit handler = new VerifyStateInCommit();
 
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput("git commit -m \"feature: add feature\"", worktreeDir.toString(), "test-session"));
+          TestUtils.bashInput(scope, "git commit -m \"feature: add feature\"", worktreeDir.toString(), "test-session"));
 
         // Empty string is not IssueStatus.CLOSED, so a warning is expected
         requireThat(result.blocked(), "blocked").isFalse();
@@ -561,7 +576,7 @@ public final class VerifyStateInCommitTest
         VerifyStateInCommit handler = new VerifyStateInCommit();
 
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput("git commit -m \"feature: add feature\"", worktreeDir.toString(), "test-session"));
+          TestUtils.bashInput(scope, "git commit -m \"feature: add feature\"", worktreeDir.toString(), "test-session"));
 
         // Pattern fails to match (no value after colon), isClosed=false, so a warning is expected
         requireThat(result.blocked(), "blocked").isFalse();
@@ -607,7 +622,7 @@ public final class VerifyStateInCommitTest
         VerifyStateInCommit handler = new VerifyStateInCommit();
 
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput("git commit -m \"feature: add feature\"", worktreeDir.toString(), "test-session"));
+          TestUtils.bashInput(scope, "git commit -m \"feature: add feature\"", worktreeDir.toString(), "test-session"));
 
         // "unknown" is not IssueStatus.CLOSED, so warning is expected
         requireThat(result.blocked(), "blocked").isFalse();
@@ -651,7 +666,7 @@ public final class VerifyStateInCommitTest
         VerifyStateInCommit handler = new VerifyStateInCommit();
 
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput("git commit -m \"feature: add feature\"", worktreeDir.toString(), "test-session"));
+          TestUtils.bashInput(scope, "git commit -m \"feature: add feature\"", worktreeDir.toString(), "test-session"));
 
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").contains("closed");
@@ -694,7 +709,7 @@ public final class VerifyStateInCommitTest
         VerifyStateInCommit handler = new VerifyStateInCommit();
 
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput("git commit -m \"feature: add feature\"", worktreeDir.toString(), "test-session"));
+          TestUtils.bashInput(scope, "git commit -m \"feature: add feature\"", worktreeDir.toString(), "test-session"));
 
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").contains("closed");
@@ -722,13 +737,19 @@ public final class VerifyStateInCommitTest
     // The isInCatWorktree() method catches IOException and returns false → Result.allow()
     Path nonExistentDir = Path.of("/tmp/non-existent-directory-" + System.nanoTime());
 
-    VerifyStateInCommit handler = new VerifyStateInCommit();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      VerifyStateInCommit handler = new VerifyStateInCommit();
 
-    BashHandler.Result result = handler.check(
-      TestUtils.bashInput("git commit -m \"bugfix: fix something\"", nonExistentDir.toString(), "test-session"));
+      BashHandler.Result result = handler.check(
+        TestUtils.bashInput(scope,
+          "git commit -m \"bugfix: fix something\"",
+          nonExistentDir.toString(),
+          "test-session"));
 
-    // When git command fails, isInCatWorktree() returns false → allow
-    requireThat(result.blocked(), "blocked").isFalse();
-    requireThat(result.reason(), "reason").isEmpty();
+      // When git command fails, isInCatWorktree() returns false → allow
+      requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.reason(), "reason").isEmpty();
+    }
   }
 }

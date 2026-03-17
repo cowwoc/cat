@@ -70,7 +70,7 @@ public final class BlockUnauthorizedMergeCleanupTest
       writeCatConfig(tempDir, "medium");
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput("git status", "/workspace", SESSION_ID));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, "git status", "/workspace", SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -95,7 +95,7 @@ public final class BlockUnauthorizedMergeCleanupTest
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
       String command = "/path/to/merge-and-cleanup session-id issue-id";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", SESSION_ID));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "/workspace", SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -123,7 +123,7 @@ public final class BlockUnauthorizedMergeCleanupTest
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
       String command = "/path/to/merge-and-cleanup session-id issue-id";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", SESSION_ID));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "/workspace", SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -151,7 +151,7 @@ public final class BlockUnauthorizedMergeCleanupTest
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
       String command = "/path/to/merge-and-cleanup session-id issue-id";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", SESSION_ID));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "/workspace", SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -179,7 +179,7 @@ public final class BlockUnauthorizedMergeCleanupTest
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
       String command = "merge-and-cleanup session-id issue-id";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", SESSION_ID));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "/workspace", SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -216,7 +216,7 @@ public final class BlockUnauthorizedMergeCleanupTest
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
       String command = "merge-and-cleanup session-id issue-id";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", SESSION_ID));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "/workspace", SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -247,7 +247,7 @@ public final class BlockUnauthorizedMergeCleanupTest
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
       String command = "merge-and-cleanup session-id issue-id";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", SESSION_ID));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "/workspace", SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Step 7");
@@ -298,7 +298,7 @@ public final class BlockUnauthorizedMergeCleanupTest
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
       String command = "merge-and-cleanup session-id issue-id";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", SESSION_ID));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "/workspace", SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
     }

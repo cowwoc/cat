@@ -76,7 +76,7 @@ public final class WarnMainWorkspaceCommitTest
         WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
         // Pass worktreeDir as the working directory — it IS a CAT worktree by git dir structure
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput("git commit -m \"feature: test cwd detection\"",
+          TestUtils.bashInput(scope, "git commit -m \"feature: test cwd detection\"",
             worktreeDir.toString(), sessionId));
 
         // Should allow because the worktree is identified by git dir structure
@@ -110,7 +110,8 @@ public final class WarnMainWorkspaceCommitTest
       createLockFile(scope, "test-issue", sessionId);
 
       WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
-      BashHandler.Result result = handler.check(TestUtils.bashInput("git status", mainRepo.toString(), sessionId));
+      BashHandler.Result result = handler.check(
+        TestUtils.bashInput(scope, "git status", mainRepo.toString(), sessionId));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -140,7 +141,7 @@ public final class WarnMainWorkspaceCommitTest
 
       WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput("git commit -m \"feature: add something\"", mainRepo.toString(), sessionId));
+        TestUtils.bashInput(scope, "git commit -m \"feature: add something\"", mainRepo.toString(), sessionId));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isNotEmpty();
@@ -177,7 +178,7 @@ public final class WarnMainWorkspaceCommitTest
 
       WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput("git commit -m \"bugfix: fix something\"", mainRepo.toString(), sessionId));
+        TestUtils.bashInput(scope, "git commit -m \"bugfix: fix something\"", mainRepo.toString(), sessionId));
 
       String reason = result.reason();
       // Verify complete message structure
@@ -226,7 +227,7 @@ public final class WarnMainWorkspaceCommitTest
 
         WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput("git commit -m \"feature: implement the feature\"",
+          TestUtils.bashInput(scope, "git commit -m \"feature: implement the feature\"",
             worktreeDir.toString(), sessionId));
 
         requireThat(result.blocked(), "blocked").isFalse();
@@ -263,7 +264,7 @@ public final class WarnMainWorkspaceCommitTest
 
       WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput("git commit -m \"config: update settings\"", mainRepo.toString(), sessionId));
+        TestUtils.bashInput(scope, "git commit -m \"config: update settings\"", mainRepo.toString(), sessionId));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -300,7 +301,7 @@ public final class WarnMainWorkspaceCommitTest
         WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
         // cwd is mainRepo but command cd's into the worktree
         String command = "cd " + worktreeDir + " && git commit -m \"feature: test\"";
-        BashHandler.Result result = handler.check(TestUtils.bashInput(command, mainRepo.toString(), sessionId));
+        BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, mainRepo.toString(), sessionId));
 
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").isEmpty();
@@ -334,7 +335,7 @@ public final class WarnMainWorkspaceCommitTest
 
       WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput("git commit --amend --no-edit", mainRepo.toString(), sessionId));
+        TestUtils.bashInput(scope, "git commit --amend --no-edit", mainRepo.toString(), sessionId));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isNotEmpty();
@@ -362,7 +363,7 @@ public final class WarnMainWorkspaceCommitTest
 
       WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput("git push origin v2.1", mainRepo.toString(), sessionId));
+        TestUtils.bashInput(scope, "git push origin v2.1", mainRepo.toString(), sessionId));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -389,7 +390,7 @@ public final class WarnMainWorkspaceCommitTest
 
       WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput("git  commit -m \"feature: test\"", mainRepo.toString(), sessionId));  // Two spaces
+        TestUtils.bashInput(scope, "git  commit -m \"feature: test\"", mainRepo.toString(), sessionId));  // Two spaces
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isNotEmpty();
@@ -417,7 +418,10 @@ public final class WarnMainWorkspaceCommitTest
 
       WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput("git commit --verify --sign-off -m \"feature: test\"", mainRepo.toString(), sessionId));
+        TestUtils.bashInput(scope,
+          "git commit --verify --sign-off -m \"feature: test\"",
+          mainRepo.toString(),
+          sessionId));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isNotEmpty();
@@ -445,7 +449,7 @@ public final class WarnMainWorkspaceCommitTest
 
       WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput("git commit -a -m \"feature: test\"", mainRepo.toString(), sessionId));
+        TestUtils.bashInput(scope, "git commit -a -m \"feature: test\"", mainRepo.toString(), sessionId));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isNotEmpty();
@@ -480,7 +484,7 @@ public final class WarnMainWorkspaceCommitTest
         WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
         // Semicolon syntax instead of &&
         String command = "cd " + worktreeDir + "; git commit -m \"feature: test\"";
-        BashHandler.Result result = handler.check(TestUtils.bashInput(command, mainRepo.toString(), sessionId));
+        BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, mainRepo.toString(), sessionId));
 
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").isEmpty();
@@ -522,7 +526,7 @@ public final class WarnMainWorkspaceCommitTest
         WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
         // Using pipe operator
         String command = "cd " + worktreeDir + " | git commit -m \"feature: test\"";
-        BashHandler.Result result = handler.check(TestUtils.bashInput(command, mainRepo.toString(), sessionId));
+        BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, mainRepo.toString(), sessionId));
 
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").isEmpty();
@@ -562,7 +566,7 @@ public final class WarnMainWorkspaceCommitTest
         WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
         // Double-quoted path
         String command = "cd \"" + worktreeDir + "\" && git commit -m \"feature: test\"";
-        BashHandler.Result result = handler.check(TestUtils.bashInput(command, mainRepo.toString(), sessionId));
+        BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, mainRepo.toString(), sessionId));
 
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").isEmpty();
@@ -600,7 +604,7 @@ public final class WarnMainWorkspaceCommitTest
       // Verify that handler can detect the lock and emit a warning
       WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput("git commit -m \"feature: test lock detection\"", mainRepo.toString(), sessionId));
+        TestUtils.bashInput(scope, "git commit -m \"feature: test lock detection\"", mainRepo.toString(), sessionId));
 
       // If the lock is correctly created and detected, we should get a warning
       requireThat(result.blocked(), "blocked").isFalse();
