@@ -1,0 +1,6 @@
+{
+  "status" : "closed",
+  "resolution" : "implemented",
+  "dependencies" : [ "2.1-add-concern-details-to-trust-low-gate" ],
+  "target_branch" : "v2.1"
+}
