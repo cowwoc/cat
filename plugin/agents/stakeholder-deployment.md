@@ -169,7 +169,7 @@ Use these domain-specific examples to calibrate your severity ratings against th
 ## Detail File
 
 Before returning your review, write comprehensive analysis to:
-`${WORKTREE_PATH}/.cat/review/deployment-concerns.json`
+`${WORKTREE_PATH}/.cat/work/review/deployment-concerns.json`
 
 The detail file is consumed by a planning subagent that creates concrete fix steps. Include:
 - Exact file paths and line numbers for each problem
@@ -190,7 +190,7 @@ Return compact JSON inline. Write full details to the detail file, not inline.
       "location": "file:line or component name",
       "explanation": "Brief description of the deployment/release concern",
       "recommendation": "Brief fix or approach",
-      "detail_file": "${WORKTREE_PATH}/.cat/review/deployment-concerns.json"
+      "detail_file": "${WORKTREE_PATH}/.cat/work/review/deployment-concerns.json"
     }
   ]
 }

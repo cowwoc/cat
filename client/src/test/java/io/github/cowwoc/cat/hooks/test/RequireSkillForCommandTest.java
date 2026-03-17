@@ -123,7 +123,7 @@ public final class RequireSkillForCommandTest
       RequireSkillForCommand handler = new RequireSkillForCommand(scope);
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput("git rebase origin/main", "/workspace", "test-session-id"));
+        TestUtils.bashInput(scope, "git rebase origin/main", "/workspace", "test-session-id"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("BLOCKED");
@@ -157,7 +157,7 @@ public final class RequireSkillForCommandTest
       RequireSkillForCommand handler = new RequireSkillForCommand(scope);
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput("git rebase origin/main", "/workspace", "test-session-id"));
+        TestUtils.bashInput(scope, "git rebase origin/main", "/workspace", "test-session-id"));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -188,7 +188,7 @@ public final class RequireSkillForCommandTest
       RequireSkillForCommand handler = new RequireSkillForCommand(scope);
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput("git status", "/workspace", "test-session-id"));
+        TestUtils.bashInput(scope, "git status", "/workspace", "test-session-id"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -219,7 +219,7 @@ public final class RequireSkillForCommandTest
       RequireSkillForCommand handler = new RequireSkillForCommand(scope);
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInputWithAgentId("git rebase origin/v2.1", "/workspace", "test-session-id",
+        TestUtils.bashInputWithAgentId(scope, "git rebase origin/v2.1", "/workspace", "test-session-id",
           "subagent-abc123"));
 
       requireThat(result.blocked(), "blocked").isTrue();
@@ -256,7 +256,7 @@ public final class RequireSkillForCommandTest
       RequireSkillForCommand handler = new RequireSkillForCommand(scope);
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInputWithAgentId("git rebase origin/v2.1", "/workspace", "test-session-id",
+        TestUtils.bashInputWithAgentId(scope, "git rebase origin/v2.1", "/workspace", "test-session-id",
           "subagent-abc123"));
 
       requireThat(result.blocked(), "blocked").isFalse();
@@ -289,7 +289,7 @@ public final class RequireSkillForCommandTest
       RequireSkillForCommand handler = new RequireSkillForCommand(scope);
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput("git rebase origin/main", "/workspace", "test-session-id"));
+        TestUtils.bashInput(scope, "git rebase origin/main", "/workspace", "test-session-id"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("cat:git-rebase-agent");
@@ -321,7 +321,7 @@ public final class RequireSkillForCommandTest
       RequireSkillForCommand handler = new RequireSkillForCommand(scope);
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput("git rebase origin/main", "/workspace", "test-session-id"));
+        TestUtils.bashInput(scope, "git rebase origin/main", "/workspace", "test-session-id"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("cat:git-rebase-agent");
@@ -351,7 +351,7 @@ public final class RequireSkillForCommandTest
       RequireSkillForCommand handler = new RequireSkillForCommand(scope);
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput("", "/workspace", "test-session-id"));
+        TestUtils.bashInput(scope, "", "/workspace", "test-session-id"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }

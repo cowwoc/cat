@@ -26,13 +26,16 @@ public final class RemindGitSquashTest
   @Test
   public void gitResetSoftWithoutPathIsBlocked()
   {
-    RemindGitSquash handler = new RemindGitSquash();
-    String command = "git reset --soft HEAD~1";
+    try (JvmScope scope = new TestJvmScope())
+    {
+      RemindGitSquash handler = new RemindGitSquash();
+      String command = "git reset --soft HEAD~1";
 
-    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "/workspace", "session1"));
 
-    requireThat(result.blocked(), "blocked").isTrue();
-    requireThat(result.reason(), "reason").contains("/cat:git-squash");
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("/cat:git-squash");
+    }
   }
 
   /**
@@ -50,7 +53,7 @@ public final class RemindGitSquashTest
       String worktreePath = scope.getCatWorkPath().resolve("worktrees").resolve("2.1-my-issue").toString();
       String command = "git -C " + worktreePath + " reset --soft v2.1";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "/workspace", "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("/cat:git-squash");
@@ -63,12 +66,15 @@ public final class RemindGitSquashTest
   @Test
   public void normalGitCommitIsAllowed()
   {
-    RemindGitSquash handler = new RemindGitSquash();
-    String command = "git commit -m \"feature: add something\"";
+    try (JvmScope scope = new TestJvmScope())
+    {
+      RemindGitSquash handler = new RemindGitSquash();
+      String command = "git commit -m \"feature: add something\"";
 
-    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "/workspace", "session1"));
 
-    requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
   }
 
   /**
@@ -77,12 +83,15 @@ public final class RemindGitSquashTest
   @Test
   public void gitRebaseInteractiveTriggersWarning()
   {
-    RemindGitSquash handler = new RemindGitSquash();
-    String command = "git rebase -i HEAD~3";
+    try (JvmScope scope = new TestJvmScope())
+    {
+      RemindGitSquash handler = new RemindGitSquash();
+      String command = "git rebase -i HEAD~3";
 
-    BashHandler.Result result = handler.check(TestUtils.bashInput(command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "/workspace", "session1"));
 
-    requireThat(result.blocked(), "blocked").isFalse();
-    requireThat(result.reason(), "reason").contains("/cat:git-squash");
+      requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.reason(), "reason").contains("/cat:git-squash");
+    }
   }
 }

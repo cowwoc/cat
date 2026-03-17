@@ -125,6 +125,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 
 
 ## Issues Closed
+- fix-parseskill-double-file-read
 - accept-approve-merge-without-wizard
 - acceptance-criteria-options
 - add-backup-branch-cleanup-to-merge

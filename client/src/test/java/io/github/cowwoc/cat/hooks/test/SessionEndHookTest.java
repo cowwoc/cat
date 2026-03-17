@@ -63,7 +63,7 @@ public final class SessionEndHookTest
         Path lockFile = lockDir.resolve(projectName + ".lock");
         Files.writeString(lockFile, "locked");
 
-        HookInput input = TestUtils.dummyInput(scope.getJsonMapper());
+        HookInput input = TestUtils.dummyInput(scope);
         HookOutput output = new HookOutput(scope);
 
         createSessionEndHook(scope).runWithProjectDir(input, output, tempDir);
@@ -135,7 +135,7 @@ public final class SessionEndHookTest
         Instant staleTime = Instant.now().minus(25, ChronoUnit.HOURS);
         Files.setLastModifiedTime(staleLock, FileTime.from(staleTime));
 
-        HookInput input = TestUtils.dummyInput(scope.getJsonMapper());
+        HookInput input = TestUtils.dummyInput(scope);
         HookOutput output = new HookOutput(scope);
 
         createSessionEndHook(scope).runWithProjectDir(input, output, tempDir);
@@ -167,7 +167,7 @@ public final class SessionEndHookTest
         Path taskLock = taskLockDir.resolve("task1.lock");
         Files.writeString(taskLock, "session_id=session123");
 
-        HookInput input = TestUtils.dummyInput(scope.getJsonMapper());
+        HookInput input = TestUtils.dummyInput(scope);
         HookOutput output = new HookOutput(scope);
 
         createSessionEndHook(scope).runWithProjectDir(input, output, tempDir);
@@ -206,7 +206,7 @@ public final class SessionEndHookTest
         Files.setLastModifiedTime(justWithinBoundary, FileTime.from(within));
         Files.setLastModifiedTime(justBeyondBoundary, FileTime.from(beyond));
 
-        HookInput input = TestUtils.dummyInput(scope.getJsonMapper());
+        HookInput input = TestUtils.dummyInput(scope);
         HookOutput output = new HookOutput(scope);
 
         createSessionEndHook(scope).runWithProjectDir(input, output, tempDir);
@@ -313,7 +313,7 @@ public final class SessionEndHookTest
       Path lockFile = lockDir.resolve(projectName + ".lock");
       Files.writeString(lockFile, "locked");
 
-      HookInput input = TestUtils.dummyInput(scope.getJsonMapper());
+      HookInput input = TestUtils.dummyInput(scope);
       HookOutput output = new HookOutput(scope);
 
       // run() derives the project name from scope.getProjectPath() and must delete this lock file
@@ -362,7 +362,7 @@ public final class SessionEndHookTest
       Path tempDir = Files.createTempDirectory("session-end-hook-test");
       try
       {
-        HookInput input = TestUtils.dummyInput(scope.getJsonMapper());
+        HookInput input = TestUtils.dummyInput(scope);
         createSessionEndHook(scope).runWithProjectDir(input, null, tempDir);
       }
       finally
@@ -381,7 +381,7 @@ public final class SessionEndHookTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      HookInput input = TestUtils.dummyInput(scope.getJsonMapper());
+      HookInput input = TestUtils.dummyInput(scope);
       HookOutput output = new HookOutput(scope);
 
       createSessionEndHook(scope).runWithProjectDir(input, output, null);
@@ -465,7 +465,7 @@ public final class SessionEndHookTest
         Path nestedFile = lockFile.resolve("nested.txt");
         Files.writeString(nestedFile, "content");
 
-        HookInput input = TestUtils.dummyInput(scope.getJsonMapper());
+        HookInput input = TestUtils.dummyInput(scope);
         HookOutput output = new HookOutput(scope);
 
         createSessionEndHook(scope).runWithProjectDir(input, output, tempDir);
@@ -500,7 +500,7 @@ public final class SessionEndHookTest
         Path nestedFile = directoryAsLockFile.resolve("nested.txt");
         Files.writeString(nestedFile, "content");
 
-        HookInput input = TestUtils.dummyInput(scope.getJsonMapper());
+        HookInput input = TestUtils.dummyInput(scope);
         HookOutput output = new HookOutput(scope);
 
         createSessionEndHook(scope).runWithProjectDir(input, output, tempDir);
