@@ -2378,5 +2378,19 @@
     "prevention_verified" : false,
     "recurrence_of" : null,
     "correct_behavior" : ""
+  }, {
+    "id" : "M567",
+    "timestamp" : "2026-03-17T12:45:13Z",
+    "category" : "skill_structure_violation",
+    "description" : "",
+    "root_cause" : "instruction-builder workflow Step 3 writes SKILL_DRAFT directly to SKILL.md without checking for preprocessor directives. When a skill uses get-skill/get-output directive, the workflow should split: SKILL.md gets frontmatter+directive only, first-use.md gets full Purpose/Procedure/Verification content. The split decision logic is missing.",
+    "cause_signature" : null,
+    "prevention_type" : "",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "correct_behavior" : ""
   } ]
 }
