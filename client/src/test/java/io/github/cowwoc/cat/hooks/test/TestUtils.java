@@ -7,6 +7,7 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.HookInput;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.FileUtils;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.JsonNode;
@@ -45,12 +46,12 @@ public final class TestUtils
    * session (e.g., {@link io.github.cowwoc.cat.hooks.session.SessionEndHandler}) treat it as an
    * external (non-current) session.
    *
-   * @param mapper the JSON mapper
+   * @param scope the JVM scope
    * @return a HookInput with a hard-coded session ID that differs from any {@code TestJvmScope} session ID
    */
-  static HookInput dummyInput(JsonMapper mapper)
+  static HookInput dummyInput(JvmScope scope)
   {
-    return HookInput.readFrom(mapper, new java.io.ByteArrayInputStream(
+    return HookInput.readFrom(scope.getJsonMapper(), new java.io.ByteArrayInputStream(
       "{\"session_id\": \"00000000-0000-0000-0000-000000000001\"}".getBytes(StandardCharsets.UTF_8)));
   }
 
@@ -97,7 +98,7 @@ public final class TestUtils
   }
 
   /**
-   * Builds a HookInput for bash command tests.
+   * Builds a HookInput for bash command tests with a JvmScope.
    *
    * @param mapper the JSON mapper to use for constructing the input
    * @param command the bash command string
@@ -114,7 +115,7 @@ public final class TestUtils
   }
 
   /**
-   * Builds a HookInput for bash command tests with a tool result.
+   * Builds a HookInput for bash command tests with a JvmScope and tool result.
    *
    * @param mapper the JSON mapper to use for constructing the input
    * @param command the bash command string
@@ -132,7 +133,7 @@ public final class TestUtils
   }
 
   /**
-   * Builds a HookInput for bash command tests with a native agent ID.
+   * Builds a HookInput for bash command tests with a JvmScope and native agent ID.
    *
    * @param mapper the JSON mapper to use for constructing the input
    * @param command the bash command string

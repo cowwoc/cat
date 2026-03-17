@@ -552,4 +552,65 @@ public class GetOutputTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that the generated instructions reference the specific output type, not a generic output tag.
+   * This ensures the agent selects the correct output tag when multiple types exist in the conversation.
+   */
+  @Test
+  public void generatedInstructionsReferenceOutputType() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("get-output-test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      String output = new GetOutput(scope).getOutput(new String[]{"status"});
+      requireThat(output, "output").contains("<output type=\"status\">");
+      requireThat(output, "output").contains("`<output type=\"status\">`");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that type matching correctly handles dot-notation types and does not match partial types.
+   * This validates that the skill correctly processes type arguments like "config.saved" and does not
+   * confuse them with "config.no-changes" or "config.*" patterns. This is a critical guard against
+   * the staleness bug where the wrong output tag type could be selected.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void typeMatchingSelectsCorrectOutput() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-get-output-type-matching-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      // Create minimal config for config handler
+      Path catDir = tempDir.resolve(".cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("config.json"), "{}");
+
+      GetOutput handler = new GetOutput(scope);
+      // Request config.saved type specifically
+      String result = handler.getOutput(new String[]{"config.saved"});
+
+      // Verify the output contains the CORRECT type attribute and content for config.saved
+      requireThat(result, "result").
+        contains("<output type=\"config.saved\">").
+        contains("SAVED");
+
+      // Verify output does NOT contain content from other config types
+      // (would indicate type confusion or staleness)
+      requireThat(result, "result").
+        doesNotContain("CURRENT SETTINGS").
+        doesNotContain("NO CHANGES").
+        doesNotContain("DIFF");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }

@@ -37,7 +37,7 @@ None
 ## Files to Modify
 - `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetOutput.java` — update Step 1 and Verification to reference the LAST `<output>` tag (prevents staleness when the skill is invoked multiple times)
 - `plugin/skills/get-output-agent/SKILL.md` — remove appended instructions (staleness guidance now lives in GetOutput.java)
-- `plugin/skills/get-output-agent/first-use.md` — may be improved by `cat:instruction-builder-agent`
+- `plugin/skills/get-output-agent/first-use.md` — Supplementary Rules removed; type-matching and error-content rules moved into GetOutput.java
 
 ## Pre-conditions
 - [ ] All dependent issues are closed
@@ -154,6 +154,7 @@ None
   - Files touched: none (read-only test execution)
 
 ## Post-conditions
+- [ ] `first-use.md` contains only the preprocessor directive and description (Supplementary Rules section removed)
 - [ ] `plugin/skills/get-output-agent/SKILL.md` was processed by instruction-builder (verify with
   `git log --oneline plugin/skills/get-output-agent/SKILL.md`; new commit present OR instruction-builder
   confirmed no changes needed)

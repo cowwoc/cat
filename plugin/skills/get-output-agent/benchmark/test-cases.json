@@ -1,0 +1,44 @@
+{
+  "test_cases": [
+    {
+      "test_case_id": "scenario_1_cold_start",
+      "category": "REQUIREMENT",
+      "description": "Cold start: agent invokes cat:get-output-agent with token-report and echoes the output verbatim",
+      "prompt": "Invoke the cat:get-output-agent skill with argument 'token-report'.",
+      "success_criteria": {
+        "must_use_tools": ["Skill"],
+        "must_contain": ["No subagent data found in session."],
+        "must_not_contain": ["display unavailable", "is not a valid", "unknown skill"]
+      }
+    },
+    {
+      "test_case_id": "scenario_2_latest_output",
+      "category": "REQUIREMENT",
+      "description": "Latest-output: agent echoes the CURRENT token-report, not stale content from an earlier invocation",
+      "priming_messages": [
+        {
+          "role": "user",
+          "content": "Invoke the cat:get-output-agent skill with argument 'token-report'."
+        },
+        {
+          "role": "assistant",
+          "content": "STALE_BENCHMARK_MARKER_DO_NOT_ECHO\n\nSTALE_BENCHMARK_CONTENT_XYZ123"
+        },
+        {
+          "role": "user",
+          "content": "Now do something unrelated: what is 1 + 1?"
+        },
+        {
+          "role": "assistant",
+          "content": "1 + 1 = 2"
+        }
+      ],
+      "prompt": "Invoke the cat:get-output-agent skill with argument 'token-report' again.",
+      "success_criteria": {
+        "must_use_tools": ["Skill"],
+        "must_contain": ["No subagent data found in session."],
+        "must_not_contain": ["STALE_BENCHMARK_CONTENT_XYZ123", "STALE_BENCHMARK_MARKER_DO_NOT_ECHO"]
+      }
+    }
+  ]
+}
