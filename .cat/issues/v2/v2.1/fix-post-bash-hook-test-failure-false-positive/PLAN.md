@@ -59,6 +59,11 @@ Explicitly exclude commands or output that are clearly diffs:
 - Don't pattern-match on `git diff` output
 - Don't pattern-match on rendered diff output from tools like `get-output get-diff`
 
+## Assumptions
+
+- A session holds at most one issue lock at a time. `EnforceWorktreePathIsolation` uses the
+  session's single lock file to identify the active worktree path.
+
 ## Scope
 
 ### In scope

@@ -10,8 +10,11 @@ import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.bash.RemindGitSquash;
 import org.testng.annotations.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -24,17 +27,23 @@ public final class RemindGitSquashTest
    * Verifies that {@code git reset --soft} without a path argument is blocked.
    */
   @Test
-  public void gitResetSoftWithoutPathIsBlocked()
+  public void gitResetSoftWithoutPathIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("rgs-test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
+      JsonMapper mapper = scope.getJsonMapper();
       RemindGitSquash handler = new RemindGitSquash();
       String command = "git reset --soft HEAD~1";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("/cat:git-squash");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -49,11 +58,12 @@ public final class RemindGitSquashTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
+      JsonMapper mapper = scope.getJsonMapper();
       RemindGitSquash handler = new RemindGitSquash();
       String worktreePath = scope.getCatWorkPath().resolve("worktrees").resolve("2.1-my-issue").toString();
       String command = "git -C " + worktreePath + " reset --soft v2.1";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("/cat:git-squash");
@@ -64,16 +74,22 @@ public final class RemindGitSquashTest
    * Verifies that normal git commits are not blocked.
    */
   @Test
-  public void normalGitCommitIsAllowed()
+  public void normalGitCommitIsAllowed() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("rgs-test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
+      JsonMapper mapper = scope.getJsonMapper();
       RemindGitSquash handler = new RemindGitSquash();
       String command = "git commit -m \"feature: add something\"";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
 
       requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -81,17 +97,23 @@ public final class RemindGitSquashTest
    * Verifies that {@code git rebase -i} triggers a warning suggestion.
    */
   @Test
-  public void gitRebaseInteractiveTriggersWarning()
+  public void gitRebaseInteractiveTriggersWarning() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("rgs-test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
+      JsonMapper mapper = scope.getJsonMapper();
       RemindGitSquash handler = new RemindGitSquash();
       String command = "git rebase -i HEAD~3";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").contains("/cat:git-squash");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 }

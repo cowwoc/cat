@@ -69,7 +69,7 @@ public final class EnforceCommitBeforeSubagentSpawn implements TaskHandler
     try
     {
       context = WorktreeContext.forSession(scope.getCatWorkPath(), scope.getProjectPath(),
-        scope.getJsonMapper(), sessionId);
+        scope.getJsonMapper(), sessionId).orElse(null);
     }
     catch (RuntimeException _)
     {

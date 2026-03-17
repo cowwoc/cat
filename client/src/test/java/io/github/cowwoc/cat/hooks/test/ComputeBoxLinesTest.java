@@ -10,6 +10,7 @@ import io.github.cowwoc.cat.hooks.bash.ComputeBoxLines;
 import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import org.testng.annotations.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -37,7 +38,8 @@ public class ComputeBoxLinesTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, "echo hello", "", "session1"));
+      JsonMapper mapper = scope.getJsonMapper();
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, "echo hello", "", "session1"));
       requireThat(result.blocked(), "blocked").isFalse();
     }
     finally
@@ -58,8 +60,9 @@ public class ComputeBoxLinesTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
+      JsonMapper mapper = scope.getJsonMapper();
       String command = "#BOX_COMPUTE\nHello World";
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "", "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "", "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -95,8 +98,9 @@ public class ComputeBoxLinesTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
+      JsonMapper mapper = scope.getJsonMapper();
       String command = "#BOX_COMPUTE\nLine 1\nLine 2\nLine 3";
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "", "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "", "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -130,8 +134,9 @@ public class ComputeBoxLinesTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
+      JsonMapper mapper = scope.getJsonMapper();
       String command = "#BOX_COMPUTE\n📊 Overall: 91%\n🏆 112/122 tasks";
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "", "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "", "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -169,8 +174,9 @@ public class ComputeBoxLinesTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
+      JsonMapper mapper = scope.getJsonMapper();
       String command = "#BOX_COMPUTE";
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "", "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "", "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -194,8 +200,9 @@ public class ComputeBoxLinesTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
+      JsonMapper mapper = scope.getJsonMapper();
       String command = "#BOX_COMPUTE\nShort\nMedium length\nVery long content line here";
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "", "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "", "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -238,8 +245,9 @@ public class ComputeBoxLinesTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
+      JsonMapper mapper = scope.getJsonMapper();
       String command = "#BOX_COMPUTE\nTest content";
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "", "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "", "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       String additionalContext = result.additionalContext();
@@ -264,8 +272,9 @@ public class ComputeBoxLinesTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
+      JsonMapper mapper = scope.getJsonMapper();
       String command = "   #BOX_COMPUTE\nContent";
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "", "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "", "session1"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -287,8 +296,9 @@ public class ComputeBoxLinesTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
+      JsonMapper mapper = scope.getJsonMapper();
       String command = "echo 'test'\n#BOX_COMPUTE\nContent";
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "", "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "", "session1"));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -310,8 +320,9 @@ public class ComputeBoxLinesTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
+      JsonMapper mapper = scope.getJsonMapper();
       String command = "#BOX_COMPUTE\nX";
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "", "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "", "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -341,9 +352,10 @@ public class ComputeBoxLinesTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
+      JsonMapper mapper = scope.getJsonMapper();
       String longContent = "A".repeat(100);
       String command = "#BOX_COMPUTE\n" + longContent;
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "", "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "", "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -384,8 +396,9 @@ public class ComputeBoxLinesTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
+      JsonMapper mapper = scope.getJsonMapper();
       String command = "#BOX_COMPUTE\n─── Header\n│ Column │";
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "", "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "", "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -409,8 +422,9 @@ public class ComputeBoxLinesTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
+      JsonMapper mapper = scope.getJsonMapper();
       String command = "#BOX_COMPUTE\nStatus: ✅ Complete\nTasks: 🏆 10/10";
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "", "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "", "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -434,8 +448,9 @@ public class ComputeBoxLinesTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
+      JsonMapper mapper = scope.getJsonMapper();
       String command = "#BOX_COMPUTE\nLine 1\n\nLine 3";
-      BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, "", "session1"));
+      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "", "session1"));
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();

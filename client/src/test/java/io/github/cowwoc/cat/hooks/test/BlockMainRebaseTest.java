@@ -10,6 +10,7 @@ import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.bash.BlockMainRebase;
 import org.testng.annotations.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -82,12 +83,13 @@ public final class BlockMainRebaseTest
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
     try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockMainRebase handler = new BlockMainRebase(scope);
       // No lock file — session has no active worktree, so commands run in main context
       String command = "git rebase origin/main";
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("REBASE ON MAIN BLOCKED");
@@ -123,11 +125,12 @@ public final class BlockMainRebaseTest
       // Create the lock file so the handler resolves to the worktree context
       writeLockFile(scope, ISSUE_ID, SESSION_ID);
 
+      JsonMapper mapper = scope.getJsonMapper();
       BlockMainRebase handler = new BlockMainRebase(scope);
       String command = "git rebase main";
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, worktree.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, worktree.toString(), SESSION_ID));
 
       // The worktree is on feature branch, not main — rebase must be allowed
       requireThat(result.blocked(), "blocked").isFalse();
@@ -154,12 +157,13 @@ public final class BlockMainRebaseTest
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
     try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockMainRebase handler = new BlockMainRebase(scope);
       // No lock — session is in main context; checkout must be blocked
       String command = "git checkout feature-branch";
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -188,12 +192,13 @@ public final class BlockMainRebaseTest
       createWorktreeDir(scope, ISSUE_ID);
       writeLockFile(scope, ISSUE_ID, SESSION_ID);
 
+      JsonMapper mapper = scope.getJsonMapper();
       BlockMainRebase handler = new BlockMainRebase(scope);
       // The session has a lock — it's in an issue worktree context, not main
       String command = "git checkout -b new-branch";
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, mainRepo.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, mainRepo.toString(), SESSION_ID));
 
       // -b is a flag, not a branch name — even in main context this would be a flag checkout
       requireThat(result.blocked(), "blocked").isFalse();
@@ -218,8 +223,9 @@ public final class BlockMainRebaseTest
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
     try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockMainRebase handler = new BlockMainRebase(scope);
-      handler.check(TestUtils.bashInput(scope, "git checkout feature-branch", projectPath.toString(), ""));
+      handler.check(TestUtils.bashInput(mapper, "git checkout feature-branch", projectPath.toString(), ""));
     }
     finally
     {
@@ -241,8 +247,9 @@ public final class BlockMainRebaseTest
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
     try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockMainRebase handler = new BlockMainRebase(scope);
-      handler.check(TestUtils.bashInput(scope, "git rebase origin/main", projectPath.toString(), ""));
+      handler.check(TestUtils.bashInput(mapper, "git rebase origin/main", projectPath.toString(), ""));
     }
     finally
     {
@@ -263,11 +270,12 @@ public final class BlockMainRebaseTest
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
     try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
+      JsonMapper mapper = scope.getJsonMapper();
       BlockMainRebase handler = new BlockMainRebase(scope);
       String command = "git log --oneline -10";
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }

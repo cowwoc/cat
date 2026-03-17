@@ -13,6 +13,7 @@ import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.bash.WarnMainWorkspaceCommit;
 import io.github.cowwoc.cat.hooks.util.IssueLock;
 import org.testng.annotations.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -73,10 +74,11 @@ public final class WarnMainWorkspaceCommitTest
       {
         createLockFile(scope, "2.1-cwd-issue", sessionId);
 
-        WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
+        JsonMapper mapper = scope.getJsonMapper();
+      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
         // Pass worktreeDir as the working directory — it IS a CAT worktree by git dir structure
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput(scope, "git commit -m \"feature: test cwd detection\"",
+          TestUtils.bashInput(mapper, "git commit -m \"feature: test cwd detection\"",
             worktreeDir.toString(), sessionId));
 
         // Should allow because the worktree is identified by git dir structure
@@ -109,9 +111,10 @@ public final class WarnMainWorkspaceCommitTest
       String sessionId = UUID.randomUUID().toString();
       createLockFile(scope, "test-issue", sessionId);
 
+      JsonMapper mapper = scope.getJsonMapper();
       WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, "git status", mainRepo.toString(), sessionId));
+        TestUtils.bashInput(mapper, "git status", mainRepo.toString(), sessionId));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -139,9 +142,10 @@ public final class WarnMainWorkspaceCommitTest
       String sessionId = UUID.randomUUID().toString();
       createLockFile(scope, "2.1-my-feature", sessionId);
 
+      JsonMapper mapper = scope.getJsonMapper();
       WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, "git commit -m \"feature: add something\"", mainRepo.toString(), sessionId));
+        TestUtils.bashInput(mapper, "git commit -m \"feature: add something\"", mainRepo.toString(), sessionId));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isNotEmpty();
@@ -176,9 +180,10 @@ public final class WarnMainWorkspaceCommitTest
       String sessionId = UUID.randomUUID().toString();
       createLockFile(scope, "2.1-active-issue", sessionId);
 
+      JsonMapper mapper = scope.getJsonMapper();
       WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, "git commit -m \"bugfix: fix something\"", mainRepo.toString(), sessionId));
+        TestUtils.bashInput(mapper, "git commit -m \"bugfix: fix something\"", mainRepo.toString(), sessionId));
 
       String reason = result.reason();
       // Verify complete message structure
@@ -225,9 +230,10 @@ public final class WarnMainWorkspaceCommitTest
       {
         createLockFile(scope,"2.1-active-issue", sessionId);
 
-        WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
+        JsonMapper mapper = scope.getJsonMapper();
+      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput(scope, "git commit -m \"feature: implement the feature\"",
+          TestUtils.bashInput(mapper, "git commit -m \"feature: implement the feature\"",
             worktreeDir.toString(), sessionId));
 
         requireThat(result.blocked(), "blocked").isFalse();
@@ -262,9 +268,10 @@ public final class WarnMainWorkspaceCommitTest
       // No lock file created — no active worktree lock for this session
       String sessionId = UUID.randomUUID().toString();
 
+      JsonMapper mapper = scope.getJsonMapper();
       WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, "git commit -m \"config: update settings\"", mainRepo.toString(), sessionId));
+        TestUtils.bashInput(mapper, "git commit -m \"config: update settings\"", mainRepo.toString(), sessionId));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -298,10 +305,11 @@ public final class WarnMainWorkspaceCommitTest
       {
         createLockFile(scope,"2.1-cd-issue", sessionId);
 
-        WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
+        JsonMapper mapper = scope.getJsonMapper();
+      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
         // cwd is mainRepo but command cd's into the worktree
         String command = "cd " + worktreeDir + " && git commit -m \"feature: test\"";
-        BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, mainRepo.toString(), sessionId));
+        BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, mainRepo.toString(), sessionId));
 
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").isEmpty();
@@ -333,9 +341,10 @@ public final class WarnMainWorkspaceCommitTest
       String sessionId = UUID.randomUUID().toString();
       createLockFile(scope, "2.1-amend-issue", sessionId);
 
+      JsonMapper mapper = scope.getJsonMapper();
       WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, "git commit --amend --no-edit", mainRepo.toString(), sessionId));
+        TestUtils.bashInput(mapper, "git commit --amend --no-edit", mainRepo.toString(), sessionId));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isNotEmpty();
@@ -361,9 +370,10 @@ public final class WarnMainWorkspaceCommitTest
       String sessionId = UUID.randomUUID().toString();
       createLockFile(scope, "2.1-push-issue", sessionId);
 
+      JsonMapper mapper = scope.getJsonMapper();
       WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, "git push origin v2.1", mainRepo.toString(), sessionId));
+        TestUtils.bashInput(mapper, "git push origin v2.1", mainRepo.toString(), sessionId));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -388,9 +398,10 @@ public final class WarnMainWorkspaceCommitTest
       String sessionId = UUID.randomUUID().toString();
       createLockFile(scope, "2.1-spaces-issue", sessionId);
 
+      JsonMapper mapper = scope.getJsonMapper();
       WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, "git  commit -m \"feature: test\"", mainRepo.toString(), sessionId));  // Two spaces
+        TestUtils.bashInput(mapper, "git  commit -m \"feature: test\"", mainRepo.toString(), sessionId));  // Two spaces
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isNotEmpty();
@@ -416,12 +427,11 @@ public final class WarnMainWorkspaceCommitTest
       String sessionId = UUID.randomUUID().toString();
       createLockFile(scope, "2.1-flags-issue", sessionId);
 
+      JsonMapper mapper = scope.getJsonMapper();
       WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope,
-          "git commit --verify --sign-off -m \"feature: test\"",
-          mainRepo.toString(),
-          sessionId));
+        TestUtils.bashInput(mapper, "git commit --verify --sign-off -m \"feature: test\"",
+          mainRepo.toString(), sessionId));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isNotEmpty();
@@ -447,9 +457,10 @@ public final class WarnMainWorkspaceCommitTest
       String sessionId = UUID.randomUUID().toString();
       createLockFile(scope, "2.1-shorthand-issue", sessionId);
 
+      JsonMapper mapper = scope.getJsonMapper();
       WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, "git commit -a -m \"feature: test\"", mainRepo.toString(), sessionId));
+        TestUtils.bashInput(mapper, "git commit -a -m \"feature: test\"", mainRepo.toString(), sessionId));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isNotEmpty();
@@ -481,10 +492,11 @@ public final class WarnMainWorkspaceCommitTest
       {
         createLockFile(scope,"2.1-semicolon-issue", sessionId);
 
-        WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
+        JsonMapper mapper = scope.getJsonMapper();
+      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
         // Semicolon syntax instead of &&
         String command = "cd " + worktreeDir + "; git commit -m \"feature: test\"";
-        BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, mainRepo.toString(), sessionId));
+        BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, mainRepo.toString(), sessionId));
 
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").isEmpty();
@@ -523,10 +535,11 @@ public final class WarnMainWorkspaceCommitTest
       {
         createLockFile(scope,"2.1-pipe-issue", sessionId);
 
-        WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
+        JsonMapper mapper = scope.getJsonMapper();
+      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
         // Using pipe operator
         String command = "cd " + worktreeDir + " | git commit -m \"feature: test\"";
-        BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, mainRepo.toString(), sessionId));
+        BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, mainRepo.toString(), sessionId));
 
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").isEmpty();
@@ -563,10 +576,11 @@ public final class WarnMainWorkspaceCommitTest
       {
         createLockFile(scope,"2.1-quoted-issue", sessionId);
 
-        WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
+        JsonMapper mapper = scope.getJsonMapper();
+      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
         // Double-quoted path
         String command = "cd \"" + worktreeDir + "\" && git commit -m \"feature: test\"";
-        BashHandler.Result result = handler.check(TestUtils.bashInput(scope, command, mainRepo.toString(), sessionId));
+        BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, mainRepo.toString(), sessionId));
 
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").isEmpty();
@@ -602,9 +616,10 @@ public final class WarnMainWorkspaceCommitTest
       createLockFile(scope, issueId, sessionId);
 
       // Verify that handler can detect the lock and emit a warning
+      JsonMapper mapper = scope.getJsonMapper();
       WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(scope, "git commit -m \"feature: test lock detection\"", mainRepo.toString(), sessionId));
+        TestUtils.bashInput(mapper, "git commit -m \"feature: test lock detection\"", mainRepo.toString(), sessionId));
 
       // If the lock is correctly created and detected, we should get a warning
       requireThat(result.blocked(), "blocked").isFalse();
