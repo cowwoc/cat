@@ -122,6 +122,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - add-failure-investigation-to-skill-builder
 - fix-skill-builder-fresh-subagent-per-run
 - refactor-learn-skill-files
+- remove-jvmscope-claudeenv-duplicates
 
 
 ## Issues Closed
