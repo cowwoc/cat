@@ -33,6 +33,38 @@ The AskUserQuestion format helps users think by presenting concrete options to r
 field.
 </critical_rule>
 
+<context_before_questions>
+**Display relevant context as plain text immediately before every AskUserQuestion call.**
+
+Context compaction may remove earlier conversation content from the user's terminal view. When a question is asked,
+the user may no longer be able to scroll back to see the data being discussed. Displaying context immediately before
+the question ensures the user has what they need to respond, regardless of what compaction has removed.
+
+What to include in the context block:
+- The data or options being asked about
+- Relevant decisions already made in the conversation
+- The current state of whatever is being discussed
+
+Pattern:
+
+```
+[Context paragraph — plain text describing the relevant state, data, or decisions]
+
+[AskUserQuestion call]
+```
+
+Example — asking the user to confirm a branch name after determining it from other inputs:
+
+The target branch for this merge is `v2.1`, based on the issue's `target_branch` field. The issue branch is
+`2.1-add-context-before-questions` and currently has 2 commits ahead of `v2.1`.
+
+[AskUserQuestion: header="Confirm merge", question="Merge 2.1-add-context-before-questions into v2.1?",
+options=["Yes, merge", "No, cancel"]]
+
+The context block restores the user's understanding before they answer, making the AskUserQuestion call
+self-contained and unambiguous.
+</context_before_questions>
+
 <conversation_arc>
 **1. Open**
 
