@@ -2964,6 +2964,307 @@ public class WorkPrepareTest
   }
 
   /**
+   * Verifies that a double-star glob in "Files to Modify" matches a file with zero intermediate
+   * directory segments (e.g., {@code src/**} + {@code /Foo.java} matches {@code src/Foo.java}).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void doubleStarGlobMatchesZeroIntermediateSegments() throws IOException
+  {
+    Path projectPath = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    {
+      createIssue(projectPath, "2", "1", "glob-feature", "open");
+
+      Path planPath = projectPath.resolve(".cat").resolve("issues").
+        resolve("v2").resolve("v2.1").resolve("glob-feature").resolve("PLAN.md");
+      Files.writeString(planPath, """
+        # Plan: glob-feature
+
+        ## Goal
+
+        Test double-star glob support.
+
+        ## Files to Modify
+
+        - `src/**/Foo.java`
+        """);
+
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "planning: add issue glob-feature");
+
+      // Commit that touches src/Foo.java (zero intermediate segments) on the target branch
+      Path srcDir = projectPath.resolve("src");
+      Files.createDirectories(srcDir);
+      Files.writeString(srcDir.resolve("Foo.java"), "class Foo {}");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "feature: touch src/Foo.java");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "2.1-glob-feature", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+      requireThat(node.path("potentially_complete").asBoolean(), "potentiallyComplete").isTrue();
+      requireThat(node.path("suspicious_commits").asString(), "suspiciousCommits").isNotBlank();
+
+      worktreePath = Path.of(node.path("worktree_path").asString());
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that a double-star glob in "Files to Modify" matches a file with one intermediate
+   * directory segment (e.g., {@code src/**} + {@code /Foo.java} matches {@code src/sub/Foo.java}).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void doubleStarGlobMatchesOneIntermediateSegment() throws IOException
+  {
+    Path projectPath = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    {
+      createIssue(projectPath, "2", "1", "glob-feature", "open");
+
+      Path planPath = projectPath.resolve(".cat").resolve("issues").
+        resolve("v2").resolve("v2.1").resolve("glob-feature").resolve("PLAN.md");
+      Files.writeString(planPath, """
+        # Plan: glob-feature
+
+        ## Goal
+
+        Test double-star glob support.
+
+        ## Files to Modify
+
+        - `src/**/Foo.java`
+        """);
+
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "planning: add issue glob-feature");
+
+      // Commit that touches src/sub/Foo.java (one intermediate segment) on the target branch
+      Path subDir = projectPath.resolve("src").resolve("sub");
+      Files.createDirectories(subDir);
+      Files.writeString(subDir.resolve("Foo.java"), "class Foo {}");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "feature: touch src/sub/Foo.java");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "2.1-glob-feature", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+      requireThat(node.path("potentially_complete").asBoolean(), "potentiallyComplete").isTrue();
+      requireThat(node.path("suspicious_commits").asString(), "suspiciousCommits").isNotBlank();
+
+      worktreePath = Path.of(node.path("worktree_path").asString());
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that a double-star glob in "Files to Modify" matches a file with multiple intermediate
+   * directory segments (e.g., {@code src/**} + {@code /Foo.java} matches {@code src/a/b/c/Foo.java}).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void doubleStarGlobMatchesMultipleIntermediateSegments() throws IOException
+  {
+    Path projectPath = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    {
+      createIssue(projectPath, "2", "1", "glob-feature", "open");
+
+      Path planPath = projectPath.resolve(".cat").resolve("issues").
+        resolve("v2").resolve("v2.1").resolve("glob-feature").resolve("PLAN.md");
+      Files.writeString(planPath, """
+        # Plan: glob-feature
+
+        ## Goal
+
+        Test double-star glob support.
+
+        ## Files to Modify
+
+        - `src/**/Foo.java`
+        """);
+
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "planning: add issue glob-feature");
+
+      // Commit that touches src/a/b/c/Foo.java (multiple intermediate segments)
+      Path deepDir = projectPath.resolve("src").resolve("a").resolve("b").resolve("c");
+      Files.createDirectories(deepDir);
+      Files.writeString(deepDir.resolve("Foo.java"), "class Foo {}");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "feature: touch src/a/b/c/Foo.java");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "2.1-glob-feature", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+      requireThat(node.path("potentially_complete").asBoolean(), "potentiallyComplete").isTrue();
+      requireThat(node.path("suspicious_commits").asString(), "suspiciousCommits").isNotBlank();
+
+      worktreePath = Path.of(node.path("worktree_path").asString());
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that a double-star glob in "Files to Modify" does NOT match a file with a different
+   * name (e.g., {@code src/**} + {@code /Foo.java} must not match {@code src/Bar.java}).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void doubleStarGlobDoesNotMatchUnrelatedFile() throws IOException
+  {
+    Path projectPath = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    {
+      createIssue(projectPath, "2", "1", "glob-feature", "open");
+
+      Path planPath = projectPath.resolve(".cat").resolve("issues").
+        resolve("v2").resolve("v2.1").resolve("glob-feature").resolve("PLAN.md");
+      Files.writeString(planPath, """
+        # Plan: glob-feature
+
+        ## Goal
+
+        Test double-star glob support.
+
+        ## Files to Modify
+
+        - `src/**/Foo.java`
+        """);
+
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "planning: add issue glob-feature");
+
+      // Commit that touches src/Bar.java — different filename, must NOT match src/**/Foo.java
+      Path srcDir = projectPath.resolve("src");
+      Files.createDirectories(srcDir);
+      Files.writeString(srcDir.resolve("Bar.java"), "class Bar {}");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "feature: touch src/Bar.java");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "2.1-glob-feature", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+      // src/Bar.java must not match src/**/Foo.java — no suspicious commits
+      requireThat(node.path("potentially_complete").asBoolean(), "potentiallyComplete").isFalse();
+
+      worktreePath = Path.of(node.path("worktree_path").asString());
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that a single-star glob in "Files to Modify" still matches correctly
+   * after the token-based glob-to-regex rewrite, confirming no regression in the single-star behavior.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void singleStarGlobRegressionUnchanged() throws IOException
+  {
+    Path projectPath = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    {
+      createIssue(projectPath, "2", "1", "glob-feature", "open");
+
+      Path planPath = projectPath.resolve(".cat").resolve("issues").
+        resolve("v2").resolve("v2.1").resolve("glob-feature").resolve("PLAN.md");
+      Files.writeString(planPath, """
+        # Plan: glob-feature
+
+        ## Goal
+
+        Test single-star glob regression.
+
+        ## Files to Modify
+
+        - `plugin/agents/stakeholder-*.md`
+        """);
+
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "planning: add issue glob-feature");
+
+      // Commit that touches plugin/agents/stakeholder-concern-box-agent.md
+      Path agentsDir = projectPath.resolve("plugin").resolve("agents");
+      Files.createDirectories(agentsDir);
+      Files.writeString(agentsDir.resolve("stakeholder-concern-box-agent.md"), "# Content");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m",
+        "feature: touch stakeholder-concern-box-agent.md");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "2.1-glob-feature", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+      requireThat(node.path("potentially_complete").asBoolean(), "potentiallyComplete").isTrue();
+      requireThat(node.path("suspicious_commits").asString(), "suspiciousCommits").isNotBlank();
+
+      worktreePath = Path.of(node.path("worktree_path").asString());
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
    * Verifies that the worktree has no uncommitted files after execute returns READY.
    * <p>
    * The STATE.md update must be committed to the issue branch so that the implement phase

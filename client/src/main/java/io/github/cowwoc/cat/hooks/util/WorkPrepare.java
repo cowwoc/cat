@@ -29,7 +29,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.StringJoiner;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -74,6 +73,10 @@ public final class WorkPrepare
    */
   private static final Pattern EXECUTION_WAVES_PATTERN =
     Pattern.compile("## Execution Waves\\s+(.*?)(?=\\n## [^#]|\\Z)", Pattern.DOTALL);
+  /**
+   * Tokenizes a glob pattern into {@code **}, {@code *}, or literal text segments.
+   */
+  private static final Pattern GLOB_TOKEN_PATTERN = Pattern.compile("\\*\\*|\\*|[^*]+");
   /**
    * Hard limit for token estimation: issues estimated above this are considered oversized.
    */
@@ -1500,12 +1503,36 @@ public final class WorkPrepare
       {
         if (plannedFile.contains("*"))
         {
-          String[] parts = plannedFile.split("\\*", -1);
-          StringJoiner regexJoiner = new StringJoiner("[^/]*");
-          for (String part : parts)
-            regexJoiner.add(Pattern.quote(part));
-          String regexPattern = regexJoiner.toString();
-          globPatterns.put(plannedFile, Pattern.compile(".*" + regexPattern));
+          // Glob-to-regex conversion:
+          //   * matches any sequence of characters except path separators (converted to [^/]*)
+          //   ** matches zero or more complete path segments, including their separators.
+          //      The regex (?:[^/]+/)* always ends with a trailing /, so when the following
+          //      literal token starts with /, stripping that / prevents doubling the separator
+          //      (e.g., "src/**/foo" would otherwise match "src//foo").
+          //   All literal text between wildcards is quoted with Pattern.quote() so characters
+          //   like "[", "]", ".", and "(" are treated as literals, not regex syntax.
+          StringBuilder regexBuilder = new StringBuilder(".*");
+          Matcher tokenMatcher = GLOB_TOKEN_PATTERN.matcher(plannedFile);
+          String previousToken = null;
+          while (tokenMatcher.find())
+          {
+            String token = tokenMatcher.group();
+
+            // (?:[^/]+/)* emits a trailing /, so strip the leading / from the next
+            // literal token to avoid a doubled separator in the output regex.
+            if (Objects.equals(previousToken, "**") && token.startsWith("/"))
+              token = token.substring(1);
+
+            if (token.equals("**"))
+              regexBuilder.append("(?:[^/]+/)*");
+            else if (token.equals("*"))
+              regexBuilder.append("[^/]*");
+            else
+              regexBuilder.append(Pattern.quote(token));
+
+            previousToken = token;
+          }
+          globPatterns.put(plannedFile, Pattern.compile(regexBuilder.toString()));
         }
       }
 
