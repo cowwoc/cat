@@ -65,16 +65,16 @@ public class WorkPrepareMainTest
   }
 
   /**
-   * Verifies that run() with no arguments produces a valid JSON result on stdout (not an exception).
+   * Verifies that run() with a valid session-id produces a valid JSON result on stdout (not an exception).
    * <p>
-   * With no arguments, execute() runs with default parameters and returns a JSON response
+   * With a session ID argument, execute() runs with default parameters and returns a JSON response
    * (e.g., with status "ERROR" when .cat is not configured). The test verifies that
    * run() never propagates exceptions — it always writes to stdout.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void noArgsProducesJsonOutputOnStdout() throws IOException
+  public void sessionIdArgProducesJsonOutputOnStdout() throws IOException
   {
     Path tempDir = Files.createTempDirectory("work-prepare-main-test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -82,8 +82,8 @@ public class WorkPrepareMainTest
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
 
-      // No arguments — execute() returns a JSON result (status=ERROR for missing config)
-      WorkPrepare.run(scope, new String[]{}, out);
+      // Pass an explicit session ID — execute() returns a JSON result (status=ERROR for missing config)
+      WorkPrepare.run(scope, new String[]{"--session-id", "00000000-0000-0000-0000-000000000001"}, out);
 
       String output = buffer.toString(StandardCharsets.UTF_8).strip();
       // Output must be non-blank JSON (either a business result or a block response)

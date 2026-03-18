@@ -8,7 +8,6 @@ package io.github.cowwoc.cat.hooks.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.session.SessionEndHandler;
 
 import org.testng.annotations.Test;
@@ -34,7 +33,7 @@ public final class SessionEndHandlerTest
   public void sessionEndDeletesStaleSessionWorkFiles() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       // Create a stale session work directory (no matching Claude session directory)
       String staleSessionId = "11111111-1111-1111-1111-111111111111";
@@ -46,7 +45,7 @@ public final class SessionEndHandlerTest
       // The corresponding Claude session directory does NOT exist
       // (scope.getSessionDirectory() is for the current session, not staleSessionId)
 
-      new SessionEndHandler(scope).clean();
+      new SessionEndHandler(scope).clean(scope.getClaudeSessionId());
 
       requireThat(Files.exists(sessionWorkDir), "sessionWorkDirExists").isFalse();
     }
@@ -63,12 +62,12 @@ public final class SessionEndHandlerTest
   public void sessionEndSkipsCurrentSessionWorkFiles() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       String currentSessionId = scope.getClaudeSessionId();
 
       // Create the current session's Claude directory (marking it as active)
-      Path currentClaudeSessionDir = scope.getClaudeSessionPath();
+      Path currentClaudeSessionDir = scope.getClaudeSessionPath(scope.getClaudeSessionId());
       Files.createDirectories(currentClaudeSessionDir);
 
       // Create the current session's work directory
@@ -76,7 +75,7 @@ public final class SessionEndHandlerTest
       Files.createDirectories(currentSessionWorkDir);
       Files.writeString(currentSessionWorkDir.resolve("session.cwd"), "/workspace");
 
-      new SessionEndHandler(scope).clean();
+      new SessionEndHandler(scope).clean(currentSessionId);
 
       // Current session work directory must NOT be deleted
       requireThat(Files.exists(currentSessionWorkDir), "currentSessionWorkDirExists").isTrue();
@@ -94,14 +93,14 @@ public final class SessionEndHandlerTest
   public void sessionEndHandlesNonExistentWorkDirectory() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       // Sessions directory does not exist — no error should occur
       Path sessionsDir = scope.getCatWorkPath().resolve("sessions");
       requireThat(Files.exists(sessionsDir), "sessionsDirExists").isFalse();
 
       // Should complete without throwing
-      new SessionEndHandler(scope).clean();
+      new SessionEndHandler(scope).clean(scope.getClaudeSessionId());
     }
     finally
     {
@@ -117,7 +116,7 @@ public final class SessionEndHandlerTest
   public void sessionEndSkipsWhenStaleDirectoryMissing() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       // Create the sessions directory but no subdirectories.
       // The stale directory is absent before the handler runs.
@@ -128,7 +127,7 @@ public final class SessionEndHandlerTest
       Path staleSessionWorkDir = sessionsDir.resolve(staleSessionId);
 
       // Should complete without throwing even though there are no stale directories to delete
-      new SessionEndHandler(scope).clean();
+      new SessionEndHandler(scope).clean(scope.getClaudeSessionId());
 
       requireThat(Files.exists(staleSessionWorkDir), "staleSessionWorkDirExists").isFalse();
     }
@@ -149,7 +148,7 @@ public final class SessionEndHandlerTest
   public void sessionEndPreservesActiveSessionWorkFiles() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       // Simulate another active session: create its Claude session directory
       String activeOtherSessionId = "cccccccc-cccc-cccc-cccc-cccccccccccc";
@@ -162,7 +161,7 @@ public final class SessionEndHandlerTest
       Files.createDirectories(activeSessionWorkDir);
       Files.writeString(activeSessionWorkDir.resolve("session.cwd"), "/workspace");
 
-      new SessionEndHandler(scope).clean();
+      new SessionEndHandler(scope).clean(scope.getClaudeSessionId());
 
       // Active session work directory must NOT be deleted
       requireThat(Files.exists(activeSessionWorkDir), "activeSessionWorkDirExists").isTrue();
@@ -184,7 +183,7 @@ public final class SessionEndHandlerTest
   public void sessionEndCleansMixedStaleSessions() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       // Active session: create its Claude session directory
       String activeSessionId = "dddddddd-dddd-dddd-dddd-dddddddddddd";
@@ -203,7 +202,7 @@ public final class SessionEndHandlerTest
       Path staleWorkDir2 = scope.getCatWorkPath().resolve("sessions").resolve(staleSessionId2);
       Files.createDirectories(staleWorkDir2);
 
-      new SessionEndHandler(scope).clean();
+      new SessionEndHandler(scope).clean(scope.getClaudeSessionId());
 
       requireThat(Files.exists(activeWorkDir), "activeWorkDirExists").isTrue();
       requireThat(Files.exists(staleWorkDir1), "staleWorkDir1Exists").isFalse();
@@ -223,7 +222,7 @@ public final class SessionEndHandlerTest
   public void sessionEndSkipsCurrentSessionEvenWithoutClaudeDirectory() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       String currentSessionId = scope.getClaudeSessionId();
 
@@ -235,7 +234,7 @@ public final class SessionEndHandlerTest
       Files.createDirectories(currentSessionWorkDir);
       Files.writeString(currentSessionWorkDir.resolve("session.cwd"), "/workspace");
 
-      new SessionEndHandler(scope).clean();
+      new SessionEndHandler(scope).clean(currentSessionId);
 
       // Current session directory is skipped regardless of Claude dir existence
       requireThat(Files.exists(currentSessionWorkDir), "currentSessionWorkDirExists").isTrue();
@@ -255,7 +254,7 @@ public final class SessionEndHandlerTest
   public void sessionEndContinuesOnConcurrentDeletion() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       // Create a stale session work directory
       String staleSessionId = "44444444-4444-4444-4444-444444444444";
@@ -267,7 +266,7 @@ public final class SessionEndHandlerTest
       Files.delete(staleWorkDir);
 
       // Handler must complete without throwing even if the stale directory is gone
-      new SessionEndHandler(scope).clean();
+      new SessionEndHandler(scope).clean(scope.getClaudeSessionId());
 
       requireThat(Files.exists(staleWorkDir), "staleWorkDirExists").isFalse();
     }
@@ -286,7 +285,7 @@ public final class SessionEndHandlerTest
   public void sessionEndCleansMultipleStaleSessionsLeavingOnlyActive() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       // Active session 1: has Claude session directory
       String activeSessionId1 = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
@@ -317,7 +316,7 @@ public final class SessionEndHandlerTest
       Path staleWorkDir3 = scope.getCatWorkPath().resolve("sessions").resolve(staleSessionId3);
       Files.createDirectories(staleWorkDir3);
 
-      new SessionEndHandler(scope).clean();
+      new SessionEndHandler(scope).clean(scope.getClaudeSessionId());
 
       // Active sessions must be preserved
       requireThat(Files.exists(activeWorkDir1), "activeWorkDir1Exists").isTrue();
@@ -342,7 +341,7 @@ public final class SessionEndHandlerTest
   public void sessionEndUsesScopeSessionIdToSkipCurrentSession() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       String sessionId = scope.getClaudeSessionId();
 
@@ -350,7 +349,7 @@ public final class SessionEndHandlerTest
       Path currentWorkDir = scope.getCatWorkPath().resolve("sessions").resolve(sessionId);
       Files.createDirectories(currentWorkDir);
 
-      new SessionEndHandler(scope).clean();
+      new SessionEndHandler(scope).clean(sessionId);
 
       // The session identified by the scope's session ID must NOT be deleted
       requireThat(Files.exists(currentWorkDir), "currentWorkDirExists").isTrue();
@@ -369,7 +368,7 @@ public final class SessionEndHandlerTest
   public void sessionEndRejectsNonUuidSessionIds() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       // Create sessions directory with a non-UUID entry
       Path sessionsDir = scope.getCatWorkPath().resolve("sessions");
@@ -381,7 +380,7 @@ public final class SessionEndHandlerTest
       Files.writeString(nonUuidWorkDir.resolve("session.cwd"), "/workspace");
 
       // Handler must complete without throwing
-      new SessionEndHandler(scope).clean();
+      new SessionEndHandler(scope).clean(scope.getClaudeSessionId());
 
       // Non-UUID directory must NOT be deleted — the handler skips it
       requireThat(Files.exists(nonUuidWorkDir), "nonUuidWorkDirExists").isTrue();
@@ -393,7 +392,7 @@ public final class SessionEndHandlerTest
   }
 
   /**
-   * Verifies that {@code scope.getClaudeSessionPath().getParent()} resolves to the correct Claude
+   * Verifies that {@code scope.getClaudeSessionPath(sessionId).getParent()} resolves to the correct Claude
    * projects directory for the given project path.
    * <p>
    * The parent of the session path must equal {@code scope.getClaudeSessionsPath()}, which is
@@ -403,9 +402,9 @@ public final class SessionEndHandlerTest
   public void claudeSessionPathParentIsClaudeProjectsDirectory() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path sessionPath = scope.getClaudeSessionPath();
+      Path sessionPath = scope.getClaudeSessionPath(scope.getClaudeSessionId());
       Path parentOfSessionPath = sessionPath.getParent();
       Path claudeSessionsPath = scope.getClaudeSessionsPath();
 
@@ -425,7 +424,7 @@ public final class SessionEndHandlerTest
   public void sessionEndHandlesPermissionErrors() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       // Create a stale session work directory with a child file
       String staleSessionId = "88888888-8888-8888-8888-888888888888";
@@ -440,7 +439,7 @@ public final class SessionEndHandlerTest
       try
       {
         // Handler must complete without throwing even when deletion fails due to permissions
-        new SessionEndHandler(scope).clean();
+        new SessionEndHandler(scope).clean(scope.getClaudeSessionId());
       }
       finally
       {

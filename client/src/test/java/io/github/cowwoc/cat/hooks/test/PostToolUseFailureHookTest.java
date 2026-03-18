@@ -8,7 +8,6 @@ package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.HookOutput;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.PostToolUseFailureHook;
 import io.github.cowwoc.cat.hooks.skills.TerminalType;
 import org.testng.annotations.Test;
@@ -64,7 +63,7 @@ public final class PostToolUseFailureHookTest
     try
     {
       Path claudeEnvFile = Files.createTempFile("test-env", ".sh");
-      try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session", claudeEnvFile,
+      try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session", claudeEnvFile,
         TerminalType.WINDOWS_TERMINAL))
       {
         String sessionId = scope.getClaudeSessionId();
@@ -81,7 +80,7 @@ public final class PostToolUseFailureHookTest
         hook.run(input2, output);
 
         // The tracking file must exist under {catSessionPath}, not under {claudeSessionsPath}/{sessionId}
-        Path catSessionPath = scope.getCatSessionPath();
+        Path catSessionPath = scope.getCatSessionPath(scope.getClaudeSessionId());
         Path trackingFile = catSessionPath.resolve("cat-failure-tracking-" + sessionId + ".count");
         requireThat(Files.exists(trackingFile), "trackingFileExistsUnderCatSessionPath").isTrue();
       }

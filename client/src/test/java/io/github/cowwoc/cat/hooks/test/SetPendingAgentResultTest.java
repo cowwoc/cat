@@ -454,7 +454,7 @@ public final class SetPendingAgentResultTest
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestJvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
       // Use the scope's own session ID to align getCatSessionPath() with the check() parameter
       String sessionId = scope.getClaudeSessionId();
@@ -472,7 +472,7 @@ public final class SetPendingAgentResultTest
 
       requireThat(result.warning(), "warning").isEmpty();
       // Flag must be at {catSessionPath}/pending-agent-result
-      Path flagPath = scope.getCatSessionPath().resolve("pending-agent-result");
+      Path flagPath = scope.getCatSessionPath(sessionId).resolve("pending-agent-result");
       requireThat(Files.exists(flagPath), "flagExistsUnderCatSessionPath").isTrue();
     }
     finally

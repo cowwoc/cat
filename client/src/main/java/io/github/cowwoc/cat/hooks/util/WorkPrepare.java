@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
+import io.github.cowwoc.cat.hooks.ClaudeEnv;
 import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
@@ -2064,7 +2065,7 @@ public final class WorkPrepare
     if (!sessionIdOverride.isEmpty())
       sessionId = sessionIdOverride;
     else
-      sessionId = scope.getClaudeSessionId();
+      sessionId = new ClaudeEnv().getClaudeSessionId();
 
     PrepareInput input = new PrepareInput(sessionId, excludePattern, issueId, trustLevel);
     WorkPrepare wp = new WorkPrepare(scope);

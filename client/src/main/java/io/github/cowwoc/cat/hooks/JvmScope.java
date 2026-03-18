@@ -80,15 +80,6 @@ public interface JvmScope extends AutoCloseable
   String getPluginPrefix();
 
   /**
-   * Returns the Claude session ID.
-   *
-   * @return the session ID
-   * @throws AssertionError if the session ID is not configured
-   * @throws IllegalStateException if this scope is closed
-   */
-  String getClaudeSessionId();
-
-  /**
    * Returns the Claude config directory.
    * <p>
    * Reads the {@code CLAUDE_CONFIG_DIR} environment variable; defaults to {@code ~/.claude} if unset.
@@ -109,14 +100,16 @@ public interface JvmScope extends AutoCloseable
   Path getClaudeSessionsPath();
 
   /**
-   * Returns the directory for the current session's tracking files.
+   * Returns the directory for a session's tracking files.
    * <p>
    * Located at {@code {claudeConfigDir}/projects/{encodedProjectRoot}/{sessionId}/}.
    *
+   * @param sessionId the session ID
    * @return the session directory path
+   * @throws NullPointerException if {@code sessionId} is null
    * @throws IllegalStateException if this scope is closed
    */
-  Path getClaudeSessionPath();
+  Path getClaudeSessionPath(String sessionId);
 
   /**
    * Returns the cross-session project CAT directory.
@@ -135,10 +128,12 @@ public interface JvmScope extends AutoCloseable
    * <p>
    * Located at {@code {projectPath}/.cat/work/sessions/{sessionId}/}.
    *
+   * @param sessionId the session ID
    * @return the session CAT directory path
+   * @throws NullPointerException if {@code sessionId} is null
    * @throws IllegalStateException if this scope is closed
    */
-  Path getCatSessionPath();
+  Path getCatSessionPath(String sessionId);
 
   /**
    * Returns the path to the Claude environment file.

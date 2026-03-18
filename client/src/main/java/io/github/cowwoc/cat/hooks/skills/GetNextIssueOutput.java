@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.skills;
 
+import io.github.cowwoc.cat.hooks.ClaudeEnv;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.IssueDiscovery;
@@ -125,7 +126,7 @@ public final class GetNextIssueOutput implements SkillOutput
     String excludePattern = parsed.excludePattern();
 
     if (sessionId.isBlank())
-      sessionId = scope.getClaudeSessionId();
+      sessionId = new ClaudeEnv().getClaudeSessionId();
     if (projectPath.isEmpty())
       projectPath = scope.getProjectPath().toString();
 

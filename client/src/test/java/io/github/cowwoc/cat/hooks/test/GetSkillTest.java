@@ -62,19 +62,19 @@ public class GetSkillTest
   }
 
   /**
-   * Verifies that blank agent ID falls back to session ID.
+   * Verifies that blank agent ID falls back to ClaudeEnv, which throws AssertionError
+   * when CLAUDE_SESSION_ID is not set in the environment.
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
-  public void constructorBlankAgentIdFallsBackToSessionId() throws IOException
+  @Test(expectedExceptions = AssertionError.class,
+    expectedExceptionsMessageRegExp = ".*CLAUDE_SESSION_ID.*")
+  public void constructorBlankAgentIdThrowsWhenEnvVarNotSet() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      GetSkill loader = new GetSkill(scope, List.of(""));
-      // Constructor should succeed using session ID as fallback
-      requireThat(loader, "loader").isNotNull();
+      new GetSkill(scope, List.of(""));
     }
     finally
     {
@@ -83,19 +83,19 @@ public class GetSkillTest
   }
 
   /**
-   * Verifies that whitespace-only agent ID falls back to session ID.
+   * Verifies that whitespace-only agent ID falls back to ClaudeEnv, which throws AssertionError
+   * when CLAUDE_SESSION_ID is not set in the environment.
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
-  public void constructorWhitespaceAgentIdFallsBackToSessionId() throws IOException
+  @Test(expectedExceptions = AssertionError.class,
+    expectedExceptionsMessageRegExp = ".*CLAUDE_SESSION_ID.*")
+  public void constructorWhitespaceAgentIdThrowsWhenEnvVarNotSet() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      GetSkill loader = new GetSkill(scope, List.of("   "));
-      // Constructor should succeed using session ID as fallback
-      requireThat(loader, "loader").isNotNull();
+      new GetSkill(scope, List.of("   "));
     }
     finally
     {
