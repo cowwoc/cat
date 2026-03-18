@@ -126,6 +126,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-get-diff-agent-missing-arg
 - add-write-session-marker-cli
 - rename-skill-builder-to-instruction-builder
+- add-criteria-verification-gate
 
 
 ## Issues Closed
