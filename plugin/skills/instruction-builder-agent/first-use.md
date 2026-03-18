@@ -172,7 +172,40 @@ The subagent will return the designed skill draft as `SKILL_DRAFT`. Validate tha
 If the response is empty, not a markdown code block, missing required sections, or has empty sections,
 reject the draft and re-invoke the design subagent with clarifying instructions.
 
-### Step 3: Benchmark Evaluation Loop
+### Step 3: Compact-Output Pass
+
+Before writing the draft to disk, review `SKILL_DRAFT` for output-token waste. Apply each compaction rule
+below inline (no subagent needed). **Correctness takes priority over compactness** — both semantic correctness
+(meaning/parsing) and visual correctness (user-facing output alignment and readability) override any size
+reduction.
+
+**Correctness exemptions — do NOT apply compaction when:**
+- Inside YAML frontmatter (whitespace is syntax)
+- Inside Makefile targets (tabs are required, spaces are wrong)
+- Inside fenced code blocks where indentation is part of the example
+- In any context where changing whitespace would change meaning or break parsing
+- In display tables, boxes, or formatted reports where spacing is part of the visual design
+
+**Compaction rules (apply only outside exempted contexts):**
+
+1. **Condense verbose section headings** — if a heading repeats context already established by the skill's
+   purpose or a parent heading, shorten or remove the redundant portion.
+2. **Shorten examples** — trim examples to the minimum needed to illustrate the point; remove lines that
+   duplicate the explanatory text above them.
+3. **Remove unused output sections** — if a section produces content never referenced downstream (e.g., a
+   table always populated with a single static row, or a section whose output is never acted on), remove it.
+4. **Deduplicate repeated guidance** — if the same rule or constraint appears in two or more steps verbatim
+   or near-verbatim, keep it in the most authoritative location and replace the others with a brief reference.
+5. **Omit receiver-irrelevant output** — review what each output section communicates to its receiver (user,
+   subagent, or calling skill). Remove content the receiver cannot act on or does not need: internal reasoning
+   steps that informed a decision but weren't requested, full context that the receiver already has, verbose
+   status updates that duplicate information the receiver already knows.
+
+After applying compaction rules, store the result as `SKILL_DRAFT` (overwrite with the compacted version).
+If no changes were made, proceed without noting it — this pass is silent unless changes were significant
+(>10% size reduction), in which case note "Compact-output pass reduced draft by ~{N}%."
+
+### Step 4: Benchmark Evaluation Loop
 
 After receiving the skill draft from the design subagent, write `SKILL_DRAFT` to its target file path on disk
 (the SKILL.md or first-use.md path where the skill will live). Store this path as `SKILL_TEXT_PATH` — a
@@ -182,12 +215,12 @@ commit SHA as `SKILL_DRAFT_SHA`. The skill text is now on disk and committed, so
 `git show <SHA>:<SKILL_TEXT_PATH>` or `cat <SKILL_TEXT_PATH>`.
 
 **Effort gate:** Read `effort` from `${CLAUDE_PROJECT_DIR}/.cat/config.json`. If `effort = low`, skip
-the benchmark evaluation loop (Steps 3a–3g), adversarial hardening (Step 4), and compression phase (Step 6)
+the benchmark evaluation loop (Steps 4.1–4.4), adversarial hardening (Step 5), and compression phase (Step 7)
 entirely. Proceed directly to ## Output Format with a single-run sanity check: spawn one benchmark-run
 subagent with the skill active on a simple test scenario, verify it produces non-empty output, and report
 the result to the user.
 
-At the start of Step 3, compute `BENCHMARK_ARTIFACTS_DIR` as
+At the start of Step 4, compute `BENCHMARK_ARTIFACTS_DIR` as
 `<worktree-root>/benchmark-artifacts/${CLAUDE_SESSION_ID}` (expanding `${CLAUDE_SESSION_ID}` to its actual
 value). Pass this resolved path as a literal string to all subagents — do NOT pass variable references.
 
@@ -207,7 +240,7 @@ benchmark-run subagent receives `BENCHMARK_ARTIFACTS_DIR`, `CLAUDE_SESSION_ID`, 
 pre-resolved literal strings, so no subagent ever expands these variables independently. Subagents must not
 derive their own session ID — they must use the value passed by the main agent.
 
-#### Step 3.1: Auto-Generate Test Cases
+#### Step 4.1: Auto-Generate Test Cases
 
 Extract semantic units from the skill file using the Nine-Category Extraction Algorithm embedded in
 `${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder-agent/validation-protocol.md` (Section 1). Perform this
@@ -286,7 +319,7 @@ Store the approved test cases in `${BENCHMARK_ARTIFACTS_DIR}/test-cases.json` an
 committed file via `git show {BENCHMARK_SET_SHA}:benchmark-artifacts/<SESSION_ID>/test-cases.json` or
 `cat {BENCHMARK_ARTIFACTS_DIR}/test-cases.json`.
 
-#### Step 3.2: Incremental Test Case Selection (Re-benchmarking only)
+#### Step 4.2: Incremental Test Case Selection (Re-benchmarking only)
 
 When re-benchmarking an existing skill after an edit (rather than benchmarking a brand-new draft), use
 `${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner` to identify which test cases need to re-run and which can carry forward from the
@@ -337,7 +370,7 @@ if the unit range and the changed range share any common line number.
 already Accepted those cases. Do NOT re-run them. Only report that they were carried forward in the
 final benchmark summary.
 
-#### Step 3.3: SPRT Benchmark
+#### Step 4.3: SPRT Benchmark
 
 Run the SPRT-based benchmark to measure the skill's compliance quantitatively.
 
@@ -478,7 +511,7 @@ TOTAL     |  18  |     27,200   |    78,000 ms
 
 Display SPRT results to the user: per-test-case decision, log_ratio, pass/fail counts, and token summary.
 
-#### Step 3.4: Analyze via skill-analyzer-agent
+#### Step 4.4: Analyze via skill-analyzer-agent
 
 **Analyze via skill-analyzer-agent subagent:** Spawn skill-analyzer-agent. Pass it the benchmark
 SHA+path (from the SPRT result) and `SKILL_TEXT_PATH` (worktree-relative). The `skill_text_path` must be
@@ -521,7 +554,7 @@ only the compact analysis report text (~1KB). It does NOT read the analysis file
 3. Are you satisfied with the current skill version?
 
 **Iterate if needed:** If the user requests improvement, apply targeted changes to the skill file at
-`SKILL_TEXT_PATH`, commit the updated file, and update `SKILL_DRAFT_SHA` before returning to Step 3.3. Cap
+`SKILL_TEXT_PATH`, commit the updated file, and update `SKILL_DRAFT_SHA` before returning to Step 4.3. Cap
 at 5 benchmark iterations total. Track the best-performing iteration by storing `BEST_SCORE` and `BEST_SHA`
 (the commit SHA of the skill file at that iteration). `BEST_SCORE` is defined as the fraction of test cases
 that reached SPRT Accept. After each iteration, compare the current BEST_SCORE and update if higher. Stop
@@ -531,13 +564,13 @@ message `benchmark: restore best iteration [session: ${CLAUDE_SESSION_ID}]`, the
 reached." If the iteration cap is reached, apply the same rollback to `BEST_SHA` if the final iteration is
 not the best, then stop and report "Benchmark iteration cap reached (5 rounds) — presenting best result."
 
-### Step 4: Adversarial TDD Loop
+### Step 5: Adversarial TDD Loop
 
 After the benchmark phase converges, harden the instructions using alternating red-team and blue-team
 subagents. Run until convergence (no CRITICAL/HIGH loopholes remain).
 
 **Effort gate:** Read `effort` from `${CLAUDE_PROJECT_DIR}/.cat/config.json`. If `effort = low`, skip
-adversarial hardening entirely and proceed to Step 5.
+adversarial hardening entirely and proceed to Step 6.
 
 **Protocol:** Follow [plugin/concepts/adversarial-protocol.md](${CLAUDE_PLUGIN_ROOT}/concepts/adversarial-protocol.md)
 for the complete adversarial loop including:
@@ -572,13 +605,13 @@ process findings using the fields the red-team agent actually writes, not the pr
 After hardening converges, present the hardening changes to the user for review before proceeding to
 compression.
 
-### Step 5: In-Place Hardening Mode (Optional)
+### Step 6: In-Place Hardening Mode (Optional)
 
 **BLOCKING — Do NOT implement this loop manually.** Reading this section does not authorize direct
 execution of the hardening algorithm. You are NOT the hardening engine — you are the orchestrator.
 
 The ONLY valid execution path is:
-- Spawn red-team and blue-team subagents using the **Task tool** as defined in Step 4
+- Spawn red-team and blue-team subagents using the **Task tool** as defined in Step 5
 - Let the subagents read the target file from `SKILL_FILE_PATH` on disk, execute the loop, and commit changes
 
 **Prohibited paths (will be treated as a protocol violation):**
@@ -589,7 +622,7 @@ The ONLY valid execution path is:
 - Announcing "executing skill-builder in-place hardening mode" and then doing it yourself
 
 If you are reading this and thinking "I should now run the loop", stop — you are primed incorrectly.
-Return to Step 4 and spawn Task tool subagents.
+Return to Step 5 and spawn Task tool subagents.
 
 In-place hardening mode runs the adversarial TDD loop against a skill file in a worktree in a single session,
 producing one commit per round as the loop progresses.
@@ -598,12 +631,12 @@ producing one commit per round as the loop progresses.
 
 In-place hardening mode activates when the caller passes a single skill file path inside the current worktree.
 This mode is intended for hardening existing, already-functional skills — it applies adversarial instruction
-review only and does NOT run the benchmark evaluation loop (Steps 1-3). Before entering in-place mode,
+review only and does NOT run the benchmark evaluation loop (Step 4). Before entering in-place mode,
 the orchestrator must verify that a prior benchmark exists for this skill by checking whether
 `benchmark-artifacts/*/benchmark.json` contains an entry whose skill path matches the target file (search
 via `git log --all --oneline -- 'benchmark-artifacts/*/benchmark.json'` to find benchmark commits, then
 verify at least one exists). If no prior benchmark is found, the orchestrator must abort in-place mode and
-fall back to the full workflow (Steps 1-4) with the message: "No prior benchmark found for this skill —
+fall back to the full workflow (Steps 1-5) with the message: "No prior benchmark found for this skill —
 running full workflow including benchmark evaluation."
 
 1. Store the file path as `SKILL_FILE_PATH`. Do NOT read the file into `CURRENT_INSTRUCTIONS` and relay
@@ -613,7 +646,7 @@ running full workflow including benchmark evaluation."
    construct absolute paths for **direct filesystem operations** (e.g., `cat {WORKTREE_ROOT}/findings.json`,
    `mkdir -p {WORKTREE_ROOT}/...`). For `git show` commands, subagents must use repo-relative paths
    (e.g., `git show <sha>:findings.json`) as specified in the shared adversarial protocol.
-2. Run the full RED→BLUE loop as defined in Step 4 and the shared adversarial protocol. Each round
+2. Run the full RED→BLUE loop as defined in Step 5 and the shared adversarial protocol. Each round
    produces commits from red-team (findings.json) and blue-team (patched skill file). The loop
    continues until convergence (red-team returns `has_critical_high: false`).
 3. No additional write step is needed — the blue-team commits the hardened content directly each round.
@@ -639,7 +672,7 @@ red-team and blue-team subagent prompts via a `FINDINGS_PATH` parameter that ove
 `{WORKTREE_ROOT}/findings.json`.
 Parallel subagents must not commit shared files (e.g., index files or aggregated docs) to avoid merge
 conflicts; those are updated once after all parallel subagents complete. The concurrent commit safety
-retry protocol (exponential backoff with jitter, up to 3 retries) from Step 3 also applies to all
+retry protocol (exponential backoff with jitter, up to 3 retries) from Step 4 also applies to all
 red-team and blue-team commits in batch parallel mode. Each parallel subagent must retry on ref-lock
 contention using the same backoff schedule: first retry after 1-2 seconds (randomized), second after
 2-4 seconds, third after 4-8 seconds.
@@ -653,32 +686,32 @@ After all skill files are processed (or user types `abort`), display a batch sum
 |-------|--------|-----------------|-----------------|-----------------|
 | ...   | ...    | ...             | ...             | ...             |
 
-### Step 6: Compression Phase
+### Step 7: Compression Phase
 
 **Effort gate:** Read `effort` from `${CLAUDE_PROJECT_DIR}/.cat/config.json`. If `effort = low`, skip
 this entire step. The compression phase runs only when `effort = medium` or `high`.
 
-After hardening achieves compliance (Step 4 converges and SPRT re-benchmark accepts), compress the skill
+After hardening achieves compliance (Step 5 converges and SPRT re-benchmark accepts), compress the skill
 file to minimize token cost while preserving behavioral compliance.
 
 **Hardening + benchmarking + compression are always run together** — never one without the others when
 effort > low.
 
 **Sequential phases, never interleaved:**
-1. Harden until compliant (only add text) — Step 4
-2. Compress to minimize size (only remove text) — Step 6
-3. Re-benchmark to verify compression preserved compliance — Step 6 SPRT re-benchmark
+1. Harden until compliant (only add text) — Step 5
+2. Compress to minimize size (only remove text) — Step 7
+3. Re-benchmark to verify compression preserved compliance — Step 7 SPRT re-benchmark
 4. If compliance dropped, mark load-bearing text as protected and retry compression (up to 3 times)
 
-#### Step 6.1: Post-Hardening SPRT Re-Benchmark
+#### Step 7.1: Post-Hardening SPRT Re-Benchmark
 
 Before compressing, run a full SPRT benchmark on the hardened skill to confirm compliance. Use the same
-test cases from `${BENCHMARK_ARTIFACTS_DIR}/test-cases.json` and identical SPRT parameters as Step 3.3.
+test cases from `${BENCHMARK_ARTIFACTS_DIR}/test-cases.json` and identical SPRT parameters as Step 4.3.
 Commit benchmark results with message `benchmark: post-hardening SPRT [session: ${CLAUDE_SESSION_ID}]`.
-Store SHA as `POST_HARDENING_SHA`. If any test case rejects, return to hardening (Step 4) to address the
+Store SHA as `POST_HARDENING_SHA`. If any test case rejects, return to hardening (Step 5) to address the
 failures before proceeding to compression.
 
-#### Step 6.2: Compress
+#### Step 7.2: Compress
 
 Invoke a general-purpose subagent to compress the skill file:
 
@@ -708,7 +741,7 @@ Task tool:
 Commit the compressed file with message `benchmark: compress skill [session: ${CLAUDE_SESSION_ID}]`.
 Store SHA as `COMPRESSED_SHA`.
 
-#### Step 6.3: Semantic Pre-Check (Fast Gate)
+#### Step 7.3: Semantic Pre-Check (Fast Gate)
 
 Before running the full SPRT re-benchmark, run a semantic pre-check using the comparison algorithm from
 `${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder-agent/validation-protocol.md` (Section 2):
@@ -720,9 +753,9 @@ Before running the full SPRT re-benchmark, run a semantic pre-check using the co
    retry compression immediately (mark the lost unit's text as protected)
 5. If semantically EQUIVALENT or only MEDIUM/LOW losses → proceed to SPRT re-benchmark
 
-#### Step 6.4: Post-Compression SPRT Re-Benchmark
+#### Step 7.4: Post-Compression SPRT Re-Benchmark
 
-Run SPRT re-benchmark on the compressed version using identical test cases and parameters as Step 6.1.
+Run SPRT re-benchmark on the compressed version using identical test cases and parameters as Step 7.1.
 
 **Acceptance criterion:** ALL test cases must reach SPRT Accept (log_ratio ≥ A).
 
@@ -811,7 +844,7 @@ implementation details (trust levels, internal architecture, etc.).
 - [ ] SPRT decision logic uses p0=0.95, p1=0.85, α=0.05, β=0.05 with boundaries A≈2.944, B≈-2.944
 - [ ] Each test case runs its own independent SPRT; rejection of any case stops all remaining cases
 - [ ] SPRT check runs after each individual agent completion (pipelined), not batched per wave
-- [ ] BENCHMARK_MODEL is read from skill frontmatter via `${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner extract-model` at the start of Step 3
+- [ ] BENCHMARK_MODEL is read from skill frontmatter via `${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner extract-model` at the start of Step 4
 - [ ] Eval-run subagents use `BENCHMARK_MODEL` (not hardcoded Haiku), fresh (non-resumed) per run
 - [ ] Eval-run subagents grade deterministic assertions inline before returning
 - [ ] Semantic assertions use separate `BENCHMARK_MODEL` grader subagents
@@ -829,29 +862,29 @@ implementation details (trust levels, internal architecture, etc.).
 - [ ] Protected text identification cross-references SPRT failure data with diff hunks
 - [ ] Step 2 design subagent tool prohibition explicitly lists Grep alongside Bash, Write, Edit, Glob, WebFetch, WebSearch
 - [ ] Step 2 draft validation checks that each required section contains non-empty content (not just headings)
-- [ ] Step 4 follows shared adversarial protocol from plugin/concepts/adversarial-protocol.md
+- [ ] Step 5 follows shared adversarial protocol from plugin/concepts/adversarial-protocol.md
 - [ ] Shared protocol performs final-round MEDIUM/LOW cleanup pass (blue-team only, no arbitration/diff-validation) before loop exit
-- [ ] Step 4 uses target_type: skill_instructions
-- [ ] Step 4 main agent never reads findings.json directly — uses structured JSON returns from subagents
+- [ ] Step 5 uses target_type: skill_instructions
+- [ ] Step 5 main agent never reads findings.json directly — uses structured JSON returns from subagents
 - [ ] In-place hardening mode produces per-round commits (one from red-team, one from blue-team per round)
 - [ ] If batch mode was used: summary table shows Loopholes Closed, Disputes Upheld, and Patches Applied columns
 - [ ] Step 2 design subagent tool prohibition explicitly lists NotebookEdit alongside other prohibited tools
-- [ ] Step 5 prohibited paths cover all hardening loop phases (red-team, blue-team, arbitration, diff validation)
-- [ ] Step 4 arbitration agent scope restriction prohibits modifying any file other than findings.json
-- [ ] Step 5 sequential batch mode requires deleting findings.json between skills to prevent contamination
+- [ ] Step 6 prohibited paths cover all hardening loop phases (red-team, blue-team, arbitration, diff validation)
+- [ ] Step 5 arbitration agent scope restriction prohibits modifying any file other than findings.json
+- [ ] Step 6 sequential batch mode requires deleting findings.json between skills to prevent contamination
 - [ ] Step 2 design subagent validation verifies Read tool was used only on permitted files
-- [ ] Step 4 blue-team patch constraints explicitly protect verification checklist items from removal or weakening
-- [ ] Step 4 does not embed file content inline in subagent prompts — subagents read from TARGET_FILE_PATH
-- [ ] Step 5 in-place mode verifies prior benchmark existence before skipping Steps 1-3 (checking benchmark-artifacts/*/benchmark.json)
-- [ ] Step 5 batch mode uses per-skill findings paths (`findings-<skill-name>.json`) to avoid collisions
-- [ ] Step 5 batch mode passes `FINDINGS_PATH` parameter to override default findings.json path in subagent prompts
-- [ ] Step 5 distinguishes filesystem operations (use WORKTREE_ROOT prefix) from git show (use repo-relative paths)
-- [ ] Step 3.4 skill-analyzer-agent report includes Delegation Opportunities and Content Relay Anti-Patterns sections
+- [ ] Step 5 blue-team patch constraints explicitly protect verification checklist items from removal or weakening
+- [ ] Step 5 does not embed file content inline in subagent prompts — subagents read from TARGET_FILE_PATH
+- [ ] Step 6 in-place mode verifies prior benchmark existence before skipping Steps 1-4 (checking benchmark-artifacts/*/benchmark.json)
+- [ ] Step 6 batch mode uses per-skill findings paths (`findings-<skill-name>.json`) to avoid collisions
+- [ ] Step 6 batch mode passes `FINDINGS_PATH` parameter to override default findings.json path in subagent prompts
+- [ ] Step 6 distinguishes filesystem operations (use WORKTREE_ROOT prefix) from git show (use repo-relative paths)
+- [ ] Step 4.4 skill-analyzer-agent report includes Delegation Opportunities and Content Relay Anti-Patterns sections
 - [ ] Step 2 design subagent Read scope is restricted to methodology, conventions, and existing skill files only
-- [ ] Step 5 batch mode skill-name derivation is defined as `<directory-name>-<file-stem>` to avoid collisions
-- [ ] Step 5 batch parallel mode extends the concurrent commit retry protocol to red-team and blue-team commits
-- [ ] Step 3.3 benchmark plateau tracks BEST_SCORE and BEST_SHA, rolls back to best iteration on plateau or cap
-- [ ] Step 4 arbitration agent prompt includes explicit tool restrictions (Write/Edit limited to findings.json, no state-modifying Bash)
+- [ ] Step 6 batch mode skill-name derivation is defined as `<directory-name>-<file-stem>` to avoid collisions
+- [ ] Step 6 batch parallel mode extends the concurrent commit retry protocol to red-team and blue-team commits
+- [ ] Step 4.3 benchmark plateau tracks BEST_SCORE and BEST_SHA, rolls back to best iteration on plateau or cap
+- [ ] Step 5 arbitration agent prompt includes explicit tool restrictions (Write/Edit limited to findings.json, no state-modifying Bash)
 - [ ] Semantic extraction uses embedded Nine-Category algorithm from validation-protocol.md (not subagent invocation)
 - [ ] Extracted units include id, category, original, normalized, quote, and location fields
 - [ ] Non-testable units (REFERENCE, CONJUNCTION) are skipped when generating test cases
@@ -864,3 +897,7 @@ implementation details (trust levels, internal architecture, etc.).
 - [ ] `${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner persist-artifacts` is called after each SPRT commit to persist test cases to `<skill-dir>/benchmark/`
 - [ ] `${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner persist-artifacts` commits `benchmark/benchmark.json` (with skill SHA, test-case SHA, session, phase, timestamp) to skill directory
 - [ ] `${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner extract-model` falls back to "haiku" when skill has no model: frontmatter field
+- [ ] Step 3 compact-output pass applied to SKILL_DRAFT before writing to disk
+- [ ] Step 3 compact-output pass lists all correctness exemptions (YAML frontmatter, Makefile targets, fenced code blocks, semantic whitespace, visual alignment)
+- [ ] Step 3 compact-output pass does not modify SKILL_DRAFT when exemption conditions apply
+- [ ] Both semantic and visual correctness take priority over compactness in the compact-output pass
