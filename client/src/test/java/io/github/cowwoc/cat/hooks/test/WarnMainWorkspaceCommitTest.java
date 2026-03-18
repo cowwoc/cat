@@ -48,7 +48,7 @@ public final class WarnMainWorkspaceCommitTest
   private static void createLockFile(JvmScope scope, String issueId, String sessionId) throws IOException
   {
     IssueLock lock = new IssueLock(scope);
-    lock.acquire(issueId, sessionId, "");
+    lock.acquire(issueId, sessionId, "/path/to/worktree");
   }
 
   /**

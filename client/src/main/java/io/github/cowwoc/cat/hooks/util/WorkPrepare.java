@@ -248,7 +248,6 @@ public final class WorkPrepare
       preBuiltBareNameIndex = null;
     }
 
-    // Step 3 (lock acquisition) is handled implicitly by IssueDiscovery.findNextIssue()
     IssueDiscovery.DiscoveryResult discoveryResult = discovery.findNextIssue(searchOptions);
     warnings.addAll(discovery.getWarnings());
 
@@ -271,8 +270,7 @@ public final class WorkPrepare
     // Check for corrupt directory (STATE.md present, PLAN.md absent)
     if (found.isCorrupt())
     {
-      if (!input.sessionId().isEmpty())
-        releaseLock(issueId, input.sessionId());
+      releaseLock(issueId, input.sessionId());
       Map<String, Object> corruptResult = new LinkedHashMap<>();
       corruptResult.put("status", "CORRUPT");
       corruptResult.put("issue_id", issueId);
@@ -300,8 +298,7 @@ public final class WorkPrepare
     // Check if oversized
     if (estimatedTokens > TOKEN_LIMIT)
     {
-      if (!input.sessionId().isEmpty())
-        releaseLock(issueId, input.sessionId());
+      releaseLock(issueId, input.sessionId());
       Map<String, Object> oversizedResult = new LinkedHashMap<>();
       oversizedResult.put("status", "OVERSIZED");
       oversizedResult.put("message", "Issue estimated at " + estimatedTokens + " tokens (limit: " + TOKEN_LIMIT + ")");
@@ -323,11 +320,10 @@ public final class WorkPrepare
    * Returns an empty string if the result is {@code Found}, indicating the caller should
    * continue with worktree creation.
    * <p>
-   * For {@code ExistingWorktree} results, if the current session owns the lock, this method
-   * returns a {@code READY} response using the existing worktree path (resume semantics).
-   * If a different session owns the lock, the lock check fires first in {@code IssueDiscovery}
-   * and returns {@code NotExecutable}, so this branch is only reached when the lock is unlocked
-   * or owned by the current session.
+   * For {@code ExistingWorktree} results, this method calls {@code issueLock.check()} to inspect
+   * the lock state inline: if the current session owns the lock, it returns a {@code READY} response
+   * using the existing worktree path (resume semantics); if another session owns the lock, it returns
+   * a {@code LOCKED} response; if the issue is unlocked, it returns an {@code ERROR} response.
    *
    * @param input the preparation input parameters
    * @param discoveryResult the discovery result to handle
@@ -412,16 +408,22 @@ public final class WorkPrepare
 
     if (discoveryResult instanceof ExistingWorktree existingWorktree)
     {
-      // When the lock check in IssueDiscovery fires before the worktree check, a different-session
-      // lock returns NotExecutable (LOCKED). Reaching this branch means the lock is either unlocked
-      // or owned by the current session. Check for current-session ownership to enable seamless resume.
+      // The issue has an existing worktree. Check the lock state to determine the correct response:
+      // - Locked by current session: resume with READY response
+      // - Locked by another session: return LOCKED so the agent does not attempt to use the worktree
+      // - Unlocked: return ERROR about the existing worktree
       IssueLock issueLock = new IssueLock(scope);
       IssueLock.LockResult lockCheck = issueLock.check(existingWorktree.issueId());
       Path projectPath = scope.getProjectPath();
-      if (lockCheck instanceof IssueLock.LockResult.CheckLocked locked &&
-        locked.sessionId().equals(input.sessionId()))
+      if (lockCheck instanceof IssueLock.LockResult.CheckLocked locked)
       {
-        return resumeWithExistingWorktree(existingWorktree, projectPath, mapper);
+        if (locked.sessionId().equals(input.sessionId()))
+          return resumeWithExistingWorktree(existingWorktree, projectPath, mapper);
+        return mapper.writeValueAsString(Map.of(
+          "status", "LOCKED",
+          "message", "Issue " + existingWorktree.issueId() + " is locked by another session",
+          "issue_id", existingWorktree.issueId(),
+          "locked_by", locked.sessionId()));
       }
       return mapper.writeValueAsString(Map.of(
         "status", "ERROR",
@@ -447,7 +449,12 @@ public final class WorkPrepare
   }
 
   /**
-   * Executes the worktree creation and metadata collection steps after a Found result.
+   * Acquires the issue lock and executes the worktree creation and metadata collection steps
+   * after a Found result.
+   * <p>
+   * Lock acquisition is the first step inside this method, using the pre-computed worktree path
+   * derived from {@code issueBranch}. If the lock is already held by another session, a LOCKED
+   * JSON response is returned immediately before any worktree is created.
    *
    * @param input the preparation input parameters
    * @param projectPath the project root directory
@@ -461,7 +468,7 @@ public final class WorkPrepare
    * @param planPath the path to PLAN.md
    * @param estimatedTokens the estimated token count
    * @param issueBranch the issue branch name
-   * @return JSON string with READY or ERROR result
+   * @return JSON string with READY, LOCKED, or ERROR result
    * @throws IOException if file operations fail
    */
   private String executeWhileLocked(PrepareInput input, Path projectPath, JsonMapper mapper,
@@ -469,11 +476,25 @@ public final class WorkPrepare
     String issueName, Path issuePath, String targetBranch, Path planPath, int estimatedTokens,
     String issueBranch) throws IOException
   {
+    // Step 3: Acquire lock with the pre-computed worktree path so the lock file is correct
+    // the moment it is written, eliminating the two-step acquire-then-update pattern.
+    Path worktreePath = scope.getCatWorkPath().resolve("worktrees").resolve(issueBranch);
+    IssueLock issueLock = new IssueLock(scope);
+    IssueLock.LockResult lockResult = issueLock.acquire(issueId, input.sessionId(),
+      worktreePath.toString());
+    if (lockResult instanceof IssueLock.LockResult.Locked locked)
+    {
+      return mapper.writeValueAsString(Map.of(
+        "status", "LOCKED",
+        "message", "Issue locked by another session: " + locked.owner(),
+        "issue_id", issueId,
+        "locked_by", locked.owner()));
+    }
+
     // Step 5: Create worktree
-    Path worktreePath;
     try
     {
-      worktreePath = createWorktree(projectPath, issueBranch);
+      createWorktree(projectPath, issueBranch);
     }
     catch (IOException e)
     {
@@ -523,20 +544,6 @@ public final class WorkPrepare
       return mapper.writeValueAsString(Map.of(
         "status", "ERROR",
         "message", "Failed to verify worktree branch: " + e.getMessage()));
-    }
-
-    // Update lock with worktree path
-    try
-    {
-      updateLockWorktree(issueId, input.sessionId(), worktreePath.toString());
-    }
-    catch (IOException e)
-    {
-      cleanupWorktree(projectPath, worktreePath);
-      releaseLock(issueId, input.sessionId());
-      return mapper.writeValueAsString(Map.of(
-        "status", "ERROR",
-        "message", "Failed to update lock with worktree path: " + e.getMessage()));
     }
 
     // Step 7: Check for existing work
@@ -1842,24 +1849,6 @@ public final class WorkPrepare
     }
 
     return preconditions;
-  }
-
-  /**
-   * Updates the lock file with the worktree path.
-   *
-   * @param issueId the issue ID to update the lock for
-   * @param sessionId the session ID that owns the lock
-   * @param worktreePath the worktree path to store in the lock
-   * @throws IOException if the lock file cannot be updated
-   */
-  private void updateLockWorktree(String issueId, String sessionId, String worktreePath)
-    throws IOException
-  {
-    assert that(issueId, "issueId").isNotBlank().elseThrow();
-    assert that(sessionId, "sessionId").isNotBlank().elseThrow();
-    assert that(worktreePath, "worktreePath").isNotBlank().elseThrow();
-    IssueLock issueLock = new IssueLock(scope);
-    issueLock.update(issueId, sessionId, worktreePath);
   }
 
   /**
