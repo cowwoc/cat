@@ -125,6 +125,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - remove-jvmscope-claudeenv-duplicates
 - fix-get-diff-agent-missing-arg
 - add-write-session-marker-cli
+- rename-skill-builder-to-instruction-builder
 
 
 ## Issues Closed
