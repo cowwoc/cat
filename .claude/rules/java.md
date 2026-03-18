@@ -592,7 +592,8 @@ Files.writeString(path, "# Configuration\n" +
 Text blocks automatically include a newline at each line break. Use `\` at end of line to suppress unwanted newlines.
 
 ### String Comparison (Case-Sensitive)
-Use `variable.equals("literal")` for standard comparisons. Only use `Objects.equals()` when the variable may be null:
+Use `variable.equals("literal")` for standard comparisons. If the variable may be null, use
+`Objects.equals(variable, "literal")` instead. Never use Yoda-style `"literal".equals(variable)`:
 
 ```java
 // Good - variable first, known non-null
