@@ -2880,6 +2880,34 @@
         "catches_variations": true
       },
       "correct_behavior": "CLI commands (main() methods, skill launchers) read environment variables via new ClaudeEnv().getClaudeSessionId(). Hook handlers use HookInput.getSessionId(). scope.getEnvironmentVariable() is reserved for resolving ${name} references in skill directive strings only."
+    },
+    {
+      "id": "M572",
+      "timestamp": "2026-03-18T19:00:00Z",
+      "category": "data_loss",
+      "description": "Squash subagent deleted Java production source files (RemindGitSquash.java, GetCleanupOutput.java, EnforceStatusOutput.java) while resolving git rebase 'deleted by us' conflicts during a pre-squash rebase, causing 1285+ test failures with NoClassDefFoundError.",
+      "root_cause": "MISSING GUIDANCE: The git-rebase-agent skill's '## Handling Conflicts' section provided no numbered steps and no coverage of 'deleted by us' conflict scenarios. When git status showed 'deleted by us' for STATE.md files (the issue branch had renamed STATE.md → index.json, but v2.1 had since updated those files), the subagent had no guidance on how to distinguish delete-mode conflicts (accept deletion vs. restore target version). With no structured protocol, the subagent improvised and accidentally deleted unrelated Java source files that happened to be listed in the conflicting area, corrupting the build.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/git-rebase-agent/first-use.md",
+      "pattern_keywords": [
+        "deleted_by_us",
+        "rebase_conflict",
+        "java_source_deleted",
+        "NoClassDefFoundError",
+        "conflict_resolution_improvised",
+        "missing_delete_conflict_guidance"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M458",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When git rebase stops at a conflict, consult the numbered Steps 1-4 in '## Handling Conflicts'. For 'deleted by us' conflicts: verify the file is one the issue branch intentionally deleted, then run 'git rm <file>' to accept the deletion. Never delete files outside the explicit conflict set. When uncertain whether a deletion was intentional, run 'git checkout HEAD -- <file>' to keep the target branch's version."
     }
   ]
 }
