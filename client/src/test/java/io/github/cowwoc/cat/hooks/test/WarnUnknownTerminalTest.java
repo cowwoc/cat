@@ -57,7 +57,16 @@ public class WarnUnknownTerminalTest
     if (!Files.exists(sourceEmojiFile))
       sourceEmojiFile = Path.of(System.getProperty("user.dir")).resolve("../../plugin/emoji-widths.json");
     if (Files.exists(sourceEmojiFile))
-      Files.copy(sourceEmojiFile, pluginRoot.resolve("emoji-widths.json"));
+    {
+      try
+      {
+        Files.copy(sourceEmojiFile, pluginRoot.resolve("emoji-widths.json"));
+      }
+      catch (java.nio.file.FileAlreadyExistsException _)
+      {
+        // Already present — the goal is achieved
+      }
+    }
   }
 
   /**
@@ -68,9 +77,7 @@ public class WarnUnknownTerminalTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-known-term-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    Path envFile = Files.createTempFile("test-env", ".sh");
-    try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, "test-session-1", envFile,
-      TerminalType.WINDOWS_TERMINAL))
+    try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, TerminalType.WINDOWS_TERMINAL))
     {
       ensureEmojiWidthsFile(pluginRoot);
 
@@ -85,7 +92,6 @@ public class WarnUnknownTerminalTest
     {
       TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
-      Files.deleteIfExists(envFile);
     }
   }
 
@@ -98,9 +104,7 @@ public class WarnUnknownTerminalTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-unknown-term-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    Path envFile = Files.createTempFile("test-env", ".sh");
-    try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, "test-session-2", envFile,
-      TerminalType.UNKNOWN))
+    try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, TerminalType.UNKNOWN))
     {
       ensureEmojiWidthsFile(pluginRoot);
 
@@ -118,7 +122,6 @@ public class WarnUnknownTerminalTest
     {
       TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
-      Files.deleteIfExists(envFile);
     }
   }
 
@@ -130,9 +133,8 @@ public class WarnUnknownTerminalTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-warn-fallback-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    Path envFile = Files.createTempFile("test-env", ".sh");
     String sessionId = "test-session-" + System.nanoTime();
-    try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, sessionId, envFile, TerminalType.UNKNOWN))
+    try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, TerminalType.UNKNOWN))
     {
       ensureEmojiWidthsFile(pluginRoot);
 
@@ -145,14 +147,13 @@ public class WarnUnknownTerminalTest
       requireThat(result.stderr(), "stderr").contains("WARNING");
 
       // Verify marker file was created
-      Path markerFile = scope.getClaudeSessionPath(scope.getClaudeSessionId()).resolve("terminal-warning-emitted");
+      Path markerFile = scope.getClaudeSessionPath(sessionId).resolve("terminal-warning-emitted");
       requireThat(Files.exists(markerFile), "markerFileExists").isTrue();
     }
     finally
     {
       TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
-      Files.deleteIfExists(envFile);
     }
   }
 
@@ -164,14 +165,13 @@ public class WarnUnknownTerminalTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-suppress-warning-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    Path envFile = Files.createTempFile("test-env", ".sh");
     String sessionId = "test-session-" + System.nanoTime();
-    try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, sessionId, envFile, TerminalType.UNKNOWN))
+    try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, TerminalType.UNKNOWN))
     {
       ensureEmojiWidthsFile(pluginRoot);
 
       // Create the marker file in advance
-      Path sessionDir = scope.getClaudeSessionPath(scope.getClaudeSessionId());
+      Path sessionDir = scope.getClaudeSessionPath(sessionId);
       Files.createDirectories(sessionDir);
       Path markerFile = sessionDir.resolve("terminal-warning-emitted");
       Files.writeString(markerFile, "");
@@ -187,7 +187,6 @@ public class WarnUnknownTerminalTest
     {
       TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
-      Files.deleteIfExists(envFile);
     }
   }
 
@@ -199,9 +198,7 @@ public class WarnUnknownTerminalTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-no-warn-known-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    Path envFile = Files.createTempFile("test-env", ".sh");
-    try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, "test-session-known", envFile,
-      TerminalType.ITERM))
+    try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, TerminalType.ITERM))
     {
       ensureEmojiWidthsFile(pluginRoot);
 
@@ -213,14 +210,13 @@ public class WarnUnknownTerminalTest
       requireThat(result.stderr(), "stderr").isEmpty();
 
       // Marker file should not be created
-      Path markerFile = scope.getClaudeSessionPath(scope.getClaudeSessionId()).resolve("terminal-warning-emitted");
+      Path markerFile = scope.getClaudeSessionPath("test-session-known").resolve("terminal-warning-emitted");
       requireThat(Files.exists(markerFile), "markerFileExists").isFalse();
     }
     finally
     {
       TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
-      Files.deleteIfExists(envFile);
     }
   }
 
@@ -233,9 +229,7 @@ public class WarnUnknownTerminalTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-empty-session-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    Path envFile = Files.createTempFile("test-env", ".sh");
-    try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, "test-session-empty", envFile,
-      TerminalType.UNKNOWN))
+    try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, TerminalType.UNKNOWN))
     {
       ensureEmojiWidthsFile(pluginRoot);
 
@@ -247,7 +241,6 @@ public class WarnUnknownTerminalTest
     {
       TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
-      Files.deleteIfExists(envFile);
     }
   }
 
@@ -260,14 +253,13 @@ public class WarnUnknownTerminalTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-readonly-session-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    Path envFile = Files.createTempFile("test-env", ".sh");
     String sessionId = "test-session-" + System.nanoTime();
-    try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, sessionId, envFile, TerminalType.UNKNOWN))
+    try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, TerminalType.UNKNOWN))
     {
       ensureEmojiWidthsFile(pluginRoot);
 
       // Create session directory and make it read-only so marker file write fails
-      Path sessionDir = scope.getClaudeSessionPath(scope.getClaudeSessionId());
+      Path sessionDir = scope.getClaudeSessionPath(sessionId);
       Files.createDirectories(sessionDir);
       Set<PosixFilePermission> readOnly = Set.of(
         PosixFilePermission.OWNER_READ,
@@ -297,7 +289,6 @@ public class WarnUnknownTerminalTest
     {
       TestUtils.deleteDirectoryRecursively(projectPath);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
-      Files.deleteIfExists(envFile);
     }
   }
 }

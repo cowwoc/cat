@@ -66,7 +66,7 @@ public final class CheckDataMigration implements SessionStartHandler
     if (!Files.isRegularFile(configFile))
       return Result.empty();
 
-    Path pluginRoot = scope.getClaudePluginRoot();
+    Path pluginRoot = scope.getPluginRoot();
 
     try
     {

@@ -47,7 +47,7 @@ public final class Entitlements
   {
     requireThat(scope, "scope").isNotNull();
 
-    Path pluginRoot = scope.getClaudePluginRoot();
+    Path pluginRoot = scope.getPluginRoot();
     JsonMapper mapper = scope.getJsonMapper();
     Path tiersFile = pluginRoot.resolve("config").resolve("tiers.json");
     if (!Files.exists(tiersFile))

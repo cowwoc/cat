@@ -66,8 +66,8 @@ public final class GetTokenReportOutput implements SkillOutput
   /**
    * Generates the token report output for this skill.
    * <p>
-   * This class does not accept any arguments. The session ID is resolved from the environment
-   * via {@code new ClaudeEnv().getClaudeSessionId()}.
+   * This class does not accept any arguments. The session ID is resolved from
+   * {@link ClaudeEnv#getSessionId()}.
    *
    * @param args the arguments from the preprocessor directive (must be empty)
    * @return the formatted output, or null if session not found or CLAUDE_SESSION_ID not set
@@ -80,16 +80,8 @@ public final class GetTokenReportOutput implements SkillOutput
     requireThat(args, "args").isNotNull();
     if (args.length > 0)
       throw new IllegalArgumentException("Unexpected arguments: " + String.join(" ", args));
-    String sessionId;
-    try
-    {
-      sessionId = new ClaudeEnv().getClaudeSessionId();
-    }
-    catch (AssertionError _)
-    {
-      return null;
-    }
-    return getOutput(sessionId);
+    String envSessionId = new ClaudeEnv().getSessionId();
+    return getOutput(envSessionId);
   }
 
   /**

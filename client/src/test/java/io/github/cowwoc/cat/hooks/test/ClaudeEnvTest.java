@@ -21,18 +21,18 @@ import java.util.Map;
 public final class ClaudeEnvTest
 {
   /**
-   * Verifies that getClaudeSessionId() returns the session ID from a supplied environment map.
+   * Verifies that getSessionId() returns the session ID from a supplied environment map.
    */
   @Test
   public void sessionIdIsReturnedFromEnvironment()
   {
     Map<String, String> env = Map.of("CLAUDE_SESSION_ID", "test-session-123");
     ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(env);
-    requireThat(claudeEnv.getClaudeSessionId(), "sessionId").isEqualTo("test-session-123");
+    requireThat(claudeEnv.getSessionId(), "sessionId").isEqualTo("test-session-123");
   }
 
   /**
-   * Verifies that getClaudeSessionId() throws AssertionError when CLAUDE_SESSION_ID is not set.
+   * Verifies that getSessionId() throws AssertionError when CLAUDE_SESSION_ID is not set.
    */
   @Test(expectedExceptions = AssertionError.class,
     expectedExceptionsMessageRegExp = ".*CLAUDE_SESSION_ID.*")
@@ -40,7 +40,7 @@ public final class ClaudeEnvTest
   {
     Map<String, String> env = Map.of();
     ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(env);
-    claudeEnv.getClaudeSessionId();
+    claudeEnv.getSessionId();
   }
 
   /**
@@ -67,18 +67,18 @@ public final class ClaudeEnvTest
   }
 
   /**
-   * Verifies that getClaudePluginRoot() returns the plugin root path from a supplied environment map.
+   * Verifies that getPluginRoot() returns the plugin root path from a supplied environment map.
    */
   @Test
   public void pluginRootIsReturnedFromEnvironment()
   {
     Map<String, String> env = Map.of("CLAUDE_PLUGIN_ROOT", "/plugin");
     ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(env);
-    requireThat(claudeEnv.getClaudePluginRoot(), "pluginRoot").isEqualTo(Path.of("/plugin"));
+    requireThat(claudeEnv.getPluginRoot(), "pluginRoot").isEqualTo(Path.of("/plugin"));
   }
 
   /**
-   * Verifies that getClaudePluginRoot() throws AssertionError when CLAUDE_PLUGIN_ROOT is not set.
+   * Verifies that getPluginRoot() throws AssertionError when CLAUDE_PLUGIN_ROOT is not set.
    */
   @Test(expectedExceptions = AssertionError.class,
     expectedExceptionsMessageRegExp = ".*CLAUDE_PLUGIN_ROOT.*")
@@ -86,22 +86,22 @@ public final class ClaudeEnvTest
   {
     Map<String, String> env = Map.of();
     ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(env);
-    claudeEnv.getClaudePluginRoot();
+    claudeEnv.getPluginRoot();
   }
 
   /**
-   * Verifies that getClaudeEnvFile() returns the env file path from a supplied environment map.
+   * Verifies that getEnvFile() returns the env file path from a supplied environment map.
    */
   @Test
   public void envFileIsReturnedFromEnvironment()
   {
     Map<String, String> env = Map.of("CLAUDE_ENV_FILE", "/tmp/env.sh");
     ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(env);
-    requireThat(claudeEnv.getClaudeEnvFile(), "envFile").isEqualTo(Path.of("/tmp/env.sh"));
+    requireThat(claudeEnv.getEnvFile(), "envFile").isEqualTo(Path.of("/tmp/env.sh"));
   }
 
   /**
-   * Verifies that getClaudeEnvFile() throws AssertionError when CLAUDE_ENV_FILE is not set.
+   * Verifies that getEnvFile() throws AssertionError when CLAUDE_ENV_FILE is not set.
    */
   @Test(expectedExceptions = AssertionError.class,
     expectedExceptionsMessageRegExp = ".*CLAUDE_ENV_FILE.*")
@@ -109,7 +109,7 @@ public final class ClaudeEnvTest
   {
     Map<String, String> env = Map.of();
     ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(env);
-    claudeEnv.getClaudeEnvFile();
+    claudeEnv.getEnvFile();
   }
 
   /**

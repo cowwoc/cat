@@ -693,7 +693,7 @@ public final class RecordLearning
       return;
     }
 
-    String sessionId = new ClaudeEnv().getClaudeSessionId();
+    String sessionId = new ClaudeEnv().getSessionId();
     RecordLearning cmd = new RecordLearning(scope, projectPath, Clock.systemUTC());
 
     try

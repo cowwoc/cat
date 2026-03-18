@@ -46,7 +46,7 @@ public final class InjectSubAgentRulesTest
     Path pluginDir = Files.createTempDirectory("inject-subagent-plugin-root-");
     try (JvmScope scope = new TestJvmScope(projectPath, pluginDir))
     {
-      Path pluginRulesDir = scope.getClaudePluginRoot().resolve("rules");
+      Path pluginRulesDir = scope.getPluginRoot().resolve("rules");
       Files.createDirectories(pluginRulesDir);
       // No subAgents frontmatter → null → matches all subagents
       Files.writeString(pluginRulesDir.resolve("plugin-subagent-rule.md"), """
@@ -90,7 +90,7 @@ public final class InjectSubAgentRulesTest
     Path pluginDir = Files.createTempDirectory("inject-subagent-override-plugin-");
     try (JvmScope scope = new TestJvmScope(projectPath, pluginDir))
     {
-      Path pluginRulesDir = scope.getClaudePluginRoot().resolve("rules");
+      Path pluginRulesDir = scope.getPluginRoot().resolve("rules");
       Files.createDirectories(pluginRulesDir);
       Files.writeString(pluginRulesDir.resolve("shared-subagent-rule.md"), """
         ---
@@ -250,7 +250,7 @@ public final class InjectSubAgentRulesTest
     Path pluginDir = Files.createTempDirectory("inject-subagent-override-empty-plugin-");
     try (JvmScope scope = new TestJvmScope(projectPath, pluginDir))
     {
-      Path pluginRulesDir = scope.getClaudePluginRoot().resolve("rules");
+      Path pluginRulesDir = scope.getPluginRoot().resolve("rules");
       Files.createDirectories(pluginRulesDir);
       // Plugin rule: null subAgents → matches all subagent types — passes filter
       Files.writeString(pluginRulesDir.resolve("toggled-subagent-rule.md"), """

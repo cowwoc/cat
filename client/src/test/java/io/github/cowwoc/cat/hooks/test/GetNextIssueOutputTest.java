@@ -8,7 +8,6 @@ package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetNextIssueOutput;
-import io.github.cowwoc.cat.hooks.skills.TerminalType;
 import io.github.cowwoc.cat.hooks.util.IssueGoalReader;
 import org.testng.annotations.Test;
 
@@ -327,30 +326,6 @@ public class GetNextIssueOutputTest
         "--session-id", "00000000-0000-0000-0000-000000000001",
         "--project-dir", "/tmp"
       });
-    }
-  }
-
-  /**
-   * Verifies that TestJvmScope rejects a blank session ID, matching the production contract
-   * where CLAUDE_SESSION_ID must be set.
-   */
-  @Test(expectedExceptions = AssertionError.class,
-    expectedExceptionsMessageRegExp = ".*must not be blank.*")
-  public void getOutputThrowsWhenSessionIdMissing() throws IOException
-  {
-    Path projectPath = Files.createTempDirectory("test-project-session");
-    Path pluginRoot = Files.createTempDirectory("test-plugin-session");
-    Path envFile = Files.createTempFile("test-env", ".sh");
-    try
-    {
-      // Constructing with blank sessionId must throw, matching MainJvmScope behavior
-      new TestJvmScope(projectPath, pluginRoot, "", envFile, TerminalType.WINDOWS_TERMINAL);
-    }
-    finally
-    {
-      Files.deleteIfExists(envFile);
-      TestUtils.deleteDirectoryRecursively(pluginRoot);
-      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 

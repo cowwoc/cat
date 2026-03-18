@@ -59,7 +59,7 @@ public final class InjectMainAgentRules implements SessionStartHandler
   {
     requireThat(input, "input").isNotNull();
 
-    Path pluginRulesDir = scope.getClaudePluginRoot().resolve("rules");
+    Path pluginRulesDir = scope.getPluginRoot().resolve("rules");
     Path projectRulesDir = scope.getCatDir().resolve("rules");
     // Rules with paths: restrictions are injected dynamically by InjectPathRules (PreToolUse hook)
     // when matching files are accessed. Only non-paths rules are injected here at session start.

@@ -62,14 +62,14 @@ public class GetSkillTest
   }
 
   /**
-   * Verifies that blank agent ID falls back to ClaudeEnv, which throws AssertionError
-   * when CLAUDE_SESSION_ID is not set in the environment.
+   * Verifies that blank agent ID throws IllegalArgumentException because a blank ID is a skill
+   * misconfiguration — the SKILL.md must provide a non-blank $0.
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = AssertionError.class,
-    expectedExceptionsMessageRegExp = ".*CLAUDE_SESSION_ID.*")
-  public void constructorBlankAgentIdThrowsWhenEnvVarNotSet() throws IOException
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*catAgentId is blank.*")
+  public void constructorBlankAgentIdThrowsIllegalArgumentException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -83,14 +83,14 @@ public class GetSkillTest
   }
 
   /**
-   * Verifies that whitespace-only agent ID falls back to ClaudeEnv, which throws AssertionError
-   * when CLAUDE_SESSION_ID is not set in the environment.
+   * Verifies that whitespace-only agent ID throws IllegalArgumentException because a blank ID is a skill
+   * misconfiguration — the SKILL.md must provide a non-blank $0.
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = AssertionError.class,
-    expectedExceptionsMessageRegExp = ".*CLAUDE_SESSION_ID.*")
-  public void constructorWhitespaceAgentIdThrowsWhenEnvVarNotSet() throws IOException
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*catAgentId is blank.*")
+  public void constructorWhitespaceAgentIdThrowsIllegalArgumentException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -1524,6 +1524,55 @@ More content here.
       Path doubleQualifiedMarker = loadedDir.resolve(
         URLEncoder.encode("cat:cat:test-skill", StandardCharsets.UTF_8));
       requireThat(Files.exists(doubleQualifiedMarker), "doubleQualifiedExists").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that variable expansion inside {@code !} directive strings uses {@code System.getenv()}
+   * directly, not the injectable {@code ClaudeEnv}.
+   * <p>
+   * When {@code GetSkill} is constructed with a {@code ClaudeEnv} that has no variables (empty map),
+   * a real environment variable that exists in the process (like {@code PATH}) should still be
+   * expanded in directive strings because expansion reads from {@code System.getenv()}.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadExpandsVariableViaSystemGetenv() throws IOException
+  {
+    // PATH is always set in the process environment
+    String pathValue = System.getenv("PATH");
+    requireThat(pathValue, "pathValue").isNotNull();
+
+    Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      // Set up a launcher so the directive is executed and args are visible in output
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutput "$@"
+        """);
+
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      // ${PATH} inside the directive args — must be expanded via System.getenv()
+      Files.writeString(companionDir.resolve("first-use.md"), """
+        Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output" "${PATH}"`
+        """);
+
+      // GetSkill uses System.getenv() directly for variable expansion
+      String agentId = UUID.randomUUID().toString();
+      GetSkill loader = new GetSkill(scope, List.of(agentId));
+      String result = loader.load("test-skill");
+
+      // ${PATH} must have been expanded to the real PATH value via System.getenv()
+      requireThat(result, "result").contains("ARGS:" + pathValue);
     }
     finally
     {

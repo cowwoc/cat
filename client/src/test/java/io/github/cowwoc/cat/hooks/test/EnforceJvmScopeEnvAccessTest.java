@@ -8,7 +8,6 @@ package io.github.cowwoc.cat.hooks.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -20,17 +19,20 @@ import java.util.List;
 import java.util.stream.Stream;
 
 /**
- * Enforces that only MainJvmScope.java, ClaudeEnv.java, and TerminalType.java call System.getenv() directly.
+ * Enforces that only MainJvmScope.java, ClaudeEnv.java, GetSkill.java, and TerminalType.java call
+ * System.getenv() directly.
  * <p>
  * Hook handlers must access session-specific values (session ID, env file path) from HookInput JSON,
  * not from environment variables. Non-hook CLI commands use ClaudeEnv to read environment variables.
+ * GetSkill.java is allowed because it is a CLI tool that does generic variable expansion (reading
+ * arbitrary environment variables for directive string substitution).
  * TerminalType.detect() is allowed because it wraps System.getenv() for terminal detection.
  */
 public final class EnforceJvmScopeEnvAccessTest
 {
   /**
-   * Verifies that no Java file except MainJvmScope.java, ClaudeEnv.java, and TerminalType.java contains
-   * System.getenv().
+   * Verifies that no Java file except MainJvmScope.java, ClaudeEnv.java, GetSkill.java, and
+   * TerminalType.java contains System.getenv().
    *
    * @throws IOException if scanning source files fails
    */
@@ -42,28 +44,22 @@ public final class EnforceJvmScopeEnvAccessTest
 
     List<String> violations = new ArrayList<>();
 
+    List<Path> javaFiles;
     try (Stream<Path> paths = Files.walk(sourceRoot))
     {
-      paths.filter(Files::isRegularFile).
+      javaFiles = paths.filter(Files::isRegularFile).
         filter(path -> path.toString().endsWith(".java")).
         filter(path -> !path.toString().endsWith("MainJvmScope.java")).
         filter(path -> !path.toString().endsWith("ClaudeEnv.java")).
+        filter(path -> !path.toString().endsWith("GetSkill.java")).
         filter(path -> !path.toString().endsWith("TerminalType.java")).
-        forEach(path ->
-        {
-          try
-          {
-            String content = Files.readString(path);
-            if (content.contains("System.getenv("))
-            {
-              violations.add(sourceRoot.relativize(path).toString());
-            }
-          }
-          catch (IOException e)
-          {
-            throw WrappedCheckedException.wrap(e);
-          }
-        });
+        toList();
+    }
+    for (Path path : javaFiles)
+    {
+      String content = Files.readString(path);
+      if (content.contains("System.getenv("))
+        violations.add(sourceRoot.relativize(path).toString());
     }
 
     if (!violations.isEmpty())
@@ -78,8 +74,11 @@ public final class EnforceJvmScopeEnvAccessTest
         """ + String.join("\n", violations.stream().map(v -> "  - " + v).toList()) + """
 
 
-        FIX: For hook handlers, use HookInput.getSessionId() instead of System.getenv("CLAUDE_SESSION_ID").
-        FIX: For CLI commands, use new ClaudeEnv().getClaudeSessionId() instead of System.getenv().
+        FIX depends on context:
+          In CLI main() methods: new ClaudeEnv().getSessionId() or new ClaudeEnv().getEnvFile() \
+        are acceptable — ClaudeEnv wraps System.getenv() for non-hook commands.
+          In hook handlers / business logic: read session-specific values from HookInput JSON, \
+        not environment variables — hooks must not call System.getenv() directly.
         """;
       throw new AssertionError(message);
     }

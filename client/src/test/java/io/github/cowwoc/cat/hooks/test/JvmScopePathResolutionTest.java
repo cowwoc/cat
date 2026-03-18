@@ -7,7 +7,6 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.AbstractJvmScope;
-import io.github.cowwoc.cat.hooks.skills.TerminalType;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -60,8 +59,8 @@ public final class JvmScopePathResolutionTest
     Path tempDir = Files.createTempDirectory("test-scope-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path result = scope.getCatSessionPath(scope.getClaudeSessionId());
-      String sessionId = scope.getClaudeSessionId();
+      Path result = scope.getCatSessionPath("test-session");
+      String sessionId = "test-session";
       Path expected = tempDir.resolve(".cat").resolve("work").resolve("sessions").resolve(sessionId);
       requireThat(result, "result").isEqualTo(expected);
     }
@@ -142,7 +141,7 @@ public final class JvmScopePathResolutionTest
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       scope.close();
-      scope.getCatSessionPath(scope.getClaudeSessionId());
+      scope.getCatSessionPath("test-session");
     }
     finally
     {
@@ -187,9 +186,9 @@ public final class JvmScopePathResolutionTest
     Path tempDir = Files.createTempDirectory("test-scope-");
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path result = scope.getClaudeSessionPath(scope.getClaudeSessionId());
+      Path result = scope.getClaudeSessionPath("test-session");
       String encoded = AbstractJvmScope.encodeProjectPath(tempDir.toString());
-      String sessionId = scope.getClaudeSessionId();
+      String sessionId = "test-session";
       Path expected = tempDir.resolve("projects").resolve(encoded).resolve(sessionId);
       requireThat(result, "result").isEqualTo(expected);
     }
@@ -209,16 +208,15 @@ public final class JvmScopePathResolutionTest
   public void crossSessionPathDifferentiation() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    Path envFile = tempDir.resolve("env.sh");
-    try (TestJvmScope scope1 = new TestJvmScope(tempDir, tempDir, "session-a", envFile, TerminalType.WINDOWS_TERMINAL);
-      TestJvmScope scope2 = new TestJvmScope(tempDir, tempDir, "session-b", envFile, TerminalType.WINDOWS_TERMINAL))
+    try (TestJvmScope scope1 = new TestJvmScope(tempDir, tempDir);
+      TestJvmScope scope2 = new TestJvmScope(tempDir, tempDir))
     {
-      Path sessionPath1 = scope1.getClaudeSessionPath(scope1.getClaudeSessionId());
-      Path sessionPath2 = scope2.getClaudeSessionPath(scope2.getClaudeSessionId());
+      Path sessionPath1 = scope1.getClaudeSessionPath("session-a");
+      Path sessionPath2 = scope2.getClaudeSessionPath("session-b");
       requireThat(sessionPath1, "sessionPath1").isNotEqualTo(sessionPath2);
 
-      Path catSessionPath1 = scope1.getCatSessionPath(scope1.getClaudeSessionId());
-      Path catSessionPath2 = scope2.getCatSessionPath(scope2.getClaudeSessionId());
+      Path catSessionPath1 = scope1.getCatSessionPath("session-a");
+      Path catSessionPath2 = scope2.getCatSessionPath("session-b");
       requireThat(catSessionPath1, "catSessionPath1").isNotEqualTo(catSessionPath2);
     }
     finally
@@ -263,7 +261,7 @@ public final class JvmScopePathResolutionTest
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       scope.close();
-      scope.getClaudeSessionPath(scope.getClaudeSessionId());
+      scope.getClaudeSessionPath("test-session");
     }
     finally
     {
@@ -357,7 +355,7 @@ public final class JvmScopePathResolutionTest
 
     try (TestJvmScope scope = new TestJvmScope(projectPath, pluginDir))
     {
-      Path result = scope.getClaudeSessionPath(scope.getClaudeSessionId());
+      Path result = scope.getClaudeSessionPath("test-session");
       String encoded = AbstractJvmScope.encodeProjectPath(projectPath.toString());
       Path expected = projectPath.resolve("projects").resolve(encoded).resolve("test-session");
       requireThat(result, "result").isEqualTo(expected);

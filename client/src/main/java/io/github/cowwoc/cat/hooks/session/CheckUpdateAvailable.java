@@ -63,7 +63,7 @@ public final class CheckUpdateAvailable implements SessionStartHandler
   public Result handle(HookInput input)
   {
     requireThat(input, "input").isNotNull();
-    Path pluginRoot = scope.getClaudePluginRoot();
+    Path pluginRoot = scope.getPluginRoot();
 
     try
     {

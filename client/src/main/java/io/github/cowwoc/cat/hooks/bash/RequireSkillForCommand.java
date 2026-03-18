@@ -78,7 +78,7 @@ public final class RequireSkillForCommand implements BashHandler
    */
   private List<GuardEntry> loadGuards()
   {
-    Path registryFile = scope.getClaudePluginRoot().resolve("config").resolve("skill-triggers.json");
+    Path registryFile = scope.getPluginRoot().resolve("config").resolve("skill-triggers.json");
     List<GuardEntry> result = new ArrayList<>();
     try
     {

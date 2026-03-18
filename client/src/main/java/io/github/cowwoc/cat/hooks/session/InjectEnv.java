@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.hooks.session;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.ClaudeEnv;
 import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
@@ -31,17 +32,34 @@ import java.nio.file.StandardOpenOption;
 public final class InjectEnv implements SessionStartHandler
 {
   private final JvmScope scope;
+  private final ClaudeEnv claudeEnv;
 
   /**
-   * Creates a new InjectEnv handler.
+   * Creates a new InjectEnv handler reading the env file path from the process environment.
    *
    * @param scope the JVM scope
    * @throws NullPointerException if {@code scope} is null
    */
   public InjectEnv(JvmScope scope)
   {
+    this(scope, new ClaudeEnv());
+  }
+
+  /**
+   * Creates a new InjectEnv handler with an explicit ClaudeEnv.
+   * <p>
+   * Intended for tests where the process environment is not populated with Claude variables.
+   *
+   * @param scope     the JVM scope
+   * @param claudeEnv the ClaudeEnv to read the env file path from
+   * @throws NullPointerException if {@code scope} or {@code claudeEnv} are null
+   */
+  public InjectEnv(JvmScope scope, ClaudeEnv claudeEnv)
+  {
     requireThat(scope, "scope").isNotNull();
+    requireThat(claudeEnv, "claudeEnv").isNotNull();
     this.scope = scope;
+    this.claudeEnv = claudeEnv;
   }
 
   /**
@@ -54,7 +72,7 @@ public final class InjectEnv implements SessionStartHandler
    * For source="resume", writes directly to the resumed session's env directory (identified by session_id from
    * stdin JSON) using TRUNCATE_EXISTING to overwrite any previously written content.
    * <p>
-   * The env file path is read from the {@code CLAUDE_ENV_FILE} environment variable via {@link ClaudeEnv}.
+   * The env file path is obtained from {@link ClaudeEnv#getEnvFile()}.
    *
    * @param input the hook input
    * @return a result with a warning if a symlink was skipped, otherwise empty
@@ -69,7 +87,7 @@ public final class InjectEnv implements SessionStartHandler
   public Result handle(HookInput input)
   {
     requireThat(input, "input").isNotNull();
-    Path envPath = scope.getClaudeEnvFile();
+    Path envPath = claudeEnv.getEnvFile();
     if (Files.isSymbolicLink(envPath))
       return Result.context("InjectEnv: CLAUDE_ENV_FILE is a symlink - skipping for security");
 
@@ -115,7 +133,7 @@ public final class InjectEnv implements SessionStartHandler
   private Result handleResume(Path envPath, String sessionId)
   {
     String projectPath = scope.getProjectPath().toString();
-    String pluginRoot = scope.getClaudePluginRoot().toString();
+    String pluginRoot = scope.getPluginRoot().toString();
     validateEnvValue(projectPath, "CLAUDE_PROJECT_DIR");
     validateEnvValue(pluginRoot, "CLAUDE_PLUGIN_ROOT");
     validateEnvValue(sessionId, "CLAUDE_SESSION_ID");
@@ -152,7 +170,7 @@ public final class InjectEnv implements SessionStartHandler
   private Result handleStartup(Path envPath, String sessionId)
   {
     String projectPath = scope.getProjectPath().toString();
-    String pluginRoot = scope.getClaudePluginRoot().toString();
+    String pluginRoot = scope.getPluginRoot().toString();
     validateEnvValue(projectPath, "CLAUDE_PROJECT_DIR");
     validateEnvValue(pluginRoot, "CLAUDE_PLUGIN_ROOT");
     validateEnvValue(sessionId, "CLAUDE_SESSION_ID");
