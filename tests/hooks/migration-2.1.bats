@@ -854,3 +854,163 @@ EOF
     run grep '"displayWidth": 120' ".cat/config.local.json"
     [ "$status" -eq 0 ]
 }
+
+# ─── Phase 17: Convert bare sub-issue names to qualified names ───────────────
+
+@test "2.1.sh phase 17: converts bare names to qualified names in Decomposed Into section" {
+    mkdir -p "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/parent-issue"
+    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/parent-issue/STATE.md" <<'EOF'
+# State
+
+- **Status:** open
+- **Progress:** 0%
+- **Dependencies:** []
+- **Blocks:** []
+
+## Decomposed Into
+- rename-config-java-core
+- rename-config-plugin-docs
+EOF
+    setup_config_fixture
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    run grep "2\.1-rename-config-java-core" ".cat/issues/v2/v2.1/parent-issue/STATE.md"
+    [ "$status" -eq 0 ]
+    run grep "2\.1-rename-config-plugin-docs" ".cat/issues/v2/v2.1/parent-issue/STATE.md"
+    [ "$status" -eq 0 ]
+    # Bare names should be gone
+    run grep "^- rename-config-java-core$" ".cat/issues/v2/v2.1/parent-issue/STATE.md"
+    [ "$status" -ne 0 ]
+}
+
+@test "2.1.sh phase 17: skips already-qualified names in Decomposed Into section" {
+    mkdir -p "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/parent-issue"
+    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/parent-issue/STATE.md" <<'EOF'
+# State
+
+- **Status:** open
+- **Progress:** 0%
+- **Dependencies:** []
+- **Blocks:** []
+
+## Decomposed Into
+- 2.1-rename-config-java-core
+- 2.1-rename-config-plugin-docs
+EOF
+    setup_config_fixture
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    # Already-qualified names should be unchanged
+    run grep "2\.1-rename-config-java-core" ".cat/issues/v2/v2.1/parent-issue/STATE.md"
+    [ "$status" -eq 0 ]
+    # Should NOT have double-prefixed names
+    run grep "2\.1-2\.1-rename-config-java-core" ".cat/issues/v2/v2.1/parent-issue/STATE.md"
+    [ "$status" -ne 0 ]
+}
+
+@test "2.1.sh phase 17: idempotent when run twice" {
+    mkdir -p "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/parent-issue"
+    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/parent-issue/STATE.md" <<'EOF'
+# State
+
+- **Status:** open
+- **Progress:** 0%
+- **Dependencies:** []
+- **Blocks:** []
+
+## Decomposed Into
+- rename-config-java-core
+EOF
+    setup_config_fixture
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    # After two runs, should be qualified exactly once
+    run grep "2\.1-rename-config-java-core" ".cat/issues/v2/v2.1/parent-issue/STATE.md"
+    [ "$status" -eq 0 ]
+    run grep "2\.1-2\.1-rename-config-java-core" ".cat/issues/v2/v2.1/parent-issue/STATE.md"
+    [ "$status" -ne 0 ]
+}
+
+@test "2.1.sh phase 17: skips STATE.md without Decomposed Into section" {
+    mkdir -p "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/simple-issue"
+    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/simple-issue/STATE.md" <<'EOF'
+# State
+
+- **Status:** open
+- **Progress:** 0%
+- **Dependencies:** []
+- **Blocks:** []
+EOF
+    setup_config_fixture
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    # File should be unchanged (no Decomposed Into section added)
+    run grep "Decomposed Into" ".cat/issues/v2/v2.1/simple-issue/STATE.md"
+    [ "$status" -ne 0 ]
+}
+
+@test "2.1.sh phase 17: preserves trailing description text after bare name" {
+    mkdir -p "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/parent-issue"
+    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/parent-issue/STATE.md" <<'EOF'
+# State
+
+- **Status:** open
+- **Progress:** 0%
+
+## Decomposed Into
+- rename-config-java-core (core Java files)
+- rename-config-plugin-docs (docs and plugin files)
+EOF
+    setup_config_fixture
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    run grep "2\.1-rename-config-java-core (core Java files)" ".cat/issues/v2/v2.1/parent-issue/STATE.md"
+    [ "$status" -eq 0 ]
+    run grep "2\.1-rename-config-plugin-docs (docs and plugin files)" ".cat/issues/v2/v2.1/parent-issue/STATE.md"
+    [ "$status" -eq 0 ]
+}
+
+@test "2.1.sh phase 17: does not modify content outside Decomposed Into section" {
+    mkdir -p "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/parent-issue"
+    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/parent-issue/STATE.md" <<'EOF'
+# State
+
+- **Status:** open
+- **Progress:** 0%
+- **Dependencies:** [some-dep]
+- **Blocks:** [some-block]
+
+## Decomposed Into
+- rename-config-java-core
+
+## Parallel Execution Plan
+
+### Wave 1 (Concurrent)
+| Issue | Dependencies |
+|-------|-------------|
+| rename-config-java-core | None |
+EOF
+    setup_config_fixture
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    # The table entry outside the Decomposed Into section should NOT be prefixed
+    run grep "| rename-config-java-core | None |" ".cat/issues/v2/v2.1/parent-issue/STATE.md"
+    [ "$status" -eq 0 ]
+    # The Decomposed Into entry should be prefixed
+    run grep "^- 2\.1-rename-config-java-core$" ".cat/issues/v2/v2.1/parent-issue/STATE.md"
+    [ "$status" -eq 0 ]
+}
