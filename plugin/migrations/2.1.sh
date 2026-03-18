@@ -38,6 +38,7 @@ set -euo pipefail
 # 15. Rename ## Execution Waves → ## Sub-Agent Waves in PLAN.md files
 #     (all issues, including closed ones)
 # 16. Rename cat-config.json → config.json and cat-config.local.json → config.local.json
+# 17. Convert bare sub-issue names to qualified names in "Decomposed Into" sections
 
 trap 'echo "ERROR in 2.1.sh at line $LINENO: $BASH_COMMAND" >&2; exit 1' ERR
 
@@ -1215,6 +1216,74 @@ else
     fi
 
     log_migration "Phase 16 complete: $phase16_changed files changed"
+fi
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase 17: Convert bare sub-issue names to qualified names in "Decomposed Into" sections
+# ──────────────────────────────────────────────────────────────────────────────
+
+log_migration "Phase 17: Convert bare sub-issue names to qualified names in Decomposed Into sections"
+
+# Issue-level STATE.md files live at .cat/issues/v*/v*.*/issue-name/STATE.md (depth 4 from issues/).
+issue_state_files=$(find .cat/issues -path "*v*.*/*" -name "STATE.md" -mindepth 4 -maxdepth 4 -type f \
+    2>/dev/null || true)
+
+if [[ -z "$issue_state_files" ]]; then
+    log_migration "No issue-level STATE.md files found - skipping phase 17"
+else
+    total_count=$(echo "$issue_state_files" | wc -l | tr -d ' ')
+    log_migration "Found $total_count issue-level STATE.md files to check"
+
+    phase17_changed=0
+    phase17_skipped=0
+
+    while IFS= read -r state_file; do
+        [[ -z "$state_file" ]] && continue
+
+        # Skip files without a "Decomposed Into" section
+        if ! grep -q "^## Decomposed Into" "$state_file" 2>/dev/null; then
+            continue
+        fi
+
+        # Extract version prefix from path (e.g., v2.1 -> 2.1-)
+        version_dir=$(echo "$state_file" | sed 's|.*/v[0-9]*/\(v[0-9]*\.[0-9]*\)/.*|\1|')
+        version_prefix="${version_dir#v}-"
+
+        # Validate we got a proper version prefix (digits.digits-)
+        if ! [[ "$version_prefix" =~ ^[0-9]+\.[0-9]+-$ ]]; then
+            log_migration "  Warning: Could not extract version prefix from $state_file (got '$version_prefix') - skipping"
+            ((phase17_skipped++)) || true
+            continue
+        fi
+
+        # Use awk to transform bare names in the Decomposed Into section only
+        # A "bare name" is a list item (^- ) that does NOT start with a digit (not yet qualified)
+        new_content=$(awk -v prefix="$version_prefix" '
+            /^## Decomposed Into/ { in_section=1; print; next }
+            in_section && /^## / { in_section=0 }
+            in_section && /^- / {
+                # Check if line starts with "- " followed by a version prefix (digit.digit-)
+                if ($0 ~ /^- [0-9]+\.[0-9]+-/) {
+                    print  # already qualified
+                } else {
+                    # Prefix the bare name with version prefix
+                    sub(/^- /, "- " prefix)
+                    print
+                }
+                next
+            }
+            { print }
+        ' "$state_file")
+
+        if [[ "$new_content" != "$(cat "$state_file")" ]]; then
+            printf '%s\n' "$new_content" > "$state_file"
+            ((phase17_changed++)) || true
+            log_migration "  Updated: $state_file (prefix: $version_prefix)"
+        fi
+
+    done <<< "$issue_state_files"
+
+    log_migration "Phase 17 complete: $phase17_changed files changed, $phase17_skipped skipped"
 fi
 
 log_success "Migration to 2.1 completed"
