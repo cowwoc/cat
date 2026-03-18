@@ -124,6 +124,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - refactor-learn-skill-files
 - remove-jvmscope-claudeenv-duplicates
 - fix-get-diff-agent-missing-arg
+- add-write-session-marker-cli
 
 
 ## Issues Closed
