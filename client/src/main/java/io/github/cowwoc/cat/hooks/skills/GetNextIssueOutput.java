@@ -126,7 +126,9 @@ public final class GetNextIssueOutput implements SkillOutput
     String excludePattern = parsed.excludePattern();
 
     if (sessionId.isBlank())
-      sessionId = new ClaudeEnv().getClaudeSessionId();
+    {
+      sessionId = new ClaudeEnv().getSessionId();
+    }
     if (projectPath.isEmpty())
       projectPath = scope.getProjectPath().toString();
 

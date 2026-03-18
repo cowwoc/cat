@@ -189,7 +189,7 @@ public abstract class AbstractJvmScope implements JvmScope
    */
   private String derivePluginPrefix()
   {
-    Path pluginRoot = getClaudePluginRoot().toAbsolutePath().normalize();
+    Path pluginRoot = getPluginRoot().toAbsolutePath().normalize();
     Path slugDir = pluginRoot.getParent();
     if (slugDir == null)
       throw new AssertionError("Plugin root has no parent directory: " + pluginRoot);

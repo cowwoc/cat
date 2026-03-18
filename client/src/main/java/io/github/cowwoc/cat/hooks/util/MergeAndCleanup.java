@@ -463,7 +463,7 @@ public final class MergeAndCleanup
         }
       }
 
-      String pluginRoot = scope.getClaudePluginRoot().toString();
+      String pluginRoot = scope.getPluginRoot().toString();
       MergeAndCleanup cmd = new MergeAndCleanup(scope);
       try
       {

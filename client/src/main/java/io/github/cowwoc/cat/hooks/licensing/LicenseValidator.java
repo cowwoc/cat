@@ -81,7 +81,7 @@ public final class LicenseValidator
       return LicenseResult.core();
 
     // Find public key
-    Path keyPath = scope.getClaudePluginRoot().resolve("config").resolve("cat-public-key.pem");
+    Path keyPath = scope.getPluginRoot().resolve("config").resolve("cat-public-key.pem");
     if (!Files.exists(keyPath))
       return LicenseResult.error("Public key not found");
 
@@ -188,8 +188,7 @@ public final class LicenseValidator
         {
           Duration pastExpiry = Duration.between(expTime, now);
           int daysPastExpiry = (int) pastExpiry.toDays();
-          Duration remaining = Duration.between(now, expTime);
-          daysRemaining = (int) remaining.toDays();
+          daysRemaining = 0;
 
           if (daysPastExpiry <= graceDays)
           {

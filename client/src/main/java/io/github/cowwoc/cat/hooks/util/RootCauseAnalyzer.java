@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
-import io.github.cowwoc.cat.hooks.ClaudeEnv;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.skills.JsonHelper;
@@ -232,8 +231,7 @@ public final class RootCauseAnalyzer
         return;
       }
 
-      ClaudeEnv env = new ClaudeEnv();
-      Path projectPath = env.getProjectPath();
+      Path projectPath = scope.getProjectPath();
       RootCauseAnalyzer analyzer = new RootCauseAnalyzer(projectPath, scope);
       String result = analyzer.analyze(startId);
       System.out.println(result);

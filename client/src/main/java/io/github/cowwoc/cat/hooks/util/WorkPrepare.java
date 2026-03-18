@@ -2054,7 +2054,9 @@ public final class WorkPrepare
     if (!sessionIdOverride.isEmpty())
       sessionId = sessionIdOverride;
     else
-      sessionId = new ClaudeEnv().getClaudeSessionId();
+    {
+      sessionId = new ClaudeEnv().getSessionId();
+    }
 
     PrepareInput input = new PrepareInput(sessionId, excludePattern, issueId, trustLevel);
     WorkPrepare wp = new WorkPrepare(scope);

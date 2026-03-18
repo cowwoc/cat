@@ -452,9 +452,7 @@ public final class RecordLearningTest
     // Use a unique session ID to avoid the WorktreeLock static cache returning stale results
     // from other tests that used the default "test-session" ID.
     String sessionId = UUID.randomUUID().toString();
-    Path envFile = Files.createTempFile("test-env", ".sh");
-    try (JvmScope scope = new TestJvmScope(mainRepo, pluginRoot, sessionId, envFile,
-      io.github.cowwoc.cat.hooks.skills.TerminalType.WINDOWS_TERMINAL))
+    try (JvmScope scope = new TestJvmScope(mainRepo, pluginRoot))
     {
       // Create the worktree at the location WorktreeContext expects:
       // {projectCatDir}/worktrees/{issueId}
@@ -492,7 +490,6 @@ public final class RecordLearningTest
     {
       TestUtils.deleteDirectoryRecursively(mainRepo);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
-      Files.deleteIfExists(envFile);
     }
   }
 
@@ -511,9 +508,7 @@ public final class RecordLearningTest
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
     // Use a unique session ID to avoid the WorktreeLock static cache returning stale results
     String sessionId = UUID.randomUUID().toString();
-    Path envFile = Files.createTempFile("test-env", ".sh");
-    try (JvmScope scope = new TestJvmScope(mainRepo, pluginRoot, sessionId, envFile,
-      io.github.cowwoc.cat.hooks.skills.TerminalType.WINDOWS_TERMINAL))
+    try (JvmScope scope = new TestJvmScope(mainRepo, pluginRoot))
     {
       Path retroDir = mainRepo.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -534,7 +529,6 @@ public final class RecordLearningTest
     {
       TestUtils.deleteDirectoryRecursively(mainRepo);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
-      Files.deleteIfExists(envFile);
     }
   }
 

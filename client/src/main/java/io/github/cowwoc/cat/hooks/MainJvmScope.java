@@ -41,13 +41,6 @@ public final class MainJvmScope extends AbstractJvmScope
       return Path.of(configDir);
     return Path.of(System.getProperty("user.home"), ".claude");
   });
-  private final ConcurrentLazyReference<Path> claudeEnvFile = ConcurrentLazyReference.create(() ->
-  {
-    String envFile = System.getenv("CLAUDE_ENV_FILE");
-    if (envFile == null || envFile.isEmpty())
-      throw new AssertionError("CLAUDE_ENV_FILE is not set");
-    return Path.of(envFile);
-  });
   private final ConcurrentLazyReference<TerminalType> terminalType =
     ConcurrentLazyReference.create(TerminalType::detect);
   private final ConcurrentLazyReference<String> tz = ConcurrentLazyReference.create(() ->
@@ -81,7 +74,7 @@ public final class MainJvmScope extends AbstractJvmScope
   }
 
   @Override
-  public Path getClaudePluginRoot()
+  public Path getPluginRoot()
   {
     ensureOpen();
     return claudePluginRoot.getValue();
@@ -92,13 +85,6 @@ public final class MainJvmScope extends AbstractJvmScope
   {
     ensureOpen();
     return claudeConfigDir.getValue();
-  }
-
-  @Override
-  public Path getClaudeEnvFile()
-  {
-    ensureOpen();
-    return claudeEnvFile.getValue();
   }
 
   @Override
@@ -113,13 +99,6 @@ public final class MainJvmScope extends AbstractJvmScope
   {
     ensureOpen();
     return tz.getValue();
-  }
-
-  @Override
-  public String getEnvironmentVariable(String name)
-  {
-    ensureOpen();
-    return System.getenv(name);
   }
 
   @Override

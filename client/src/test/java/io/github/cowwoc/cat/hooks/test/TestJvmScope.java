@@ -15,7 +15,6 @@ import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -31,11 +30,8 @@ public final class TestJvmScope extends AbstractJvmScope
   private final Path claudeProjectPath;
   private final Path claudePluginRoot;
   private final Path claudeConfigDir;
-  private final String claudeSessionId;
-  private final Path claudeEnvFile;
   private final TerminalType terminalType;
   private final AtomicBoolean closed = new AtomicBoolean();
-  private final Map<String, String> envVars;
   private final Path workDir;
 
   /**
@@ -48,10 +44,7 @@ public final class TestJvmScope extends AbstractJvmScope
       this.claudeProjectPath = Files.createTempDirectory("test-project");
       this.claudePluginRoot = Files.createTempDirectory("test-plugin");
       this.claudeConfigDir = Files.createTempDirectory("test-config");
-      this.claudeSessionId = "test-session";
-      this.claudeEnvFile = Files.createTempFile("test-env", ".sh");
       this.terminalType = TerminalType.WINDOWS_TERMINAL;
-      this.envVars = Map.of();
       this.workDir = claudeProjectPath;
 
       // Copy emoji-widths.json from plugin directory to temporary plugin root
@@ -92,12 +85,9 @@ public final class TestJvmScope extends AbstractJvmScope
     this.claudeProjectPath = claudeProjectPath;
     this.claudePluginRoot = claudePluginRoot;
     this.claudeConfigDir = claudeProjectPath;
-    this.claudeSessionId = "test-session";
-    this.envVars = Map.of();
     this.workDir = workDir;
     try
     {
-      this.claudeEnvFile = Files.createTempFile("test-env", ".sh");
       // Copy emoji-widths.json to the plugin root if it's a temporary directory
       copyEmojiWidthsIfNeeded(claudePluginRoot);
     }
@@ -109,119 +99,48 @@ public final class TestJvmScope extends AbstractJvmScope
   }
 
   /**
-   * Creates a new test JVM scope with injectable environment variables.
+   * Creates a new test JVM scope with a specified terminal type.
    *
    * @param claudeProjectPath the project directory path
    * @param claudePluginRoot the plugin root directory path
-   * @param envVars the environment variables to expose via {@link #getEnvironmentVariable(String)}
+   * @param terminalType the terminal type to use
    * @throws NullPointerException if {@code claudeProjectPath}, {@code claudePluginRoot},
-   *   or {@code envVars} are null
+   *   or {@code terminalType} are null
    */
-  public TestJvmScope(Path claudeProjectPath, Path claudePluginRoot, Map<String, String> envVars)
+  public TestJvmScope(Path claudeProjectPath, Path claudePluginRoot, TerminalType terminalType)
   {
-    requireThat(claudeProjectPath, "claudeProjectPath").isNotNull();
-    requireThat(claudePluginRoot, "claudePluginRoot").isNotNull();
-    requireThat(envVars, "envVars").isNotNull();
-    this.claudeProjectPath = claudeProjectPath;
-    this.claudePluginRoot = claudePluginRoot;
-    this.claudeConfigDir = claudeProjectPath;
-    this.claudeSessionId = "test-session";
-    this.envVars = Map.copyOf(envVars);
-    this.workDir = claudeProjectPath;
-    try
-    {
-      this.claudeEnvFile = Files.createTempFile("test-env", ".sh");
-      copyEmojiWidthsIfNeeded(claudePluginRoot);
-    }
-    catch (IOException e)
-    {
-      throw WrappedCheckedException.wrap(e);
-    }
-    this.terminalType = TerminalType.WINDOWS_TERMINAL;
+    this(claudeProjectPath, claudePluginRoot, terminalType, claudeProjectPath);
   }
 
   /**
-   * Creates a new test JVM scope with injectable environment variables and workDir.
+   * Creates a new test JVM scope with a specified terminal type and independent workDir.
    *
    * @param claudeProjectPath the project directory path
    * @param claudePluginRoot the plugin root directory path
-   * @param envVars the environment variables to expose via {@link #getEnvironmentVariable(String)}
+   * @param terminalType the terminal type to use
    * @param workDir the work directory path (can differ from claudeProjectPath)
    * @throws NullPointerException if any parameter is null
    * @throws IllegalArgumentException if {@code workDir} is not an absolute path
    */
-  public TestJvmScope(Path claudeProjectPath, Path claudePluginRoot, Map<String, String> envVars, Path workDir)
+  public TestJvmScope(Path claudeProjectPath, Path claudePluginRoot, TerminalType terminalType, Path workDir)
   {
     requireThat(claudeProjectPath, "claudeProjectPath").isNotNull();
     requireThat(claudePluginRoot, "claudePluginRoot").isNotNull();
-    requireThat(envVars, "envVars").isNotNull();
-    requireThat(workDir, "workDir").isNotNull().isAbsolute();
-    this.claudeProjectPath = claudeProjectPath;
-    this.claudePluginRoot = claudePluginRoot;
-    this.claudeConfigDir = claudeProjectPath;
-    this.claudeSessionId = "test-session";
-    this.envVars = Map.copyOf(envVars);
-    this.workDir = workDir;
-    try
-    {
-      this.claudeEnvFile = Files.createTempFile("test-env", ".sh");
-      copyEmojiWidthsIfNeeded(claudePluginRoot);
-    }
-    catch (IOException e)
-    {
-      throw WrappedCheckedException.wrap(e);
-    }
-    this.terminalType = TerminalType.WINDOWS_TERMINAL;
-  }
-
-  /**
-   * Creates a new test JVM scope with full configuration.
-   *
-   * @param claudeProjectPath the project directory path
-   * @param claudePluginRoot the plugin root directory path
-   * @param claudeSessionId the session ID
-   * @param claudeEnvFile the environment file path
-   * @param terminalType the terminal type
-   * @throws NullPointerException if {@code claudeProjectPath}, {@code claudePluginRoot},
-   *   {@code claudeSessionId}, {@code claudeEnvFile}, or {@code terminalType} are null
-   */
-  public TestJvmScope(Path claudeProjectPath, Path claudePluginRoot, String claudeSessionId,
-    Path claudeEnvFile, TerminalType terminalType)
-  {
-    this(claudeProjectPath, claudePluginRoot, claudeSessionId, claudeEnvFile, terminalType, claudeProjectPath);
-  }
-
-  /**
-   * Creates a new test JVM scope with full configuration and independent workDir.
-   *
-   * @param claudeProjectPath the project directory path
-   * @param claudePluginRoot the plugin root directory path
-   * @param claudeSessionId the session ID
-   * @param claudeEnvFile the environment file path
-   * @param terminalType the terminal type
-   * @param workDir the work directory path (can differ from claudeProjectPath)
-   * @throws NullPointerException if any parameter is null
-   * @throws IllegalArgumentException if {@code workDir} is not an absolute path
-   */
-  public TestJvmScope(Path claudeProjectPath, Path claudePluginRoot, String claudeSessionId,
-    Path claudeEnvFile, TerminalType terminalType, Path workDir)
-  {
-    requireThat(claudeProjectPath, "claudeProjectPath").isNotNull();
-    requireThat(claudePluginRoot, "claudePluginRoot").isNotNull();
-    requireThat(claudeSessionId, "claudeSessionId").isNotNull();
-    if (claudeSessionId.isBlank())
-      throw new AssertionError("claudeSessionId must not be blank");
-    requireThat(claudeEnvFile, "claudeEnvFile").isNotNull();
     requireThat(terminalType, "terminalType").isNotNull();
     requireThat(workDir, "workDir").isNotNull().isAbsolute();
     this.claudeProjectPath = claudeProjectPath;
     this.claudePluginRoot = claudePluginRoot;
     this.claudeConfigDir = claudeProjectPath;
-    this.claudeSessionId = claudeSessionId;
-    this.claudeEnvFile = claudeEnvFile;
     this.terminalType = terminalType;
-    this.envVars = Map.of();
     this.workDir = workDir;
+    try
+    {
+      copyEmojiWidthsIfNeeded(claudePluginRoot);
+    }
+    catch (IOException e)
+    {
+      throw WrappedCheckedException.wrap(e);
+    }
   }
 
   @Override
@@ -246,7 +165,7 @@ public final class TestJvmScope extends AbstractJvmScope
   }
 
   @Override
-  public Path getClaudePluginRoot()
+  public Path getPluginRoot()
   {
     ensureOpen();
     return claudePluginRoot;
@@ -257,24 +176,6 @@ public final class TestJvmScope extends AbstractJvmScope
   {
     ensureOpen();
     return claudeConfigDir;
-  }
-
-  /**
-   * Returns the session ID injected into this test scope.
-   *
-   * @return the session ID
-   */
-  public String getClaudeSessionId()
-  {
-    ensureOpen();
-    return claudeSessionId;
-  }
-
-  @Override
-  public Path getClaudeEnvFile()
-  {
-    ensureOpen();
-    return claudeEnvFile;
   }
 
   @Override
@@ -289,13 +190,6 @@ public final class TestJvmScope extends AbstractJvmScope
   {
     ensureOpen();
     return "UTC";
-  }
-
-  @Override
-  public String getEnvironmentVariable(String name)
-  {
-    ensureOpen();
-    return envVars.get(name);
   }
 
   @Override
@@ -320,6 +214,10 @@ public final class TestJvmScope extends AbstractJvmScope
    */
   private static void copyEmojiWidthsIfNeeded(Path claudePluginRoot) throws IOException
   {
+    // Skip copying if the plugin root doesn't exist (e.g., tests that exercise non-existent paths)
+    if (!Files.isDirectory(claudePluginRoot))
+      return;
+
     // Check if emoji-widths.json already exists in the target directory
     Path targetEmojiFile = claudePluginRoot.resolve("emoji-widths.json");
     if (Files.exists(targetEmojiFile))
@@ -331,10 +229,6 @@ public final class TestJvmScope extends AbstractJvmScope
     String userDir = System.getProperty("user.dir");
     Path basePath = Path.of(userDir);
 
-    // Try to find emoji-widths.json in the plugin directory
-    // It should be at basePath/plugin/emoji-widths.json when running from hooks directory
-    // or basePath/../plugin/emoji-widths.json when running from another location
-    //
     // Dynamically resolve workspace paths by traversing up from user.dir
     Path workspaceRoot = findWorkspaceRoot(basePath);
     Path[] possiblePaths = {
@@ -358,7 +252,14 @@ public final class TestJvmScope extends AbstractJvmScope
       throw new IOException("emoji-widths.json not found in any of the expected locations");
     }
 
-    Files.copy(sourceEmojiFile, targetEmojiFile);
+    try
+    {
+      Files.copy(sourceEmojiFile, targetEmojiFile);
+    }
+    catch (java.nio.file.FileAlreadyExistsException _)
+    {
+      // Another thread already copied the file — the goal is achieved
+    }
   }
 
   /**

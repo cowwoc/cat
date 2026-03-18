@@ -69,7 +69,7 @@ public final class InjectSubAgentRules implements SubagentStartHandler
       log.debug("SubagentStart hook received blank subagent_type; rules requiring a specific " +
         "subagent type will not match");
 
-    Path pluginRulesDir = scope.getClaudePluginRoot().resolve("rules");
+    Path pluginRulesDir = scope.getPluginRoot().resolve("rules");
     Path projectRulesDir = scope.getCatDir().resolve("rules");
     // Rules with paths: restrictions are injected dynamically by InjectPathRules (PreToolUse hook)
     // when matching files are accessed. For subagents, only non-paths rules are injected at start.

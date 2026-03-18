@@ -516,16 +516,8 @@ public final class GetStatusOutput implements SkillOutput
                      data.overallCompleted + "/" + data.overallTotal + " issues");
     contentItems.add("");
 
-    String currentSession;
-    try
-    {
-      currentSession = new ClaudeEnv().getClaudeSessionId();
-    }
-    catch (AssertionError _)
-    {
-      currentSession = "";
-    }
-    List<Agent> agents = getActiveAgents(catDir, currentSession);
+    String envSessionId = new ClaudeEnv().getSessionId();
+    List<Agent> agents = getActiveAgents(catDir, envSessionId);
 
     if (!agents.isEmpty())
     {
