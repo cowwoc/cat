@@ -39,27 +39,24 @@ After this issue is implemented:
 
 ## Post-conditions
 
-- [ ] `cat:work-verify` subagent includes a violation scanning step that runs after standard post-condition checks
-- [ ] Scan depth is parameterized by the `effort` value from `.cat/config.json`
-- [ ] At least the following violation patterns are detected:
-  - Silent fallback in catch block (catch that swallows exception and returns a default value)
-  - Null return from a method that should throw on error
-  - Comment flags indicating known issues (`// FIXME`, `// TODO: fix`, `// fallback`, `// workaround`)
-- [ ] When violations are found, they appear as `Missing` criteria in the verify output
-- [ ] When no violations are found, scanning completes silently (no output noise)
-- [ ] `plugin/concepts/work.md` §"When editing any file, actively scan..." is updated to reference automated enforcement
-- [ ] At least one unit test validates violation detection for each pattern
+- [ ] `## Enforcement` sections with ` ```cat-rules ` blocks are supported in `.claude/rules/*.md` convention files
+- [ ] `.claude/rules/jackson.md` has cat-rules for `new ObjectMapper()` and `JsonMapper.builder()` usage
+- [ ] `.claude/rules/common.md` has cat-rules for `\bjq\b` in shell scripts, `/workspace/` hardcoded paths in shell
+  scripts, and comment flags (`FIXME`, `workaround`, `fallback`) in any file
+- [ ] `plugin/agents/work-verify.md` implements three-step effort-based scanning using the cat-rules blocks
+- [ ] At LOW effort scanning is skipped; MEDIUM greps diff lines; HIGH greps full changed file content
+- [ ] LLM reviews grep hits with surrounding context; failures become Missing criteria in verify output
+- [ ] `ViolationScanner.java`, `ViolationFinding.java`, `ViolationScannerTest.java` are removed
+- [ ] `violation-scanner` entry removed from `client/build-jlink.sh` HANDLERS array
+- [ ] `plugin/concepts/work.md` updated to reference the cat-rules enforcement mechanism
 
 ## Sub-Agent Waves
 
 ### Wave 1
 
-1. Design the violation scanner interface: create a `ViolationScanner` class in
-   `client/src/main/java/io/github/cowwoc/cat/hooks/util/` that accepts a list of changed file paths
-   and an effort level, and returns a list of `ViolationFinding` records
-2. Implement the three required detection patterns: silent-fallback catch, null-return-on-error, comment-flag
-3. Write unit tests for each detection pattern with both positive and negative cases
-4. Integrate the scanner call into the `cat:work-verify` subagent skill: after post-condition checks,
-   invoke the scanner and translate `ViolationFinding` results into INCOMPLETE criteria entries
-5. Update `plugin/concepts/work.md` to note that the automated scanner enforces violation detection
-   during `cat:work` verify phase, and cross-reference the effort setting
+1. Remove `ViolationScanner.java`, `ViolationFinding.java`, `ViolationScannerTest.java` from the worktree
+2. Remove the `violation-scanner:util.ViolationScanner` entry from the HANDLERS array in `client/build-jlink.sh`
+3. Add an `## Enforcement` section with cat-rules blocks to `.claude/rules/jackson.md`
+4. Add an `## Enforcement` section with cat-rules blocks to `.claude/rules/common.md`
+5. Rewrite the violation scanning section in `plugin/agents/work-verify.md` with the new LLM-assisted grep approach
+6. Update `plugin/concepts/work.md` to reference the cat-rules enforcement mechanism
