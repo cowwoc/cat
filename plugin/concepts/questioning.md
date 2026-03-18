@@ -55,7 +55,7 @@ Pattern:
 
 Example — asking the user to confirm a branch name after determining it from other inputs:
 
-The target branch for this merge is `v2.1`, based on the issue's `target_branch` field. The issue branch is
+The target branch for this merge is `v2.1`, based on the issue's `targetBranch` field. The issue branch is
 `2.1-add-context-before-questions` and currently has 2 commits ahead of `v2.1`.
 
 [AskUserQuestion: header="Confirm merge", question="Merge 2.1-add-context-before-questions into v2.1?",

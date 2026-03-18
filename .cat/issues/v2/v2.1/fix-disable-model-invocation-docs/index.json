@@ -1,0 +1,5 @@
+{
+  "status": "closed",
+  "targetBranch": "v2.1",
+  "dependencies": ["merge-agent-skill-variants"]
+}

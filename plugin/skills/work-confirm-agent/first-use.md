@@ -5,25 +5,25 @@ See LICENSE.md in the project root for license terms.
 -->
 # Work Phase: Confirm
 
-Confirm phase for `/cat:work`. Verifies that PLAN.md post-conditions were implemented before
+Confirm phase for `/cat:work`. Verifies that plan.md post-conditions were implemented before
 stakeholder quality review. Spawns a verify subagent, handles fix iteration if criteria are missing.
 
 ## Arguments Format
 
 ```
-<catAgentId> <issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <execution_commits_json_path> <files_changed> <trust> <verify>
+<catAgentId> <issueId> <issuePath> <worktreePath> <issueBranch> <targetBranch> <executionCommitsJsonPath> <filesChanged> <trust> <verify>
 ```
 
 | Position | Name | Example |
 |----------|------|---------|
 | 1 | catAgentId | agent ID passed through from parent |
-| 2 | issue_id | `2.1-issue-name` |
-| 3 | issue_path | `/workspace/.cat/issues/v2/v2.1/issue-name` |
-| 4 | worktree_path | `${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name` |
-| 5 | issue_branch | `2.1-issue-name` |
-| 6 | target_branch | `v2.1` |
-| 7 | execution_commits_json_path | Path to JSON file containing commit objects from the implement phase |
-| 8 | files_changed | integer count of files changed |
+| 2 | issueId | `2.1-issue-name` |
+| 3 | issuePath | `/workspace/.cat/issues/v2/v2.1/issue-name` |
+| 4 | worktreePath | `${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name` |
+| 5 | issueBranch | `2.1-issue-name` |
+| 6 | targetBranch | `v2.1` |
+| 7 | executionCommitsJsonPath | Path to JSON file containing commit objects from the implement phase |
+| 8 | filesChanged | integer count of files changed |
 | 9 | trust | `medium` |
 | 10 | verify | `changed` |
 
@@ -34,8 +34,8 @@ Return JSON when complete:
 ```json
 {
   "status": "COMPLETE|PARTIAL|INCOMPLETE",
-  "execution_commits_json": "[{...}]",
-  "files_changed": 5
+  "executionCommitsJson": "[{...}]",
+  "filesChanged": 5
 }
 ```
 
@@ -45,7 +45,7 @@ Parse arguments and display the **Confirming phase** banner in a chained call:
 
 ```bash
 read CAT_AGENT_ID ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH EXECUTION_COMMITS_JSON_PATH FILES_CHANGED TRUST VERIFY <<< "$ARGUMENTS" && \
-PLAN_MD="${ISSUE_PATH}/PLAN.md" && \
+PLAN_MD="${ISSUE_PATH}/plan.md" && \
 "${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase confirming
 ```
 
@@ -56,7 +56,7 @@ CURRENT_COMMITS_JSON="$EXECUTION_COMMITS_JSON"
 
 ## Step 4: Confirm Implementation
 
-**This step confirms PLAN.md post-conditions were implemented before stakeholder quality review.**
+**This step confirms plan.md post-conditions were implemented before stakeholder quality review.**
 
 **If the command fails or produces no output**, STOP immediately:
 ```
@@ -99,33 +99,33 @@ Task tool:
     TARGET_BRANCH: ${TARGET_BRANCH}
     PLAN_MD_PATH: ${PLAN_MD}
 
-    Read the Goal and Post-conditions sections from PLAN_MD_PATH directly.
-    Do NOT ask the main agent to provide this content — it is authoritative in PLAN.md.
+    Read the Goal and Post-conditions sections from PLAN_MD_PATH (plan.md) directly.
+    Do NOT ask the main agent to provide this content — it is authoritative in plan.md.
 
     ## Execution Result
-    Commits: ${execution_commits_json}
-    Files changed: ${files_changed}
+    Commits: ${executionCommitsJson}
+    Files changed: ${filesChanged}
 
     ## Your Task
-    1. Invoke the verify-implementation skill to check all PLAN.md post-conditions:
+    1. Invoke the verify-implementation skill to check all plan.md post-conditions:
        ```
        Skill tool:
          skill: "cat:verify-implementation-agent"
          args: |
            {
-             "issue_id": "${ISSUE_ID}",
-             "issue_path": "${ISSUE_PATH}",
-             "worktree_path": "${WORKTREE_PATH}",
+             "issueId": "${ISSUE_ID}",
+             "issuePath": "${ISSUE_PATH}",
+             "worktreePath": "${WORKTREE_PATH}",
              "execution_result": {
-               "commits": ${execution_commits_json},
-               "files_changed": ${files_changed}
+               "commits": ${executionCommitsJson},
+               "filesChanged": ${filesChanged}
              }
            }
        ```
     2. Run E2E testing appropriate to the issue type:
-       - Determine issue type by reading the `## Type` field in ${ISSUE_PATH}/PLAN.md. Use the FIRST
+       - Determine issue type by reading the `## Type` field in ${ISSUE_PATH}/plan.md. Use the FIRST
          occurrence of a line matching `^## Type` in the file — the authoritative field is always near
-         the top of PLAN.md, never inside a Sub-Agent Waves section. Do NOT infer type from commit
+         the top of plan.md, never inside a Sub-Agent Waves section. Do NOT infer type from commit
          messages, issue ID naming, or other heuristics.
        - For `feature`, `bugfix`, `refactor`, and `performance` issue types: run runtime E2E tests
          using worktree artifacts.
@@ -150,7 +150,7 @@ Task tool:
       "status": "COMPLETE|PARTIAL|INCOMPLETE",
       "criteria": [
         {
-          "name": "criterion text from PLAN.md",
+          "name": "criterion text from plan.md",
           "status": "Done|Partial|Missing",
           "explanation": "brief one-line explanation",
           "detail_file": "${VERIFY_DIR}/criteria-analysis.json"
@@ -180,7 +180,7 @@ Extract detail file paths for use in fix subagent prompts:
 - Collect `e2e.detail_file`
 - Combine into a list: this is `DETAIL_FILE_PATHS` (used as `${detail_file_paths_from_compact_json}` in subagent prompts)
 
-Also store the parsed `execution_commits_json` (from `EXECUTION_COMMITS_JSON` argument) as a
+Also store the parsed `executionCommitsJson` (from `EXECUTION_COMMITS_JSON` argument) as a
 mutable variable `CURRENT_COMMITS_JSON`. This is the variable that step 5 updates and that
 re-spawned verify prompts must use — always use `CURRENT_COMMITS_JSON` (never the original
 `EXECUTION_COMMITS_JSON`) when constructing re-verification prompts after any fix iteration.
@@ -223,7 +223,7 @@ the first result is PARTIAL or INCOMPLETE. Do NOT re-initialize inside any branc
    - Partial criteria: items in `criteria[]` with `status: "Partial"`
    - Failed E2E: `e2e.status == "FAILED"`
 
-3. Spawn a **planning subagent** to revise PLAN.md with fix steps.
+3. Spawn a **planning subagent** to revise plan.md with fix steps.
 
    **If the planning subagent returns `"status": "FAILED"`**, STOP the fix loop immediately. Do NOT
    spawn the implementation subagent. Note the planning failure in the return JSON and proceed to the
@@ -242,7 +242,7 @@ the first result is PARTIAL or INCOMPLETE. Do NOT re-initialize inside any branc
      subagent_type: "general-purpose"
      model: "sonnet"
      prompt: |
-       Revise PLAN.md to add fix steps for the following missing post-conditions.
+       Revise plan.md to add fix steps for the following missing post-conditions.
 
        ## Issue Configuration
        ISSUE_ID: ${ISSUE_ID}
@@ -256,21 +256,21 @@ the first result is PARTIAL or INCOMPLETE. Do NOT re-initialize inside any branc
        ${detail_file_paths_from_compact_json}
 
        ## Instructions
-       - Read ${ISSUE_PATH}/PLAN.md to understand the current plan
+       - Read ${ISSUE_PATH}/plan.md to understand the current plan
        - Read the detail files to understand what specifically failed. Do NOT include file contents
          in your JSON response — use them only to inform what fix steps to write
-       - Add new items to the Sub-Agent Waves section of PLAN.md
+       - Add new items to the Sub-Agent Waves section of plan.md
        - Each new item must address exactly one missing criterion
        - Do NOT remove or alter existing items — only append new items to the last wave (or steps section)
-       - Do NOT modify any existing PLAN.md fields — especially `## Type`, `## Goal`, existing post-conditions,
+       - Do NOT modify any existing plan.md fields — especially `## Type`, `## Goal`, existing post-conditions,
          or any section other than the Sub-Agent Waves / steps list
        - Sub-Agent Wave items MUST be concrete, actionable implementation steps that modify source files,
          add tests, or run migrations. Read-only checks, echo commands, or no-op commands that do not
          modify files do NOT satisfy missing implementation criteria and must not be used as fix steps
        - Do NOT add commentary, interpretive qualifications, or text claiming existing criteria are
          already satisfied or equivalent to something else
-       - Commit the revised PLAN.md using git from ${WORKTREE_PATH} (not the main workspace):
-         `cd "${WORKTREE_PATH}" && git add "${ISSUE_PATH}/PLAN.md" && git commit -m "planning: add fix items for missing criteria (iteration ${VERIFY_ITERATION})"`
+       - Commit the revised plan.md using git from ${WORKTREE_PATH} (not the main workspace):
+         `cd "${WORKTREE_PATH}" && git add "${ISSUE_PATH}/plan.md" && git commit -m "planning: add fix items for missing criteria (iteration ${VERIFY_ITERATION})"`
        - All git operations MUST use ${WORKTREE_PATH} as the working directory so commits land on the issue
          branch, not on the main workspace branch
        - After committing, verify the commit is present: `cd "${WORKTREE_PATH}" && git log --oneline -1`
@@ -281,7 +281,7 @@ the first result is PARTIAL or INCOMPLETE. Do NOT re-initialize inside any branc
        {
          "status": "SUCCESS|FAILED",
          "fix_steps": ["step text 1", "step text 2"],
-         "plan_md_path": "${ISSUE_PATH}/PLAN.md"
+         "plan_md_path": "${ISSUE_PATH}/plan.md"
        }
        ```
    ```
@@ -301,7 +301,7 @@ the first result is PARTIAL or INCOMPLETE. Do NOT re-initialize inside any branc
        BRANCH: ${BRANCH}
        TARGET_BRANCH: ${TARGET_BRANCH}
 
-       ## Fix Steps (from revised PLAN.md)
+       ## Fix Steps (from revised plan.md)
        ${fix_steps_from_planning_result}
 
        ## Detail Files (read these to understand what needs fixing)
@@ -310,7 +310,7 @@ the first result is PARTIAL or INCOMPLETE. Do NOT re-initialize inside any branc
        ## Instructions
        - Work ONLY in the worktree at ${WORKTREE_PATH}
        - Read the detail files to understand exactly what failed
-       - Implement each fix step from the revised PLAN.md
+       - Implement each fix step from the revised plan.md
        - Commit fixes using the same commit type as the primary implementation
          (e.g., `bugfix:`, `feature:`). Do NOT use `planning:` as a commit type.
        - Return JSON status when complete
@@ -320,7 +320,7 @@ the first result is PARTIAL or INCOMPLETE. Do NOT re-initialize inside any branc
        {
          "status": "SUCCESS|PARTIAL|FAILED",
          "commits": [{"hash": "...", "message": "...", "type": "..."}],
-         "files_changed": N,
+         "filesChanged": N,
          "criteria_addressed": N
        }
        ```
@@ -340,15 +340,15 @@ the first result is PARTIAL or INCOMPLETE. Do NOT re-initialize inside any branc
 **Steps 3, 4, 5, and 6 are STRICTLY SEQUENTIAL — never spawn step 4 until step 3 completes, never
 spawn step 6 until step 5 completes. Do NOT make parallel Task tool calls between any of these steps.**
 
-5. Append the implementation subagent's commits to `CURRENT_COMMITS_JSON` and add its `files_changed`
+5. Append the implementation subagent's commits to `CURRENT_COMMITS_JSON` and add its `filesChanged`
    to the running total. This MUST happen before re-spawning the verify subagent. Never use the original
    `EXECUTION_COMMITS_JSON` argument in re-verification prompts — always use the updated `CURRENT_COMMITS_JSON`.
 
 6. Re-spawn the verify subagent by constructing a NEW prompt from the template (do NOT reuse or re-send
    the original rendered prompt string). Substitute the CURRENT value of `CURRENT_COMMITS_JSON` (which
-   now includes fix commits) and the updated `files_changed` total into the prompt before spawning.
+   now includes fix commits) and the updated `filesChanged` total into the prompt before spawning.
    The re-rendered prompt must reflect the post-fix state. Note: the planning subagent appended fix steps
-   only to the `## Sub-Agent Waves` section of PLAN.md — never to the post-conditions. The verify subagent
+   only to the `## Sub-Agent Waves` section of plan.md — never to the post-conditions. The verify subagent
    evaluates the same post-conditions as the initial invocation.
 
 **If still INCOMPLETE or PARTIAL after 2 iterations:**

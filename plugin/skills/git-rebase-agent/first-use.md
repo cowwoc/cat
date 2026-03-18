@@ -88,11 +88,8 @@ When a backup_branch was created before the error, its name appears on a `backup
   (branches matching `backup-before-rebase-*`)
 - The backup exists only during verification — leaving it permanently clutters the repository
 
-**On CONFLICT status:** Agent should examine the conflicting files to determine the best strategy:
-- If conflicts are simple (whitespace, formatting), attempt manual resolution
-- If conflicts involve complex logic changes, consider alternative merge strategy
-- If uncertain, abort and restore from backup
-- After resolution is complete (or error handled): `git branch -D <backup_branch>`
+**On CONFLICT status:** Resolve conflicts using the numbered steps in [Handling Conflicts](#handling-conflicts) below.
+After resolution is complete (or error handled): `git branch -D <backup_branch>`
 
 **On block decision:** After handling the error (investigation complete, alternative approach taken, or
 issue escalated to user):
@@ -140,23 +137,79 @@ This silent failure is particularly dangerous because `git rebase` reports succe
 Rebase conflicts are normal and expected when branches have diverged. The solution is to resolve conflicts and continue,
 not to abandon rebase for cherry-picking.
 
+**Step 1: Inspect the conflicting files.**
+
 ```bash
-# When rebase stops due to conflict:
-
-# 1. Check which files have conflicts
 git status
+```
 
-# 2. Resolve conflicts (see "Conflict Resolution References" below)
+The output lists each conflicting file with its conflict type. The most important types are:
 
-# 3. Stage resolved files
-git add <resolved-files>
+| git status description | Meaning |
+|------------------------|---------|
+| `both modified` | Both branches changed the file — classic merge conflict with markers |
+| `deleted by us` | The commit being replayed (your branch) deleted the file; the target branch still has it |
+| `deleted by them` | The target branch deleted the file; the commit being replayed (your branch) still has it |
 
-# 4. Continue rebase
+**Step 2: For each conflicting file, resolve by conflict type.**
+
+**"both modified" (classic conflict):**
+
+```bash
+# Edit file to resolve conflict markers (<<<<<<<, =======, >>>>>>>)
+# Then stage the resolved file
+git add <file>
+```
+
+**"deleted by us" — your branch deleted the file, target branch still has it:**
+
+Determine intent: does the current commit's deletion still make sense, or should the file be preserved?
+
+- If your branch intentionally deleted the file (e.g., renamed it, removed a feature): accept the deletion.
+
+  ```bash
+  git rm <file>
+  ```
+
+- If the file should be preserved (e.g., target branch added important content): keep the target's version.
+
+  ```bash
+  git checkout HEAD -- <file>
+  git add <file>
+  ```
+
+**CRITICAL:** Do NOT `git rm` or delete any file unless you have verified it is the file your branch intentionally
+removed. Never delete files outside the conflict set. If unsure, keep the target's version:
+`git checkout HEAD -- <file>`.
+
+**"deleted by them" — target branch deleted the file, your branch still has it:**
+
+Determine intent: does the commit being replayed still need the file?
+
+- If the deletion on the target branch is correct (file is gone for a good reason): accept the deletion.
+
+  ```bash
+  git rm <file>
+  ```
+
+- If your branch has meaningful changes to the file that supersede the deletion: restore your version.
+
+  ```bash
+  git checkout REBASE_HEAD -- <file>
+  git add <file>
+  ```
+
+**Step 3: Continue the rebase after all files in the current commit are resolved.**
+
+```bash
 git rebase --continue
+```
 
-# 5. Repeat steps 1-4 for each conflicting commit
+**Step 4: Repeat Steps 1–3 for each subsequent conflicting commit** until the rebase completes.
 
-# If you want to abort:
+**Abort path** (use only when resolution is not feasible and you must restore the original state):
+
+```bash
 git rebase --abort
 git reset --hard "$BACKUP"
 ```

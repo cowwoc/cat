@@ -421,8 +421,8 @@ public final class MergeAndCleanup
     ObjectNode json = scope.getJsonMapper().createObjectNode();
     json.put("status", "success");
     json.put("message", "Merged and cleaned up issue");
-    json.put("issue_id", issueId);
-    json.put("target_branch", targetBranch);
+    json.put("issueId", issueId);
+    json.put("targetBranch", targetBranch);
     json.put("merged_commit", commitSha);
     json.put("lock_released", lockReleased);
     json.put("duration_seconds", duration);

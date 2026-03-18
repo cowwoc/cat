@@ -1,0 +1,5 @@
+{
+  "status": "closed",
+  "resolution": "implemented",
+  "decomposedInto": ["2.1-rename-task-scripts", "2.1-rename-task-in-skills", "2.1-rename-task-in-concepts", "2.1-rename-task-in-commands", "2.1-rename-task-remaining"]
+}

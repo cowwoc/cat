@@ -1300,7 +1300,7 @@ public class GetCleanupOutputTest
           "handler": "cleanup",
           "context": {
             "phase": "plan",
-            "locks_to_remove": [{"issue_id": "2.1-issue-name", "session": "eb68bb02", "age_seconds": 326}],
+            "locks_to_remove": [{"issueId": "2.1-issue-name", "session": "eb68bb02", "age_seconds": 326}],
             "worktrees_to_remove": [{"path": "%s",
               "branch": "2.1-issue-name", "age_seconds": 326}],
             "branches_to_remove": ["2.1-issue-name"],
@@ -1627,22 +1627,22 @@ public class GetCleanupOutputTest
   }
 
   /**
-   * Verifies that gatherCorruptIssues detects directories with STATE.md but no PLAN.md.
+   * Verifies that gatherCorruptIssues detects directories with index.json but no plan.md.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void gatherCorruptIssuesDetectsStateMdWithoutPlanMd() throws IOException
+  public void gatherCorruptIssuesDetectsIndexJsonWithoutPlanMd() throws IOException
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
     try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
-      // Create a corrupt issue directory: STATE.md present, PLAN.md absent
+      // Create a corrupt issue directory: index.json present, plan.md absent
       Path issueDir = projectPath.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("orphaned-issue");
       Files.createDirectories(issueDir);
-      Files.writeString(issueDir.resolve("STATE.md"), "# State\n- **Status:** open\n");
+      Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"open\"}");
 
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<GetCleanupOutput.CorruptIssue> result = handler.gatherCorruptIssues(projectPath);
@@ -1657,7 +1657,7 @@ public class GetCleanupOutputTest
   }
 
   /**
-   * Verifies that gatherCorruptIssues does not flag directories with both STATE.md and PLAN.md.
+   * Verifies that gatherCorruptIssues does not flag directories with both index.json and plan.md.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -1668,12 +1668,12 @@ public class GetCleanupOutputTest
     Path pluginRoot = Files.createTempDirectory("test-plugin");
     try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
-      // Create a valid issue directory: both STATE.md and PLAN.md present
+      // Create a valid issue directory: both index.json and plan.md present
       Path issueDir = projectPath.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("valid-issue");
       Files.createDirectories(issueDir);
-      Files.writeString(issueDir.resolve("STATE.md"), "# State\n- **Status:** open\n");
-      Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nDo something.\n");
+      Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"open\"}");
+      Files.writeString(issueDir.resolve("plan.md"), "# Plan\n\n## Goal\n\nDo something.\n");
 
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<GetCleanupOutput.CorruptIssue> result = handler.gatherCorruptIssues(projectPath);
@@ -1687,22 +1687,22 @@ public class GetCleanupOutputTest
   }
 
   /**
-   * Verifies that gatherCorruptIssues detects directories missing PLAN.md even when STATE.md is also absent.
+   * Verifies that gatherCorruptIssues detects directories missing plan.md even when index.json is also absent.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void gatherCorruptIssuesDetectsMissingPlanMdWithNoStateMd() throws IOException
+  public void gatherCorruptIssuesDetectsMissingPlanMdWithNoIndexJson() throws IOException
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
     try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
-      // Create an issue directory with neither STATE.md nor PLAN.md
+      // Create an issue directory with neither index.json nor plan.md
       Path issueDir = projectPath.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("empty-issue");
       Files.createDirectories(issueDir);
-      // Deliberately no STATE.md and no PLAN.md
+      // Deliberately no index.json and no plan.md
 
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<GetCleanupOutput.CorruptIssue> result = handler.gatherCorruptIssues(projectPath);

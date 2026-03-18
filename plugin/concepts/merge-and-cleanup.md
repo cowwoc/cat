@@ -92,27 +92,26 @@ To review: `git diff main..{branch}`
 **Approve merge to main?**
 ```
 
-### 6. Update Issue STATE.md (BEFORE merge)
+### 6. Update Issue index.json (BEFORE merge)
 
-**CRITICAL: STATE.md must be in same commit as implementation.**
+**CRITICAL: index.json must be in same commit as implementation.**
 
-Before squashing/merging, update issue STATE.md to closed in the issue branch:
+Before squashing/merging, update issue index.json to closed in the issue branch:
 
 ```bash
-# In issue worktree - update STATE.md
-# .cat/issues/v{major}/v{major}.{minor}/{issue-name}/STATE.md:
-#   Status: closed
-#   Progress: 100%
-#   Resolution: implemented   ← REQUIRED for all closed issues
+# In issue worktree - update index.json
+# .cat/issues/v{major}/v{major}.{minor}/{issue-name}/index.json:
+#   "status": "closed"
+#   "resolution": "implemented"   ← REQUIRED for all closed issues
 
 # Include in implementation commit
-git add .cat/issues/v{major}/v{major}.{minor}/{issue-name}/STATE.md
+git add .cat/issues/v{major}/v{major}.{minor}/{issue-name}/index.json
 git commit --amend --no-edit
 ```
 
 ### 7. Merge to Main
 
-After approval and STATE.md update, use the `merge-and-cleanup` Java tool which performs a
+After approval and index.json update, use the `merge-and-cleanup` Java tool which performs a
 fast-forward-only merge:
 
 ```bash
@@ -192,7 +191,7 @@ git branch -d {major}.{minor}-{issue-name}-sub-*
 
 ### 10. Update Parent State Files
 
-Update minor and major STATE.md progress (issue STATE.md already updated in step 6):
+Update minor and major STATE.md progress (issue index.json already updated in step 6):
 
 - Minor STATE.md: recalculate progress based on closed issues
 - Major STATE.md: recalculate progress based on closed minor versions

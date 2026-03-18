@@ -5,18 +5,18 @@ See LICENSE.md in the project root for license terms.
 -->
 # Skill: verify-implementation
 
-Post-execution verification that systematically checks all planned changes from PLAN.md were actually implemented in
+Post-execution verification that systematically checks all planned changes from plan.md were actually implemented in
 the codebase.
 
 ## Purpose
 
-Verify that the implementation matches what was planned in the issue's PLAN.md file. This is a read-only audit that
+Verify that the implementation matches what was planned in the issue's plan.md file. This is a read-only audit that
 reports findings without making changes. The skill is invoked automatically by `/cat:work` between the execute and
 review phases.
 
 ## When to Use
 
-- Invoked by `/cat:work` between execute and review phases to verify PLAN.md post-conditions before stakeholder
+- Invoked by `/cat:work` between execute and review phases to verify plan.md post-conditions before stakeholder
   quality review
 
 ## Arguments Format
@@ -25,12 +25,12 @@ This skill receives JSON arguments with execution context from `/cat:work`:
 
 ```json
 {
-  "issue_id": "2.1-issue-name",
-  "issue_path": "/path/to/issue",
-  "worktree_path": "/path/to/worktree",
+  "issueId": "2.1-issue-name",
+  "issuePath": "/path/to/issue",
+  "worktreePath": "/path/to/worktree",
   "execution_result": {
     "commits": [{"hash": "abc123", "message": "...", "type": "feature"}],
-    "files_changed": 5
+    "filesChanged": 5
   }
 }
 ```
@@ -48,9 +48,9 @@ Each status includes evidence (file paths, line content, command output).
 
 <step name="prepare">
 
-**Prepare all audit data in a single step:**
+**Prepare audit data:**
 
-Parse JSON arguments, validate the issue, parse PLAN.md, generate subagent prompts, and verify file specs.
+Parse JSON arguments and run verify-audit to validate the issue and verify file specs from plan.md.
 
 ```bash
 CLIENT_BIN="${WORKTREE_PATH}/client/target/jlink/bin"
@@ -65,25 +65,77 @@ if [ $? -ne 0 ]; then
 fi
 ```
 
-After running, read the JSON output to extract values:
-- Display: "◆ Auditing issue: {issue_id}" and "◆ Found {criteria_count} post-conditions and {file_count} file
-  specifications"
-- Extract `prompts` array — each entry has `group_index` and `prompt` fields
-- Store `file_results` for the collect_results step
+After running, extract `issueId`, `issuePath`, and `worktreePath` from the JSON output. Store `file_results`
+for the collect_results step.
 
-Then **immediately spawn verification subagents**:
+Display: "◆ Auditing issue: {issueId}"
 
-For each entry in the `prompts` array, invoke the Task tool with:
+**Read post-conditions from plan.md directly:**
+
+Use the Read tool to read `{issuePath}/plan.md`. Locate the `## Post-conditions` section and extract each
+criterion listed as a checkbox item (`- [ ]` or `- [x]`). These are the criteria to verify.
+
+Display: "◆ Found {N} post-conditions"
+
+**Spawn verification subagents:**
+
+For each post-condition criterion, spawn a verification subagent using the Task tool with:
 - `subagent_type: "general-purpose"`
 - `model: "haiku"` (verification is straightforward - check files against criteria)
-- `prompt: <the full prompt text from the "prompt" field>`
+- `prompt:` the verification prompt below
 
-Spawn all subagents in parallel (multiple Task tool calls in a single message). They will run concurrently and return
-results together.
+Build the prompt for each criterion using this template:
+
+```
+You are a verification agent auditing implementation compliance with a planned post-condition.
+
+## Post-condition
+{criterion text}
+
+## Worktree Path
+All implementation changes are in the issue worktree, NOT in the main workspace.
+Search for files in: {worktreePath}
+Do NOT search /workspace directly — use the worktree path above for all file lookups.
+Example: use `{worktreePath}/plugin/skills/` not `/workspace/plugin/skills/`
+
+## Task
+Verify whether this criterion is satisfied in the codebase.
+
+Use these tools to investigate:
+- Read: Check file contents
+- Glob: Find files by pattern
+- Grep: Search for specific content
+- Bash: Run verification commands (git log, test commands, etc.)
+
+## Evidence Requirements
+For this criterion, provide:
+1. Status: Done|Partial|Missing
+2. Evidence: File paths, line numbers, command outputs
+3. Notes: Any discrepancies or concerns
+
+If the criterion cannot be definitively verified, set status to Missing with an explanation of why
+verification was not possible. Do not guess or assume.
+
+## Response Format
+Return a JSON array with one entry for this criterion:
+[
+  {
+    "criterion": "{criterion text}",
+    "status": "Done|Partial|Missing",
+    "evidence": [
+      {"type": "file_exists|content_match|command_output", "detail": "..."}
+    ],
+    "notes": "Any additional observations"
+  }
+]
+
+Be thorough but efficient. Check actual implementation, not just file existence.
+```
+
+Spawn all subagents in parallel (multiple Task tool calls in a single message). They will run concurrently and
+return results together.
 
 Store all returned task IDs for result collection in the next step.
-
-Each subagent verifies all criteria in its group against the same file context, avoiding redundant reads.
 
 </step>
 
@@ -93,7 +145,7 @@ Each subagent verifies all criteria in its group against the same file context, 
 
 Wait for all verification subagents to complete. Use TaskOutput to retrieve each subagent's JSON response.
 
-Each subagent returns a JSON array of criterion objects (even for single-criterion groups):
+Each subagent returns a JSON array of criterion objects:
 ```
 [
   {"criterion": "...", "status": "Done|Partial|Missing", "evidence": [...], "notes": "..."}
@@ -101,7 +153,6 @@ Each subagent returns a JSON array of criterion objects (even for single-criteri
 ```
 
 Aggregate all criterion results into a single `criteria_results` array, then combine with file verification results.
-Write the combined JSON to a temporary file using the Write tool, then pipe it to the report command.
 
 The combined JSON must follow this structure:
 ```json
@@ -114,9 +165,6 @@ The combined JSON must follow this structure:
 Where `file_results` comes from the `file_results` field in the `PREPARED` JSON produced in the prepare step.
 
 Use the Write tool to write the combined JSON to `/tmp/verify-results-${ISSUE_ID}.json`, then generate the report:
-
-Extract `issue_id` directly from the `PREPARED` JSON output (the agent can read JSON natively). Then generate the
-report:
 
 ```bash
 REPORT=$("$CLIENT_BIN/verify-audit" report "$ISSUE_ID" < /tmp/verify-results-${ISSUE_ID}.json)
@@ -153,11 +201,6 @@ echo "$REPORT"
 **Subagent usage:** Verification subagents use Read, Glob, Grep, and Bash tools to investigate the codebase. Their
 internal tool calls are invisible to the user.
 
-**Performance optimization:** Criteria are grouped by file dependencies before spawning subagents. When multiple
-criteria reference the same files, a single subagent verifies all of them together, reading each file only once. This
-reduces token usage from ~187K to ~30-40K for typical single-file issues. Criteria referencing different files are
-still verified in parallel.
-
 **No auto-fix:** This skill reports findings only. If issues are found, the user must decide whether to re-run
 implementation or accept the current state.
 
@@ -168,10 +211,6 @@ implementation or accept the current state.
 
 ## Limitations
 
-- **Heuristic-based verification:** Automated checks parse PLAN.md structure and verify file operations, but cannot
-  replace human review for semantic correctness.
-- **Parse-dependent:** Only verifies what can be parsed from PLAN.md. If post-conditions or file specifications
-  are not explicitly documented, they will not be verified.
 - **No semantic understanding:** Verifies that code exists and was modified, but cannot judge whether implementation
   correctly satisfies the intent behind post-conditions.
 - **Limited to documented plans:** Cannot verify undocumented requirements or implicit expectations.

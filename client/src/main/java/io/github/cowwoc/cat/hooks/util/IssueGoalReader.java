@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Reads the goal from a PLAN.md file.
+ * Reads the goal from a plan.md file.
  */
 public final class IssueGoalReader
 {
@@ -22,28 +22,21 @@ public final class IssueGoalReader
   }
 
   /**
-   * Reads the goal from PLAN.md.
+   * Reads the goal from plan.md.
    * <p>
    * Extracts the first paragraph of text under the {@code ## Goal} heading.
    *
-   * @param planPath the path to PLAN.md
+   * @param planPath the path to plan.md
    * @return the goal text, or {@code "No goal found"} if absent
    * @throws NullPointerException if {@code planPath} is null
+   * @throws IOException if the file exists but cannot be read
    */
-  public static String readGoalFromPlan(Path planPath)
+  public static String readGoalFromPlan(Path planPath) throws IOException
   {
     if (!Files.isRegularFile(planPath))
       return "No goal found";
 
-    List<String> lines;
-    try
-    {
-      lines = Files.readAllLines(planPath);
-    }
-    catch (IOException _)
-    {
-      return "No goal found";
-    }
+    List<String> lines = Files.readAllLines(planPath);
 
     // Find ## Goal heading
     int goalStart = -1;

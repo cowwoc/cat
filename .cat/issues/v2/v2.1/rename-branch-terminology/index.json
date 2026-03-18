@@ -1,0 +1,5 @@
+{
+  "status": "closed",
+  "resolution": "implemented",
+  "decomposedInto": ["2.1-rename-branch-terminology-plugin", "2.1-rename-branch-terminology-java"]
+}

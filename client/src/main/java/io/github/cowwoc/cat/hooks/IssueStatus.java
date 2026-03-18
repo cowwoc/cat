@@ -6,7 +6,10 @@
  */
 package io.github.cowwoc.cat.hooks;
 
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Locale;
+import java.util.StringJoiner;
 
 /**
  * Canonical status values for CAT issues and versions.
@@ -26,7 +29,7 @@ public enum IssueStatus
   /**
    * Creates a new status value.
    *
-   * @param value the string representation used in STATE.md files
+   * @param value the string representation used in index.json files
    */
   IssueStatus(String value)
   {
@@ -34,7 +37,7 @@ public enum IssueStatus
   }
 
   /**
-   * Returns the string representation used in STATE.md files.
+   * Returns the string representation used in index.json files.
    *
    * @return the string representation
    */
@@ -70,15 +73,11 @@ public enum IssueStatus
    */
   public static String asCommaSeparated()
   {
-    StringBuilder sb = new StringBuilder();
+    StringJoiner joiner = new StringJoiner(", ");
     IssueStatus[] sorted = values().clone();
-    java.util.Arrays.sort(sorted, java.util.Comparator.comparing(IssueStatus::toString));
-    for (int i = 0; i < sorted.length; ++i)
-    {
-      if (i > 0)
-        sb.append(", ");
-      sb.append(sorted[i].value);
-    }
-    return sb.toString();
+    Arrays.sort(sorted, Comparator.comparing(IssueStatus::toString));
+    for (IssueStatus status : sorted)
+      joiner.add(status.value);
+    return joiner.toString();
   }
 }

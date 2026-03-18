@@ -1,0 +1,5 @@
+{
+  "status": "closed",
+  "resolution": "implemented",
+  "dependencies": ["rename-task-scripts", "rename-task-in-skills", "rename-task-in-concepts", "rename-task-in-commands"]
+}

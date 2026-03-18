@@ -45,7 +45,7 @@ Display collection progress using visible feedback symbols:
 
 These symbols match the phase-based progress format used in `/cat:work`.
 
-Steps: Verify completion, Extract commits, Parse metrics, Extract issues, Report to user, Update STATE.md
+Steps: Verify completion, Extract commits, Parse metrics, Extract issues, Report to user, Update index.json
 
 ### 1. Verify Subagent Completion
 
@@ -171,11 +171,11 @@ git diff origin/HEAD..HEAD > /tmp/subagent-changes.diff
 
 ### 6. Extract Subagent Status
 
-If subagent maintained a STATE.md or status file:
+If subagent maintained a index.json or status file:
 
 ```bash
 # Read subagent's final state
-cat "${WORKTREE}/.cat/issues/${ISSUE}/STATE.md"
+cat "${WORKTREE}/.cat/issues/${ISSUE}/index.json"
 
 # Or check for completion report
 cat "${WORKTREE}/COMPLETION_REPORT.md" 2>/dev/null
@@ -245,7 +245,7 @@ The subagent experienced context pressure and may have produced lower quality ou
 Consider invoking /cat:decompose-issue for similar issues in the future.
 ```
 
-### 8. Update Parent STATE.md
+### 8. Update Parent index.json
 
 Record collection results in parent's tracking:
 
@@ -257,7 +257,7 @@ subagents:
     collected_at: 2026-01-10T15:00:00Z
     results:
       commits: 5
-      files_changed: 12
+      filesChanged: 12
       lines_added: 450
       lines_removed: 120
     metrics:

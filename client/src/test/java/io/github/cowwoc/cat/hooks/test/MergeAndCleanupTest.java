@@ -490,7 +490,7 @@ public class MergeAndCleanupTest
           issueWorktree.toString(), pluginRoot.toString());
 
         requireThat(result, "result").contains("\"status\" : \"success\"");
-        requireThat(result, "result").contains("\"issue_id\" : \"" + issueBranch + "\"");
+        requireThat(result, "result").contains("\"issueId\" : \"" + issueBranch + "\"");
 
         // Verify v2.1 now contains the issue commit
         String v21Log = TestUtils.runGitCommandWithOutput(mainRepo, "log", "--oneline", "v2.1");

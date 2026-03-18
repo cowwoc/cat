@@ -1,0 +1,6 @@
+{
+  "status": "open",
+  "dependencies": ["migrate-to-silent-preprocessing", "prevent-plan-md-priming", "migrate-python-to-java"],
+  "parent": "compress-md-files",
+  "decomposedInto": ["2.1-compress-skills-batch-1", "2.1-compress-skills-batch-2", "2.1-compress-skills-batch-3", "2.1-compress-skills-batch-4", "2.1-compress-skills-batch-5"]
+}

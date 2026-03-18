@@ -66,9 +66,9 @@ public final class ExistingWorkChecker
     {
       requireThat(mapper, "mapper").isNotNull();
       return mapper.writeValueAsString(Map.of(
-        "has_existing_work", hasExistingWork,
-        "existing_commits", existingCommits,
-        "commit_summary", commitSummary));
+        "hasExistingWork", hasExistingWork,
+        "existingCommits", existingCommits,
+        "commitSummary", commitSummary));
     }
   }
 

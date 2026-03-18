@@ -45,7 +45,7 @@ Use AskUserQuestion:
 Invoke `/cat:decompose-issue-agent` to split remaining similar work.
 
 **If "Continue anyway":**
-Proceed but note in STATE.md that compaction occurred.
+Proceed but note in index.json that compaction occurred.
 
 **If "Abort":**
 Rollback changes and mark issue for manual review.

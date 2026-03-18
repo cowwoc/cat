@@ -96,11 +96,11 @@ public final class AotTraining
       new GetCleanupOutput(scope);
       new GetOutput(scope);
 
-      // VerifyAudit training - create temp file for parse() and minimal JSON for report()
+      // VerifyAudit training - create temp directory with plan.md for prepare() and minimal JSON for report()
       Path tempDir = Files.createTempDirectory("aot-training-");
       try
       {
-        Path planFile = tempDir.resolve("PLAN.md");
+        Path planFile = tempDir.resolve("plan.md");
         Files.writeString(planFile, """
           # Plan
           ## Post-conditions
@@ -110,12 +110,19 @@ public final class AotTraining
           """);
 
         VerifyAudit audit = new VerifyAudit(scope);
-        audit.parse(planFile);
+        String prepareArgs = """
+          {
+            "issueId": "aot-training",
+            "issuePath": "%s",
+            "worktreePath": "%s"
+          }
+          """.formatted(tempDir.toString(), tempDir.toString());
+        audit.prepare(prepareArgs);
         audit.report("test-issue", "{\"criteria_results\": [], \"file_results\": {\"modify\": {}, \"delete\": {}}}");
       }
       finally
       {
-        Files.deleteIfExists(tempDir.resolve("PLAN.md"));
+        Files.deleteIfExists(tempDir.resolve("plan.md"));
         Files.deleteIfExists(tempDir);
       }
 

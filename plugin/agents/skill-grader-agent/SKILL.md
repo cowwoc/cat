@@ -88,13 +88,13 @@ Assemble a grading JSON object in this exact structure:
   ],
   "pass_count": 1,
   "fail_count": 1,
-  "total_count": 2,
+  "totalCount": 2,
   "pass_rate": 0.5
 }
 ```
 
 Rules for the grading JSON:
-- `pass_rate` is `pass_count / total_count`, rounded to two decimal places.
+- `pass_rate` is `pass_count / totalCount`, rounded to two decimal places.
 - `evidence` must be a verbatim quote (or substring) from the output, not a paraphrase. Use
   `"(no relevant text found)"` only when no relevant text exists.
 
@@ -120,7 +120,7 @@ Rules for the grading JSON:
 ## Error Handling
 
 - **Empty assertions array**: If the assertions array is empty, write a grading JSON with
-  `pass_count: 0`, `fail_count: 0`, `total_count: 0`, `pass_rate: 0.0`, and an empty
+  `pass_count: 0`, `fail_count: 0`, `totalCount: 0`, `pass_rate: 0.0`, and an empty
   `assertion_results` array. Commit and return the SHA normally. Do not fail.
 - **git show fails**: If `git show <SHA>:<path>` returns a non-zero exit code, return
   `{"error": "git show failed: SHA not found: <SHA>"}` and stop.
@@ -131,7 +131,7 @@ Rules for the grading JSON:
 ## Verification
 
 - [ ] Every assertion in the input array has exactly one entry in `assertion_results`
-- [ ] `pass_count + fail_count == total_count`
-- [ ] `pass_rate == pass_count / total_count` rounded to two decimal places
+- [ ] `pass_count + fail_count == totalCount`
+- [ ] `pass_rate == pass_count / totalCount` rounded to two decimal places
 - [ ] `evidence` values are verbatim quotes from the output, not paraphrases
 - [ ] Commit SHA returned as sole output (no JSON in return value)

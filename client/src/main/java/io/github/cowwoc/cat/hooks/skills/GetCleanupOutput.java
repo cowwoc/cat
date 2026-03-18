@@ -275,7 +275,7 @@ public final class GetCleanupOutput implements SkillOutput
 
   /**
    * Scans all issue directories under {@code .cat/issues/} for the corrupt condition
-   * (STATE.md present, PLAN.md absent).
+   * (index.json present, plan.md absent).
    *
    * @param projectPath the project root directory
    * @return list of corrupt issue entries (empty if none found or directory does not exist)
@@ -317,10 +317,10 @@ public final class GetCleanupOutput implements SkillOutput
           continue;
         }
 
-        Path planMd = entry.resolve("PLAN.md");
+        Path planMd = entry.resolve("plan.md");
         if (!Files.isRegularFile(planMd))
         {
-          // Issue directory with PLAN.md absent — corrupt
+          // Issue directory with plan.md absent — corrupt
           result.add(new CorruptIssue(dirName, entry.toString()));
         }
       }
@@ -1059,7 +1059,7 @@ public final class GetCleanupOutput implements SkillOutput
     List<Lock> locksToRemove = new ArrayList<>();
     for (JsonNode lock : context.path("locks_to_remove"))
     {
-      String issueId = lock.path("issue_id").asString();
+      String issueId = lock.path("issueId").asString();
       String session = lock.path("session").asString();
       int ageSeconds = lock.path("age_seconds").asInt(0);
       locksToRemove.add(new Lock(issueId, session, Duration.ofSeconds(ageSeconds)));

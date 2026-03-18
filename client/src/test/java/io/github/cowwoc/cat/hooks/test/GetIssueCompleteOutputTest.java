@@ -719,7 +719,7 @@ public class GetIssueCompleteOutputTest
   // -----------------------------------------------------------------------------------------
 
   /**
-   * Verifies that readGoalFromPlan returns the goal text from a valid PLAN.md.
+   * Verifies that readGoalFromPlan returns the goal text from a valid plan.md.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -742,9 +742,11 @@ public class GetIssueCompleteOutputTest
 
   /**
    * Verifies that readGoalFromPlan returns "No goal found" when the file does not exist.
+   *
+   * @throws IOException if an I/O error occurs
    */
   @Test
-  public void readGoalFromPlanMissingFile()
+  public void readGoalFromPlanMissingFile() throws IOException
   {
     Path nonExistent = Path.of("/tmp/nonexistent-plan-" + System.nanoTime() + ".md");
     String goal = IssueGoalReader.readGoalFromPlan(nonExistent);
@@ -821,14 +823,14 @@ public class GetIssueCompleteOutputTest
   // -----------------------------------------------------------------------------------------
 
   /**
-   * Creates an issue directory with STATE.md and a PLAN.md with the given content.
+   * Creates an issue directory with index.json and a plan.md with the given content.
    *
    * @param projectPath  the project root
    * @param major       the major version string
    * @param minor       the minor version string
    * @param issueName   the bare issue name
    * @param status      the issue status (e.g., "open")
-   * @param planContent the full content to write into PLAN.md
+   * @param planContent the full content to write into plan.md
    * @throws IOException if file creation fails
    */
   private void createIssueWithPlan(Path projectPath, String major, String minor, String issueName,
@@ -838,21 +840,12 @@ public class GetIssueCompleteOutputTest
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
-    String stateContent = """
-      # State
-
-      - **Status:** %s
-      - **Progress:** 0%%
-      - **Dependencies:** []
-      - **Blocks:** []
-      """.formatted(status);
-
-    Files.writeString(issueDir.resolve("STATE.md"), stateContent);
-    Files.writeString(issueDir.resolve("PLAN.md"), planContent);
+    Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"" + status + "\"}");
+    Files.writeString(issueDir.resolve("plan.md"), planContent);
   }
 
   /**
-   * Creates a patch-version issue directory with STATE.md and a PLAN.md with the given content.
+   * Creates a patch-version issue directory with index.json and a plan.md with the given content.
    *
    * @param projectPath  the project root
    * @param major       the major version string
@@ -860,7 +853,7 @@ public class GetIssueCompleteOutputTest
    * @param patch       the patch version string
    * @param issueName   the bare issue name
    * @param status      the issue status (e.g., "open")
-   * @param planContent the full content to write into PLAN.md
+   * @param planContent the full content to write into plan.md
    * @throws IOException if file creation fails
    */
   private void createIssueWithPlan(Path projectPath, String major, String minor, String patch,
@@ -871,16 +864,7 @@ public class GetIssueCompleteOutputTest
       resolve("v" + major + "." + minor + "." + patch).resolve(issueName);
     Files.createDirectories(issueDir);
 
-    String stateContent = """
-      # State
-
-      - **Status:** %s
-      - **Progress:** 0%%
-      - **Dependencies:** []
-      - **Blocks:** []
-      """.formatted(status);
-
-    Files.writeString(issueDir.resolve("STATE.md"), stateContent);
-    Files.writeString(issueDir.resolve("PLAN.md"), planContent);
+    Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"" + status + "\"}");
+    Files.writeString(issueDir.resolve("plan.md"), planContent);
   }
 }

@@ -1,0 +1,5 @@
+{
+  "status": "closed",
+  "targetBranch": "v2.1",
+  "dependencies": ["2.1-fix-issue-path-worktree-resolution"]
+}

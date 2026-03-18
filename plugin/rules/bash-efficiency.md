@@ -38,7 +38,7 @@ Bash("git log --oneline -3 && git status --porcelain && git diff --stat && git b
 git branch --show-current && git log --oneline -5 && git status --porcelain
 
 # Good: sequential but independent reads
-cat PLAN.md && cat STATE.md && git diff --stat
+cat plan.md && cat index.json && git diff --stat
 
 # Bad: three separate tool calls for independent state
 Bash("git branch --show-current")

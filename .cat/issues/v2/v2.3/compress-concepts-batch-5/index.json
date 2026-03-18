@@ -1,0 +1,5 @@
+{
+  "status": "open",
+  "dependencies": ["migrate-python-to-java"],
+  "parent": "compress-concepts-md"
+}

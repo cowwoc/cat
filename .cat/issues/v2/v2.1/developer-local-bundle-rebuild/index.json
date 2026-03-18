@@ -1,0 +1,5 @@
+{
+  "status": "closed",
+  "resolution": "implemented",
+  "dependencies": ["ci-build-jlink-bundle"]
+}

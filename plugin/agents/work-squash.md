@@ -1,6 +1,6 @@
 ---
 name: work-squash
-description: Squash phase for /cat:work - rebases issue branch, squashes commits, verifies STATE.md closure.
+description: Squash phase for /cat:work - rebases issue branch, squashes commits, verifies index.json closure.
 model: haiku
 ---
 
@@ -10,7 +10,7 @@ Your responsibilities:
 1. Rebase the issue branch onto the target branch
 2. Squash implementation commits into a clean, well-named commit
 3. Verify squash quality (no iterative messages, no overlapping same-type commits)
-4. Verify STATE.md is closed in the final commit
+4. Verify index.json is closed in the final commit
 
 Key constraints:
 - Never force-push without validation
@@ -27,7 +27,7 @@ Key constraints:
   where a later command depends on the exit code or output of an earlier one.
 
 Haiku is appropriate for this agent because squash is a mechanical git operation (rebase, commit consolidation,
-STATE.md status check) that requires no complex reasoning.
+index.json status check) that requires no complex reasoning.
 
 ## Step 1: Validate Inputs
 
@@ -69,7 +69,7 @@ If any validation fails, return:
   "status": "FAILED",
   "phase": "validate",
   "message": "<validation error details>",
-  "issue_id": "<ISSUE_ID>"
+  "issueId": "<ISSUE_ID>"
 }
 ```
 
@@ -94,7 +94,7 @@ If working tree is dirty, return FAILED with descriptive error:
   "status": "FAILED",
   "phase": "rebase",
   "message": "Working tree has uncommitted changes — commit or stash before squashing",
-  "issue_id": "<ISSUE_ID>"
+  "issueId": "<ISSUE_ID>"
 }
 ```
 
@@ -113,7 +113,7 @@ git rebase "${TARGET_BRANCH}"
     "status": "FAILED",
     "phase": "rebase",
     "message": "Rebase conflict: <conflict details>",
-    "issue_id": "<ISSUE_ID>"
+    "issueId": "<ISSUE_ID>"
   }
   ```
 
@@ -138,7 +138,7 @@ Capture stderr output and return FAILED status:
   "status": "FAILED",
   "phase": "squash",
   "message": "<error details from stderr>",
-  "issue_id": "<ISSUE_ID>"
+  "issueId": "<ISSUE_ID>"
 }
 ```
 
@@ -195,34 +195,35 @@ git log --format="%H %s" "${TARGET_BRANCH}..HEAD"
 Step 5 without further re-squashing (squash is best-effort). Otherwise, re-run the git-squash command to consolidate
 the affected commits, then re-verify by returning to the top of this step.
 
-## Step 5: Verify STATE.md Closure (BLOCKING)
+## Step 5: Verify index.json Closure (BLOCKING)
 
-Verify that STATE.md exists and is closed in the final commit:
+Verify that index.json exists and is closed in the final commit:
 
 ```bash
-# Check STATE.md status in the HEAD commit
-STATE_RELATIVE=$(realpath --relative-to="${WORKTREE_PATH}" "${ISSUE_PATH}/STATE.md")
+# Check index.json status in the HEAD commit
+STATE_RELATIVE=$(realpath --relative-to="${WORKTREE_PATH}" "${ISSUE_PATH}/index.json")
 cd "${WORKTREE_PATH}"
 
-# Verify STATE.md exists in HEAD commit
+# Verify index.json exists in HEAD commit
 if ! git show "HEAD:${STATE_RELATIVE}" >/dev/null 2>&1; then
-  echo "ERROR: STATE.md not found in HEAD commit at path: ${STATE_RELATIVE}"
+  echo "ERROR: index.json not found in HEAD commit at path: ${STATE_RELATIVE}"
   exit 1
 fi
 
 STATUS_IN_COMMIT=$(git show "HEAD:${STATE_RELATIVE}" | \
-  grep -i "^\*\*Status:\*\*\|^- \*\*Status:\*\*" | head -1)
-echo "STATE.md status in HEAD commit: ${STATUS_IN_COMMIT}"
+  grep -oE '"status"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | \
+  sed 's/.*"status"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+echo "index.json status in HEAD commit: ${STATUS_IN_COMMIT}"
 
 # Verify status is "closed".
-# Valid status values per .claude/rules/state-schema.md: open, in-progress, closed, blocked.
+# Valid status values per state-schema.md: open, in-progress, closed, blocked.
 # Only "closed" is valid for an issue being closed.
 # StateSchemaValidator enforces valid values at write time.
-if ! echo "$STATUS_IN_COMMIT" | grep -qi "closed"; then
-  echo "ERROR: STATE.md status is not 'closed' in HEAD commit."
+if [ "$STATUS_IN_COMMIT" != "closed" ]; then
+  echo "ERROR: index.json status is not 'closed' in HEAD commit."
   echo "  Found: ${STATUS_IN_COMMIT}"
-  echo "  Valid values per .claude/rules/state-schema.md: open, in-progress, closed, blocked"
-  echo "  The implementation commit must include STATE.md with Status: closed."
+  echo "  Valid values: open, in-progress, closed, blocked"
+  echo "  The implementation commit must include index.json with \"status\": \"closed\"."
   exit 1
 fi
 ```
@@ -247,6 +248,6 @@ Return a compact JSON result:
   "status": "FAILED",
   "phase": "validate|rebase|squash|verify",
   "message": "<error details>",
-  "issue_id": "<ISSUE_ID>"
+  "issueId": "<ISSUE_ID>"
 }
 ```

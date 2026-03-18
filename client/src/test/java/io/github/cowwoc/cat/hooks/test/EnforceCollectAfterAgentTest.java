@@ -280,7 +280,7 @@ public final class EnforceCollectAfterAgentTest
 
   /**
    * Verifies that the block reason contains the composite agent ID construction formula so the
-   * main agent knows how to form the correct cat_agent_id argument.
+   * main agent knows how to form the correct catAgentId argument.
    *
    * @throws IOException if test setup fails
    */

@@ -43,7 +43,7 @@ Select the appropriate template based on issue type.
 
 ## Pre-conditions
 <!-- Conditions that must be true before this issue can begin execution -->
-<!-- Default: all dependent issues listed in STATE.md are closed -->
+<!-- Default: all dependent issues listed in index.json are closed -->
 - [ ] All dependent issues are closed
 
 ## Main Agent Waves

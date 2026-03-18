@@ -424,8 +424,8 @@ public class GitRebaseTest
         // Add a directory tree on main that will be retroactively removed
         Path issueDir = repoDir.resolve("issues").resolve("v2.1").resolve("some-issue");
         Files.createDirectories(issueDir);
-        Files.writeString(issueDir.resolve("PLAN.md"), "plan content");
-        Files.writeString(issueDir.resolve("STATE.md"), "state content");
+        Files.writeString(issueDir.resolve("plan.md"), "plan content");
+        Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"open\"}");
         TestUtils.runGit(repoDir, "add", "issues/");
         TestUtils.runGit(repoDir, "commit", "-m", "add issue directory");
         String forkPoint = TestUtils.runGitCommandWithOutput(repoDir, "rev-parse", "HEAD");
@@ -442,7 +442,7 @@ public class GitRebaseTest
         TestUtils.runGit(repoDir, "rebase", "--onto", initialCommit, forkPoint, "main");
 
         TestUtils.runGit(repoDir, "checkout", "feature");
-        requireThat(Files.exists(issueDir.resolve("PLAN.md")), "planExistsBefore").isTrue();
+        requireThat(Files.exists(issueDir.resolve("plan.md")), "planExistsBefore").isTrue();
 
         GitRebase cmd = new GitRebase(scope, repoDir);
         String result = cmd.execute("main");

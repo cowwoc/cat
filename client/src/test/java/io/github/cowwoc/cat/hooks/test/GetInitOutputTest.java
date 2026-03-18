@@ -312,7 +312,7 @@ public class GetInitOutputTest
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getFirstIssueCreated("test-task");
 
-      requireThat(result, "result").contains("PLAN.md").contains("STATE.md");
+      requireThat(result, "result").contains("plan.md").contains("index.json");
     }
   }
 

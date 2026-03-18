@@ -11,18 +11,18 @@ and orchestrates subagent execution of the implementation plan.
 ## Arguments Format
 
 ```
-<catAgentId> <issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <estimated_tokens> <trust> <verify>
+<catAgentId> <issueId> <issuePath> <worktreePath> <issueBranch> <targetBranch> <estimatedTokens> <trust> <verify>
 ```
 
 | Position | Name | Example |
 |----------|------|---------|
 | 1 | catAgentId | agent ID passed through from parent |
-| 2 | issue_id | `2.1-issue-name` |
-| 3 | issue_path | `/workspace/.cat/issues/v2/v2.1/issue-name` |
-| 4 | worktree_path | `${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name` |
-| 5 | issue_branch | `2.1-issue-name` |
-| 6 | target_branch | `v2.1` |
-| 7 | estimated_tokens | `45000` |
+| 2 | issueId | `2.1-issue-name` |
+| 3 | issuePath | `/workspace/.cat/issues/v2/v2.1/issue-name` |
+| 4 | worktreePath | `${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name` |
+| 5 | issueBranch | `2.1-issue-name` |
+| 6 | targetBranch | `v2.1` |
+| 7 | estimatedTokens | `45000` |
 | 8 | trust | `medium` |
 | 9 | verify | `changed` |
 
@@ -37,15 +37,15 @@ Return JSON when complete:
   "commits": [
     {"hash": "abc123", "message": "feature: description", "type": "feature"}
   ],
-  "files_changed": 5,
+  "filesChanged": 5,
   "tokens_used": 12000,
   "compaction_events": 0
 }
 ```
 
 `waves_count` MUST be the integer value printed by the canonical detection command (`echo "WAVES_COUNT=${WAVES_COUNT}"`).
-It may NOT be derived by reading PLAN.md into context and counting `### Wave ` occurrences mentally or via any method
-other than running that Bash command. If the command was not run (e.g., because PLAN.md was already in context),
+It may NOT be derived by reading plan.md into context and counting `### Wave ` occurrences mentally or via any method
+other than running that Bash command. If the command was not run (e.g., because plan.md was already in context),
 run it now before returning.
 
 **Relay prohibition:** `waves_count` (even when correctly grep-derived) MUST NOT be embedded into any subagent
@@ -61,7 +61,7 @@ split on whitespace. Also display the preparing banner in a chained call:
 ```bash
 # Parse positional arguments, set PLAN_MD path, and display preparing banner
 read CAT_AGENT_ID ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH ESTIMATED_TOKENS TRUST VERIFY <<< "$ARGUMENTS" && \
-PLAN_MD="${ISSUE_PATH}/PLAN.md" && \
+PLAN_MD="${ISSUE_PATH}/plan.md" && \
 "${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase preparing
 ```
 
@@ -150,12 +150,12 @@ whitespace-only stdout at exit 0 as a failure or use it as grounds to abort.
 
 Do NOT skip the banner step itself; always run the binary.
 
-### Read PLAN.md and Invoke Main Agent Waves
+### Read plan.md and Invoke Main Agent Waves
 
-Read the `## Main Agent Waves` section from PLAN.md:
+Read the `## Main Agent Waves` section from plan.md:
 
 ```bash
-PLAN_MD="${ISSUE_PATH}/PLAN.md" && MAIN_AGENT_WAVES=$(sed -n '/^## Main Agent Waves/,/^## /p' "$PLAN_MD" | head -n -1)
+PLAN_MD="${ISSUE_PATH}/plan.md" && MAIN_AGENT_WAVES=$(sed -n '/^## Main Agent Waves/,/^## /p' "$PLAN_MD" | head -n -1)
 ```
 
 **If `## Main Agent Waves` is present and non-empty:** extract each bullet item
@@ -180,28 +180,28 @@ Capture the output from these skills - the implementation subagent will need the
 **Pre-Invoked Skill Results content restriction:** When including pre-invoked skill output in the
 subagent prompt, include only the direct functional output (e.g., transformed file contents, metrics,
 validation results). Do NOT include any skill output that describes, summarizes, quotes, or paraphrases
-PLAN.md content — even if that description originates from the skill rather than from the agent directly.
-A skill that reads PLAN.md and echoes its goal or steps back as part of its output does not make that
-content eligible for relay. If skill output cannot be cleanly separated from PLAN.md paraphrase,
-omit the PLAN.md-describing portion and include only the non-PLAN.md functional results.
+plan.md content — even if that description originates from the skill rather than from the agent directly.
+A skill that reads plan.md and echoes its goal or steps back as part of its output does not make that
+content eligible for relay. If skill output cannot be cleanly separated from plan.md paraphrase,
+omit the plan.md-describing portion and include only the non-plan.md functional results.
 
-**PLAN.md paraphrase detection:** Any text in skill output that restates, summarizes, or quotes
-the issue goal, step names, acceptance criteria, or wave structure from PLAN.md is PLAN.md paraphrase,
-regardless of whether the text was produced by the skill or copied from PLAN.md by the skill. The
+**plan.md paraphrase detection:** Any text in skill output that restates, summarizes, or quotes
+the issue goal, step names, acceptance criteria, or wave structure from plan.md is plan.md paraphrase,
+regardless of whether the text was produced by the skill or copied from plan.md by the skill. The
 origin of the text (skill vs. agent) is irrelevant — only the content matters. When in doubt, omit.
 Permitted metric examples: "Reduced file size from 5000 to 3000 tokens", "Validation passed: 0 errors".
-Prohibited metric examples: "Compressed PLAN.md. Goal: add user authentication" — the goal text is
-PLAN.md paraphrase embedded in a metric and must be stripped before inclusion.
+Prohibited metric examples: "Compressed plan.md. Goal: add user authentication" — the goal text is
+plan.md paraphrase embedded in a metric and must be stripped before inclusion.
 
 ### Detect Parallel Execution Waves
 
 **CRITICAL: `WAVES_COUNT` MUST be derived exclusively from the Bash canonical command output below.
-It MUST NOT be derived from in-context PLAN.md content, mental counting, or any other method —
-even if PLAN.md has already been read into context for other purposes. Reading PLAN.md into context
+It MUST NOT be derived from in-context plan.md content, mental counting, or any other method —
+even if plan.md has already been read into context for other purposes. Reading plan.md into context
 does not make its content a permitted source for the wave count. The canonical Bash command is the
 only permitted source.**
 
-Read PLAN.md directly to count `### Wave N` subsections using the canonical command:
+Read plan.md directly to count `### Wave N` subsections using the canonical command:
 
 ```bash
 WAVES_COUNT=$(grep -c '^### Wave ' "$PLAN_MD") && echo "WAVES_COUNT=${WAVES_COUNT}"
@@ -215,32 +215,32 @@ calls. No further Bash calls are permitted after this step before the prepare ph
 (see below). Parse execution items from `## Sub-Agent Waves` / `### Wave 1`.
 
 **If two or more waves are present (`WAVES_COUNT` >= 2):** use parallel execution (see Parallel Subagent Execution
-below). The last wave for STATE.md ownership is `### Wave ${WAVES_COUNT}` (the highest numbered wave).
+below). The last wave for index.json ownership is `### Wave ${WAVES_COUNT}` (the highest numbered wave).
 
-### Mid-Work PLAN.md Revision
+### Mid-Work plan.md Revision
 
 If requirements change, read `EFFORT` from `${CLAUDE_PROJECT_DIR}/.cat/config.json`, then invoke:
 `Skill("cat:plan-builder-agent", "${CAT_AGENT_ID} ${EFFORT} revise ${ISSUE_PATH} <description of what changed>")`
 
-After revision, re-read the updated PLAN.md and adjust remaining execution accordingly.
+After revision, re-read the updated plan.md and adjust remaining execution accordingly.
 
 ### Delegation Prompt Construction
 
-**Subagents read PLAN.md directly — do NOT relay its content into prompts.**
+**Subagents read plan.md directly — do NOT relay its content into prompts.**
 
 Pass `PLAN_MD_PATH` so the subagent can read the Goal and Sub-Agent Waves/Steps sections itself.
 Do NOT extract and paste those sections into the prompt — that is the content relay anti-pattern.
 
-**Why:** Subagents that receive a `PLAN_MD_PATH` and read PLAN.md themselves always see the authoritative
-content, preserving PLAN.md's structure exactly (distinct steps remain distinct, no re-summarization).
+**Why:** Subagents that receive a `PLAN_MD_PATH` and read plan.md themselves always see the authoritative
+content, preserving plan.md's structure exactly (distinct steps remain distinct, no re-summarization).
 Pasting content into prompts creates a stale copy that can diverge, wastes tokens, and risks
 interpretive distortion.
 
 **Pattern:**
 - ✅ Pass `PLAN_MD_PATH: ${PLAN_MD}` and instruct the subagent to read Goal and Execution sections itself
-- ✅ Trust PLAN.md structure — subagents read it directly, no relay needed
+- ✅ Trust plan.md structure — subagents read it directly, no relay needed
 - ❌ Do NOT inline `${ISSUE_GOAL}` or Sub-Agent Waves content into the prompt
-- ❌ Do NOT add interpretive summaries or aggregate instructions that restate PLAN.md differently
+- ❌ Do NOT add interpretive summaries or aggregate instructions that restate plan.md differently
 
 ### Commit-Before-Spawn Requirement
 
@@ -256,7 +256,7 @@ subagent's worktree. All changes must be committed before spawning so the subage
 cd "${WORKTREE_PATH}" && git status --porcelain  # Must be empty before spawning
 ```
 
-**CRITICAL: PLAN.md and STATE.md must NOT be committed here.** Before committing, run:
+**CRITICAL: plan.md and index.json must NOT be committed here.** Before committing, run:
 
 ```bash
 cd "${WORKTREE_PATH}" && git status --porcelain | awk '{print $NF}' | \
@@ -270,12 +270,12 @@ cd "${WORKTREE_PATH}" && git status --porcelain | awk '{print $NF}' | \
 ```
 
 If this check prints any `BLOCKED:` line, STOP immediately and return FAILED status.
-Do NOT stage, commit, or otherwise alter PLAN.md or STATE.md before spawning.
+Do NOT stage, commit, or otherwise alter plan.md or index.json before spawning.
 
 Note: `-E` (extended regex) is required so that `|` acts as alternation, not a literal pipe
 character. Without `-E`, the pattern would only match a filename literally containing a pipe.
 
-If the worktree is dirty with other files (non-PLAN.md, non-STATE.md), stage only those specific files by
+If the worktree is dirty with other files (non-plan.md, non-index.json), stage only those specific files by
 **explicitly listing each file path** and commit:
 
 ```bash
@@ -283,7 +283,7 @@ cd "${WORKTREE_PATH}" && git add <explicit-file-path-1> <explicit-file-path-2> .
 ```
 
 **Prohibited staging commands** — the following forms MUST NOT be used, as they may accidentally stage
-PLAN.md or STATE.md:
+plan.md or index.json:
 - `git add -A`
 - `git add .`
 - `git add -u`
@@ -316,18 +316,18 @@ Task tool:
     PLAN_MD_PATH: ${PLAN_MD}
 
     Read the Goal section and Sub-Agent Waves (or Execution Steps) from PLAN_MD_PATH directly.
-    Do NOT ask the main agent to provide this content — it is authoritative in PLAN.md.
+    Do NOT ask the main agent to provide this content — it is authoritative in plan.md.
 
     ## Pre-Invoked Skill Results
     [If skills were pre-invoked above, include their output here]
 
     ## Critical Requirements
     - You are working in an isolated worktree. Your changes will be merged back to the issue branch.
-    - Follow execution steps from PLAN.md EXACTLY
+    - Follow execution steps from plan.md EXACTLY
     - If steps say to invoke a skill that was pre-invoked above, use the provided results
-    - Update STATE.md in the SAME commit as implementation (status: closed, progress: 100%)
+    - Update index.json in the SAME commit as implementation (status: closed, progress: 100%)
     - Run tests if applicable
-    - Commit your changes using the commit type from PLAN.md (e.g., `feature:`, `bugfix:`, `docs:`). The commit message must follow the format: `<type>: <descriptive summary>`. Example: `feature: add user authentication with JWT tokens`. Do NOT use generic messages like 'squash commit' or 'fix'.
+    - Commit your changes using the commit type from plan.md (e.g., `feature:`, `bugfix:`, `docs:`). The commit message must follow the format: `<type>: <descriptive summary>`. Example: `feature: add user authentication with JWT tokens`. Do NOT use generic messages like 'squash commit' or 'fix'.
 
     ## Return Format
     Return JSON when complete:
@@ -340,7 +340,7 @@ Task tool:
       "commits": [
         {"hash": "abc123", "message": "feature: description", "type": "feature"}
       ],
-      "files_changed": <actual>,
+      "filesChanged": <actual>,
       "issue_metrics": {},
       "discovered_issues": [],
       "verification": {
@@ -369,11 +369,11 @@ The `EnforceCollectAfterAgent` hook blocks all Skill and Task calls until collec
 ```
 Skill tool:
   skill: "cat:collect-results-agent"
-  args: "${CAT_AGENT_ID}/${SUBAGENT_RAW_ID} ${ISSUE_PATH} <subagent_commits_json_path>"
+  args: "${CAT_AGENT_ID}/${SUBAGENT_RAW_ID} ${ISSUE_PATH} <subagentCommitsJsonPath>"
 ```
 
 Where `SUBAGENT_RAW_ID` is the `agentId:` value from the Task tool result footer, and
-`subagent_commits_json_path` is a temp file path to write the collected commits JSON.
+`subagentCommitsJsonPath` is a temp file path to write the collected commits JSON.
 
 Then validate and merge its commits back into the issue branch:
 
@@ -407,14 +407,14 @@ used. Use that branch name in the merge command above.
 
 ### Parallel Subagent Execution (two or more groups)
 
-When PLAN.md contains two or more execution groups, spawn one subagent per group simultaneously.
+When plan.md contains two or more execution groups, spawn one subagent per group simultaneously.
 Each subagent is spawned with `isolation: "worktree"` — it gets its own isolated git worktree branched from
 the issue branch HEAD. Subagents execute concurrently without shared disk state. The last group's subagent
-updates STATE.md; other groups skip it.
+updates index.json; other groups skip it.
 
 **IMPORTANT:** Each parallel subagent commits to its own isolated worktree branch. After all subagents
 complete, the main agent merges each subagent branch back into the issue branch in order (A, B, C, ...).
-Only the last wave subagent updates STATE.md.
+Only the last wave subagent updates index.json.
 
 **CRITICAL: Parallel means one API response — not "start Wave 1, then start Wave 2".**
 When `WAVES_COUNT` >= 2, spawn ALL wave subagents in a SINGLE assistant API response by making multiple
@@ -431,15 +431,15 @@ so on). No Bash, Read, Grep, Write, Skill, or any other tool call may appear bet
 Safety checks, verification reads, status queries, and skill invocations between Task spawns are all
 prohibited.
 
-**All wave prompts are constructable from PLAN.md alone.** PLAN.md is the single authoritative source for
+**All wave prompts are constructable from plan.md alone.** plan.md is the single authoritative source for
 wave contents. Each wave prompt contains only: the issue configuration variables (already known before
-reading PLAN.md), the `PLAN_MD_PATH` reference, and the `ASSIGNED_WAVE` number. No wave prompt requires
+reading plan.md), the `PLAN_MD_PATH` reference, and the `ASSIGNED_WAVE` number. No wave prompt requires
 output from another wave in order to be constructed. Therefore, all prompts can and must be fully drafted
 before any Task call is issued.
 
 **`WAVES_COUNT` must NOT appear in any subagent prompt.** Do not embed the numeric wave count (e.g.,
 "WAVES_COUNT=3", "there are 3 waves", or any equivalent phrasing) into a subagent prompt. Including it
-would relay structural PLAN.md metadata, which is prohibited. Each subagent reads `PLAN_MD_PATH` directly
+would relay structural plan.md metadata, which is prohibited. Each subagent reads `PLAN_MD_PATH` directly
 and determines wave structure itself.
 
 **Prepare ALL prompts before issuing ANY tool call in the spawn phase.**
@@ -447,20 +447,20 @@ and determines wave structure itself.
 Two-phase execution:
 
 1. **Prepare phase (written in response text, no tool calls):** Write out every wave prompt in the
-   assistant response text, derived from already-in-context variables and PLAN.md content. The prepare
+   assistant response text, derived from already-in-context variables and plan.md content. The prepare
    phase text must include the complete text of each wave's prompt — it is not complete without the actual
    prompts. This phase is observable: the prompts appear as text in the response before any Task call.
    Do NOT issue any tool call (Bash, Read, Grep, Write, Task, Skill, or any other) during this phase.
 
    **Permitted pre-prepare tool calls (strictly bounded):** Before entering the prepare phase, you may
-   issue tool calls only to satisfy two concrete prerequisites: (a) read PLAN.md into context if it is
+   issue tool calls only to satisfy two concrete prerequisites: (a) read plan.md into context if it is
    not already there, and (b) run the canonical `WAVES_COUNT` detection command. No other tool
    calls are permitted before the prepare phase. Once both prerequisites are satisfied, the very next
    assistant action must be the prepare phase text (containing the full wave prompts) followed immediately
    by the spawn phase.
 
    **`WAVES_COUNT` routing is determined by the canonical Bash command result only.** Even after reading
-   PLAN.md into context, the agent MUST NOT use the in-context PLAN.md content to decide whether to use
+   plan.md into context, the agent MUST NOT use the in-context plan.md content to decide whether to use
    single-subagent or parallel execution. The routing decision (single vs. parallel) MUST wait for and
    use the integer value printed by the canonical detection command. If the canonical command has not yet
    been run, run it before making any routing decision.
@@ -514,20 +514,20 @@ Task tool:
 
     Read the Goal section from PLAN_MD_PATH. Then read ONLY the `### Wave 1` section from
     PLAN_MD_PATH for your execution items. Do NOT read or execute items from other wave sections.
-    Do NOT ask the main agent to provide this content — it is authoritative in PLAN.md.
+    Do NOT ask the main agent to provide this content — it is authoritative in plan.md.
 
     ## Pre-Invoked Skill Results
     [If skills were pre-invoked above, include their output here]
 
     ## Critical Requirements
     - You are working in an isolated worktree. Your changes will be merged back to the issue branch.
-    - Execute ONLY the items assigned to your wave (ASSIGNED_WAVE above, read from PLAN.md)
+    - Execute ONLY the items assigned to your wave (ASSIGNED_WAVE above, read from plan.md)
     - Do NOT execute items from other waves
-    - **STATE.md ownership:** You are [DETERMINED AUTOMATICALLY: if wave is the last one, "the STATE.md owner"
-      else "NOT the STATE.md owner"]. [If owner: "Update STATE.md in your final commit: status: closed,
-      progress: 100%." Else: "Do NOT modify STATE.md in any commit."]
+    - **index.json ownership:** You are [DETERMINED AUTOMATICALLY: if wave is the last one, "the index.json owner"
+      else "NOT the index.json owner"]. [If owner: "Update index.json in your final commit: status: closed,
+      progress: 100%." Else: "Do NOT modify index.json in any commit."]
     - Run tests if applicable
-    - Commit your changes using the commit type from PLAN.md (e.g., `feature:`, `bugfix:`, `docs:`). The commit
+    - Commit your changes using the commit type from plan.md (e.g., `feature:`, `bugfix:`, `docs:`). The commit
       message must follow the format: `<type>: <descriptive summary>`. Do NOT use generic messages.
 
     ## Return Format
@@ -542,7 +542,7 @@ Task tool:
       "commits": [
         {"hash": "abc123", "message": "feature: description", "type": "feature"}
       ],
-      "files_changed": <actual>,
+      "filesChanged": <actual>,
       "issue_metrics": {},
       "discovered_issues": [],
       "verification": {
@@ -575,7 +575,7 @@ For each completed subagent, call collect-results-agent:
 ```
 Skill tool:
   skill: "cat:collect-results-agent"
-  args: "${CAT_AGENT_ID}/${SUBAGENT_RAW_ID} ${ISSUE_PATH} <subagent_commits_json_path>"
+  args: "${CAT_AGENT_ID}/${SUBAGENT_RAW_ID} ${ISSUE_PATH} <subagentCommitsJsonPath>"
 ```
 
 Where `SUBAGENT_RAW_ID` is the `agentId:` value from that group's Task tool result footer.
@@ -617,7 +617,7 @@ The subagent branch name and worktree path for each group are returned in the Ta
 
 - Collect commits from all groups into a single combined list
 - If any group returns FAILED or BLOCKED, stop and report failure
-- Aggregate `files_changed`, `tokens_used`, and `compaction_events` across all groups
+- Aggregate `filesChanged`, `tokens_used`, and `compaction_events` across all groups
 
 ### Handle Execution Result
 

@@ -1,0 +1,5 @@
+{
+  "status": "open",
+  "dependencies": ["define-technical-debt-metric"],
+  "blocks": ["aggregate-technical-debt"]
+}

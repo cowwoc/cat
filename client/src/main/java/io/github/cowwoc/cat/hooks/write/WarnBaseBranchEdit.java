@@ -36,7 +36,7 @@ import java.util.List;
  *   <li>.cat/issues/, .cat/rules/, .cat/retrospectives/, .cat/migrations/ and similar planning
  *       directories (not .cat/work/ which contains runtime-only data)</li>
  *   <li>.claude/rules/, .claude/settings* (orchestration only, not commands/client)</li>
- *   <li>STATE.md, PLAN.md, CHANGELOG.md, ROADMAP.md files</li>
+ *   <li>index.json, plan.md, CHANGELOG.md, ROADMAP.md files</li>
  *   <li>CLAUDE.md, PROJECT.md (project instructions)</li>
  *   <li>retrospectives/ directory</li>
  *   <li>mistakes.json, retrospectives.json</li>
@@ -57,8 +57,7 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
     Config.CAT_DIR_NAME + "/config",
     Config.CAT_DIR_NAME + "/VERSION",
     ".claude/rules/",
-    "STATE.md",
-    "PLAN.md",
+    "plan.md",
     "CHANGELOG.md",
     "ROADMAP.md",
     "CLAUDE.md",

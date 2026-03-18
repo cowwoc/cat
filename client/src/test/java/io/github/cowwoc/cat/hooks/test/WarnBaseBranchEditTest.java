@@ -71,7 +71,7 @@ public final class WarnBaseBranchEditTest
   /**
    * Verifies that edits to files matching allowed patterns are permitted without warning.
    * <p>
-   * STATE.md, PLAN.md, and similar orchestration files must always be allowed even when
+   * index.json, plan.md, and similar orchestration files must always be allowed even when
    * editing on a base branch.
    *
    * @throws IOException if test setup fails
@@ -86,7 +86,7 @@ public final class WarnBaseBranchEditTest
       WarnBaseBranchEdit handler = new WarnBaseBranchEdit(scope);
       JsonMapper mapper = scope.getJsonMapper();
       ObjectNode input = mapper.createObjectNode();
-      input.put("file_path", projectPath.resolve(".cat/issues/my-issue/STATE.md").toString());
+      input.put("file_path", projectPath.resolve(".cat/issues/my-issue/index.json").toString());
 
       FileWriteHandler.Result result = handler.check(input, SESSION_ID);
 

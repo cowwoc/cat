@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # Tests for the issue_detect_skill_deps step in plugin/skills/add/first-use.md
 # Verifies that the bash scanning logic correctly:
-#   - Finds open issues whose PLAN.md references a given skill
+#   - Finds open issues whose plan.md references a given skill
 #   - Excludes closed issues
 #   - Excludes the current issue being created
 
@@ -22,16 +22,16 @@ teardown() {
     teardown_test_dir
 }
 
-# Create a mock issue directory with STATE.md and PLAN.md
+# Create a mock issue directory with index.json and plan.md
 create_mock_issue() {
     local issue_id="$1"
     local status="$2"       # e.g. "open" or "closed"
-    local skill_ref="$3"    # skill path to put in PLAN.md, or "" for none
+    local skill_ref="$3"    # skill path to put in plan.md, or "" for none
 
     local issue_dir="${ISSUES_DIR}/v2/v2.1/${issue_id}"
     mkdir -p "$issue_dir"
 
-    cat > "${issue_dir}/STATE.md" <<EOF
+    cat > "${issue_dir}/index.json" <<EOF
 # ${issue_id}
 
 - **Status:** ${status}
@@ -39,7 +39,7 @@ create_mock_issue() {
 EOF
 
     if [[ -n "$skill_ref" ]]; then
-        cat > "${issue_dir}/PLAN.md" <<EOF
+        cat > "${issue_dir}/plan.md" <<EOF
 # Plan for ${issue_id}
 
 ## Files to Modify
@@ -49,7 +49,7 @@ EOF
 1. Modify skill file
 EOF
     else
-        cat > "${issue_dir}/PLAN.md" <<EOF
+        cat > "${issue_dir}/plan.md" <<EOF
 # Plan for ${issue_id}
 
 ## Files to Modify
@@ -195,13 +195,13 @@ EOF
 @test "skill_dep_detection: partial name match does not trigger (add vs add-wizard)" {
     local issue_dir="${ISSUES_DIR}/v2/v2.1/add-wizard-issue"
     mkdir -p "$issue_dir"
-    cat > "${issue_dir}/STATE.md" <<EOF
+    cat > "${issue_dir}/index.json" <<EOF
 # add-wizard-issue
 
 - **Status:** open
 - **Dependencies:** []
 EOF
-    cat > "${issue_dir}/PLAN.md" <<EOF
+    cat > "${issue_dir}/plan.md" <<EOF
 # Plan for add-wizard-issue
 
 ## Files to Modify
@@ -226,8 +226,8 @@ EOF
     mkdir -p "$issue_dir"
     # Status line has trailing spaces
     printf '# trailing-ws-issue\n\n- **Status:** open   \n- **Dependencies:** []\n' \
-        > "${issue_dir}/STATE.md"
-    cat > "${issue_dir}/PLAN.md" <<EOF
+        > "${issue_dir}/index.json"
+    cat > "${issue_dir}/plan.md" <<EOF
 # Plan
 
 ## Files to Modify
@@ -241,19 +241,19 @@ EOF
 }
 
 # ============================================================================
-# Deduplication: same skill referenced on multiple PLAN.md lines
+# Deduplication: same skill referenced on multiple plan.md lines
 # ============================================================================
 
 @test "skill_dep_detection: issue referencing same skill on two lines appears exactly once" {
     local issue_dir="${ISSUES_DIR}/v2/v2.1/dup-ref-issue"
     mkdir -p "$issue_dir"
-    cat > "${issue_dir}/STATE.md" <<EOF
+    cat > "${issue_dir}/index.json" <<EOF
 # dup-ref-issue
 
 - **Status:** open
 - **Dependencies:** []
 EOF
-    cat > "${issue_dir}/PLAN.md" <<EOF
+    cat > "${issue_dir}/plan.md" <<EOF
 # Plan for dup-ref-issue
 
 ## Files to Modify
@@ -313,11 +313,11 @@ EOF
 }
 
 # ============================================================================
-# update_state_dependency: STATE.md dependency insertion
+# update_state_dependency: index.json dependency insertion
 # ============================================================================
 
 @test "update_state_dependency: empty [] list becomes [new-issue]" {
-    local state_file="${TEST_TEMP_DIR}/STATE.md"
+    local state_file="${TEST_TEMP_DIR}/index.json"
     cat > "$state_file" <<EOF
 # test-issue
 
@@ -331,7 +331,7 @@ EOF
 }
 
 @test "update_state_dependency: single-entry list gets new issue appended" {
-    local state_file="${TEST_TEMP_DIR}/STATE.md"
+    local state_file="${TEST_TEMP_DIR}/index.json"
     cat > "$state_file" <<EOF
 # test-issue
 
@@ -345,7 +345,7 @@ EOF
 }
 
 @test "update_state_dependency: multi-entry list gets new issue appended" {
-    local state_file="${TEST_TEMP_DIR}/STATE.md"
+    local state_file="${TEST_TEMP_DIR}/index.json"
     cat > "$state_file" <<EOF
 # test-issue
 
@@ -359,7 +359,7 @@ EOF
 }
 
 @test "update_state_dependency: idempotent (double update does not duplicate)" {
-    local state_file="${TEST_TEMP_DIR}/STATE.md"
+    local state_file="${TEST_TEMP_DIR}/index.json"
     cat > "$state_file" <<EOF
 # test-issue
 
@@ -376,7 +376,7 @@ EOF
 }
 
 @test "update_state_dependency: handles special characters in issue ID" {
-    local state_file="${TEST_TEMP_DIR}/STATE.md"
+    local state_file="${TEST_TEMP_DIR}/index.json"
     cat > "$state_file" <<EOF
 # test-issue
 
@@ -396,10 +396,10 @@ EOF
 }
 
 # ============================================================================
-# E2E integration test: full flow from extraction to STATE.md update
+# E2E integration test: full flow from extraction to index.json update
 # ============================================================================
 
-@test "skill_dep_detection: E2E full flow - extract names, detect deps, update STATE.md" {
+@test "skill_dep_detection: E2E full flow - extract names, detect deps, update index.json" {
     # Create two open issues referencing plugin/skills/add/
     create_mock_issue "open-issue-alpha" "open" "plugin/skills/add"
     create_mock_issue "open-issue-beta" "open" "plugin/skills/add"
@@ -424,20 +424,20 @@ EOF
     [[ "$output" == *"open-issue-beta"* ]]
     [[ "$output" != *"closed-issue-gamma"* ]]
 
-    # Step 3: Update STATE.md for each matched issue
+    # Step 3: Update index.json for each matched issue
     local new_issue_id="brand-new-issue"
-    local alpha_state="${ISSUES_DIR}/v2/v2.1/open-issue-alpha/STATE.md"
-    local beta_state="${ISSUES_DIR}/v2/v2.1/open-issue-beta/STATE.md"
-    local closed_state="${ISSUES_DIR}/v2/v2.1/closed-issue-gamma/STATE.md"
+    local alpha_state="${ISSUES_DIR}/v2/v2.1/open-issue-alpha/index.json"
+    local beta_state="${ISSUES_DIR}/v2/v2.1/open-issue-beta/index.json"
+    local closed_state="${ISSUES_DIR}/v2/v2.1/closed-issue-gamma/index.json"
 
     update_state_dependency "$alpha_state" "$new_issue_id"
     update_state_dependency "$beta_state" "$new_issue_id"
 
-    # Assert each matched STATE.md now contains the new-issue-id in Dependencies
+    # Assert each matched index.json now contains the new-issue-id in Dependencies
     grep -qF "$new_issue_id" "$alpha_state"
     grep -qF "$new_issue_id" "$beta_state"
 
-    # Assert closed issue STATE.md was NOT modified
+    # Assert closed issue index.json was NOT modified
     ! grep -qF "$new_issue_id" "$closed_state"
 }
 
@@ -448,13 +448,13 @@ EOF
 @test "skill_dep_detection: missing Status field is treated as non-closed (conservative)" {
     local issue_dir="${ISSUES_DIR}/v2/v2.1/no-status-issue"
     mkdir -p "$issue_dir"
-    # STATE.md with no Status field at all
-    cat > "${issue_dir}/STATE.md" <<EOF
+    # index.json with no Status field at all
+    cat > "${issue_dir}/index.json" <<EOF
 # no-status-issue
 
 - **Dependencies:** []
 EOF
-    cat > "${issue_dir}/PLAN.md" <<EOF
+    cat > "${issue_dir}/plan.md" <<EOF
 # Plan for no-status-issue
 
 ## Files to Modify
@@ -469,20 +469,20 @@ EOF
 }
 
 # ============================================================================
-# Missing PLAN.md: guard skips issue correctly
+# Missing plan.md: guard skips issue correctly
 # ============================================================================
 
-@test "skill_dep_detection: issue without PLAN.md is skipped (not included in results)" {
+@test "skill_dep_detection: issue without plan.md is skipped (not included in results)" {
     local issue_dir="${ISSUES_DIR}/v2/v2.1/no-plan-issue"
     mkdir -p "$issue_dir"
-    # Only STATE.md, no PLAN.md
-    cat > "${issue_dir}/STATE.md" <<EOF
+    # Only index.json, no plan.md
+    cat > "${issue_dir}/index.json" <<EOF
 # no-plan-issue
 
 - **Status:** open
 - **Dependencies:** []
 EOF
-    # Intentionally do NOT create PLAN.md
+    # Intentionally do NOT create plan.md
 
     run run_detection "add" "new-current-issue"
 
@@ -532,8 +532,8 @@ EOF
     mkdir -p "$issue_dir"
     # Status line has extra spaces before "open"
     printf '# leading-ws-issue\n\n- **Status:**   open\n- **Dependencies:** []\n' \
-        > "${issue_dir}/STATE.md"
-    cat > "${issue_dir}/PLAN.md" <<EOF
+        > "${issue_dir}/index.json"
+    cat > "${issue_dir}/plan.md" <<EOF
 # Plan
 
 ## Files to Modify
@@ -551,8 +551,8 @@ EOF
     mkdir -p "$issue_dir"
     # Status "closed" with trailing spaces — must be treated as closed
     printf '# trailing-closed-issue\n\n- **Status:** closed   \n- **Dependencies:** []\n' \
-        > "${issue_dir}/STATE.md"
-    cat > "${issue_dir}/PLAN.md" <<EOF
+        > "${issue_dir}/index.json"
+    cat > "${issue_dir}/plan.md" <<EOF
 # Plan
 
 ## Files to Modify
@@ -570,8 +570,8 @@ EOF
     mkdir -p "$issue_dir"
     # First Status: open; second Status: closed — grep -m1 takes the first
     printf '# multi-status-issue\n\n- **Status:** open\n- **Status:** closed\n- **Dependencies:** []\n' \
-        > "${issue_dir}/STATE.md"
-    cat > "${issue_dir}/PLAN.md" <<EOF
+        > "${issue_dir}/index.json"
+    cat > "${issue_dir}/plan.md" <<EOF
 # Plan
 
 ## Files to Modify
@@ -590,7 +590,7 @@ EOF
 # ============================================================================
 
 @test "update_state_dependency: issue ID containing forward slash is handled safely" {
-    local state_file="${TEST_TEMP_DIR}/STATE.md"
+    local state_file="${TEST_TEMP_DIR}/index.json"
     cat > "$state_file" <<EOF
 # test-issue
 
@@ -608,7 +608,7 @@ EOF
 }
 
 @test "update_state_dependency: issue ID containing ampersand is handled safely" {
-    local state_file="${TEST_TEMP_DIR}/STATE.md"
+    local state_file="${TEST_TEMP_DIR}/index.json"
     cat > "$state_file" <<EOF
 # test-issue
 
@@ -630,16 +630,16 @@ EOF
 # ============================================================================
 
 @test "run_detection_multi_skill: same issue found via two skills appears exactly once" {
-    # Create an issue whose PLAN.md references BOTH "add" and "work" skills
+    # Create an issue whose plan.md references BOTH "add" and "work" skills
     local issue_dir="${ISSUES_DIR}/v2/v2.1/cross-skill-issue"
     mkdir -p "$issue_dir"
-    cat > "${issue_dir}/STATE.md" <<EOF
+    cat > "${issue_dir}/index.json" <<EOF
 # cross-skill-issue
 
 - **Status:** open
 - **Dependencies:** []
 EOF
-    cat > "${issue_dir}/PLAN.md" <<EOF
+    cat > "${issue_dir}/plan.md" <<EOF
 # Plan for cross-skill-issue
 
 ## Files to Modify
@@ -736,8 +736,8 @@ EOF
 # Idempotency with multiple existing dependencies
 # ============================================================================
 
-@test "update_state_dependency: idempotent when STATE.md already has multiple dependencies including target" {
-    local state_file="${TEST_TEMP_DIR}/STATE.md"
+@test "update_state_dependency: idempotent when index.json already has multiple dependencies including target" {
+    local state_file="${TEST_TEMP_DIR}/index.json"
     cat > "$state_file" <<EOF
 # test-issue
 
@@ -758,7 +758,7 @@ EOF
 }
 
 @test "update_state_dependency: appends to multi-entry list correctly after idempotent guard" {
-    local state_file="${TEST_TEMP_DIR}/STATE.md"
+    local state_file="${TEST_TEMP_DIR}/index.json"
     cat > "$state_file" <<EOF
 # test-issue
 
@@ -776,10 +776,10 @@ EOF
 }
 
 # ============================================================================
-# Full workflow integration: detect → user selection simulation → STATE.md update → confirm
+# Full workflow integration: detect → user selection simulation → index.json update → confirm
 # ============================================================================
 
-@test "full_workflow: detect skill deps, select all, update STATE.md, verify idempotent confirm" {
+@test "full_workflow: detect skill deps, select all, update index.json, verify idempotent confirm" {
     # Setup: two open issues referencing the "add-agent" skill
     create_mock_issue "issue-needs-add-agent-1" "open" "plugin/skills/add-agent"
     create_mock_issue "issue-needs-add-agent-2" "open" "plugin/skills/add-agent"
@@ -795,10 +795,10 @@ EOF
     [[ "$output" == *"issue-needs-add-agent-1"* ]]
     [[ "$output" == *"issue-needs-add-agent-2"* ]]
 
-    # Step 3: Simulate "Yes, mark all as dependents" — update each STATE.md
+    # Step 3: Simulate "Yes, mark all as dependents" — update each index.json
     local new_issue_id="brand-new-auto-dep-issue"
-    local state1="${ISSUES_DIR}/v2/v2.1/issue-needs-add-agent-1/STATE.md"
-    local state2="${ISSUES_DIR}/v2/v2.1/issue-needs-add-agent-2/STATE.md"
+    local state1="${ISSUES_DIR}/v2/v2.1/issue-needs-add-agent-1/index.json"
+    local state2="${ISSUES_DIR}/v2/v2.1/issue-needs-add-agent-2/index.json"
 
     update_state_dependency "$state1" "$new_issue_id"
     update_state_dependency "$state2" "$new_issue_id"

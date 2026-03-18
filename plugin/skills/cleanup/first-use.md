@@ -28,7 +28,7 @@ All abandoned CAT artifacts (worktrees, locks, branches) are identified and clea
 - ALWAYS remove worktree BEFORE deleting its branch
 - NEVER force-delete branches that might have unmerged commits
 
-### STATE.md Reset Safety
+### index.json Reset Safety
 
 **When resetting stuck `in-progress` issues, verify implementation status first:**
 
@@ -46,7 +46,7 @@ git log --oneline -- ".cat/issues/*/v*/$ISSUE_NAME/" -5
 | No relevant commits | Mark as `pending` (truly abandoned) |
 | Partial commits | Check commit content, may be partial completion |
 
-**Why this matters:** An issue may show `in-progress` with 0% because STATE.md wasn't updated after
+**Why this matters:** An issue may show `in-progress` with 0% because index.json wasn't updated after
 work was completed on the target branch. Resetting to `pending` causes duplicate work.
 
 ---
@@ -64,7 +64,7 @@ work was completed on the target branch. Resetting to `pending` causes duplicate
 Analyze survey results to classify artifacts:
 
 **Stale in-progress issues:**
-- STATE.md shows `in-progress` but no worktree, lock, or branch exists
+- index.json shows `in-progress` but no worktree, lock, or branch exists
 - Verify via git history before resetting (see Safety Rules above)
 - Reset confirmed stale issues to `open` status
 
@@ -78,14 +78,14 @@ Analyze survey results to classify artifacts:
 - No heartbeat updates (if heartbeat tracking enabled)
 
 **Corrupt issue directories:**
-- Issue directories that contain STATE.md but no PLAN.md
+- Issue directories that contain index.json but no plan.md
 - Listed in the survey output under "⚠ Corrupt Issue Directories"
-- These cannot be executed without recovery (delete or recreate PLAN.md)
+- These cannot be executed without recovery (delete or recreate plan.md)
 
 For each lock, check status and record the full `session_id` (complete UUID, not truncated) for use in Steps 4 and 5:
 ```bash
-issue_id="<from-survey>"
-"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" check "$issue_id"
+issueId="<from-survey>"
+"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" check "$issueId"
 ```
 
 Derive age from the branch's last commit time (not the lock file). If the branch does not exist, treat the artifact
@@ -155,13 +155,13 @@ else
   continue  # Skip to next worktree — do not include in plan or cleanup
 fi
 # Use exact version directory match (trailing /) to avoid 2.1 matching 2.10
-STATE_FILE=$(find "$WORKTREE_PATH/.cat/issues/" -path "*/${ISSUE_VERSION}/${ISSUE_NAME}/STATE.md" 2>/dev/null | head -1)
+STATE_FILE=$(find "$WORKTREE_PATH/.cat/issues/" -path "*/${ISSUE_VERSION}/${ISSUE_NAME}/index.json" 2>/dev/null | head -1)
 TARGET_BRANCH=""
 if [[ -n "$STATE_FILE" ]]; then
   TARGET_BRANCH=$(grep "Target Branch:" "$STATE_FILE" | sed 's/.*\*\*Target Branch:\*\*\s*//')
 fi
 if [[ -z "$TARGET_BRANCH" ]]; then
-  echo "Warning: Could not determine target branch from STATE.md — skipping merge check"
+  echo "Warning: Could not determine target branch from index.json — skipping merge check"
   MERGED="unknown"
 else
   MERGED=$(git branch --merged "$TARGET_BRANCH" | grep -q "^[* ]*${BRANCH_NAME}$" && echo "yes" || echo "no")
@@ -172,7 +172,7 @@ fi
 |---|---|
 | Branch is merged into target | Low risk — branch commits are safe on target; only uncommitted modifications would be lost |
 | Branch is NOT merged | High risk — discarding uncommitted work may also represent the only copy of work in progress |
-| Unknown (no Target Branch in STATE.md) | Treat as high risk — cannot confirm merge status |
+| Unknown (no Target Branch in index.json) | Treat as high risk — cannot confirm merge status |
 | SKIP (branch name format unrecognized) | Excluded from cleanup — not shown in plan box or cleanup options. Requires manual review |
 
 Present findings:
@@ -209,7 +209,7 @@ Generate the cleanup plan box by invoking the handler with your analysis. **Excl
 SKIP-flagged in Step 3** (branch name did not match the expected `<version>-<issue-name>` format). Only worktrees
 that passed branch-name parsing in Step 3 may appear in `worktrees_to_remove` and `branches_to_remove` below.
 
-For each lock, include `issue_id`, `session` (first 8 chars of session ID, for display only), and `age_seconds`
+For each lock, include `issueId`, `session` (first 8 chars of session ID, for display only), and `age_seconds`
 (derived from the branch's last commit time via `git log -1 --format=%ct <branch>`). For each worktree, include
 `age_seconds` (same source). **Note:** The `session` field in the JSON below is truncated for display purposes
 only. You must retain the full session UUID (recorded in Step 2) separately for use in Step 5 re-validation:
@@ -220,7 +220,7 @@ echo '{
   "context": {
     "phase": "plan",
     "locks_to_remove": [
-      {"issue_id": "2.1-issue-name", "session": "eb68bb02", "age_seconds": 326}
+      {"issueId": "2.1-issue-name", "session": "eb68bb02", "age_seconds": 326}
     ],
     "worktrees_to_remove": [
       {"path": "${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name",
@@ -248,7 +248,7 @@ Then use AskUserQuestion with these options (in this order):
 If the user selects option 1, skip any locks and worktrees classified as "recent" in the plan box.
 If the user selects option 2, remove all items in the plan box.
 If the user selects option 3, for each corrupt issue directory:
-1. Display the contents of its STATE.md to the user (it may contain useful state data such as target branch or progress)
+1. Display the contents of its index.json to the user (it may contain useful state data such as target branch or progress)
 2. Ask the user to confirm deletion of that specific directory after reviewing its contents
 3. Delete the directory using `/cat:safe-rm-agent`
 4. Stage and commit the deletion. Validate the path is non-empty before staging:
@@ -293,25 +293,25 @@ For each issue that has both a worktree and a lock to remove, process them as an
 
 ```bash
 WORKTREE_PATH="<from-plan>"
-issue_id="<issue-id-for-this-worktree>"
+issueId="<issue-id-for-this-worktree>"
 EXPECTED_SESSION="<full-session-id-from-step-2>"
 
 # Re-validate: check the lock is still held by the expected session
-CURRENT_LOCK=$("${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" check "$issue_id" 2>&1)
+CURRENT_LOCK=$("${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" check "$issueId" 2>&1)
 if echo "$CURRENT_LOCK" | grep -qF "$EXPECTED_SESSION"; then
   # Lock still held by the same (abandoned) session — safe to remove worktree then release lock
   cd /workspace
   if git worktree remove "$WORKTREE_PATH" --force; then
-    if "${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" force-release "$issue_id"; then
-      echo "OK: Worktree removed and lock released for '$issue_id'."
+    if "${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" force-release "$issueId"; then
+      echo "OK: Worktree removed and lock released for '$issueId'."
     else
-      echo "ERROR: Worktree removed but lock release failed for '$issue_id'. Lock may still be held — manual release may be needed."
+      echo "ERROR: Worktree removed but lock release failed for '$issueId'. Lock may still be held — manual release may be needed."
     fi
   else
-    echo "ERROR: Failed to remove worktree '$WORKTREE_PATH'. Lock for '$issue_id' NOT released (preserving invariant)."
+    echo "ERROR: Failed to remove worktree '$WORKTREE_PATH'. Lock for '$issueId' NOT released (preserving invariant)."
   fi
 else
-  echo "WARNING: Lock for '$issue_id' is now held by a different session. Skipping worktree and lock."
+  echo "WARNING: Lock for '$issueId' is now held by a different session. Skipping worktree and lock."
 fi
 ```
 
@@ -322,11 +322,11 @@ and started using the worktree. Re-check before removing:
 
 ```bash
 WORKTREE_PATH="<from-plan>"
-issue_id="<issue-id-for-this-worktree>"
+issueId="<issue-id-for-this-worktree>"
 # Re-check: if a lock now exists, a new session has claimed this worktree
-CURRENT_LOCK=$("${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" check "$issue_id" 2>&1)
+CURRENT_LOCK=$("${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" check "$issueId" 2>&1)
 if echo "$CURRENT_LOCK" | grep -q "locked"; then
-  echo "WARNING: Worktree for '$issue_id' is now locked by a new session. Skipping removal."
+  echo "WARNING: Worktree for '$issueId' is now locked by a new session. Skipping removal."
 else
   cd /workspace
   git worktree remove "$WORKTREE_PATH" --force
@@ -338,14 +338,14 @@ fi
 For locks that have no associated worktree (lock-only cleanup), re-validate and release:
 
 ```bash
-issue_id="<from-plan>"
+issueId="<from-plan>"
 EXPECTED_SESSION="<full-session-id-from-step-2>"
 # Re-check current lock owner (use -F for literal string match, not regex substring)
-CURRENT_LOCK=$("${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" check "$issue_id" 2>&1)
+CURRENT_LOCK=$("${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" check "$issueId" 2>&1)
 if echo "$CURRENT_LOCK" | grep -qF "$EXPECTED_SESSION"; then
-  "${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" force-release "$issue_id"
+  "${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" force-release "$issueId"
 else
-  echo "WARNING: Lock for '$issue_id' is now held by a different session. Skipping."
+  echo "WARNING: Lock for '$issueId' is now held by a different session. Skipping."
 fi
 ```
 
@@ -369,7 +369,7 @@ If a branch has unmerged commits, report it to the user and skip it rather than 
 
 **Reset stale in-progress issues and commit the change:**
 ```bash
-STATE_FILE="<path-to-STATE.md>"
+STATE_FILE="<path-to-index.json>"
 sed -i 's/\*\*Status:\*\* in-progress/**Status:** open/' "$STATE_FILE"
 git add "$STATE_FILE"
 git commit -m "planning: reset stale issue to open status"

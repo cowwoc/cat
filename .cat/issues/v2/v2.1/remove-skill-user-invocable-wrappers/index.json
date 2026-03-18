@@ -1,0 +1,4 @@
+{
+  "status": "open",
+  "dependencies": ["2.1-defer-plan-generation-to-work-phase"]
+}

@@ -1,0 +1,5 @@
+{
+  "status": "closed",
+  "resolution": "implemented",
+  "decomposedInto": ["2.1-port-licensing-to-java", "2.1-port-text-utilities-to-java", "2.1-port-analysis-to-java", "2.1-port-operational-scripts-to-java", "2.1-cleanup-ported-scripts", "2.1-wire-remaining-java-equivalents"]
+}

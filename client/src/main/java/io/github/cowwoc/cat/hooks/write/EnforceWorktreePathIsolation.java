@@ -36,7 +36,7 @@ import java.util.Optional;
  * </ol>
  * <p>
  * Uses session ID to find the matching lock file in the project CAT work directory
- * ({@code {claudeProjectPath}/.cat/work/locks/}), derives the issue_id from the lock filename,
+ * ({@code {claudeProjectPath}/.cat/work/locks/}), derives the issueId from the lock filename,
  * and checks whether the file being accessed falls within the corresponding worktree.
  */
 public final class EnforceWorktreePathIsolation implements FileWriteHandler, ReadHandler

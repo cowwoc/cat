@@ -1,0 +1,4 @@
+{
+  "status": "in-progress",
+  "decomposedInto": ["2.1-jvmenv-w1-claudeenv", "2.1-jvmenv-w2-interface", "2.1-jvmenv-w3-main", "2.1-jvmenv-w4-tests"]
+}

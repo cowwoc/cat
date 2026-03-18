@@ -979,7 +979,7 @@ config, etc.) without LLM judgment.
 └─────────────────┘
 ```
 
-**Example**: Status display - script reads STATE.md files, computes progress, renders box.
+**Example**: Status display - script reads index.json files, computes progress, renders box.
 
 ```markdown
 # Status Skill

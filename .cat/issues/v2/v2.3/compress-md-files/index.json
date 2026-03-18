@@ -1,0 +1,5 @@
+{
+  "status": "open",
+  "dependencies": ["migrate-python-to-java"],
+  "decomposedInto": ["2.1-compress-skills-md", "2.1-compress-commands-md", "2.1-compress-concepts-md", "2.1-compress-templates-md", "2.1-compress-stakeholders-md", "2.1-compress-lang-md"]
+}

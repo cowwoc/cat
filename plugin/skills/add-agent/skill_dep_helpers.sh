@@ -9,8 +9,8 @@
 #
 # Functions:
 #   extract_skill_names   - Parse ISSUE_DESCRIPTION to extract referenced skill names
-#   run_detection         - Find all open issues whose PLAN.md references a given skill
-#   update_state_dependency - Update a single issue's STATE.md to add a dependency entry
+#   run_detection         - Find all open issues whose plan.md references a given skill
+#   update_state_dependency - Update a single issue's index.json to add a dependency entry
 
 # extract_skill_names <description>
 #
@@ -56,7 +56,7 @@ extract_skill_names() {
 
 # run_detection <skill_name> <current_issue_name>
 #
-# Scans all STATE.md files under ISSUES_DIR for open issues whose PLAN.md references
+# Scans all index.json files under ISSUES_DIR for open issues whose plan.md references
 # plugin/skills/<skill_name>/. Excludes closed issues and the current issue being created.
 #
 # Outputs one matching issue ID per line.
@@ -77,21 +77,21 @@ run_detection() {
         if [[ "$STATUS" == "closed" ]]; then
             continue
         fi
-        PLAN_FILE="${state_file%STATE.md}PLAN.md"
+        PLAN_FILE="${state_file%index.json}plan.md"
         if [[ -f "$PLAN_FILE" ]] && grep -qF "plugin/skills/${skill_name}/" "$PLAN_FILE"; then
-            local dir_path="${state_file%/STATE.md}"
+            local dir_path="${state_file%/index.json}"
             ISSUE_ID="${dir_path##*/}"
             MATCHING_ISSUES+=("$ISSUE_ID")
             MATCHING_ISSUE_PATHS+=("$state_file")
         fi
-    done < <(find "$ISSUES_DIR" -name "STATE.md" -not -path "*/${current_issue_name}/STATE.md")
+    done < <(find "$ISSUES_DIR" -name "index.json" -not -path "*/${current_issue_name}/index.json")
 
     printf '%s\n' "${MATCHING_ISSUES[@]+"${MATCHING_ISSUES[@]}"}"
 }
 
 # update_state_dependency <state_file> <new_issue_id>
 #
-# Appends new_issue_id to the Dependencies list in the given STATE.md file.
+# Appends new_issue_id to the Dependencies list in the given index.json file.
 # If the dependency is already present (idempotency guard), this is a no-op.
 #
 # Handles sed metacharacters in new_issue_id (&, /, \) via escaping.

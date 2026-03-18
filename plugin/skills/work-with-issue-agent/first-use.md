@@ -26,8 +26,8 @@ been merged.
 | **Merge complete** | Merge-and-cleanup tool ran. Squashed commit on `TARGET_BRANCH`. Worktree may still exist briefly. |
 | **Issue closed** | Worktree removed, lock released, branch deleted. |
 
-**WARNING:** `STATE.md status: closed` means **implementation is finished** (State 1 done), NOT that the issue was
-merged (State 2/3). Do NOT infer "merged and cleaned up" from STATE.md alone. To determine whether the issue was
+**WARNING:** `index.json status: closed` means **implementation is finished** (State 1 done), NOT that the issue was
+merged (State 2/3). Do NOT infer "merged and cleaned up" from index.json alone. To determine whether the issue was
 merged, BOTH of the following must be true: (1) the issue branch no longer exists, AND (2) `TARGET_BRANCH` contains
 the squashed commit. A missing branch alone is not sufficient — verify both conditions before concluding the issue
 was merged. If either check cannot be confirmed, treat the issue as not yet merged and run the full merge workflow.
@@ -50,7 +50,7 @@ are additionally enforced by hooks or explicit STOP instructions that block prog
 ## Arguments and Configuration
 
 The main `/cat:work` skill invokes this with positional space-separated arguments:
-`<issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <estimated_tokens> <trust> <verify>`
+`<issueId> <issuePath> <worktreePath> <issueBranch> <targetBranch> <estimatedTokens> <trust> <verify>`
 
 ```bash
 read ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH ESTIMATED_TOKENS TRUST VERIFY <<< "$ARGUMENTS"
@@ -64,7 +64,7 @@ Before invoking any phase skill, validate that `ISSUE_PATH`, `WORKTREE_PATH`, an
 components (`..`). If either check fails, STOP immediately and display:
 
 ```
-ERROR: issue_path is not well-formed.
+ERROR: issuePath is not well-formed.
 Expected: a canonical path (no '..') containing /.cat/issues/
 Actual:   <value of ISSUE_PATH>
 ```
@@ -80,7 +80,7 @@ Only suggest a replacement when a path segment differs from `.cat` by one charac
 substitution). Do not suggest replacements for unrelated segments like `.catalog` or `.cattle`.
 
 ```
-STOP. Fix the issue_path before re-invoking /cat:work.
+STOP. Fix the issuePath before re-invoking /cat:work.
 ```
 
 **WORKTREE_PATH:** Check that `WORKTREE_PATH` is a non-empty absolute path (starts with `/`). If not, STOP with an
@@ -106,7 +106,7 @@ Capture the result. Assign variables from the returned JSON:
 
 ```
 EXECUTION_COMMITS_JSON = commits array from implement result
-FILES_CHANGED = files_changed integer from implement result
+FILES_CHANGED = filesChanged integer from implement result
 TOKENS_USED = tokens_used integer from implement result (only implement tracks this)
 ```
 
@@ -145,7 +145,7 @@ Skill tool:
 ```
 
 Capture the result including `all_concerns`, `fixed_concerns`, `deferred_concerns`, and
-updated `all_commits_compact` (review may add fix commits).
+updated `allCommitsCompact` (review may add fix commits).
 
 If the review phase added fix commits, append them to `EXECUTION_COMMITS_JSON` to build the
 complete `COMMITS_JSON` array containing all commits from all phases.
@@ -180,9 +180,9 @@ Return the final status to the `/cat:work` skill:
 ```json
 {
   "status": "SUCCESS|ABORTED|CHANGES_REQUESTED|FAILED",
-  "issue_id": "${ISSUE_ID}",
+  "issueId": "${ISSUE_ID}",
   "commits": [...],
-  "files_changed": N,
+  "filesChanged": N,
   "tokens_used": N,  // from implement phase only
   "merged": true
 }
@@ -201,7 +201,7 @@ If any phase fails:
   "status": "FAILED",
   "phase": "implement|confirm|review|merge",
   "message": "actual error message",
-  "issue_id": "${ISSUE_ID}"
+  "issueId": "${ISSUE_ID}"
 }
 ```
 

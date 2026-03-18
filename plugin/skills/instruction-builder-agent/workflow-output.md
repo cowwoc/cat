@@ -93,7 +93,7 @@ Main agent shows result summary
 
 | Phase Batch | Operations Bundled | Returns |
 |-------------|-------------------|---------|
-| **Preparation** | Read STATE.md, PLAN.md, check deps, create worktree | {ready, worktreePath, estimate} |
+| **Preparation** | Read index.json, plan.md, check deps, create worktree | {ready, worktreePath, estimate} |
 | **Exploration** | Search codebase, find patterns, check duplicates | {findings, filesToModify} |
 | **Planning** | Make decisions, create implementation spec | {spec, approach, steps} |
 | **Implementation** | All code changes, tests, commits | {commits, filesChanged, tokens} |
@@ -130,9 +130,9 @@ With pre-computation or subagent batching, only show:
 
 ```
 # BAD: Overhead exceeds benefit
-◆ Reading STATE.md...
+◆ Reading index.json...
 [Task tool]
-◆ Reading PLAN.md...
+◆ Reading plan.md...
 [Task tool]
 
 # GOOD: Batch related operations
@@ -144,8 +144,8 @@ With pre-computation or subagent batching, only show:
 
 ```
 # BAD: Main agent shows all tool calls
-● Read(STATE.md)
-● Read(PLAN.md)
+● Read(index.json)
+● Read(plan.md)
 ● Bash(check dependencies)
 
 # GOOD: Delegate to subagent

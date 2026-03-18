@@ -1,0 +1,5 @@
+{
+  "status": "closed",
+  "resolution": "implemented",
+  "blocks": ["2.1-update-skill-builder-tdd-to-use-adversarial-agents"]
+}

@@ -756,7 +756,7 @@ public final class IssueLock
     if (!AgentIdPatterns.SESSION_ID_PATTERN.matcher(sessionId).matches())
     {
       throw new IllegalArgumentException("Invalid session_id format: '" + sessionId +
-        "'. Expected UUID. Did you swap issue_id and session_id arguments?");
+        "'. Expected UUID. Did you swap issueId and session_id arguments?");
     }
   }
 

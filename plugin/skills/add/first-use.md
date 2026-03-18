@@ -19,8 +19,8 @@ treats the argument as a issue description and skips directly to issue creation 
 to minimize wizard interactions and reduce user friction.
 
 **Reference files** — read on demand as needed:
-- See `${CLAUDE_PLUGIN_ROOT}/templates/issue-state.md` for the issue STATE.md template.
-- See `${CLAUDE_PLUGIN_ROOT}/templates/issue-plan.md` for issue PLAN.md templates.
+- See `${CLAUDE_PLUGIN_ROOT}/templates/issue-state.md` for the issue index.json template.
+- See `${CLAUDE_PLUGIN_ROOT}/templates/issue-plan.md` for issue plan.md templates.
 - See `${CLAUDE_PLUGIN_ROOT}/templates/major-state.md` and `${CLAUDE_PLUGIN_ROOT}/templates/major-plan.md` for major version templates.
 - See `${CLAUDE_PLUGIN_ROOT}/templates/minor-state.md` and `${CLAUDE_PLUGIN_ROOT}/templates/minor-plan.md` for minor version templates.
 - See `${CLAUDE_PLUGIN_ROOT}/templates/changelog.md` for the CHANGELOG.md template.
@@ -257,7 +257,7 @@ Use version data from output.versions. The handler has pre-filtered closed versi
 For each version in output.versions:
 - version: Version number (e.g., "2.1")
 - status: Current status (open or in-progress)
-- summary: Brief description from PLAN.md goals
+- summary: Brief description from plan.md goals
 - issue_count: Number of existing issues
 
 All versions in output.versions are already filtered to exclude closed versions.
@@ -474,12 +474,12 @@ The scanning uses a two-level loop structure:
 
 - **Outer loop** — iterates over each skill name in SKILL_NAMES. A single issue description may reference more than
   one skill (e.g., both `add` and `add-agent`), so every skill name must be checked independently.
-- **Inner loop** — for each skill name, iterates over all STATE.md files found under ISSUES_DIR (excluding the
-  current issue). It reads the STATUS field and, for open issues, checks whether the corresponding PLAN.md contains
+- **Inner loop** — for each skill name, iterates over all index.json files found under ISSUES_DIR (excluding the
+  current issue). It reads the STATUS field and, for open issues, checks whether the corresponding plan.md contains
   a reference to `plugin/skills/<skill_name>/`.
 
 Deduplication is handled after the outer loop by collecting all matched issue IDs into a single array and running
-`sort -u`. An issue is included at most once even if its PLAN.md references multiple skills that are all in
+`sort -u`. An issue is included at most once even if its plan.md references multiple skills that are all in
 SKILL_NAMES.
 
 ```bash
@@ -520,7 +520,7 @@ done
 ```
 
 Exclude the current issue being created from results. Collect all matching issue IDs across all skill names into
-AUTO_DETECTED_DEPS (deduplicated list). Collect corresponding full STATE.md paths into AUTO_DETECTED_DEP_PATHS.
+AUTO_DETECTED_DEPS (deduplicated list). Collect corresponding full index.json paths into AUTO_DETECTED_DEP_PATHS.
 
 **3. Present suggestions if matches found:**
 
@@ -602,10 +602,10 @@ Store the estimate internally as SCOPE_ESTIMATE (do not ask user).
 
 ```bash
 # VERSION_PLAN is set to the parent version path (works for any level: major, minor, or patch)
-VERSION_PLAN=".cat/issues/v$MAJOR/v$MAJOR.$MINOR/PLAN.md"
+VERSION_PLAN=".cat/issues/v$MAJOR/v$MAJOR.$MINOR/plan.md"
 ```
 
-Extract REQ-XXX items from PLAN.md. Store as VERSION_REQUIREMENTS (may be empty).
+Extract REQ-XXX items from plan.md. Store as VERSION_REQUIREMENTS (may be empty).
 
 **4. Batch question strategy:**
 
@@ -665,7 +665,7 @@ List existing issues in same minor version for selection using AskUserQuestion w
 **If Blocks = "Yes, select blocked issues":**
 
 List existing issues in same minor version for selection using AskUserQuestion with multiSelect.
-When blockers are selected, add this new issue to their Dependencies list in STATE.md.
+When blockers are selected, add this new issue to their Dependencies list in index.json.
 
 </step>
 
@@ -699,7 +699,7 @@ Skip to step: issue_validate_criteria.
 
 **Validate acceptance criteria against requirements:**
 
-This step ensures acceptance criteria comprehensively cover the issue requirements before PLAN.md creation.
+This step ensures acceptance criteria comprehensively cover the issue requirements before plan.md creation.
 Addresses the known gap where incorrect acceptance criteria primed incorrect implementations.
 
 **Prepare validation context:**
@@ -708,14 +708,14 @@ Gather the following for validation:
 - ISSUE_DESCRIPTION (from issue_gather_intent)
 - ISSUE_TYPE (from issue_ask_type_and_criteria)
 - POSTCONDITIONS (from issue_ask_type_and_criteria)
-- All ancestor version requirements (from issue_discuss_and_requirements and ancestor PLAN.md files)
+- All ancestor version requirements (from issue_discuss_and_requirements and ancestor plan.md files)
 
 **Spawn requirements stakeholder subagent:**
 
 Use Task tool to spawn a cat:stakeholder-requirements subagent with the following prompt:
 
 ```
-You are validating post-conditions for a CAT issue before PLAN.md creation.
+You are validating post-conditions for a CAT issue before plan.md creation.
 
 **Issue Description:**
 {ISSUE_DESCRIPTION}
@@ -733,7 +733,7 @@ You are validating post-conditions for a CAT issue before PLAN.md creation.
 
 1. **Completeness Check:** Break ISSUE_DESCRIPTION into discrete requirements. Verify each requirement has at least one corresponding post-condition. List any missing requirements.
 
-2. **Version Requirements Cross-Check:** If this issue satisfies REQ-XXX requirements, verify the post-conditions address the intent of those requirements. Check requirements from ALL ancestor versions recursively (e.g., for an issue in v2.1, check both v2.1 PLAN.md and v2 PLAN.md requirements). Flag any satisfied requirement from any ancestor that has no corresponding post-condition.
+2. **Version Requirements Cross-Check:** If this issue satisfies REQ-XXX requirements, verify the post-conditions address the intent of those requirements. Check requirements from ALL ancestor versions recursively (e.g., for an issue in v2.1, check both v2.1 plan.md and v2 plan.md requirements). Flag any satisfied requirement from any ancestor that has no corresponding post-condition.
 
 3. **Contradiction Check:** Verify no post-condition contradicts the issue goal or established principles (e.g., M462 pattern: fail-fast post-conditions must not require recovery instructions).
 
@@ -818,7 +818,7 @@ Skip this step entirely. Continue to step: issue_create.
 
 Load existing issues from the selected version using output.versions[selected_version].existing_issues.
 
-For each existing issue in the version, compare its name and any available STATE.md/PLAN.md summary against
+For each existing issue in the version, compare its name and any available index.json/plan.md summary against
 ISSUE_DESCRIPTION. Identify:
 - **Direct conflicts:** The new issue modifies or removes something an existing issue depends on
 - **Overlap:** The new issue covers ground already addressed by an existing issue
@@ -834,7 +834,7 @@ If one or more concerns are found, use AskUserQuestion:
   - "Proceed as described" — Create the issue without changes
   - "Revise description" — I want to adjust the scope to avoid the conflict
   - "Split into multiple issues" — Separate the conflicting parts
-  - "Add impact notes to plan" — Document the impact relationship in PLAN.md
+  - "Add impact notes to plan" — Document the impact relationship in plan.md
 
 **If "Revise description":**
 
@@ -856,7 +856,7 @@ each." Then STOP execution.
 
 **If "Add impact notes to plan":**
 
-Set IMPACT_NOTES to the concern descriptions. These will be appended to the PLAN.md in the issue_create step.
+Set IMPACT_NOTES to the concern descriptions. These will be appended to the plan.md in the issue_create step.
 
 **If no concerns are detected:**
 
@@ -894,7 +894,7 @@ If any concerns were found across dimensions, use AskUserQuestion:
   - "Proceed as described" — Create the issue without changes
   - "Revise description" — I want to adjust the scope
   - "Split into multiple issues" — Separate the impacted parts
-  - "Add impact notes to plan" — Document the relationships in PLAN.md
+  - "Add impact notes to plan" — Document the relationships in plan.md
 
 **If "Revise description":**
 
@@ -911,7 +911,7 @@ each." Then STOP execution.
 
 **If "Add impact notes to plan":**
 
-Set IMPACT_NOTES to the concern descriptions. These will be appended to the PLAN.md in the issue_create step.
+Set IMPACT_NOTES to the concern descriptions. These will be appended to the plan.md in the issue_create step.
 
 **If no concerns are detected at any level:**
 
@@ -932,7 +932,7 @@ Calculate the issue branch name:
 - If branch_strategy is "main-only": No issue branch
 - Default: {major}.{minor}-{issue-name}
 
-**Generate STATE.md content:**
+**Generate index.json content:**
 
 Use appropriate template format:
 
@@ -945,9 +945,9 @@ Use appropriate template format:
 - **Blocks:** []
 ```
 
-**Generate PLAN.md via plan-builder-agent:**
+**Generate plan.md via plan-builder-agent:**
 
-Invoke the plan-builder-agent skill to generate the PLAN.md. This centralizes all planning logic (effort-based depth,
+Invoke the plan-builder-agent skill to generate the plan.md. This centralizes all planning logic (effort-based depth,
 comprehensiveness requirements, sub-agent waves, templates) in one place.
 
 1. Write a temporary context file with the issue details:
@@ -973,32 +973,32 @@ Skill tool:
   args: "${CAT_AGENT_ID} ${EFFORT} initial ${PLAN_CONTEXT}"
 ```
 
-3. Create the issue, passing the generated PLAN.md file path:
+3. Create the issue, passing the generated plan.md file path:
 
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/client/bin/create-issue" --json '{
   "major": "{major}",
   "minor": "{minor}",
-  "issue_name": "{issue-name}",
+  "issueName": "{issue-name}",
   "issue_type": "{issue-type}",
   "dependencies": ["{dep1}", "{dep2}"],
-  "state_content": "{full STATE.md content}",
-  "plan_file": "'"${PLAN_CONTEXT%.json}.plan.md"'",
-  "commit_description": "{one-line description}"
+  "indexContent": "{full index.json content}",
+  "planFile": "'"${PLAN_CONTEXT%.json}.plan.md"'",
+  "commitDescription": "{one-line description}"
 }'
 ```
 
 The script handles:
 - Creating the issue directory
-- Writing STATE.md and PLAN.md
-- Updating parent version STATE.md
+- Writing index.json and plan.md
+- Updating parent version index.json
 - Git add and commit
 
 Check the JSON output for success status.
 
 **Apply auto-detected skill dependency updates (if any):**
 
-After the issue is fully created, apply STATE.md dependency updates for issues that were flagged in
+After the issue is fully created, apply index.json dependency updates for issues that were flagged in
 `issue_detect_skill_deps`. This is done AFTER creation to ensure that orphaned writes never happen if
 the wizard is abandoned before issue creation completes.
 
@@ -1011,7 +1011,7 @@ STATE_FILE="${AUTO_DETECTED_DEP_PATHS[$i]}"
 update_state_dependency "$STATE_FILE" "$NEW_ISSUE_ID"
 ```
 
-After updating all STATE.md files, commit all changes with a `planning:` commit message such as:
+After updating all index.json files, commit all changes with a `planning:` commit message such as:
 `planning: add {new-issue-id} as dependency of auto-detected dependent issues`
 
 </step>
@@ -1025,7 +1025,7 @@ After creating a sub-issue, verify if it's being added to a decomposed parent is
 ```bash
 # Check if this issue is a sub-issue of a decomposed parent
 PARENT_ISSUE_DIR=$(dirname "${ISSUE_DIR}")
-if [[ -f "${PARENT_ISSUE_DIR}/STATE.md" ]] && grep -q "^## Decomposed Into" "${PARENT_ISSUE_DIR}/STATE.md"; then
+if [[ -f "${PARENT_ISSUE_DIR}/index.json" ]] && grep -q "^## Decomposed Into" "${PARENT_ISSUE_DIR}/index.json"; then
   PARENT_NAME=$(basename "${PARENT_ISSUE_DIR}")
 
   # Output warning about parent completion requirements
@@ -1117,7 +1117,7 @@ find .cat -maxdepth 2 -type d -name "v[0-9]*.[0-9]*" 2>/dev/null | while read d;
     VERSION=$(basename "$d" | sed 's/v//')
     MAJOR=$(echo "$VERSION" | cut -d. -f1)
     MINOR=$(echo "$VERSION" | cut -d. -f2)
-    STATUS=$(grep -oP '(?<=\*\*Status:\*\* )\w+' "$d/STATE.md" 2>/dev/null || echo "open")
+    STATUS=$(grep -oP '(?<=\*\*Status:\*\* )\w+' "$d/index.json" 2>/dev/null || echo "open")
     PATCH_COUNT=$(find "$d" -maxdepth 1 -type d -name "v$MAJOR.$MINOR.*" 2>/dev/null | wc -l)
     echo "$MAJOR.$MINOR ($STATUS, $PATCH_COUNT patches)"
 done | sort -V
@@ -1452,10 +1452,10 @@ VERSION_PATH=".cat/issues/v$MAJOR"
 mkdir -p "$VERSION_PATH/v$MAJOR.0/issue"
 ```
 
-**Create major STATE.md:**
+**Create major index.json:**
 
 ```bash
-cat > "$VERSION_PATH/STATE.md" << EOF
+cat > "$VERSION_PATH/index.json" << EOF
 # Major Version $MAJOR State
 
 ## Status
@@ -1468,7 +1468,7 @@ cat > "$VERSION_PATH/STATE.md" << EOF
 ## Summary
 $VERSION_DESCRIPTION
 EOF
-[ -f "$VERSION_PATH/STATE.md" ] || echo "ERROR: Major STATE.md not created"
+[ -f "$VERSION_PATH/index.json" ] || echo "ERROR: Major index.json not created"
 ```
 
 **Create major CHANGELOG.md:**
@@ -1510,10 +1510,10 @@ VERSION_SUMMARY="$VERSION_DESCRIPTION"
 mkdir -p "$VERSION_PATH/issue"
 ```
 
-**Create minor STATE.md:**
+**Create minor index.json:**
 
 ```bash
-cat > "$VERSION_PATH/STATE.md" << EOF
+cat > "$VERSION_PATH/index.json" << EOF
 # Minor Version $MAJOR.$MINOR State
 
 ## Status
@@ -1529,13 +1529,13 @@ cat > "$VERSION_PATH/STATE.md" << EOF
 ## Summary
 $VERSION_SUMMARY
 EOF
-[ -f "$VERSION_PATH/STATE.md" ] || echo "ERROR: Minor STATE.md not created"
+[ -f "$VERSION_PATH/index.json" ] || echo "ERROR: Minor index.json not created"
 ```
 
-**Create minor PLAN.md:**
+**Create minor plan.md:**
 
 ```bash
-cat > "$VERSION_PATH/PLAN.md" << EOF
+cat > "$VERSION_PATH/plan.md" << EOF
 # Minor Version $MAJOR.$MINOR Plan
 
 ## Goals
@@ -1550,7 +1550,7 @@ $PRECONDITIONS
 ## Post-conditions
 $POSTCONDITIONS
 EOF
-[ -f "$VERSION_PATH/PLAN.md" ] || echo "ERROR: Minor PLAN.md not created"
+[ -f "$VERSION_PATH/plan.md" ] || echo "ERROR: Minor plan.md not created"
 ```
 
 **Create minor CHANGELOG.md:**
@@ -1578,10 +1578,10 @@ VERSION_PATH="$PARENT_PATH/v$MAJOR.$MINOR.$PATCH"
 mkdir -p "$VERSION_PATH"
 ```
 
-**Create STATE.md:**
+**Create index.json:**
 
 ```bash
-cat > "$VERSION_PATH/STATE.md" << EOF
+cat > "$VERSION_PATH/index.json" << EOF
 # Patch Version $MAJOR.$MINOR.$PATCH State
 
 ## Status
@@ -1597,13 +1597,13 @@ cat > "$VERSION_PATH/STATE.md" << EOF
 ## Summary
 $VERSION_DESCRIPTION
 EOF
-[ -f "$VERSION_PATH/STATE.md" ] || echo "ERROR: Patch STATE.md not created"
+[ -f "$VERSION_PATH/index.json" ] || echo "ERROR: Patch index.json not created"
 ```
 
-**Create PLAN.md:**
+**Create plan.md:**
 
 ```bash
-cat > "$VERSION_PATH/PLAN.md" << EOF
+cat > "$VERSION_PATH/plan.md" << EOF
 # Patch Version $MAJOR.$MINOR.$PATCH Plan
 
 ## Goals
@@ -1618,7 +1618,7 @@ $PRECONDITIONS
 ## Post-conditions
 $POSTCONDITIONS
 EOF
-[ -f "$VERSION_PATH/PLAN.md" ] || echo "ERROR: Patch PLAN.md not created"
+[ -f "$VERSION_PATH/plan.md" ] || echo "ERROR: Patch plan.md not created"
 ```
 
 **Create CHANGELOG.md:**
@@ -1687,7 +1687,7 @@ grep -q "$MAJOR.$MINOR.$PATCH" "$ROADMAP" || echo "WARNING: Patch not added to R
 
 <step name="version_update_parent">
 
-**Update parent STATE.md (skip if VERSION_TYPE="major"):**
+**Update parent index.json (skip if VERSION_TYPE="major"):**
 
 **If VERSION_TYPE is "major":**
 - Skip to step: version_commit (no parent to update)
@@ -1695,7 +1695,7 @@ grep -q "$MAJOR.$MINOR.$PATCH" "$ROADMAP" || echo "WARNING: Patch not added to R
 **If VERSION_TYPE is "minor":**
 
 ```bash
-PARENT_STATE="$PARENT_PATH/STATE.md" && \
+PARENT_STATE="$PARENT_PATH/index.json" && \
 if grep -q "^## Minor Versions" "$PARENT_STATE"; then
   sed -i "/^## Minor Versions/a - v$MAJOR.$MINOR" "$PARENT_STATE"
 else
@@ -1703,13 +1703,13 @@ else
 ## Minor Versions
 - v$MAJOR.$MINOR" >> "$PARENT_STATE"
 fi && \
-grep -q "v$MAJOR.$MINOR" "$PARENT_STATE" || echo "ERROR: Minor version not added to major STATE.md"
+grep -q "v$MAJOR.$MINOR" "$PARENT_STATE" || echo "ERROR: Minor version not added to major index.json"
 ```
 
 **If VERSION_TYPE is "patch":**
 
 ```bash
-PARENT_STATE="$PARENT_PATH/STATE.md" && \
+PARENT_STATE="$PARENT_PATH/index.json" && \
 if grep -q "^## Patch Versions" "$PARENT_STATE"; then
   sed -i "/^## Patch Versions/a - v$MAJOR.$MINOR.$PATCH" "$PARENT_STATE"
 else
@@ -1717,7 +1717,7 @@ else
 ## Patch Versions
 - v$MAJOR.$MINOR.$PATCH" >> "$PARENT_STATE"
 fi && \
-grep -q "v$MAJOR.$MINOR.$PATCH" "$PARENT_STATE" || echo "ERROR: Patch version not added to minor STATE.md"
+grep -q "v$MAJOR.$MINOR.$PATCH" "$PARENT_STATE" || echo "ERROR: Patch version not added to minor index.json"
 ```
 
 </step>
@@ -1743,7 +1743,7 @@ EOF
 **If VERSION_TYPE is "minor":**
 
 ```bash
-git add "$VERSION_PATH/" ".cat/ROADMAP.md" "$PARENT_PATH/STATE.md" && \
+git add "$VERSION_PATH/" ".cat/ROADMAP.md" "$PARENT_PATH/index.json" && \
 git commit -m "$(cat <<'EOF'
 planning: add minor version {major}.{minor}
 
@@ -1755,7 +1755,7 @@ EOF
 **If VERSION_TYPE is "patch":**
 
 ```bash
-git add "$VERSION_PATH/" ".cat/ROADMAP.md" "$PARENT_PATH/STATE.md" && \
+git add "$VERSION_PATH/" ".cat/ROADMAP.md" "$PARENT_PATH/index.json" && \
 git commit -m "$(cat <<'EOF'
 planning: add patch version {major}.{minor}.{patch}
 
@@ -1791,8 +1791,8 @@ fi
 - [ ] Issue name validated (format and uniqueness)
 - [ ] Discussion captured issue details
 - [ ] Requirements selected (or explicitly set to None)
-- [ ] STATE.md and PLAN.md created
-- [ ] Parent STATE.md updated
+- [ ] index.json and plan.md created
+- [ ] Parent index.json updated
 - [ ] All committed to git
 
 **For Version (Major/Minor/Patch):**
@@ -1803,7 +1803,7 @@ fi
 - [ ] Gates configured
 - [ ] Directory structure created
 - [ ] Files created and ROADMAP.md updated
-- [ ] Parent STATE.md updated (if applicable)
+- [ ] Parent index.json updated (if applicable)
 - [ ] All committed to git
 
 </success_criteria>

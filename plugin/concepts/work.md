@@ -17,10 +17,10 @@ Main Agent (work-with-issue skill)
     |
     +---> work-prepare subagent
     |     Loads: version-paths.md, discovery scripts
-    |     Returns: {issue_id, worktree_path, estimate}
+    |     Returns: {issueId, worktreePath, estimate}
     |
     +---> Implementation subagent (inline)
-    |     Receives: PLAN.md steps, pre-invoked skill results
+    |     Receives: plan.md steps, pre-invoked skill results
     |     Returns: {status, tokens, commits}
     |
     +---> Skill: stakeholder-review (invoked directly)
@@ -44,7 +44,7 @@ Main Agent (work-with-issue skill)
 | Phase | Handler | Purpose |
 |-------|---------|---------|
 | Prepare | work-prepare subagent | Find issue, create worktree |
-| Execute | Inline implementation subagent | Implement issue per PLAN.md |
+| Execute | Inline implementation subagent | Implement issue per plan.md |
 | Review | stakeholder-review skill | Run stakeholder reviews |
 | Merge | work-merge subagent | Squash, merge, cleanup |
 
@@ -92,7 +92,7 @@ those criteria, it must be fixed — regardless of when it was introduced.
 `python3` calls, those must be addressed.
 
 **When editing any file, actively scan for cross-cutting rule violations in surrounding code** — not just the
-lines relevant to the PLAN.md goal. Common violations to look for in every file you read:
+lines relevant to the plan.md goal. Common violations to look for in every file you read:
 
 - **Fail-fast violations:** Silent fallbacks (`catch (X _) { return fallback; }`, `|| "default"`, `getOrDefault`
   returning non-error values for required config). Every required value must block with a clear error, never silently
@@ -156,7 +156,7 @@ manual debugging sessions.
 **MANDATORY: Use `IssueDiscovery` Java class (via `work-prepare` launcher). FAIL-FAST if tool fails.**
 
 The work-prepare subagent handles discovery internally. Main agent receives the result
-as JSON with issue_id, worktree_path, and other metadata.
+as JSON with issueId, worktreePath, and other metadata.
 
 ## Lock Management
 

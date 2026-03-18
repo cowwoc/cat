@@ -171,7 +171,7 @@ a misidentified root cause that directed prevention at the wrong target.
   or priming documents that shaped the prior RCA), **not** the documentation file that recorded the prior
   conclusion. A pipeline fix must target one of: (a) a priming document that introduced incorrect framing,
   (b) the RCA methodology steps that led to the wrong root cause, or (c) re-execution of the RCA with
-  corrected inputs. Editing only the prior mistake's learning record entry, PLAN.md, or any other
+  corrected inputs. Editing only the prior mistake's learning record entry, plan.md, or any other
   conclusion-recording document does **not** constitute fixing the analysis pipeline.
 - The `biased_rca` cause type is **invalid** if the prior RCA correctly identified the root cause and the
   agent simply failed to act on it. That is `unenforced`. `biased_rca` applies only when the pipeline

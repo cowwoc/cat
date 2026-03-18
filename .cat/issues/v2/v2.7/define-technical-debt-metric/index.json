@@ -1,0 +1,4 @@
+{
+  "status": "open",
+  "blocks": ["calculate-file-technical-debt", "aggregate-technical-debt", "add-technical-debt-report-skill"]
+}

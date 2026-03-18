@@ -1,0 +1,6 @@
+{
+  "status": "closed",
+  "resolution": "won't-fix (optimize-hook-json-parser closed as won't fix. Further optimization via jackson-core streaming API migration is not justified.)",
+  "dependencies": ["json-core-api-migration"],
+  "parent": "optimize-hook-json-parser"
+}

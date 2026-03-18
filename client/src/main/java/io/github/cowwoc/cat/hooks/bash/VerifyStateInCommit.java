@@ -14,6 +14,10 @@ import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.IssueStatus;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,9 +28,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Validates that bugfix/feature commits in CAT worktrees include STATE.md changes.
+ * Validates that bugfix/feature commits in CAT worktrees include index.json changes.
  * <p>
- * Blocks commits when STATE.md is not staged, and warns when STATE.md is staged but does not
+ * Blocks commits when index.json is not staged, and warns when index.json is staged but does not
  * contain a "closed" status.
  */
 public final class VerifyStateInCommit implements BashHandler
@@ -34,11 +38,9 @@ public final class VerifyStateInCommit implements BashHandler
   private static final Pattern IMPLEMENTATION_COMMIT_PATTERN = Pattern.compile(
     "git\\s+commit(?!.*--amend).*-m\\s+.*?(bugfix|feature):", Pattern.DOTALL);
   private static final Pattern CD_PATTERN = Pattern.compile("(?:^|[;&|])\\s*cd\\s+([^;&|\\s]+)");
-  private static final Pattern STATUS_PATTERN = Pattern.compile("^- \\*\\*Status:\\*\\* (.+)$",
-    Pattern.MULTILINE);
 
   /**
-   * Creates a new handler for verifying STATE.md in commits.
+   * Creates a new handler for verifying index.json in commits.
    */
   public VerifyStateInCommit()
   {
@@ -69,39 +71,39 @@ public final class VerifyStateInCommit implements BashHandler
     try
     {
       List<String> stagedFiles = getStagedFilesInDirectory(effectiveDirectory);
-      boolean stateMdStaged = stagedFiles.stream().anyMatch(f -> f.endsWith("STATE.md"));
+      boolean indexJsonStaged = stagedFiles.stream().anyMatch(f -> f.endsWith("index.json"));
 
-      if (!stateMdStaged)
+      if (!indexJsonStaged)
       {
         return Result.block(
-          "**BLOCKED: STATE.md not included in bugfix/feature commit**\n" +
+          "**BLOCKED: index.json not included in bugfix/feature commit**\n" +
           "\n" +
           "When committing bugfix: or feature: changes in a CAT worktree,\n" +
-          "STATE.md must be updated and staged in the same commit.\n" +
+          "index.json must be updated and staged in the same commit.\n" +
           "\n" +
-          "Fix: Update STATE.md to reflect completion status, then stage it:\n" +
-          "  git add " + Config.CAT_DIR_NAME + "/issues/**/STATE.md");
+          "Fix: Update index.json to reflect completion status, then stage it:\n" +
+          "  git add " + Config.CAT_DIR_NAME + "/issues/**/index.json");
       }
 
-      String stateMdContent = readStagedStateMd(stagedFiles, effectiveDirectory);
-      if (!stateMdContent.isEmpty())
+      String indexJsonContent = readStagedIndexJson(stagedFiles, effectiveDirectory);
+      if (!indexJsonContent.isEmpty())
       {
-        Matcher statusMatcher = STATUS_PATTERN.matcher(stateMdContent);
-        boolean isClosed = statusMatcher.find() &&
-          IssueStatus.fromString(statusMatcher.group(1).strip()) == IssueStatus.CLOSED;
+        boolean isClosed = isClosedStatus(indexJsonContent, input.getMapper());
         if (!isClosed)
         {
           return Result.warn(
-            "STATE.md is staged but does not contain 'closed' status. " +
+            "index.json is staged but does not contain 'closed' status. " +
             "Verify the issue status is correct before committing.");
         }
       }
 
       return Result.allow();
     }
-    catch (IOException _)
+    catch (IOException e)
     {
-      return Result.allow();
+      return Result.warn(
+        "index.json is staged but does not contain 'closed' status. " +
+        "Verify the issue status is correct before committing. (Error: " + e.getMessage() + ")");
     }
   }
 
@@ -174,22 +176,22 @@ public final class VerifyStateInCommit implements BashHandler
   }
 
   /**
-   * Reads the content of the staged STATE.md file.
+   * Reads the content of the staged index.json file.
    *
    * @param stagedFiles the list of staged file paths
    * @param workingDirectory the working directory
-   * @return the content of STATE.md, or empty string if it cannot be read
+   * @return the content of index.json, or empty string if it cannot be read
    */
-  private String readStagedStateMd(List<String> stagedFiles, String workingDirectory)
+  private String readStagedIndexJson(List<String> stagedFiles, String workingDirectory)
   {
     for (String file : stagedFiles)
     {
-      if (file.endsWith("STATE.md"))
+      if (file.endsWith("index.json"))
       {
-        Path stateMdPath = Path.of(workingDirectory).resolve(file);
+        Path indexJsonPath = Path.of(workingDirectory).resolve(file);
         try
         {
-          return Files.readString(stateMdPath);
+          return Files.readString(indexJsonPath);
         }
         catch (IOException _)
         {
@@ -198,5 +200,29 @@ public final class VerifyStateInCommit implements BashHandler
       }
     }
     return "";
+  }
+
+  /**
+   * Returns whether the index.json content represents a closed issue.
+   *
+   * @param content the JSON content of the index.json file
+   * @param mapper the JSON mapper to use for parsing
+   * @return {@code true} if the status field is "closed", {@code false} otherwise
+   * @throws IOException if the JSON cannot be parsed or is missing the required "status" field
+   */
+  private boolean isClosedStatus(String content, JsonMapper mapper) throws IOException
+  {
+    try
+    {
+      JsonNode root = mapper.readTree(content);
+      JsonNode statusNode = root.get("status");
+      if (statusNode == null || !statusNode.isString())
+        throw new IOException("index.json is missing required 'status' field or it is not a string");
+      return IssueStatus.fromString(statusNode.asString()) == IssueStatus.CLOSED;
+    }
+    catch (JacksonException e)
+    {
+      throw new IOException("Failed to parse index.json: " + e.getMessage(), e);
+    }
   }
 }

@@ -21,7 +21,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * Tests for GetNextIssueOutput functionality.
  * <p>
  * Tests verify box rendering output structure and business logic for
- * reading issue goals from PLAN.md fixtures.
+ * reading issue goals from plan.md fixtures.
  * <p>
  * Tests are designed for parallel execution - each test is self-contained
  * with no shared state.
@@ -29,7 +29,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public class GetNextIssueOutputTest
 {
   /**
-   * Verifies that IssueGoalReader extracts first paragraph from PLAN.md.
+   * Verifies that IssueGoalReader extracts first paragraph from plan.md.
    */
   @Test
   public void readIssueGoalExtractsFirstParagraph() throws IOException
@@ -37,7 +37,7 @@ public class GetNextIssueOutputTest
     Path tempDir = Files.createTempDirectory("test-issue");
     try
     {
-      Path planPath = tempDir.resolve("PLAN.md");
+      Path planPath = tempDir.resolve("plan.md");
       String planContent = """
         # Issue Plan
 
@@ -58,7 +58,7 @@ public class GetNextIssueOutputTest
     }
     finally
     {
-      Files.deleteIfExists(tempDir.resolve("PLAN.md"));
+      Files.deleteIfExists(tempDir.resolve("plan.md"));
       Files.deleteIfExists(tempDir);
     }
   }
@@ -72,7 +72,7 @@ public class GetNextIssueOutputTest
     Path tempDir = Files.createTempDirectory("test-issue");
     try
     {
-      Path planPath = tempDir.resolve("PLAN.md");
+      Path planPath = tempDir.resolve("plan.md");
       String planContent = """
         # Issue Plan
 
@@ -87,20 +87,22 @@ public class GetNextIssueOutputTest
     }
     finally
     {
-      Files.deleteIfExists(tempDir.resolve("PLAN.md"));
+      Files.deleteIfExists(tempDir.resolve("plan.md"));
       Files.deleteIfExists(tempDir);
     }
   }
 
   /**
-   * Verifies that IssueGoalReader returns fallback message when PLAN.md missing.
+   * Verifies that IssueGoalReader returns fallback message when plan.md missing.
+   *
+   * @throws IOException if an I/O error occurs
    */
   @Test
-  public void readIssueGoalReturnsNoGoalFoundWhenFileMissing()
+  public void readIssueGoalReturnsNoGoalFoundWhenFileMissing() throws IOException
   {
     Path tempDir = Path.of(System.getProperty("java.io.tmpdir"), "test-issue-missing-" +
       System.nanoTime());
-    Path planPath = tempDir.resolve("PLAN.md");
+    Path planPath = tempDir.resolve("plan.md");
     String goal = IssueGoalReader.readGoalFromPlan(planPath);
     requireThat(goal, "goal").isEqualTo("No goal found");
   }
@@ -114,7 +116,7 @@ public class GetNextIssueOutputTest
     Path tempDir = Files.createTempDirectory("test-issue");
     try
     {
-      Path planPath = tempDir.resolve("PLAN.md");
+      Path planPath = tempDir.resolve("plan.md");
       String planContent = """
         ## Goal
 
@@ -129,7 +131,7 @@ public class GetNextIssueOutputTest
     }
     finally
     {
-      Files.deleteIfExists(tempDir.resolve("PLAN.md"));
+      Files.deleteIfExists(tempDir.resolve("plan.md"));
       Files.deleteIfExists(tempDir);
     }
   }
@@ -532,7 +534,7 @@ public class GetNextIssueOutputTest
   // -----------------------------------------------------------------------------------------
 
   /**
-   * Creates an issue directory with STATE.md.
+   * Creates an issue directory with index.json.
    *
    * @param projectPath the project root
    * @param major      the major version string
@@ -548,15 +550,6 @@ public class GetNextIssueOutputTest
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
-    String stateContent = """
-      # State
-
-      - **Status:** %s
-      - **Progress:** 0%%
-      - **Dependencies:** []
-      - **Blocks:** []
-      """.formatted(status);
-
-    Files.writeString(issueDir.resolve("STATE.md"), stateContent);
+    Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"" + status + "\"}");
   }
 }

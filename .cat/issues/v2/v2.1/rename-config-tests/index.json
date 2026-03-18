@@ -1,0 +1,7 @@
+{
+  "status": "closed",
+  "resolution": "implemented",
+  "targetBranch": "v2.1",
+  "dependencies": ["rename-config-java-core", "rename-config-plugin-docs"],
+  "parent": "rename-cat-config-files"
+}

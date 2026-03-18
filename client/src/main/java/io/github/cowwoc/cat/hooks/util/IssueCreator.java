@@ -24,23 +24,26 @@ import java.nio.file.Paths;
 import java.util.Objects;
 
 /**
- * Creates CAT issue directory structure with STATE.md, PLAN.md, and git commit.
+ * Creates CAT issue directory structure with index.json, plan.md, and git commit.
  * <p>
  * This class consolidates multiple operations into a single atomic call:
  * - Creating issue directory
- * - Writing STATE.md and PLAN.md files
- * - Updating parent version STATE.md
+ * - Writing index.json and plan.md files
  * - Git add and commit
  */
 public final class IssueCreator
 {
-  private final JsonMapper mapper = JsonMapper.builder().build();
+  private final JsonMapper mapper;
 
   /**
    * Creates a new IssueCreator instance.
+   *
+   * @param scope the JVM scope providing configuration and services
+   * @throws NullPointerException if {@code scope} is null
    */
-  public IssueCreator()
+  public IssueCreator(JvmScope scope)
   {
+    this.mapper = scope.getJsonMapper();
   }
 
   /**
@@ -75,36 +78,35 @@ public final class IssueCreator
       throw new IOException("Input must be a JSON object, got: " + parsedNode.getNodeType());
     ObjectNode data = (ObjectNode) parsedNode;
 
-    String[] required = {"major", "minor", "issue_name", "state_content"};
+    String[] required = {"major", "minor", "issueName", "indexContent"};
     for (String field : required)
     {
       if (!data.has(field))
         throw new IOException("Missing required field: " + field);
     }
-    if (!data.has("plan_content") && !data.has("plan_file"))
-      throw new IOException("Missing required field: plan_content or plan_file (provide one)");
+    if (!data.has("planContent") && !data.has("planFile"))
+      throw new IOException("Missing required field: planContent or planFile (provide one)");
 
     int major = data.get("major").asInt();
     int minor = data.get("minor").asInt();
-    String issueName = data.get("issue_name").asString();
-    String stateContent = data.get("state_content").asString();
+    String issueName = data.get("issueName").asString();
+    String indexContent = data.get("indexContent").asString();
     String planContent;
-    if (data.has("plan_file"))
+    if (data.has("planFile"))
     {
-      Path planSourceFile = Path.of(data.get("plan_file").asString());
+      Path planSourceFile = Path.of(data.get("planFile").asString());
       planContent = Files.readString(planSourceFile, StandardCharsets.UTF_8);
     }
     else
-      planContent = data.get("plan_content").asString();
+      planContent = data.get("planContent").asString();
     String commitDesc;
-    if (data.has("commit_description"))
-      commitDesc = data.get("commit_description").asString();
+    if (data.has("commitDescription"))
+      commitDesc = data.get("commitDescription").asString();
     else
       commitDesc = "Add issue";
 
     String issueDirPath = Config.CAT_DIR_NAME + "/issues/v" + major + "/v" + major + "." + minor + "/" + issueName;
     Path issuePath = workingDirectory.resolve(issueDirPath);
-    Path parentStatePath = issuePath.getParent().resolve("STATE.md");
 
     if (!Files.exists(issuePath.getParent()))
     {
@@ -116,17 +118,14 @@ public final class IssueCreator
 
     Files.createDirectories(issuePath);
 
-    Path stateFile = issuePath.resolve("STATE.md");
-    Files.writeString(stateFile, stateContent, StandardCharsets.UTF_8);
+    Path indexFile = issuePath.resolve("index.json");
+    Files.writeString(indexFile, indexContent, StandardCharsets.UTF_8);
 
-    Path planFile = issuePath.resolve("PLAN.md");
+    Path planFile = issuePath.resolve("plan.md");
     Files.writeString(planFile, planContent, StandardCharsets.UTF_8);
 
-    updateParentState(parentStatePath, issueName);
-
     String issueRelPath = workingDirectory.relativize(issuePath).toString();
-    String parentRelPath = workingDirectory.relativize(parentStatePath).toString();
-    runGit(workingDirectory, "add", issueRelPath, parentRelPath);
+    runGit(workingDirectory, "add", issueRelPath);
 
     String commitMessage = "planning: add issue " + issueName + " to " + major + "." + minor +
       "\n\n" + commitDesc;
@@ -136,64 +135,6 @@ public final class IssueCreator
     result.put("success", true);
     result.put("path", issuePath.toString());
     return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);
-  }
-
-  /**
-   * Updates parent version STATE.md to add issue to pending list.
-   *
-   * @param parentStatePath path to parent version STATE.md
-   * @param issueName name of the issue to add
-   * @throws IOException if the file cannot be read or written
-   */
-  private void updateParentState(Path parentStatePath, String issueName) throws IOException
-  {
-    if (!Files.exists(parentStatePath))
-      throw new IOException("Parent STATE.md not found: " + parentStatePath);
-
-    String content = Files.readString(parentStatePath, StandardCharsets.UTF_8);
-
-    if (content.contains("## Issues Pending"))
-    {
-      String[] lines = content.split("\n", -1);
-      StringBuilder newContent = new StringBuilder();
-      boolean inPendingSection = false;
-      int lastIssueIndex = -1;
-
-      for (int i = 0; i < lines.length; ++i)
-      {
-        if (lines[i].strip().equals("## Issues Pending"))
-        {
-          inPendingSection = true;
-        }
-        else if (inPendingSection && lines[i].strip().startsWith("##"))
-        {
-          inPendingSection = false;
-        }
-        else if (inPendingSection && lines[i].strip().startsWith("-"))
-        {
-          lastIssueIndex = i;
-        }
-      }
-
-      for (int i = 0; i < lines.length; ++i)
-      {
-        newContent.append(lines[i]).append('\n');
-        if (i == lastIssueIndex && lastIssueIndex != -1)
-          newContent.append("- ").append(issueName).append('\n');
-        else if (lastIssueIndex == -1 && lines[i].strip().equals("## Issues Pending"))
-          newContent.append("- ").append(issueName).append('\n');
-      }
-
-      content = newContent.toString();
-      if (content.endsWith("\n"))
-        content = content.substring(0, content.length() - 1);
-    }
-    else
-    {
-      content += "\n\n## Issues Pending\n- " + issueName + "\n";
-    }
-
-    Files.writeString(parentStatePath, content, StandardCharsets.UTF_8);
   }
 
   /**
@@ -226,7 +167,7 @@ public final class IssueCreator
         return;
       }
 
-      IssueCreator creator = new IssueCreator();
+      IssueCreator creator = new IssueCreator(scope);
       try
       {
         String result = creator.execute(jsonInput);

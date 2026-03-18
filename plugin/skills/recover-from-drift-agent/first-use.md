@@ -5,7 +5,7 @@ See LICENSE.md in the project root for license terms.
 -->
 # Recover from Drift (Agent Variant)
 
-Agent-only skill for detecting and recovering from goal drift. Compares recent actions against PLAN.md to identify
+Agent-only skill for detecting and recovering from goal drift. Compares recent actions against plan.md to identify
 when execution has diverged from the intended plan, then provides corrective guidance to realign with the original
 goal.
 

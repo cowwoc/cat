@@ -755,7 +755,6 @@ public final class GetSkill
    * <p>
    * The plugin root and project directory are read from the JVM environment via {@link MainJvmScope}.
    * The agent ID is passed as the first skill argument ({@code skill-args[0]}, i.e., {@code $0}).
-   * Blank-agent-ID fallback is handled by the constructor.
    *
    * @param args command-line arguments: skill-name catAgentId [skill-args...]
    */

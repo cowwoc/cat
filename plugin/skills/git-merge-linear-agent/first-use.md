@@ -82,7 +82,7 @@ to stderr (exit code 1) with `"status": "error"` and a `"message"` field contain
 | Output | Meaning | Agent Recovery Action |
 |--------|---------|----------------------|
 | `"status": "success"` (stdout) | Merge completed successfully | Report `merged_commit` and `source_branch`, continue |
-| `"status": "error"`: Must be on {target} branch | Wrong branch checked out | `git checkout {target_branch}` first |
+| `"status": "error"`: Must be on {target} branch | Wrong branch checked out | `git checkout {targetBranch}` first |
 | `"status": "error"`: Working directory is not clean | Uncommitted changes | Commit or stash changes before merging |
 | `"status": "error"`: Source branch must have exactly 1 commit | Multiple commits | Squash commits first |
 | `"status": "error"`: Source branch is behind {target} | Target has commits not in source branch | Rebase source branch onto target before merging |

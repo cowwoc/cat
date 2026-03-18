@@ -40,7 +40,7 @@ the prompt. The subagent reads the file in its own context at a fraction of the 
 
 ```
 ✅ CORRECT: pass the path
-  "Read PLAN.md at: /workspace/.claude/worktrees/my-issue/.cat/issues/v2/v2.1/my-issue/PLAN.md"
+  "Read plan.md at: /workspace/.claude/worktrees/my-issue/.cat/issues/v2/v2.1/my-issue/plan.md"
 
 ❌ WRONG: paste the content
   "Here is subagent-delegation.md: [600 lines of content pasted inline]"
@@ -66,11 +66,11 @@ of the files or instructions the subagent will need.
 
 ```
 ✅ CORRECT: pass the description with references
-  "Implement the changes described in PLAN.md Wave 1. PLAN.md is at:
-   /workspace/.claude/worktrees/my-issue/.cat/issues/v2/v2.1/my-issue/PLAN.md"
+  "Implement the changes described in plan.md Wave 1. plan.md is at:
+   /workspace/.claude/worktrees/my-issue/.cat/issues/v2/v2.1/my-issue/plan.md"
 
 ❌ WRONG: expand the plan inline
-  "Here are the Wave 1 items: [PLAN.md Wave 1 section pasted verbatim]"
+  "Here are the Wave 1 items: [plan.md Wave 1 section pasted verbatim]"
 ```
 
 ## Correct Patterns
@@ -84,7 +84,7 @@ Task tool:
   model: "sonnet"
   prompt: |
     Implement the changes described in:
-      PLAN.md: ${WORKTREE_PATH}/.cat/issues/v2/v2.1/my-issue/PLAN.md
+      plan.md: ${WORKTREE_PATH}/.cat/issues/v2/v2.1/my-issue/plan.md
     Read that file yourself before starting. Execute only Wave 1 items.
 ```
 
@@ -155,7 +155,7 @@ Passing the verbatim output wastes main agent context without benefit.
 ```
 
 **Exception:** If the main agent already read the file or ran the command for its *own* decision-making (for example,
-reviewing PLAN.md to choose which wave to execute), it MAY include that content in the subagent prompt to avoid a
+reviewing plan.md to choose which wave to execute), it MAY include that content in the subagent prompt to avoid a
 redundant subagent read. The key distinction is that the main agent read it for its own purpose first, not as a relay.
 
 ## Codebase Examples

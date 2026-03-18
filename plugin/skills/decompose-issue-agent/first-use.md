@@ -17,7 +17,7 @@ when a issue exceeds safe context bounds.
 
 - Token report shows issue approaching 40% threshold (80K tokens)
 - Subagent has experienced compaction events
-- PLAN.md analysis reveals issue is larger than expected
+- plan.md analysis reveals issue is larger than expected
 - Partial collection indicates significant remaining work
 - Pre-emptive decomposition during planning phase
 
@@ -52,19 +52,19 @@ if [ ! -d "$ISSUE_DIR" ]; then
   exit 1
 fi
 
-# FAIL immediately if PLAN.md missing
-if [ ! -f "${ISSUE_DIR}/PLAN.md" ]; then
-  echo "ERROR: PLAN.md not found at ${ISSUE_DIR}/PLAN.md"
-  echo "Cannot decompose a issue without a plan - create PLAN.md first."
+# FAIL immediately if plan.md missing
+if [ ! -f "${ISSUE_DIR}/plan.md" ]; then
+  echo "ERROR: plan.md not found at ${ISSUE_DIR}/plan.md"
+  echo "Cannot decompose a issue without a plan - create plan.md first."
   echo "FAIL immediately - do NOT attempt workarounds."
   exit 1
 fi
 
-# Read current PLAN.md
-cat "${ISSUE_DIR}/PLAN.md"
+# Read current plan.md
+cat "${ISSUE_DIR}/plan.md"
 
-# Read STATE.md for progress
-cat "${ISSUE_DIR}/STATE.md"
+# Read index.json for progress
+cat "${ISSUE_DIR}/index.json"
 
 # If subagent exists, check its progress
 source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
@@ -76,7 +76,7 @@ fi
 
 ### 2. Identify Logical Split Points
 
-Analyze PLAN.md for natural boundaries:
+Analyze plan.md for natural boundaries:
 
 **Good split points:**
 - Between independent features
@@ -102,12 +102,12 @@ mkdir -p ".cat/issues/v1/v1.2/parser-ast"
 mkdir -p ".cat/issues/v1/v1.2/parser-semantic"
 ```
 
-### 4. Create PLAN.md for Each New Issue
+### 4. Create plan.md for Each New Issue
 
-Each new issue gets its own focused PLAN.md:
+Each new issue gets its own focused plan.md:
 
 ```yaml
-# parser-lexer/PLAN.md  (directory name is bare; qualified ID is 1.2-parser-lexer)
+# parser-lexer/plan.md  (directory name is bare; qualified ID is 1.2-parser-lexer)
 ---
 issue: 1.2-parser-lexer
 parent: 1.2-implement-parser
@@ -145,7 +145,7 @@ dependencies:
     - 1.2-parser-ast    # Depends on AST
 ```
 
-### 6. Update STATE.md Files
+### 6. Update index.json Files
 
 **Parent Issue Status Lifecycle:**
 
@@ -158,9 +158,9 @@ When a issue is decomposed, the parent issue status follows this lifecycle:
 
 When /cat:work selects a decomposed parent (all sub-issues closed), verify parent acceptance criteria before closure:
 
-1. **Read parent PLAN.md** - Review all acceptance criteria listed
+1. **Read parent plan.md** - Review all acceptance criteria listed
 2. **Verify each criterion** - Check codebase/tests to confirm each criterion is actually satisfied
-3. **If all criteria met** - Update parent STATE.md to closed/100%
+3. **If all criteria met** - Update parent index.json to closed/100%
 4. **If criteria NOT met** - Create new sub-issue for remaining work, keep parent open
 
 **Why sub-issues implemented and tested ≠ parent complete:** Sub-issues implement their individual scopes, but may not
@@ -170,10 +170,10 @@ originals.
 **INVALID:** Using `status: decomposed` - this is NOT a valid status value.
 Valid values are: `open`, `in-progress`, `closed`, `blocked`.
 
-Original issue STATE.md:
+Original issue index.json:
 
 ```markdown
-# 1.2-implement-parser/STATE.md
+# 1.2-implement-parser/index.json
 
 - **Status:** in-progress
 - **Progress:** 0%
@@ -197,10 +197,10 @@ Original issue STATE.md:
 **Note:** Parent stays `in-progress` until ALL sub-issues are implemented and tested. Progress is calculated from sub-issue
 completion (e.g., 1/3 sub-issues = 33%).
 
-New issue STATE.md:
+New issue index.json:
 
 ```markdown
-# parser-lexer/STATE.md  (directory name is bare; qualified ID is 1.2-parser-lexer)
+# parser-lexer/index.json  (directory name is bare; qualified ID is 1.2-parser-lexer)
 
 - **Status:** open
 - **Progress:** 0%
@@ -238,13 +238,13 @@ sub-issue in Wave N+1 can begin.
 sub-issues:
   - id: 1.2-parser-lexer
     dependencies: []
-    estimated_tokens: 25000
+    estimatedTokens: 25000
   - id: 1.2-parser-ast
     dependencies: [1.2-parser-lexer]
-    estimated_tokens: 30000
+    estimatedTokens: 30000
   - id: 1.2-parser-tests
     dependencies: []
-    estimated_tokens: 20000
+    estimatedTokens: 20000
 
 # Wave-based parallel plan
 parallel_execution_plan:
@@ -269,7 +269,7 @@ execution_order:
   6. Merge wave_2 branches
 ```
 
-**Output parallel plan to STATE.md:**
+**Output parallel plan to index.json:**
 
 ```markdown
 ## Parallel Execution Plan
@@ -309,20 +309,20 @@ conflict_check:
 
 ### 9. Update Original Issue for Decomposition
 
-**STATE.md:** Keep status as `in-progress` (NOT `decomposed` - invalid status value per M263).
+**index.json:** Keep status as `in-progress` (NOT `decomposed` - invalid status value per M263).
 
-**PLAN.md:** Add decomposition metadata:
+**plan.md:** Add decomposition metadata:
 
 ```bash
-# Update original PLAN.md with decomposition info
+# Update original plan.md with decomposition info
 # IMPORTANT: Use fully-qualified names (VERSION_PREFIX + bare-name), not bare names
 echo "---
 decomposed: true
-decomposed_into: [1.2-parser-lexer, 1.2-parser-ast, 1.2-parser-semantic]
+decomposedInto: [1.2-parser-lexer, 1.2-parser-ast, 1.2-parser-semantic]
 parallel_plan: wave_1=[1.2-parser-lexer, 1.2-parser-semantic], wave_2=[1.2-parser-ast]
----" >> "${ISSUE_DIR}/PLAN.md"
+---" >> "${ISSUE_DIR}/plan.md"
 
-# Update STATE.md - status stays in-progress, add Decomposed field
+# Update index.json - status stays in-progress, add Decomposed field
 # Parent transitions to 'closed' only when ALL sub-issues are implemented and tested
 ```
 
@@ -464,11 +464,11 @@ merge_to_appropriate_sub-issue "${SUBAGENT_WORK}"
 ```yaml
 # ❌ Create sub-issues, forget to track
 mkdir parser-lexer parser-ast parser-semantic
-# Parent doesn't know about them! Also used bare names in STATE.md!
+# Parent doesn't know about them! Also used bare names in index.json!
 
 # ✅ Full state update (use qualified names: VERSION_PREFIX + bare-name)
 create_sub-issues "parser-lexer" "parser-ast" "parser-semantic"
-# In parent STATE.md "Decomposed Into", list qualified names:
+# In parent index.json "Decomposed Into", list qualified names:
 # - 1.2-parser-lexer
 # - 1.2-parser-ast
 # - 1.2-parser-semantic

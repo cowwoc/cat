@@ -1,0 +1,5 @@
+{
+  "status": "closed",
+  "resolution": "implemented",
+  "blocks": ["migrate-decomposed-state-bare-to-qualified"]
+}

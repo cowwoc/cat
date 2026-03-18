@@ -26,7 +26,7 @@ public class IssueGoalReaderTest
    * Verifies that a missing file returns "No goal found".
    */
   @Test
-  public void missingFileReturnsNoGoalFound()
+  public void missingFileReturnsNoGoalFound() throws IOException
   {
     Path nonExistent = Path.of(System.getProperty("java.io.tmpdir"),
       "issue-goal-reader-test-missing-" + System.nanoTime() + ".md");
@@ -210,9 +210,11 @@ public class IssueGoalReaderTest
 
   /**
    * Verifies that a null path throws {@link NullPointerException}.
+   *
+   * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = NullPointerException.class)
-  public void nullInputThrowsNullPointerException()
+  public void nullInputThrowsNullPointerException() throws IOException
   {
     IssueGoalReader.readGoalFromPlan(null);
   }

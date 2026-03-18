@@ -1,0 +1,5 @@
+{
+  "status": "open",
+  "dependencies": ["migrate-python-to-java"],
+  "decomposedInto": ["2.1-compress-concepts-batch-1", "2.1-compress-concepts-batch-2", "2.1-compress-concepts-batch-3", "2.1-compress-concepts-batch-4", "2.1-compress-concepts-batch-5"]
+}

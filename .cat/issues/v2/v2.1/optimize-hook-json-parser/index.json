@@ -1,0 +1,6 @@
+{
+  "status": "closed",
+  "resolution": "won't-fix (Hook aggregator pattern is simpler and sufficient. See benchmarks below.)",
+  "dependencies": ["hook-sh-fix", "json-core-api-migration", "json-complex-handler-migration", "build-optimize-validate"],
+  "decomposedInto": ["2.1-hook-sh-fix", "2.1-json-core-api-migration", "2.1-json-complex-handler-migration", "2.1-build-optimize-validate"]
+}

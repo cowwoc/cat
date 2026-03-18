@@ -761,7 +761,7 @@ public class GetDiffOutputTest
   /**
    * Verifies that target branch detection works from a worktree directory path.
    * <p>
-   * When the issue path's STATE.md specifies "v2.1" as the target branch, the diff is computed
+   * When the issue path's index.json specifies "v2.1" as the target branch, the diff is computed
    * against "v2.1".
    *
    * @throws IOException if an I/O error occurs
@@ -804,7 +804,7 @@ public class GetDiffOutputTest
         runGit(worktree, "add", ".");
         runGit(worktree, "commit", "-m", "feature change");
 
-        // Use issue path with STATE.md specifying v2.1 as the target branch
+        // Use issue path with index.json specifying v2.1 as the target branch
         GetDiffOutput handler = new GetDiffOutput(scope);
         Path issuePath = createIssueDirWithTargetBranch(worktree, "v2.1");
         String result = handler.getOutput(new String[]{issuePath.toString()});
@@ -889,7 +889,7 @@ public class GetDiffOutputTest
         runGit(tempDir, "commit", "-m", "add large file");
 
         GetDiffOutput handler = new GetDiffOutput(scope);
-        // createIssueDirWithTargetBranch writes STATE.md with "Target Branch: v2.0"
+        // createIssueDirWithTargetBranch writes index.json with "Target Branch: v2.0"
         Path issuePath = createIssueDirWithTargetBranch(tempDir, "v2.0");
         String result = handler.getOutput(new String[]{issuePath.toString()});
 
@@ -1030,7 +1030,7 @@ public class GetDiffOutputTest
 
   /**
    * Verifies that the issue path argument derives the project root and reads the target branch
-   * from STATE.md.
+   * from index.json.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -1059,18 +1059,18 @@ public class GetDiffOutputTest
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("config.json"), "{\"displayWidth\": 80}");
 
-      // Create issue directory with STATE.md containing target branch
+      // Create issue directory with index.json containing target branch
       Path issuePath = tempDir.resolve(".cat/issues/v2/v2.0/some-feature");
       Files.createDirectories(issuePath);
-      Files.writeString(issuePath.resolve("STATE.md"),
-        "# State\n\n- **Status:** in-progress\n- **Target Branch:** v2.0\n");
+      Files.writeString(issuePath.resolve("index.json"),
+        "{\"status\":\"in-progress\",\"targetBranch\":\"v2.0\"}");
 
       try (JvmScope scope = new TestJvmScope())
       {
         GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(new String[]{issuePath.toString()});
 
-        // Project root derived from issue path, target branch read from STATE.md
+        // Project root derived from issue path, target branch read from index.json
         requireThat(result, "result").contains("Diff Summary").contains("v2.0");
       }
     }
@@ -1718,9 +1718,9 @@ public class GetDiffOutputTest
 
   /**
    * Verifies that target branch detection works from the worktree path when the project root
-   * is passed via issue path STATE.md.
+   * is passed via issue path index.json.
    * <p>
-   * When STATE.md specifies "v2.1" as the target branch, the diff is computed against "v2.1"
+   * When index.json specifies "v2.1" as the target branch, the diff is computed against "v2.1"
    * regardless of the worktree directory name.
    *
    * @throws IOException if an I/O error occurs
@@ -1769,12 +1769,12 @@ public class GetDiffOutputTest
         runGit(worktree, "add", ".");
         runGit(worktree, "commit", "-m", "modify file");
 
-        // Pass issue path with STATE.md specifying v2.1 as target branch
+        // Pass issue path with index.json specifying v2.1 as target branch
         GetDiffOutput handler = new GetDiffOutput(scope);
         Path issuePath = createIssueDirWithTargetBranch(worktree, "v2.1");
         String result = handler.getOutput(new String[]{issuePath.toString()});
 
-        // The STATE.md specifies v2.1 as the target branch
+        // The index.json specifies v2.1 as the target branch
         requireThat(result, "result").contains("v2.1");
 
         TestUtils.deleteDirectoryRecursively(worktreesParent);
@@ -1865,12 +1865,12 @@ public class GetDiffOutputTest
   }
 
   /**
-   * Verifies that getOutput throws IllegalArgumentException when STATE.md is missing from the
+   * Verifies that getOutput throws IllegalArgumentException when index.json is missing from the
    * issue directory.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*STATE\\.md not found.*")
-  public void testMissingStateMdThrowsException() throws IOException
+    expectedExceptionsMessageRegExp = ".*index\\.json not found.*")
+  public void testMissingIndexJsonThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("missing-state-test");
     try
@@ -1920,20 +1920,20 @@ public class GetDiffOutputTest
   }
 
   /**
-   * Verifies that getOutput throws IllegalArgumentException when STATE.md exists but does not
-   * contain a Target Branch field.
+   * Verifies that getOutput throws IllegalArgumentException when index.json exists but does not
+   * contain a targetBranch field.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*Target Branch.*")
-  public void testMissingTargetBranchInStateMdThrowsException() throws IOException
+    expectedExceptionsMessageRegExp = ".*targetBranch.*")
+  public void testMissingTargetBranchInIndexJsonThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("no-target-branch-test");
     try
     {
       Path issuePath = tempDir.resolve(".cat/issues/v2/v2.0/some-issue");
       Files.createDirectories(issuePath);
-      Files.writeString(issuePath.resolve("STATE.md"),
-        "# State\n\n- **Status:** in-progress\n");
+      Files.writeString(issuePath.resolve("index.json"),
+        "{\"status\":\"in-progress\"}");
 
       try (JvmScope scope = new TestJvmScope())
       {
@@ -1948,12 +1948,12 @@ public class GetDiffOutputTest
   }
 
   /**
-   * Creates a minimal issue directory with STATE.md inside the given project root,
+   * Creates a minimal issue directory with index.json inside the given project root,
    * and returns the issue path. Used by tests to call getOutput(String[]) with the
    * issue path interface.
    *
    * @param projectPath  the project root directory in which to create the issue directory
-   * @param targetBranch the target branch value to write into STATE.md
+   * @param targetBranch the target branch value to write into index.json
    * @return the path to the created issue directory
    * @throws IOException if an I/O error occurs
    */
@@ -1961,8 +1961,8 @@ public class GetDiffOutputTest
   {
     Path issuePath = projectPath.resolve(".cat/issues/v1/v1.0/test-issue");
     Files.createDirectories(issuePath);
-    Files.writeString(issuePath.resolve("STATE.md"),
-      "# State\n\n- **Status:** in-progress\n- **Target Branch:** " + targetBranch + "\n");
+    Files.writeString(issuePath.resolve("index.json"),
+      "{\"status\":\"in-progress\",\"targetBranch\":\"" + targetBranch + "\"}");
     return issuePath;
   }
 

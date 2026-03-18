@@ -244,7 +244,7 @@ Main agent: "The skill invocation failed. Let me retry with a single file first,
 
 If session ends during execution:
 
-1. STATE.md reflects last known state
+1. index.json reflects last known state
 2. Worktree may exist with partial work
 3. User resumes with `/cat:work`
 4. Main agent assesses state and continues or restarts

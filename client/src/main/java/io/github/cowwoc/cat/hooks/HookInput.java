@@ -425,6 +425,16 @@ public final class HookInput
   }
 
   /**
+   * Returns the JSON mapper used to parse the hook input.
+   *
+   * @return the JSON mapper
+   */
+  public JsonMapper getMapper()
+  {
+    return mapper;
+  }
+
+  /**
    * Get the user message/prompt from standard hook input locations.
    *
    * @return the user prompt from message, user_message, or prompt fields

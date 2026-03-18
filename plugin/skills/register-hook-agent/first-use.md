@@ -252,7 +252,7 @@ trap 'echo "ERROR in inject-session-context.sh at line $LINENO: Command failed: 
 echo "## Session Context"
 echo "Working directory: $(pwd)"
 echo "Git branch: $(git branch --show-current)"
-echo "Planning state: $(cat .planning/STATE.md 2>/dev/null | head -5 || echo 'No planning context')"
+echo "Planning state: $(cat .planning/index.json 2>/dev/null | head -5 || echo 'No planning context')"
 SCRIPT
 )"
 ```

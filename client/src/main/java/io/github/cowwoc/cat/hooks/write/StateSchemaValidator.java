@@ -13,60 +13,65 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
 import io.github.cowwoc.cat.hooks.IssueStatus;
+import io.github.cowwoc.cat.hooks.JvmScope;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Validates STATE.md files against the standardized schema.
+ * Validates index.json files against the standardized schema.
  * <p>
- * Enforces mandatory keys, value formats, and prevents non-standard keys.
- * This ensures all STATE.md files follow the same structure across the project.
+ * Enforces mandatory fields, value formats, and prevents non-standard fields.
+ * This ensures all index.json files follow the same structure across the project.
  */
 public final class StateSchemaValidator implements FileWriteHandler
 {
-  private static final Pattern STATE_MD_PATTERN =
-    Pattern.compile(Pattern.quote(Config.CAT_DIR_NAME) + "/issues/v\\d+/v\\d+\\.\\d+/[^/]+/STATE\\.md$");
-  private static final Pattern KEY_VALUE_PATTERN =
-    Pattern.compile("^- \\*\\*([^:]+):\\*\\* (.+)$", Pattern.MULTILINE);
-  private static final Pattern PROGRESS_FORMAT = Pattern.compile("^(\\d+)%$");
+  private static final Pattern INDEX_JSON_PATTERN =
+    Pattern.compile(Pattern.quote(Config.CAT_DIR_NAME) + "/issues/v\\d+/v\\d+\\.\\d+/[^/]+/index\\.json$");
   private static final Pattern ISSUE_SLUG_FORMAT = Pattern.compile("^[a-z0-9][a-z0-9.-]*$");
   private static final Set<String> VALID_RESOLUTION_PREFIXES =
     Set.of("implemented", "duplicate", "obsolete", "won't-fix", "not-applicable");
-  private static final Set<String> MANDATORY_KEYS =
-    Set.of("Status", "Progress", "Dependencies", "Blocks");
-  private static final Set<String> OPTIONAL_KEYS = Set.of("Resolution", "Parent", "Target Branch");
-  private static final Set<String> ALL_VALID_KEYS;
-  private static final String MANDATORY_KEYS_LIST;
-  private static final String OPTIONAL_KEYS_LIST;
+  private static final Set<String> MANDATORY_FIELDS = Set.of("status");
+  private static final Set<String> OPTIONAL_FIELDS =
+    Set.of("resolution", "targetBranch", "dependencies", "blocks", "parent", "decomposedInto");
+  private static final Set<String> ALL_VALID_FIELDS;
+  private static final String MANDATORY_FIELDS_LIST;
+  private static final String OPTIONAL_FIELDS_LIST;
 
   static
   {
-    Set<String> allKeys = new HashSet<>(MANDATORY_KEYS);
-    allKeys.addAll(OPTIONAL_KEYS);
-    ALL_VALID_KEYS = Set.copyOf(allKeys);
-    MANDATORY_KEYS_LIST = String.join(", ", new TreeSet<>(MANDATORY_KEYS));
-    OPTIONAL_KEYS_LIST = String.join(", ", new TreeSet<>(OPTIONAL_KEYS));
+    Set<String> allFields = new HashSet<>(MANDATORY_FIELDS);
+    allFields.addAll(OPTIONAL_FIELDS);
+    ALL_VALID_FIELDS = Set.copyOf(allFields);
+    MANDATORY_FIELDS_LIST = String.join(", ", new TreeSet<>(MANDATORY_FIELDS));
+    OPTIONAL_FIELDS_LIST = String.join(", ", new TreeSet<>(OPTIONAL_FIELDS));
   }
+
+  private final JsonMapper mapper;
 
   /**
    * Creates a new StateSchemaValidator instance.
+   *
+   * @param scope the JVM scope providing shared services
+   * @throws NullPointerException if {@code scope} is null
    */
-  public StateSchemaValidator()
+  public StateSchemaValidator(JvmScope scope)
   {
+    this.mapper = scope.getJsonMapper();
   }
 
   /**
-   * Check if the write should be blocked due to STATE.md schema violations.
+   * Check if the write should be blocked due to index.json schema violations.
    *
    * @param toolInput the tool input JSON
    * @param sessionId the session ID
@@ -85,7 +90,7 @@ public final class StateSchemaValidator implements FileWriteHandler
     if (filePath.isEmpty())
       return FileWriteHandler.Result.allow();
 
-    if (!STATE_MD_PATTERN.matcher(filePath).find())
+    if (!INDEX_JSON_PATTERN.matcher(filePath).find())
       return FileWriteHandler.Result.allow();
 
     String content = getStringOrDefault(toolInput, "content", "");
@@ -107,7 +112,8 @@ public final class StateSchemaValidator implements FileWriteHandler
         return FileWriteHandler.Result.block(
           "Edit validation failed: Could not read " + filePath + " to validate post-edit content.\n" +
           "This may indicate a file system issue or permission problem.\n" +
-          "Error: " + editResult.exception.getClass().getSimpleName() + ": " + editResult.exception.getMessage());
+          "Error: " + editResult.exception.getClass().getSimpleName() + ": " +
+          editResult.exception.getMessage());
       }
       content = editResult.content;
       if (content.isEmpty())
@@ -116,144 +122,130 @@ public final class StateSchemaValidator implements FileWriteHandler
           "The file on disk does not contain the text being replaced.");
     }
 
-    Map<String, String> fields = parseFields(content);
-    return validateSchema(fields);
+    return validateJson(content, filePath);
   }
 
   /**
-   * Parse key-value pairs from STATE.md markdown bullet format.
-   * <p>
-   * Lines not matching the pattern {@code - **Key:** Value} are ignored.
+   * Parse and validate index.json content against the schema.
    *
-   * @param content the STATE.md content (may be empty)
-   * @return map of field names to values; empty if no matching key-value pairs found
-   */
-  private Map<String, String> parseFields(String content)
-  {
-    Map<String, String> fields = new HashMap<>();
-    Matcher matcher = KEY_VALUE_PATTERN.matcher(content);
-    while (matcher.find())
-    {
-      String key = matcher.group(1).strip();
-      String value = matcher.group(2).strip();
-      fields.put(key, value);
-    }
-    return fields;
-  }
-
-  /**
-   * Validate the parsed fields against the STATE.md schema.
-   *
-   * @param fields the parsed fields
+   * @param content  the JSON content to validate
+   * @param filePath the file path, used in error messages
    * @return validation result
    */
-  private FileWriteHandler.Result validateSchema(Map<String, String> fields)
+  private FileWriteHandler.Result validateJson(String content, String filePath)
   {
-    FileWriteHandler.Result result = validateMandatoryKeys(fields);
-    if (result.blocked())
-      return result;
-
-    result = validateNoNonStandardKeys(fields);
-    if (result.blocked())
-      return result;
-
-    String status = fields.get("Status");
-    result = validateStatus(status);
-    if (result.blocked())
-      return result;
-
-    String progress = fields.get("Progress");
-    result = validateProgress(progress);
-    if (result.blocked())
-      return result;
-
-    String dependencies = fields.get("Dependencies");
-    if (dependencies != null)
+    ObjectNode root;
+    try
     {
-      result = validateListFormat(dependencies, "Dependencies");
+      JsonNode parsed = mapper.readTree(content);
+      if (!parsed.isObject())
+      {
+        return FileWriteHandler.Result.block(
+          "index.json schema violation in " + filePath + ": root element must be a JSON object.\n" +
+          "\n" +
+          "Mandatory fields: " + MANDATORY_FIELDS_LIST + "\n" +
+          "Optional fields: " + OPTIONAL_FIELDS_LIST);
+      }
+      root = (ObjectNode) parsed;
+    }
+    catch (JacksonException e)
+    {
+      return FileWriteHandler.Result.block(
+        "index.json schema violation in " + filePath + ": invalid JSON.\n" +
+        "Parse error: " + e.getMessage());
+    }
+
+    FileWriteHandler.Result result = validateMandatoryFields(root, filePath);
+    if (result.blocked())
+      return result;
+
+    result = validateNoNonStandardFields(root, filePath);
+    if (result.blocked())
+      return result;
+
+    String status = root.path("status").asString();
+    result = validateStatus(status, filePath);
+    if (result.blocked())
+      return result;
+
+    result = validateClosedResolution(status, root, filePath);
+    if (result.blocked())
+      return result;
+
+    JsonNode parentNode = root.get("parent");
+    if (parentNode != null)
+    {
+      result = validateParent(parentNode, filePath);
       if (result.blocked())
         return result;
     }
-
-    String blocks = fields.get("Blocks");
-    if (blocks != null)
-    {
-      result = validateListFormat(blocks, "Blocks");
-      if (result.blocked())
-        return result;
-    }
-
-    result = validateClosedResolution(status, fields);
-    if (result.blocked())
-      return result;
-
-    String parent = fields.get("Parent");
-    result = validateParent(parent);
-    if (result.blocked())
-      return result;
 
     return FileWriteHandler.Result.allow();
   }
 
   /**
-   * Validate that all mandatory keys are present.
+   * Validate that all mandatory fields are present.
    *
-   * @param fields the parsed fields
+   * @param root     the parsed JSON root object
+   * @param filePath the file path for error messages
    * @return validation result
    */
-  private FileWriteHandler.Result validateMandatoryKeys(Map<String, String> fields)
+  private FileWriteHandler.Result validateMandatoryFields(ObjectNode root, String filePath)
   {
-    for (String key : MANDATORY_KEYS)
+    for (String field : MANDATORY_FIELDS)
     {
-      if (!fields.containsKey(key))
+      if (!root.has(field))
       {
         return FileWriteHandler.Result.block(
-          "STATE.md schema violation: Missing mandatory key '" + key + "'.\n" +
+          "index.json schema violation in " + filePath + ": Missing mandatory field '" + field + "'.\n" +
           "\n" +
-          "Mandatory keys: " + MANDATORY_KEYS_LIST + "\n" +
-          "Optional keys: " + OPTIONAL_KEYS_LIST + " (Resolution required for closed issues)");
+          "Mandatory fields: " + MANDATORY_FIELDS_LIST + "\n" +
+          "Optional fields: " + OPTIONAL_FIELDS_LIST + " (resolution required for closed issues)");
       }
     }
     return FileWriteHandler.Result.allow();
   }
 
   /**
-   * Validate that no non-standard keys are present.
+   * Validate that no non-standard fields are present.
    *
-   * @param fields the parsed fields
+   * @param root     the parsed JSON root object
+   * @param filePath the file path for error messages
    * @return validation result
    */
-  private FileWriteHandler.Result validateNoNonStandardKeys(Map<String, String> fields)
+  private FileWriteHandler.Result validateNoNonStandardFields(ObjectNode root, String filePath)
   {
-    for (String key : fields.keySet())
+    for (Map.Entry<String, JsonNode> entry : root.properties())
     {
-      if (!ALL_VALID_KEYS.contains(key))
+      String fieldName = entry.getKey();
+      if (!ALL_VALID_FIELDS.contains(fieldName))
       {
         return FileWriteHandler.Result.block(
-          "STATE.md schema violation: Non-standard key '" + key + "'.\n" +
+          "index.json schema violation in " + filePath + ": Non-standard field '" + fieldName + "'.\n" +
           "\n" +
-          "Only these keys are allowed:\n" +
-          "  Mandatory: " + MANDATORY_KEYS_LIST + "\n" +
-          "  Optional: " + OPTIONAL_KEYS_LIST);
+          "Only these fields are allowed:\n" +
+          "  Mandatory: " + MANDATORY_FIELDS_LIST + "\n" +
+          "  Optional: " + OPTIONAL_FIELDS_LIST);
       }
     }
     return FileWriteHandler.Result.allow();
   }
 
   /**
-   * Validate the Status field value.
+   * Validate the status field value.
    *
-   * @param status the status value (may be null)
+   * @param status   the status value
+   * @param filePath the file path for error messages
    * @return validation result
    */
-  private FileWriteHandler.Result validateStatus(String status)
+  private FileWriteHandler.Result validateStatus(String status, String filePath)
   {
     if (status != null && IssueStatus.fromString(status) == null)
     {
       return FileWriteHandler.Result.block(
-        "STATE.md schema violation: Invalid Status value '" + status + "'.\n" +
+        "index.json schema violation in " + filePath + ": Invalid status value '" + status + "'.\n" +
         "\n" +
-        "Status must be one of: " + IssueStatus.asCommaSeparated() + "\n" +
+        "status must be one of: " + IssueStatus.asCommaSeparated() + "\n" +
         "\n" +
         "If migrating from older versions, run: plugin/migrations/2.1.sh");
     }
@@ -261,53 +253,28 @@ public final class StateSchemaValidator implements FileWriteHandler
   }
 
   /**
-   * Validate the Progress field format and value range.
+   * Validate that closed status has a valid resolution field.
    *
-   * @param progress the progress value (may be null)
+   * @param status   the status value
+   * @param root     the parsed JSON root object
+   * @param filePath the file path for error messages
    * @return validation result
    */
-  private FileWriteHandler.Result validateProgress(String progress)
-  {
-    if (progress != null)
-    {
-      Matcher progressMatcher = PROGRESS_FORMAT.matcher(progress);
-      if (!progressMatcher.matches())
-      {
-        return FileWriteHandler.Result.block(
-          "STATE.md schema violation: Invalid Progress format '" + progress + "'.\n" +
-          "\n" +
-          "Progress must be an integer 0-100 followed by % (e.g., '50%')");
-      }
-      int progressValue = Integer.parseInt(progressMatcher.group(1));
-      if (progressValue < 0 || progressValue > 100)
-      {
-        return FileWriteHandler.Result.block(
-          "STATE.md schema violation: Progress value out of range: " + progressValue + ".\n" +
-          "\n" +
-          "Progress must be between 0 and 100");
-      }
-    }
-    return FileWriteHandler.Result.allow();
-  }
-
-  /**
-   * Validate that closed status has a valid Resolution field.
-   *
-   * @param status the status value (may be null)
-   * @param fields the parsed fields
-   * @return validation result
-   */
-  private FileWriteHandler.Result validateClosedResolution(String status, Map<String, String> fields)
+  private FileWriteHandler.Result validateClosedResolution(String status, ObjectNode root, String filePath)
   {
     if (IssueStatus.fromString(status) == IssueStatus.CLOSED)
     {
-      String resolution = fields.get("Resolution");
-      if (resolution == null || resolution.isEmpty())
+      JsonNode resolutionNode = root.get("resolution");
+      String resolution = null;
+      if (resolutionNode != null && resolutionNode.isString())
+        resolution = resolutionNode.asString();
+
+      if (resolution == null || resolution.isBlank())
       {
         return FileWriteHandler.Result.block(
-          "STATE.md schema violation: Resolution is required when Status is 'closed'.\n" +
+          "index.json schema violation in " + filePath + ": resolution is required when status is 'closed'.\n" +
           "\n" +
-          "Resolution must be one of:\n" +
+          "resolution must be one of:\n" +
           "  - implemented\n" +
           "  - duplicate (<issue-id>)\n" +
           "  - obsolete (<explanation>)\n" +
@@ -328,52 +295,36 @@ public final class StateSchemaValidator implements FileWriteHandler
       if (!validResolution)
       {
         return FileWriteHandler.Result.block(
-          "STATE.md schema violation: Invalid Resolution value '" + resolution + "'.\n" +
+          "index.json schema violation in " + filePath + ": Invalid resolution value '" + resolution + "'.\n" +
           "\n" +
-          "Resolution must start with one of: implemented, duplicate, obsolete, won't-fix, not-applicable");
+          "resolution must start with one of: implemented, duplicate, obsolete, won't-fix, not-applicable");
       }
     }
     return FileWriteHandler.Result.allow();
   }
 
   /**
-   * Validate the Parent field format.
+   * Validate the parent field format.
    *
-   * @param parent the parent value (may be null)
+   * @param parentNode the parent JSON node
+   * @param filePath   the file path for error messages
    * @return validation result
    */
-  private FileWriteHandler.Result validateParent(String parent)
+  private FileWriteHandler.Result validateParent(JsonNode parentNode, String filePath)
   {
-    if (parent != null && !parent.isEmpty() && !ISSUE_SLUG_FORMAT.matcher(parent).matches())
+    if (!parentNode.isString())
     {
       return FileWriteHandler.Result.block(
-        "STATE.md schema violation: Invalid Parent format '" + parent + "'.\n" +
-        "\n" +
-        "Parent must be a valid issue slug (lowercase letters, numbers, hyphens only)");
+        "index.json schema violation in " + filePath + ": parent must be a string.");
     }
-    return FileWriteHandler.Result.allow();
-  }
-
-  /**
-   * Validate list format for Dependencies and Blocks fields.
-   *
-   * @param value the field value
-   * @param fieldName the field name for error messages
-   * @return validation result
-   */
-  private FileWriteHandler.Result validateListFormat(String value, String fieldName)
-  {
-    if (value.equals("[]"))
-      return FileWriteHandler.Result.allow();
-
-    if (!value.startsWith("[") || !value.endsWith("]"))
+    String parent = parentNode.asString();
+    if (!parent.isEmpty() && !ISSUE_SLUG_FORMAT.matcher(parent).matches())
     {
       return FileWriteHandler.Result.block(
-        "STATE.md schema violation: Invalid " + fieldName + " format '" + value + "'.\n" +
+        "index.json schema violation in " + filePath + ": Invalid parent format '" + parent + "'.\n" +
         "\n" +
-        fieldName + " must be [] or [comma-separated-values]");
+        "parent must be a valid issue slug (lowercase letters, numbers, hyphens only)");
     }
-
     return FileWriteHandler.Result.allow();
   }
 

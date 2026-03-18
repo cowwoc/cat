@@ -48,7 +48,7 @@ public final class VerifyStateInCommitTest
   }
 
   /**
-   * Verifies that non-bugfix/feature commits are allowed without STATE.md checks.
+   * Verifies that non-bugfix/feature commits are allowed without index.json checks.
    */
   @Test
   public void allowsNonBugfixFeatureCommits() throws IOException
@@ -72,7 +72,7 @@ public final class VerifyStateInCommitTest
   }
 
   /**
-   * Verifies that --amend commits are allowed without STATE.md checks.
+   * Verifies that --amend commits are allowed without index.json checks.
    */
   @Test
   public void allowsAmendCommits() throws IOException
@@ -97,10 +97,10 @@ public final class VerifyStateInCommitTest
   }
 
   /**
-   * Verifies that bugfix commits in a CAT worktree are blocked when STATE.md is not staged.
+   * Verifies that bugfix commits in a CAT worktree are blocked when index.json is not staged.
    */
   @Test
-  public void blocksWhenStateMdNotStaged() throws IOException
+  public void blocksWhenIndexJsonNotStaged() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
@@ -111,7 +111,7 @@ public final class VerifyStateInCommitTest
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-fix-thing");
       try
       {
-        // Stage a file that is NOT STATE.md
+        // Stage a file that is NOT index.json
         Files.writeString(worktreeDir.resolve("some-file.java"), "class Foo {}");
         TestUtils.runGit(worktreeDir, "add", "some-file.java");
 
@@ -123,7 +123,7 @@ public final class VerifyStateInCommitTest
             worktreeDir.toString(), "test-session"));
 
         requireThat(result.blocked(), "blocked").isTrue();
-        requireThat(result.reason(), "reason").contains("STATE.md not included");
+        requireThat(result.reason(), "reason").contains("index.json not included");
       }
       finally
       {
@@ -138,10 +138,10 @@ public final class VerifyStateInCommitTest
   }
 
   /**
-   * Verifies that a warning is issued when STATE.md is staged but does not contain "closed" status.
+   * Verifies that a warning is issued when index.json is staged but does not contain "closed" status.
    */
   @Test
-  public void warnsWhenStateMdNotClosed() throws IOException
+  public void warnsWhenIndexJsonNotClosed() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
@@ -152,11 +152,11 @@ public final class VerifyStateInCommitTest
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-new-feature");
       try
       {
-        // Create and stage STATE.md with "open" status (not "closed")
+        // Create and stage index.json with "open" status (not "closed")
         Path issueDir = worktreeDir.resolve(".cat").resolve("issues").resolve("test-issue");
         Files.createDirectories(issueDir);
-        Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** open\n");
-        TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());
+        Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"open\"}");
+        TestUtils.runGit(worktreeDir, "add", issueDir.resolve("index.json").toString());
 
         // Also stage a source file
         Files.writeString(worktreeDir.resolve("Foo.java"), "class Foo {}");
@@ -185,10 +185,10 @@ public final class VerifyStateInCommitTest
   }
 
   /**
-   * Verifies that no warning is issued when STATE.md is staged with "closed" status.
+   * Verifies that no warning is issued when index.json is staged with "closed" status.
    */
   @Test
-  public void noWarnWhenStateMdIsClosed() throws IOException
+  public void noWarnWhenIndexJsonIsClosed() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
@@ -199,11 +199,11 @@ public final class VerifyStateInCommitTest
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-closed-feature");
       try
       {
-        // Create and stage STATE.md with "closed" status
+        // Create and stage index.json with "closed" status
         Path issueDir = worktreeDir.resolve(".cat").resolve("issues").resolve("test-issue");
         Files.createDirectories(issueDir);
-        Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** closed\n");
-        TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());
+        Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"closed\"}");
+        TestUtils.runGit(worktreeDir, "add", issueDir.resolve("index.json").toString());
 
         // Also stage a source file
         Files.writeString(worktreeDir.resolve("Foo.java"), "class Foo {}");
@@ -249,7 +249,7 @@ public final class VerifyStateInCommitTest
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-fix-something");
       try
       {
-        // Stage a file in worktreeDir that is NOT STATE.md
+        // Stage a file in worktreeDir that is NOT index.json
         Files.writeString(worktreeDir.resolve("some-file.java"), "class Foo {}");
         TestUtils.runGit(worktreeDir, "add", "some-file.java");
 
@@ -262,9 +262,9 @@ public final class VerifyStateInCommitTest
         BashHandler.Result result = handler.check(
           TestUtils.bashInput(mapper, command, mainRepo.toString(), "test-session"));
 
-        // Since worktreeDir is a CAT worktree and STATE.md is not staged, it should be blocked
+        // Since worktreeDir is a CAT worktree and index.json is not staged, it should be blocked
         requireThat(result.blocked(), "blocked").isTrue();
-        requireThat(result.reason(), "reason").contains("STATE.md not included");
+        requireThat(result.reason(), "reason").contains("index.json not included");
       }
       finally
       {
@@ -307,7 +307,7 @@ public final class VerifyStateInCommitTest
         BashHandler.Result result = handler.check(
           TestUtils.bashInput(mapper, command, firstDir.toString(), "test-session"));
 
-        // secondDir is not a CAT worktree, so no STATE.md check → allowed
+        // secondDir is not a CAT worktree, so no index.json check → allowed
         requireThat(result.blocked(), "blocked").isFalse();
       }
       finally
@@ -350,7 +350,7 @@ public final class VerifyStateInCommitTest
 
   /**
    * Verifies that commits in the main workspace (which has a .cat directory) are not blocked
-   * by the STATE.md check.
+   * by the index.json check.
    */
   @Test
   public void allowsMainWorkspaceCommitsWithClaudeCatDirectory() throws IOException
@@ -383,7 +383,7 @@ public final class VerifyStateInCommitTest
   }
 
   /**
-   * Verifies that feature commits outside a CAT worktree are allowed without STATE.md checks.
+   * Verifies that feature commits outside a CAT worktree are allowed without index.json checks.
    */
   @Test
   public void allowsNonWorktreeCommits() throws IOException
@@ -411,10 +411,10 @@ public final class VerifyStateInCommitTest
   }
 
   /**
-   * Verifies that when STATE.md is staged but empty, validation is silently skipped and commit is allowed.
+   * Verifies that when index.json is staged but empty, validation is silently skipped and commit is allowed.
    */
   @Test
-  public void allowsWhenStateMdIsEmpty() throws IOException
+  public void allowsWhenIndexJsonIsEmpty() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
@@ -425,11 +425,11 @@ public final class VerifyStateInCommitTest
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-empty-state");
       try
       {
-        // Stage an empty STATE.md — validation should be skipped (empty content guard)
+        // Stage an empty index.json — validation should be skipped (empty content guard)
         Path issueDir = worktreeDir.resolve(".cat").resolve("issues").resolve("test-issue");
         Files.createDirectories(issueDir);
-        Files.writeString(issueDir.resolve("STATE.md"), "");
-        TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());
+        Files.writeString(issueDir.resolve("index.json"), "");
+        TestUtils.runGit(worktreeDir, "add", issueDir.resolve("index.json").toString());
 
         // Also stage a source file
         Files.writeString(worktreeDir.resolve("Foo.java"), "class Foo {}");
@@ -458,12 +458,15 @@ public final class VerifyStateInCommitTest
   }
 
   /**
-   * Verifies that when STATE.md has a malformed status format (e.g., "Status: closed" instead of
-   * "- **Status:** closed"), a warning is issued because the STATUS_PATTERN does not match,
-   * causing isClosed to be false.
+   * Verifies that when index.json contains invalid JSON, validation is silently skipped and commit is allowed.
+   * The isClosedStatus() method catches the IOException from JSON parsing and returns false,
+   * but since the content guard only invokes it when content is non-empty, it falls through to allow.
+   * <p>
+   * Wait — the content is non-empty so isClosedStatus() IS called, IOException is caught, returns false,
+   * and a warning is issued (not-closed). This tests that invalid JSON produces a warning.
    */
   @Test
-  public void warnsWhenStateMdHasMalformedFormat() throws IOException
+  public void warnsWhenIndexJsonHasInvalidJson() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
@@ -471,14 +474,14 @@ public final class VerifyStateInCommitTest
       Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
-      Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-malformed-state");
+      Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-invalid-json");
       try
       {
-        // Stage STATE.md with malformed format — STATUS_PATTERN won't match, so validation is skipped
+        // Stage index.json with invalid JSON content
         Path issueDir = worktreeDir.resolve(".cat").resolve("issues").resolve("test-issue");
         Files.createDirectories(issueDir);
-        Files.writeString(issueDir.resolve("STATE.md"), "Status: closed\n");
-        TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());
+        Files.writeString(issueDir.resolve("index.json"), "not valid json");
+        TestUtils.runGit(worktreeDir, "add", issueDir.resolve("index.json").toString());
 
         // Also stage a source file
         Files.writeString(worktreeDir.resolve("Foo.java"), "class Foo {}");
@@ -491,7 +494,7 @@ public final class VerifyStateInCommitTest
           TestUtils.bashInput(mapper, "git commit -m \"feature: add feature\"",
             worktreeDir.toString(), "test-session"));
 
-        // Malformed format: pattern doesn't match, isClosed=false, so a warning is issued
+        // Invalid JSON: isClosedStatus() catches IOException, returns false → warning issued
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").contains("closed");
       }
@@ -508,11 +511,11 @@ public final class VerifyStateInCommitTest
   }
 
   /**
-   * Verifies that when STATE.md has an empty status value (e.g., "- **Status:** \n"), a warning is issued
-   * because the empty string is not IssueStatus.CLOSED, causing isClosed to be false.
+   * Verifies that when index.json has a missing status field, a warning is issued because
+   * the status node is null, causing isClosedStatus() to return false.
    */
   @Test
-  public void warnsWhenStateMdHasEmptyStatusValue() throws IOException
+  public void warnsWhenIndexJsonHasMissingStatusField() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
@@ -520,14 +523,14 @@ public final class VerifyStateInCommitTest
       Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
 
-      Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-empty-status-value");
+      Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-missing-status");
       try
       {
-        // Stage STATE.md with an empty status value — empty string is not IssueStatus.CLOSED
+        // Stage index.json with no "status" field
         Path issueDir = worktreeDir.resolve(".cat").resolve("issues").resolve("test-issue");
         Files.createDirectories(issueDir);
-        Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** \n");
-        TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());
+        Files.writeString(issueDir.resolve("index.json"), "{}");
+        TestUtils.runGit(worktreeDir, "add", issueDir.resolve("index.json").toString());
 
         // Also stage a source file
         Files.writeString(worktreeDir.resolve("Foo.java"), "class Foo {}");
@@ -540,7 +543,7 @@ public final class VerifyStateInCommitTest
           TestUtils.bashInput(mapper, "git commit -m \"feature: add feature\"",
             worktreeDir.toString(), "test-session"));
 
-        // Empty string is not IssueStatus.CLOSED, so a warning is expected
+        // Missing status field: statusNode is null → isClosedStatus() returns false → warning issued
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").contains("closed");
       }
@@ -557,60 +560,10 @@ public final class VerifyStateInCommitTest
   }
 
   /**
-   * Verifies that a warning is issued when STATE.md has the Status key but no value at all
-   * (e.g., "- **Status:**\n" with no trailing space and no value), so the STATUS_PATTERN
-   * {@code (.+)$} fails to match because there is no character after the colon.
+   * Verifies that when index.json has a valid format but an unrecognized status value, a warning is issued.
    */
   @Test
-  public void warnsWhenStateMdHasStatusKeyWithNoValue() throws IOException
-  {
-    Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
-    {
-      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
-      Files.createDirectories(worktreesDir);
-
-      Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-no-value-status");
-      try
-      {
-        // Stage STATE.md with status key but truly no value — pattern requires (.+) so no match occurs
-        Path issueDir = worktreeDir.resolve(".cat").resolve("issues").resolve("test-issue");
-        Files.createDirectories(issueDir);
-        Files.writeString(issueDir.resolve("STATE.md"), "- **Status:**\n");
-        TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());
-
-        // Also stage a source file
-        Files.writeString(worktreeDir.resolve("Foo.java"), "class Foo {}");
-        TestUtils.runGit(worktreeDir, "add", "Foo.java");
-
-        JsonMapper mapper = scope.getJsonMapper();
-        VerifyStateInCommit handler = new VerifyStateInCommit();
-
-        BashHandler.Result result = handler.check(
-          TestUtils.bashInput(mapper, "git commit -m \"feature: add feature\"",
-            worktreeDir.toString(), "test-session"));
-
-        // Pattern fails to match (no value after colon), isClosed=false, so a warning is expected
-        requireThat(result.blocked(), "blocked").isFalse();
-        requireThat(result.reason(), "reason").contains("closed");
-      }
-      finally
-      {
-        TestUtils.runGit(mainRepo, "worktree", "remove", "--force", worktreeDir.toString());
-        TestUtils.deleteDirectoryRecursively(worktreeDir);
-      }
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(mainRepo);
-    }
-  }
-
-  /**
-   * Verifies that when STATE.md has a valid format but an unrecognized status value, a warning is issued.
-   */
-  @Test
-  public void warnsWhenStateMdHasInvalidStatus() throws IOException
+  public void warnsWhenIndexJsonHasInvalidStatus() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
@@ -621,11 +574,11 @@ public final class VerifyStateInCommitTest
       Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-invalid-status");
       try
       {
-        // Stage STATE.md with valid format but an invalid/unknown status value
+        // Stage index.json with valid format but an invalid/unknown status value
         Path issueDir = worktreeDir.resolve(".cat").resolve("issues").resolve("test-issue");
         Files.createDirectories(issueDir);
-        Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** unknown\n");
-        TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());
+        Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"unknown\"}");
+        TestUtils.runGit(worktreeDir, "add", issueDir.resolve("index.json").toString());
 
         // Also stage a source file
         Files.writeString(worktreeDir.resolve("Foo.java"), "class Foo {}");
@@ -655,10 +608,10 @@ public final class VerifyStateInCommitTest
   }
 
   /**
-   * Verifies that a warning is issued when STATE.md has "in-progress" status (not closed).
+   * Verifies that a warning is issued when index.json has "in-progress" status (not closed).
    */
   @Test
-  public void warnsWhenStateMdHasInProgressStatus() throws IOException
+  public void warnsWhenIndexJsonHasInProgressStatus() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
@@ -671,8 +624,8 @@ public final class VerifyStateInCommitTest
       {
         Path issueDir = worktreeDir.resolve(".cat").resolve("issues").resolve("test-issue");
         Files.createDirectories(issueDir);
-        Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** in-progress\n");
-        TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());
+        Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"in-progress\"}");
+        TestUtils.runGit(worktreeDir, "add", issueDir.resolve("index.json").toString());
 
         Files.writeString(worktreeDir.resolve("Foo.java"), "class Foo {}");
         TestUtils.runGit(worktreeDir, "add", "Foo.java");
@@ -700,10 +653,10 @@ public final class VerifyStateInCommitTest
   }
 
   /**
-   * Verifies that a warning is issued when STATE.md has "blocked" status (not closed).
+   * Verifies that a warning is issued when index.json has "blocked" status (not closed).
    */
   @Test
-  public void warnsWhenStateMdHasBlockedStatus() throws IOException
+  public void warnsWhenIndexJsonHasBlockedStatus() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
@@ -716,8 +669,8 @@ public final class VerifyStateInCommitTest
       {
         Path issueDir = worktreeDir.resolve(".cat").resolve("issues").resolve("test-issue");
         Files.createDirectories(issueDir);
-        Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** blocked\n");
-        TestUtils.runGit(worktreeDir, "add", issueDir.resolve("STATE.md").toString());
+        Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"blocked\"}");
+        TestUtils.runGit(worktreeDir, "add", issueDir.resolve("index.json").toString());
 
         Files.writeString(worktreeDir.resolve("Foo.java"), "class Foo {}");
         TestUtils.runGit(worktreeDir, "add", "Foo.java");

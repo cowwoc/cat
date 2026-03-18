@@ -24,8 +24,8 @@ import java.util.regex.Pattern;
  */
 public final class EnforceWorkflowCompletion implements FileWriteHandler
 {
-  private static final Pattern STATE_MD_PATTERN =
-    Pattern.compile(Pattern.quote(Config.CAT_DIR_NAME) + "/issues/v[0-9]+/v[0-9]+\\.[0-9]+/[^/]+/STATE\\.md$");
+  private static final Pattern INDEX_JSON_PATTERN =
+    Pattern.compile(Pattern.quote(Config.CAT_DIR_NAME) + "/issues/v[0-9]+/v[0-9]+\\.[0-9]+/[^/]+/index\\.json$");
   private static final Pattern STATUS_CLOSED_PATTERN =
     Pattern.compile("[Ss]tatus.*closed");
 
@@ -49,7 +49,7 @@ public final class EnforceWorkflowCompletion implements FileWriteHandler
     else
       filePath = "";
 
-    if (!STATE_MD_PATTERN.matcher(filePath).find())
+    if (!INDEX_JSON_PATTERN.matcher(filePath).find())
       return Result.allow();
 
     JsonNode newStringNode = toolInput.get("new_string");
@@ -69,7 +69,7 @@ public final class EnforceWorkflowCompletion implements FileWriteHandler
   }
 
   /**
-   * Extract the task name from the STATE.md file path.
+   * Extract the task name from the index.json file path.
    *
    * @param filePath the file path
    * @return the task name

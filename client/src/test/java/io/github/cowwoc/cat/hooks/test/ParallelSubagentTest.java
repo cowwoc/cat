@@ -59,10 +59,10 @@ public class ParallelSubagentTest
       JsonNode node = mapper.readTree(json);
       String status = node.path("status").asString();
       requireThat(status, "status").isEqualTo("READY");
-      int tokens = node.path("estimated_tokens").asInt();
+      int tokens = node.path("estimatedTokens").asInt();
       requireThat(tokens, "tokens").isEqualTo(16_000);
 
-      worktreePath = Path.of(node.path("worktree_path").asString());
+      worktreePath = Path.of(node.path("worktreePath").asString());
     }
     finally
     {
@@ -100,11 +100,11 @@ public class ParallelSubagentTest
       JsonNode node = mapper.readTree(json);
       String status = node.path("status").asString();
       requireThat(status, "status").isEqualTo("READY");
-      int tokens = node.path("estimated_tokens").asInt();
+      int tokens = node.path("estimatedTokens").asInt();
       // 2 top-level items only (sub-items with indentation ignored)
       requireThat(tokens, "tokens").isEqualTo(14_000);
 
-      worktreePath = Path.of(node.path("worktree_path").asString());
+      worktreePath = Path.of(node.path("worktreePath").asString());
     }
     finally
     {
@@ -141,11 +141,11 @@ public class ParallelSubagentTest
       JsonNode node = mapper.readTree(json);
       String status = node.path("status").asString();
       requireThat(status, "status").isEqualTo("READY");
-      int tokens = node.path("estimated_tokens").asInt();
+      int tokens = node.path("estimatedTokens").asInt();
       // No files to create/modify and no execution items: base estimate only
       requireThat(tokens, "tokens").isEqualTo(10_000);
 
-      worktreePath = Path.of(node.path("worktree_path").asString());
+      worktreePath = Path.of(node.path("worktreePath").asString());
     }
     finally
     {
@@ -189,7 +189,7 @@ public class ParallelSubagentTest
   }
 
   /**
-   * Creates an issue directory with STATE.md.
+   * Creates an issue directory with index.json.
    *
    * @param projectPath the project root directory
    * @param major the major version
@@ -208,13 +208,11 @@ public class ParallelSubagentTest
       resolve(issueName);
     Files.createDirectories(issueDir);
 
-    String stateMd = "# State: " + issueName + "\n\n- **Status:** " + status +
-      "\n- **Progress:** 0%\n";
-    Files.writeString(issueDir.resolve("STATE.md"), stateMd);
+    Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"" + status + "\"}");
   }
 
   /**
-   * Creates a PLAN.md with ## Execution Waves section.
+   * Creates a plan.md with ## Execution Waves section.
    *
    * @param projectPath the project root directory
    * @param major the major version
@@ -250,11 +248,11 @@ public class ParallelSubagentTest
       - [ ] Implementation complete
       """.formatted(issueName);
 
-    Files.writeString(issueDir.resolve("PLAN.md"), planMd);
+    Files.writeString(issueDir.resolve("plan.md"), planMd);
   }
 
   /**
-   * Creates a PLAN.md with execution waves containing sub-items.
+   * Creates a plan.md with execution waves containing sub-items.
    *
    * @param projectPath the project root directory
    * @param major the major version
@@ -289,11 +287,11 @@ public class ParallelSubagentTest
       - [ ] Implementation complete
       """.formatted(issueName);
 
-    Files.writeString(issueDir.resolve("PLAN.md"), planMd);
+    Files.writeString(issueDir.resolve("plan.md"), planMd);
   }
 
   /**
-   * Creates a PLAN.md without execution section.
+   * Creates a plan.md without execution section.
    *
    * @param projectPath the project root directory
    * @param major the major version
@@ -320,7 +318,7 @@ public class ParallelSubagentTest
       - [ ] Implementation complete
       """.formatted(issueName);
 
-    Files.writeString(issueDir.resolve("PLAN.md"), planMd);
+    Files.writeString(issueDir.resolve("plan.md"), planMd);
   }
 
   /**

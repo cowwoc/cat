@@ -265,7 +265,7 @@ public class IssueDiscoveryTest
         createIssue(projectPath, "2", "1", "dep-issue", "open");
         // Create a feature that depends on dep-issue
         createIssueWithDependencies(projectPath, "2", "1", "my-feature", "open",
-          "[2.1-dep-issue]");
+          "[\"2.1-dep-issue\"]");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
@@ -301,7 +301,7 @@ public class IssueDiscoveryTest
         createIssue(projectPath, "2", "1", "dep-issue", "closed");
         // Create a feature that depends on dep-issue (which is closed)
         createIssueWithDependencies(projectPath, "2", "1", "my-feature", "open",
-          "[2.1-dep-issue]");
+          "[\"2.1-dep-issue\"]");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         // Search by specific issue ID
@@ -335,7 +335,7 @@ public class IssueDiscoveryTest
         createIssue(projectPath, "2", "1", "dep-issue", "open");
         // Create a feature with dependency on open issue
         createIssueWithDependencies(projectPath, "2", "1", "my-feature", "open",
-          "[2.1-dep-issue]");
+          "[\"2.1-dep-issue\"]");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ISSUE, "2.1-my-feature", sessionId, "", false);
@@ -575,7 +575,7 @@ public class IssueDiscoveryTest
 
       requireThat(json, "json").contains("\"status\"");
       requireThat(json, "json").contains("\"found\"");
-      requireThat(json, "json").contains("\"issue_id\"");
+      requireThat(json, "json").contains("\"issueId\"");
       requireThat(json, "json").contains("\"2.1-my-feature\"");
     }
   }
@@ -596,7 +596,7 @@ public class IssueDiscoveryTest
       String json = notFound.toJson(mapper);
 
       requireThat(json, "json").contains("\"status\"");
-      requireThat(json, "json").contains("\"not_found\"");
+      requireThat(json, "json").contains("\"notFound\"");
       requireThat(json, "json").contains("\"scope\"");
     }
   }
@@ -619,7 +619,7 @@ public class IssueDiscoveryTest
 
       requireThat(json, "json").contains("\"status\"");
       requireThat(json, "json").contains("\"blocked\"");
-      requireThat(json, "json").contains("\"issue_id\"");
+      requireThat(json, "json").contains("\"issueId\"");
       requireThat(json, "json").contains("\"blocking\"");
       requireThat(json, "json").contains("2.1-dep-a");
     }
@@ -640,8 +640,8 @@ public class IssueDiscoveryTest
 
       String json = notFound.toJson(mapper);
 
-      requireThat(json, "json").contains("\"excluded_count\"");
-      requireThat(json, "json").contains("\"exclude_pattern\"");
+      requireThat(json, "json").contains("\"excludedCount\"");
+      requireThat(json, "json").contains("\"excludePattern\"");
       requireThat(json, "json").contains("compress");
       requireThat(json, "json").contains("excluded by pattern");
     }
@@ -737,7 +737,7 @@ public class IssueDiscoveryTest
         createIssue(projectPath, "2", "1", "regular-feature", "open");
         // Create post-condition issue
         createIssue(projectPath, "2", "1", "exit-gate-issue", "open");
-        // Create a PLAN.md marking exit-gate-issue as a post-condition issue
+        // Create a plan.md marking exit-gate-issue as a post-condition issue
         createVersionPlanWithExitGate(projectPath, "2", "1", "exit-gate-issue");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
@@ -807,7 +807,7 @@ public class IssueDiscoveryTest
         createIssue(projectPath, "2", "1", "regular-feature", "open");
         // Create a post-condition issue
         createIssue(projectPath, "2", "1", "exit-gate-issue", "open");
-        // Mark exit-gate-issue as a post-condition issue in PLAN.md
+        // Mark exit-gate-issue as a post-condition issue in plan.md
         createVersionPlanWithExitGate(projectPath, "2", "1", "exit-gate-issue");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
@@ -858,10 +858,13 @@ public class IssueDiscoveryTest
   @Test(dataProvider = "canonicalStatusProvider")
   public void canonicalStatusIsAccepted(String status) throws IOException
   {
-    List<String> lines = List.of("- **Status:** " + status);
-    Path fakePath = Path.of("fake/STATE.md");
-    String result = SharedSecrets.getIssueStatus(lines, fakePath);
-    requireThat(result, "result").isEqualTo(status);
+    try (TestJvmScope scope = new TestJvmScope())
+    {
+      String content = "{\"status\":\"" + status + "\"}";
+      Path fakePath = Path.of("fake/index.json");
+      String result = SharedSecrets.getIssueStatus(content, fakePath, scope.getJsonMapper());
+      requireThat(result, "result").isEqualTo(status);
+    }
   }
 
   /**
@@ -894,9 +897,12 @@ public class IssueDiscoveryTest
     expectedExceptionsMessageRegExp = ".*Unknown status.*")
   public void nonCanonicalStatusIsRejected(String status) throws IOException
   {
-    List<String> lines = List.of("- **Status:** " + status);
-    Path fakePath = Path.of("fake/STATE.md");
-    SharedSecrets.getIssueStatus(lines, fakePath);
+    try (TestJvmScope scope = new TestJvmScope())
+    {
+      String content = "{\"status\":\"" + status + "\"}";
+      Path fakePath = Path.of("fake/index.json");
+      SharedSecrets.getIssueStatus(content, fakePath, scope.getJsonMapper());
+    }
   }
 
   /**
@@ -915,8 +921,8 @@ public class IssueDiscoveryTest
         String sessionId = UUID.randomUUID().toString();
         // Create v2.0 with an open issue (the dependency that is not yet closed)
         createIssue(projectPath, "2", "0", "prev-release", "open");
-        // Create v2.1 STATE.md with a dependency on v2.0 (not closed)
-        createVersionStateWithDependencies(projectPath, "2", "1", "[2.0-prev-release]");
+        // Create v2.1 index.json with a dependency on v2.0 (not closed)
+        createVersionStateWithDependencies(projectPath, "2", "1", "[\"2.0-prev-release\"]");
         // Create an open issue in v2.1
         createIssue(projectPath, "2", "1", "blocked-issue", "open");
 
@@ -957,7 +963,7 @@ public class IssueDiscoveryTest
         createIssue(projectPath, "2", "1", "dep-c", "open");
         // Create issue depending on all three
         createIssueWithDependencies(projectPath, "2", "1", "my-feature", "open",
-          "[2.1-dep-a, 2.1-dep-b, 2.1-dep-c]");
+          "[\"2.1-dep-a\", \"2.1-dep-b\", \"2.1-dep-c\"]");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ISSUE, "2.1-my-feature", sessionId, "", false);
@@ -1167,7 +1173,7 @@ public class IssueDiscoveryTest
 
       requireThat(json, "json").contains("\"status\"");
       requireThat(json, "json").contains("\"found\"");
-      requireThat(json, "json").contains("\"issue_id\"");
+      requireThat(json, "json").contains("\"issueId\"");
       requireThat(json, "json").contains("\"2.1.3-patch-fix\"");
       requireThat(json, "json").contains("\"patch\"");
       requireThat(json, "json").contains("\"3\"");
@@ -1296,7 +1302,7 @@ public class IssueDiscoveryTest
 
       requireThat(json, "json").contains("\"status\"");
       requireThat(json, "json").contains("\"found\"");
-      requireThat(json, "json").contains("\"issue_id\"");
+      requireThat(json, "json").contains("\"issueId\"");
       requireThat(json, "json").contains("\"2-my-feature\"");
       requireThat(json, "json").contains("\"major\"");
       requireThat(json, "json").doesNotContain("\"minor\"");
@@ -1305,7 +1311,7 @@ public class IssueDiscoveryTest
   }
 
   /**
-   * Creates an issue directory with STATE.md in the specified project.
+   * Creates an issue directory with index.json in the specified project.
    *
    * @param projectPath the project root directory
    * @param major the major version number
@@ -1321,14 +1327,14 @@ public class IssueDiscoveryTest
   }
 
   /**
-   * Creates an issue directory with STATE.md and specified dependencies.
+   * Creates an issue directory with index.json and specified dependencies.
    *
    * @param projectPath the project root directory
    * @param major the major version number
    * @param minor the minor version number
    * @param issueName the issue name
    * @param status the issue status
-   * @param dependencies the dependencies in array notation (e.g., {@code [dep1, dep2]})
+   * @param dependencies the dependencies in JSON array notation (e.g., {@code ["dep1","dep2"]})
    * @throws IOException if file creation fails
    */
   private void createIssueWithDependencies(Path projectPath, String major, String minor,
@@ -1338,16 +1344,14 @@ public class IssueDiscoveryTest
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
-    String stateContent = """
-      # State
-
-      - **Status:** %s
-      - **Progress:** 0%%
-      - **Dependencies:** %s
-      - **Blocks:** []
+    String indexContent = """
+      {
+        "status": "%s",
+        "dependencies": %s
+      }
       """.formatted(status, dependencies);
 
-    Files.writeString(issueDir.resolve("STATE.md"), stateContent);
+    Files.writeString(issueDir.resolve("index.json"), indexContent);
 
     String planContent = """
       # Plan: %s
@@ -1357,11 +1361,11 @@ public class IssueDiscoveryTest
       Test issue for %s.
       """.formatted(issueName, issueName);
 
-    Files.writeString(issueDir.resolve("PLAN.md"), planContent);
+    Files.writeString(issueDir.resolve("plan.md"), planContent);
   }
 
   /**
-   * Creates a decomposed parent issue with a sub-issue reference in STATE.md.
+   * Creates a decomposed parent issue with a sub-issue reference in index.json.
    *
    * @param projectPath the project root directory
    * @param major the major version number
@@ -1378,29 +1382,23 @@ public class IssueDiscoveryTest
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
-    String stateContent = """
-      # State
-
-      - **Status:** %s
-      - **Progress:** 0%%
-      - **Dependencies:** []
-      - **Blocks:** []
-
-      ## Decomposed Into
-
-      - %s
+    String indexContent = """
+      {
+        "status": "%s",
+        "decomposedInto": ["%s"]
+      }
       """.formatted(status, subIssueName);
 
-    Files.writeString(issueDir.resolve("STATE.md"), stateContent);
+    Files.writeString(issueDir.resolve("index.json"), indexContent);
   }
 
   /**
-   * Creates a version-level STATE.md with the specified dependencies.
+   * Creates a version-level index.json with the specified dependencies.
    *
    * @param projectPath the project root directory
    * @param major the major version number
    * @param minor the minor version number
-   * @param dependencies the dependencies in array notation (e.g., {@code [dep1, dep2]})
+   * @param dependencies the dependencies in JSON array notation (e.g., {@code ["dep1","dep2"]})
    * @throws IOException if file creation fails
    */
   private void createVersionStateWithDependencies(Path projectPath, String major, String minor,
@@ -1410,18 +1408,18 @@ public class IssueDiscoveryTest
       resolve("v" + major).resolve("v" + major + "." + minor);
     Files.createDirectories(versionDir);
 
-    String stateContent = """
-      # State
-
-      - **Status:** open
-      - **Dependencies:** %s
+    String indexContent = """
+      {
+        "status": "open",
+        "dependencies": %s
+      }
       """.formatted(dependencies);
 
-    Files.writeString(versionDir.resolve("STATE.md"), stateContent);
+    Files.writeString(versionDir.resolve("index.json"), indexContent);
   }
 
   /**
-   * Creates a version PLAN.md marking an issue as a post-condition issue.
+   * Creates a version plan.md marking an issue as a post-condition issue.
    *
    * @param projectPath the project root directory
    * @param major the major version number
@@ -1444,11 +1442,11 @@ public class IssueDiscoveryTest
       - [issue] %s
       """.formatted(major, minor, postconditionIssueName);
 
-    Files.writeString(versionDir.resolve("PLAN.md"), planContent);
+    Files.writeString(versionDir.resolve("plan.md"), planContent);
   }
 
   /**
-   * Creates a major-only issue directory with STATE.md directly under the major version directory.
+   * Creates a major-only issue directory with index.json directly under the major version directory.
    *
    * @param projectPath the project root directory
    * @param major the major version number
@@ -1463,20 +1461,17 @@ public class IssueDiscoveryTest
       resolve("v" + major).resolve(issueName);
     Files.createDirectories(issueDir);
 
-    String stateContent = """
-      # State
-
-      - **Status:** %s
-      - **Progress:** 0%%
-      - **Dependencies:** []
-      - **Blocks:** []
+    String indexContent = """
+      {
+        "status": "%s"
+      }
       """.formatted(status);
 
-    Files.writeString(issueDir.resolve("STATE.md"), stateContent);
+    Files.writeString(issueDir.resolve("index.json"), indexContent);
   }
 
   /**
-   * Creates a patch-level issue directory with STATE.md in the specified project.
+   * Creates a patch-level issue directory with index.json in the specified project.
    *
    * @param projectPath the project root directory
    * @param major the major version number
@@ -1494,16 +1489,13 @@ public class IssueDiscoveryTest
       resolve("v" + major + "." + minor + "." + patch).resolve(issueName);
     Files.createDirectories(issueDir);
 
-    String stateContent = """
-      # State
-
-      - **Status:** %s
-      - **Progress:** 0%%
-      - **Dependencies:** []
-      - **Blocks:** []
+    String indexContent = """
+      {
+        "status": "%s"
+      }
       """.formatted(status);
 
-    Files.writeString(issueDir.resolve("STATE.md"), stateContent);
+    Files.writeString(issueDir.resolve("index.json"), indexContent);
   }
 
   /**
@@ -1521,8 +1513,8 @@ public class IssueDiscoveryTest
       try
       {
         String sessionId = UUID.randomUUID().toString();
-        createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "[2.1-issue-b]");
-        createIssueWithDependencies(projectPath, "2", "1", "issue-b", "open", "[2.1-issue-a]");
+        createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "[\"2.1-issue-b\"]");
+        createIssueWithDependencies(projectPath, "2", "1", "issue-b", "open", "[\"2.1-issue-a\"]");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
@@ -1553,9 +1545,9 @@ public class IssueDiscoveryTest
       try
       {
         String sessionId = UUID.randomUUID().toString();
-        createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "[2.1-issue-b]");
-        createIssueWithDependencies(projectPath, "2", "1", "issue-b", "open", "[2.1-issue-c]");
-        createIssueWithDependencies(projectPath, "2", "1", "issue-c", "open", "[2.1-issue-a]");
+        createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "[\"2.1-issue-b\"]");
+        createIssueWithDependencies(projectPath, "2", "1", "issue-b", "open", "[\"2.1-issue-c\"]");
+        createIssueWithDependencies(projectPath, "2", "1", "issue-c", "open", "[\"2.1-issue-a\"]");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
@@ -1587,8 +1579,8 @@ public class IssueDiscoveryTest
       {
         String sessionId = UUID.randomUUID().toString();
         // Create a cycle
-        createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "[2.1-issue-b]");
-        createIssueWithDependencies(projectPath, "2", "1", "issue-b", "open", "[2.1-issue-a]");
+        createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "[\"2.1-issue-b\"]");
+        createIssueWithDependencies(projectPath, "2", "1", "issue-b", "open", "[\"2.1-issue-a\"]");
         // Create an unrelated open issue
         createIssue(projectPath, "2", "1", "unrelated-feature", "open");
 
@@ -1609,7 +1601,7 @@ public class IssueDiscoveryTest
   }
 
   /**
-   * Verifies that when multiple open issues exist, the one whose STATE.md was committed earliest is
+   * Verifies that when multiple open issues exist, the one whose index.json was committed earliest is
    * selected first, not the alphabetically first one.
    * <p>
    * issue-b is committed first (older), issue-a is committed second (newer but alphabetically first).
@@ -1634,24 +1626,19 @@ public class IssueDiscoveryTest
         // Create issue-b first (older commit date)
         Path issueBDir = minorDir.resolve("issue-b");
         Files.createDirectories(issueBDir);
-        String stateContent = """
-          # State
-
-          - **Status:** open
-          - **Progress:** 0%
-          - **Dependencies:** []
-          - **Blocks:** []
+        String indexContent = """
+          {"status":"open"}
           """;
-        Files.writeString(issueBDir.resolve("STATE.md"), stateContent);
-        TestUtils.runGit(projectPath, "add", ".cat/issues/v2/v2.1/issue-b/STATE.md");
+        Files.writeString(issueBDir.resolve("index.json"), indexContent);
+        TestUtils.runGit(projectPath, "add", ".cat/issues/v2/v2.1/issue-b/index.json");
         TestUtils.runGit(projectPath, "commit", "--date=2026-01-01T00:00:01Z",
           "--author=Test User <test@example.com>", "-m", "Add issue-b");
 
         // Create issue-a second (newer commit date, but alphabetically first)
         Path issueADir = minorDir.resolve("issue-a");
         Files.createDirectories(issueADir);
-        Files.writeString(issueADir.resolve("STATE.md"), stateContent);
-        TestUtils.runGit(projectPath, "add", ".cat/issues/v2/v2.1/issue-a/STATE.md");
+        Files.writeString(issueADir.resolve("index.json"), indexContent);
+        TestUtils.runGit(projectPath, "add", ".cat/issues/v2/v2.1/issue-a/index.json");
         TestUtils.runGit(projectPath, "commit", "--date=2026-01-01T00:00:02Z",
           "--author=Test User <test@example.com>", "-m", "Add issue-a");
 
@@ -1725,23 +1712,18 @@ public class IssueDiscoveryTest
         Path issuesDir = projectPath.resolve(".cat").resolve("issues");
         Path minorDir = issuesDir.resolve("v2").resolve("v2.1");
 
-        String stateContent = """
-          # State
-
-          - **Status:** open
-          - **Progress:** 0%
-          - **Dependencies:** []
-          - **Blocks:** []
+        String indexContent = """
+          {"status":"open"}
           """;
 
         // Commit both issues with the same timestamp
         Path issueBDir = minorDir.resolve("issue-b");
         Files.createDirectories(issueBDir);
-        Files.writeString(issueBDir.resolve("STATE.md"), stateContent);
+        Files.writeString(issueBDir.resolve("index.json"), indexContent);
 
         Path issueADir = minorDir.resolve("issue-a");
         Files.createDirectories(issueADir);
-        Files.writeString(issueADir.resolve("STATE.md"), stateContent);
+        Files.writeString(issueADir.resolve("index.json"), indexContent);
 
         TestUtils.runGit(projectPath, "add", ".");
         TestUtils.runGit(projectPath, "commit", "--date=2026-01-01T00:00:01Z",
@@ -1764,7 +1746,7 @@ public class IssueDiscoveryTest
   }
 
   /**
-   * Verifies that when the git log command fails (e.g., STATE.md not yet committed),
+   * Verifies that when the git log command fails (e.g., index.json not yet committed),
    * the issue creation time falls back to {@code Long.MAX_VALUE}, and alphabetical order determines
    * the result.
    *
@@ -1800,7 +1782,7 @@ public class IssueDiscoveryTest
   }
 
   /**
-   * Verifies that an issue directory containing only PLAN.md (no STATE.md) is included as a candidate
+   * Verifies that an issue directory containing only plan.md (no index.json) is included as a candidate
    * by findIssueInDir and treated as open.
    *
    * @throws IOException if an I/O error occurs
@@ -1815,11 +1797,11 @@ public class IssueDiscoveryTest
       {
         String sessionId = UUID.randomUUID().toString();
 
-        // Create an issue with only PLAN.md - no STATE.md
+        // Create an issue with only plan.md - no index.json
         Path issueDir = projectPath.resolve(".cat").resolve("issues").
           resolve("v2").resolve("v2.1").resolve("plan-only-issue");
         Files.createDirectories(issueDir);
-        Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nTest goal\n");
+        Files.writeString(issueDir.resolve("plan.md"), "# Plan\n\n## Goal\n\nTest goal\n");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
@@ -1828,7 +1810,7 @@ public class IssueDiscoveryTest
         requireThat(result, "result").isInstanceOf(DiscoveryResult.Found.class);
         DiscoveryResult.Found found = (DiscoveryResult.Found) result;
         requireThat(found.issueId(), "issueId").isEqualTo("2.1-plan-only-issue");
-        requireThat(found.createStateMd(), "createStateMd").isTrue();
+        requireThat(found.createIndexJson(), "createIndexJson").isTrue();
       }
       finally
       {
@@ -1839,7 +1821,7 @@ public class IssueDiscoveryTest
 
   /**
    * Verifies that hasOpenIssues returns true when a minor directory contains an issue
-   * directory with only PLAN.md (no STATE.md).
+   * directory with only plan.md (no index.json).
    *
    * @throws IOException if an I/O error occurs
    */
@@ -1856,17 +1838,17 @@ public class IssueDiscoveryTest
         // Create a closed issue (normally would prevent hasOpenIssues from returning true)
         createIssue(projectPath, "2", "1", "closed-issue", "closed");
 
-        // Create an issue with only PLAN.md - no STATE.md
+        // Create an issue with only plan.md - no index.json
         Path issueDir = projectPath.resolve(".cat").resolve("issues").
           resolve("v2").resolve("v2.1").resolve("plan-only-issue");
         Files.createDirectories(issueDir);
-        Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nTest goal\n");
+        Files.writeString(issueDir.resolve("plan.md"), "# Plan\n\n## Goal\n\nTest goal\n");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
         DiscoveryResult result = discovery.findNextIssue(options);
 
-        // The PLAN.md-only issue should be found since it's treated as open
+        // The plan.md-only issue should be found since it's treated as open
         requireThat(result, "result").isInstanceOf(DiscoveryResult.Found.class);
       }
       finally
@@ -1877,40 +1859,46 @@ public class IssueDiscoveryTest
   }
 
   /**
-   * Verifies that getIssueStatus returns "open" when the STATE.md file has no status field.
+   * Verifies that getIssueStatus returns "open" when the index.json file has no status field.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
   public void getIssueStatusReturnOpenWhenStatusFieldMissing() throws IOException
   {
-    List<String> lines = List.of("# State", "", "- **Progress:** 0%");
-    Path fakePath = Path.of("fake/STATE.md");
-    String result = SharedSecrets.getIssueStatus(lines, fakePath);
-    requireThat(result, "result").isEqualTo("open");
+    try (TestJvmScope scope = new TestJvmScope())
+    {
+      String content = "{\"resolution\":\"completed\"}";
+      Path fakePath = Path.of("fake/index.json");
+      String result = SharedSecrets.getIssueStatus(content, fakePath, scope.getJsonMapper());
+      requireThat(result, "result").isEqualTo("open");
+    }
   }
 
   /**
-   * Verifies that getIssueStatus returns "open" when the STATE.md file is empty.
+   * Verifies that getIssueStatus returns "open" when the index.json file is empty.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
   public void getIssueStatusReturnOpenWhenFileIsEmpty() throws IOException
   {
-    List<String> lines = List.of();
-    Path fakePath = Path.of("fake/STATE.md");
-    String result = SharedSecrets.getIssueStatus(lines, fakePath);
-    requireThat(result, "result").isEqualTo("open");
+    try (TestJvmScope scope = new TestJvmScope())
+    {
+      String content = "";
+      Path fakePath = Path.of("fake/index.json");
+      String result = SharedSecrets.getIssueStatus(content, fakePath, scope.getJsonMapper());
+      requireThat(result, "result").isEqualTo("open");
+    }
   }
 
   /**
-   * Verifies that an issue with only PLAN.md is found when looked up by specific issue ID.
+   * Verifies that an issue with only plan.md is found when looked up by specific issue ID.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void findSpecificIssueWithNullStateMdTreatsAsOpen() throws IOException
+  public void findSpecificIssueWithNullIndexJsonTreatsAsOpen() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
@@ -1919,11 +1907,11 @@ public class IssueDiscoveryTest
       {
         String sessionId = UUID.randomUUID().toString();
 
-        // Create an issue with only PLAN.md - no STATE.md
+        // Create an issue with only plan.md - no index.json
         Path issueDir = projectPath.resolve(".cat").resolve("issues").
           resolve("v2").resolve("v2.1").resolve("plan-only-issue");
         Files.createDirectories(issueDir);
-        Files.writeString(issueDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nTest goal\n");
+        Files.writeString(issueDir.resolve("plan.md"), "# Plan\n\n## Goal\n\nTest goal\n");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ISSUE, "2.1-plan-only-issue", sessionId, "",
@@ -1933,7 +1921,7 @@ public class IssueDiscoveryTest
         requireThat(result, "result").isInstanceOf(DiscoveryResult.Found.class);
         DiscoveryResult.Found found = (DiscoveryResult.Found) result;
         requireThat(found.issueId(), "issueId").isEqualTo("2.1-plan-only-issue");
-        requireThat(found.createStateMd(), "createStateMd").isTrue();
+        requireThat(found.createIndexJson(), "createIndexJson").isTrue();
       }
       finally
       {
@@ -1990,12 +1978,12 @@ public class IssueDiscoveryTest
   }
 
   /**
-   * Verifies that isCorrupt is true when STATE.md exists but PLAN.md is missing.
+   * Verifies that isCorrupt is true when index.json exists but plan.md is missing.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void foundResultIsCorruptWhenStateMdExistsButNoPlanMd() throws IOException
+  public void foundResultIsCorruptWhenIndexJsonExistsButNoPlanMd() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
@@ -2004,21 +1992,13 @@ public class IssueDiscoveryTest
       {
         String sessionId = UUID.randomUUID().toString();
 
-        // Create issue directory with STATE.md only (no PLAN.md)
+        // Create issue directory with index.json only (no plan.md)
         Path issueDir = projectPath.resolve(".cat").resolve("issues").
           resolve("v2").resolve("v2.1").resolve("corrupt-feature");
         Files.createDirectories(issueDir);
 
-        String stateContent = """
-          # State
-
-          - **Status:** open
-          - **Progress:** 0%
-          - **Dependencies:** []
-          - **Blocks:** []
-          """;
-        Files.writeString(issueDir.resolve("STATE.md"), stateContent);
-        // Deliberately no PLAN.md — this is the corrupt condition
+        Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"open\"}");
+        // Deliberately no plan.md — this is the corrupt condition
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
@@ -2037,12 +2017,12 @@ public class IssueDiscoveryTest
   }
 
   /**
-   * Verifies that isCorrupt is false when both STATE.md and PLAN.md exist.
+   * Verifies that isCorrupt is false when both index.json and plan.md exist.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void foundResultIsNotCorruptWhenBothStateMdAndPlanMdExist() throws IOException
+  public void foundResultIsNotCorruptWhenBothIndexJsonAndPlanMdExist() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
@@ -2069,26 +2049,26 @@ public class IssueDiscoveryTest
   }
 
   /**
-   * Verifies that constructing a Found record with both isCorrupt=true and createStateMd=true
-   * is valid (directory has neither STATE.md nor PLAN.md).
+   * Verifies that constructing a Found record with both isCorrupt=true and createIndexJson=true
+   * is valid (directory has neither index.json nor plan.md).
    */
   @Test
-  public void foundRecordAllowsIsCorruptAndCreateStateMdBothTrue()
+  public void foundRecordAllowsIsCorruptAndCreateIndexJsonBothTrue()
   {
     DiscoveryResult.Found found = new DiscoveryResult.Found("2.1-some-issue", "2", "1", "", "some-issue",
       "/path/to/issue", "all", true, true, false);
     requireThat(found.isCorrupt(), "isCorrupt").isTrue();
-    requireThat(found.createStateMd(), "createStateMd").isTrue();
+    requireThat(found.createIndexJson(), "createIndexJson").isTrue();
   }
 
   /**
-   * Verifies that isCorrupt is true and createStateMd is true when an issue directory has neither
-   * STATE.md nor PLAN.md.
+   * Verifies that isCorrupt is true and createIndexJson is true when an issue directory has neither
+   * index.json nor plan.md.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void foundResultIsCorruptAndCreateStateMdWhenNeitherFileExists() throws IOException
+  public void foundResultIsCorruptAndCreateIndexJsonWhenNeitherFileExists() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
@@ -2097,11 +2077,11 @@ public class IssueDiscoveryTest
       {
         String sessionId = UUID.randomUUID().toString();
 
-        // Create issue directory with neither STATE.md nor PLAN.md
+        // Create issue directory with neither index.json nor plan.md
         Path issueDir = projectPath.resolve(".cat").resolve("issues").
           resolve("v2").resolve("v2.1").resolve("empty-feature");
         Files.createDirectories(issueDir);
-        // Deliberately no STATE.md and no PLAN.md
+        // Deliberately no index.json and no plan.md
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ALL, "", sessionId, "", false);
@@ -2111,7 +2091,7 @@ public class IssueDiscoveryTest
         DiscoveryResult.Found found = (DiscoveryResult.Found) result;
         requireThat(found.issueId(), "issueId").isEqualTo("2.1-empty-feature");
         requireThat(found.isCorrupt(), "isCorrupt").isTrue();
-        requireThat(found.createStateMd(), "createStateMd").isTrue();
+        requireThat(found.createIndexJson(), "createIndexJson").isTrue();
       }
       finally
       {
