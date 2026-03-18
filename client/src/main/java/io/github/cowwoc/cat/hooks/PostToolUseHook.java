@@ -84,7 +84,7 @@ public final class PostToolUseHook implements HookHandler
 
     // Create handlers using sessionId from HookInput
     Path claudeConfigDir = scope.getClaudeConfigDir();
-    Path sessionDirectory = scope.getCatSessionPath();
+    Path sessionDirectory = scope.getCatSessionPath(sessionId);
     List<PostToolHandler> handlers = List.of(
       new SetPendingAgentResult(scope),
       new ResetFailureCounter(sessionDirectory),

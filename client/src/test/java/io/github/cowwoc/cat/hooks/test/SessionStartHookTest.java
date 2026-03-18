@@ -158,42 +158,24 @@ public class SessionStartHookTest
   // --- InjectEnv tests ---
 
   /**
-   * Verifies that InjectEnv skips env file writing on resumed sessions.
+   * Verifies that InjectEnv writes env vars to the resumed session's derived directory when source="resume".
+   * <p>
+   * On resume, CLAUDE_ENV_FILE points to the startup session directory. The env vars must be written
+   * to the resumed session directory (identified by session_id from the hook input JSON) instead.
    */
   @Test
-  public void injectEnvSkipsResumedSessions() throws IOException
+  public void injectEnvResumeWritesToDerivedSessionDir() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      // Resumed session should skip env file writing
-      HookInput input = createInput(mapper, "{\"source\": \"resume\", \"session_id\": \"test-session\"}");
-      SessionStartHandler.Result result = new InjectEnv(scope).handle(input);
-      requireThat(result.additionalContext(), "additionalContext").isEmpty();
-      requireThat(result.stderr(), "stderr").isEmpty();
-    }
-  }
-
-  /**
-   * Verifies that writeToAllSessionDirs writes to multiple UUID-named sibling directories.
-   */
-  @Test
-  public void injectEnvWritesToMultipleSessionDirs() throws IOException
-  {
-    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-resume-");
     try
     {
-      // sessionEnvBase/ (2 levels up from envFile)
-      //   startupId/sessionstart-hook-1.sh  ← CLAUDE_ENV_FILE
-      //   siblingId/                        ← sibling session dir (UUID-named)
       String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
-      String siblingId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
-      String sessionId = "cccccccc-cccc-cccc-cccc-cccccccccccc";
+      String resumedId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
       Path sessionEnvBase = tempBase.resolve("session-env");
       Path startupDir = sessionEnvBase.resolve(startupId);
-      Path siblingDir = sessionEnvBase.resolve(siblingId);
+      Path resumedDir = sessionEnvBase.resolve(resumedId);
       Files.createDirectories(startupDir);
-      Files.createDirectories(siblingDir);
+      Files.createDirectories(resumedDir);
       Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
 
       Path projectPath = Files.createTempDirectory("cat-test-project-");
@@ -204,14 +186,236 @@ public class SessionStartHookTest
           envFile, TerminalType.WINDOWS_TERMINAL))
         {
           JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}");
+          HookInput input = createInput(mapper, "{\"source\": \"resume\", \"session_id\": \"" + resumedId + "\"}");
+          SessionStartHandler.Result result = new InjectEnv(scope).handle(input);
+          requireThat(result.additionalContext(), "additionalContext").isEmpty();
+          requireThat(result.stderr(), "stderr").isEmpty();
+        }
+        // Env file must be written to resumed session dir, not to startup dir
+        Path resumedEnvFile = resumedDir.resolve("sessionstart-hook-1.sh");
+        requireThat(Files.exists(resumedEnvFile), "resumedEnvFileExists").isTrue();
+        String content = Files.readString(resumedEnvFile);
+        requireThat(content, "content").contains("CLAUDE_SESSION_ID=\"" + resumedId + "\"");
+        requireThat(content, "content").contains("CLAUDE_PROJECT_DIR=");
+        requireThat(content, "content").contains("CLAUDE_PLUGIN_ROOT=");
+        // Startup dir must NOT have been written on resume
+        requireThat(Files.exists(envFile), "startupEnvFileExists").isFalse();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectPath);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that InjectEnv does not write to the startup directory when source="resume".
+   * <p>
+   * The startup directory is where CLAUDE_ENV_FILE points on resume. InjectEnv must only write
+   * to the resumed session directory, leaving the startup directory untouched.
+   */
+  @Test
+  public void injectEnvResumeDoesNotWriteToStartupDir() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-resume-");
+    try
+    {
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      String resumedId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Files.createDirectories(startupDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, "test-session",
+          envFile, TerminalType.WINDOWS_TERMINAL))
+        {
+          JsonMapper mapper = scope.getJsonMapper();
+          HookInput input = createInput(mapper, "{\"source\": \"resume\", \"session_id\": \"" + resumedId + "\"}");
           new InjectEnv(scope).handle(input);
         }
-        requireThat(Files.exists(envFile), "startupEnvFileExists").isTrue();
-        Path siblingEnvFile = siblingDir.resolve("sessionstart-hook-1.sh");
-        requireThat(Files.exists(siblingEnvFile), "siblingEnvFileExists").isTrue();
-        String siblingContent = Files.readString(siblingEnvFile);
-        requireThat(siblingContent, "siblingContent").contains("CLAUDE_SESSION_ID=\"" + sessionId + "\"");
+        // The startup dir (CLAUDE_ENV_FILE parent) must NOT be written on resume
+        requireThat(Files.exists(envFile), "startupEnvFileExists").isFalse();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectPath);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that InjectEnv overwrites (not appends) the resumed session env file when source="resume".
+   * <p>
+   * If content was previously written to the resumed session directory, the resume write must truncate the
+   * file so the content is not duplicated.
+   */
+  @Test
+  public void injectEnvResumeOverwritesExistingEnvFile() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-resume-");
+    try
+    {
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      String resumedId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Path resumedDir = sessionEnvBase.resolve(resumedId);
+      Files.createDirectories(startupDir);
+      Files.createDirectories(resumedDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+      Path resumedEnvFile = resumedDir.resolve("sessionstart-hook-1.sh");
+
+      // Pre-populate the resumed session env file as if a prior startup write had already done so
+      Files.writeString(resumedEnvFile,
+        "export CLAUDE_SESSION_ID=\"old-session\"\nexport CLAUDE_PROJECT_DIR=\"/old\"\n");
+
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, "test-session",
+          envFile, TerminalType.WINDOWS_TERMINAL))
+        {
+          JsonMapper mapper = scope.getJsonMapper();
+          HookInput input = createInput(mapper, "{\"source\": \"resume\", \"session_id\": \"" + resumedId + "\"}");
+          new InjectEnv(scope).handle(input);
+        }
+        // File must contain the new session ID, not the old one
+        String content = Files.readString(resumedEnvFile);
+        requireThat(content, "content").contains("CLAUDE_SESSION_ID=\"" + resumedId + "\"");
+        // Old session ID must not be present — file was overwritten, not appended
+        requireThat(content, "content").doesNotContain("old-session");
+        // CLAUDE_SESSION_ID must appear exactly once (not duplicated)
+        int count = 0;
+        int index = 0;
+        index = content.indexOf("CLAUDE_SESSION_ID", index);
+        while (index != -1)
+        {
+          ++count;
+          ++index;
+          index = content.indexOf("CLAUDE_SESSION_ID", index);
+        }
+        requireThat(count, "sessionIdOccurrences").isEqualTo(1);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectPath);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that InjectEnv writes the env file when source="resume" and CLAUDE_ENV_FILE already points to the
+   * resumed session directory (upstream bug #24775 is fixed).
+   * <p>
+   * When the upstream bug is fixed, CLAUDE_ENV_FILE correctly points to the resumed session's own directory.
+   * In that case resumedSessionDir equals envPath.getParent(), so writeToResumedSessionDir's early-return
+   * guard would skip the write. The resume case must write directly, bypassing that guard, so the env file
+   * is always populated even when no source="startup" ran for this session.
+   */
+  @Test
+  public void injectEnvResumeWritesWhenEnvFileAlreadyInResumedDir() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-resume-same-");
+    try
+    {
+      // Simulate upstream bug fixed: CLAUDE_ENV_FILE points directly to the resumed session's directory
+      String resumedId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path resumedDir = sessionEnvBase.resolve(resumedId);
+      Files.createDirectories(resumedDir);
+      // CLAUDE_ENV_FILE is inside the resumed dir (not a separate startup dir)
+      Path envFile = resumedDir.resolve("sessionstart-hook-1.sh");
+
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, "test-session",
+          envFile, TerminalType.WINDOWS_TERMINAL))
+        {
+          JsonMapper mapper = scope.getJsonMapper();
+          HookInput input = createInput(mapper, "{\"source\": \"resume\", \"session_id\": \"" + resumedId + "\"}");
+          SessionStartHandler.Result result = new InjectEnv(scope).handle(input);
+          requireThat(result.additionalContext(), "additionalContext").isEmpty();
+          requireThat(result.stderr(), "stderr").isEmpty();
+        }
+        // Env file must be written to the resumed session directory
+        requireThat(Files.exists(envFile), "resumedEnvFileExists").isTrue();
+        String content = Files.readString(envFile);
+        requireThat(content, "content").contains("CLAUDE_SESSION_ID=\"" + resumedId + "\"");
+        requireThat(content, "content").contains("CLAUDE_PROJECT_DIR=");
+        requireThat(content, "content").contains("CLAUDE_PLUGIN_ROOT=");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectPath);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that InjectEnv writes env vars to CLAUDE_ENV_FILE's directory when source="clear".
+   * <p>
+   * For source="clear", CLAUDE_ENV_FILE already points to the new session's correct directory. The write
+   * is identical to source="startup".
+   */
+  @Test
+  public void injectEnvClearWritesToStartupDir() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-clear-");
+    try
+    {
+      String clearSessionId = "cccccccc-cccc-cccc-cccc-cccccccccccc";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path clearSessionDir = sessionEnvBase.resolve(clearSessionId);
+      Files.createDirectories(clearSessionDir);
+      Path envFile = clearSessionDir.resolve("sessionstart-hook-1.sh");
+
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, "test-session",
+          envFile, TerminalType.WINDOWS_TERMINAL))
+        {
+          JsonMapper mapper = scope.getJsonMapper();
+          HookInput input = createInput(mapper,
+            "{\"source\": \"clear\", \"session_id\": \"" + clearSessionId + "\"}");
+          SessionStartHandler.Result result = new InjectEnv(scope).handle(input);
+          requireThat(result.additionalContext(), "additionalContext").isEmpty();
+          requireThat(result.stderr(), "stderr").isEmpty();
+        }
+        requireThat(Files.exists(envFile), "envFileExists").isTrue();
+        String content = Files.readString(envFile);
+        requireThat(content, "content").contains("CLAUDE_SESSION_ID=\"" + clearSessionId + "\"");
+        requireThat(content, "content").contains("CLAUDE_PROJECT_DIR=");
+        requireThat(content, "content").contains("CLAUDE_PLUGIN_ROOT=");
       }
       finally
       {
@@ -645,11 +849,11 @@ public class SessionStartHookTest
   }
 
   /**
-   * Verifies that InjectEnv returns a warning when the env file in the resumed session directory is a symlink.
+   * Verifies that InjectEnv returns a warning when source="resume" and the env file in the resumed session
+   * directory is a symlink.
    * <p>
-   * When the session_id differs from the startup session ID, InjectEnv writes to the resumed session
-   * directory. If the env file at that location is already a symlink, it should return a warning and
-   * skip the write for security.
+   * When resuming, InjectEnv writes to the resumed session directory (identified by session_id). If the env
+   * file at that location is already a symlink, it should return a warning and skip the write for security.
    */
   @Test
   public void injectEnvHandlesSymlinkInResumedSessionDir() throws IOException
@@ -658,14 +862,14 @@ public class SessionStartHookTest
     try
     {
       String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
-      String sessionId = "cccccccc-cccc-cccc-cccc-cccccccccccc";
+      String resumedId = "cccccccc-cccc-cccc-cccc-cccccccccccc";
       Path sessionEnvBase = tempBase.resolve("session-env");
       Path startupDir = sessionEnvBase.resolve(startupId);
       Files.createDirectories(startupDir);
       Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
 
       // Create the resumed session directory and place a symlink at the env file location
-      Path resumedSessionDir = sessionEnvBase.resolve(sessionId);
+      Path resumedSessionDir = sessionEnvBase.resolve(resumedId);
       Files.createDirectories(resumedSessionDir);
       Path realEnvTarget = tempBase.resolve("real-env-target.sh");
       Files.writeString(realEnvTarget, "# real target");
@@ -680,7 +884,7 @@ public class SessionStartHookTest
           envFile, TerminalType.WINDOWS_TERMINAL))
         {
           JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}");
+          HookInput input = createInput(mapper, "{\"source\": \"resume\", \"session_id\": \"" + resumedId + "\"}");
           SessionStartHandler.Result result = new InjectEnv(scope).handle(input);
           // The env file in the resumed session dir is a symlink - should return a warning
           requireThat(result.additionalContext(), "additionalContext").contains("symlink");
@@ -822,60 +1026,6 @@ public class SessionStartHookTest
           // Inject a session_id that contains '$' - a dangerous shell character
           HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"test-$INJECTED\"}");
           new InjectEnv(scope).handle(input);
-        }
-      }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(projectPath);
-        TestUtils.deleteDirectoryRecursively(pluginRoot);
-      }
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempBase);
-    }
-  }
-
-  /**
-   * Verifies that InjectEnv.handle() returns a warning when a sibling session directory contains an env file
-   * that is a symlink.
-   * <p>
-   * When writing to sibling session directories, InjectEnv skips symlinked env files for security and
-   * returns a warning message containing "symlink".
-   */
-  @Test
-  public void injectEnvWarnsWhenSiblingEnvFileIsSymlink() throws IOException
-  {
-    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
-    try
-    {
-      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
-      String siblingId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
-      Path sessionEnvBase = tempBase.resolve("session-env");
-      Path startupDir = sessionEnvBase.resolve(startupId);
-      Files.createDirectories(startupDir);
-      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
-
-      // Create sibling directory with env file as a symlink
-      Path siblingDir = sessionEnvBase.resolve(siblingId);
-      Files.createDirectories(siblingDir);
-      Path realTarget = tempBase.resolve("real-sibling-target.sh");
-      Files.writeString(realTarget, "# real sibling target");
-      Path siblingEnvFile = siblingDir.resolve("sessionstart-hook-1.sh");
-      Files.createSymbolicLink(siblingEnvFile, realTarget);
-
-      Path projectPath = Files.createTempDirectory("cat-test-project-");
-      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-      try
-      {
-        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, "test-session",
-          envFile, TerminalType.WINDOWS_TERMINAL))
-        {
-          JsonMapper mapper = scope.getJsonMapper();
-          // Use startupId as session_id so the resumed session dir equals startupDir (no resumed write)
-          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}");
-          SessionStartHandler.Result result = new InjectEnv(scope).handle(input);
-          requireThat(result.additionalContext(), "additionalContext").contains("symlink");
         }
       }
       finally

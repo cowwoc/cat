@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks.util;
 import static io.github.cowwoc.cat.hooks.skills.JsonHelper.getStringOrDefault;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.ClaudeEnv;
 import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
@@ -89,7 +90,7 @@ public final class InvestigationContextExtractor
     try (MainJvmScope scope = new MainJvmScope())
     {
       InvestigationContextExtractor extractor = new InvestigationContextExtractor(scope);
-      Path sessionFile = scope.getClaudeSessionsPath().resolve(scope.getClaudeSessionId() + ".jsonl");
+      Path sessionFile = scope.getClaudeSessionsPath().resolve(new ClaudeEnv().getClaudeSessionId() + ".jsonl");
       List<String> keywords = new ArrayList<>();
       for (String arg : args)
         keywords.add(arg);

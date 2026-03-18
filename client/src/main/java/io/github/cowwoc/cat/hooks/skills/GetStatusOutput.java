@@ -21,6 +21,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import io.github.cowwoc.cat.hooks.ClaudeEnv;
 import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
@@ -518,7 +519,7 @@ public final class GetStatusOutput implements SkillOutput
     String currentSession;
     try
     {
-      currentSession = scope.getClaudeSessionId();
+      currentSession = new ClaudeEnv().getClaudeSessionId();
     }
     catch (AssertionError _)
     {

@@ -7,7 +7,6 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.AbstractJvmScope;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.TerminalType;
 import org.testng.annotations.Test;
 
@@ -36,7 +35,7 @@ public final class JvmScopePathResolutionTest
   public void getCatWorkPathReturnsCorrectPath() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       Path result = scope.getCatWorkPath();
       Path expected = tempDir.resolve(".cat").resolve("work");
@@ -59,9 +58,9 @@ public final class JvmScopePathResolutionTest
   public void getCatSessionPathIncludesSessionId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path result = scope.getCatSessionPath();
+      Path result = scope.getCatSessionPath(scope.getClaudeSessionId());
       String sessionId = scope.getClaudeSessionId();
       Path expected = tempDir.resolve(".cat").resolve("work").resolve("sessions").resolve(sessionId);
       requireThat(result, "result").isEqualTo(expected);
@@ -118,7 +117,7 @@ public final class JvmScopePathResolutionTest
   public void getCatWorkPathThrowsAfterClose() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       scope.close();
       scope.getCatWorkPath();
@@ -140,10 +139,10 @@ public final class JvmScopePathResolutionTest
   public void getCatSessionPathThrowsAfterClose() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       scope.close();
-      scope.getCatSessionPath();
+      scope.getCatSessionPath(scope.getClaudeSessionId());
     }
     finally
     {
@@ -162,7 +161,7 @@ public final class JvmScopePathResolutionTest
   public void getClaudeSessionsPathReturnsCorrectPath() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       Path result = scope.getClaudeSessionsPath();
       String encoded = AbstractJvmScope.encodeProjectPath(tempDir.toString());
@@ -186,9 +185,9 @@ public final class JvmScopePathResolutionTest
   public void getClaudeSessionPathReturnsCorrectPath() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path result = scope.getClaudeSessionPath();
+      Path result = scope.getClaudeSessionPath(scope.getClaudeSessionId());
       String encoded = AbstractJvmScope.encodeProjectPath(tempDir.toString());
       String sessionId = scope.getClaudeSessionId();
       Path expected = tempDir.resolve("projects").resolve(encoded).resolve(sessionId);
@@ -211,15 +210,15 @@ public final class JvmScopePathResolutionTest
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
     Path envFile = tempDir.resolve("env.sh");
-    try (JvmScope scope1 = new TestJvmScope(tempDir, tempDir, "session-a", envFile, TerminalType.WINDOWS_TERMINAL);
-      JvmScope scope2 = new TestJvmScope(tempDir, tempDir, "session-b", envFile, TerminalType.WINDOWS_TERMINAL))
+    try (TestJvmScope scope1 = new TestJvmScope(tempDir, tempDir, "session-a", envFile, TerminalType.WINDOWS_TERMINAL);
+      TestJvmScope scope2 = new TestJvmScope(tempDir, tempDir, "session-b", envFile, TerminalType.WINDOWS_TERMINAL))
     {
-      Path sessionPath1 = scope1.getClaudeSessionPath();
-      Path sessionPath2 = scope2.getClaudeSessionPath();
+      Path sessionPath1 = scope1.getClaudeSessionPath(scope1.getClaudeSessionId());
+      Path sessionPath2 = scope2.getClaudeSessionPath(scope2.getClaudeSessionId());
       requireThat(sessionPath1, "sessionPath1").isNotEqualTo(sessionPath2);
 
-      Path catSessionPath1 = scope1.getCatSessionPath();
-      Path catSessionPath2 = scope2.getCatSessionPath();
+      Path catSessionPath1 = scope1.getCatSessionPath(scope1.getClaudeSessionId());
+      Path catSessionPath2 = scope2.getCatSessionPath(scope2.getClaudeSessionId());
       requireThat(catSessionPath1, "catSessionPath1").isNotEqualTo(catSessionPath2);
     }
     finally
@@ -239,7 +238,7 @@ public final class JvmScopePathResolutionTest
   public void getClaudeSessionsPathThrowsAfterClose() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       scope.close();
       scope.getClaudeSessionsPath();
@@ -261,10 +260,10 @@ public final class JvmScopePathResolutionTest
   public void getClaudeSessionPathThrowsAfterClose() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       scope.close();
-      scope.getClaudeSessionPath();
+      scope.getClaudeSessionPath(scope.getClaudeSessionId());
     }
     finally
     {
@@ -281,7 +280,7 @@ public final class JvmScopePathResolutionTest
   public void getWorkDirReturnsInjectedPath() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       Path result = scope.getWorkDir();
       requireThat(result, "result").isEqualTo(tempDir);
@@ -302,7 +301,7 @@ public final class JvmScopePathResolutionTest
   {
     Path projectPath = Files.createTempDirectory("test-project-");
     Path workDir = Files.createTempDirectory("test-work-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath, workDir))
+    try (TestJvmScope scope = new TestJvmScope(projectPath, projectPath, workDir))
     {
       Path result = scope.getWorkDir();
       requireThat(result, "result").isEqualTo(workDir);
@@ -356,9 +355,9 @@ public final class JvmScopePathResolutionTest
     Path pluginDir = parentDir.resolve("plugin");
     Files.createDirectories(pluginDir);
 
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginDir))
+    try (TestJvmScope scope = new TestJvmScope(projectPath, pluginDir))
     {
-      Path result = scope.getClaudeSessionPath();
+      Path result = scope.getClaudeSessionPath(scope.getClaudeSessionId());
       String encoded = AbstractJvmScope.encodeProjectPath(projectPath.toString());
       Path expected = projectPath.resolve("projects").resolve(encoded).resolve("test-session");
       requireThat(result, "result").isEqualTo(expected);
@@ -385,7 +384,7 @@ public final class JvmScopePathResolutionTest
     Path pluginDir = parentDir.resolve("plugin");
     Files.createDirectories(pluginDir);
 
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginDir))
+    try (TestJvmScope scope = new TestJvmScope(projectPath, pluginDir))
     {
       Path result = scope.getClaudeSessionsPath();
       String encoded = AbstractJvmScope.encodeProjectPath(projectPath.toString());

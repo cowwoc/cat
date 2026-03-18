@@ -6,6 +6,8 @@
  */
 package io.github.cowwoc.cat.hooks;
 
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
 import io.github.cowwoc.cat.hooks.prompt.UserIssues;
 import io.github.cowwoc.cat.hooks.read.post.DetectSequentialTools;
 import io.github.cowwoc.cat.hooks.read.pre.PredictBatchOpportunity;
@@ -113,17 +115,20 @@ public abstract class AbstractJvmScope implements JvmScope
   }
 
   /**
-   * Returns the directory for the current session's tracking files.
+   * Returns the directory for a session's tracking files.
    * <p>
    * Located at {@code {claudeConfigDir}/projects/{encodedProjectRoot}/{sessionId}/}.
    *
+   * @param sessionId the session ID
    * @return the session directory path
+   * @throws NullPointerException if {@code sessionId} is null
    * @throws IllegalStateException if this scope is closed
    */
   @Override
-  public Path getClaudeSessionPath()
+  public Path getClaudeSessionPath(String sessionId)
   {
-    return getClaudeSessionsPath().resolve(getClaudeSessionId());
+    requireThat(sessionId, "sessionId").isNotBlank();
+    return getClaudeSessionsPath().resolve(sessionId);
   }
 
   /**
@@ -147,13 +152,16 @@ public abstract class AbstractJvmScope implements JvmScope
    * <p>
    * Located at {@code {projectPath}/.cat/work/sessions/{sessionId}/}.
    *
+   * @param sessionId the session ID
    * @return the session CAT directory path
+   * @throws NullPointerException if {@code sessionId} is null
    * @throws IllegalStateException if this scope is closed
    */
   @Override
-  public Path getCatSessionPath()
+  public Path getCatSessionPath(String sessionId)
   {
-    return getCatWorkPath().resolve("sessions").resolve(getClaudeSessionId());
+    requireThat(sessionId, "sessionId").isNotBlank();
+    return getCatWorkPath().resolve("sessions").resolve(sessionId);
   }
 
   /**
