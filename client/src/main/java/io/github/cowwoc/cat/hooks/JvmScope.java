@@ -64,7 +64,7 @@ public interface JvmScope extends AutoCloseable
    * @throws AssertionError if the directory is not configured
    * @throws IllegalStateException if this scope is closed
    */
-  Path getClaudePluginRoot();
+  Path getPluginRoot();
 
   /**
    * Returns the plugin prefix (e.g., {@code "cat"}).
@@ -136,15 +136,6 @@ public interface JvmScope extends AutoCloseable
   Path getCatSessionPath(String sessionId);
 
   /**
-   * Returns the path to the Claude environment file.
-   *
-   * @return the environment file path
-   * @throws AssertionError if the env file is not configured
-   * @throws IllegalStateException if this scope is closed
-   */
-  Path getClaudeEnvFile();
-
-  /**
    * Returns the detected terminal type.
    *
    * @return the terminal type
@@ -201,19 +192,6 @@ public interface JvmScope extends AutoCloseable
    * @throws IllegalStateException if this scope is closed
    */
   UserIssues getUserIssues();
-
-  /**
-   * Returns the value of an environment variable by name.
-   * <p>
-   * Returns {@code null} if the variable is not set. Used by {@code GetSkill} to resolve
-   * {@code ${name}} references inside directive strings via the scope abstraction.
-   *
-   * @param name the environment variable name
-   * @return the value, or {@code null} if not set
-   * @throws NullPointerException if {@code name} is null
-   * @throws IllegalStateException if this scope is closed
-   */
-  String getEnvironmentVariable(String name);
 
   /**
    * Indicates whether this scope has been closed.

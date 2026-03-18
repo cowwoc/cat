@@ -102,7 +102,7 @@ public final class DisplayUtils
     requireThat(scope, "scope").isNotNull();
 
     JsonMapper mapper = scope.getJsonMapper();
-    Path pluginRoot = scope.getClaudePluginRoot();
+    Path pluginRoot = scope.getPluginRoot();
     TerminalType terminalType = scope.getTerminalType();
 
     this.detectedTerminalKey = terminalType.getJsonKey();

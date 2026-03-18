@@ -84,7 +84,7 @@ public final class InjectMainAgentRulesTest
     Path pluginDir = Files.createTempDirectory("inject-rules-plugin-root-");
     try (JvmScope scope = new TestJvmScope(projectPath, pluginDir))
     {
-      Path pluginRulesDir = scope.getClaudePluginRoot().resolve("rules");
+      Path pluginRulesDir = scope.getPluginRoot().resolve("rules");
       Files.createDirectories(pluginRulesDir);
       Files.writeString(pluginRulesDir.resolve("plugin-rule.md"), """
         ---
@@ -130,7 +130,7 @@ public final class InjectMainAgentRulesTest
     Path pluginDir = Files.createTempDirectory("inject-rules-override-plugin-");
     try (JvmScope scope = new TestJvmScope(projectPath, pluginDir))
     {
-      Path pluginRulesDir = scope.getClaudePluginRoot().resolve("rules");
+      Path pluginRulesDir = scope.getPluginRoot().resolve("rules");
       Files.createDirectories(pluginRulesDir);
       Files.writeString(pluginRulesDir.resolve("shared-rule.md"), """
         ---
@@ -259,7 +259,7 @@ public final class InjectMainAgentRulesTest
     Path pluginDir = Files.createTempDirectory("inject-rules-override-main-false-plugin-");
     try (JvmScope scope = new TestJvmScope(projectPath, pluginDir))
     {
-      Path pluginRulesDir = scope.getClaudePluginRoot().resolve("rules");
+      Path pluginRulesDir = scope.getPluginRoot().resolve("rules");
       Files.createDirectories(pluginRulesDir);
       // Plugin rule: mainAgent=true — passes the main-agent filter
       Files.writeString(pluginRulesDir.resolve("toggled-rule.md"), """

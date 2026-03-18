@@ -8,7 +8,6 @@ package io.github.cowwoc.cat.hooks.util;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.ClaudeEnv;
 import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
@@ -58,7 +57,7 @@ import org.slf4j.LoggerFactory;
  * <p>
  * Inside {@code !} directive strings, the following variable forms are expanded:
  * <ul>
- *   <li>{@code ${name}} — resolved via {@link JvmScope#getEnvironmentVariable(String)}</li>
+ *   <li>{@code ${name}} — resolved via {@link System#getenv(String)}</li>
  *   <li>{@code ${CLAUDE_SKILL_DIR}} — resolved by GetSkill to the skill's directory
  *       ({@code pluginRoot/skills/{skill-name}/})</li>
  *   <li>{@code $0}, {@code $1}, ..., {@code $N} — resolved to skill positional arguments</li>
@@ -125,21 +124,20 @@ public final class GetSkill
    * the first element contains a space, it is split on the first space: the prefix becomes the agent ID
    * ({@code $0}) and the remainder is inserted as {@code $1}, shifting any existing {@code $1}..$N
    * arguments to {@code $2}..$N+1. This handles callers that pass {@code "catAgentId description text"}
-   * as a single quoted argument. If the first element is blank (e.g., when the user invokes a slash
-   * command directly without passing args), the session ID from {@code CLAUDE_SESSION_ID} is used as the
-   * fallback agent ID. If {@code skillArgs} is empty, the SKILL.md is misconfigured (missing
-   * {@code "$0"}) and the constructor fails fast.
+   * as a single quoted argument. If the first element is blank, it is rejected with an
+   * {@link IllegalArgumentException} because a blank agent ID is a skill misconfiguration. If
+   * {@code skillArgs} is empty, the SKILL.md is misconfigured (missing {@code "$0"}) and the constructor
+   * fails fast.
    * <p>
    * The plugin root and project directory are read from {@code scope} via
-   * {@link JvmScope#getClaudePluginRoot()} and {@link JvmScope#getProjectPath()}.
+   * {@link JvmScope#getPluginRoot()} and {@link JvmScope#getProjectPath()}.
    *
    * @param scope the JVM scope for accessing shared services and environment paths
    * @param skillArgs pre-tokenized positional arguments; the first element ({@code $0}) is the CAT agent ID,
    *   optionally followed by a space and description text to insert as {@code $1}
    * @throws NullPointerException if {@code scope} or {@code skillArgs} are null
    * @throws IllegalArgumentException if {@code skillArgs} is empty, if the first element (catAgentId)
-   *   is blank and {@code CLAUDE_SESSION_ID} is also unavailable, or if the catAgentId does not match
-   *   a valid UUID or subagent ID format
+   *   is blank, or if the catAgentId does not match a valid UUID or subagent ID format
    * @throws IOException if the plugin root directory does not exist, or if the agent marker file cannot be read
    */
   public GetSkill(JvmScope scope, List<String> skillArgs) throws IOException
@@ -160,7 +158,6 @@ public final class GetSkill
     // This handles callers that pass "catAgentId description text" as a single quoted argument:
     // the catAgentId is path-safe (no spaces), while the description is inserted as $1,
     // shifting any existing $1..$N arguments to $2..$N+1.
-    // When $0 is blank (user invoked slash command directly), fall back to CLAUDE_SESSION_ID.
     String catAgentId;
     List<String> tokens = new ArrayList<>(skillArgs);
     String firstArg = skillArgs.getFirst();
@@ -174,11 +171,17 @@ public final class GetSkill
     }
     else
     {
-      if (firstArg.isBlank())
-        catAgentId = new ClaudeEnv().getClaudeSessionId();
-      else
-        catAgentId = firstArg;
+      catAgentId = firstArg;
       tokens.set(0, catAgentId);
+    }
+
+    // Blank agentId is a skill misconfiguration - the SKILL.md must provide $0.
+    // Fail fast instead of falling back to an env var.
+    if (catAgentId.isBlank())
+    {
+      throw new IllegalArgumentException(
+        "catAgentId is blank. The SKILL.md must provide a non-blank agent ID as the first argument ($0). " +
+          "Main agents pass ${CLAUDE_SESSION_ID}; subagents pass the value injected by SubagentStartHook.");
     }
 
     // Validate catAgentId format. A valid catAgentId is either a UUID (main agent) or
@@ -196,7 +199,7 @@ public final class GetSkill
     }
 
     this.scope = scope;
-    this.pluginRoot = scope.getClaudePluginRoot();
+    this.pluginRoot = scope.getPluginRoot();
     if (!Files.isDirectory(pluginRoot))
     {
       throw new IOException(
@@ -668,7 +671,7 @@ public final class GetSkill
    * <p>
    * {@code ${CLAUDE_SKILL_DIR}} is resolved by GetSkill to the skill's directory
    * ({@code pluginRoot/skills/{skill-name}/}). All other variables are resolved via
-   * {@link JvmScope#getEnvironmentVariable(String)}. Unknown variables (not set in the environment)
+   * {@link System#getenv(String)}. Unknown variables (not set in the environment)
    * are passed through as {@code ${name}} literals.
    *
    * @param varName the variable name (without ${} delimiters)
@@ -679,7 +682,7 @@ public final class GetSkill
   {
     if (varName.equals("CLAUDE_SKILL_DIR"))
       return pluginRoot.resolve("skills").resolve(stripPrefix(skillName)).toString();
-    String envValue = scope.getEnvironmentVariable(varName);
+    String envValue = System.getenv(varName);
     if (envValue == null)
       return "${" + varName + "}";
     return envValue;

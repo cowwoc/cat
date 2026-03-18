@@ -457,7 +457,7 @@ public final class SetPendingAgentResultTest
     try (TestJvmScope scope = new TestJvmScope(mainRepo, mainRepo))
     {
       // Use the scope's own session ID to align getCatSessionPath() with the check() parameter
-      String sessionId = scope.getClaudeSessionId();
+      String sessionId = "test-session";
       JsonMapper mapper = scope.getJsonMapper();
       String issueId = "2.1-test-issue";
 

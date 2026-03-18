@@ -90,7 +90,8 @@ public final class InvestigationContextExtractor
     try (MainJvmScope scope = new MainJvmScope())
     {
       InvestigationContextExtractor extractor = new InvestigationContextExtractor(scope);
-      Path sessionFile = scope.getClaudeSessionsPath().resolve(new ClaudeEnv().getClaudeSessionId() + ".jsonl");
+      String envSessionId = new ClaudeEnv().getSessionId();
+      Path sessionFile = scope.getClaudeSessionsPath().resolve(envSessionId + ".jsonl");
       List<String> keywords = new ArrayList<>();
       for (String arg : args)
         keywords.add(arg);

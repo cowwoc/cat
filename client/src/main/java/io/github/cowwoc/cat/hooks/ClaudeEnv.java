@@ -59,7 +59,7 @@ public final class ClaudeEnv
    * @return the session ID
    * @throws AssertionError if {@code CLAUDE_SESSION_ID} is not set in the environment
    */
-  public String getClaudeSessionId()
+  public String getSessionId()
   {
     String value = env.get("CLAUDE_SESSION_ID");
     if (value == null || value.isEmpty())
@@ -87,7 +87,7 @@ public final class ClaudeEnv
    * @return the plugin root directory path
    * @throws AssertionError if {@code CLAUDE_PLUGIN_ROOT} is not set in the environment
    */
-  public Path getClaudePluginRoot()
+  public Path getPluginRoot()
   {
     String value = env.get("CLAUDE_PLUGIN_ROOT");
     if (value == null || value.isEmpty())
@@ -101,7 +101,7 @@ public final class ClaudeEnv
    * @return the environment file path
    * @throws AssertionError if {@code CLAUDE_ENV_FILE} is not set in the environment
    */
-  public Path getClaudeEnvFile()
+  public Path getEnvFile()
   {
     String value = env.get("CLAUDE_ENV_FILE");
     if (value == null || value.isEmpty())
