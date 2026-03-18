@@ -6,8 +6,10 @@ See LICENSE.md in the project root for license terms.
 # Command Optimizer Skill
 
 **Purpose**: Analyze session tool_use history to identify optimization opportunities and categorize
-tool outputs by user relevance. Provides actionable recommendations for batching, caching, and output
-summarization.
+tool outputs by user relevance. Provides actionable recommendations for batching, caching, output
+summarization, and output-token efficiency. **Correctness always takes priority over compactness** —
+this includes both semantic correctness (meaning/parsing) and visual correctness (user-facing output
+alignment and readability). Report efficiency opportunities only when fixing them does not degrade either.
 
 ## When to Use
 
@@ -338,6 +340,22 @@ Compile analysis into actionable recommendations based on the skill output:
 10. **Content relay detection**: Identify main agent Read/Grep/Bash calls whose output is only used to populate
    a subagent prompt. Recommend letting the subagent load its own content instead. Exception: content the main
    agent already had in context for its own decision-making may be passed to avoid a redundant subagent read.
+11. **Token efficiency analysis**: Scan skill files referenced in the session for output-token waste patterns.
+   Correctness (semantic and visual) always takes priority over compactness — flag only patterns where removing
+   or condensing content does not change meaning, parsing, or user-facing visual alignment.
+   Waste patterns to detect:
+   - Verbose section headings that repeat context already present in scope
+   - Example blocks with identical leading spaces where a tab would suffice (and where the whitespace is not
+     semantic — i.e., not inside YAML frontmatter, Makefile targets, or fenced code blocks)
+   - Repeated boilerplate across steps that could be a single referenced rule
+   - Output sections that produce content never referenced downstream (e.g., always-empty tables,
+     documentation sections nobody reads)
+   - Receiver-irrelevant output: content sent to the downstream receiver (user, subagent, or calling skill) that
+     the receiver cannot act on or does not need — internal reasoning steps that informed a decision but weren't
+     requested, full file contents when only a summary is needed, verbose status updates that duplicate
+     information the receiver already knows
+   For each flagged pattern, estimate output-token savings (e.g., "removes ~200 tokens per invocation").
+   Report these as a "Token Efficiency" category in the Issues Found section, ordered by estimated savings.
 
 Generate a comprehensive analysis report with specific recommendations for:
 - Which operations to batch together
@@ -378,6 +396,38 @@ branching, no user interaction) is a candidate for script extraction.
 deterministic execution, and produces fewer tool call round-trips.
 
 See `/cat:instruction-builder-agent` for the full script extraction architecture and hybrid workflow pattern.
+
+#### Token Efficiency Patterns
+
+**Definition**: Skill output patterns that waste output tokens without adding value, making each invocation
+more expensive without improving correctness or readability.
+
+**Correctness takes priority** — both semantic correctness (meaning/parsing) and visual correctness
+(user-facing output alignment and readability) override any compactness gain. Never flag a pattern as wasteful
+when fixing it would change meaning, break parsing, or degrade visual presentation.
+
+**Correctness exemptions — do NOT flag as wasteful when:**
+- Inside YAML frontmatter (whitespace is syntax)
+- Inside Makefile targets (tabs are required, spaces are wrong)
+- Inside fenced code blocks where indentation is part of the example
+- In any context where changing whitespace would change meaning or break parsing
+- In display tables, boxes, or formatted reports where spacing is part of the visual design
+
+**Detection patterns:**
+
+| Pattern | Detection | Estimated Savings |
+|---------|-----------|-------------------|
+| Verbose section headings repeating scope | Heading text restates prior heading or context | ~10-30 tokens/invocation |
+| Redundant leading spaces in examples | Multiple example lines share identical indent that could be one tab | ~5-20 tokens/example block |
+| Boilerplate repeated across steps | Identical or near-identical guidance block appears 2+ times | ~50-200 tokens/invocation |
+| Unused output sections | Section always produces empty table, list, or block | ~20-100 tokens/invocation |
+| Receiver-irrelevant output | Content sent to caller that caller cannot use | ~100-500 tokens/invocation |
+
+**Reporting format:** Each flagged pattern should include:
+- Location: skill file and section name
+- Pattern type: one of the types above
+- Sample text (abbreviated)
+- Estimated savings: tokens saved per invocation
 
 #### Subagent Content Relay Anti-Pattern
 
@@ -442,6 +492,23 @@ Do NOT output raw JSON to the user. Use the JSON data internally to populate the
 - **Estimated savings:** {e.g., "3 fewer tool calls, ~8s wall time"}
 
 {Repeat for each issue found, ordered by impact (high first)}
+
+#### Token Efficiency
+{Include this subsection only if Step 6 item 11 detected output-token waste patterns in session skill files}
+
+| Skill | Pattern | Location | Est. Savings/Invocation |
+|-------|---------|----------|------------------------|
+| {skill name} | {pattern type} | {section name} | ~{N} tokens |
+
+{For each flagged pattern:}
+
+**{pattern type} in {skill/section}:**
+- **Sample:** `{abbreviated sample text}`
+- **Fix:** {specific change — e.g., "replace repeated boilerplate with a reference to rule X"}
+- **Estimated savings:** ~{N} tokens per invocation
+
+{Note: Correctness takes priority — patterns are only flagged where the fix does not change meaning,
+parsing, or user-facing visual alignment.}
 
 ### Delegation Analysis
 {Include this section only if subagent delegations were detected}
@@ -603,6 +670,7 @@ Delegating would have saved ~59.1% tokens. Recommend delegating this phase.
 | 2 | Combine 6 sequential Grep calls into 1-2 with regex alternation | 4-5 tool calls |
 | 3 | Cache CLAUDE.md content after first read; reference from context | 3 Read calls |
 | 4 | Extract 5 deterministic validation bash commands to standalone script | 5 tool calls |
+| 5 | Remove repeated boilerplate in work-agent/first-use.md steps 3-5 | ~150 tokens/invocation |
 ```
 
 ## Worked Example: Subagent Delegation Trade-off Analysis
