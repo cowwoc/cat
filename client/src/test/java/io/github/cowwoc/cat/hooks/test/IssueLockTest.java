@@ -32,7 +32,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 /**
  * Tests for IssueLock.
  * <p>
- * Tests verify lock acquisition, release, update, force-release, check, and list operations.
+ * Tests verify lock acquisition, release, force-release, check, and list operations.
  * Each test is self-contained with temporary directories to support parallel execution.
  */
 public class IssueLockTest
@@ -150,99 +150,6 @@ public class IssueLockTest
         IssueLock lock = new IssueLock(scope);
 
         lock.acquire("test-issue", "not-a-uuid", "/path/to/worktree");
-      }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
-    }
-  }
-
-  /**
-   * Verifies that update succeeds when the lock is owned by the session.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void updateSucceedsWhenLockOwned() throws IOException
-  {
-    Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      try
-      {
-        IssueLock lock = new IssueLock(scope);
-        String sessionId = UUID.randomUUID().toString();
-
-        lock.acquire("test-issue", sessionId, "");
-        LockResult result = lock.update("test-issue", sessionId, "/new/worktree");
-
-        requireThat(result, "result").isInstanceOf(LockResult.Updated.class);
-        LockResult.Updated updated = (LockResult.Updated) result;
-        requireThat(updated.status(), "status").isEqualTo("updated");
-        requireThat(updated.worktree(), "worktree").isEqualTo("/new/worktree");
-      }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
-    }
-  }
-
-  /**
-   * Verifies that update fails when the lock is owned by a different session.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void updateFailsWhenLockOwnedByAnotherSession() throws IOException
-  {
-    Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      try
-      {
-        IssueLock lock = new IssueLock(scope);
-        String sessionId1 = UUID.randomUUID().toString();
-        String sessionId2 = UUID.randomUUID().toString();
-
-        lock.acquire("test-issue", sessionId1, "/path/to/worktree");
-        LockResult result = lock.update("test-issue", sessionId2, "/new/worktree");
-
-        requireThat(result, "result").isInstanceOf(LockResult.Error.class);
-        LockResult.Error error = (LockResult.Error) result;
-        requireThat(error.status(), "status").isEqualTo("error");
-        requireThat(error.message(), "message").contains("different session");
-      }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
-    }
-  }
-
-  /**
-   * Verifies that update fails when no lock exists.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void updateFailsWhenNoLockExists() throws IOException
-  {
-    Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      try
-      {
-        IssueLock lock = new IssueLock(scope);
-        String sessionId = UUID.randomUUID().toString();
-
-        LockResult result = lock.update("test-issue", sessionId, "/new/worktree");
-
-        requireThat(result, "result").isInstanceOf(LockResult.Error.class);
-        LockResult.Error error = (LockResult.Error) result;
-        requireThat(error.status(), "status").isEqualTo("error");
-        requireThat(error.message(), "message").contains("No lock exists");
       }
       finally
       {
@@ -590,12 +497,11 @@ public class IssueLockTest
   }
 
   /**
-   * Verifies that check handles lock files missing created_at field.
-   *
-   * @throws IOException if an I/O error occurs
+   * Verifies that check throws IOException for a lock file with a missing worktrees map.
    */
-  @Test(expectedExceptions = NullPointerException.class)
-  public void checkHandlesMissingCreatedAtField() throws IOException
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*(?=.*test-issue)(?=.*empty or missing worktrees).*")
+  public void checkThrowsOnMissingWorktreesMap() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -740,50 +646,6 @@ public class IssueLockTest
   }
 
   /**
-   * Verifies that update preserves the created_at timestamp from the original acquire.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void updatePreservesCreatedAt() throws IOException
-  {
-    Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      try
-      {
-        IssueLock lock = new IssueLock(scope);
-        String sessionId = UUID.randomUUID().toString();
-
-        lock.acquire("test-issue", sessionId, "/initial/worktree");
-
-        Path lockFile = scope.getCatWorkPath().resolve("locks").
-          resolve("test-issue.lock");
-        String beforeContent = Files.readString(lockFile);
-        @SuppressWarnings("unchecked")
-        Map<String, Object> beforeData = scope.getJsonMapper().readValue(beforeContent, Map.class);
-        long createdAtBefore = ((Number) beforeData.get("created_at")).longValue();
-        String createdIsoBefore = beforeData.get("created_iso").toString();
-
-        lock.update("test-issue", sessionId, "/updated/worktree");
-
-        String afterContent = Files.readString(lockFile);
-        @SuppressWarnings("unchecked")
-        Map<String, Object> afterData = scope.getJsonMapper().readValue(afterContent, Map.class);
-        long createdAtAfter = ((Number) afterData.get("created_at")).longValue();
-        String createdIsoAfter = afterData.get("created_iso").toString();
-
-        requireThat(createdAtAfter, "createdAtAfter").isEqualTo(createdAtBefore);
-        requireThat(createdIsoAfter, "createdIsoAfter").isEqualTo(createdIsoBefore);
-      }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
-    }
-  }
-
-  /**
    * Verifies that lock files sanitize backslashes in issue IDs.
    *
    * @throws IOException if an I/O error occurs
@@ -868,75 +730,6 @@ public class IssueLockTest
         requireThat(content, "content").contains("\"worktrees\"");
         requireThat(content, "content").contains("\"session_id\"");
         requireThat(content, "content").contains(sessionId);
-      }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
-    }
-  }
-
-  /**
-   * Verifies that update() adds the new worktree path to the worktrees map in the lock file.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void updateAddsWorktreeToLockFile() throws IOException
-  {
-    Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      try
-      {
-        IssueLock lock = new IssueLock(scope);
-        String sessionId = UUID.randomUUID().toString();
-
-        lock.acquire("test-issue", sessionId, "/path/to/worktree");
-        lock.update("test-issue", sessionId, "/new/path/to/worktree");
-
-        Path lockDir = scope.getCatWorkPath().resolve("locks");
-        Path lockFile = lockDir.resolve("test-issue.lock");
-        String content = Files.readString(lockFile);
-
-        requireThat(content, "content").contains("\"worktrees\"");
-        requireThat(content, "content").contains("/new/path/to/worktree");
-      }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
-    }
-  }
-
-  /**
-   * Verifies that update() stores the session ID (not empty string) as the worktree map value.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void updateStoresSessionIdInWorktreesMap() throws IOException
-  {
-    Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      try
-      {
-        IssueLock lock = new IssueLock(scope);
-        String sessionId = UUID.randomUUID().toString();
-
-        lock.acquire("test-issue", sessionId, "");
-        lock.update("test-issue", sessionId, "/new/worktree");
-
-        Path lockFile = scope.getCatWorkPath().resolve("locks").
-          resolve("test-issue.lock");
-        String content = Files.readString(lockFile);
-        @SuppressWarnings("unchecked")
-        Map<String, Object> lockData = scope.getJsonMapper().readValue(content, Map.class);
-        @SuppressWarnings("unchecked")
-        Map<String, String> worktrees = (Map<String, String>) lockData.get("worktrees");
-
-        requireThat(worktrees.get("/new/worktree"), "worktreeValue").isEqualTo(sessionId);
       }
       finally
       {
@@ -1114,6 +907,78 @@ public class IssueLockTest
         LockResult.Locked locked = (LockResult.Locked) result;
         requireThat(locked.status(), "status").isEqualTo("locked");
         requireThat(locked.owner(), "owner").isEqualTo(otherSessionId);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that acquire() populates the worktrees map immediately without requiring a separate update() call.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquirePopulatesWorktreesMapImmediately() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+        String worktreePath = "/workspace/.cat/worktrees/2.1-my-issue";
+
+        LockResult result = lock.acquire("test-issue", sessionId, worktreePath);
+
+        requireThat(result, "result").isInstanceOf(LockResult.Acquired.class);
+
+        Path lockFile = scope.getCatWorkPath().resolve("locks").resolve("test-issue.lock");
+        String content = Files.readString(lockFile);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> lockData = scope.getJsonMapper().readValue(content, Map.class);
+        @SuppressWarnings("unchecked")
+        Map<String, String> worktrees = (Map<String, String>) lockData.get("worktrees");
+
+        requireThat(worktrees, "worktrees").isNotNull();
+        requireThat(worktrees.size(), "worktreesSize").isEqualTo(1);
+        requireThat(worktrees.get(worktreePath), "worktreeValue").isEqualTo(sessionId);
+
+        String lockSessionId = (String) lockData.get("session_id");
+        requireThat(lockSessionId, "lockSessionId").isNotBlank();
+        requireThat(lockSessionId, "lockSessionId").isEqualTo(sessionId);
+
+        long createdAt = ((Number) lockData.get("created_at")).longValue();
+        requireThat(createdAt > 0L, "createdAtPositive").isTrue();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that acquire() throws IllegalArgumentException when the worktree path is blank.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*worktree.*")
+  public void acquireRejectsBlankWorktreePath() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+
+        lock.acquire("test-issue", sessionId, "");
       }
       finally
       {

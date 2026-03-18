@@ -37,8 +37,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * Issue discovery for CAT workflow.
  * <p>
  * Java equivalent of {@code get-available-issues.sh}. Scans the {@code .cat/issues} directory for
- * open or in-progress issues, checks dependencies, evaluates exit gates, and integrates with
- * {@link IssueLock} for lock acquisition.
+ * open or in-progress issues, checks dependencies, and evaluates exit gates.
  * <p>
  * The search scope controls which version directories are searched:
  * <ul>
@@ -113,7 +112,6 @@ public final class IssueDiscovery
   private final JvmScope scope;
   private final Path projectPath;
   private final Path issuesDir;
-  private final IssueLock issueLock;
   /**
    * Cache mapping issue directory paths to their git creation timestamps (seconds since epoch).
    * <p>
@@ -151,7 +149,6 @@ public final class IssueDiscovery
         " (no .cat directory)");
     }
     this.issuesDir = catDir.resolve("issues");
-    this.issueLock = new IssueLock(scope);
   }
 
   /**
@@ -279,7 +276,6 @@ public final class IssueDiscovery
         result.put("issue_name", issueName);
         result.put("issue_path", issuePath);
         result.put("scope", scope);
-        result.put("lock_status", "acquired");
         return mapper.writeValueAsString(result);
       }
     }
@@ -607,7 +603,7 @@ public final class IssueDiscovery
 
     // Handle specific issue scope
     if (scope == Scope.ISSUE && !target.isEmpty())
-      return findSpecificIssue(target, options);
+      return findSpecificIssue(target);
 
     // Handle search scopes (all, major, minor)
     return searchForIssue(scope, target, options);
@@ -692,11 +688,10 @@ public final class IssueDiscovery
    * Finds a specific issue by fully-qualified ID.
    *
    * @param issueId the fully-qualified issue ID (e.g., {@code 2.1-fix-bug})
-   * @param options the search options
    * @return the discovery result
    * @throws IOException if file operations fail
    */
-  private DiscoveryResult findSpecificIssue(String issueId, SearchOptions options) throws IOException
+  private DiscoveryResult findSpecificIssue(String issueId) throws IOException
   {
     Matcher matcher = QUALIFIED_ISSUE_ID_PATTERN.matcher(issueId);
     if (!matcher.matches())
@@ -774,27 +769,10 @@ public final class IssueDiscovery
     if (!blockingDependencies.isEmpty())
       return new DiscoveryResult.Blocked(issueId, blockingDependencies);
 
-    // Try to acquire lock before checking for an existing worktree so that a locked issue
-    // (owned by another session) is reported as LOCKED rather than triggering the worktree-cleanup
-    // prompt.
-    if (!options.sessionId().isEmpty())
-    {
-      IssueLock.LockResult lockResult = issueLock.acquire(issueId, options.sessionId(), "");
-      if (lockResult instanceof IssueLock.LockResult.Locked locked)
-      {
-        return new DiscoveryResult.NotExecutable(issueId,
-          "Issue locked by another session: " + locked.owner());
-      }
-    }
-
     // Check for existing worktree
     Path worktreePath = getWorktreePath(issueId);
     if (Files.isDirectory(worktreePath))
     {
-      // Update the lock with the actual worktree path so it is not left with an empty worktrees map.
-      // This is best-effort: if the lock was overwritten by a concurrent session, proceed anyway.
-      if (!options.sessionId().isEmpty())
-        issueLock.update(issueId, options.sessionId(), worktreePath.toString());
       return new DiscoveryResult.ExistingWorktree(issueId, major, minor, patch, issueName,
         issueDir.toString(), worktreePath.toString());
     }
@@ -1129,22 +1107,9 @@ public final class IssueDiscovery
         !postconditionsSatisfied(minorDir))
         continue;
 
-      // Try to acquire lock before checking for an existing worktree so that a locked issue
-      // (owned by another session) is skipped rather than treated as an abandoned worktree.
-      if (!options.sessionId().isEmpty())
-      {
-        IssueLock.LockResult lockResult = issueLock.acquire(issueId, options.sessionId(), "");
-        if (!(lockResult instanceof IssueLock.LockResult.Acquired))
-          continue;
-      }
-
       // Check for existing worktree
       if (Files.isDirectory(getWorktreePath(issueId)))
-      {
-        if (!options.sessionId().isEmpty())
-          issueLock.release(issueId, options.sessionId());
         continue;
-      }
 
       boolean isDecomposedComplete = isDecomposedParent(stateLines);
       return new DiscoveryResult.Found(issueId, major, minor, patch, issueName, issueDir.toString(),
