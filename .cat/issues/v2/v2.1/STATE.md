@@ -127,6 +127,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - add-write-session-marker-cli
 - rename-skill-builder-to-instruction-builder
 - add-criteria-verification-gate
+- fix-inject-env-resume-session-id
 
 
 ## Issues Closed
