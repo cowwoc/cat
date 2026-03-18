@@ -259,7 +259,11 @@ public final class TestJvmScope extends AbstractJvmScope
     return claudeConfigDir;
   }
 
-  @Override
+  /**
+   * Returns the session ID injected into this test scope.
+   *
+   * @return the session ID
+   */
   public String getClaudeSessionId()
   {
     ensureOpen();

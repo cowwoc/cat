@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
  * {@code {claudeConfigDir}/projects/{encodedProjectDir}/{sessionId}/} no longer exists.
  * <p>
  * The current session's directory is always skipped to avoid deleting files mid-session.
+ * The current session ID is passed as a parameter to {@link #clean(String)}.
  * Concurrent deletion (e.g., another session cleaning the same stale directory) is handled
  * gracefully.
  */
@@ -62,35 +63,38 @@ public final class SessionEndHandler
    * Scans the session work directory and deletes stale session subdirectories.
    * <p>
    * A session directory is stale if its corresponding Claude session directory no longer exists.
-   * The current session's directory (identified by {@code scope.getClaudeSessionId()}) is always skipped.
+   * The current session's directory is always skipped to avoid deleting active work files.
+   *
+   * @param sessionId the current session's ID
+   * @throws NullPointerException if {@code sessionId} is null
    */
-  public void clean()
+  public void clean(String sessionId)
   {
+    requireThat(sessionId, "sessionId").isNotBlank();
     Path sessionsDir = scope.getCatWorkPath().resolve("sessions");
     if (Files.notExists(sessionsDir))
       return;
 
-    String currentSessionId = scope.getClaudeSessionId();
-    Path claudeProjectsDir = scope.getClaudeSessionPath().getParent();
+    Path claudeProjectsDir = scope.getClaudeSessionPath(sessionId).getParent();
 
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(sessionsDir))
     {
       for (Path sessionWorkDir : stream)
       {
-        String sessionId = sessionWorkDir.getFileName().toString();
+        String candidateSessionId = sessionWorkDir.getFileName().toString();
 
         // Reject non-UUID names to prevent path traversal: only process standard UUID session IDs
-        if (!SESSION_ID_PATTERN.matcher(sessionId).matches())
+        if (!SESSION_ID_PATTERN.matcher(candidateSessionId).matches())
         {
-          LOG.warn("Skipping non-UUID entry in sessions directory: {}", sessionId);
+          LOG.warn("Skipping non-UUID entry in sessions directory: {}", candidateSessionId);
           continue;
         }
 
         // Skip the current session to avoid deleting active work files
-        if (sessionId.equals(currentSessionId))
+        if (candidateSessionId.equals(sessionId))
           continue;
 
-        Path claudeSessionDir = claudeProjectsDir.resolve(sessionId);
+        Path claudeSessionDir = claudeProjectsDir.resolve(candidateSessionId);
         if (Files.notExists(claudeSessionDir))
           deleteSessionWorkDirectory(sessionWorkDir);
       }

@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks.util;
 import static io.github.cowwoc.cat.hooks.util.GitCommands.runGit;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.ClaudeEnv;
 import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
@@ -692,7 +693,7 @@ public final class RecordLearning
       return;
     }
 
-    String sessionId = scope.getClaudeSessionId();
+    String sessionId = new ClaudeEnv().getClaudeSessionId();
     RecordLearning cmd = new RecordLearning(scope, projectPath, Clock.systemUTC());
 
     try

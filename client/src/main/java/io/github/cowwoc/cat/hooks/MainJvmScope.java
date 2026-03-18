@@ -41,13 +41,6 @@ public final class MainJvmScope extends AbstractJvmScope
       return Path.of(configDir);
     return Path.of(System.getProperty("user.home"), ".claude");
   });
-  private final ConcurrentLazyReference<String> claudeSessionId = ConcurrentLazyReference.create(() ->
-  {
-    String sessionId = System.getenv("CLAUDE_SESSION_ID");
-    if (sessionId == null || sessionId.isEmpty())
-      throw new AssertionError("CLAUDE_SESSION_ID is not set");
-    return sessionId;
-  });
   private final ConcurrentLazyReference<Path> claudeEnvFile = ConcurrentLazyReference.create(() ->
   {
     String envFile = System.getenv("CLAUDE_ENV_FILE");
@@ -99,13 +92,6 @@ public final class MainJvmScope extends AbstractJvmScope
   {
     ensureOpen();
     return claudeConfigDir.getValue();
-  }
-
-  @Override
-  public String getClaudeSessionId()
-  {
-    ensureOpen();
-    return claudeSessionId.getValue();
   }
 
   @Override

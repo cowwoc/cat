@@ -309,6 +309,9 @@ public class GetNextIssueOutputTest
 
   /**
    * Verifies that getOutput throws for missing required arguments.
+   * <p>
+   * Passes --session-id and --completed-issue but omits --target-branch to trigger
+   * the missing-argument IOException.
    *
    * @throws IOException expected for missing arguments
    */
@@ -319,7 +322,11 @@ public class GetNextIssueOutputTest
     try (JvmScope scope = new TestJvmScope())
     {
       GetNextIssueOutput output = new GetNextIssueOutput(scope);
-      output.getOutput(new String[]{"--completed-issue", "2.1-test"});
+      output.getOutput(new String[]{
+        "--completed-issue", "2.1-test",
+        "--session-id", "00000000-0000-0000-0000-000000000001",
+        "--project-dir", "/tmp"
+      });
     }
   }
 
@@ -391,20 +398,23 @@ public class GetNextIssueOutputTest
   }
 
   /**
-   * Verifies that getOutput falls back to scope session ID and project dir when those arguments are omitted.
+   * Verifies that getOutput uses the provided session ID and project dir arguments.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getOutputFallsBackToScopeWhenSessionIdAndProjectDirOmitted() throws IOException
+  public void getOutputUsesProvidedSessionIdAndProjectDir() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GetNextIssueOutput output = new GetNextIssueOutput(scope);
-      // Omit --session-id and --project-dir; scope provides defaults
+      String sessionId = "00000000-0000-0000-0000-000000000010";
+      String projectDir = scope.getProjectPath().toString();
       String[] args = {
         "--completed-issue", "2.1-test-issue",
-        "--target-branch", "v2.1"
+        "--target-branch", "v2.1",
+        "--session-id", sessionId,
+        "--project-dir", projectDir
       };
       String result = output.getOutput(args);
       requireThat(result, "result").isNotEmpty();

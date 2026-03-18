@@ -114,7 +114,7 @@ public final class SessionEndHook implements HookHandler
 
       cleanStaleLocks(messages);
 
-      new SessionEndHandler(scope).clean();
+      new SessionEndHandler(scope).clean(sessionId);
 
       return new HookResult(output.empty(), messages);
     }

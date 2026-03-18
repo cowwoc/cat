@@ -14,14 +14,9 @@ import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringJoiner;
-import java.util.regex.Pattern;
 
 /**
  * Persists Claude environment variables into CLAUDE_ENV_FILE for Bash tool invocations.
@@ -30,19 +25,11 @@ import java.util.regex.Pattern;
  * {@code CLAUDE_SESSION_ID} to the env file so they are available in all subsequent
  * Bash tool calls.
  * <p>
- * Only writes for new sessions (source="startup"). On resumed (source="resume") or
- * compacted (source="compact") sessions, the env file already has the correct content
- * and re-appending would cause duplicates.
- * <p>
- * Workaround for <a href="https://github.com/anthropics/claude-code/issues/24775">#24775</a>:
- * On resumed sessions, CLAUDE_ENV_FILE points to a startup session directory, but the env
- * loader reads from the resumed session directory. To fix this, we also write the env file
- * to the resumed session's directory using the session_id from stdin JSON.
+ * Writes for new sessions (source="startup"), cleared sessions (source="clear"), and resumed sessions
+ * (source="resume"). On compacted (source="compact") sessions, the env file already has the correct content.
  */
 public final class InjectEnv implements SessionStartHandler
 {
-  private static final Pattern SESSION_ID_PATTERN =
-    Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
   private final JvmScope scope;
 
   /**
@@ -58,20 +45,24 @@ public final class InjectEnv implements SessionStartHandler
   }
 
   /**
-   * Writes environment variables to CLAUDE_ENV_FILE, the resumed session's env directory, and all sibling session
-   * directories.
+   * Writes environment variables to CLAUDE_ENV_FILE.
    * <p>
-   * Only writes for new sessions (source="startup"). On resumed (source="resume") or compacted (source="compact")
-   * sessions, the env file already has the correct content and re-appending would cause duplicates.
+   * Writes for new sessions (source="startup"), cleared sessions (source="clear"), and resumed sessions
+   * (source="resume"). On compacted (source="compact") sessions, the env file already has the correct content
+   * and re-appending would cause duplicates.
+   * <p>
+   * For source="resume", writes directly to the resumed session's env directory (identified by session_id from
+   * stdin JSON) using TRUNCATE_EXISTING to overwrite any previously written content.
    * <p>
    * The env file path is read from the {@code CLAUDE_ENV_FILE} environment variable via {@link ClaudeEnv}.
    *
    * @param input the hook input
-   * @return a result with warnings if symlinks were skipped, otherwise empty
+   * @return a result with a warning if a symlink was skipped, otherwise empty
    * @throws NullPointerException if {@code input} is null
    * @throws AssertionError if required environment variables are not set (CLAUDE_ENV_FILE, CLAUDE_PROJECT_DIR,
    *   CLAUDE_PLUGIN_ROOT) or if session_id is not found in hook input
-   * @throws IllegalArgumentException if any environment value contains dangerous shell characters
+   * @throws IllegalArgumentException if any environment value contains dangerous shell characters, or if
+   *   {@code source} is not one of "startup", "clear", "resume", or "compact"
    * @throws WrappedCheckedException if writing to the env file fails
    */
   @Override
@@ -86,36 +77,111 @@ public final class InjectEnv implements SessionStartHandler
     String sessionId = input.getSessionId();
     requireThat(sessionId, "session_id").isNotEmpty();
 
-    // Only write for new sessions (startup). Skip for resumed (resume) or compacted (compact) sessions.
+    // Only write for new sessions (startup), cleared sessions (clear), or resumed sessions (resume).
+    // Skip for compacted (compact) sessions — the env file is already correct after compaction.
     String source = input.getString("source");
-    if (!source.equals("startup"))
-      return Result.empty();
+    switch (source)
+    {
+      case "resume" ->
+      {
+        return handleResume(envPath, sessionId);
+      }
+      case "startup", "clear" ->
+      {
+        return handleStartup(envPath, sessionId);
+      }
+      case "compact" ->
+      {
+        return Result.empty();
+      }
+      default -> throw new IllegalArgumentException("Unexpected source value: \"" + source + "\"");
+    }
+  }
 
+  /**
+   * Handles source="resume" by writing env vars directly to the resumed session's directory.
+   * <p>
+   * Writes directly to {@code sessionEnvBase/sessionId} unconditionally — both when the upstream
+   * bug (https://github.com/anthropics/claude-code/issues/24775) is active (dirs differ) and when it
+   * is fixed (dirs are the same). The write is still required after the fix because no source="startup"
+   * event fires for resumed sessions.
+   *
+   * @param envPath   the CLAUDE_ENV_FILE path
+   * @param sessionId the session ID from stdin JSON
+   * @return a result with a warning if the env file is a symlink, otherwise empty
+   * @throws WrappedCheckedException if writing to the env file fails
+   * @throws IllegalArgumentException if any environment value contains dangerous shell characters
+   */
+  private Result handleResume(Path envPath, String sessionId)
+  {
     String projectPath = scope.getProjectPath().toString();
     String pluginRoot = scope.getClaudePluginRoot().toString();
     validateEnvValue(projectPath, "CLAUDE_PROJECT_DIR");
     validateEnvValue(pluginRoot, "CLAUDE_PLUGIN_ROOT");
     validateEnvValue(sessionId, "CLAUDE_SESSION_ID");
-    String content = "export CLAUDE_PROJECT_DIR=\"" + projectPath + "\"\n" +
-      "export CLAUDE_PLUGIN_ROOT=\"" + pluginRoot + "\"\n" +
-      "export CLAUDE_SESSION_ID=\"" + sessionId + "\"\n";
-
+    String content = buildEnvContent(projectPath, pluginRoot, sessionId);
     try
     {
-      Files.createDirectories(envPath.getParent());
-      writeEnvFileToDir(envPath.getParent(), envPath.getFileName(), content, "");
       Path sessionEnvBase = envPath.getParent().getParent();
-      String resumedWarning = writeToResumedSessionDir(sessionEnvBase, envPath, sessionId, content);
-      List<String> allWarnings = writeToAllSessionDirs(sessionEnvBase, envPath, content);
-      String combinedWarnings = aggregateWarnings(resumedWarning, allWarnings);
-      if (!combinedWarnings.isEmpty())
-        return Result.context(combinedWarnings);
+      Path resumedSessionDir = sessionEnvBase.resolve(sessionId);
+      Files.createDirectories(resumedSessionDir);
+      String warning = writeEnvFileToDir(resumedSessionDir, envPath.getFileName(), content,
+        "InjectEnv: resumed session env file is a symlink - skipping for security", true);
+      if (!warning.isEmpty())
+        return Result.context(warning);
     }
     catch (IOException e)
     {
       throw WrappedCheckedException.wrap(e);
     }
     return Result.empty();
+  }
+
+  /**
+   * Handles source="startup" and source="clear" by writing env vars to CLAUDE_ENV_FILE's directory.
+   * <p>
+   * For source="clear", CLAUDE_ENV_FILE already points to the new session's correct directory, so the
+   * write is identical to source="startup".
+   *
+   * @param envPath   the CLAUDE_ENV_FILE path
+   * @param sessionId the session ID from stdin JSON
+   * @return an empty result
+   * @throws WrappedCheckedException if writing to the env file fails
+   * @throws IllegalArgumentException if any environment value contains dangerous shell characters
+   */
+  private Result handleStartup(Path envPath, String sessionId)
+  {
+    String projectPath = scope.getProjectPath().toString();
+    String pluginRoot = scope.getClaudePluginRoot().toString();
+    validateEnvValue(projectPath, "CLAUDE_PROJECT_DIR");
+    validateEnvValue(pluginRoot, "CLAUDE_PLUGIN_ROOT");
+    validateEnvValue(sessionId, "CLAUDE_SESSION_ID");
+    String content = buildEnvContent(projectPath, pluginRoot, sessionId);
+    try
+    {
+      Files.createDirectories(envPath.getParent());
+      writeEnvFileToDir(envPath.getParent(), envPath.getFileName(), content, "", false);
+    }
+    catch (IOException e)
+    {
+      throw WrappedCheckedException.wrap(e);
+    }
+    return Result.empty();
+  }
+
+  /**
+   * Builds the env file content string for the three CAT environment variables.
+   *
+   * @param projectPath the value for CLAUDE_PROJECT_DIR
+   * @param pluginRoot  the value for CLAUDE_PLUGIN_ROOT
+   * @param sessionId   the value for CLAUDE_SESSION_ID
+   * @return the export statements to write
+   */
+  private static String buildEnvContent(String projectPath, String pluginRoot, String sessionId)
+  {
+    return "export CLAUDE_PROJECT_DIR=\"" + projectPath + "\"\n" +
+      "export CLAUDE_PLUGIN_ROOT=\"" + pluginRoot + "\"\n" +
+      "export CLAUDE_SESSION_ID=\"" + sessionId + "\"\n";
   }
 
   /**
@@ -139,114 +205,34 @@ public final class InjectEnv implements SessionStartHandler
   }
 
   /**
-   * Combines a single warning string and a list of additional warnings into one newline-delimited string.
-   *
-   * @param resumedWarning a warning from the resumed-session write, or empty string
-   * @param allWarnings additional warnings from sibling-directory writes
-   * @return a single newline-delimited string of all non-empty warnings, or empty string if none
-   */
-  private static String aggregateWarnings(String resumedWarning, List<String> allWarnings)
-  {
-    StringJoiner warnings = new StringJoiner("\n");
-    if (!resumedWarning.isEmpty())
-      warnings.add(resumedWarning);
-    for (String warning : allWarnings)
-      warnings.add(warning);
-    return warnings.toString();
-  }
-
-  /**
    * Writes the env content to a single session directory, skipping symlinks.
    * <p>
    * The target directory must already exist before calling this method.
    *
-   * @param targetDir       the directory to write the env file into
-   * @param envFileName     the filename of the env file (e.g. {@code sessionstart-hook-N.sh})
-   * @param content         the export statements to write
+   * @param targetDir        the directory to write the env file into
+   * @param envFileName      the filename of the env file (e.g. {@code sessionstart-hook-N.sh})
+   * @param content          the export statements to write
    * @param warningIfSymlink the warning message to return if the env file is a symlink; pass empty string
-   *                        if no warning should be returned in that case
+   *                         if no warning should be returned in that case
+   * @param overwrite        if {@code true}, truncates the file before writing (TRUNCATE_EXISTING);
+   *                         if {@code false}, appends to the file (APPEND)
    * @return {@code warningIfSymlink} if the env file is a symlink, otherwise empty string
    * @throws IOException if writing fails
    */
-  private String writeEnvFileToDir(Path targetDir, Path envFileName, String content, String warningIfSymlink)
+  private String writeEnvFileToDir(Path targetDir, Path envFileName, String content, String warningIfSymlink,
+    boolean overwrite)
     throws IOException
   {
     Path envFile = targetDir.resolve(envFileName);
     if (Files.isSymbolicLink(envFile))
       return warningIfSymlink;
+    StandardOpenOption writeMode;
+    if (overwrite)
+      writeMode = StandardOpenOption.TRUNCATE_EXISTING;
+    else
+      writeMode = StandardOpenOption.APPEND;
     Files.writeString(envFile, content, StandardCharsets.UTF_8,
-      StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+      StandardOpenOption.CREATE, writeMode);
     return "";
-  }
-
-  /**
-   * Writes the env content to the resumed session's env directory.
-   * <p>
-   * Workaround for https://github.com/anthropics/claude-code/issues/24775:
-   * CLAUDE_ENV_FILE may point to a startup session directory that differs from the resumed
-   * session's directory. The env loader reads from the resumed session's sibling directory,
-   * so we write there too.
-   *
-   * @param sessionEnvBase the parent directory containing all session-env subdirectories
-   * @param envPath the CLAUDE_ENV_FILE path (used to identify the already-written directory)
-   * @param sessionId the session ID from stdin JSON
-   * @param content the export statements to write
-   * @return warning message if symlink was skipped, empty string otherwise
-   * @throws IOException if writing fails
-   */
-  private String writeToResumedSessionDir(Path sessionEnvBase, Path envPath, String sessionId, String content)
-    throws IOException
-  {
-    Path resumedSessionDir = sessionEnvBase.resolve(sessionId);
-
-    // Only write if this is a different directory than what CLAUDE_ENV_FILE already points to
-    if (resumedSessionDir.equals(envPath.getParent()))
-      return "";
-
-    Files.createDirectories(resumedSessionDir);
-    return writeEnvFileToDir(resumedSessionDir, envPath.getFileName(), content,
-      "InjectEnv: resumed session env file is a symlink - skipping for security");
-  }
-
-  // WORKAROUND: https://github.com/anthropics/claude-code/issues/14433
-  /**
-   * Writes the env content to all existing session-env sibling directories.
-   * <p>
-   * After {@code /clear}, Claude Code's session env loader may cache files from an old session directory and not
-   * re-read from the new session directory. Writing to all sibling directories ensures that whichever directory the
-   * cache reads from, it gets the current {@code CLAUDE_SESSION_ID}.
-   *
-   * @param sessionEnvBase the parent directory containing all session-env subdirectories
-   * @param envPath the CLAUDE_ENV_FILE path (used to identify the already-written directory)
-   * @param content the export statements to write
-   * @return a list of warning messages for any symlinks that were skipped, empty if none
-   * @throws IOException if reading the directory listing or writing fails
-   */
-  private List<String> writeToAllSessionDirs(Path sessionEnvBase, Path envPath, String content)
-    throws IOException
-  {
-    List<String> warnings = new ArrayList<>();
-    if (!Files.isDirectory(sessionEnvBase))
-      return warnings;
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(sessionEnvBase))
-    {
-      for (Path siblingDir : stream)
-      {
-        if (!Files.isDirectory(siblingDir) || Files.isSymbolicLink(siblingDir))
-          continue;
-        // Skip directories whose name does not look like a session ID
-        if (!SESSION_ID_PATTERN.matcher(siblingDir.getFileName().toString()).matches())
-          continue;
-        // Skip the directory that CLAUDE_ENV_FILE already points to (written by writeEnvFile)
-        if (siblingDir.equals(envPath.getParent()))
-          continue;
-        String warning = writeEnvFileToDir(siblingDir, envPath.getFileName(), content,
-          "InjectEnv: sibling session env file is a symlink - skipping for security: " +
-            siblingDir.resolve(envPath.getFileName()));
-        if (!warning.isEmpty())
-          warnings.add(warning);
-      }
-    }
-    return warnings;
   }
 }

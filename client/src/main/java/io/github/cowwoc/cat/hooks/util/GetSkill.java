@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.hooks.util;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.ClaudeEnv;
 import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
@@ -174,7 +175,7 @@ public final class GetSkill
     else
     {
       if (firstArg.isBlank())
-        catAgentId = scope.getClaudeSessionId();
+        catAgentId = new ClaudeEnv().getClaudeSessionId();
       else
         catAgentId = firstArg;
       tokens.set(0, catAgentId);
@@ -184,8 +185,7 @@ public final class GetSkill
     // "{uuid}/subagents/{agentId}" (subagent). If the value doesn't match either pattern,
     // the model passed the wrong argument (e.g., a branch name or path). Fail fast to
     // prevent marker files from being created in wrong directories.
-    if (!catAgentId.equals(scope.getClaudeSessionId()) &&
-      !AgentIdPatterns.SESSION_ID_PATTERN.matcher(catAgentId).matches() &&
+    if (!AgentIdPatterns.SESSION_ID_PATTERN.matcher(catAgentId).matches() &&
       !AgentIdPatterns.SUBAGENT_ID_PATTERN.matcher(catAgentId).matches())
     {
       throw new IllegalArgumentException(

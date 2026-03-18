@@ -16,6 +16,7 @@ import java.util.List;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
+import io.github.cowwoc.cat.hooks.ClaudeEnv;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
@@ -66,7 +67,7 @@ public final class GetTokenReportOutput implements SkillOutput
    * Generates the token report output for this skill.
    * <p>
    * This class does not accept any arguments. The session ID is resolved from the environment
-   * via {@code scope.getClaudeSessionId()}.
+   * via {@code new ClaudeEnv().getClaudeSessionId()}.
    *
    * @param args the arguments from the preprocessor directive (must be empty)
    * @return the formatted output, or null if session not found or CLAUDE_SESSION_ID not set
@@ -82,7 +83,7 @@ public final class GetTokenReportOutput implements SkillOutput
     String sessionId;
     try
     {
-      sessionId = scope.getClaudeSessionId();
+      sessionId = new ClaudeEnv().getClaudeSessionId();
     }
     catch (AssertionError _)
     {
