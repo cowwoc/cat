@@ -27,7 +27,7 @@ in_section && /^## / {
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - In the Phase 7 awk block, track whether the previous printed line was blank via a

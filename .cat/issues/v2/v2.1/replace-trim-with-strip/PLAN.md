@@ -31,7 +31,7 @@ None - code quality / convention alignment
 - `hooks/src/test/java/io/github/cowwoc/cat/hooks/test/HookEntryPointTest.java`
 - `hooks/src/test/java/io/github/cowwoc/cat/hooks/test/EnforcePluginFileIsolationTest.java`
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Replace all `.trim()` with `.strip()` across all 16 files

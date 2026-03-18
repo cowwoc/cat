@@ -49,7 +49,7 @@ None - terminology consistency task
 - [ ] Class renamed to `SkillPreprocessorOutputHandler`
 - [ ] All imports and references updated to new names
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Rename file: `skill_precompute.py` → `skill_preprocessor_output.py`

@@ -23,7 +23,7 @@ None - infrastructure/performance improvement
 - [ ] Script returns appropriate exit codes (0=found, 1=none available)
 - [ ] Skill renders the output it receives from the script (no additional processing)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Create find-next-task.sh script

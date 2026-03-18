@@ -47,7 +47,7 @@ The selected policy is written to the `### Squash Policy` section in PROJECT.md.
 - [ ] Setting policy via wizard produces correct PROJECT.md section
 - [ ] git-squash skill honors the wizard-configured policy
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

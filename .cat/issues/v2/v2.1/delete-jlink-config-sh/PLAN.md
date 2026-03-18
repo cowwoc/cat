@@ -31,7 +31,7 @@ None (cleanup)
 - [ ] Issue PLANs updated to remove stale jlink-config.sh references
 - [ ] E2E: `grep -r 'jlink-config' plugin/` returns no results
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

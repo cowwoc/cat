@@ -37,7 +37,7 @@ Ten distinct findings across five phase files, falling into three categories:
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

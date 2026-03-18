@@ -30,7 +30,7 @@ require full re-execution of the original skill instructions.
 - [ ] reference.md explicitly requires full re-execution of the original skill instructions
 - [ ] No other files modified (single-file change)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Rewrite reference.md:** Replace the current 2-line generic redirect with stronger instructions that explicitly

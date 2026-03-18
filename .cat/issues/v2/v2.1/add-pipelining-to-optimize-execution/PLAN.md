@@ -58,7 +58,7 @@ None - infrastructure improvement
 - [ ] Applicability constraints clearly documented
 - [ ] All existing tests pass with no regressions
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Add pipelining pattern to optimize-execution analysis categories

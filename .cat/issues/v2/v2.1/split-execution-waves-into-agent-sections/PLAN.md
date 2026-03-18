@@ -41,7 +41,7 @@ None ��� aligns with existing anti-pattern documentation in `optimize-exec
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

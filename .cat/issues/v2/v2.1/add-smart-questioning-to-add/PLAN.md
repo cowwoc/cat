@@ -45,7 +45,7 @@ The `issue_validate_criteria` step validates post-conditions but does not analyz
 
 - [ ] `refactor-curiosity-to-effort` is closed (effort config exists)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

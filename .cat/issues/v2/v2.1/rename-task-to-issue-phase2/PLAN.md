@@ -100,7 +100,7 @@ None (terminology consistency)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Rename Java classes and binaries:** Rename `PreTaskHook` → `PreIssueHook`, `GetNextTaskOutput` →

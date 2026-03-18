@@ -35,7 +35,7 @@ None - Tech debt / architectural improvement
 - [x] Environment logging added to hook launcher scripts (evidence collected)
 - [x] Hook documentation reviewed (https://code.claude.com/docs/en/hooks#json-output)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

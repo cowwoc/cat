@@ -128,7 +128,7 @@ Task tool:
 - [ ] No orchestration logic remains in skill
 - [ ] Main-agent-only restriction added (skill provides templates for spawning)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

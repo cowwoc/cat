@@ -54,7 +54,7 @@ tasks (deliver via `<task-notification>`). The agent conflates the two mechanism
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

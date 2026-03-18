@@ -35,7 +35,7 @@ None (UX polish)
 - [ ] Banner matches the visual style of the implementing/confirming/reviewing/merging banners
 - [ ] `/cat:work-with-issue` still shows its own preparing banner with the issue ID once known
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

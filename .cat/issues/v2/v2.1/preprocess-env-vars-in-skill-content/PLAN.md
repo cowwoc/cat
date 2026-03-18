@@ -49,7 +49,7 @@ agent. The script already receives plugin root (`$1`) and session ID (`$3`) as a
 - [ ] `!` backtick preprocessing still works (not affected by this change)
 - [ ] Existing skills continue to function correctly
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Modify load-skill.sh** to add variable substitution

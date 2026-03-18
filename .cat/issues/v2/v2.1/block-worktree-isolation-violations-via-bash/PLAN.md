@@ -36,7 +36,7 @@ outside the worktree.
 - [ ] No false positives for legitimate Bash operations
 - [ ] All tests pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Create `BlockWorktreeIsolationViolation` BashHandler that checks for file-writing bash patterns targeting

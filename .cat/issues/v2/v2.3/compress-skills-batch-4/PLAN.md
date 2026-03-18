@@ -32,7 +32,7 @@ None - sub-issue of parent
 - [ ] All files score 1.0 on /compare-docs validation
 - [ ] No functionality regression
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Use /cat:delegate to process all files in parallel: `/cat:delegate --skill optimize-doc file1.md file2.md ...` (M369)

@@ -35,7 +35,7 @@ None - naming consistency cleanup
 - [ ] All tests pass with `mvn -f client/pom.xml test`
 - [ ] `grep -r "engine/" --include="*.java" --include="*.sh" --include="*.md" client/` returns no stale references
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** `git mv engine client`

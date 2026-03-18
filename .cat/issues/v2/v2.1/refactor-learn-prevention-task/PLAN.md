@@ -40,7 +40,7 @@ None - infrastructure improvement
 - [ ] Parent agent successfully proposes task creation to user
 - [ ] All existing tests pass with no regressions
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Refactor plugin/skills/learn/phase-prevent.md

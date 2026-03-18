@@ -21,7 +21,7 @@ None - process improvement
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Add deferred concern tracking to stakeholder-review skill**

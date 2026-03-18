@@ -22,7 +22,7 @@ Improve visual presentation, clarity, and commercial appeal.
 - [ ] Visual hierarchy improved for scannability
 - [ ] Consistent formatting throughout
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Audit current README for polish opportunities

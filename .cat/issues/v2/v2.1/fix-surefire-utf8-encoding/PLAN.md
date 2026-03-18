@@ -16,7 +16,7 @@ The `maven-surefire-plugin` configuration in `hooks/pom.xml` lacks an `<argLine>
 `-Dstdout.encoding=UTF-8`. The forked JVM inherits the container's POSIX locale, causing `stdout.encoding` to default
 to `ANSI_X3.4-1968` (ASCII).
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

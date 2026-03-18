@@ -19,7 +19,7 @@ be implemented consistently across calculation and reporting tools.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Research existing technical debt metrics (SQALE, CodeClimate maintainability, CISQ) and summarize strengths/weaknesses

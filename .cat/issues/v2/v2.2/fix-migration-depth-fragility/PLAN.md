@@ -19,7 +19,7 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Replace the `find ... -mindepth 4 -maxdepth 4` pattern in Phase 13 with logic that finds issue-level

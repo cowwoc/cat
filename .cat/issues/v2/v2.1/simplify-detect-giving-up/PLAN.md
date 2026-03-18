@@ -48,7 +48,7 @@ state, cleanupStaleSessionDirs() is also unnecessary.
 - [ ] Full prompt scanned (no truncation) - pattern at end of long prompt detected
 - [ ] No /tmp directories created during tests
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Read java.md conventions before editing

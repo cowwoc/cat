@@ -24,7 +24,7 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Investigate where and why agents currently set git user config (worktree creation, commit

@@ -35,7 +35,7 @@ All runtime logging is lost, making hook debugging difficult.
 - [ ] `mvn -f hooks/pom.xml test` passes
 - [ ] After jlink rebuild, running `hook.sh GetSkillOutput` produces no SLF4J "Failed to load class" warnings on stderr
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Update pom.xml:** Remove `<scope>test</scope>` from the logback-classic dependency

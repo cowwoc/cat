@@ -42,7 +42,7 @@ only covers the current attempt's backup.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Update the Result Handling table OK row and add an "On OK status" section in

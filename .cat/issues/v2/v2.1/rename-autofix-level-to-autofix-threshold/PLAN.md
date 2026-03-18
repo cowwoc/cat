@@ -85,7 +85,7 @@ The following files contain references to `AUTOFIX_LEVEL`, `autofixLevel`, `auto
 - [ ] All existing tests pass
 - [ ] Build verification passes: `mvn -f client/pom.xml verify`
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

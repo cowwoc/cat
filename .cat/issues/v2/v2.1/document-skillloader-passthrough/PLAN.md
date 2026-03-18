@@ -10,7 +10,7 @@ behavior). This behavior should be documented.
 
 None - documentation
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

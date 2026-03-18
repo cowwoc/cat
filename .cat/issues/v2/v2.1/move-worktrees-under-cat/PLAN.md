@@ -38,7 +38,7 @@ None - infrastructure cleanup
 - [ ] All tests pass
 - [ ] No hardcoded old paths remain in plugin directory
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Find all files referencing `.worktrees/` or `.worktrees` path pattern

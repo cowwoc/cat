@@ -28,7 +28,7 @@ None - infrastructure/tech debt
 - `plugin/scripts/` - Remove ported scripts
 - `plugin/skills/*/SKILL.md` - Update script invocation paths
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Port write-and-commit.sh:** Simplest script - atomic write + commit in Java

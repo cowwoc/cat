@@ -23,7 +23,7 @@ None - infrastructure/performance task
 - [ ] Script releases task lock
 - [ ] Script exits cleanly with appropriate error codes on failures
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Create merge-and-cleanup.sh script

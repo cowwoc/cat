@@ -31,7 +31,7 @@ None (infrastructure/internal improvement)
 - [ ] Skills create/update Task tool entries for progress visibility
 - [ ] Tasks survive context compaction without backup hooks
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Remove TodoWrite hooks**

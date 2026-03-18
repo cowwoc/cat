@@ -23,7 +23,7 @@ None (performance optimization)
 - [x] Inactive minors are unaffected (they already show summary counts only)
 - [x] All existing tests pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Modify `generate_status_display()` in `plugin/scripts/get-status-display.py`

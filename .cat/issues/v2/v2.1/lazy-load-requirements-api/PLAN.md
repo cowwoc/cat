@@ -22,7 +22,7 @@ None - infrastructure optimization
 - `CLAUDE.md` - Update the convention table to reference `plugin/concepts/requirements-api.md` instead of
   `.claude/rules/requirements-api.md`
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Copy `.claude/rules/requirements-api.md` to `plugin/concepts/requirements-api.md`

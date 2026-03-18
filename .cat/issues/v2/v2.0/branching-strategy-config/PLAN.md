@@ -45,7 +45,7 @@ Agent MUST ask follow-up questions when:
 - plugin/skills/git-rebase/SKILL.md - Read PROJECT.md, warn on preference conflicts
 - plugin/templates/project.md - Add Git Workflow section template
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

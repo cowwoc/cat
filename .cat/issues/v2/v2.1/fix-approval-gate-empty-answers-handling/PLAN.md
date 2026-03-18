@@ -35,7 +35,7 @@ None — bugfix for work-with-issue approval gate methodology (M459 prevention).
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1: Add empty-answers handling to Step 8 Approval Gate
 

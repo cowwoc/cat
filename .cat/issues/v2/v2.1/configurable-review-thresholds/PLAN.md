@@ -109,7 +109,7 @@ Add `reviewThresholds` to `cat-config.json`:
 - [ ] `/cat:config` wizard includes review threshold configuration
 - [ ] E2E: Setting `"autofix": "all"` causes all HIGH and MEDIUM concerns to be auto-fixed before user approval
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

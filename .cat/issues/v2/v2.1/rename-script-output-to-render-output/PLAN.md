@@ -38,7 +38,7 @@ None - naming convention/refactoring
 - [ ] `render-output/SKILL.md` has `user-invocable: false` in frontmatter
 - [ ] All tests pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

@@ -22,7 +22,7 @@ interface.
 - [ ] No changes to file structure (backwards compatible)
 - [ ] Existing skills migrated to use abstraction
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Implement LocalFileBackend**

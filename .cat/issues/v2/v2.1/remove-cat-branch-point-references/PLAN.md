@@ -92,7 +92,7 @@ Closed issue PLANs also reference it but are historical records and must not be 
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1: Investigate replacement mechanism
 

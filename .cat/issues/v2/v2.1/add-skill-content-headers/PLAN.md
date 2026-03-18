@@ -35,7 +35,7 @@ None - infrastructure improvement
 - [ ] All 10 files updated with consistent header format
 - [ ] All existing tests pass with no regressions
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Add headers to XML-tagged skills (5 files)

@@ -26,7 +26,7 @@ None - documentation cleanup task
 - [ ] `autoRemoveWorktrees` documented in README Options Reference
 - [ ] README options match template defaults
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Remove yoloMode from template:**

@@ -19,7 +19,7 @@ None - security hardening from stakeholder review of 2.1-session-start-version-c
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Add atomic locking to try_acquire_runtime**

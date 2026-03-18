@@ -34,7 +34,7 @@ The workflow templates and handlers don't include `/clear` guidance in their Nex
 - [ ] /cat:status shows `/clear` before `/cat:work` in Next Steps
 - [ ] Task completion in /cat:work shows `/clear` guidance
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Update status_handler.py

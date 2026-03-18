@@ -37,7 +37,7 @@ agent at 80K+ during review phase).
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

@@ -29,7 +29,7 @@ None - infrastructure/setup task
 ## Dependencies
 - java-core-hooks (entry points and core infrastructure must be wired up)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Read enforce-worktree-isolation.py** - Understand the logic (checks if Write/Edit targets base branch)

@@ -25,7 +25,7 @@ cleanup → retry workflow was not followed.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Read the current work first-use.md ERROR handling section

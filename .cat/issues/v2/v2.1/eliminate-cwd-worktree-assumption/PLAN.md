@@ -66,7 +66,7 @@ None — infrastructure correctness fix
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1: Fix Java hooks
 

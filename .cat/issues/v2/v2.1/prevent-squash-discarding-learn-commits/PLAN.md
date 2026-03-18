@@ -71,7 +71,7 @@ modifications."
 - [ ] Simulated learn commit survives squash in worktree
 - [ ] Normal squash (no learn commits) behaves identically to current behavior
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Determine selected approach (from user choice or config alignment)

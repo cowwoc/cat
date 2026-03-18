@@ -48,7 +48,7 @@ None — bugfix for learn skill investigation methodology.
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1: Add cognitive anchoring pattern to priming analysis
 

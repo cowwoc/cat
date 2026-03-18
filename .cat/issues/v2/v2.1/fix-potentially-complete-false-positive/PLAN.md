@@ -28,7 +28,7 @@ None (infrastructure bugfix)
 Add `"config: decompose"` to the `planning_prefixes` tuple. Add a unit test for `check_base_branch_commits()` that
 verifies decomposition commits are filtered out.
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

@@ -48,7 +48,7 @@ relative file list. Without a working directory in the prompt, reviewers default
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

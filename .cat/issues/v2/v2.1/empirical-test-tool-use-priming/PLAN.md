@@ -33,7 +33,7 @@ is a string, treat it as a user message (backward compatible). When it is an obj
 - [ ] Test runner can simulate a conversation with completed Bash tool calls before the test prompt
 - [ ] Skill documentation updated with structured priming examples
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Add message builder methods for tool_use and tool_result stream-json events

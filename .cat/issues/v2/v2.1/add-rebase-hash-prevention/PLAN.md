@@ -37,7 +37,7 @@ Root cause (M471): The agent manually constructed a sed pattern with a full/long
 
 - [x] 2.1-fix-add-agent-skill-loading is merged
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

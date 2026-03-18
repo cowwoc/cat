@@ -179,7 +179,7 @@ instructions over negative prohibitions when the positive form is equally clear.
 **Validation:**
 - [ ] No test regressions (python3 /workspace/run_tests.py passes)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

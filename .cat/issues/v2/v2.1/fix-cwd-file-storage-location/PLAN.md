@@ -52,7 +52,7 @@ deleted in `SessionEndHook`.
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

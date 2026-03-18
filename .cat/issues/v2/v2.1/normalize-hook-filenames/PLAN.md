@@ -30,7 +30,7 @@ None - naming consistency and bugfix
 - `plugin/skills/status/SKILL.md` - Pass `"$(pwd)"` as 4th arg to load-skill.sh
 - `plugin/concepts/agent-architecture.md` - Correct env var availability table
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Rename the file: `git mv plugin/hooks/session_start.sh plugin/hooks/session-start.sh`

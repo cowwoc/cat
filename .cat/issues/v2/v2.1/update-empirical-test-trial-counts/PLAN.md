@@ -23,7 +23,7 @@ ambiguous results.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Read `plugin/skills/empirical-test/first-use.md`** to identify all `--trials` occurrences

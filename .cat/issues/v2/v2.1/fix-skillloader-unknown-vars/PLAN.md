@@ -23,7 +23,7 @@ Test results (Claude Code native behavior):
 
 No code-fence awareness — Claude Code resolves known variables inside code fences too.
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

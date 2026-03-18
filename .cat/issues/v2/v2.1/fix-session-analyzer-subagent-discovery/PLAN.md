@@ -37,7 +37,7 @@ only contained one `agentId` reference (the most recent Agent call after compact
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Update `discoverSubagents()` to perform two-phase discovery:

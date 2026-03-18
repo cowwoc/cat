@@ -31,7 +31,7 @@ benefiting Phase 1 (Investigate) of the learn skill.
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1: Implement regex search
 

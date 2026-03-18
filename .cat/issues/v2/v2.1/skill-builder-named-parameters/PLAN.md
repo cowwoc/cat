@@ -35,7 +35,7 @@ None
 - [ ] M358 over-engineered changes reverted (no load-skill.sh routing for these skills)
 - [ ] All existing tests pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Add named parameter support to SkillLoader.java:**

@@ -36,7 +36,7 @@ None - infrastructure/optimization issue
 - [ ] "pre-rendered" renamed to "script output" throughout
 - [ ] No manual script execution instructions remain
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Audit each skill for manual script fallback patterns

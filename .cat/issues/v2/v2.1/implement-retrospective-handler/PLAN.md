@@ -67,7 +67,7 @@ None (infrastructure issue - filling a gap where handler was never implemented)
 - [ ] Tests cover: trigger not met, time-based trigger, count-based trigger, first retrospective (no last_retro)
 - [ ] Tests cover: effectiveness reporting, missing index.json error, empty patterns/action items arrays
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

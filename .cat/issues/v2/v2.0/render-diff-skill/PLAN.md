@@ -183,7 +183,7 @@ Only includes symbols actually used in the diff.
 - [x] Shows complete changed lines
 - [x] Includes 2-3 lines of context around changes
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

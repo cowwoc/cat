@@ -54,7 +54,7 @@ refactor
 - [ ] Line wrapping continuation rows align with content column
 - [ ] Multiple hunks in same file share one file header box
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Remove fixed column constants:** Delete `COL_OLD`, `COL_NEW`, `COL_SYM`. Add a helper method

@@ -34,7 +34,7 @@ banner before presenting the diff.
 - [ ] Progress header banner with `◉ Merging` state shown before diff at approval gate
 - [ ] Task ID clearly visible so user knows which task they are approving
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Update work.md approval_gate step

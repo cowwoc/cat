@@ -27,7 +27,7 @@ None - context optimization
 ## Files to Modify
 - `plugin/skills/add/SKILL.md` - Add continuation prompt in task_done step
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Read the task_done step in `plugin/skills/add/SKILL.md`

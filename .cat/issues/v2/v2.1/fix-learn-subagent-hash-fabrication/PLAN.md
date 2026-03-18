@@ -34,7 +34,7 @@ instead of performing actual work.
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

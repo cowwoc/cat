@@ -40,7 +40,7 @@ None (infrastructure fix from M347 investigation)
 - [ ] `task_creation_info` is populated with enough detail to create a follow-up issue
 - [ ] Parent agent creates the CAT issue from `task_creation_info` when `prevention_implemented: false`
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Update phase-prevent.md Step 9:** Add gate before implementation: if prevention_type is code_fix or hook AND

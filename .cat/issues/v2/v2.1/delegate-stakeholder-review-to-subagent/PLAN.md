@@ -52,7 +52,7 @@ None - performance optimization
 - [ ] Re-review scope respects verify configuration (all/changed/none)
 - [ ] Parent agent context consumed by Phase 3c is reduced by at least 50% compared to current baseline
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Measure current baseline**

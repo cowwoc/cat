@@ -24,7 +24,7 @@ preventing orphaned backup branches from accumulating in the repository.
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

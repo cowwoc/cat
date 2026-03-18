@@ -28,7 +28,7 @@ None (infrastructure/optimization)
 - [ ] Existing `session-analyzer <file>` (no subcommand) continues to work as before
 - [ ] get-history skill updated to reference the Java tool
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

@@ -19,7 +19,7 @@ Ensure bare issue names (e.g., 'fix-bug') correctly detect as Scope.BARE_NAME an
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

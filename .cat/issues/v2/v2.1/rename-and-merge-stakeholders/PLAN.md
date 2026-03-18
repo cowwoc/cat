@@ -44,7 +44,7 @@ None (naming consistency and consolidation)
 - [ ] Tests pass
 - [ ] E2E: Invoke stakeholder-review skill selection and confirm new names appear correctly
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Rename architect agent:** Rename file, update frontmatter name field and heading

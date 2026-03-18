@@ -48,7 +48,7 @@ None - infrastructure/tech debt
 - `plugin/scripts/` - Remove ported scripts
 - `plugin/skills/*/SKILL.md` - Update script invocation paths
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Port licensing scripts:** feature-gate, entitlements, validate-license as unified Java class

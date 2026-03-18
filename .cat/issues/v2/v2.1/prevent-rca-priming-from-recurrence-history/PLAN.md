@@ -29,7 +29,7 @@ primes the RCA toward the historical narrative before the Step 4b-R independence
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

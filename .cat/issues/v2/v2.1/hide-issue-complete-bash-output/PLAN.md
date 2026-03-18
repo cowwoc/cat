@@ -33,7 +33,7 @@ None
 - [ ] Combined script correctly releases lock, discovers next task, renders box
 - [ ] All existing tests pass (226+ tests)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

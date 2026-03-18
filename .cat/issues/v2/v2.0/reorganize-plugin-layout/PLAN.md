@@ -35,7 +35,7 @@ None - infrastructure/organization task
 - [ ] Code quality improved - cleaner directory structure
 - [ ] Old `.cat/` directory removed from plugin
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Move lang directory first (before moving references)

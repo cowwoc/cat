@@ -62,7 +62,7 @@ fail-fast with a clear error.
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

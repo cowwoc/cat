@@ -40,7 +40,7 @@ None (infrastructure/bugfix)
 - [ ] .claude/skills/cat-release-plugin/SKILL.md uses 'closed' for issue status grep and log messages
 - [ ] .claude/skills/cat-release-plugin/SKILL.md for loop on line 122 uses $CLOSED_ISSUES (not undeclared $COMPLETED_ISSUES)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

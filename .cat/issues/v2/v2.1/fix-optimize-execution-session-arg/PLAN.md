@@ -32,7 +32,7 @@ The skill's Step 1 and Usage section use `$SESSION_FILE` (full path) instead of 
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Update Usage section:** Change `SESSION_FILE` variable to use session ID, not path

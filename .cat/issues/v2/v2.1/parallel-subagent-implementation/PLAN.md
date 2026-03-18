@@ -116,7 +116,7 @@ The proposal enables:
 - [ ] All dependent issues are closed
 - [ ] PLAN.md template supports optional grouping annotations
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Remove wave-annotation parsing from WorkPrepare.java (STEP_NUMBER_PATTERN, WAVE_ANNOTATION_PATTERN, readExecutionWavesFromPlan method)

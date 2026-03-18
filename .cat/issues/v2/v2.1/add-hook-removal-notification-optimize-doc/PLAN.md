@@ -20,7 +20,7 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - In Step 2f of `plugin/skills/optimize-doc/first-use.md`, fold hook monitoring into the existing

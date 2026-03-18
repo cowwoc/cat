@@ -46,7 +46,7 @@ None - infrastructure bugfix
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Remove `DIAGNOSTIC_SCAN_LIMIT` constant from `WorkPrepare.java`. Replace

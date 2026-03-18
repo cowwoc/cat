@@ -43,7 +43,7 @@ arguments capture group `[^`\n]+` both exclude newlines, preventing cross-line m
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Read `SkillLoader.java` and locate `executeDirective()` method to understand exact failure point

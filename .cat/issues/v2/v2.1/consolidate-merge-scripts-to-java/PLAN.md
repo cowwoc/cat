@@ -61,7 +61,7 @@ All of these are deterministic operations that don't require LLM judgment.
 - [ ] No hook-blocked failures during merge (Java bypasses per-command hooks)
 - [ ] All existing merge functionality preserved (divergence check, suspicious deletion, backup cleanup)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Create MergeAndCleanup.java:** Implement CLI tool with subcommands mirroring the consolidated workflow:

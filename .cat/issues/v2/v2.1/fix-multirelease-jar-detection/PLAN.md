@@ -51,7 +51,7 @@ Two gaps in multi-release JAR handling:
 - [ ] All tests pass
 - [ ] jlink image builds with all launchers functional
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Fix `is_automatic_module()` in `hooks/build-jlink.sh`

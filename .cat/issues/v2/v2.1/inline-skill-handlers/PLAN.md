@@ -69,7 +69,7 @@ implementing `SkillOutput`. The class must have a public constructor accepting `
 - `plugin/skills/status/bindings.json` — New file mapping variables to SkillOutput classes
 - `plugin/hooks/README.md` — Update skill directory structure documentation
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

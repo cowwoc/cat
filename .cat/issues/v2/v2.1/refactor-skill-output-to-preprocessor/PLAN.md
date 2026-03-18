@@ -84,7 +84,7 @@ Tested via nested Claude instances with 7 scenarios. Results:
 4. **Exit code 1 vs 2**: Identical treatment — only zero vs non-zero matters.
 5. **Content never discarded**: All output included regardless of exit code.
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

@@ -38,7 +38,7 @@ None
 ## Files to Create
 - `hooks/src/test/java/.../test/EnforceJvmScopeEnvAccessTest.java` - Test that scans source for System.getenv outside MainJvmScope
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Add `getClaudeSessionId()` and `getClaudeEnvFile()` to `JvmScope` interface

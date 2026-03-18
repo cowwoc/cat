@@ -32,7 +32,7 @@ Replace "task" terminology with "issue" in all concept documentation files.
 - plugin/concepts/duplicate-task.md → duplicate-issue.md
 - plugin/concepts/token-warning.md
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Rename task-resolution.md to issue-resolution.md

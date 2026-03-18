@@ -47,7 +47,7 @@ The M376 fix (commit daa321ca) already caps `maxContentWidth` to `terminalWidth 
 - [ ] Lines 1 character over terminal width do wrap
 - [ ] Empty blocked-by list still works
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Read `.cat/conventions/java.md` for code style conventions

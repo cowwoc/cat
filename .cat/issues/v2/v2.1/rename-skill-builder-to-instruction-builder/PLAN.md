@@ -41,7 +41,7 @@ Specifically:
 - `skill-builder` when used as a skill name in prose → `instruction-builder`
 - "skill-builder review" → "instruction-builder review"
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] `grep -r "skill-builder" plugin/` returns zero matches (excluding any legitimate compound uses
   unrelated to the skill name)

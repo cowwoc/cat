@@ -41,7 +41,7 @@ None - infrastructure/optimization task
 - [ ] All tests pass
 - [ ] Box output is identical before/after refactor
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Add `build_header_box()` to `status_handler.py`

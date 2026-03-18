@@ -117,7 +117,7 @@ Add `cat-config.local.json` to prevent accidental commit.
 - [ ] Feature gate allows team features for team tier
 - [ ] Upgrade message shown when blocked
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

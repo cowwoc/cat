@@ -52,7 +52,7 @@ treats each tool need independently rather than anticipating which tools it will
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

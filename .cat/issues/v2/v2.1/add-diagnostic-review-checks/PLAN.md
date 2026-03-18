@@ -28,7 +28,7 @@ None
 - [ ] Requirements stakeholder has output contract semantic correctness item and checklist row
 - [ ] All existing tests pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

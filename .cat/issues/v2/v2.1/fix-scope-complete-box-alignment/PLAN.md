@@ -44,7 +44,7 @@ Compare with `build_issue_complete_box()` (line 74) which correctly uses plain t
 - [ ] Existing tests still pass
 - [ ] No new issues introduced
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Edit `plugin/scripts/get-issue-complete-box.py`

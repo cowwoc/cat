@@ -29,7 +29,7 @@ None (infrastructure/tooling improvement)
 - [ ] Running `--output /tmp/test.json` produces valid JSON with full trial responses
 - [ ] Skill document includes response investigation step
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Make ConfigResult and TrialResult records public (or add Jackson module opens) in

@@ -36,7 +36,7 @@ access regardless of how obvious the mistake appears.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Remove Step 1 (tier classification) from SKILL.md

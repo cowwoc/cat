@@ -23,7 +23,7 @@ None (infrastructure improvement)
 - [ ] Visual output improved for readability
 - [ ] Detailed stakeholder findings preserved below summary
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Read current research skill

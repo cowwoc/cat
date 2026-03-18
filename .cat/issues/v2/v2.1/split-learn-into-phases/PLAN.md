@@ -51,7 +51,7 @@ None - infrastructure optimization
 
 Existing auxiliary files remain unchanged - they're already separate and referenced by link.
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Read the full current `plugin/skills/learn/SKILL.md` to understand all sections

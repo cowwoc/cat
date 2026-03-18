@@ -61,7 +61,9 @@ are unaffected.
 
 ---
 
-## Execution Steps
+## Sub-Agent Waves
+
+### Wave 1
 
 ### Step 1 — Write failing tests in `SetPendingAgentResultTest`
 
@@ -170,7 +172,7 @@ Update the Javadoc to mention the `subagent_type: cat:work-execute` precondition
 
 ---
 
-## Success Criteria
+## Post-conditions
 
 1. `mvn -f client/pom.xml test` exits 0 with all tests green.
 2. New tests `agentToolWithWorkExecuteSubagentCreatesFlagFile`,

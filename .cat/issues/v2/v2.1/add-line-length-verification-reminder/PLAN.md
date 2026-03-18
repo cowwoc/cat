@@ -20,7 +20,7 @@ None - action item A023 from retrospective (PATTERN-019)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Read phase-prevent.md:** Identify Step 4 (post-edit verification) and the current list of checks

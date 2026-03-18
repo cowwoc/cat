@@ -48,7 +48,7 @@ unnecessary.
 - [ ] `hook.sh` still works if `CAT_JAVA_HOME` happens to be set (no breakage)
 - [ ] `session_start.sh` no longer exports `CAT_JAVA_HOME`
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

@@ -34,7 +34,7 @@ Parent: 2.1-port-workflow-scripts (sub-issue 4 of 4)
 ## Files to Modify
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/module-info.java` - if new exports needed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Read `work-prepare.py` thoroughly - understand full orchestration flow

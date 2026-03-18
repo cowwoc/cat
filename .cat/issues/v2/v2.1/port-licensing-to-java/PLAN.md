@@ -33,7 +33,7 @@ Parent: port-utility-scripts
 ## Files to Modify
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/module-info.java` - Export licensing package
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Read all three scripts to understand inputs, outputs, and logic

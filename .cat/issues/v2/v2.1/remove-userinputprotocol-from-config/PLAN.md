@@ -19,7 +19,7 @@ configuration — it is not consumed by any code and duplicates protocol already
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Remove userInputProtocol:** Delete the `userInputProtocol` key and its value from `.cat/cat-config.json`

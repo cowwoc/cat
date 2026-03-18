@@ -38,7 +38,7 @@ None — bugfix for internal tooling
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

@@ -34,7 +34,7 @@ The `/cat:work` command loads ~5,500+ lines (~22-25K tokens) at invocation:
 - [ ] All tests still pass - run_tests.py exits 0
 - [ ] Code quality improved - measurable reduction in loaded context
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Analyze duplication:** Identify exact overlap between work.md concept and phase files

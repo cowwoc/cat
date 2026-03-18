@@ -61,7 +61,7 @@ This issue requires research before implementation. Key questions:
 - [ ] Word-level changes are visually distinct in Claude Code terminal output
 - [ ] No regression in line-level diff rendering
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Research:** Run `/cat:research` to investigate formatting options and test what renders in Claude Code

@@ -21,7 +21,7 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Update `GetRetrospectiveOutput.generateAnalysis()` to produce a formatted display box:

@@ -77,7 +77,7 @@ These 33 agent-only skills correctly have only an `-agent` variant:
 ## Pre-conditions
 - [ ] 2.1-fix-work-skill-catagentid-priming is closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Delete the 4 redundant skill directories listed above

@@ -39,7 +39,7 @@ Parent: 2.1-port-display-scripts
 - [ ] All existing tests pass
 - [ ] New tests verify output parity with Python for at least 5 distinct input scenarios
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Read `build_box_lines.py`** to catalog all computation logic: display width, line building, border rendering

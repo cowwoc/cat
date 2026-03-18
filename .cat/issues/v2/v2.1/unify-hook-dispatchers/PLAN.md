@@ -35,7 +35,7 @@ Split into 6 sub-issues by hook type:
 - [ ] All existing tests pass
 - [ ] New Java handler tests cover migrated logic
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Complete all 6 sub-issues

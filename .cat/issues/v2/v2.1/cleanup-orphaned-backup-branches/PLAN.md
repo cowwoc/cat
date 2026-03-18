@@ -16,12 +16,14 @@ None (infrastructure maintenance)
 ## Files to Modify
 - `plugin/scripts/git-squash-quick.sh` - Add proactive cleanup of orphaned backup branches at script start
 
-## Acceptance Criteria
+## Post-conditions
 - [ ] Orphaned `backup-before-squash-*` branches are deleted at the start of each squash operation
 - [ ] Cleanup is best-effort (failures ignored with `|| true`)
 - [ ] Existing backup/cleanup logic unchanged
 
-## Execution Steps
+## Sub-Agent Waves
+
+### Wave 1
 1. **Add orphaned backup cleanup:** Insert a loop after the argument parsing (line 17) and before the EXIT trap
    setup (line 19) that deletes any existing `backup-before-squash-*` branches:
    ```bash

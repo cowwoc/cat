@@ -52,7 +52,7 @@ can't invoke the git-squash skill construct their own messages, defaulting to ge
 - [ ] subagent-delegation.md contains capability limitation fail-fast instruction
 - [ ] All existing tests pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Add commit message validation to `plugin/scripts/git-squash-quick.sh`

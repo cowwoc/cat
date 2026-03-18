@@ -27,7 +27,7 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Search codebase for all occurrences of `cat:run-retrospective` and `run-retrospective` to build a

@@ -42,7 +42,7 @@ nothing else is altered.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Replace the Phase 7 implementation in `plugin/migrations/2.1.sh`

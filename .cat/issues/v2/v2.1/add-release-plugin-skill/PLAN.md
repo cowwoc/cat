@@ -18,7 +18,7 @@ None - infrastructure reorganization
 - `.claude/skills/release-plugin/SKILL.md` - Create skill definition (migrated from command)
 - `.claude/commands/release-plugin/SKILL.md` - Delete old command location
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Create `.claude/skills/release-plugin/SKILL.md` with the release workflow

@@ -39,7 +39,7 @@ change directories.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Fix symlink resolution in `checkProtectedPaths()`: attempt `toRealPath()` on target path when possible, fall back

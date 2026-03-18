@@ -31,7 +31,7 @@ None (infrastructure fix from M348/M349)
 - [ ] After merge with multiple approval gate retries, no orphaned backups remain
 - [ ] Parallel instance's in-progress backup is not deleted
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Fix dead code in git-squash-quick.sh:** Replace the unreachable rebase conflict handling (lines 54-93) with

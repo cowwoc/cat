@@ -24,7 +24,7 @@ None (infrastructure improvement)
 - [ ] All callers pass project-dir
 - [ ] Tests pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Update SkillLoader.main():** Change arg count check from `< 3 || > 4` to `!= 4`, remove empty string fallback

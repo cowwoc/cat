@@ -48,7 +48,7 @@ already contains `module-info.class`, it is a named module regardless of what `j
 - [ ] jlink image builds successfully
 - [ ] All launchers work
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Modify `is_automatic_module` in `hooks/build-jlink.sh`

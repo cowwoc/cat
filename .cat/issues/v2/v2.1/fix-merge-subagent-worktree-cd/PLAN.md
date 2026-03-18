@@ -37,7 +37,7 @@ None - M465 prevention
 - [ ] git-merge-linear works when invoked from any directory
 - [ ] All tests pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Read current git-merge-linear/SKILL.md and work-merge/SKILL.md

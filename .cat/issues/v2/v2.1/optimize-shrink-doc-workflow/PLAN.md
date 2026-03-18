@@ -23,7 +23,7 @@ None - internal optimization
 - [ ] All tests still pass
 - [ ] Code quality improved (fewer round-trips)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Modify Step 2 to combine baseline + version check into single parallel Bash

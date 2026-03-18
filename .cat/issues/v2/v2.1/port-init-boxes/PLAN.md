@@ -25,7 +25,7 @@ Parent: 2.1-port-display-scripts
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/skills/GetInitOutput.java` - New or update existing
 - Update init handler to call Java class instead of Python script
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Read `build-init-boxes.py`** to understand exact output format and logic

@@ -19,7 +19,7 @@ None - action item A026 from retrospective (PATTERN-022)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Read work-with-issue/first-use.md:** Examine current approval gate and review step structure

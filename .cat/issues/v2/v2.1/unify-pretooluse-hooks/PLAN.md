@@ -74,7 +74,7 @@ None
 - warn-base-branch-edit.sh: Complex allowlist with M442 narrowing - careful port of pattern matching
 - enforce-approval-before-merge.sh: Reads cat-config.json for trust level, searches session JSONL - use JsonMapper + Files
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Create handler packages (ask/, edit/, task/)

@@ -36,7 +36,7 @@ None (UX enhancement)
 - [ ] After invocation, `.claude/settings.json` contains correct `statusLine` JSON structure
 - [ ] Installed script is executable and produces colored output when fed sample JSON on stdin
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Create statusline script:** Copy the statusline-command.sh into `plugin/scripts/statusline-command.sh`

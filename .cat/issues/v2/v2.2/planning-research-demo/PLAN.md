@@ -24,7 +24,7 @@ None - marketing/documentation task
 - [ ] Each feature has 2-3 sentence description explaining value
 - [ ] Videos demonstrate the planning workflow end-to-end
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Write feature descriptions for planning commands

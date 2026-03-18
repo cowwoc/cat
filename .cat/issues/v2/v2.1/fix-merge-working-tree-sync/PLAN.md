@@ -49,7 +49,7 @@ This is equivalent to `git update-ref` or `git branch -f`. The working tree must
 - [ ] syncMainWorkingTree() runs successfully in projectDir
 - [ ] Existing MergeAndCleanup tests still pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

@@ -42,7 +42,7 @@ on sub-issues instead.
 - [ ] Sub-issues are discovered when their dependencies are satisfied
 - [ ] No regressions in existing task discovery behavior
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Add decomposed parent check in find_issue_in_minor():**

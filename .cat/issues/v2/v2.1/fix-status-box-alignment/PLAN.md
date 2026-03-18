@@ -28,7 +28,7 @@ None
 - [ ] Edge case: major version with no minors still renders correctly
 - [ ] All existing tests still pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** In `GetStatusOutput.generateStatusDisplay()`, refactor the major version loop (lines 516-626) into a two-pass approach:

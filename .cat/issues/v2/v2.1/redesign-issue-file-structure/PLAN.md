@@ -9,7 +9,7 @@ pre-conditions and post-conditions, having skills instruct the LLM to read plan.
 Update all skills, hooks, templates, and Java code to use the new filenames and formats. Add an
 idempotent migration script.
 
-## Satisfies
+## Parent Requirements
 
 None
 
@@ -70,7 +70,7 @@ as obsolete before or during this work.
 - [ ] E2E: Run `/cat:add`, `/cat:work`, and `/cat:status` against the new format and confirm
   correct behavior
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1 — Audit
 

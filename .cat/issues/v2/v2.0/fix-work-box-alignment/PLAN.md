@@ -37,7 +37,7 @@ lengths cause the right border to shift.
 - [ ] All box corners align (╭╮╰╯)
 - [ ] Right border `│` aligns on all lines
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Identify box templates in work.md**

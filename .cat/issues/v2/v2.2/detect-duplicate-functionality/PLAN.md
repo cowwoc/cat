@@ -690,7 +690,7 @@ def find_duplicates(db: sqlite3.Connection, new_claims: list, threshold: float =
 - [ ] Tests written and passing
 - [ ] No regressions
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

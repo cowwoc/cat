@@ -34,7 +34,7 @@ None (infrastructure improvement)
 - [ ] Bug report skill successfully creates/finds GitHub issues via `gh` CLI
 - [ ] All existing SkillLoader tests pass with updated expectations
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Modify SkillLoader.java error handling to produce user-friendly error message instead of `<error>` XML

@@ -28,7 +28,7 @@ None - bugfix for existing A008 hook
 - `plugin/hooks/posttool_handlers/detect_manual_boxes.py` - Add logic to track recent script outputs
   containing box characters and suppress warnings when assistant output matches
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Read `plugin/hooks/posttool_handlers/detect_manual_boxes.py` to understand current detection logic

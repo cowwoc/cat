@@ -89,7 +89,7 @@ Parent: optimize-hook-json-parser (core API migration)
 - [ ] HookInput uses jackson-core JsonParser internally
 - [ ] All handler interfaces use Map<String, Object>
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Add jackson-core to pom.xml** alongside jackson-databind and add `requires tools.jackson.core` to module-info

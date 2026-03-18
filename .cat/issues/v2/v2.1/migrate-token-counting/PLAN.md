@@ -28,7 +28,7 @@ None - infrastructure/setup task
 - `hooks/pom.xml` - Add JTokkit dependency
 - `plugin/skills/compare-docs/SKILL.md` - Update token counting command from Python to Java
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Add JTokkit dependency** to `hooks/pom.xml`

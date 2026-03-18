@@ -49,7 +49,7 @@ None - convention update
 - [ ] All modified files reference safe-rm or the cwd-removal safety rule
 - [ ] All tests pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Update `.claude/rules/common.md` line 154

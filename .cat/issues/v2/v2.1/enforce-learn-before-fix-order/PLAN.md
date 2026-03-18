@@ -24,7 +24,7 @@ require running the learn skill BEFORE fixing the problem, not after.
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

@@ -28,7 +28,7 @@ None
 ## Pre-conditions
 None
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1: Structured Grading Enhancement
 - Extend test config JSON schema to support rich criterion metadata:

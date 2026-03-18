@@ -39,7 +39,7 @@ In `SkillLoader`, `catAgentId` is derived from `skillArgs.getFirst()` (`$0`). If
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Examine all `SKILL.md` files that invoke `skill-loader` and check how `$0` is passed

@@ -172,7 +172,7 @@ Implementation should choose one that renders well across terminals.
 - [ ] Final success shows `✓` in header
 - [ ] Final failure shows `✗` in header
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Update work-progress.sh to render horizontal layout

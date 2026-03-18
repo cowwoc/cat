@@ -45,7 +45,7 @@ None
 - Removes stale locks older than 24 hours
 - Requires CLAUDE_PROJECT_DIR env var (fail-fast if missing)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Create SessionUnlock handler class

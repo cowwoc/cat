@@ -43,7 +43,7 @@ Parent: 2.1-port-display-scripts
 - [ ] All three phase outputs match Python character-for-character
 - [ ] All existing and new tests pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Read `get-cleanup-display.py`** to catalog all data gathering logic per phase

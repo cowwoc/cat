@@ -36,7 +36,7 @@ None - infrastructure/performance optimization
 - `plugin/skills/work-prepare/SKILL.md` - Add header note that logic is now implemented as work-prepare.py script;
   SKILL.md retained as algorithm documentation
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Create work-prepare.py script** that:

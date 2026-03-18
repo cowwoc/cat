@@ -52,7 +52,7 @@ None - cleanup task
 ## Dependencies
 - migrate-python-tests (all tests must be migrated to Java first)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Verify Java tests pass** - `mvn test` must succeed before any deletion

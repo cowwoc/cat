@@ -31,7 +31,7 @@ automatically iterate to fix concerns. Default is LOW (fix all concerns automati
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

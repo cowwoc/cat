@@ -39,7 +39,7 @@ None — infrastructure refactoring.
 - The concept of "hooks" when referring to Claude Code hook events (PreToolUse, PostToolUse, etc.)
 - Retrospective/mistake JSON files (historical records)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

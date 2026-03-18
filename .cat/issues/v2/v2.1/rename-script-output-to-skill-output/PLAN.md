@@ -96,7 +96,7 @@ Files:
 - [ ] `mvn -f hooks/pom.xml test` passes
 - [ ] Verbatim skills (/cat:status, /cat:help, /cat:token-report, /cat:render-diff) produce correct output
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

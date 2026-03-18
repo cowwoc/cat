@@ -29,7 +29,7 @@ None (infrastructure bugfix)
 - [ ] Version-qualified names where the dependency is NOT closed still return `false`
 - [ ] E2E: `get-available-issues.sh` returns `found` for `2.1-port-issue-discovery` (currently returns `blocked`)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

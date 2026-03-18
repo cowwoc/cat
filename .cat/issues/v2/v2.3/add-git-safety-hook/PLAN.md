@@ -33,7 +33,7 @@ Blog post analysis (adriangalilea.com/claude-code-permission-bypass) identified 
 | `git stash drop --all` | Not covered |
 | All handlers | No git global flag normalization (`-C`, `--git-dir`, `--work-tree`) |
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

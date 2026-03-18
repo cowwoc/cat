@@ -39,7 +39,7 @@ None
 ## Pre-conditions
 None
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Update `plugin/skills/skill-builder-agent/first-use.md`:

@@ -67,7 +67,7 @@ automatically removes the key at SessionStart before validation runs.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

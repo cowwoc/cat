@@ -58,7 +58,7 @@ Only a compact JSON summary is returned to the main agent:
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

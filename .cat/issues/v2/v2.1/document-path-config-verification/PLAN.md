@@ -29,7 +29,7 @@ wrong-directory file operations, and silent fallback to incorrect defaults.
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

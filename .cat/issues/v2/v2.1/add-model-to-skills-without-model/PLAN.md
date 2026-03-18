@@ -71,7 +71,7 @@ None - infrastructure improvement for cost optimization and consistent behavior
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. For each skill in the haiku list, add `model: haiku` to the SKILL.md frontmatter

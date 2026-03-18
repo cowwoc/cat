@@ -4,7 +4,7 @@
 Correct and consolidate license header conventions: move the authoritative documentation into project conventions,
 fix exemptions, add headers to `first-use.md` files, and scrub existing headers from exempt locations.
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

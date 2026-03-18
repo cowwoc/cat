@@ -64,7 +64,7 @@ None - infrastructure/optimization task
 - [ ] Workflow produces same results as before
 - [ ] Error handling preserved
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Define phase subagent JSON contracts

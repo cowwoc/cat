@@ -43,7 +43,7 @@ actual activity. Lock file timestamps are local-only metadata that may not refle
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

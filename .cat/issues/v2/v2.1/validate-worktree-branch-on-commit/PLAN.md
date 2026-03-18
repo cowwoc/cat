@@ -21,7 +21,7 @@ None — prevention for mistake M452 (subagent committed directly to v2.1 instea
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1: Implement and register the hook
 - Create `BlockWrongBranchCommit.java` that:

@@ -55,7 +55,7 @@ tune wrapping for file output (e.g., markdown docs) vs. terminal rendering (e.g.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Update `Config.java`: remove `terminalWidth` default, add `fileWidth: 120` and `displayWidth: 120`

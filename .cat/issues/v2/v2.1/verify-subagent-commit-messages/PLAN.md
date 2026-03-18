@@ -30,7 +30,7 @@ to detect it before the squash/merge phase propagates the bad message.
 - [ ] Verification compares git log output against subagent-reported messages
 - [ ] Mismatch triggers mandatory amend operation to fix commit messages
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Add commit message verification after execution result parsing:** In `plugin/skills/work-with-issue/first-use.md`,

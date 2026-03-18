@@ -19,7 +19,7 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Replace `/* file was all blanks - emit nothing */` C-style comment in Phase 6 awk block with a

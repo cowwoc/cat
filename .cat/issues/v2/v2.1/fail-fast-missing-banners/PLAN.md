@@ -27,7 +27,7 @@ None - infrastructure/retrospective action item
 - [ ] No manual box/banner construction instructions remain
 - [ ] All tests pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Grep all skills for SCRIPT OUTPUT references to identify affected files

@@ -45,7 +45,7 @@ Exclude: `.cat/backups/`, `.worktrees/`, `node_modules/`, `.git/`
 - [ ] All existing tests pass
 - [ ] Code blocks, tables, and URLs are intact
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

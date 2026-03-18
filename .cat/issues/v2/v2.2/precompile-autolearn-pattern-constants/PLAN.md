@@ -40,7 +40,7 @@ fixed-string patterns that should be precompiled once at class load time.
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

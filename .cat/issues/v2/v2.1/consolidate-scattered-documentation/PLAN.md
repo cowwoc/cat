@@ -63,7 +63,7 @@ None
 ## Pre-conditions
 - [ ] `2.1-enhance-compare-docs-grading` is closed (binary verdict available for verification)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1: Validate on Simple Document
 - Select a single real document with scattered/duplicated information (candidate: a skill first-use.md that has

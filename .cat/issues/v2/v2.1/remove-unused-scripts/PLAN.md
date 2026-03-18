@@ -36,7 +36,7 @@ None (tech debt cleanup)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Re-verify each script has no active references via grep

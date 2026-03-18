@@ -20,7 +20,7 @@ To be determined through automated iteration of compress -> validate -> learn cy
 - `scripts/compress-validate-loop.py` - New orchestration script (create)
 - `plugin/skills/learn/learn.md` - Potential improvements based on findings
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Create Python orchestration script** that:

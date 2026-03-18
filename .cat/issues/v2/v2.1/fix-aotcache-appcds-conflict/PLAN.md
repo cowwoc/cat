@@ -29,7 +29,7 @@ is dead weight when AOTCache exists.
 - [ ] build-jlink.sh completes without AppCDS step
 - [ ] No references to appcds or SharedArchiveFile remain in modified files
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Edit `plugin/hooks/hook.sh`:** Remove lines 67-69 (the `appcds` variable and its `[[ -f ]]` conditional). Keep only

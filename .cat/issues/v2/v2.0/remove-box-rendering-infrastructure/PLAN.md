@@ -49,7 +49,7 @@ None - infrastructure cleanup task
 - [ ] Plugin still functions correctly
 - [ ] All tests pass (if any)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Verify no dependencies remain** - Grep for box.sh and emoji-widths references

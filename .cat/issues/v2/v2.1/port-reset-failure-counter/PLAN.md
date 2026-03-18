@@ -34,7 +34,7 @@ None (migration/cleanup)
 - [ ] E2E: `grep -r 'reset-failure-counter' plugin/` returns no results
 - [ ] All tests pass (`mvn -f client/pom.xml test`)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

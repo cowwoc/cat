@@ -28,7 +28,7 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - In `plugin/skills/work-with-issue-agent/first-use.md`, apply the following renames:

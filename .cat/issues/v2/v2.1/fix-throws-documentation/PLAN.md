@@ -32,7 +32,7 @@ None (convention compliance fix)
 - [ ] No incorrect `@throws` annotations (e.g., documenting wrong exception type)
 - [ ] Tests pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Fix ProcessRunner.java Result record:** Update @throws to document NullPointerException for isNotNull() calls

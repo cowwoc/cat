@@ -75,7 +75,7 @@ None - infrastructure/code quality task
 - [ ] Existing tests pass (tests/handlers/test_display_utils.py)
 - [ ] Box alignment in /cat:status still renders correctly
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

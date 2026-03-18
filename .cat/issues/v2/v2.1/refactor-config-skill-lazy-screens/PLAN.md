@@ -43,7 +43,7 @@ None (tech debt / compliance fix)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Update `GetConfigOutput.java` to accept an optional `page` argument and return only

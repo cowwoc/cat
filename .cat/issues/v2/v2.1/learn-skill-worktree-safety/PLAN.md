@@ -33,7 +33,7 @@ returning exit code 1).
 - [ ] No `cd` commands that change into repo directories
 - [ ] All tests pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** In `plugin/skills/learn/phase-record.md`, find Step 12 (lines ~203-267) where git commands are used

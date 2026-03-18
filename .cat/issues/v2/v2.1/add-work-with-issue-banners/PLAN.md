@@ -60,7 +60,7 @@ instructions.
 - [ ] work-with-issue skill no longer references pre-rendered banner sections
 - [ ] `mvn -f hooks/pom.xml verify` passes with exit code 0
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

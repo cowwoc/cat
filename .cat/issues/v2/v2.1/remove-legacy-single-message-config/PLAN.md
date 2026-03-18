@@ -30,7 +30,7 @@ None (code cleanup)
 - [ ] All existing tests updated and passing
 - [ ] Help text documents only the multi-message format
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

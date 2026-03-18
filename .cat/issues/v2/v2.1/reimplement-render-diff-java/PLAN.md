@@ -42,7 +42,7 @@ None
 - [ ] Java output matches Python output format on sample diffs
 - [ ] render-diff.py no longer exists in the repository
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Read Python render-diff.py** to understand the 2-column format implementation details

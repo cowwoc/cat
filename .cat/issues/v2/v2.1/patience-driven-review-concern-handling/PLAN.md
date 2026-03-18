@@ -41,7 +41,7 @@ These semantics should extend to out-of-scope review concerns.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Update SUBAGENT-PROMPT-CHECKLIST.md patience table:** Change "high" description from "FUTURE version backlog" to

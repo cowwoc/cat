@@ -20,7 +20,7 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Change Phase 12 find command from `-mindepth 5 -maxdepth 5` to `-mindepth 4 -maxdepth 4`

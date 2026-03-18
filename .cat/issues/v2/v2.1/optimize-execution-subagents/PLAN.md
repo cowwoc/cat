@@ -26,7 +26,7 @@ None (infrastructure enhancement to existing optimization tooling)
 - [ ] All existing tests continue to pass
 - [ ] New tests cover subagent discovery, per-agent analysis, and combined aggregation
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Add subagent discovery function to `analyze-session.py`:**

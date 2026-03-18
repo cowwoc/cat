@@ -64,7 +64,7 @@ and when to use main agent vs subagent execution.
 - [ ] Restriction text is consistent across all files
 - [ ] No functional changes to skill logic
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

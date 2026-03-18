@@ -55,7 +55,7 @@ The additionalContext output includes an error section:
 - [ ] Process exits with non-zero code when any handler failed
 - [ ] All existing tests pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Modify GetSessionStartOutput.run()** to collect errors into a list

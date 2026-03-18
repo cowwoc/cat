@@ -21,7 +21,7 @@ None - UX improvement task
 - [ ] Documentation updated
 - [ ] No regressions
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Update analyze_task_size step in work.md

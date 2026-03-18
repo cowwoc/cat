@@ -20,7 +20,7 @@ the subsequent `git diff backupBranch` check compares the wrong state.
 - [ ] If HEAD != newCommit, throw IOException with diagnostic info (expected vs actual)
 - [ ] Existing tests still pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Add HEAD verification after Step 9 in GitSquash.java**

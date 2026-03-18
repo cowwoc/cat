@@ -61,7 +61,7 @@ Add tests to `AutoLearnMistakesTest` verifying:
 - `client/src/test/java/io/github/cowwoc/cat/hooks/test/AutoLearnMistakesTest.java` — add false-positive and
   true-positive test cases for Pattern 2
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

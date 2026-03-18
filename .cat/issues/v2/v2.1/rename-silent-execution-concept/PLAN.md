@@ -28,7 +28,7 @@ Fold both changes into the existing implementation commit (826d991f).
 - [ ] No separate commit for the rename/reference
 - [ ] v2.1 branch history is clean
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Rename concept file:** `git mv plugin/concepts/silent-execution-pattern.md plugin/concepts/silent-execution.md`

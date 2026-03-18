@@ -24,7 +24,7 @@ None - infrastructure/cleanup task
 - [ ] All tests still pass
 - [ ] References updated - all file references point to new location
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Create `plugin/stakeholders/` directory

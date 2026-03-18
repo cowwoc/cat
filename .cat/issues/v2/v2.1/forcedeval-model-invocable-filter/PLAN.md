@@ -40,7 +40,7 @@ compaction. Then ForcedEvalSkills can list just skill names (saving tokens on ev
 - [ ] Javadoc accurately describes the filtering logic
 - [ ] All tests pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Update ForcedEvalSkills.java** — change filter from `user-invocable` to `model-invocable` and strip descriptions

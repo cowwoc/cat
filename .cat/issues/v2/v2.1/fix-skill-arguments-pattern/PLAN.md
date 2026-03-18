@@ -54,7 +54,7 @@ argument-hint: "<severity> <stakeholder> <description> <location>"
 - [ ] Both skills have argument-hint in frontmatter
 - [ ] Neither skill references ${ARGUMENTS} or $ARGUMENTS
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Update `plugin/skills/stakeholder-review-box/SKILL.md`

@@ -17,7 +17,7 @@ None - workflow enhancement
   to approval gate
 - `plugin/skills/stakeholder-review/content.md` - decide step: align with new auto-fix behavior
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

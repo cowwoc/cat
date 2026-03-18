@@ -37,7 +37,7 @@ line is found, silently skipping those issues instead of defaulting to `open`.
 ## Pre-conditions
 - All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** In `IssueDiscovery.getIssueStatus(List<String>, Path)`, change the IOException

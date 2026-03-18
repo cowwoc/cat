@@ -86,7 +86,7 @@ Where:
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1: Add path resolution methods
 - Add `getProjectCatDir()` to `JvmScope.java` — returns `{configDir}/projects/{encoded}/cat/`

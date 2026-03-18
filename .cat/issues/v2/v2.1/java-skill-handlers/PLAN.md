@@ -48,7 +48,7 @@ Supporting utility classes (already exist):
 | `skill_handlers/status_handler.py` | `GetStatusOutput.java` | `plugin/hooks/src/io/github/cowwoc/cat/hooks/skills/` |
 | `skill_handlers/work_with_issue_handler.py` | `GetWorkWithIssueOutput.java` | `plugin/hooks/src/io/github/cowwoc/cat/hooks/skills/` |
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Create GetDelegateOutput.java** - Port logic from `delegate_handler.py`

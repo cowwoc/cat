@@ -33,7 +33,7 @@ None - UX improvement
 - [ ] Large-scope issues (6+ files) still trigger the split suggestion
 - [ ] All tests pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

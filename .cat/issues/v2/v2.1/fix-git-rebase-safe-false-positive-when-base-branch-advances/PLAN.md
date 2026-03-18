@@ -63,7 +63,7 @@ The fix is patch-diff comparison: compare issue branch content relative to its b
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

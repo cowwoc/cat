@@ -21,7 +21,7 @@ None - correctness improvement to rebase tooling
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - In `GitRebaseSafe.java`, before running the rebase, capture the set of untracked file paths from

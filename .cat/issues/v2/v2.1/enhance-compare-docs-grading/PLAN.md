@@ -29,7 +29,7 @@ None
 ## Pre-conditions
 None
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1: Evidence Extraction in Extractors
 - Update EXTRACTION-AGENT.md to include verbatim quote snippets in each extracted semantic unit's JSON output

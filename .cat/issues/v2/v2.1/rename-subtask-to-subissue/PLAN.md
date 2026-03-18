@@ -103,7 +103,7 @@ None - terminology consistency
 - [ ] All tests pass after rename
 - [ ] Grep for subtask/sub-task/sub_task returns only the v1.10 historical issue
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Rename function and variables in `plugin/scripts/get-available-issues.sh`
