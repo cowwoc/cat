@@ -104,6 +104,12 @@ lines relevant to the PLAN.md goal. Common violations to look for in every file 
 Treat these like compilation errors: they must be fixed before the issue closes, regardless of whether they were
 introduced before the current session.
 
+**Automated enforcement:** The `cat:work` verify phase scans modified files for violations using grep patterns defined
+in convention files' `## Enforcement` sections (as `cat-rules` blocks). Scan scope is parameterized by the `effort`
+setting in `.cat/config.json` — `low` skips scanning, `medium` greps only added/modified diff lines, and `high` greps
+the full content of all changed files. Detected violations appear as `Missing` criteria in the verify output and must
+be resolved before the issue can be marked complete.
+
 ## CRITICAL: Worktree Isolation
 
 **ALL issue implementation work MUST happen in the issue worktree, NEVER in `/workspace` main.**

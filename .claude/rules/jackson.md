@@ -14,3 +14,17 @@
 - `JsonNode.asString()` never returns `null` when `JsonNode.isString()` is `true`. The node is a `TextNode` and
   `asString()` returns the string content directly. Do not add redundant `value != null` checks after an `isString()`
   guard.
+
+## Enforcement
+
+```cat-rules
+- pattern: "new ObjectMapper\\(\\)"
+  files: "*.java"
+  severity: high
+  message: "Use JsonMapper instead of ObjectMapper. Obtain the shared instance from JvmScope.getJsonMapper(). See .claude/rules/jackson.md."
+
+- pattern: "JsonMapper\\.builder\\(\\)"
+  files: "*.java"
+  severity: high
+  message: "Never call JsonMapper.builder().build() directly. Use JvmScope.getJsonMapper(). See .claude/rules/jackson.md."
+```
