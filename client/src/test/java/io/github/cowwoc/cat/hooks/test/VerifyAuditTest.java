@@ -23,256 +23,6 @@ import tools.jackson.databind.json.JsonMapper;
 public final class VerifyAuditTest
 {
   /**
-   * Verifies that parse extracts post-conditions from PLAN.md.
-   *
-   * @throws IOException if file operations fail
-   */
-  @Test
-  public void parseExtractsCriteria() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("verify-audit-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      VerifyAudit audit = new VerifyAudit(scope);
-
-      Path planFile = tempDir.resolve("PLAN.md");
-      Files.writeString(planFile, """
-        # Plan
-
-        ## Post-conditions
-        - [ ] First criterion
-        - [x] Second criterion checked
-        - [ ] Third criterion
-
-        ## Other Section
-        Not criteria
-        """);
-
-      String result = audit.parse(planFile);
-      JsonNode root = mapper.readTree(result);
-      JsonNode criteria = root.path("criteria");
-
-      requireThat(criteria.isArray(), "criteria.isArray").isTrue();
-      requireThat(criteria.size(), "criteria.size").isEqualTo(3);
-      requireThat(criteria.get(0).asString(), "criteria[0]").isEqualTo("First criterion");
-      requireThat(criteria.get(1).asString(), "criteria[1]").isEqualTo("Second criterion checked");
-      requireThat(criteria.get(2).asString(), "criteria[2]").isEqualTo("Third criterion");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that parse extracts file specs from Files to Modify section.
-   *
-   * @throws IOException if file operations fail
-   */
-  @Test
-  public void parseExtractsFileModifications() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("verify-audit-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      VerifyAudit audit = new VerifyAudit(scope);
-
-      Path planFile = tempDir.resolve("PLAN.md");
-      Files.writeString(planFile, """
-        # Plan
-
-        ## Files to Modify
-        - plugin/skills/test.md - Update something
-        - hooks/src/Main.java - Add feature
-
-        ## Post-conditions
-        - [ ] Test criterion
-        """);
-
-      String result = audit.parse(planFile);
-      JsonNode root = mapper.readTree(result);
-      JsonNode fileSpecs = root.path("file_specs");
-      JsonNode modify = fileSpecs.path("modify");
-
-      requireThat(modify.isArray(), "modify.isArray").isTrue();
-      requireThat(modify.size(), "modify.size").isEqualTo(2);
-      requireThat(modify.get(0).asString(), "modify[0]").isEqualTo("plugin/skills/test.md");
-      requireThat(modify.get(1).asString(), "modify[1]").isEqualTo("hooks/src/Main.java");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that parse extracts file specs from Execution Steps section.
-   *
-   * @throws IOException if file operations fail
-   */
-  @Test
-  public void parseExtractsFileFromExecutionSteps() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("verify-audit-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      VerifyAudit audit = new VerifyAudit(scope);
-
-      Path planFile = tempDir.resolve("PLAN.md");
-      Files.writeString(planFile, """
-        # Plan
-
-        ## Execution Steps
-        1. Edit plugin/skills/verify.md to add feature
-        2. Files: hooks/src/test/Test.java - create test
-        3. Update the documentation
-
-        ## Post-conditions
-        - [ ] Test criterion
-        """);
-
-      String result = audit.parse(planFile);
-      JsonNode root = mapper.readTree(result);
-      JsonNode fileSpecs = root.path("file_specs");
-      JsonNode modify = fileSpecs.path("modify");
-
-      requireThat(modify.isArray(), "modify.isArray").isTrue();
-      requireThat(modify.size(), "modify.size").isGreaterThanOrEqualTo(2);
-
-      boolean hasVerifyMd = false;
-      boolean hasTestJava = false;
-      for (JsonNode node : modify)
-      {
-        String file = node.asString();
-        if (file.equals("plugin/skills/verify.md"))
-          hasVerifyMd = true;
-        if (file.equals("hooks/src/test/Test.java"))
-          hasTestJava = true;
-      }
-
-      requireThat(hasVerifyMd, "hasVerifyMd").isTrue();
-      requireThat(hasTestJava, "hasTestJava").isTrue();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that parse groups criteria by shared file dependencies.
-   *
-   * @throws IOException if file operations fail
-   */
-  @Test
-  public void parseGroupsCriteriaByFiles() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("verify-audit-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      VerifyAudit audit = new VerifyAudit(scope);
-
-      Path planFile = tempDir.resolve("PLAN.md");
-      Files.writeString(planFile, """
-        # Plan
-
-        ## Files to Modify
-        - plugin/skills/test.md - Update
-        - hooks/src/Main.java - Update
-
-        ## Post-conditions
-        - [ ] test.md should have new section
-        - [ ] test.md formatting is correct
-        - [ ] Main.java has new method
-        """);
-
-      String result = audit.parse(planFile);
-      JsonNode root = mapper.readTree(result);
-      JsonNode groups = root.path("groups");
-
-      requireThat(groups.isArray(), "groups.isArray").isTrue();
-      requireThat(groups.size(), "groups.size").isGreaterThanOrEqualTo(2);
-
-      boolean foundTestMdGroup = false;
-      boolean foundMainJavaGroup = false;
-
-      for (JsonNode group : groups)
-      {
-        JsonNode files = group.path("files");
-        JsonNode criteria = group.path("criteria");
-
-        for (JsonNode file : files)
-        {
-          if (file.asString().equals("plugin/skills/test.md"))
-          {
-            foundTestMdGroup = true;
-            requireThat(criteria.size(), "testMdCriteriaCount").isGreaterThanOrEqualTo(1);
-          }
-          if (file.asString().equals("hooks/src/Main.java"))
-          {
-            foundMainJavaGroup = true;
-            requireThat(criteria.size(), "mainJavaCriteriaCount").isGreaterThanOrEqualTo(1);
-          }
-        }
-      }
-
-      requireThat(foundTestMdGroup, "foundTestMdGroup").isTrue();
-      requireThat(foundMainJavaGroup, "foundMainJavaGroup").isTrue();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that criteria without file references get grouped with all files.
-   *
-   * @throws IOException if file operations fail
-   */
-  @Test
-  public void parseCriteriaWithoutFilesGetAllFiles() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("verify-audit-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      VerifyAudit audit = new VerifyAudit(scope);
-
-      Path planFile = tempDir.resolve("PLAN.md");
-      Files.writeString(planFile, """
-        # Plan
-
-        ## Files to Modify
-        - plugin/skills/test.md - Update
-        - hooks/src/Main.java - Update
-
-        ## Post-conditions
-        - [ ] General criterion with no file mention
-        """);
-
-      String result = audit.parse(planFile);
-      JsonNode root = mapper.readTree(result);
-      JsonNode groups = root.path("groups");
-
-      requireThat(groups.isArray(), "groups.isArray").isTrue();
-      requireThat(groups.size(), "groups.size").isEqualTo(1);
-
-      JsonNode group = groups.get(0);
-      JsonNode files = group.path("files");
-      requireThat(files.size(), "files.size").isEqualTo(2);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
    * Verifies that report renders all-Done results correctly.
    *
    * @throws IOException if file operations fail
@@ -438,134 +188,12 @@ public final class VerifyAuditTest
   }
 
   /**
-   * Verifies that parse handles empty post-conditions section.
+   * Verifies that prepare returns a JSON object with issue identifiers and file_results only.
    *
    * @throws IOException if file operations fail
    */
   @Test
-  public void parseHandlesEmptyCriteria() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("verify-audit-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      VerifyAudit audit = new VerifyAudit(scope);
-
-      Path planFile = tempDir.resolve("PLAN.md");
-      Files.writeString(planFile, """
-        # Plan
-
-        ## Post-conditions
-
-        ## Files to Modify
-        - test.md - Update
-        """);
-
-      String result = audit.parse(planFile);
-      JsonNode root = mapper.readTree(result);
-      JsonNode criteria = root.path("criteria");
-
-      requireThat(criteria.isArray(), "criteria.isArray").isTrue();
-      requireThat(criteria.size(), "criteria.size").isEqualTo(0);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that parse extracts files from Files to Delete section.
-   *
-   * @throws IOException if file operations fail
-   */
-  @Test
-  public void parseExtractsDeleteFiles() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("verify-audit-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      VerifyAudit audit = new VerifyAudit(scope);
-
-      Path planFile = tempDir.resolve("PLAN.md");
-      Files.writeString(planFile, """
-        # Plan
-
-        ## Files to Delete
-        - plugin/skills/old-skill.md - Remove deprecated skill
-        - hooks/src/OldClass.java - Remove old implementation
-
-        ## Post-conditions
-        - [ ] Old files removed
-        """);
-
-      String result = audit.parse(planFile);
-      JsonNode root = mapper.readTree(result);
-      JsonNode fileSpecs = root.path("file_specs");
-      JsonNode delete = fileSpecs.path("delete");
-
-      requireThat(delete.isArray(), "delete.isArray").isTrue();
-      requireThat(delete.size(), "delete.size").isEqualTo(2);
-      requireThat(delete.get(0).asString(), "delete[0]").isEqualTo("plugin/skills/old-skill.md");
-      requireThat(delete.get(1).asString(), "delete[1]").isEqualTo("hooks/src/OldClass.java");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that parse handles filename ambiguity by grouping similar names correctly.
-   *
-   * @throws IOException if file operations fail
-   */
-  @Test
-  public void parseHandlesFilenameAmbiguity() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("verify-audit-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      VerifyAudit audit = new VerifyAudit(scope);
-
-      Path planFile = tempDir.resolve("PLAN.md");
-      Files.writeString(planFile, """
-        # Plan
-
-        ## Files to Modify
-        - plugin/skills/test.md - Update
-        - plugin/commands/test.md - Update different test file
-
-        ## Post-conditions
-        - [ ] test.md in skills has new section
-        - [ ] test.md in commands has new content
-        """);
-
-      String result = audit.parse(planFile);
-      JsonNode root = mapper.readTree(result);
-      JsonNode fileSpecs = root.path("file_specs");
-      JsonNode modify = fileSpecs.path("modify");
-
-      requireThat(modify.isArray(), "modify.isArray").isTrue();
-      requireThat(modify.size(), "modify.size").isEqualTo(2);
-      requireThat(modify.get(0).asString(), "modify[0]").isEqualTo("plugin/skills/test.md");
-      requireThat(modify.get(1).asString(), "modify[1]").isEqualTo("plugin/commands/test.md");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that prepare returns a complete JSON object for valid input with all required fields.
-   *
-   * @throws IOException if file operations fail
-   */
-  @Test
-  public void prepareReturnsCompleteJson() throws IOException
+  public void prepareReturnsIssueIdentifiersAndFileResults() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-audit-test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -578,7 +206,7 @@ public final class VerifyAuditTest
       Path worktreeDir = tempDir.resolve("worktree");
       Files.createDirectories(worktreeDir);
 
-      Files.writeString(issueDir.resolve("PLAN.md"), """
+      Files.writeString(issueDir.resolve("plan.md"), """
         # Plan
 
         ## Files to Modify
@@ -590,25 +218,26 @@ public final class VerifyAuditTest
 
       String argumentsJson = """
         {
-          "issue_id": "2.1-test-issue",
-          "issue_path": "%s",
-          "worktree_path": "%s"
+          "issueId": "2.1-test-issue",
+          "issuePath": "%s",
+          "worktreePath": "%s"
         }
         """.formatted(issueDir.toString(), worktreeDir.toString());
 
       String result = audit.prepare(argumentsJson);
       JsonNode root = mapper.readTree(result);
 
-      requireThat(root.path("issue_id").asString(), "issue_id").isEqualTo("2.1-test-issue");
-      requireThat(root.path("issue_path").asString(), "issue_path").isEqualTo(issueDir.toString());
-      requireThat(root.path("worktree_path").asString(), "worktree_path").isEqualTo(worktreeDir.toString());
-      requireThat(root.path("criteria_count").asInt(), "criteria_count").isEqualTo(1);
-      requireThat(root.path("file_count").asInt(), "file_count").isEqualTo(1);
-      requireThat(root.path("prompts").isArray(), "prompts.isArray").isTrue();
-      requireThat(root.path("prompts").size(), "prompts.size").isEqualTo(1);
+      requireThat(root.path("issueId").asString(), "issueId").isEqualTo("2.1-test-issue");
+      requireThat(root.path("issuePath").asString(), "issuePath").isEqualTo(issueDir.toString());
+      requireThat(root.path("worktreePath").asString(), "worktreePath").isEqualTo(worktreeDir.toString());
       requireThat(root.path("file_results").isObject(), "file_results.isObject").isTrue();
       requireThat(root.path("file_results").path("modify").isObject(), "file_results.modify.isObject").isTrue();
       requireThat(root.path("file_results").path("delete").isObject(), "file_results.delete.isObject").isTrue();
+
+      // criteria_count, file_count, and prompts must NOT be present in the new schema
+      requireThat(root.has("criteria_count"), "has_criteria_count").isFalse();
+      requireThat(root.has("file_count"), "has_file_count").isFalse();
+      requireThat(root.has("prompts"), "has_prompts").isFalse();
     }
     finally
     {
@@ -617,12 +246,12 @@ public final class VerifyAuditTest
   }
 
   /**
-   * Verifies that prepare throws IllegalArgumentException when issue_id is missing.
+   * Verifies that prepare throws IllegalArgumentException when issueId is missing.
    *
    * @throws IOException if JSON parsing fails
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*issue_id.*")
+    expectedExceptionsMessageRegExp = ".*issueId.*")
   public void prepareRejectsMissingIssueId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-audit-test-");
@@ -632,8 +261,8 @@ public final class VerifyAuditTest
 
       String json = """
         {
-          "issue_path": "/tmp/issue",
-          "worktree_path": "/tmp/worktree"
+          "issuePath": "/tmp/issue",
+          "worktreePath": "/tmp/worktree"
         }
         """;
 
@@ -646,12 +275,12 @@ public final class VerifyAuditTest
   }
 
   /**
-   * Verifies that prepare throws IllegalArgumentException when PLAN.md does not exist at issue_path.
+   * Verifies that prepare throws IllegalArgumentException when plan.md does not exist at issuePath.
    *
    * @throws IOException if file operations fail
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*PLAN\\.md.*")
+    expectedExceptionsMessageRegExp = ".*plan\\.md.*")
   public void prepareRejectsMissingPlanMd() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-audit-test-");
@@ -664,73 +293,13 @@ public final class VerifyAuditTest
 
       String json = """
         {
-          "issue_id": "2.1-test-issue",
-          "issue_path": "%s",
-          "worktree_path": "/tmp/worktree"
+          "issueId": "2.1-test-issue",
+          "issuePath": "%s",
+          "worktreePath": "/tmp/worktree"
         }
         """.formatted(issueDir.toString());
 
       audit.prepare(json);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that prepare generates prompts for each group derived from PLAN.md.
-   *
-   * @throws IOException if file operations fail
-   */
-  @Test
-  public void prepareGeneratesPromptsForGroups() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("verify-audit-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      VerifyAudit audit = new VerifyAudit(scope);
-
-      Path issueDir = tempDir.resolve("issue");
-      Files.createDirectories(issueDir);
-      Path worktreeDir = tempDir.resolve("worktree");
-      Files.createDirectories(worktreeDir);
-
-      Files.writeString(issueDir.resolve("PLAN.md"), """
-        # Plan
-
-        ## Files to Modify
-        - plugin/skills/test.md - Update
-        - hooks/src/Main.java - Add method
-
-        ## Post-conditions
-        - [ ] test.md has new section
-        - [ ] Main.java has new method
-        """);
-
-      String argumentsJson = """
-        {
-          "issue_id": "2.1-test-issue",
-          "issue_path": "%s",
-          "worktree_path": "%s"
-        }
-        """.formatted(issueDir.toString(), worktreeDir.toString());
-
-      String result = audit.prepare(argumentsJson);
-      JsonNode root = mapper.readTree(result);
-
-      JsonNode prompts = root.path("prompts");
-      requireThat(prompts.isArray(), "prompts.isArray").isTrue();
-      requireThat(prompts.size(), "prompts.size").isGreaterThanOrEqualTo(1);
-
-      for (JsonNode promptEntry : prompts)
-      {
-        requireThat(promptEntry.has("group_index"), "hasGroupIndex").isTrue();
-        requireThat(promptEntry.has("prompt"), "hasPrompt").isTrue();
-        String promptText = promptEntry.path("prompt").asString();
-        requireThat(promptText, "promptText").contains("Post-condition");
-      }
     }
     finally
     {

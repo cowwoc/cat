@@ -1,0 +1,5 @@
+{
+  "status": "closed",
+  "resolution": "implemented",
+  "decomposedInto": ["2.1-port-lock-and-worktree", "2.1-port-standalone-scripts", "2.1-port-issue-discovery", "2.1-port-work-prepare"]
+}

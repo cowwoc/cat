@@ -1,0 +1,6 @@
+{
+  "status": "closed",
+  "resolution": "implemented post-closure bugfix restoring SHA+path input model for context minimization",
+  "targetBranch": "v2.1",
+  "dependencies": ["add-subagent-context-minimization-concept"]
+}

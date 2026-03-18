@@ -36,7 +36,7 @@ ISSUE_BRANCH="${ISSUE}"
 WORKTREE="${WORKTREES_DIR}/${SUBAGENT_BRANCH}"
 
 # Verify subagent results collected
-# Check parent STATE.md for ready_for_merge: true
+# Check parent index.json for ready_for_merge: true
 
 # Verify issue branch exists
 git branch --list "${ISSUE_BRANCH}"
@@ -152,7 +152,7 @@ git worktree list | grep -v "${SUBAGENT_BRANCH}"
 rm -rf "${WORKTREE}" 2>/dev/null || true
 ```
 
-### 8. Update Parent STATE.md
+### 8. Update Parent index.json
 
 ```yaml
 subagents:

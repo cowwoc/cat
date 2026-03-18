@@ -132,7 +132,7 @@ public final class GetIssueCompleteOutput implements SkillOutput
 
     if (result instanceof DiscoveryResult.Found found)
     {
-      Path planPath = Path.of(found.issuePath()).resolve("PLAN.md");
+      Path planPath = Path.of(found.issuePath()).resolve("plan.md");
       String nextGoal = IssueGoalReader.readGoalFromPlan(planPath);
       return getIssueCompleteBox(issueName, found.issueId(), nextGoal, targetBranch);
     }

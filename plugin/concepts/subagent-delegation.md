@@ -28,7 +28,7 @@ orchestrating agent needs to know the exact blocker to adjust its delegation str
 
 **General-purpose subagents have access to ALL tools**, including Task and Skill.
 
-If a PLAN.md or delegation prompt specifies using a skill (e.g., `cat:instruction-builder-agent`), invoke it directly via the Skill
+If a plan.md or delegation prompt specifies using a skill (e.g., `cat:instruction-builder-agent`), invoke it directly via the Skill
 tool. Do not assume tool limitations exist - subagents have full tool access.
 
 ## Spawning Subagents: Task vs TaskCreate
@@ -197,13 +197,13 @@ Acceptance criteria define what specific outputs validate successful completion.
 
 **For issue-based delegations** (subagent working on a tracked issue):
 
-1. Read the issue's PLAN.md `## Acceptance Criteria` section
+1. Read the issue's plan.md `## Acceptance Criteria` section
 2. Extract each measurable criterion (scores, test results, build status)
 3. Include criteria in subagent prompt with explicit instruction to produce that output
 4. On subagent completion, verify each criterion has evidence in output
 
 ```yaml
-# Example: PLAN.md says "Execution equivalence verified (score = 1.0 from validation protocol)"
+# Example: plan.md says "Execution equivalence verified (score = 1.0 from validation protocol)"
 subagent_prompt_must_include: |
   ACCEPTANCE CRITERIA:
   - Run validation protocol from cat:instruction-builder-agent on compressed file

@@ -10,18 +10,18 @@ Review phase for `/cat:work`. Runs stakeholder review (Step 5) and deferred conc
 ## Arguments Format
 
 ```
-<catAgentId> <issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <all_commits_compact> <trust> <verify>
+<catAgentId> <issueId> <issuePath> <worktreePath> <issueBranch> <targetBranch> <allCommitsCompact> <trust> <verify>
 ```
 
 | Position | Name | Example |
 |----------|------|---------|
 | 1 | catAgentId | agent ID passed through from parent |
-| 2 | issue_id | `2.1-issue-name` |
-| 3 | issue_path | `/workspace/.cat/issues/v2/v2.1/issue-name` |
-| 4 | worktree_path | `${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name` |
-| 5 | issue_branch | `2.1-issue-name` |
-| 6 | target_branch | `v2.1` |
-| 7 | all_commits_compact | compact format `hash:type,hash:type` |
+| 2 | issueId | `2.1-issue-name` |
+| 3 | issuePath | `/workspace/.cat/issues/v2/v2.1/issue-name` |
+| 4 | worktreePath | `${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name` |
+| 5 | issueBranch | `2.1-issue-name` |
+| 6 | targetBranch | `v2.1` |
+| 7 | allCommitsCompact | compact format `hash:type,hash:type` |
 | 8 | trust | `medium` |
 | 9 | verify | `changed` |
 
@@ -35,7 +35,7 @@ Return JSON when complete:
   "all_concerns": [...],
   "fixed_concerns": [...],
   "deferred_concerns": [...],
-  "all_commits_compact": "hash:type,hash:type"
+  "allCommitsCompact": "hash:type,hash:type"
 }
 ```
 
@@ -45,7 +45,7 @@ Parse arguments and display the **Reviewing phase** banner in a chained call:
 
 ```bash
 read CAT_AGENT_ID ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH ALL_COMMITS_COMPACT TRUST VERIFY <<< "$ARGUMENTS" && \
-PLAN_MD="${ISSUE_PATH}/PLAN.md" && \
+PLAN_MD="${ISSUE_PATH}/plan.md" && \
 "${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase reviewing
 ```
 
@@ -367,7 +367,7 @@ and return:
   "all_concerns": [...],
   "fixed_concerns": [],
   "deferred_concerns": [...],
-  "all_commits_compact": "${ALL_COMMITS_COMPACT}"
+  "allCommitsCompact": "${ALL_COMMITS_COMPACT}"
 }
 ```
 
@@ -580,7 +580,7 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
        {
          "status": "SUCCESS|PARTIAL|FAILED",
          "commits": [{"hash": "...", "message": "...", "type": "..."}],
-         "files_changed": N,
+         "filesChanged": N,
          "concern_addressed": true|false
        }
        ```
@@ -656,7 +656,7 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
         {
           "status": "SUCCESS|PARTIAL|FAILED",
           "commits": [{"hash": "...", "message": "...", "type": "..."}],
-          "files_changed": N,
+          "filesChanged": N,
           "concern_addressed": true|false
         }
         ```
@@ -1135,7 +1135,7 @@ Output ONLY this JSON (no surrounding text):
   "all_concerns": [],
   "fixed_concerns": [],
   "deferred_concerns": [],
-  "all_commits_compact": "${ALL_COMMITS_COMPACT}"
+  "allCommitsCompact": "${ALL_COMMITS_COMPACT}"
 }
 ```
 
@@ -1149,7 +1149,7 @@ Where:
 - `all_concerns` = the full list of concern objects from the final review pass
 - `fixed_concerns` = concerns that were fixed in the auto-fix loop
 - `deferred_concerns` = concerns deferred by the patience matrix (may have tracking issues created)
-- `all_commits_compact` = accumulated compact format string including any fix commits added during this phase
+- `allCommitsCompact` = accumulated compact format string including any fix commits added during this phase
 
 **After outputting this JSON, do NOT add any further text.** The orchestrator parses the JSON return value and
 immediately invokes `cat:work-merge-agent` — no user confirmation or additional summary is needed here.

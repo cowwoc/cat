@@ -188,14 +188,14 @@ public final class DetectRepeatedFailures implements PostToolHandler
       **Failure Count**: 2+ consecutive failures detected.
 
       **Possible Causes**:
-      1. **Goal Drift**: You may be attempting actions not in the current PLAN.md execution step
+      1. **Goal Drift**: You may be attempting actions not in the current plan.md execution step
       2. **Legitimate Error**: The current step has a genuine technical issue
 
       **RECOMMENDED ACTION**:
       Consider running `/cat:recover-from-drift` to verify you are aligned with the current execution step.
 
       The recovery skill will:
-      - Read the current PLAN.md
+      - Read the current plan.md
       - Identify which step should be active
       - Compare your failing action against the plan
       - Determine if drift has occurred

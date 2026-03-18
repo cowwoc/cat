@@ -56,7 +56,7 @@ public final class PreWriteHook implements HookHandler
     this.handlers = List.of(
       new EnforceWorkflowCompletion(),
       new WarnBaseBranchEdit(scope),
-      new StateSchemaValidator(),
+      new StateSchemaValidator(scope),
       new BlockGitconfigFileWrite(),
       new EnforcePluginFileIsolation(),
       new EnforceWorktreePathIsolation(scope));

@@ -14,7 +14,7 @@ The git log should read like a changelog of what shipped, not a diary of plannin
 | Event | Commit? | Why |
 |-------|---------|-----|
 | PROJECT.md + ROADMAP.md created | YES | Project initialization |
-| PLAN.md created | NO | Intermediate - commit with first issue |
+| plan.md created | NO | Intermediate - commit with first issue |
 | RESEARCH.md created | NO | Intermediate artifact |
 | **Issue closed** | YES | Implementation + planning metadata |
 | Handoff created | YES | WIP state preserved |
@@ -42,7 +42,7 @@ Use ONLY these types when committing in a CAT-managed project:
 | File Location | Commit Type | Examples |
 |---------------|-------------|----------|
 | `.cat/*.md` | `planning:` | PROJECT.md, ROADMAP.md |
-| `.cat/issues/v*/` | `planning:` | STATE.md, PLAN.md, CHANGELOG.md |
+| `.cat/issues/v*/` | `planning:` | index.json, plan.md, CHANGELOG.md |
 | `.cat/retrospectives/` | `config:` | index.json, mistakes-*.json, retrospectives-*.json (Claude-facing) |
 | `.claude/hooks/`, `.claude/settings.json` | `config:` | hooks, Claude Code settings |
 | `CLAUDE.md`, skills, workflows | `config:` | Claude-facing behavior rules |
@@ -105,13 +105,13 @@ A single issue typically produces **one or two commits**, but may have more:
 
 **Multi-Commit Issues**: An issue may be implemented across multiple commits when the work spans
 multiple sessions, requires incremental progress, or addresses distinct aspects of the same issue.
-Commits are tracked via STATE.md file history, not commit footers.
+Commits are tracked via index.json file history, not commit footers.
 
-**Issue STATE.md vs General Config:**
-- **Issue's STATE.md changes** → **SAME commit** as implementation (always)
+**Issue's index.json vs General Config:**
+- **Issue's index.json changes** → **SAME commit** as implementation (always)
 - **General config** (adding dependencies, updating tooling) → Can be **separate commit**
 
-Any changes to an issue's STATE.md (marking complete, updating status, adding notes) are part of
+Any changes to an issue's index.json (marking complete, updating status) are part of
 implementing that issue and belong in the same commit as the code changes.
 
 **Convention/Infrastructure Updates:**
@@ -136,18 +136,18 @@ This keeps issue branches focused on deliverables and ensures infrastructure cha
 immediately available to all branches.
 
 ```
-# ✅ CORRECT - Implementation + STATE.md update (ONE commit)
+# ✅ CORRECT - Implementation + index.json update (ONE commit)
 abc1234 feature: add nested annotation type support
-# (includes STATE.md changes for this issue)
+# (includes index.json changes for this issue)
 
 # ✅ CORRECT - Issue with general config changes (TWO commits)
 abc1234 feature: add nested annotation type support
 def5678 config: add new dependency for annotation support
 
-# ❌ WRONG - STATE.md changes in separate commit
+# ❌ WRONG - index.json changes in separate commit
 abc1234 feature: add nested annotation type support
 def5678 config: mark add-nested-annotation-type-support complete
-# (STATE.md changes belong with the feature commit)
+# (index.json changes belong with the feature commit)
 ```
 
 Use `test:` type ONLY for standalone test changes (no production code).
@@ -166,7 +166,7 @@ abc1234 bugfix: fix comment parsing (includes tests)
 
 ## Finding Commits by Issue
 
-Implementation commits are tracked via STATE.md file history, not commit footers.
+Implementation commits are tracked via index.json file history, not commit footers.
 
 ### Finding Implementation Commits
 
@@ -174,16 +174,16 @@ Implementation commits are tracked via STATE.md file history, not commit footers
 # Find all commits that touched this issue
 git log --oneline -- .cat/issues/v2/v2.1/issue-name/
 
-# Find the most recent implementation commit (usually STATE.md completion)
-git log --oneline -1 -- .cat/issues/v2/v2.1/issue-name/STATE.md
+# Find the most recent implementation commit (usually index.json completion)
+git log --oneline -1 -- .cat/issues/v2/v2.1/issue-name/index.json
 
 # See full implementation history with diffs
-git log -p -- .cat/issues/v2/v2.1/issue-name/STATE.md
+git log -p -- .cat/issues/v2/v2.1/issue-name/index.json
 ```
 
 **Why this works:**
-- STATE.md is updated when the issue is closed
-- STATE.md commits are part of the implementation commit (per M076)
+- index.json is updated when the issue is closed
+- index.json commits are part of the implementation commit
 - Git's file history tracking survives rebases automatically
 - No manual commit hash maintenance required
 
@@ -191,8 +191,8 @@ git log -p -- .cat/issues/v2/v2.1/issue-name/STATE.md
 
 | Resolution | How to Find Commits |
 |------------|---------------------|
-| `implemented` | `git log -- .cat/issues/v*/v*.*/issue-name/STATE.md` |
-| `duplicate` | Check STATE.md for `Duplicate Of`, search for that issue |
+| `implemented` | `git log -- .cat/issues/v*/v*.*/issue-name/index.json` |
+| `duplicate` | Check index.json for `resolution` field, search for that issue |
 | `obsolete` | No implementation commit exists |
 
 See [issue-resolution.md](issue-resolution.md) for detailed resolution handling.

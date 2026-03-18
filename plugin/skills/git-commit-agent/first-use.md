@@ -115,9 +115,9 @@ Changes:
 
 ## Finding Commits for CAT Issues
 
-**Commits are tracked via STATE.md file history, not commit footers.**
+**Commits are tracked via index.json file history, not commit footers.**
 
-When an issue is completed, STATE.md is updated in the same commit as the implementation
+When an issue is completed, index.json is updated in the same commit as the implementation
 (per M076). This creates a permanent link between the commit and the issue.
 
 ```
@@ -138,7 +138,7 @@ for JDK 14+ switch expressions.
 git log --oneline -- .cat/issues/v3/v3.0/add-yield-statement-support/
 
 # Find the completion commit
-git log --oneline -1 -- .cat/issues/v3/v3.0/add-yield-statement-support/STATE.md
+git log --oneline -1 -- .cat/issues/v3/v3.0/add-yield-statement-support/index.json
 ```
 
 **Why no footer needed:** Git's file history tracking survives rebases automatically and

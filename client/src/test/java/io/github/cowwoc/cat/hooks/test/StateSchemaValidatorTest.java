@@ -7,7 +7,6 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
 import io.github.cowwoc.cat.hooks.JvmScope;
@@ -27,28 +26,25 @@ import java.nio.file.Path;
 public final class StateSchemaValidatorTest
 {
   /**
-   * Verifies that a valid open STATE.md file is accepted.
+   * Verifies that a valid open index.json file is accepted.
    */
   @Test
-  public void validOpenStateIsAccepted() throws IOException
+  public void validOpenIndexIsAccepted() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
 
       String content = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 0%
-        - **Dependencies:** []
-        - **Blocks:** []
+        {
+          "status": "open"
+        }
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -63,28 +59,27 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that a valid in-progress STATE.md file is accepted.
+   * Verifies that a valid in-progress index.json file is accepted.
    */
   @Test
-  public void validInProgressStateIsAccepted() throws IOException
+  public void validInProgressIndexIsAccepted() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
 
       String content = """
-        # State
-
-        - **Status:** in-progress
-        - **Progress:** 50%
-        - **Dependencies:** []
-        - **Blocks:** [v2.1-other-issue]
+        {
+          "status": "in-progress",
+          "dependencies": [],
+          "blocks": ["2.1-other-issue"]
+        }
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -99,28 +94,27 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that a valid blocked STATE.md file is accepted.
+   * Verifies that a valid blocked index.json file is accepted.
    */
   @Test
-  public void validBlockedStateIsAccepted() throws IOException
+  public void validBlockedIndexIsAccepted() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
 
       String content = """
-        # State
-
-        - **Status:** blocked
-        - **Progress:** 25%
-        - **Dependencies:** [v2.1-other-issue]
-        - **Blocks:** []
+        {
+          "status": "blocked",
+          "dependencies": ["2.1-other-issue"],
+          "blocks": []
+        }
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -135,29 +129,26 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that a valid closed STATE.md file with resolution is accepted.
+   * Verifies that a valid closed index.json file with resolution is accepted.
    */
   @Test
-  public void validClosedStateWithResolutionIsAccepted() throws IOException
+  public void validClosedIndexWithResolutionIsAccepted() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
 
       String content = """
-        # State
-
-        - **Status:** closed
-        - **Progress:** 100%
-        - **Resolution:** implemented
-        - **Dependencies:** []
-        - **Blocks:** []
+        {
+          "status": "closed",
+          "resolution": "implemented"
+        }
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -172,29 +163,26 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that a closed STATE.md with duplicate resolution is accepted.
+   * Verifies that a closed index.json with duplicate resolution is accepted.
    */
   @Test
-  public void closedStateWithDuplicateResolutionIsAccepted() throws IOException
+  public void closedIndexWithDuplicateResolutionIsAccepted() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
 
       String content = """
-        # State
-
-        - **Status:** closed
-        - **Progress:** 100%
-        - **Resolution:** duplicate (v2.1-other-issue)
-        - **Dependencies:** []
-        - **Blocks:** []
+        {
+          "status": "closed",
+          "resolution": "duplicate 2.1-other-issue"
+        }
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -209,29 +197,26 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that STATE.md with parent field is accepted.
+   * Verifies that index.json with parent field is accepted.
    */
   @Test
-  public void stateWithParentIsAccepted() throws IOException
+  public void indexWithParentIsAccepted() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
 
       String content = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 25%
-        - **Parent:** v2.1-parent-issue
-        - **Dependencies:** []
-        - **Blocks:** []
+        {
+          "status": "open",
+          "parent": "v2.1-parent-issue"
+        }
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -246,28 +231,26 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that STATE.md with dependencies is accepted.
+   * Verifies that index.json with dependencies array is accepted.
    */
   @Test
-  public void stateWithDependenciesIsAccepted() throws IOException
+  public void indexWithDependenciesIsAccepted() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
 
       String content = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 0%
-        - **Dependencies:** [v2.1-dep1, v2.1-dep2]
-        - **Blocks:** []
+        {
+          "status": "open",
+          "dependencies": ["2.1-dep1", "2.1-dep2"]
+        }
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -282,33 +265,71 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that missing Status key is rejected.
+   * Verifies that index.json with all optional fields is accepted.
    */
   @Test
-  public void missingStatusKeyIsRejected() throws IOException
+  public void indexWithAllOptionalFieldsIsAccepted() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
 
       String content = """
-        # State
-
-        - **Progress:** 0%
-        - **Dependencies:** []
-        - **Blocks:** []
+        {
+          "status": "closed",
+          "resolution": "implemented",
+          "targetBranch": "v2.1",
+          "dependencies": ["2.1-dep1"],
+          "blocks": ["2.1-other"],
+          "parent": "v2.1-parent-issue",
+          "decomposedInto": ["2.1-sub1", "2.1-sub2"]
+        }
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
+      toolInput.put("content", content);
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.reason(), "reason").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that missing status field is rejected.
+   */
+  @Test
+  public void missingStatusFieldIsRejected() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
+
+      String content = """
+        {
+          "dependencies": [],
+          "blocks": []
+        }
+        """;
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
 
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Missing mandatory key 'Status'");
+      requireThat(result.reason(), "reason").contains("Missing mandatory field 'status'");
     }
     finally
     {
@@ -317,33 +338,32 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that missing Progress key is rejected.
+   * Verifies that non-standard fields are rejected.
    */
   @Test
-  public void missingProgressKeyIsRejected() throws IOException
+  public void nonStandardFieldIsRejected() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
 
       String content = """
-        # State
-
-        - **Status:** open
-        - **Dependencies:** []
-        - **Blocks:** []
+        {
+          "status": "open",
+          "custom_field": "some value"
+        }
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
 
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Missing mandatory key 'Progress'");
+      requireThat(result.reason(), "reason").contains("Non-standard field 'custom_field'");
     }
     finally
     {
@@ -352,114 +372,7 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that missing Dependencies key is rejected.
-   */
-  @Test
-  public void missingDependenciesKeyIsRejected() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 0%
-        - **Blocks:** []
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Missing mandatory key 'Dependencies'");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that missing Blocks key is rejected.
-   */
-  @Test
-  public void missingBlocksKeyIsRejected() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 0%
-        - **Dependencies:** []
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Missing mandatory key 'Blocks'");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that non-standard keys are rejected.
-   */
-  @Test
-  public void nonStandardKeyIsRejected() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 0%
-        - **Dependencies:** []
-        - **Blocks:** []
-        - **CustomField:** some value
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Non-standard key 'CustomField'");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that invalid Status value is rejected.
+   * Verifies that invalid status value is rejected.
    */
   @Test
   public void invalidStatusValueIsRejected() throws IOException
@@ -468,25 +381,22 @@ public final class StateSchemaValidatorTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
 
       String content = """
-        # State
-
-        - **Status:** pending
-        - **Progress:** 0%
-        - **Dependencies:** []
-        - **Blocks:** []
+        {
+          "status": "pending"
+        }
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
 
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Invalid Status value 'pending'");
+      requireThat(result.reason(), "reason").contains("Invalid status value 'pending'");
     }
     finally
     {
@@ -495,151 +405,7 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that invalid Progress format is rejected.
-   */
-  @Test
-  public void invalidProgressFormatIsRejected() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 50 percent
-        - **Dependencies:** []
-        - **Blocks:** []
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Invalid Progress format");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that Progress value over 100 is rejected.
-   */
-  @Test
-  public void progressOver100IsRejected() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 150%
-        - **Dependencies:** []
-        - **Blocks:** []
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Progress value out of range");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that invalid Dependencies format is rejected.
-   */
-  @Test
-  public void invalidDependenciesFormatIsRejected() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 0%
-        - **Dependencies:** none
-        - **Blocks:** []
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Invalid Dependencies format");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that invalid Blocks format is rejected.
-   */
-  @Test
-  public void invalidBlocksFormatIsRejected() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 0%
-        - **Dependencies:** []
-        - **Blocks:** none
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Invalid Blocks format");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that closed status without Resolution is rejected.
+   * Verifies that closed status without resolution is rejected.
    */
   @Test
   public void closedStatusWithoutResolutionIsRejected() throws IOException
@@ -648,25 +414,22 @@ public final class StateSchemaValidatorTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
 
       String content = """
-        # State
-
-        - **Status:** closed
-        - **Progress:** 100%
-        - **Dependencies:** []
-        - **Blocks:** []
+        {
+          "status": "closed"
+        }
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
 
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Resolution is required when Status is 'closed'");
+      requireThat(result.reason(), "reason").contains("resolution is required when status is 'closed'");
     }
     finally
     {
@@ -675,7 +438,7 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that invalid Resolution value is rejected.
+   * Verifies that invalid resolution value is rejected.
    */
   @Test
   public void invalidResolutionValueIsRejected() throws IOException
@@ -684,26 +447,23 @@ public final class StateSchemaValidatorTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
 
       String content = """
-        # State
-
-        - **Status:** closed
-        - **Progress:** 100%
-        - **Resolution:** completed
-        - **Dependencies:** []
-        - **Blocks:** []
+        {
+          "status": "closed",
+          "resolution": "completed"
+        }
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
 
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Invalid Resolution value");
+      requireThat(result.reason(), "reason").contains("Invalid resolution value");
     }
     finally
     {
@@ -712,7 +472,7 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that invalid Parent format is rejected.
+   * Verifies that invalid parent format is rejected.
    */
   @Test
   public void invalidParentFormatIsRejected() throws IOException
@@ -721,26 +481,23 @@ public final class StateSchemaValidatorTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
 
       String content = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 0%
-        - **Parent:** Invalid_Parent_Name
-        - **Dependencies:** []
-        - **Blocks:** []
+        {
+          "status": "open",
+          "parent": "Invalid_Parent_Name"
+        }
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
 
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Invalid Parent format");
+      requireThat(result.reason(), "reason").contains("Invalid parent format");
     }
     finally
     {
@@ -749,21 +506,21 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that non-STATE.md files are allowed.
+   * Verifies that non-index.json files are allowed.
    */
   @Test
-  public void nonStateMdFilesAreAllowed() throws IOException
+  public void nonIndexJsonFilesAreAllowed() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
 
       String content = "Any content here";
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/PLAN.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/plan.md");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -778,21 +535,22 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that version-level STATE.md files are allowed without validation.
+   * Verifies that version-level JSON files at the wrong path are allowed without validation.
    */
   @Test
-  public void versionStateMdFilesAreAllowed() throws IOException
+  public void versionLevelJsonFileIsAllowed() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
 
-      String content = "Any content here - version STATE.md has different format";
+      // Version-level path (missing issue directory segment) — pattern does not match
+      String content = "{\"status\": \"open\"}";
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/index.json");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -807,19 +565,19 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that empty STATE.md content is allowed.
+   * Verifies that empty content is allowed (no content to validate for Write-without-content).
    */
   @Test
-  public void emptyStateMdContentIsAllowed() throws IOException
+  public void emptyContentIsAllowed() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", "");
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -843,20 +601,17 @@ public final class StateSchemaValidatorTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
 
       String content = """
-        # State
-
-        - **Status:** closed
-        - **Progress:** 100%
-        - **Resolution:** obsolete (feature was removed in v3.0)
-        - **Dependencies:** []
-        - **Blocks:** []
+        {
+          "status": "closed",
+          "resolution": "obsolete feature was removed in v3.0"
+        }
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -880,20 +635,17 @@ public final class StateSchemaValidatorTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
 
       String content = """
-        # State
-
-        - **Status:** closed
-        - **Progress:** 100%
-        - **Resolution:** won't-fix (out of scope for v2.1)
-        - **Dependencies:** []
-        - **Blocks:** []
+        {
+          "status": "closed",
+          "resolution": "won't-fix out of scope for v2.1"
+        }
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -917,20 +669,17 @@ public final class StateSchemaValidatorTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
 
       String content = """
-        # State
-
-        - **Status:** closed
-        - **Progress:** 100%
-        - **Resolution:** not-applicable (requirements changed)
-        - **Dependencies:** []
-        - **Blocks:** []
+        {
+          "status": "closed",
+          "resolution": "not-applicable requirements changed"
+        }
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -945,34 +694,27 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that negative Progress value is rejected.
+   * Verifies that invalid JSON content is rejected.
    */
   @Test
-  public void negativeProgressIsRejected() throws IOException
+  public void invalidJsonContentIsRejected() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
 
-      String content = """
-        # State
-
-        - **Status:** open
-        - **Progress:** -5%
-        - **Dependencies:** []
-        - **Blocks:** []
-        """;
+      String content = "not valid json {{{";
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
 
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Invalid Progress format");
+      requireThat(result.reason(), "reason").contains("invalid JSON");
     }
     finally
     {
@@ -981,7 +723,36 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that multiple violations report the first error.
+   * Verifies that a JSON array root element is rejected.
+   */
+  @Test
+  public void jsonArrayRootIsRejected() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
+
+      String content = "[\"status\", \"open\"]";
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
+      toolInput.put("content", content);
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("root element must be a JSON object");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that multiple violations report the first error (missing status).
    */
   @Test
   public void multipleViolationsReportsFirstError() throws IOException
@@ -990,24 +761,23 @@ public final class StateSchemaValidatorTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
 
+      // Missing status, non-standard field — should report status first
       String content = """
-        # State
-
-        - **Progress:** 150%
-        - **Dependencies:** []
-        - **Blocks:** []
+        {
+          "custom_field": "bad"
+        }
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
 
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Missing mandatory key 'Status'");
+      requireThat(result.reason(), "reason").contains("Missing mandatory field 'status'");
     }
     finally
     {
@@ -1016,7 +786,7 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that Resolution field is allowed when Status is open.
+   * Verifies that resolution field is allowed when status is open.
    */
   @Test
   public void resolutionFieldAllowedWhenStatusIsOpen() throws IOException
@@ -1025,20 +795,17 @@ public final class StateSchemaValidatorTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
 
       String content = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 50%
-        - **Resolution:** implemented
-        - **Dependencies:** []
-        - **Blocks:** []
+        {
+          "status": "open",
+          "resolution": "implemented"
+        }
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1053,38 +820,32 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that a STATE.md file containing the non-standard 'Last Updated' field is rejected.
+   * Verifies that the progress field (unsupported in new schema) is rejected.
    */
   @Test
-  public void lastUpdatedFieldIsRejected() throws IOException
+  public void progressFieldIsRejected() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
 
       String content = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 0%
-        - **Dependencies:** []
-        - **Blocks:** []
-        - **Last Updated:** 2026-02-12
+        {
+          "status": "open",
+          "progress": 50
+        }
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
 
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Non-standard key 'Last Updated'");
-      requireThat(result.reason(), "reason").contains("Only these keys are allowed:");
-      requireThat(result.reason(), "reason").contains("Mandatory: Blocks, Dependencies, Progress, Status");
-      requireThat(result.reason(), "reason").contains("Optional: Parent, Resolution, Target Branch");
+      requireThat(result.reason(), "reason").contains("Non-standard field 'progress'");
     }
     finally
     {
@@ -1093,7 +854,7 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that the 'Target Branch' field (written by WorkPrepare) is accepted.
+   * Verifies that the targetBranch optional field is accepted.
    */
   @Test
   public void targetBranchFieldIsAccepted() throws IOException
@@ -1102,20 +863,17 @@ public final class StateSchemaValidatorTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
 
       String content = """
-        # State
-
-        - **Status:** in-progress
-        - **Progress:** 50%
-        - **Dependencies:** []
-        - **Blocks:** []
-        - **Target Branch:** v2.1
+        {
+          "status": "in-progress",
+          "targetBranch": "v2.1"
+        }
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
@@ -1130,36 +888,33 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that the 'Final commit' field (an unsupported agent-generated field) is rejected.
+   * Verifies that the non-standard 'last_updated' field is rejected.
    */
   @Test
-  public void finalCommitFieldIsRejected() throws IOException
+  public void lastUpdatedFieldIsRejected() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
 
       String content = """
-        # State
-
-        - **Status:** closed
-        - **Progress:** 100%
-        - **Resolution:** implemented
-        - **Dependencies:** []
-        - **Blocks:** []
-        - **Final commit:** abc123
+        {
+          "status": "open",
+          "last_updated": "2026-02-12"
+        }
         """;
 
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
 
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Non-standard key 'Final commit'");
+      requireThat(result.reason(), "reason").contains("Non-standard field 'last_updated'");
+      requireThat(result.reason(), "reason").contains("Only these fields are allowed:");
     }
     finally
     {
@@ -1168,996 +923,35 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that a STATE.md file containing the non-standard 'Completed' field is rejected.
+   * Verifies that an Edit tool operation on index.json is validated after applying the replacement.
    */
   @Test
-  public void completedFieldIsRejected() throws IOException
+  public void editOperationAppliesReplacementBeforeValidation() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **Status:** closed
-        - **Progress:** 100%
-        - **Resolution:** implemented
-        - **Dependencies:** []
-        - **Blocks:** []
-        - **Completed:** 2026-02-12
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Non-standard key 'Completed'");
-      requireThat(result.reason(), "reason").contains("Only these keys are allowed:");
-      requireThat(result.reason(), "reason").contains("Mandatory: Blocks, Dependencies, Progress, Status");
-      requireThat(result.reason(), "reason").contains("Optional: Parent, Resolution, Target Branch");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that field keys with leading whitespace are accepted (whitespace is stripped).
-   */
-  @Test
-  public void testFieldKeysWithLeadingWhitespace() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **  Status:** open
-        - **Progress:** 0%
-        - **Dependencies:** []
-        - **Blocks:** []
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isFalse();
-      requireThat(result.reason(), "reason").isEmpty();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that field keys with trailing whitespace are accepted (whitespace is stripped).
-   */
-  @Test
-  public void testFieldKeysWithTrailingWhitespace() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **Status  :** open
-        - **Progress:** 0%
-        - **Dependencies:** []
-        - **Blocks:** []
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isFalse();
-      requireThat(result.reason(), "reason").isEmpty();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that field keys with internal whitespace are rejected.
-   */
-  @Test
-  public void testFieldKeysWithInternalWhitespaceInvalid() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **Final Commit:** abc123
-        - **Status:** open
-        - **Progress:** 0%
-        - **Dependencies:** []
-        - **Blocks:** []
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Non-standard key 'Final Commit'");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that field keys with mixed whitespace (tabs and spaces) are accepted (whitespace is stripped).
-   */
-  @Test
-  public void testFieldKeysWithMixedWhitespace() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = "# State\n\n- **\tStatus\t:** open\n- **Progress:** 0%\n- **Dependencies:** []\n" +
-        "- **Blocks:** []";
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isFalse();
-      requireThat(result.reason(), "reason").isEmpty();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that lowercase 'status' field is case-sensitive and rejected.
-   */
-  @Test
-  public void testStatusFieldCaseInsensitivity() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **status:** open
-        - **Progress:** 0%
-        - **Dependencies:** []
-        - **Blocks:** []
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Missing mandatory key 'Status'");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that lowercase 'progress' field is case-sensitive and rejected.
-   */
-  @Test
-  public void testProgressFieldCaseInsensitivity() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **Status:** open
-        - **progress:** 0%
-        - **Dependencies:** []
-        - **Blocks:** []
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Missing mandatory key 'Progress'");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that lowercase 'dependencies' field is case-sensitive and rejected.
-   */
-  @Test
-  public void testDependenciesFieldCaseInsensitivity() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 0%
-        - **dependencies:** []
-        - **Blocks:** []
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Missing mandatory key 'Dependencies'");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that lowercase 'blocks' field is case-sensitive and rejected.
-   */
-  @Test
-  public void testBlocksFieldCaseInsensitivity() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 0%
-        - **Dependencies:** []
-        - **blocks:** []
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Missing mandatory key 'Blocks'");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that lowercase 'resolution' field is case-sensitive and rejected as non-standard.
-   */
-  @Test
-  public void testResolutionFieldCaseInsensitivity() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **Status:** closed
-        - **Progress:** 100%
-        - **resolution:** implemented
-        - **Dependencies:** []
-        - **Blocks:** []
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Non-standard key 'resolution'");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that lowercase 'parent' field is case-sensitive and rejected.
-   */
-  @Test
-  public void testParentFieldCaseInsensitivity() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 0%
-        - **parent:** v2.1-parent-issue
-        - **Dependencies:** []
-        - **Blocks:** []
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Non-standard key 'parent'");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that non-standard 'Last Updated' combined with missing mandatory 'Status' reports the mandatory key first.
-   */
-  @Test
-  public void testNonStandardKeyWithMissingMandatory() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **Progress:** 0%
-        - **Dependencies:** []
-        - **Blocks:** []
-        - **Last Updated:** 2026-02-12
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Missing mandatory key 'Status'");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that non-standard 'Last Updated' combined with non-standard 'CustomField' reports the first non-standard
-   * key found.
-   */
-  @Test
-  public void testMultipleNonStandardKeys() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 0%
-        - **Dependencies:** []
-        - **Blocks:** []
-        - **Last Updated:** 2026-02-12
-        - **CustomField:** value
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Non-standard key");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that multiple non-standard keys report the first one encountered.
-   */
-  @Test
-  public void testMultipleNonStandardKeysReportsFirst() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 0%
-        - **Dependencies:** []
-        - **Blocks:** []
-        - **CustomField1:** value1
-        - **CustomField2:** value2
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      String reason = result.reason();
-      // Should contain one of the custom fields mentioned
-      boolean hasCustomField = reason.contains("CustomField");
-      requireThat(hasCustomField, "shouldContainCustomField").isTrue();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that non-standard key combined with invalid Progress value reports non-standard key first.
-   */
-  @Test
-  public void testNonStandardKeyWithInvalidValue() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **Status:** open
-        - **Progress:** invalid
-        - **Dependencies:** []
-        - **Blocks:** []
-        - **CustomField:** value
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Non-standard key 'CustomField'");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that special characters in field keys (pipes, brackets, parentheses) are parsed but rejected.
-   */
-  @Test
-  public void testSpecialCharactersAreParsedButRejected() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 0%
-        - **Dependencies:** []
-        - **Blocks:** []
-        - **Field|Name:** value
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Non-standard key");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that a STATE.md file containing the non-standard 'Closed' field is rejected.
-   */
-  @Test
-  public void closedFieldIsRejected() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **Status:** closed
-        - **Progress:** 100%
-        - **Resolution:** implemented
-        - **Dependencies:** []
-        - **Blocks:** []
-        - **Closed:** 2026-02-12
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Non-standard key 'Closed'");
-      requireThat(result.reason(), "reason").contains("Mandatory: Blocks, Dependencies, Progress, Status");
-      requireThat(result.reason(), "reason").contains("Optional: Parent, Resolution, Target Branch");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that uppercase 'CLOSED' status correctly triggers the Resolution requirement.
-   */
-  @Test
-  public void testUppercaseClosedStatusRequiresResolution() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **Status:** CLOSED
-        - **Progress:** 100%
-        - **Dependencies:** []
-        - **Blocks:** []
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Resolution is required when Status is 'closed'");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that a STATE.md file containing the non-standard 'Started' field is rejected.
-   */
-  @Test
-  public void startedFieldIsRejected() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **Status:** in-progress
-        - **Progress:** 50%
-        - **Dependencies:** []
-        - **Blocks:** []
-        - **Started:** 2026-02-12
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Non-standard key 'Started'");
-      requireThat(result.reason(), "reason").contains("Only these keys are allowed:");
-      requireThat(result.reason(), "reason").contains("Mandatory: Blocks, Dependencies, Progress, Status");
-      requireThat(result.reason(), "reason").contains("Optional: Parent, Resolution, Target Branch");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that a STATE.md file containing the non-standard 'Tokens Used' field is rejected.
-   */
-  @Test
-  public void tokensUsedFieldIsRejected() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String content = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 0%
-        - **Dependencies:** []
-        - **Blocks:** []
-        - **Tokens Used:** 12345
-        """;
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/STATE.md");
-      toolInput.put("content", content);
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Non-standard key 'Tokens Used'");
-      requireThat(result.reason(), "reason").contains("Only these keys are allowed:");
-      requireThat(result.reason(), "reason").contains("Mandatory: Blocks, Dependencies, Progress, Status");
-      requireThat(result.reason(), "reason").contains("Optional: Parent, Resolution, Target Branch");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that an Edit call adding a non-standard field to STATE.md is blocked.
-   */
-  @Test
-  public void editWithNonStandardFieldIsBlocked() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String diskContent = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 0%
-        - **Dependencies:** []
-        - **Blocks:** []
-        """;
-
-      // Write a valid STATE.md file to disk at the path expected by the Edit toolInput
-      Path issueDir = tempDir.resolve(".cat/issues/v2/v2.1/test-issue");
+      // Create a valid index.json file on disk
+      Path issueDir = tempDir.resolve(".cat").resolve("issues").resolve("v2").
+        resolve("v2.1").resolve("test-issue");
       Files.createDirectories(issueDir);
-      Path stateMd = issueDir.resolve("STATE.md");
-      Files.writeString(stateMd, diskContent, UTF_8);
+      Path indexFile = issueDir.resolve("index.json");
+      Files.writeString(indexFile, "{\"status\": \"open\"}");
 
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator(scope);
+
+      // Edit operation: replace "open" with "closed" (without resolution → should be blocked)
       ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", stateMd.toString());
-      toolInput.put("old_string", "- **Blocks:** []");
-      toolInput.put("new_string", "- **Blocks:** []\n- **Stakeholder Review:** xyz");
+      toolInput.put("file_path", indexFile.toString());
+      toolInput.put("old_string", "\"open\"");
+      toolInput.put("new_string", "\"closed\"");
 
       FileWriteHandler.Result result = validator.check(toolInput, "session-123");
 
+      // "closed" without "resolution" should be blocked
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Stakeholder Review");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that an Edit call making a valid change to STATE.md is allowed.
-   */
-  @Test
-  public void editWithValidChangeIsAllowed() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String diskContent = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 0%
-        - **Dependencies:** []
-        - **Blocks:** []
-        """;
-
-      Path issueDir = tempDir.resolve(".cat/issues/v2/v2.1/test-issue");
-      Files.createDirectories(issueDir);
-      Path stateMd = issueDir.resolve("STATE.md");
-      Files.writeString(stateMd, diskContent, UTF_8);
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", stateMd.toString());
-      toolInput.put("old_string", "- **Status:** open\n- **Progress:** 0%");
-      toolInput.put("new_string", "- **Status:** closed\n- **Progress:** 100%\n- **Resolution:** implemented");
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isFalse();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that an Edit call with a non-existent file fails open (is allowed).
-   */
-  @Test
-  public void editWithMissingFileReturnsError() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", tempDir.resolve(".cat/issues/v2/v2.1/nonexistent/STATE.md").toString());
-      toolInput.put("old_string", "- **Blocks:** []");
-      toolInput.put("new_string", "- **Blocks:** []\n- **Stakeholder Review:** xyz");
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      // File does not exist, so applyEdit() throws IOException. This should be reported to the
-      // user as a blocked edit with the error details, not silently allowed.
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Edit validation failed");
-      requireThat(result.reason(), "reason").contains("NoSuchFileException");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that an Edit replacing only the first occurrence is validated correctly when oldString appears
-   * multiple times in STATE.md.
-   * <p>
-   * When "[]" appears in both "- **Dependencies:** []" and "- **Blocks:** []", the Edit tool replaces only
-   * the first match. Replacing "[]" with "[dep-a]" must yield "- **Dependencies:** [dep-a]" while leaving
-   * "- **Blocks:** []" untouched — and the resulting content must be valid.
-   */
-  @Test
-  public void editWithMultipleOccurrencesOfOldStringReplacesFirstOnly() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      // "[]" appears twice: once in Dependencies and once in Blocks
-      String diskContent = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 0%
-        - **Dependencies:** []
-        - **Blocks:** []
-        """;
-
-      Path issueDir = tempDir.resolve(".cat/issues/v2/v2.1/test-issue");
-      Files.createDirectories(issueDir);
-      Path stateMd = issueDir.resolve("STATE.md");
-      Files.writeString(stateMd, diskContent, UTF_8);
-
-      // Replace first occurrence of "[]" with "[dep-a]"; Blocks still has "[]"
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", stateMd.toString());
-      toolInput.put("old_string", "[]");
-      toolInput.put("new_string", "[dep-a]");
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      // Result must be allowed — the reconstructed content is a valid open STATE.md
-      requireThat(result.blocked(), "blocked").isFalse();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that an Edit call whose oldString is not present in the file is blocked (fail-fast).
-   * <p>
-   * When oldString is missing from the file, the validator cannot reconstruct the post-edit content.
-   * Rather than silently allowing the edit, it blocks with a clear error message.
-   */
-  @Test
-  public void editWithOldStringNotFoundInFileIsBlocked() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String diskContent = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 0%
-        - **Dependencies:** []
-        - **Blocks:** []
-        """;
-
-      Path issueDir = tempDir.resolve(".cat/issues/v2/v2.1/test-issue");
-      Files.createDirectories(issueDir);
-      Path stateMd = issueDir.resolve("STATE.md");
-      Files.writeString(stateMd, diskContent, UTF_8);
-
-      // oldString does not exist in the file
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", stateMd.toString());
-      toolInput.put("old_string", "- **Status:** in_progress");
-      toolInput.put("new_string", "- **Status:** closed\n- **Progress:** 100%\n- **Resolution:** implemented");
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      // Validator should block — oldString not found means we can't validate the post-edit content
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("old_string not found");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that an Edit that changes Status to an invalid value is blocked.
-   */
-  @Test
-  public void editResultingInInvalidStatusIsBlocked() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      StateSchemaValidator validator = new StateSchemaValidator();
-
-      String diskContent = """
-        # State
-
-        - **Status:** open
-        - **Progress:** 0%
-        - **Dependencies:** []
-        - **Blocks:** []
-        """;
-
-      Path issueDir = tempDir.resolve(".cat/issues/v2/v2.1/test-issue");
-      Files.createDirectories(issueDir);
-      Path stateMd = issueDir.resolve("STATE.md");
-      Files.writeString(stateMd, diskContent, UTF_8);
-
-      // Replace Status with an invalid value
-      ObjectNode toolInput = mapper.createObjectNode();
-      toolInput.put("file_path", stateMd.toString());
-      toolInput.put("old_string", "- **Status:** open");
-      toolInput.put("new_string", "- **Status:** pending");
-
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
-
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Status");
+      requireThat(result.reason(), "reason").contains("resolution is required when status is 'closed'");
     }
     finally
     {

@@ -1,0 +1,7 @@
+{
+  "status": "closed",
+  "resolution": "implemented",
+  "dependencies": ["port-display-scripts-to-java", "port-git-scripts-to-java", "port-infra-scripts-to-java", "port-statusline-scripts-to-java", "port-workflow-scripts-to-java"],
+  "blocks": ["add-java-build-to-ci"],
+  "decomposedInto": ["2.1-java-jdk-infrastructure", "2.1-java-core-hooks", "2.1-java-skill-handlers", "2.1-java-bash-handlers", "2.1-java-other-handlers", "2.1-migrate-enforce-hooks", "2.1-migrate-token-counting", "2.1-migrate-python-tests", "2.1-cleanup-python-files"]
+}

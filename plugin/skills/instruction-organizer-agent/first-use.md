@@ -782,17 +782,17 @@ Extracted **67 semantic units** from original document, categorized as:
 | Category | Count | Examples |
 |----------|-------|----------|
 | MAPPING | 26 | File locations → commit types, change types → override types, resolution → search method |
-| RULE | 14 | STATE.md same commit, test: only standalone, commits tracked via file history |
+| RULE | 14 | index.json same commit, test: only standalone, commits tracked via file history |
 | PRINCIPLE | 4 | Commit outcomes not process, WHAT changed not WHERE, default overridable |
 | REQUIREMENT | 1 | Use ONLY standard types |
 | PROHIBITION | 1 | NOT VALID: feat, fix, chore, build, ci, perf |
 | SEQUENCE | 1 | 5-step workflow for convention updates |
 | FORMAT | 1 | `{type}: {description}` |
 | CATEGORY | 2 | Implementation squash, infrastructure squash |
-| EXAMPLE-CORRECT | 2 | ONE commit (feature+STATE.md), single commit (bugfix+test) |
-| EXAMPLE-WRONG | 2 | STATE.md in separate commit, separate test+bugfix commits |
+| EXAMPLE-CORRECT | 2 | ONE commit (feature+index.json), single commit (bugfix+test) |
+| EXAMPLE-WRONG | 2 | index.json in separate commit, separate test+bugfix commits |
 | PROCEDURE | 3 | git log commands to find commits by issue |
-| REASON | 1 | Why STATE.md file history tracking works |
+| REASON | 1 | Why index.json file history tracking works |
 | REFERENCE | 1 | See issue-resolution.md for resolution handling |
 
 **Key Observation**: The dominant category is MAPPING (26/67 = 39%) — lookup tables with no

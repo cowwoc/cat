@@ -37,7 +37,7 @@ public final class DetectTokenThresholdTest
       String sessionId = "test-session-low";
       createSessionFile(tempDir, sessionId, 20_000, 10_000);
 
-      DetectTokenThreshold handler = new DetectTokenThreshold(tempDir);
+      DetectTokenThreshold handler = new DetectTokenThreshold(scope);
       JsonNode toolResult = mapper.readTree("{}");
       JsonNode hookData = mapper.readTree("{}");
 
@@ -65,7 +65,7 @@ public final class DetectTokenThresholdTest
       String sessionId = "test-session-soft";
       createSessionFile(tempDir, sessionId, 40_000, 25_000);
 
-      DetectTokenThreshold handler = new DetectTokenThreshold(tempDir);
+      DetectTokenThreshold handler = new DetectTokenThreshold(scope);
       JsonNode toolResult = mapper.readTree("{}");
       JsonNode hookData = mapper.readTree("{}");
 
@@ -93,7 +93,7 @@ public final class DetectTokenThresholdTest
       String sessionId = "test-session-strong";
       createSessionFile(tempDir, sessionId, 50_000, 35_000);
 
-      DetectTokenThreshold handler = new DetectTokenThreshold(tempDir);
+      DetectTokenThreshold handler = new DetectTokenThreshold(scope);
       JsonNode toolResult = mapper.readTree("{}");
       JsonNode hookData = mapper.readTree("{}");
 
@@ -118,7 +118,7 @@ public final class DetectTokenThresholdTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      DetectTokenThreshold handler = new DetectTokenThreshold(tempDir);
+      DetectTokenThreshold handler = new DetectTokenThreshold(scope);
       JsonNode toolResult = mapper.readTree("{}");
       JsonNode hookData = mapper.readTree("{}");
 
@@ -148,7 +148,7 @@ public final class DetectTokenThresholdTest
       Files.createDirectories(sessionsDir);
       Files.writeString(sessionsDir.resolve(sessionId + ".json"), "{}");
 
-      DetectTokenThreshold handler = new DetectTokenThreshold(tempDir);
+      DetectTokenThreshold handler = new DetectTokenThreshold(scope);
       JsonNode toolResult = mapper.readTree("{}");
       JsonNode hookData = mapper.readTree("{}");
 

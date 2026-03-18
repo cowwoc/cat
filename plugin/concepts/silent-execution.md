@@ -63,8 +63,8 @@ Skill B's preprocessor runs the command invisibly using the passed arguments.
 ┌──────────────────────────────────────────────────────┐
 │ Skill A (orchestrator)                               │
 │                                                      │
-│   1. Agent determines issue_id, target_branch, etc.    │
-│   2. Invokes: /cat:skill-b issue_id target_branch      │
+│   1. Agent determines issueId, targetBranch, etc.    │
+│   2. Invokes: /cat:skill-b issueId targetBranch      │
 └──────────────────┬───────────────────────────────────┘
                    │
                    ▼
@@ -88,7 +88,7 @@ Skill B's preprocessor runs the command invisibly using the passed arguments.
 
 ```markdown
 ## Next Issue
-Run `get-next-issue-box --completed-issue "${issue_id}" ...` to generate the box.
+Run `get-next-issue-box --completed-issue "${issueId}" ...` to generate the box.
 ```
 
 Agent makes a visible Bash tool call. User sees the command.

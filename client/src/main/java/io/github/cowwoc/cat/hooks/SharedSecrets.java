@@ -7,6 +7,7 @@
 package io.github.cowwoc.cat.hooks;
 
 import io.github.cowwoc.cat.hooks.util.IssueDiscovery;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
@@ -104,21 +105,23 @@ public final class SharedSecrets
   }
 
   /**
-   * Parses the status field from STATE.md lines and validates it against canonical values.
+   * Parses the status field from index.json content and validates it against canonical values.
    *
-   * @param lines the lines from the STATE.md file
-   * @param statePath the path to the STATE.md file (used in error messages only)
-   * @return the validated status string
-   * @throws NullPointerException if {@code lines} or {@code statePath} are null
-   * @throws IOException if the status field is missing or the status value is non-canonical
+   * @param content the JSON content of the index.json file
+   * @param indexPath the path to the index.json file (used in error messages only)
+   * @param mapper the JSON mapper to use for parsing
+   * @return the validated status string, or {@code "open"} if the status field is absent
+   * @throws NullPointerException if {@code content}, {@code indexPath}, or {@code mapper} are null
+   * @throws IOException if the status value is present but non-canonical
    */
-  public static String getIssueStatus(List<String> lines, Path statePath) throws IOException
+  public static String getIssueStatus(String content, Path indexPath, JsonMapper mapper) throws IOException
   {
-    requireThat(lines, "lines").isNotNull();
-    requireThat(statePath, "statePath").isNotNull();
+    requireThat(content, "content").isNotNull();
+    requireThat(indexPath, "indexPath").isNotNull();
+    requireThat(mapper, "mapper").isNotNull();
     if (issueDiscoveryAccess == null)
       initialize(IssueDiscovery.class);
-    return issueDiscoveryAccess.getIssueStatus(lines, statePath);
+    return issueDiscoveryAccess.getIssueStatus(content, indexPath, mapper);
   }
 
   /**
@@ -204,14 +207,15 @@ public final class SharedSecrets
   public interface IssueDiscoveryAccess
   {
     /**
-     * Gets the issue status from STATE.md lines.
+     * Gets the issue status from index.json content.
      *
-     * @param lines the lines
-     * @param statePath the path
-     * @return the status
+     * @param content the JSON content of the index.json file
+     * @param indexPath the path to the index.json file (used in error messages only)
+     * @param mapper the JSON mapper to use for parsing
+     * @return the validated status string, or {@code "open"} if absent
      * @throws IOException if parsing fails
      */
-    String getIssueStatus(List<String> lines, Path statePath) throws IOException;
+    String getIssueStatus(String content, Path indexPath, JsonMapper mapper) throws IOException;
   }
 
   /**

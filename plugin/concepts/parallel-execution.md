@@ -6,14 +6,14 @@ See LICENSE.md in the project root for license terms.
 # Parallel Subagent Execution
 
 CAT supports running independent work items in parallel by spawning multiple implementation subagents, each working on
-its own assigned wave of items. Parallelism is opt-in: it only activates when PLAN.md contains a `## Execution Waves`
+its own assigned wave of items. Parallelism is opt-in: it only activates when plan.md contains a `## Execution Waves`
 section with multiple `### Wave N` subsections.
 
 ## How It Works
 
 When `/cat:work` starts executing an issue:
 
-1. `work-with-issue` reads PLAN.md directly to detect `## Execution Waves` sections.
+1. `work-with-issue` reads plan.md directly to detect `## Execution Waves` sections.
 2. For each `### Wave N` subsection, the LLM counts the top-level bullet items.
 3. **Parallel mode requires 2+ waves:** Plans with only 1 wave (or no waves at all) use single-subagent mode, spawning
    one implementation subagent with all items (default behavior). Only plans with 2 or more distinct waves spawn
@@ -63,12 +63,12 @@ Use execution waves **only** when:
 - The issue is small enough that parallelism adds no benefit
 - There is only one item (or one wave of items)
 
-## STATE.md Ownership
+## index.json Ownership
 
-STATE.md must be updated exactly once. The last wave alphabetically owns STATE.md updates:
+index.json must be updated exactly once. The last wave alphabetically owns index.json updates:
 
-- Wave 1: does NOT update STATE.md
-- Wave 2 (last): updates STATE.md to `closed` / `100%` in its final commit
+- Wave 1: does NOT update index.json
+- Wave 2 (last): updates index.json to `"status": "closed"` in its final commit
 
 The `work-with-issue` skill communicates this ownership in each subagent's delegation prompt.
 
@@ -101,7 +101,7 @@ without forcing a merge or overwriting other waves' work.
 ```
 work-with-issue (main agent)
     |
-    +---> Read PLAN.md directly
+    +---> Read plan.md directly
     |     Detect ## Execution Waves / ### Wave N sections
     |     Count top-level bullet items per wave
     |
@@ -109,7 +109,7 @@ work-with-issue (main agent)
     |         Wave 1: subagent handles all items in Wave 1 (parallel)
     |         Wave 2: subagent handles all items in Wave 2 (wait for Wave 1, then parallel)
     |         Worktree: shared
-    |         STATE.md: NO (Wave 1) / YES (Wave 2, last)
+    |         index.json: NO (Wave 1) / YES (Wave 2, last)
     |
     +---> Collect commits from all waves
     |

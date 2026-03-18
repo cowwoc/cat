@@ -14,7 +14,7 @@ teardown() {
 @test "JSON with special chars survives printf write and cat read round-trip" {
     # Construct a synthetic JSON commits array containing all problematic special characters:
     # {, }, ", :, [, ], whitespace, comma
-    ORIGINAL='[{"hash":"abc123","message":"feat: add {feature} with \"quotes\" and [brackets]","files_changed":3}]'
+    ORIGINAL='[{"hash":"abc123","message":"feat: add {feature} with \"quotes\" and [brackets]","filesChanged":3}]'
 
     printf '%s' "$ORIGINAL" > "$TMPFILE"
     ROUNDTRIP=$(cat "$TMPFILE")
@@ -28,7 +28,7 @@ teardown() {
   {
     "hash": "def456",
     "message": "refactor: restructure {module}: [old] -> [new]",
-    "files_changed": 7
+    "filesChanged": 7
   }
 ]'
 

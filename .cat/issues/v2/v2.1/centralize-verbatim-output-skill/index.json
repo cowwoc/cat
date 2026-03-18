@@ -1,0 +1,5 @@
+{
+  "status": "closed",
+  "resolution": "implemented",
+  "blocks": ["refactor-config-skill-lazy-screens"]
+}

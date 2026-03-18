@@ -180,17 +180,17 @@ proceed to infer_state.
 
 <step name="existing_parse_git" condition="Existing codebase">
 
-**Parse STATE.md file history (AUTHORITATIVE source):**
+**Parse index.json file history (AUTHORITATIVE source):**
 ```bash
-# Find all issue directories with STATE.md files
-find .cat/issues -name "STATE.md" -type f 2>/dev/null | head -100
+# Find all issue directories with index.json files
+find .cat/issues -name "index.json" -type f 2>/dev/null | head -100
 ```
 
-For each STATE.md found:
-- Extract: major, minor, issue-name from path `.cat/issues/v{major}/v{major}.{minor}/{issue-name}/STATE.md`
+For each index.json found:
+- Extract: major, minor, issue-name from path `.cat/issues/v{major}/v{major}.{minor}/{issue-name}/index.json`
 - Get commits: `git log --oneline -- ".cat/issues/v{major}/v{major}.{minor}/{issue-name}/"`
 - Get files: `git diff-tree --no-commit-id --name-status -r <hash>` for each commit
-- Get date: `git log -1 --format="%ci" -- <STATE.md path>`
+- Get date: `git log -1 --format="%ci" -- <index.json path>`
 
 Build mapping: issue-name → {commits, files_created, files_modified, date}
 
@@ -198,7 +198,7 @@ Build mapping: issue-name → {commits, files_created, files_modified, date}
 
 <step name="existing_import" condition="Existing codebase">
 
-**Import planning data (FALLBACK when no STATE.md files exist):**
+**Import planning data (FALLBACK when no index.json files exist):**
 
 ```bash
 find . -maxdepth 3 -name "changelog*.md" -type f 2>/dev/null | grep -v node_modules
@@ -207,8 +207,8 @@ grep -rl "## Objective\|## Issues" . --include="*.md" 2>/dev/null | head -30
 
 | Content Pattern | Category | Maps To |
 |-----------------|----------|---------|
-| `## Objective`, `## Issues` | Issue Definition | PLAN.md |
-| `## Accomplishments`, `completed:` | Completion Record | STATE.md |
+| `## Objective`, `## Issues` | Issue Definition | plan.md |
+| `## Accomplishments`, `completed:` | Completion Record | index.json |
 
 </step>
 
@@ -252,7 +252,7 @@ Create issue directories:
 mkdir -p ".cat/issues/v{major}/v{major}.{minor}/{issue-name}"
 ```
 
-**PLAN.md** (from issue definition source):
+**plan.md** (from issue definition source):
 ```markdown
 # Issue Plan: {issue-name}
 ## Objective
@@ -271,7 +271,7 @@ mkdir -p ".cat/issues/v{major}/v{major}.{minor}/{issue-name}"
 *Imported from: {source}*
 ```
 
-**STATE.md** (closed issues):
+**index.json** (closed issues):
 ```markdown
 # State
 
@@ -282,7 +282,7 @@ mkdir -p ".cat/issues/v{major}/v{major}.{minor}/{issue-name}"
 - **Blocks:** []
 ```
 
-**STATE.md** (open): status: open, progress: 0%
+**index.json** (open): status: open, progress: 0%
 
 </step>
 
@@ -302,7 +302,7 @@ Use AskUserQuestion:
 
 **If "Use defaults":**
 
-For each major version PLAN.md, add:
+For each major version plan.md, add:
 ```markdown
 ## Gates
 
@@ -313,7 +313,7 @@ For each major version PLAN.md, add:
 - All minor versions complete
 ```
 
-For each minor version PLAN.md, add:
+For each minor version plan.md, add:
 ```markdown
 ## Gates
 
@@ -367,8 +367,8 @@ After importing the project structure, research is needed for pending versions.
 
 ```bash
 # Find all pending minor versions
-PENDING_VERSIONS=$(find .cat -name "STATE.md" -exec grep -l "\*\*Status:\*\*.*pending" {} \; \
-  | sed 's|.cat/||; s|/STATE.md||' \
+PENDING_VERSIONS=$(find .cat -name "index.json" -exec grep -l "\*\*Status:\*\*.*pending" {} \; \
+  | sed 's|.cat/||; s|/index.json||' \
   | grep -E "v[0-9]+/v[0-9]+\.[0-9]+" \
   | sed 's|v\([0-9]*\)/v\([0-9]*\.[0-9]*\)|\2|' \
   | sort -V)
@@ -388,7 +388,7 @@ Use AskUserQuestion:
 For each pending version in PENDING_VERSIONS:
 - Invoke `/cat:research-agent {version}`
 - This spawns 8 stakeholder agents in parallel
-- Results are stored in the version's PLAN.md Research section
+- Results are stored in the version's plan.md Research section
 
 Display progress:
 ```
@@ -758,7 +758,7 @@ After:
 - Description MUST be imperative mood ("add", not "added")
 - Description MUST NOT exceed 72 characters
 - Body MAY provide additional context
-- Commits are tracked via STATE.md file history, not commit footers
+- Commits are tracked via index.json file history, not commit footers
 ```
 
 **If GIT_CUSTOM_NOTES exists:**
@@ -888,7 +888,7 @@ ISSUE_NAME="[sanitized-issue-name]"
 mkdir -p ".cat/issues/v0/v0.0/${ISSUE_NAME}"
 ```
 
-4. Create initial PLAN.md for the issue:
+4. Create initial plan.md for the issue:
 ```markdown
 # Issue Plan: {issue-name}
 
@@ -905,7 +905,7 @@ mkdir -p ".cat/issues/v0/v0.0/${ISSUE_NAME}"
 - [ ] [Success criteria]
 ```
 
-5. Create initial STATE.md:
+5. Create initial index.json:
 ```markdown
 # State
 

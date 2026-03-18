@@ -5,13 +5,13 @@ See LICENSE.md in the project root for license terms.
 -->
 # Skill: rebase-impact-agent
 
-Analyze whether changes introduced between the old and new rebase fork points affect the current PLAN.md.
+Analyze whether changes introduced between the old and new rebase fork points affect the current plan.md.
 Returns a compact JSON summary; writes the full analysis to the CLAUDE session directory (not the worktree).
 
 ## Purpose
 
 After rebasing an issue branch onto the target branch, determine whether the new commits from the target
-branch affect the current implementation plan. This prevents PLAN.md from becoming stale when upstream
+branch affect the current implementation plan. This prevents plan.md from becoming stale when upstream
 changes add, remove, or modify files that the plan depends on.
 
 ## Arguments
@@ -19,13 +19,13 @@ changes add, remove, or modify files that the plan depends on.
 Positional space-separated arguments:
 
 ```
-<issue_path> <worktree_path> <old_fork_point> <new_fork_point> [session_analysis_dir]
+<issuePath> <worktreePath> <old_fork_point> <new_fork_point> [session_analysis_dir]
 ```
 
 | Position | Name | Description |
 |----------|------|-------------|
-| 1 | issue_path | Absolute path to the issue directory containing PLAN.md |
-| 2 | worktree_path | Absolute path to the issue worktree |
+| 1 | issuePath | Absolute path to the issue directory containing plan.md |
+| 2 | worktreePath | Absolute path to the issue worktree |
 | 3 | old_fork_point | Git ref (commit hash) of the fork point before the rebase |
 | 4 | new_fork_point | Git ref (commit hash) of the fork point after the rebase |
 | 5 | session_analysis_dir | (Optional) Absolute path to the session directory for ephemeral output |
@@ -67,13 +67,13 @@ Return ONLY the following compact JSON to the calling agent (do NOT include anal
 
 | Severity | Condition | Calling Agent Action |
 |----------|-----------|----------------------|
-| `NO_IMPACT` | No changed files overlap with PLAN.md dependencies | Continue silently |
+| `NO_IMPACT` | No changed files overlap with plan.md dependencies | Continue silently |
 | `LOW` | Overlapping files changed cosmetically (whitespace, comments, renames) | Continue silently |
-| `MEDIUM` | Overlapping files changed in ways that affect PLAN.md, but revision is unambiguous | Auto-revise PLAN.md |
+| `MEDIUM` | Overlapping files changed in ways that affect plan.md, but revision is unambiguous | Auto-revise plan.md |
 | `HIGH` | Changes introduce conflicting requirements or multiple valid revision paths | Ask user |
 
 **Decision rule:**
-- `MEDIUM`: PLAN.md can be revised with zero judgment calls (mechanical update)
+- `MEDIUM`: plan.md can be revised with zero judgment calls (mechanical update)
 - `HIGH`: Revision requires choosing between conflicting approaches (human decision needed)
 - **When uncertain, classify as `HIGH` rather than `MEDIUM`** (conservative assignment)
 
@@ -85,13 +85,13 @@ Validate the required arguments are non-empty:
 read ISSUE_PATH WORKTREE_PATH OLD_FORK_POINT NEW_FORK_POINT SESSION_ANALYSIS_DIR <<< "$ARGUMENTS"
 
 if [[ -z "$ISSUE_PATH" || -z "$WORKTREE_PATH" || -z "$OLD_FORK_POINT" || -z "$NEW_FORK_POINT" ]]; then
-  echo "ERROR: rebase-impact-agent requires 4 arguments: <issue_path> <worktree_path> <old_fork_point> <new_fork_point> [session_analysis_dir]" >&2
+  echo "ERROR: rebase-impact-agent requires 4 arguments: <issuePath> <worktreePath> <old_fork_point> <new_fork_point> [session_analysis_dir]" >&2
   exit 1
 fi
 
-PLAN_MD="${ISSUE_PATH}/PLAN.md"
+PLAN_MD="${ISSUE_PATH}/plan.md"
 if [[ ! -f "$PLAN_MD" ]]; then
-  echo "ERROR: PLAN.md not found at ${PLAN_MD}" >&2
+  echo "ERROR: plan.md not found at ${PLAN_MD}" >&2
   exit 1
 fi
 ```
@@ -114,21 +114,21 @@ fi
 If `CHANGED_FILES` is empty, no files changed between fork points — return `NO_IMPACT` immediately (see
 Step 6).
 
-## Step 3: Extract PLAN.md File Dependencies
+## Step 3: Extract plan.md File Dependencies
 
-Read PLAN.md and extract all file paths mentioned in the plan. Look for paths in:
+Read plan.md and extract all file paths mentioned in the plan. Look for paths in:
 - `## Files to Modify` section (explicit file list)
 - Code blocks referencing file paths (lines containing `/` followed by a file extension)
 - Inline file references in prose (paths like `plugin/skills/...`, `client/src/...`, etc.)
 
 Collect all unique file paths into a `PLAN_DEPS` list.
 
-**Pattern to detect file paths in PLAN.md:**
+**Pattern to detect file paths in plan.md:**
 - Lines in `## Files to Modify` that start with `-` and contain a path
 - Backtick-enclosed paths (e.g., `` `plugin/skills/foo/SKILL.md` ``)
 - Bare paths with directory separators (e.g., `plugin/hooks/hooks.json`)
 
-If `PLAN_DEPS` is empty, PLAN.md has no explicit file dependencies — return `NO_IMPACT` (see Step 6).
+If `PLAN_DEPS` is empty, plan.md has no explicit file dependencies — return `NO_IMPACT` (see Step 6).
 
 ## Step 4: Determine Overlap and Severity
 
@@ -151,7 +151,7 @@ git diff "${OLD_FORK_POINT}..${NEW_FORK_POINT}" -- "<overlapping_file>"
 
 Classify the diff as one of:
 - **Cosmetic**: Only whitespace, comment, or rename changes — no behavioral difference
-- **Structural**: API changes, function signatures, file moves, or content that PLAN.md steps depend on
+- **Structural**: API changes, function signatures, file moves, or content that plan.md steps depend on
 
 **Severity matrix:**
 
@@ -192,8 +192,8 @@ Write a Markdown document to `${ANALYSIS_PATH}` containing:
 ## Changed Files Between Fork Points
 <list of files from git diff, or "(none)" if empty>
 
-## PLAN.md Dependencies
-<list of file paths extracted from PLAN.md, or "(none)" if empty>
+## plan.md Dependencies
+<list of file paths extracted from plan.md, or "(none)" if empty>
 
 ## Overlapping Files
 <list of files appearing in both lists, or "(none)">
@@ -231,7 +231,7 @@ Run against a real issue in the project; the steps create isolated, reversible t
 
 **Step 1 — Set up test conditions**
 
-Pick any open issue that has a `## Files to Modify` section in its PLAN.md containing at least one file in
+Pick any open issue that has a `## Files to Modify` section in its plan.md containing at least one file in
 `plugin/skills/`. Note the target branch name (e.g., `v2.1`) and the issue branch (e.g., `v2.1-my-issue`).
 Record the current tip of the target branch:
 
@@ -239,9 +239,9 @@ Record the current tip of the target branch:
 BEFORE=$(git rev-parse v2.1)
 ```
 
-**Step 2 — Commit a change to the target branch that touches a PLAN.md dependency**
+**Step 2 — Commit a change to the target branch that touches a plan.md dependency**
 
-On the target branch, make a structural edit to a file listed in the test issue's PLAN.md `## Files to Modify`
+On the target branch, make a structural edit to a file listed in the test issue's plan.md `## Files to Modify`
 section — for example, add a blank line inside a section of `plugin/skills/work-with-issue-agent/first-use.md`.
 Commit directly to the target branch. Record the new tip:
 
@@ -257,7 +257,7 @@ Run `/cat:work` on the test issue. When the rebase step executes, `work-with-iss
 `rebase-impact-agent` with arguments:
 
 ```
-<issue_path> <worktree_path> $BEFORE $NEW
+<issuePath> <worktreePath> $BEFORE $NEW
 ```
 
 Verify the invocation appears in the session transcript and that the analysis file is written to the CLAUDE
@@ -266,7 +266,7 @@ Confirm the file does NOT appear inside the worktree directory.
 
 **Step 4 — Verify NO_IMPACT / LOW routing: silent continuation**
 
-Repeat Step 2, but this time make a cosmetic-only edit to a file that is NOT listed in the test issue's PLAN.md
+Repeat Step 2, but this time make a cosmetic-only edit to a file that is NOT listed in the test issue's plan.md
 (e.g., add a trailing newline to an unrelated skill file). Re-run `/cat:work`. Confirm:
 
 - The compact JSON returned by `rebase-impact-agent` has `"severity": "NO_IMPACT"` or `"severity": "LOW"`.
@@ -274,11 +274,11 @@ Repeat Step 2, but this time make a cosmetic-only edit to a file that is NOT lis
 
 **Step 5 — Verify MEDIUM routing: plan-builder-agent invoked automatically**
 
-Repeat Step 2 with a structural edit to a file that IS in the test issue's PLAN.md `## Files to Modify` list,
+Repeat Step 2 with a structural edit to a file that IS in the test issue's plan.md `## Files to Modify` list,
 where the change has one obvious correct update to the plan (e.g., a renamed constant). Re-run `/cat:work`. Confirm:
 
 - The compact JSON has `"severity": "MEDIUM"`.
-- `work-with-issue-agent` automatically invokes `plan-builder-agent` to revise PLAN.md.
+- `work-with-issue-agent` automatically invokes `plan-builder-agent` to revise plan.md.
 - The user is NOT interrupted; execution continues after the plan revision.
 
 **Step 6 — Verify HIGH routing: proposal file written and user prompted**

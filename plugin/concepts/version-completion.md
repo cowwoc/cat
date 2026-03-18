@@ -15,7 +15,7 @@ Load this workflow when **all issues in a minor version are closed** (no open/in
 
 ```bash
 # Count pending/in-progress issues in this minor version
-PENDING_COUNT=$(find ".cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/" -name "STATE.md" -exec grep -l 'Status.*open\|Status.*in-progress' {} \; 2>/dev/null | wc -l)
+PENDING_COUNT=$(find ".cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/" -name "index.json" -exec grep -l '"status".*"open"\|"status".*"in-progress"' {} \; 2>/dev/null | wc -l)
 
 if [[ "$PENDING_COUNT" -eq 0 ]]; then
   MINOR_COMPLETE=true
@@ -32,13 +32,13 @@ fi
 
 > **See also:** [version-scheme.md](version-scheme.md) for versioning scheme details.
 
-1. **Extract requirements from version PLAN.md**:
-   - Read the version's PLAN.md (works for any level: major, minor, or patch)
+1. **Extract requirements from version plan.md**:
+   - Read the version's plan.md (works for any level: major, minor, or patch)
    - Parse the Requirements table for all REQ-XXX IDs
 
 2. **Collect satisfied requirements from all issues**:
    - For each closed issue in the minor version
-   - Read the issue's PLAN.md and extract the `## Parent Requirements` section
+   - Read the issue's plan.md and extract the `## Parent Requirements` section
    - Build a set of all satisfied requirement IDs
 
 3. **Identify unsatisfied requirements**:
@@ -58,7 +58,7 @@ fi
      Options:
      1. Add an issue to satisfy these requirements
      2. Remove requirements that are no longer needed
-     3. Mark requirements as deferred (update PLAN.md)
+     3. Mark requirements as deferred (update plan.md)
      ```
    - Use AskUserQuestion to let user choose resolution path
    - Do NOT mark the version as complete until resolved
@@ -204,7 +204,7 @@ Continue with next steps.
 ```bash
 # Count incomplete minor versions in this major
 INCOMPLETE_MINORS=$(find ".cat/issues/v${MAJOR}" -maxdepth 1 -name "v${MAJOR}.*" -type d | while read dir; do
-  [ -f "$dir/STATE.md" ] && ! grep -q 'Status.*closed' "$dir/STATE.md" && echo "$dir"
+  [ -f "$dir/index.json" ] && ! grep -q '"status".*"closed"' "$dir/index.json" && echo "$dir"
 done | wc -l)
 
 if [[ "$INCOMPLETE_MINORS" -eq 0 ]]; then

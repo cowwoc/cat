@@ -101,7 +101,7 @@ public final class WarnUnsquashedApproval implements AskHandler
                        "  " + firstCommit + "\n" +
                        "  " + secondCommit + "\n" +
                        "\n" +
-                       "The implementation commit and STATE.md update should be in the SAME commit.\n" +
+                       "The implementation commit and index.json update should be in the SAME commit.\n" +
                        "Squash these commits before approval.";
       return Result.withContext(warning);
     }

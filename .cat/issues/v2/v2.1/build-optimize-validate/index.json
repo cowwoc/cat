@@ -1,0 +1,6 @@
+{
+  "status": "closed",
+  "resolution": "won't-fix (optimize-hook-json-parser closed as won't fix.)",
+  "dependencies": ["json-complex-handler-migration"],
+  "parent": "optimize-hook-json-parser"
+}

@@ -9,6 +9,8 @@ package io.github.cowwoc.cat.hooks.util;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.SharedSecrets;
 import io.github.cowwoc.cat.hooks.IssueStatus;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
@@ -45,15 +47,11 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  *   <li>{@code major} - a specific major version (e.g., {@code v2})</li>
  *   <li>{@code minor} - a specific minor version (e.g., {@code v2.1})</li>
  *   <li>{@code issue} - a specific issue by fully-qualified ID (e.g., {@code 2.1-fix-bug})</li>
- *   <li>{@code bare_name} - a bare issue name resolved against all versions</li>
+ *   <li>{@code bareName} - a bare issue name resolved against all versions</li>
  * </ul>
  */
 public final class IssueDiscovery
 {
-  static
-  {
-    SharedSecrets.setIssueDiscoveryAccess(IssueDiscovery::getIssueStatus);
-  }
   /**
    * Pattern matching a bare issue name like {@code fix-bug}.
    */
@@ -66,19 +64,6 @@ public final class IssueDiscovery
    */
   static final Pattern QUALIFIED_NAME_PATTERN =
     Pattern.compile("^(\\d+\\.\\d+[a-z]?-)(\\S+)$");
-  /**
-   * Pattern for the "Decomposed Into" section header in STATE.md.
-   */
-  static final Pattern DECOMPOSED_INTO_PATTERN = Pattern.compile("^## Decomposed Into",
-    Pattern.MULTILINE);
-  /**
-   * Pattern for the next section header in STATE.md.
-   */
-  static final Pattern NEXT_SECTION_PATTERN = Pattern.compile("^## ", Pattern.MULTILINE);
-  /**
-   * Pattern for sub-issue list items in the "Decomposed Into" section.
-   */
-  static final Pattern SUBISSUE_ITEM_PATTERN = Pattern.compile("^- ([^(\\s]+)", Pattern.MULTILINE);
   /**
    * Pattern matching a version directory name like {@code v2}, {@code v2.1}, or {@code v2.1.3}.
    */
@@ -105,13 +90,19 @@ public final class IssueDiscovery
   private static final Pattern QUALIFIED_ISSUE_ID_PATTERN =
     Pattern.compile("^(\\d+)(?:\\.(\\d+)(?:\\.(\\d+))?)?-([a-zA-Z][a-zA-Z0-9_-]*)$");
   /**
-   * Pattern for issue entries in the exit section of a version PLAN.md.
+   * Pattern for issue entries in the exit section of a version plan.md.
    */
   private static final Pattern EXIT_ISSUE_PATTERN = Pattern.compile("^- \\[issue\\] (.+)$");
+
+  static
+  {
+    SharedSecrets.setIssueDiscoveryAccess(IssueDiscovery::parseIssueStatus);
+  }
 
   private final JvmScope scope;
   private final Path projectPath;
   private final Path issuesDir;
+  private final JsonMapper mapper;
   /**
    * Cache mapping issue directory paths to their git creation timestamps (seconds since epoch).
    * <p>
@@ -149,6 +140,7 @@ public final class IssueDiscovery
         " (no .cat directory)");
     }
     this.issuesDir = catDir.resolve("issues");
+    this.mapper = scope.getJsonMapper();
   }
 
   /**
@@ -219,14 +211,14 @@ public final class IssueDiscovery
      * @param issueName the bare issue name
      * @param issuePath the absolute path to the issue directory
      * @param scope the scope used to find the issue
-     * @param createStateMd true if the issue directory had no STATE.md file (STATE.md is absent and must be
-     *   created)
-     * @param isCorrupt true if PLAN.md is absent (the issue cannot be executed without it); both
-     *   {@code isCorrupt} and {@code createStateMd} can be true when neither file is present
+     * @param createIndexJson true if the issue directory had no index.json file (index.json is absent and must
+     *   be created)
+     * @param isCorrupt true if plan.md is absent (the issue cannot be executed without it); both
+     *   {@code isCorrupt} and {@code createIndexJson} can be true when neither file is present
      * @param isDecomposedComplete true if this is a decomposed parent with all sub-issues closed
      */
     record Found(String issueId, String major, String minor, String patch, String issueName,
-      String issuePath, String scope, boolean createStateMd, boolean isCorrupt,
+      String issuePath, String scope, boolean createIndexJson, boolean isCorrupt,
       boolean isDecomposedComplete) implements DiscoveryResult
     {
       /**
@@ -239,10 +231,10 @@ public final class IssueDiscovery
        * @param issueName the bare issue name
        * @param issuePath the absolute path to the issue directory
        * @param scope the scope used to find the issue
-       * @param createStateMd true if the issue directory had no STATE.md file (STATE.md is absent and must be
-       *   created)
-       * @param isCorrupt true if PLAN.md is absent (the issue cannot be executed without it); both
-       *   {@code isCorrupt} and {@code createStateMd} can be true when neither file is present
+       * @param createIndexJson true if the issue directory had no index.json file (index.json is absent and
+       *   must be created)
+       * @param isCorrupt true if plan.md is absent (the issue cannot be executed without it); both
+       *   {@code isCorrupt} and {@code createIndexJson} can be true when neither file is present
        * @param isDecomposedComplete true if this is a decomposed parent with all sub-issues closed
        * @throws IllegalArgumentException if {@code issueId}, {@code major}, {@code issueName},
        *   {@code issuePath} or {@code scope} are blank
@@ -265,7 +257,7 @@ public final class IssueDiscovery
         requireThat(mapper, "mapper").isNotNull();
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("status", "found");
-        result.put("issue_id", issueId);
+        result.put("issueId", issueId);
         result.put("major", major);
         if (!minor.isEmpty())
         {
@@ -273,8 +265,8 @@ public final class IssueDiscovery
           if (!patch.isEmpty())
             result.put("patch", patch);
         }
-        result.put("issue_name", issueName);
-        result.put("issue_path", issuePath);
+        result.put("issueName", issueName);
+        result.put("issuePath", issuePath);
         result.put("scope", scope);
         return mapper.writeValueAsString(result);
       }
@@ -309,13 +301,13 @@ public final class IssueDiscovery
       {
         requireThat(mapper, "mapper").isNotNull();
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("status", "not_found");
+        result.put("status", "notFound");
         if (!excludePattern.isEmpty() && excludedCount > 0)
         {
           result.put("message", "No executable issues found (" + excludedCount + " excluded by pattern)");
           result.put("scope", scope);
-          result.put("exclude_pattern", excludePattern);
-          result.put("excluded_count", excludedCount);
+          result.put("excludePattern", excludePattern);
+          result.put("excludedCount", excludedCount);
         }
         else
         {
@@ -349,9 +341,9 @@ public final class IssueDiscovery
       {
         requireThat(mapper, "mapper").isNotNull();
         return mapper.writeValueAsString(Map.of(
-          "status", "already_complete",
+          "status", "alreadyComplete",
           "message", "Issue " + issueId + " is already closed - no work needed",
-          "issue_id", issueId));
+          "issueId", issueId));
       }
     }
 
@@ -381,9 +373,9 @@ public final class IssueDiscovery
       {
         requireThat(mapper, "mapper").isNotNull();
         return mapper.writeValueAsString(Map.of(
-          "status", "not_executable",
+          "status", "notExecutable",
           "message", reason,
-          "issue_id", issueId));
+          "issueId", issueId));
       }
     }
 
@@ -416,7 +408,7 @@ public final class IssueDiscovery
         return mapper.writeValueAsString(Map.of(
           "status", "blocked",
           "message", "Dependencies not satisfied",
-          "issue_id", issueId,
+          "issueId", issueId,
           "blocking", blockingIssues));
       }
     }
@@ -446,7 +438,7 @@ public final class IssueDiscovery
         return mapper.writeValueAsString(Map.of(
           "status", "decomposed",
           "message", "Issue is a decomposed parent task - execute sub-issues instead",
-          "issue_id", issueId));
+          "issueId", issueId));
       }
     }
 
@@ -494,8 +486,8 @@ public final class IssueDiscovery
       {
         requireThat(mapper, "mapper").isNotNull();
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("status", "existing_worktree");
-        result.put("issue_id", issueId);
+        result.put("status", "existingWorktree");
+        result.put("issueId", issueId);
         result.put("major", major);
         if (!minor.isEmpty())
         {
@@ -503,9 +495,9 @@ public final class IssueDiscovery
           if (!patch.isEmpty())
             result.put("patch", patch);
         }
-        result.put("issue_name", issueName);
-        result.put("issue_path", issuePath);
-        result.put("worktree_path", worktreePath);
+        result.put("issueName", issueName);
+        result.put("issuePath", issuePath);
+        result.put("worktreePath", worktreePath);
         result.put("message", "Issue has existing worktree - likely in use by another session");
         return mapper.writeValueAsString(result);
       }
@@ -587,7 +579,7 @@ public final class IssueDiscovery
     Scope scope = options.scope();
     String target = options.target();
 
-    // Handle bare_name scope: resolve to a fully-qualified issue ID
+    // Handle bareName scope: resolve to a fully-qualified issue ID
     if (scope == Scope.BARE_NAME && !target.isEmpty())
     {
       if (!BARE_NAME_PATTERN.matcher(target).matches())
@@ -596,7 +588,7 @@ public final class IssueDiscovery
       }
       String resolvedId = resolveBareNameToIssueId(target);
       if (resolvedId == null)
-        return new DiscoveryResult.NotFound("bare_name", "", 0);
+        return new DiscoveryResult.NotFound("bareName", "", 0);
       scope = Scope.ISSUE;
       target = resolvedId;
     }
@@ -717,22 +709,22 @@ public final class IssueDiscovery
       return new DiscoveryResult.NotFound("issue", "", 0);
     }
 
-    Path statePath = issueDir.resolve("STATE.md");
-    Path issuePlanPath = issueDir.resolve("PLAN.md");
-    boolean createStateMd = !Files.isRegularFile(statePath);
+    Path indexPath = issueDir.resolve("index.json");
+    Path issuePlanPath = issueDir.resolve("plan.md");
+    boolean createIndexJson = !Files.isRegularFile(indexPath);
     boolean isCorrupt = !Files.isRegularFile(issuePlanPath);
-    List<String> stateLines;
+    String indexContent;
     String status;
-    if (createStateMd)
+    if (createIndexJson)
     {
-      stateLines = Collections.emptyList();
+      indexContent = "";
       status = "open";
     }
     else
     {
       try
       {
-        stateLines = readFileLines(statePath);
+        indexContent = Files.readString(indexPath);
       }
       catch (IOException _)
       {
@@ -742,7 +734,7 @@ public final class IssueDiscovery
 
       try
       {
-        status = getIssueStatus(stateLines, statePath, warnings);
+        status = getIssueStatus(indexContent, indexPath, warnings, mapper);
       }
       catch (IOException _)
       {
@@ -760,11 +752,11 @@ public final class IssueDiscovery
     }
 
     // Check if decomposed parent task with open sub-issues
-    if (isDecomposedParent(stateLines) && !allSubissuesClosed(statePath))
+    if (isDecomposedParent(indexContent, indexPath) && !allSubissuesClosed(indexPath))
       return new DiscoveryResult.Decomposed(issueId);
 
     // Check dependencies
-    List<String> dependencies = getDependencies(stateLines);
+    List<String> dependencies = getDependencies(indexContent, indexPath);
     List<String> blockingDependencies = getBlockingDependencies(dependencies);
     if (!blockingDependencies.isEmpty())
       return new DiscoveryResult.Blocked(issueId, blockingDependencies);
@@ -777,9 +769,9 @@ public final class IssueDiscovery
         issueDir.toString(), worktreePath.toString());
     }
 
-    boolean isDecomposedComplete = isDecomposedParent(stateLines);
+    boolean isDecomposedComplete = isDecomposedParent(indexContent, indexPath);
     return new DiscoveryResult.Found(issueId, major, minor, patch, issueName, issueDir.toString(),
-      "issue", createStateMd, isCorrupt, isDecomposedComplete);
+      "issue", createIndexJson, isCorrupt, isDecomposedComplete);
   }
 
   /**
@@ -910,10 +902,10 @@ public final class IssueDiscovery
     for (Path minorDir : listMinorDirs(majorDir))
     {
       // Check version-level dependencies before scanning tasks
-      Path versionStatePath = minorDir.resolve("STATE.md");
-      if (Files.isRegularFile(versionStatePath))
+      Path versionIndexPath = minorDir.resolve("index.json");
+      if (Files.isRegularFile(versionIndexPath))
       {
-        List<String> versionDeps = getDependencies(versionStatePath);
+        List<String> versionDeps = getDependencies(Files.readString(versionIndexPath), versionIndexPath);
         List<String> blockingVersionDeps = getBlockingDependencies(versionDeps);
         if (!blockingVersionDeps.isEmpty())
           continue;
@@ -939,12 +931,12 @@ public final class IssueDiscovery
     // Check direct issue dirs
     for (Path issueDir : listIssueDirsByAge(minorDir))
     {
-      Path statePath = issueDir.resolve("STATE.md");
-      if (!Files.isRegularFile(statePath))
+      Path indexPath = issueDir.resolve("index.json");
+      if (!Files.isRegularFile(indexPath))
         return true;
       try
       {
-        String status = getIssueStatus(statePath);
+        String status = getIssueStatus(indexPath);
         if ("open".equals(status) || "in-progress".equals(status))
           return true;
       }
@@ -959,12 +951,12 @@ public final class IssueDiscovery
     {
       for (Path issueDir : listIssueDirsByAge(patchDir))
       {
-        Path statePath = issueDir.resolve("STATE.md");
-        if (!Files.isRegularFile(statePath))
+        Path indexPath = issueDir.resolve("index.json");
+        if (!Files.isRegularFile(indexPath))
           return true;
         try
         {
-          String status = getIssueStatus(statePath);
+          String status = getIssueStatus(indexPath);
           if ("open".equals(status) || "in-progress".equals(status))
             return true;
         }
@@ -1045,25 +1037,25 @@ public final class IssueDiscovery
     for (Path issueDir : listIssueDirsByAge(searchDir))
     {
       String issueName = issueDir.getFileName().toString();
-      Path statePath = issueDir.resolve("STATE.md");
-      Path planPath = issueDir.resolve("PLAN.md");
-      boolean stateMdMissing = !Files.isRegularFile(statePath);
+      Path indexPath = issueDir.resolve("index.json");
+      Path planPath = issueDir.resolve("plan.md");
+      boolean indexJsonMissing = !Files.isRegularFile(indexPath);
       boolean isCorrupt = !Files.isRegularFile(planPath);
 
-      // Read STATE.md once and reuse across all checks to avoid repeated I/O.
-      // If STATE.md is absent, treat the issue as open with no content.
-      List<String> stateLines;
+      // Read index.json once and reuse across all checks to avoid repeated I/O.
+      // If index.json is absent, treat the issue as open with no content.
+      String indexContent;
       String status;
-      if (stateMdMissing)
+      if (indexJsonMissing)
       {
-        stateLines = Collections.emptyList();
+        indexContent = "";
         status = "open";
       }
       else
       {
         try
         {
-          stateLines = readFileLines(statePath);
+          indexContent = Files.readString(indexPath);
         }
         catch (IOException _)
         {
@@ -1072,7 +1064,7 @@ public final class IssueDiscovery
 
         try
         {
-          status = getIssueStatus(stateLines, statePath, warnings);
+          status = getIssueStatus(indexContent, indexPath, warnings, mapper);
         }
         catch (IOException _)
         {
@@ -1084,7 +1076,7 @@ public final class IssueDiscovery
         continue;
 
       // Skip decomposed parent tasks with open sub-issues
-      if (isDecomposedParent(stateLines) && !allSubissuesClosed(statePath))
+      if (isDecomposedParent(indexContent, indexPath) && !allSubissuesClosed(indexPath))
         continue;
 
       String issueId = buildIssueId(major, minor, patch, issueName);
@@ -1097,7 +1089,7 @@ public final class IssueDiscovery
       }
 
       // Check dependencies
-      List<String> dependencies = getDependencies(stateLines);
+      List<String> dependencies = getDependencies(indexContent, indexPath);
       List<String> blockingDependencies = getBlockingDependencies(dependencies);
       if (!blockingDependencies.isEmpty())
         continue;
@@ -1111,94 +1103,75 @@ public final class IssueDiscovery
       if (Files.isDirectory(getWorktreePath(issueId)))
         continue;
 
-      boolean isDecomposedComplete = isDecomposedParent(stateLines);
+      boolean isDecomposedComplete = isDecomposedParent(indexContent, indexPath);
       return new DiscoveryResult.Found(issueId, major, minor, patch, issueName, issueDir.toString(),
-        scopeName, stateMdMissing, isCorrupt, isDecomposedComplete);
+        scopeName, indexJsonMissing, isCorrupt, isDecomposedComplete);
     }
 
     return null;
   }
 
   /**
-   * Reads all lines from a file, throwing if the file does not exist.
+   * Reads and validates the status from an index.json file.
    *
-   * @param path the path to the file
-   * @return the list of lines
-   * @throws IOException if the file does not exist or reading fails
-   */
-  private List<String> readFileLines(Path path) throws IOException
-  {
-    if (!Files.isRegularFile(path))
-      throw new IOException("File not found: " + path);
-    return Files.readAllLines(path);
-  }
-
-  /**
-   * Reads and validates the status from a STATE.md file.
-   *
-   * @param statePath the path to the STATE.md file
-   * @return the normalized status string
-   * @throws IOException if reading the file fails, the status field is missing, or the status is invalid
-   */
-  private String getIssueStatus(Path statePath) throws IOException
-  {
-    List<String> lines = readFileLines(statePath);
-    return getIssueStatus(lines, statePath, warnings);
-  }
-
-  /**
-   * Reads and validates the status from pre-read STATE.md lines.
-   * <p>
-   * When the status field is missing, returns {@code "open"}. If {@code warningsSink} is non-null,
-   * appends a warning message describing the missing field; otherwise the warning is silently dropped.
-   *
-   * @param lines the lines already read from the STATE.md file
-   * @param statePath the path to the STATE.md file (used in error messages only)
+   * @param indexPath the path to the index.json file
    * @return the normalized status string, or {@code "open"} if the status field is absent
-   * @throws IOException if the status value is present but non-canonical
+   * @throws IOException if reading the file fails or the status value is non-canonical
    */
-  private static String getIssueStatus(List<String> lines, Path statePath) throws IOException
+  private String getIssueStatus(Path indexPath) throws IOException
   {
-    return getIssueStatus(lines, statePath, null);
+    String content = Files.readString(indexPath);
+    return getIssueStatus(content, indexPath, warnings, mapper);
   }
 
   /**
-   * Reads and validates the status from pre-read STATE.md lines.
+   * Reads and validates the status from pre-read index.json content.
    * <p>
    * When the status field is missing, returns {@code "open"}. If {@code warningsSink} is non-null,
    * appends a warning message describing the missing field; otherwise the warning is silently dropped.
    *
-   * @param lines the lines already read from the STATE.md file
-   * @param statePath the path to the STATE.md file (used in error messages only)
+   * @param content the JSON content of the index.json file
+   * @param indexPath the path to the index.json file (used in error messages only)
    * @param warningsSink a list to collect warnings into, or {@code null} to discard warnings
+   * @param mapper the JSON mapper to use for parsing
    * @return the normalized status string, or {@code "open"} if the status field is absent
    * @throws IOException if the status value is present but non-canonical
    */
-  private static String getIssueStatus(List<String> lines, Path statePath,
-    List<String> warningsSink) throws IOException
+  private static String getIssueStatus(String content, Path indexPath,
+    List<String> warningsSink, JsonMapper mapper) throws IOException
   {
-    String status = null;
-    for (String line : lines)
-    {
-      if (line.startsWith("- **Status:**"))
-      {
-        status = line.substring("- **Status:**".length()).strip();
-        break;
-      }
-    }
-
-    if (status == null)
+    if (content.isBlank())
     {
       if (warningsSink != null)
-        warningsSink.add("Status field missing in " + statePath +
-          ". STATE.md has no '- **Status:**' line. Treating as open.");
+        warningsSink.add("index.json is empty in " + indexPath + ". Treating as open.");
       return "open";
     }
+
+    JsonNode root;
+    try
+    {
+      root = mapper.readTree(content);
+    }
+    catch (JacksonException e)
+    {
+      throw new IOException("Failed to parse " + indexPath + ": " + e.getMessage(), e);
+    }
+
+    JsonNode statusNode = root.get("status");
+    if (statusNode == null || !statusNode.isString())
+    {
+      if (warningsSink != null)
+        warningsSink.add("Status field missing in " + indexPath +
+          ". index.json has no 'status' field. Treating as open.");
+      return "open";
+    }
+
+    String status = statusNode.asString().strip();
 
     // Validate against allowed canonical status values only (no aliases).
     // Legacy alias values must be migrated using plugin/migrations/2.1.sh before reading.
     if (IssueStatus.fromString(status) == null)
-      throw new IOException("Unknown status '" + status + "' in " + statePath +
+      throw new IOException("Unknown status '" + status + "' in " + indexPath +
         ". Valid values: " + IssueStatus.asCommaSeparated() + ".\n" +
         "Legacy statuses (pending, completed, complete, done, in_progress, active) must be migrated:\n" +
         "  Run: plugin/migrations/2.1.sh");
@@ -1207,54 +1180,75 @@ public final class IssueDiscovery
   }
 
   /**
-   * Checks if pre-read STATE.md lines describe a decomposed parent task.
+   * Parses index.json content for the status field. Used via SharedSecrets.
    *
-   * @param lines the lines already read from the STATE.md file
-   * @return true if the lines contain a "## Decomposed Into" section
+   * @param content the JSON content of the index.json file
+   * @param indexPath the path to the index.json file (used in error messages only)
+   * @param mapper the JSON mapper to use for parsing
+   * @return the validated status string, or {@code "open"} if absent
+   * @throws IOException if the status value is present but non-canonical
    */
-  private boolean isDecomposedParent(List<String> lines)
+  private static String parseIssueStatus(String content, Path indexPath, JsonMapper mapper) throws IOException
   {
-    for (String line : lines)
+    return getIssueStatus(content, indexPath, null, mapper);
+  }
+
+  /**
+   * Checks if pre-read index.json content describes a decomposed parent task.
+   *
+   * @param content the JSON content of the index.json file
+   * @param indexPath the path to the index.json file (used in error messages)
+   * @return true if the content has a non-empty {@code decomposedInto} array
+   * @throws IOException if the content is not valid JSON
+   */
+  private boolean isDecomposedParent(String content, Path indexPath) throws IOException
+  {
+    if (content.isBlank())
+      return false;
+    try
     {
-      if (DECOMPOSED_INTO_PATTERN.matcher(line).matches())
-        return true;
+      JsonNode root = mapper.readTree(content);
+      JsonNode decomposedInto = root.get("decomposedInto");
+      return decomposedInto != null && decomposedInto.isArray() && !decomposedInto.isEmpty();
     }
-    return false;
+    catch (JacksonException e)
+    {
+      throw new IOException("Failed to parse " + indexPath + ": " + e.getMessage(), e);
+    }
   }
 
   /**
    * Checks if all sub-issues of a decomposed parent task are closed.
    *
-   * @param statePath the path to the parent's STATE.md file
+   * @param indexPath the path to the parent's index.json file
    * @return true if all sub-issues are closed (or no sub-issues listed)
    * @throws IOException if file operations fail
    */
-  private boolean allSubissuesClosed(Path statePath) throws IOException
+  private boolean allSubissuesClosed(Path indexPath) throws IOException
   {
-    List<String> lines = Files.readAllLines(statePath);
-
-    // Extract sub-issue names from "## Decomposed Into" section
-    List<String> subissueNames = new ArrayList<>();
-    boolean inDecomposedSection = false;
-    for (String line : lines)
+    String content = Files.readString(indexPath);
+    JsonNode root;
+    try
     {
-      if (DECOMPOSED_INTO_PATTERN.matcher(line).matches())
+      root = mapper.readTree(content);
+    }
+    catch (JacksonException e)
+    {
+      throw new IOException("Failed to parse " + indexPath + ": " + e.getMessage(), e);
+    }
+
+    // Extract sub-issue names from decomposedInto JSON array
+    List<String> subissueNames = new ArrayList<>();
+    JsonNode decomposedInto = root.get("decomposedInto");
+    if (decomposedInto == null || !decomposedInto.isArray())
+      return true;
+    for (JsonNode item : decomposedInto)
+    {
+      if (item.isString())
       {
-        inDecomposedSection = true;
-        continue;
-      }
-      if (inDecomposedSection)
-      {
-        // Stop at next section header
-        if (NEXT_SECTION_PATTERN.matcher(line).matches())
-          break;
-        Matcher itemMatcher = SUBISSUE_ITEM_PATTERN.matcher(line);
-        if (itemMatcher.find())
-        {
-          String name = itemMatcher.group(1).strip().replaceAll("[()]", "");
-          if (!name.isEmpty())
-            subissueNames.add(name);
-        }
+        String name = item.asString().strip();
+        if (!name.isEmpty())
+          subissueNames.add(name);
       }
     }
 
@@ -1262,7 +1256,7 @@ public final class IssueDiscovery
       return true;
 
     // Check each sub-issue
-    Path parentVersionDir = statePath.getParent().getParent();
+    Path parentVersionDir = indexPath.getParent().getParent();
     if (parentVersionDir == null)
       return false;
 
@@ -1275,80 +1269,51 @@ public final class IssueDiscovery
       if (!qualifiedMatcher.matches())
         continue;
       String dirName = qualifiedMatcher.group(2);
-      Path subissueStatePath = parentVersionDir.resolve(dirName).resolve("STATE.md");
-      if (!Files.isRegularFile(subissueStatePath))
+      Path subissueIndexPath = parentVersionDir.resolve(dirName).resolve("index.json");
+      if (!Files.isRegularFile(subissueIndexPath))
         return false;
-      try
-      {
-        String subStatus = getIssueStatus(subissueStatePath);
-        if (!"closed".equals(subStatus))
-          return false;
-      }
-      catch (IOException _)
-      {
+      String subStatus = getIssueStatus(subissueIndexPath);
+      if (!"closed".equals(subStatus))
         return false;
-      }
     }
 
     return true;
   }
 
   /**
-   * Parses the dependencies list from a STATE.md file.
+   * Parses the dependencies list from pre-read index.json content.
    *
-   * @param statePath the path to the STATE.md file
+   * @param content the JSON content of the index.json file
+   * @param indexPath the path to the index.json file (used in error messages)
    * @return list of dependency issue IDs, empty if none
-   * @throws IOException if reading the file fails
+   * @throws IOException if the content is not valid JSON
    */
-  private List<String> getDependencies(Path statePath) throws IOException
+  private List<String> getDependencies(String content, Path indexPath) throws IOException
   {
-    if (!Files.isRegularFile(statePath))
+    if (content.isBlank())
       return Collections.emptyList();
-
-    List<String> lines = Files.readAllLines(statePath);
-    return getDependencies(lines);
-  }
-
-  /**
-   * Parses the dependencies list from pre-read STATE.md lines.
-   *
-   * @param lines the lines already read from the STATE.md file
-   * @return list of dependency issue IDs, empty if none
-   */
-  private List<String> getDependencies(List<String> lines)
-  {
-    for (String line : lines)
+    try
     {
-      if (line.startsWith("- **Dependencies:**"))
-      {
-        String depsContent = line.substring("- **Dependencies:**".length()).strip();
-
-        // Check for empty dependencies
-        if (depsContent.equals("[]") || depsContent.equalsIgnoreCase("none") ||
-          depsContent.isEmpty())
-          return Collections.emptyList();
-
-        // Extract from array notation [dep1, dep2]
-        if (depsContent.startsWith("[") && depsContent.contains("]"))
-        {
-          String inner = depsContent.substring(1, depsContent.lastIndexOf(']'));
-          if (inner.isBlank())
-            return Collections.emptyList();
-          List<String> deps = new ArrayList<>();
-          for (String part : inner.split(","))
-          {
-            String dep = part.strip().replaceAll("^\"|\"$", "");
-            if (!dep.isEmpty())
-              deps.add(dep);
-          }
-          return deps;
-        }
-
+      JsonNode root = mapper.readTree(content);
+      JsonNode depsNode = root.get("dependencies");
+      if (depsNode == null || !depsNode.isArray())
         return Collections.emptyList();
+      List<String> deps = new ArrayList<>();
+      for (JsonNode item : depsNode)
+      {
+        if (item.isString())
+        {
+          String dep = item.asString().strip();
+          if (!dep.isEmpty())
+            deps.add(dep);
+        }
       }
+      return deps;
     }
-
-    return Collections.emptyList();
+    catch (JacksonException e)
+    {
+      throw new IOException("Failed to parse " + indexPath + ": " + e.getMessage(), e);
+    }
   }
 
   /**
@@ -1403,7 +1368,7 @@ public final class IssueDiscovery
       String depIssueName = matcher.group(4);
       Path directPath = resolveVersionDir(depMajor, depMinor, depPatch).
         resolve(depIssueName).
-        resolve("STATE.md");
+        resolve("index.json");
       if (Files.isRegularFile(directPath))
         depStatePath = directPath;
     }
@@ -1418,7 +1383,7 @@ public final class IssueDiscovery
       try (Stream<Path> stream = Files.walk(issuesDir, 4))
       {
         depStatePath = stream.
-          filter(p -> p.getFileName().toString().equals("STATE.md")).
+          filter(p -> p.getFileName().toString().equals("index.json")).
           filter(p ->
           {
             Path parentDir = p.getParent();
@@ -1432,15 +1397,8 @@ public final class IssueDiscovery
     if (depStatePath == null)
       return false;
 
-    try
-    {
-      String status = getIssueStatus(depStatePath);
-      return "closed".equals(status);
-    }
-    catch (IOException _)
-    {
-      return false;
-    }
+    String status = getIssueStatus(depStatePath);
+    return "closed".equals(status);
   }
 
   /**
@@ -1448,7 +1406,7 @@ public final class IssueDiscovery
    *
    * @param minorDir the minor version directory
    * @param issueName the bare issue name
-   * @return true if the issue is listed as a post-condition issue in the version's PLAN.md
+   * @return true if the issue is listed as a post-condition issue in the version's plan.md
    * @throws IOException if file operations fail
    */
   private boolean isPostconditionIssue(Path minorDir, String issueName) throws IOException
@@ -1475,13 +1433,13 @@ public final class IssueDiscovery
       if (postconditionIssues.contains(dirName))
         continue;
 
-      Path statePath = issueDir.resolve("STATE.md");
-      if (!Files.isRegularFile(statePath))
+      Path indexPath = issueDir.resolve("index.json");
+      if (!Files.isRegularFile(indexPath))
         return false;
 
       try
       {
-        String status = getIssueStatus(statePath);
+        String status = getIssueStatus(indexPath);
         if (!"closed".equals(status))
           return false;
       }
@@ -1566,15 +1524,15 @@ public final class IssueDiscovery
   }
 
   /**
-   * Parses post-condition issue names from a version's PLAN.md file.
+   * Parses post-condition issue names from a version's plan.md file.
    *
-   * @param minorDir the minor version directory containing the PLAN.md
-   * @return list of bare issue names that are post-condition issues, empty if no PLAN.md or no such issues
+   * @param minorDir the minor version directory containing the plan.md
+   * @return list of bare issue names that are post-condition issues, empty if no plan.md or no such issues
    * @throws IOException if reading the file fails
    */
   private List<String> parsePostconditionIssues(Path minorDir) throws IOException
   {
-    Path planPath = minorDir.resolve("PLAN.md");
+    Path planPath = minorDir.resolve("plan.md");
     if (!Files.isRegularFile(planPath))
       return Collections.emptyList();
 
@@ -1684,26 +1642,26 @@ public final class IssueDiscovery
     }
 
     // Filter out closed issues before paying the git subprocess cost.
-    // Issues without a STATE.md are treated as open.
+    // Issues without an index.json are treated as open.
     List<Path> openDirs = new ArrayList<>(allDirs.size());
     for (Path dir : allDirs)
     {
-      Path statePath = dir.resolve("STATE.md");
-      if (!Files.isRegularFile(statePath))
+      Path indexPath = dir.resolve("index.json");
+      if (!Files.isRegularFile(indexPath))
       {
         openDirs.add(dir);
         continue;
       }
       try
       {
-        String status = getIssueStatus(statePath);
+        String status = getIssueStatus(indexPath);
         if ("open".equals(status) || "in-progress".equals(status))
           openDirs.add(dir);
         // closed (and any other non-open status) are silently excluded
       }
       catch (IOException e)
       {
-        warnings.add("Failed to read status from " + statePath + ": " + e.getMessage());
+        warnings.add("Failed to read status from " + indexPath + ": " + e.getMessage());
         // Unreadable status — include the dir so it is not silently lost
         openDirs.add(dir);
       }
@@ -1832,7 +1790,7 @@ public final class IssueDiscovery
 
   /**
    * Returns the Unix timestamp (seconds since epoch) of the oldest git commit that added the issue's
-   * {@code STATE.md} file.
+   * {@code index.json} file.
    * <p>
    * The {@code --reverse} flag ensures git log output is in oldest-first order, so the first line
    * is the original add commit.
@@ -1840,7 +1798,7 @@ public final class IssueDiscovery
    * Results are cached per issue directory to avoid redundant git subprocess calls.
    *
    * @param issueDir the issue directory
-   * @return the Unix timestamp of the first commit that added {@code STATE.md}, or {@code Long.MAX_VALUE}
+   * @return the Unix timestamp of the first commit that added {@code index.json}, or {@code Long.MAX_VALUE}
    *   if the timestamp cannot be determined (command failure, no output, non-git directory, or
    *   non-numeric output)
    * @throws NullPointerException if {@code issueDir} is null
@@ -1850,8 +1808,8 @@ public final class IssueDiscovery
     Long cached = creationTimeCache.get(issueDir);
     if (cached != null)
       return cached;
-    Path statePath = issueDir.resolve("STATE.md");
-    Path relativePath = projectPath.relativize(statePath);
+    Path indexPath = issueDir.resolve("index.json");
+    Path relativePath = projectPath.relativize(indexPath);
     String firstLine = ProcessRunner.runAndCaptureFirstLine(List.of("git", "-C", projectPath.toString(),
       "log", "--diff-filter=A", "--format=%at", "--reverse", "--", relativePath.toString()));
     long timestamp;

@@ -96,11 +96,11 @@ List all issues:
 
 ```bash
 find .cat/issues/v*/v*.* -mindepth 1 -maxdepth 1 -type d ! -name "v*" 2>/dev/null | while read d; do
-    [ -f "$d/STATE.md" ] || continue
+    [ -f "$d/index.json" ] || continue
     ISSUE_NAME=$(basename "$d")
     MAJOR=$(echo "$d" | sed 's|.*/v\([0-9]*\)/v[0-9]*\.[0-9]*/.*|\1|')
     MINOR=$(echo "$d" | sed 's|.*/v[0-9]*/v[0-9]*\.\([0-9]*\)/.*|\1|')
-    STATUS=$(grep "Status:" "$d/STATE.md" | sed 's/.*: //')
+    STATUS=$(grep "Status:" "$d/index.json" | sed 's/.*: //')
     echo "$MAJOR.$MINOR-$ISSUE_NAME ($STATUS)"
 done
 ```
@@ -123,7 +123,7 @@ ISSUE_PATH=".cat/issues/v$MAJOR/v$MAJOR.$MINOR/$ISSUE_NAME"
 
 [ ! -d "$ISSUE_PATH" ] && echo "ERROR: Issue does not exist" && exit 1
 
-STATUS=$(grep "Status:" "$ISSUE_PATH/STATE.md" | sed 's/.*: //')
+STATUS=$(grep "Status:" "$ISSUE_PATH/index.json" | sed 's/.*: //')
 ```
 
 **Block removal if in-progress:**
@@ -138,7 +138,7 @@ Progress: {progress}%
 
 Options:
 1. Complete the issue first with /cat:work
-2. Manually reset status to 'pending' in STATE.md if you want to discard work
+2. Manually reset status to 'pending' in index.json if you want to discard work
 ```
 
 Exit command.
@@ -164,7 +164,7 @@ If "No, keep it" -> exit command.
 
 ```bash
 find .cat/issues/v*/v*.* -mindepth 1 -maxdepth 1 -type d ! -name "v*" \
-    -exec grep -l "Dependencies:.*$ISSUE_NAME" {}/STATE.md \; 2>/dev/null
+    -exec grep -l "Dependencies:.*$ISSUE_NAME" {}/index.json \; 2>/dev/null
 ```
 
 If dependents found:
@@ -192,8 +192,8 @@ Use AskUserQuestion:
 - question: "Remove issue '{issue-name}' from {major}.{minor}?
 
 This will delete:
-- STATE.md
-- PLAN.md"
+- index.json
+- plan.md"
 - options:
   - "Yes, remove it" - Proceed
   - "No, cancel" - Abort
@@ -214,8 +214,8 @@ rm -rf "$ISSUE_PATH"
 
 ```bash
 find .cat/issues/v$MAJOR/v$MAJOR.$MINOR -mindepth 1 -maxdepth 1 -type d ! -name "v*" | while read d; do
-    if grep -q "Dependencies:.*$ISSUE_NAME" "$d/STATE.md" 2>/dev/null; then
-        sed -i "s/$ISSUE_NAME, //g; s/, $ISSUE_NAME//g; s/$ISSUE_NAME//g" "$d/STATE.md"
+    if grep -q "Dependencies:.*$ISSUE_NAME" "$d/index.json" 2>/dev/null; then
+        sed -i "s/$ISSUE_NAME, //g; s/, $ISSUE_NAME//g; s/$ISSUE_NAME//g" "$d/index.json"
     fi
 done
 ```
@@ -224,10 +224,10 @@ done
 
 <step name="issue_update_parent">
 
-**Update parent minor STATE.md - remove issue from list:**
+**Update parent minor index.json - remove issue from list:**
 
 ```bash
-VERSION_STATE=".cat/issues/v$MAJOR/v$MAJOR.$MINOR/STATE.md"
+VERSION_STATE=".cat/issues/v$MAJOR/v$MAJOR.$MINOR/index.json"
 
 # Remove issue from Issues Pending section
 sed -i "/^- $ISSUE_NAME$/d" "$VERSION_STATE"
@@ -246,7 +246,7 @@ fi
 sed -i "s/Progress:.*$/Progress:** $PROGRESS%/" "$VERSION_STATE"
 
 # Verify issue removed
-! grep -q "^- $ISSUE_NAME$" "$VERSION_STATE" || echo "ERROR: Issue not removed from STATE.md"
+! grep -q "^- $ISSUE_NAME$" "$VERSION_STATE" || echo "ERROR: Issue not removed from index.json"
 ```
 
 </step>
@@ -311,7 +311,7 @@ for d in .cat/v[0-9]*/; do
     MAJOR=$(basename "$d" | sed 's/v//')
     MINOR_COUNT=$(ls -1d "$d"v$MAJOR.[0-9]* 2>/dev/null | wc -l)
     ISSUE_COUNT=$(find "$d" -mindepth 2 -maxdepth 2 -type d ! -name "v*" ! -name "issue" 2>/dev/null | wc -l)
-    STATUS=$(grep "Status:" "$d/STATE.md" 2>/dev/null | sed 's/.*: //' || echo "unknown")
+    STATUS=$(grep "Status:" "$d/index.json" 2>/dev/null | sed 's/.*: //' || echo "unknown")
     echo "Major $MAJOR: $MINOR_COUNT minor versions, $ISSUE_COUNT issues ($STATUS)"
 done
 ```
@@ -351,7 +351,7 @@ find .cat -maxdepth 3 -type d -name "v[0-9]*.[0-9]*.[0-9]*" 2>/dev/null | while 
     MINOR=$(echo "$VERSION" | cut -d. -f2)
     PATCH=$(echo "$VERSION" | cut -d. -f3)
     ISSUE_COUNT=$(find "$d" -mindepth 1 -maxdepth 1 -type d ! -name "v*" 2>/dev/null | wc -l)
-    STATUS=$(grep -oP '(?<=\*\*Status:\*\* )\w+' "$d/STATE.md" 2>/dev/null || echo "open")
+    STATUS=$(grep -oP '(?<=\*\*Status:\*\* )\w+' "$d/index.json" 2>/dev/null || echo "open")
     echo "$MAJOR.$MINOR.$PATCH ($ISSUE_COUNT issues, $STATUS)"
 done | sort -V
 ```
@@ -380,7 +380,7 @@ Check for incomplete work:
 
 ```bash
 INCOMPLETE=$(find "$VERSION_PATH" -mindepth 2 -maxdepth 2 -type d ! -name "v*" ! -name "issue" | while read d; do
-    [ -f "$d/STATE.md" ] && grep -q "Status: pending\|Status: in-progress" "$d/STATE.md" && echo "$d"
+    [ -f "$d/index.json" ] && grep -q "Status: pending\|Status: in-progress" "$d/index.json" && echo "$d"
 done)
 ```
 
@@ -395,8 +395,8 @@ Check for incomplete issues:
 
 ```bash
 INCOMPLETE=$(find "$VERSION_PATH" -mindepth 1 -maxdepth 1 -type d ! -name "issue" ! -name "v*" \
-    -exec test -f {}/STATE.md \; \
-    -exec grep -l "Status: pending\|Status: in-progress" {}/STATE.md \; 2>/dev/null)
+    -exec test -f {}/index.json \; \
+    -exec grep -l "Status: pending\|Status: in-progress" {}/index.json \; 2>/dev/null)
 ```
 
 **If VERSION_TYPE is "patch":**
@@ -410,8 +410,8 @@ Check for incomplete issues:
 
 ```bash
 INCOMPLETE=$(find "$VERSION_PATH" -mindepth 1 -maxdepth 1 -type d ! -name "v*" \
-    -exec test -f {}/STATE.md \; \
-    -exec grep -l "Status: pending\|Status: in-progress" {}/STATE.md \; 2>/dev/null)
+    -exec test -f {}/index.json \; \
+    -exec grep -l "Status: pending\|Status: in-progress" {}/index.json \; 2>/dev/null)
 ```
 
 **If incomplete work/issues exist:**
@@ -438,7 +438,7 @@ If "Cancel" -> exit command.
 **If VERSION_TYPE is "major":**
 
 ```bash
-LATER_MAJORS=$(find .cat -name "STATE.md" -path ".cat/v[$(($MAJOR+1))-9]*/STATE.md" \
+LATER_MAJORS=$(find .cat -name "index.json" -path ".cat/v[$(($MAJOR+1))-9]*/index.json" \
     -exec grep -l "Dependencies:.*$MAJOR" {} \; 2>/dev/null)
 ```
 
@@ -527,7 +527,7 @@ This will permanently delete:
 - {minor_count} minor
   versions
 - {issue_count} issues
-- All associated STATE.md, PLAN.md, CHANGELOG.md files
+- All associated index.json, plan.md, CHANGELOG.md files
 
 This action cannot be
   undone (except via git). Are you absolutely sure?"
@@ -543,7 +543,7 @@ Use AskUserQuestion:
 
 This will delete:
 - {issue_count} issues
-- All STATE.md, PLAN.md
+- All index.json, plan.md
   files"
 - options:
   - "Yes, remove it" - Proceed
@@ -557,8 +557,8 @@ Use AskUserQuestion:
 
 This will delete:
 - $ISSUE_COUNT issues
-- All STATE.md,
-  PLAN.md, CHANGELOG.md files"
+- All index.json,
+  plan.md, CHANGELOG.md files"
 - options:
   - "Yes, remove it" - Proceed
   - "No, cancel" - Abort
@@ -615,7 +615,7 @@ sed -i "/^[[:space:]]*- \*\*$MAJOR\.$MINOR\.$PATCH:\*\*/d" "$ROADMAP"
 
 <step name="version_update_parent">
 
-**Update parent STATE.md (skip if VERSION_TYPE="major"):**
+**Update parent index.json (skip if VERSION_TYPE="major"):**
 
 **If VERSION_TYPE is "major":**
 - Skip to step: version_commit (no parent to update)
@@ -623,7 +623,7 @@ sed -i "/^[[:space:]]*- \*\*$MAJOR\.$MINOR\.$PATCH:\*\*/d" "$ROADMAP"
 **If VERSION_TYPE is "minor":**
 
 ```bash
-PARENT_STATE=".cat/issues/v$MAJOR/STATE.md"
+PARENT_STATE=".cat/issues/v$MAJOR/index.json"
 
 # Remove minor version from "## Minor Versions" section
 sed -i "/^- v$MAJOR.$MINOR$/d" "$PARENT_STATE"
@@ -632,7 +632,7 @@ sed -i "/^- v$MAJOR.$MINOR$/d" "$PARENT_STATE"
 TOTAL_MINORS=$(grep -c "^- v$MAJOR\." "$PARENT_STATE" 2>/dev/null || echo 0)
 CLOSED_MINORS=0
 for minor_entry in $(grep "^- v$MAJOR\." "$PARENT_STATE" | sed 's/- v//'); do
-  MINOR_STATE=".cat/issues/v$MAJOR/v$minor_entry/STATE.md"
+  MINOR_STATE=".cat/issues/v$MAJOR/v$minor_entry/index.json"
   if [ -f "$MINOR_STATE" ] && grep -q "\*\*Status:\*\*.*closed" "$MINOR_STATE"; then
     CLOSED_MINORS=$((CLOSED_MINORS + 1))
   fi
@@ -645,19 +645,19 @@ fi
 sed -i "s/- \*\*Progress:\*\* .*$/- **Progress:** $PROGRESS%/" "$PARENT_STATE"
 
 # Verify minor removed
-! grep -q "^- v$MAJOR.$MINOR$" "$PARENT_STATE" || echo "ERROR: Minor version not removed from major STATE.md"
+! grep -q "^- v$MAJOR.$MINOR$" "$PARENT_STATE" || echo "ERROR: Minor version not removed from major index.json"
 ```
 
 **If VERSION_TYPE is "patch":**
 
 ```bash
-PARENT_STATE=".cat/issues/v$MAJOR/v$MAJOR.$MINOR/STATE.md"
+PARENT_STATE=".cat/issues/v$MAJOR/v$MAJOR.$MINOR/index.json"
 
 # Remove patch version from "## Patch Versions" section
 sed -i "/^- v$MAJOR.$MINOR.$PATCH$/d" "$PARENT_STATE"
 
 # Verify patch removed
-! grep -q "^- v$MAJOR.$MINOR.$PATCH$" "$PARENT_STATE" || echo "ERROR: Patch version not removed from minor STATE.md"
+! grep -q "^- v$MAJOR.$MINOR.$PATCH$" "$PARENT_STATE" || echo "ERROR: Patch version not removed from minor index.json"
 ```
 
 </step>
@@ -776,7 +776,7 @@ Use `/cat:status` to see current state.
 - [ ] Dependencies checked and warned
 - [ ] User confirmation obtained
 - [ ] Issue directory removed
-- [ ] Parent STATE.md updated
+- [ ] Parent index.json updated
 - [ ] Removal committed to git
 
 **For Version (Major/Minor/Patch):**
@@ -787,7 +787,7 @@ Use `/cat:status` to see current state.
 - [ ] User confirmation obtained
 - [ ] Version directory removed
 - [ ] ROADMAP.md updated
-- [ ] Parent STATE.md updated (if applicable)
+- [ ] Parent index.json updated (if applicable)
 - [ ] Removal committed to git
 - [ ] Recovery instructions provided (for major)
 

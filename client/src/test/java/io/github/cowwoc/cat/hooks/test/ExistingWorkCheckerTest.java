@@ -255,9 +255,9 @@ public class ExistingWorkCheckerTest
       String json = result.toJson(mapper);
       JsonNode parsed = mapper.readTree(json);
 
-      requireThat(parsed.get("has_existing_work").asBoolean(), "has_existing_work").isFalse();
-      requireThat(parsed.get("existing_commits").asInt(), "existing_commits").isEqualTo(0);
-      requireThat(parsed.get("commit_summary").asString(), "commit_summary").isEqualTo("");
+      requireThat(parsed.get("hasExistingWork").asBoolean(), "hasExistingWork").isFalse();
+      requireThat(parsed.get("existingCommits").asInt(), "existingCommits").isEqualTo(0);
+      requireThat(parsed.get("commitSummary").asString(), "commitSummary").isEqualTo("");
     }
   }
 
@@ -277,9 +277,9 @@ public class ExistingWorkCheckerTest
       String json = result.toJson(mapper);
       JsonNode parsed = mapper.readTree(json);
 
-      requireThat(parsed.get("has_existing_work").asBoolean(), "has_existing_work").isTrue();
-      requireThat(parsed.get("existing_commits").asInt(), "existing_commits").isEqualTo(3);
-      requireThat(parsed.get("commit_summary").asString(), "commit_summary").
+      requireThat(parsed.get("hasExistingWork").asBoolean(), "hasExistingWork").isTrue();
+      requireThat(parsed.get("existingCommits").asInt(), "existingCommits").isEqualTo(3);
+      requireThat(parsed.get("commitSummary").asString(), "commitSummary").
         isEqualTo("abc1234 First|def5678 Second");
     }
   }
@@ -312,8 +312,8 @@ public class ExistingWorkCheckerTest
 
         requireThat(success, "success").isTrue();
         String output = outBytes.toString(StandardCharsets.UTF_8);
-        requireThat(output, "output").contains("\"has_existing_work\"");
-        requireThat(output, "output").contains("\"existing_commits\"");
+        requireThat(output, "output").contains("\"hasExistingWork\"");
+        requireThat(output, "output").contains("\"existingCommits\"");
         String errOutput = errBytes.toString(StandardCharsets.UTF_8);
         requireThat(errOutput, "errOutput").isEmpty();
       }

@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.hooks.tool.post;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.PostToolHandler;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -28,17 +29,18 @@ public final class DetectTokenThreshold implements PostToolHandler
   private static final long STRONG_WARNING_THRESHOLD = 80_000;
 
   private final Path claudeConfigDir;
+  private final JsonMapper mapper;
 
   /**
    * Creates a new detect-token-threshold handler.
    *
-   * @param claudeConfigDir the Claude config directory path for resolving session files
-   * @throws NullPointerException if {@code claudeConfigDir} is null
+   * @param scope the JVM scope providing configuration paths and services
+   * @throws NullPointerException if {@code scope} is null
    */
-  public DetectTokenThreshold(Path claudeConfigDir)
+  public DetectTokenThreshold(JvmScope scope)
   {
-    requireThat(claudeConfigDir, "claudeConfigDir").isNotNull();
-    this.claudeConfigDir = claudeConfigDir;
+    this.claudeConfigDir = scope.getClaudeConfigDir();
+    this.mapper = scope.getJsonMapper();
   }
 
   @Override
@@ -93,7 +95,6 @@ public final class DetectTokenThreshold implements PostToolHandler
   long readTotalTokens(Path sessionFile) throws IOException
   {
     String content = Files.readString(sessionFile);
-    JsonMapper mapper = JsonMapper.builder().build();
     JsonNode root = mapper.readTree(content);
 
     JsonNode tokenUsage = root.get("token_usage");

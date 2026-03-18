@@ -1,0 +1,6 @@
+{
+  "status": "closed",
+  "resolution": "implemented",
+  "dependencies": ["2.1-port-lock-and-worktree"],
+  "parent": "2.1-port-workflow-scripts"
+}

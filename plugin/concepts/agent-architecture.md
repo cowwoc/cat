@@ -17,7 +17,7 @@ See LICENSE.md in the project root for license terms.
 | Git operations | Branch creation, merging |
 | Conflict resolution | Resolve merge conflicts |
 | Queue processing | Handle subagent returns serially |
-| State updates | Update STATE.md after completions |
+| State updates | Update index.json after completions |
 
 ### Does NOT
 
@@ -43,7 +43,7 @@ The delegation boundary exists for quality and traceability, not efficiency.
 BEFORE using the Edit tool on ANY source file (.java, .md code docs, etc.), STOP and verify:
 
 1. **Am I the main agent?** (orchestrating a CAT issue)
-2. **Is this a source/documentation file?** (not STATE.md, PLAN.md, CHANGELOG.md)
+2. **Is this a source/documentation file?** (not index.json, plan.md, CHANGELOG.md)
 3. **Is a subagent already running or could one be spawned?**
 
 If answers are YES/YES/YES → **SPAWN SUBAGENT INSTEAD**
@@ -125,7 +125,7 @@ Handles three phases internally to hide noisy tool calls from user.
 
 | Phase | Responsibilities | Output |
 |-------|------------------|--------|
-| **Preparation** | Read PLAN.md, analyze issue size, create worktree | Estimate and worktree path |
+| **Preparation** | Read plan.md, analyze issue size, create worktree | Estimate and worktree path |
 | **Exploration** | Search codebase, find patterns, check duplicates | File locations and patterns |
 | **Verification** | Validate findings, confirm paths exist | Validation results |
 
@@ -224,7 +224,7 @@ Main Agent
     Merge branches
          |
          v
-    Update STATE.md
+    Update index.json
 ```
 
 ## Parallel Execution

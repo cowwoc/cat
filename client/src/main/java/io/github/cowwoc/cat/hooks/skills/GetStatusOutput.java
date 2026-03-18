@@ -33,6 +33,8 @@ import io.github.cowwoc.cat.hooks.licensing.Tier;
 import io.github.cowwoc.cat.hooks.skills.GetCleanupOutput.CorruptIssue;
 import io.github.cowwoc.cat.hooks.util.IssueDiscovery;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -182,12 +184,12 @@ public final class GetStatusOutput implements SkillOutput
             majorName = matched.trim();
         }
 
-        Path majorStateFile = majorDir.resolve("STATE.md");
+        Path majorIndexFile = majorDir.resolve("index.json");
         String majorStatus = "open";
-        if (Files.exists(majorStateFile))
+        if (Files.exists(majorIndexFile))
         {
-          String content = Files.readString(majorStateFile);
-          majorStatus = parseStatusFromContent(content, majorStateFile.toString());
+          String content = Files.readString(majorIndexFile);
+          majorStatus = parseStatusFromJson(content, majorIndexFile.toString());
         }
 
         MajorVersion major = new MajorVersion();
@@ -231,13 +233,13 @@ public final class GetStatusOutput implements SkillOutput
             for (Path issueDir : issueDirs)
             {
               String issueName = issueDir.getFileName().toString();
-              Path stateFile = issueDir.resolve("STATE.md");
-              Path planFile = issueDir.resolve("PLAN.md");
+              Path indexFile = issueDir.resolve("index.json");
+              Path planFile = issueDir.resolve("plan.md");
 
-              if (!Files.exists(stateFile) && !Files.exists(planFile))
+              if (!Files.exists(indexFile) && !Files.exists(planFile))
                 continue;
 
-              String status = getIssueStatus(stateFile, catDir, minorNum, issueName, licenseResult);
+              String status = getIssueStatus(indexFile, catDir, minorNum, issueName, licenseResult);
               allIssueStatuses.put(issueName, status);
             }
 
@@ -319,12 +321,12 @@ public final class GetStatusOutput implements SkillOutput
   }
 
   /**
-   * Gets issue status from STATE.md file.
+   * Gets issue status from index.json file.
    * <p>
-   * If STATE.md status is "open", checks for lock files (Core tier) and git branches (Pro tier)
+   * If the status is "open", checks for lock files (Core tier) and git branches (Pro tier)
    * to determine if the issue is actually in-progress.
    *
-   * @param stateFile the STATE.md file path
+   * @param indexFile the index.json file path
    * @param catDir the CAT directory (for lock file lookup)
    * @param minorNum the minor version number (e.g., "2.1")
    * @param issueName the issue name
@@ -332,14 +334,14 @@ public final class GetStatusOutput implements SkillOutput
    * @return the normalized status
    * @throws IOException if an I/O error occurs
    */
-  private String getIssueStatus(Path stateFile, Path catDir, String minorNum, String issueName,
+  private String getIssueStatus(Path indexFile, Path catDir, String minorNum, String issueName,
     LicenseResult licenseResult) throws IOException
   {
-    if (!Files.exists(stateFile))
+    if (!Files.exists(indexFile))
       return "open";
 
-    String content = Files.readString(stateFile);
-    String status = parseStatusFromContent(content, stateFile.toString());
+    String content = Files.readString(indexFile);
+    String status = parseStatusFromIndexJson(content, indexFile.toString());
 
     if (status.equals("open"))
     {
@@ -350,7 +352,7 @@ public final class GetStatusOutput implements SkillOutput
 
       if (licenseResult.tier().compareTo(Tier.PRO) >= 0)
       {
-        Path issueRelPath = stateFile.getParent();
+        Path issueRelPath = indexFile.getParent();
         Path projectPath = catDir.getParent().getParent();
         String relPath = projectPath.relativize(issueRelPath).toString();
         String branchStatus = branchStatusCache.get(relPath);
@@ -360,6 +362,41 @@ public final class GetStatusOutput implements SkillOutput
     }
 
     return status;
+  }
+
+  /**
+   * Parses the status field from index.json content.
+   * <p>
+   * Throws IOException if the status field is missing or contains an unrecognized value.
+   *
+   * @param content the index.json file content
+   * @param sourcePath the file path to include in error messages (e.g., "v2/v2.1/my-issue/index.json")
+   * @return the parsed status
+   * @throws IOException if the status field is missing or its value is not a recognized canonical value
+   */
+  private String parseStatusFromIndexJson(String content, String sourcePath) throws IOException
+  {
+    JsonNode root;
+    try
+    {
+      root = scope.getJsonMapper().readTree(content);
+    }
+    catch (JacksonException e)
+    {
+      throw new IOException("Failed to parse index.json at " + sourcePath + ": " + e.getMessage(), e);
+    }
+    if (content.isBlank())
+      return "open";
+    JsonNode statusNode = root.get("status");
+    if (statusNode == null || !statusNode.isString())
+      throw new IOException("Missing status field in " + sourcePath);
+    String rawStatus = statusNode.asString().strip();
+    IssueStatus status = IssueStatus.fromString(rawStatus);
+    if (status != null)
+      return status.toString();
+    throw new IOException("Unknown status '" + rawStatus + "' in " + sourcePath + ".\n" +
+      "Valid values: " + IssueStatus.asCommaSeparated() + ".\n" +
+      "If migrating from older versions, run: plugin/migrations/2.1.sh");
   }
 
   /**
@@ -388,6 +425,39 @@ public final class GetStatusOutput implements SkillOutput
     throw new IOException("Unknown status '" + rawStatus + "' in " + sourcePath + ":" + lineNumber + ".\n" +
       "Valid values: " + IssueStatus.asCommaSeparated() + ".\n" +
       "If migrating from older versions, run: plugin/migrations/2.1.sh");
+  }
+
+  /**
+   * Parses the status field from index.json content.
+   * <p>
+   * Throws IOException if the status field is missing or contains an unrecognized value,
+   * enforcing canonical status validation at read time.
+   *
+   * @param content the index.json file content
+   * @param sourcePath the file path to include in error messages (e.g., "v2/index.json")
+   * @return the parsed status
+   * @throws IOException if the status field is missing or its value is not a recognized canonical value
+   */
+  private String parseStatusFromJson(String content, String sourcePath) throws IOException
+  {
+    try
+    {
+      JsonNode root = scope.getJsonMapper().readTree(content);
+      JsonNode statusNode = root.get("status");
+      if (statusNode == null || !statusNode.isString())
+        throw new IOException("Missing 'status' field in " + sourcePath);
+      String rawStatus = statusNode.asString();
+      IssueStatus status = IssueStatus.fromString(rawStatus);
+      if (status != null)
+        return status.toString();
+      throw new IOException("Unknown status '" + rawStatus + "' in " + sourcePath + ".\n" +
+        "Valid values: " + IssueStatus.asCommaSeparated() + ".\n" +
+        "If migrating from older versions, run: plugin/migrations/2.1.sh");
+    }
+    catch (JacksonException e)
+    {
+      throw new IOException("Invalid JSON in " + sourcePath + ": " + e.getMessage(), e);
+    }
   }
 
   /**
@@ -436,59 +506,46 @@ public final class GetStatusOutput implements SkillOutput
   }
 
   /**
-   * Gets issue dependencies from STATE.md file.
+   * Gets issue dependencies from index.json file.
    *
-   * @param stateFile the STATE.md file path
+   * @param indexFile the index.json file path
    * @return the list of dependency issue IDs
    * @throws IOException if an I/O error occurs
    */
-  private List<String> getIssueDependencies(Path stateFile) throws IOException
+  private List<String> getIssueDependencies(Path indexFile) throws IOException
   {
-    if (!Files.exists(stateFile))
+    if (!Files.exists(indexFile))
       return List.of();
 
-    String content = Files.readString(stateFile);
+    String content = Files.readString(indexFile);
+    if (content.isBlank())
+      return List.of();
 
-    Pattern sectionPattern = Pattern.compile("^## Dependencies\\s*\\n((?:- .+\\n?)+)", Pattern.MULTILINE);
-    Matcher sectionMatcher = sectionPattern.matcher(content);
-    if (sectionMatcher.find())
+    JsonNode root;
+    try
     {
-      List<String> deps = new ArrayList<>();
-      String section = sectionMatcher.group(1).strip();
-      for (String line : section.split("\n"))
-      {
-        Pattern depPattern = Pattern.compile("^- ([a-zA-Z0-9_-]+)");
-        Matcher depMatcher = depPattern.matcher(line);
-        if (depMatcher.find())
-        {
-          String depName = depMatcher.group(1);
-          if (!depName.equalsIgnoreCase("none"))
-            deps.add(depName);
-        }
-      }
-      return deps;
+      root = scope.getJsonMapper().readTree(content);
+    }
+    catch (JacksonException e)
+    {
+      throw new IOException("Failed to parse " + indexFile + ": " + e.getMessage(), e);
     }
 
-    Pattern inlinePattern = Pattern.compile("^- \\*\\*Dependencies:\\*\\*\\s*\\[([^\\]]*)\\]",
-      Pattern.MULTILINE);
-    Matcher inlineMatcher = inlinePattern.matcher(content);
-    if (inlineMatcher.find())
+    JsonNode depsNode = root.get("dependencies");
+    if (depsNode == null || !depsNode.isArray())
+      return List.of();
+
+    List<String> deps = new ArrayList<>();
+    for (JsonNode dep : depsNode)
     {
-      String depStr = inlineMatcher.group(1).strip();
-      if (!depStr.isEmpty())
+      if (dep.isString())
       {
-        List<String> deps = new ArrayList<>();
-        for (String dep : depStr.split(","))
-        {
-          String trimmed = dep.strip();
-          if (!trimmed.isEmpty())
-            deps.add(trimmed);
-        }
-        return deps;
+        String depStr = dep.asString().strip();
+        if (!depStr.isEmpty())
+          deps.add(depStr);
       }
     }
-
-    return List.of();
+    return deps;
   }
 
   /**
@@ -666,7 +723,7 @@ public final class GetStatusOutput implements SkillOutput
     {
       contentItems.add("⚠ Corrupt Issue Directories:");
       for (CorruptIssue corrupt : data.corruptIssues)
-        contentItems.add("   ⚠ CORRUPT  " + corrupt.issueId() + "  — STATE.md present but PLAN.md missing at " +
+        contentItems.add("   ⚠ CORRUPT  " + corrupt.issueId() + "  — index.json present but plan.md missing at " +
                          corrupt.issuePath());
       contentItems.add("");
     }
@@ -762,9 +819,9 @@ public final class GetStatusOutput implements SkillOutput
   }
 
   /**
-   * Loads the status of issues from git branches by scanning for STATE.md changes.
+   * Loads the status of issues from git branches by scanning for index.json changes.
    * <p>
-   * For each branch, finds STATE.md files that differ from the target branch,
+   * For each branch, finds index.json files that differ from the target branch,
    * reads their status, and builds a map of issue path to status.
    *
    * @param projectPath the project root directory
@@ -802,7 +859,7 @@ public final class GetStatusOutput implements SkillOutput
         }
         if (!status.isEmpty())
         {
-          String issueRelPath = stateFilePath.replace("/STATE.md", "");
+          String issueRelPath = stateFilePath.replace("/index.json", "");
           statusMap.putIfAbsent(issueRelPath, status);
         }
       }
@@ -858,7 +915,7 @@ public final class GetStatusOutput implements SkillOutput
   }
 
   /**
-   * Gets the list of STATE.md files that changed between target branch and the given branch.
+   * Gets the list of index.json files that changed between target branch and the given branch.
    * <p>
    * File paths are validated to ensure they are within the expected directory
    * and do not contain path traversal sequences.
@@ -866,14 +923,14 @@ public final class GetStatusOutput implements SkillOutput
    * @param projectPath the project root directory
    * @param targetBranch the target branch name
    * @param branch the branch to compare
-   * @return list of valid changed STATE.md file paths relative to project root
+   * @return list of valid changed index.json file paths relative to project root
    * @throws IOException if git command fails
    */
   private List<String> getChangedStateFiles(Path projectPath, String targetBranch, String branch)
     throws IOException
   {
     List<String> lines = executeGitCommand(projectPath, "git", "diff", "--name-only",
-      targetBranch + "..." + branch, "--", Config.CAT_DIR_NAME + "/issues/**/STATE.md");
+      targetBranch + "..." + branch, "--", Config.CAT_DIR_NAME + "/issues/**/index.json");
 
     List<String> changedFiles = new ArrayList<>();
     for (String line : lines)
@@ -887,12 +944,12 @@ public final class GetStatusOutput implements SkillOutput
   }
 
   /**
-   * Validates a STATE.md file path from git output.
+   * Validates an index.json file path from git output.
    * <p>
    * Valid paths must:
    * - Not contain ".." sequences (path traversal)
    * - Start with ".cat/issues/"
-   * - End with "/STATE.md"
+   * - End with "/index.json"
    *
    * @param filePath the file path to validate
    * @return true if the path is valid
@@ -903,11 +960,11 @@ public final class GetStatusOutput implements SkillOutput
       return false;
     if (filePath.contains(".."))
       return false;
-    return filePath.startsWith(Config.CAT_DIR_NAME + "/issues/") && filePath.endsWith("/STATE.md");
+    return filePath.startsWith(Config.CAT_DIR_NAME + "/issues/") && filePath.endsWith("/index.json");
   }
 
   /**
-   * Reads the status from a STATE.md file on a specific branch.
+   * Reads the status from an index.json file on a specific branch.
    * <p>
    * Branch names are validated before use in git commands.
    *
@@ -930,7 +987,7 @@ public final class GetStatusOutput implements SkillOutput
     for (String line : lines)
       content.append(line).append('\n');
 
-    return parseStatusFromContent(content.toString(), branch + ":" + filePath);
+    return parseStatusFromIndexJson(content.toString(), branch + ":" + filePath);
   }
 
   /**
@@ -1074,14 +1131,14 @@ public final class GetStatusOutput implements SkillOutput
     for (Path issueDir : issueDirs)
     {
       String issueName = issueDir.getFileName().toString();
-      Path stateFile = issueDir.resolve("STATE.md");
-      Path planFile = issueDir.resolve("PLAN.md");
+      Path indexFile = issueDir.resolve("index.json");
+      Path planFile = issueDir.resolve("plan.md");
 
-      if (!Files.exists(stateFile) && !Files.exists(planFile))
+      if (!Files.exists(indexFile) && !Files.exists(planFile))
         continue;
 
-      String status = getIssueStatus(stateFile, catDir, minorNum, issueName, licenseResult);
-      List<String> dependencies = getIssueDependencies(stateFile);
+      String status = getIssueStatus(indexFile, catDir, minorNum, issueName, licenseResult);
+      List<String> dependencies = getIssueDependencies(indexFile);
       ++total;
 
       List<String> blockedBy = new ArrayList<>();

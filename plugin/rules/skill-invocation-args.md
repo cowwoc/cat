@@ -15,7 +15,7 @@ skill: "cat:example", args: "<catAgentId>"
 For skills with additional arguments, append them after the catAgentId:
 
 ```
-skill: "cat:example", args: "<catAgentId> <issue_id> <worktree_path>"
+skill: "cat:example", args: "<catAgentId> <issueId> <worktreePath>"
 ```
 
 **NEVER** pass a branch name, skill name, or other value as the first argument — it must always be

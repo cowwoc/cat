@@ -75,15 +75,15 @@ CAT supports flexible version schemes:
 +-- ROADMAP.md              # Version summaries
 +-- config.json             # Configuration
 +-- v{major}/
-    +-- STATE.md            # Major version state
-    +-- PLAN.md             # Business-level plan
+    +-- index.json            # Major version state
+    +-- plan.md             # Business-level plan
     +-- v{major}.{minor}/
-        +-- STATE.md        # Minor version state
-        +-- PLAN.md         # Feature-level plan
+        +-- index.json        # Minor version state
+        +-- plan.md         # Feature-level plan
         +-- {issue-name}/    # Issues at minor level (2-level scheme)
         +-- v{major}.{minor}.{patch}/
-            +-- STATE.md    # Patch version state (optional 3-level)
-            +-- PLAN.md     # Patch-level plan
+            +-- index.json    # Patch version state (optional 3-level)
+            +-- plan.md     # Patch-level plan
             +-- {issue-name}/  # Issues at patch level
 ```
 
@@ -209,4 +209,4 @@ config.json:
 - Read `.cat/PROJECT.md` for project vision
 - Check `.cat/ROADMAP.md` for version overview
 - Use `/cat:status` to see current state
-- Review individual STATE.md files for detailed progress
+- Review individual index.json files for detailed progress

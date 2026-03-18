@@ -1,6 +1,8 @@
 # State
 
-- **Status:** in-progress
-- **Progress:** 95%
+- **Status:** closed
+- **Resolution:** implemented
+- **Target Branch:** v2.1
+- **Progress:** 100%
 - **Dependencies:** []
 - **Blocks:** []

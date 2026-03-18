@@ -1,0 +1,5 @@
+{
+  "status": "closed",
+  "resolution": "implemented - Wave 4 fixes complete: use scope.getClaudeSessionId() for session ID consistency, add tests for non-UUID rejection and permission error handling",
+  "targetBranch": "v2.1"
+}

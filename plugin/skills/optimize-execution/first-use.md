@@ -374,8 +374,8 @@ Generate a comprehensive analysis report with specific recommendations for:
 
 **Examples**:
 - Stakeholder review spawn after diff available, before commit squash (review needs diff, not squash order)
-- PLAN.md read overlapping with lock acquisition (independent operations masked as sequential)
-- Implementation subagent start after first execution step read, before full PLAN.md parse
+- plan.md read overlapping with lock acquisition (independent operations masked as sequential)
+- Implementation subagent start after first execution step read, before full plan.md parse
 
 **Applicability Note**: Claude Code tool calls are sequential within a message. Pipelining applies when skill steps have false serial dependencies - reordering steps to overlap output availability with consumption can reduce total wall-clock time even though tool calls remain sequential.
 
@@ -446,7 +446,7 @@ subagent could read the files directly at lower token cost.
 - Main agent context stays lean for orchestration decisions
 
 **Correct pattern — pass content already in context:**
-- If the main agent already read a file for its own decision-making (e.g., reviewing PLAN.md to
+- If the main agent already read a file for its own decision-making (e.g., reviewing plan.md to
   choose which phase to run), it MAY include that content in the subagent prompt to save a
   redundant read
 - The key distinction: the main agent read it for *its own purpose first*, not as a relay
@@ -472,7 +472,7 @@ Do NOT output raw JSON to the user. Use the JSON data internally to populate the
 ## Session Optimization Report
 
 ### Session Overview
-- **Issue:** {issue_id}
+- **Issue:** {issueId}
 - **Total tool calls:** {combined.summary.total_tool_calls} ({main count} main + {subagent count} subagent)
 - **Unique tools used:** {combined.summary.unique_tools joined with ", "}
 - **Delegations:** {number of Task tool calls}

@@ -91,7 +91,7 @@ grep -q 'NO' "$FIRST_USE" \
 REVIEW_LINE=$(grep -n 'Iterative Completeness Review\|review loop' "$FIRST_USE" | head -1 | cut -d: -f1)
 
 # First occurrence of a write/commit step
-COMMIT_LINE=$(grep -n -E '(git commit|## Commit|commit the PLAN\.md|Write the final PLAN\.md)' "$FIRST_USE" \
+COMMIT_LINE=$(grep -n -E '(git commit|## Commit|commit the plan\.md|Write the final plan\.md|[Ww]rite.*plan\.md)' "$FIRST_USE" \
   | head -1 | cut -d: -f1)
 
 if [[ -z "$REVIEW_LINE" ]]; then
@@ -99,7 +99,7 @@ if [[ -z "$REVIEW_LINE" ]]; then
 fi
 
 if [[ -z "$COMMIT_LINE" ]]; then
-  fail "Could not locate a write/commit step (git commit / ## Commit / commit the PLAN.md / Write the final PLAN.md) in first-use.md"
+  fail "Could not locate a write/commit step (git commit / ## Commit / commit the plan.md / Write the final plan.md) in first-use.md"
 fi
 
 if [[ "$REVIEW_LINE" -gt "$COMMIT_LINE" ]]; then

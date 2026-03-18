@@ -42,8 +42,8 @@ Example (MAJOR.MINOR scheme):
         ├── PLAN.md
         ├── CHANGELOG.md
         └── my-issue-name/      ← Issue directory (directly under version)
-            ├── STATE.md
-            └── PLAN.md
+            ├── index.json
+            └── plan.md
 ```
 
 ## Path Resolution Functions
@@ -142,8 +142,8 @@ find_issues_in_version() {
 | Minor version dir | `.cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}` |
 | Patch version dir | `.cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/v${MAJOR}.${MINOR}.${PATCH}` |
 | Issue dir | `$(get_version_path $MAJOR $MINOR)/${ISSUE_NAME}` |
-| Issue STATE.md | `$(get_issue_path $MAJOR $MINOR $ISSUE_NAME)/STATE.md` |
-| Issue PLAN.md | `$(get_issue_path $MAJOR $MINOR $ISSUE_NAME)/PLAN.md` |
+| Issue index.json | `$(get_issue_path $MAJOR $MINOR $ISSUE_NAME)/index.json` |
+| Issue plan.md | `$(get_issue_path $MAJOR $MINOR $ISSUE_NAME)/plan.md` |
 | Version STATE.md | `$(get_version_path $MAJOR $MINOR)/STATE.md` |
 | Version CHANGELOG.md | `$(get_version_path $MAJOR $MINOR)/CHANGELOG.md` |
 
@@ -154,7 +154,7 @@ find_issues_in_version() {
 | All major versions | `.cat/issues/v*` |
 | All minor versions in major | `.cat/issues/v${MAJOR}/v${MAJOR}.*` |
 | All patches in minor | `.cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/v${MAJOR}.${MINOR}.*` |
-| All issues (any version) | `.cat/issues/v*/v*.*/*/STATE.md` |
+| All issues (any version) | `.cat/issues/v*/v*.*/*/index.json` |
 
 ## Usage in Commands/Skills
 

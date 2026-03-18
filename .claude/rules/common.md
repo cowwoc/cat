@@ -239,7 +239,7 @@ from `config.json`.
 | Value | Source |
 |-------|--------|
 | `trust`, `verify`, `effort` | `.cat/config.json` field values |
-| `target_branch`, `issue_id` | Parameters from `work-prepare` phase output |
+| `targetBranch`, `issueId` | Parameters from `work-prepare` phase output |
 | Current branch | `git branch --show-current` |
 | Worktree path | Parameters from `work-prepare` phase output |
 
@@ -257,9 +257,9 @@ fi
 TRUST=$(echo "$CONFIG" | grep -o '"trust"[[:space:]]*:[[:space:]]*"[^"]*"' \
   | sed 's/.*"trust"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 
-# 2. Use target_branch from parameter (not from config.json)
+# 2. Use targetBranch from parameter (not from config.json)
 if [[ -z "${TARGET_BRANCH:-}" ]]; then
-  echo "ERROR: target_branch parameter is missing" >&2
+  echo "ERROR: targetBranch parameter is missing" >&2
   exit 1
 fi
 git rebase "$TARGET_BRANCH"
