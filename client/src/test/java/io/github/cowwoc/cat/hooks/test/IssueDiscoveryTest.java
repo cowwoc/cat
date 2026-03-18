@@ -574,8 +574,6 @@ public class IssueDiscoveryTest
       requireThat(json, "json").contains("\"found\"");
       requireThat(json, "json").contains("\"issue_id\"");
       requireThat(json, "json").contains("\"2.1-my-feature\"");
-      requireThat(json, "json").contains("\"lock_status\"");
-      requireThat(json, "json").contains("\"acquired\"");
     }
   }
 
@@ -1170,8 +1168,6 @@ public class IssueDiscoveryTest
       requireThat(json, "json").contains("\"2.1.3-patch-fix\"");
       requireThat(json, "json").contains("\"patch\"");
       requireThat(json, "json").contains("\"3\"");
-      requireThat(json, "json").contains("\"lock_status\"");
-      requireThat(json, "json").contains("\"acquired\"");
     }
   }
 
@@ -1302,8 +1298,6 @@ public class IssueDiscoveryTest
       requireThat(json, "json").contains("\"major\"");
       requireThat(json, "json").doesNotContain("\"minor\"");
       requireThat(json, "json").doesNotContain("\"patch\"");
-      requireThat(json, "json").contains("\"lock_status\"");
-      requireThat(json, "json").contains("\"acquired\"");
     }
   }
 
@@ -1984,54 +1978,6 @@ public class IssueDiscoveryTest
         Path lockDir = scope.getCatWorkPath().resolve("locks");
         Path lockFile = lockDir.resolve("2.1-my-feature.lock");
         requireThat(Files.exists(lockFile), "lockFileExists").isFalse();
-      }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(projectPath);
-      }
-    }
-  }
-
-  /**
-   * Verifies that specific-issue discovery updates the lock with the actual worktree path when the
-   * worktree already exists.
-   * <p>
-   * When a worktree directory exists for the requested issue, the lock file must record the worktree
-   * path before returning {@code ExistingWorktree}. This invariant ensures the lock file is never
-   * left with an empty worktrees map, which would cause subsequent work-prepare invocations to fail.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void specificIssueDiscoveryUpdatesLockWithWorktreePathWhenWorktreeExists() throws IOException
-  {
-    Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
-    {
-      try
-      {
-        String sessionId = UUID.randomUUID().toString();
-        createIssue(projectPath, "2", "1", "my-feature", "open");
-
-        // Create a fake worktree for my-feature
-        Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
-        Path worktreePath = worktreesDir.resolve("2.1-my-feature");
-        Files.createDirectories(worktreePath);
-
-        IssueDiscovery discovery = new IssueDiscovery(scope);
-        SearchOptions options = new SearchOptions(Scope.ISSUE, "2.1-my-feature", sessionId, "", false);
-        DiscoveryResult result = discovery.findNextIssue(options);
-
-        // Discovery should return ExistingWorktree
-        requireThat(result, "result").isInstanceOf(DiscoveryResult.ExistingWorktree.class);
-
-        // The lock file must exist and have the worktree path registered (not empty worktrees map)
-        Path lockDir = scope.getCatWorkPath().resolve("locks");
-        Path lockFile = lockDir.resolve("2.1-my-feature.lock");
-        requireThat(Files.exists(lockFile), "lockFileExists").isTrue();
-
-        String lockContent = Files.readString(lockFile);
-        requireThat(lockContent, "lockContent").contains(worktreePath.toString());
       }
       finally
       {

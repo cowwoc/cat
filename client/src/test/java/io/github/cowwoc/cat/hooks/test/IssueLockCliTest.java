@@ -14,7 +14,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.UUID;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -45,7 +47,7 @@ public class IssueLockCliTest
         PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
 
         String sessionId = UUID.randomUUID().toString();
-        IssueLock.run(new String[]{"acquire", "test-issue", sessionId}, scope, out);
+        IssueLock.run(new String[]{"acquire", "test-issue", sessionId, "/some/worktree"}, scope, out);
 
         String output = outBytes.toString(StandardCharsets.UTF_8);
         requireThat(output, "output").contains("\"status\"");
@@ -104,7 +106,7 @@ public class IssueLockCliTest
         ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
 
-        IssueLock.run(new String[]{"acquire", "test-issue", "not-a-uuid"}, scope, out);
+        IssueLock.run(new String[]{"acquire", "test-issue", "not-a-uuid", "/some/worktree"}, scope, out);
 
         String output = outBytes.toString(StandardCharsets.UTF_8);
         requireThat(output, "output").contains("\"decision\"");
@@ -136,46 +138,13 @@ public class IssueLockCliTest
 
         String sessionId = UUID.randomUUID().toString();
         IssueLock lock = new IssueLock(scope);
-        lock.acquire("test-issue", sessionId, "");
+        lock.acquire("test-issue", sessionId, "/path/to/worktree");
 
         IssueLock.run(new String[]{"release", "test-issue", sessionId}, scope, out);
 
         String output = outBytes.toString(StandardCharsets.UTF_8);
         requireThat(output, "output").contains("\"status\"");
         requireThat(output, "output").contains("\"released\"");
-      }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
-    }
-  }
-
-  /**
-   * Verifies that update with valid arguments writes updated status to stdout.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void updateWithValidArgsWritesUpdatedToStdout() throws IOException
-  {
-    Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      try
-      {
-        ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-        PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
-
-        String sessionId = UUID.randomUUID().toString();
-        IssueLock lock = new IssueLock(scope);
-        lock.acquire("test-issue", sessionId, "");
-
-        IssueLock.run(new String[]{"update", "test-issue", sessionId, "/new/worktree"}, scope, out);
-
-        String output = outBytes.toString(StandardCharsets.UTF_8);
-        requireThat(output, "output").contains("\"status\"");
-        requireThat(output, "output").contains("\"updated\"");
       }
       finally
       {
@@ -291,7 +260,7 @@ public class IssueLockCliTest
 
         String sessionId = UUID.randomUUID().toString();
         IssueLock lock = new IssueLock(scope);
-        lock.acquire("test-issue", sessionId, "");
+        lock.acquire("test-issue", sessionId, "/path/to/worktree");
 
         IssueLock.run(new String[]{"force-release", "test-issue"}, scope, out);
 
@@ -327,6 +296,80 @@ public class IssueLockCliTest
         requireThat(output, "output").contains("\"decision\"");
         requireThat(output, "output").contains("\"block\"");
         requireThat(output, "output").contains("Usage");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that acquire with a blank worktree argument writes a block error response to stdout.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquireWithBlankWorktreeArgWritesBlockErrorToStdout() throws IOException
+  {
+    Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      try
+      {
+        ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
+        PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
+
+        String sessionId = UUID.randomUUID().toString();
+        IssueLock.run(new String[]{"acquire", "test-issue", sessionId, ""}, scope, out);
+
+        String output = outBytes.toString(StandardCharsets.UTF_8);
+        requireThat(output, "output").contains("\"decision\"");
+        requireThat(output, "output").contains("\"block\"");
+        requireThat(output, "output").contains("worktree");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that acquire with a worktree argument produces JSON with status=acquired and populates
+   * the worktrees map in the lock file on disk.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquireWithWorktreeArgPopulatesWorktreesMap() throws IOException
+  {
+    Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      try
+      {
+        ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
+        PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
+
+        String sessionId = UUID.randomUUID().toString();
+        String worktreePath = "/some/path";
+        IssueLock.run(new String[]{"acquire", "test-issue", sessionId, worktreePath}, scope, out);
+
+        String output = outBytes.toString(StandardCharsets.UTF_8);
+        requireThat(output, "output").contains("\"status\"");
+        requireThat(output, "output").contains("\"acquired\"");
+
+        // Verify the lock file on disk has the worktree path in the worktrees map
+        Path lockFile = scope.getCatWorkPath().resolve("locks").resolve("test-issue.lock");
+        String content = Files.readString(lockFile);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> lockData = scope.getJsonMapper().readValue(content, Map.class);
+        @SuppressWarnings("unchecked")
+        Map<String, String> worktrees = (Map<String, String>) lockData.get("worktrees");
+
+        requireThat(worktrees, "worktrees").isNotNull();
+        requireThat(worktrees.get(worktreePath), "worktreeValue").isEqualTo(sessionId);
       }
       finally
       {

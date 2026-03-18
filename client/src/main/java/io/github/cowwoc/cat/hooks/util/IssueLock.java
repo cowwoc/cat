@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
 
 /**
  * Issue-level locking for concurrent CAT execution.
@@ -52,7 +53,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * <ul>
  *   <li>{@link LockResult.Acquired} - lock successfully acquired</li>
  *   <li>{@link LockResult.Locked} - issue is locked by another session</li>
- *   <li>{@link LockResult.Updated} - lock metadata updated</li>
  *   <li>{@link LockResult.Released} - lock released</li>
  *   <li>{@link LockResult.Error} - operation failed</li>
  *   <li>{@link LockResult.CheckLocked} - check() found active lock</li>
@@ -124,7 +124,6 @@ public final class IssueLock
   public sealed interface LockResult permits
     LockResult.Acquired,
     LockResult.Locked,
-    LockResult.Updated,
     LockResult.Released,
     LockResult.Error,
     LockResult.CheckLocked,
@@ -217,41 +216,6 @@ public final class IssueLock
           "owner", owner,
           "action", action,
           "guidance", guidance));
-      }
-    }
-
-    /**
-     * Lock metadata updated with new worktree path.
-     *
-     * @param status the operation status
-     * @param message the status message
-     * @param worktree the worktree path
-     */
-    record Updated(String status, String message, String worktree) implements LockResult
-    {
-      /**
-       * Creates a new updated result.
-       *
-       * @param status the operation status
-       * @param message the status message
-       * @param worktree the worktree path
-       * @throws NullPointerException if {@code status}, {@code message} or {@code worktree} are null
-       */
-      public Updated
-      {
-        requireThat(status, "status").isNotNull();
-        requireThat(message, "message").isNotNull();
-        requireThat(worktree, "worktree").isNotNull();
-      }
-
-      @Override
-      public String toJson(JsonMapper mapper) throws IOException
-      {
-        requireThat(mapper, "mapper").isNotNull();
-        return mapper.writeValueAsString(Map.of(
-          "status", status,
-          "message", message,
-          "worktree", worktree));
       }
     }
 
@@ -423,7 +387,7 @@ public final class IssueLock
    *
    * @param issueId the issue identifier
    * @param sessionId the Claude session UUID
-   * @param worktree the worktree path (may be empty)
+   * @param worktree the worktree path (must not be blank)
    * @return the lock result
    * @throws IllegalArgumentException if {@code sessionId} is not a valid UUID
    * @throws IOException if file operations fail
@@ -432,7 +396,7 @@ public final class IssueLock
   {
     requireThat(issueId, "issueId").isNotBlank();
     requireThat(sessionId, "sessionId").isNotBlank();
-    requireThat(worktree, "worktree").isNotNull();
+    requireThat(worktree, "worktree").isNotBlank();
 
     validateSessionId(sessionId);
 
@@ -518,7 +482,7 @@ public final class IssueLock
    *
    * @param issueId the issue identifier
    * @param sessionId the Claude session UUID for the new lock
-   * @param worktree the worktree path (may be empty)
+   * @param worktree the worktree path
    * @param lockFile the path to the existing lock file to overwrite
    * @param staleLockSessionId the session ID read from the stale lock during the initial check
    * @param staleLockCreatedAt the created_at epoch second read from the stale lock during the initial check
@@ -578,7 +542,7 @@ public final class IssueLock
    *
    * @param issueId the issue identifier
    * @param sessionId the Claude session UUID
-   * @param worktree the worktree path (may be empty)
+   * @param worktree the worktree path
    * @return the path to the written temporary file
    * @throws IOException if the file cannot be written
    */
@@ -588,8 +552,8 @@ public final class IssueLock
     String createdIso = ISO_FORMATTER.format(clock.instant());
 
     Map<String, String> worktrees = new LinkedHashMap<>();
-    if (!worktree.isBlank())
-      worktrees.put(worktree, sessionId);
+    assert that(worktree, "worktree").isNotBlank().elseThrow();
+    worktrees.put(worktree, sessionId);
     Map<String, Object> newLockData = new LinkedHashMap<>();
     newLockData.put("session_id", sessionId);
     newLockData.put("worktrees", worktrees);
@@ -599,59 +563,6 @@ public final class IssueLock
     Path tempFile = lockDir.resolve(sanitizeIssueId(issueId) + ".lock." + ProcessHandle.current().pid());
     Files.writeString(tempFile, scope.getJsonMapper().writeValueAsString(newLockData));
     return tempFile;
-  }
-
-  /**
-   * Updates the lock metadata with a new worktree path.
-   * <p>
-   * Only succeeds if the lock is owned by the specified session.
-   *
-   * @param issueId the issue identifier
-   * @param sessionId the Claude session UUID
-   * @param worktree the worktree path
-   * @return the lock result
-   * @throws IllegalArgumentException if sessionId is not a valid UUID
-   * @throws IOException if file operations fail
-   */
-  public LockResult update(String issueId, String sessionId, String worktree) throws IOException
-  {
-    requireThat(issueId, "issueId").isNotBlank();
-    requireThat(sessionId, "sessionId").isNotBlank();
-    requireThat(worktree, "worktree").isNotBlank();
-
-    validateSessionId(sessionId);
-
-    Path lockFile = getLockFile(issueId);
-
-    if (!Files.exists(lockFile))
-      return new LockResult.Error("error", "No lock exists to update");
-
-    String content = Files.readString(lockFile);
-    @SuppressWarnings("unchecked")
-    Map<String, Object> lockData = scope.getJsonMapper().readValue(content, Map.class);
-    String existingSession = lockData.get("session_id").toString();
-
-    if (!existingSession.equals(sessionId))
-      return new LockResult.Error("error", "Lock owned by different session: " + existingSession);
-
-    long createdAt = ((Number) lockData.get("created_at")).longValue();
-    String createdIso = lockData.getOrDefault("created_iso", "").toString();
-    @SuppressWarnings("unchecked")
-    Map<String, String> updatedWorktrees = new LinkedHashMap<>(
-      (Map<String, String>) lockData.getOrDefault("worktrees", Map.of()));
-    updatedWorktrees.put(worktree, sessionId);
-
-    Map<String, Object> updatedData = new LinkedHashMap<>();
-    updatedData.put("session_id", sessionId);
-    updatedData.put("worktrees", updatedWorktrees);
-    updatedData.put("created_at", createdAt);
-    updatedData.put("created_iso", createdIso);
-
-    Path tempFile = lockDir.resolve(sanitizeIssueId(issueId) + ".lock." + ProcessHandle.current().pid());
-    Files.writeString(tempFile, scope.getJsonMapper().writeValueAsString(updatedData));
-    Files.move(tempFile, lockFile, StandardCopyOption.ATOMIC_MOVE);
-
-    return new LockResult.Updated("updated", "Lock updated with worktree", worktree);
   }
 
   /**
@@ -736,15 +647,16 @@ public final class IssueLock
     @SuppressWarnings("unchecked")
     Map<String, Object> lockData = scope.getJsonMapper().readValue(content, Map.class);
 
+    @SuppressWarnings("unchecked")
+    Map<String, Object> worktreesMap = (Map<String, Object>) lockData.get("worktrees");
+    if (worktreesMap == null || worktreesMap.isEmpty())
+    {
+      throw new IOException("Lock file for issue '" + issueId + "' has an empty or missing worktrees map: " +
+        lockFile + ". Delete the lock file or run /cat:cleanup.");
+    }
     String sessionId = lockData.get("session_id").toString();
     long createdAt = ((Number) lockData.get("created_at")).longValue();
-    @SuppressWarnings("unchecked")
-    Map<String, Object> worktreesMap = (Map<String, Object>) lockData.getOrDefault("worktrees", Map.of());
-    String worktree;
-    if (worktreesMap.isEmpty())
-      worktree = "";
-    else
-      worktree = worktreesMap.keySet().iterator().next();
+    String worktree = worktreesMap.keySet().iterator().next();
 
     long now = clock.instant().getEpochSecond();
     long age = now - createdAt;
@@ -929,8 +841,7 @@ public final class IssueLock
    * <p>
    * Commands:
    * <ul>
-   *   <li>{@code acquire <issue-id> <session-id> [worktree]}</li>
-   *   <li>{@code update <issue-id> <session-id> <worktree>}</li>
+   *   <li>{@code acquire <issue-id> <session-id> <worktree>}</li>
    *   <li>{@code release <issue-id> <session-id>}</li>
    *   <li>{@code force-release <issue-id>}</li>
    *   <li>{@code check <issue-id>}</li>
@@ -984,7 +895,7 @@ public final class IssueLock
     if (args.length < 1)
     {
       out.println(hookOutput.block(
-        "Usage: issue-lock <command> [args]. Commands: acquire, update, release, force-release, check, list"));
+        "Usage: issue-lock <command> [args]. Commands: acquire, release, force-release, check, list"));
       return;
     }
 
@@ -997,14 +908,13 @@ public final class IssueLock
       switch (command)
       {
         case "acquire" -> handleAcquire(lock, mapper, hookOutput, args, out);
-        case "update" -> handleUpdate(lock, mapper, hookOutput, args, out);
         case "release" -> handleRelease(lock, mapper, hookOutput, args, out);
         case "force-release" -> handleForceRelease(lock, mapper, hookOutput, args, out);
         case "check" -> handleCheck(lock, mapper, hookOutput, args, out);
         case "list" -> handleList(lock, mapper, out);
         default -> out.println(hookOutput.block(
           "Unknown command: " + command +
-            ". Use acquire, update, release, force-release, check, or list."));
+            ". Use acquire, release, force-release, check, or list."));
       }
     }
     catch (IllegalArgumentException | IOException e)
@@ -1026,41 +936,15 @@ public final class IssueLock
   private static void handleAcquire(IssueLock lock, JsonMapper mapper, HookOutput hookOutput, String[] args,
     PrintStream out) throws IOException
   {
-    if (args.length < 3)
+    if (args.length < 4)
     {
-      out.println(hookOutput.block("Usage: acquire <issue-id> <session-id> [worktree]"));
+      out.println(hookOutput.block("Usage: acquire <issue-id> <session-id> <worktree>"));
       return;
     }
     String issueId = args[1];
     String sessionId = args[2];
-    String worktree;
-    if (args.length > 3)
-      worktree = args[3];
-    else
-      worktree = "";
+    String worktree = args[3];
     LockResult result = lock.acquire(issueId, sessionId, worktree);
-    out.println(result.toJson(mapper));
-  }
-
-  /**
-   * Handles the update subcommand.
-   *
-   * @param lock       the issue lock instance
-   * @param mapper     the JSON mapper
-   * @param hookOutput the hook output for block responses
-   * @param args       the command-line arguments
-   * @param out        the output stream
-   * @throws IOException if the operation fails
-   */
-  private static void handleUpdate(IssueLock lock, JsonMapper mapper, HookOutput hookOutput, String[] args,
-    PrintStream out) throws IOException
-  {
-    if (args.length < 4)
-    {
-      out.println(hookOutput.block("Usage: update <issue-id> <session-id> <worktree>"));
-      return;
-    }
-    LockResult result = lock.update(args[1], args[2], args[3]);
     out.println(result.toJson(mapper));
   }
 

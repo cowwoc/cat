@@ -23,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -179,10 +180,10 @@ public class WorkPrepareTest
   }
 
   /**
-   * Verifies that execute releases the lock when returning OVERSIZED.
+   * Verifies that no lock file exists after execute returns OVERSIZED.
    * <p>
-   * After an OVERSIZED return the lock file must not remain on disk, so that a
-   * subsequent work-prepare call does not fail with "empty worktrees map".
+   * The OVERSIZED check happens before lock acquisition (which occurs inside executeWhileLocked()),
+   * so no lock is ever acquired and no lock file is created.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -218,10 +219,10 @@ public class WorkPrepareTest
   }
 
   /**
-   * Verifies that execute releases the lock when returning CORRUPT.
+   * Verifies that no lock file exists after execute returns CORRUPT.
    * <p>
-   * After a CORRUPT return the lock file must not remain on disk, so that a
-   * subsequent work-prepare call does not fail with "empty worktrees map".
+   * The CORRUPT check happens before lock acquisition (which occurs inside executeWhileLocked()),
+   * so no lock is ever acquired and no lock file is created.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -1167,6 +1168,55 @@ public class WorkPrepareTest
     }
     finally
     {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that after a READY return, the lock file's worktrees map contains the worktree path
+   * that matches the worktree_path field in the JSON output.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeReadyLockContainsWorktreePath() throws IOException
+  {
+    Path projectPath = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    {
+      createIssue(projectPath, "2", "1", "my-feature", "open");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+
+      worktreePath = Path.of(node.path("worktree_path").asString());
+      String expectedWorktreePath = worktreePath.toString();
+
+      // Read the lock file and verify the worktrees map is populated immediately
+      Path lockFile = scope.getCatWorkPath().resolve("locks").resolve("2.1-my-feature.lock");
+      String lockContent = Files.readString(lockFile);
+      @SuppressWarnings("unchecked")
+      Map<String, Object> lockData = mapper.readValue(lockContent, Map.class);
+      @SuppressWarnings("unchecked")
+      Map<String, String> worktrees = (Map<String, String>) lockData.get("worktrees");
+
+      requireThat(worktrees, "worktrees").isNotNull();
+      requireThat(worktrees.size(), "worktreesSize").isEqualTo(1);
+      requireThat(worktrees.get(expectedWorktreePath), "worktreeValue").isEqualTo(sessionId);
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectPath, worktreePath);
       TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
