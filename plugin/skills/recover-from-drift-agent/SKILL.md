@@ -1,6 +1,6 @@
 ---
 description: Use when actions keep failing or progress has stalled - detects goal drift by comparing actions against PLAN.md
-model: haiku
+model: sonnet
 allowed-tools:
   - Read
   - Bash
