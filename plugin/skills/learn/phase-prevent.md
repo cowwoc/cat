@@ -132,13 +132,13 @@ prevention_quality_check:
   generality_analysis:
     question: "Am I fixing the ROOT CAUSE or just this specific symptom?"
     root_cause_example: |
-      Problem: Interactive rebase lost STATE.md changes during tree-building
-      ❌ Specific fix: Check if STATE.md regressed from closed→open
+      Problem: Interactive rebase lost index.json changes during tree-building
+      ❌ Specific fix: Check if index.json regressed from closed→open
       ✅ General fix: Use two-step approach (drop, then squash) for all files
 
     # Ask: Could this failure affect OTHER files?
     symptom_questions:
-      - "Is this failure specific to one data type (e.g., STATE.md)?"
+      - "Is this failure specific to one data type (e.g., index.json)?"
       - "Would the same root cause cause similar problems with other files?"
       - "Would a different manifestation of the same root cause evade this check?"
 
@@ -718,7 +718,7 @@ prevention_action:
         - Should issue be decomposed now?
 
     tertiary:
-      action: "Enhance PLAN.md with explicit checkpoints"
+      action: "Enhance plan.md with explicit checkpoints"
       implementation: |
         Add context-aware milestones to issue plans.
         Each milestone = potential decomposition point.

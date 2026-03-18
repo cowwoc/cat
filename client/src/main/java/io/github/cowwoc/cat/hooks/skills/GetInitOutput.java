@@ -278,8 +278,8 @@ public final class GetInitOutput implements SkillOutput
         padToWidth(locationLine, 66),
         "                                                                  ",
         "  Files created:                                                  ",
-        "  - PLAN.md - What needs to be done                               ",
-        "  - STATE.md - Progress tracking                                  "),
+        "  - plan.md - What needs to be done                               ",
+        "  - index.json - Progress tracking                                "),
       BOX_WIDTH);
   }
 

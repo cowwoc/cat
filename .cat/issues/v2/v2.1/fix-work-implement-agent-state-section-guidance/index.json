@@ -1,0 +1,5 @@
+{
+  "status": "open",
+  "targetBranch": "v2.1",
+  "dependencies": ["2.1-defer-plan-generation-to-work-phase"]
+}

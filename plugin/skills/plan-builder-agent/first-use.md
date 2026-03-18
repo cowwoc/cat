@@ -7,23 +7,23 @@ See LICENSE.md in the project root for license terms.
 
 ## Purpose
 
-Build or revise a comprehensive PLAN.md for a CAT issue. This skill centralizes all planning logic so that
-PLAN.md generation is consistent regardless of which workflow invokes it.
+Build or revise a comprehensive plan.md for a CAT issue. This skill centralizes all planning logic so that
+plan.md generation is consistent regardless of which workflow invokes it.
 
 ## Arguments
 
 Positional space-separated arguments:
 
 ```
-<cat_agent_id> <effort> <mode> <context_path>
+<catAgentId> <effort> <mode> <contextPath>
 ```
 
 | Position | Name | Description |
 |----------|------|-------------|
-| 1 | cat_agent_id | CAT session identifier |
+| 1 | catAgentId | CAT session identifier |
 | 2 | effort | Planning depth: `low`, `medium`, or `high` |
 | 3 | mode | `initial` or `revise` |
-| 4 | context_path | Path to a file containing context (see below) |
+| 4 | contextPath | Path to a file containing context (see below) |
 
 Parse from ARGUMENTS:
 ```bash
@@ -32,7 +32,7 @@ read CAT_AGENT_ID EFFORT MODE CONTEXT_PATH <<< "$ARGUMENTS"
 
 ### Mode: `initial`
 
-Used by `/cat:add`. The `context_path` points to a temporary JSON file containing:
+Used by `/cat:add`. The `contextPath` points to a temporary JSON file containing:
 
 ```json
 {
@@ -44,28 +44,28 @@ Used by `/cat:add`. The `context_path` points to a temporary JSON file containin
 }
 ```
 
-The skill reads this file, generates PLAN.md content, and writes it to `${context_path%.json}.plan.md`
+The skill reads this file, generates plan.md content, and writes it to `${contextPath%.json}.plan.md`
 (same directory, replacing `.json` extension with `.plan.md`). The caller reads the output file.
 
 ### Mode: `revise`
 
-Used by `/cat:work`. The `context_path` points to the issue directory (which contains PLAN.md and STATE.md).
+Used by `/cat:work`. The `contextPath` points to the issue directory (which contains plan.md and index.json).
 An additional revision description follows as remaining arguments:
 
 ```bash
 read CAT_AGENT_ID EFFORT MODE ISSUE_PATH REVISION_CONTEXT <<< "$ARGUMENTS"
 ```
 
-The skill reads the existing PLAN.md, applies the revision, and writes the updated PLAN.md in place.
+The skill reads the existing plan.md, applies the revision, and writes the updated plan.md in place.
 
 ## When to Use
 
-- **Initial planning** (`/cat:add`): Generate PLAN.md from issue description and context
-- **Mid-work revision** (`/cat:work`): Revise PLAN.md when requirements change during implementation
+- **Initial planning** (`/cat:add`): Generate plan.md from issue description and context
+- **Mid-work revision** (`/cat:work`): Revise plan.md when requirements change during implementation
 
 ## Effort-Based Planning Depth
 
-Apply the following depth to PLAN.md content based on `$EFFORT`:
+Apply the following depth to plan.md content based on `$EFFORT`:
 
 - `low`: Generate a concise plan. Assume the obvious approach. Skip alternative analysis. List only essential steps
   and post-conditions.
@@ -74,19 +74,19 @@ Apply the following depth to PLAN.md content based on `$EFFORT`:
 - `high`: Perform deep research on the problem space. Document the reasoning for the chosen approach and explicitly
   list rejected alternatives with rationale. Execution steps must cover all known edge cases and failure modes.
 
-## PLAN.md Comprehensiveness
+## plan.md Comprehensiveness
 
-The PLAN.md must be comprehensive enough for a haiku-level model to implement mechanically without making architectural
+The plan.md must be comprehensive enough for a haiku-level model to implement mechanically without making architectural
 decisions. Include:
 - Exact file paths to create/modify
 - Specific code patterns or formats to use
 - Complete lists (all files, all references to update, all post-conditions)
 - Research findings that inform implementation decisions
 
-If the execution subagent needs to make judgment calls about "how" to implement, the PLAN.md is not detailed enough.
+If the execution subagent needs to make judgment calls about "how" to implement, the plan.md is not detailed enough.
 The subagent should only decide "how to write the code", not "what approach to take".
 
-## PLAN.md Templates
+## plan.md Templates
 
 Use the appropriate template based on issue type. Read the issue-plan.md reference for Feature, Bugfix, or Refactor
 templates:
@@ -111,7 +111,7 @@ Rules for sub-agent waves:
 - Waves execute sequentially (Wave 1 completes before Wave 2 starts)
 - All items within a wave run in parallel
 - Waves must not modify the same files (to avoid merge conflicts)
-- The last wave is responsible for updating STATE.md
+- The last wave is responsible for updating index.json
 
 **Main Agent Waves (optional):** If the issue requires skills that spawn their own subagents (e.g.,
 `/cat:instruction-builder-agent`, `/cat:stakeholder-review-agent`), add a `## Main Agent Waves` section
@@ -146,7 +146,7 @@ Do NOT use multiple waves if items share files or if the sequential dependency i
 
 ## Research Findings
 
-If research was performed (via `/cat:research-agent` or inline), add a Research Findings section to PLAN.md after the
+If research was performed (via `/cat:research-agent` or inline), add a Research Findings section to plan.md after the
 Goal/Problem section:
 
 ```markdown
@@ -160,7 +160,7 @@ Goal/Problem section:
 
 **Step 1:** Read the context JSON from `${CONTEXT_PATH}`.
 
-**Step 2:** Read `${CLAUDE_PLUGIN_ROOT}/concepts/issue-plan.md` for PLAN.md templates.
+**Step 2:** Read `${CLAUDE_PLUGIN_ROOT}/concepts/issue-plan.md` for plan.md templates.
 
 **Step 3:** If `research_findings` is non-empty, incorporate into a `## Research Findings` section.
 
@@ -171,9 +171,9 @@ Goal/Problem section:
 - `medium`: Brief exploration of 2-3 alternatives
 - `high`: Deep research, document rejected alternatives with rationale
 
-**Step 6:** Generate PLAN.md content using the appropriate template for `issue_type`.
+**Step 6:** Generate plan.md content using the appropriate template for `issue_type`.
 
-**Step 7:** Write the draft PLAN.md content to `PLAN_OUTPUT_PATH` = `${CONTEXT_PATH%.json}.plan.md` (delegate the
+**Step 7:** Write the draft plan.md content to `PLAN_OUTPUT_PATH` = `${CONTEXT_PATH%.json}.plan.md` (delegate the
 file write to a subagent).
 
 **Step 8:** Run the Iterative Completeness Review (see section below), passing `PLAN_OUTPUT_PATH` and `ISSUE_GOAL`.
@@ -182,19 +182,19 @@ file write to a subagent).
 
 ### For Mid-Work Revision (mode=revise)
 
-**Step 1:** Read the existing `${ISSUE_PATH}/PLAN.md`.
+**Step 1:** Read the existing `${ISSUE_PATH}/plan.md`.
 
 **Step 2:** Read the revision context (`REVISION_CONTEXT` argument) to understand what changed.
 
-**Step 3:** Update PLAN.md sections affected by the revision.
+**Step 3:** Update plan.md sections affected by the revision.
 
 **Step 4:** Preserve completed work and adjust remaining execution steps.
 
-**Step 5:** Write the revised PLAN.md content to `PLAN_OUTPUT_PATH` = `${ISSUE_PATH}/PLAN.md` (delegate the
+**Step 5:** Write the revised plan.md content to `PLAN_OUTPUT_PATH` = `${ISSUE_PATH}/plan.md` (delegate the
 file write to a subagent).
 
 **Step 6:** Run the Iterative Completeness Review (see section below), passing `PLAN_OUTPUT_PATH` and `ISSUE_GOAL`
-(from the existing PLAN.md `## Goal` section).
+(from the existing plan.md `## Goal` section).
 
 **Step 7:** Verify the file at `PLAN_OUTPUT_PATH` exists.
 
@@ -206,7 +206,7 @@ For effort `medium` or `high`, delegate the entire review-and-fix loop to a sing
 reads the draft from disk, reviews it, fixes gaps directly in the file, and returns only the iteration count.
 No plan content flows through the main agent's context.
 
-**Prerequisite:** The draft PLAN.md must already be written to `PLAN_OUTPUT_PATH` before invoking the
+**Prerequisite:** The draft plan.md must already be written to `PLAN_OUTPUT_PATH` before invoking the
 review subagent.
 
 Spawn the review-and-fix subagent:
@@ -218,7 +218,7 @@ Task tool:
   prompt: |
     Use model claude-sonnet-4-6.
 
-    You are a plan review-and-fix agent. Read the draft PLAN.md from disk, review it for
+    You are a plan review-and-fix agent. Read the draft plan.md from disk, review it for
     completeness, fix any gaps, and re-verify. Iterate until the plan passes review.
 
     Read and follow: ${CLAUDE_PLUGIN_ROOT}/agents/plan-review-agent.md
@@ -247,4 +247,4 @@ Handle the result:
 
 - **initial mode**: Draft written to `${CONTEXT_PATH%.json}.plan.md` in Step 7, reviewed in Step 8. The caller
   reads this file and passes the content to `create-issue`.
-- **revise mode**: Draft written to `${ISSUE_PATH}/PLAN.md` in Step 5, reviewed in Step 6.
+- **revise mode**: Draft written to `${ISSUE_PATH}/plan.md` in Step 5, reviewed in Step 6.

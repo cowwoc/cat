@@ -205,7 +205,7 @@ public final class DetectRepeatedFailuresTest
       requireThat(result.additionalContext(), "additionalContext").contains("REPEATED TOOL FAILURES DETECTED");
       requireThat(result.additionalContext(), "additionalContext").contains("Goal Drift");
       requireThat(result.additionalContext(), "additionalContext").contains("/cat:recover-from-drift");
-      requireThat(result.additionalContext(), "additionalContext").contains("PLAN.md");
+      requireThat(result.additionalContext(), "additionalContext").contains("plan.md");
     }
     finally
     {

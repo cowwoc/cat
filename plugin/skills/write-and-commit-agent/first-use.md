@@ -11,9 +11,9 @@ See LICENSE.md in the project root for license terms.
 
 ## When to Use This Skill
 
-### STATE.md Files
+### index.json Files
 
-When creating a STATE.md file, read `plugin/concepts/state-schema.md` for the current allowed fields
+When creating a index.json file, read `plugin/concepts/state-schema.md` for the current allowed fields
 before writing. Writing disallowed fields causes StateSchemaValidator to block the write.
 
 ### ✅ Use write-and-commit When:

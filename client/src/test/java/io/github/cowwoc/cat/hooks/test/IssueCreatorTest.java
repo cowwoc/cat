@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.IssueCreator;
 import org.testng.annotations.Test;
 import tools.jackson.databind.json.JsonMapper;
@@ -34,8 +35,16 @@ public class IssueCreatorTest
     expectedExceptionsMessageRegExp = ".*jsonInput.*")
   public void executeRejectsNullInput() throws IOException
   {
-    IssueCreator creator = new IssueCreator();
-    creator.execute(null);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      IssueCreator creator = new IssueCreator(scope);
+      creator.execute(null);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -47,8 +56,16 @@ public class IssueCreatorTest
     expectedExceptionsMessageRegExp = ".*jsonInput.*")
   public void executeRejectsEmptyInput() throws IOException
   {
-    IssueCreator creator = new IssueCreator();
-    creator.execute("");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      IssueCreator creator = new IssueCreator(scope);
+      creator.execute("");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -60,8 +77,16 @@ public class IssueCreatorTest
     expectedExceptionsMessageRegExp = ".*Unexpected character.*")
   public void executeRejectsMalformedJson() throws IOException
   {
-    IssueCreator creator = new IssueCreator();
-    creator.execute("{invalid}");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      IssueCreator creator = new IssueCreator(scope);
+      creator.execute("{invalid}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -73,15 +98,23 @@ public class IssueCreatorTest
     expectedExceptionsMessageRegExp = ".*Missing required field: major.*")
   public void executeRejectsMissingMajor() throws IOException
   {
-    IssueCreator creator = new IssueCreator();
-    String json = """
-      {
-        "minor": 1,
-        "issue_name": "test",
-        "state_content": "state",
-        "plan_content": "plan"
-      }""";
-    creator.execute(json);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      IssueCreator creator = new IssueCreator(scope);
+      String json = """
+        {
+          "minor": 1,
+          "issueName": "test",
+          "indexContent": "{}",
+          "planContent": "plan"
+        }""";
+      creator.execute(json);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -93,75 +126,107 @@ public class IssueCreatorTest
     expectedExceptionsMessageRegExp = ".*Missing required field: minor.*")
   public void executeRejectsMissingMinor() throws IOException
   {
-    IssueCreator creator = new IssueCreator();
-    String json = """
-      {
-        "major": 2,
-        "issue_name": "test",
-        "state_content": "state",
-        "plan_content": "plan"
-      }""";
-    creator.execute(json);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      IssueCreator creator = new IssueCreator(scope);
+      String json = """
+        {
+          "major": 2,
+          "issueName": "test",
+          "indexContent": "{}",
+          "planContent": "plan"
+        }""";
+      creator.execute(json);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
-   * Verifies that execute rejects JSON missing required field issue_name.
+   * Verifies that execute rejects JSON missing required field issueName.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = IOException.class,
-    expectedExceptionsMessageRegExp = ".*Missing required field: issue_name.*")
+    expectedExceptionsMessageRegExp = ".*Missing required field: issueName.*")
   public void executeRejectsMissingIssueName() throws IOException
   {
-    IssueCreator creator = new IssueCreator();
-    String json = """
-      {
-        "major": 2,
-        "minor": 1,
-        "state_content": "state",
-        "plan_content": "plan"
-      }""";
-    creator.execute(json);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      IssueCreator creator = new IssueCreator(scope);
+      String json = """
+        {
+          "major": 2,
+          "minor": 1,
+          "indexContent": "{}",
+          "planContent": "plan"
+        }""";
+      creator.execute(json);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
-   * Verifies that execute rejects JSON missing required field state_content.
+   * Verifies that execute rejects JSON missing required field indexContent.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = IOException.class,
-    expectedExceptionsMessageRegExp = ".*Missing required field: state_content.*")
-  public void executeRejectsMissingStateContent() throws IOException
+    expectedExceptionsMessageRegExp = ".*Missing required field: indexContent.*")
+  public void executeRejectsMissingIndexContent() throws IOException
   {
-    IssueCreator creator = new IssueCreator();
-    String json = """
-      {
-        "major": 2,
-        "minor": 1,
-        "issue_name": "test",
-        "plan_content": "plan"
-      }""";
-    creator.execute(json);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      IssueCreator creator = new IssueCreator(scope);
+      String json = """
+        {
+          "major": 2,
+          "minor": 1,
+          "issueName": "test",
+          "planContent": "plan"
+        }""";
+      creator.execute(json);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
-   * Verifies that execute rejects JSON missing required field plan_content.
+   * Verifies that execute rejects JSON missing required field planContent.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = IOException.class,
-    expectedExceptionsMessageRegExp = ".*Missing required field: plan_content.*")
+    expectedExceptionsMessageRegExp = ".*Missing required field: planContent.*")
   public void executeRejectsMissingPlanContent() throws IOException
   {
-    IssueCreator creator = new IssueCreator();
-    String json = """
-      {
-        "major": 2,
-        "minor": 1,
-        "issue_name": "test",
-        "state_content": "state"
-      }""";
-    creator.execute(json);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      IssueCreator creator = new IssueCreator(scope);
+      String json = """
+        {
+          "major": 2,
+          "minor": 1,
+          "issueName": "test",
+          "indexContent": "{}"
+        }""";
+      creator.execute(json);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -172,24 +237,32 @@ public class IssueCreatorTest
   @Test
   public void executeReturnsErrorWhenParentMissing() throws IOException
   {
-    IssueCreator creator = new IssueCreator();
-    String json = """
-      {
-        "major": 999,
-        "minor": 999,
-        "issue_name": "nonexistent-test",
-        "state_content": "state",
-        "plan_content": "plan"
-      }""";
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      IssueCreator creator = new IssueCreator(scope);
+      String json = """
+        {
+          "major": 999,
+          "minor": 999,
+          "issueName": "nonexistent-test",
+          "indexContent": "{}",
+          "planContent": "plan"
+        }""";
 
-    String result = creator.execute(json);
-    JsonMapper mapper = JsonMapper.builder().build();
-    ObjectNode resultNode = (ObjectNode) mapper.readTree(result);
+      String result = creator.execute(json);
+      JsonMapper mapper = scope.getJsonMapper();
+      ObjectNode resultNode = (ObjectNode) mapper.readTree(result);
 
-    requireThat(resultNode.has("success"), "hasSuccess").isTrue();
-    requireThat(resultNode.get("success").asBoolean(), "success").isFalse();
-    requireThat(resultNode.has("error"), "hasError").isTrue();
-    requireThat(resultNode.get("error").asString(), "error").contains("Parent version directory does not exist");
+      requireThat(resultNode.has("success"), "hasSuccess").isTrue();
+      requireThat(resultNode.get("success").asBoolean(), "success").isFalse();
+      requireThat(resultNode.has("error"), "hasError").isTrue();
+      requireThat(resultNode.get("error").asString(), "error").contains("Parent version directory does not exist");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -217,7 +290,7 @@ public class IssueCreatorTest
 
     Path versionDir = tempDir.resolve(".cat/issues/v2/v2.1");
     Files.createDirectories(versionDir);
-    Files.writeString(versionDir.resolve("STATE.md"), "# Version 2.1\n");
+    Files.writeString(versionDir.resolve("index.json"), "{\"status\": \"open\"}\n");
 
     pb = new ProcessBuilder("git", "add", ".");
     pb.directory(tempDir.toFile());
@@ -240,41 +313,40 @@ public class IssueCreatorTest
   public void executeCreatesIssueStructure() throws IOException, InterruptedException
   {
     Path tempDir = setupGitRepo();
-    try
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      Path versionDir = tempDir.resolve(".cat/issues/v2/v2.1");
-
-      IssueCreator creator = new IssueCreator();
+      IssueCreator creator = new IssueCreator(scope);
       String json = """
         {
           "major": 2,
           "minor": 1,
-          "issue_name": "test-issue",
-          "state_content": "# State\\nstatus: pending",
-          "plan_content": "# Plan\\nSteps here",
-          "commit_description": "Test issue creation"
+          "issueName": "test-issue",
+          "indexContent": "{\\"status\\": \\"open\\"}",
+          "planContent": "# Plan\\nSteps here",
+          "commitDescription": "Test issue creation"
         }""";
 
       String result = creator.execute(json, tempDir);
-      JsonMapper mapper = JsonMapper.builder().build();
+      JsonMapper mapper = scope.getJsonMapper();
       ObjectNode resultNode = (ObjectNode) mapper.readTree(result);
 
       requireThat(resultNode.get("success").asBoolean(), "success").isTrue();
 
       Path issuePath = tempDir.resolve(".cat/issues/v2/v2.1/test-issue");
       requireThat(Files.exists(issuePath), "issuePathExists").isTrue();
-      requireThat(Files.exists(issuePath.resolve("STATE.md")), "stateExists").isTrue();
-      requireThat(Files.exists(issuePath.resolve("PLAN.md")), "planExists").isTrue();
+      requireThat(Files.exists(issuePath.resolve("index.json")), "indexExists").isTrue();
+      requireThat(Files.exists(issuePath.resolve("plan.md")), "planExists").isTrue();
 
-      String stateContent = Files.readString(issuePath.resolve("STATE.md"));
-      requireThat(stateContent, "stateContent").contains("status: pending");
+      String indexContent = Files.readString(issuePath.resolve("index.json"));
+      requireThat(indexContent, "indexContent").contains("open");
 
-      String planContent = Files.readString(issuePath.resolve("PLAN.md"));
+      String planContent = Files.readString(issuePath.resolve("plan.md"));
       requireThat(planContent, "planContent").contains("Steps here");
 
-      String parentState = Files.readString(versionDir.resolve("STATE.md"));
-      requireThat(parentState, "parentState").contains("## Issues Pending");
-      requireThat(parentState, "parentState").contains("- test-issue");
+      // The version-level index.json tracks only status, not an issue list
+      Path versionDir = tempDir.resolve(".cat/issues/v2/v2.1");
+      String versionIndex = Files.readString(versionDir.resolve("index.json"));
+      requireThat(versionIndex, "versionIndex").contains("\"status\"");
     }
     finally
     {
@@ -283,7 +355,7 @@ public class IssueCreatorTest
   }
 
   /**
-   * Verifies that execute accepts JSON without commit_description field.
+   * Verifies that execute accepts JSON without commitDescription field.
    *
    * @throws IOException if an I/O error occurs
    * @throws InterruptedException if git process is interrupted
@@ -292,20 +364,20 @@ public class IssueCreatorTest
   public void executeAcceptsOptionalCommitDescription() throws IOException, InterruptedException
   {
     Path tempDir = setupGitRepo();
-    try
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      IssueCreator creator = new IssueCreator();
+      IssueCreator creator = new IssueCreator(scope);
       String json = """
         {
           "major": 2,
           "minor": 1,
-          "issue_name": "test-optional",
-          "state_content": "# State",
-          "plan_content": "# Plan"
+          "issueName": "test-optional",
+          "indexContent": "{}",
+          "planContent": "# Plan"
         }""";
 
       String result = creator.execute(json, tempDir);
-      JsonMapper mapper = JsonMapper.builder().build();
+      JsonMapper mapper = scope.getJsonMapper();
       ObjectNode resultNode = (ObjectNode) mapper.readTree(result);
 
       requireThat(resultNode.get("success").asBoolean(), "success").isTrue();
@@ -317,56 +389,55 @@ public class IssueCreatorTest
   }
 
   /**
-   * Verifies that execute adds new issue after existing pending issues.
+   * Verifies that execute creates multiple issues independently in the same version directory.
+   * <p>
+   * The version-level index.json tracks only status and is not modified when issues are added.
    *
    * @throws IOException if an I/O error occurs
    * @throws InterruptedException if git process is interrupted
    */
   @Test
-  public void executeAppendsToExistingPendingIssues() throws IOException, InterruptedException
+  public void executeCreatesMultipleIssuesIndependently() throws IOException, InterruptedException
   {
     Path tempDir = setupGitRepo();
-    try
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       Path versionDir = tempDir.resolve(".cat/issues/v2/v2.1");
-      String existingState = """
-        # Version 2.1
 
-        ## Issues Pending
-        - existing-issue
-        """;
-      Files.writeString(versionDir.resolve("STATE.md"), existingState);
-
-      ProcessBuilder pb = new ProcessBuilder("git", "add", ".");
-      pb.directory(tempDir.toFile());
-      pb.start().waitFor();
-
-      pb = new ProcessBuilder("git", "commit", "-m", "Add existing issue");
-      pb.directory(tempDir.toFile());
-      pb.start().waitFor();
-
-      IssueCreator creator = new IssueCreator();
-      String json = """
+      IssueCreator creator = new IssueCreator(scope);
+      String json1 = """
         {
           "major": 2,
           "minor": 1,
-          "issue_name": "new-issue",
-          "state_content": "# State",
-          "plan_content": "# Plan"
+          "issueName": "first-issue",
+          "indexContent": "{\\"status\\": \\"open\\"}",
+          "planContent": "# Plan"
         }""";
 
-      String result = creator.execute(json, tempDir);
-      JsonMapper mapper = JsonMapper.builder().build();
-      ObjectNode resultNode = (ObjectNode) mapper.readTree(result);
+      String result1 = creator.execute(json1, tempDir);
+      JsonMapper mapper = scope.getJsonMapper();
+      ObjectNode result1Node = (ObjectNode) mapper.readTree(result1);
+      requireThat(result1Node.get("success").asBoolean(), "success1").isTrue();
 
-      requireThat(resultNode.get("success").asBoolean(), "success").isTrue();
+      String json2 = """
+        {
+          "major": 2,
+          "minor": 1,
+          "issueName": "second-issue",
+          "indexContent": "{\\"status\\": \\"open\\"}",
+          "planContent": "# Plan"
+        }""";
 
-      String parentState = Files.readString(versionDir.resolve("STATE.md"));
-      requireThat(parentState, "parentState").contains("- existing-issue");
-      requireThat(parentState, "parentState").contains("- new-issue");
-      int existingPos = parentState.indexOf("- existing-issue");
-      int newPos = parentState.indexOf("- new-issue");
-      requireThat(newPos > existingPos, "newIssueAfterExisting").isTrue();
+      String result2 = creator.execute(json2, tempDir);
+      ObjectNode result2Node = (ObjectNode) mapper.readTree(result2);
+      requireThat(result2Node.get("success").asBoolean(), "success2").isTrue();
+
+      requireThat(Files.exists(versionDir.resolve("first-issue/index.json")), "firstIssueExists").isTrue();
+      requireThat(Files.exists(versionDir.resolve("second-issue/index.json")), "secondIssueExists").isTrue();
+
+      // The version-level index.json is unchanged — it tracks only status, not an issue list
+      String versionIndex = Files.readString(versionDir.resolve("index.json"));
+      requireThat(versionIndex, "versionIndex").contains("\"status\"");
     }
     finally
     {
@@ -384,20 +455,20 @@ public class IssueCreatorTest
   public void executeHandlesNonGitDirectory() throws IOException
   {
     Path tempDir = Files.createTempDirectory("issue-creator-test-nongit");
-    try
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       Path versionDir = tempDir.resolve(".cat/issues/v2/v2.1");
       Files.createDirectories(versionDir);
-      Files.writeString(versionDir.resolve("STATE.md"), "# Version 2.1\n");
+      Files.writeString(versionDir.resolve("index.json"), "{\"status\": \"open\"}\n");
 
-      IssueCreator creator = new IssueCreator();
+      IssueCreator creator = new IssueCreator(scope);
       String json = """
         {
           "major": 2,
           "minor": 1,
-          "issue_name": "test-issue",
-          "state_content": "# State",
-          "plan_content": "# Plan"
+          "issueName": "test-issue",
+          "indexContent": "{}",
+          "planContent": "# Plan"
         }""";
 
       creator.execute(json, tempDir);
@@ -409,7 +480,9 @@ public class IssueCreatorTest
   }
 
   /**
-   * Verifies that execute handles read-only directory appropriately.
+   * Verifies that execute handles read-only version directory appropriately by throwing IOException.
+   * <p>
+   * When the version directory is read-only, creating subdirectories inside it should fail.
    *
    * @throws IOException if an I/O error occurs
    * @throws InterruptedException if git process is interrupted
@@ -421,16 +494,16 @@ public class IssueCreatorTest
     Path versionDir = tempDir.resolve(".cat/issues/v2/v2.1");
 
     boolean madeReadOnly = versionDir.toFile().setReadOnly();
-    try
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      IssueCreator creator = new IssueCreator();
+      IssueCreator creator = new IssueCreator(scope);
       String json = """
         {
           "major": 2,
           "minor": 1,
-          "issue_name": "test-readonly",
-          "state_content": "# State",
-          "plan_content": "# Plan"
+          "issueName": "test-readonly",
+          "indexContent": "{\\"status\\": \\"open\\"}",
+          "planContent": "# Plan"
         }""";
 
       creator.execute(json, tempDir);

@@ -341,19 +341,19 @@ For other research types:
 
 <step name="offer_plan_update">
 
-**Ask user if they want to update PLAN.md with research results:**
+**Ask user if they want to update plan.md with research results:**
 
 Use AskUserQuestion:
 
 ```
 AskUserQuestion({
   questions: [{
-    question: "Would you like to save these research findings to a PLAN.md file?",
+    question: "Would you like to save these research findings to a plan.md file?",
     header: "Save Research",
     options: [
       {
-        label: "Yes, update PLAN.md",
-        description: "Save research to existing PLAN.md or specify path for new file"
+        label: "Yes, update plan.md",
+        description: "Save research to existing plan.md or specify path for new file"
       },
       {
         label: "No, just use the findings",
@@ -365,12 +365,12 @@ AskUserQuestion({
 })
 ```
 
-If yes, ask for PLAN.md path or version identifier:
-- If version provided: `.cat/issues/v{major}/v{major}.{minor}/PLAN.md`
+If yes, ask for plan.md path or version identifier:
+- If version provided: `.cat/issues/v{major}/v{major}.{minor}/plan.md`
 - If path provided: Use specified path
 - If neither: Ask user to specify
 
-Update PLAN.md with research section containing subagent's findings.
+Update plan.md with research section containing subagent's findings.
 
 </step>
 
@@ -381,7 +381,7 @@ Update PLAN.md with research section containing subagent's findings.
 ```
 Research complete: {topic}
 Type: {research-type}
-[If saved: "Results saved to: {PLAN.md path}"]
+[If saved: "Results saved to: {plan.md path}"]
 
 Ready to proceed with implementation planning.
 ```
@@ -397,7 +397,7 @@ Ready to proceed with implementation planning.
 - [ ] Subagent spawned with correct configuration (model, type, prompt)
 - [ ] Research results received from subagent
 - [ ] Results presented to user in structured format
-- [ ] User offered option to save to PLAN.md (if desired)
+- [ ] User offered option to save to plan.md (if desired)
 - [ ] Research findings available for implementation planning
 
 </success_criteria>

@@ -184,8 +184,8 @@ public class GetStatusOutputTest
     Files.createDirectories(issue1Dir);
     Files.createDirectories(issue2Dir);
 
-    Files.writeString(issue1Dir.resolve("STATE.md"), "- **Status:** closed\n");
-    Files.writeString(issue2Dir.resolve("STATE.md"), "- **Status:** open\n");
+    Files.writeString(issue1Dir.resolve("index.json"), "{\"status\":\"closed\"}");
+    Files.writeString(issue2Dir.resolve("index.json"), "{\"status\":\"open\"}");
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
@@ -215,7 +215,7 @@ public class GetStatusOutputTest
     Path issueDir = minorDir.resolve("my-task");
     Files.createDirectories(issueDir);
 
-    Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** open\n");
+    Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"open\"}");
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
@@ -246,7 +246,7 @@ public class GetStatusOutputTest
     Path issueDir = minorDir.resolve("active-task");
     Files.createDirectories(issueDir);
 
-    Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** in-progress\n");
+    Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"in-progress\"}");
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
@@ -278,12 +278,9 @@ public class GetStatusOutputTest
     Files.createDirectories(issue1Dir);
     Files.createDirectories(issue2Dir);
 
-    Files.writeString(issue1Dir.resolve("STATE.md"), "- **Status:** open\n");
-    Files.writeString(issue2Dir.resolve("STATE.md"),
-      "- **Status:** open\n" +
-      "\n" +
-      "## Dependencies\n" +
-      "- task-1\n");
+    Files.writeString(issue1Dir.resolve("index.json"), "{\"status\":\"open\"}");
+    Files.writeString(issue2Dir.resolve("index.json"),
+      "{\"status\":\"open\",\"dependencies\":[\"task-1\"]}");
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
@@ -315,8 +312,8 @@ public class GetStatusOutputTest
     Files.createDirectories(issue1Dir);
     Files.createDirectories(issue2Dir);
 
-    Files.writeString(issue1Dir.resolve("STATE.md"), "- **Status:** closed\n");
-    Files.writeString(issue2Dir.resolve("STATE.md"), "- **Status:** open\n");
+    Files.writeString(issue1Dir.resolve("index.json"), "{\"status\":\"closed\"}");
+    Files.writeString(issue2Dir.resolve("index.json"), "{\"status\":\"open\"}");
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
@@ -346,7 +343,7 @@ public class GetStatusOutputTest
     Path issueDir = minorDir.resolve("open-task");
     Files.createDirectories(issueDir);
 
-    Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** open\n");
+    Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"open\"}");
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
@@ -376,7 +373,7 @@ public class GetStatusOutputTest
     Path issueDir = minorDir.resolve("active-task");
     Files.createDirectories(issueDir);
 
-    Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** in-progress\n");
+    Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"in-progress\"}");
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
@@ -406,7 +403,7 @@ public class GetStatusOutputTest
     Path issueDir = minorDir.resolve("next-task");
     Files.createDirectories(issueDir);
 
-    Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** open\n");
+    Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"open\"}");
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
@@ -442,13 +439,10 @@ public class GetStatusOutputTest
     Files.createDirectories(issue2Dir);
     Files.createDirectories(issue3Dir);
 
-    Files.writeString(issue1Dir.resolve("STATE.md"), "- **Status:** closed\n");
-    Files.writeString(issue2Dir.resolve("STATE.md"), "- **Status:** closed\n");
-    Files.writeString(issue3Dir.resolve("STATE.md"),
-      "- **Status:** blocked\n" +
-      "\n" +
-      "## Dependencies\n" +
-      "- another-done-task\n");
+    Files.writeString(issue1Dir.resolve("index.json"), "{\"status\":\"closed\"}");
+    Files.writeString(issue2Dir.resolve("index.json"), "{\"status\":\"closed\"}");
+    Files.writeString(issue3Dir.resolve("index.json"),
+      "{\"status\":\"blocked\",\"dependencies\":[\"another-done-task\"]}");
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
@@ -511,7 +505,7 @@ public class GetStatusOutputTest
     Path issueDir = minorDir.resolve("task-1");
     Files.createDirectories(issueDir);
 
-    Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** open\n");
+    Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"open\"}");
     Files.writeString(catDir.resolve("ROADMAP.md"),
       "# Roadmap\n" +
       "\n" +
@@ -575,7 +569,7 @@ public class GetStatusOutputTest
     Path issueDir = minorDir.resolve("task-1");
     Files.createDirectories(issueDir);
 
-    Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** open\n");
+    Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"open\"}");
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
@@ -608,8 +602,8 @@ public class GetStatusOutputTest
     Files.createDirectories(issue1Dir);
     Files.createDirectories(issue2Dir);
 
-    Files.writeString(issue1Dir.resolve("STATE.md"), "- **Status:** closed\n");
-    Files.writeString(issue2Dir.resolve("STATE.md"), "- **Status:** open\n");
+    Files.writeString(issue1Dir.resolve("index.json"), "{\"status\":\"closed\"}");
+    Files.writeString(issue2Dir.resolve("index.json"), "{\"status\":\"open\"}");
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
@@ -677,7 +671,7 @@ public class GetStatusOutputTest
     Path issueDir = minorDir.resolve("my-task");
     Files.createDirectories(issueDir);
 
-    Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** open\n");
+    Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"open\"}");
 
     Path locksDir = catDir.resolve("locks");
     Files.createDirectories(locksDir);
@@ -714,7 +708,7 @@ public class GetStatusOutputTest
     Path issueDir = minorDir.resolve("pending-task");
     Files.createDirectories(issueDir);
 
-    Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** open\n");
+    Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"open\"}");
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
@@ -747,8 +741,8 @@ public class GetStatusOutputTest
     Files.createDirectories(issue1Dir);
     Files.createDirectories(issue2Dir);
 
-    Files.writeString(issue1Dir.resolve("STATE.md"), "- **Status:** closed\n");
-    Files.writeString(issue2Dir.resolve("STATE.md"), "- **Status:** open\n");
+    Files.writeString(issue1Dir.resolve("index.json"), "{\"status\":\"closed\"}");
+    Files.writeString(issue2Dir.resolve("index.json"), "{\"status\":\"open\"}");
 
     Path locksDir = catDir.resolve("locks");
     Files.createDirectories(locksDir);
@@ -979,7 +973,7 @@ public class GetStatusOutputTest
   }
 
   /**
-   * Verifies that isValidStateFilePath accepts valid STATE.md paths.
+   * Verifies that isValidStateFilePath accepts valid index.json paths.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -992,9 +986,9 @@ public class GetStatusOutputTest
       GetStatusOutput handler = new GetStatusOutput(scope);
 
       String[] validPaths = {
-        ".cat/issues/v1/v1.0/task-1/STATE.md",
-        ".cat/issues/v2/v2.1/my-feature/STATE.md",
-        ".cat/issues/v10/v10.5/long_task_name/STATE.md"
+        ".cat/issues/v1/v1.0/task-1/index.json",
+        ".cat/issues/v2/v2.1/my-feature/index.json",
+        ".cat/issues/v10/v10.5/long_task_name/index.json"
       };
 
       for (String path : validPaths)
@@ -1024,8 +1018,8 @@ public class GetStatusOutputTest
 
       String[] traversalPaths = {
         ".cat/issues/../../../etc/passwd",
-        ".cat/issues/v1/../v2/STATE.md",
-        ".cat/issues/v1/v1.0/../v1.1/task/STATE.md"
+        ".cat/issues/v1/../v2/index.json",
+        ".cat/issues/v1/v1.0/../v1.1/task/index.json"
       };
 
       for (String path : traversalPaths)
@@ -1054,9 +1048,9 @@ public class GetStatusOutputTest
       GetStatusOutput handler = new GetStatusOutput(scope);
 
       String[] wrongPrefixPaths = {
-        "other/directory/STATE.md",
-        "claude/cat/issues/v1/v1.0/task/STATE.md",
-        ".claude/issues/v1/v1.0/task/STATE.md"
+        "other/directory/index.json",
+        "claude/cat/issues/v1/v1.0/task/index.json",
+        ".claude/issues/v1/v1.0/task/index.json"
       };
 
       for (String path : wrongPrefixPaths)
@@ -1172,7 +1166,7 @@ public class GetStatusOutputTest
     {
       Path issueDir = minor10Dir.resolve("long-task-name-number-" + i);
       Files.createDirectories(issueDir);
-      Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** open\n");
+      Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"open\"}");
     }
 
     // Major v2 has one short issue (narrower content)
@@ -1180,7 +1174,7 @@ public class GetStatusOutputTest
     Path minor20Dir = major2Dir.resolve("v2.0");
     Path shortIssueDir = minor20Dir.resolve("x");
     Files.createDirectories(shortIssueDir);
-    Files.writeString(shortIssueDir.resolve("STATE.md"), "- **Status:** open\n");
+    Files.writeString(shortIssueDir.resolve("index.json"), "{\"status\":\"open\"}");
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
@@ -1213,7 +1207,7 @@ public class GetStatusOutputTest
 
   /**
    * Verifies that issues within a minor version are listed in oldest-first order (by git creation
-   * time of STATE.md), not alphabetically.
+   * time of index.json), not alphabetically.
    * <p>
    * Creates three issues with distinct commit timestamps in non-alphabetical order
    * (task-c first/oldest, then task-a, then task-b last/newest) and verifies the status output
@@ -1235,21 +1229,21 @@ public class GetStatusOutputTest
       // Create and commit task-c first (oldest) using explicit date to ensure distinct timestamps
       Path taskCDir = minorDir.resolve("task-c");
       Files.createDirectories(taskCDir);
-      Files.writeString(taskCDir.resolve("STATE.md"), "- **Status:** open\n");
+      Files.writeString(taskCDir.resolve("index.json"), "{\"status\":\"open\"}");
       TestUtils.runGit(tempDir, "add", "-A");
       TestUtils.runGit(tempDir, "commit", "--date=2020-01-01T00:00:01", "-m", "add task-c");
 
       // Create and commit task-a second
       Path taskADir = minorDir.resolve("task-a");
       Files.createDirectories(taskADir);
-      Files.writeString(taskADir.resolve("STATE.md"), "- **Status:** open\n");
+      Files.writeString(taskADir.resolve("index.json"), "{\"status\":\"open\"}");
       TestUtils.runGit(tempDir, "add", "-A");
       TestUtils.runGit(tempDir, "commit", "--date=2020-01-02T00:00:01", "-m", "add task-a");
 
       // Create and commit task-b last (newest)
       Path taskBDir = minorDir.resolve("task-b");
       Files.createDirectories(taskBDir);
-      Files.writeString(taskBDir.resolve("STATE.md"), "- **Status:** open\n");
+      Files.writeString(taskBDir.resolve("index.json"), "{\"status\":\"open\"}");
       TestUtils.runGit(tempDir, "add", "-A");
       TestUtils.runGit(tempDir, "commit", "--date=2020-01-03T00:00:01", "-m", "add task-b");
 
@@ -1298,13 +1292,13 @@ public class GetStatusOutputTest
       // Create and commit task-z before task-a, both with the same timestamp
       Path taskZDir = minorDir.resolve("task-z");
       Files.createDirectories(taskZDir);
-      Files.writeString(taskZDir.resolve("STATE.md"), "- **Status:** open\n");
+      Files.writeString(taskZDir.resolve("index.json"), "{\"status\":\"open\"}");
       TestUtils.runGit(tempDir, "add", "-A");
       TestUtils.runGit(tempDir, "commit", "--date=2020-06-15T12:00:00", "-m", "add task-z");
 
       Path taskADir = minorDir.resolve("task-a");
       Files.createDirectories(taskADir);
-      Files.writeString(taskADir.resolve("STATE.md"), "- **Status:** open\n");
+      Files.writeString(taskADir.resolve("index.json"), "{\"status\":\"open\"}");
       TestUtils.runGit(tempDir, "add", "-A");
       TestUtils.runGit(tempDir, "commit", "--date=2020-06-15T12:00:00", "-m", "add task-a");
 
@@ -1329,7 +1323,7 @@ public class GetStatusOutputTest
   }
 
   /**
-   * Verifies that corrupt issue directories (STATE.md present but PLAN.md missing) appear in
+   * Verifies that corrupt issue directories (index.json present but plan.md missing) appear in
    * the status display.
    *
    * @throws IOException if an I/O error occurs
@@ -1345,8 +1339,8 @@ public class GetStatusOutputTest
     Path corruptDir = minorDir.resolve("corrupt-issue");
     Files.createDirectories(corruptDir);
 
-    // Corrupt issue: STATE.md exists but PLAN.md is absent
-    Files.writeString(corruptDir.resolve("STATE.md"), "- **Status:** open\n");
+    // Corrupt issue: index.json exists but plan.md is absent
+    Files.writeString(corruptDir.resolve("index.json"), "{\"status\":\"open\"}");
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {

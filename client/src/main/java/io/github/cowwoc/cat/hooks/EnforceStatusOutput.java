@@ -135,7 +135,7 @@ public final class EnforceStatusOutput
 
           Required next step: Invoke collect-results-agent:
             Skill tool: skill="cat:collect-results-agent"
-            Arguments: "<cat_agent_id> <issue_path> <subagent_commits_json>"
+            Arguments: "<catAgentId> <issuePath> <subagentCommitsJson>"
 
           See plugin/skills/collect-results-agent/SKILL.md for argument details.""";
         return hookOutput.block(reason);

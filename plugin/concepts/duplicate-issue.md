@@ -24,7 +24,7 @@ Skip worktree creation and implementation phases entirely.
 
 ### 2. Verify Duplicate
 
-Test the specific scenarios from this issue's PLAN.md to confirm they work:
+Test the specific scenarios from this issue's plan.md to confirm they work:
 
 ```bash
 # Run tests related to this issue's scenarios
@@ -40,29 +40,31 @@ Find which issue/commit implemented the fix:
 git log --oneline --grep="<related keywords>"
 
 # Check other closed issues in same version
-find .cat/issues/v*/v*.*/ -name "STATE.md" -exec grep -l "closed" {} \;
+find .cat/issues/v*/v*.*/ -name "index.json" -exec grep -l '"status".*"closed"' {} \;
 ```
 
-### 4. Update STATE.md
+### 4. Update index.json
 
-```yaml
-- **Status:** closed
-- **Progress:** 100%
-- **Resolution:** duplicate
-- **Duplicate Of:** v{major}.{minor}-{original-issue-name}
+```json
+{
+  "status": "closed",
+  "resolution": "duplicate (v{major}.{minor}-{original-issue-name})",
+  "dependencies": [],
+  "blocks": []
+}
 ```
 
-### 5. Commit STATE.md Only
+### 5. Commit index.json Only
 
-Duplicate issues have no implementation commit - only the STATE.md update:
+Duplicate issues have no implementation commit - only the index.json update:
 
 ```bash
-git add .cat/issues/v{major}/v{major}.{minor}/{issue-name}/STATE.md
+git add .cat/issues/v{major}/v{major}.{minor}/{issue-name}/index.json
 git commit -m "$(cat <<'EOF'
 config: close duplicate issue {issue-name}
 
 Duplicate of {original-issue}.
-Verification confirmed all scenarios from PLAN.md pass.
+Verification confirmed all scenarios from plan.md pass.
 EOF
 )"
 ```

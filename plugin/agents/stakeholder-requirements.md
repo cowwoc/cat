@@ -14,7 +14,7 @@ skills: [cat:stakeholder-common]
 ## Modes
 
 This stakeholder operates in two modes:
-- **review**: Verify implementation satisfies PLAN.md requirements (default)
+- **review**: Verify implementation satisfies plan.md requirements (default)
 - **research**: Investigate domain for requirements-related planning insights (pre-implementation)
 
 ---
@@ -149,7 +149,7 @@ Parent Requirements section?"*
 
 ## Review Process
 
-1. **Read the issue's PLAN.md** to extract:
+1. **Read the issue's plan.md** to extract:
    - The `## Parent Requirements` section (list of REQ-XXX IDs, if any)
    - The `## Success Criteria` section (issue-local acceptance criteria, if any)
    - The `## Target State` or goal description (what the implementation should produce)
@@ -172,7 +172,7 @@ Parent Requirements section?"*
 
 ### Porting/Migration Issue Verification
 
-When the PLAN.md describes porting a script or migrating code to a new language/system:
+When the plan.md describes porting a script or migrating code to a new language/system:
 
 - Read the original source file(s) to understand the full scope of supported inputs/behaviors
 - Verify the new implementation supports the same input ranges (e.g., version schemes: major, major.minor,
@@ -183,7 +183,7 @@ When the PLAN.md describes porting a script or migrating code to a new language/
 ## Review Concerns
 
 ### Critical (Must Fix)
-- **Missing Functionality**: Requirement specified in PLAN.md but not implemented
+- **Missing Functionality**: Requirement specified in plan.md but not implemented
 - **Incorrect Behavior**: Implementation behaves differently than specification
 - **Broken Core Feature**: Primary issue objective not achieved
 - **Silent Failure**: Feature appears to work but produces wrong results
@@ -193,7 +193,7 @@ When the PLAN.md describes porting a script or migrating code to a new language/
 - **Undocumented Deviation**: Implementation differs from spec without explanation
 - **Edge Case Failure**: Core functionality works but fails on specified edge cases
 - **Output Contract Semantic Correctness**: Data in output contracts matches the contract's semantic meaning, not just
-  its structural format. When a contract shows fields like 'blocked_by' with status information, that data must be
+  its structural format. When a contract shows fields like 'blockedBy' with status information, that data must be
   actually fetched and validated, not assumed from raw field values.
 
 ### Medium Priority
@@ -203,7 +203,7 @@ When the PLAN.md describes porting a script or migrating code to a new language/
 
 ## Verification Checklist
 
-For each requirement in PLAN.md:
+For each requirement in plan.md:
 
 | Check | Question |
 |-------|----------|
@@ -220,8 +220,8 @@ Use these domain-specific examples to calibrate your severity ratings against th
 
 | Severity | Example for this domain |
 |----------|------------------------|
-| CRITICAL | A core requirement from PLAN.md is not implemented at all — the feature is missing entirely |
-| HIGH     | Requirement partially implemented; a key acceptance criterion listed in PLAN.md is not satisfied |
+| CRITICAL | A core requirement from plan.md is not implemented at all — the feature is missing entirely |
+| HIGH     | Requirement partially implemented; a key acceptance criterion listed in plan.md is not satisfied |
 | MEDIUM   | Implementation satisfies the stated requirement but an unspecified edge case is unhandled |
 | LOW      | Minor deviation from spec wording with no functional impact on behavior |
 

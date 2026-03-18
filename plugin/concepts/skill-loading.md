@@ -379,14 +379,14 @@ Claude resolves relative file paths in skill content relative to the skill's SKI
 
 ```markdown
 # Good — absolute path, unambiguous
-See `${CLAUDE_PLUGIN_ROOT}/templates/issue-state.md` for the STATE.md template.
+See `${CLAUDE_PLUGIN_ROOT}/templates/issue-index.json` for the index.json template.
 See `${CLAUDE_PLUGIN_ROOT}/concepts/version-paths.md` for version path conventions.
 
 # Good — relative path for files within the skill directory
 See [workflow-output.md](workflow-output.md) for output format details.
 
 # Wrong — bare relative path resolves to the skill directory, not the plugin root
-See `templates/issue-state.md` for the STATE.md template.
+See `templates/issue-index.json` for the index.json template.
 ```
 
 `${CLAUDE_PLUGIN_ROOT}` is not expanded by GetSkill in content body (only inside `!` directive strings).

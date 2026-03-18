@@ -394,17 +394,17 @@ Parse input to determine if major (single digit) or minor (X.Y format).
 
 **Step 2: Display current conditions**
 
-Read the PLAN.md for selected version:
+Read the plan.md for selected version:
 ```bash
-cat .cat/issues/v{major}/v{major}.{minor}/PLAN.md 2>/dev/null || \
-cat .cat/issues/v{major}/PLAN.md 2>/dev/null
+cat .cat/issues/v{major}/v{major}.{minor}/plan.md 2>/dev/null || \
+cat .cat/issues/v{major}/plan.md 2>/dev/null
 ```
 
 Extract the `## Pre-conditions` and `## Post-conditions` sections.
 
 INVOKE: Skill("cat:get-output-agent", args="config.conditions-for-version {version} {preconditions} {postconditions}")
 
-Replace `{version}`, `{preconditions}`, and `{postconditions}` with actual values extracted from PLAN.md.
+Replace `{version}`, `{preconditions}`, and `{postconditions}` with actual values extracted from plan.md.
 Empty conditions should be represented as "(none)".
 
 **Step 3: Choose action**
@@ -455,9 +455,9 @@ Use AskUserQuestion:
 If "Specific issue(s) complete":
 - Ask: "Which issue(s)? (comma-separated)"
 
-**Step 5: Update PLAN.md**
+**Step 5: Update plan.md**
 
-Read the version's PLAN.md, update the `## Pre-conditions` and `## Post-conditions` sections:
+Read the version's plan.md, update the `## Pre-conditions` and `## Post-conditions` sections:
 
 ```markdown
 ## Pre-conditions
@@ -469,9 +469,9 @@ Read the version's PLAN.md, update the `## Pre-conditions` and `## Post-conditio
 - {condition 2}
 ```
 
-If the PLAN.md doesn't have these sections, insert them after `## Focus` or `## Vision`.
+If the plan.md doesn't have these sections, insert them after `## Focus` or `## Vision`.
 
-Write the updated PLAN.md using the Write tool.
+Write the updated plan.md using the Write tool.
 
 **Step 6: Confirm and loop**
 
@@ -577,7 +577,7 @@ INVOKE: Skill("cat:get-output-agent", args="config.no-changes")
 - [ ] User navigated wizard successfully
 - [ ] Settings updated in config.json using Write tool
 - [ ] Version conditions viewable and editable via wizard
-- [ ] Gate changes saved to version PLAN.md files
+- [ ] Gate changes saved to version plan.md files
 - [ ] Changes confirmed with before/after values
 
 </success_criteria>

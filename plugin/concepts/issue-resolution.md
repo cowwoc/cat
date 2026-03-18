@@ -12,7 +12,7 @@ How issues are marked complete and how to trace their resolving commits.
 | Resolution | Description | Has Commit? | How to Find |
 |------------|-------------|-------------|-------------|
 | `implemented` | Issue closed normally | Yes | `git log -- .cat/issues/v{x}/v{x}.{y}/{issue-name}/` |
-| `duplicate` | Another issue did this work | No | Check STATE.md "Duplicate Of" field |
+| `duplicate` | Another issue did this work | No | Check index.json `resolution` field |
 | `obsolete` | No longer needed | No | No implementation commit |
 
 **Status values:** `open`, `in-progress`, `closed` (only these three)
@@ -22,11 +22,11 @@ How issues are marked complete and how to trace their resolving commits.
 When an issue is closed through normal execution:
 
 1. Work is done and committed
-2. STATE.md updated in the same commit (per M076)
-3. STATE.md updated with `Resolution: implemented`
+2. index.json updated in the same commit (per M076)
+3. index.json updated with `"resolution": "implemented"`
 
 ```bash
-# Find commits for an issue via STATE.md history
+# Find commits for an issue via index.json history
 git log --oneline -- .cat/issues/v1/v1.0/add-feature-x/
 ```
 
@@ -43,21 +43,25 @@ An issue is a **duplicate** when another issue already implemented the same func
 
 ### How to Mark a Duplicate
 
-Update the duplicate issue's STATE.md:
+Update the duplicate issue's index.json:
 
-```yaml
-- **Status:** closed
-- **Progress:** 100%
-- **Resolution:** duplicate
-- **Duplicate Of:** v{major}.{minor}-{original-issue-name}
+```json
+{
+  "status": "closed",
+  "resolution": "duplicate (v{major}.{minor}-{original-issue-name})",
+  "dependencies": [],
+  "blocks": []
+}
 ```
 
 **Example:**
-```yaml
-- **Status:** closed
-- **Progress:** 100%
-- **Resolution:** duplicate
-- **Duplicate Of:** v0.5-fix-multi-param-lambda
+```json
+{
+  "status": "closed",
+  "resolution": "duplicate (v0.5-fix-multi-param-lambda)",
+  "dependencies": [],
+  "blocks": []
+}
 ```
 
 ### Finding Commits for Duplicates
@@ -67,25 +71,25 @@ The duplicate issue has **no implementation commit**. The work was done by the o
 **To find the resolving commit:**
 
 ```bash
-# 1. Read the duplicate issue's STATE.md
-# 2. Get the "Duplicate Of" value (e.g., v0.5-fix-multi-param-lambda)
-# 3. Find commits for that original issue via STATE.md history
+# 1. Read the duplicate issue's index.json
+# 2. Get the "resolution" value (e.g., "duplicate (v0.5-fix-multi-param-lambda)")
+# 3. Find commits for that original issue via index.json history
 git log --oneline -- .cat/issues/v0/v0.5/fix-multi-param-lambda/
 ```
 
 ### Commit for Duplicate Resolution
 
-When marking an issue as duplicate, commit only the STATE.md update:
+When marking an issue as duplicate, commit only the index.json update:
 
 ```bash
-git add .cat/issues/v{major}/v{major}.{minor}/{issue-name}/STATE.md
+git add .cat/issues/v{major}/v{major}.{minor}/{issue-name}/index.json
 git commit -m "config: close duplicate issue {issue-name}
 
 Duplicate of {original-issue-name} which was resolved in commit {hash}.
 "
 ```
 
-**Note:** Duplicate resolutions have no implementation commit - only the STATE.md update.
+**Note:** Duplicate resolutions have no implementation commit - only the index.json update.
 
 ## Obsolete Issues
 
@@ -93,11 +97,13 @@ An issue is **obsolete** when it's no longer needed (requirements changed, featu
 
 ### How to Mark Obsolete
 
-```yaml
-- **Status:** closed
-- **Progress:** 100%
-- **Resolution:** obsolete
-- **Reason:** {why issue is no longer needed}
+```json
+{
+  "status": "closed",
+  "resolution": "obsolete ({why issue is no longer needed})",
+  "dependencies": [],
+  "blocks": []
+}
 ```
 
 ### Commit for Obsolete Resolution
@@ -117,12 +123,12 @@ git commit -m "config: close obsolete issue {issue-name}
 | User Says | Action |
 |-----------|--------|
 | "abort/stop the issue" | Release lock, delete worktree and branch |
-| "mark as obsolete" | Set Status: `closed`, Resolution: `obsolete` |
-| "mark as duplicate" | Set Status: `closed`, Resolution: `duplicate` |
+| "mark as obsolete" | Set `status: "closed"`, `resolution: "obsolete (...)"` in index.json |
+| "mark as duplicate" | Set `status: "closed"`, `resolution: "duplicate (...)"` in index.json |
 
 **Abort cleanup:** Release the issue lock, remove the worktree (`git worktree remove --force`),
-and delete the branch. No STATE.md commit is needed on the target branch — the source branch
-contains all in-progress changes, and deleting it reverts STATE.md automatically.
+and delete the branch. No index.json commit is needed on the target branch — the source branch
+contains all in-progress changes, and deleting it reverts index.json automatically.
 
 **A stopped issue returns to open state** - ready for future work.
 Only issues that reach their goal (or are explicitly declared obsolete/duplicate) become closed.
@@ -134,11 +140,11 @@ Only issues that reach their goal (or are explicitly declared obsolete/duplicate
 To find what resolved an issue:
 
 ```
-1. Read issue's STATE.md
-2. Check Resolution field:
+1. Read issue's index.json
+2. Check "resolution" field:
    - If "implemented": git log -- .cat/issues/v{x}/v{x}.{y}/{issue-name}/
-   - If "duplicate": find commits for the "Duplicate Of" issue
-   - If "obsolete": no implementation commit exists
+   - If "duplicate (...)": find commits for the referenced original issue
+   - If "obsolete (...)": no implementation commit exists
 ```
 
 ### Script Example
@@ -148,29 +154,26 @@ To find what resolved an issue:
 # find-issue-commit.sh <issue-path>
 
 ISSUE_PATH="$1"
-STATE_FILE="$ISSUE_PATH/STATE.md"
+INDEX_FILE="$ISSUE_PATH/index.json"
 
-RESOLUTION=$(grep "Resolution:" "$STATE_FILE" | sed 's/.*Resolution: *//')
-ISSUE_NAME=$(basename "$ISSUE_PATH")
-MINOR_PATH=$(dirname "$ISSUE_PATH" | xargs dirname)
-MINOR=$(basename "$MINOR_PATH")
-MAJOR_PATH=$(dirname "$MINOR_PATH")
-MAJOR=$(basename "$MAJOR_PATH" | sed 's/v//')
+# Extract resolution from JSON (no jq available; use grep/sed)
+RESOLUTION=$(grep -oE '"resolution"[[:space:]]*:[[:space:]]*"[^"]*"' "$INDEX_FILE" \
+  | sed 's/.*"resolution"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 
 case "$RESOLUTION" in
   implemented)
-    # Find commits via STATE.md file history
+    # Find commits via index.json file history
     git log --oneline -- "$ISSUE_PATH/"
     ;;
-  duplicate)
-    DUPLICATE_OF=$(grep "Duplicate Of:" "$STATE_FILE" | sed 's/.*Duplicate Of: *//')
-    # Parse version and issue name from duplicate reference
-    DUP_MAJOR=$(echo "$DUPLICATE_OF" | sed 's/v\([0-9]*\)\..*/\1/')
-    DUP_MINOR=$(echo "$DUPLICATE_OF" | sed 's/v\([0-9]*\.[0-9]*\)-.*/\1/')
-    DUP_NAME=$(echo "$DUPLICATE_OF" | sed 's/v[0-9]*\.[0-9]*-//')
+  duplicate*)
+    # Extract original issue reference from "duplicate (v0.5-issue-name)"
+    DUP_REF=$(echo "$RESOLUTION" | sed 's/duplicate (\(.*\))/\1/')
+    DUP_MAJOR=$(echo "$DUP_REF" | sed 's/v\([0-9]*\)\..*/\1/')
+    DUP_MINOR=$(echo "$DUP_REF" | sed 's/v\([0-9]*\.[0-9]*\)-.*/\1/')
+    DUP_NAME=$(echo "$DUP_REF" | sed 's/v[0-9]*\.[0-9]*-//')
     git log --oneline -- ".cat/issues/v${DUP_MAJOR}/v${DUP_MINOR}/${DUP_NAME}/"
     ;;
-  obsolete)
+  obsolete*)
     echo "Issue was obsolete - no implementation commit"
     ;;
   *)

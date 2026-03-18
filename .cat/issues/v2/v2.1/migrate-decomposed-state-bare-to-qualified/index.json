@@ -1,0 +1,7 @@
+{
+  "status": "closed",
+  "resolution": "implemented",
+  "progress": 100,
+  "dependencies": ["fix-decompose-issue-bare-names"],
+  "targetBranch": "v2.1"
+}

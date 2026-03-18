@@ -34,15 +34,15 @@ Read, Glob, and Grep tools. This enables reviewers to catch:
 Positional space-separated arguments:
 
 ```
-<issue_id> <worktree_path> <verify_level> <commits_compact>
+<issueId> <worktreePath> <verifyLevel> <commitsCompact>
 ```
 
 | Position | Name | Example |
 |----------|------|---------|
-| 1 | issue_id | `2.1-issue-name` |
-| 2 | worktree_path | `${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name` |
-| 3 | verify_level | `quick` or `changed` or `all` |
-| 4 | commits_compact | `hash:type,hash:type` (e.g., `abc123:bugfix,def456:test`) |
+| 1 | issueId | `2.1-issue-name` |
+| 2 | worktreePath | `${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name` |
+| 3 | verifyLevel | `quick` or `changed` or `all` |
+| 4 | commitsCompact | `hash:type,hash:type` (e.g., `abc123:bugfix,def456:test`) |
 
 Parse from ARGUMENTS:
 ```bash
@@ -114,11 +114,11 @@ reviewers.
 ```
 RESEARCH MODE (pre-implementation):
 1. Start with base set: [requirements] (always included)
-2. Detect issue type from PLAN.md or commit messages
+2. Detect issue type from plan.md or commit messages
 3. Apply issue type inclusions/exclusions
 4. Scan issue description/goal for keywords
 5. Apply keyword inclusions
-6. Check version PLAN.md for focus keywords
+6. Check version plan.md for focus keywords
 7. Apply version focus inclusions
 8. Output: selected_stakeholders, skipped_with_reasons
 
@@ -132,7 +132,7 @@ REVIEW MODE (post-implementation):
 
 ### Issue Type Mappings
 
-Detect issue type from PLAN.md `## Type` field or infer from commit messages/description:
+Detect issue type from plan.md `## Type` field or infer from commit messages/description:
 
 | Issue Type | Include | Exclude |
 |-----------|---------|---------|
@@ -143,7 +143,7 @@ Detect issue type from PLAN.md `## Type` field or infer from commit messages/des
 
 ### Keyword Mappings
 
-Scan issue description, goal, and PLAN.md for keywords:
+Scan issue description, goal, and plan.md for keywords:
 
 | Keywords | Include |
 |----------|---------|
@@ -156,9 +156,9 @@ Scan issue description, goal, and PLAN.md for keywords:
 
 ### Version Focus Mapping
 
-Check version PLAN.md for strategic focus:
+Check version plan.md for strategic focus:
 
-- If version PLAN.md mentions "commercialization" → include legal, business
+- If version plan.md mentions "commercialization" → include legal, business
 
 ### File-Based Overrides (Review Mode Only)
 
@@ -176,7 +176,7 @@ In review mode, file changes can override context exclusions:
 
 ### User Override: Force Stakeholders
 
-Users can force specific stakeholders by adding to issue PLAN.md:
+Users can force specific stakeholders by adding to issue plan.md:
 
 ```markdown
 ## Force Stakeholders
@@ -194,8 +194,8 @@ SELECTED="requirements"
 SKIPPED=""
 OVERRIDDEN=""
 
-# Read issue PLAN.md
-ISSUE_PLAN=$(cat .cat/issues/*/PLAN.md 2>/dev/null || echo "")
+# Read issue plan.md
+ISSUE_PLAN=$(cat .cat/issues/*/plan.md 2>/dev/null || echo "")
 
 # Check for forced stakeholders
 FORCED=$(echo "$ISSUE_PLAN" | sed -n '/## Force Stakeholders/,/^##/p' | grep '^ *-' | sed 's/^ *- *//')
@@ -259,8 +259,8 @@ if echo "$ISSUE_TEXT" | grep -qE 'ci|cd|pipeline|build|deploy|release|migrat
     SELECTED="$SELECTED deployment"
 fi
 
-# Check version PLAN.md for focus
-VERSION_PLAN=$(cat .cat/versions/*/PLAN.md 2>/dev/null || echo "")
+# Check version plan.md for focus
+VERSION_PLAN=$(cat .cat/versions/*/plan.md 2>/dev/null || echo "")
 if echo "$VERSION_PLAN" | grep -qi 'commercialization'; then
     SELECTED="$SELECTED legal business"
 fi
@@ -502,7 +502,7 @@ The `analyze_context` step determines which stakeholders run based on:
 2. Keywords in issue description (license, UI, API, security, etc.)
 3. Version focus (commercialization triggers legal/business)
 4. File-based overrides (review mode only)
-5. User-forced stakeholders via `## Force Stakeholders` in PLAN.md
+5. User-forced stakeholders via `## Force Stakeholders` in plan.md
 
 See `analyze_context` step for full selection rules and skip reasons.
 
@@ -544,14 +544,14 @@ Before spawning, collect the issue context file paths:
 ISSUE_DIR=$(ls -d "${WORKTREE_PATH}/.cat/issues/"*/ 2>/dev/null | head -1)
 ISSUE_PLAN_PATH=""
 VERSION_PLAN_PATH=""
-if [[ -n "$ISSUE_DIR" && -f "${ISSUE_DIR}PLAN.md" ]]; then
-    ISSUE_PLAN_PATH="${ISSUE_DIR}PLAN.md"
-    # Derive version PLAN.md path from issue directory name (e.g., v2.1-issue-name -> v2.1)
+if [[ -n "$ISSUE_DIR" && -f "${ISSUE_DIR}plan.md" ]]; then
+    ISSUE_PLAN_PATH="${ISSUE_DIR}plan.md"
+    # Derive version plan.md path from issue directory name (e.g., v2.1-issue-name -> v2.1)
     ISSUE_NAME=$(basename "$ISSUE_DIR")
     VERSION_PATTERN=$(echo "$ISSUE_NAME" | grep -oE '^v[0-9]+\.[0-9]+')
     MAJOR_VERSION=$(echo "$VERSION_PATTERN" | grep -oE '^v[0-9]+')
     if [[ -n "$MAJOR_VERSION" && -n "$VERSION_PATTERN" ]]; then
-        VERSION_PLAN="${WORKTREE_PATH}/.cat/issues/${MAJOR_VERSION}/${VERSION_PATTERN}/PLAN.md"
+        VERSION_PLAN="${WORKTREE_PATH}/.cat/issues/${MAJOR_VERSION}/${VERSION_PATTERN}/plan.md"
         if [[ -f "$VERSION_PLAN" ]]; then
             VERSION_PLAN_PATH="$VERSION_PLAN"
         fi
@@ -570,15 +570,15 @@ is system-specific context that stakeholders need to identify better alternative
 is not visible in the code itself.
 
 ```bash
-# Collect domain knowledge from PLAN.md "Domain Knowledge" section (if present)
+# Collect domain knowledge from plan.md "Domain Knowledge" section (if present)
 DOMAIN_KNOWLEDGE=""
-if [[ -n "$ISSUE_DIR" && -f "${ISSUE_DIR}PLAN.md" ]]; then
-    DOMAIN_KNOWLEDGE=$(awk '/^## Domain Knowledge/,/^## /' "${ISSUE_DIR}PLAN.md" | \
+if [[ -n "$ISSUE_DIR" && -f "${ISSUE_DIR}plan.md" ]]; then
+    DOMAIN_KNOWLEDGE=$(awk '/^## Domain Knowledge/,/^## /' "${ISSUE_DIR}plan.md" | \
         grep -v '^## ' | sed '/^$/d' | head -50)
 fi
 ```
 
-If the PLAN.md does not have a `## Domain Knowledge` section but the implementation touches
+If the plan.md does not have a `## Domain Knowledge` section but the implementation touches
 system-specific APIs or behaviors (e.g., CLI output formats, session mechanics, external service
 contracts), synthesize the key facts and add them to the prompt as domain knowledge.
 
@@ -604,8 +604,8 @@ Do NOT access files outside {WORKTREE_PATH}.
 ## Issue Context
 
 Read the following files for issue context (skip any path that is empty):
-- Issue PLAN.md: {ISSUE_PLAN_PATH}
-- Version PLAN.md: {VERSION_PLAN_PATH}
+- Issue plan.md: {ISSUE_PLAN_PATH}
+- Version plan.md: {VERSION_PLAN_PATH}
 
 ## Domain Knowledge
 

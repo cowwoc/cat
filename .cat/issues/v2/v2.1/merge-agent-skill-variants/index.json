@@ -1,0 +1,5 @@
+{
+  "status": "closed",
+  "resolution": "implemented",
+  "dependencies": ["fix-work-skill-catagentid-priming"]
+}

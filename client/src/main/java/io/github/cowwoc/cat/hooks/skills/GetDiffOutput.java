@@ -32,6 +32,7 @@ import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
+import tools.jackson.databind.JsonNode;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 /**
@@ -369,7 +370,7 @@ public final class GetDiffOutput implements SkillOutput
    * Expects a single positional argument: the absolute path to the issue directory (e.g.,
    * {@code /path/to/worktree/.cat/issues/v2/v2.1/fix-foo/}). The project root (worktree path)
    * is derived by stripping everything from {@code .cat/issues/} onward. The target branch is
-   * read from the issue's {@code STATE.md} file.
+   * read from the issue's {@code index.json} file.
    *
    * @param args the arguments from the preprocessor directive (exactly 1: issue path)
    * @return the formatted diff display
@@ -413,32 +414,25 @@ public final class GetDiffOutput implements SkillOutput
   }
 
   /**
-   * Reads the target branch from the issue's STATE.md file.
+   * Reads the target branch from the issue's index.json file.
    *
    * @param issuePath absolute path to the issue directory
    * @return the target branch name
-   * @throws IOException              if STATE.md cannot be read
-   * @throws IllegalArgumentException if STATE.md does not exist or does not contain a Target Branch field
+   * @throws IOException              if index.json cannot be read
+   * @throws IllegalArgumentException if index.json does not exist or does not contain a targetBranch field
    */
-  private static String readTargetBranch(Path issuePath) throws IOException
+  private String readTargetBranch(Path issuePath) throws IOException
   {
-    Path stateMd = issuePath.resolve("STATE.md");
-    if (!Files.exists(stateMd))
-      throw new IllegalArgumentException("STATE.md not found at: " + stateMd);
-    List<String> lines = Files.readAllLines(stateMd);
-    String marker = "**Target Branch:**";
-    for (String line : lines)
-    {
-      int pos = line.indexOf(marker);
-      if (pos >= 0)
-      {
-        String branch = line.substring(pos + marker.length()).trim();
-        if (!branch.isEmpty())
-          return branch;
-      }
-    }
-    throw new IllegalArgumentException(
-      "STATE.md does not contain a 'Target Branch' field: " + stateMd);
+    Path indexJson = issuePath.resolve("index.json");
+    if (!Files.exists(indexJson))
+      throw new IllegalArgumentException("index.json not found at: " + indexJson);
+    String content = Files.readString(indexJson);
+    JsonNode root = scope.getJsonMapper().readTree(content);
+    JsonNode targetBranchNode = root.get("targetBranch");
+    if (targetBranchNode == null || !targetBranchNode.isString() || targetBranchNode.asString().isBlank())
+      throw new IllegalArgumentException(
+        "index.json does not contain a 'targetBranch' field: " + indexJson);
+    return targetBranchNode.asString();
   }
 
   /**

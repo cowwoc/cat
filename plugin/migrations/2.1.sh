@@ -39,6 +39,10 @@ set -euo pipefail
 #     (all issues, including closed ones)
 # 16. Rename cat-config.json → config.json and cat-config.local.json → config.local.json
 # 17. Convert bare sub-issue names to qualified names in "Decomposed Into" sections
+# 18. Rename PLAN.md → plan.md in all issue directories under .cat/issues/
+# 19. Convert STATE.md → index.json in all directories under .cat/issues/,
+#     extracting: status, resolution, targetBranch, dependencies, blocks, parent, decomposedInto
+#     Strips Progress, Last Updated, Completed, and any narrative content.
 
 trap 'echo "ERROR in 2.1.sh at line $LINENO: $BASH_COMMAND" >&2; exit 1' ERR
 
@@ -80,8 +84,8 @@ version_state_files=$(find .cat/issues -path "*v*.*/*" -name "STATE.md" -mindept
 if [[ -z "$version_state_files" ]]; then
     log_migration "No version-level STATE.md files found - skipping phase 2"
 else
-    total_count=$(echo "$version_state_files" | wc -l | tr -d ' ')
-    log_migration "Found $total_count version-level STATE.md files to check"
+    totalCount=$(echo "$version_state_files" | wc -l | tr -d ' ')
+    log_migration "Found $totalCount version-level STATE.md files to check"
 
     phase2_migrated=0
 
@@ -329,30 +333,30 @@ else
 
     phase5_changed=0
 
-    while IFS= read -r plan_file; do
-        [[ -z "$plan_file" ]] && continue
+    while IFS= read -r planFile; do
+        [[ -z "$planFile" ]] && continue
 
         changed=false
 
         # Rename "## Acceptance Criteria" → "## Post-conditions"
-        if grep -q "^## Acceptance Criteria" "$plan_file" 2>/dev/null; then
-            sed -i 's/^## Acceptance Criteria$/## Post-conditions/' "$plan_file"
+        if grep -q "^## Acceptance Criteria" "$planFile" 2>/dev/null; then
+            sed -i 's/^## Acceptance Criteria$/## Post-conditions/' "$planFile"
             changed=true
-            log_migration "  Renamed Acceptance Criteria → Post-conditions: $plan_file"
+            log_migration "  Renamed Acceptance Criteria → Post-conditions: $planFile"
         fi
 
         # Rename "## Success Criteria" → "## Post-conditions" (merge)
         # If both "## Post-conditions" and "## Success Criteria" exist, remove Success Criteria section
         # If only "## Success Criteria" exists, rename it
-        if grep -q "^## Success Criteria" "$plan_file" 2>/dev/null; then
-            if grep -q "^## Post-conditions" "$plan_file" 2>/dev/null; then
+        if grep -q "^## Success Criteria" "$planFile" 2>/dev/null; then
+            if grep -q "^## Post-conditions" "$planFile" 2>/dev/null; then
                 # Both sections exist - merge Success Criteria content into Post-conditions
                 # Extract Success Criteria items
                 success_items=$(awk '
                     /^## Success Criteria/ { in_section=1; next }
                     in_section && /^## / { in_section=0 }
                     in_section && /^- / { print }
-                ' "$plan_file")
+                ' "$planFile")
 
                 # Remove Success Criteria section
                 awk '
@@ -360,7 +364,7 @@ else
                     skip && /^## / { skip=0; print; next }
                     skip { next }
                     { print }
-                ' "$plan_file" > "${plan_file}.tmp" && mv "${plan_file}.tmp" "$plan_file"
+                ' "$planFile" > "${planFile}.tmp" && mv "${planFile}.tmp" "$planFile"
 
                 # Append Success Criteria items to Post-conditions section
                 if [[ -n "$success_items" ]]; then
@@ -387,25 +391,25 @@ else
                                 }
                             }
                         }
-                    ' "$plan_file" > "${plan_file}.tmp" && mv "${plan_file}.tmp" "$plan_file"
+                    ' "$planFile" > "${planFile}.tmp" && mv "${planFile}.tmp" "$planFile"
                 fi
             else
                 # Only Success Criteria - rename it to Post-conditions
-                sed -i 's/^## Success Criteria$/## Post-conditions/' "$plan_file"
+                sed -i 's/^## Success Criteria$/## Post-conditions/' "$planFile"
             fi
             changed=true
-            log_migration "  Merged/renamed Success Criteria → Post-conditions: $plan_file"
+            log_migration "  Merged/renamed Success Criteria → Post-conditions: $planFile"
         fi
 
         # Handle "## Gates" with "### Entry" and "### Exit" subsections
-        if grep -q "^## Gates" "$plan_file" 2>/dev/null; then
+        if grep -q "^## Gates" "$planFile" 2>/dev/null; then
             # Extract Entry section content
             entry_content=$(awk '
                 /^### Entry/ { in_section=1; next }
                 in_section && /^### / { in_section=0 }
                 in_section && /^## / { in_section=0 }
                 in_section { print }
-            ' "$plan_file")
+            ' "$planFile")
 
             # Extract Exit section content
             exit_content=$(awk '
@@ -413,7 +417,7 @@ else
                 in_section && /^### / { in_section=0 }
                 in_section && /^## / { in_section=0 }
                 in_section { print }
-            ' "$plan_file")
+            ' "$planFile")
 
             # Replace ## Gates section in-place with ## Pre-conditions / ## Post-conditions
             awk -v entry="$entry_content" -v exit_cond="$exit_content" '
@@ -444,25 +448,25 @@ else
                         if (exit_cond != "") print exit_cond; else print "- All issues complete"
                     }
                 }
-            ' "$plan_file" > "${plan_file}.tmp" && mv "${plan_file}.tmp" "$plan_file"
+            ' "$planFile" > "${planFile}.tmp" && mv "${planFile}.tmp" "$planFile"
 
             changed=true
-            log_migration "  Converted Gates → Pre/Post-conditions in-place: $plan_file"
+            log_migration "  Converted Gates → Pre/Post-conditions in-place: $planFile"
         fi
 
         # Handle standalone "## Entry Gate" section
-        if grep -q "^## Entry Gate$" "$plan_file" 2>/dev/null; then
-            sed -i 's/^## Entry Gate$/## Pre-conditions/' "$plan_file"
+        if grep -q "^## Entry Gate$" "$planFile" 2>/dev/null; then
+            sed -i 's/^## Entry Gate$/## Pre-conditions/' "$planFile"
             changed=true
-            log_migration "  Renamed Entry Gate → Pre-conditions: $plan_file"
+            log_migration "  Renamed Entry Gate → Pre-conditions: $planFile"
         fi
 
         # Handle standalone "## Exit Gate" or "## Exit Gate Tasks" section
-        if grep -q "^## Exit Gate" "$plan_file" 2>/dev/null; then
-            sed -i 's/^## Exit Gate Tasks$/## Post-conditions/' "$plan_file"
-            sed -i 's/^## Exit Gate$/## Post-conditions/' "$plan_file"
+        if grep -q "^## Exit Gate" "$planFile" 2>/dev/null; then
+            sed -i 's/^## Exit Gate Tasks$/## Post-conditions/' "$planFile"
+            sed -i 's/^## Exit Gate$/## Post-conditions/' "$planFile"
             changed=true
-            log_migration "  Renamed Exit Gate → Post-conditions: $plan_file"
+            log_migration "  Renamed Exit Gate → Post-conditions: $planFile"
         fi
 
         if [[ "$changed" == "true" ]]; then
@@ -636,20 +640,20 @@ if [[ -z "$all_plan_files" ]]; then
 else
     phase8_migrated=0
 
-    while IFS= read -r plan_file; do
-        [[ -z "$plan_file" ]] && continue
+    while IFS= read -r planFile; do
+        [[ -z "$planFile" ]] && continue
 
         # Skip if already migrated (has Execution Waves)
-        if grep -q "^## Execution Waves" "$plan_file" 2>/dev/null; then
+        if grep -q "^## Execution Waves" "$planFile" 2>/dev/null; then
             continue
         fi
 
         # Skip if no old format exists
-        if ! grep -q "^## Execution Steps" "$plan_file" 2>/dev/null; then
+        if ! grep -q "^## Execution Steps" "$planFile" 2>/dev/null; then
             continue
         fi
 
-        log_migration "  Migrating: $plan_file"
+        log_migration "  Migrating: $planFile"
 
         # Use awk to preserve all content while renaming the section heading and inserting Wave 1
         # The awk command:
@@ -672,10 +676,10 @@ else
             next
         }
         { print; last_blank=($0 == "") }
-        ' "$plan_file" > "${plan_file}.tmp" && mv "${plan_file}.tmp" "$plan_file"
+        ' "$planFile" > "${planFile}.tmp" && mv "${planFile}.tmp" "$planFile"
 
         ((phase8_migrated++)) || true
-        log_migration "    Done: $plan_file"
+        log_migration "    Done: $planFile"
 
     done <<< "$all_plan_files"
 
@@ -1047,8 +1051,8 @@ issue_state_files=$(find .cat/issues -path "*v*.*/*" -name "STATE.md" -mindepth 
 if [[ -z "$issue_state_files" ]]; then
     log_migration "No issue-level STATE.md files found - skipping phase 13"
 else
-    total_count=$(echo "$issue_state_files" | wc -l | tr -d ' ')
-    log_migration "Found $total_count issue-level STATE.md files to check"
+    totalCount=$(echo "$issue_state_files" | wc -l | tr -d ' ')
+    log_migration "Found $totalCount issue-level STATE.md files to check"
 
     phase13_changed=0
     phase13_skipped=0
@@ -1103,34 +1107,34 @@ issue_plan_files=$(find .cat/issues -path "*v*.*/*" -name "PLAN.md" -mindepth 4 
 if [[ -z "$issue_plan_files" ]]; then
     log_migration "No issue-level PLAN.md files found - skipping phase 14"
 else
-    total_count=$(echo "$issue_plan_files" | wc -l | tr -d ' ')
-    log_migration "Found $total_count issue-level PLAN.md files to check"
+    totalCount=$(echo "$issue_plan_files" | wc -l | tr -d ' ')
+    log_migration "Found $totalCount issue-level PLAN.md files to check"
 
     phase14_changed=0
     phase14_skipped=0
 
-    while IFS= read -r plan_file; do
-        [[ -z "$plan_file" ]] && continue
+    while IFS= read -r planFile; do
+        [[ -z "$planFile" ]] && continue
 
         # Skip if already migrated (idempotency)
-        if ! grep -q "^## Satisfies" "$plan_file" 2>/dev/null; then
+        if ! grep -q "^## Satisfies" "$planFile" 2>/dev/null; then
             continue
         fi
 
         # Skip closed issues - check corresponding STATE.md
-        issue_dir=$(dirname "$plan_file")
+        issue_dir=$(dirname "$planFile")
         state_file="${issue_dir}/STATE.md"
         if [[ ! -f "$state_file" ]]; then
-            log_migration "  Warning: STATE.md missing for $plan_file — treating as open issue"
+            log_migration "  Warning: STATE.md missing for $planFile — treating as open issue"
         elif grep -q '^\*\*Status:\*\* closed' "$state_file" 2>/dev/null || \
              grep -q '^- \*\*Status:\*\* closed' "$state_file" 2>/dev/null; then
             ((phase14_skipped++)) || true
             continue
         fi
 
-        sed -i 's/^## Satisfies$/## Parent Requirements/' "$plan_file"
+        sed -i 's/^## Satisfies$/## Parent Requirements/' "$planFile"
         ((phase14_changed++)) || true
-        log_migration "  Updated: $plan_file"
+        log_migration "  Updated: $planFile"
 
     done <<< "$issue_plan_files"
 
@@ -1151,23 +1155,23 @@ else
     phase15_migrated=0
     phase15_skipped=0
 
-    while IFS= read -r plan_file; do
-        [[ -z "$plan_file" ]] && continue
+    while IFS= read -r planFile; do
+        [[ -z "$planFile" ]] && continue
 
         # Idempotency: skip files that already use the new section name
-        if grep -q "^## Sub-Agent Waves" "$plan_file" 2>/dev/null; then
+        if grep -q "^## Sub-Agent Waves" "$planFile" 2>/dev/null; then
             ((phase15_skipped++)) || true
             continue
         fi
 
         # Skip files with no old section to rename
-        if ! grep -q "^## Execution Waves" "$plan_file" 2>/dev/null; then
+        if ! grep -q "^## Execution Waves" "$planFile" 2>/dev/null; then
             continue
         fi
 
-        sed -i 's/^## Execution Waves$/## Sub-Agent Waves/' "$plan_file"
+        sed -i 's/^## Execution Waves$/## Sub-Agent Waves/' "$planFile"
         ((phase15_migrated++)) || true
-        log_migration "  Updated: $plan_file"
+        log_migration "  Updated: $planFile"
 
     done <<< "$all_plan_files"
 
@@ -1231,8 +1235,8 @@ issue_state_files=$(find .cat/issues -path "*v*.*/*" -name "STATE.md" -mindepth 
 if [[ -z "$issue_state_files" ]]; then
     log_migration "No issue-level STATE.md files found - skipping phase 17"
 else
-    total_count=$(echo "$issue_state_files" | wc -l | tr -d ' ')
-    log_migration "Found $total_count issue-level STATE.md files to check"
+    totalCount=$(echo "$issue_state_files" | wc -l | tr -d ' ')
+    log_migration "Found $totalCount issue-level STATE.md files to check"
 
     phase17_changed=0
     phase17_skipped=0
@@ -1284,6 +1288,233 @@ else
     done <<< "$issue_state_files"
 
     log_migration "Phase 17 complete: $phase17_changed files changed, $phase17_skipped skipped"
+fi
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase 18: Rename PLAN.md → plan.md in all directories under .cat/issues/
+# ──────────────────────────────────────────────────────────────────────────────
+
+log_migration "Phase 18: Rename PLAN.md → plan.md under .cat/issues/"
+
+issues_dir=".cat/issues"
+
+if [[ ! -d "$issues_dir" ]]; then
+    log_migration "No .cat/issues/ directory found - skipping phase 18"
+else
+    phase18_migrated=0
+    phase18_skipped=0
+
+    while IFS= read -r planFile; do
+        [[ -z "$planFile" ]] && continue
+        dir=$(dirname "$planFile")
+        target="${dir}/plan.md"
+
+        # Idempotency: skip if plan.md already exists
+        if [[ -f "$target" ]]; then
+            ((phase18_skipped++)) || true
+            continue
+        fi
+
+        mv "$planFile" "$target"
+        ((phase18_migrated++)) || true
+        log_migration "  Renamed: $planFile → $target"
+
+    done < <(find "$issues_dir" -name "PLAN.md" -type f 2>/dev/null || true)
+
+    log_migration "Phase 18 complete: $phase18_migrated files renamed, $phase18_skipped already up to date"
+fi
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase 19: Convert STATE.md → index.json under .cat/issues/
+#
+# Extracts structured fields from STATE.md markdown bullet list format into JSON:
+#   status, resolution, targetBranch, dependencies, blocks, parent, decomposedInto
+# Strips: Progress, Last Updated, Completed, and any narrative/markdown content.
+# ──────────────────────────────────────────────────────────────────────────────
+
+log_migration "Phase 19: Convert STATE.md → index.json under .cat/issues/"
+
+issues_dir=".cat/issues"
+
+if [[ ! -d "$issues_dir" ]]; then
+    log_migration "No .cat/issues/ directory found - skipping phase 19"
+else
+    phase19_migrated=0
+    phase19_skipped=0
+
+    # Helper: extract a bullet field value from STATE.md content
+    # Usage: extract_field "Status" "$content"
+    extract_field() {
+        local field="$1"
+        local content="$2"
+        # Match: - **FieldName:** value (rest of line)
+        # Use grep || true to avoid exit 1 when field is absent (set -e compatibility)
+        echo "$content" | (grep -m1 "^\- \*\*${field}:\*\*" || true) | sed "s/^\- \*\*${field}:\*\* *//" | sed 's/[[:space:]]*$//'
+    }
+
+    # Helper: convert a bracket list like [a, b, c] to JSON array ["a","b","c"]
+    # Empty list [] returns ""
+    bracket_list_to_json() {
+        local raw="$1"
+        # Strip surrounding brackets and whitespace
+        local inner
+        inner=$(echo "$raw" | sed 's/^[[:space:]]*\[//' | sed 's/\][[:space:]]*$//')
+        # Empty list
+        if [[ -z "$inner" ]]; then
+            echo ""
+            return
+        fi
+        # Split on comma, trim, wrap in quotes
+        local result="["
+        local first=1
+        while IFS= read -r item; do
+            item=$(echo "$item" | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
+            [[ -z "$item" ]] && continue
+            # Escape double quotes in item
+            item="${item//\"/\\\"}"
+            if [[ $first -eq 1 ]]; then
+                result="${result}\"${item}\""
+                first=0
+            else
+                result="${result}, \"${item}\""
+            fi
+        done < <(echo "$inner" | tr ',' '\n')
+        result="${result}]"
+        echo "$result"
+    }
+
+    # Helper: extract decomposedInto list from ## Decomposed Into section
+    # Returns newline-separated list of items (bare names extracted from "- item (description)" lines)
+    extract_decomposedInto() {
+        local content="$1"
+        # Find the ## Decomposed Into section and extract bullet items until next ## section
+        echo "$content" | awk '
+            /^## Decomposed Into/ { in_section=1; next }
+            /^## / && in_section { exit }
+            in_section && /^- / {
+                # Extract the item: first word after "- " up to space or parenthesis
+                line=$0
+                sub(/^- /, "", line)
+                # Take content up to first " (" or end of line
+                if (match(line, / \(/) > 0) {
+                    print substr(line, 1, RSTART - 1)
+                } else {
+                    print line
+                }
+            }
+        ' | sed 's/[[:space:]]*$//'
+    }
+
+    # Helper: build JSON from extracted fields
+    build_index_json() {
+        local state_file="$1"
+        local content
+        content=$(cat "$state_file")
+
+        local status resolution targetBranch deps blocks parent
+
+        status=$(extract_field "Status" "$content")
+        resolution=$(extract_field "Resolution" "$content")
+        targetBranch=$(extract_field "Target Branch" "$content")
+        deps=$(extract_field "Dependencies" "$content")
+        blocks=$(extract_field "Blocks" "$content")
+        parent=$(extract_field "Parent" "$content")
+
+        local json="{"
+
+        # status is always required
+        if [[ -n "$status" ]]; then
+            status="${status//\"/\\\"}"
+            json="${json}
+  \"status\": \"${status}\""
+        fi
+
+        # resolution only if non-empty
+        if [[ -n "$resolution" ]]; then
+            resolution="${resolution//\"/\\\"}"
+            json="${json},
+  \"resolution\": \"${resolution}\""
+        fi
+
+        # targetBranch only if non-empty
+        if [[ -n "$targetBranch" ]]; then
+            targetBranch="${targetBranch//\"/\\\"}"
+            json="${json},
+  \"targetBranch\": \"${targetBranch}\""
+        fi
+
+        # dependencies only if non-empty list
+        if [[ -n "$deps" ]] && [[ "$deps" != "[]" ]]; then
+            local deps_json
+            deps_json=$(bracket_list_to_json "$deps")
+            if [[ -n "$deps_json" ]]; then
+                json="${json},
+  \"dependencies\": ${deps_json}"
+            fi
+        fi
+
+        # blocks only if non-empty list
+        if [[ -n "$blocks" ]] && [[ "$blocks" != "[]" ]]; then
+            local blocks_json
+            blocks_json=$(bracket_list_to_json "$blocks")
+            if [[ -n "$blocks_json" ]]; then
+                json="${json},
+  \"blocks\": ${blocks_json}"
+            fi
+        fi
+
+        # parent only if non-empty
+        if [[ -n "$parent" ]]; then
+            parent="${parent//\"/\\\"}"
+            json="${json},
+  \"parent\": \"${parent}\""
+        fi
+
+        # decomposedInto: extract from ## Decomposed Into section
+        local decomposed_items
+        decomposed_items=$(extract_decomposedInto "$content")
+        if [[ -n "$decomposed_items" ]]; then
+            local decomposed_json="["
+            local dfirst=1
+            while IFS= read -r ditem; do
+                [[ -z "$ditem" ]] && continue
+                ditem="${ditem//\"/\\\"}"
+                if [[ $dfirst -eq 1 ]]; then
+                    decomposed_json="${decomposed_json}\"${ditem}\""
+                    dfirst=0
+                else
+                    decomposed_json="${decomposed_json}, \"${ditem}\""
+                fi
+            done <<< "$decomposed_items"
+            decomposed_json="${decomposed_json}]"
+            json="${json},
+  \"decomposedInto\": ${decomposed_json}"
+        fi
+
+        json="${json}
+}"
+        echo "$json"
+    }
+
+    while IFS= read -r state_file; do
+        [[ -z "$state_file" ]] && continue
+        dir=$(dirname "$state_file")
+        target="${dir}/index.json"
+
+        # Idempotency: skip if index.json already exists
+        if [[ -f "$target" ]]; then
+            ((phase19_skipped++)) || true
+            continue
+        fi
+
+        build_index_json "$state_file" > "$target"
+        rm "$state_file"
+        ((phase19_migrated++)) || true
+        log_migration "  Converted: $state_file → $target"
+
+    done < <(find "$issues_dir" -name "STATE.md" -type f 2>/dev/null || true)
+
+    log_migration "Phase 19 complete: $phase19_migrated files converted, $phase19_skipped already up to date"
 fi
 
 log_success "Migration to 2.1 completed"

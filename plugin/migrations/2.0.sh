@@ -22,14 +22,14 @@ log_migration "Starting 2.0 migration: Research & Requirements sections"
 
 # Count files to process
 plan_files=$(find .claude/cat/issues -name "PLAN.md" -type f 2>/dev/null || true)
-total_count=$(echo "$plan_files" | grep -c "PLAN.md" || echo 0)
+totalCount=$(echo "$plan_files" | grep -c "PLAN.md" || echo 0)
 
-if [[ "$total_count" -eq 0 ]]; then
+if [[ "$totalCount" -eq 0 ]]; then
     log_migration "No PLAN.md files found - skipping"
     exit 0
 fi
 
-log_migration "Found $total_count PLAN.md files to check"
+log_migration "Found $totalCount PLAN.md files to check"
 
 research_added=0
 requirements_added=0
@@ -72,16 +72,16 @@ TRACEABILITY_TEMPLATE='### Requirements Traceability
 
 '
 
-while IFS= read -r plan_file; do
-    [[ -z "$plan_file" ]] && continue
+while IFS= read -r planFile; do
+    [[ -z "$planFile" ]] && continue
 
     modified=false
-    content=$(cat "$plan_file")
+    content=$(cat "$planFile")
 
     # Check if Research section exists
-    if ! grep -q "^## Research" "$plan_file"; then
+    if ! grep -q "^## Research" "$planFile"; then
         # Find insertion point (after ## Goal or ## Focus or ## Vision, before ## Approach)
-        if grep -q "^## Goal\|^## Focus\|^## Vision" "$plan_file"; then
+        if grep -q "^## Goal\|^## Focus\|^## Vision" "$planFile"; then
             # Insert after Goal/Focus/Vision section
             # Use awk for reliable multi-line insertion
             awk -v template="$RESEARCH_TEMPLATE" '
@@ -92,18 +92,18 @@ while IFS= read -r plan_file; do
                 }
                 { print }
                 END { if (in_section) print template }
-            ' "$plan_file" > "${plan_file}.tmp" && mv "${plan_file}.tmp" "$plan_file"
+            ' "$planFile" > "${planFile}.tmp" && mv "${planFile}.tmp" "$planFile"
 
             ((research_added++)) || true
             modified=true
-            log_migration "  Added Research section to: $plan_file"
+            log_migration "  Added Research section to: $planFile"
         fi
     fi
 
     # Check if this is a Feature-type plan (has ## Goal, not ## Problem)
-    if grep -q "^## Goal" "$plan_file" && ! grep -q "^## Problem" "$plan_file"; then
+    if grep -q "^## Goal" "$planFile" && ! grep -q "^## Problem" "$planFile"; then
         # Check if Requirements section exists
-        if ! grep -q "^## Requirements" "$plan_file"; then
+        if ! grep -q "^## Requirements" "$planFile"; then
             # Insert after ## Goal, before ## Research or ## Approach
             awk -v template="$REQUIREMENTS_TEMPLATE" '
                 /^## Goal/ { in_goal=1 }
@@ -112,27 +112,27 @@ while IFS= read -r plan_file; do
                     in_goal=0
                 }
                 { print }
-            ' "$plan_file" > "${plan_file}.tmp" && mv "${plan_file}.tmp" "$plan_file"
+            ' "$planFile" > "${planFile}.tmp" && mv "${planFile}.tmp" "$planFile"
 
             ((requirements_added++)) || true
             modified=true
-            log_migration "  Added Requirements section to: $plan_file"
+            log_migration "  Added Requirements section to: $planFile"
         fi
 
         # Check if Requirements Traceability exists (for detailed specs)
-        if grep -q "^### Acceptance Criteria\|^### Execution Steps" "$plan_file"; then
-            if ! grep -q "^### Requirements Traceability" "$plan_file"; then
+        if grep -q "^### Acceptance Criteria\|^### Execution Steps" "$planFile"; then
+            if ! grep -q "^### Requirements Traceability" "$planFile"; then
                 # Insert before ### Execution Steps
                 awk -v template="$TRACEABILITY_TEMPLATE" '
                     /^### Execution Steps/ {
                         print template
                     }
                     { print }
-                ' "$plan_file" > "${plan_file}.tmp" && mv "${plan_file}.tmp" "$plan_file"
+                ' "$planFile" > "${planFile}.tmp" && mv "${planFile}.tmp" "$planFile"
 
                 ((traceability_added++)) || true
                 modified=true
-                log_migration "  Added Traceability section to: $plan_file"
+                log_migration "  Added Traceability section to: $planFile"
             fi
         fi
     fi

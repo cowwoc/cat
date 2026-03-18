@@ -1,0 +1,6 @@
+{
+  "status": "closed",
+  "resolution": "implemented",
+  "blocks": ["rename-config-tests"],
+  "parent": "rename-cat-config-files"
+}

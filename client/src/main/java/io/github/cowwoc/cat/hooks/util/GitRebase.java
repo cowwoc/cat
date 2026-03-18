@@ -595,7 +595,7 @@ public final class GitRebase
   {
     ObjectNode json = scope.getJsonMapper().createObjectNode();
     json.put("status", "OK");
-    json.put("target_branch", target);
+    json.put("targetBranch", target);
     json.put("commits_rebased", commitsRebased);
     json.put("backup_cleaned", true);
     ArrayNode orphansArray = json.putArray("deleted_orphans");
@@ -618,7 +618,7 @@ public final class GitRebase
   {
     ObjectNode json = scope.getJsonMapper().createObjectNode();
     json.put("status", "CONFLICT");
-    json.put("target_branch", target);
+    json.put("targetBranch", target);
     json.put("backup_branch", backupBranch);
     ArrayNode filesArray = json.putArray("conflicting_files");
     for (String file : conflictingFiles.split("\n"))
@@ -645,7 +645,7 @@ public final class GitRebase
     StringBuilder reason = new StringBuilder(message);
     if (target != null)
     {
-      reason.append("\ntarget_branch: ").append(target);
+      reason.append("\ntargetBranch: ").append(target);
     }
     if (backupBranch != null)
       reason.append("\nbackup_branch: ").append(backupBranch);
@@ -664,7 +664,7 @@ public final class GitRebase
   {
     HookOutput hookOutput = new HookOutput(scope);
     String reason = "Content changed during rebase - backup preserved for investigation" +
-      "\ntarget_branch: " + target +
+      "\ntargetBranch: " + target +
       "\nbackup_branch: " + backupBranch +
       "\ndiff_stat:\n" + diffStat;
     return hookOutput.block(reason);

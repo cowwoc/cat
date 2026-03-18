@@ -1,0 +1,6 @@
+{
+  "status": "closed",
+  "resolution": "implemented",
+  "targetBranch": "v2.1",
+  "decomposedInto": ["2.1-rename-config-java-core", "2.1-rename-config-plugin-docs", "2.1-rename-config-tests"]
+}

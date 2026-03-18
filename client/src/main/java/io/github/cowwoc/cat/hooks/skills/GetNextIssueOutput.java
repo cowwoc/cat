@@ -205,9 +205,10 @@ public final class GetNextIssueOutput implements SkillOutput
    * @return the formatted box
    * @throws NullPointerException if any parameter is null
    * @throws IllegalArgumentException if any required parameter is blank
+   * @throws IOException if an I/O error occurs while reading plan.md
    */
   public String getNextIssueBox(String completedIssue, String targetBranch, String sessionId, String projectPath,
-                                String excludePattern)
+                                String excludePattern) throws IOException
   {
     requireThat(completedIssue, "completedIssue").isNotBlank();
     requireThat(targetBranch, "targetBranch").isNotBlank();
@@ -223,12 +224,12 @@ public final class GetNextIssueOutput implements SkillOutput
 
     if (!nextIssue.isEmpty())
     {
-      String nextIssueId = nextIssue.getOrDefault("issue_id", "").toString();
-      String nextIssuePath = nextIssue.getOrDefault("issue_path", "").toString();
+      String nextIssueId = nextIssue.getOrDefault("issueId", "").toString();
+      String nextIssuePath = nextIssue.getOrDefault("issuePath", "").toString();
 
       String goal;
       if (!nextIssuePath.isEmpty())
-        goal = IssueGoalReader.readGoalFromPlan(Path.of(nextIssuePath, "PLAN.md"));
+        goal = IssueGoalReader.readGoalFromPlan(Path.of(nextIssuePath, "plan.md"));
       else
         goal = "No goal available";
 
@@ -285,8 +286,8 @@ public final class GetNextIssueOutput implements SkillOutput
       {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("status", "found");
-        data.put("issue_id", found.issueId());
-        data.put("issue_path", found.issuePath());
+        data.put("issueId", found.issueId());
+        data.put("issuePath", found.issuePath());
         return data;
       }
       return Map.of();

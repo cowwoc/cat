@@ -357,7 +357,7 @@ revertable during development, supporting both single-session and multi-session 
 
 When pausing mid-feature:
 1. Complete the current RED-GREEN-REFACTOR cycle (commit the last behavior)
-2. Document remaining behaviors in issue comments or STATE.md
+2. Document remaining behaviors in issue comments or index.json
 3. Next session picks up at STEP 1 (RED) for the next behavior
 4. Final session uses `cat:git-squash` to consolidate all cycles before review
 

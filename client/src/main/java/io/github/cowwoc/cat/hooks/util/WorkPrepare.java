@@ -13,8 +13,11 @@ import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.util.IssueDiscovery.DiscoveryResult.ExistingWorktree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -48,29 +51,17 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
 public final class WorkPrepare
 {
   /**
-   * Matches the status line in STATE.md: {@code - **Status:** open}.
-   */
-  private static final Pattern STATUS_PATTERN = Pattern.compile("\\*\\*Status:\\*\\*\\s+(\\S+)");
-  /**
-   * Matches the progress line in STATE.md: {@code - **Progress:** 0%}.
-   */
-  private static final Pattern PROGRESS_PATTERN = Pattern.compile("\\*\\*Progress:\\*\\*\\s+\\d+%");
-  /**
-   * Matches dependency entries in STATE.md: {@code - **Dependencies:** [dep1, dep2]}.
-   */
-  private static final Pattern DEPS_PATTERN = Pattern.compile("\\*\\*Dependencies:\\*\\*\\s+\\[([^\\]]*)\\]");
-  /**
-   * Matches the "Files to Create" section in PLAN.md.
+   * Matches the "Files to Create" section in plan.md.
    */
   private static final Pattern FILES_TO_CREATE_PATTERN =
     Pattern.compile("## Files to Create\\s+(.*?)(?=\\n## [^#]|\\Z)", Pattern.DOTALL);
   /**
-   * Matches the "Files to Modify" section in PLAN.md.
+   * Matches the "Files to Modify" section in plan.md.
    */
   private static final Pattern FILES_TO_MODIFY_PATTERN =
     Pattern.compile("## Files to Modify\\s+(.*?)(?=\\n## [^#]|\\Z)", Pattern.DOTALL);
   /**
-   * Matches the "Execution Waves" section in PLAN.md.
+   * Matches the "Execution Waves" section in plan.md.
    */
   private static final Pattern EXECUTION_WAVES_PATTERN =
     Pattern.compile("## Execution Waves\\s+(.*?)(?=\\n## [^#]|\\Z)", Pattern.DOTALL);
@@ -182,7 +173,7 @@ public final class WorkPrepare
    *   <li>{@code NO_ISSUES} - no executable issues found</li>
    *   <li>{@code LOCKED} - selected issue is locked by another session</li>
    *   <li>{@code OVERSIZED} - estimated tokens exceed hard limit</li>
-   *   <li>{@code CORRUPT} - issue directory has STATE.md but no PLAN.md</li>
+   *   <li>{@code CORRUPT} - issue directory has index.json but no plan.md</li>
    *   <li>{@code ERROR} - unexpected error during preparation</li>
    * </ul>
    *
@@ -232,7 +223,7 @@ public final class WorkPrepare
       discoveryScope, discoveryTarget, input.sessionId(), input.excludePattern(), false);
 
     // For the ALL scope, build the issue index once so it can be reused in gatherDiagnosticInfo
-    // if no issue is found, avoiding a double scan of all STATE.md files.
+    // if no issue is found, avoiding a double scan of all index.json files.
     Map<String, IssueIndexEntry> preBuiltIssueIndex;
     Map<String, List<String>> preBuiltBareNameIndex;
     if (discoveryScope == IssueDiscovery.Scope.ALL)
@@ -267,15 +258,15 @@ public final class WorkPrepare
     String issueName = found.issueName();
     Path issuePath = Path.of(found.issuePath());
 
-    // Check for corrupt directory (STATE.md present, PLAN.md absent)
+    // Check for corrupt directory (index.json present, plan.md absent)
     if (found.isCorrupt())
     {
       releaseLock(issueId, input.sessionId());
       Map<String, Object> corruptResult = new LinkedHashMap<>();
       corruptResult.put("status", "CORRUPT");
-      corruptResult.put("issue_id", issueId);
-      corruptResult.put("issue_path", issuePath.toString());
-      corruptResult.put("message", "Issue directory is corrupt: STATE.md exists but PLAN.md is " +
+      corruptResult.put("issueId", issueId);
+      corruptResult.put("issuePath", issuePath.toString());
+      corruptResult.put("message", "Issue directory is corrupt: index.json exists but plan.md is " +
         "missing at " + issuePath);
       return mapper.writeValueAsString(corruptResult);
     }
@@ -288,11 +279,11 @@ public final class WorkPrepare
     {
       String issueBranch = buildIssueBranch(major, minor, found.patch(), issueName);
       return executeWhileLocked(input, projectPath, mapper, issueId, major, minor, issueName,
-        issuePath, targetBranch, issuePath.resolve("PLAN.md"), 5000, issueBranch);
+        issuePath, targetBranch, issuePath.resolve("plan.md"), 5000, issueBranch);
     }
 
     // Step 4: Estimate tokens
-    Path planPath = issuePath.resolve("PLAN.md");
+    Path planPath = issuePath.resolve("plan.md");
     int estimatedTokens = estimateTokens(planPath);
 
     // Check if oversized
@@ -303,8 +294,8 @@ public final class WorkPrepare
       oversizedResult.put("status", "OVERSIZED");
       oversizedResult.put("message", "Issue estimated at " + estimatedTokens + " tokens (limit: " + TOKEN_LIMIT + ")");
       oversizedResult.put("suggestion", "Use /cat:decompose-issue to break into smaller issues");
-      oversizedResult.put("issue_id", issueId);
-      oversizedResult.put("estimated_tokens", estimatedTokens);
+      oversizedResult.put("issueId", issueId);
+      oversizedResult.put("estimatedTokens", estimatedTokens);
       return mapper.writeValueAsString(oversizedResult);
     }
 
@@ -350,14 +341,14 @@ public final class WorkPrepare
       result.put("suggestion", "Use /cat:status to see available issues");
 
       if (!diagnostics.blockedIssues().isEmpty())
-        result.put("blocked_issues", diagnostics.blockedIssues());
+        result.put("blockedIssues", diagnostics.blockedIssues());
       if (!diagnostics.lockedIssues().isEmpty())
-        result.put("locked_issues", diagnostics.lockedIssues());
+        result.put("lockedIssues", diagnostics.lockedIssues());
       if (!diagnostics.circularDependencies().isEmpty())
-        result.put("circular_dependencies", diagnostics.circularDependencies());
+        result.put("circularDependencies", diagnostics.circularDependencies());
 
-      result.put("closed_count", diagnostics.closedCount());
-      result.put("total_count", diagnostics.totalCount());
+      result.put("closedCount", diagnostics.closedCount());
+      result.put("totalCount", diagnostics.totalCount());
 
       if (!warnings.isEmpty())
         result.put("warnings", warnings);
@@ -373,8 +364,8 @@ public final class WorkPrepare
         return mapper.writeValueAsString(Map.of(
           "status", "LOCKED",
           "message", msg,
-          "issue_id", notExec.issueId(),
-          "locked_by", ""));
+          "issueId", notExec.issueId(),
+          "lockedBy", ""));
       }
       return mapper.writeValueAsString(Map.of(
         "status", "ERROR",
@@ -422,8 +413,8 @@ public final class WorkPrepare
         return mapper.writeValueAsString(Map.of(
           "status", "LOCKED",
           "message", "Issue " + existingWorktree.issueId() + " is locked by another session",
-          "issue_id", existingWorktree.issueId(),
-          "locked_by", locked.sessionId()));
+          "issueId", existingWorktree.issueId(),
+          "lockedBy", locked.sessionId()));
       }
       return mapper.writeValueAsString(Map.of(
         "status", "ERROR",
@@ -465,7 +456,7 @@ public final class WorkPrepare
    * @param issueName the bare issue name
    * @param issuePath the path to the issue directory
    * @param targetBranch the target branch name
-   * @param planPath the path to PLAN.md
+   * @param planPath the path to plan.md
    * @param estimatedTokens the estimated token count
    * @param issueBranch the issue branch name
    * @return JSON string with READY, LOCKED, or ERROR result
@@ -487,8 +478,8 @@ public final class WorkPrepare
       return mapper.writeValueAsString(Map.of(
         "status", "LOCKED",
         "message", "Issue locked by another session: " + locked.owner(),
-        "issue_id", issueId,
-        "locked_by", locked.owner()));
+        "issueId", issueId,
+        "lockedBy", locked.owner()));
     }
 
     // Step 5: Create worktree
@@ -504,14 +495,14 @@ public final class WorkPrepare
         "message", "Failed to create worktree: " + e.getMessage()));
     }
 
-    // Step 5.5: Create and commit STATE.md in worktree if needed
-    // Ensures STATE.md is always tracked in the issue branch, preventing the case where
-    // STATE.md exists untracked in the main workspace but is absent from the worktree.
+    // Step 5.5: Create and commit index.json in worktree if needed
+    // Ensures index.json is always tracked in the issue branch, preventing the case where
+    // index.json exists untracked in the main workspace but is absent from the worktree.
     try
     {
-      if (!stateFileExistsInWorktree(worktreePath, issuePath, projectPath))
+      if (!indexFileExistsInWorktree(worktreePath, issuePath, projectPath))
       {
-        createStateFileAndCommit(worktreePath, issuePath, projectPath, targetBranch);
+        createIndexFileAndCommit(worktreePath, issuePath, projectPath, targetBranch);
       }
     }
     catch (IOException e)
@@ -520,7 +511,7 @@ public final class WorkPrepare
       releaseLock(issueId, input.sessionId());
       return mapper.writeValueAsString(Map.of(
         "status", "ERROR",
-        "message", "Failed to create and commit STATE.md: " + e.getMessage()));
+        "message", "Failed to create and commit index.json: " + e.getMessage()));
     }
 
     // Step 6: Verify worktree branch
@@ -564,11 +555,11 @@ public final class WorkPrepare
     // Step 8: Check target branch for suspicious commits
     String suspiciousCommits = checkTargetBranchCommits(projectPath, targetBranch, issueName, planPath);
 
-    // Step 9: Update STATE.md in worktree
-    // STATE.md now always exists in the worktree (created in Step 5.5 if needed)
+    // Step 9: Update index.json in worktree
+    // index.json now always exists in the worktree (created in Step 5.5 if needed)
     try
     {
-      updateStateMd(worktreePath, issuePath, projectPath, targetBranch);
+      updateIndexJson(worktreePath, issuePath, projectPath, targetBranch);
     }
     catch (IOException e)
     {
@@ -576,54 +567,37 @@ public final class WorkPrepare
       releaseLock(issueId, input.sessionId());
       return mapper.writeValueAsString(Map.of(
         "status", "ERROR",
-        "message", "Failed to update STATE.md: " + e.getMessage()));
+        "message", "Failed to update index.json: " + e.getMessage()));
     }
 
-    // Read goal from PLAN.md
+    // Read goal from plan.md
     String goal = IssueGoalReader.readGoalFromPlan(planPath);
 
-    // Read pre-conditions from PLAN.md
-    List<String> preconditions;
-    try
-    {
-      preconditions = readPreconditionsFromPlan(planPath);
-    }
-    catch (IOException e)
-    {
-      cleanupWorktree(projectPath, worktreePath);
-      releaseLock(issueId, input.sessionId());
-      return mapper.writeValueAsString(Map.of(
-        "status", "ERROR",
-        "message", "Failed to read pre-conditions from PLAN.md: " + e.getMessage()));
-    }
-
-    // Read execution groups from PLAN.md (parallel subagent annotations)
     // Step 10: Return READY JSON
     Map<String, Object> result = new LinkedHashMap<>();
     result.put("status", "READY");
-    result.put("issue_id", issueId);
+    result.put("issueId", issueId);
     result.put("major", major);
     result.put("minor", minor);
-    result.put("issue_name", issueName);
+    result.put("issueName", issueName);
     Path relativeIssuePath = projectPath.relativize(issuePath);
-    result.put("issue_path", worktreePath.resolve(relativeIssuePath).toString());
-    result.put("worktree_path", worktreePath.toString());
-    result.put("issue_branch", issueBranch);
-    result.put("target_branch", targetBranch);
-    result.put("estimated_tokens", estimatedTokens);
-    result.put("percent_of_threshold", (int) ((estimatedTokens / (double) TOKEN_LIMIT) * 100));
+    result.put("issuePath", worktreePath.resolve(relativeIssuePath).toString());
+    result.put("worktreePath", worktreePath.toString());
+    result.put("issueBranch", issueBranch);
+    result.put("targetBranch", targetBranch);
+    result.put("estimatedTokens", estimatedTokens);
+    result.put("percentOfThreshold", (int) ((estimatedTokens / (double) TOKEN_LIMIT) * 100));
     result.put("goal", goal);
-    result.put("preconditions", preconditions);
-    result.put("approach_selected", "auto");
-    result.put("lock_acquired", true);
-    result.put("has_existing_work", existingWork.hasExistingWork());
-    result.put("existing_commits", existingWork.existingCommits());
-    result.put("commit_summary", existingWork.commitSummary());
+    result.put("approachSelected", "auto");
+    result.put("lockAcquired", true);
+    result.put("hasExistingWork", existingWork.hasExistingWork());
+    result.put("existingCommits", existingWork.existingCommits());
+    result.put("commitSummary", existingWork.commitSummary());
 
     if (!suspiciousCommits.isEmpty())
     {
-      result.put("potentially_complete", true);
-      result.put("suspicious_commits", suspiciousCommits);
+      result.put("potentiallyComplete", true);
+      result.put("suspiciousCommits", suspiciousCommits);
     }
 
     if (!warnings.isEmpty())
@@ -636,7 +610,7 @@ public final class WorkPrepare
    * Builds a READY JSON response by reusing an already-existing worktree owned by the current session.
    * <p>
    * Called when {@code IssueDiscovery} returns an {@code ExistingWorktree} result and the lock is
-   * confirmed to be owned by the current session. All metadata (tokens, goal, preconditions,
+   * confirmed to be owned by the current session. All metadata (tokens, goal,
    * existing work) is recomputed from the existing worktree path using the same helpers used during
    * initial worktree creation.
    *
@@ -656,11 +630,11 @@ public final class WorkPrepare
     String targetBranch = GitCommands.getCurrentBranch(projectPath.toString());
 
     // The issuePath from IssueDiscovery points to the main-workspace issue directory.
-    // Recompute the equivalent path inside the existing worktree so PLAN.md can be read.
+    // Recompute the equivalent path inside the existing worktree so plan.md can be read.
     Path mainIssuePath = Path.of(existing.issuePath());
     Path relativeIssuePath = projectPath.relativize(mainIssuePath);
     Path worktreePath = Path.of(existing.worktreePath());
-    Path planPath = worktreePath.resolve(relativeIssuePath).resolve("PLAN.md");
+    Path planPath = worktreePath.resolve(relativeIssuePath).resolve("plan.md");
 
     int estimatedTokens = estimateTokens(planPath);
 
@@ -671,8 +645,8 @@ public final class WorkPrepare
       oversizedResult.put("message", "Issue estimated at " + estimatedTokens +
         " tokens (limit: " + TOKEN_LIMIT + ")");
       oversizedResult.put("suggestion", "Use /cat:decompose-issue to break into smaller issues");
-      oversizedResult.put("issue_id", existing.issueId());
-      oversizedResult.put("estimated_tokens", estimatedTokens);
+      oversizedResult.put("issueId", existing.issueId());
+      oversizedResult.put("estimatedTokens", estimatedTokens);
       return mapper.writeValueAsString(oversizedResult);
     }
 
@@ -681,32 +655,30 @@ public final class WorkPrepare
     String suspiciousCommits =
       checkTargetBranchCommits(projectPath, targetBranch, existing.issueName(), planPath);
     String goal = IssueGoalReader.readGoalFromPlan(planPath);
-    List<String> preconditions = readPreconditionsFromPlan(planPath);
 
     Map<String, Object> result = new LinkedHashMap<>();
     result.put("status", "READY");
-    result.put("issue_id", existing.issueId());
+    result.put("issueId", existing.issueId());
     result.put("major", existing.major());
     result.put("minor", existing.minor());
-    result.put("issue_name", existing.issueName());
-    result.put("issue_path", worktreePath.resolve(relativeIssuePath).toString());
-    result.put("worktree_path", existing.worktreePath());
-    result.put("issue_branch", issueBranch);
-    result.put("target_branch", targetBranch);
-    result.put("estimated_tokens", estimatedTokens);
-    result.put("percent_of_threshold", (int) ((estimatedTokens / (double) TOKEN_LIMIT) * 100));
+    result.put("issueName", existing.issueName());
+    result.put("issuePath", worktreePath.resolve(relativeIssuePath).toString());
+    result.put("worktreePath", existing.worktreePath());
+    result.put("issueBranch", issueBranch);
+    result.put("targetBranch", targetBranch);
+    result.put("estimatedTokens", estimatedTokens);
+    result.put("percentOfThreshold", (int) ((estimatedTokens / (double) TOKEN_LIMIT) * 100));
     result.put("goal", goal);
-    result.put("preconditions", preconditions);
-    result.put("approach_selected", "auto");
-    result.put("lock_acquired", true);
-    result.put("has_existing_work", existingWork.hasExistingWork());
-    result.put("existing_commits", existingWork.existingCommits());
-    result.put("commit_summary", existingWork.commitSummary());
+    result.put("approachSelected", "auto");
+    result.put("lockAcquired", true);
+    result.put("hasExistingWork", existingWork.hasExistingWork());
+    result.put("existingCommits", existingWork.existingCommits());
+    result.put("commitSummary", existingWork.commitSummary());
 
     if (!suspiciousCommits.isEmpty())
     {
-      result.put("potentially_complete", true);
-      result.put("suspicious_commits", suspiciousCommits);
+      result.put("potentiallyComplete", true);
+      result.put("suspiciousCommits", suspiciousCommits);
     }
 
     if (!warnings.isEmpty())
@@ -765,12 +737,21 @@ public final class WorkPrepare
     int closedCount = 0;
     int totalCount = 0;
 
+    JsonMapper diagnosticMapper = scope.getJsonMapper();
     for (IssueIndexEntry entry : issueIndex.values())
     {
       ++totalCount;
-      Matcher statusMatcher = STATUS_PATTERN.matcher(entry.content());
-      if (statusMatcher.find() && statusMatcher.group(1).equals("closed"))
-        ++closedCount;
+      try
+      {
+        JsonNode root = diagnosticMapper.readTree(entry.content());
+        JsonNode statusNode = root.get("status");
+        if (statusNode != null && statusNode.isString() && statusNode.asString().equals("closed"))
+          ++closedCount;
+      }
+      catch (JacksonException _)
+      {
+        // Malformed index.json — not counted as closed
+      }
     }
 
     List<Map<String, Object>> lockedIssues = findLockedIssues();
@@ -782,19 +763,19 @@ public final class WorkPrepare
    * A (path, qualifiedName, content) tuple collected during the parallel read phase of
    * {@link #buildIssueIndex}.
    *
-   * @param stateFile the path to the STATE.md file
+   * @param indexFile the path to the index.json file
    * @param qualifiedName the qualified issue name (e.g., {@code 2.1-fix-bug})
    * @param issueName the bare issue name (e.g., {@code fix-bug})
-   * @param content the content of the STATE.md file
+   * @param content the content of the index.json file
    */
-  private record ReadResult(Path stateFile, String qualifiedName, String issueName, String content)
+  private record ReadResult(Path indexFile, String qualifiedName, String issueName, String content)
   {
   }
 
   /**
-   * Builds the issue index and bare name index from STATE.md files.
+   * Builds the issue index and bare name index from index.json files.
    * <p>
-   * Populates the provided maps with qualified issue names mapped to their state content,
+   * Populates the provided maps with qualified issue names mapped to their index.json content,
    * and bare issue names mapped to lists of qualified names for ambiguous lookups.
    * <p>
    * {@code Files.readString()} calls are parallelized using virtual threads. Results are collected
@@ -815,7 +796,7 @@ public final class WorkPrepare
     if (!Files.isDirectory(issuesDir))
       return;
 
-    List<Path> stateFiles;
+    List<Path> indexFiles;
     try (Stream<Path> stream = Files.walk(issuesDir, 4))
     {
       List<Path> allEntries = stream.limit(diagnosticScanSafetyThreshold).toList();
@@ -827,27 +808,27 @@ public final class WorkPrepare
             " filesystem entries. Consider archiving old issues.");
       }
 
-      stateFiles = allEntries.stream().
-        filter(p -> p.getFileName().toString().equals("STATE.md")).
+      indexFiles = allEntries.stream().
+        filter(p -> p.getFileName().toString().equals("index.json")).
         toList();
     }
 
     // Parallelize Files.readString() calls using virtual threads.
-    // The results array mirrors stateFiles order so that insertion into the output maps
+    // The results array mirrors indexFiles order so that insertion into the output maps
     // preserves the original Files.walk() ordering (same as the sequential implementation).
     @SuppressWarnings("unchecked")
-    ReadResult[] readResults = new ReadResult[stateFiles.size()];
+    ReadResult[] readResults = new ReadResult[indexFiles.size()];
     try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor())
     {
-      List<Future<?>> futures = new ArrayList<>(stateFiles.size());
-      for (int i = 0; i < stateFiles.size(); ++i)
+      List<Future<?>> futures = new ArrayList<>(indexFiles.size());
+      for (int i = 0; i < indexFiles.size(); ++i)
       {
         int index = i;
-        Path stateFile = stateFiles.get(index);
+        Path indexFile = indexFiles.get(index);
         futures.add(executor.submit(() ->
         {
-          String issueName = stateFile.getParent().getFileName().toString();
-          String versionDirName = stateFile.getParent().getParent().getFileName().toString();
+          String issueName = indexFile.getParent().getFileName().toString();
+          String versionDirName = indexFile.getParent().getParent().getFileName().toString();
           String qualifiedName;
           if (versionDirName.startsWith("v"))
           {
@@ -860,13 +841,13 @@ public final class WorkPrepare
           }
           try
           {
-            String content = Files.readString(stateFile);
-            readResults[index] = new ReadResult(stateFile, qualifiedName, issueName, content);
+            String content = Files.readString(indexFile);
+            readResults[index] = new ReadResult(indexFile, qualifiedName, issueName, content);
           }
           catch (IOException e)
           {
-            warnings.add("Failed to read " + stateFile + ": " + e.getMessage());
-            // Skip unreadable STATE.md files — slot remains null, skipped below
+            warnings.add("Failed to read " + indexFile + ": " + e.getMessage());
+            // Skip unreadable index.json files — slot remains null, skipped below
           }
           return null;
         }));
@@ -897,7 +878,7 @@ public final class WorkPrepare
     {
       if (r == null)
         continue;
-      issueIndex.put(r.qualifiedName(), new IssueIndexEntry(r.stateFile(), r.content()));
+      issueIndex.put(r.qualifiedName(), new IssueIndexEntry(r.indexFile(), r.content()));
       bareNameIndex.computeIfAbsent(r.issueName(), k -> new ArrayList<>()).add(r.qualifiedName());
     }
   }
@@ -911,36 +892,45 @@ public final class WorkPrepare
    * find cycles through any of them. When no candidates exist, the bare name is skipped
    * because it would not match any graph key.
    *
-   * @param content the content of the issue's STATE.md file
+   * @param content the content of the issue's index.json file
+   * @param indexPath the path to the index.json file (used in error messages)
    * @param issueIndex the qualified name to issue entry index
    * @param bareNameIndex the bare name to qualified name list index
    * @return the list of resolved dependency IDs, or an empty list if the issue is not active
    *         or has no dependencies
+   * @throws IOException if the content is not valid JSON
    */
-  private List<String> resolveActiveDependencies(String content,
+  private List<String> resolveActiveDependencies(String content, Path indexPath,
     Map<String, IssueIndexEntry> issueIndex, Map<String, List<String>> bareNameIndex)
+    throws IOException
   {
-    Matcher statusMatcher = STATUS_PATTERN.matcher(content);
-    if (!statusMatcher.find())
-      return List.of();
+    JsonNode root;
+    try
+    {
+      root = scope.getJsonMapper().readTree(content);
+    }
+    catch (JacksonException e)
+    {
+      throw new IOException("Failed to parse " + indexPath + ": " + e.getMessage(), e);
+    }
 
-    String status = statusMatcher.group(1);
+    JsonNode statusNode = root.get("status");
+    if (statusNode == null || !statusNode.isString())
+      return List.of();
+    String status = statusNode.asString();
     if (!status.equals("open") && !status.equals("in-progress"))
       return List.of();
 
-    Matcher depsMatcher = DEPS_PATTERN.matcher(content);
-    if (!depsMatcher.find())
+    JsonNode depsNode = root.get("dependencies");
+    if (depsNode == null || !depsNode.isArray())
       return List.of();
 
-    String depsStr = depsMatcher.group(1).strip();
-    if (depsStr.isEmpty())
-      return List.of();
-
-    String[] depsArr = depsStr.split(",");
     List<String> resolvedDeps = new ArrayList<>();
-    for (String dep : depsArr)
+    for (JsonNode item : depsNode)
     {
-      String depId = dep.strip();
+      if (!item.isString())
+        continue;
+      String depId = item.asString().strip();
       if (depId.isEmpty())
         continue;
 
@@ -961,22 +951,31 @@ public final class WorkPrepare
   /**
    * Returns a map describing the status of a dependency.
    * <p>
-   * Returns {@code {"id": depId, "status": "closed"|"open"|"in-progress"|"unknown"|"not_found"}}.
+   * Returns {@code {"id": depId, "status": "closed"|"open"|"in-progress"|"unknown"|"notFound"}}.
    *
    * @param depId the qualified dependency issue ID
    * @param issueIndex the qualified name to issue entry index
    * @return a map with "id" and "status" keys
+   * @throws IOException if the index.json content is not valid JSON
    */
   private Map<String, String> getDependencyStatus(String depId,
-    Map<String, IssueIndexEntry> issueIndex)
+    Map<String, IssueIndexEntry> issueIndex) throws IOException
   {
     IssueIndexEntry depData = issueIndex.get(depId);
     if (depData == null)
-      return Map.of("id", depId, "status", "not_found");
+      return Map.of("id", depId, "status", "notFound");
 
-    Matcher depStatusMatcher = STATUS_PATTERN.matcher(depData.content());
-    if (depStatusMatcher.find())
-      return Map.of("id", depId, "status", depStatusMatcher.group(1));
+    try
+    {
+      JsonNode root = scope.getJsonMapper().readTree(depData.content());
+      JsonNode statusNode = root.get("status");
+      if (statusNode != null && statusNode.isString())
+        return Map.of("id", depId, "status", statusNode.asString());
+    }
+    catch (JacksonException e)
+    {
+      throw new IOException("Failed to parse " + depData.indexPath() + ": " + e.getMessage(), e);
+    }
     return Map.of("id", depId, "status", "unknown");
   }
 
@@ -985,20 +984,22 @@ public final class WorkPrepare
    *
    * @param issueIndex the qualified name to issue entry index
    * @param bareNameIndex the bare name to qualified name list index
-   * @return a list of blocked issue maps with issue_id, blocked_by, and reason fields
+   * @return a list of blocked issue maps with issueId, blockedBy, and reason fields
+   * @throws IOException if an index.json file contains invalid JSON
    */
   private List<Map<String, Object>> findBlockedIssues(Map<String, IssueIndexEntry> issueIndex,
-    Map<String, List<String>> bareNameIndex)
+    Map<String, List<String>> bareNameIndex) throws IOException
   {
     List<Map<String, Object>> blockedIssues = new ArrayList<>();
 
     for (Map.Entry<String, IssueIndexEntry> entry : issueIndex.entrySet())
     {
       String qualifiedIssueName = entry.getKey();
-      String content = entry.getValue().content();
+      IssueIndexEntry issueEntry = entry.getValue();
+      String content = issueEntry.content();
 
       List<String> activeDeps = resolveActiveDependencies(
-        content, issueIndex, bareNameIndex);
+        content, issueEntry.indexPath(), issueIndex, bareNameIndex);
       if (activeDeps.isEmpty())
         continue;
 
@@ -1021,8 +1022,8 @@ public final class WorkPrepare
         }
 
         Map<String, Object> blockedIssue = new LinkedHashMap<>();
-        blockedIssue.put("issue_id", qualifiedIssueName);
-        blockedIssue.put("blocked_by", blockedBy);
+        blockedIssue.put("issueId", qualifiedIssueName);
+        blockedIssue.put("blockedBy", blockedBy);
         blockedIssue.put("reason", String.join(", ", reasonParts));
         blockedIssues.add(blockedIssue);
       }
@@ -1097,10 +1098,11 @@ public final class WorkPrepare
     for (Map.Entry<String, IssueIndexEntry> entry : issueIndex.entrySet())
     {
       String qualifiedName = entry.getKey();
-      String content = entry.getValue().content();
+      IssueIndexEntry issueEntry = entry.getValue();
+      String content = issueEntry.content();
 
       List<String> activeDeps = resolveActiveDependencies(
-        content, issueIndex, bareNameIndex);
+        content, issueEntry.indexPath(), issueIndex, bareNameIndex);
       if (activeDeps.isEmpty())
         continue;
 
@@ -1116,9 +1118,10 @@ public final class WorkPrepare
     for (Map.Entry<String, IssueIndexEntry> entry : issueIndex.entrySet())
     {
       String qualifiedName = entry.getKey();
-      String content = entry.getValue().content();
+      IssueIndexEntry issueEntry = entry.getValue();
+      String content = issueEntry.content();
 
-      List<String> subIssueNames = getDecomposedSubIssueNames(content, issueIndex);
+      List<String> subIssueNames = getDecomposedSubIssueNames(content, issueEntry.indexPath(), issueIndex);
       if (subIssueNames.isEmpty())
         continue;
 
@@ -1160,43 +1163,46 @@ public final class WorkPrepare
   }
 
   /**
-   * Returns the qualified names of sub-issues listed in the "## Decomposed Into" section of a
-   * STATE.md file.
+   * Returns the qualified names of sub-issues listed in the {@code decomposedInto} array of an
+   * index.json file.
    * <p>
-   * Names in the "Decomposed Into" section are fully-qualified (e.g., {@code 2.1-parser-lexer})
-   * and are returned as-is since they already match the keys in the issue index.
+   * Names are fully-qualified (e.g., {@code 2.1-parser-lexer}) and are returned as-is since they
+   * already match the keys in the issue index.
    * <p>
    * Entries that do not match the qualified name pattern are skipped.
    *
-   * @param content the content of the STATE.md file
+   * @param content the content of the index.json file
+   * @param indexPath the path to the index.json file (used in error messages)
    * @param issueIndex the qualified name to issue entry index, used to verify that returned names
    *         exist in the index
    * @return the list of qualified sub-issue names, or an empty list if the issue is not a
    *         decomposed parent or has no recognized sub-issue entries
+   * @throws IOException if the content is not valid JSON
    */
-  private List<String> getDecomposedSubIssueNames(String content,
-    Map<String, IssueIndexEntry> issueIndex)
+  private List<String> getDecomposedSubIssueNames(String content, Path indexPath,
+    Map<String, IssueIndexEntry> issueIndex) throws IOException
   {
-    Matcher decomposedMatcher = IssueDiscovery.DECOMPOSED_INTO_PATTERN.matcher(content);
-    if (!decomposedMatcher.find())
+    JsonMapper mapper = scope.getJsonMapper();
+    JsonNode root;
+    try
+    {
+      root = mapper.readTree(content);
+    }
+    catch (JacksonException e)
+    {
+      throw new IOException("Failed to parse " + indexPath + ": " + e.getMessage(), e);
+    }
+
+    JsonNode decomposedInto = root.get("decomposedInto");
+    if (decomposedInto == null || !decomposedInto.isArray())
       return List.of();
 
-    int sectionStart = decomposedMatcher.end();
-
-    // Find the next section header to delimit the "Decomposed Into" section
-    int sectionEnd = content.length();
-    Matcher nextSectionMatcher = IssueDiscovery.NEXT_SECTION_PATTERN.matcher(content);
-    nextSectionMatcher.region(sectionStart, content.length());
-    if (nextSectionMatcher.find())
-      sectionEnd = nextSectionMatcher.start();
-
-    String sectionContent = content.substring(sectionStart, sectionEnd);
-
     List<String> result = new ArrayList<>();
-    Matcher itemMatcher = IssueDiscovery.SUBISSUE_ITEM_PATTERN.matcher(sectionContent);
-    while (itemMatcher.find())
+    for (JsonNode item : decomposedInto)
     {
-      String name = itemMatcher.group(1);
+      if (!item.isString())
+        continue;
+      String name = item.asString();
       if (name.isEmpty())
         continue;
       if (!IssueDiscovery.QUALIFIED_NAME_PATTERN.matcher(name).matches())
@@ -1270,7 +1276,7 @@ public final class WorkPrepare
   /**
    * Finds locked issues by scanning the locks directory.
    *
-   * @return a list of locked issue maps with issue_id and locked_by fields
+   * @return a list of locked issue maps with issueId and lockedBy fields
    * @throws IOException if file operations fail
    */
   private List<Map<String, Object>> findLockedIssues() throws IOException
@@ -1299,8 +1305,8 @@ public final class WorkPrepare
             substring(0, lockFile.getFileName().toString().length() - ".lock".length());
 
           Map<String, Object> lockedIssue = new LinkedHashMap<>();
-          lockedIssue.put("issue_id", lockIssueId);
-          lockedIssue.put("locked_by", lockData.getOrDefault("session_id", "unknown").toString());
+          lockedIssue.put("issueId", lockIssueId);
+          lockedIssue.put("lockedBy", lockData.getOrDefault("session_id", "unknown").toString());
           lockedIssues.add(lockedIssue);
         }
         catch (IOException _)
@@ -1314,7 +1320,7 @@ public final class WorkPrepare
   }
 
   /**
-   * Estimates the token count heuristically from PLAN.md.
+   * Estimates the token count heuristically from plan.md.
    * <p>
    * Heuristic:
    * <ul>
@@ -1325,23 +1331,16 @@ public final class WorkPrepare
    *   <li>Base overhead: 10000 tokens</li>
    * </ul>
    *
-   * @param planPath the path to PLAN.md
+   * @param planPath the path to plan.md
    * @return the estimated token count
+   * @throws IOException if plan.md exists but cannot be read
    */
-  private int estimateTokens(Path planPath)
+  private int estimateTokens(Path planPath) throws IOException
   {
     if (!Files.isRegularFile(planPath))
       return 10_000;
 
-    String content;
-    try
-    {
-      content = Files.readString(planPath);
-    }
-    catch (IOException _)
-    {
-      return 10_000;
-    }
+    String content = Files.readString(planPath);
 
     // Count files to create
     Matcher createSection = FILES_TO_CREATE_PATTERN.matcher(content);
@@ -1437,7 +1436,7 @@ public final class WorkPrepare
    * Uses two complementary strategies:
    * <ol>
    *   <li>Message search: looks for commits whose message mentions the issue name.</li>
-   *   <li>File overlap search: looks for commits that modified files listed in PLAN.md's
+   *   <li>File overlap search: looks for commits that modified files listed in plan.md's
    *       "Files to Create" or "Files to Modify" sections.</li>
    * </ol>
    * Planning commits (e.g., {@code planning: add issue ...}) are filtered out as false positives.
@@ -1445,11 +1444,12 @@ public final class WorkPrepare
    * @param projectPath the project root directory
    * @param targetBranch the target branch to search
    * @param issueName the issue name to search for in commit messages
-   * @param planPath the path to PLAN.md, used to extract planned files for overlap detection
+   * @param planPath the path to plan.md, used to extract planned files for overlap detection
    * @return a newline-separated list of suspicious commit lines, or empty string if none found
+   * @throws IOException if plan.md exists but cannot be read
    */
   private String checkTargetBranchCommits(Path projectPath, String targetBranch, String issueName,
-    Path planPath)
+    Path planPath) throws IOException
   {
     List<String> planningPrefixes = List.of(
       "planning:", "config: add issue", "planning: add issue", "config: mark", "config: decompose");
@@ -1610,28 +1610,21 @@ public final class WorkPrepare
   }
 
   /**
-   * Extracts the set of file paths listed under "Files to Create" and "Files to Modify" in PLAN.md.
+   * Extracts the set of file paths listed under "Files to Create" and "Files to Modify" in plan.md.
    * <p>
    * Glob patterns (e.g., {@code plugin/agents/stakeholder-*.md}) are included as-is for later
    * matching against actual changed files.
    *
-   * @param planPath the path to PLAN.md
-   * @return the set of planned file paths, or an empty set if PLAN.md is absent or unreadable
+   * @param planPath the path to plan.md
+   * @return the set of planned file paths, or an empty set if plan.md is absent
+   * @throws IOException if plan.md exists but cannot be read
    */
-  private Set<String> extractPlannedFiles(Path planPath)
+  private Set<String> extractPlannedFiles(Path planPath) throws IOException
   {
     if (!Files.isRegularFile(planPath))
       return Collections.emptySet();
 
-    String content;
-    try
-    {
-      content = Files.readString(planPath);
-    }
-    catch (IOException _)
-    {
-      return Collections.emptySet();
-    }
+    String content = Files.readString(planPath);
 
     Set<String> files = new HashSet<>();
     // Match backtick-quoted file paths in list items under Files to Create / Files to Modify
@@ -1664,7 +1657,7 @@ public final class WorkPrepare
   }
 
   /**
-   * Updates STATE.md in the worktree to mark the issue as in-progress and record the target branch.
+   * Updates index.json in the worktree to mark the issue as in-progress and record the target branch.
    *
    * @param worktreePath the path to the worktree
    * @param issuePath the absolute path to the issue directory in the main working tree
@@ -1672,41 +1665,36 @@ public final class WorkPrepare
    * @param targetBranch the target branch name for this issue
    * @throws IOException if file operations fail
    */
-  private void updateStateMd(Path worktreePath, Path issuePath, Path projectPath, String targetBranch)
+  private void updateIndexJson(Path worktreePath, Path issuePath, Path projectPath, String targetBranch)
     throws IOException
   {
-    // STATE.md is in the worktree's copy of the issue directory
+    // index.json is in the worktree's copy of the issue directory
     Path relativeIssuePath = projectPath.relativize(issuePath);
-    Path stateFile = worktreePath.resolve(relativeIssuePath).resolve("STATE.md");
+    Path indexFile = worktreePath.resolve(relativeIssuePath).resolve("index.json");
 
-    if (!Files.isRegularFile(stateFile))
-    {
-      throw new IOException("STATE.md not found in worktree: " + stateFile);
-    }
+    if (!Files.isRegularFile(indexFile))
+      throw new IOException("index.json not found in worktree: " + indexFile);
 
-    String content = Files.readString(stateFile);
+    JsonMapper mapper = scope.getJsonMapper();
+    JsonNode root = mapper.readTree(indexFile.toFile());
+    if (!root.isObject())
+      throw new IOException("index.json does not contain a JSON object: " + indexFile);
 
-    content = STATUS_PATTERN.matcher(content).replaceAll("**Status:** in-progress");
-    content = PROGRESS_PATTERN.matcher(content).replaceAll("**Progress:** 0%");
+    ObjectNode node = (ObjectNode) root;
+    node.put("status", "in-progress");
+    node.put("targetBranch", targetBranch);
 
-    // Add Target Branch field if not already present
-    if (!content.contains("**Target Branch:**"))
-    {
-      content = content.stripTrailing() + "\n- **Target Branch:** " + targetBranch + "\n";
-    }
+    Files.writeString(indexFile, mapper.writeValueAsString(node));
 
-    Files.writeString(stateFile, content);
-
-    // Commit STATE.md to keep the worktree clean
-    Path relativeStateFile = relativeIssuePath.resolve("STATE.md");
-    commitStateFile(worktreePath, relativeStateFile, "planning: update STATE.md to in-progress");
+    // Commit index.json to keep the worktree clean
+    Path relativeIndexFile = relativeIssuePath.resolve("index.json");
+    commitStateFile(worktreePath, relativeIndexFile, "planning: update index.json to in-progress");
   }
 
   /**
-   * Creates a minimal STATE.md in the worktree for an issue that had no STATE.md in the main workspace.
+   * Creates a minimal index.json in the worktree for an issue that had no index.json in the main workspace.
    * <p>
-   * The created file contains the standard initial state: status {@code in-progress}, progress 0%,
-   * empty dependencies and blocks lists, and the target branch.
+   * The created file contains the standard initial state: status {@code in-progress} and the target branch.
    *
    * @param worktreePath the path to the worktree
    * @param issuePath the absolute path to the issue directory in the main working tree
@@ -1714,49 +1702,41 @@ public final class WorkPrepare
    * @param targetBranch the target branch name for this issue
    * @throws IOException if file operations fail
    */
-  private void createStateMd(Path worktreePath, Path issuePath, Path projectPath, String targetBranch)
+  private void createIndexJson(Path worktreePath, Path issuePath, Path projectPath, String targetBranch)
     throws IOException
   {
     Path relativeIssuePath = projectPath.relativize(issuePath);
     Path issueDir = worktreePath.resolve(relativeIssuePath);
     Files.createDirectories(issueDir);
-    Path stateFile = issueDir.resolve("STATE.md");
+    Path indexFile = issueDir.resolve("index.json");
 
-    String content = """
-      # State
+    Map<String, Object> state = new LinkedHashMap<>();
+    state.put("status", "in-progress");
+    state.put("targetBranch", targetBranch);
 
-      - **Status:** in-progress
-      - **Progress:** 0%%
-      - **Dependencies:** []
-      - **Blocks:** []
-      - **Target Branch:** %s
-      """.formatted(targetBranch);
-
-    Files.writeString(stateFile, content);
+    Files.writeString(indexFile, scope.getJsonMapper().writeValueAsString(state));
   }
 
   /**
-   * Checks whether STATE.md exists and is tracked in the worktree.
+   * Checks whether index.json exists in the worktree.
    *
    * @param worktreePath the path to the worktree
    * @param issuePath the absolute path to the issue directory in the main working tree
    * @param projectPath the project root directory
-   * @return true if STATE.md exists in the worktree, false otherwise
-   * @throws IOException if file operations fail
+   * @return true if index.json exists in the worktree, false otherwise
    */
-  private boolean stateFileExistsInWorktree(Path worktreePath, Path issuePath, Path projectPath)
-    throws IOException
+  private boolean indexFileExistsInWorktree(Path worktreePath, Path issuePath, Path projectPath)
   {
     Path relativeIssuePath = projectPath.relativize(issuePath);
-    Path stateFile = worktreePath.resolve(relativeIssuePath).resolve("STATE.md");
-    return Files.isRegularFile(stateFile);
+    Path indexFile = worktreePath.resolve(relativeIssuePath).resolve("index.json");
+    return Files.isRegularFile(indexFile);
   }
 
   /**
-   * Creates STATE.md in the worktree and commits it to the issue branch.
+   * Creates index.json in the worktree and commits it to the issue branch.
    * <p>
-   * This ensures STATE.md is established as a committed file in the issue branch,
-   * preventing the case where STATE.md exists untracked in the main workspace but
+   * This ensures index.json is established as a committed file in the issue branch,
+   * preventing the case where index.json exists untracked in the main workspace but
    * is absent from the worktree.
    *
    * @param worktreePath the path to the worktree
@@ -1765,90 +1745,49 @@ public final class WorkPrepare
    * @param targetBranch the target branch name for this issue
    * @throws IOException if file operations or git operations fail
    */
-  private void createStateFileAndCommit(Path worktreePath, Path issuePath, Path projectPath,
+  private void createIndexFileAndCommit(Path worktreePath, Path issuePath, Path projectPath,
     String targetBranch) throws IOException
   {
-    // Create the STATE.md file in the worktree
-    createStateMd(worktreePath, issuePath, projectPath, targetBranch);
+    // Create the index.json file in the worktree
+    createIndexJson(worktreePath, issuePath, projectPath, targetBranch);
 
-    // Commit STATE.md to the issue branch
+    // Commit index.json to the issue branch
     Path relativeIssuePath = projectPath.relativize(issuePath);
-    Path relativeStateFile = relativeIssuePath.resolve("STATE.md");
-    commitStateFile(worktreePath, relativeStateFile, "planning: create STATE.md for new issue");
+    Path relativeIndexFile = relativeIssuePath.resolve("index.json");
+    commitStateFile(worktreePath, relativeIndexFile, "planning: create index.json for new issue");
   }
 
   /**
-   * Stages STATE.md and commits it if the file has staged changes.
+   * Stages index.json and commits it if the file has staged changes.
    * <p>
-   * After staging, checks whether STATE.md itself has staged changes (as opposed to any
+   * After staging, checks whether index.json itself has staged changes (as opposed to any
    * other staged file) before committing. This prevents bundling unrelated staged changes into
-   * the STATE.md commit.
+   * the index.json commit.
    *
    * @param worktreePath the path to the worktree
-   * @param relativeStateFile the path to STATE.md relative to the worktree root
+   * @param relativeIndexFile the path to index.json relative to the worktree root
    * @param commitMessage the commit message to use
    * @throws IOException if git operations fail
    */
-  private void commitStateFile(Path worktreePath, Path relativeStateFile, String commitMessage)
+  private void commitStateFile(Path worktreePath, Path relativeIndexFile, String commitMessage)
     throws IOException
   {
     try
     {
-      GitCommands.runGit(worktreePath, "add", relativeStateFile.toString());
-      // Check whether STATE.md itself has staged changes; git diff --cached --name-only exits 0
+      GitCommands.runGit(worktreePath, "add", relativeIndexFile.toString());
+      // Check whether index.json itself has staged changes; git diff --cached --name-only exits 0
       // regardless of whether files are staged, and returns the names of staged files.
-      // We filter to just the STATE.md path rather than using "git status --porcelain" which
+      // We filter to just the index.json path rather than using "git status --porcelain" which
       // would detect unrelated staged files and bundle them into this commit.
       String stagedFiles = GitCommands.runGit(worktreePath, "diff", "--cached", "--name-only",
-        "--", relativeStateFile.toString());
+        "--", relativeIndexFile.toString());
       if (!stagedFiles.isBlank())
         GitCommands.runGit(worktreePath, "commit", "-m", commitMessage);
     }
     catch (IOException e)
     {
-      throw new IOException("Failed to commit STATE.md to git: " + e.getMessage(), e);
+      throw new IOException("Failed to commit index.json to git: " + e.getMessage(), e);
     }
-  }
-
-  /**
-   * Reads the pre-conditions from a PLAN.md file.
-   * <p>
-   * Extracts checkbox items from the "## Pre-conditions" section. Returns a list of pre-condition
-   * text strings (without the checkbox prefix).
-   *
-   * @param planPath the path to the PLAN.md file
-   * @return list of pre-condition text strings, empty if section not found or file does not exist
-   * @throws IOException if the file exists but cannot be read
-   */
-  private List<String> readPreconditionsFromPlan(Path planPath) throws IOException
-  {
-    if (!Files.isRegularFile(planPath))
-      return Collections.emptyList();
-
-    List<String> lines = Files.readAllLines(planPath);
-
-    List<String> preconditions = new ArrayList<>();
-    boolean inSection = false;
-    for (String line : lines)
-    {
-      if (line.strip().startsWith("## Pre-conditions"))
-      {
-        inSection = true;
-        continue;
-      }
-      if (inSection && line.strip().startsWith("##"))
-        break;
-      if (inSection)
-      {
-        String stripped = line.strip();
-        if (stripped.startsWith("- [ ]"))
-          preconditions.add(stripped.substring(6).strip());
-        else if (stripped.startsWith("- [x]"))
-          preconditions.add(stripped.substring(6).strip());
-      }
-    }
-
-    return preconditions;
   }
 
   /**
@@ -2124,23 +2063,23 @@ public final class WorkPrepare
   }
 
   /**
-   * Holder for an issue's state file path and content.
+   * Holder for an issue's index file path and content.
    *
-   * @param statePath the path to the STATE.md file
+   * @param indexPath the path to the index.json file
    * @param content the file content
    */
-  private record IssueIndexEntry(Path statePath, String content)
+  private record IssueIndexEntry(Path indexPath, String content)
   {
     /**
      * Creates a new issue index entry.
      *
-     * @param statePath the path to the STATE.md file
+     * @param indexPath the path to the index.json file
      * @param content the file content
-     * @throws NullPointerException if {@code statePath} or {@code content} are null
+     * @throws NullPointerException if {@code indexPath} or {@code content} are null
      */
     IssueIndexEntry
     {
-      assert that(statePath, "statePath").isNotNull().elseThrow();
+      assert that(indexPath, "indexPath").isNotNull().elseThrow();
       assert that(content, "content").isNotNull().elseThrow();
     }
   }

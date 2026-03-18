@@ -156,7 +156,7 @@ The script implements: rebase onto target, backup, commit-tree squash, verify, c
 | Status | Meaning | Agent Recovery Action |
 |--------|---------|----------------------|
 | `OK` | Squash completed successfully | Verify working tree (see below), then report success |
-| `REBASE_CONFLICT` | Conflict during pre-squash rebase | Agent decides: resolve conflict and retry, or abort |
+| `REBASE_CONFLICT` | Conflict during pre-squash rebase | Invoke `cat:git-rebase-agent` and follow its `## Handling Conflicts` numbered steps. |
 | `VERIFY_FAILED` | Content changed during squash | Restore from backup branch, investigate diff_stat. Delete backup after investigation. |
 | `ERROR` | Rebase or squash failed | Check backup_branch and error message for details. Delete backup after the error is handled. |
 
@@ -239,7 +239,7 @@ After dropping unwanted commits, NOW use the Interactive Rebase Workflow below t
 **Benefits of this approach:**
 - Simple rebase for dropping: easy to verify, low risk
 - Separate squash operation: tree-building is clean and predictable
-- Prevents any file loss (not just STATE.md-specific)
+- Prevents any file loss (not just index.json-specific)
 - Each step is independently verifiable
 
 ### Safety Pattern: Backup-Verify-Cleanup
@@ -336,7 +336,7 @@ Complex squash operations include:
 | Planning | `planning:` | ONE commit (optional) |
 
 **Key rules when squashing:**
-- **Issue STATE.md** → same commit as implementation
+- **Issue index.json** → same commit as implementation
 - **Test commits for the issue implementation** → same commit as implementation (tests verify the fix,
   they are part of it)
 - **Same topic, different type prefixes** (`bugfix:` + `refactor:` on same code) → combine into one commit; choose

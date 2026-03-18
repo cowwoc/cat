@@ -107,7 +107,7 @@ The skill-grader-agent returns one grading JSON object per run. The structure is
   ],
   "pass_count": 1,
   "fail_count": 1,
-  "total_count": 2,
+  "totalCount": 2,
   "pass_rate": 0.50
 }
 ```
@@ -125,8 +125,8 @@ The skill-grader-agent returns one grading JSON object per run. The structure is
 | `explanation` | string | One-sentence explanation of the verdict |
 | `pass_count` | integer | Number of assertions that passed |
 | `fail_count` | integer | Number of assertions that failed |
-| `total_count` | integer | `pass_count + fail_count` |
-| `pass_rate` | number | `pass_count / total_count`, rounded to two decimal places |
+| `totalCount` | integer | `pass_count + fail_count` |
+| `pass_rate` | number | `pass_count / totalCount`, rounded to two decimal places |
 
 ## Benchmark JSON Schema
 

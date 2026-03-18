@@ -23,11 +23,11 @@ See LICENSE.md in the project root for license terms.
         ├── PLAN.md
         ├── CHANGELOG.md      # Aggregates closed issues
         └── <issue-name>/
-            ├── STATE.md
-            └── PLAN.md
+            ├── index.json
+            └── plan.md
 ```
 
-> **See also:** [state-schema.md](state-schema.md) for the current STATE.md field schema and deprecated field list.
+> **See also:** [state-schema.md](state-schema.md) for the current index.json field schema.
 
 > **NOTE**: Issue-level CHANGELOG.md is not created. Issue changelog content is embedded
 > in commit messages (see commit message format in work command).
@@ -54,7 +54,7 @@ See [version-scheme.md](version-scheme.md) for:
 Requirements are defined at the **minor version level** and traced to issues:
 
 ```
-Minor PLAN.md                    Issue PLAN.md
+Minor PLAN.md                    Issue plan.md
 ┌─────────────────────┐         ┌──────────────────────────┐
 │ ## Requirements     │         │ ## Parent Requirements   │
 │ | REQ-001 | ...     │ ◄────── │ - REQ-001               │
@@ -98,7 +98,7 @@ Minor versions have implicit sequential dependencies:
 2. OR it has no dependency (first version)
 
 **Issue-level dependencies:**
-- Issues within a minor depend on their explicit dependency list in STATE.md
+- Issues within a minor depend on their explicit dependency list in index.json
 - Cross-minor issue dependencies are not supported (use minor version ordering instead)
 
 ## Issue Execution Order
@@ -120,7 +120,7 @@ dependent issues.
 ## Example Path
 
 ```
-.cat/issues/v1/v1.0/parse-switch-statements/STATE.md
+.cat/issues/v1/v1.0/parse-switch-statements/index.json
 ```
 
 Components (using MAJOR.MINOR scheme):

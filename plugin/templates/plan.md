@@ -9,9 +9,9 @@ Select the appropriate template based on work type.
 
 ---
 
-## Minor Version PLAN.md Template
+## Minor Version plan.md Template
 
-Minor version PLAN.md defines the requirements for all issues within that version.
+Minor version plan.md defines the requirements for all issues within that version.
 Issues reference these requirements via their `Parent Requirements` field.
 
 ```markdown
@@ -54,7 +54,7 @@ Issues reference these requirements via their `Parent Requirements` field.
 ## Issue Templates
 
 All issue templates include a `Parent Requirements` field referencing requirements from the parent
-minor version's PLAN.md. Issues may satisfy zero or more requirements.
+minor version's plan.md. Issues may satisfy zero or more requirements.
 
 ---
 
@@ -67,7 +67,7 @@ minor version's PLAN.md. Issues may satisfy zero or more requirements.
 [1-2 sentences: what this feature accomplishes]
 
 ## Parent Requirements
-[List requirement IDs from parent minor version PLAN.md, or "None" for infrastructure issues]
+[List requirement IDs from parent minor version plan.md, or "None" for infrastructure issues]
 - REQ-001
 - REQ-002
 
@@ -120,7 +120,7 @@ and executable without external dependencies (e.g., external codebases, third-pa
 [1-2 sentences describing the bug]
 
 ## Parent Requirements
-[List requirement IDs from parent minor version PLAN.md, or "None" for standalone fixes]
+[List requirement IDs from parent minor version plan.md, or "None" for standalone fixes]
 - REQ-001
 
 ## Reproduction Code
@@ -186,7 +186,7 @@ code_that_fails();
 [1-2 sentences - what it should become]
 
 ## Parent Requirements
-[List requirement IDs from parent minor version PLAN.md, or "None" for tech debt]
+[List requirement IDs from parent minor version plan.md, or "None" for tech debt]
 - REQ-001
 
 ## Risk Assessment

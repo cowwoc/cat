@@ -651,7 +651,7 @@ public class HookEntryPointTest
   // --- EnforceWorkflowCompletion tests ---
 
   /**
-   * Verifies that EnforceWorkflowCompletion allows edits to non-STATE.md files.
+   * Verifies that EnforceWorkflowCompletion allows edits to non-index.json files.
    */
   @Test
   public void enforceWorkflowCompletionAllowsNonStateMdFiles() throws IOException
@@ -857,7 +857,7 @@ public class HookEntryPointTest
   // --- EnforceWorkflowCompletion handler tests ---
 
   /**
-   * Verifies that EnforceWorkflowCompletion warns when editing STATE.md with status closed.
+   * Verifies that EnforceWorkflowCompletion warns when editing index.json with status closed.
    */
   @Test
   public void enforceWorkflowCompletionWarnsOnStatusClosed() throws IOException
@@ -866,8 +866,8 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree(
-        "{\"file_path\": \".cat/issues/v2/v2.1/my-task/STATE.md\", " +
-        "\"new_string\": \"Status: closed\"}");
+        "{\"file_path\": \".cat/issues/v2/v2.1/my-task/index.json\", " +
+        "\"new_string\": \"{\\\"status\\\":\\\"closed\\\"}\"}");
       FileWriteHandler.Result result = new EnforceWorkflowCompletion().check(toolInput, "test");
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").contains("WORKFLOW COMPLETION CHECK");
@@ -885,8 +885,8 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree(
-        "{\"file_path\": \".cat/issues/v2/v2.1/my-task/STATE.md\", " +
-        "\"new_string\": \"status:closed\"}");
+        "{\"file_path\": \".cat/issues/v2/v2.1/my-task/index.json\", " +
+        "\"new_string\": \"{\\\"status\\\":\\\"closed\\\"}\"}");
       FileWriteHandler.Result result = new EnforceWorkflowCompletion().check(toolInput, "test");
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").contains("WORKFLOW COMPLETION CHECK");
@@ -903,7 +903,7 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
-        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \".cat/v2/v2.1/my-task/STATE.md\"}, " +
+        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \".cat/v2/v2.1/my-task/index.json\"}, " +
         "\"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
@@ -924,7 +924,7 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
-        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \".cat/v2/v2.1/fix-bug-123/STATE.md\", " +
+        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \".cat/v2/v2.1/fix-bug-123/index.json\", " +
         "\"new_string\": \"Status: in_progress\"}, \"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 

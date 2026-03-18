@@ -1,0 +1,4 @@
+{
+  "status": "open",
+  "dependencies": ["aggregate-technical-debt"]
+}

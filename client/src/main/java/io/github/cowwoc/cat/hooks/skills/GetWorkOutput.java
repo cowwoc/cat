@@ -283,7 +283,7 @@ public final class GetWorkOutput implements SkillOutput
    *
    * @param issueName the completed issue name
    * @param nextIssueName the next issue name
-   * @param nextGoal the goal from PLAN.md for the next issue
+   * @param nextGoal the goal from plan.md for the next issue
    * @return the formatted box
    * @throws NullPointerException if any parameter is null
    * @throws IllegalArgumentException if any parameter is blank
@@ -320,7 +320,7 @@ public final class GetWorkOutput implements SkillOutput
    * @param issueName the issue name
    * @param commitHash the commit hash where the issue was completed
    * @param nextIssueName the next issue name
-   * @param nextGoal the goal from PLAN.md for the next issue
+   * @param nextGoal the goal from plan.md for the next issue
    * @return the formatted box
    * @throws NullPointerException if any parameter is null
    * @throws IllegalArgumentException if any parameter is blank
@@ -340,7 +340,7 @@ public final class GetWorkOutput implements SkillOutput
       "**" + issueName + "** was already implemented.",
       "Commit: " + commitHash,
       "",
-      "STATE.md updated to reflect completion.",
+      "index.json updated to reflect completion.",
       "");
 
     List<String> separatorContent = List.of(
@@ -396,7 +396,7 @@ public final class GetWorkOutput implements SkillOutput
    *
    * @param issueName the completed issue name
    * @param nextIssueName the next issue name
-   * @param nextGoal the goal from PLAN.md for the next issue
+   * @param nextGoal the goal from plan.md for the next issue
    * @return the formatted box
    * @throws NullPointerException if any parameter is null
    * @throws IllegalArgumentException if any parameter is blank

@@ -24,18 +24,18 @@ commit squashing, branch merging, worktree cleanup, and state updates.
 
 ## Arguments and Configuration
 
-`<catAgentId> <issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <commits_json_path> <trust> <verify>`
+`<catAgentId> <issueId> <issuePath> <worktreePath> <issueBranch> <targetBranch> <commitsJsonPath> <trust> <verify>`
 
 ```bash
 read CAT_AGENT_ID ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH COMMITS_JSON_PATH TRUST VERIFY <<< "$ARGUMENTS"
-PLAN_MD="${ISSUE_PATH}/PLAN.md"
+PLAN_MD="${ISSUE_PATH}/plan.md"
 ```
 
 ```bash
 COMMITS_JSON=$(cat "$COMMITS_JSON_PATH")
 ```
 
-Return JSON: `{"status": "SUCCESS|ABORTED|CHANGES_REQUESTED|FAILED", "issue_id": "...", "commits": [...], "files_changed": N, "merged": true}`
+Return JSON: `{"status": "SUCCESS|ABORTED|CHANGES_REQUESTED|FAILED", "issueId": "...", "commits": [...], "filesChanged": N, "merged": true}`
 
 ## Issue Lifecycle States
 
@@ -48,9 +48,9 @@ as refusing to squash commits on an active branch.
 | **Merge complete** | The merge-and-cleanup tool ran and produced a squashed commit on `TARGET_BRANCH`. The worktree may still exist briefly during cleanup. | The merge-and-cleanup tool returned `"status": "success"` in the current session |
 | **Issue closed** | Worktree removed, lock released, branch deleted. | No worktree, no lock, no issue branch |
 
-**CRITICAL:** `STATE.md status: closed` means **implementation is done**, NOT that the issue was merged. An issue can
-have `STATE.md status: closed` while the worktree still exists and the merge-and-cleanup tool has not yet run. Always
-verify merge status by checking the git branch state AND the merge-and-cleanup tool result — never by reading STATE.md
+**CRITICAL:** `index.json status: closed` means **implementation is done**, NOT that the issue was merged. An issue can
+have `index.json status: closed` while the worktree still exists and the merge-and-cleanup tool has not yet run. Always
+verify merge status by checking the git branch state AND the merge-and-cleanup tool result — never by reading index.json
 alone.
 
 **Distinguishing State 1 from State 2:** Observable git indicators (worktree present, branch present, commit on
@@ -61,15 +61,15 @@ as State 1 and run the full merge workflow.
 
 ## Step 7: Squash Commits by Topic Before Review (MANDATORY)
 
-**MANDATORY: Delegate rebase, squash, and STATE.md closure verification to a squash subagent.** This step must not be
+**MANDATORY: Delegate rebase, squash, and index.json closure verification to a squash subagent.** This step must not be
 skipped — the approval gate (Step 9) checks that squash was executed and blocks proceeding if it was not.
 This keeps the parent agent context lean by offloading git operations to a dedicated haiku-model subagent.
 
 **Note:** It is expected and correct to squash commits on **the current issue's branch** (`${BRANCH}`) where
-STATE.md shows `closed`. This means the implementation subagent finished its work (State 1 complete) and the merge
+index.json shows `closed`. This means the implementation subagent finished its work (State 1 complete) and the merge
 preparation phase is now running. The squash operation is part of transitioning from State 1 to State 2. Do NOT skip
-or abort squash due to STATE.md showing `closed`. This authorization applies only to `${BRANCH}` — do NOT squash any
-other branch based on this reasoning, even if that branch's STATE.md also shows `closed`.
+or abort squash due to index.json showing `closed`. This authorization applies only to `${BRANCH}` — do NOT squash any
+other branch based on this reasoning, even if that branch's index.json also shows `closed`.
 
 Determine the primary commit message from the execution result (the most significant commit's message). If multiple
 topics exist, use the most significant commit's message. Do NOT use generic messages like "squash commit".
@@ -89,7 +89,7 @@ Spawn the squash subagent:
 
 ```
 Task tool:
-  description: "Squash: rebase, squash commits, verify STATE.md"
+  description: "Squash: rebase, squash commits, verify index.json"
   subagent_type: "cat:work-squash"
   model: "haiku"
   prompt: |
@@ -153,14 +153,11 @@ Skill("cat:git-rebase-agent", args="{WORKTREE_PATH} {TARGET_BRANCH}")
 ```
 
 **If rebase reports CONFLICT:**
-- Examine the conflicting files reported by cat:git-rebase-agent
-- Record the list of conflicting files and the resolution strategy used for each (e.g., "accepted ours",
-  "accepted theirs", "manual merge") in a variable `CONFLICT_RESOLUTIONS` for display at the approval gate
-- Resolve each conflict. For each conflicted file, the resolution MUST incorporate changes from BOTH sides
-  unless one side's changes are entirely superseded. Do NOT use accept-ours or accept-theirs as the resolution
-  strategy for any file unless the other side's changes to that file are wholly redundant or inapplicable.
-  Examine each conflict individually and preserve the intent of both sides
-- Stage resolved files and continue the rebase
+- Follow the numbered steps in `cat:git-rebase-agent` `## Handling Conflicts` to resolve each conflicting file
+- Record the list of conflicting files and the resolution strategy used for each (e.g., "accepted deletion",
+  "restored target version", "manual merge") in a variable `CONFLICT_RESOLUTIONS` for display at the approval gate
+- For each conflicted file, the resolution MUST incorporate changes from BOTH sides unless one side's changes are
+  entirely superseded. Examine each conflict individually and preserve the intent of both sides.
 - Delete the backup branch created by cat:git-rebase-agent after resolution
 - **MANDATORY:** Flag that conflicts were resolved so Step 9 displays them. Set `REBASE_HAD_CONFLICTS=true`
   and retain `CONFLICT_RESOLUTIONS` for the approval gate output
@@ -178,7 +175,7 @@ Skill("cat:git-rebase-agent", args="{WORKTREE_PATH} {TARGET_BRANCH}")
 ### Step 7c: Post-Rebase Impact Analysis
 
 After a successful rebase (OK or resolved CONFLICT), capture the new fork point and invoke the
-impact analysis skill to determine whether upstream changes affect the current PLAN.md:
+impact analysis skill to determine whether upstream changes affect the current plan.md:
 
 ```bash
 cd "${WORKTREE_PATH}"
@@ -220,7 +217,7 @@ IMPACT_SEVERITY=$(echo "${IMPACT_JSON}" | grep -o '"severity"[[:space:]]*:[[:spa
 |------------------------|--------|
 | `NO_IMPACT` | Continue silently to Step 8 |
 | `LOW` | Continue silently to Step 8 |
-| `MEDIUM` | Auto-revise PLAN.md then continue to Step 8 (see below) |
+| `MEDIUM` | Auto-revise plan.md then continue to Step 8 (see below) |
 | `HIGH` | Write proposal file then ask user for guidance (see below) |
 
 **MEDIUM: Auto-Revision**
@@ -238,15 +235,15 @@ ANALYSIS_PATH=$(echo "${IMPACT_JSON}" | grep -o '"analysis_path"[[:space:]]*:[[:
   | sed 's/.*"analysis_path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 ```
 
-Invoke `cat:plan-builder-agent` to mechanically revise the PLAN.md based on the upstream changes:
+Invoke `cat:plan-builder-agent` to mechanically revise the plan.md based on the upstream changes:
 
 ```
-Skill("cat:plan-builder-agent", args="${CAT_AGENT_ID} ${EFFORT} revise ${ISSUE_PATH} rebase introduced upstream changes that affect PLAN.md — see ${ANALYSIS_PATH}")
+Skill("cat:plan-builder-agent", args="${CAT_AGENT_ID} ${EFFORT} revise ${ISSUE_PATH} rebase introduced upstream changes that affect plan.md — see ${ANALYSIS_PATH}")
 ```
 
 If any implementation work was already committed on this branch before the rebase, spawn an implementation
-subagent to apply the revised PLAN.md to the already-implemented code. This ensures in-progress work
-remains consistent with the updated plan before continuing. The subagent receives the revised PLAN.md and
+subagent to apply the revised plan.md to the already-implemented code. This ensures in-progress work
+remains consistent with the updated plan before continuing. The subagent receives the revised plan.md and
 the analysis file path as context.
 
 After the plan-builder (and any code-revision subagent) returns, continue to Step 8.
@@ -387,13 +384,13 @@ about what they are approving.
 
 2. **Display commit summary** — list commits since target branch, and extract the issue goal in a single chained bash call:
    ```bash
-   cd "${WORKTREE_PATH}" && git log --oneline ${TARGET_BRANCH}..HEAD && ISSUE_GOAL=$(grep -A1 "^## Goal" "${ISSUE_PATH}/PLAN.md" | tail -n1) && echo "Issue Goal: ${ISSUE_GOAL}"
+   cd "${WORKTREE_PATH}" && git log --oneline ${TARGET_BRANCH}..HEAD && ISSUE_GOAL=$(grep -A1 "^## Goal" "${ISSUE_PATH}/plan.md" | tail -n1) && echo "Issue Goal: ${ISSUE_GOAL}"
    ```
 
 3. **Display execution summary** (commits count, files changed)
 4. **Display E2E testing summary** — what tests ran, what they verified, results (if skipped: state explicitly)
 5. **Display impact analysis warning** (if `IMPACT_ANALYSIS_SKIPPED=true`) — display a prominent warning:
-   `"WARNING: Post-rebase impact analysis was skipped because the fork point could not be determined. Upstream changes may affect PLAN.md but were not analyzed."` This ensures the user is informed before approving.
+   `"WARNING: Post-rebase impact analysis was skipped because the fork point could not be determined. Upstream changes may affect plan.md but were not analyzed."` This ensures the user is informed before approving.
 6. **Display rebase conflict resolutions** (if `REBASE_HAD_CONFLICTS=true`) — for each conflicting file:
    (a) list the resolution strategy from `CONFLICT_RESOLUTIONS`,
    (b) run `git diff ${TARGET_BRANCH}...HEAD -- <file>` to show the actual resolved diff for that file,
@@ -435,7 +432,7 @@ do NOT offer "Fix remaining concerns" again. Instead, present only: ["Approve an
 
 1. Extract MEDIUM+ concerns (severity, description, location, recommendation, detail_file)
 2. Spawn `cat:work-execute` subagent to fix each MEDIUM+ concern. Pass `ISSUE_PATH` explicitly so the
-   subagent can invoke `cat:collect-results-agent` and update STATE.md without constructing the path
+   subagent can invoke `cat:collect-results-agent` and update index.json without constructing the path
    from ISSUE_ID (which gets the `v2/v2.1/` nesting wrong):
    ```
    Task tool:
@@ -443,7 +440,7 @@ do NOT offer "Fix remaining concerns" again. Instead, present only: ["Approve an
      subagent_type: "cat:work-execute"
      prompt: |
        Fix each MEDIUM+ concern in the worktree and commit with the same type as the primary
-       implementation (e.g., `bugfix:`). Return JSON with commits and files_changed.
+       implementation (e.g., `bugfix:`). Return JSON with commits and filesChanged.
 
        ## Configuration
        ISSUE_ID: ${ISSUE_ID}
@@ -466,7 +463,7 @@ do NOT offer "Fix remaining concerns" again. Instead, present only: ["Approve an
 ```json
 {
   "status": "CHANGES_REQUESTED",
-  "issue_id": "${ISSUE_ID}",
+  "issueId": "${ISSUE_ID}",
   "feedback": "user feedback text"
 }
 ```
@@ -475,7 +472,7 @@ do NOT offer "Fix remaining concerns" again. Instead, present only: ["Approve an
 ```json
 {
   "status": "ABORTED",
-  "issue_id": "${ISSUE_ID}",
+  "issueId": "${ISSUE_ID}",
   "message": "User aborted merge"
 }
 ```
@@ -643,9 +640,9 @@ Return summary to the main `/cat:work` skill:
 ```json
 {
   "status": "SUCCESS",
-  "issue_id": "${ISSUE_ID}",
+  "issueId": "${ISSUE_ID}",
   "commits": [...],
-  "files_changed": N,
+  "filesChanged": N,
   "tokens_used": N,
   "merged": true
 }
@@ -684,7 +681,7 @@ If any phase fails:
   "status": "FAILED",
   "phase": "squash|rebase|merge",
   "message": "actual error message",
-  "issue_id": "${ISSUE_ID}",
+  "issueId": "${ISSUE_ID}",
   "lock_retained": true
 }
 ```

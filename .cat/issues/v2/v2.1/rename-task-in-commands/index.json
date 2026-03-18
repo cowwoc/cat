@@ -1,0 +1,6 @@
+{
+  "status": "closed",
+  "resolution": "duplicate (see parent issue)",
+  "dependencies": ["rename-task-scripts"],
+  "parent": "2.1-rename-task-to-issue"
+}

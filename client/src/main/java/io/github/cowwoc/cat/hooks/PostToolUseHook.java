@@ -83,7 +83,6 @@ public final class PostToolUseHook implements HookHandler
     requireThat(sessionId, "sessionId").isNotBlank();
 
     // Create handlers using sessionId from HookInput
-    Path claudeConfigDir = scope.getClaudeConfigDir();
     Path sessionDirectory = scope.getCatSessionPath(sessionId);
     List<PostToolHandler> handlers = List.of(
       new SetPendingAgentResult(scope),
@@ -91,7 +90,7 @@ public final class PostToolUseHook implements HookHandler
       new AutoLearnMistakes(),
       new DetectAssistantGivingUp(scope),
       new DetectValidationWithoutEvidence(scope),
-      new DetectTokenThreshold(claudeConfigDir),
+      new DetectTokenThreshold(scope),
       new RemindRestartAfterSkillModification());
 
     List<String> warnings = new ArrayList<>();

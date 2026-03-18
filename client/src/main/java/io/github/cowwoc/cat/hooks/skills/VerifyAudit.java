@@ -17,29 +17,26 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
+import java.util.Locale;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * CLI tool for extracting and reporting on verify-implementation audit data.
+ * CLI tool for verifying implementation compliance with planned file specs.
  * <p>
  * Provides subcommands:
  * <ul>
- *   <li>{@code prepare} - Validates arguments, parses PLAN.md, generates prompts, and verifies
- *     files in a single step</li>
+ *   <li>{@code prepare} - Validates arguments, extracts file specs from plan.md, and verifies files</li>
  *   <li>{@code report} - Renders a formatted audit report from verification results</li>
  * </ul>
  */
@@ -47,7 +44,6 @@ public final class VerifyAudit
 {
   private static final Pattern FULL_PATH_PATTERN =
     Pattern.compile("\\b([a-zA-Z0-9_-]+(?:/[a-zA-Z0-9_-]+)+\\.[a-z]+)\\b");
-  private static final Pattern FILENAME_PATTERN = Pattern.compile("\\b([a-zA-Z0-9_-]+\\.[a-z]{1,4})\\b");
   private static final Pattern LIST_ITEM_PATTERN = Pattern.compile("^\\s*-\\s+([^\\s]+)");
   private static final Pattern FILES_LABEL_PATTERN =
     Pattern.compile("Files?:\\s+([^\\s,]+(?:\\.[a-z]+)?)", Pattern.CASE_INSENSITIVE);
@@ -68,82 +64,6 @@ public final class VerifyAudit
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
-  }
-
-  /**
-   * Parses PLAN.md and extracts post-conditions, file specs, and grouped criteria.
-   * <p>
-   * Returns a JSON object with the following schema:
-   * <pre>{@code
-   * {
-   *   "criteria": ["criterion text 1", "criterion text 2", ...],
-   *   "file_specs": {
-   *     "modify": ["path/to/file1.ext", "path/to/file2.ext", ...],
-   *     "delete": ["path/to/deleted.ext", ...]
-   *   },
-   *   "groups": [
-   *     {
-   *       "files": ["path/to/file1.ext", ...],
-   *       "criteria": ["criterion text", ...]
-   *     },
-   *     ...
-   *   ]
-   * }
-   * }</pre>
-   * <p>
-   * The {@code criteria} array contains all post-conditions extracted from the "Post-conditions"
-   * section. The {@code file_specs} object lists files to modify or delete. The {@code groups} array
-   * organizes criteria by their file dependencies for optimized verification.
-   *
-   * @param planPath path to PLAN.md file
-   * @return JSON string with criteria, file_specs, and groups
-   * @throws NullPointerException if {@code planPath} is null
-   * @throws IOException if the file cannot be read
-   */
-  public String parse(Path planPath) throws IOException
-  {
-    requireThat(planPath, "planPath").isNotNull();
-
-    String content = Files.readString(planPath);
-    List<String> criteria = extractPostconditions(content);
-    FileSpecs fileSpecs = extractFileSpecs(content);
-    List<CriteriaGroup> groups = groupCriteriaByFiles(criteria, fileSpecs);
-
-    ObjectNode root = scope.getJsonMapper().createObjectNode();
-    ArrayNode criteriaArray = scope.getJsonMapper().createArrayNode();
-    for (String criterion : criteria)
-      criteriaArray.add(criterion);
-    root.set("criteria", criteriaArray);
-
-    ObjectNode fileSpecsNode = scope.getJsonMapper().createObjectNode();
-    ArrayNode modifyArray = scope.getJsonMapper().createArrayNode();
-    for (String file : fileSpecs.modify())
-      modifyArray.add(file);
-    ArrayNode deleteArray = scope.getJsonMapper().createArrayNode();
-    for (String file : fileSpecs.delete())
-      deleteArray.add(file);
-    fileSpecsNode.set("modify", modifyArray);
-    fileSpecsNode.set("delete", deleteArray);
-    root.set("file_specs", fileSpecsNode);
-
-    ArrayNode groupsArray = scope.getJsonMapper().createArrayNode();
-    for (CriteriaGroup group : groups)
-    {
-      ObjectNode groupNode = scope.getJsonMapper().createObjectNode();
-      ArrayNode filesArray = scope.getJsonMapper().createArrayNode();
-      for (String file : group.files())
-        filesArray.add(file);
-      groupNode.set("files", filesArray);
-
-      ArrayNode critArray = scope.getJsonMapper().createArrayNode();
-      for (String criterion : group.criteria())
-        critArray.add(criterion);
-      groupNode.set("criteria", critArray);
-      groupsArray.add(groupNode);
-    }
-    root.set("groups", groupsArray);
-
-    return scope.getJsonMapper().writeValueAsString(root);
   }
 
   /**
@@ -253,38 +173,34 @@ public final class VerifyAudit
   }
 
   /**
-   * Performs all preparation work for a verify-implementation audit in a single step.
+   * Performs file-spec verification for a verify-implementation audit.
    * <p>
    * Takes raw ARGUMENTS JSON on stdin and:
    * <ol>
-   *   <li>Extracts and validates issue_id, issue_path, worktree_path from JSON</li>
-   *   <li>Parses PLAN.md to extract criteria, file specs, and groups</li>
-   *   <li>Generates verification subagent prompts from groups</li>
+   *   <li>Extracts and validates issueId, issuePath, worktreePath from JSON</li>
+   *   <li>Parses plan.md to extract file specs</li>
    *   <li>Verifies file existence and git history against file specs</li>
    * </ol>
    * <p>
    * Returns a JSON object:
    * <pre>{@code
    * {
-   *   "issue_id": "2.1-issue-name",
-   *   "issue_path": "/path/to/issue",
-   *   "worktree_path": "/path/to/worktree",
-   *   "criteria_count": 3,
-   *   "file_count": 2,
-   *   "prompts": [
-   *     {"group_index": 0, "prompt": "...full prompt text..."}
-   *   ],
+   *   "issueId": "2.1-issue-name",
+   *   "issuePath": "/path/to/issue",
+   *   "worktreePath": "/path/to/worktree",
    *   "file_results": {
    *     "modify": {"file1.java": "exists_and_modified"},
    *     "delete": {}
    *   }
    * }
    * }</pre>
+   * <p>
+   * Post-conditions are NOT extracted here. The skill reads plan.md directly to verify criteria.
    *
-   * @param argumentsJson the JSON string containing issue_id, issue_path, worktree_path
-   * @return JSON string with all preparation results
+   * @param argumentsJson the JSON string containing issueId, issuePath, worktreePath
+   * @return JSON string with issue identifiers and file verification results
    * @throws NullPointerException if {@code argumentsJson} is null
-   * @throws IllegalArgumentException if required fields are missing or PLAN.md does not exist
+   * @throws IllegalArgumentException if required fields are missing or plan.md does not exist
    * @throws IOException if JSON parsing or file operations fail
    */
   public String prepare(String argumentsJson) throws IOException
@@ -294,52 +210,32 @@ public final class VerifyAudit
     JsonNode argsRoot = scope.getJsonMapper().readTree(argumentsJson);
 
     String issueId = requireThat(argsRoot, "argumentsJson").
-      property("issue_id").isString().getValue().asString();
-    requireThat(issueId, "argumentsJson.issue_id").isNotBlank();
+      property("issueId").isString().getValue().asString();
+    requireThat(issueId, "argumentsJson.issueId").isNotBlank();
 
     String issuePath = requireThat(argsRoot, "argumentsJson").
-      property("issue_path").isString().getValue().asString();
-    requireThat(issuePath, "argumentsJson.issue_path").isNotBlank();
+      property("issuePath").isString().getValue().asString();
+    requireThat(issuePath, "argumentsJson.issuePath").isNotBlank();
 
     String worktreePath = requireThat(argsRoot, "argumentsJson").
-      property("worktree_path").isString().getValue().asString();
-    requireThat(worktreePath, "argumentsJson.worktree_path").isNotBlank();
+      property("worktreePath").isString().getValue().asString();
+    requireThat(worktreePath, "argumentsJson.worktreePath").isNotBlank();
 
     Path issueDir = Path.of(issuePath);
-    Path planFile = issueDir.resolve("PLAN.md");
-    if (!Files.exists(planFile))
-      throw new IllegalArgumentException("PLAN.md not found at " + issuePath);
+    Path planFile = issueDir.resolve("plan.md");
+    if (Files.notExists(planFile))
+      throw new IllegalArgumentException("plan.md not found at " + issuePath);
 
     String content = Files.readString(planFile);
-    List<String> criteria = extractPostconditions(content);
     FileSpecs fileSpecs = extractFileSpecs(content);
-    List<CriteriaGroup> groups = groupCriteriaByFiles(criteria, fileSpecs);
-
-    int fileCount = fileSpecs.modify().size() + fileSpecs.delete().size();
-
-    List<String> prompts = new ArrayList<>();
-    for (CriteriaGroup group : groups)
-      prompts.add(buildPromptForGroup(buildGroupNode(group), worktreePath));
 
     String fileSpecsJson = buildFileSpecsJson(fileSpecs);
     String fileResultsJson = verifyFilesInternal(fileSpecsJson, Path.of(worktreePath));
 
     ObjectNode result = scope.getJsonMapper().createObjectNode();
-    result.put("issue_id", issueId);
-    result.put("issue_path", issuePath);
-    result.put("worktree_path", worktreePath);
-    result.put("criteria_count", criteria.size());
-    result.put("file_count", fileCount);
-
-    ArrayNode promptsArray = scope.getJsonMapper().createArrayNode();
-    for (int idx = 0; idx < prompts.size(); ++idx)
-    {
-      ObjectNode promptEntry = scope.getJsonMapper().createObjectNode();
-      promptEntry.put("group_index", idx);
-      promptEntry.put("prompt", prompts.get(idx));
-      promptsArray.add(promptEntry);
-    }
-    result.set("prompts", promptsArray);
+    result.put("issueId", issueId);
+    result.put("issuePath", issuePath);
+    result.put("worktreePath", worktreePath);
 
     JsonNode fileResultsNode = scope.getJsonMapper().readTree(fileResultsJson);
     result.set("file_results", fileResultsNode);
@@ -348,341 +244,9 @@ public final class VerifyAudit
   }
 
   /**
-   * Builds a JsonNode representing a criteria group, suitable for passing to buildPromptForGroup.
+   * Extracts file specifications from plan.md content.
    *
-   * @param group the criteria group
-   * @return a JsonNode with "files" and "criteria" arrays
-   */
-  private JsonNode buildGroupNode(CriteriaGroup group)
-  {
-    ObjectNode groupNode = scope.getJsonMapper().createObjectNode();
-    ArrayNode filesArray = scope.getJsonMapper().createArrayNode();
-    for (String file : group.files())
-      filesArray.add(file);
-    groupNode.set("files", filesArray);
-
-    ArrayNode criteriaArray = scope.getJsonMapper().createArrayNode();
-    for (String criterion : group.criteria())
-      criteriaArray.add(criterion);
-    groupNode.set("criteria", criteriaArray);
-
-    return groupNode;
-  }
-
-  /**
-   * Builds a file specs JSON string from a FileSpecs object.
-   *
-   * @param fileSpecs the file specifications
-   * @return JSON string with "modify" and "delete" arrays
-   * @throws IOException if serialization fails
-   */
-  private String buildFileSpecsJson(FileSpecs fileSpecs) throws IOException
-  {
-    ObjectNode root = scope.getJsonMapper().createObjectNode();
-    ArrayNode modifyArray = scope.getJsonMapper().createArrayNode();
-    for (String file : fileSpecs.modify())
-      modifyArray.add(file);
-    ArrayNode deleteArray = scope.getJsonMapper().createArrayNode();
-    for (String file : fileSpecs.delete())
-      deleteArray.add(file);
-    root.set("modify", modifyArray);
-    root.set("delete", deleteArray);
-    return scope.getJsonMapper().writeValueAsString(root);
-  }
-
-  /**
-   * Verifies file existence and git history against file specifications.
-   * <p>
-   * For "modify" files: checks if the file exists on disk AND git log shows modifications.
-   * For "delete" files: checks if the file does NOT exist AND git log shows it previously existed.
-   *
-   * @param fileSpecsJson JSON with "modify" and "delete" string arrays
-   * @param directory the working directory for git commands
-   * @return JSON object mapping each file to its verification status
-   * @throws NullPointerException if {@code fileSpecsJson} or {@code directory} are null
-   * @throws IOException if JSON parsing fails
-   */
-  private String verifyFilesInternal(String fileSpecsJson, Path directory) throws IOException
-  {
-    JsonNode root = scope.getJsonMapper().readTree(fileSpecsJson);
-    JsonNode modifyNode = root.path("modify");
-    JsonNode deleteNode = root.path("delete");
-
-    Map<String, String> modifyResults = new LinkedHashMap<>();
-    if (modifyNode.isArray())
-    {
-      for (JsonNode fileNode : modifyNode)
-      {
-        String file = fileNode.asString();
-        Path filePath = directory.resolve(file);
-
-        if (Files.exists(filePath))
-        {
-          String gitOutput = runGitLog(directory, file);
-          if (gitOutput != null && !gitOutput.isEmpty())
-            modifyResults.put(file, "exists_and_modified");
-          else
-            modifyResults.put(file, "exists_not_modified");
-        }
-        else
-        {
-          modifyResults.put(file, "missing");
-        }
-      }
-    }
-
-    Map<String, String> deleteResults = new LinkedHashMap<>();
-    if (deleteNode.isArray())
-    {
-      for (JsonNode fileNode : deleteNode)
-      {
-        String file = fileNode.asString();
-        Path filePath = directory.resolve(file);
-
-        if (!Files.exists(filePath))
-        {
-          String gitOutput = runGitLogAll(directory, file);
-          if (gitOutput != null && !gitOutput.isEmpty())
-            deleteResults.put(file, "deleted_confirmed");
-          else
-            deleteResults.put(file, "never_existed");
-        }
-        else
-        {
-          deleteResults.put(file, "still_exists");
-        }
-      }
-    }
-
-    ObjectNode result = scope.getJsonMapper().createObjectNode();
-    ObjectNode modifyObj = scope.getJsonMapper().createObjectNode();
-    for (Map.Entry<String, String> entry : modifyResults.entrySet())
-      modifyObj.put(entry.getKey(), entry.getValue());
-    ObjectNode deleteObj = scope.getJsonMapper().createObjectNode();
-    for (Map.Entry<String, String> entry : deleteResults.entrySet())
-      deleteObj.put(entry.getKey(), entry.getValue());
-    result.set("modify", modifyObj);
-    result.set("delete", deleteObj);
-
-    return scope.getJsonMapper().writeValueAsString(result);
-  }
-
-  /**
-   * Builds a verification prompt for a single criteria group.
-   *
-   * @param group the group node with "files" and "criteria" arrays
-   * @param worktreePath the absolute path to the issue worktree
-   * @return the prompt text
-   */
-  private String buildPromptForGroup(JsonNode group, String worktreePath)
-  {
-    JsonNode filesNode = group.path("files");
-    JsonNode criteriaNode = group.path("criteria");
-
-    List<String> files = new ArrayList<>();
-    for (JsonNode f : filesNode)
-      files.add(f.asString());
-    List<String> criteria = new ArrayList<>();
-    for (JsonNode c : criteriaNode)
-      criteria.add(c.asString());
-
-    StringBuilder fileList = new StringBuilder();
-    for (String f : files)
-      fileList.append("- ").append(f).append('\n');
-
-    String criterionSection;
-    if (criteria.size() == 1)
-    {
-      criterionSection = "## Post-condition\n" + criteria.get(0);
-    }
-    else
-    {
-      StringBuilder lines = new StringBuilder();
-      for (int i = 0; i < criteria.size(); ++i)
-        lines.append(i + 1).append(". ").append(criteria.get(i)).append('\n');
-      criterionSection = "## Post-conditions\n" + lines.toString().stripTrailing();
-    }
-
-    String taskVerb;
-    if (criteria.size() == 1)
-      taskVerb = "this criterion is";
-    else
-      taskVerb = "EACH criterion is";
-
-    return """
-      You are a verification agent auditing implementation compliance with planned post-conditions.
-
-      %s
-
-      ## Worktree Path
-      All implementation changes are in the issue worktree, NOT in the main workspace.
-      Search for files in: %s
-      Do NOT search /workspace directly — use the worktree path above for all file lookups.
-      Example: use `%s/plugin/skills/` not `/workspace/plugin/skills/`
-
-      ## Task
-      Verify whether %s satisfied in the codebase.
-
-      Use these tools to investigate:
-      - Read: Check file contents
-      - Glob: Find files by pattern
-      - Grep: Search for specific content
-      - Bash: Run verification commands (git log, test commands, etc.)
-
-      ## Evidence Requirements
-      For each criterion, provide:
-      1. Status: Done|Partial|Missing
-      2. Evidence: File paths, line numbers, command outputs
-      3. Notes: Any discrepancies or concerns
-
-      If a criterion cannot be definitively verified, set status to Missing with an explanation \
-      of why verification was not possible. Do not guess or assume.
-
-      ## File Context
-      These files were specified in PLAN.md:
-      %s
-      ## Response Format
-      Return JSON array with one entry per criterion (even if only one criterion):
-      [
-        {
-          "criterion": "criterion text",
-          "status": "Done|Partial|Missing",
-          "evidence": [
-            {"type": "file_exists|content_match|command_output", "detail": "..."}
-          ],
-          "notes": "Any additional observations"
-        }
-      ]
-
-      Be thorough but efficient. Check actual implementation, not just file existence.""".
-      formatted(criterionSection, worktreePath, worktreePath, taskVerb, fileList.toString());
-  }
-
-  /**
-   * Runs git log for a file in the specified directory.
-   *
-   * @param directory the working directory
-   * @param file the file path relative to the directory
-   * @return git log output, or null on error
-   */
-  private String runGitLog(Path directory, String file)
-  {
-    try
-    {
-      ProcessBuilder pb = new ProcessBuilder("git", "log", "--oneline", "--follow", "-5", "--", file);
-      pb.directory(directory.toFile());
-      pb.redirectErrorStream(true);
-      Process process = pb.start();
-
-      StringBuilder output = new StringBuilder();
-      try (BufferedReader reader = new BufferedReader(
-        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
-      {
-        String line = reader.readLine();
-        while (line != null)
-        {
-          if (output.length() > 0)
-            output.append('\n');
-          output.append(line);
-          line = reader.readLine();
-        }
-      }
-
-      int exitCode = process.waitFor();
-      if (exitCode != 0)
-        return null;
-      return output.toString();
-    }
-    catch (IOException | InterruptedException _)
-    {
-      return null;
-    }
-  }
-
-  /**
-   * Runs git log --all for a file in the specified directory to check historical existence.
-   *
-   * @param directory the working directory
-   * @param file the file path relative to the directory
-   * @return git log output, or null on error
-   */
-  private String runGitLogAll(Path directory, String file)
-  {
-    try
-    {
-      ProcessBuilder pb = new ProcessBuilder("git", "log", "--all", "--oneline", "-5", "--", file);
-      pb.directory(directory.toFile());
-      pb.redirectErrorStream(true);
-      Process process = pb.start();
-
-      StringBuilder output = new StringBuilder();
-      try (BufferedReader reader = new BufferedReader(
-        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
-      {
-        String line = reader.readLine();
-        while (line != null)
-        {
-          if (output.length() > 0)
-            output.append('\n');
-          output.append(line);
-          line = reader.readLine();
-        }
-      }
-
-      int exitCode = process.waitFor();
-      if (exitCode != 0)
-        return null;
-      return output.toString();
-    }
-    catch (IOException | InterruptedException _)
-    {
-      return null;
-    }
-  }
-
-  /**
-   * Extracts post-conditions from PLAN.md content.
-   *
-   * @param content the PLAN.md file content
-   * @return list of post-condition text
-   */
-  private List<String> extractPostconditions(String content)
-  {
-    List<String> criteria = new ArrayList<>();
-    boolean inSection = false;
-
-    for (String line : content.split("\n"))
-    {
-      if (line.startsWith("## Post-conditions"))
-      {
-        inSection = true;
-        continue;
-      }
-      if (inSection && line.startsWith("##"))
-        break;
-      if (inSection)
-      {
-        String stripped = line.strip();
-        if (stripped.startsWith("- [ ]"))
-        {
-          String criterion = stripped.substring(6).strip();
-          criteria.add(criterion);
-        }
-        else if (stripped.startsWith("- [x]"))
-        {
-          String criterion = stripped.substring(6).strip();
-          criteria.add(criterion);
-        }
-      }
-    }
-
-    return criteria;
-  }
-
-  /**
-   * Extracts file specifications from PLAN.md content.
-   *
-   * @param content the PLAN.md file content
+   * @param content the plan.md file content
    * @return file specs (modify and delete lists)
    */
   private FileSpecs extractFileSpecs(String content)
@@ -792,75 +356,179 @@ public final class VerifyAudit
   }
 
   /**
-   * Extracts file references from a criterion text.
+   * Builds a file specs JSON string from a FileSpecs object.
    *
-   * @param criterionText the criterion text
-   * @param fileSpecs all file specs from PLAN.md
-   * @return set of referenced files (all file specs if none mentioned)
+   * @param fileSpecs the file specifications
+   * @return JSON string with "modify" and "delete" arrays
+   * @throws IOException if serialization fails
    */
-  private Set<String> extractFileReferences(String criterionText, FileSpecs fileSpecs)
+  private String buildFileSpecsJson(FileSpecs fileSpecs) throws IOException
   {
-    Set<String> referenced = new HashSet<>();
-    List<String> allFileSpecs = new ArrayList<>();
-    allFileSpecs.addAll(fileSpecs.modify());
-    allFileSpecs.addAll(fileSpecs.delete());
-
-    Matcher pathMatcher = FULL_PATH_PATTERN.matcher(criterionText);
-    while (pathMatcher.find())
-      referenced.add(pathMatcher.group(1));
-
-    Matcher fileMatcher = FILENAME_PATTERN.matcher(criterionText);
-    while (fileMatcher.find())
-    {
-      String filename = fileMatcher.group(1);
-      for (String spec : allFileSpecs)
-      {
-        if (spec.endsWith(filename))
-          referenced.add(spec);
-      }
-    }
-
-    if (referenced.isEmpty())
-      return new HashSet<>(allFileSpecs);
-
-    return referenced;
+    ObjectNode root = scope.getJsonMapper().createObjectNode();
+    ArrayNode modifyArray = scope.getJsonMapper().createArrayNode();
+    for (String file : fileSpecs.modify())
+      modifyArray.add(file);
+    ArrayNode deleteArray = scope.getJsonMapper().createArrayNode();
+    for (String file : fileSpecs.delete())
+      deleteArray.add(file);
+    root.set("modify", modifyArray);
+    root.set("delete", deleteArray);
+    return scope.getJsonMapper().writeValueAsString(root);
   }
 
   /**
-   * Groups criteria by their file dependencies.
+   * Verifies file existence and git history against file specifications.
+   * <p>
+   * For "modify" files: checks if the file exists on disk AND git log shows modifications.
+   * For "delete" files: checks if the file does NOT exist AND git log shows it previously existed.
    *
-   * @param criteria list of acceptance criteria
-   * @param fileSpecs file specifications
-   * @return list of criteria groups
+   * @param fileSpecsJson JSON with "modify" and "delete" string arrays
+   * @param directory the working directory for git commands
+   * @return JSON object mapping each file to its verification status
+   * @throws NullPointerException if {@code fileSpecsJson} or {@code directory} are null
+   * @throws IOException if JSON parsing fails
    */
-  private List<CriteriaGroup> groupCriteriaByFiles(List<String> criteria, FileSpecs fileSpecs)
+  private String verifyFilesInternal(String fileSpecsJson, Path directory) throws IOException
   {
-    Map<String, List<String>> groups = new HashMap<>();
+    JsonNode root = scope.getJsonMapper().readTree(fileSpecsJson);
+    JsonNode modifyNode = root.path("modify");
+    JsonNode deleteNode = root.path("delete");
 
-    for (String criterion : criteria)
+    Map<String, String> modifyResults = new LinkedHashMap<>();
+    if (modifyNode.isArray())
     {
-      Set<String> fileSet = extractFileReferences(criterion, fileSpecs);
-      String sortedKey = fileSet.stream().sorted().collect(Collectors.joining(","));
-      if (!groups.containsKey(sortedKey))
-        groups.put(sortedKey, new ArrayList<>());
-      groups.get(sortedKey).add(criterion);
-    }
-
-    return groups.entrySet().stream().
-      map(entry ->
+      for (JsonNode fileNode : modifyNode)
       {
-        Set<String> files;
-        if (entry.getKey().isEmpty())
+        String file = fileNode.asString();
+        Path filePath = directory.resolve(file);
+
+        if (Files.exists(filePath))
         {
-          files = new HashSet<>();
+          String gitOutput = runGitLog(directory, file);
+          if (gitOutput != null && !gitOutput.isEmpty())
+            modifyResults.put(file, "exists_and_modified");
+          else
+            modifyResults.put(file, "exists_not_modified");
         }
         else
         {
-          files = new HashSet<>(List.of(entry.getKey().split(",")));
+          modifyResults.put(file, "missing");
         }
-        return new CriteriaGroup(files, entry.getValue());
-      }).
-      collect(Collectors.toList());
+      }
+    }
+
+    Map<String, String> deleteResults = new LinkedHashMap<>();
+    if (deleteNode.isArray())
+    {
+      for (JsonNode fileNode : deleteNode)
+      {
+        String file = fileNode.asString();
+        Path filePath = directory.resolve(file);
+
+        if (Files.notExists(filePath))
+        {
+          String gitOutput = runGitLogAll(directory, file);
+          if (gitOutput != null && !gitOutput.isEmpty())
+            deleteResults.put(file, "deleted_confirmed");
+          else
+            deleteResults.put(file, "never_existed");
+        }
+        else
+        {
+          deleteResults.put(file, "still_exists");
+        }
+      }
+    }
+
+    ObjectNode result = scope.getJsonMapper().createObjectNode();
+    ObjectNode modifyObj = scope.getJsonMapper().createObjectNode();
+    for (Map.Entry<String, String> entry : modifyResults.entrySet())
+      modifyObj.put(entry.getKey(), entry.getValue());
+    ObjectNode deleteObj = scope.getJsonMapper().createObjectNode();
+    for (Map.Entry<String, String> entry : deleteResults.entrySet())
+      deleteObj.put(entry.getKey(), entry.getValue());
+    result.set("modify", modifyObj);
+    result.set("delete", deleteObj);
+
+    return scope.getJsonMapper().writeValueAsString(result);
+  }
+
+  /**
+   * Runs git log for a file in the specified directory.
+   *
+   * @param directory the working directory
+   * @param file the file path relative to the directory
+   * @return git log output, or null on error
+   */
+  private String runGitLog(Path directory, String file)
+  {
+    try
+    {
+      ProcessBuilder pb = new ProcessBuilder("git", "log", "--oneline", "--follow", "-5", "--", file);
+      pb.directory(directory.toFile());
+      pb.redirectErrorStream(true);
+      Process process = pb.start();
+
+      StringJoiner output = new StringJoiner("\n");
+      try (BufferedReader reader = new BufferedReader(
+        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
+      {
+        String line = reader.readLine();
+        while (line != null)
+        {
+          output.add(line);
+          line = reader.readLine();
+        }
+      }
+
+      int exitCode = process.waitFor();
+      if (exitCode != 0)
+        return null;
+      return output.toString();
+    }
+    catch (IOException | InterruptedException _)
+    {
+      return null;
+    }
+  }
+
+  /**
+   * Runs git log --all for a file in the specified directory to check historical existence.
+   *
+   * @param directory the working directory
+   * @param file the file path relative to the directory
+   * @return git log output, or null on error
+   */
+  private String runGitLogAll(Path directory, String file)
+  {
+    try
+    {
+      ProcessBuilder pb = new ProcessBuilder("git", "log", "--all", "--oneline", "-5", "--", file);
+      pb.directory(directory.toFile());
+      pb.redirectErrorStream(true);
+      Process process = pb.start();
+
+      StringJoiner output = new StringJoiner("\n");
+      try (BufferedReader reader = new BufferedReader(
+        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
+      {
+        String line = reader.readLine();
+        while (line != null)
+        {
+          output.add(line);
+          line = reader.readLine();
+        }
+      }
+
+      int exitCode = process.waitFor();
+      if (exitCode != 0)
+        return null;
+      return output.toString();
+    }
+    catch (IOException | InterruptedException _)
+    {
+      return null;
+    }
   }
 
   /**
@@ -1070,11 +738,11 @@ public final class VerifyAudit
 
         Subcommands:
           report <issue-id>             Generate audit report from stdin JSON
-          prepare                      Validate args, parse PLAN.md, generate prompts, verify files
+          prepare                      Validate args, extract file specs from plan.md, verify files
 
         Examples:
           echo '{"criteria_results": [...]}' | verify-audit report 2.1-issue-name
-          echo '{"issue_id":"..."}' | verify-audit prepare""");
+          echo '{"issueId":"..."}' | verify-audit prepare""");
       return;
     }
 
@@ -1110,16 +778,6 @@ public final class VerifyAudit
    * @param delete files to delete
    */
   private record FileSpecs(List<String> modify, List<String> delete)
-  {
-  }
-
-  /**
-   * Criteria group with shared file dependencies.
-   *
-   * @param files the set of files referenced by these criteria
-   * @param criteria the list of criteria texts
-   */
-  private record CriteriaGroup(Set<String> files, List<String> criteria)
   {
   }
 
