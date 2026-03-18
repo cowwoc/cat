@@ -54,7 +54,7 @@ data properly from the session file. The workflow should reference these skills 
 - [ ] Formal "Subagent Execution Report" format is presented
 - [ ] Pre-execution estimates are NOT used when actual metrics are available
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

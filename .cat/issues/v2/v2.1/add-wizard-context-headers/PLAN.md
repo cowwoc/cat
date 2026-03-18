@@ -44,7 +44,7 @@ and skill-builder are workflow wizards without issue context - use workflow name
 - [ ] Users can identify which issue AND its goal when answering wizard questions
 - [ ] All existing tests pass with no regressions
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Audit each file in "Files to Modify" to identify AskUserQuestion instructions where the agent

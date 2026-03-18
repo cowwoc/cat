@@ -19,7 +19,7 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Create `plugin/tests/migrations/test-2.1-phase-13.bats` with test cases:

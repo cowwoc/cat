@@ -29,7 +29,7 @@ None - infrastructure/refactoring task
 - [ ] All existing tests pass
 - [ ] No subprocess calls to build-box-lines.py from the new Python hook
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Rename status.sh to get-status-data.sh

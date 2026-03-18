@@ -22,7 +22,7 @@ None - UI enhancement
 - [ ] Documentation updated
 - [ ] No regressions
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Research how active sessions are tracked

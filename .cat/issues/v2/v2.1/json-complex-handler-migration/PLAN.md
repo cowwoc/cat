@@ -45,7 +45,7 @@ Parent: optimize-hook-json-parser (complete handler migration + dependency remov
 - [ ] `grep -r 'import tools.jackson.databind' hooks/src/` returns empty
 - [ ] pom.xml has jackson-core only (no jackson-databind)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Migrate each complex handler** replacing:

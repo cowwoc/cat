@@ -22,7 +22,7 @@ None (infrastructure task)
 - [ ] All handler scripts have test coverage
 - [ ] Tests pass in CI
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Identify all handler scripts and their use-cases

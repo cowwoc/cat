@@ -24,7 +24,7 @@ after receiving user approval.
 - [ ] Approval gate respects the setting (merge to main OR create PR)
 - [ ] Default value is `merge` (current behavior)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Add `completionWorkflow` to cat-config.json schema

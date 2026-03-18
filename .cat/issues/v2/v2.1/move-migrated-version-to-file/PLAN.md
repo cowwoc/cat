@@ -31,7 +31,7 @@ None
 - [ ] Migration script moves value from old location to new file
 - [ ] Backward compatibility wrappers removed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Update `plugin/migrations/lib/utils.sh`:**

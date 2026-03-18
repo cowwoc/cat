@@ -109,7 +109,7 @@ providing context or motivation behind your instructions helps Claude better und
 - [ ] Zero `**FAIL-FAST:**` blocks in verbatim output skill files
 - [ ] Haiku achieves ~100% echo success with explanatory guard (verified by empirical test)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Replace FAIL-FAST blocks in all affected skill files with explanatory guard pattern:

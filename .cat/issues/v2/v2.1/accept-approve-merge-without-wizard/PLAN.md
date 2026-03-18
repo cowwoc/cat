@@ -26,7 +26,7 @@ None (usability improvement)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Update EnforceApprovalBeforeMerge.java** to accept direct user approval messages:

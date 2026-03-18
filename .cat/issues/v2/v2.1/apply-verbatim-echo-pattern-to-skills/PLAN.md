@@ -32,7 +32,7 @@ None (infrastructure improvement)
 - [ ] skill-builder template updated to document the new pattern
 - [ ] Tests pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

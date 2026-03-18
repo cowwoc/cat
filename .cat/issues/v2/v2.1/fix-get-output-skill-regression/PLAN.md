@@ -75,7 +75,7 @@ calls the Skill tool. The `get-output` SKILL.md must call the launcher directly 
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

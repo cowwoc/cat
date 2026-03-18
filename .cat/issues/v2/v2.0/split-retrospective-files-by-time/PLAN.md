@@ -30,7 +30,7 @@ None - infrastructure/maintenance task
 - [ ] run-retrospective skill aggregates across split files
 - [ ] Existing data preserved and accessible
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Design split strategy** - Decide on time granularity (monthly vs quarterly)

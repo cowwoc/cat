@@ -19,7 +19,7 @@ None - infrastructure improvement
 - [ ] Documentation explains when to use each location
 - [ ] conventions.md in .claude/rules/ points to on-demand conventions
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Update mkdir commands to create both directories

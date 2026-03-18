@@ -21,7 +21,7 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Reproduce the bug - run /cat:cleanup and observe the survey output shows "0 worktrees found"

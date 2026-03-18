@@ -5,7 +5,7 @@
 Verify pre-conditions in `cat:work-prepare` before starting work on an issue, mirroring how
 `cat:verify-implementation` checks post-conditions before closing.
 
-## Satisfies
+## Parent Requirements
 
 None
 
@@ -33,7 +33,7 @@ None
 - [ ] All tests pass (`mvn -f client/pom.xml test`)
 - [ ] E2E: Start work on an issue with an explicitly unmet pre-condition and confirm the agent reports it
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1 — Research
 

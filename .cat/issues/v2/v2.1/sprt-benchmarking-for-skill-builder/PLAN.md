@@ -368,7 +368,7 @@ boundary, (b) adversarial TDD runs until convergence, (c) compression retries up
       where the organized document introduced ambiguity or regression
     - Add to the existing compliance checklist in instruction-organizer-agent
 
-## Acceptance Criteria
+## Post-conditions
 
 ### Terminology
 - [ ] No occurrences of `eval-artifacts`, `EVAL_ARTIFACTS_DIR`, `EVAL_SET_SHA`, or `eval:` commit prefix in

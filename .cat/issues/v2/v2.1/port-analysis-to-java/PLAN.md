@@ -28,7 +28,7 @@ Parent: port-utility-scripts
 - `hooks/src/test/java/io/github/cowwoc/cat/hooks/test/SessionAnalyzerTest.java`
 - `hooks/src/test/java/io/github/cowwoc/cat/hooks/test/RetrospectiveMigratorTest.java`
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Read analyze-session.py to understand analysis logic, metrics, and output format

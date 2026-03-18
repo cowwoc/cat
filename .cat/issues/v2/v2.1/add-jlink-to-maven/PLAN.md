@@ -29,7 +29,7 @@ None - infrastructure improvement
 - [ ] session_start.sh debug trace shows JDK runtime verified
 - [ ] All 318+ tests still pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

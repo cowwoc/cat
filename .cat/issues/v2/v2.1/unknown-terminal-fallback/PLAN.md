@@ -24,7 +24,7 @@ the first available terminal's widths and warning the user once per session (sup
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Modify `DisplayUtils`:** In `loadEmojiWidthsFromFile`, when terminal key not found, fall back to first

@@ -31,7 +31,7 @@ skill total execution time by ~24% (~3.5 minutes).
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1: Implement CLI tool
 

@@ -22,7 +22,7 @@ None
 - `plugin/scripts/analyze-session.py` - New Python script for mechanical data extraction
 - `plugin/skills/optimize-execution/SKILL.md` - Simplify to run script + interpret results
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Create `plugin/scripts/analyze-session.py`:**

@@ -19,7 +19,7 @@ None - documentation consistency fix
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - In `plugin/concepts/state-schema.md`, add a row for `Target Branch` to the Optional fields table with

@@ -34,7 +34,7 @@ which requires the `SkillOutput` interface.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Add `implements SkillOutput`** to `GetCleanupOutput` class declaration

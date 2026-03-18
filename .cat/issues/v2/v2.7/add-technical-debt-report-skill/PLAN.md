@@ -23,7 +23,7 @@ product), surfacing the worst offenders and providing actionable guidance.
 ## Pre-conditions
 - [ ] `aggregate-technical-debt` is closed (aggregation working)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Write failing tests for report formatting (TDD):

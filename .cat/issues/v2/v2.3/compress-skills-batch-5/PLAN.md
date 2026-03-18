@@ -32,7 +32,7 @@ None - sub-issue of parent
 - [ ] All files score 1.0 on /compare-docs validation
 - [ ] No functionality regression
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. For each file in scope: Run /cat:optimize-doc

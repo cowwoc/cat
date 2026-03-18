@@ -26,7 +26,7 @@ settings box, and the skill has no wizard step for `minSeverity`.
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

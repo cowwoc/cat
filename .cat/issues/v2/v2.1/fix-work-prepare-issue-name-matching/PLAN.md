@@ -39,7 +39,7 @@ names fall through to the else branch which treats them as filter patterns (or i
 - [ ] Unrecognized arguments produce a warning instead of silent fallthrough
 - [ ] When a bare name matches multiple versions, the script selects from the current branch's version
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Update the argument regex in `plugin/skills/work/SKILL.md` to match bare issue names

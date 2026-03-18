@@ -76,7 +76,7 @@ You are a senior code reviewer ensuring high standards of code quality and secur
 - [ ] Directory structure created
 - [ ] README.md is comprehensive enough to guide subsequent migration issues
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

@@ -26,7 +26,9 @@ echo "squashed:${SQUASH_COMMIT_HASH}" > "${SQUASH_MARKER_DIR}/squash-complete-${
 A single CLI tool call replaces 2 of these steps (mkdir + redirect), reducing round-trips and providing
 consistent error handling.
 
-## Execution Steps
+## Sub-Agent Waves
+
+### Wave 1
 
 ### Step 1: Create WriteSessionMarker.java
 

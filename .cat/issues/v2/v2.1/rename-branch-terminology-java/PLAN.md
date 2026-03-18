@@ -55,7 +55,7 @@ None — infrastructure terminology cleanup.
 
 - [ ] Parent issue `2.1-rename-branch-terminology` exists
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

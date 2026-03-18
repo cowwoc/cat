@@ -73,7 +73,7 @@ None - infrastructure/setup task
 ## Dependencies to Add
 - `com.knuddels:jtokkit:1.1.0` - Java tokenizer library (tiktoken equivalent)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

@@ -57,7 +57,7 @@ None - infrastructure cleanup
 - `.cat/conventions/state-schema.md` (new - documents the schema)
 - STATE.md template in skill add (references in create-issue.py)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Create `.cat/conventions/state-schema.md` documenting the standardized schema

@@ -34,7 +34,7 @@ None - infrastructure/optimization issue addressing PATTERN-008
 - [ ] No multi-step procedures that could be skipped
 - [ ] PATTERN-008 addressed structurally
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Audit each skill for pre-rendered output patterns

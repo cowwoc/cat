@@ -33,7 +33,7 @@ None - infrastructure improvement
 - [ ] Patterns are scoped appropriately (file-system, git, shared state - not general threading)
 - [ ] All existing tests pass with no regressions
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Add race condition criteria to security stakeholder

@@ -110,7 +110,7 @@ No changes needed. Each skill remains a single directory with SKILL.md. No neste
 - [ ] A/B test shows significant token reduction on repeat invocations
 - [ ] No user-visible behavior changes
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

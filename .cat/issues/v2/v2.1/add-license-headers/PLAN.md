@@ -152,7 +152,7 @@ Create a reference document with all header formats by file type (Java, Python, 
 - [ ] license-header.md reference document exists
 - [ ] All tests pass (mvn -f hooks/pom.xml verify exits 0)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Create license-header.md reference:** Create `plugin/concepts/license-header.md` with all header formats by file

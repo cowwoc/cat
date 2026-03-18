@@ -36,7 +36,7 @@ point of invocation (the SKILL.md). Agents reading SKILL.md alone have no way to
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

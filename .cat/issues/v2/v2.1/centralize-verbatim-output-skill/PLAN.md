@@ -91,7 +91,7 @@ After migration: these skills have no `<output>` tag. Each step that needs a box
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Create `GetOutput.java` dispatcher that accepts `skill` and optional `page`

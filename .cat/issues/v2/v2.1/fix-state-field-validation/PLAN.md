@@ -55,7 +55,7 @@ against the allowed set (Status, Progress, Dependencies, Blocks, Resolution, Par
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

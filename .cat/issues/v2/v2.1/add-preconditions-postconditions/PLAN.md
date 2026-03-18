@@ -52,7 +52,7 @@ None - workflow infrastructure improvement
 ## Pre-conditions
 - [ ] All dependencies closed (default)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

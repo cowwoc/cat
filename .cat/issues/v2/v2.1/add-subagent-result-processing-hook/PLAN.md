@@ -28,7 +28,9 @@ Implement a two-phase hook enforcement mechanism that detects when the main agen
 
 **Per-subagent-type detection in PostToolUse:** Checking `subagent_type` in the Agent tool output to limit flag to work-execute is fragile (subagent type not reliably available in tool result). Using presence of active worktree lock is sufficient and accurate.
 
-## Execution Steps
+## Sub-Agent Waves
+
+### Wave 1
 
 ### Step 1 — Create `SetPendingAgentResult.java`
 
@@ -155,7 +157,7 @@ All tests must pass before marking implementation complete.
 
 Update `status: open` → `status: closed` and `progress: 0%` → `progress: 100%` in the issue's STATE.md.
 
-## Success Criteria
+## Post-conditions
 
 - `SetPendingAgentResult` creates `{sessionBasePath}/{sessionId}/pending-agent-result` when Agent tool completes in work-with-issue context on the main agent
 - `EnforceCollectAfterAgent` blocks Task and Skill calls when flag exists, except for `cat:collect-results-agent` and `cat:merge-subagent-agent`

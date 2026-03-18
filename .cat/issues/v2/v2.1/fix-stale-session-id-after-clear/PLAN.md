@@ -35,7 +35,7 @@ Tag with: `// WORKAROUND: https://github.com/anthropics/claude-code/issues/14433
 - [ ] `mvn -f client/pom.xml verify` exits with code 0
 - [ ] InjectEnv writes to all session-env sibling directories
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Add a `writeToAllSessionDirs` method to InjectEnv that iterates all subdirectories of sessionEnvBase

@@ -38,7 +38,7 @@ The missing link is argument parsing in the skill content that detects task ID p
 - [ ] `/cat:work` with no arguments still selects by priority (existing behavior)
 - [ ] `/cat:work 2.1` passes version filter correctly
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Read `plugin/skills/work/content.md` and locate the Phase 1 prepare section (around lines 62-84)

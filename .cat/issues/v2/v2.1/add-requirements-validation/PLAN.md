@@ -36,7 +36,7 @@ None - infrastructure improvement
 - [ ] Validation cross-checks against parent version REQ-xxx requirements
 - [ ] All existing tests pass with no regressions
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Add a new step `task_validate_criteria` to plugin/skills/add/content.md

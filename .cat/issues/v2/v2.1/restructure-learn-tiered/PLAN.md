@@ -25,7 +25,7 @@ None
 - plugin/skills/learn/phase-prevent.md - Add user_summary output requirement
 - plugin/skills/learn/phase-record.md - Add user_summary output requirement
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Read current SKILL.md and all 4 phase files** to understand current orchestration

@@ -21,7 +21,7 @@ None - bugfix
 `-Dstdout.encoding=UTF-8`. The JVM defaults `stdout.encoding` from the native locale, which is POSIX/ASCII in the
 container.
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

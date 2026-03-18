@@ -24,7 +24,7 @@ None (bugfix for add-empirical-compliance-testing-skill)
 - [ ] Skill registers in Claude Code's skill list after plugin cache update
 - [ ] SKILL.md follows same pattern as other skills (e.g., learn/SKILL.md)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Create `plugin/skills/empirical-test/SKILL.md` with description and load-skill.sh invocation

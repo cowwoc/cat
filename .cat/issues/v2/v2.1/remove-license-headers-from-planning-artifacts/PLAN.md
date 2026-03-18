@@ -31,7 +31,7 @@ None (housekeeping / convention compliance)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** For each file listed in "Files to Modify", remove the HTML license comment block at the top (the `<!--

@@ -22,7 +22,7 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Enumerate all Java hook handler classes under `client/src/main/java/`

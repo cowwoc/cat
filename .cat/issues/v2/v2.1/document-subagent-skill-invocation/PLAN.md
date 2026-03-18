@@ -36,7 +36,7 @@ Add a new section after "Subagent Responsibilities" covering these empirically-v
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Read agent-architecture.md** to find the right insertion point (after Subagent Responsibilities)

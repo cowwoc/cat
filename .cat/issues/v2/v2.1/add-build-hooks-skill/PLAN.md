@@ -17,7 +17,7 @@ None - developer tooling improvement
 ## Files to Modify
 - `.claude/skills/build-hooks/SKILL.md` - Create new skill definition
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Create `.claude/skills/build-hooks/SKILL.md` with build, test, and install steps

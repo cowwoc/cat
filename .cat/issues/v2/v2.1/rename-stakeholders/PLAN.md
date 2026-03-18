@@ -33,7 +33,7 @@ None - infrastructure/organization task
 - [ ] All references updated across all files
 - [ ] No broken references remain (grep verification)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Find all files referencing stakeholders path

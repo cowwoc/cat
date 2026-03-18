@@ -51,7 +51,7 @@ live at `{CLAUDE_CODE_SESSION_ID}/subagents/agent-{id}.jsonl`.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Investigate how Claude Code session ID differs from CLAUDE_SESSION_ID and how to resolve it

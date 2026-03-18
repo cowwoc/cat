@@ -19,7 +19,7 @@ compress-concepts-md (decomposed)
 - [ ] All files score 1.0 on /compare-docs validation
 - [ ] Tests pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. For each file: Invoke /cat:optimize-doc

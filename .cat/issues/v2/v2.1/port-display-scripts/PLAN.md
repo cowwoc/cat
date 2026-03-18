@@ -43,7 +43,7 @@ None - infrastructure/tech debt
 - `plugin/scripts/` - Remove ported scripts
 - `plugin/skills/*/SKILL.md` - Update script invocation paths
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Port Python display scripts to Java:** For each Python script, create corresponding Java class

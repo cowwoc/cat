@@ -31,7 +31,7 @@ requirements are not met.
 - [ ] version-utils.sh functions fail with clear error if cat_dir not provided
 - [ ] All tests pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Update register-hook.sh

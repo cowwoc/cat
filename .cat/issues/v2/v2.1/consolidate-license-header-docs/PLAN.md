@@ -18,7 +18,7 @@ which is the authoritative source for license header formats, rules, and exempti
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Consolidate CLAUDE.md license section:** Replace the full license header text, year rules, formatting rules, and

@@ -72,7 +72,7 @@ None
 - `hooks/src/test/resources/logback-test.xml` - create, set level to ERROR (silent tests)
 - `hooks/src/main/resources/logback.xml` - update pattern to `%msg%n` (bare messages, no timestamp)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

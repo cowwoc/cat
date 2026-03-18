@@ -59,7 +59,7 @@ None - infrastructure bugfix
 - [ ] Warnings documented in Critical Rules sections
 - [ ] All existing tests pass with no regressions
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Fix git-squash Quick Workflow

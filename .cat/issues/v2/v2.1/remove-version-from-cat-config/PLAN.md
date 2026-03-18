@@ -49,7 +49,7 @@ The field is NOT simply redundant - it tracks migration state. Removing it requi
 - `.cat/cat-config.json` - Remove `version` field (via migration)
 - New migration script to rename/remove the field
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Decide approach** - Choose between (A) rename, (B) separate file, or (C) remove entirely

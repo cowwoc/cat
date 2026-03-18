@@ -49,7 +49,7 @@ None - infrastructure/architectural improvement
 - [ ] Documentation shows how to find commits via git log
 - [ ] STATE.md uses simple "Resolution: implemented" (no hash)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Update commit-types.md

@@ -40,7 +40,7 @@ The version schema determines where tasks are stored:
 - [ ] All MD files updated to reflect new format
 - [ ] Existing commands/scripts handle all three formats
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Audit all files for version format references

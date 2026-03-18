@@ -24,7 +24,7 @@ None - infrastructure/tech debt (completes port-display-scripts parent issue)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Add multi-issue support to GetAddOutput.java:** The Python script handles comma-separated issue

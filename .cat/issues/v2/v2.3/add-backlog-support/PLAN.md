@@ -43,7 +43,7 @@ None (infrastructure improvement)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1: Data model and path detection
 - Add `backlog/` path support to version-paths.md and hierarchy.md

@@ -29,7 +29,7 @@ was replaced by the Java class but never wired up.
 - [ ] Stakeholder review skill no longer hits fail-fast for missing boxes
 - [ ] Error messages reference correct Java class instead of `stakeholder_review_handler.py`
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Research:** Determine how to invoke `GetStakeholderOutput` from SKILL.md preprocessing (CLI entry point needed?)

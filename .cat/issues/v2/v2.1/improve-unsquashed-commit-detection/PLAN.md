@@ -36,7 +36,7 @@ squashing before the approval gate, making the worktree check redundant.
 - [ ] Tests pass regardless of the worktree's actual commit count
 - [ ] Uses "issue" terminology consistently (not "task")
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

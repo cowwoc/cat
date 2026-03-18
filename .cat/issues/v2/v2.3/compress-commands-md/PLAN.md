@@ -25,7 +25,7 @@ None - infrastructure/optimization sub-issue
 - [ ] Execution equivalence verified (all files score 1.0 on /compare-docs)
 - [ ] No functionality regression
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. List all MD files in `plugin/commands/`

@@ -40,7 +40,7 @@ Replace "task" terminology with "issue" in all skill files.
 - plugin/skills/config/SKILL.md (from merged rename-task-in-commands)
 - plugin/skills/research/SKILL.md (from merged rename-task-in-commands)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Replace "task" with "issue" in all skill files

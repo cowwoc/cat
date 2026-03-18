@@ -33,7 +33,7 @@ None (infrastructure cleanup / token optimization)
   "### M-Code References"
 - [ ] Tests passing
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Strip all parenthesized M-code references from plugin/skills/**/*.md files.

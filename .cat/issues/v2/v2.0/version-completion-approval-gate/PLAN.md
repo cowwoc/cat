@@ -37,7 +37,7 @@ None - workflow improvement
 - [ ] Gate offers option to exit work loop
 - [ ] Behavior unchanged when staying within same version
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Identify where version boundary is detected in work.md

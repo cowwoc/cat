@@ -36,7 +36,7 @@ None - infrastructure rename
 - [ ] All tests pass (`mvn -f client/pom.xml test`)
 - [ ] Zero remaining `hooks/bin` references in `client/src/`
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Replace in SkillLoader.java:** Update 3 occurrences (Javadoc lines 67, 473 and path resolution line 521)

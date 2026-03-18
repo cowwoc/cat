@@ -31,7 +31,7 @@ None - infrastructure/tech debt
 - [ ] All JSON output is pretty-printed
 - [ ] All tests pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Add `getJsonMapper()` to `JvmScope` interface

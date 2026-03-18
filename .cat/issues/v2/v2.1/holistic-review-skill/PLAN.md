@@ -21,7 +21,7 @@ None - process improvement
 - [ ] Documentation updated
 - [ ] No regressions in existing functionality
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Update prepare step:** Modify context preparation to read full files instead of just diffs

@@ -23,7 +23,7 @@ None (infrastructure/UX improvement)
 - `plugin/hooks/skill_handlers/work_handler.py` — Add config reading in `handle()` method, inject values into output
 - `plugin/skills/work/SKILL.md` — Remove "Configuration" section (lines 71-79), reference pre-injected values
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Modify work_handler.py `handle()` method:**

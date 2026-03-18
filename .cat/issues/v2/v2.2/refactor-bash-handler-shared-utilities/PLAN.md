@@ -27,7 +27,7 @@ implementations.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Create `BashHandlerUtils` with shared constants and methods

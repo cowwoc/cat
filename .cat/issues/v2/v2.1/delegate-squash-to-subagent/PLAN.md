@@ -30,7 +30,7 @@ None - performance optimization
 - [ ] STATE.md closure is included in the squashed commit
 - [ ] Parent agent context consumed by Phase 6 is reduced by at least 50% compared to current baseline
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Measure current baseline**

@@ -74,7 +74,7 @@ The approved design from conversation:
 - [ ] Works with projects that have no patch versions (backward compatible)
 - [ ] Works with projects that have patch versions
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Update status_handler.py rendering logic

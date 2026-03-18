@@ -28,7 +28,7 @@ None - terminology cleanup
 - [ ] All replacements are contextually appropriate
 - [ ] All tests pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Search all files for "pre-computed", "precomputed", "Pre-computed", "Precomputed" variations

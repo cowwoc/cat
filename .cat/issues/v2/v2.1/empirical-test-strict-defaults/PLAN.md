@@ -30,7 +30,7 @@ None (infrastructure improvement)
 - [ ] Multiple trials execute concurrently (not sequentially)
 - [ ] `mvn -f client/pom.xml test` passes
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Change default trials to 10:** In `main()`, change `int trials = 5` to `int trials = 10`

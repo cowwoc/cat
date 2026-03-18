@@ -19,7 +19,7 @@ to `InjectSessionInstructions.java` (end-user plugin) so it applies to all CAT u
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Add "Directory before file write" paragraph to InjectSessionInstructions.java after "Chain independent commands"

@@ -64,7 +64,9 @@ None - infrastructure/tech debt (completes parent issue `port-utility-scripts`)
 - [ ] All Java util classes exist with correct business logic
 - [ ] Existing jlink build works (`client/build-jlink.sh` succeeds)
 
-## Execution Steps
+## Sub-Agent Waves
+
+### Wave 1
 1. **Add main() methods to all 6 Java util classes:** Follow the existing pattern from classes like `GetRenderDiffOutput.java` or `SessionAnalyzer.java` that already have main() methods. Each main() should parse CLI arguments, invoke the class logic, and write output to stdout.
 2. **Add launcher entries to build-jlink.sh:** Add 6 entries to the HANDLERS array: `work-prepare:util.WorkPrepare`, `wrap-markdown:util.MarkdownWrapper`, `batch-read:util.BatchReader`, `monitor-subagents:util.SubagentMonitor`, `register-hook:util.HookRegistrar`, `validate-status-alignment:util.StatusAlignmentValidator`.
 3. **Build jlink image:** Run `client/build-jlink.sh` and verify all 6 new launchers appear in `client/bin/`.

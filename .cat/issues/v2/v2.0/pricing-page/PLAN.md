@@ -48,7 +48,7 @@ review, this task implements a unified pricing strategy.
 - [ ] All pricing links point to consistent destination
 - [ ] Feature comparison table visible on pricing page
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

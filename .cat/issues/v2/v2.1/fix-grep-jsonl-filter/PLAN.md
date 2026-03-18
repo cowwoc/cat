@@ -33,7 +33,7 @@ This fails for grep output format `123:{"type":...}` because the line starts wit
 - [ ] Legitimate test failures still detected
 - [ ] Edge cases: multiple colons in line, non-numeric prefixes
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Update `_filter_json_content()` to handle grep's `line_number:json` format

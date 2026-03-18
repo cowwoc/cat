@@ -46,7 +46,7 @@ With optional --verbose for full breakdown.
 - [ ] --verbose flag available for full breakdown
 - [ ] Works when session file is unavailable (shows "Session data unavailable")
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Rewrite SKILL.md output format**

@@ -39,7 +39,7 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Add a new `## Monthly Winner Program` section at the bottom of `README.md`

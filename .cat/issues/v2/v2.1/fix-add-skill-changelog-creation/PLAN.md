@@ -47,7 +47,7 @@ instructions without corresponding bash scripts.
 - [ ] CHANGELOG.md follows template format
 - [ ] Existing patch version creation still works
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

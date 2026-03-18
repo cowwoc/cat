@@ -25,7 +25,7 @@ clickable video link.
 - [ ] Video link still works correctly
 - [ ] Renders properly on GitHub
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Research GitHub-compatible methods for video thumbnail enhancement

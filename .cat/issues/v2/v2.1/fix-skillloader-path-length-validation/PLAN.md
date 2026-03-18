@@ -38,7 +38,7 @@ original `$1...$N` becoming `$2...$N+1`.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Write a failing test that passes `"UUID description text"` as `skillArgs.getFirst()` and

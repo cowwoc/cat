@@ -19,7 +19,7 @@ None - documentation and schema hygiene
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Search all .cat/issues/**/*.md files for deprecated STATE.md fields (e.g., 'Last Updated', 'Completed',

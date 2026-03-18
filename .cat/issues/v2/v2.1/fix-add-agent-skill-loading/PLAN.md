@@ -47,7 +47,7 @@ retrospective-agent, shrink-doc-agent, status-agent, statusline-agent, work-agen
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Add fallback logic in `loadRawContent`: when loading `{skill}-agent` and `{skill}-agent/first-use.md`

@@ -22,7 +22,7 @@ None - infrastructure improvement
 - [ ] Tests written and passing - test coverage for PostToolUse handler
 - [ ] No regressions - existing UserPromptSubmit path still works
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Audit skill handlers:** Identify all handlers that generate output templates

@@ -75,7 +75,7 @@ A→B→(implicit sub-issue C)→A is never detected.
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

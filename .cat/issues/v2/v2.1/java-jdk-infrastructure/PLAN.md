@@ -31,7 +31,7 @@ Package prefix: `io.github.cowwoc.cat.hooks` (set in `java.sh` line ~171)
 
 JDK requirement: `CAT_JAVA_HOME` must be set (jlinked runtime only, no system JDK fallback)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Verify jlink configuration includes Jackson 3 modules

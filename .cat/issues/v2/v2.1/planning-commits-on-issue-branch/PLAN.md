@@ -39,7 +39,7 @@ None (workflow improvement)
 - [ ] New issues created mid-work are visible in the issue branch history
 - [ ] Merge to base branch includes the planning commits
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

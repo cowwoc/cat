@@ -21,7 +21,7 @@ None - Infrastructure/maintenance issue
 - [ ] CAT init and migration scripts are established
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

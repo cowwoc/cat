@@ -33,7 +33,7 @@ issue branches.
 - MergeAndCleanup.java contains syncBaseBranchWithOrigin called before getDivergenceCount
 - work-merge Step 3 no longer contains redundant fetch
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Add `syncBaseBranchWithOrigin` method to MergeAndCleanup.java:**

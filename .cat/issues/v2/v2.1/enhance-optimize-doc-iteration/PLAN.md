@@ -32,7 +32,7 @@ None
 - [ ] `2.1-rename-shrink-doc-to-optimize-doc` is closed (skill directories renamed)
 - [ ] `2.1-enhance-compare-docs-grading` is closed (severity and evidence fields available in compare-docs output)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1: Root Cause Categorization
 - Create `plugin/skills/optimize-doc-agent/first-use.md` with complete optimize-doc methodology:

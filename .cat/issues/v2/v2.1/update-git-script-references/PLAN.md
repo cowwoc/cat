@@ -45,7 +45,7 @@ None - follow-up to 2.1-port-git-scripts infrastructure work
 - `plugin/scripts/git-squash-optimized.sh`
 - `plugin/scripts/merge-and-cleanup.sh`
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Update each skill/concept** to reference Java class invocation instead of bash script

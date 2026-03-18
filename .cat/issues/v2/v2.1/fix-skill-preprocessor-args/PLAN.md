@@ -39,7 +39,7 @@ None - bug fix
 - [x] All tests still pass
 - [x] Args included in user_prompt for skill handlers
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

@@ -50,7 +50,7 @@ Or with helpful suggestion if close match exists:
 - [ ] Optional: "Did you mean X?" for close matches (Levenshtein distance)
 - [ ] Consistent with other compact output styles
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Update work.md task lookup section**

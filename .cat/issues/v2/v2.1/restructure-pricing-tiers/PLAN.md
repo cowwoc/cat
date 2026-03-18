@@ -32,7 +32,7 @@ None - strategic pricing restructure
 - [ ] No remaining references to "Indie" tier
 - [ ] Free tier defined as closed feature set, not persona-based
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Update tiers.json:** Rename indie→core, add pro tier with features moved from indie and new team features, keep enterprise unchanged

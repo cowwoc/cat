@@ -10,7 +10,7 @@ M346, M349, M355, M370, M421, M423.
 
 Current PLAN.md structure mixes execution instructions with expected values:
 ```
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Compress files using /cat:shrink-doc
@@ -37,13 +37,13 @@ Detection patterns:
 Separate actions from success criteria in PLAN.md template:
 
 ```markdown
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Compress files using /cat:shrink-doc
 2. Run /compare-docs validation
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

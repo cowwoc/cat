@@ -51,7 +51,7 @@ Cross-agent state must only flow through committed git history, never through sh
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Audit `work-with-issue-agent` orchestration: identify all points where the main agent or a

@@ -14,7 +14,7 @@ None - configuration improvement
 Conservative initial memory setting in `generate_launchers()` in `hooks/build-jlink.sh` and in
 `plugin/scripts/load-skill.sh`.
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

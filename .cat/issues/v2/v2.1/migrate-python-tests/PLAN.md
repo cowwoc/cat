@@ -51,7 +51,7 @@ Existing: `HookEntryPointTest.java` (11 tests)
 ## Dependencies
 - All handler sub-issues complete (handlers must work in Java before tests can validate them)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Read each Python test file** to understand test cases and assertions

@@ -27,7 +27,7 @@ None - infrastructure/documentation improvement
 - [ ] Code quality improved - model selection table now complete (haiku/sonnet/opus)
 - [ ] Technical debt reduced - addresses gap in model selection documentation
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

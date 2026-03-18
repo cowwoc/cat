@@ -49,7 +49,7 @@ None
 - [ ] All migrated skills produce correct output when invoked
 - [ ] No regressions in existing functionality
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Audit each skill**: For each of the 6 skills, identify all files that reference SKILL OUTPUT markers and check
