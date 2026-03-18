@@ -123,6 +123,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-skill-builder-fresh-subagent-per-run
 - refactor-learn-skill-files
 - remove-jvmscope-claudeenv-duplicates
+- fix-get-diff-agent-missing-arg
 
 
 ## Issues Closed
