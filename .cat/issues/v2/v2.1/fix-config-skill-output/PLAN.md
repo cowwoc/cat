@@ -55,7 +55,7 @@ GetConfigOutput.java exists with all box-building methods but:
 - [ ] GetConfigOutput implements SkillOutput interface
 - [ ] first-use.md contains output preprocessor directive
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

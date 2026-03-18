@@ -41,7 +41,7 @@ workspace take precedence.
 - [ ] `mvn -f hooks/pom.xml test` passes
 - [ ] Manual verification: issue with active lock file shows 🔄 in status output
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Add lock file detection:** In `getTaskStatus()`, after reading STATE.md, if status is `open`, check if a lock file

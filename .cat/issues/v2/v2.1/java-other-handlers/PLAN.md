@@ -52,7 +52,7 @@ Read handlers:
 | `posttool_handlers/user_input_reminder.py` | `UserInputReminder.java` | `plugin/hooks/src/io/github/cowwoc/cat/hooks/tool/post/` |
 | `posttool_handlers/validate_state_status.py` | `ValidateStateStatus.java` | `plugin/hooks/src/io/github/cowwoc/cat/hooks/tool/post/` |
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Create AbortClarification.java** - Port logic from `abort_clarification.py`

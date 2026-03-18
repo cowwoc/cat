@@ -31,7 +31,7 @@ None - infrastructure sub-issue of add-java-build-to-ci
 - [ ] Downloaded bundle passes functionality check
 - [ ] API failures produce clear warning without blocking session
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Add version reading logic to session_start.sh**

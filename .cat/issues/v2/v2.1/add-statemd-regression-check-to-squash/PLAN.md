@@ -40,7 +40,7 @@ None (infrastructure/prevention from M363)
 - [x] Skill SKILL.md files updated to reference Java launcher
 - [x] Bash script and bats tests deleted
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

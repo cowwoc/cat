@@ -20,7 +20,7 @@ None - infrastructure/performance task
 - [ ] Conditional flows still work (e.g., "Yes, select dependencies" still shows task list)
 - [ ] Wizard completes with fewer user interactions
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Identify combinable questions in add.md

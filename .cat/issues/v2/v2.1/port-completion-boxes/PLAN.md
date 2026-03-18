@@ -29,7 +29,7 @@ Parent: 2.1-port-display-scripts
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/skills/GetNextTaskOutput.java` - New
 - Update relevant handlers to call Java classes instead of Python scripts
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Read Python scripts** to understand exact output format and logic

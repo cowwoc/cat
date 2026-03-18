@@ -21,7 +21,7 @@ None - infrastructure task
 - [ ] Missing local config file does not cause errors
 - [ ] Existing behavior unchanged when no local config exists
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Identify config loading code

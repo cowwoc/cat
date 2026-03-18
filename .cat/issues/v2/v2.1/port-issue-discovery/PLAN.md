@@ -36,7 +36,7 @@ Parent: 2.1-port-workflow-scripts (sub-issue 3 of 4)
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/util/VersionUtils.java` - extend if needed
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/module-info.java` - if new exports needed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Read `get-available-issues.sh` thoroughly - understand issue scanning, dependency resolution, lock integration

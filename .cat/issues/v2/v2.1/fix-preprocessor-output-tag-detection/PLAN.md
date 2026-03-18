@@ -48,7 +48,7 @@ at line 563. The tag detection and content expansion happen in the wrong order.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1: TDD - Write failing tests
 - Create TestSkillOutputWithTag.java that returns `<output type="tag">content</output>`

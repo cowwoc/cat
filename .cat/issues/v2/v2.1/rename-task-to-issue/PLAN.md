@@ -21,7 +21,7 @@ None - terminology standardization
 - Reference documentation in .cat/references/
 - Any Python/shell scripts referencing "task"
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Inventory all files containing "task" terminology

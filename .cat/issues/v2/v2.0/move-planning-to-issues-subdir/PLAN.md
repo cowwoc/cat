@@ -24,7 +24,7 @@ None - infrastructure/maintenance task
 - [ ] No broken path references remain
 - [ ] CAT commands still work after move
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Find all external references:**

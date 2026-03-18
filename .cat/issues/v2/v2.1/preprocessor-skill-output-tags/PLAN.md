@@ -133,7 +133,7 @@ as proof-of-concept, enabling future subagent preloading without additional refa
 - [ ] skill-loading.md updated with `-first-use` pattern
 - [ ] All tests pass (`mvn -f client/pom.xml verify`)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

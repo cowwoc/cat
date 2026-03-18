@@ -22,7 +22,7 @@ preventing PATTERN-008 mistakes.
 - [ ] No false positives on legitimate uses (e.g., in code blocks)
 - [ ] Tests pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Create detect_manual_boxes.py PostToolUse handler

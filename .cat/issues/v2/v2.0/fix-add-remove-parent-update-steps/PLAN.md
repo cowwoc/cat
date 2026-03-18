@@ -38,7 +38,7 @@ All parent update steps have explicit bash commands showing:
 - [ ] Edge cases handled (missing sections create them)
 - [ ] Consistent with task_update_parent fix already applied
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Fix add.md minor_update_parent**

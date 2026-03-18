@@ -27,7 +27,7 @@ tracking, priming agents to conflate it with Task tool for spawning.
 - [ ] Original confusion scenarios - now have clear guidance
 - [ ] Documentation is unambiguous
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Update subagent-delegation.md

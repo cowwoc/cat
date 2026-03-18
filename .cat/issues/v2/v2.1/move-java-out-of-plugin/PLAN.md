@@ -42,7 +42,7 @@ These files contain `hooks/` paths. Update to `hooks/`:
 - `.cat/issues/v2/v2.1/migrate-python-to-java/PLAN.md`
 - `.cat/issues/v2/v2.1/mavenize-java-hooks/PLAN.md`
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

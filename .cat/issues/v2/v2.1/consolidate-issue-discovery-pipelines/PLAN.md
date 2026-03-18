@@ -35,7 +35,7 @@ None
 - [ ] All dependent issues are closed
 - [ ] extract-read-goal-from-plan-utility is closed (shared utility extracted first)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

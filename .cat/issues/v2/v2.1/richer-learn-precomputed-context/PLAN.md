@@ -33,7 +33,7 @@ of performing expensive JSONL searches at runtime. Target: reduce Phase 1 time b
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1: Enhance SessionAnalyzer
 

@@ -43,7 +43,7 @@ None — escalation A001 from retrospective (PATTERN-001: subagent_validation_fa
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

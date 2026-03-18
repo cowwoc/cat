@@ -65,7 +65,7 @@ turn typically shows high `cache_read_input_tokens` (shared system prompt, tool 
 `cache_creation_input_tokens` only for subagent-unique content (task prompt, agent instructions, injected skill
 listings).
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

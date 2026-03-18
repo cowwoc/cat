@@ -49,7 +49,7 @@ branch names use `date +%Y%m%d-%H%M%S` which follows $TZ."
 - [ ] Investigation duration < 5 minutes for typical mistakes
 - [ ] No loss of investigation quality (same root causes identified)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Create pre-extraction script:** Python script that takes session JSONL path + keywords, outputs structured JSON

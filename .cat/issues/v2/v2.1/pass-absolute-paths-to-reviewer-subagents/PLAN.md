@@ -35,7 +35,7 @@ ambiguity — the full path is directly usable without any prefix logic.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - In Batch 3 (file content preparation, ~line 505-571), change `### File: ${file}` to use the

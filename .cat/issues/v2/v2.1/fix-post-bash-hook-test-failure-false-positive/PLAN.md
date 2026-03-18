@@ -80,7 +80,7 @@ Explicitly exclude commands or output that are clearly diffs:
 - Modifications to test runners themselves
 - Changes to skills that invoke test runners
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] PostToolUse:Bash hook does NOT trigger "test_failure" detection on `git diff` output
 - [ ] PostToolUse:Bash hook does NOT trigger "test_failure" detection on `get-output get-diff`

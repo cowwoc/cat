@@ -32,7 +32,7 @@ STATE.md schema contains no date fields. `StateSchemaValidator` rejects files th
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - **Step 1:** Read `StateSchemaValidator.java`, `ValidateStateMdFormat.java`, and `StateSchemaValidatorTest.java` to

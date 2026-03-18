@@ -21,7 +21,7 @@ a hierarchical debt summary.
 ## Pre-conditions
 - [ ] `calculate-file-technical-debt` is closed (per-file calculation working)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Write failing tests for aggregation (TDD):

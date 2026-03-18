@@ -37,7 +37,7 @@ updates the data structure."
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Remove backwards-compatibility aliases from `IssueDiscovery.getIssueStatus()` — reject non-canonical

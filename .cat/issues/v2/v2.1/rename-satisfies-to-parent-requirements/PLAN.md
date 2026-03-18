@@ -47,7 +47,7 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1: Update Plugin Files
 - Rename `## Satisfies` → `## Parent Requirements` heading and all prose references in plugin template,

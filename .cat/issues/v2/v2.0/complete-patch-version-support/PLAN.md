@@ -40,7 +40,7 @@ The flexible-version-schema task focused on infrastructure (parsing) but skipped
 - [ ] Status command displays patch versions
 - [ ] README.md documents flexible MAJOR[.MINOR[.PATCH]] versioning
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Add "Patch version" option to add.md select_type**

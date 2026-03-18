@@ -25,7 +25,7 @@ None - internal architecture improvement
 - [ ] All tests still pass
 - [ ] Code quality improved (clear separation of concerns)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Remove threshold tables and context detection from compare-docs

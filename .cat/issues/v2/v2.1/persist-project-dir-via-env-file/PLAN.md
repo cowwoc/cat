@@ -39,7 +39,7 @@ can reference it as a live shell variable.
 - [ ] `/cat:work` runs without the empty project-dir error
 - [ ] Existing hook scripts that read CLAUDE_PROJECT_DIR from env still work
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Create persist-project-dir.sh** SessionStart hook script

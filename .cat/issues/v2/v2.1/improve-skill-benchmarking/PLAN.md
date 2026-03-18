@@ -50,7 +50,7 @@ None (infrastructure/tooling improvement)
 - [ ] Benchmark data is committed to the repository with each run
 - [ ] Backward compatibility is maintained where possible
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1: Change Detection and Semantic Unit Mapping
 1. **Step 1:** Implement diff logic to identify changed semantic units

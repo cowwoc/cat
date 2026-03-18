@@ -54,7 +54,7 @@ None
 ## Pre-conditions
 None
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1: Rename Skill Directories
 - `git mv plugin/skills/shrink-doc-agent/ plugin/skills/optimize-doc-agent/`

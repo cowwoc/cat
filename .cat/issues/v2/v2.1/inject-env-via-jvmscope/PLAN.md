@@ -32,7 +32,7 @@ None
 - `hooks/src/main/java/.../MainJvmScope.java` - Production impl with lazy env var reading
 - `hooks/src/test/java/.../test/TestJvmScope.java` - Test impl with injectable paths
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Add `getClaudeProjectDir()` and `getClaudePluginRoot()` to `JvmScope` interface

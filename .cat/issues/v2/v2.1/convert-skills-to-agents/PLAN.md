@@ -111,7 +111,7 @@ These remain as skills but are now preloaded into agents:
 - [ ] No manual duplication of git instructions in agent prompts
 - [ ] Clean separation: agents in plugin/agents/, skills in plugin/skills/
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

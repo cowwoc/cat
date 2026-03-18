@@ -20,7 +20,7 @@ defined in `define-technical-debt-metric`.
 ## Pre-conditions
 - [ ] `define-technical-debt-metric` is closed (metric definition finalized)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Read the metric definition from `plugin/concepts/technical-debt-metric.md`

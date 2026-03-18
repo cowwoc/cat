@@ -118,7 +118,7 @@ Modify `SessionStartHook` and `SubagentStartHook` to:
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Audit content**: Review `.claude/rules/common.md`, `.claude/rules/hooks.md`, and `CLAUDE.md` to classify each

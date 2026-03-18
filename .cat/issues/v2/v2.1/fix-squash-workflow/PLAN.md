@@ -28,7 +28,7 @@ None - infrastructure/retrospective action item
 - [ ] STATE.md file grouping rules are explicit and unambiguous
 - [ ] All tests pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Read current squash skill and work-with-issue squash instructions

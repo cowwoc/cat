@@ -39,7 +39,7 @@ None - infrastructure improvement
 - [ ] Banner patterns show 5 phases
 - [ ] All existing tests pass with no regressions
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Rename plugin/skills/audit-plan to plugin/skills/verify-implementation

@@ -29,7 +29,7 @@ None (user onboarding improvement)
 - [ ] All detail pages linked from README
 - [ ] No content lost, only reorganized
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Create docs/ directory structure**

@@ -59,7 +59,7 @@ None - terminology and documentation
 - [ ] delegate/SKILL.md contains formal wave definition and respects wave ordering
 - [ ] All tests pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Add terminology definitions section to README.md

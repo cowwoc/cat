@@ -27,7 +27,7 @@ None - infrastructure sub-issue of add-java-build-to-ci
 - [ ] Stale detection works (only rebuilds when needed)
 - [ ] Bundle version matches plugin.json after rebuild
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Create build-bundle.sh script**

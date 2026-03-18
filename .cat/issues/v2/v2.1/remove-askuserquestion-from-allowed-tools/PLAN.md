@@ -56,7 +56,7 @@ All SKILL.md files containing `AskUserQuestion` in their `allowed-tools` list:
 
 - None
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1: Remove AskUserQuestion from all allowed-tools lists
 

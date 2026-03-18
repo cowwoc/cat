@@ -53,7 +53,7 @@ Update Step 2 to pass `run_in_background: True` when background mode is selected
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

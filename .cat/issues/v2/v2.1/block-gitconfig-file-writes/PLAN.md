@@ -45,7 +45,7 @@ It has no awareness of arbitrary shell writes to well-known gitconfig file paths
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Add a pattern that detects shell write redirections to canonical gitconfig paths:

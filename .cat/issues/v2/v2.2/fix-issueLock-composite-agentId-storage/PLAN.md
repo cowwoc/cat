@@ -42,7 +42,7 @@ None (infrastructure bugfix)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Update `determineLockReason()` in `BlockUnsafeRemoval` to extract sessionId from composite agentId

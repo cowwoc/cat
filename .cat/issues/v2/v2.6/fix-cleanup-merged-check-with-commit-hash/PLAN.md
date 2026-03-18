@@ -67,7 +67,7 @@ branch info automatically. `WorkPrepare` writes the field at worktree creation t
 
 - [x] Issue `2.1-remove-cat-branch-point-references` is closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

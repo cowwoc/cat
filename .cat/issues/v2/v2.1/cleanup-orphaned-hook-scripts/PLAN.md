@@ -18,7 +18,7 @@ Two infrastructure scripts should be kept:
 ## Target State
 Orphaned scripts either removed (if truly unused) or documented and registered (if still needed).
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. For each orphaned script, search for references (sourced by other scripts, called from Java, etc.)

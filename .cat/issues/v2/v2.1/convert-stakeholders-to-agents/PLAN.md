@@ -80,7 +80,7 @@ model: haiku
 - [ ] `grep -r 'stakeholders/' plugin/` returns no results
 - [ ] Stakeholder-based skills (stakeholder-review, research) still function
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

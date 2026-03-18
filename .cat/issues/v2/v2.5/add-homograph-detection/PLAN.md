@@ -24,7 +24,7 @@ in URLs, domains, and user input prompts. Inspired by Tirith's terminal security
 - [ ] Documentation updated
 - [ ] No regressions
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Research Unicode confusable characters and build detection logic

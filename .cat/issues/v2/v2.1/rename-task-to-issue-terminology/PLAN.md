@@ -49,7 +49,7 @@ None (terminology consistency)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Scan all files in `plugin/agents/`, `plugin/concepts/`, `plugin/skills/` for "task"

@@ -52,7 +52,7 @@ None - infrastructure improvement
 - [ ] `render-add-complete.sh --name "a, b, c"` produces numbered list with plural header
 - [ ] Box alignment correct in both cases (verify with terminal output)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

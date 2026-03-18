@@ -48,7 +48,7 @@ output but does NOT check `exit_code != 0`. Compare with Pattern 13 (line 195-20
 - [ ] No false positives for intentional path handling with exit_code=0
 - [ ] Real path errors (exit_code != 0) still detected
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Edit `plugin/hooks/posttool_handlers/auto_learn.py`

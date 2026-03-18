@@ -23,7 +23,7 @@ Implement GitHub Issues backend that stores planning metadata as GitHub Issues w
 - [ ] Works with `gh` CLI authentication
 - [ ] Rate limiting handled gracefully
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Design GitHub mapping**

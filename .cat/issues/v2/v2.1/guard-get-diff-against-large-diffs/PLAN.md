@@ -20,7 +20,7 @@ is excessively large (e.g., 158K insertions across 1588 files when diffing v2.1 
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Add guard using DiffStats before raw diff retrieval** — In `getOutput(Path projectRoot)`, after the existing

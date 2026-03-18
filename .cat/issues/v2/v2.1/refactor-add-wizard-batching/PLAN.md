@@ -40,7 +40,7 @@ Note: issue_suggest_version cannot be batched with issue_suggest_names because n
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

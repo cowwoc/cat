@@ -30,7 +30,7 @@ None (infrastructure cleanup)
 - [ ] deviation-rules.md contains only Deviation Rules and Plan Change Checkpoint
 - [ ] No grep hits for removed section headers in active skill files
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Edit `plugin/skills/work/anti-patterns.md` - remove Background Task Behavior section (lines 9-24), Config settings list (lines 66-70), entire Anti-Pattern Index section (lines 94-166). Update title/header to reflect remaining content (Main Agent Boundaries).

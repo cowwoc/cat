@@ -124,7 +124,7 @@ work → work-with-issue (main agent orchestrates directly)
 - [ ] work-batch-executor, work-review, work-execute deleted
 - [ ] No references to deleted skills remain
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

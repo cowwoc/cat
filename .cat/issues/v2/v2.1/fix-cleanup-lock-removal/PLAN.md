@@ -47,7 +47,7 @@ The `BlockLockManipulation` hook error message does not include information abou
 - [ ] Test suite passes with exit code 0
 - [ ] No regressions in existing BlockLockManipulation blocking behavior
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

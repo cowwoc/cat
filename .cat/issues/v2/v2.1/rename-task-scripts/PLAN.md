@@ -22,7 +22,7 @@ None (first in sequence)
 - plugin/scripts/monitor-subagents.sh (if references task-lock.sh)
 - plugin/scripts/merge-and-cleanup.sh (if references task-lock.sh)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Rename find-task.sh to get-available-issues.sh

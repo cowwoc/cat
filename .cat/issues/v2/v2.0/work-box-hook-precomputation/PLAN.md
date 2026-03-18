@@ -42,7 +42,7 @@ at skill invocation, and the LLM outputs them verbatim.
 - [ ] Low-trust Task Complete box renders with aligned borders
 - [ ] Handler gracefully handles missing task info
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Create work_handler.py**

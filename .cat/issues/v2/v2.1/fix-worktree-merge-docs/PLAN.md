@@ -30,7 +30,7 @@ prevent accidental branch switches.
 - [ ] Documentation clearly explains the scenario
 - [ ] No regressions
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Add section to merge-and-cleanup.md

@@ -29,7 +29,7 @@ None (convention compliance)
 - [ ] skill-loading.md reflects current `<output>` tag pattern (no `<skill>` tag references)
 - [ ] skill-loading.md examples match actual agent frontmatter
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Research prefix requirement:** Test whether `cat:` prefix is required for plugin skill resolution in frontmatter

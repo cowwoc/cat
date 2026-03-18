@@ -30,7 +30,7 @@ None - infrastructure sub-issue of add-java-build-to-ci
 - [ ] GitHub Actions workflow builds and publishes successfully
 - [x] ~~java.sh finds JAR from bundle location~~ (N/A - jlink module system handles this)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Modify build-jlink.sh to include cat-hooks.jar**

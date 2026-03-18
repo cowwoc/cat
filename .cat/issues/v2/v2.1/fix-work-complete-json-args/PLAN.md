@@ -27,7 +27,7 @@ The curly braces in the JSON are interpreted by shell brace expansion before the
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Investigate the quoting pipeline:** Trace how arguments flow from Skill tool invocation through

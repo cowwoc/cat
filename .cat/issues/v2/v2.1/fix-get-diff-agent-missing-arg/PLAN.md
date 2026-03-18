@@ -49,7 +49,9 @@ There are two separate bugs:
 
 Both must be fixed.
 
-## Execution Steps
+## Sub-Agent Waves
+
+### Wave 1
 
 1. Open `plugin/skills/work-merge-agent/first-use.md`.
 

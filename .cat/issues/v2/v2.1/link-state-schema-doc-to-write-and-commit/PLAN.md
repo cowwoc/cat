@@ -47,7 +47,7 @@ None - infrastructure enforcement
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - In `plugin/skills/write-and-commit-agent/first-use.md`, add a "STATE.md Files" subsection under

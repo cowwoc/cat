@@ -39,7 +39,7 @@ Parent: 2.1-port-workflow-scripts (sub-issue 2 of 4)
 ## Files to Modify
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/module-info.java` - if new exports needed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. Read `create-issue.py` - understand directory creation and commit logic

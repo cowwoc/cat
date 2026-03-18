@@ -50,7 +50,7 @@ checks already validate parameter counts.
 - `plugin/scripts/get-work-boxes.sh`
 - `plugin/scripts/validate-status-alignment.sh`
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

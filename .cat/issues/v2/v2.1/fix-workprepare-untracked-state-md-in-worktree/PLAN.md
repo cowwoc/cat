@@ -42,7 +42,7 @@ not in git). IssueDiscovery still returns `createStateMd=false` for this case.
 ## Pre-conditions
 - All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** In `WorkPrepare.java` `executeWithLock()` around line 513, locate the

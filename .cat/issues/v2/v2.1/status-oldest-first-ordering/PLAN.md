@@ -20,7 +20,7 @@ None
 ## Pre-conditions
 - [ ] `2.1-work-select-oldest-first` is closed (provides `listIssueDirsByAge()`)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - In `IssueDiscovery.java`, replace the `listIssueDirs(minorDir)` calls used for status display

@@ -47,7 +47,7 @@ None — escalation A003 from retrospective (PATTERN-003: path_config_assumption
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

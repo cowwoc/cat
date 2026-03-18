@@ -46,7 +46,7 @@ None - UX polish
 - [ ] All create-issue.py tests pass
 - [ ] Existing add_handler display tests still pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

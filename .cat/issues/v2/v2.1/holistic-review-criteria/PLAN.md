@@ -30,7 +30,7 @@ None - process improvement
 - [ ] Criteria explicitly require evaluating impact on entire project
 - [ ] Anti-accumulation checks prevent death by a thousand cuts
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Define holistic template:** Create standard holistic review section for all stakeholders

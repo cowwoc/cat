@@ -52,7 +52,7 @@ so paths with `..` components are canonicalized before comparison.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Write failing tests for the new test cases

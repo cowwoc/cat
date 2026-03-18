@@ -28,7 +28,7 @@ None - infrastructure/retrospective action item
 - [ ] No false positives for script file execution
 - [ ] All existing tests continue to pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Create PreToolUse bash handler that inspects Bash command input for problematic operators

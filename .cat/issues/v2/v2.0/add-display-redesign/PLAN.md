@@ -23,7 +23,7 @@ reliable emoji alignment.
 - [ ] Emoji alignment is correct (verified via hook preprocessor output)
 - [ ] Next steps shown in compact single-line format
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Create add_handler.py**

@@ -49,7 +49,7 @@ None (infrastructure improvement)
 - [ ] Running `/cat:learn` on a skill preprocessing failure correctly identifies "preprocessor corruption" as root cause
 - [ ] Running `/cat:empirical-test` on a skill with broken preprocessing detects the content mismatch
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Read current phase-investigate.md:** Understand the existing investigation flow and where the new step fits

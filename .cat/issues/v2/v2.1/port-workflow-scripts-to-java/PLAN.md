@@ -35,7 +35,7 @@ None (infrastructure/tech debt)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Read `issue-lock.sh` and document all subcommands, flags, and exit codes

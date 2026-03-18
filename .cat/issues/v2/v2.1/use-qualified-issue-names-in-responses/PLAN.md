@@ -20,7 +20,7 @@ suggesting next work, when summarizing created issues, etc.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Add instruction to InjectSessionInstructions.java:** Add a section to the injected session instructions requiring

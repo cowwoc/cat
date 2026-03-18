@@ -44,7 +44,7 @@ time for both dates when these variables are absent.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - In `GitCommands.java`, add a new overload:

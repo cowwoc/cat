@@ -20,7 +20,7 @@ None - action item A025 from retrospective (PATTERN-021)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Audit wizard-based skills:** Search for skills that invoke AskUserQuestion or produce wizard

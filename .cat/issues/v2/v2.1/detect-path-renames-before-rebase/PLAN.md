@@ -97,7 +97,9 @@ Use `--find-renames=50%` explicitly so the behavior is documented.
 - `plugin/skills/git-rebase-agent/first-use.md` — add a section explaining the new path rename validation behavior
   so agents know what causes pre-rebase errors
 
-## Execution Steps
+## Sub-Agent Waves
+
+### Wave 1
 
 ### Step 1: Write failing tests in GitRebaseTest.java
 
@@ -274,7 +276,7 @@ Files to commit:
 - `plugin/skills/git-rebase-agent/first-use.md`
 - `.cat/issues/v2.1/detect-path-renames-before-rebase/STATE.md`
 
-## Success Criteria
+## Post-conditions
 
 - [ ] When the current branch has a file tracked at a path that was renamed on the target branch,
       `execute()` returns status `ERROR` before creating a backup, with a message naming the conflicting paths

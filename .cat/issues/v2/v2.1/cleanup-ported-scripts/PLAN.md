@@ -35,7 +35,7 @@ Parent: 2.1-port-display-scripts
 - `get-init-boxes.sh` (after port-init-boxes completes)
 - `render-add-complete.sh`
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

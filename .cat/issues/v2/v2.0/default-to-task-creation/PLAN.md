@@ -70,7 +70,7 @@ When work is suggested or requested:
   - high: Create task automatically, proceed to work
 - [ ] Existing `/cat:work` workflow unchanged
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Document the behavior in agent-architecture.md**

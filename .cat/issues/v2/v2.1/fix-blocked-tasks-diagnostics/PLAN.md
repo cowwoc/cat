@@ -40,7 +40,7 @@ checks each dependency's STATE.md status before adding to BLOCKED_TASKS. The com
 - [ ] Open dependencies still correctly reported as blockers
 - [ ] Mixed dependencies (some closed, some open) correctly filtered
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Edit `plugin/skills/work-prepare/SKILL.md` lines 146-175

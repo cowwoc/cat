@@ -28,7 +28,7 @@ Remove the `autoRemoveWorktrees` configuration option entirely. Hard-code the au
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

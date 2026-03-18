@@ -35,7 +35,7 @@ principle enforced by the step-level checks. The step-level checks are authorita
 - `plugin/skills/work-with-issue/content.md` - Replace the skip guidance (line 39-40) with fail-fast guidance matching
   the step-level checks
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

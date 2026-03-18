@@ -23,7 +23,7 @@ confirmation, and completion verification.
 - [ ] Output uses same box-drawing style as /cat:status
 - [ ] Emoji alignment is correct (verified via hook preprocessor output)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Create cleanup_handler.py**

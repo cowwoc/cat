@@ -21,7 +21,7 @@ None - infrastructure improvement
 - [ ] /cat:status displays correctly with dynamic sizing
 - [ ] No content truncation in rendered boxes
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Review current width calculation in build-box-lines.py

@@ -40,7 +40,7 @@ None - UX improvement / architecture consistency task
 - [ ] `next_task` step remains separate (user interaction)
 - [ ] Concept work.md "Batched into Finalization subagent" remains accurate
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

@@ -23,7 +23,7 @@ Parent: optimize-hook-json-parser (acceptance criterion 4)
 
 - [ ] hook.sh uses elif for AOTCache/SharedArchiveFile flags
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Read hook.sh** and locate the two independent `[[ -f ]]` checks for AOTCache and SharedArchiveFile

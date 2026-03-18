@@ -28,7 +28,7 @@ string comparisons throughout the codebase.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Create TrustLevel enum:** Extract `WorkPrepare.TrustLevel` to a top-level

@@ -90,7 +90,7 @@ Hook event behavior (verified from Claude Code source):
 - [ ] Subagent can load a skill via load-skill.sh when it identifies one from the listing
 - [ ] All tests pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Rename ForcedEvalSkills → ConsiderSkills, then remove from UserPromptSubmit

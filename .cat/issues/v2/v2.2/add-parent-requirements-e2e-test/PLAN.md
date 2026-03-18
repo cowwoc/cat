@@ -17,7 +17,7 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 - Create test verifying that invoking the add skill creates a PLAN.md containing `## Parent Requirements`

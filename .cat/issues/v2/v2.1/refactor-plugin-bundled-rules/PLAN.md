@@ -53,7 +53,7 @@ None — architectural refactor
 
 - [ ] refactor-rules-injection-classes is closed (InjectRulesToMainAgent and InjectRulesToSubAgent exist)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1: Create plugin rules directory and split InjectSessionInstructions
 

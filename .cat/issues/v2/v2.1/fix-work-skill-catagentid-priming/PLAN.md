@@ -50,7 +50,7 @@ pattern. The `argument-hint` in `work-with-issue-agent/SKILL.md` correctly shows
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

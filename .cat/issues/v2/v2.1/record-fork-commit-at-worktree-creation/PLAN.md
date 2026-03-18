@@ -95,7 +95,7 @@ With `cat-branch-point` storing an immutable fork-point commit, the following mi
 
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

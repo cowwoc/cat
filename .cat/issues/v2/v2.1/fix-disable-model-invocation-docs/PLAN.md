@@ -50,7 +50,7 @@ Incomplete documentation: flags and arguments are described by their mechanism b
 
 - [ ] merge-agent-skill-variants is closed (to avoid conflicts on skill-loading.md lines 266-303)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

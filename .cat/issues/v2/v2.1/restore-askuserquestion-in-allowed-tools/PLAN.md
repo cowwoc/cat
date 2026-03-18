@@ -51,7 +51,7 @@ All 17 SKILL.md files from the original removal:
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 

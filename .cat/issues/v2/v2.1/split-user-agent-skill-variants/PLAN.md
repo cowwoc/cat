@@ -113,7 +113,7 @@ content from `plugin/skills/<base-name>/` for both, so no content duplication is
 ## Pre-conditions
 - [ ] `rename-run-retrospective-skill` is closed (so we work with the final `retrospective` skill name)
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1: Create model-facing (-agent) skill directories and SKILL.md files
 - For each of the 20 skills listed above, create `plugin/skills/<name>-agent/SKILL.md`

@@ -99,7 +99,7 @@ No variant achieved 100% across all depths.
 - [ ] SkillLoader resends post-output content on subsequent invocations
 - [ ] All existing tests pass
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Modify SkillLoader.processContent():** Capture content after `</output>` in ParsedContent. On subsequent

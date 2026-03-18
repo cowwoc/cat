@@ -49,7 +49,7 @@ Core infrastructure (already implemented):
 ## Files to Modify
 - `plugin/hooks/hooks.json` - Replace 5 Python commands with java.sh calls
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Wire up GetSkillOutput** - Edit hooks.json line ~50, test by invoking a skill

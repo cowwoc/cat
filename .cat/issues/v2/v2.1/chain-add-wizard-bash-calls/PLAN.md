@@ -38,7 +38,7 @@ None - efficiency optimization
 - `plugin/skills/add/SKILL.md` - Update Bash code blocks in steps: task_validate_name, task_discuss,
   task_create, task_update_parent, task_commit to chain related operations
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Read `plugin/skills/add/SKILL.md` and identify all Bash code blocks in the issue creation workflow

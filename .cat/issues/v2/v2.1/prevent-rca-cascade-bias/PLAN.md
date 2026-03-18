@@ -28,7 +28,7 @@ None (infrastructure improvement)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Modify `plugin/skills/learn/first-use.md` Step 1 tier classification table

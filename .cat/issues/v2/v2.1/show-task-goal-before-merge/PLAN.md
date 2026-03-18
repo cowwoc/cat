@@ -20,7 +20,7 @@ None - UX improvement
 - [ ] Tests written and passing
 - [ ] No regressions to existing functionality
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Identify where merge approval gate is triggered

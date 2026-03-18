@@ -22,7 +22,7 @@ None - infrastructure/build improvement
 - `hooks/build.sh` - Update build paths
 - `plugin/hooks/hooks.json` - Update hook command references
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Move all Java sources from `plugin/hooks/src/` to `hooks/src/main/java/`

@@ -24,7 +24,7 @@ None - marketing/documentation task
 - [ ] Each feature has 2-3 sentence description explaining value
 - [ ] Videos show real multi-agent workflow in action
 
-## Execution Waves
+## Sub-Agent Waves
 
 ### Wave 1
 1. **Step 1:** Write feature descriptions for multi-agent commands
