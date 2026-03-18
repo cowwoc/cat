@@ -256,6 +256,38 @@ if (current.length() > 0)
   tokens.add(current.toString());
 ```
 
+### StringJoiner for Delimited Sequences
+Use `StringJoiner` to build delimited strings (with commas, newlines, or other separators) instead of manual
+`StringBuilder` loops with delimiter injection:
+
+```java
+// Good - StringJoiner with newline delimiter
+StringJoiner output = new StringJoiner("\n");
+try (BufferedReader reader = new BufferedReader(new FileReader(file)))
+{
+  String line;
+  while ((line = reader.readLine()) != null)
+    output.add(line);
+}
+return output.toString();
+
+// Avoid - manual StringBuilder with conditional delimiter
+StringBuilder output = new StringBuilder();
+try (BufferedReader reader = new BufferedReader(new FileReader(file)))
+{
+  String line;
+  while ((line = reader.readLine()) != null)
+  {
+    if (!output.isEmpty())
+      output.append('\n');
+    output.append(line);
+  }
+}
+return output.toString();
+```
+
+**Why:** `StringJoiner` is purpose-built for this pattern. It eliminates the error-prone conditional check (`if (!output.isEmpty())`) and is more idiomatic than manual delimiter injection.
+
 ### Conditional Expressions
 Use if/else statements instead of the ternary operator:
 
