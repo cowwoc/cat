@@ -28,11 +28,15 @@ non-startup sources must be relaxed to allow writes for `source="resume"`.
 
 Tag the new code path with: `// Workaround for https://github.com/anthropics/claude-code/issues/24775`
 
+`writeToResumedSessionDir()` must use `TRUNCATE_EXISTING` (overwrite) instead of `APPEND` when writing to the resumed
+session directory. Rationale: if `writeToAllSessionDirs()` already wrote to that dir during startup (because the
+leftover dir existed), appending during resume would create duplicate entries. Each hook writes to its own numbered
+file, so overwriting is safe.
+
 ## Risk Assessment
 - **Risk Level:** LOW
-- **Concerns:** If Claude Code fixes #24775 upstream, both `writeToAllSessionDirs()` and this new path may
-  write duplicate content. Since we use `APPEND` mode and the content is idempotent export statements,
-  duplicates are harmless.
+- **Concerns:** If Claude Code fixes #24775 upstream and `writeToAllSessionDirs()` already wrote to the resumed
+  session dir at startup, the resume write would overwrite with identical content — harmless.
 - **Mitigation:** Existing symlink security check in `writeToResumedSessionDir()` applies to the derived
   path.
 
@@ -44,13 +48,15 @@ Tag the new code path with: `// Workaround for https://github.com/anthropics/cla
 - [ ] Symlink security check applies to the derived path
 - [ ] Workaround comment references upstream issue URL
 - [ ] Tests cover `source="resume"` writing to the correct derived directory
+- [ ] Writing to the resumed session directory uses TRUNCATE_EXISTING (overwrite), not APPEND
 - [ ] `mvn -f client/pom.xml verify` exits with code 0
 
 ## Execution Waves
 
 ### Wave 1
 1. **Step 1:** Relax the early-return guard in `handle()` to allow `source="resume"` through, then call
-   `writeToResumedSessionDir()` with the resumed `session_id` and return.
+   `writeToResumedSessionDir()` with the resumed `session_id` and return. Update `writeToResumedSessionDir()` to use
+   `TRUNCATE_EXISTING` (overwrite) instead of `APPEND` when writing to the resumed session directory.
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/session/InjectEnv.java`
 2. **Step 2:** Update class-level and method-level Javadoc to document the new `source="resume"` behavior.
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/session/InjectEnv.java`
