@@ -414,4 +414,23 @@ Tests must be **self-contained**, **thread-safe**, and must **never impact the p
    controlled inputs and injectable dependencies (e.g., `Clock` for time, temp dirs for paths).
 
 **Why:** A leaky test that runs `git reset --soft HEAD~1 && git commit` against the real repo will silently corrupt the
-working branch on every build. This is catastrophic when builds happen automatically or in parallel.
+working branch on every build. This is catastrophic when builds automatically or in parallel.
+
+## Enforcement
+
+```cat-rules
+- pattern: "\\bjq\\b"
+  files: "*.sh"
+  severity: high
+  message: "jq is not available in the plugin runtime. Use Java (via jlink tools) or Bash pattern matching. See .claude/rules/common.md § Tool Availability."
+
+- pattern: "/workspace/"
+  files: "*.sh,*.md"
+  severity: medium
+  message: "Hardcoded /workspace/ path violates worktree isolation. Use ${CLAUDE_PROJECT_DIR} or ${WORKTREE_PATH}. See .claude/rules/common.md § Multi-Instance Safety."
+
+- pattern: "\\b(?:FIXME|TODO:[[:space:]]*fix|fallback|workaround)\\b"
+  files: "*"
+  severity: low
+  message: "Comment flag indicates known issue or workaround. Resolve or track as a separate issue. See .claude/rules/common.md."
+```
