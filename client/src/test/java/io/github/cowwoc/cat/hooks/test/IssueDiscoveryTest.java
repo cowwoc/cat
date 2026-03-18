@@ -19,8 +19,11 @@ import tools.jackson.databind.json.JsonMapper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -2196,6 +2199,166 @@ public class IssueDiscoveryTest
         TestUtils.deleteDirectoryRecursively(projectPath);
       }
     }
+  }
+
+  /**
+   * Verifies that a decomposed parent whose "Decomposed Into" section contains bare sub-issue names
+   * (without version prefix) is treated as {@code Decomposed} because {@code allSubissuesClosed()}
+   * skips bare names and returns {@code true} (empty list), making the parent appear eligible — but
+   * before migration the parent remains in a state where the sub-issue is actually open.
+   * <p>
+   * After running the Phase 17 migration (which qualifies the bare names), the parent correctly
+   * returns {@code Decomposed} when the sub-issue is open and {@code Found} when the sub-issue is
+   * closed.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void phase17MigrationQualifiesBareNamesAndAllSubissuesClosedBehavesCorrectly()
+    throws IOException
+  {
+    Path projectPath = TestUtils.createTempCatProject("issue-discovery-migration-test");
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    {
+      try
+      {
+        String sessionId = UUID.randomUUID().toString();
+
+        // Create a sub-task issue (open)
+        createIssue(projectPath, "2", "1", "sub-task", "open");
+
+        // Create a decomposed parent with a BARE sub-issue name (pre-migration state)
+        createDecomposedParentWithBareName(projectPath, "2", "1", "parent-task", "open", "sub-task");
+
+        // Before migration: bare names are skipped by allSubissuesClosed(), so it returns true,
+        // and the parent is treated as eligible (Found) rather than Decomposed.
+        // This is the bug that the migration fixes.
+        IssueDiscovery discoveryBefore = new IssueDiscovery(scope);
+        SearchOptions optionsBefore = new SearchOptions(Scope.ISSUE, "2.1-parent-task", sessionId,
+          "", false);
+        // With bare names, allSubissuesClosed() returns true (no qualified names to check),
+        // so the parent is Found (incorrectly eligible despite open sub-issue).
+        DiscoveryResult resultBefore = discoveryBefore.findNextIssue(optionsBefore);
+        requireThat(resultBefore, "resultBefore").isInstanceOf(DiscoveryResult.Found.class);
+
+        // Apply Phase 17 migration: qualify the bare sub-issue name in the parent STATE.md
+        Path parentStatePath = projectPath.resolve(".cat").resolve("issues").
+          resolve("v2").resolve("v2.1").resolve("parent-task").resolve("STATE.md");
+        applyPhase17Migration(parentStatePath, "2.1-");
+
+        // After migration: "sub-task" becomes "2.1-sub-task" in the Decomposed Into section.
+        // Verify STATE.md was updated correctly.
+        String migratedContent = Files.readString(parentStatePath);
+        requireThat(migratedContent, "migratedContent").contains("- 2.1-sub-task");
+        requireThat(migratedContent, "migratedContent").doesNotContain("- sub-task\n");
+
+        // After migration with sub-issue open: parent is Decomposed (cannot proceed)
+        IssueDiscovery discoveryAfterOpen = new IssueDiscovery(scope);
+        SearchOptions optionsAfterOpen = new SearchOptions(Scope.ISSUE, "2.1-parent-task", sessionId,
+          "", false);
+        DiscoveryResult resultAfterOpen = discoveryAfterOpen.findNextIssue(optionsAfterOpen);
+        requireThat(resultAfterOpen, "resultAfterOpen").isInstanceOf(DiscoveryResult.Decomposed.class);
+        DiscoveryResult.Decomposed decomposed = (DiscoveryResult.Decomposed) resultAfterOpen;
+        requireThat(decomposed.issueId(), "issueId").isEqualTo("2.1-parent-task");
+
+        // Now close the sub-issue
+        Path subTaskStatePath = projectPath.resolve(".cat").resolve("issues").
+          resolve("v2").resolve("v2.1").resolve("sub-task").resolve("STATE.md");
+        String closedState = """
+          # State
+
+          - **Status:** closed
+          - **Progress:** 100%
+          - **Dependencies:** []
+          - **Blocks:** []
+          """;
+        Files.writeString(subTaskStatePath, closedState);
+
+        // After migration with sub-issue closed: parent is Found (eligible to proceed)
+        IssueDiscovery discoveryAfterClosed = new IssueDiscovery(scope);
+        SearchOptions optionsAfterClosed = new SearchOptions(Scope.ISSUE, "2.1-parent-task", sessionId,
+          "", false);
+        DiscoveryResult resultAfterClosed = discoveryAfterClosed.findNextIssue(optionsAfterClosed);
+        requireThat(resultAfterClosed, "resultAfterClosed").isInstanceOf(DiscoveryResult.Found.class);
+        DiscoveryResult.Found found = (DiscoveryResult.Found) resultAfterClosed;
+        requireThat(found.issueId(), "issueId").isEqualTo("2.1-parent-task");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectPath);
+      }
+    }
+  }
+
+  /**
+   * Creates a decomposed parent issue with a bare (unqualified) sub-issue name in STATE.md.
+   * This represents the pre-migration state that Phase 17 corrects.
+   *
+   * @param projectPath the project root directory
+   * @param major the major version number
+   * @param minor the minor version number
+   * @param issueName the parent issue name
+   * @param status the parent issue status
+   * @param bareSubIssueName the bare (unqualified) sub-issue name to reference
+   * @throws IOException if file creation fails
+   */
+  private void createDecomposedParentWithBareName(Path projectPath, String major, String minor,
+    String issueName, String status, String bareSubIssueName) throws IOException
+  {
+    Path issueDir = projectPath.resolve(".cat").resolve("issues").
+      resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
+    Files.createDirectories(issueDir);
+
+    String stateContent = """
+      # State
+
+      - **Status:** %s
+      - **Progress:** 0%%
+      - **Dependencies:** []
+      - **Blocks:** []
+
+      ## Decomposed Into
+
+      - %s
+      """.formatted(status, bareSubIssueName);
+
+    Files.writeString(issueDir.resolve("STATE.md"), stateContent);
+  }
+
+  /**
+   * Applies the Phase 17 migration transformation to a STATE.md file.
+   * Qualifies bare sub-issue names in the "Decomposed Into" section by prepending the version prefix.
+   * Names already matching {@code digit.digit-} are left unchanged (idempotent).
+   *
+   * @param statePath the path to the STATE.md file to transform
+   * @param versionPrefix the version prefix to prepend (e.g., {@code "2.1-"})
+   * @throws IOException if reading or writing the file fails
+   */
+  private static void applyPhase17Migration(Path statePath, String versionPrefix) throws IOException
+  {
+    Pattern qualifiedPattern = Pattern.compile("^- \\d+\\.\\d+.*-.*");
+    List<String> lines = Files.readAllLines(statePath);
+    List<String> result = new ArrayList<>();
+    boolean inDecomposedSection = false;
+    for (String line : lines)
+    {
+      if (line.equals("## Decomposed Into"))
+      {
+        inDecomposedSection = true;
+        result.add(line);
+        continue;
+      }
+      if (inDecomposedSection && line.startsWith("## "))
+        inDecomposedSection = false;
+      if (inDecomposedSection && line.startsWith("- ") && !qualifiedPattern.matcher(line).matches())
+        result.add("- " + versionPrefix + line.substring(2));
+      else
+        result.add(line);
+    }
+    StringJoiner joiner = new StringJoiner("\n");
+    for (String line : result)
+      joiner.add(line);
+    Files.writeString(statePath, joiner.toString() + "\n");
   }
 
   /**

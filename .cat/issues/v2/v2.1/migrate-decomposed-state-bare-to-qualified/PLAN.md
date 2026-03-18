@@ -36,6 +36,20 @@ The decompose-issue-agent skill previously created bare names before the fix in 
 - Create Bats tests verifying the migration behavior
   - Files: `tests/hooks/migration-2.1.bats`
 
+### Wave 2
+- Install bats via `npm install -g bats` and run `bats tests/hooks/migration-2.1.bats` to execute all
+  Phase 17 tests; all 6 tests must pass with exit code 0
+  - Files: `tests/hooks/migration-2.1.bats` (read-only verification; no source changes unless a test
+    fails, in which case fix the failing test or the migration script)
+- Add a TestNG test to `IssueDiscoveryTest.java` that: (1) creates a temp project with a parent
+  STATE.md whose "Decomposed Into" section lists bare sub-issue names (e.g., `sub-task`), (2) runs
+  the Phase 17 migration on that temp project by invoking `plugin/migrations/2.1.sh` as a subprocess
+  or by replicating its awk transformation on the STATE.md file, (3) asserts that the STATE.md now
+  contains fully-qualified names (e.g., `2.1-sub-task`), and (4) calls `IssueDiscovery.findNextIssue()`
+  with the parent and asserts the result reflects correct `allSubissuesClosed()` behavior (parent is
+  `Decomposed` when sub-issues are open, `Found` when all sub-issues are closed)
+  - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/IssueDiscoveryTest.java`
+
 ## Post-conditions
 - [ ] All existing STATE.md "Decomposed Into" sections use fully-qualified names
 - [ ] Migration script is idempotent (running multiple times produces same result)

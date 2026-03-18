@@ -1,7 +1,8 @@
 # State
 
-- **Status:** in-progress
-- **Progress:** 50%
+- **Status:** closed
+- **Resolution:** implemented
+- **Progress:** 100%
 - **Dependencies:** [fix-decompose-issue-bare-names]
 - **Blocks:** []
 - **Target Branch:** v2.1
