@@ -26,12 +26,11 @@ import java.util.regex.Pattern;
  * Detects mistakes from tool results and suggests learn skill.
  * <p>
  * Monitors tool results for error patterns including build failures, test failures,
- * protocol violations, merge conflicts, and self-acknowledged mistakes.
+ * merge conflicts, and self-acknowledged mistakes.
  */
 public final class AutoLearnMistakes implements PostToolHandler
 {
   private static final int MAX_OUTPUT_LENGTH = 100_000;
-  private static final int MAX_PATTERN_GAP = 200;
   private final Map<String, Integer> sessionIdToLineCount = new HashMap<>();
 
   /**
@@ -170,6 +169,11 @@ public final class AutoLearnMistakes implements PostToolHandler
 
   /**
    * Detects mistake type from tool output.
+   * <p>
+   * Bash-failure patterns (Patterns 1, 2, 4, 7, 12, 13, 14, 15, 16) only trigger when the Bash tool
+   * exits with a non-zero code. A successful Bash command (exit_code == 0) cannot represent a real
+   * failure — any matching keywords in its output are false positives from displayed content
+   * (source files, git history, etc.).
    *
    * @param toolName the tool name
    * @param output the tool output
@@ -179,29 +183,69 @@ public final class AutoLearnMistakes implements PostToolHandler
    */
   private MistakeDetection detectMistake(String toolName, String output, int exitCode, String assistantMsg)
   {
-    String filtered = filterJsonContent(output);
+    String filtered = output;
 
-    // Pattern 1: Build failures
-    if (Pattern.compile("BUILD FAILURE|COMPILATION ERROR|compilation failure", Pattern.CASE_INSENSITIVE).
-        matcher(filtered).find())
-      return new MistakeDetection("build_failure", extractContext(filtered, "error|failure", 5));
+    if (toolName.equals("Bash") && exitCode != 0)
+    {
+      // Pattern 1: Build failures
+      if (Pattern.compile("BUILD FAILURE|COMPILATION ERROR|compilation failure",
+          Pattern.CASE_INSENSITIVE).matcher(filtered).find())
+        return new MistakeDetection("build_failure", extractContext(filtered, "error|failure", 5));
 
-    // Pattern 2: Test failures
-    String testFailPattern = "Tests run:.*Failures: [1-9]|\\d+\\s+tests?\\s+failed|" +
-        "\\d+\\s+failures?\\b|^\\s*\\S+\\s+\\.\\.\\.\\s+FAILED";
-    if (Pattern.compile(testFailPattern, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE).
-        matcher(filtered).find())
-      return new MistakeDetection("test_failure", extractContext(filtered, "fail|error", 5));
+      // Pattern 2: Test failures
+      String testFailPattern = "Tests run:.*Failures: [1-9]|\\d+\\s+tests?\\s+failed|" +
+          "\\d+\\s+failures?\\b|^\\s*\\S+\\s+\\.\\.\\.\\s+FAILED";
+      if (Pattern.compile(testFailPattern, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE).
+          matcher(filtered).find())
+        return new MistakeDetection("test_failure", extractContext(filtered, "fail|error", 5));
 
-    // Pattern 3: Protocol violations
-    if (Pattern.compile("PROTOCOL VIOLATION|VIOLATION").matcher(filtered).find())
-      return new MistakeDetection("protocol_violation", extractContext(filtered, "violation", 5));
+      // Pattern 4: Merge conflicts
+      if (Pattern.compile("CONFLICT \\(|^<<<<<<<|^=======$|^>>>>>>>",
+          Pattern.MULTILINE).matcher(filtered).find())
+        return new MistakeDetection("merge_conflict", extractContext(filtered, "CONFLICT \\(|<<<<<<<", 3));
 
-    // Pattern 4: Merge conflicts
-    if (Pattern.compile("CONFLICT \\(|^<<<<<<<|^=======$|^>>>>>>>", Pattern.MULTILINE).matcher(filtered).find())
-      return new MistakeDetection("merge_conflict", extractContext(filtered, "CONFLICT \\(|<<<<<<<", 3));
+      // Pattern 7: Git operation failures
+      String gitFiltered = filterGitNoise(filtered);
+      if (Pattern.compile("^fatal:|^error: ", Pattern.MULTILINE).matcher(gitFiltered).find())
+        return new MistakeDetection("git_operation_failure", extractContext(gitFiltered, "^fatal:|^error: ", 3));
 
-    // Pattern 5: Edit tool failures
+      // Pattern 12: Wrong working directory (git repo)
+      String gitRepoPattern = "fatal: not a git repository|not a git repository \\(or any";
+      if (Pattern.compile(gitRepoPattern, Pattern.CASE_INSENSITIVE).matcher(filtered).find())
+      {
+        return new MistakeDetection("wrong_working_directory",
+            extractContext(filtered, "not a git repository", 3));
+      }
+
+      // Pattern 13: Wrong working directory (pom.xml)
+      String pomPattern = "Could not (find|locate) (the )?pom\\.xml|No pom\\.xml found";
+      if (Pattern.compile(pomPattern, Pattern.CASE_INSENSITIVE).matcher(filtered).find())
+      {
+        return new MistakeDetection("wrong_working_directory",
+            extractContext(filtered, "pom\\.xml", 3));
+      }
+
+      // Pattern 14: Path errors in Bash
+      if (Pattern.compile(
+          "No such file or directory.*(/workspace|/tasks)|cannot access.*/workspace",
+          Pattern.CASE_INSENSITIVE).matcher(filtered).find())
+        return new MistakeDetection("wrong_working_directory",
+          extractContext(filtered, "No such file or directory|cannot access", 3));
+
+      // Pattern 15: Parse errors
+      if (Pattern.compile(
+          "parse error.*Invalid|jq: error|JSON.parse.*SyntaxError|malformed JSON",
+          Pattern.CASE_INSENSITIVE).matcher(filtered).find())
+        return new MistakeDetection("parse_error",
+          extractContext(filtered, "parse error|jq: error|JSON|SyntaxError", 5));
+
+      // Pattern 16: Bash parse errors
+      if (Pattern.compile("\\(eval\\):[0-9]+:.*parse error").matcher(filtered).find())
+        return new MistakeDetection("bash_parse_error",
+          extractContext(filtered, "\\(eval\\):[0-9]+:|parse error", 3));
+    }
+
+    // Pattern 5: Edit tool failures (no tool-type guard)
     if (Pattern.compile("String to replace not found|old_string not found", Pattern.CASE_INSENSITIVE).
         matcher(filtered).find())
     {
@@ -219,78 +263,8 @@ public final class AutoLearnMistakes implements PostToolHandler
           extractContext(filtered, "error|failed|could not|unable to", 5));
     }
 
-    // Pattern 7: Git operation failures
-    String gitFiltered = filterGitNoise(filtered);
-    if (Pattern.compile("^fatal:|^error: ", Pattern.MULTILINE).matcher(gitFiltered).find())
-      return new MistakeDetection("git_operation_failure", extractContext(gitFiltered, "^fatal:|^error: ", 3));
-
-    // Pattern 8: Missing cleanup
-    if (Pattern.compile("why didn't you (remove|delete|clean|cleanup)", Pattern.CASE_INSENSITIVE).
-        matcher(filtered).find())
-    {
-      return new MistakeDetection("missing_cleanup",
-          extractContext(filtered, "why didn't you|didn't you", 2));
-    }
-
-    // Pattern 9: Self-acknowledged mistakes
-    String selfAckPattern = "(you're|you are) (right|correct|absolutely right).{0," + MAX_PATTERN_GAP + "}" +
-        "(should have|should've)|I should have.{0," + MAX_PATTERN_GAP + "}instead";
-    if (Pattern.compile(selfAckPattern, Pattern.CASE_INSENSITIVE).matcher(filtered).find())
-    {
-      return new MistakeDetection("self_acknowledged_mistake",
-          extractContext(filtered, "you're right|should have", 5));
-    }
-
-    // Pattern 10: Restore from backup
-    if (Pattern.compile(
-        "(let me|I'll|I will|going to) (restore|reset).*(from|using|to).{0,10}backup",
-        Pattern.CASE_INSENSITIVE).matcher(filtered).find())
-      return new MistakeDetection("restore_from_backup", extractContext(filtered, "restore|reset|backup", 3));
-
-    // Pattern 11: Critical self-acknowledgments (requires first-person framing to avoid false positives
-    // from severity-table vocabulary like "critical issues" or "critical error in severity table")
-    String criticalSelfAckPattern =
-      "I (made|caused|introduced|created|committed) a CRITICAL" +
-      "|this (is|was) a CRITICAL (DISASTER|MISTAKE|ERROR|FAILURE|BUG|PROBLEM)" +
-      "|(catastrophic|devastating) (mistake|error|failure|bug)";
-    if (Pattern.compile(criticalSelfAckPattern, Pattern.CASE_INSENSITIVE).matcher(gitFiltered).find())
-      return new MistakeDetection("critical_self_acknowledgment",
-        extractContext(gitFiltered, "CRITICAL|catastrophic|devastating", 5));
-
-    // Pattern 12: Wrong working directory
-    String gitRepoPattern = "fatal: not a git repository|not a git repository \\(or any";
-    if (Pattern.compile(gitRepoPattern, Pattern.CASE_INSENSITIVE).matcher(filtered).find())
-    {
-      return new MistakeDetection("wrong_working_directory",
-          extractContext(filtered, "not a git repository", 3));
-    }
-
-    // Pattern 13: Missing pom.xml
-    String pomPattern = "Could not (find|locate) (the )?pom\\.xml|No pom\\.xml found";
-    if (Pattern.compile(pomPattern, Pattern.CASE_INSENSITIVE).matcher(filtered).find())
-    {
-      return new MistakeDetection("wrong_working_directory",
-          extractContext(filtered, "pom\\.xml", 3));
-    }
-
-    // Pattern 14: Path errors in Bash
-    if (toolName.equals("Bash") && Pattern.compile(
-        "No such file or directory.*(/workspace|/tasks)|cannot access.*/workspace",
-        Pattern.CASE_INSENSITIVE).matcher(filtered).find())
-      return new MistakeDetection("wrong_working_directory",
-        extractContext(filtered, "No such file or directory|cannot access", 3));
-
-    // Pattern 15: Parse errors
-    if (exitCode != 0 && Pattern.compile(
-        "parse error.*Invalid|jq: error|JSON.parse.*SyntaxError|malformed JSON",
-        Pattern.CASE_INSENSITIVE).matcher(filtered).find())
-      return new MistakeDetection("parse_error", extractContext(filtered, "parse error|jq: error|JSON|SyntaxError", 5));
-
-    // Pattern 16: Bash parse errors
-    if (toolName.equals("Bash") && Pattern.compile("\\(eval\\):[0-9]+:.*parse error").matcher(filtered).find())
-      return new MistakeDetection("bash_parse_error", extractContext(filtered, "\\(eval\\):[0-9]+:|parse error", 3));
-
-    // Check assistant messages
+    // Check assistant messages for self-acknowledged mistakes. These patterns detect agent
+    // reasoning/dialogue and can only appear meaningfully in agent responses, not in tool output.
     if (!assistantMsg.isEmpty())
     {
       if (Pattern.compile("I made a critical (error|mistake)|CRITICAL (DISASTER|MISTAKE|ERROR)",
@@ -303,31 +277,6 @@ public final class AutoLearnMistakes implements PostToolHandler
     }
 
     return null;
-  }
-
-  /**
-   * Filters out JSON/JSONL content to avoid false positives.
-   *
-   * @param output the raw output
-   * @return filtered output
-   */
-  private String filterJsonContent(String output)
-  {
-    StringBuilder result = new StringBuilder();
-    for (String line : output.split("\n"))
-    {
-      String stripped = line.strip();
-      if (stripped.startsWith("{") && (stripped.contains("\"type\":") ||
-          stripped.contains("\"parentUuid\":") || stripped.contains("\"sessionId\":")))
-        continue;
-      if ((stripped.startsWith("[{") || stripped.startsWith("{\"")) &&
-          (stripped.contains("\"type\":") || stripped.contains("\"message\":")))
-        continue;
-      if (!result.isEmpty())
-        result.append('\n');
-      result.append(line);
-    }
-    return result.toString();
   }
 
   /**
