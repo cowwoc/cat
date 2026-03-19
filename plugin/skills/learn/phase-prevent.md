@@ -11,8 +11,7 @@ This phase identifies prevention strategies, evaluates quality, implements fixes
 
 Complete the prevention phase for the learn skill. You will receive analysis results from Phase 2 as input.
 
-Your final message must be ONLY the JSON result object with no surrounding text or explanation. The parent agent parses
-your response as JSON.
+Output the JSON result object at the end of your analysis — this is how the orchestrator parses your findings.
 
 ## Input
 
@@ -798,13 +797,14 @@ In those cases, set `empirical_verification_skipped: true` in output JSON with a
 
 ## Output Format
 
-Your final message MUST be ONLY this JSON (no other text):
+Your final message must be ONLY this JSON object (no other text) — the main agent will parse this to
+orchestrate the next phase. Copy and fill in the values:
 
 ```json
 {
   "phase": "prevent",
   "status": "COMPLETE",
-  "user_summary": "1-3 sentence summary of what this phase did (for display to user between phases)",
+  "internal_summary": "1-3 sentence summary of what this phase did",
   "prevention_type": "code_fix|hook|validation|config|skill|process|documentation",
   "prevention_implemented": true,
   "prevention_level": 1,

@@ -83,6 +83,39 @@ Four priming sources identified (M408 pattern — imperative framing triggers an
 - Check the parent learn skill orchestrator for any references to `user_summary` and update to `internal_summary`
   - Files: `plugin/skills/learn/` (all files referencing `user_summary`)
 
+### Wave 2
+
+- Add a Bats test file at `plugin/skills/learn/tests/test-phase-output-schema.bats` that uses `grep` to assert
+  that each of the three phase files (`phase-investigate.md`, `phase-analyze.md`, `phase-prevent.md`) contains
+  an `internal_summary` field in its JSON output template and does NOT contain a `user_summary` field, and that
+  each file contains the user-centric preamble `"The user wants to receive this exact JSON object"` — providing
+  a repeatable, automated verification of the output schema without requiring a live subagent session
+  - Files: `plugin/skills/learn/tests/test-phase-output-schema.bats`
+- Fix the bats test helper load path in `plugin/skills/learn/tests/test-phase-output-schema.bats` line 11: change
+  `load "${BATS_TEST_DIRNAME}/../../../tests/test_helper"` to
+  `load "${BATS_TEST_DIRNAME}/../../../../tests/test_helper"` — the test file is 4 levels deep under the project
+  root (`plugin/skills/learn/tests/`), so 4 `..` segments are required to reach `tests/test_helper`
+  - Files: `plugin/skills/learn/tests/test-phase-output-schema.bats`
+- Add a `LEARN_DIR` guard variable at the top of `plugin/skills/learn/tests/test-phase-output-schema.bats`:
+  `LEARN_DIR="${BATS_TEST_DIRNAME}/.."` and use `"${LEARN_DIR}/phase-investigate.md"` (etc.) in tests instead
+  of constructing the path inline each time — this makes the test file's root assumption explicit and avoids
+  repetition
+  - Files: `plugin/skills/learn/tests/test-phase-output-schema.bats`
+- Add bats tests to `plugin/skills/learn/tests/test-phase-output-schema.bats` that assert the phrase
+  `"for display to user between phases"` does NOT appear in each of the three phase files
+  (`phase-investigate.md`, `phase-analyze.md`, `phase-prevent.md`) — one test per file, matching the
+  post-condition that this phrase is absent from all phase files
+  - Files: `plugin/skills/learn/tests/test-phase-output-schema.bats`
+- Add a bats test to `plugin/skills/learn/tests/test-phase-output-schema.bats` that verifies `first-use.md`
+  documents the `"internal_summary"` field (not `"user_summary"`) in the `phase_summaries` schema — grep for
+  `'"internal_summary"'` (with quotes) in `first-use.md` to confirm the schema section is correct
+  - Files: `plugin/skills/learn/tests/test-phase-output-schema.bats`
+- Strengthen all grep patterns in `plugin/skills/learn/tests/test-phase-output-schema.bats` that check for
+  field names (e.g., `grep -q 'internal_summary'`) to use quoted JSON patterns instead
+  (e.g., `grep -q '"internal_summary"'`) — this prevents false positives from matching the field name in
+  comments or prose
+  - Files: `plugin/skills/learn/tests/test-phase-output-schema.bats`
+
 ## Post-conditions
 
 - [ ] All three phase files updated with user-centric output framing
