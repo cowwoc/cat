@@ -130,6 +130,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-inject-env-resume-session-id
 - clarify-git-rebase-conflict-handling
 - refactor-claudeenv-api
+- fix-autolearn-diff-false-positive
 
 
 ## Issues Closed
