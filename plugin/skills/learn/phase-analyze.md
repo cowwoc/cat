@@ -13,8 +13,7 @@ Complete the analysis phase for the learn skill.
 
 **IMPORTANT:** You will receive investigation results from Phase 1 as input.
 
-Your final message must be ONLY the JSON result object with no surrounding text or explanation.
-The parent agent parses your response as JSON.
+Output the JSON result object at the end of your analysis — this is how the orchestrator parses your findings.
 
 ## Input
 
@@ -344,13 +343,14 @@ Check: Was the right thing possible? Did guidance exist? Why wasn't it followed?
 
 ## Output Format
 
-Your final message MUST be ONLY this JSON (no other text):
+Your final message must be ONLY this JSON object (no other text) — the main agent will parse this to
+orchestrate the next phase. Copy and fill in the values:
 
 ```json
 {
   "phase": "analyze",
   "status": "COMPLETE",
-  "user_summary": "1-3 sentence summary of what this phase found (for display to user between phases)",
+  "internal_summary": "1-3 sentence summary of what this phase found",
   "mistake_description": {
     "timestamp": "ISO-8601",
     "type": "incorrect_implementation|protocol_violation|tool_misuse|etc",

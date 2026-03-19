@@ -111,7 +111,7 @@ Delegate to general-purpose subagent using the Task tool with these JSON paramet
 > For each phase:
 > 1. Use the Read tool to load the phase file from ${CLAUDE_PLUGIN_ROOT}/skills/learn/
 > 2. Follow the instructions in that phase file
-> 3. Generate a user_summary (1-3 sentences) of what you found/did
+> 3. Generate an internal_summary (1-3 sentences) of what you found/did
 > 4. Include the phase result in your final JSON output
 > 5. Pass results from previous phases as input to subsequent phases (as documented in phase files)
 >
@@ -131,16 +131,15 @@ Delegate to general-purpose subagent using the Task tool with these JSON paramet
 > hash field to `null`. If prevention was not implemented, set `prevention_implemented` to `false`. Fabricated
 > values corrupt the learning record and will be discovered on review.
 >
-> **Your FINAL message must be ONLY the JSON result object below — no surrounding text, no explanation.**
-> This is critical because the parent agent parses your response as JSON.
+> Your final message must be ONLY this JSON object (no other text) — the main agent will parse this to orchestrate the next phase. Copy and fill in the values:
 >
 > ```json
 > {
 >   "phases_executed": ["investigate", "analyze", "prevent"],
 >   "phase_summaries": {
->     "investigate": "1-3 sentence summary for user",
->     "analyze": "1-3 sentence summary for user",
->     "prevent": "1-3 sentence summary for user"
+>     "investigate": "1-3 sentence summary",
+>     "analyze": "1-3 sentence summary",
+>     "prevent": "1-3 sentence summary"
 >   },
 >   "investigate": { ...phase 1 output fields... },
 >   "analyze": { ...phase 2 output fields... },
@@ -226,7 +225,9 @@ Required fields (exhaustive — no others are treated as required):
 - `investigate`: object with ALL required keys from phase-investigate.md output format. Not "at least one" — ALL keys
   must be present. Required keys for investigate (MANDATORY to validate EACH of these): `event_sequence`, `documents_read`, `priming_analysis`, `session_id`.
   If any key is missing, stop with an error naming each missing key.
-- `analyze`: object with ALL required keys. Required keys (MANDATORY to validate EACH using exhaustive field checks): `analysis_text`, `cause_signature`, `prevention_type`, `prevention_level`, `fragility`, `verification_type`. If any key is missing, stop with an error naming each missing key.
+- `analyze`: object with ALL required keys. Required keys (MANDATORY to validate EACH using exhaustive field checks):
+  `mistake_description`, `root_cause`, `cause_signature`, `rca_depth_verified`, `rca_depth_check`, `rca_depth_evidence`,
+  `category`. If any key is missing, stop with an error naming each missing key.
 - `prevent`: object with ALL required keys. Required keys (MANDATORY to validate EACH using exhaustive field checks): `prevention_implemented`, `prevention_commit_hash`, `prevention_path` (when hash is non-null), `issue_creation_info` (when prevention_implemented is false). If any key is missing, stop with an error naming each missing key.
 - `prevent.prevention_implemented`: boolean (true or false — must be explicitly present)
 - `prevent.prevention_commit_hash`: string or null (must be explicitly present)
@@ -476,13 +477,13 @@ After Phase 4 completes, parse the results and display each phase summary to the
 
 ```
 Phase: Investigate
-{investigate.user_summary or phase_summaries.investigate}
+{phase_summaries.investigate}
 
 Phase: Analyze
-{analyze.user_summary or phase_summaries.analyze}
+{phase_summaries.analyze}
 
 Phase: Prevent
-{prevent.user_summary or phase_summaries.prevent}
+{phase_summaries.prevent}
 
 Phase: Record
 Learning {learning_id} recorded. {counter_status.count}/{counter_status.threshold} mistakes since last retrospective.
