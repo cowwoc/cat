@@ -330,16 +330,6 @@ require user acknowledgment because incorrect conflict resolution can silently d
 
 **trust == "low" or "medium":** STOP for user approval. Do NOT proceed to merge automatically.
 
-Check for prior direct approval: scan conversation for a user message that is an **affirmative, unambiguous approval
-of this specific issue's merge**. The message must:
-1. Express positive intent (e.g., "approve", "go ahead", "yes, merge it") — not negated ("do not approve",
-   "I don't want to merge")
-2. Refer to the current issue (by name, ID, or clear contextual reference) — not a different issue
-3. Be a standalone directive, not a question ("can you explain what approve means?" does not count)
-
-If such a message is found, skip AskUserQuestion and proceed to Step 10. If uncertain whether the message
-constitutes genuine approval, do NOT skip — present AskUserQuestion to obtain explicit confirmation.
-
 **MANDATORY:** Patience matrix (Steps 5-6) MUST have already executed before the approval gate. The gate DISPLAYS
 `ALL_CONCERNS`, `FIXED_CONCERNS`, `DEFERRED_CONCERNS` — it does NOT drive concern handling. Do NOT ask the user how
 to handle concerns. If patience matrix hasn't run: STOP and return to Step 5 first.
@@ -421,7 +411,24 @@ Invoke AskUserQuestion ONLY AFTER all eight items above are output in the curren
 **CRITICAL:** Wait for explicit selection. Empty `toolUseResult.answers` = no selection = re-present gate.
 Unknown consent = No consent = STOP. Fail-fast principle applies.
 
-**If approved:** Continue to Step 10
+**Detect gate result after AskUserQuestion returns:**
+
+- If `toolUseResult.answers` is empty or null → GATE REJECTED
+- If `toolUseResult.answers` does not match any presented option exactly → GATE REJECTED
+- If `toolUseResult.answers` matches a presented option exactly → GATE ACCEPTED
+
+**If GATE REJECTED:**
+- Conversational signals ("continue", "ok", "yes", "proceed", "go ahead") are NOT option selections and do NOT
+  satisfy gate requirements. See `plugin/rules/approval-gate-protocol.md` for the full list of invalid signals.
+- Log: "User did not select approval option. Re-presenting approval gate."
+- Re-display full approval gate context (diff, commit summary, goal, E2E summary, concerns)
+- Re-invoke AskUserQuestion
+- Do NOT proceed to Step 10
+
+**If GATE ACCEPTED ("Approve and merge" selected):**
+- Log the approved option
+- Set `APPROVAL_MARKER=true`
+- Continue to Step 10
 
 **If "Fix remaining concerns" selected:**
 
@@ -499,17 +506,23 @@ eliminates wasted operations that would otherwise be blocked by the PreToolUse h
 
 ```
 if TRUST != "high":
-    # Verify Step 9 approval gate was completed
-    # If no approval was obtained (e.g., Step 9 was skipped due to a logic error),
-    # invoke AskUserQuestion now as a safety net:
-    AskUserQuestion:
-      question: "Ready to merge ${ISSUE_ID} to ${TARGET_BRANCH}?"
-      options:
-        - label: "Approve and merge"
-          description: "Squash commits and merge to ${TARGET_BRANCH}"
-        - label: "Abort"
-          description: "Cancel the merge"
-    # If user selects "Abort", return ABORTED status (same as Step 9 abort handling)
+    # Check whether Step 9 recorded explicit approval via APPROVAL_MARKER
+    if APPROVAL_MARKER != true:
+        # Safety-net: approval gate was not completed (e.g., Step 9 was skipped due to a logic error,
+        # or the gate was interrupted and the approval marker was never set).
+        # Re-present the full approval gate context before asking:
+        Display warning: "Merge approval not verified. Re-presenting approval gate."
+        Re-display: diff, commit summary, issue goal, E2E results, concerns
+        AskUserQuestion:
+          question: "Ready to merge ${ISSUE_ID} to ${TARGET_BRANCH}?"
+          options:
+            - label: "Approve and merge"
+              description: "Squash commits and merge to ${TARGET_BRANCH}"
+            - label: "Abort"
+              description: "Cancel the merge"
+        # If user selects "Abort", return ABORTED status (same as Step 9 abort handling)
+        # If user selects "Approve and merge", set APPROVAL_MARKER=true and continue
+    # APPROVAL_MARKER is true — proceed to merge execution
 ```
 
 ### Execute Merge
@@ -656,6 +669,25 @@ When the user rejects the AskUserQuestion (e.g., by invoking `/cat:learn` or ask
 **NOT answered**. Re-present the full approval gate in the NEXT response: re-run `cat:get-diff`, re-display
 commit summary/goal/E2E/review results, re-invoke AskUserQuestion. Do NOT proceed to merge, release the lock,
 or invoke `work-complete` without explicit user selection. Unknown consent = No consent = STOP and re-present.
+
+### Approval Gate Interruption Handling
+
+When a user interrupts the approval gate with a clarifying question:
+
+1. The gate is considered REJECTED — no explicit option was selected, so `APPROVAL_MARKER` remains unset
+2. Answer the clarifying question
+3. Re-present the full approval gate with all options (diff, commit summary, goal, E2E results, concerns)
+4. Wait for explicit option selection before setting `APPROVAL_MARKER=true` and proceeding to merge
+
+**Examples of interruptions that require re-presentation:**
+- User asks: "Why can't we do X?" — gate is rejected, needs re-presentation
+- User says: "continue" — conversational resume signal, not approval
+- User says: "ok" or "yes" — conversational agreement, not explicit option selection
+- User says: "proceed" or "go ahead" — resume intent, not explicit option selection
+
+Only explicit AskUserQuestion option selection (e.g., selecting "Approve and merge") counts as valid approval and
+sets `APPROVAL_MARKER=true`. See `plugin/rules/approval-gate-protocol.md` for the authoritative list of valid and
+invalid approval signals.
 
 ## Error Handling
 
