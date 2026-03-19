@@ -38,13 +38,12 @@ git diff v2.1..HEAD
 
 ## Root Cause
 
-`AutoLearnMistakes.filterJsonContent()` (line ~85 in AutoLearnMistakes.java) only strips JSON-formatted
-lines. Java source code lines contain keywords that match mistake detection patterns but are not agent
-actions. The method needs to detect and strip Java source code output before pattern matching.
-
-Recurrence root cause: each prior fix addressed only the specific pattern that caused the observed
-false positive, not the underlying filter gap. A structural fix is needed that filters all recognized
-non-agent-action content types (JSON, Java source, Maven output metadata), not just one pattern at a time.
+The hook scans all tool output for mistake patterns regardless of exit code or tool type. Commands that
+succeed (exit_code 0) cannot represent real failures; any matching keywords in their output are false
+positives from displayed content (source files, git history, etc.). Additionally, several patterns
+(protocol_violation, missing_cleanup, restore_from_backup, and critical_self_acknowledgment/
+self_acknowledged_mistake from tool output) presuppose agent reasoning/dialogue, which can only appear
+in agent responses, not in tool output.
 
 ## Risk Assessment
 
@@ -55,23 +54,31 @@ non-agent-action content types (JSON, Java source, Maven output metadata), not j
 
 ## Files to Modify
 
-- `client/src/main/java/io/github/cowwoc/cat/hooks/tool/post/AutoLearnMistakes.java` — extend
-  `filterJsonContent()` to detect and strip lines that are not agent-generated output:
-  - Java source code lines: `^\s*(return Result\.|Pattern\.compile\(|if \(|public final class|private static final|\* @param|/\*\*|\*/\s*$|\s*\*\s)`
-  - Git diff lines: lines starting with `+`, `-`, or `@@` (diff hunks and changed content)
-- `client/src/test/java/io/github/cowwoc/cat/hooks/test/` (AutoLearnMistakesTest or new test file) —
-  add test cases per the TDD-first acceptance criteria
+- `client/src/main/java/io/github/cowwoc/cat/hooks/tool/post/AutoLearnMistakes.java`
+  - Gate Bash-tool failure patterns on `toolName.equals("Bash") && exitCode != 0`
+  - Remove patterns that scan for agent-dialogue/agent-reasoning concepts in tool output
+    (Patterns 3, 8, 9 from tool output, 10, 11 from tool output)
+  - Keep patterns 9 and 11 in the assistant message check at bottom of `detectMistake()`
+  - Remove `JAVA_SOURCE_LINE_PATTERN` and Java source detection from `filterJsonContent()`
+  - Simplify `filterJsonContent()`: remove git diff line filtering, keep JSONL filtering
+  - Remove unused `MAX_PATTERN_GAP` constant
+- `client/src/test/java/io/github/cowwoc/cat/hooks/test/AutoLearnMistakesTest.java`
+  - Add `toolResult(mapper, stdout, exitCode)` overload
+  - Remove Java source detection tests and git diff test
+  - Update true-positive tests to use exitCode=1
+  - Add exit-code-based gating tests
 
 ## Test Cases
 
-Per M555/M563 learn task acceptance criteria (TDD order: write failing tests first):
-- [ ] `Pattern 3 (protocol_violation) does NOT trigger when stdout contains DetectAssistantGivingUp.java source`
-- [ ] `Pattern 1 (build_failure) does NOT trigger when stdout contains AutoLearnMistakes.java 'BUILD FAILURE' string literal`
-- [ ] `Pattern 2 (test_failure) does NOT trigger when stdout contains hook source with 'test failures' in Javadoc`
-- [ ] `Pattern 3 (protocol_violation) does NOT trigger when stdout is a git diff containing deleted PLAN.md with 'violation types'`
-- [ ] `Real Maven BUILD FAILURE output still triggers Pattern 1` (true positive preserved)
-- [ ] `Real protocol violations from non-Java-source output still trigger Pattern 3` (true positive preserved)
-- [ ] `No regression in other AutoLearnMistakes patterns`
+Exit-code-based gating coverage:
+- [ ] `Bash with exit_code 0 does NOT trigger Pattern 1 even with 'BUILD FAILURE' in output`
+- [ ] `Bash with exit_code 0 does NOT trigger Pattern 2 even with 'Tests run: 1, Failures: 1' in output`
+- [ ] `Bash with exit_code != 0 DOES trigger Pattern 1 with 'BUILD FAILURE' in output`
+- [ ] `Bash with exit_code != 0 DOES trigger Pattern 2 with 'Tests run: 1, Failures: 1' in output`
+- [ ] `Tool output keywords from Pattern 3/8/10 removed never trigger regardless of exit_code`
+- [ ] `Pattern 11/9 from tool output never trigger (removed from tool-output check)`
+- [ ] `Pattern 11/9 from assistant messages still trigger (preserved in assistant check)`
+- [ ] `Real Maven BUILD FAILURE with exit_code != 0 still triggers Pattern 1`
 
 ## Pre-conditions
 
@@ -79,38 +86,38 @@ Per M555/M563 learn task acceptance criteria (TDD order: write failing tests fir
 
 ## Sub-Agent Waves
 
-### Wave 1 (TDD: Write Failing Tests)
+### Wave 1+2+3 (Unified Implementation + Testing)
 
-- Invoke `/cat:tdd-implementation` for GAP-1773608389
-- Write failing tests for all 6 test cases above in AutoLearnMistakes test class
-- Run `mvn -f client/pom.xml test -pl . -Dtest=AutoLearnMistakesTest` — verify tests FAIL (confirms bug)
-- Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/AutoLearnMistakesTest.java` (or equivalent)
-
-### Wave 2 (Fix)
-
-- Extend `filterJsonContent()` in AutoLearnMistakes.java to detect Java source code patterns
-- Design the filter to strip lines matching Java-specific syntax (not broad enough to strip valid agent output)
-- Run full test suite: `mvn -f client/pom.xml test`
-- Verify all 6 test cases PASS after fix
-- Files: `client/src/main/java/io/github/cowwoc/cat/hooks/tool/post/AutoLearnMistakes.java`
-
-### Wave 3 (Verify + Commit)
-
-- Confirm false-positive scenario is resolved: simulate reading DetectAssistantGivingUp.java and verify no spurious trigger
-- Confirm true-positive scenarios still work: real Maven BUILD FAILURE output triggers Pattern 1
-- Update STATE.md with completion
+- Rewrite `detectMistake()` to gate Bash failure patterns on `toolName.equals("Bash") && exitCode != 0`
+- Remove patterns that only apply to agent output (3, 8, 9 from tool-output, 10, 11 from tool-output)
+- Simplify `filterJsonContent()`: remove Java source detection and git diff filtering (exit-code gating makes them unnecessary)
+- Update test suite:
+  - Add `toolResult(mapper, stdout, exitCode)` overload
+  - Add tests verifying exit-code-based gating works
+  - Remove Java source detection and git diff tests (no longer needed)
+  - Update true-positive tests to use exitCode=1
+- Run `mvn -f client/pom.xml test` — verify all 2528 tests PASS
+- Update PLAN.md and STATE.md with final design
 - Commit with type `bugfix:`
 
 ## Post-conditions
 
-- [ ] `filterJsonContent()` strips lines matching Java source code syntax patterns
-- [ ] `filterJsonContent()` strips git diff lines (starting with `+`, `-`, or `@@`)
-- [ ] Pattern 3 does NOT trigger when Bash reads DetectAssistantGivingUp.java or similar hook source files
-- [ ] Pattern 3 does NOT trigger when Bash runs git diff containing deleted PLAN.md with 'violation types'
-- [ ] Pattern 1 does NOT trigger when Bash reads AutoLearnMistakes.java containing 'BUILD FAILURE' in string literals
-- [ ] Real Maven `BUILD FAILURE` output still triggers Pattern 1 (true positive preserved)
-- [ ] Real protocol violations from non-Java-source output still trigger Pattern 3 (true positive preserved)
-- [ ] Tests in AutoLearnMistakesTest (or equivalent) cover all false-positive and true-positive cases
+- [ ] Bash commands with exit_code 0 do NOT trigger any failure patterns (even if output contains keywords)
+- [ ] Pattern 1 (build_failure) only triggers when toolName == "Bash" and exitCode != 0
+- [ ] Pattern 2 (test_failure) only triggers when toolName == "Bash" and exitCode != 0
+- [ ] Pattern 4 (merge_conflict) only triggers when toolName == "Bash" and exitCode != 0
+- [ ] Pattern 7 (git_operation_failure) only triggers when toolName == "Bash" and exitCode != 0
+- [ ] Pattern 12 (wrong_working_directory - git repo) only triggers when toolName == "Bash" and exitCode != 0
+- [ ] Pattern 13 (wrong_working_directory - pom.xml) only triggers when toolName == "Bash" and exitCode != 0
+- [ ] Pattern 3 (protocol_violation) completely removed from tool-output scanning
+- [ ] Pattern 8 (missing_cleanup) completely removed
+- [ ] Pattern 10 (restore_from_backup) completely removed
+- [ ] Pattern 9 (self_acknowledged_mistake) removed from tool-output scanning (kept in assistant message check)
+- [ ] Pattern 11 (critical_self_acknowledgment) removed from tool-output scanning (kept in assistant message check)
+- [ ] JAVA_SOURCE_LINE_PATTERN and Java source detection logic removed
+- [ ] filterJsonContent() only filters JSONL conversation logs (no git diff or Java source filtering)
+- [ ] Edit tool failures still work (not gated by Bash/exitCode)
+- [ ] Skill step failures still work (already checks toolName == "Skill")
+- [ ] Assistant message patterns still work (protocol_violation and critical_self_acknowledgment checks preserved)
+- [ ] All 2528 tests pass
 - [ ] No regression in other AutoLearnMistakes patterns
-- [ ] E2E: Run the exact reproduction step (read DetectAssistantGivingUp.java via sed) — confirm no protocol_violation hook fires
-- [ ] E2E: Run git diff containing deleted PLAN.md with 'violation' keyword — confirm no protocol_violation hook fires

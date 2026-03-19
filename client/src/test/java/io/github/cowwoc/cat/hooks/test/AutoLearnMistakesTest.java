@@ -17,44 +17,151 @@ import tools.jackson.databind.json.JsonMapper;
 import java.io.IOException;
 
 /**
- * Tests for {@link AutoLearnMistakes} Pattern 2 (test_failure detection) and
- * Pattern 11 (critical_self_acknowledgment detection).
+ * Tests for {@link AutoLearnMistakes} detection patterns.
  * <p>
- * Verifies that severity-table vocabulary and non-test FAIL prefixes do not trigger false positives,
- * while genuine test failure output and first-person critical mistake acknowledgments are correctly detected.
+ * Verifies that Bash commands with exit_code 0 never trigger failure patterns regardless of output
+ * content, while genuine failures (exit_code != 0) from Bash commands are correctly detected.
+ * Also verifies edit_failure, skill_step_failure, and assistant message patterns.
  */
 public final class AutoLearnMistakesTest
 {
-  private static final JsonMapper MAPPER = JsonMapper.builder().build();
-  private static final String SESSION_ID = "00000000-0000-0000-0000-000000000000";
-
   /**
-   * Builds a tool result JSON node with the given stdout content.
+   * Builds a tool result JSON node with the given stdout content and exit code 0.
    *
+   * @param mapper the JSON mapper to use
    * @param stdout the stdout content to place in the tool result
    * @return a JsonNode representing the tool result
    * @throws IOException if JSON parsing fails
    */
-  private static JsonNode toolResult(String stdout) throws IOException
+  private static JsonNode toolResult(JsonMapper mapper, String stdout) throws IOException
+  {
+    return toolResult(mapper, stdout, 0);
+  }
+
+  /**
+   * Builds a tool result JSON node with the given stdout content and exit code.
+   *
+   * @param mapper the JSON mapper to use
+   * @param stdout the stdout content to place in the tool result
+   * @param exitCode the exit code to set in the tool result
+   * @return a JsonNode representing the tool result
+   * @throws IOException if JSON parsing fails
+   */
+  private static JsonNode toolResult(JsonMapper mapper, String stdout, int exitCode) throws IOException
   {
     String json = """
-      {"stdout": %s, "stderr": "", "exit_code": 0}
-      """.formatted(MAPPER.writeValueAsString(stdout));
-    return MAPPER.readTree(json);
+      {"stdout": %s, "stderr": "", "exit_code": %d}
+      """.formatted(mapper.writeValueAsString(stdout), exitCode);
+    return mapper.readTree(json);
   }
 
   /**
    * Builds a hook data JSON node for the given session ID.
    *
+   * @param mapper    the JSON mapper to use
    * @param sessionId the session ID
    * @return a JsonNode representing the hook data
    * @throws IOException if JSON parsing fails
    */
-  private static JsonNode hookData(String sessionId) throws IOException
+  private static JsonNode hookData(JsonMapper mapper, String sessionId) throws IOException
   {
-    return MAPPER.readTree("""
+    return mapper.readTree("""
       {"tool_input": {}, "tool_result": {}, "session_id": "%s"}
       """.formatted(sessionId));
+  }
+
+  /**
+   * Verifies that Bash with exit_code 0 does NOT trigger Pattern 1 (build_failure) even when
+   * stdout contains "BUILD FAILURE".
+   * <p>
+   * A successful Bash command cannot represent a real build failure — the keyword must be from
+   * displayed content such as source files or documentation.
+   */
+  @Test
+  public void bashExitCodeZeroDoesNotTriggerBuildFailure() throws IOException
+  {
+    String sessionId = "00000000-0000-0000-0000-000000000000";
+    try (TestJvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      AutoLearnMistakes handler = new AutoLearnMistakes();
+      JsonNode result = toolResult(mapper, "BUILD FAILURE", 0);
+      JsonNode hook = hookData(mapper, sessionId);
+
+      PostToolHandler.Result detection = handler.check("Bash", result, sessionId, hook);
+
+      requireThat(detection.additionalContext(), "additionalContext").
+        doesNotContain("build_failure");
+    }
+  }
+
+  /**
+   * Verifies that Bash with exit_code 0 does NOT trigger Pattern 2 (test_failure) even when
+   * stdout contains "Tests run: 1, Failures: 1".
+   * <p>
+   * A successful Bash command cannot represent a real test failure — the keyword must be from
+   * displayed content such as source files or documentation.
+   */
+  @Test
+  public void bashExitCodeZeroDoesNotTriggerTestFailure() throws IOException
+  {
+    String sessionId = "00000000-0000-0000-0000-000000000000";
+    try (TestJvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      AutoLearnMistakes handler = new AutoLearnMistakes();
+      JsonNode result = toolResult(mapper, "Tests run: 1, Failures: 1, Errors: 0, Skipped: 0", 0);
+      JsonNode hook = hookData(mapper, sessionId);
+
+      PostToolHandler.Result detection = handler.check("Bash", result, sessionId, hook);
+
+      requireThat(detection.additionalContext(), "additionalContext").
+        doesNotContain("test_failure");
+    }
+  }
+
+  /**
+   * Verifies that Bash with exit_code != 0 DOES trigger Pattern 1 (build_failure) when
+   * stdout contains "BUILD FAILURE".
+   */
+  @Test
+  public void bashExitCodeNonZeroTriggersBuildFailure() throws IOException
+  {
+    String sessionId = "00000000-0000-0000-0000-000000000000";
+    try (TestJvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      AutoLearnMistakes handler = new AutoLearnMistakes();
+      JsonNode result = toolResult(mapper, "BUILD FAILURE", 1);
+      JsonNode hook = hookData(mapper, sessionId);
+
+      PostToolHandler.Result detection = handler.check("Bash", result, sessionId, hook);
+
+      requireThat(detection.additionalContext(), "additionalContext").
+        contains("build_failure");
+    }
+  }
+
+  /**
+   * Verifies that Bash with exit_code != 0 DOES trigger Pattern 2 (test_failure) when
+   * stdout contains "Tests run: 1, Failures: 1".
+   */
+  @Test
+  public void bashExitCodeNonZeroTriggersTestFailure() throws IOException
+  {
+    String sessionId = "00000000-0000-0000-0000-000000000000";
+    try (TestJvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      AutoLearnMistakes handler = new AutoLearnMistakes();
+      JsonNode result = toolResult(mapper, "Tests run: 1, Failures: 1, Errors: 0, Skipped: 0", 1);
+      JsonNode hook = hookData(mapper, sessionId);
+
+      PostToolHandler.Result detection = handler.check("Bash", result, sessionId, hook);
+
+      requireThat(detection.additionalContext(), "additionalContext").
+        contains("test_failure");
+    }
   }
 
   /**
@@ -63,14 +170,19 @@ public final class AutoLearnMistakesTest
   @Test
   public void failPrefixProgressBannerIsNotTestFailure() throws IOException
   {
-    AutoLearnMistakes handler = new AutoLearnMistakes();
-    JsonNode result = toolResult("FAIL: progress-banner launcher failed");
-    JsonNode hook = hookData(SESSION_ID);
+    String sessionId = "00000000-0000-0000-0000-000000000000";
+    try (TestJvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      AutoLearnMistakes handler = new AutoLearnMistakes();
+      JsonNode result = toolResult(mapper, "FAIL: progress-banner launcher failed");
+      JsonNode hook = hookData(mapper, sessionId);
 
-    PostToolHandler.Result detection = handler.check("Bash", result, SESSION_ID, hook);
+      PostToolHandler.Result detection = handler.check("Bash", result, sessionId, hook);
 
-    requireThat(detection.additionalContext(), "additionalContext").
-      doesNotContain("test_failure");
+      requireThat(detection.additionalContext(), "additionalContext").
+        doesNotContain("test_failure");
+    }
   }
 
   /**
@@ -79,46 +191,62 @@ public final class AutoLearnMistakesTest
   @Test
   public void failPrefixPhaseErrorIsNotTestFailure() throws IOException
   {
-    AutoLearnMistakes handler = new AutoLearnMistakes();
-    JsonNode result = toolResult("FAIL: some phase error");
-    JsonNode hook = hookData(SESSION_ID);
+    String sessionId = "00000000-0000-0000-0000-000000000000";
+    try (TestJvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      AutoLearnMistakes handler = new AutoLearnMistakes();
+      JsonNode result = toolResult(mapper, "FAIL: some phase error");
+      JsonNode hook = hookData(mapper, sessionId);
 
-    PostToolHandler.Result detection = handler.check("Bash", result, SESSION_ID, hook);
+      PostToolHandler.Result detection = handler.check("Bash", result, sessionId, hook);
 
-    requireThat(detection.additionalContext(), "additionalContext").
-      doesNotContain("test_failure");
+      requireThat(detection.additionalContext(), "additionalContext").
+        doesNotContain("test_failure");
+    }
   }
 
   /**
-   * Verifies that Maven Surefire output "Tests run: 5, Failures: 2" triggers Pattern 2 (test_failure).
+   * Verifies that Maven Surefire output "Tests run: 5, Failures: 2" triggers Pattern 2 (test_failure)
+   * when exit_code is non-zero.
    */
   @Test
   public void mavenSurefireTestFailureIsDetected() throws IOException
   {
-    AutoLearnMistakes handler = new AutoLearnMistakes();
-    JsonNode result = toolResult("Tests run: 5, Failures: 2, Errors: 0, Skipped: 0");
-    JsonNode hook = hookData(SESSION_ID);
+    String sessionId = "00000000-0000-0000-0000-000000000000";
+    try (TestJvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      AutoLearnMistakes handler = new AutoLearnMistakes();
+      JsonNode result = toolResult(mapper, "Tests run: 5, Failures: 2, Errors: 0, Skipped: 0", 1);
+      JsonNode hook = hookData(mapper, sessionId);
 
-    PostToolHandler.Result detection = handler.check("Bash", result, SESSION_ID, hook);
+      PostToolHandler.Result detection = handler.check("Bash", result, sessionId, hook);
 
-    requireThat(detection.additionalContext(), "additionalContext").
-      contains("test_failure");
+      requireThat(detection.additionalContext(), "additionalContext").
+        contains("test_failure");
+    }
   }
 
   /**
-   * Verifies that "3 tests failed" triggers Pattern 2 (test_failure).
+   * Verifies that "3 tests failed" triggers Pattern 2 (test_failure) when exit_code is non-zero.
    */
   @Test
   public void multipleTestsFailedIsDetected() throws IOException
   {
-    AutoLearnMistakes handler = new AutoLearnMistakes();
-    JsonNode result = toolResult("3 tests failed");
-    JsonNode hook = hookData(SESSION_ID);
+    String sessionId = "00000000-0000-0000-0000-000000000000";
+    try (TestJvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      AutoLearnMistakes handler = new AutoLearnMistakes();
+      JsonNode result = toolResult(mapper, "3 tests failed", 1);
+      JsonNode hook = hookData(mapper, sessionId);
 
-    PostToolHandler.Result detection = handler.check("Bash", result, SESSION_ID, hook);
+      PostToolHandler.Result detection = handler.check("Bash", result, sessionId, hook);
 
-    requireThat(detection.additionalContext(), "additionalContext").
-      contains("test_failure");
+      requireThat(detection.additionalContext(), "additionalContext").
+        contains("test_failure");
+    }
   }
 
   /**
@@ -127,62 +255,83 @@ public final class AutoLearnMistakesTest
   @Test
   public void failPrefixDocumentationErrorIsNotTestFailure() throws IOException
   {
-    AutoLearnMistakes handler = new AutoLearnMistakes();
-    JsonNode result = toolResult("FAIL: some documentation error message");
-    JsonNode hook = hookData(SESSION_ID);
+    String sessionId = "00000000-0000-0000-0000-000000000000";
+    try (TestJvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      AutoLearnMistakes handler = new AutoLearnMistakes();
+      JsonNode result = toolResult(mapper, "FAIL: some documentation error message");
+      JsonNode hook = hookData(mapper, sessionId);
 
-    PostToolHandler.Result detection = handler.check("Bash", result, SESSION_ID, hook);
+      PostToolHandler.Result detection = handler.check("Bash", result, sessionId, hook);
 
-    requireThat(detection.additionalContext(), "additionalContext").
-      doesNotContain("test_failure");
+      requireThat(detection.additionalContext(), "additionalContext").
+        doesNotContain("test_failure");
+    }
   }
 
   /**
-   * Verifies that "MyTest.testMethod ... FAILED" triggers Pattern 2 (test_failure).
+   * Verifies that "MyTest.testMethod ... FAILED" triggers Pattern 2 (test_failure)
+   * when exit_code is non-zero.
    */
   @Test
   public void testMethodFailedIsDetected() throws IOException
   {
-    AutoLearnMistakes handler = new AutoLearnMistakes();
-    JsonNode result = toolResult("MyTest.testMethod ... FAILED");
-    JsonNode hook = hookData(SESSION_ID);
+    String sessionId = "00000000-0000-0000-0000-000000000000";
+    try (TestJvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      AutoLearnMistakes handler = new AutoLearnMistakes();
+      JsonNode result = toolResult(mapper, "MyTest.testMethod ... FAILED", 1);
+      JsonNode hook = hookData(mapper, sessionId);
 
-    PostToolHandler.Result detection = handler.check("Bash", result, SESSION_ID, hook);
+      PostToolHandler.Result detection = handler.check("Bash", result, sessionId, hook);
 
-    requireThat(detection.additionalContext(), "additionalContext").
-      contains("test_failure");
+      requireThat(detection.additionalContext(), "additionalContext").
+        contains("test_failure");
+    }
   }
 
   /**
-   * Verifies that "5 failures" triggers Pattern 2 (test_failure).
+   * Verifies that "5 failures" triggers Pattern 2 (test_failure) when exit_code is non-zero.
    */
   @Test
   public void failuresCountIsDetected() throws IOException
   {
-    AutoLearnMistakes handler = new AutoLearnMistakes();
-    JsonNode result = toolResult("5 failures");
-    JsonNode hook = hookData(SESSION_ID);
+    String sessionId = "00000000-0000-0000-0000-000000000000";
+    try (TestJvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      AutoLearnMistakes handler = new AutoLearnMistakes();
+      JsonNode result = toolResult(mapper, "5 failures", 1);
+      JsonNode hook = hookData(mapper, sessionId);
 
-    PostToolHandler.Result detection = handler.check("Bash", result, SESSION_ID, hook);
+      PostToolHandler.Result detection = handler.check("Bash", result, sessionId, hook);
 
-    requireThat(detection.additionalContext(), "additionalContext").
-      contains("test_failure");
+      requireThat(detection.additionalContext(), "additionalContext").
+        contains("test_failure");
+    }
   }
 
   /**
-   * Verifies that "1 test failed" triggers Pattern 2 (test_failure).
+   * Verifies that "1 test failed" triggers Pattern 2 (test_failure) when exit_code is non-zero.
    */
   @Test
   public void singleTestFailedIsDetected() throws IOException
   {
-    AutoLearnMistakes handler = new AutoLearnMistakes();
-    JsonNode result = toolResult("1 test failed");
-    JsonNode hook = hookData(SESSION_ID);
+    String sessionId = "00000000-0000-0000-0000-000000000000";
+    try (TestJvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      AutoLearnMistakes handler = new AutoLearnMistakes();
+      JsonNode result = toolResult(mapper, "1 test failed", 1);
+      JsonNode hook = hookData(mapper, sessionId);
 
-    PostToolHandler.Result detection = handler.check("Bash", result, SESSION_ID, hook);
+      PostToolHandler.Result detection = handler.check("Bash", result, sessionId, hook);
 
-    requireThat(detection.additionalContext(), "additionalContext").
-      contains("test_failure");
+      requireThat(detection.additionalContext(), "additionalContext").
+        contains("test_failure");
+    }
   }
 
   /**
@@ -191,174 +340,160 @@ public final class AutoLearnMistakesTest
   @Test
   public void zeroFailuresDoesNotTriggerTestFailure() throws IOException
   {
-    AutoLearnMistakes handler = new AutoLearnMistakes();
-    JsonNode result = toolResult("Tests run: 5, Failures: 0, Errors: 0, Skipped: 0");
-    JsonNode hook = hookData(SESSION_ID);
+    String sessionId = "00000000-0000-0000-0000-000000000000";
+    try (TestJvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      AutoLearnMistakes handler = new AutoLearnMistakes();
+      JsonNode result = toolResult(mapper, "Tests run: 5, Failures: 0, Errors: 0, Skipped: 0");
+      JsonNode hook = hookData(mapper, sessionId);
 
-    PostToolHandler.Result detection = handler.check("Bash", result, SESSION_ID, hook);
+      PostToolHandler.Result detection = handler.check("Bash", result, sessionId, hook);
 
-    requireThat(detection.additionalContext(), "additionalContext").
-      doesNotContain("test_failure");
+      requireThat(detection.additionalContext(), "additionalContext").
+        doesNotContain("test_failure");
+    }
   }
 
   /**
-   * Verifies that uppercase Maven Surefire output triggers Pattern 2 (test_failure).
+   * Verifies that uppercase Maven Surefire output triggers Pattern 2 (test_failure)
+   * when exit_code is non-zero.
    */
   @Test
   public void uppercaseMavenSurefireIsDetected() throws IOException
   {
-    AutoLearnMistakes handler = new AutoLearnMistakes();
-    JsonNode result = toolResult("TESTS RUN: 5, FAILURES: 2, ERRORS: 0, SKIPPED: 0");
-    JsonNode hook = hookData(SESSION_ID);
+    String sessionId = "00000000-0000-0000-0000-000000000000";
+    try (TestJvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      AutoLearnMistakes handler = new AutoLearnMistakes();
+      JsonNode result = toolResult(mapper, "TESTS RUN: 5, FAILURES: 2, ERRORS: 0, SKIPPED: 0", 1);
+      JsonNode hook = hookData(mapper, sessionId);
 
-    PostToolHandler.Result detection = handler.check("Bash", result, SESSION_ID, hook);
+      PostToolHandler.Result detection = handler.check("Bash", result, sessionId, hook);
 
-    requireThat(detection.additionalContext(), "additionalContext").
-      contains("test_failure");
+      requireThat(detection.additionalContext(), "additionalContext").
+        contains("test_failure");
+    }
   }
 
   /**
-   * Verifies that a test method failure with leading whitespace triggers Pattern 2 (test_failure).
+   * Verifies that a test method failure with leading whitespace triggers Pattern 2 (test_failure)
+   * when exit_code is non-zero.
    */
   @Test
   public void indentedTestMethodFailedIsDetected() throws IOException
   {
-    AutoLearnMistakes handler = new AutoLearnMistakes();
-    JsonNode result = toolResult("  MyTest.testMethod ... FAILED");
-    JsonNode hook = hookData(SESSION_ID);
+    String sessionId = "00000000-0000-0000-0000-000000000000";
+    try (TestJvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      AutoLearnMistakes handler = new AutoLearnMistakes();
+      JsonNode result = toolResult(mapper, "  MyTest.testMethod ... FAILED", 1);
+      JsonNode hook = hookData(mapper, sessionId);
 
-    PostToolHandler.Result detection = handler.check("Bash", result, SESSION_ID, hook);
+      PostToolHandler.Result detection = handler.check("Bash", result, sessionId, hook);
 
-    requireThat(detection.additionalContext(), "additionalContext").
-      contains("test_failure");
+      requireThat(detection.additionalContext(), "additionalContext").
+        contains("test_failure");
+    }
   }
 
   /**
-   * Verifies that severity-table content "Must fix critical issues" does not trigger Pattern 11.
+   * Verifies that severity-table content "Must fix critical issues" does not trigger
+   * critical_self_acknowledgment.
+   * <p>
+   * Pattern 11 only applies to assistant messages, not to tool output.
    */
   @Test
   public void severityTableMustFixCriticalIssuesIsNotTriggered() throws IOException
   {
-    AutoLearnMistakes handler = new AutoLearnMistakes();
-    JsonNode result = toolResult("Must fix critical issues");
-    JsonNode hook = hookData(SESSION_ID);
+    String sessionId = "00000000-0000-0000-0000-000000000000";
+    try (TestJvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      AutoLearnMistakes handler = new AutoLearnMistakes();
+      JsonNode result = toolResult(mapper, "Must fix critical issues");
+      JsonNode hook = hookData(mapper, sessionId);
 
-    PostToolHandler.Result detection = handler.check("Bash", result, SESSION_ID, hook);
+      PostToolHandler.Result detection = handler.check("Bash", result, sessionId, hook);
 
-    requireThat(detection.additionalContext(), "additionalContext").
-      doesNotContain("critical_self_acknowledgment");
+      requireThat(detection.additionalContext(), "additionalContext").
+        doesNotContain("critical_self_acknowledgment");
+    }
   }
 
   /**
-   * Verifies that severity-table content "critical error in severity table" does not trigger Pattern 11.
+   * Verifies that severity-table content "critical error in severity table" does not trigger
+   * critical_self_acknowledgment.
+   * <p>
+   * Pattern 11 only applies to assistant messages, not to tool output.
    */
   @Test
   public void severityTableCriticalErrorDescriptionIsNotTriggered() throws IOException
   {
-    AutoLearnMistakes handler = new AutoLearnMistakes();
-    JsonNode result = toolResult("critical error in severity table");
-    JsonNode hook = hookData(SESSION_ID);
+    String sessionId = "00000000-0000-0000-0000-000000000000";
+    try (TestJvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      AutoLearnMistakes handler = new AutoLearnMistakes();
+      JsonNode result = toolResult(mapper, "critical error in severity table");
+      JsonNode hook = hookData(mapper, sessionId);
 
-    PostToolHandler.Result detection = handler.check("Bash", result, SESSION_ID, hook);
+      PostToolHandler.Result detection = handler.check("Bash", result, sessionId, hook);
 
-    requireThat(detection.additionalContext(), "additionalContext").
-      doesNotContain("critical_self_acknowledgment");
+      requireThat(detection.additionalContext(), "additionalContext").
+        doesNotContain("critical_self_acknowledgment");
+    }
   }
 
   /**
-   * Verifies that severity-table content "CRITICAL | Blocks release" does not trigger Pattern 11.
+   * Verifies that severity-table content "CRITICAL | Blocks release" does not trigger
+   * critical_self_acknowledgment.
+   * <p>
+   * Pattern 11 only applies to assistant messages, not to tool output.
    */
   @Test
   public void severityTableCriticalBlocksReleaseIsNotTriggered() throws IOException
   {
-    AutoLearnMistakes handler = new AutoLearnMistakes();
-    JsonNode result = toolResult("CRITICAL | Blocks release");
-    JsonNode hook = hookData(SESSION_ID);
+    String sessionId = "00000000-0000-0000-0000-000000000000";
+    try (TestJvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      AutoLearnMistakes handler = new AutoLearnMistakes();
+      JsonNode result = toolResult(mapper, "CRITICAL | Blocks release");
+      JsonNode hook = hookData(mapper, sessionId);
 
-    PostToolHandler.Result detection = handler.check("Bash", result, SESSION_ID, hook);
+      PostToolHandler.Result detection = handler.check("Bash", result, sessionId, hook);
 
-    requireThat(detection.additionalContext(), "additionalContext").
-      doesNotContain("critical_self_acknowledgment");
+      requireThat(detection.additionalContext(), "additionalContext").
+        doesNotContain("critical_self_acknowledgment");
+    }
   }
 
   /**
-   * Verifies that "I made a critical error" triggers Pattern 11.
+   * Verifies that "I made a critical error" in tool output does NOT trigger
+   * critical_self_acknowledgment.
+   * <p>
+   * Pattern 11 only applies to assistant messages. Tool output containing this phrase is a false
+   * positive from displayed content (e.g., grep output, documentation).
    */
   @Test
-  public void firstPersonCriticalErrorIsDetected() throws IOException
+  public void firstPersonCriticalErrorInToolOutputIsNotTriggered() throws IOException
   {
-    AutoLearnMistakes handler = new AutoLearnMistakes();
-    JsonNode result = toolResult("I made a critical error");
-    JsonNode hook = hookData(SESSION_ID);
+    String sessionId = "00000000-0000-0000-0000-000000000000";
+    try (TestJvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      AutoLearnMistakes handler = new AutoLearnMistakes();
+      JsonNode result = toolResult(mapper, "I made a critical error");
+      JsonNode hook = hookData(mapper, sessionId);
 
-    PostToolHandler.Result detection = handler.check("Bash", result, SESSION_ID, hook);
+      PostToolHandler.Result detection = handler.check("Bash", result, sessionId, hook);
 
-    requireThat(detection.additionalContext(), "additionalContext").
-      contains("critical_self_acknowledgment");
-  }
-
-  /**
-   * Verifies that "I caused a critical mistake" triggers Pattern 11.
-   */
-  @Test
-  public void firstPersonCriticalMistakeIsDetected() throws IOException
-  {
-    AutoLearnMistakes handler = new AutoLearnMistakes();
-    JsonNode result = toolResult("I caused a critical mistake");
-    JsonNode hook = hookData(SESSION_ID);
-
-    PostToolHandler.Result detection = handler.check("Bash", result, SESSION_ID, hook);
-
-    requireThat(detection.additionalContext(), "additionalContext").
-      contains("critical_self_acknowledgment");
-  }
-
-  /**
-   * Verifies that "this was a critical failure" triggers Pattern 11.
-   */
-  @Test
-  public void thisWasACriticalFailureIsDetected() throws IOException
-  {
-    AutoLearnMistakes handler = new AutoLearnMistakes();
-    JsonNode result = toolResult("this was a critical failure");
-    JsonNode hook = hookData(SESSION_ID);
-
-    PostToolHandler.Result detection = handler.check("Bash", result, SESSION_ID, hook);
-
-    requireThat(detection.additionalContext(), "additionalContext").
-      contains("critical_self_acknowledgment");
-  }
-
-  /**
-   * Verifies that "catastrophic mistake" triggers Pattern 11.
-   */
-  @Test
-  public void catastrophicMistakeIsDetected() throws IOException
-  {
-    AutoLearnMistakes handler = new AutoLearnMistakes();
-    JsonNode result = toolResult("catastrophic mistake");
-    JsonNode hook = hookData(SESSION_ID);
-
-    PostToolHandler.Result detection = handler.check("Bash", result, SESSION_ID, hook);
-
-    requireThat(detection.additionalContext(), "additionalContext").
-      contains("critical_self_acknowledgment");
-  }
-
-  /**
-   * Verifies that "devastating bug" triggers Pattern 11.
-   */
-  @Test
-  public void devastatingBugIsDetected() throws IOException
-  {
-    AutoLearnMistakes handler = new AutoLearnMistakes();
-    JsonNode result = toolResult("devastating bug");
-    JsonNode hook = hookData(SESSION_ID);
-
-    PostToolHandler.Result detection = handler.check("Bash", result, SESSION_ID, hook);
-
-    requireThat(detection.additionalContext(), "additionalContext").
-      contains("critical_self_acknowledgment");
+      requireThat(detection.additionalContext(), "additionalContext").
+        doesNotContain("critical_self_acknowledgment");
+    }
   }
 
   /**
@@ -368,10 +503,46 @@ public final class AutoLearnMistakesTest
     expectedExceptionsMessageRegExp = ".*Invalid sessionId format.*")
   public void invalidSessionIdThrowsException() throws IOException
   {
-    AutoLearnMistakes handler = new AutoLearnMistakes();
-    JsonNode result = toolResult("some output");
-    JsonNode hook = hookData("not-a-valid-uuid");
+    try (TestJvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      AutoLearnMistakes handler = new AutoLearnMistakes();
+      JsonNode result = toolResult(mapper, "some output");
+      JsonNode hook = hookData(mapper, "not-a-valid-uuid");
 
-    handler.check("Bash", result, "not-a-valid-uuid", hook);
+      handler.check("Bash", result, "not-a-valid-uuid", hook);
+    }
+  }
+
+  /**
+   * Verifies that real Maven BUILD FAILURE output still triggers Pattern 1 (build_failure)
+   * when exit_code is non-zero.
+   * <p>
+   * True positive preserved: genuine Maven build failures must continue to be detected.
+   */
+  @Test
+  public void realMavenBuildFailureTriggersBuildFailurePattern() throws IOException
+  {
+    String sessionId = "00000000-0000-0000-0000-000000000000";
+    try (TestJvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      AutoLearnMistakes handler = new AutoLearnMistakes();
+      // Simulates actual Maven build failure output — real build failure with non-zero exit code.
+      String mavenOutput = """
+        [INFO] --- maven-compiler-plugin:3.11.0:compile (default-compile) @ cat-hooks ---
+        [ERROR] /workspace/client/src/main/java/Foo.java:[10,5] ';' expected
+        [INFO] BUILD FAILURE
+        [INFO] ------------------------------------------------------------------------
+        [ERROR] Failed to execute goal compile
+        """;
+      JsonNode result = toolResult(mapper, mavenOutput, 1);
+      JsonNode hook = hookData(mapper, sessionId);
+
+      PostToolHandler.Result detection = handler.check("Bash", result, sessionId, hook);
+
+      requireThat(detection.additionalContext(), "additionalContext").
+        contains("build_failure");
+    }
   }
 }
