@@ -9,8 +9,8 @@ This phase verifies the event sequence and analyzes the documentation path to un
 
 ## Your Task
 
-Complete the investigation phase for the learn skill. Your final message must be ONLY the JSON result object with no
-surrounding text or explanation. The parent agent parses your response as JSON.
+Complete the investigation phase for the learn skill. Output the JSON result object at the end of your analysis —
+this is how the orchestrator parses your findings.
 
 ## Pre-Extracted Investigation Context
 
@@ -260,7 +260,8 @@ documentation_priming:
 
 ## Output Format
 
-Your final message MUST be ONLY this JSON (no other text):
+Your final message must be ONLY this JSON object (no other text) — the main agent will parse this to
+orchestrate the next phase. Copy and fill in the values:
 
 Valid `priming_type` values: `algorithm_exposure`, `output_format`, `cost_concern`, `conflicting_guidance`,
 `cognitive_anchor`, `impossible_instruction`, `missing_skill_preload`.
@@ -269,7 +270,7 @@ Valid `priming_type` values: `algorithm_exposure`, `output_format`, `cost_concer
 {
   "phase": "investigate",
   "status": "COMPLETE",
-  "user_summary": "1-3 sentence summary of what this phase found (for display to user between phases)",
+  "internal_summary": "1-3 sentence summary of what this phase found",
   "event_sequence": {
     "timeline": ["Event 1", "Event 2", ...],
     "mistake_trigger": "What actually triggered the mistake"
