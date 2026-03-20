@@ -1,1 +1,6 @@
-{"status":"open","progress":0}
+{
+  "status": "closed",
+  "resolution": "implemented",
+  "targetBranch": "v2.1"
+}
+
