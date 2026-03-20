@@ -87,6 +87,7 @@ readonly -a HANDLERS=(
   "statusline-install:util.StatuslineInstall"
   "record-learning:util.RecordLearning"
   "benchmark-runner:skills.BenchmarkRunner"
+  "verify-defer-plan-generation:util.VerifyDeferPlanGeneration"
 )
 
 # --- Logging ---

@@ -62,7 +62,7 @@ split on whitespace. Also display the preparing banner in a chained call:
 # Parse positional arguments, set PLAN_MD path, and display preparing banner
 read CAT_AGENT_ID ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH ESTIMATED_TOKENS TRUST VERIFY <<< "$ARGUMENTS" && \
 PLAN_MD="${ISSUE_PATH}/plan.md" && \
-"${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase preparing
+"${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" "${ISSUE_ID}" --phase preparing
 ```
 
 ## Step 1: Display Preparing Banner
@@ -70,14 +70,15 @@ PLAN_MD="${ISSUE_PATH}/plan.md" && \
 Capture the exit code and stdout separately:
 
 ```bash
-BANNER_OUT=$("${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase preparing 2>/tmp/banner-stderr.txt)
+BANNER_STDERR_FILE=$(mktemp)
+BANNER_OUT=$("${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" "${ISSUE_ID}" --phase preparing 2>"${BANNER_STDERR_FILE}")
 BANNER_EXIT=$?
 ```
 
 **If the binary exited non-zero**, STOP immediately:
 ```
 FAIL: progress-banner launcher failed for phase 'preparing' (exit code <BANNER_EXIT>).
-stderr: <contents of /tmp/banner-stderr.txt>
+stderr: <contents of ${BANNER_STDERR_FILE}>
 The jlink image may not be built. Run: mvn -f hooks/pom.xml verify
 ```
 
@@ -86,6 +87,10 @@ invisible or terminal-control rendering that is not captured in this context. Do
 whitespace-only stdout at exit 0 as a failure or use it as grounds to abort.
 
 Do NOT skip the banner step itself; always run the binary.
+
+```bash
+rm -f "${BANNER_STDERR_FILE}"
+```
 
 This indicates Phase 1 (prepare) has completed and work phases are starting.
 
@@ -127,20 +132,21 @@ to execution — another session owns this issue.
 Display the **Implementing phase** banner by running:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase implementing
+"${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" "${ISSUE_ID}" --phase implementing
 ```
 
 Capture the exit code and stdout separately:
 
 ```bash
-BANNER_OUT=$("${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase implementing 2>/tmp/banner-stderr.txt)
+BANNER_STDERR_FILE=$(mktemp)
+BANNER_OUT=$("${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" "${ISSUE_ID}" --phase implementing 2>"${BANNER_STDERR_FILE}")
 BANNER_EXIT=$?
 ```
 
 **If the binary exited non-zero**, STOP immediately:
 ```
 FAIL: progress-banner launcher failed for phase 'implementing' (exit code <BANNER_EXIT>).
-stderr: <contents of /tmp/banner-stderr.txt>
+stderr: <contents of ${BANNER_STDERR_FILE}>
 The jlink image may not be built. Run: mvn -f hooks/pom.xml verify
 ```
 
@@ -149,6 +155,49 @@ invisible or terminal-control rendering that is not captured in this context. Do
 whitespace-only stdout at exit 0 as a failure or use it as grounds to abort.
 
 Do NOT skip the banner step itself; always run the binary.
+
+```bash
+rm -f "${BANNER_STDERR_FILE}"
+```
+
+## Step 4: Generate Implementation Steps
+
+Before reading Main Agent Waves, check whether plan.md already contains implementation steps:
+
+```bash
+PLAN_MD="${ISSUE_PATH}/plan.md" && \
+grep -qE '^## (Sub-Agent Waves|Execution Steps)' "${PLAN_MD}" && \
+echo "hasSteps=true" || echo "hasSteps=false"
+```
+
+**If `hasSteps=false`** (lightweight plan created by `/cat:add`): invoke `cat:plan-builder-agent` in revise mode to
+generate full implementation steps before spawning the implementation subagent:
+
+1. Read EFFORT from config:
+
+```bash
+CONFIG=$("${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output" effective)
+if [[ $? -ne 0 ]]; then
+    echo "ERROR: Failed to read effective config" >&2
+    exit 1
+fi
+EFFORT=$(echo "$CONFIG" | grep -o '"effort"[[:space:]]*:[[:space:]]*"[^"]*"' \
+  | sed 's/.*"effort"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+```
+
+2. Invoke plan-builder-agent to add implementation steps:
+
+```
+Skill tool:
+  skill: "cat:plan-builder-agent"
+  args: "${CAT_AGENT_ID} ${EFFORT} revise ${ISSUE_PATH} Generate full implementation steps for this lightweight
+plan. Add Sub-Agent Waves or Execution Steps section with detailed step-by-step implementation guidance."
+```
+
+3. After plan-builder-agent returns, re-read the updated plan.md in subsequent steps.
+
+**If `hasSteps=true`** (full plan with implementation steps): skip plan-builder-agent invocation. Proceed directly
+to "Read plan.md and Invoke Main Agent Waves".
 
 ### Read plan.md and Invoke Main Agent Waves
 
@@ -219,7 +268,19 @@ below). The last wave for index.json ownership is `### Wave ${WAVES_COUNT}` (the
 
 ### Mid-Work plan.md Revision
 
-If requirements change, read `EFFORT` from `${CLAUDE_PROJECT_DIR}/.cat/config.json`, then invoke:
+If requirements change, read `EFFORT` from config:
+
+```bash
+CONFIG=$("${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output" effective)
+if [[ $? -ne 0 ]]; then
+    echo "ERROR: Failed to read effective config" >&2
+    exit 1
+fi
+EFFORT=$(echo "$CONFIG" | grep -o '"effort"[[:space:]]*:[[:space:]]*"[^"]*"' \
+  | sed 's/.*"effort"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+```
+
+Then invoke:
 `Skill("cat:plan-builder-agent", "${CAT_AGENT_ID} ${EFFORT} revise ${ISSUE_PATH} <description of what changed>")`
 
 After revision, re-read the updated plan.md and adjust remaining execution accordingly.

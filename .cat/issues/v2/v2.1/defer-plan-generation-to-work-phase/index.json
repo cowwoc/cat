@@ -1,3 +1,5 @@
 {
-  "status": "open"
+  "status": "closed",
+  "resolution": "implemented with final inline fixes (config reads, temp cleanup, hardcoded paths)",
+  "targetBranch": "v2.1"
 }
