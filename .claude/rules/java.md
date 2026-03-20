@@ -1425,6 +1425,70 @@ private Map<String, Object> loadConfig()
 }
 ```
 
+## Environment Variable Access
+
+Claude environment variables (e.g., `CLAUDE_SESSION_ID`, `CLAUDE_ENV_FILE`) must be read through the correct API
+depending on the execution context. Never call `System.getenv()` directly outside of the four designated files.
+
+| Context | Correct API |
+|---------|-------------|
+| CLI commands (`main()` methods) | `new ClaudeEnv().getSessionId()` — `getSessionId()` is an instance method |
+| Hook handlers | `HookInput.getSessionId()` |
+| Skill directive variable substitution | `System.getenv(name)` (whitelisted; see below) |
+
+**Why:** Hook handlers receive session-specific values from the `HookInput` JSON payload, not from environment
+variables. Reading environment variables in hook handlers bypasses this contract. CLI commands that run outside of
+hook invocation (e.g., `GetSkill`, `WorkPrepare`) use `ClaudeEnv` which wraps `System.getenv()` with validation.
+
+```java
+// Good - CLI main() method reads session ID via ClaudeEnv (instance method)
+public static void main(String[] args)
+{
+  String sessionId = new ClaudeEnv().getSessionId();
+  // ...
+}
+
+// Bad - CLI main() method reads session ID via System.getenv()
+public static void main(String[] args)
+{
+  String sessionId = System.getenv("CLAUDE_SESSION_ID");  // Don't do this
+  // ...
+}
+
+// Good - hook handler reads session ID from HookInput JSON
+public Result handle(HookInput input)
+{
+  String sessionId = input.getSessionId();
+  // ...
+}
+
+// Bad - hook handler bypasses HookInput to read environment directly
+public Result handle(HookInput input)
+{
+  String sessionId = System.getenv("CLAUDE_SESSION_ID");  // Don't do this
+  // ...
+}
+```
+
+`EnforceJvmScopeEnvAccessTest` enforces this convention by scanning all Java source files and failing the build if
+`System.getenv(` appears outside of `MainJvmScope.java`, `ClaudeEnv.java`, `GetSkill.java`, and `TerminalType.java`.
+
+The four whitelisted files each have a specific reason for direct env var access:
+- `MainJvmScope.java` — reads infrastructure path variables (`CLAUDE_PROJECT_DIR`, `CLAUDE_PLUGIN_ROOT`,
+  `CLAUDE_CONFIG_DIR`, `TZ`) available in both hook and CLI contexts
+- `ClaudeEnv.java` — the designated wrapper for session-specific variables (`CLAUDE_SESSION_ID`,
+  `CLAUDE_ENV_FILE`); all other code must use `ClaudeEnv` to access these
+- `GetSkill.java` — expands env var references in skill directive templates; requires direct access to
+  substitute variable values
+- `TerminalType.java` — detects terminal type from standard terminal env vars (`TERM`, `TERM_PROGRAM`)
+
+```cat-rules
+- pattern: "System\\.getenv\\("
+  files: "*.java"
+  severity: high
+  message: "Use ClaudeEnv (CLI commands) or HookInput (hook handlers) instead of System.getenv(). Direct access is only permitted in the four whitelisted files. See .claude/rules/java.md § Environment Variable Access."
+```
+
 ## Exception Handling
 
 ### AssertionError vs IllegalStateException
@@ -1436,9 +1500,10 @@ state is queryable, and the caller could have checked before calling.
 
 ```java
 // Good - AssertionError for environment invariant (caller cannot prevent or query)
-String envFile = System.getenv("CLAUDE_ENV_FILE");
-if (envFile == null || envFile.isEmpty())
-  throw new AssertionError("CLAUDE_ENV_FILE is not set");
+// Use ClaudeEnv to safely read session configuration
+String sessionId = new ClaudeEnv().getSessionId();
+if (sessionId.isBlank())
+  throw new AssertionError("CLAUDE_SESSION_ID is not set");
 
 // Good - IllegalStateException for preventable state violation (caller can query)
 public void stop()
