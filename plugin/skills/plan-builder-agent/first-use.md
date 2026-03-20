@@ -15,37 +15,16 @@ plan.md generation is consistent regardless of which workflow invokes it.
 Positional space-separated arguments:
 
 ```
-<catAgentId> <effort> <mode> <contextPath>
+<catAgentId> <effort> <mode> <contextPath> [revision-context]
 ```
 
 | Position | Name | Description |
 |----------|------|-------------|
 | 1 | catAgentId | CAT session identifier |
 | 2 | effort | Planning depth: `low`, `medium`, or `high` |
-| 3 | mode | `initial` or `revise` |
+| 3 | mode | `revise` |
 | 4 | contextPath | Path to a file containing context (see below) |
-
-Parse from ARGUMENTS:
-```bash
-read CAT_AGENT_ID EFFORT MODE CONTEXT_PATH <<< "$ARGUMENTS"
-```
-
-### Mode: `initial`
-
-Used by `/cat:add`. The `contextPath` points to a temporary JSON file containing:
-
-```json
-{
-  "issue_type": "feature|bugfix|refactor|performance",
-  "description": "The full issue description",
-  "postconditions": ["criterion 1", "criterion 2"],
-  "research_findings": "optional research text or empty string",
-  "impact_notes": "optional impact notes or empty string"
-}
-```
-
-The skill reads this file, generates plan.md content, and writes it to `${contextPath%.json}.plan.md`
-(same directory, replacing `.json` extension with `.plan.md`). The caller reads the output file.
+| 5 | [revision-context] | Optional: Revision instructions for revise mode (e.g., 'add performance tests') |
 
 ### Mode: `revise`
 
@@ -54,13 +33,15 @@ An additional revision description follows as remaining arguments:
 
 ```bash
 read CAT_AGENT_ID EFFORT MODE ISSUE_PATH REVISION_CONTEXT <<< "$ARGUMENTS"
+# REVISION_CONTEXT receives all remaining words after ISSUE_PATH (may contain spaces)
 ```
 
 The skill reads the existing plan.md, applies the revision, and writes the updated plan.md in place.
 
 ## When to Use
 
-- **Initial planning** (`/cat:add`): Generate plan.md from issue description and context
+- **Initial implementation** (`/cat:work`): Generate full implementation steps from a lightweight plan.md created
+  by `/cat:add` (which contains only goal and post-conditions)
 - **Mid-work revision** (`/cat:work`): Revise plan.md when requirements change during implementation
 
 ## Effort-Based Planning Depth
@@ -156,30 +137,6 @@ Goal/Problem section:
 
 ## Workflow
 
-### For Initial Planning (mode=initial)
-
-**Step 1:** Read the context JSON from `${CONTEXT_PATH}`.
-
-**Step 2:** Read `${CLAUDE_PLUGIN_ROOT}/concepts/issue-plan.md` for plan.md templates.
-
-**Step 3:** If `research_findings` is non-empty, incorporate into a `## Research Findings` section.
-
-**Step 4:** If `impact_notes` is non-empty, incorporate into an `## Impact Notes` section.
-
-**Step 5:** Based on EFFORT level, research approaches:
-- `low`: Skip research, use obvious approach
-- `medium`: Brief exploration of 2-3 alternatives
-- `high`: Deep research, document rejected alternatives with rationale
-
-**Step 6:** Generate plan.md content using the appropriate template for `issue_type`.
-
-**Step 7:** Write the draft plan.md content to `PLAN_OUTPUT_PATH` = `${CONTEXT_PATH%.json}.plan.md` (delegate the
-file write to a subagent).
-
-**Step 8:** Run the Iterative Completeness Review (see section below), passing `PLAN_OUTPUT_PATH` and `ISSUE_GOAL`.
-
-**Step 9:** Verify the file at `PLAN_OUTPUT_PATH` exists.
-
 ### For Mid-Work Revision (mode=revise)
 
 **Step 1:** Read the existing `${ISSUE_PATH}/plan.md`.
@@ -245,6 +202,4 @@ Handle the result:
 
 ## Output
 
-- **initial mode**: Draft written to `${CONTEXT_PATH%.json}.plan.md` in Step 7, reviewed in Step 8. The caller
-  reads this file and passes the content to `create-issue`.
 - **revise mode**: Draft written to `${ISSUE_PATH}/plan.md` in Step 5, reviewed in Step 6.

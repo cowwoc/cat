@@ -118,23 +118,23 @@ Capture as ISSUE_DESCRIPTION, then continue to step: issue_read_config.
 
 **Read and validate configuration:**
 
-Read the `effort` value from config.json and store it for all downstream steps:
+Read the `effort` value from effective config and store it for all downstream steps:
 
 ```bash
-CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.cat/config.json"
-if [[ ! -f "$CONFIG_FILE" ]]; then
-    echo "ERROR: config.json not found: $CONFIG_FILE" >&2
-    echo "Solution: Run /cat:init to initialize the project." >&2
+CONFIG=$("${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output" effective)
+if [[ $? -ne 0 ]]; then
+    echo "ERROR: Failed to read effective config" >&2
     exit 1
 fi
-EFFORT=$(grep '"effort"' "$CONFIG_FILE" | sed 's/.*"effort"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+EFFORT=$(echo "$CONFIG" | grep -o '"effort"[[:space:]]*:[[:space:]]*"[^"]*"' \
+  | sed 's/.*"effort"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 if [[ -z "$EFFORT" ]]; then
-    echo "ERROR: 'effort' key not found in $CONFIG_FILE." >&2
-    echo "Add: \"effort\": \"low|medium|high\" to config.json" >&2
+    echo "ERROR: 'effort' key not found in effective config." >&2
+    echo "Add: \"effort\": \"low|medium|high\" to .cat/config.json" >&2
     exit 1
 fi
 if [[ "$EFFORT" != "low" && "$EFFORT" != "medium" && "$EFFORT" != "high" ]]; then
-    echo "ERROR: Invalid effort value '$EFFORT' in $CONFIG_FILE." >&2
+    echo "ERROR: Invalid effort value '$EFFORT' in effective config." >&2
     echo "Valid values: low, medium, high" >&2
     exit 1
 fi
@@ -945,32 +945,35 @@ Use appropriate template format:
 - **Blocks:** []
 ```
 
-**Generate plan.md via plan-builder-agent:**
+**Generate lightweight plan.md:**
 
-Invoke the plan-builder-agent skill to generate the plan.md. This centralizes all planning logic (effort-based depth,
-comprehensiveness requirements, sub-agent waves, templates) in one place.
+Create a lightweight plan.md containing only the goal and post-conditions. Full implementation steps are generated
+later by `cat:work-implement-agent` when work begins.
 
-1. Write a temporary context file with the issue details:
+1. Create a unique temporary plan.md file (multi-instance safe):
 
 ```bash
-PLAN_CONTEXT="/tmp/plan-context-${ISSUE_NAME}.json"
-cat > "$PLAN_CONTEXT" << EOF
-{
-  "issue_type": "${ISSUE_TYPE}",
-  "description": "${ISSUE_DESCRIPTION}",
-  "postconditions": ${POSTCONDITIONS_JSON},
-  "research_findings": "${RESEARCH_FINDINGS:-}",
-  "impact_notes": "${IMPACT_NOTES:-}"
-}
-EOF
+planTempFile=$(mktemp --suffix=.md)
 ```
 
-2. Invoke plan-builder-agent:
+2. Write the lightweight plan.md to `${planTempFile}` using the Write tool with the following structure:
 
 ```
-Skill tool:
-  skill: "cat:plan-builder-agent"
-  args: "${CAT_AGENT_ID} ${EFFORT} initial ${PLAN_CONTEXT}"
+# Plan
+
+## Goal
+
+${ISSUE_DESCRIPTION}
+
+## Pre-conditions
+
+(none)
+
+## Post-conditions
+
+- [ ] ${postcondition_1}
+- [ ] ${postcondition_2}
+...
 ```
 
 3. Create the issue, passing the generated plan.md file path:
@@ -983,7 +986,7 @@ Skill tool:
   "issue_type": "{issue-type}",
   "dependencies": ["{dep1}", "{dep2}"],
   "indexContent": "{full index.json content}",
-  "planFile": "'"${PLAN_CONTEXT%.json}.plan.md"'",
+  "planFile": "'"${planTempFile}"'",
   "commitDescription": "{one-line description}"
 }'
 ```
@@ -994,7 +997,18 @@ The script handles:
 - Updating parent version index.json
 - Git add and commit
 
-Check the JSON output for success status.
+Check the JSON output for success status. If create-issue returns an error, clean up the temporary plan file
+before reporting the error and stopping:
+
+```bash
+rm -f "${planTempFile}"
+```
+
+Clean up the temporary plan file after a successful create-issue call:
+
+```bash
+rm -f "${planTempFile}"
+```
 
 **Apply auto-detected skill dependency updates (if any):**
 
@@ -1059,7 +1073,7 @@ Run the renderer and output its result verbatim:
 ```bash
 CLIENT_BIN="${WORKTREE_PATH}/client/target/jlink/bin"
 if [[ ! -x "$CLIENT_BIN/get-add-output" ]]; then
-  CLIENT_BIN="/workspace/client/target/jlink/bin"
+  CLIENT_BIN="${CLAUDE_PROJECT_DIR}/client/target/jlink/bin"
 fi
 "$CLIENT_BIN/get-add-output" --type issue --name "{issue-name}" --version "{version}" --issue-type "{type}" --dependencies "{dependencies}"
 ```
@@ -1775,7 +1789,7 @@ Run the renderer and output its result verbatim:
 ```bash
 CLIENT_BIN="${WORKTREE_PATH}/client/target/jlink/bin"
 if [[ ! -x "$CLIENT_BIN/get-add-output" ]]; then
-  CLIENT_BIN="/workspace/client/target/jlink/bin"
+  CLIENT_BIN="${CLAUDE_PROJECT_DIR}/client/target/jlink/bin"
 fi
 "$CLIENT_BIN/get-add-output" --type version --name "{version-name}" --version "{version}" --version-type "{VERSION_TYPE}" --parent "{parent-info}" --path "{version-path}"
 ```
