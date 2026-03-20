@@ -4,6 +4,6 @@
   "trust": "medium",
   "verify": "all",
   "effort": "high",
-  "patience": "medium",
+  "patience": "low",
   "minSeverity": "low"
 }
