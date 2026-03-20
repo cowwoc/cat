@@ -1,8 +1,9 @@
 ---
 description: >
   Build or revise a plan.md for an issue. Centralizes effort-based planning depth, approach research,
-  execution plan format, and comprehensiveness requirements. Invoked by /cat:add for initial plans
-  and by /cat:work for mid-work revisions.
+  execution plan format, and comprehensiveness requirements. Invoked by /cat:work to generate full
+  implementation steps before spawning the implementation subagent, and for mid-work revisions when
+  requirements change during implementation.
 model: sonnet
 allowed-tools:
   - Read
@@ -14,7 +15,7 @@ allowed-tools:
   - Agent
   - WebSearch
   - WebFetch
-argument-hint: "<catAgentId> <issuePath> <effort> [revision-context]"
+argument-hint: "<catAgentId> <effort> <mode> <contextPath> [revision-context]"
 user-invocable: false
 ---
 
