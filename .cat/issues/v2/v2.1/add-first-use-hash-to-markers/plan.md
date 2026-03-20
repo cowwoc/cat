@@ -290,6 +290,14 @@ old markers for skills with `first-use.md` are automatically invalidated on firs
 
   - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/GetSkillTest.java`
 
+- Fix 5 pre-existing PMD `CloseResource` violations in files unrelated to this issue so that
+  `mvn -f client/pom.xml test` exits 0. The violations are in:
+  `EmpiricalTestRunner.java`, `Feedback.java`, `GitMergeLinear.java`, `WriteAndCommit.java`,
+  `GetDiffOutputTest.java`. For each file, wrap the resource(s) flagged by PMD in a
+  try-with-resources block (or close them in a `finally` block) so they are always closed.
+  Run `mvn -f client/pom.xml test` after all fixes and confirm exit code 0.
+  - Files: the five Java files listed above (locate under `client/src/`)
+
 - Run full test suite to verify no regressions:
   ```bash
   mvn -f client/pom.xml test

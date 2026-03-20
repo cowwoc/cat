@@ -22,6 +22,7 @@ import java.io.PrintStream;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -208,25 +209,23 @@ public final class GitMergeLinear
       ProcessBuilder pb = new ProcessBuilder("git", "merge", "--ff-only", branch);
       pb.directory(Path.of(directory).toFile());
       pb.redirectErrorStream(true);
-      Process process = pb.start();
-
-      StringBuilder output = new StringBuilder();
-      try (BufferedReader reader = new BufferedReader(
-        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
+      try (Process process = pb.start())
       {
-        String line = reader.readLine();
-        while (line != null)
+        StringJoiner output = new StringJoiner("\n");
+        try (BufferedReader reader = new BufferedReader(
+          new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
         {
-          if (!output.isEmpty())
-            output.append('\n');
-          output.append(line);
-          line = reader.readLine();
+          String line = reader.readLine();
+          while (line != null)
+          {
+            output.add(line);
+            line = reader.readLine();
+          }
         }
+        int exitCode = process.waitFor();
+        if (exitCode != 0)
+          throw new IOException("Fast-forward merge failed. Rebase task branch onto base first.");
       }
-
-      int exitCode = process.waitFor();
-      if (exitCode != 0)
-        throw new IOException("Fast-forward merge failed. Rebase task branch onto base first.");
     }
     catch (InterruptedException e)
     {

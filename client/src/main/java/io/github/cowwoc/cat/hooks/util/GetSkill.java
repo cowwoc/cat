@@ -7,6 +7,7 @@
 package io.github.cowwoc.cat.hooks.util;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
@@ -16,17 +17,20 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.HexFormat;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +42,13 @@ import org.slf4j.LoggerFactory;
  * preprocessor directives expanded. On subsequent invocations within the same session, returns a
  * short "already loaded" reference message and re-executes the single {@code !} preprocessor
  * directive from {@code first-use.md} (if present) to produce fresh output.
+ * <p>
+ * <b>Marker files and hash tracking:</b> Each loaded skill is tracked by a marker file in
+ * {@code loadedDir}, named after the URL-encoded qualified skill name. Marker files contain the
+ * SHA-256 hex digest of the skill's {@code first-use.md} at the time the skill was first loaded.
+ * On each {@link #load(String)} call, the stored digest is compared to the current digest. A
+ * mismatch invalidates the marker and triggers a full first-use reload — ensuring Claude always
+ * receives updated skill instructions after a plugin upgrade.
  * <p>
  * <b>Skill directory structure:</b>
  * <pre>
@@ -109,12 +120,13 @@ public final class GetSkill
   private static final Pattern POSITIONAL_INDEXED_ARG_PATTERN = Pattern.compile("\\$(\\d+)");
   private static final Pattern ARGUMENTS_INDEXED_PATTERN = Pattern.compile("\\$ARGUMENTS\\[(\\d+)]");
   private static final String LAUNCHER_DIRECTORY = "client/bin";
+  private static final HexFormat HEX_FORMAT = HexFormat.of();
 
   private final JvmScope scope;
   private final Path pluginRoot;
   private final List<String> skillArgs;
   private final Path loadedDir;
-  private final Set<String> loadedSkills;
+  private final Map<String, String> skillHashes;
   private final String pluginPrefix;
 
   /**
@@ -215,12 +227,22 @@ public final class GetSkill
     this.loadedDir = agentDir.resolve(LOADED_DIR);
 
     Files.createDirectories(loadedDir);
-    this.loadedSkills = new HashSet<>();
+    this.skillHashes = new HashMap<>();
 
-    try (java.util.stream.Stream<Path> stream = Files.list(loadedDir))
+    try (Stream<Path> stream = Files.list(loadedDir))
     {
-      stream.forEach(p -> loadedSkills.add(
-        URLDecoder.decode(p.getFileName().toString(), StandardCharsets.UTF_8)));
+      List<Path> markerFiles = stream.toList();
+      for (Path markerFile : markerFiles)
+      {
+        String qualifiedName = URLDecoder.decode(markerFile.getFileName().toString(), UTF_8);
+        String storedHash = Files.readString(markerFile, UTF_8);
+        if (storedHash.isEmpty())
+        {
+          Files.delete(markerFile);
+          continue;
+        }
+        skillHashes.put(qualifiedName, storedHash);
+      }
     }
   }
 
@@ -248,13 +270,22 @@ public final class GetSkill
     String content = stripFrontmatter(rawContent);
 
     String qualifiedName = qualifySkillName(skillName);
-    if (loadedSkills.contains(qualifiedName))
+    String storedHash = skillHashes.get(qualifiedName);
+    if (storedHash != null)
     {
-      // Subsequent load: return reference + re-execute single directive if present
-      return buildSubsequentLoadResponse(skillName, content);
+      String currentHash = computeFirstUseHash(skillName);
+      if (storedHash.equals(currentHash))
+      {
+        // Hash matches: skill content unchanged, use cached marker
+        return buildSubsequentLoadResponse(skillName, content);
+      }
+      // Hash mismatch: first-use.md was updated (e.g., plugin upgrade) — invalidate marker
+      String encodedName = URLEncoder.encode(qualifiedName, UTF_8);
+      Files.deleteIfExists(loadedDir.resolve(encodedName));
+      skillHashes.remove(qualifiedName);
     }
-    // First load: return full expanded content
-    markSkillLoaded(qualifiedName);
+    // First load or invalidated marker: return full expanded content
+    markSkillLoaded(qualifiedName, skillName);
     return processPreprocessorDirectives(content, skillName);
   }
 
@@ -388,18 +419,29 @@ public final class GetSkill
    */
   private String loadRawContent(String skillName) throws IOException
   {
+    Path skillsDir = pluginRoot.resolve("skills").toAbsolutePath().normalize();
     String dirName = stripPrefix(skillName);
-    Path contentPath = pluginRoot.resolve("skills/" + dirName + "/first-use.md");
+    Path contentPath = pluginRoot.resolve("skills/" + dirName + "/first-use.md").toAbsolutePath().normalize();
+    if (!contentPath.startsWith(skillsDir))
+    {
+      throw new IllegalArgumentException("skillName contains path traversal: '" + skillName +
+        "'. Expected path under: " + skillsDir);
+    }
 
     // Fall back to parent skill's first-use.md for *-agent variants that have none of their own.
     // Only one level of -agent suffix is stripped: "add-agent" → "add", not "add-agent-agent" → "add".
-    if (!Files.exists(contentPath) && dirName.endsWith("-agent"))
+    if (Files.notExists(contentPath) && dirName.endsWith("-agent"))
     {
       String parentDirName = dirName.substring(0, dirName.length() - "-agent".length());
-      contentPath = pluginRoot.resolve("skills/" + parentDirName + "/first-use.md");
+      contentPath = pluginRoot.resolve("skills/" + parentDirName + "/first-use.md").toAbsolutePath().normalize();
+      if (!contentPath.startsWith(skillsDir))
+      {
+        throw new IllegalArgumentException("skillName (parent) contains path traversal: '" + skillName +
+          "'. Expected path under: " + skillsDir);
+      }
     }
 
-    return Files.readString(contentPath, StandardCharsets.UTF_8);
+    return Files.readString(contentPath, UTF_8);
   }
 
   /**
@@ -563,7 +605,7 @@ public final class GetSkill
     if (!Files.exists(expectedLauncher))
       return originalDirective;
 
-    String launcherContent = Files.readString(expectedLauncher, StandardCharsets.UTF_8);
+    String launcherContent = Files.readString(expectedLauncher, UTF_8);
     String className = extractClassName(launcherContent);
     if (className.isEmpty())
     {
@@ -689,18 +731,71 @@ public final class GetSkill
   }
 
   /**
-   * Marks a skill as loaded by creating an empty marker file in the loaded directory.
+   * Computes a SHA-256 hex digest of the {@code first-use.md} file for the given skill.
+   * <p>
+   * Applies the same {@code -agent} fallback logic as {@link #loadRawContent}: if the skill has
+   * no {@code first-use.md} of its own and its name ends with {@code -agent}, the parent skill's
+   * {@code first-use.md} is tried.
+   *
+   * @param skillName the skill name (bare or qualified)
+   * @return the SHA-256 hex digest of the file contents
+   * @throws IOException if the file does not exist or cannot be read
+   */
+  private String computeFirstUseHash(String skillName) throws IOException
+  {
+    Path skillsDir = pluginRoot.resolve("skills").toAbsolutePath().normalize();
+    String dirName = stripPrefix(skillName);
+    Path firstUsePath = pluginRoot.resolve("skills/" + dirName + "/first-use.md").toAbsolutePath().normalize();
+    if (!firstUsePath.startsWith(skillsDir))
+    {
+      throw new IllegalArgumentException("skillName contains path traversal: '" + skillName +
+        "'. Expected path under: " + skillsDir);
+    }
+    if (Files.notExists(firstUsePath) && dirName.endsWith("-agent"))
+    {
+      String parentDirName = dirName.substring(0, dirName.length() - "-agent".length());
+      firstUsePath = pluginRoot.resolve("skills/" + parentDirName + "/first-use.md").toAbsolutePath().normalize();
+      if (!firstUsePath.startsWith(skillsDir))
+      {
+        throw new IllegalArgumentException("skillName (parent) contains path traversal: '" + skillName +
+          "'. Expected path under: " + skillsDir);
+      }
+    }
+    if (Files.notExists(firstUsePath))
+      throw new IOException(
+        "first-use.md not found for skill '" + skillName + "': " + firstUsePath + ". " +
+          "Every skill must have a first-use.md file.");
+    byte[] fileBytes = Files.readAllBytes(firstUsePath);
+    try
+    {
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      byte[] hashBytes = digest.digest(fileBytes);
+      return HEX_FORMAT.formatHex(hashBytes);
+    }
+    catch (NoSuchAlgorithmException e)
+    {
+      // SHA-256 is guaranteed by the Java SE specification to be available on all compliant JVMs.
+      throw new AssertionError("SHA-256 MessageDigest not available", e);
+    }
+  }
+
+  /**
+   * Marks a skill as loaded by writing the SHA-256 hash of its {@code first-use.md} to a marker
+   * file in the loaded directory.
    * <p>
    * The {@code qualifiedName} must include the plugin prefix (e.g., {@code "cat:git-rebase-agent"}).
+   * The {@code skillName} is used to locate {@code first-use.md} and compute its hash.
    *
    * @param qualifiedName the fully-qualified skill name
-   * @throws IOException if the marker file cannot be written
+   * @param skillName the skill name (bare or qualified), used to compute the {@code first-use.md} hash
+   * @throws IOException if {@code first-use.md} is not found or the marker file cannot be written
    */
-  private void markSkillLoaded(String qualifiedName) throws IOException
+  private void markSkillLoaded(String qualifiedName, String skillName) throws IOException
   {
-    loadedSkills.add(qualifiedName);
-    String encodedName = URLEncoder.encode(qualifiedName, StandardCharsets.UTF_8);
-    Files.writeString(loadedDir.resolve(encodedName), "", StandardCharsets.UTF_8);
+    String hash = computeFirstUseHash(skillName);
+    skillHashes.put(qualifiedName, hash);
+    String encodedName = URLEncoder.encode(qualifiedName, UTF_8);
+    Files.writeString(loadedDir.resolve(encodedName), hash, UTF_8);
   }
 
   /**

@@ -41,7 +41,7 @@ import java.util.StringJoiner;
  * <p>
  * Returns JSON output suitable for agent parsing.
  */
-public final class Feedback
+public final class Feedback implements AutoCloseable
 {
   private static final String GITHUB_API_BASE = "https://api.github.com";
   private static final String GITHUB_BASE = "https://github.com";
@@ -64,6 +64,12 @@ public final class Feedback
     this.httpClient = HttpClient.newBuilder().
       connectTimeout(REQUEST_TIMEOUT).
       build();
+  }
+
+  @Override
+  public void close()
+  {
+    httpClient.close();
   }
 
   /**
@@ -357,14 +363,15 @@ public final class Feedback
 
       String subcommand = args[0];
 
-      Feedback feedback = new Feedback(scope);
-
-      switch (subcommand)
+      try (Feedback feedback = new Feedback(scope))
       {
-        case "search" -> runSearch(feedback, hookOutput, args);
-        case "open" -> runOpen(feedback, hookOutput, args);
-        default -> System.out.println(hookOutput.block(
-          "Unknown subcommand: %s. Use 'search' or 'open'.".formatted(subcommand)));
+        switch (subcommand)
+        {
+          case "search" -> runSearch(feedback, hookOutput, args);
+          case "open" -> runOpen(feedback, hookOutput, args);
+          default -> System.out.println(hookOutput.block(
+            "Unknown subcommand: %s. Use 'search' or 'open'.".formatted(subcommand)));
+        }
       }
     }
   }

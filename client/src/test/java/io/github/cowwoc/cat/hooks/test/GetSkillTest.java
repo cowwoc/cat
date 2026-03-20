@@ -10,16 +10,19 @@ import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.GetSkill;
 import org.testng.annotations.Test;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.NoSuchFileException;
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Tests for GetSkill functionality.
@@ -1151,10 +1154,6 @@ More content here.
     }
   }
 
-  // -------------------------------------------------------------------------
-  // Fix 4: Success path for multiple directives on first load
-  // -------------------------------------------------------------------------
-
   /**
    * Verifies that a skill with multiple {@code !} preprocessor directives succeeds on the first load,
    * expanding all directives inline.
@@ -1266,10 +1265,6 @@ More content here.
       TestUtils.deleteDirectoryRecursively(baseDir);
     }
   }
-
-  // -------------------------------------------------------------------------
-  // Fix 5c: catAgentId negative validation tests
-  // -------------------------------------------------------------------------
 
   /**
    * Verifies that constructor rejects an agent ID that is neither a UUID nor a subagent ID format.
@@ -1425,7 +1420,7 @@ More content here.
       Path agentDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize().resolve(agentId);
       Path loadedDir = agentDir.resolve(GetSkill.LOADED_DIR);
       // Qualified name: "cat:test-skill" → URL-encoded: "cat%3Atest-skill"
-      Path expectedMarker = loadedDir.resolve(URLEncoder.encode("cat:test-skill", StandardCharsets.UTF_8));
+      Path expectedMarker = loadedDir.resolve(URLEncoder.encode("cat:test-skill", UTF_8));
       requireThat(Files.exists(expectedMarker), "markerExists").isTrue();
     }
     finally
@@ -1437,6 +1432,10 @@ More content here.
   /**
    * Verifies that a second load call for the same bare-name skill returns the "already loaded"
    * reference message, confirming that the qualified-name marker is recognized on the second call.
+   * Also verifies that the marker file contains the correct SHA-256 hash, confirming the hash
+   * comparison path was exercised on the second load.
+   *
+   * @throws IOException if an I/O error occurs
    */
   @Test
   public void loadRecognizesAlreadyLoadedByQualifiedName() throws IOException
@@ -1446,13 +1445,24 @@ More content here.
     {
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("first-use.md"), "Skill content\n");
+      String firstUseContent = "Skill content\n";
+      Files.writeString(companionDir.resolve("first-use.md"), firstUseContent, UTF_8);
 
-      GetSkill loader = new GetSkill(scope, List.of(UUID.randomUUID().toString()));
+      String agentId = UUID.randomUUID().toString();
+      GetSkill loader = new GetSkill(scope, List.of(agentId));
       loader.load("test-skill");
 
       String secondResult = loader.load("test-skill");
       requireThat(secondResult, "secondResult").contains("skill instructions were already loaded");
+
+      // Verify the marker file still contains the correct SHA-256 hash, confirming that the
+      // hash comparison path was exercised (marker written on first load, compared on second load).
+      Path agentDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize().resolve(agentId);
+      Path loadedDir = agentDir.resolve(GetSkill.LOADED_DIR);
+      Path markerFile = loadedDir.resolve(URLEncoder.encode("cat:test-skill", UTF_8));
+      String markerContent = Files.readString(markerFile, UTF_8);
+      String expectedHash = sha256Hex(firstUseContent.getBytes(UTF_8));
+      requireThat(markerContent, "markerContent").isEqualTo(expectedHash);
     }
     finally
     {
@@ -1518,11 +1528,11 @@ More content here.
 
       Path agentDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize().resolve(agentId);
       Path loadedDir = agentDir.resolve(GetSkill.LOADED_DIR);
-      Path expectedMarker = loadedDir.resolve(URLEncoder.encode("cat:test-skill", StandardCharsets.UTF_8));
+      Path expectedMarker = loadedDir.resolve(URLEncoder.encode("cat:test-skill", UTF_8));
       requireThat(Files.exists(expectedMarker), "markerExists").isTrue();
       // Verify no double-qualified file exists
       Path doubleQualifiedMarker = loadedDir.resolve(
-        URLEncoder.encode("cat:cat:test-skill", StandardCharsets.UTF_8));
+        URLEncoder.encode("cat:cat:test-skill", UTF_8));
       requireThat(Files.exists(doubleQualifiedMarker), "doubleQualifiedExists").isFalse();
     }
     finally
@@ -1573,6 +1583,391 @@ More content here.
 
       // ${PATH} must have been expanded to the real PATH value via System.getenv()
       requireThat(result, "result").contains("ARGS:" + pathValue);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Hash-based marker tracking
+  // -------------------------------------------------------------------------
+
+  /**
+   * Computes the SHA-256 hex digest of a byte array for test assertions.
+   *
+   * @param bytes the content to hash
+   * @return the SHA-256 hex digest
+   */
+  private static String sha256Hex(byte[] bytes)
+  {
+    try
+    {
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      return HexFormat.of().formatHex(digest.digest(bytes));
+    }
+    catch (NoSuchAlgorithmException e)
+    {
+      throw new AssertionError("SHA-256 MessageDigest not available", e);
+    }
+  }
+
+  /**
+   * Verifies that loading a skill for the first time writes the SHA-256 hash of first-use.md
+   * to the marker file, not an empty string.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void firstLoadWritesHashToMarkerFile() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      String firstUseContent = "This is the first-use content for hash test.\n";
+      Files.writeString(companionDir.resolve("first-use.md"), firstUseContent, UTF_8);
+
+      String agentId = UUID.randomUUID().toString();
+      GetSkill loader = new GetSkill(scope, List.of(agentId));
+      loader.load("test-skill");
+
+      // The marker file should exist and contain the SHA-256 hash of first-use.md
+      Path agentDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize().resolve(agentId);
+      Path loadedDir = agentDir.resolve(GetSkill.LOADED_DIR);
+      Path markerFile = loadedDir.resolve(URLEncoder.encode("cat:test-skill", UTF_8));
+      requireThat(Files.exists(markerFile), "markerExists").isTrue();
+
+      String markerContent = Files.readString(markerFile, UTF_8);
+      String expectedHash = sha256Hex(firstUseContent.getBytes(UTF_8));
+      requireThat(markerContent, "markerContent").isEqualTo(expectedHash);
+      // A valid SHA-256 hex string is 64 characters
+      requireThat(markerContent.length(), "markerContent.length").isEqualTo(64);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that a second load for the same skill returns the "already loaded" reference message
+   * when first-use.md content has not changed since the first load.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void secondLoadWithMatchingHashReturnsSubsequentResponse() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      String firstUseContent = "Skill content for hash match test.\n";
+      Files.writeString(companionDir.resolve("first-use.md"), firstUseContent, UTF_8);
+
+      // Pre-write a marker file containing the correct SHA-256 hash
+      String agentId = UUID.randomUUID().toString();
+      Path agentDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize().resolve(agentId);
+      Path loadedDir = agentDir.resolve(GetSkill.LOADED_DIR);
+      Files.createDirectories(loadedDir);
+      String correctHash = sha256Hex(firstUseContent.getBytes(UTF_8));
+      Files.writeString(
+        loadedDir.resolve(URLEncoder.encode("cat:test-skill", UTF_8)),
+        correctHash,
+        UTF_8);
+
+      // GetSkill reads the existing marker; load() should detect the matching hash
+      GetSkill loader = new GetSkill(scope, List.of(agentId));
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").contains("already loaded");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that when the stored hash in the marker file does not match the current first-use.md
+   * content (e.g., after a plugin upgrade), the marker is invalidated and the full skill content
+   * is returned.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void secondLoadWithMismatchedHashReturnsFullContent() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      String firstUseContent = "Updated skill content after plugin upgrade.\n";
+      Files.writeString(companionDir.resolve("first-use.md"), firstUseContent, UTF_8);
+
+      // Pre-write a marker file with a stale/wrong hash
+      String agentId = UUID.randomUUID().toString();
+      Path agentDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize().resolve(agentId);
+      Path loadedDir = agentDir.resolve(GetSkill.LOADED_DIR);
+      Files.createDirectories(loadedDir);
+      Path markerFilePath = loadedDir.resolve(
+        URLEncoder.encode("cat:test-skill", UTF_8));
+      Files.writeString(markerFilePath, "stale-hash", UTF_8);
+
+      // GetSkill reads the stale marker; load() should detect the mismatch
+      GetSkill loader = new GetSkill(scope, List.of(agentId));
+      String result = loader.load("test-skill");
+
+      // Full first-use content is returned (not "already loaded")
+      requireThat(result, "result").contains("Updated skill content after plugin upgrade.");
+
+      // The marker file now contains the correct hash
+      String newMarkerContent = Files.readString(markerFilePath, UTF_8);
+      String expectedHash = sha256Hex(firstUseContent.getBytes(UTF_8));
+      requireThat(newMarkerContent, "newMarkerContent").isEqualTo(expectedHash);
+      requireThat(newMarkerContent, "newMarkerContent").doesNotContain("stale-hash");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that a pre-existing empty marker file is deleted on construction, causing the skill
+   * to be treated as not yet loaded and returning full first-use content on the next load.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void emptyMarkerFileIsDeletedOnConstructionAndTriggersFirstUseReload() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      String firstUseContent = "Content for migration test.\n";
+      Files.writeString(companionDir.resolve("first-use.md"), firstUseContent, UTF_8);
+
+      // Pre-write an empty marker file
+      String agentId = UUID.randomUUID().toString();
+      Path agentDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize().resolve(agentId);
+      Path loadedDir = agentDir.resolve(GetSkill.LOADED_DIR);
+      Files.createDirectories(loadedDir);
+      Path markerFilePath = loadedDir.resolve(
+        URLEncoder.encode("cat:test-skill", UTF_8));
+      Files.writeString(markerFilePath, "", UTF_8);
+
+      // GetSkill construction deletes the empty marker file
+      GetSkill loader = new GetSkill(scope, List.of(agentId));
+
+      // Empty marker file no longer exists after construction
+      requireThat(Files.notExists(markerFilePath), "markerFileDeleted").isTrue();
+
+      String result = loader.load("test-skill");
+
+      // Full first-use content is returned (not "already loaded")
+      requireThat(result, "result").contains("Content for migration test.");
+
+      // The marker file now contains a non-empty SHA-256 hash
+      String newMarkerContent = Files.readString(markerFilePath, UTF_8);
+      requireThat(newMarkerContent, "newMarkerContent").isNotEmpty();
+      requireThat(newMarkerContent.length(), "newMarkerContent.length").isEqualTo(64);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that after a stale marker is invalidated, the newly written marker contains the
+   * correct current hash, so a subsequent third load is served from cache without re-invalidating.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void afterInvalidationNewMarkerIsValidForThirdLoad() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      String firstUseContent = "Content for third-load test.\n";
+      Files.writeString(companionDir.resolve("first-use.md"), firstUseContent, UTF_8);
+
+      // Pre-write a marker file with a stale hash
+      String agentId = UUID.randomUUID().toString();
+      Path agentDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize().resolve(agentId);
+      Path loadedDir = agentDir.resolve(GetSkill.LOADED_DIR);
+      Files.createDirectories(loadedDir);
+      Files.writeString(
+        loadedDir.resolve(URLEncoder.encode("cat:test-skill", UTF_8)),
+        "stale-hash",
+        UTF_8);
+
+      GetSkill loader = new GetSkill(scope, List.of(agentId));
+
+      // First call: stale hash detected, marker invalidated, full content returned
+      String firstResult = loader.load("test-skill");
+      requireThat(firstResult, "firstResult").contains("Content for third-load test.");
+
+      // Second call: the marker was rewritten with the correct hash during the first call,
+      // so this load should hit the valid marker and return the "already loaded" message
+      String secondResult = loader.load("test-skill");
+      requireThat(secondResult, "secondResult").contains("already loaded");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that when a skill named {@code foo-agent} has no {@code first-use.md} of its own,
+   * the hash is computed from the parent skill's {@code foo/first-use.md} via the {@code -agent}
+   * suffix fallback.
+   * <p>
+   * The marker file written after loading the skill must contain a non-empty SHA-256 hash
+   * (proving that {@code first-use.md} was found via fallback rather than returning an empty hash
+   * for a missing file).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void agentSuffixFallbackComputesHashFromParentSkill() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      // Create only the parent skill's first-use.md (not foo-agent/first-use.md)
+      Path parentSkillDir = tempPluginRoot.resolve("skills/foo");
+      Files.createDirectories(parentSkillDir);
+      String firstUseContent = "Parent skill content for agent fallback test.\n";
+      Files.writeString(parentSkillDir.resolve("first-use.md"), firstUseContent, UTF_8);
+
+      // Create the foo-agent skill directory but without a first-use.md
+      Path agentSkillDir = tempPluginRoot.resolve("skills/foo-agent");
+      Files.createDirectories(agentSkillDir);
+      // No first-use.md in foo-agent/ — fallback to foo/first-use.md must occur
+
+      String agentId = UUID.randomUUID().toString();
+      GetSkill loader = new GetSkill(scope, List.of(agentId));
+      loader.load("foo-agent");
+
+      // The marker file should contain the SHA-256 hash of foo/first-use.md (not empty)
+      Path agentDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize().resolve(agentId);
+      Path loadedDir = agentDir.resolve(GetSkill.LOADED_DIR);
+      Path markerFile = loadedDir.resolve(URLEncoder.encode("cat:foo-agent", UTF_8));
+      requireThat(Files.exists(markerFile), "markerExists").isTrue();
+
+      String markerContent = Files.readString(markerFile, UTF_8);
+      String expectedHash = sha256Hex(firstUseContent.getBytes(UTF_8));
+      requireThat(markerContent, "markerContent").isEqualTo(expectedHash);
+      // A valid SHA-256 hex string is 64 characters; empty hash would be ""
+      requireThat(markerContent.length(), "markerContent.length").isEqualTo(64);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Security: path traversal rejection tests
+  // -------------------------------------------------------------------------
+
+  /**
+   * Verifies that load() rejects a skill name containing path traversal sequences ({@code ..}).
+   * A malicious skill name like {@code ../../etc/passwd} must not be used to construct a file path
+   * that escapes the skills directory.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = "(?s).*path traversal.*")
+  public void loadRejectsPathTraversalInSkillName() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      GetSkill loader = new GetSkill(scope, List.of(UUID.randomUUID().toString()));
+      loader.load("../../etc/passwd");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that load() rejects a skill name containing path traversal sequences ({@code ..}) when
+   * the traversal is detected in the parent-skill fallback path (the {@code -agent} fallback logic).
+   * A stale marker with a non-empty hash triggers {@code computeFirstUseHash()}, which must also
+   * reject the traversal before reading any file.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = "(?s).*path traversal.*")
+  public void computeFirstUseHashRejectsPathTraversalInSkillName() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      // Pre-write a stale marker so load() proceeds to computeFirstUseHash() for the traversal name.
+      String agentId = UUID.randomUUID().toString();
+      Path agentDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize().resolve(agentId);
+      Path loadedDir = agentDir.resolve(GetSkill.LOADED_DIR);
+      Files.createDirectories(loadedDir);
+      // URL-encode the traversal skill name to form the marker filename
+      Files.writeString(
+        loadedDir.resolve(URLEncoder.encode("cat:../../etc/passwd", UTF_8)),
+        "stale-hash",
+        UTF_8);
+
+      GetSkill loader = new GetSkill(scope, List.of(agentId));
+      loader.load("../../etc/passwd");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that load() throws {@link IOException} when a stale (non-empty) marker exists for a
+   * skill but {@code first-use.md} is absent. The exception is thrown by {@code loadRawContent()}
+   * when it tries to read the missing file.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = "(?s).*first-use\\.md.*")
+  public void loadThrowsWhenStaleMarkerExistsButFirstUseMdIsMissing() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      // Pre-write a stale marker for "test-skill" but do NOT create the first-use.md file.
+      String agentId = UUID.randomUUID().toString();
+      Path agentDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize().resolve(agentId);
+      Path loadedDir = agentDir.resolve(GetSkill.LOADED_DIR);
+      Files.createDirectories(loadedDir);
+      Files.writeString(
+        loadedDir.resolve(URLEncoder.encode("cat:test-skill", UTF_8)),
+        "stale-hash",
+        UTF_8);
+
+      GetSkill loader = new GetSkill(scope, List.of(agentId));
+      loader.load("test-skill");
     }
     finally
     {
