@@ -1300,7 +1300,7 @@ public class GetCleanupOutputTest
           "handler": "cleanup",
           "context": {
             "phase": "plan",
-            "locks_to_remove": [{"issueId": "2.1-issue-name", "session": "eb68bb02", "age_seconds": 326}],
+            "locks_to_remove": [{"issue_id": "2.1-issue-name", "session": "eb68bb02", "age_seconds": 326}],
             "worktrees_to_remove": [{"path": "%s",
               "branch": "2.1-issue-name", "age_seconds": 326}],
             "branches_to_remove": ["2.1-issue-name"],

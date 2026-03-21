@@ -5,7 +5,7 @@ description: >
   IMPORTANT: After invoking this skill, forward the AskUserQuestion tool call verbatim — do not respond
   conversationally.
 model: haiku
-argument-hint: "<catAgentId> [description]"
+argument-hint: "<cat_agent_id> [description]"
 allowed-tools:
   - Bash
   - Read

@@ -224,8 +224,8 @@ public final class GetNextIssueOutput implements SkillOutput
 
     if (!nextIssue.isEmpty())
     {
-      String nextIssueId = nextIssue.getOrDefault("issueId", "").toString();
-      String nextIssuePath = nextIssue.getOrDefault("issuePath", "").toString();
+      String nextIssueId = nextIssue.getOrDefault("issue_id", "").toString();
+      String nextIssuePath = nextIssue.getOrDefault("issue_path", "").toString();
 
       String goal;
       if (!nextIssuePath.isEmpty())
@@ -286,8 +286,8 @@ public final class GetNextIssueOutput implements SkillOutput
       {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("status", "found");
-        data.put("issueId", found.issueId());
-        data.put("issuePath", found.issuePath());
+        data.put("issue_id", found.issueId());
+        data.put("issue_path", found.issuePath());
         return data;
       }
       return Map.of();

@@ -1059,7 +1059,7 @@ public final class GetCleanupOutput implements SkillOutput
     List<Lock> locksToRemove = new ArrayList<>();
     for (JsonNode lock : context.path("locks_to_remove"))
     {
-      String issueId = lock.path("issueId").asString();
+      String issueId = lock.path("issue_id").asString();
       String session = lock.path("session").asString();
       int ageSeconds = lock.path("age_seconds").asInt(0);
       locksToRemove.add(new Lock(issueId, session, Duration.ofSeconds(ageSeconds)));

@@ -17,7 +17,7 @@ Main Agent (work-with-issue skill)
     |
     +---> work-prepare subagent
     |     Loads: version-paths.md, discovery scripts
-    |     Returns: {issueId, worktreePath, estimate}
+    |     Returns: {issue_id, worktree_path, estimate}
     |
     +---> Implementation subagent (inline)
     |     Receives: plan.md steps, pre-invoked skill results
@@ -156,7 +156,7 @@ manual debugging sessions.
 **MANDATORY: Use `IssueDiscovery` Java class (via `work-prepare` launcher). FAIL-FAST if tool fails.**
 
 The work-prepare subagent handles discovery internally. Main agent receives the result
-as JSON with issueId, worktreePath, and other metadata.
+as JSON with issue_id, worktree_path, and other metadata.
 
 ## Lock Management
 

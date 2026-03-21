@@ -1,7 +1,7 @@
 {
   "status": "closed",
   "resolution": "implemented",
-  "targetBranch": "v2.1",
+  "target_branch": "v2.1",
   "dependencies": [
     "2.1-migrate-benchmark-runner-to-java"
   ]

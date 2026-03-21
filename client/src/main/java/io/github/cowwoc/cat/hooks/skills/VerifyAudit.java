@@ -177,7 +177,7 @@ public final class VerifyAudit
    * <p>
    * Takes raw ARGUMENTS JSON on stdin and:
    * <ol>
-   *   <li>Extracts and validates issueId, issuePath, worktreePath from JSON</li>
+   *   <li>Extracts and validates issue_id, issue_path, worktree_path from JSON</li>
    *   <li>Parses plan.md to extract file specs</li>
    *   <li>Verifies file existence and git history against file specs</li>
    * </ol>
@@ -185,9 +185,9 @@ public final class VerifyAudit
    * Returns a JSON object:
    * <pre>{@code
    * {
-   *   "issueId": "2.1-issue-name",
-   *   "issuePath": "/path/to/issue",
-   *   "worktreePath": "/path/to/worktree",
+   *   "issue_id": "2.1-issue-name",
+   *   "issue_path": "/path/to/issue",
+   *   "worktree_path": "/path/to/worktree",
    *   "file_results": {
    *     "modify": {"file1.java": "exists_and_modified"},
    *     "delete": {}
@@ -197,7 +197,7 @@ public final class VerifyAudit
    * <p>
    * Post-conditions are NOT extracted here. The skill reads plan.md directly to verify criteria.
    *
-   * @param argumentsJson the JSON string containing issueId, issuePath, worktreePath
+   * @param argumentsJson the JSON string containing issue_id, issue_path, worktree_path
    * @return JSON string with issue identifiers and file verification results
    * @throws NullPointerException if {@code argumentsJson} is null
    * @throws IllegalArgumentException if required fields are missing or plan.md does not exist
@@ -210,16 +210,16 @@ public final class VerifyAudit
     JsonNode argsRoot = scope.getJsonMapper().readTree(argumentsJson);
 
     String issueId = requireThat(argsRoot, "argumentsJson").
-      property("issueId").isString().getValue().asString();
-    requireThat(issueId, "argumentsJson.issueId").isNotBlank();
+      property("issue_id").isString().getValue().asString();
+    requireThat(issueId, "argumentsJson.issue_id").isNotBlank();
 
     String issuePath = requireThat(argsRoot, "argumentsJson").
-      property("issuePath").isString().getValue().asString();
-    requireThat(issuePath, "argumentsJson.issuePath").isNotBlank();
+      property("issue_path").isString().getValue().asString();
+    requireThat(issuePath, "argumentsJson.issue_path").isNotBlank();
 
     String worktreePath = requireThat(argsRoot, "argumentsJson").
-      property("worktreePath").isString().getValue().asString();
-    requireThat(worktreePath, "argumentsJson.worktreePath").isNotBlank();
+      property("worktree_path").isString().getValue().asString();
+    requireThat(worktreePath, "argumentsJson.worktree_path").isNotBlank();
 
     Path issueDir = Path.of(issuePath);
     Path planFile = issueDir.resolve("plan.md");
@@ -233,9 +233,9 @@ public final class VerifyAudit
     String fileResultsJson = verifyFilesInternal(fileSpecsJson, Path.of(worktreePath));
 
     ObjectNode result = scope.getJsonMapper().createObjectNode();
-    result.put("issueId", issueId);
-    result.put("issuePath", issuePath);
-    result.put("worktreePath", worktreePath);
+    result.put("issue_id", issueId);
+    result.put("issue_path", issuePath);
+    result.put("worktree_path", worktreePath);
 
     JsonNode fileResultsNode = scope.getJsonMapper().readTree(fileResultsJson);
     result.set("file_results", fileResultsNode);
@@ -742,7 +742,7 @@ public final class VerifyAudit
 
         Examples:
           echo '{"criteria_results": [...]}' | verify-audit report 2.1-issue-name
-          echo '{"issueId":"..."}' | verify-audit prepare""");
+          echo '{"issue_id":"..."}' | verify-audit prepare""");
       return;
     }
 

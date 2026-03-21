@@ -15,7 +15,7 @@ allowed-tools:
   - Agent
   - WebSearch
   - WebFetch
-argument-hint: "<catAgentId> <effort> <mode> <contextPath> [revision-context]"
+argument-hint: "<cat_agent_id> <effort> <mode> <contextPath> [revision-context]"
 user-invocable: false
 ---
 

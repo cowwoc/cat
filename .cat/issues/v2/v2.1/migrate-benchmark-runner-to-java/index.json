@@ -1,5 +1,5 @@
 {
   "status": "closed",
   "resolution": "implemented (all 2503 tests passing)",
-  "targetBranch": "v2.1"
+  "target_branch": "v2.1"
 }

@@ -84,7 +84,7 @@ output from stdout.
 | Status | Action |
 |--------|--------|
 | READY | Continue to Phase 2 |
-| READY + `potentiallyComplete: true` | Ask user to verify (see below), then skip or continue |
+| READY + `potentially_complete: true` | Ask user to verify (see below), then skip or continue |
 | NO_ISSUES | Display extended diagnostics (see below), stop |
 | LOCKED | Display lock message verbatim, stop — do NOT act on suggestions in the message (see below) |
 | OVERSIZED | Invoke /cat:decompose-issue-agent, then retry (max 2 attempts) |
@@ -124,9 +124,9 @@ If the prepare script returns empty output or output that cannot be parsed as JS
 
 When prepare phase returns NO_ISSUES, use extended failure fields to provide specific diagnostics:
 
-1. If `blockedIssues` is non-empty: list each blocked issue and what it's blocked by
-2. If `lockedIssues` is non-empty: suggest `/cat:cleanup` to clear stale locks
-3. If `closedCount == totalCount`: all issues done — suggest `/cat:add` for new work
+1. If `blocked_issues` is non-empty: list each blocked issue and what it's blocked by
+2. If `locked_issues` is non-empty: suggest `/cat:cleanup` to clear stale locks
+3. If `closed_count == total_count`: all issues done — suggest `/cat:add` for new work
 4. Otherwise: display the `message` field from work-prepare and suggest `/cat:status` to review
    issue state. Do NOT re-run work-prepare — stop.
 
@@ -154,23 +154,23 @@ executed without recovery.
      header: "Corrupt Issue Detected"
      question: "<message from CORRUPT JSON>"
      options:
-       - "Delete directory" (invoke /cat:safe-rm-agent on issuePath from JSON, then retry work-prepare)
-       - "Create plan.md (guided)" (invoke /cat:add with the issueId as context, then retry work-prepare)
+       - "Delete directory" (invoke /cat:safe-rm-agent on issue_path from JSON, then retry work-prepare)
+       - "Create plan.md (guided)" (invoke /cat:add with the issue_id as context, then retry work-prepare)
        - "Skip this issue" (release lock, retry work-prepare to find next issue)
    ```
 
 3. If user selects **"Delete directory"**:
-   - Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issueId}" "${CLAUDE_SESSION_ID}"`
-   - Invoke `cat:safe-rm-agent` to remove the corrupt issue directory at `issuePath` from the JSON
+   - Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
+   - Invoke `cat:safe-rm-agent` to remove the corrupt issue directory at `issue_path` from the JSON
    - After removal, retry `work-prepare` immediately
 
 4. If user selects **"Create plan.md (guided)"**:
-   - Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issueId}" "${CLAUDE_SESSION_ID}"`
-   - Invoke `cat:add` with the `issueId` from the CORRUPT JSON as context to guide plan.md creation
+   - Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
+   - Invoke `cat:add` with the `issue_id` from the CORRUPT JSON as context to guide plan.md creation
    - After plan.md is created, retry `work-prepare` to validate and continue
 
 5. If user selects **"Skip this issue"**:
-   - Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issueId}" "${CLAUDE_SESSION_ID}"`
+   - Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
    - Retry `work-prepare` with the same arguments to find the next available issue
 
 **CORRUPT retry limit:** If work-prepare returns CORRUPT 3 consecutive times (across any combination
@@ -239,15 +239,15 @@ retrying `work-prepare`. Any other skill invocation at this point is a control-f
 
 **Potentially Complete Handling:**
 
-When prepare returns READY with `potentiallyComplete: true`, work may already exist on the target
+When prepare returns READY with `potentially_complete: true`, work may already exist on the target
 branch with index.json not reflecting completion (e.g., stale merge overwrote status).
 
-1. Read the full diff for all commits in `suspiciousCommits` in a single Bash call (git show reads
+1. Read the full diff for all commits in `suspicious_commits` in a single Bash call (git show reads
    object history, not working tree contents, so any git directory in the repo works):
    ```bash
-   # suspiciousCommits is a space-separated list of commit hashes from work-prepare JSON output.
+   # suspicious_commits is a space-separated list of commit hashes from work-prepare JSON output.
    # Validate each value is a hex hash before use — reject any value not matching [0-9a-fA-F]+.
-   cd "${WORKTREE_PATH}" && valid_count=0 && for hash in ${suspiciousCommits}; do
+   cd "${WORKTREE_PATH}" && valid_count=0 && for hash in ${suspicious_commits}; do
      if [[ ! "$hash" =~ ^[0-9a-fA-F]+$ ]]; then
        echo "ERROR: invalid commit hash: $hash" >&2
        continue
@@ -259,16 +259,16 @@ branch with index.json not reflecting completion (e.g., stale merge overwrote st
    ```
    Use `git show` (full diff), not `git show --stat`. File names alone are insufficient to determine
    whether a commit implements the issue's goal — the actual code changes must be visible.
-   If `suspiciousCommits` is empty, skip to step 2 (no analysis needed).
-   If `VALID_HASH_COUNT` is 0 but `suspiciousCommits` was non-empty, treat as UNCERTAIN
+   If `suspicious_commits` is empty, skip to step 2 (no analysis needed).
+   If `VALID_HASH_COUNT` is 0 but `suspicious_commits` was non-empty, treat as UNCERTAIN
    (all hashes were invalid — present AskUserQuestion to the user rather than guessing).
 2. Read the issue's goal from its plan.md.
 3. Analyze whether the suspicious commits implement the issue's goal:
    - **YES** (commits clearly address the goal) → ask user permission to close:
      ```
      AskUserQuestion:
-       header: "${issueId}"
-       question: "Is ${issueId} already complete?"
+       header: "${issue_id}"
+       question: "Is ${issue_id} already complete?"
        options:
          - "Already complete" (close issue via worktree — see details below)
          - "Not complete, continue" (Proceed to Phase 2 normally)
@@ -279,16 +279,16 @@ branch with index.json not reflecting completion (e.g., stale merge overwrote st
    - **UNCERTAIN** → ask the user using the same AskUserQuestion as the YES case above.
 
    **"Already complete" implementation:**
-   1. Output: `"Verifying post-conditions before closing ${issueId}..."`
+   1. Output: `"Verifying post-conditions before closing ${issue_id}..."`
 
       <!-- Note: the standard implement→confirm→review→merge path runs the same check via work-confirm-agent
            (Phase 3), so this gate is consistent with the existing flow. -->
 
-      Build the commits JSON array from `suspiciousCommits`:
+      Build the commits JSON array from `suspicious_commits`:
       ```bash
       COMMITS_JSON="["
       first=true
-      for hash in ${suspiciousCommits}; do
+      for hash in ${suspicious_commits}; do
         [[ "$hash" =~ ^[0-9a-fA-F]+$ ]] || continue
         [[ "$first" == "true" ]] || COMMITS_JSON="${COMMITS_JSON},"
         COMMITS_JSON="${COMMITS_JSON}{\"hash\":\"${hash}\",\"message\":\"suspicious commit\",\"type\":\"feature\"}"
@@ -297,18 +297,18 @@ branch with index.json not reflecting completion (e.g., stale merge overwrote st
       COMMITS_JSON="${COMMITS_JSON}]"
       echo "COMMITS_JSON=${COMMITS_JSON}"
       ```
-      Then invoke the skill (if `suspiciousCommits` is empty, `COMMITS_JSON` will be `[]`):
+      Then invoke the skill (if `suspicious_commits` is empty, `COMMITS_JSON` will be `[]`):
       ```
       Skill tool:
         skill: "cat:verify-implementation-agent"
         args: |
           {
-            "issueId": "${issueId}",
-            "issuePath": "${issuePath}",
-            "worktreePath": "${WORKTREE_PATH}",
+            "issue_id": "${issue_id}",
+            "issue_path": "${issue_path}",
+            "worktree_path": "${WORKTREE_PATH}",
             "execution_result": {
               "commits": ${COMMITS_JSON},
-              "filesChanged": 0
+              "files_changed": 0
             }
           }
       ```
@@ -320,13 +320,13 @@ branch with index.json not reflecting completion (e.g., stale merge overwrote st
       - **If PARTIAL or INCOMPLETE:** Output the full verification report (which criteria are Missing/Partial and
         why). Then STOP — do NOT update index.json, do NOT merge. Display to the user:
         ```
-        BLOCKED: ${issueId} cannot be closed — ${N} post-condition(s) are unmet.
+        BLOCKED: ${issue_id} cannot be closed — ${N} post-condition(s) are unmet.
         Review the criteria above, then either:
           - Fix the missing implementation and re-run /cat:work
           - Select "Not complete, continue" to run the full implement→confirm→review→merge workflow
         ```
         Release the lock:
-        `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issueId}" "${CLAUDE_SESSION_ID}"`
+        `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
         Clean up worktree by invoking:
         ```
         Skill tool:
@@ -340,19 +340,19 @@ branch with index.json not reflecting completion (e.g., stale merge overwrote st
 
       - **If the verify skill itself fails** (non-zero exit or unparseable output): STOP immediately:
         ```
-        FAIL: verify-implementation-agent failed for ${issueId}.
+        FAIL: verify-implementation-agent failed for ${issue_id}.
         Cannot close issue without verified post-conditions.
         Error: <error message>
         ```
         Release the lock:
-        `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issueId}" "${CLAUDE_SESSION_ID}"`
+        `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
         Invoke `cat:safe-rm-agent` to clean up worktree, then stop.
 
    2. Update `${WORKTREE_PATH}/<relative_issue_path>/index.json` to set status to `closed`
-   3. Commit in worktree: `cd ${WORKTREE_PATH} && git add <relative_issue_path>/index.json && git commit -m "planning: close completed issue ${issueId}"`
-   4. Merge the worktree branch into `${targetBranch}` using the normal merge flow (Phase 4 merge
+   3. Commit in worktree: `cd ${WORKTREE_PATH} && git add <relative_issue_path>/index.json && git commit -m "planning: close completed issue ${issue_id}"`
+   4. Merge the worktree branch into `${target_branch}` using the normal merge flow (Phase 4 merge
       procedure)
-   5. Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issueId}" "${CLAUDE_SESSION_ID}"`
+   5. Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
    6. Clean up worktree using `/cat:safe-rm-agent`
    7. Select next issue by invoking `/cat:work` with the same version scope
 
@@ -368,19 +368,19 @@ closure to the user.
 **Decomposed parent detection:**
 
 ```bash
-ISSUE_STATE="${issuePath}/index.json"
+ISSUE_STATE="${issue_path}/index.json"
 IS_DECOMPOSED=$(grep -q "^## Decomposed Into" "$ISSUE_STATE" && echo "true" || echo "false")
 ```
 
 **Required flow when IS_DECOMPOSED is true:**
 
-1. Read plan.md acceptance criteria: `cat "${issuePath}/plan.md"`
+1. Read plan.md acceptance criteria: `cat "${issue_path}/plan.md"`
 2. Verify each acceptance criterion is satisfied (spawn an Explore subagent if needed)
 3. Only after all criteria are verified, use AskUserQuestion to offer closure:
    ```
    AskUserQuestion:
-     header: "${issueId}"
-     question: "All sub-issues are closed. Close parent issue ${issueId}?"
+     header: "${issue_id}"
+     question: "All sub-issues are closed. Close parent issue ${issue_id}?"
      options:
        - "Close parent issue" (Update index.json in worktree, commit, merge, release lock, clean up worktree)
        - "Keep open" (Release lock, clean up worktree, stop)
@@ -388,14 +388,14 @@ IS_DECOMPOSED=$(grep -q "^## Decomposed Into" "$ISSUE_STATE" && echo "true" || e
 
 4. If user selects **"Close parent issue"**:
    - Update `${WORKTREE_PATH}/<relative_issue_path>/index.json` to set status to `closed`
-   - Commit in worktree: `cd ${WORKTREE_PATH} && git add <relative_issue_path>/index.json && git commit -m "planning: close parent issue ${issueId}"`
-   - Merge the worktree branch into `${targetBranch}` using the normal merge flow (Phase 4 merge
+   - Commit in worktree: `cd ${WORKTREE_PATH} && git add <relative_issue_path>/index.json && git commit -m "planning: close parent issue ${issue_id}"`
+   - Merge the worktree branch into `${target_branch}` using the normal merge flow (Phase 4 merge
      procedure)
-   - Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issueId}" "${CLAUDE_SESSION_ID}"`
+   - Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
    - Clean up worktree using `/cat:safe-rm-agent`
 
 5. If user selects **"Keep open"**:
-   - Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issueId}" "${CLAUDE_SESSION_ID}"`
+   - Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
    - Clean up worktree using `/cat:safe-rm-agent`
    - Stop.
 
@@ -404,8 +404,8 @@ The sequence is always: children closed → criteria verified → offer closure.
 Offering closure without criteria verification is a protocol violation.
 
 **Store phase 1 results:**
-- `issueId`, `issuePath`, `worktreePath`, `issueBranch`, `targetBranch`
-- `estimatedTokens`
+- `issue_id`, `issue_path`, `worktree_path`, `issue_branch`, `target_branch`
+- `estimated_tokens`
 
 ## Phase 2-4: Delegate to work-with-issue
 
@@ -421,11 +421,11 @@ Use the Skill tool to invoke `/cat:work-with-issue-agent` with positional space-
 ```
 Skill tool:
   skill: "cat:work-with-issue-agent"
-  args: "${CLAUDE_SESSION_ID} ${issueId} ${issuePath} ${worktreePath} ${issueBranch} ${targetBranch} ${estimatedTokens} ${TRUST} ${VERIFY}"
+  args: "${CLAUDE_SESSION_ID} ${issue_id} ${issue_path} ${worktree_path} ${issue_branch} ${target_branch} ${estimated_tokens} ${TRUST} ${VERIFY}"
 ```
 
 The skill will:
-1. Render progress banners via exclamation-backtick preprocessing (now has issueId available)
+1. Render progress banners via exclamation-backtick preprocessing (now has issue_id available)
 2. Execute Phase 2 (implementation subagent)
 3. Execute Phase 3 (stakeholder review) if verify != none
 4. Execute Phase 4 (merge and cleanup)
@@ -436,9 +436,9 @@ The skill will:
 ```json
 {
   "status": "SUCCESS|FAILED",
-  "issueId": "2.1-issue-name",
+  "issue_id": "2.1-issue-name",
   "commits": [...],
-  "filesChanged": 5,
+  "files_changed": 5,
   "tokens_used": 65000,
   "merged": true
 }
@@ -450,14 +450,14 @@ procedure below and display the raw return value to the user. Do NOT proceed to 
 with undefined or missing result fields.
 
 **Store final results:**
-- `commits`, `filesChanged`, `tokens_used`, `merged`
+- `commits`, `files_changed`, `tokens_used`, `merged`
 
 ## Next Issue
 
 After successful merge, invoke `/cat:work-complete-agent` with positional arguments:
 
 ```
-/cat:work-complete-agent ${CLAUDE_SESSION_ID} ${issueId} ${targetBranch}
+/cat:work-complete-agent ${CLAUDE_SESSION_ID} ${issue_id} ${target_branch}
 ```
 
 Output the skill result verbatim.
@@ -493,7 +493,7 @@ to continue to the next issue. No delay needed — the work skill handles its ow
 If any phase subagent fails unexpectedly:
 
 1. Capture error message
-2. Run `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issueId}" "${CLAUDE_SESSION_ID}"` to release the lock.
+2. Run `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"` to release the lock.
 3. Display error to user
 4. Offer: Retry, Abort, or Manual cleanup
 

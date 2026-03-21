@@ -193,11 +193,11 @@ public final class SubagentStartHookTest
   }
 
   /**
-   * Verifies that plugin/rules/skill-invocation-args.md contains catAgentId argument guidance so
-   * agents know to pass the injected catAgentId as the first argument when invoking skills.
+   * Verifies that plugin/rules/skill-invocation-args.md contains cat_agent_id argument guidance so
+   * agents know to pass the injected cat_agent_id as the first argument when invoking skills.
    * <p>
    * This prevents agents from passing branch names, skill names, or other wrong values as the
-   * first argument to skills that require a catAgentId.
+   * first argument to skills that require a cat_agent_id.
    */
   @Test
   public void skillInvocationArgsRuleContainsCatAgentIdGuidance() throws IOException
@@ -221,7 +221,7 @@ public final class SubagentStartHookTest
 
     String content = Files.readString(rulesFile);
     requireThat(content, "content").contains("args");
-    requireThat(content, "content").contains("catAgentId");
+    requireThat(content, "content").contains("cat_agent_id");
     requireThat(content, "content").contains("first argument");
   }
 

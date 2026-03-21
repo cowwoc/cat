@@ -15,11 +15,11 @@ Use the Skill tool and pass your CAT agent ID as the first argument:
 ```
 Skill tool:
   skill: "cat:<skill-name>"
-  args: "<catAgentId> [skill-specific-args...]"
+  args: "<cat_agent_id> [skill-specific-args...]"
 ```
 
 Your CAT agent ID was injected into your context at startup by SubagentStartHook. It has the form
-`{sessionId}/subagents/{agent_id}`. You MUST pass it as the first argument to every skill invocation.
+`{session_id}/subagents/{agent_id}`. You MUST pass it as the first argument to every skill invocation.
 
 The skill will provide its full instructions on first use and a brief reference on subsequent invocations.
 

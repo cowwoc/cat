@@ -280,7 +280,7 @@ public final class StateSchemaValidatorTest
         {
           "status": "closed",
           "resolution": "implemented",
-          "targetBranch": "v2.1",
+          "target_branch": "v2.1",
           "dependencies": ["2.1-dep1"],
           "blocks": ["2.1-other"],
           "parent": "v2.1-parent-issue",
@@ -854,7 +854,7 @@ public final class StateSchemaValidatorTest
   }
 
   /**
-   * Verifies that the targetBranch optional field is accepted.
+   * Verifies that the target_branch optional field is accepted.
    */
   @Test
   public void targetBranchFieldIsAccepted() throws IOException
@@ -868,7 +868,7 @@ public final class StateSchemaValidatorTest
       String content = """
         {
           "status": "in-progress",
-          "targetBranch": "v2.1"
+          "target_branch": "v2.1"
         }
         """;
 

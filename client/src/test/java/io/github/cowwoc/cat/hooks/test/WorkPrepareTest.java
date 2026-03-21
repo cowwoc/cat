@@ -87,8 +87,8 @@ public class WorkPrepareTest
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("NO_ISSUES");
       requireThat(node.path("message").asString(), "message").isNotBlank();
-      requireThat(node.path("closedCount").asInt(), "closedCount").isEqualTo(1);
-      requireThat(node.path("totalCount").asInt(), "totalCount").isEqualTo(1);
+      requireThat(node.path("closed_count").asInt(), "closedCount").isEqualTo(1);
+      requireThat(node.path("total_count").asInt(), "totalCount").isEqualTo(1);
     }
     finally
     {
@@ -122,8 +122,8 @@ public class WorkPrepareTest
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("OVERSIZED");
-      requireThat(node.path("issueId").asString(), "issueId").isEqualTo("2.1-huge-feature");
-      requireThat(node.path("estimatedTokens").asInt(), "estimatedTokens").isGreaterThan(160_000);
+      requireThat(node.path("issue_id").asString(), "issueId").isEqualTo("2.1-huge-feature");
+      requireThat(node.path("estimated_tokens").asInt(), "estimatedTokens").isGreaterThan(160_000);
     }
     finally
     {
@@ -161,8 +161,8 @@ public class WorkPrepareTest
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("CORRUPT");
-      requireThat(node.path("issueId").asString(), "issueId").isEqualTo("2.1-corrupt-issue");
-      requireThat(node.path("issuePath").asString(), "issuePath").isNotBlank();
+      requireThat(node.path("issue_id").asString(), "issueId").isEqualTo("2.1-corrupt-issue");
+      requireThat(node.path("issue_path").asString(), "issuePath").isNotBlank();
       requireThat(node.path("message").asString(), "message").contains("plan.md");
     }
     finally
@@ -367,19 +367,19 @@ public class WorkPrepareTest
       JsonNode node = mapper.readTree(json);
 
       requireThat(node.path("status").asString(), "status").isEqualTo("READY");
-      requireThat(node.path("issueId").asString(), "issueId").isEqualTo("2.1-my-feature");
+      requireThat(node.path("issue_id").asString(), "issueId").isEqualTo("2.1-my-feature");
       requireThat(node.path("major").asString(), "major").isEqualTo("2");
       requireThat(node.path("minor").asString(), "minor").isEqualTo("1");
-      requireThat(node.path("issueName").asString(), "issueName").isEqualTo("my-feature");
-      requireThat(node.path("issueBranch").asString(), "issueBranch").isEqualTo("2.1-my-feature");
-      requireThat(node.path("targetBranch").asString(), "targetBranch").isEqualTo("v2.1");
-      requireThat(node.path("lockAcquired").asBoolean(), "lockAcquired").isTrue();
-      requireThat(node.path("estimatedTokens").asInt(), "estimatedTokens").isGreaterThan(0);
-      requireThat(node.path("worktreePath").isMissingNode(), "hasWorktreePath").isFalse();
-      requireThat(node.path("approachSelected").isMissingNode(), "hasApproachSelected").isFalse();
+      requireThat(node.path("issue_name").asString(), "issueName").isEqualTo("my-feature");
+      requireThat(node.path("issue_branch").asString(), "issueBranch").isEqualTo("2.1-my-feature");
+      requireThat(node.path("target_branch").asString(), "targetBranch").isEqualTo("v2.1");
+      requireThat(node.path("lock_acquired").asBoolean(), "lockAcquired").isTrue();
+      requireThat(node.path("estimated_tokens").asInt(), "estimatedTokens").isGreaterThan(0);
+      requireThat(node.path("worktree_path").isMissingNode(), "hasWorktreePath").isFalse();
+      requireThat(node.path("approach_selected").isMissingNode(), "hasApproachSelected").isFalse();
 
       // Verify worktree was actually created
-      worktreePath = Path.of(node.path("worktreePath").asString());
+      worktreePath = Path.of(node.path("worktree_path").asString());
       requireThat(Files.isDirectory(worktreePath), "worktreeExists").isTrue();
     }
     finally
@@ -415,7 +415,7 @@ public class WorkPrepareTest
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("READY");
 
-      worktreePath = Path.of(node.path("worktreePath").asString());
+      worktreePath = Path.of(node.path("worktree_path").asString());
 
       // Read the index.json from the worktree
       Path stateFile = worktreePath.resolve(".cat").resolve("issues").
@@ -458,9 +458,9 @@ public class WorkPrepareTest
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("READY");
-      requireThat(node.path("issueId").asString(), "issueId").isEqualTo("2.1-second-feature");
+      requireThat(node.path("issue_id").asString(), "issueId").isEqualTo("2.1-second-feature");
 
-      worktreePath = Path.of(node.path("worktreePath").asString());
+      worktreePath = Path.of(node.path("worktree_path").asString());
     }
     finally
     {
@@ -494,9 +494,9 @@ public class WorkPrepareTest
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("READY");
-      requireThat(node.path("issueId").asString(), "issueId").isEqualTo("2.1-fix-bug");
+      requireThat(node.path("issue_id").asString(), "issueId").isEqualTo("2.1-fix-bug");
 
-      worktreePath = Path.of(node.path("worktreePath").asString());
+      worktreePath = Path.of(node.path("worktree_path").asString());
     }
     finally
     {
@@ -559,11 +559,11 @@ public class WorkPrepareTest
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("READY");
-      requireThat(node.path("estimatedTokens").asInt(), "estimatedTokens").isGreaterThan(0);
-      requireThat(node.path("percentOfThreshold").isMissingNode(), "hasPercentOfThreshold").
+      requireThat(node.path("estimated_tokens").asInt(), "estimatedTokens").isGreaterThan(0);
+      requireThat(node.path("percent_of_threshold").isMissingNode(), "hasPercentOfThreshold").
         isFalse();
 
-      worktreePath = Path.of(node.path("worktreePath").asString());
+      worktreePath = Path.of(node.path("worktree_path").asString());
     }
     finally
     {
@@ -601,7 +601,7 @@ public class WorkPrepareTest
       requireThat(node.path("goal").asString(), "goal").
         contains("Implement the best feature ever");
 
-      worktreePath = Path.of(node.path("worktreePath").asString());
+      worktreePath = Path.of(node.path("worktree_path").asString());
     }
     finally
     {
@@ -651,7 +651,7 @@ public class WorkPrepareTest
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("LOCKED");
       requireThat(node.path("message").asString(), "message").contains("locked");
-      requireThat(node.path("issueId").asString(), "issueId").isEqualTo("2.1-locked-feature");
+      requireThat(node.path("issue_id").asString(), "issueId").isEqualTo("2.1-locked-feature");
     }
     finally
     {
@@ -743,7 +743,7 @@ public class WorkPrepareTest
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node1 = mapper.readTree(json1);
       requireThat(node1.path("status").asString(), "firstStatus").isEqualTo("READY");
-      worktreePath = Path.of(node1.path("worktreePath").asString());
+      worktreePath = Path.of(node1.path("worktree_path").asString());
 
       // Second call with same session ID — worktree exists, lock is still held by this session
       // Must return READY (resume), not ERROR
@@ -751,10 +751,10 @@ public class WorkPrepareTest
       JsonNode node2 = mapper.readTree(json2);
 
       requireThat(node2.path("status").asString(), "secondStatus").isEqualTo("READY");
-      requireThat(node2.path("issueId").asString(), "issueId").isEqualTo("2.1-resume-feature");
-      requireThat(node2.path("worktreePath").asString(), "worktreePath").
+      requireThat(node2.path("issue_id").asString(), "issueId").isEqualTo("2.1-resume-feature");
+      requireThat(node2.path("worktree_path").asString(), "worktreePath").
         isEqualTo(worktreePath.toString());
-      requireThat(node2.path("lockAcquired").asBoolean(), "lockAcquired").isTrue();
+      requireThat(node2.path("lock_acquired").asBoolean(), "lockAcquired").isTrue();
     }
     finally
     {
@@ -795,10 +795,10 @@ public class WorkPrepareTest
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("READY");
-      requireThat(node.path("potentiallyComplete").asBoolean(), "potentiallyComplete").isTrue();
-      requireThat(node.path("suspiciousCommits").asString(), "suspiciousCommits").isNotBlank();
+      requireThat(node.path("potentially_complete").asBoolean(), "potentiallyComplete").isTrue();
+      requireThat(node.path("suspicious_commits").asString(), "suspiciousCommits").isNotBlank();
 
-      worktreePath = Path.of(node.path("worktreePath").asString());
+      worktreePath = Path.of(node.path("worktree_path").asString());
     }
     finally
     {
@@ -834,13 +834,13 @@ public class WorkPrepareTest
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("READY");
-      requireThat(node.has("hasExistingWork"), "hasExistingWorkField").isTrue();
-      requireThat(node.path("hasExistingWork").asBoolean(), "hasExistingWork").isFalse();
-      requireThat(node.has("existingCommits"), "hasExistingCommitsField").isTrue();
-      requireThat(node.path("existingCommits").asInt(), "existingCommits").isEqualTo(0);
-      requireThat(node.has("commitSummary"), "hasCommitSummaryField").isTrue();
+      requireThat(node.has("has_existing_work"), "hasExistingWorkField").isTrue();
+      requireThat(node.path("has_existing_work").asBoolean(), "hasExistingWork").isFalse();
+      requireThat(node.has("existing_commits"), "hasExistingCommitsField").isTrue();
+      requireThat(node.path("existing_commits").asInt(), "existingCommits").isEqualTo(0);
+      requireThat(node.has("commit_summary"), "hasCommitSummaryField").isTrue();
 
-      worktreePath = Path.of(node.path("worktreePath").asString());
+      worktreePath = Path.of(node.path("worktree_path").asString());
     }
     finally
     {
@@ -889,7 +889,7 @@ public class WorkPrepareTest
       requireThat(node.path("status").asString(), "status").isEqualTo("READY");
       requireThat(node.path("goal").asString(), "goal").isEqualTo("No goal found");
 
-      worktreePath = Path.of(node.path("worktreePath").asString());
+      worktreePath = Path.of(node.path("worktree_path").asString());
     }
     finally
     {
@@ -929,19 +929,19 @@ public class WorkPrepareTest
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("NO_ISSUES");
-      requireThat(node.has("blockedIssues"), "hasBlockedIssues").isTrue();
+      requireThat(node.has("blocked_issues"), "hasBlockedIssues").isTrue();
 
-      JsonNode blockedIssues = node.path("blockedIssues");
+      JsonNode blockedIssues = node.path("blocked_issues");
       requireThat(blockedIssues.size(), "blockedIssueCount").isGreaterThan(0);
 
       // Find the blocked-feature entry
       boolean foundBlockedFeature = false;
       for (JsonNode issue : blockedIssues)
       {
-        if (issue.path("issueId").asString().equals("2.1-blocked-feature"))
+        if (issue.path("issue_id").asString().equals("2.1-blocked-feature"))
         {
           foundBlockedFeature = true;
-          requireThat(issue.has("blockedBy"), "hasBlockedBy").isTrue();
+          requireThat(issue.has("blocked_by"), "hasBlockedBy").isTrue();
           requireThat(issue.path("reason").asString(), "reason").contains("2.1-dependency-issue");
         }
       }
@@ -990,7 +990,7 @@ public class WorkPrepareTest
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("OVERSIZED");
       // 32 * 5000 + 1 * 2000 + 10000 = 172000
-      requireThat(node.path("estimatedTokens").asInt(), "estimatedTokens").isGreaterThan(160_000);
+      requireThat(node.path("estimated_tokens").asInt(), "estimatedTokens").isGreaterThan(160_000);
     }
     finally
     {
@@ -1076,7 +1076,7 @@ public class WorkPrepareTest
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("READY");
 
-      worktreePath = Path.of(node.path("worktreePath").asString());
+      worktreePath = Path.of(node.path("worktree_path").asString());
       String expectedWorktreePath = worktreePath.toString();
 
       // Read the lock file and verify the worktrees map is populated immediately
@@ -1330,10 +1330,10 @@ public class WorkPrepareTest
       JsonNode node = mapper.readTree(json);
       // Should succeed with READY status, resolving the bare name to the qualified issue
       requireThat(node.path("status").asString(), "status").isEqualTo("READY");
-      requireThat(node.path("issueId").asString(), "issueId").isEqualTo("2.1-fix-bug");
-      requireThat(node.path("issueName").asString(), "issueName").isEqualTo("fix-bug");
+      requireThat(node.path("issue_id").asString(), "issueId").isEqualTo("2.1-fix-bug");
+      requireThat(node.path("issue_name").asString(), "issueName").isEqualTo("fix-bug");
 
-      worktreePath = Path.of(node.path("worktreePath").asString());
+      worktreePath = Path.of(node.path("worktree_path").asString());
     }
     finally
     {
@@ -1374,8 +1374,8 @@ public class WorkPrepareTest
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode bareNameNode = mapper.readTree(bareNameJson);
       requireThat(bareNameNode.path("status").asString(), "bareNameStatus").isEqualTo("READY");
-      requireThat(bareNameNode.path("issueId").asString(), "bareNameIssueId").isEqualTo("2.1-fix-bug");
-      worktreePath1 = Path.of(bareNameNode.path("worktreePath").asString());
+      requireThat(bareNameNode.path("issue_id").asString(), "bareNameIssueId").isEqualTo("2.1-fix-bug");
+      worktreePath1 = Path.of(bareNameNode.path("worktree_path").asString());
 
       // Release the lock by removing the worktree and lock file so we can test qualified name
       if (worktreePath1 != null && Files.exists(worktreePath1))
@@ -1396,8 +1396,8 @@ public class WorkPrepareTest
 
       JsonNode qualifiedNameNode = mapper.readTree(qualifiedNameJson);
       requireThat(qualifiedNameNode.path("status").asString(), "qualifiedNameStatus").isEqualTo("READY");
-      requireThat(qualifiedNameNode.path("issueId").asString(), "qualifiedNameIssueId").isEqualTo("2.1-fix-bug");
-      worktreePath2 = Path.of(qualifiedNameNode.path("worktreePath").asString());
+      requireThat(qualifiedNameNode.path("issue_id").asString(), "qualifiedNameIssueId").isEqualTo("2.1-fix-bug");
+      worktreePath2 = Path.of(qualifiedNameNode.path("worktree_path").asString());
     }
     finally
     {
@@ -1442,11 +1442,11 @@ public class WorkPrepareTest
       // Must succeed with READY status when bare name resolves
       requireThat(node.path("status").asString(), "status").isEqualTo("READY");
       // Must resolve to the fully-qualified issue ID
-      requireThat(node.path("issueId").asString(), "issueId").isEqualTo("2.1-fix-bug");
+      requireThat(node.path("issue_id").asString(), "issueId").isEqualTo("2.1-fix-bug");
       // Must have bare issue name extracted correctly
-      requireThat(node.path("issueName").asString(), "issueName").isEqualTo("fix-bug");
+      requireThat(node.path("issue_name").asString(), "issueName").isEqualTo("fix-bug");
 
-      worktreePath = Path.of(node.path("worktreePath").asString());
+      worktreePath = Path.of(node.path("worktree_path").asString());
     }
     finally
     {
@@ -1458,7 +1458,7 @@ public class WorkPrepareTest
   /**
    * Verifies that diagnostic output correctly resolves issue dependencies even when the project has
    * more than 333 issues (each with ~3 files = ~1000 filesystem entries). With the old scan limit of
-   * 1000 entries, issues beyond that limit would appear as notFound in blockedIssues diagnostic
+   * 1000 entries, issues beyond that limit would appear as not_found in blockedIssues diagnostic
    * output, causing false positives. With the fixed unlimited scan, a closed dependency is correctly
    * resolved, so an issue depending only on closed issues does not appear in blockedIssues at all.
    *
@@ -1495,11 +1495,11 @@ public class WorkPrepareTest
       // With the fixed unlimited scan, dependency-far is correctly resolved as "closed".
       // Since its only dependency is closed, blocked-by-far must NOT appear in blockedIssues.
       // (The old broken behavior was: dependency-far not found → blocked-by-far falsely blocked.)
-      JsonNode blockedIssues = node.path("blockedIssues");
+      JsonNode blockedIssues = node.path("blocked_issues");
       boolean foundBlockedByFar = false;
       for (JsonNode issue : blockedIssues)
       {
-        if (issue.path("issueId").asString().equals("2.8-blocked-by-far"))
+        if (issue.path("issue_id").asString().equals("2.8-blocked-by-far"))
           foundBlockedByFar = true;
       }
       requireThat(foundBlockedByFar, "foundBlockedByFar").isFalse();
@@ -1539,7 +1539,7 @@ public class WorkPrepareTest
       JsonNode node = mapper.readTree(json);
       // Should complete normally (not ERROR), just report NO_ISSUES with full diagnostics
       requireThat(node.path("status").asString(), "status").isEqualTo("NO_ISSUES");
-      requireThat(node.path("totalCount").asInt(), "totalCount").isGreaterThanOrEqualTo(400);
+      requireThat(node.path("total_count").asInt(), "totalCount").isGreaterThanOrEqualTo(400);
     }
     finally
     {
@@ -1573,8 +1573,8 @@ public class WorkPrepareTest
       requireThat(node.path("status").asString(), "status").isEqualTo("NO_ISSUES");
 
       // Circular dependencies must be reported
-      requireThat(node.has("circularDependencies"), "hasCircularDependencies").isTrue();
-      JsonNode cycles = node.path("circularDependencies");
+      requireThat(node.has("circular_dependencies"), "hasCircularDependencies").isTrue();
+      JsonNode cycles = node.path("circular_dependencies");
       requireThat(cycles.size(), "cycleCount").isGreaterThan(0);
 
       // Verify cycle contains the expected issue IDs
@@ -1623,8 +1623,8 @@ public class WorkPrepareTest
       requireThat(node.path("status").asString(), "status").isEqualTo("NO_ISSUES");
 
       // Circular dependencies must be reported
-      requireThat(node.has("circularDependencies"), "hasCircularDependencies").isTrue();
-      JsonNode cycles = node.path("circularDependencies");
+      requireThat(node.has("circular_dependencies"), "hasCircularDependencies").isTrue();
+      JsonNode cycles = node.path("circular_dependencies");
       requireThat(cycles.size(), "cycleCount").isGreaterThan(0);
 
       // The cycle path should contain all three nodes
@@ -1673,8 +1673,8 @@ public class WorkPrepareTest
       requireThat(node.path("status").asString(), "status").isEqualTo("NO_ISSUES");
 
       // No circular dependencies should be reported for a linear chain
-      boolean hasCircularDependencies = node.has("circularDependencies") &&
-        node.path("circularDependencies").size() > 0;
+      boolean hasCircularDependencies = node.has("circular_dependencies") &&
+        node.path("circular_dependencies").size() > 0;
       requireThat(hasCircularDependencies, "hasCircularDependencies").isFalse();
     }
     finally
@@ -1812,8 +1812,8 @@ public class WorkPrepareTest
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("NO_ISSUES");
 
-      requireThat(node.has("circularDependencies"), "hasCircularDependencies").isTrue();
-      JsonNode cycles = node.path("circularDependencies");
+      requireThat(node.has("circular_dependencies"), "hasCircularDependencies").isTrue();
+      JsonNode cycles = node.path("circular_dependencies");
       requireThat(cycles.size(), "cycleCount").isGreaterThan(0);
 
       String expectedCycle =
@@ -1864,8 +1864,8 @@ public class WorkPrepareTest
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("NO_ISSUES");
 
-      requireThat(node.has("circularDependencies"), "hasCircularDependencies").isTrue();
-      JsonNode cycles = node.path("circularDependencies");
+      requireThat(node.has("circular_dependencies"), "hasCircularDependencies").isTrue();
+      JsonNode cycles = node.path("circular_dependencies");
       requireThat(cycles.size(), "cycleCount").isGreaterThan(0);
 
       String expectedCycle =
@@ -1913,8 +1913,8 @@ public class WorkPrepareTest
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("NO_ISSUES");
 
-      boolean hasCircularDependencies = node.has("circularDependencies") &&
-        node.path("circularDependencies").size() > 0;
+      boolean hasCircularDependencies = node.has("circular_dependencies") &&
+        node.path("circular_dependencies").size() > 0;
       requireThat(hasCircularDependencies, "hasCircularDependencies").isFalse();
     }
     finally
@@ -1952,8 +1952,8 @@ public class WorkPrepareTest
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("NO_ISSUES");
 
-      requireThat(node.has("circularDependencies"), "hasCircularDependencies").isTrue();
-      JsonNode cycles = node.path("circularDependencies");
+      requireThat(node.has("circular_dependencies"), "hasCircularDependencies").isTrue();
+      JsonNode cycles = node.path("circular_dependencies");
       requireThat(cycles.size(), "cycleCount").isGreaterThanOrEqualTo(2);
 
       String expectedDirectCycle = "2.1-issue-y -> 2.1-issue-x -> 2.1-issue-y";
@@ -2008,8 +2008,8 @@ public class WorkPrepareTest
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree(json);
-      requireThat(node.has("circularDependencies"), "hasCircularDependencies").isTrue();
-      JsonNode cycles = node.path("circularDependencies");
+      requireThat(node.has("circular_dependencies"), "hasCircularDependencies").isTrue();
+      JsonNode cycles = node.path("circular_dependencies");
       requireThat(cycles.size(), "cycleCount").isGreaterThan(0);
 
       boolean foundCycle = false;
@@ -2063,8 +2063,8 @@ public class WorkPrepareTest
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree(json);
-      requireThat(node.has("circularDependencies"), "hasCircularDependencies").isTrue();
-      JsonNode cycles = node.path("circularDependencies");
+      requireThat(node.has("circular_dependencies"), "hasCircularDependencies").isTrue();
+      JsonNode cycles = node.path("circular_dependencies");
       requireThat(cycles.size(), "cycleCount").isGreaterThan(0);
 
       boolean foundCycle = false;
@@ -2113,8 +2113,8 @@ public class WorkPrepareTest
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree(json);
-      boolean hasCircularDependencies = node.has("circularDependencies") &&
-        node.path("circularDependencies").size() > 0;
+      boolean hasCircularDependencies = node.has("circular_dependencies") &&
+        node.path("circular_dependencies").size() > 0;
       requireThat(hasCircularDependencies, "hasCircularDependencies").isFalse();
     }
     finally
@@ -2209,9 +2209,9 @@ public class WorkPrepareTest
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("READY");
-      requireThat(node.path("issueId").asString(), "issueId").isEqualTo("2.1-plan-only-issue");
+      requireThat(node.path("issue_id").asString(), "issueId").isEqualTo("2.1-plan-only-issue");
 
-      worktreePath = Path.of(node.path("worktreePath").asString());
+      worktreePath = Path.of(node.path("worktree_path").asString());
       requireThat(Files.isDirectory(worktreePath), "worktreeExists").isTrue();
     }
     finally
@@ -2253,7 +2253,7 @@ public class WorkPrepareTest
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("READY");
 
-      worktreePath = Path.of(node.path("worktreePath").asString());
+      worktreePath = Path.of(node.path("worktree_path").asString());
 
       // Verify index.json was created in the worktree (not in the main workspace)
       Path worktreeIssueDir = worktreePath.resolve(".cat").resolve("issues").
@@ -2314,9 +2314,9 @@ public class WorkPrepareTest
       JsonNode node = mapper.readTree(json);
       // Must return READY, not ERROR
       requireThat(node.path("status").asString(), "status").isEqualTo("READY");
-      requireThat(node.path("issueId").asString(), "issueId").isEqualTo("2.1-untracked-state-issue");
+      requireThat(node.path("issue_id").asString(), "issueId").isEqualTo("2.1-untracked-state-issue");
 
-      worktreePath = Path.of(node.path("worktreePath").asString());
+      worktreePath = Path.of(node.path("worktree_path").asString());
 
       // index.json must exist in the worktree with in-progress status
       Path worktreeIssueDir = worktreePath.resolve(".cat").resolve("issues").
@@ -2364,9 +2364,9 @@ public class WorkPrepareTest
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("READY");
-      requireThat(node.path("issueId").asString(), "issueId").isEqualTo("2.1-no-status-issue");
+      requireThat(node.path("issue_id").asString(), "issueId").isEqualTo("2.1-no-status-issue");
 
-      worktreePath = Path.of(node.path("worktreePath").asString());
+      worktreePath = Path.of(node.path("worktree_path").asString());
     }
     finally
     {
@@ -2407,8 +2407,8 @@ public class WorkPrepareTest
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("READY");
 
-      worktreePath = Path.of(node.path("worktreePath").asString());
-      String issuePath = node.path("issuePath").asString();
+      worktreePath = Path.of(node.path("worktree_path").asString());
+      String issuePath = node.path("issue_path").asString();
 
       // issuePath must be inside the worktree, not the main workspace issue directory
       requireThat(issuePath, "issuePath").startsWith(worktreePath.toString());
@@ -2627,7 +2627,7 @@ public class WorkPrepareTest
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isNotEqualTo("ERROR");
 
-      worktreePath = Path.of(node.path("worktreePath").asString());
+      worktreePath = Path.of(node.path("worktree_path").asString());
     }
     finally
     {
@@ -2684,10 +2684,10 @@ public class WorkPrepareTest
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("READY");
-      requireThat(node.path("potentiallyComplete").asBoolean(), "potentiallyComplete").isTrue();
-      requireThat(node.path("suspiciousCommits").asString(), "suspiciousCommits").isNotBlank();
+      requireThat(node.path("potentially_complete").asBoolean(), "potentiallyComplete").isTrue();
+      requireThat(node.path("suspicious_commits").asString(), "suspiciousCommits").isNotBlank();
 
-      worktreePath = Path.of(node.path("worktreePath").asString());
+      worktreePath = Path.of(node.path("worktree_path").asString());
     }
     finally
     {
@@ -2744,10 +2744,10 @@ public class WorkPrepareTest
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("READY");
-      requireThat(node.path("potentiallyComplete").asBoolean(), "potentiallyComplete").isTrue();
-      requireThat(node.path("suspiciousCommits").asString(), "suspiciousCommits").isNotBlank();
+      requireThat(node.path("potentially_complete").asBoolean(), "potentiallyComplete").isTrue();
+      requireThat(node.path("suspicious_commits").asString(), "suspiciousCommits").isNotBlank();
 
-      worktreePath = Path.of(node.path("worktreePath").asString());
+      worktreePath = Path.of(node.path("worktree_path").asString());
     }
     finally
     {
@@ -2804,10 +2804,10 @@ public class WorkPrepareTest
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("READY");
-      requireThat(node.path("potentiallyComplete").asBoolean(), "potentiallyComplete").isTrue();
-      requireThat(node.path("suspiciousCommits").asString(), "suspiciousCommits").isNotBlank();
+      requireThat(node.path("potentially_complete").asBoolean(), "potentiallyComplete").isTrue();
+      requireThat(node.path("suspicious_commits").asString(), "suspiciousCommits").isNotBlank();
 
-      worktreePath = Path.of(node.path("worktreePath").asString());
+      worktreePath = Path.of(node.path("worktree_path").asString());
     }
     finally
     {
@@ -2865,9 +2865,9 @@ public class WorkPrepareTest
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("READY");
       // src/Bar.java must not match src/**/Foo.java — no suspicious commits
-      requireThat(node.path("potentiallyComplete").asBoolean(), "potentiallyComplete").isFalse();
+      requireThat(node.path("potentially_complete").asBoolean(), "potentiallyComplete").isFalse();
 
-      worktreePath = Path.of(node.path("worktreePath").asString());
+      worktreePath = Path.of(node.path("worktree_path").asString());
     }
     finally
     {
@@ -2925,10 +2925,10 @@ public class WorkPrepareTest
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("READY");
-      requireThat(node.path("potentiallyComplete").asBoolean(), "potentiallyComplete").isTrue();
-      requireThat(node.path("suspiciousCommits").asString(), "suspiciousCommits").isNotBlank();
+      requireThat(node.path("potentially_complete").asBoolean(), "potentiallyComplete").isTrue();
+      requireThat(node.path("suspicious_commits").asString(), "suspiciousCommits").isNotBlank();
 
-      worktreePath = Path.of(node.path("worktreePath").asString());
+      worktreePath = Path.of(node.path("worktree_path").asString());
     }
     finally
     {
@@ -2966,7 +2966,7 @@ public class WorkPrepareTest
       JsonNode node = mapper.readTree(json);
       requireThat(node.path("status").asString(), "status").isEqualTo("READY");
 
-      worktreePath = Path.of(node.path("worktreePath").asString());
+      worktreePath = Path.of(node.path("worktree_path").asString());
 
       // The worktree must be clean (no uncommitted changes) so the implement phase can proceed.
       // If updateIndexJson() writes index.json without committing it, git status --porcelain
@@ -3026,11 +3026,11 @@ public class WorkPrepareTest
         // A decomposed parent with all sub-issues closed needs only closure work — must be READY
         requireThat(node.path("status").asString(), "status").isEqualTo("READY");
         // Token estimate must be the minimal closure estimate (at most 5000), not the large PLAN.md size
-        requireThat(node.path("estimatedTokens").asInt(), "estimatedTokens").
+        requireThat(node.path("estimated_tokens").asInt(), "estimatedTokens").
           isLessThanOrEqualTo(5000);
 
-        if (!node.path("worktreePath").isMissingNode())
-          worktreePath = Path.of(node.path("worktreePath").asString());
+        if (!node.path("worktree_path").isMissingNode())
+          worktreePath = Path.of(node.path("worktree_path").asString());
       }
     }
     finally

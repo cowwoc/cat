@@ -3,5 +3,5 @@
   "resolution" : "implemented",
   "dependencies" : [ ],
   "blocks" : [ ],
-  "targetBranch" : "v2.1"
+  "target_branch" : "v2.1"
 }

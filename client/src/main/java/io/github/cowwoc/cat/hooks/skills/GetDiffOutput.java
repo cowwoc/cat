@@ -428,10 +428,10 @@ public final class GetDiffOutput implements SkillOutput
       throw new IllegalArgumentException("index.json not found at: " + indexJson);
     String content = Files.readString(indexJson);
     JsonNode root = scope.getJsonMapper().readTree(content);
-    JsonNode targetBranchNode = root.get("targetBranch");
+    JsonNode targetBranchNode = root.get("target_branch");
     if (targetBranchNode == null || !targetBranchNode.isString() || targetBranchNode.asString().isBlank())
       throw new IllegalArgumentException(
-        "index.json does not contain a 'targetBranch' field: " + indexJson);
+        "index.json does not contain a 'target_branch' field: " + indexJson);
     return targetBranchNode.asString();
   }
 

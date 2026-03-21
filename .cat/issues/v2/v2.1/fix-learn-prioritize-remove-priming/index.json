@@ -1,5 +1,5 @@
 {
   "status": "closed",
   "resolution": "implemented — added priming exception to A002 blocking criteria in phase-prevent.md and prevention-hierarchy.md",
-  "targetBranch": "v2.1"
+  "target_branch": "v2.1"
 }

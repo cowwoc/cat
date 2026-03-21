@@ -1,5 +1,5 @@
 {
   "status": "closed",
   "resolution": "implemented with concern fixes applied in confirm phase",
-  "targetBranch": "v2.1"
+  "target_branch": "v2.1"
 }

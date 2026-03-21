@@ -134,8 +134,8 @@ Handles three phases internally to hide noisy tool calls from user.
 ```json
 {
   "status": "READY|OVERSIZED|DUPLICATE|BLOCKED",
-  "preparation": {"estimatedTokens": 45000, "worktreePath": "..."},
-  "findings": {"filesToModify": [...], "patterns": [...]},
+  "preparation": {"estimated_tokens": 45000, "worktree_path": "..."},
+  "findings": {"files_to_modify": [...], "patterns": [...]},
   "verification": {"allPathsExist": true}
 }
 ```

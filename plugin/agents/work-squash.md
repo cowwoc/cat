@@ -69,7 +69,7 @@ If any validation fails, return:
   "status": "FAILED",
   "phase": "validate",
   "message": "<validation error details>",
-  "issueId": "<ISSUE_ID>"
+  "issue_id": "<ISSUE_ID>"
 }
 ```
 
@@ -94,7 +94,7 @@ If working tree is dirty, return FAILED with descriptive error:
   "status": "FAILED",
   "phase": "rebase",
   "message": "Working tree has uncommitted changes — commit or stash before squashing",
-  "issueId": "<ISSUE_ID>"
+  "issue_id": "<ISSUE_ID>"
 }
 ```
 
@@ -113,7 +113,7 @@ git rebase "${TARGET_BRANCH}"
     "status": "FAILED",
     "phase": "rebase",
     "message": "Rebase conflict: <conflict details>",
-    "issueId": "<ISSUE_ID>"
+    "issue_id": "<ISSUE_ID>"
   }
   ```
 
@@ -185,7 +185,7 @@ Capture stderr output and return FAILED status:
   "status": "FAILED",
   "phase": "squash",
   "message": "<error details from stderr>",
-  "issueId": "<ISSUE_ID>"
+  "issue_id": "<ISSUE_ID>"
 }
 ```
 
@@ -295,6 +295,6 @@ Return a compact JSON result:
   "status": "FAILED",
   "phase": "validate|rebase|squash|verify",
   "message": "<error details>",
-  "issueId": "<ISSUE_ID>"
+  "issue_id": "<ISSUE_ID>"
 }
 ```

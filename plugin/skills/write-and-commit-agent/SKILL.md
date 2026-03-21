@@ -3,7 +3,7 @@ description: PREFER when creating a new file that needs immediate committing - c
 model: haiku
 user-invocable: false
 allowed-tools: Bash, Write
-argument-hint: "<catAgentId>"
+argument-hint: "<cat_agent_id>"
 ---
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" write-and-commit-agent "$0"`
