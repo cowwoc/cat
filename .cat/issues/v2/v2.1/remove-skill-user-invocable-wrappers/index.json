@@ -1,4 +1,4 @@
 {
   "status": "open",
-  "dependencies": ["2.1-defer-plan-generation-to-work-phase"]
+  "dependencies": ["2.1-defer-plan-generation-to-work-phase", "2.1-fix-add-skill-index-json-format"]
 }
