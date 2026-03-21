@@ -95,3 +95,156 @@ public static void main(String[] args)
   }
 }
 ```
+
+## Hook Output Guidance
+
+**MANDATORY**: Every hook that blocks or warns an operation MUST include actionable guidance explaining what the
+agent should do instead, OR explain what the hook protects when no safe alternative exists.
+
+A block/warn message with only a reason (no next steps) leaves the agent with no recovery path. Guidance is
+required because agents act on hook output; incomplete messages cause infinite retries or incorrect workarounds.
+
+### Required Elements
+
+Every block/warn message must include:
+
+1. **What is blocked** — name the specific operation being prevented
+2. **Why it is blocked** — the protection the hook provides (not just "blocked")
+3. **How to proceed** — concrete next steps the agent should take
+
+When no safe alternative exists (e.g., write to `/etc/gitconfig`), explain what the hook protects:
+- What harmful effect the hook prevents
+- What condition must be true before the agent may proceed (e.g., explicit user request)
+
+### Good Patterns
+
+**Pattern: git identity protection** (`BlockGitconfigFileWrite`)
+
+Explains what the hook protects, the harmful effect, when the operation is allowed, and shows safe alternatives:
+
+```
+BLOCKED: Cannot write to canonical gitconfig file without explicit user request
+
+Writing directly to git configuration files (~/.gitconfig, ...) silently overwrites
+the author information on every future commit.
+
+Only change git identity when the user explicitly asks you to (e.g., "set my git username to Alice").
+
+To safely read or modify git identity:
+  git config user.name        # read current name
+  git config user.email       # read current email
+  git config user.name Alice  # set new name (with explicit user request)
+```
+
+**Pattern: worktree path isolation** (`EnforceWorktreePathIsolation`)
+
+Identifies the specific file, states the correct path the agent should use, and prohibits the bash bypass:
+
+```
+ERROR: Worktree isolation violation
+
+You are working in worktree: /workspace/.cat/worktrees/my-issue
+But attempting to access outside it: /workspace/plugin/skills/foo.md
+
+Use the corrected worktree path instead:
+  /workspace/.cat/worktrees/my-issue/plugin/skills/foo.md
+
+Do NOT bypass this hook using Bash (cat, echo, tee, etc.) to access the file directly.
+The worktree exists to isolate changes from the main workspace until merge.
+```
+
+**Pattern: uncommitted changes before subagent spawn** (`EnforceCommitBeforeSubagentSpawn`)
+
+Includes the worktree path, the uncommitted file list, the rationale, and a required-fix instruction:
+
+```
+BLOCKED: Worktree has uncommitted changes. Commit all changes before spawning a subagent.
+
+Worktree: /workspace/.cat/worktrees/my-issue
+Uncommitted changes detected (git status --porcelain):
+ M plugin/skills/foo.md
+
+Rationale: Each subagent is spawned with isolation: "worktree", creating a new git worktree
+branched from the current HEAD. Uncommitted changes are NOT visible in the subagent's
+worktree. All changes must be committed so the subagent sees the complete implementation state.
+
+Required fix: Commit all changes in the worktree, then retry spawning the subagent.
+```
+
+**Pattern: worktree isolation for plugin edits** (`EnforcePluginFileIsolation`)
+
+States the file, provides numbered steps, explains why isolation matters, and covers the edge case:
+
+```
+BLOCKED: Cannot edit source files outside of an issue worktree.
+
+File: plugin/skills/foo.md
+
+Solution:
+1. Create task: /cat:add <task-description>
+2. Work in isolated worktree: /cat:work
+3. Make edits in the issue worktree
+
+Why this matters:
+- Keeps base branch stable
+- Enables clean rollback
+- Allows parallel work on multiple tasks
+
+If this is truly maintenance work on the base branch:
+1. Create an issue for it
+2. Use /cat:work to create proper worktree
+3. Make changes in isolated environment
+```
+
+**Pattern: schema violation** (`StateSchemaValidator`)
+
+Names the invalid value, lists valid alternatives, and provides migration guidance:
+
+```
+STATE.md schema violation: Invalid Status value 'Done'.
+
+Status must be one of: closed, in-progress, open
+
+If migrating from older versions, run: plugin/migrations/2.1.sh
+```
+
+### Bad Patterns
+
+**Bad — reason only, no guidance:**
+
+```
+Blocked: Only issue worktrees may modify plugin/ files.
+```
+
+Problem: The agent knows it is blocked but has no path forward.
+
+**Bad — generic instruction:**
+
+```
+BLOCKED: Use the correct path.
+```
+
+Problem: Does not identify what the correct path is or how to determine it.
+
+**Bad — partial guidance:**
+
+```
+BLOCKED: Worktree has uncommitted changes.
+```
+
+Problem: Does not explain why uncommitted changes are a problem or what the required fix is.
+
+### Hooks With No Safe Alternative
+
+When the hook protects an operation the agent should NEVER perform without explicit user instruction
+(e.g., git identity changes), the guidance must:
+
+1. State what explicit condition must be met (e.g., "the user must explicitly ask")
+2. Give an example of what counts as explicit user instruction
+3. Show read-only alternatives when they exist
+
+### Project Hooks
+
+Project hooks in `.claude/settings.json` must follow the same guidance pattern if they block or warn
+operations. An empty hooks object (the current state) requires no changes. Any future project hooks
+added to `.claude/settings.json` must include actionable guidance in their block/warn messages.
