@@ -1,0 +1,6 @@
+{
+  "status" : "open",
+  "dependencies" : [ ],
+  "blocks" : [ "2.1-replace-bfg-with-git-filter-repo" ],
+  "targetBranch" : "v2.1"
+}
