@@ -1,0 +1,205 @@
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+name: Build git-filter-repo Binaries
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'git-filter-repo version tag (e.g., v2.38.0)'
+        required: true
+        default: 'v2.38.0'
+
+jobs:
+  build:
+    permissions:
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux-x64
+          - os: ubuntu-24.04-arm
+            platform: linux-aarch64
+          - os: macos-26-intel
+            platform: macos-x64
+          - os: macos-latest
+            platform: macos-aarch64
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+      VERSION: ${{ github.event.inputs.version }}
+
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Validate version input
+        run: |
+          set -euo pipefail
+          if ! echo "${VERSION}" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "ERROR: Version '${VERSION}' does not match required format vX.Y.Z (e.g., v2.38.0)." >&2
+            exit 1
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+
+      - name: Install PyInstaller
+        run: pip install pyinstaller==6.19.0
+
+      - name: Download git-filter-repo
+        run: |
+          set -euo pipefail
+          curl -fsSL -o git-filter-repo.py \
+            "https://raw.githubusercontent.com/newren/git-filter-repo/${VERSION}/git-filter-repo"
+
+      - name: Verify source integrity
+        run: |
+          set -euo pipefail
+          SOURCE_SHA256=$(grep 'SOURCE_SHA256=' plugin/.git-filter-repo-config/release.conf | sed 's/SOURCE_SHA256="//;s/"//')
+          echo "${SOURCE_SHA256}  git-filter-repo.py" | sha256sum --check
+
+      - name: Build standalone binary with PyInstaller
+        run: |
+          set -euo pipefail
+          pyinstaller \
+            --onefile \
+            --name git-filter-repo \
+            git-filter-repo.py
+          ls -lh dist/git-filter-repo
+
+      - name: Verify binary runs
+        run: |
+          set -euo pipefail
+          ./dist/git-filter-repo --version
+
+      - name: Generate SHA256 checksum
+        run: |
+          set -euo pipefail
+          cd dist
+          sha256sum git-filter-repo > git-filter-repo-${{ matrix.platform }}.sha256
+          cat git-filter-repo-${{ matrix.platform }}.sha256
+
+      - name: Rename binary for platform
+        run: |
+          set -euo pipefail
+          mv dist/git-filter-repo dist/git-filter-repo-${{ matrix.platform }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: git-filter-repo-${{ matrix.platform }}
+          path: |
+            dist/git-filter-repo-${{ matrix.platform }}
+            dist/git-filter-repo-${{ matrix.platform }}.sha256
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    env:
+      VERSION: ${{ github.event.inputs.version }}
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: List artifacts
+        run: ls -la artifacts/
+
+      - name: Verify all expected artifacts are present
+        run: |
+          set -euo pipefail
+          # NOTE: This list must stay in sync with the build matrix platforms defined above.
+          # When adding or removing a platform from the matrix, update this list too.
+          # Each platform produces one binary and one .sha256 checksum file:
+          #   linux-x64      - Linux x86_64 (ubuntu-latest)
+          #   linux-aarch64  - Linux ARM64 (ubuntu-24.04-arm)
+          #   macos-x64      - macOS Intel (macos-26-intel)
+          #   macos-aarch64  - macOS Apple Silicon (macos-latest)
+          EXPECTED=(
+            git-filter-repo-linux-x64
+            git-filter-repo-linux-aarch64
+            git-filter-repo-macos-x64
+            git-filter-repo-macos-aarch64
+            git-filter-repo-linux-x64.sha256
+            git-filter-repo-linux-aarch64.sha256
+            git-filter-repo-macos-x64.sha256
+            git-filter-repo-macos-aarch64.sha256
+          )
+          MISSING=()
+          for FILE in "${EXPECTED[@]}"; do
+            if [[ ! -f "artifacts/${FILE}" ]]; then
+              MISSING+=("${FILE}")
+            fi
+          done
+          if [[ ${#MISSING[@]} -gt 0 ]]; then
+            echo "ERROR: Missing required artifact files before release creation:" >&2
+            for FILE in "${MISSING[@]}"; do
+              echo "  - ${FILE}" >&2
+            done
+            echo "All 4 platform builds must succeed before a release can be created." >&2
+            exit 1
+          fi
+
+      - name: Read SHA256 checksums
+        id: checksums
+        run: |
+          set -euo pipefail
+          LINUX_X64=$(awk '{print $1}' artifacts/git-filter-repo-linux-x64.sha256)
+          LINUX_AARCH64=$(awk '{print $1}' artifacts/git-filter-repo-linux-aarch64.sha256)
+          MACOS_X64=$(awk '{print $1}' artifacts/git-filter-repo-macos-x64.sha256)
+          MACOS_AARCH64=$(awk '{print $1}' artifacts/git-filter-repo-macos-aarch64.sha256)
+          echo "linux_x64=${LINUX_X64}" >> $GITHUB_OUTPUT
+          echo "linux_aarch64=${LINUX_AARCH64}" >> $GITHUB_OUTPUT
+          echo "macos_x64=${MACOS_X64}" >> $GITHUB_OUTPUT
+          echo "macos_aarch64=${MACOS_AARCH64}" >> $GITHUB_OUTPUT
+
+      - name: Create release
+        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2.6.1
+        with:
+          tag_name: git-filter-repo-${{ env.VERSION }}
+          name: git-filter-repo ${{ env.VERSION }} Standalone Binaries
+          body: |
+            ## git-filter-repo ${{ env.VERSION }} Standalone Binaries
+
+            Pre-built standalone binaries of [git-filter-repo](https://github.com/newren/git-filter-repo)
+            compiled with PyInstaller. No Python installation required.
+
+            ### Platforms
+
+            | Platform | File | SHA256 |
+            |----------|------|--------|
+            | Linux x86_64 | `git-filter-repo-linux-x64` | `${{ steps.checksums.outputs.linux_x64 }}` |
+            | Linux ARM64 | `git-filter-repo-linux-aarch64` | `${{ steps.checksums.outputs.linux_aarch64 }}` |
+            | macOS Intel | `git-filter-repo-macos-x64` | `${{ steps.checksums.outputs.macos_x64 }}` |
+            | macOS Apple Silicon | `git-filter-repo-macos-aarch64` | `${{ steps.checksums.outputs.macos_aarch64 }}` |
+
+            ### Usage
+
+            The CAT plugin automatically downloads the appropriate binary on first use.
+            Set `GFR_FORCE_DOWNLOAD=1` to force re-download and re-verification.
+          files: |
+            artifacts/git-filter-repo-linux-x64
+            artifacts/git-filter-repo-linux-aarch64
+            artifacts/git-filter-repo-macos-x64
+            artifacts/git-filter-repo-macos-aarch64
+            artifacts/git-filter-repo-linux-x64.sha256
+            artifacts/git-filter-repo-linux-aarch64.sha256
+            artifacts/git-filter-repo-macos-x64.sha256
+            artifacts/git-filter-repo-macos-aarch64.sha256
+          draft: false
+          prerelease: false
