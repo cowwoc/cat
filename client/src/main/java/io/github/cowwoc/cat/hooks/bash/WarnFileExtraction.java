@@ -35,7 +35,14 @@ public final class WarnFileExtraction implements BashHandler
     // Check for tar/unzip extraction
     if (EXTRACTION_PATTERN.matcher(command).find())
       // Just a mild warning, don't block
-      return Result.warn("File extraction detected. Ensure destination directory is appropriate.");
+      return Result.warn(
+        "File extraction detected. Verify the destination directory before proceeding:\n" +
+        "\n" +
+        "- Extract to a temp directory (e.g., mktemp -d) rather than the project root\n" +
+        "- Confirm the archive does not overwrite tracked files in the worktree\n" +
+        "- If extracting to the worktree, ensure the files are intentional additions\n" +
+        "\n" +
+        "Proceed only if the extraction destination is appropriate for the current task.");
 
     return Result.allow();
   }

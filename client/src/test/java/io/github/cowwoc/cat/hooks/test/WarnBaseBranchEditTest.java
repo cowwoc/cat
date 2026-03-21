@@ -36,39 +36,6 @@ public final class WarnBaseBranchEditTest
   private static final String ISSUE_ID = "2.1-test-task";
 
   /**
-   * Creates a lock file associating {@code sessionId} with {@code issueId}.
-   *
-   * @param scope the JVM scope providing the lock directory path
-   * @param issueId the issue identifier (becomes the lock filename stem)
-   * @param sessionId the session ID to embed in the lock content
-   * @throws IOException if the lock file cannot be written
-   */
-  private static void writeLockFile(JvmScope scope, String issueId, String sessionId) throws IOException
-  {
-    Path lockDir = scope.getCatWorkPath().resolve("locks");
-    Files.createDirectories(lockDir);
-    String content = """
-      {"session_id": "%s", "worktrees": {}, "created_at": 1000000, "created_iso": "2026-01-01T00:00:00Z"}
-      """.formatted(sessionId);
-    Files.writeString(lockDir.resolve(issueId + ".lock"), content);
-  }
-
-  /**
-   * Creates the worktree directory for the given issue ID.
-   *
-   * @param scope the JVM scope providing the worktree base path
-   * @param issueId the issue identifier
-   * @return the created worktree directory path
-   * @throws IOException if the directory cannot be created
-   */
-  private static Path createWorktreeDir(JvmScope scope, String issueId) throws IOException
-  {
-    Path worktreeDir = scope.getCatWorkPath().resolve("worktrees").resolve(issueId);
-    Files.createDirectories(worktreeDir);
-    return worktreeDir;
-  }
-
-  /**
    * Verifies that edits to files matching allowed patterns are permitted without warning.
    * <p>
    * index.json, plan.md, and similar orchestration files must always be allowed even when
@@ -154,8 +121,8 @@ public final class WarnBaseBranchEditTest
     try (JvmScope scope = new TestJvmScope(mainRepo, pluginRoot))
     {
       // Create worktree and lock so the handler sees an active worktree context
-      Path worktreeDir = createWorktreeDir(scope, ISSUE_ID);
-      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
 
       WarnBaseBranchEdit handler = new WarnBaseBranchEdit(scope);
       JsonMapper mapper = scope.getJsonMapper();
@@ -199,7 +166,7 @@ public final class WarnBaseBranchEditTest
       Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
       Path worktree = TestUtils.createWorktree(mainRepo, worktreesDir, ISSUE_ID);
-      writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
 
       WarnBaseBranchEdit handler = new WarnBaseBranchEdit(scope);
       JsonMapper mapper = scope.getJsonMapper();

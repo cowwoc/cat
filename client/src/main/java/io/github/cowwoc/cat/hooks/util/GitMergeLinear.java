@@ -292,15 +292,15 @@ public final class GitMergeLinear
   {
     try (JvmScope scope = new MainJvmScope())
     {
-      run(scope, args, System.out);
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(GitMergeLinear.class);
-      log.error("Unexpected error", e);
-      try (MainJvmScope errorScope = new MainJvmScope())
+      try
       {
-        System.out.println(new HookOutput(errorScope).block(
+        run(scope, args, System.out);
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(GitMergeLinear.class);
+        log.error("Unexpected error", e);
+        System.out.println(new HookOutput(scope).block(
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }

@@ -13,7 +13,6 @@ import io.github.cowwoc.cat.hooks.skills.GetSubagentStatusOutput.SubagentInfo;
 import io.github.cowwoc.cat.hooks.skills.GetSubagentStatusOutput.SubagentStatus;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -166,10 +165,9 @@ public class GetSubagentStatusOutputTest
   public void monitorReturnsEmptyWhenNoSubagents() throws IOException
   {
     Path sessionBase = Files.createTempDirectory("session-test");
-    try
+    try (JvmScope scope = new TestJvmScope(sessionBase, sessionBase))
     {
-      JsonMapper mapper = JsonMapper.builder().build();
-      StatusResult result = GetSubagentStatusOutput.getStatus(sessionBase.toString(), mapper);
+      StatusResult result = GetSubagentStatusOutput.getStatus(sessionBase.toString(), scope.getJsonMapper());
 
       requireThat(result.summary().total(), "total").isEqualTo(0);
       requireThat(result.summary().running(), "running").isEqualTo(0);
@@ -192,13 +190,12 @@ public class GetSubagentStatusOutputTest
   public void toJsonProducesValidJsonForEmptyResult() throws IOException
   {
     Path sessionBase = Files.createTempDirectory("session-test");
-    try
+    try (JvmScope scope = new TestJvmScope(sessionBase, sessionBase))
     {
-      JsonMapper mapper = JsonMapper.builder().build();
-      StatusResult result = GetSubagentStatusOutput.getStatus(sessionBase.toString(), mapper);
-      String json = result.toJson(mapper);
+      StatusResult result = GetSubagentStatusOutput.getStatus(sessionBase.toString(), scope.getJsonMapper());
+      String json = result.toJson(scope.getJsonMapper());
 
-      JsonNode root = mapper.readTree(json);
+      JsonNode root = scope.getJsonMapper().readTree(json);
       requireThat(root.has("subagents"), "hasSubagents").isTrue();
       requireThat(root.get("subagents").isArray(), "subagentsIsArray").isTrue();
       requireThat(root.get("subagents").size(), "subagentsSize").isEqualTo(0);
@@ -279,17 +276,24 @@ public class GetSubagentStatusOutputTest
       java.util.List.of(info),
       new GetSubagentStatusOutput.Summary(1, 1, 0, 0));
 
-    JsonMapper mapper = JsonMapper.builder().build();
-    String json = result.toJson(mapper);
+    Path tempDir2 = Files.createTempDirectory("test-");
+    try (JvmScope scope2 = new TestJvmScope(tempDir2, tempDir2))
+    {
+      String json = result.toJson(scope2.getJsonMapper());
 
-    JsonNode root = mapper.readTree(json);
-    JsonNode subagent = root.get("subagents").get(0);
-    requireThat(subagent.get("id").asString(), "id").isEqualTo("abc123");
-    requireThat(subagent.get("task").asString(), "task").isEqualTo("test-task");
-    requireThat(subagent.get("status").asString(), "status").isEqualTo("running");
-    requireThat(subagent.get("tokens").asInt(), "tokens").isEqualTo(5000);
-    requireThat(subagent.get("compactions").asInt(), "compactions").isEqualTo(2);
-    requireThat(subagent.get("worktree").asString(), "worktree").isEqualTo("/path/to/worktree");
+      JsonNode root = scope2.getJsonMapper().readTree(json);
+      JsonNode subagent = root.get("subagents").get(0);
+      requireThat(subagent.get("id").asString(), "id").isEqualTo("abc123");
+      requireThat(subagent.get("task").asString(), "task").isEqualTo("test-task");
+      requireThat(subagent.get("status").asString(), "status").isEqualTo("running");
+      requireThat(subagent.get("tokens").asInt(), "tokens").isEqualTo(5000);
+      requireThat(subagent.get("compactions").asInt(), "compactions").isEqualTo(2);
+      requireThat(subagent.get("worktree").asString(), "worktree").isEqualTo("/path/to/worktree");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir2);
+    }
   }
 
   /**
@@ -300,11 +304,18 @@ public class GetSubagentStatusOutputTest
   @Test
   public void monitorHandlesNonExistentSessionBase() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    StatusResult result = GetSubagentStatusOutput.getStatus("/nonexistent/path", mapper);
+    Path tempDir2 = Files.createTempDirectory("test-");
+    try (JvmScope scope2 = new TestJvmScope(tempDir2, tempDir2))
+    {
+      StatusResult result = GetSubagentStatusOutput.getStatus("/nonexistent/path", scope2.getJsonMapper());
 
-    requireThat(result.summary().total(), "total").isNotNegative();
-    requireThat(result.subagents(), "subagents").isNotNull();
+      requireThat(result.summary().total(), "total").isNotNegative();
+      requireThat(result.subagents(), "subagents").isNotNull();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir2);
+    }
   }
 
   /**
@@ -343,29 +354,36 @@ public class GetSubagentStatusOutputTest
       java.util.List.of(info1, info2),
       new GetSubagentStatusOutput.Summary(2, 1, 1, 0));
 
-    JsonMapper mapper = JsonMapper.builder().build();
-    String json = result.toJson(mapper);
+    Path tempDir = Files.createTempDirectory("test-subagent-parseable-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      String json = result.toJson(scope.getJsonMapper());
 
-    JsonNode parsed = mapper.readTree(json);
+      JsonNode parsed = scope.getJsonMapper().readTree(json);
 
-    requireThat(parsed.has("subagents"), "hasSubagents").isTrue();
-    requireThat(parsed.has("summary"), "hasSummary").isTrue();
+      requireThat(parsed.has("subagents"), "hasSubagents").isTrue();
+      requireThat(parsed.has("summary"), "hasSummary").isTrue();
 
-    JsonNode subagents = parsed.get("subagents");
-    requireThat(subagents.isArray(), "isArray").isTrue();
-    requireThat(subagents.size(), "size").isEqualTo(2);
+      JsonNode subagents = parsed.get("subagents");
+      requireThat(subagents.isArray(), "isArray").isTrue();
+      requireThat(subagents.size(), "size").isEqualTo(2);
 
-    JsonNode first = subagents.get(0);
-    requireThat(first.get("id").asString(), "id").isEqualTo("abc123");
-    requireThat(first.get("task").asString(), "task").isEqualTo("task-one");
-    requireThat(first.get("status").asString(), "status").isEqualTo("running");
-    requireThat(first.get("tokens").asInt(), "tokens").isEqualTo(5000);
-    requireThat(first.get("compactions").asInt(), "compactions").isEqualTo(2);
+      JsonNode first = subagents.get(0);
+      requireThat(first.get("id").asString(), "id").isEqualTo("abc123");
+      requireThat(first.get("task").asString(), "task").isEqualTo("task-one");
+      requireThat(first.get("status").asString(), "status").isEqualTo("running");
+      requireThat(first.get("tokens").asInt(), "tokens").isEqualTo(5000);
+      requireThat(first.get("compactions").asInt(), "compactions").isEqualTo(2);
 
-    JsonNode summary = parsed.get("summary");
-    requireThat(summary.get("total").asInt(), "total").isEqualTo(2);
-    requireThat(summary.get("running").asInt(), "running").isEqualTo(1);
-    requireThat(summary.get("complete").asInt(), "complete").isEqualTo(1);
-    requireThat(summary.get("warning").asInt(), "warning").isEqualTo(0);
+      JsonNode summary = parsed.get("summary");
+      requireThat(summary.get("total").asInt(), "total").isEqualTo(2);
+      requireThat(summary.get("running").asInt(), "running").isEqualTo(1);
+      requireThat(summary.get("complete").asInt(), "complete").isEqualTo(1);
+      requireThat(summary.get("warning").asInt(), "warning").isEqualTo(0);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 }

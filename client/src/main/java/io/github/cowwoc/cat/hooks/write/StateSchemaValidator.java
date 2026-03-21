@@ -109,17 +109,24 @@ public final class StateSchemaValidator implements FileWriteHandler
       {
         // File could not be read. Block the edit so the user knows validation failed due to
         // I/O failure rather than allowing potentially invalid content through silently.
-        return FileWriteHandler.Result.block(
-          "Edit validation failed: Could not read " + filePath + " to validate post-edit content.\n" +
-          "This may indicate a file system issue or permission problem.\n" +
-          "Error: " + editResult.exception.getClass().getSimpleName() + ": " +
-          editResult.exception.getMessage());
+        return FileWriteHandler.Result.block("""
+          Edit validation failed: Could not read %s to validate post-edit content.
+          This may indicate a file system issue or permission problem.
+          Error: %s: %s
+
+          Verify the file path is correct and that you have read access. If the file was created \
+          in this session, ensure the Write tool completed successfully before using the Edit tool.""".
+          formatted(filePath, editResult.exception.getClass().getSimpleName(),
+            editResult.exception.getMessage()));
       }
       content = editResult.content;
       if (content.isEmpty())
-        return FileWriteHandler.Result.block(
-          "Edit rejected: old_string not found in " + filePath + ".\n" +
-          "The file on disk does not contain the text being replaced.");
+        return FileWriteHandler.Result.block("""
+          Edit rejected: old_string not found in %s.
+          The file on disk does not contain the text being replaced.
+
+          Read the current file content first to get the exact text, then retry the Edit with \
+          an old_string that matches the current file exactly.""".formatted(filePath));
     }
 
     return validateJson(content, filePath);
@@ -196,11 +203,14 @@ public final class StateSchemaValidator implements FileWriteHandler
     {
       if (!root.has(field))
       {
-        return FileWriteHandler.Result.block(
-          "index.json schema violation in " + filePath + ": Missing mandatory field '" + field + "'.\n" +
-          "\n" +
-          "Mandatory fields: " + MANDATORY_FIELDS_LIST + "\n" +
-          "Optional fields: " + OPTIONAL_FIELDS_LIST + " (resolution required for closed issues)");
+        return FileWriteHandler.Result.block("""
+          index.json schema violation in %s: Missing mandatory field '%s'.
+
+          Mandatory fields: %s
+          Optional fields: %s (resolution required for closed issues)
+
+          Add the missing field to the index.json content: "%s": "<value>"\
+          """.formatted(filePath, field, MANDATORY_FIELDS_LIST, OPTIONAL_FIELDS_LIST, field));
       }
     }
     return FileWriteHandler.Result.allow();
@@ -220,12 +230,15 @@ public final class StateSchemaValidator implements FileWriteHandler
       String fieldName = entry.getKey();
       if (!ALL_VALID_FIELDS.contains(fieldName))
       {
-        return FileWriteHandler.Result.block(
-          "index.json schema violation in " + filePath + ": Non-standard field '" + fieldName + "'.\n" +
-          "\n" +
-          "Only these fields are allowed:\n" +
-          "  Mandatory: " + MANDATORY_FIELDS_LIST + "\n" +
-          "  Optional: " + OPTIONAL_FIELDS_LIST);
+        return FileWriteHandler.Result.block("""
+          index.json schema violation in %s: Non-standard field '%s'.
+
+          Only these fields are allowed:
+            Mandatory: %s
+            Optional: %s
+
+          Remove the '%s' field from the index.json content or rename it to a valid field.""".
+          formatted(filePath, fieldName, MANDATORY_FIELDS_LIST, OPTIONAL_FIELDS_LIST, fieldName));
       }
     }
     return FileWriteHandler.Result.allow();
@@ -320,10 +333,14 @@ public final class StateSchemaValidator implements FileWriteHandler
     String parent = parentNode.asString();
     if (!parent.isEmpty() && !ISSUE_SLUG_FORMAT.matcher(parent).matches())
     {
-      return FileWriteHandler.Result.block(
-        "index.json schema violation in " + filePath + ": Invalid parent format '" + parent + "'.\n" +
-        "\n" +
-        "parent must be a valid issue slug (lowercase letters, numbers, hyphens only)");
+      return FileWriteHandler.Result.block("""
+        index.json schema violation in %s: Invalid parent format '%s'.
+
+        parent must be a valid issue slug (lowercase letters, numbers, hyphens only).
+
+        Example: "parent": "my-parent-issue"
+        Fix: Change '%s' to use only lowercase letters, digits, and hyphens.""".
+        formatted(filePath, parent, parent));
     }
     return FileWriteHandler.Result.allow();
   }

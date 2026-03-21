@@ -29,26 +29,6 @@ import java.util.UUID;
 public final class SetPendingAgentResultTest
 {
   /**
-   * Creates a lock file for the given session pointing to a worktree.
-   *
-   * @param scope the JVM scope
-   * @param sessionId the session ID
-   * @param issueId the issue ID (worktree name)
-   * @throws IOException if lock file creation fails
-   */
-  private static void createLockFile(JvmScope scope, String sessionId, String issueId) throws IOException
-  {
-    Path lockDir = scope.getCatWorkPath().resolve("locks");
-    Files.createDirectories(lockDir);
-    String lockContent = """
-      {
-        "session_id": "%s"
-      }
-      """.formatted(sessionId);
-    Files.writeString(lockDir.resolve(issueId + ".lock"), lockContent);
-  }
-
-  /**
    * Creates a worktree directory for the given issue.
    *
    * @param mainRepo the main repository
@@ -105,7 +85,7 @@ public final class SetPendingAgentResultTest
       JsonMapper mapper = scope.getJsonMapper();
       String issueId = "2.1-test-issue";
 
-      createLockFile(scope, sessionId, issueId);
+      TestUtils.writeLockFile(scope, issueId, sessionId);
       worktreePath = createWorktreeDir(mainRepo, scope, issueId);
 
       SetPendingAgentResult handler = new SetPendingAgentResult(scope);
@@ -143,7 +123,7 @@ public final class SetPendingAgentResultTest
       JsonMapper mapper = scope.getJsonMapper();
       String issueId = "2.1-test-issue";
 
-      createLockFile(scope, sessionId, issueId);
+      TestUtils.writeLockFile(scope, issueId, sessionId);
       worktreePath = createWorktreeDir(mainRepo, scope, issueId);
 
       SetPendingAgentResult handler = new SetPendingAgentResult(scope);
@@ -184,7 +164,7 @@ public final class SetPendingAgentResultTest
       JsonMapper mapper = scope.getJsonMapper();
       String issueId = "2.1-test-issue";
 
-      createLockFile(scope, sessionId, issueId);
+      TestUtils.writeLockFile(scope, issueId, sessionId);
       worktreePath = createWorktreeDir(mainRepo, scope, issueId);
 
       SetPendingAgentResult handler = new SetPendingAgentResult(scope);
@@ -223,7 +203,7 @@ public final class SetPendingAgentResultTest
       JsonMapper mapper = scope.getJsonMapper();
       String issueId = "2.1-test-issue";
 
-      createLockFile(scope, sessionId, issueId);
+      TestUtils.writeLockFile(scope, issueId, sessionId);
       worktreePath = createWorktreeDir(mainRepo, scope, issueId);
 
       SetPendingAgentResult handler = new SetPendingAgentResult(scope);
@@ -292,10 +272,7 @@ public final class SetPendingAgentResultTest
       JsonMapper mapper = scope.getJsonMapper();
 
       // Create a lock file so worktree context is established
-      Path lockDir = scope.getCatWorkPath().resolve("locks");
-      Files.createDirectories(lockDir);
-      Files.writeString(lockDir.resolve("2.1-test-io-issue.lock"),
-        "{\"session_id\": \"" + sessionId + "\"}");
+      TestUtils.writeLockFile(scope, "2.1-test-io-issue", sessionId);
 
       // Create the worktrees directory with a regular file named after the issue
       // to simulate a directory that exists but where the flag file parent is not a directory
@@ -343,7 +320,7 @@ public final class SetPendingAgentResultTest
       JsonMapper mapper = scope.getJsonMapper();
       String issueId = "2.1-test-issue";
 
-      createLockFile(scope, sessionId, issueId);
+      TestUtils.writeLockFile(scope, issueId, sessionId);
       worktreePath = createWorktreeDir(mainRepo, scope, issueId);
 
       SetPendingAgentResult handler = new SetPendingAgentResult(scope);
@@ -383,7 +360,7 @@ public final class SetPendingAgentResultTest
       JsonMapper mapper = scope.getJsonMapper();
       String issueId = "2.1-test-issue";
 
-      createLockFile(scope, sessionId, issueId);
+      TestUtils.writeLockFile(scope, issueId, sessionId);
       worktreePath = createWorktreeDir(mainRepo, scope, issueId);
 
       SetPendingAgentResult handler = new SetPendingAgentResult(scope);
@@ -421,7 +398,7 @@ public final class SetPendingAgentResultTest
       JsonMapper mapper = scope.getJsonMapper();
       String issueId = "2.1-test-issue";
 
-      createLockFile(scope, sessionId, issueId);
+      TestUtils.writeLockFile(scope, issueId, sessionId);
       worktreePath = createWorktreeDir(mainRepo, scope, issueId);
 
       SetPendingAgentResult handler = new SetPendingAgentResult(scope);
@@ -461,7 +438,7 @@ public final class SetPendingAgentResultTest
       JsonMapper mapper = scope.getJsonMapper();
       String issueId = "2.1-test-issue";
 
-      createLockFile(scope, sessionId, issueId);
+      TestUtils.writeLockFile(scope, issueId, sessionId);
       worktreePath = createWorktreeDir(mainRepo, scope, issueId);
 
       SetPendingAgentResult handler = new SetPendingAgentResult(scope);
