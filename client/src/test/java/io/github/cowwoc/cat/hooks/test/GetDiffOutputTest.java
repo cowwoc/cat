@@ -1987,9 +1987,11 @@ public class GetDiffOutputTest
       pb.environment().put("GIT_COMMITTER_NAME", "Test");
       pb.environment().put("GIT_COMMITTER_EMAIL", "test@test.com");
       pb.redirectErrorStream(true);
-      Process process = pb.start();
-      process.getInputStream().readAllBytes();
-      process.waitFor();
+      try (Process process = pb.start())
+      {
+        process.getInputStream().readAllBytes();
+        process.waitFor();
+      }
     }
     catch (IOException | InterruptedException e)
     {

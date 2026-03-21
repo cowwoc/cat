@@ -77,6 +77,39 @@ skips the entire confirm phase.
 
 ## Sub-Agent Waves
 
+### Iteration 1 (Pre-existing Compilation Fix)
+
+**PRIORITY:** This fix must be completed before the main implementation (Iteration 0) can proceed. The compilation error blocks the test suite.
+
+- Wrap Process in try-with-resources at line 155 of GitMergeLinear.java to match the pattern at line 212.
+  The checkFastForwardPossible() method creates a Process but does not properly close it. Change:
+  ```java
+  Process process = pb.start();
+  int exitCode = process.waitFor();
+  ```
+  to:
+  ```java
+  try (Process process = pb.start())
+  {
+    int exitCode = process.waitFor();
+  }
+  ```
+  This ensures the Process resource is properly closed, resolving the compilation error:
+  "Process is not an interface" at line 212.
+  - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/GitMergeLinear.java`
+
+- Verify the fix by running tests:
+  ```bash
+  cd "${WORKTREE_PATH}" && mvn -f client/pom.xml test
+  ```
+  All tests must pass (exit code 0) before proceeding to Iteration 0.
+  - Files: `client/pom.xml`
+
+- Commit the fix:
+  ```bash
+  cd "${WORKTREE_PATH}" && git add client/src/main/java/io/github/cowwoc/cat/hooks/util/GitMergeLinear.java && git commit -m "bugfix: wrap Process in try-with-resources in GitMergeLinear.checkFastForwardPossible()"
+  ```
+
 ### Wave 1
 
 - Read `plugin/skills/work/first-use.md` (lines 240–292) to understand the current "Potentially

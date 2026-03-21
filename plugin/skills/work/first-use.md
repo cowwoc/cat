@@ -279,13 +279,82 @@ branch with index.json not reflecting completion (e.g., stale merge overwrote st
    - **UNCERTAIN** → ask the user using the same AskUserQuestion as the YES case above.
 
    **"Already complete" implementation:**
-   1. Update `${WORKTREE_PATH}/<relative_issue_path>/index.json` to set status to `closed`
-   2. Commit in worktree: `cd ${WORKTREE_PATH} && git add <relative_issue_path>/index.json && git commit -m "planning: close completed issue ${issueId}"`
-   3. Merge the worktree branch into `${targetBranch}` using the normal merge flow (Phase 4 merge
+   1. Output: `"Verifying post-conditions before closing ${issueId}..."`
+
+      <!-- Note: the standard implement→confirm→review→merge path runs the same check via work-confirm-agent
+           (Phase 3), so this gate is consistent with the existing flow. -->
+
+      Build the commits JSON array from `suspiciousCommits`:
+      ```bash
+      COMMITS_JSON="["
+      first=true
+      for hash in ${suspiciousCommits}; do
+        [[ "$hash" =~ ^[0-9a-fA-F]+$ ]] || continue
+        [[ "$first" == "true" ]] || COMMITS_JSON="${COMMITS_JSON},"
+        COMMITS_JSON="${COMMITS_JSON}{\"hash\":\"${hash}\",\"message\":\"suspicious commit\",\"type\":\"feature\"}"
+        first=false
+      done
+      COMMITS_JSON="${COMMITS_JSON}]"
+      echo "COMMITS_JSON=${COMMITS_JSON}"
+      ```
+      Then invoke the skill (if `suspiciousCommits` is empty, `COMMITS_JSON` will be `[]`):
+      ```
+      Skill tool:
+        skill: "cat:verify-implementation-agent"
+        args: |
+          {
+            "issueId": "${issueId}",
+            "issuePath": "${issuePath}",
+            "worktreePath": "${WORKTREE_PATH}",
+            "execution_result": {
+              "commits": ${COMMITS_JSON},
+              "filesChanged": 0
+            }
+          }
+      ```
+
+      Parse the verification result (overall assessment field: `COMPLETE`, `PARTIAL`, or `INCOMPLETE`):
+
+      - **If COMPLETE:** Output `"All post-conditions verified."` and proceed to step 2.
+
+      - **If PARTIAL or INCOMPLETE:** Output the full verification report (which criteria are Missing/Partial and
+        why). Then STOP — do NOT update index.json, do NOT merge. Display to the user:
+        ```
+        BLOCKED: ${issueId} cannot be closed — ${N} post-condition(s) are unmet.
+        Review the criteria above, then either:
+          - Fix the missing implementation and re-run /cat:work
+          - Select "Not complete, continue" to run the full implement→confirm→review→merge workflow
+        ```
+        Release the lock:
+        `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issueId}" "${CLAUDE_SESSION_ID}"`
+        Clean up worktree by invoking:
+        ```
+        Skill tool:
+          skill: "cat:safe-rm-agent"
+          args: "${CAT_AGENT_ID} ${WORKTREE_PATH}"
+        ```
+        **Note:** `${CAT_AGENT_ID}` is the unique agent identifier injected at the start of the work-prepare
+        phase. It is available in the work orchestration context and passed to skill invocations as the first
+        argument (see `plugin/rules/qualified-names.md` § "Skill Invocation: Passing Arguments" for details).
+        Then stop — do not proceed further.
+
+      - **If the verify skill itself fails** (non-zero exit or unparseable output): STOP immediately:
+        ```
+        FAIL: verify-implementation-agent failed for ${issueId}.
+        Cannot close issue without verified post-conditions.
+        Error: <error message>
+        ```
+        Release the lock:
+        `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issueId}" "${CLAUDE_SESSION_ID}"`
+        Invoke `cat:safe-rm-agent` to clean up worktree, then stop.
+
+   2. Update `${WORKTREE_PATH}/<relative_issue_path>/index.json` to set status to `closed`
+   3. Commit in worktree: `cd ${WORKTREE_PATH} && git add <relative_issue_path>/index.json && git commit -m "planning: close completed issue ${issueId}"`
+   4. Merge the worktree branch into `${targetBranch}` using the normal merge flow (Phase 4 merge
       procedure)
-   4. Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issueId}" "${CLAUDE_SESSION_ID}"`
-   5. Clean up worktree using `/cat:safe-rm-agent`
-   6. Select next issue by invoking `/cat:work` with the same version scope
+   5. Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issueId}" "${CLAUDE_SESSION_ID}"`
+   6. Clean up worktree using `/cat:safe-rm-agent`
+   7. Select next issue by invoking `/cat:work` with the same version scope
 
 Do NOT ask the user when the commits are clearly unrelated — that interruption is unnecessary
 friction.

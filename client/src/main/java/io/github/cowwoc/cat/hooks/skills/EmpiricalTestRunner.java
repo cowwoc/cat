@@ -68,8 +68,6 @@ public final class EmpiricalTestRunner
    * Outputs exceeding this limit are truncated before parsing.
    */
   private static final int MAX_OUTPUT_BYTES = 10 * 1024 * 1024;
-  private static final Path SESSION_DIR = Path.of(
-    System.getProperty("user.home"), ".config", "claude", "projects", "-workspace");
   private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>()
   {
   };
@@ -90,6 +88,7 @@ public final class EmpiricalTestRunner
 
   private final JvmScope scope;
   private final ObjectWriter compactWriter;
+  private final Path sessionDir;
 
   /**
    * Creates a new empirical test runner.
@@ -102,6 +101,7 @@ public final class EmpiricalTestRunner
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
     this.compactWriter = scope.getJsonMapper().writer().without(SerializationFeature.INDENT_OUTPUT);
+    this.sessionDir = scope.getClaudeSessionsPath();
   }
 
   /**
@@ -292,6 +292,10 @@ public final class EmpiricalTestRunner
     List<TrialResult> results = Collections.synchronizedList(new ArrayList<>());
     AtomicBoolean failFast = new AtomicBoolean(false);
 
+    // A new executor is created per config so that its lifecycle matches exactly the config's trial
+    // batch. This keeps shutdown and failure isolation clean: one config timing out does not cancel
+    // trials from another config, and the try-with-resources guarantees the executor is shut down
+    // before results are aggregated.
     try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor())
     {
       List<CompletableFuture<Void>> futures = new ArrayList<>();
@@ -352,28 +356,29 @@ public final class EmpiricalTestRunner
    * <p>
    * Session files follow this structure:
    * <pre>
-   * SESSION_DIR/
+   * sessionDir/
    *   {sessionId}.jsonl              — main agent session
    *   {sessionId}/subagents/
    *     agent-{agentId}.jsonl        — subagent sessions
    * </pre>
    *
+   * @param sessionDir the session directory path
    * @param sessionId the session ID extracted from stream-json output
    * @return the list of session file paths (main first, then subagents), or empty list if
    *         sessionId is empty
    * @throws IOException if the subagents directory exists but cannot be read
    */
-  private static List<Path> collectSessionFiles(String sessionId) throws IOException
+  private static List<Path> collectSessionFiles(Path sessionDir, String sessionId) throws IOException
   {
     if (sessionId.isEmpty())
       return List.of();
 
     List<Path> files = new ArrayList<>();
-    Path mainFile = SESSION_DIR.resolve(sessionId + ".jsonl");
+    Path mainFile = sessionDir.resolve(sessionId + ".jsonl");
     if (Files.isRegularFile(mainFile))
       files.add(mainFile);
 
-    Path subagentsDir = SESSION_DIR.resolve(sessionId).resolve("subagents");
+    Path subagentsDir = sessionDir.resolve(sessionId).resolve("subagents");
     if (Files.isDirectory(subagentsDir))
     {
       try (DirectoryStream<Path> stream = Files.newDirectoryStream(subagentsDir, "*.jsonl"))
@@ -436,37 +441,45 @@ public final class EmpiricalTestRunner
     {
       ProcessBuilder pb = new ProcessBuilder(command);
       Map<String, String> env = pb.environment();
+      // Remove CLAUDECODE so the spawned claude process does not inherit the hook-suppression flag
+      // and behaves as a standalone CLI invocation. All other parent env vars are intentionally
+      // inherited so the subprocess picks up PATH, HOME, CLAUDE_SESSION_ID, and any user-configured
+      // model settings needed for the empirical trial.
       env.remove("CLAUDECODE");
       pb.directory(cwd.toFile());
       pb.redirectErrorStream(true);
 
-      Process process = pb.start();
-      process.getOutputStream().write(input.getBytes(StandardCharsets.UTF_8));
-      process.getOutputStream().close();
-
-      StringBuilder output = new StringBuilder();
-      try (BufferedReader reader = new BufferedReader(
-        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
+      try (Process process = pb.start())
       {
-        String line = reader.readLine();
-        while (line != null)
+        process.getOutputStream().write(input.getBytes(StandardCharsets.UTF_8));
+        process.getOutputStream().close();
+
+        StringBuilder output = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(
+          new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
         {
-          if (output.length() + line.length() + 1 <= MAX_OUTPUT_BYTES)
-            output.append(line).append('\n');
-          line = reader.readLine();
+          String line = reader.readLine();
+          while (line != null)
+          {
+            if (output.length() + line.length() + 1 <= MAX_OUTPUT_BYTES)
+              output.append(line).append('\n');
+            else
+              break;
+            line = reader.readLine();
+          }
         }
+
+        boolean completed = process.waitFor(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        long elapsed = (System.currentTimeMillis() - startTime) / 1000;
+
+        if (!completed)
+        {
+          process.destroyForcibly();
+          return new ProcessResult("", elapsed, "timeout");
+        }
+
+        return new ProcessResult(output.toString(), elapsed, "");
       }
-
-      boolean completed = process.waitFor(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-      long elapsed = (System.currentTimeMillis() - startTime) / 1000;
-
-      if (!completed)
-      {
-        process.destroyForcibly();
-        return new ProcessResult("", elapsed, "timeout");
-      }
-
-      return new ProcessResult(output.toString(), elapsed, "");
     }
     catch (IOException | InterruptedException e)
     {
@@ -574,7 +587,7 @@ public final class EmpiricalTestRunner
     List<Path> sessionFiles;
     try
     {
-      sessionFiles = collectSessionFiles(parsed.sessionId());
+      sessionFiles = collectSessionFiles(sessionDir, parsed.sessionId());
     }
     catch (IOException _)
     {

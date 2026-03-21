@@ -35,6 +35,7 @@ import java.util.Set;
  */
 public final class WriteAndCommit
 {
+  private final Logger log = LoggerFactory.getLogger(getClass());
   private final JvmScope scope;
 
   /**
@@ -119,12 +120,21 @@ public final class WriteAndCommit
     {
       ProcessBuilder pb = new ProcessBuilder("git", "rev-parse", "--git-dir");
       pb.redirectErrorStream(true);
-      Process process = pb.start();
-      int exitCode = process.waitFor();
-      return exitCode == 0;
+      try (Process process = pb.start())
+      {
+        int exitCode = process.waitFor();
+        return exitCode == 0;
+      }
     }
-    catch (IOException | InterruptedException _)
+    catch (IOException e)
     {
+      // Non-zero exit code means the directory is not a git repo; log IO errors to distinguish from that case
+      log.debug("git rev-parse --git-dir failed: {}", e.getMessage());
+      return false;
+    }
+    catch (InterruptedException _)
+    {
+      Thread.currentThread().interrupt();
       return false;
     }
   }

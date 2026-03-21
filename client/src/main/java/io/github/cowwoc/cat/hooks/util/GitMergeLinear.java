@@ -22,7 +22,7 @@ import java.io.PrintStream;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Objects;
-import java.util.StringJoiner;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +35,10 @@ import org.slf4j.LoggerFactory;
  */
 public final class GitMergeLinear
 {
+  /**
+   * Timeout in seconds for individual git subprocess invocations.
+   */
+  private static final int GIT_TIMEOUT_SECONDS = 30;
   private final JvmScope scope;
   private final String directory;
 
@@ -152,16 +156,24 @@ public final class GitMergeLinear
       ProcessBuilder pb = new ProcessBuilder("git", "merge-base", "--is-ancestor", targetBranch, sourceBranch);
       pb.directory(Path.of(directory).toFile());
       pb.redirectErrorStream(true);
-      Process process = pb.start();
-      int exitCode = process.waitFor();
-
-      if (exitCode != 0)
+      try (Process process = pb.start())
       {
-        int behindCount = getCommitCount(sourceBranch, targetBranch);
-        if (behindCount > 0)
+        boolean completed = process.waitFor(GIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        if (!completed)
         {
-          throw new IOException("Source branch is behind " + targetBranch + " by " + behindCount +
-            " commits. Rebase required: git checkout " + sourceBranch + " && git rebase " + targetBranch);
+          process.destroyForcibly();
+          throw new IOException("git merge-base timed out after " + GIT_TIMEOUT_SECONDS + " seconds");
+        }
+        int exitCode = process.exitValue();
+
+        if (exitCode != 0)
+        {
+          int behindCount = getCommitCount(sourceBranch, targetBranch);
+          if (behindCount > 0)
+          {
+            throw new IOException("Source branch is behind " + targetBranch + " by " + behindCount +
+              " commits. Rebase required: git checkout " + sourceBranch + " && git rebase " + targetBranch);
+          }
         }
       }
     }
@@ -211,16 +223,12 @@ public final class GitMergeLinear
       pb.redirectErrorStream(true);
       try (Process process = pb.start())
       {
-        StringJoiner output = new StringJoiner("\n");
         try (BufferedReader reader = new BufferedReader(
           new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
         {
           String line = reader.readLine();
           while (line != null)
-          {
-            output.add(line);
             line = reader.readLine();
-          }
         }
         int exitCode = process.waitFor();
         if (exitCode != 0)
