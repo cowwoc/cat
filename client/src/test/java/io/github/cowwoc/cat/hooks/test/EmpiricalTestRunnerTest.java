@@ -2891,4 +2891,42 @@ public final class EmpiricalTestRunnerTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that buildCommand rejects an invalid model name.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*model.*")
+  public void buildCommandRejectsInvalidModel() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      runner.buildCommand("not-a-real-model-xyz", "system prompt");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that gradeOutput rejects null texts.
+   */
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*texts.*")
+  public void gradeOutputRejectsNullTexts() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      runner.gradeOutput(0, null, List.of(), Map.of());
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }
