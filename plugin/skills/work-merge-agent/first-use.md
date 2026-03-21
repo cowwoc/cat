@@ -10,17 +10,14 @@ commit squashing, branch merging, worktree cleanup, and state updates.
 
 ## MANDATORY STEPS
 
-- **Step 7: Rebase onto Target Branch Before Approval Gate** — always rebase the branch onto the current tip
-  of the target branch before the approval gate; do not proceed to Step 8 without completing this step
-- **Step 8: Skill-Builder Review** — always invoke `cat:skill-builder` for modified skill or
-  command files before presenting the approval gate
-- **Step 9: Squash Commits by Topic Before Approval Gate** — always squash commits by topic immediately before
-  presenting the approval gate; do not present the gate on an un-squashed branch. **This applies on EVERY
-  presentation, including after user feedback: re-squash ALL commits before re-presenting the gate.**
-- **Step 9 (sub-step): Background Task Completion** — before presenting the approval gate
-  (AskUserQuestion), ALL tasks launched with `run_in_background: true` during Steps 7-9 must
-  have returned their results via `<task-notification>`. Do NOT invoke AskUserQuestion while
-  any background task is still executing.
+- **Step 7: Post-Condition Gate Check** — verify all post-conditions are Done before squashing/rebasing
+- **Step 8: Squash Commits by Topic Before Review** — squash commits before rebase and skill-builder review
+- **Step 9: Rebase onto Target Branch** — rebase before approval gate; do not skip
+- **Step 10: Skill-Builder Review** — invoke `cat:skill-builder` for modified skill/command files before gate
+- **Step 11: Squash Before Approval Gate** — squash immediately before presenting gate. Re-squash ALL commits
+  on EVERY presentation, including after user feedback.
+- **Step 11 (sub-step): Background Task Completion** — ALL background tasks launched in Steps 9-11 must have
+  returned via `<task-notification>` before invoking AskUserQuestion.
 
 ## Arguments and Configuration
 
@@ -29,9 +26,6 @@ commit squashing, branch merging, worktree cleanup, and state updates.
 ```bash
 read CAT_AGENT_ID ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH COMMITS_JSON_PATH TRUST VERIFY <<< "$ARGUMENTS"
 PLAN_MD="${ISSUE_PATH}/plan.md"
-```
-
-```bash
 COMMITS_JSON=$(cat "$COMMITS_JSON_PATH")
 ```
 
@@ -39,54 +33,54 @@ Return JSON: `{"status": "SUCCESS|ABORTED|CHANGES_REQUESTED|FAILED", "issueId": 
 
 ## Issue Lifecycle States
 
-An issue passes through three distinct states during the merge workflow. Misidentifying the state causes errors such
-as refusing to squash commits on an active branch.
-
 | State | Description | Authoritative Indicator |
 |-------|-------------|-------------------------|
-| **Implementation running** | Confirm/review/merge phases are active. The worktree exists and the lock is held. | Worktree present, lock file exists, branch exists |
-| **Merge complete** | The merge-and-cleanup tool ran and produced a squashed commit on `TARGET_BRANCH`. The worktree may still exist briefly during cleanup. | The merge-and-cleanup tool returned `"status": "success"` in the current session |
-| **Issue closed** | Worktree removed, lock released, branch deleted. | No worktree, no lock, no issue branch |
+| **Implementation running** | Worktree exists, lock held | Worktree present, lock file, branch exists |
+| **Merge complete** | merge-and-cleanup returned `"status": "success"` in current session | Tool result in context |
+| **Issue closed** | Worktree removed, lock released, branch deleted | No worktree/lock/branch |
 
-**CRITICAL:** `index.json status: closed` means **implementation is done**, NOT that the issue was merged. An issue can
-have `index.json status: closed` while the worktree still exists and the merge-and-cleanup tool has not yet run. Always
-verify merge status by checking the git branch state AND the merge-and-cleanup tool result — never by reading index.json
-alone.
+**CRITICAL:** `index.json status: closed` means implementation is done, NOT that the issue was merged. An issue can
+have `index.json status: closed` while the worktree still exists and merge has not run. The only authoritative proof
+of State 2 (merge complete) is that merge-and-cleanup returned `"status": "success"` in the current session. If that
+result is not in context, treat as State 1 and run the full merge workflow.
 
-**Distinguishing State 1 from State 2:** Observable git indicators (worktree present, branch present, commit on
-TARGET_BRANCH) are **insufficient** to distinguish State 1 from State 2 because a stale or missing lock file produces
-identical observations. The only authoritative proof of State 2 is that the merge-and-cleanup tool returned
-`"status": "success"` in the current session. If that result is not in the current session's context, treat the issue
-as State 1 and run the full merge workflow.
-
-## Step 7: Squash Commits by Topic Before Review (MANDATORY)
-
-**MANDATORY: Delegate rebase, squash, and index.json closure verification to a squash subagent.** This step must not be
-skipped — the approval gate (Step 9) checks that squash was executed and blocks proceeding if it was not.
-This keeps the parent agent context lean by offloading git operations to a dedicated haiku-model subagent.
-
-**Note:** It is expected and correct to squash commits on **the current issue's branch** (`${BRANCH}`) where
-index.json shows `closed`. This means the implementation subagent finished its work (State 1 complete) and the merge
-preparation phase is now running. The squash operation is part of transitioning from State 1 to State 2. Do NOT skip
-or abort squash due to index.json showing `closed`. This authorization applies only to `${BRANCH}` — do NOT squash any
-other branch based on this reasoning, even if that branch's index.json also shows `closed`.
-
-Determine the primary commit message from the execution result (the most significant commit's message). If multiple
-topics exist, use the most significant commit's message. Do NOT use generic messages like "squash commit".
-
-**Before constructing the prompt below**, extract the primary commit message from the commits JSON.
-Use the first implementation commit's `message` field. Substitute the actual message string in place of the
-`PRIMARY_COMMIT_MESSAGE` value — do NOT pass the placeholder text literally.
+## Step 7: Post-Condition Gate Check (MANDATORY — BLOCKING)
 
 ```bash
-# Example: extract the primary commit message from the commits JSON
+VERIFY_DIR="${CLAUDE_PROJECT_DIR}/.cat/work/verify/${CLAUDE_SESSION_ID}"
+CRITERIA_FILE="${VERIFY_DIR}/criteria-analysis.json"
+```
+
+If `CRITERIA_FILE` does not exist:
+- If `VERIFY == "none"`: output note and continue to Step 8.
+- Otherwise: STOP, return FAILED — the confirm phase was improperly skipped.
+
+If file exists, check for unmet criteria:
+```bash
+UNMET=$(grep -E '"status"[[:space:]]*:[[:space:]]*"(Partial|Missing)"' "${CRITERIA_FILE}" || true)
+```
+
+If `UNMET` is non-empty, display a blocking error listing criterion name + status pairs and return FAILED:
+```json
+{"status": "FAILED", "phase": "pre-gate-check", "message": "Approval gate blocked: unmet post-conditions", "issueId": "${ISSUE_ID}", "lock_retained": true}
+```
+
+## Step 8: Squash Commits by Topic Before Review (MANDATORY)
+
+**MANDATORY:** Delegate to a squash subagent. The approval gate (Step 11) blocks if this step was skipped.
+
+It is correct and expected to squash commits on `${BRANCH}` when index.json shows `closed` — this means the
+implementation subagent finished (State 1 complete) and merge preparation is running. This authorization applies
+only to `${BRANCH}`.
+
+Extract the primary commit message:
+```bash
 PRIMARY_COMMIT_MESSAGE=$(echo "$COMMITS_JSON" | \
   grep -o '"message"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | \
   sed 's/"message"[[:space:]]*:[[:space:]]*"\(.*\)"/\1/')
 ```
 
 Spawn the squash subagent:
-
 ```
 Task tool:
   description: "Squash: rebase, squash commits, verify index.json"
@@ -94,561 +88,332 @@ Task tool:
   model: "haiku"
   prompt: |
     Execute the squash phase for issue ${ISSUE_ID}.
-
-    ## Configuration
     ISSUE_ID: ${ISSUE_ID}
     ISSUE_PATH: ${ISSUE_PATH}
     WORKTREE_PATH: ${WORKTREE_PATH}
     TARGET_BRANCH: ${TARGET_BRANCH}
     PRIMARY_COMMIT_MESSAGE: ${PRIMARY_COMMIT_MESSAGE}
-
     Load and follow: @${CLAUDE_PLUGIN_ROOT}/agents/work-squash.md
-
     Return JSON per the output contract in the agent definition.
 ```
 
 ### Handle Squash Result
 
-Parse the subagent result:
-
-- **SUCCESS**: Extract `commits` array for use at the approval gate. Write a durable squash marker file to prove
-  Step 7 completed (survives context compaction). The marker must contain the squashed commit hash as integrity
-  proof — a marker without a valid commit hash is treated as absent:
+- **SUCCESS**: Extract `commits` array. Write squash marker (MANDATORY — gate blocks if absent):
   ```bash
-  SQUASH_MARKER_DIR="${CLAUDE_PROJECT_DIR}/.cat/work/sessions/${CLAUDE_SESSION_ID}"
-  mkdir -p "${SQUASH_MARKER_DIR}"
   SQUASH_COMMIT_HASH=$(cd "${WORKTREE_PATH}" && git rev-parse HEAD)
-  echo "squashed:${SQUASH_COMMIT_HASH}" > "${SQUASH_MARKER_DIR}/squash-complete-${ISSUE_ID}"
+  "${CLAUDE_PLUGIN_ROOT}/client/bin/write-session-marker" "${CLAUDE_SESSION_ID}" "${ISSUE_ID}" "squashed:${SQUASH_COMMIT_HASH}"
+  if [[ $? -ne 0 ]]; then
+    echo "ERROR: write-session-marker failed. Do NOT proceed to Step 9." >&2
+    exit 1
+  fi
   ```
-  The marker file MUST be written only on the SUCCESS path after the squash subagent returns success. Do NOT
-  write the marker file manually, conditionally, or from any step other than this SUCCESS handler.
-  Continue to Step 8.
-- **FAILED** (phase: rebase): Return FAILED status with conflict details. Do NOT proceed.
-- **FAILED** (phase: squash or verify): Return FAILED status with error details. Do NOT proceed.
+  Continue to Step 9.
 
-## Step 7: Rebase onto Target Branch Before Approval Gate (MANDATORY)
+- **FAILED** (any phase): Return FAILED status. Do NOT proceed.
 
-Before proceeding to the approval gate, rebase the issue branch onto the current tip of
-the target branch. This ensures the diff shown at the approval gate reflects what the merge will
-actually produce.
+**write-session-marker allowlist** — ONLY authorized at:
+- **Step 8 SUCCESS**: write `squashed:<hash>`
+- **Step 11 SUCCESS**: update `squashed:<hash>`
+- **Step 12 "Approve and merge"**: write `approved`
+- **Step 12 "Fix remaining concerns"**: write `approved:invalidated`
+- **Step 12 "Request changes"**: write `approved:invalidated`
+- **Step 12 "Abort"**: write `approved:invalidated`
+- **Step 13 merge failure**: write `approved:invalidated`
 
-### Step 7a: Capture Old Fork Point
+Invoking `write-session-marker` from any other step or for any other value is PROHIBITED.
 
-Record the current fork point before the rebase so the impact analysis can compare what changed:
+**Single-file marker model:** Each write OVERWRITES previous content. The marker values form a state progression:
+`(empty)` → `squashed:<hash>` → `approved` → `approved:invalidated`. They are NOT independent named markers.
+
+## Step 9: Rebase onto Target Branch (MANDATORY)
+
+### Step 9a: Capture Old Fork Point
 
 ```bash
 cd "${WORKTREE_PATH}"
 OLD_FORK_POINT=$(git merge-base HEAD "${TARGET_BRANCH}" 2>/dev/null)
-if [[ -z "$OLD_FORK_POINT" ]]; then
-  echo "ERROR: Could not determine fork point before rebase" >&2
-  exit 1
-fi
+if [[ -z "$OLD_FORK_POINT" ]]; then echo "ERROR: Could not determine fork point" >&2; exit 1; fi
 ```
 
-### Step 7b: Perform Rebase
+### Step 9b: Perform Rebase
 
-**Invoke `cat:git-rebase-agent`:**
 ```
 Skill("cat:git-rebase-agent", args="{WORKTREE_PATH} {TARGET_BRANCH}")
 ```
 
-**If rebase reports CONFLICT:**
-- Follow the numbered steps in `cat:git-rebase-agent` `## Handling Conflicts` to resolve each conflicting file
-- Record the list of conflicting files and the resolution strategy used for each (e.g., "accepted deletion",
-  "restored target version", "manual merge") in a variable `CONFLICT_RESOLUTIONS` for display at the approval gate
-- For each conflicted file, the resolution MUST incorporate changes from BOTH sides unless one side's changes are
-  entirely superseded. Examine each conflict individually and preserve the intent of both sides.
-- Delete the backup branch created by cat:git-rebase-agent after resolution
-- **MANDATORY:** Flag that conflicts were resolved so Step 9 displays them. Set `REBASE_HAD_CONFLICTS=true`
-  and retain `CONFLICT_RESOLUTIONS` for the approval gate output
-- Proceed to Step 7c (Impact Analysis)
+- **CONFLICT**: Resolve each file preserving intent of both sides. Record `CONFLICT_RESOLUTIONS`. Set
+  `REBASE_HAD_CONFLICTS=true`. Delete backup branch. Proceed to Step 9c.
+- **OK**: Delete backup branch. Proceed to Step 9c.
+- **ERROR**: Output error, restore from backup if needed. STOP.
 
-**If rebase reports OK:**
-- Delete the backup branch created by cat:git-rebase-agent
-- Proceed to Step 7c (Impact Analysis)
-
-**If rebase reports ERROR:**
-- Output the error message
-- Restore from the backup branch if needed
-- STOP — do not proceed to approval gate until the error is resolved
-
-### Step 7c: Post-Rebase Impact Analysis
-
-After a successful rebase (OK or resolved CONFLICT), capture the new fork point and invoke the
-impact analysis skill to determine whether upstream changes affect the current plan.md:
+### Step 9c: Post-Rebase Impact Analysis
 
 ```bash
-cd "${WORKTREE_PATH}"
 NEW_FORK_POINT=$(git merge-base HEAD "${TARGET_BRANCH}" 2>/dev/null)
 IMPACT_ANALYSIS_SKIPPED=false
-if [[ -z "$NEW_FORK_POINT" ]]; then
-  echo "WARNING: Could not determine fork point after rebase; skipping impact analysis" >&2
-  IMPACT_ANALYSIS_SKIPPED=true
-  # Continue to Step 9 without analysis — the flag is displayed at the approval gate
-fi
+if [[ -z "$NEW_FORK_POINT" ]]; then IMPACT_ANALYSIS_SKIPPED=true; fi
 ```
 
-If `NEW_FORK_POINT` equals `OLD_FORK_POINT`, the target branch had no new commits — skip impact
-analysis and continue to Step 9.
+If `NEW_FORK_POINT == OLD_FORK_POINT`: no new upstream commits — skip impact analysis, continue to Step 10.
 
-Otherwise, compute the session analysis directory so the analysis file is written outside the worktree
-and never committed, then invoke the impact analysis skill:
-
+Otherwise:
 ```bash
-# Pass session dir so analysis file is written outside the worktree and never committed
 SESSION_ANALYSIS_DIR="${CLAUDE_PROJECT_DIR}/.cat/work/sessions/${CLAUDE_SESSION_ID}"
 mkdir -p "${SESSION_ANALYSIS_DIR}"
 ```
-
 ```
 IMPACT_JSON = Skill("cat:rebase-impact-agent", args="${ISSUE_PATH} ${WORKTREE_PATH} ${OLD_FORK_POINT} ${NEW_FORK_POINT} ${SESSION_ANALYSIS_DIR}")
 ```
-
-Extract the severity from the JSON:
-
 ```bash
 IMPACT_SEVERITY=$(echo "${IMPACT_JSON}" | grep -o '"severity"[[:space:]]*:[[:space:]]*"[^"]*"' \
   | head -1 | sed 's/.*"severity"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 ```
 
-**Route based on the returned severity:**
+| `IMPACT_SEVERITY` | Action |
+|-------------------|--------|
+| `NO_IMPACT` / `LOW` | Continue to Step 10 |
+| `MEDIUM` | Auto-revise plan.md then continue to Step 10 |
+| `HIGH` | Write proposal file, ask user via AskUserQuestion |
 
-| `IMPACT_SEVERITY` value | Action |
-|------------------------|--------|
-| `NO_IMPACT` | Continue silently to Step 8 |
-| `LOW` | Continue silently to Step 8 |
-| `MEDIUM` | Auto-revise plan.md then continue to Step 8 (see below) |
-| `HIGH` | Write proposal file then ask user for guidance (see below) |
+**MEDIUM:** Read EFFORT from config, then invoke:
+```
+Skill("cat:plan-builder-agent", args="${CAT_AGENT_ID} ${EFFORT} revise ${ISSUE_PATH} rebase introduced upstream changes — see ${ANALYSIS_PATH}")
+```
+If implementation was already committed, spawn a code-revision subagent to apply the revised plan.md.
 
-**MEDIUM: Auto-Revision**
+**HIGH:** Write `${ISSUE_PATH}/rebase-conflict-proposal.md` summarizing the conflict, then present via AskUserQuestion.
 
-Read `EFFORT` from config and read the full analysis file before invoking the plan builder:
+## Step 10: Skill-Builder Review (MANDATORY — BLOCKING)
 
 ```bash
-CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.cat/config.json"
-EFFORT=$(grep '"effort"' "$CONFIG_FILE" | sed 's/.*"effort"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
-if [[ -z "$EFFORT" ]]; then
-  echo "ERROR: 'effort' key not found in $CONFIG_FILE" >&2
-  exit 1
-fi
-ANALYSIS_PATH=$(echo "${IMPACT_JSON}" | grep -o '"analysis_path"[[:space:]]*:[[:space:]]*"[^"]*"' \
-  | sed 's/.*"analysis_path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
-```
-
-Invoke `cat:plan-builder-agent` to mechanically revise the plan.md based on the upstream changes:
-
-```
-Skill("cat:plan-builder-agent", args="${CAT_AGENT_ID} ${EFFORT} revise ${ISSUE_PATH} rebase introduced upstream changes that affect plan.md — see ${ANALYSIS_PATH}")
-```
-
-If any implementation work was already committed on this branch before the rebase, spawn an implementation
-subagent to apply the revised plan.md to the already-implemented code. This ensures in-progress work
-remains consistent with the updated plan before continuing. The subagent receives the revised plan.md and
-the analysis file path as context.
-
-After the plan-builder (and any code-revision subagent) returns, continue to Step 8.
-
-**HIGH: User Guidance Required**
-
-Write `${ISSUE_PATH}/rebase-conflict-proposal.md` summarizing the conflict (analysis_path, summary from IMPACT_JSON,
-options: revise plan / proceed / abort). Present the file path to the user and invoke `AskUserQuestion`
-before continuing to Step 8.
-
-## Step 8: Skill-Builder Review (MANDATORY — BLOCKING)
-
-**MANDATORY:** When the issue modifies files in `plugin/skills/` or `plugin/commands/`, invoke `/cat:skill-builder`
-to review each modified skill or command file before presenting the approval gate. This step must not be skipped —
-do not proceed to the approval gate without completing skill-builder review for all modified skill or command files.
-
-```bash
-# Check whether any skill or command files were modified
 git diff --name-only "${TARGET_BRANCH}..HEAD" | grep -E '^plugin/(skills|commands)/'
 ```
 
-**If skill or command files were modified:** Invoke `/cat:skill-builder` with the path to each modified skill or
-command. Review the output and address any priming issues or structural problems it identifies.
+If skill/command files were modified: invoke `/cat:skill-builder` for each. Address any issues found.
 
-**If no skill or command files were modified:** Skip directly to Post-Skill-Builder Artifact Cleanup below.
+If none modified: skip to artifact cleanup.
 
 ### Post-Skill-Builder Artifact Cleanup (MANDATORY)
 
-After skill-builder review completes (if invoked), clean up any temporary artifact files it created.
-These files (findings.json, diff-validation-*.json) are intermediate outputs and must not be committed.
-
 ```bash
 cd "${WORKTREE_PATH}"
-
-# Remove skill-builder temporary artifacts
 rm -f findings.json diff-validation-*.json benchmark-artifacts/ 2>/dev/null
-
-# Remove from git index if tracked
 git rm --cached findings.json diff-validation-*.json 2>/dev/null || true
-
-# Verify cleanup
-if git status --porcelain | grep -qE '(findings\.json|diff-validation)'; then
-  echo "WARNING: Skill-builder artifacts remain — attempting cleanup" >&2
-fi
 ```
 
-**If skill-builder was NOT invoked** (no skill/command files modified): skip this cleanup step and proceed
-directly to Step 9.
+## Step 11: Squash Before Approval Gate (MANDATORY)
 
-## Step 9: Squash Commits by Topic Before Approval Gate (MANDATORY)
-
-Before presenting the approval gate, squash all commits by topic into one or more commits grouped by their purpose.
-This ensures the diff shown at the approval gate reflects a properly organized commit structure.
-
-Determine the primary commit message from the execution result (the most significant commit's message). Do NOT use
-generic messages like "squash commit".
+**Pre-squash guard:** Read the squash marker and extract its hash. Compare to current HEAD:
+- If `HEAD == marker hash`: branch is already squashed at the same state — skip squash, proceed to gate.
+- Otherwise: re-squash AND update marker with new hash.
 
 ```bash
-# Extract the primary commit message from the commits JSON
 PRIMARY_COMMIT_MESSAGE=$(echo "$COMMITS_JSON" | \
   grep -o '"message"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | \
   sed 's/"message"[[:space:]]*:[[:space:]]*"\(.*\)"/\1/')
 ```
-
-Invoke `cat:git-squash-agent`:
 ```
 Skill("cat:git-squash-agent", args="${WORKTREE_PATH} ${TARGET_BRANCH} ${PRIMARY_COMMIT_MESSAGE}")
 ```
 
-**After squash completes:** Extract the squashed commit hash for display at the approval gate.
-
+After squash, update marker:
 ```bash
 FINAL_COMMIT=$(cd "${WORKTREE_PATH}" && git rev-parse HEAD)
 FINAL_DIFF_STAT=$(cd "${WORKTREE_PATH}" && git diff --stat ${TARGET_BRANCH}..HEAD)
+"${CLAUDE_PLUGIN_ROOT}/client/bin/write-session-marker" "${CLAUDE_SESSION_ID}" "${ISSUE_ID}" "squashed:${FINAL_COMMIT}"
 ```
 
-**If squash fails:** Return FAILED status. Do NOT proceed to approval gate.
+If squash fails: return FAILED. Do NOT proceed to gate.
 
-## Approval Gate (MANDATORY)
+## Step 12: Approval Gate (MANDATORY)
 
-**trust == "high":** Skip approval gate — UNLESS `REBASE_HAD_CONFLICTS=true`, in which case present the conflict
-resolutions to the user via AskUserQuestion before proceeding. Even at trust=high, silently merged rebase conflicts
-require user acknowledgment because incorrect conflict resolution can silently drop upstream changes.
+**trust == "high":** Skip gate — UNLESS `REBASE_HAD_CONFLICTS=true`, in which case present conflict resolutions
+via AskUserQuestion before proceeding (silently merged conflicts require user acknowledgment).
 
-**trust == "low" or "medium":** STOP for user approval. Do NOT proceed to merge automatically.
-
-**MANDATORY:** Patience matrix (Steps 5-6) MUST have already executed before the approval gate. The gate DISPLAYS
-`ALL_CONCERNS`, `FIXED_CONCERNS`, `DEFERRED_CONCERNS` — it does NOT drive concern handling. Do NOT ask the user how
-to handle concerns. If patience matrix hasn't run: STOP and return to Step 5 first.
+**trust == "low" or "medium":** STOP for explicit user approval.
 
 ### Pre-Gate Background Task Completion (MANDATORY — BLOCKING)
 
-**Before presenting any pre-gate output or the approval gate, ensure ALL background tasks have
-completed.** This applies to any task started with `run_in_background: true` via the Agent tool
-during Steps 7-9 (including skill-builder review if invoked in the background).
-
-**How to verify completion:** Background Agent tasks deliver results exclusively via
-`<task-notification>` system messages. A background task is complete when its
-`<task-notification>` has appeared in the session. Do NOT assume a background task is complete
-based on elapsed time or conversation turns.
-
-**If any background task has not yet completed:**
-1. DO NOT invoke `cat:get-diff-agent` or any other pre-gate output step
-2. DO NOT invoke AskUserQuestion
-3. Wait until the `<task-notification>` arrives for each outstanding background task
-4. Process the task result BEFORE proceeding to pre-gate output
-
-**Why this matters:** The approval gate must reflect the results of ALL completed work,
-including skill-builder findings. A gate presented before background tasks complete is missing
-information the user needs to make an informed approval decision.
+ALL background tasks (started with `run_in_background: true`) must have delivered `<task-notification>` before
+presenting pre-gate output or AskUserQuestion. Do NOT assume completion based on time or conversation turns.
 
 ### Present Changes Before Approval Gate (BLOCKING)
 
-**MANDATORY: Render the diff and output the full change summary BEFORE invoking AskUserQuestion.**
+Output all of the following in the current turn, in this order, before invoking AskUserQuestion:
 
-Context compaction can occur at any point in a long session. When the conversation is compacted, the user's
-visible context resets — they will only see output from the current turn onward. If AskUserQuestion is invoked
-without first presenting the changes in the same turn, the user sees an approval gate with no visible context
-about what they are approving.
-
-**Required pre-gate output sequence (all mandatory, in this order):**
-
-1. **Get diff** — invoke `cat:get-diff-agent` to display the changes:
-   ```
-   Skill tool:
-     skill: "cat:get-diff-agent"
-   ```
-
-2. **Display commit summary** — list commits since target branch, and extract the issue goal in a single chained bash call:
+1. **Diff** — `Skill("cat:get-diff-agent")`
+2. **Commit summary and issue goal:**
    ```bash
-   cd "${WORKTREE_PATH}" && git log --oneline ${TARGET_BRANCH}..HEAD && ISSUE_GOAL=$(grep -A1 "^## Goal" "${ISSUE_PATH}/plan.md" | tail -n1) && echo "Issue Goal: ${ISSUE_GOAL}"
+   cd "${WORKTREE_PATH}" && git log --oneline ${TARGET_BRANCH}..HEAD && \
+   ISSUE_GOAL=$(grep -A1 "^## Goal" "${ISSUE_PATH}/plan.md" | tail -n1) && echo "Issue Goal: ${ISSUE_GOAL}"
    ```
-
-3. **Display execution summary** (commits count, files changed)
-4. **Display E2E testing summary** — what tests ran, what they verified, results (if skipped: state explicitly)
-5. **Display impact analysis warning** (if `IMPACT_ANALYSIS_SKIPPED=true`) — display a prominent warning:
-   `"WARNING: Post-rebase impact analysis was skipped because the fork point could not be determined. Upstream changes may affect plan.md but were not analyzed."` This ensures the user is informed before approving.
-6. **Display rebase conflict resolutions** (if `REBASE_HAD_CONFLICTS=true`) — for each conflicting file:
-   (a) list the resolution strategy from `CONFLICT_RESOLUTIONS`,
-   (b) run `git diff ${TARGET_BRANCH}...HEAD -- <file>` to show the actual resolved diff for that file,
-   so the user can independently verify the resolution matches the claimed strategy. This ensures upstream
-   changes were not silently dropped during conflict resolution. Do NOT display only the self-reported
-   strategy without the accompanying diff.
-7. **Display ALL stakeholder concerns** regardless of severity — do NOT suppress MEDIUM or LOW
-
-For fixed concerns: `Skill("cat:stakeholder-concern-box-agent", "${SEVERITY} ${STAKEHOLDER} ${CONCERN_DESCRIPTION} ${FILE_LOCATION}")`
-For deferred: `Skill("cat:stakeholder-concern-box-agent", "${SEVERITY} ${STAKEHOLDER} ${CONCERN_DESCRIPTION} [deferred: benefit=${BENEFIT}, cost=${COST}, threshold=${THRESHOLD}] ${FILE_LOCATION}")`
-
-8. **Recap last user change request** — scan the conversation for the most recent user message
-   that requested a change, revision, or correction **to this specific issue** (e.g., "use the
-   simpler approach", "also fix X", "change the test to cover Y"). Exclude unrelated requests
-   (other issues, learn invocations, status queries). When uncertain whether a message qualifies,
-   skip this item rather than displaying a potentially incorrect recap. If found, display:
+3. **Execution summary** (commit count, files changed)
+4. **E2E testing summary** (what ran, what was verified, results; if skipped: state explicitly)
+5. **Impact analysis warning** (if `IMPACT_ANALYSIS_SKIPPED=true`): display prominent warning that upstream changes
+   were not analyzed
+6. **Rebase conflict resolutions** (if `REBASE_HAD_CONFLICTS=true`): for each file, show the resolution strategy
+   from `CONFLICT_RESOLUTIONS` AND run `git diff ${TARGET_BRANCH}...HEAD -- <file>` so the user can verify the
+   actual resolved diff. Do NOT show only the self-reported strategy without the accompanying diff.
+7. **All stakeholder concerns** (ALL severities — do NOT suppress MEDIUM or LOW):
+   - Fixed: `Skill("cat:stakeholder-concern-box-agent", "${SEVERITY} ${STAKEHOLDER} ${CONCERN} ${FILE}")`
+   - Deferred: include `[deferred: benefit=..., cost=..., threshold=...]`
+8. **Last change request recap** — scan for most recent user message requesting a change to this issue. If found:
    ```
-   **Last change you requested for this issue:** <brief description of user's request>
-   **What was done:** <specific action taken in response, based on commits or conversation following the request>
+   Last change you requested for this issue: <brief description>
+   What was done: <action taken, based on commits or conversation>
    ```
-   If no issue-specific change request exists in the conversation history, or the outcome cannot
-   be confirmed from the conversation, skip this item.
+   If no issue-specific change request exists or outcome cannot be confirmed, skip this item.
 
-Invoke AskUserQuestion ONLY AFTER all eight items above are output in the current turn:
-- If MEDIUM+ concerns: options = ["Approve and merge", "Fix remaining concerns", "Request changes", "Abort"]
-- If no concerns or only LOW: options = ["Approve and merge", "Request changes", "Abort"]
+Invoke AskUserQuestion ONLY AFTER all eight items are output:
+- MEDIUM+ concerns: options = ["Approve and merge", "Fix remaining concerns", "Request changes", "Abort"]
+- No concerns or only LOW: options = ["Approve and merge", "Request changes", "Abort"]
 
-**CRITICAL:** Wait for explicit selection. Empty `toolUseResult.answers` = no selection = re-present gate.
-Unknown consent = No consent = STOP. Fail-fast principle applies.
+**CRITICAL:** Empty `toolUseResult.answers` = no selection = GATE REJECTED. Re-present entire gate.
+Conversational signals ("continue", "ok", "yes", "proceed", "go ahead") are NOT valid approvals.
 
-**Detect gate result after AskUserQuestion returns:**
+**Gate result detection:**
+- `toolUseResult.answers` empty or null → GATE REJECTED
+- `toolUseResult.answers` does not exactly match a presented option → GATE REJECTED
+- `toolUseResult.answers` exactly matches a presented option → GATE ACCEPTED
 
-- If `toolUseResult.answers` is empty or null → GATE REJECTED
-- If `toolUseResult.answers` does not match any presented option exactly → GATE REJECTED
-- If `toolUseResult.answers` matches a presented option exactly → GATE ACCEPTED
+**If GATE REJECTED:** Re-display full context and re-invoke AskUserQuestion. Do NOT proceed to Step 13.
 
-**If GATE REJECTED:**
-- Conversational signals ("continue", "ok", "yes", "proceed", "go ahead") are NOT option selections and do NOT
-  satisfy gate requirements. See `plugin/rules/approval-gate-protocol.md` for the full list of invalid signals.
-- Log: "User did not select approval option. Re-presenting approval gate."
-- Re-display full approval gate context (diff, commit summary, goal, E2E summary, concerns)
-- Re-invoke AskUserQuestion
-- Do NOT proceed to Step 10
-
-**If GATE ACCEPTED ("Approve and merge" selected):**
-- Log the approved option
-- Set `APPROVAL_MARKER=true`
-- Continue to Step 10
+**If "Approve and merge" selected:**
+- Verify squash precondition — read marker and confirm it starts with `squashed:`:
+  ```bash
+  MARKER_VALUE=$("${CLAUDE_PLUGIN_ROOT}/client/bin/read-session-marker" "${CLAUDE_SESSION_ID}" "${ISSUE_ID}" 2>/dev/null || echo "")
+  if [[ ! "$MARKER_VALUE" =~ ^squashed: ]]; then
+    echo "ERROR: Cannot approve — squash marker missing or invalid. Current: '${MARKER_VALUE}'. Return to Step 11."
+    # Do NOT write 'approved'. Return to Step 11.
+  fi
+  ```
+  If check fails: return to Step 11. Do NOT write `approved` or proceed to Step 13.
+- Write approval marker:
+  ```bash
+  "${CLAUDE_PLUGIN_ROOT}/client/bin/write-session-marker" "${CLAUDE_SESSION_ID}" "${ISSUE_ID}" "approved"
+  ```
+- Set `APPROVAL_MARKER=true`. Continue to Step 13.
 
 **If "Fix remaining concerns" selected:**
 
-**Iteration cap:** Track the number of fix-review cycles with a counter (`FIX_ITERATION`), starting at 1.
-The maximum number of fix-review iterations is **3**. If after 3 iterations MEDIUM+ concerns still remain,
-do NOT offer "Fix remaining concerns" again. Instead, present only: ["Approve and merge (with known concerns)",
-"Request changes", "Abort"]. This prevents unbounded fix-review loops where each fix introduces new concerns.
+Write invalidation marker FIRST (before spawning fix subagent):
+```bash
+"${CLAUDE_PLUGIN_ROOT}/client/bin/write-session-marker" "${CLAUDE_SESSION_ID}" "${ISSUE_ID}" "approved:invalidated"
+```
 
-1. Extract MEDIUM+ concerns (severity, description, location, recommendation, detail_file)
-2. Spawn `cat:work-execute` subagent to fix each MEDIUM+ concern. Pass `ISSUE_PATH` explicitly so the
-   subagent can invoke `cat:collect-results-agent` and update index.json without constructing the path
-   from ISSUE_ID (which gets the `v2/v2.1/` nesting wrong):
+**Iteration cap:** Track `FIX_ITERATION` (starts at 1, max 3). After 3 iterations with MEDIUM+ concerns still
+remaining, offer only: ["Approve and merge (with known concerns)", "Request changes", "Abort"].
+
+1. Extract MEDIUM+ concerns
+2. Spawn `cat:work-execute` subagent to fix each concern. Pass `ISSUE_PATH` explicitly:
    ```
    Task tool:
      description: "Fix remaining concerns for ${ISSUE_ID}"
      subagent_type: "cat:work-execute"
      prompt: |
-       Fix each MEDIUM+ concern in the worktree and commit with the same type as the primary
-       implementation (e.g., `bugfix:`). Return JSON with commits and filesChanged.
-
-       ## Configuration
+       Fix each MEDIUM+ concern. Commit with same type as primary implementation.
+       SCOPE RESTRICTION: Only modify files related to listed concerns. One concern per commit.
        ISSUE_ID: ${ISSUE_ID}
        ISSUE_PATH: ${ISSUE_PATH}
        WORKTREE_PATH: ${WORKTREE_PATH}
        TARGET_BRANCH: ${TARGET_BRANCH}
-
        ## Concerns to fix
        ${MEDIUM_PLUS_CONCERNS}
    ```
-3. **MANDATORY: Re-run stakeholder review** after fixes:
+3. Re-squash ALL commits (MANDATORY, M560): invoke `cat:git-squash-agent` before re-running stakeholder review.
+4. Re-run stakeholder review on squashed state:
    `Skill("cat:stakeholder-review-agent", "${ISSUE_ID} ${WORKTREE_PATH} ${VERIFY} ${ALL_COMMITS_COMPACT}")`
-   The review MUST re-run to verify concerns resolved and detect new concerns introduced by fixes
-4. **Re-squash all commits by topic** (MANDATORY, M560): Before returning to Step 9, invoke
-   `cat:git-squash-agent` again with all commits (original + fix commits). Do NOT return to the approval
-   gate without re-squashing — the approval gate must never see more commits than the previous squash attempt.
-5. Increment `FIX_ITERATION`. Return to Step 9 approval gate with updated results
+5. Increment `FIX_ITERATION`. Return to Step 11.
 
-**If changes requested:** Return to user with feedback for iteration. Return status:
-```json
-{
-  "status": "CHANGES_REQUESTED",
-  "issueId": "${ISSUE_ID}",
-  "feedback": "user feedback text"
-}
+**If "Request changes" selected:**
+```bash
+"${CLAUDE_PLUGIN_ROOT}/client/bin/write-session-marker" "${CLAUDE_SESSION_ID}" "${ISSUE_ID}" "approved:invalidated"
 ```
+Return `{"status": "CHANGES_REQUESTED", "issueId": "${ISSUE_ID}", "feedback": "user feedback text"}`
 
-**If aborted:** Clean up and return ABORTED status:
-```json
-{
-  "status": "ABORTED",
-  "issueId": "${ISSUE_ID}",
-  "message": "User aborted merge"
-}
+**If "Abort" selected:**
+```bash
+"${CLAUDE_PLUGIN_ROOT}/client/bin/write-session-marker" "${CLAUDE_SESSION_ID}" "${ISSUE_ID}" "approved:invalidated"
 ```
+Return `{"status": "ABORTED", "issueId": "${ISSUE_ID}", "message": "User aborted merge"}`
 
-## Step 10: Merge Phase
-
-Display the **Merging phase** banner by running:
+## Step 13: Merge Phase
 
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase merging
 ```
-
-**If the command fails or produces no output**, STOP immediately:
-```
-FAIL: progress-banner launcher failed for phase 'merging'.
-The jlink image may not be built. Run: mvn -f hooks/pom.xml verify
-```
-Do NOT skip the banner or continue without it.
+If banner fails: STOP with error. Do NOT skip.
 
 **Pre-merge approval verification (when trust != "high"):**
 
-Before the merge, verify that user approval was obtained in Step 9. This proactive check
-eliminates wasted operations that would otherwise be blocked by the PreToolUse hook.
-
+Read the durable marker to verify approval survives context compaction:
 ```
 if TRUST != "high":
-    # Check whether Step 9 recorded explicit approval via APPROVAL_MARKER
-    if APPROVAL_MARKER != true:
-        # Safety-net: approval gate was not completed (e.g., Step 9 was skipped due to a logic error,
-        # or the gate was interrupted and the approval marker was never set).
-        # Re-present the full approval gate context before asking:
-        Display warning: "Merge approval not verified. Re-presenting approval gate."
-        Re-display: diff, commit summary, issue goal, E2E results, concerns
-        AskUserQuestion:
-          question: "Ready to merge ${ISSUE_ID} to ${TARGET_BRANCH}?"
-          options:
-            - label: "Approve and merge"
-              description: "Squash commits and merge to ${TARGET_BRANCH}"
-            - label: "Abort"
-              description: "Cancel the merge"
-        # If user selects "Abort", return ABORTED status (same as Step 9 abort handling)
-        # If user selects "Approve and merge", set APPROVAL_MARKER=true and continue
-    # APPROVAL_MARKER is true — proceed to merge execution
+    MARKER_VALUE=$("${CLAUDE_PLUGIN_ROOT}/client/bin/read-session-marker" "${CLAUDE_SESSION_ID}" "${ISSUE_ID}" 2>/dev/null | tail -1)
+    if APPROVAL_MARKER != true and MARKER_VALUE != "approved":
+        # Re-present full approval gate context, then re-invoke AskUserQuestion:
+        AskUserQuestion: "Ready to merge ${ISSUE_ID} to ${TARGET_BRANCH}?"
+          options: ["Approve and merge", "Abort"]
+        # On "Abort": return ABORTED. On "Approve and merge": set APPROVAL_MARKER=true, continue.
 ```
 
 ### Execute Merge
 
-Check idempotency guards before invoking the tool. Chain the worktree and branch existence checks:
-
+Capture pre-merge tip before invoking the tool:
 ```bash
-# Check worktree exists before removal and check branch exists before deletion in a single call
-git worktree list --porcelain | grep -qxF "worktree ${WORKTREE_PATH}" && WORKTREE_EXISTS=true || WORKTREE_EXISTS=false; \
+PRE_MERGE_TIP=$(git -C "${CLAUDE_PROJECT_DIR}" rev-parse "${TARGET_BRANCH}" 2>/dev/null)
+```
+
+Check idempotency guards:
+```bash
+git worktree list --porcelain | grep -qxF "worktree ${WORKTREE_PATH}" && WORKTREE_EXISTS=true || WORKTREE_EXISTS=false
 git show-ref --verify --quiet "refs/heads/${BRANCH}" && BRANCH_EXISTS=true || BRANCH_EXISTS=false
 ```
 
-If `WORKTREE_EXISTS=false` and `BRANCH_EXISTS=false`, cleanup may have already completed in a previous run.
-Before synthesizing success, verify the issue's commits are actually on TARGET_BRANCH:
+**Idempotency cases** (use word-boundary matching for ISSUE_ID; search last 5 commits on TARGET_BRANCH):
 
-```bash
-# Verify the issue was actually merged by checking TARGET_BRANCH tip
-MERGE_COMMIT=$(git -C "${CLAUDE_PROJECT_DIR}" rev-parse "${TARGET_BRANCH}" 2>/dev/null)
-COMMIT_MSG=$(git -C "${CLAUDE_PROJECT_DIR}" log -1 --format=%s "${TARGET_BRANCH}" 2>/dev/null)
-```
+- `WORKTREE_EXISTS=false` and `BRANCH_EXISTS=false`: check last 5 commits on TARGET_BRANCH for ISSUE_ID exact match.
+  If confirmed: synthesize success. If not: return FAILED.
+- `WORKTREE_EXISTS=false` and `BRANCH_EXISTS=true`: check last 5 commits for confirmed merge. If confirmed: delete
+  orphaned branch and synthesize success. If not: return FAILED — do NOT delete branch.
+- `WORKTREE_EXISTS=true` and `BRANCH_EXISTS=false`: check last 5 commits for confirmed merge. If confirmed: remove
+  orphaned worktree and synthesize success. If not: return FAILED — do NOT remove worktree.
 
-If `MERGE_COMMIT` is empty or `COMMIT_MSG` does not contain `ISSUE_ID` as an exact word match (case-insensitive,
-bounded by start/end of string, whitespace, or punctuation — not as a substring of a longer issue ID),
-STOP and return FAILED with
-`"message": "Worktree and branch are both missing but merge cannot be confirmed on ${TARGET_BRANCH}. Manual investigation required."`.
-The check must use word-boundary matching (e.g., `grep -iwF` on the full ID, or regex `\bISSUE_ID\b`) to prevent
-false positives when one issue ID is a prefix of another (e.g., `v2.1-fix` must NOT match `v2.1-fix-bar`).
-Do NOT use subjective judgment about whether the message "relates to" the issue. Additionally, search the last 5
-commits on TARGET_BRANCH (not just `log -1`) to handle cases where the real merge is not the tip commit:
-`git log -5 --format=%s "${TARGET_BRANCH}"`.
-
-Only if the merge is confirmed, synthesize a success result with `"merge_commit": "<actual hash>"` using the
-resolved `MERGE_COMMIT` value and skip to Step 11.
-
-If `WORKTREE_EXISTS=false` and `BRANCH_EXISTS=true`, verify the branch was merged before deleting it:
-
-```bash
-COMMIT_MSG=$(git -C "${CLAUDE_PROJECT_DIR}" log -1 --format=%s "${TARGET_BRANCH}" 2>/dev/null)
-```
-
-If `COMMIT_MSG` does not contain `ISSUE_ID` as an exact word match (case-insensitive, word-boundary matching as
-described above — not a substring of a longer ID), STOP and return FAILED with
-`"message": "Worktree is missing but branch ${BRANCH} still exists and merge cannot be confirmed on ${TARGET_BRANCH}. Do NOT delete the branch — it may contain the only copy of the work. Manual investigation required."`.
-Search the last 5 commits on TARGET_BRANCH (not just `log -1`). Do NOT delete the branch without confirmed merge.
-
-Only if the merge is confirmed, delete the orphaned branch and synthesize success.
-
-If `WORKTREE_EXISTS=true` and `BRANCH_EXISTS=false`, the branch may have been merged or force-deleted. Before
-removing the worktree, verify the branch's commits are reachable from TARGET_BRANCH:
-
-```bash
-# Check if the most recent commit message on TARGET_BRANCH references the issue
-COMMIT_MSG=$(git -C "${CLAUDE_PROJECT_DIR}" log -1 --format=%s "${TARGET_BRANCH}" 2>/dev/null)
-```
-
-If the merge cannot be confirmed (commit message does not contain `ISSUE_ID` as an exact word match,
-case-insensitive, word-boundary matching — not a substring of a longer ID), STOP and return FAILED with
-`"message": "Branch ${BRANCH} is missing but merge cannot be confirmed on ${TARGET_BRANCH}. The branch may have been force-deleted without merging. Manual investigation required."`.
-Search the last 5 commits on TARGET_BRANCH (not just `log -1`).
-Do NOT remove the worktree — it may contain the only remaining copy of the work.
-
-Only if the merge is confirmed, remove the orphaned worktree and synthesize success.
-
-Otherwise, invoke the merge-and-cleanup tool:
-
+Otherwise, invoke the merge tool:
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/client/bin/merge-and-cleanup" \
   "${CLAUDE_PROJECT_DIR}" "${ISSUE_ID}" "${CLAUDE_SESSION_ID}" "${TARGET_BRANCH}" --worktree "${WORKTREE_PATH}"
 ```
 
-The Java tool handles: fast-forward merge, worktree removal, branch deletion, backup branch cleanup,
-and lock release in a single atomic operation.
+| Output | Action |
+|--------|--------|
+| `"status": "success"` | Continue to post-merge verification |
+| `"status": "error"`: branch diverged | Rebase onto target then retry |
+| `"status": "error"`: dirty worktree | Commit/stash changes first |
 
-| Output | Meaning | Agent Recovery Action |
-|--------|---------|----------------------|
-| `"status": "success"` (stdout JSON) | Merge and cleanup completed | Continue to Step 11 |
-| `"status": "error"`: Target branch has diverged | Target has commits not in HEAD | Rebase onto target branch before merging |
-| `"status": "error"`: Fast-forward merge not possible | History diverged | Rebase issue branch onto target branch first |
-| `"status": "error"`: Worktree has uncommitted changes | Dirty worktree | Commit or stash changes in worktree first |
-
-### Post-Merge Verification (BLOCKING — M447)
-
-Before proceeding to Step 11, verify the merge actually occurred by checking that `TARGET_BRANCH`
-now contains the squashed commit:
-
-Before invoking the merge-and-cleanup tool, capture the pre-merge tip of TARGET_BRANCH:
-
+**On any merge error:** Invalidate approval marker, then return FAILED:
 ```bash
-PRE_MERGE_TIP=$(git -C "${CLAUDE_PROJECT_DIR}" rev-parse "${TARGET_BRANCH}" 2>/dev/null)
+"${CLAUDE_PLUGIN_ROOT}/client/bin/write-session-marker" "${CLAUDE_SESSION_ID}" "${ISSUE_ID}" "approved:invalidated"
 ```
 
-After the merge-and-cleanup tool returns success, verify the merge by comparing pre-merge and post-merge state:
+### Post-Merge Verification (BLOCKING)
 
 ```bash
-# Verify the merge commit is reachable from TARGET_BRANCH
-# git -C is intentional here: the worktree is already removed at this point,
-# so we must run from the main project directory.
-# IMPORTANT: Use rev-parse on TARGET_BRANCH, NOT HEAD — HEAD refers to whatever branch
-# is currently checked out in the main workspace, which may not be TARGET_BRANCH.
 POST_MERGE_TIP=$(git -C "${CLAUDE_PROJECT_DIR}" rev-parse "${TARGET_BRANCH}" 2>/dev/null)
-if [[ -z "${POST_MERGE_TIP}" ]]; then
-  echo "ERROR: Could not resolve ${TARGET_BRANCH} — branch may not exist." >&2
-  echo "Do NOT invoke work-complete. Re-run Step 10."
-  exit 1
-fi
-# Verify TARGET_BRANCH actually advanced — if the tip is unchanged, the merge did not happen
+if [[ -z "${POST_MERGE_TIP}" ]]; then echo "ERROR: Cannot resolve ${TARGET_BRANCH}" >&2; exit 1; fi
 if [[ "${POST_MERGE_TIP}" == "${PRE_MERGE_TIP}" ]]; then
-  echo "ERROR: Merge not confirmed — ${TARGET_BRANCH} tip is unchanged (${POST_MERGE_TIP})."
-  echo "The merge-and-cleanup tool may have failed silently. Do NOT invoke work-complete."
-  echo "Re-run Step 10 using the Task tool."
-  exit 1
+  echo "ERROR: ${TARGET_BRANCH} tip unchanged — merge did not occur. Re-run Step 13." >&2; exit 1
 fi
-# Verify the commit message on the new tip references the issue (exact word match)
 MERGE_MSG=$(git -C "${CLAUDE_PROJECT_DIR}" log -1 --format=%s "${TARGET_BRANCH}" 2>/dev/null)
-if ! echo "${MERGE_MSG}" | grep -iqw "${ISSUE_ID}"; then
-  echo "ERROR: Merge not confirmed — new tip commit message does not reference ${ISSUE_ID}."
-  echo "Do NOT invoke work-complete. Re-run Step 10."
-  exit 1
+if ! echo "${MERGE_MSG}" | grep -iqwF "${ISSUE_ID}"; then
+  echo "ERROR: New tip does not reference ${ISSUE_ID}. Re-run Step 13." >&2; exit 1
 fi
 ```
 
-If verification fails: STOP — do NOT invoke `work-complete`. Re-execute Step 10.
+If verification fails: STOP — do NOT invoke `work-complete`. Re-execute Step 13.
 
-## Step 11: Return Success
-
-Return summary to the main `/cat:work` skill:
+## Step 14: Return Success
 
 ```json
 {
@@ -663,50 +428,28 @@ Return summary to the main `/cat:work` skill:
 
 ## Rejection Handling
 
-### User Rejects Approval Gate (Step 9)
+**User rejects approval gate:** The gate was NOT answered. Re-present full context (diff, commit summary, goal, E2E,
+concerns) and re-invoke AskUserQuestion in the NEXT response. Unknown consent = No consent = STOP and re-present.
 
-When the user rejects the AskUserQuestion (e.g., by invoking `/cat:learn` or asking a question), the gate was
-**NOT answered**. Re-present the full approval gate in the NEXT response: re-run `cat:get-diff`, re-display
-commit summary/goal/E2E/review results, re-invoke AskUserQuestion. Do NOT proceed to merge, release the lock,
-or invoke `work-complete` without explicit user selection. Unknown consent = No consent = STOP and re-present.
+**Approval gate interruption:** Any non-option message = GATE REJECTED. Answer the question, then re-present
+the full gate with all options. Only explicit AskUserQuestion option selection counts as valid approval.
 
-### Approval Gate Interruption Handling
-
-When a user interrupts the approval gate with a clarifying question:
-
-1. The gate is considered REJECTED — no explicit option was selected, so `APPROVAL_MARKER` remains unset
-2. Answer the clarifying question
-3. Re-present the full approval gate with all options (diff, commit summary, goal, E2E results, concerns)
-4. Wait for explicit option selection before setting `APPROVAL_MARKER=true` and proceeding to merge
-
-**Examples of interruptions that require re-presentation:**
-- User asks: "Why can't we do X?" — gate is rejected, needs re-presentation
-- User says: "continue" — conversational resume signal, not approval
-- User says: "ok" or "yes" — conversational agreement, not explicit option selection
-- User says: "proceed" or "go ahead" — resume intent, not explicit option selection
-
-Only explicit AskUserQuestion option selection (e.g., selecting "Approve and merge") counts as valid approval and
-sets `APPROVAL_MARKER=true`. See `plugin/rules/approval-gate-protocol.md` for the authoritative list of valid and
-invalid approval signals.
+Invalid signals: "continue", "ok", "yes", "proceed", "go ahead" — these are NOT approvals. See
+`plugin/rules/approval-gate-protocol.md` for the authoritative list.
 
 ## Error Handling
 
-If any phase fails:
+Classify errors in order:
+1. User explicitly aborted/rejected → **permanent**
+2. Error contains `index.lock`, `shallow.lock`, `Unable to create.*lock` → **transient**
+3. Error contains `Connection refused`, `Connection timed out`, `SSL`, `Could not resolve host` → **transient**
+4. Error contains `CONFLICT` or `merge conflict` → **permanent**
+5. Error references missing branch (`not found`, `unknown revision`) → **permanent**
+6. Error references corruption (`bad object`, `corrupt`, `fatal: packed-refs`) → **permanent**
+7. None of the above → **permanent** (default to releasing lock)
 
-1. Capture error message and phase name
-2. **Classify the error as transient or permanent using this decision tree (in order):**
-   1. If the user explicitly aborted or rejected: **permanent** — release the lock.
-   2. If the error message contains `index.lock`, `shallow.lock`, or `Unable to create.*lock`: **transient**.
-   3. If the error message contains `Connection refused`, `Connection timed out`, `SSL`, or `Could not resolve host`: **transient**.
-   4. If the error message contains `CONFLICT` or `merge conflict`: **permanent** — release the lock.
-   5. If the error references a missing branch (`not found`, `unknown revision`): **permanent** — release the lock.
-   6. If the error references repository corruption (`bad object`, `corrupt`, `fatal: packed-refs`): **permanent** — release the lock.
-   7. If none of the above match: **permanent** — release the lock (default to releasing to avoid indefinite lock retention).
-
-   - **Transient errors** (rules 2-3): do NOT release the lock. Hold it so the user can retry.
-   - **Permanent errors** (rules 1, 4-7): release the lock:
-     `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${ISSUE_ID}" "$CLAUDE_SESSION_ID"`
-3. Return FAILED status with actual error details, including whether the lock was retained or released
+- **Transient**: hold lock (user can retry)
+- **Permanent**: release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${ISSUE_ID}" "$CLAUDE_SESSION_ID"`
 
 ```json
 {
@@ -718,5 +461,4 @@ If any phase fails:
 }
 ```
 
-Set `"lock_retained": true` for transient errors (safe to retry) and `"lock_retained": false` for permanent errors
-(lock was released).
+`"lock_retained": true` for transient errors, `false` for permanent (lock was released).

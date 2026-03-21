@@ -22,7 +22,7 @@ import java.io.PrintStream;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
+import java.util.StringJoiner;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,10 +35,6 @@ import org.slf4j.LoggerFactory;
  */
 public final class GitMergeLinear
 {
-  /**
-   * Timeout in seconds for individual git subprocess invocations.
-   */
-  private static final int GIT_TIMEOUT_SECONDS = 30;
   private final JvmScope scope;
   private final String directory;
 
@@ -158,13 +154,7 @@ public final class GitMergeLinear
       pb.redirectErrorStream(true);
       try (Process process = pb.start())
       {
-        boolean completed = process.waitFor(GIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        if (!completed)
-        {
-          process.destroyForcibly();
-          throw new IOException("git merge-base timed out after " + GIT_TIMEOUT_SECONDS + " seconds");
-        }
-        int exitCode = process.exitValue();
+        int exitCode = process.waitFor();
 
         if (exitCode != 0)
         {
@@ -223,12 +213,16 @@ public final class GitMergeLinear
       pb.redirectErrorStream(true);
       try (Process process = pb.start())
       {
+        StringJoiner output = new StringJoiner("\n");
         try (BufferedReader reader = new BufferedReader(
           new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
         {
           String line = reader.readLine();
           while (line != null)
+          {
+            output.add(line);
             line = reader.readLine();
+          }
         }
         int exitCode = process.waitFor();
         if (exitCode != 0)

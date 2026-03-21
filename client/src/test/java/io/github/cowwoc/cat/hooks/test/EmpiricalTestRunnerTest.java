@@ -2929,4 +2929,31 @@ public final class EmpiricalTestRunnerTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that the sessions path is derived from the scope's sessions path, not hardcoded.
+   * <p>
+   * Guards against silent auto-merge regressions that replace the injectable sessionsPath design
+   * with a static hardcoded path — a regression that git auto-merge cannot detect because there
+   * is no textual conflict.
+   */
+  @Test
+  public void sessionsPathMatchesScopeSessionsPath() throws IOException, NoSuchFieldException,
+    IllegalAccessException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      Path expected = scope.getClaudeSessionsPath();
+      java.lang.reflect.Field field = EmpiricalTestRunner.class.getDeclaredField("sessionsPath");
+      field.setAccessible(true); // NOPMD - test-only reflection to verify injectable field
+      Path actual = (Path) field.get(runner);
+      requireThat(actual, "sessionsPath").isEqualTo(expected);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }

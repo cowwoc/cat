@@ -86,6 +86,7 @@ readonly -a HANDLERS=(
   "statusline-command:util.StatuslineCommand"
   "statusline-install:util.StatuslineInstall"
   "record-learning:util.RecordLearning"
+  "write-session-marker:util.WriteSessionMarker"
   "benchmark-runner:skills.BenchmarkRunner"
   "verify-defer-plan-generation:util.VerifyDeferPlanGeneration"
   "write-and-commit:util.WriteAndCommit"
