@@ -2772,15 +2772,15 @@
     "correct_behavior" : ""
   }, {
     "id" : "M589",
-    "timestamp" : "2026-03-21T15:41:49Z",
+    "timestamp" : "2026-03-21T15:44:10Z",
     "category" : "",
     "description" : "",
     "root_cause" : "",
-    "cause_signature" : "knowledge_gap:doc_missing:issue_workflow",
-    "prevention_type" : "skill",
-    "prevention_path" : "",
+    "cause_signature" : "tool_limitation:validation_absent:git_operations",
+    "prevention_type" : "validation",
+    "prevention_path" : "client/src/test/java/io/github/cowwoc/cat/hooks/test/EmpiricalTestRunnerTest.java",
     "pattern_keywords" : [ ],
-    "prevention_implemented" : false,
+    "prevention_implemented" : true,
     "prevention_verified" : false,
     "recurrence_of" : null,
     "prevention_quality" : {
