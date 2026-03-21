@@ -88,6 +88,8 @@ readonly -a HANDLERS=(
   "record-learning:util.RecordLearning"
   "benchmark-runner:skills.BenchmarkRunner"
   "verify-defer-plan-generation:util.VerifyDeferPlanGeneration"
+  "write-and-commit:util.WriteAndCommit"
+  "get-subagent-status:skills.GetSubagentStatusOutput"
 )
 
 # --- Logging ---
