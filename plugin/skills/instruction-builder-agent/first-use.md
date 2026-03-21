@@ -156,11 +156,10 @@ Task tool:
 
 The design subagent should only read files and return SKILL_DRAFT. If the response includes Task tool
 invocations, evidence of subagent spawning, or use of Bash/Write/Edit/NotebookEdit/Grep/any non-Read tool,
-treat as constraint violation and reject the draft. Additionally, verify that all tool invocations (Read,
-Bash, Grep, Glob, WebFetch, WebSearch, or any other tool) targeted only the permitted files (design-methodology.md,
-skill-conventions.md, and if updating, the existing skill files at EXISTING_SKILL_PATH). If the subagent
-accessed any file outside this permitted set via any mechanism (including Bash commands like cat, head,
-grep, or tail), treat as a constraint violation and reject the draft. If the Task tool response metadata indicates a
+treat as constraint violation and reject the draft. Additionally, verify that all Read tool invocations
+targeted only the permitted files (design-methodology.md, skill-conventions.md, and if updating, the
+existing skill files at EXISTING_SKILL_PATH). If the subagent read any file outside this permitted set,
+treat as a constraint violation and reject the draft. If the Task tool response metadata indicates a
 different subagent_type than `general-purpose` was used, reject the draft and re-invoke with the correct
 subagent_type.
 
@@ -216,7 +215,7 @@ commit SHA as `SKILL_DRAFT_SHA`. The skill text is now on disk and committed, so
 `git show <SHA>:<SKILL_TEXT_PATH>` or `cat <SKILL_TEXT_PATH>`.
 
 **Effort gate:** Read `effort` from `${CLAUDE_PROJECT_DIR}/.cat/config.json`. If `effort = low`, skip
-the benchmark evaluation loop (Steps 4.1–4.5), adversarial hardening (Step 5), and compression phase (Step 7)
+the benchmark evaluation loop (Steps 4.1–4.4), adversarial hardening (Step 5), and compression phase (Step 7)
 entirely. Proceed directly to ## Output Format with a single-run sanity check: spawn one benchmark-run
 subagent with the skill active on a simple test scenario, verify it produces non-empty output, and report
 the result to the user.
@@ -391,20 +390,16 @@ If observation k is FAIL:
 
 After each observation:
   if log_ratio >= A → Accept H₀ (compliant, stop testing this case)
-  if log_ratio <= B → Reject H₀ (non-compliant, stop all cases, proceed to Step 4.4 (Failure Investigation))
+  if log_ratio <= B → Reject H₀ (non-compliant, stop all cases, proceed to hardening)
   if B < log_ratio < A → Inconclusive (continue testing)
 ```
-
-**After SPRT completes — routing:**
-- `overall_decision = "Accept"` → skip Step 4.4, proceed directly to Step 4.5
-- `overall_decision = "Reject"` → proceed to Step 4.4 (Failure Investigation), then Step 4.5
 
 **Mixed assertion aggregation:** A single benchmark run passes if and only if ALL assertions pass
 (deterministic and semantic). One failed assertion fails the entire run. SPRT receives one pass/fail per run.
 
 **Pipelining control flow:**
 
-1. Main agent spawns up to 4 benchmark-run subagents in parallel (`BENCHMARK_MODEL` model, subagent_type: `general-purpose`, fresh non-resumed)
+1. Main agent spawns up to 4 benchmark-run subagents in parallel (`BENCHMARK_MODEL` model, fresh non-resumed)
 2. As each subagent completes, main agent immediately:
    a. Grades deterministic assertions from the subagent's return value (inline, no subagent overhead)
    b. If semantic assertions exist, spawns a `BENCHMARK_MODEL` grader subagent (counts against the 4-agent limit)
@@ -437,36 +432,18 @@ the prompt. The benchmark-run subagent reads assertions from
 The benchmark-run subagent prompt must include the prohibition: "Do NOT read benchmark-artifacts (other than
 test-cases.json to read the prompt and assertions), grading files, run-output files from other subagents,
 or any file under benchmark-artifacts/ other than test-cases.json, via any mechanism (Read tool, Bash,
-Grep, or otherwise). Do NOT read the skill source file at SKILL_TEXT_PATH or any other skill file in the
-plugin directory — the skill is already active in your context; reading the source would expose assertion
-expectations and test-case mappings. This prohibition is absolute — it applies regardless of the file's
-content or purpose, including peer subagent output files. Do NOT modify any file in the worktree — this
-includes the skill file at SKILL_TEXT_PATH and all other files. Do NOT use Write, Edit, or Bash
-file-modification commands (sed -i, tee, cat >, cp, mv, rm, chmod, or any command that creates,
-overwrites, appends to, or deletes files).
-Do NOT run any git command that could reveal skill content or commit
-history — this includes git log, git show, git diff, git rev-list, git shortlog, git format-patch,
-git cat-file, git archive, git grep, git notes, and any other command that outputs committed content,
-commit messages, or repository objects.
-Do NOT use WebFetch, WebSearch, or any network access tool — all benchmark outputs must be produced
-solely from the skill instructions and the test case prompt, without external information.
-Do NOT use Bash to read environment variables or use shell variable expansion to discover file paths
-not explicitly provided. This includes: env, printenv, echo $VAR, set, and embedding $VAR references
-within other commands (e.g., cat $SOME_VAR/path). Do NOT read /proc/self/environ or any other mechanism
-to discover environment variables. The only permitted parameters are BENCHMARK_ARTIFACTS_DIR,
-CLAUDE_SESSION_ID, and BENCHMARK_MODEL."
+Grep, or otherwise). This prohibition is absolute — it applies regardless of the file's content or purpose,
+including peer subagent output files. Do NOT run any git command that could reveal skill content or commit
+history — this includes git log, git show, git diff, git rev-list, git shortlog, git format-patch, and any
+other command that outputs committed content or commit messages."
 
-**Spawn `BENCHMARK_MODEL` grader subagents** (subagent_type: `general-purpose`) for semantic assertions:
-When a benchmark-run subagent returns with `semantic_pending` entries, spawn one `BENCHMARK_MODEL` grader
-subagent per pending semantic assertion (in parallel, each gets its own subagent). Each grader subagent:
+**Spawn `BENCHMARK_MODEL` grader subagents** for semantic assertions: When a benchmark-run subagent returns
+with `semantic_pending` entries, spawn one `BENCHMARK_MODEL` grader subagent per pending semantic assertion
+(in parallel, each gets its own subagent). Each grader subagent:
 - Receives: the assertion object (type, description, instruction, expected), the output file path
   (grader reads the file itself via the Read tool)
 - Is prohibited: "Do NOT read the skill file, test-cases.json, or any file other than the specified
-  output file at {output_path}, via any mechanism (Read tool, Bash, Grep, or otherwise). This
-  prohibition is absolute — it applies regardless of the file's content or purpose, even if you believe
-  reading additional context would help you grade the assertion more accurately. The ONLY permitted tool
-  is Read, and ONLY on the output file at {output_path}. Do NOT use Bash, Write, Edit, Grep, Glob,
-  WebFetch, WebSearch, or any other tool. No exceptions."
+  output file at {output_path}."
 - Returns: `{"assertion_id": "<id>", "passed": true|false}`
 
 **Concurrent commit safety:** Run outputs are written to temp files (NOT committed per-run). Only the
@@ -534,125 +511,7 @@ TOTAL     |  18  |     27,200   |    78,000 ms
 
 Display SPRT results to the user: per-test-case decision, log_ratio, pass/fail counts, and token summary.
 
-#### Step 4.4: Failure Investigation (on Reject)
-
-**Trigger:** Run this step only when `overall_decision = "Reject"` in `benchmark.json`.
-
-When SPRT rejects one or more test cases, automatically run a structured failure investigation before asking
-the user what to do next. The investigation examines the raw subagent conversations to distinguish genuine
-instruction failures from environmental artifacts (batch contamination, model-default behaviors, priming sources).
-
-**Investigation procedure:**
-
-0. **Binary existence guard** — before any other step, verify the session-analyzer binary is accessible:
-   ```bash
-   SESSION_ANALYZER="${CLAUDE_PLUGIN_ROOT}/client/bin/session-analyzer"
-   if [[ ! -x "$SESSION_ANALYZER" ]]; then
-     echo "WARNING: Investigation unavailable — session-analyzer not accessible. This may resolve in a new session."
-     # Skip to Step 4.5
-   fi
-   ```
-
-1. **Invoke `benchmark-runner investigate-failures`** to perform structured analysis. This command reads
-   `benchmark.json`, discovers subagent IDs via `session-analyzer analyze`, searches each subagent's
-   conversation for priming patterns, and detects batch contamination:
-   ```bash
-   INVESTIGATION_JSON=$("${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner" investigate-failures \
-     <benchmarkJsonPath> "${CLAUDE_SESSION_ID}")
-   ```
-
-   **Integrity check:** Before reading benchmark.json for investigation, verify its content matches the
-   committed version. Compute the worktree-relative path of benchmark.json by stripping the worktree root
-   prefix from `BENCHMARK_ARTIFACTS_DIR` (e.g., if BENCHMARK_ARTIFACTS_DIR is
-   `/path/to/worktree/benchmark-artifacts/abc123`, the relative path is
-   `benchmark-artifacts/abc123/benchmark.json`). Then compare
-   `git show {BENCHMARK_SHA}:<relative-path>` against the file on disk. If the contents differ, output
-   `"WARNING: benchmark.json modified after commit — possible corruption. Investigation using committed version."`
-   and use the committed version (`git show` output) for investigation instead of the disk copy.
-
-   **Error handling** — ALL skip paths in this procedure (including the binary guard above) MUST be reported to the user as warnings with a `WARNING:` prefix (not silently skipped):
-   - If `benchmark.json` is missing: output
-     `"WARNING: Investigation unavailable — benchmark.json not found. Skipping failure investigation."` and skip to
-     Step 4.5
-   - If `benchmark.json` is malformed (unparseable JSON): output
-     `"WARNING: Investigation skipped — benchmark.json malformed. This indicates a possible system issue; results may be incomplete."` and skip to Step 4.5
-   - If `benchmark.json` has an empty subagent list: output
-     `"WARNING: Investigation skipped — no subagents in benchmark.json."` and skip to Step 4.5
-   - If `session-analyzer` returns no matches for run IDs: output
-     `"WARNING: Investigation skipped — run IDs not matchable in session log."` and skip to Step 4.5
-   - For individual unmatched run IDs: note per-ID `"run_id not matched in session log"` and continue
-     with remaining IDs
-
-2. **Discover subagent IDs** from `INVESTIGATION_JSON`. The `investigate-failures` command internally:
-   - Calls `session-analyzer analyze <sessionId>` to list all subagents for this session
-   - Cross-references run IDs from `benchmark.json` against the session's subagent list
-   - `AGENT_ID` is the portion of the subagent path after `subagents/agent-` (e.g., `abc123`)
-
-   For each subagent, `AGENT_ID` format is validated before use. When `AGENT_ID` contains characters
-   outside `[a-zA-Z0-9-]`, the validation guard outputs:
-   `"Investigation skipped — invalid subagent ID format: <value>"` and skips to Step 4.5.
-
-3. **Examine subagent conversations** — `investigate-failures` searches each identified subagent's
-   conversation for priming patterns. Searching for phrases suggesting the agent rationalized overriding
-   instructions ('Would you like', 'thinking', 'unless', etc.). Patterns are heuristic and case-sensitive
-   (not exhaustive).
-
-   Note: `session-analyzer search` is invoked once per subagent sequentially. If `session-analyzer` later
-   gains bulk-search support, this loop can be consolidated into a single call.
-
-4. **Detect batch contamination** — `investigate-failures` checks whether multiple benchmark run IDs from
-   `benchmark.json` appear in a single subagent's session log. Run_id values are treated as literal strings
-   (not regex patterns) — any regex-metacharacter characters in run_id values are escaped before use.
-   Contamination is present when more than one run_id maps to the same subagent. The `contaminatedCount`
-   field in the JSON response indicates how many subagents are contaminated.
-
-5. **Identify priming sources** — for each failing subagent, `patternsFound` in the JSON response covers:
-   - Model-default behaviors overriding "Do not..." instructions (agent rationalized an escape clause)
-   - Prior successful patterns from earlier runs in the same subagent context being replicated
-   - Thinking blocks showing the agent explicitly considering follow-up additions
-
-6. **Present investigation findings** to the user before asking whether to improve the skill.
-
-   Select ONE root cause category based on what was found:
-   - `contaminatedCount > 0` → **batch contamination**
-   - `patternsFound` contains escape-clause indicators (e.g., "unless") → **model helpfulness override**
-   - otherwise → **instruction clarity issue**
-
-   Root cause categories:
-   - `instruction clarity issue`: the instruction was ambiguous or missing a required prohibition
-   - `batch contamination`: prior passing runs in the same subagent context primed the agent to replicate
-     successful patterns including disallowed behaviors
-   - `model helpfulness override`: the model's default helpfulness instinct caused it to ignore a prohibition
-
-   Format:
-   ```
-   FAILURE INVESTIGATION
-   =====================
-   What failed: TC2, TC5 (run IDs: TC2_run_3, TC5_run_14)
-
-   Root cause (selected): batch contamination [Confidence: High]
-     Evidence: agent-def456 handled 3 run IDs (TC5_run_14, TC5_run_15, TC5_run_16);
-       prior passing runs primed the agent to replicate successful patterns including disallowed behaviors
-
-   Contamination status: Yes — 1 subagent affected
-     Explanation: Prior passing runs in the same subagent context prime the agent to replicate successful
-       patterns including disallowed behaviors.
-     Recommended: re-run with fresh subagents (one run per subagent) to isolate contamination.
-
-   Specific next action: Re-run rejected test cases with fresh subagents (one run per subagent).
-   ```
-
-   If `session-analyzer` is not accessible, report:
-   `"Investigation unavailable — session-analyzer not accessible. This may resolve in a new session."`
-   and proceed to Step 4.5.
-
-   If run IDs cannot be matched in the session log, report:
-   `"Investigation skipped — run IDs not matchable in session log. Proceed to Step 4.5."` and proceed.
-
-#### Step 4.5: Analyze via skill-analyzer-agent
-
-**When this step runs:** Step 4.5 executes after Step 4.4 completes (on Reject path) or directly after
-Step 4.3 (on Accept path, skipping Step 4.4 entirely).
+#### Step 4.4: Analyze via skill-analyzer-agent
 
 **Analyze via skill-analyzer-agent subagent:** Spawn skill-analyzer-agent. Pass it the benchmark
 SHA+path (from the SPRT result) and `SKILL_TEXT_PATH` (worktree-relative). The `skill_text_path` must be
@@ -682,13 +541,8 @@ Task tool:
 
     RESTRICTION: This is a read-only analysis task. Do NOT modify the skill file, benchmark
     artifacts, findings.json, or any other file in the worktree. Do NOT use the Write or
-    Edit tools. Do NOT use Bash to run commands that modify files or use shell redirections —
-    this includes rm, mv, sed -i, tee, cat >, echo >, printf >, dd, cp, chmod, shell
-    redirection operators (>, >>), and heredocs (cat <<EOF). No file creation, overwrite,
-    or append via any mechanism.
+    Edit tools. Do NOT use Bash to run commands that modify files (rm, mv, sed -i, tee, etc.).
     You may only use Read and Bash (read-only commands like git show, cat, grep) to gather data.
-    Do NOT use WebFetch, WebSearch, or any network access tool — all analysis must be based solely
-    on local file content.
 ```
 
 The subagent returns the analysis commit SHA and the compact analysis report text. The main agent receives
@@ -880,17 +734,8 @@ Task tool:
     Write the compressed file to: {BENCHMARK_ARTIFACTS_DIR}/compressed-{skill-filename}.md
 
     RESTRICTION: Do NOT read test-cases.json, benchmark.json, or any benchmark artifact other than
-    protected-sections.txt (if provided). Do NOT read findings.json, other skill files in the plugin
-    directory, or any worktree file other than the original skill file and protected-sections.txt.
-    You MAY read the original skill file at {SKILL_TEXT_PATH} (required for compression), but do NOT
-    modify it in place. Do NOT modify any file other than the output path above. Write compressed
-    output ONLY to the output path.
-    Do NOT use WebFetch, WebSearch, or any network access tool — all compression must be based solely
-    on local file content.
-    Do NOT use Bash or any git command (git log, git show, git diff, git cat-file, git grep, or any
-    other command that outputs committed content or repository objects) — this includes accessing
-    benchmark artifacts, test cases, or findings via committed history. The only permitted tools are
-    Read (on the original skill file and protected-sections.txt) and Write/Edit (on the output path).
+    protected-sections.txt (if provided). Do NOT read or modify the original skill file at {SKILL_TEXT_PATH}.
+    Do NOT modify any file other than the output path above.
 ```
 
 Commit the compressed file with message `benchmark: compress skill [session: ${CLAUDE_SESSION_ID}]`.
@@ -1034,50 +879,7 @@ implementation details (trust levels, internal architecture, etc.).
 - [ ] Step 6 batch mode uses per-skill findings paths (`findings-<skill-name>.json`) to avoid collisions
 - [ ] Step 6 batch mode passes `FINDINGS_PATH` parameter to override default findings.json path in subagent prompts
 - [ ] Step 6 distinguishes filesystem operations (use WORKTREE_ROOT prefix) from git show (use repo-relative paths)
-- [ ] Step 4.4 trigger is the `overall_decision` field in benchmark.json: value "Reject" triggers Step 4.4
-  and the full investigation runs; value "Accept" skips Step 4.4 entirely and execution proceeds directly
-  to Step 4.5 — no partial execution, no logging, no session-analyzer call on Accept
-- [ ] Step 4.4 uses `benchmark-runner investigate-failures <benchmarkJsonPath> ${CLAUDE_SESSION_ID}` and
-  consumes structured JSON output (not inline text parsing)
-- [ ] Step 4.4 investigation uses session-analyzer analyze to discover subagent IDs for failing benchmark runs
-- [ ] Step 4.4 session-analyzer availability check: when `session-analyzer` binary is absent, output is
-  exactly `"Investigation unavailable — session-analyzer not accessible. This may resolve in a new session."`
-  and execution continues to Step 4.5 (no halt)
-- [ ] Step 4.4 benchmark.json missing: when benchmark.json is not found, output is exactly
-  `"Investigation unavailable — benchmark.json not found"` and execution continues to Step 4.5
-- [ ] Step 4.4 benchmark.json malformed: when benchmark.json contains unparseable JSON, output is exactly
-  `"Investigation skipped — benchmark.json malformed. This indicates a possible system issue; results may be incomplete."`
-  and execution continues to Step 4.5
-- [ ] Step 4.4 empty subagents: when benchmark.json has an empty subagent list, output is exactly
-  `"Investigation skipped — no subagents in benchmark.json. Proceed to Step 4.5."` and execution continues
-- [ ] Step 4.4 AGENT_ID validation: when AGENT_ID contains characters outside `[a-zA-Z0-9-]` (e.g., `../`),
-  the guard rejects it, output is exactly `"Investigation skipped — invalid subagent ID format: <value>"`,
-  and execution continues to Step 4.5
-- [ ] Step 4.4 run IDs not matchable: when no subagent IDs can be matched, output is exactly
-  `"Investigation skipped — run IDs not matchable in session log. Proceed to Step 4.5."` and execution
-  continues to Step 4.5 without error (no exception, no halt)
-- [ ] Step 4.4 session-analyzer output parsing: subagent IDs for failing runs are matched by cross-referencing
-  run IDs from benchmark.json against the subagent list returned by `session-analyzer analyze
-  ${CLAUDE_SESSION_ID}`; unmatched run IDs are reported as "run ID not matchable" and excluded from investigation
-- [ ] Step 4.4 investigation detects batch contamination: contamination is present when a single subagent's
-  conversation contains results from more than one test-case run; the report shows the count of affected
-  subagents (contaminatedCount > 0 triggers the "batch contamination" root cause category)
-- [ ] Step 4.4 investigation identifies priming sources (model-default behaviors, thinking blocks, escape clauses)
-- [ ] Report includes all required fields: What failed, Root cause (selected), Contamination status, Specific
-  next action — no fields omitted
-- [ ] Contamination count reported as exact integer (e.g., '1 subagent affected')
-- [ ] Investigation report generated before the 'Would you like to improve?' prompt in Step 4.5
-- [ ] Step 4.4 Reject path scenario: when benchmark.json contains overall_decision = "Reject", Step 4.4
-  runs automatically; session-analyzer is invoked to discover subagent IDs; contamination and priming are
-  checked; the FAILURE INVESTIGATION report (matching the format in Step 4.4) is presented to the user
-  before any "improve or proceed?" prompt
-- [ ] Step 4.4 Accept path scenario: when benchmark.json contains overall_decision = "Accept", Step 4.4
-  is completely skipped — no partial execution, no logging, no session-analyzer call
-- [ ] Patterns used in session-analyzer search are case-sensitive and heuristic (not exhaustive); the prose
-  note before the search step explains this
-- [ ] When batch contamination is detected, report includes explanation ("Prior passing runs in the same
-  subagent context prime the agent...") and recommendation ("Recommended: re-run with fresh subagents...")
-- [ ] Step 4.5 skill-analyzer-agent report includes Delegation Opportunities and Content Relay Anti-Patterns sections
+- [ ] Step 4.4 skill-analyzer-agent report includes Delegation Opportunities and Content Relay Anti-Patterns sections
 - [ ] Step 2 design subagent Read scope is restricted to methodology, conventions, and existing skill files only
 - [ ] Step 6 batch mode skill-name derivation is defined as `<directory-name>-<file-stem>` to avoid collisions
 - [ ] Step 6 batch parallel mode extends the concurrent commit retry protocol to red-team and blue-team commits
@@ -1099,7 +901,3 @@ implementation details (trust levels, internal architecture, etc.).
 - [ ] Step 3 compact-output pass lists all correctness exemptions (YAML frontmatter, Makefile targets, fenced code blocks, semantic whitespace, visual alignment)
 - [ ] Step 3 compact-output pass does not modify SKILL_DRAFT when exemption conditions apply
 - [ ] Both semantic and visual correctness take priority over compactness in the compact-output pass
-- [ ] Priming source pattern search: confirmed session-analyzer output was examined for skill instruction
-  patterns before diagnosis
-- [ ] AGENT_ID derivation: confirmed AGENT_ID was extracted as the portion of subagent path after
-  `subagents/agent-` from session-analyzer analyze output, not hardcoded

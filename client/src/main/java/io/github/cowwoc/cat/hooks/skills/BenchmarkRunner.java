@@ -39,10 +39,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.LinkedHashSet;
+import java.util.SequencedSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.SequencedSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -52,9 +52,8 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 /**
  * Incremental benchmark driver for instruction-builder-agent.
  * <p>
- * Dispatches 11 subcommands: extract-units, detect-changes, map-units, extract-model,
- * persist-artifacts, init-sprt, update-sprt, check-boundary, smoke-status, merge-results,
- * investigate-failures.
+ * Dispatches 10 subcommands: extract-units, detect-changes, map-units, extract-model,
+ * persist-artifacts, init-sprt, update-sprt, check-boundary, smoke-status, merge-results.
  * <p>
  * All output is written to stdout as JSON. Expected errors are reported via
  * {@link HookOutput#block(String)} on stdout with exit code 0. Unexpected errors are logged
@@ -140,8 +139,7 @@ public final class BenchmarkRunner
         "BenchmarkRunner: no command specified.\n" +
         "Usage: benchmark-runner <command> [args...]\n" +
         "Commands: extract-units, extract-model, detect-changes, map-units, " +
-        "persist-artifacts, init-sprt, update-sprt, check-boundary, smoke-status, merge-results, " +
-        "investigate-failures");
+        "persist-artifacts, init-sprt, update-sprt, check-boundary, smoke-status, merge-results");
 
     String command = args[0];
     String[] rest = Arrays.copyOfRange(args, 1, args.length);
@@ -157,12 +155,10 @@ public final class BenchmarkRunner
       case "check-boundary" -> out.println(checkBoundary(rest));
       case "smoke-status" -> out.println(smokeStatus(rest));
       case "merge-results" -> out.println(mergeResults(rest));
-      case "investigate-failures" -> out.println(investigateFailures(rest));
       default -> throw new IllegalArgumentException(
         "BenchmarkRunner: unknown command: " + command + "\n" +
         "Valid commands: extract-units, extract-model, detect-changes, map-units, " +
-        "persist-artifacts, init-sprt, update-sprt, check-boundary, smoke-status, merge-results, " +
-        "investigate-failures");
+        "persist-artifacts, init-sprt, update-sprt, check-boundary, smoke-status, merge-results");
     }
   }
 
@@ -1312,201 +1308,6 @@ public final class BenchmarkRunner
       requireThat(bodyLines, "bodyLines").isNotNull();
       requireThat(bodyStartLine, "bodyStartLine").isPositive();
     }
-  }
-
-  /**
-   * Implements the {@code investigate-failures} command.
-   * <p>
-   * Reads {@code benchmark.json} at the given path, identifies rejected test cases and their run IDs,
-   * calls {@code session-analyzer analyze <sessionId>} to discover subagent IDs, cross-references run IDs
-   * to subagent IDs, calls {@code session-analyzer search} per subagent for priming patterns, and detects
-   * batch contamination (multiple run_ids mapped to one subagent).
-   * <p>
-   * Returns structured JSON on success:
-   * <pre>{@code
-   * {
-   *   "status": "OK",
-   *   "subagentInvestigations": [
-   *     {
-   *       "agentId": "abc123",
-   *       "runIds": ["TC2_run_3"],
-   *       "patternsFound": ["Would you like"],
-   *       "batchContaminated": false
-   *     }
-   *   ],
-   *   "contaminatedCount": 0
-   * }
-   * }</pre>
-   * <p>
-   * Error cases return {@code {"status": "ERROR", "message": "..."}} with a descriptive message.
-   *
-   * @param args {@code [benchmarkJsonPath, sessionId]}
-   * @return a JSON string with the investigation result
-   * @throws NullPointerException     if {@code args} is null
-   * @throws IllegalArgumentException if the argument count is wrong
-   * @throws IOException              if files cannot be read or processes cannot be launched
-   */
-  public String investigateFailures(String[] args) throws IOException
-  {
-    requireThat(args, "args").isNotNull();
-    if (args.length != 2)
-      throw new IllegalArgumentException(
-        "BenchmarkRunner investigate-failures: expected 2 arguments <benchmarkJsonPath> <sessionId>, " +
-        "got " + args.length + ".\n" +
-        "Usage: benchmark-runner investigate-failures <benchmarkJsonPath> <sessionId>");
-
-    Path benchmarkJsonPath = Path.of(args[0]);
-    String sessionId = args[1];
-
-    if (Files.notExists(benchmarkJsonPath))
-      return toErrorJson("benchmark.json not found: " + benchmarkJsonPath);
-
-    JsonMapper mapper = scope.getJsonMapper();
-    JsonNode benchmarkRoot;
-    try
-    {
-      benchmarkRoot = mapper.readTree(benchmarkJsonPath.toFile());
-    }
-    catch (Exception _)
-    {
-      return toErrorJson("benchmark.json malformed: " + benchmarkJsonPath);
-    }
-
-    // Collect rejected run IDs: scan per-test-case decisions for "Reject"
-    List<String> rejectedRunIds = new ArrayList<>();
-    JsonNode sprtNode = benchmarkRoot.get("sprt");
-    if (sprtNode != null && sprtNode.isObject())
-    {
-      for (Map.Entry<String, JsonNode> entry : sprtNode.properties())
-      {
-        JsonNode testCase = entry.getValue();
-        JsonNode decision = testCase.get("decision");
-        if (decision != null && decision.isString() && decision.asString().equals("Reject"))
-        {
-          JsonNode runIds = testCase.get("run_ids");
-          if (runIds != null && runIds.isArray())
-          {
-            for (JsonNode runId : runIds)
-            {
-              if (runId.isString())
-                rejectedRunIds.add(runId.asString());
-            }
-          }
-        }
-      }
-    }
-
-    if (rejectedRunIds.isEmpty())
-    {
-      // No rejected run IDs found — return empty investigation result
-      ObjectNode result = mapper.createObjectNode();
-      result.put("status", "OK");
-      result.putArray("subagentInvestigations");
-      result.put("contaminatedCount", 0);
-      return mapper.writeValueAsString(result);
-    }
-
-    // Discover subagents for this session via session-analyzer
-    Path sessionAnalyzer = scope.getPluginRoot().resolve("client/bin/session-analyzer");
-    ProcessRunner.Result analyzeResult = ProcessRunner.run(sessionAnalyzer.toString(), "analyze", sessionId);
-    if (analyzeResult.exitCode() != 0 || analyzeResult.stdout().isBlank())
-      return toErrorJson("session-analyzer analyze failed for session: " + sessionId);
-
-    // Parse subagent IDs and map run IDs to subagents
-    // Each line of analyze output contains a subagent path; match run IDs as literal strings
-    Map<String, List<String>> agentToRunIds = new HashMap<>();
-    String analyzeOutput = analyzeResult.stdout();
-    try (BufferedReader reader = new BufferedReader(new StringReader(analyzeOutput)))
-    {
-      String line = reader.readLine();
-      while (line != null)
-      {
-        line = line.strip();
-        // Extract agentId from paths like "<sessionId>/subagents/agent-<agentId>"
-        String subagentsMarker = "/subagents/agent-";
-        int markerIndex = line.indexOf(subagentsMarker);
-        if (markerIndex >= 0)
-        {
-          String agentId = line.substring(markerIndex + subagentsMarker.length());
-          if (!agentId.isBlank())
-          {
-            // Cross-reference: check if any rejected run ID appears in the subagent's session log.
-            // Run IDs are matched as literal strings (not regex patterns) to prevent injection.
-            List<String> matchedRunIds = new ArrayList<>();
-            for (String runId : rejectedRunIds)
-            {
-              // Escape all regex metacharacters so the run ID is treated as a literal string
-              String literalRunId = Pattern.quote(runId);
-              String subagentPath = sessionId + "/subagents/agent-" + agentId;
-              ProcessRunner.Result searchResult = ProcessRunner.run(
-                sessionAnalyzer.toString(), "search", subagentPath, literalRunId, "--regex");
-              if (searchResult.exitCode() == 0 && !searchResult.stdout().isBlank())
-                matchedRunIds.add(runId);
-            }
-            if (!matchedRunIds.isEmpty())
-              agentToRunIds.put(agentId, matchedRunIds);
-          }
-        }
-        line = reader.readLine();
-      }
-    }
-
-    // Build per-subagent investigations
-    ArrayNode investigations = mapper.createArrayNode();
-    int contaminatedCount = 0;
-    for (Map.Entry<String, List<String>> entry : agentToRunIds.entrySet())
-    {
-      String agentId = entry.getKey();
-      List<String> runIds = entry.getValue();
-      boolean batchContaminated = runIds.size() > 1;
-      if (batchContaminated)
-        ++contaminatedCount;
-
-      // Search for priming patterns in this subagent's conversation.
-      // Patterns are heuristic and case-sensitive (not exhaustive).
-      List<String> patternsFound = new ArrayList<>();
-      String[] primingPatterns = {"Would you like", "thinking", "unless"};
-      String subagentPath = sessionId + "/subagents/agent-" + agentId;
-      for (String pattern : primingPatterns)
-      {
-        ProcessRunner.Result patternResult = ProcessRunner.run(
-          sessionAnalyzer.toString(), "search", subagentPath, pattern);
-        if (patternResult.exitCode() == 0 && !patternResult.stdout().isBlank())
-          patternsFound.add(pattern);
-      }
-
-      ObjectNode investigation = mapper.createObjectNode();
-      investigation.put("agentId", agentId);
-      ArrayNode runIdsNode = investigation.putArray("runIds");
-      for (String runId : runIds)
-        runIdsNode.add(runId);
-      ArrayNode patternsNode = investigation.putArray("patternsFound");
-      for (String pattern : patternsFound)
-        patternsNode.add(pattern);
-      investigation.put("batchContaminated", batchContaminated);
-      investigations.add(investigation);
-    }
-
-    ObjectNode result = mapper.createObjectNode();
-    result.put("status", "OK");
-    result.set("subagentInvestigations", investigations);
-    result.put("contaminatedCount", contaminatedCount);
-    return mapper.writeValueAsString(result);
-  }
-
-  /**
-   * Formats a JSON error response with the given message.
-   *
-   * @param message the error message
-   * @return a JSON string with {@code {"status": "ERROR", "message": "..."}}
-   */
-  private String toErrorJson(String message)
-  {
-    return """
-      {
-        "status": "ERROR",
-        "message": "%s"
-      }""".formatted(message.replace("\\", "\\\\").replace("\"", "\\\""));
   }
 
   /**
