@@ -61,19 +61,19 @@ This returns JSON with all defaults applied (missing entries filled in automatic
 **Fail-fast rule:** If the tool exits with a non-zero status, abort immediately with the error output. The tool itself
 validates that `config.json` exists and contains valid JSON.
 
-**Note:** The target branch (`targetBranch`) and issue ID are passed as explicit parameters to skill invocations,
+**Note:** The target branch (`target_branch`) and issue ID are passed as explicit parameters to skill invocations,
 not stored in `config.json`. Do not attempt to read target branch names from this file.
 
 ### Step 3: Verify Base Branch Before Merge Operations
 
-The `targetBranch` is provided as a parameter when invoking merge skills. It is **not** stored in `config.json`.
+The `target_branch` is provided as a parameter when invoking merge skills. It is **not** stored in `config.json`.
 
 Before any merge or rebase operation:
 
-1. **Verify the `targetBranch` parameter was provided and is non-empty:**
+1. **Verify the `target_branch` parameter was provided and is non-empty:**
    ```bash
    if [[ -z "${TARGET_BRANCH:-}" ]]; then
-     echo "ERROR: targetBranch parameter is missing" >&2
+     echo "ERROR: target_branch parameter is missing" >&2
      echo "Ensure this value was passed through from /cat:work preparation output" >&2
      exit 1
    fi
@@ -159,9 +159,9 @@ fi
 TRUST=$(echo "$CONFIG" | grep -o '"trust"[[:space:]]*:[[:space:]]*"[^"]*"' \
   | sed 's/.*"trust"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 
-# Step 3: Use target branch from parameter (not config file)
+# Step 3: Use target_branch from parameter (not config file)
 if [[ -z "${TARGET_BRANCH:-}" ]]; then
-  echo "ERROR: targetBranch parameter is missing" >&2
+  echo "ERROR: target_branch parameter is missing" >&2
   exit 1
 fi
 git rebase "$TARGET_BRANCH" || exit 1
@@ -201,7 +201,7 @@ When a worktree is created, the following context is established:
 - Directory path: from preparation phase output passed as parameter
 - Branch name: `git branch --show-current` (for verification) or from preparation phase output (for operations)
 - Behavioral config: use `get-config-output effective` tool (returns JSON with defaults applied)
-- Target branch: from preparation phase `targetBranch` parameter (not from config.json)
+- Target branch: from preparation phase `target_branch` parameter (not from config.json)
 
 ## Abort Semantics
 

@@ -1,7 +1,7 @@
 ---
 description: Start working on, resume, or continue an existing issue.
 model: sonnet
-argument-hint: "[version | issueId | filter] [--override-gate]"
+argument-hint: "[version | issue_id | filter] [--override-gate]"
 allowed-tools:
   - Read
   - Bash

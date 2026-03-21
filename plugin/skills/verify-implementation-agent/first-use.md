@@ -25,12 +25,12 @@ This skill receives JSON arguments with execution context from `/cat:work`:
 
 ```json
 {
-  "issueId": "2.1-issue-name",
-  "issuePath": "/path/to/issue",
-  "worktreePath": "/path/to/worktree",
+  "issue_id": "2.1-issue-name",
+  "issue_path": "/path/to/issue",
+  "worktree_path": "/path/to/worktree",
   "execution_result": {
     "commits": [{"hash": "abc123", "message": "...", "type": "feature"}],
-    "filesChanged": 5
+    "files_changed": 5
   }
 }
 ```
@@ -65,14 +65,14 @@ if [ $? -ne 0 ]; then
 fi
 ```
 
-After running, extract `issueId`, `issuePath`, and `worktreePath` from the JSON output. Store `file_results`
+After running, extract `issue_id`, `issue_path`, and `worktree_path` from the JSON output. Store `file_results`
 for the collect_results step.
 
-Display: "◆ Auditing issue: {issueId}"
+Display: "◆ Auditing issue: {issue_id}"
 
 **Read post-conditions from plan.md directly:**
 
-Use the Read tool to read `{issuePath}/plan.md`. Locate the `## Post-conditions` section and extract each
+Use the Read tool to read `{issue_path}/plan.md`. Locate the `## Post-conditions` section and extract each
 criterion listed as a checkbox item (`- [ ]` or `- [x]`). These are the criteria to verify.
 
 Display: "◆ Found {N} post-conditions"
@@ -94,9 +94,9 @@ You are a verification agent auditing implementation compliance with a planned p
 
 ## Worktree Path
 All implementation changes are in the issue worktree, NOT in the main workspace.
-Search for files in: {worktreePath}
+Search for files in: {worktree_path}
 Do NOT search /workspace directly — use the worktree path above for all file lookups.
-Example: use `{worktreePath}/plugin/skills/` not `/workspace/plugin/skills/`
+Example: use `{worktree_path}/plugin/skills/` not `/workspace/plugin/skills/`
 
 ## Task
 Verify whether this criterion is satisfied in the codebase.

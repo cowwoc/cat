@@ -472,7 +472,7 @@ Do NOT output raw JSON to the user. Use the JSON data internally to populate the
 ## Session Optimization Report
 
 ### Session Overview
-- **Issue:** {issueId}
+- **Issue:** {issue_id}
 - **Total tool calls:** {combined.summary.total_tool_calls} ({main count} main + {subagent count} subagent)
 - **Unique tools used:** {combined.summary.unique_tools joined with ", "}
 - **Delegations:** {number of Task tool calls}

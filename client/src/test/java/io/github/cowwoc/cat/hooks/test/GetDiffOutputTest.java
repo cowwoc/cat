@@ -1063,7 +1063,7 @@ public class GetDiffOutputTest
       Path issuePath = tempDir.resolve(".cat/issues/v2/v2.0/some-feature");
       Files.createDirectories(issuePath);
       Files.writeString(issuePath.resolve("index.json"),
-        "{\"status\":\"in-progress\",\"targetBranch\":\"v2.0\"}");
+        "{\"status\":\"in-progress\",\"target_branch\":\"v2.0\"}");
 
       try (JvmScope scope = new TestJvmScope())
       {
@@ -1921,10 +1921,10 @@ public class GetDiffOutputTest
 
   /**
    * Verifies that getOutput throws IllegalArgumentException when index.json exists but does not
-   * contain a targetBranch field.
+   * contain a target_branch field.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*targetBranch.*")
+    expectedExceptionsMessageRegExp = ".*target_branch.*")
   public void testMissingTargetBranchInIndexJsonThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("no-target-branch-test");
@@ -1962,7 +1962,7 @@ public class GetDiffOutputTest
     Path issuePath = projectPath.resolve(".cat/issues/v1/v1.0/test-issue");
     Files.createDirectories(issuePath);
     Files.writeString(issuePath.resolve("index.json"),
-      "{\"status\":\"in-progress\",\"targetBranch\":\"" + targetBranch + "\"}");
+      "{\"status\":\"in-progress\",\"target_branch\":\"" + targetBranch + "\"}");
     return issuePath;
   }
 

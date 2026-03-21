@@ -112,9 +112,9 @@ public final class AotTraining
         VerifyAudit audit = new VerifyAudit(scope);
         String prepareArgs = """
           {
-            "issueId": "aot-training",
-            "issuePath": "%s",
-            "worktreePath": "%s"
+            "issue_id": "aot-training",
+            "issue_path": "%s",
+            "worktree_path": "%s"
           }
           """.formatted(tempDir.toString(), tempDir.toString());
         audit.prepare(prepareArgs);

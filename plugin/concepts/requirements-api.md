@@ -198,8 +198,8 @@ Navigate into JSON object properties and validate their types:
 ```java
 // Validate a property exists and is a string
 String issueId = requireThat(root, "root")
-  .property("issueId").isString().getValue().asString();
-requireThat(issueId, "root.issueId").isNotBlank();
+  .property("issue_id").isString().getValue().asString();
+requireThat(issueId, "root.issue_id").isNotBlank();
 
 // Validate a property is an object
 requireThat(root, "root")

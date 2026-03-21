@@ -56,18 +56,18 @@ Subagent sessions are stored in a subdirectory of the parent session, NOT at the
 
 **Storage path:**
 ```
-{parent-session-id}/subagents/agent-{agentId}.jsonl
+{parent-session-id}/subagents/agent-{agent_id}.jsonl
 ```
 
-**Finding agentId from parent session:**
+**Finding agent_id from parent session:**
 ```bash
-# Search for agentId references in parent session
+# Search for agent_id references in parent session
 "$SESSION_ANALYZER" search "${CLAUDE_SESSION_ID}" "agentId"
 ```
 
 **Verifying what tools a subagent actually used:**
 ```bash
-AGENT_ID="ad630cb"  # Example agentId
+AGENT_ID="ad630cb"  # Example agent_id
 
 # Full analysis of subagent session (session-analyzer resolves the path internally)
 "$SESSION_ANALYZER" analyze "${CLAUDE_SESSION_ID}/subagents/agent-$AGENT_ID"

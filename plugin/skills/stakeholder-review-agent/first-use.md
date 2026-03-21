@@ -34,15 +34,15 @@ Read, Glob, and Grep tools. This enables reviewers to catch:
 Positional space-separated arguments:
 
 ```
-<issueId> <worktreePath> <verifyLevel> <commitsCompact>
+<issue_id> <worktree_path> <verify_level> <commits_compact>
 ```
 
 | Position | Name | Example |
 |----------|------|---------|
-| 1 | issueId | `2.1-issue-name` |
-| 2 | worktreePath | `${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name` |
-| 3 | verifyLevel | `quick` or `changed` or `all` |
-| 4 | commitsCompact | `hash:type,hash:type` (e.g., `abc123:bugfix,def456:test`) |
+| 1 | issue_id | `2.1-issue-name` |
+| 2 | worktree_path | `${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name` |
+| 3 | verify_level | `quick` or `changed` or `all` |
+| 4 | commits_compact | `hash:type,hash:type` (e.g., `abc123:bugfix,def456:test`) |
 
 Parse from ARGUMENTS:
 ```bash

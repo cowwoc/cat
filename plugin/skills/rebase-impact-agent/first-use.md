@@ -19,13 +19,13 @@ changes add, remove, or modify files that the plan depends on.
 Positional space-separated arguments:
 
 ```
-<issuePath> <worktreePath> <old_fork_point> <new_fork_point> [session_analysis_dir]
+<issue_path> <worktree_path> <old_fork_point> <new_fork_point> [session_analysis_dir]
 ```
 
 | Position | Name | Description |
 |----------|------|-------------|
-| 1 | issuePath | Absolute path to the issue directory containing plan.md |
-| 2 | worktreePath | Absolute path to the issue worktree |
+| 1 | issue_path | Absolute path to the issue directory containing plan.md |
+| 2 | worktree_path | Absolute path to the issue worktree |
 | 3 | old_fork_point | Git ref (commit hash) of the fork point before the rebase |
 | 4 | new_fork_point | Git ref (commit hash) of the fork point after the rebase |
 | 5 | session_analysis_dir | (Optional) Absolute path to the session directory for ephemeral output |
@@ -85,7 +85,7 @@ Validate the required arguments are non-empty:
 read ISSUE_PATH WORKTREE_PATH OLD_FORK_POINT NEW_FORK_POINT SESSION_ANALYSIS_DIR <<< "$ARGUMENTS"
 
 if [[ -z "$ISSUE_PATH" || -z "$WORKTREE_PATH" || -z "$OLD_FORK_POINT" || -z "$NEW_FORK_POINT" ]]; then
-  echo "ERROR: rebase-impact-agent requires 4 arguments: <issuePath> <worktreePath> <old_fork_point> <new_fork_point> [session_analysis_dir]" >&2
+  echo "ERROR: rebase-impact-agent requires 4 arguments: <issue_path> <worktree_path> <old_fork_point> <new_fork_point> [session_analysis_dir]" >&2
   exit 1
 fi
 
@@ -257,7 +257,7 @@ Run `/cat:work` on the test issue. When the rebase step executes, `work-with-iss
 `rebase-impact-agent` with arguments:
 
 ```
-<issuePath> <worktreePath> $BEFORE $NEW
+<issue_path> <worktree_path> $BEFORE $NEW
 ```
 
 Verify the invocation appears in the session transcript and that the analysis file is written to the CLAUDE

@@ -10,18 +10,18 @@ Review phase for `/cat:work`. Runs stakeholder review (Step 5) and deferred conc
 ## Arguments Format
 
 ```
-<catAgentId> <issueId> <issuePath> <worktreePath> <issueBranch> <targetBranch> <allCommitsCompact> <trust> <verify>
+<cat_agent_id> <issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <all_commits_compact> <trust> <verify>
 ```
 
 | Position | Name | Example |
 |----------|------|---------|
-| 1 | catAgentId | agent ID passed through from parent |
-| 2 | issueId | `2.1-issue-name` |
-| 3 | issuePath | `/workspace/.cat/issues/v2/v2.1/issue-name` |
-| 4 | worktreePath | `${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name` |
-| 5 | issueBranch | `2.1-issue-name` |
-| 6 | targetBranch | `v2.1` |
-| 7 | allCommitsCompact | compact format `hash:type,hash:type` |
+| 1 | cat_agent_id | agent ID passed through from parent |
+| 2 | issue_id | `2.1-issue-name` |
+| 3 | issue_path | `/workspace/.cat/issues/v2/v2.1/issue-name` |
+| 4 | worktree_path | `${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name` |
+| 5 | issue_branch | `2.1-issue-name` |
+| 6 | target_branch | `v2.1` |
+| 7 | all_commits_compact | compact format `hash:type,hash:type` |
 | 8 | trust | `medium` |
 | 9 | verify | `changed` |
 
@@ -580,7 +580,7 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
        {
          "status": "SUCCESS|PARTIAL|FAILED",
          "commits": [{"hash": "...", "message": "...", "type": "..."}],
-         "filesChanged": N,
+         "files_changed": N,
          "concern_addressed": true|false
        }
        ```
@@ -656,7 +656,7 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
         {
           "status": "SUCCESS|PARTIAL|FAILED",
           "commits": [{"hash": "...", "message": "...", "type": "..."}],
-          "filesChanged": N,
+          "files_changed": N,
           "concern_addressed": true|false
         }
         ```

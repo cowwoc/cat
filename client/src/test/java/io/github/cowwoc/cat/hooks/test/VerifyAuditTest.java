@@ -218,18 +218,18 @@ public final class VerifyAuditTest
 
       String argumentsJson = """
         {
-          "issueId": "2.1-test-issue",
-          "issuePath": "%s",
-          "worktreePath": "%s"
+          "issue_id": "2.1-test-issue",
+          "issue_path": "%s",
+          "worktree_path": "%s"
         }
         """.formatted(issueDir.toString(), worktreeDir.toString());
 
       String result = audit.prepare(argumentsJson);
       JsonNode root = mapper.readTree(result);
 
-      requireThat(root.path("issueId").asString(), "issueId").isEqualTo("2.1-test-issue");
-      requireThat(root.path("issuePath").asString(), "issuePath").isEqualTo(issueDir.toString());
-      requireThat(root.path("worktreePath").asString(), "worktreePath").isEqualTo(worktreeDir.toString());
+      requireThat(root.path("issue_id").asString(), "issueId").isEqualTo("2.1-test-issue");
+      requireThat(root.path("issue_path").asString(), "issuePath").isEqualTo(issueDir.toString());
+      requireThat(root.path("worktree_path").asString(), "worktreePath").isEqualTo(worktreeDir.toString());
       requireThat(root.path("file_results").isObject(), "file_results.isObject").isTrue();
       requireThat(root.path("file_results").path("modify").isObject(), "file_results.modify.isObject").isTrue();
       requireThat(root.path("file_results").path("delete").isObject(), "file_results.delete.isObject").isTrue();
@@ -246,12 +246,12 @@ public final class VerifyAuditTest
   }
 
   /**
-   * Verifies that prepare throws IllegalArgumentException when issueId is missing.
+   * Verifies that prepare throws IllegalArgumentException when issue_id is missing.
    *
    * @throws IOException if JSON parsing fails
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*issueId.*")
+    expectedExceptionsMessageRegExp = ".*issue_id.*")
   public void prepareRejectsMissingIssueId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-audit-test-");
@@ -261,8 +261,8 @@ public final class VerifyAuditTest
 
       String json = """
         {
-          "issuePath": "/tmp/issue",
-          "worktreePath": "/tmp/worktree"
+          "issue_path": "/tmp/issue",
+          "worktree_path": "/tmp/worktree"
         }
         """;
 
@@ -293,9 +293,9 @@ public final class VerifyAuditTest
 
       String json = """
         {
-          "issueId": "2.1-test-issue",
-          "issuePath": "%s",
-          "worktreePath": "/tmp/worktree"
+          "issue_id": "2.1-test-issue",
+          "issue_path": "%s",
+          "worktree_path": "/tmp/worktree"
         }
         """.formatted(issueDir.toString());
 
