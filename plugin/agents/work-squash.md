@@ -119,7 +119,31 @@ git rebase "${TARGET_BRANCH}"
 
 ## Step 3: Squash Commits
 
-Use git-squash to consolidate all implementation commits into a single clean commit:
+Use git-squash to consolidate implementation commits into a single clean commit. The `git-squash` tool squashes all
+commits ahead of `TARGET_BRANCH` into one. Planning commits (e.g., `planning:` prefixed) that only modify files
+under `.cat/issues/` are separate topic groups and must NOT be included in the implementation squash — they represent
+issue lifecycle updates (closing the issue, removing OOS plan entries), not implementation work.
+
+**Before squashing, identify any planning-only commits:**
+
+```bash
+cd "${WORKTREE_PATH}"
+PLANNING_COMMITS=$(git log --format="%H %s" "${TARGET_BRANCH}..HEAD" | \
+  grep -E ' planning:' | cut -d' ' -f1)
+echo "Planning commits: ${PLANNING_COMMITS:-none}"
+
+# Verify that identified planning commits ONLY modify .cat/issues/ files
+for HASH in $PLANNING_COMMITS; do
+  NON_PLANNING_FILES=$(git show --name-only --format="" "$HASH" | grep -v '^\.cat/issues/' || true)
+  if [[ -n "$NON_PLANNING_FILES" ]]; then
+    echo "WARN: Planning commit $HASH also modifies non-planning files: $NON_PLANNING_FILES"
+    echo "WARN: Treating as implementation commit — will include in squash"
+    PLANNING_COMMITS=$(echo "$PLANNING_COMMITS" | grep -v "^$HASH$")
+  fi
+done
+```
+
+Run the squash:
 
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/client/bin/git-squash" "${TARGET_BRANCH}" "${PRIMARY_COMMIT_MESSAGE}" "${WORKTREE_PATH}"
@@ -129,6 +153,29 @@ SQUASH_EXIT=$?
 Where `PRIMARY_COMMIT_MESSAGE` is the message passed in from the parent (the primary implementation commit's message).
 
 Do NOT use generic messages like "squash commit", "squash commits", or "combined work".
+
+**After squashing, re-apply planning commits (M586):**
+
+If any planning-only commits were identified above, the squash collapsed them into the implementation commit.
+Re-create them as separate commits on top of the squashed implementation commit:
+
+```bash
+for HASH in $PLANNING_COMMITS; do
+  SUBJECT=$(git log -1 --format="%s" "$HASH")
+  # Re-apply the planning commit content on top of HEAD
+  git cherry-pick "$HASH" --no-commit 2>/dev/null || true
+  STAGED=$(git diff --cached --name-only)
+  if [[ -n "$STAGED" ]]; then
+    git commit -m "$SUBJECT"
+    echo "Re-applied planning commit: $SUBJECT"
+  else
+    echo "INFO: Planning commit $HASH already reflected in tree — skipping re-apply"
+  fi
+done
+```
+
+This restores the squash-by-topic structure: one implementation commit followed by any planning commits, so
+Step 9 (`cat:git-squash-agent`) can verify the correct topic grouping at the approval gate.
 
 **If squash fails (non-zero exit code):**
 
