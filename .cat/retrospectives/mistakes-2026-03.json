@@ -2531,5 +2531,24 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M576",
+    "timestamp" : "2026-03-21T02:45:42Z",
+    "category" : "tool_misuse",
+    "description" : "",
+    "root_cause" : "VerifyStateInCommit.java line 85 suggests `git add .cat/issues/**/index.json` (a glob) when blocking commits missing index.json. This glob matches ALL modified index.json files in the repo. When agents follow this suggestion, they accidentally stage index.json files from unrelated issues that happen to be in a modified state relative to the base branch.",
+    "cause_signature" : "tool_limitation:hook_absent:git_operations",
+    "prevention_type" : "code_fix",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }
