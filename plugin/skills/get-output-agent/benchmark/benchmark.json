@@ -1,0 +1,13 @@
+{
+  "session_id" : "344b5adb-595e-4258-86e7-efb0ad2cabd2",
+  "phase" : "sprt",
+  "timestamp" : "2026-03-19T15:52:43Z",
+  "skill" : {
+    "path" : "plugin/skills/get-output-agent/SKILL.md",
+    "sha256" : "ed294ee5e14b74cb7bad2652c573e0ccab1fbe7b6a25727c789a3b9db41c1519"
+  },
+  "test_cases" : {
+    "path" : "plugin/skills/get-output-agent/benchmark/test-cases.json",
+    "sha256" : "b46198004439c3950ddfe6c445c4f8accfdc0bfb28cb23f2ec6ab6f249f0c2f3"
+  }
+}

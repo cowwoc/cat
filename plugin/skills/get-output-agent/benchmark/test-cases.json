@@ -1,44 +1,106 @@
 {
   "test_cases": [
     {
-      "test_case_id": "scenario_1_cold_start",
-      "category": "REQUIREMENT",
-      "description": "Cold start: agent invokes cat:get-output-agent with token-report and echoes the output verbatim",
-      "prompt": "Invoke the cat:get-output-agent skill with argument 'token-report'.",
-      "success_criteria": {
-        "must_use_tools": ["Skill"],
-        "must_contain": ["No subagent data found in session."],
-        "must_not_contain": ["display unavailable", "is not a valid", "unknown skill"]
-      }
+      "test_case_id": "TC1",
+      "semantic_unit_id": "unit_1",
+      "category": "CONDITIONAL",
+      "prompt": "You are running the get-output-agent skill. The preprocessor has injected the following output for this invocation:\n<output>\nWelcome to the output agent cold-start test\n</output>\n\nExecute the skill instructions.",
+      "assertions": [
+        {
+          "assertion_id": "TC1_det_1",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "output contains the injected content",
+          "pattern": "Welcome to the output agent cold-start test",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC1_sem_1",
+          "type": "semantic",
+          "description": "output is solely the tag content without additional commentary or prefixes",
+          "instruction": "Check if the response contains ONLY the text 'Welcome to the output agent cold-start test' with no additional introductory text, commentary, or explanations. Minor whitespace differences are acceptable.",
+          "expected": true
+        }
+      ]
     },
     {
-      "test_case_id": "scenario_2_latest_output",
+      "test_case_id": "TC2",
+      "semantic_unit_id": "unit_2",
       "category": "REQUIREMENT",
-      "description": "Latest-output: agent echoes the CURRENT token-report, not stale content from an earlier invocation",
-      "priming_messages": [
+      "prompt": "You are running the get-output-agent skill. This session has processed a prior invocation which produced:\n<output>\nSTALE-CONTENT-MARKER: this is old output from a prior invocation\n</output>\n\nNow a new invocation is happening. The preprocessor has injected the following output for this current invocation:\n<output>\nLATEST-CONTENT-MARKER: this is the fresh output for this invocation\n</output>\n\nExecute the skill instructions.",
+      "assertions": [
         {
-          "role": "user",
-          "content": "Invoke the cat:get-output-agent skill with argument 'token-report'."
+          "assertion_id": "TC2_det_1",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "output contains the LATEST content marker",
+          "pattern": "LATEST-CONTENT-MARKER",
+          "expected": true
         },
         {
-          "role": "assistant",
-          "content": "STALE_BENCHMARK_MARKER_DO_NOT_ECHO\n\nSTALE_BENCHMARK_CONTENT_XYZ123"
-        },
-        {
-          "role": "user",
-          "content": "Now do something unrelated: what is 1 + 1?"
-        },
-        {
-          "role": "assistant",
-          "content": "1 + 1 = 2"
+          "assertion_id": "TC2_det_2",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "output does NOT contain the stale content marker",
+          "pattern": "STALE-CONTENT-MARKER",
+          "expected": false
         }
-      ],
-      "prompt": "Invoke the cat:get-output-agent skill with argument 'token-report' again.",
-      "success_criteria": {
-        "must_use_tools": ["Skill"],
-        "must_contain": ["No subagent data found in session."],
-        "must_not_contain": ["STALE_BENCHMARK_CONTENT_XYZ123", "STALE_BENCHMARK_MARKER_DO_NOT_ECHO"]
-      }
+      ]
+    },
+    {
+      "test_case_id": "TC3",
+      "semantic_unit_id": "unit_4",
+      "category": "PROHIBITION",
+      "prompt": "You are running the get-output-agent skill. The preprocessor has injected:\n<output>\nExact content: alpha-bravo-charlie\n</output>\n\nExecute the skill instructions.",
+      "assertions": [
+        {
+          "assertion_id": "TC3_det_1",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "output contains the exact tag content",
+          "pattern": "Exact content: alpha-bravo-charlie",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC3_sem_1",
+          "type": "semantic",
+          "description": "output does not add commentary, paraphrasing, summaries or formatting around the tag content",
+          "instruction": "Check if the response contains ONLY 'Exact content: alpha-bravo-charlie' with no added text such as 'Here is:', 'Output:', 'The content is:', summaries, explanations, or any other additions. Whitespace differences are acceptable.",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC4",
+      "semantic_unit_id": "unit_1",
+      "category": "CONDITIONAL",
+      "prompt": "You are running the get-output-agent skill.\n\nThis session has had multiple prior invocations of this skill. Here is the full session context:\n\n--- INVOCATION 1 ---\nThe preprocessor injected:\n<output>\nFIRST-INVOCATION-RESULT: apple\n</output>\n\n--- UNRELATED EXCHANGE ---\nUser: What is 2+2?\nAssistant: 4\n\n--- INVOCATION 2 ---\nThe preprocessor injected:\n<output>\nSECOND-INVOCATION-RESULT: banana\n</output>\n\n--- UNRELATED EXCHANGE ---\nUser: What is the capital of France?\nAssistant: Paris\n\n--- INVOCATION 3 (CURRENT) ---\nThe preprocessor has now injected the following output for THIS invocation:\n<output>\nTHIRD-INVOCATION-RESULT: cherry\n</output>\n\nExecute the skill instructions for this current invocation.",
+      "assertions": [
+        {
+          "assertion_id": "TC4_det_1",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "output contains the THIRD invocation result",
+          "pattern": "THIRD-INVOCATION-RESULT: cherry",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC4_det_2",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "output does NOT contain the first invocation result",
+          "pattern": "FIRST-INVOCATION-RESULT: apple",
+          "expected": false
+        },
+        {
+          "assertion_id": "TC4_det_3",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "output does NOT contain the second invocation result",
+          "pattern": "SECOND-INVOCATION-RESULT: banana",
+          "expected": false
+        }
+      ]
     }
   ]
 }
