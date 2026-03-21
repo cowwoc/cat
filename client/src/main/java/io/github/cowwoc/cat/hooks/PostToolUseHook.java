@@ -87,7 +87,7 @@ public final class PostToolUseHook implements HookHandler
     List<PostToolHandler> handlers = List.of(
       new SetPendingAgentResult(scope),
       new ResetFailureCounter(sessionDirectory),
-      new AutoLearnMistakes(),
+      new AutoLearnMistakes(scope),
       new DetectAssistantGivingUp(scope),
       new DetectValidationWithoutEvidence(scope),
       new DetectTokenThreshold(scope),
