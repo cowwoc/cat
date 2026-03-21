@@ -19,7 +19,7 @@ treats the argument as a issue description and skips directly to issue creation 
 to minimize wizard interactions and reduce user friction.
 
 **Reference files** — read on demand as needed:
-- See `${CLAUDE_PLUGIN_ROOT}/templates/issue-state.md` for the issue index.json template.
+- See `${CLAUDE_PLUGIN_ROOT}/templates/issue-index.json` for the issue index.json template.
 - See `${CLAUDE_PLUGIN_ROOT}/templates/issue-plan.md` for issue plan.md templates.
 - See `${CLAUDE_PLUGIN_ROOT}/templates/major-state.md` and `${CLAUDE_PLUGIN_ROOT}/templates/major-plan.md` for major version templates.
 - See `${CLAUDE_PLUGIN_ROOT}/templates/minor-state.md` and `${CLAUDE_PLUGIN_ROOT}/templates/minor-plan.md` for minor version templates.
@@ -49,8 +49,17 @@ If output.planning_valid is false:
 **Check if description argument was provided:**
 
 If the command was invoked with arguments (e.g., `/cat:add make installation easier`):
-- Capture the full argument string as ISSUE_DESCRIPTION
-- Skip directly to step: issue_read_config (bypassing select_type and the freeform description question)
+- First, check if the argument text indicates version creation intent. If the text matches any of these patterns,
+  route to step: select_type instead of treating it as an issue description:
+  - Contains "version" AND one of: "major", "minor", "patch", "new", "create", "add"
+  - Starts with "new major", "new minor", "new patch", "add major", "add minor", "add patch"
+  - Contains one of "major", "minor", "patch" AND one of: "bump", "release", "start", "create", "new", "next"
+  - Matches the pattern `v\d+` or `v\d+\.\d+` (explicit version number reference like "start v3" or "bump to v2.1")
+- These patterns are non-exhaustive. If the argument text does not match any pattern but still appears to express
+  version creation intent (e.g., uses synonyms or indirect phrasing), treat it as version intent.
+- If version intent is detected: continue to step: select_type (do NOT capture as ISSUE_DESCRIPTION)
+- If no version intent detected: capture the full argument string as ISSUE_DESCRIPTION and skip directly to
+  step: issue_read_config (bypassing select_type and the freeform description question)
 
 If no arguments provided:
 - Continue to step: select_type
@@ -665,7 +674,9 @@ List existing issues in same minor version for selection using AskUserQuestion w
 **If Blocks = "Yes, select blocked issues":**
 
 List existing issues in same minor version for selection using AskUserQuestion with multiSelect.
-When blockers are selected, add this new issue to their Dependencies list in index.json.
+When blockers are selected, store the selected issue IDs as BLOCKED_ISSUES. The dependency updates to
+their index.json files are deferred to issue_create (after the new issue is committed), following the
+same pattern as AUTO_DETECTED_DEPS. Do NOT modify blocked issues' index.json files at this point.
 
 </step>
 
@@ -684,7 +695,7 @@ Running /cat:research to gather information...
 Invoke the research skill:
 ```bash
 # Use Skill tool to invoke research
-Skill: "research"
+Skill: "cat:research"
 Args: "{ISSUE_DESCRIPTION}"
 ```
 
@@ -934,16 +945,17 @@ Calculate the issue branch name:
 
 **Generate index.json content:**
 
-Use appropriate template format:
+Construct the `indexContent` field as valid JSON matching `${CLAUDE_PLUGIN_ROOT}/templates/issue-index.json`:
 
-```markdown
-# State
-
-- **Status:** open
-- **Progress:** 0%
-- **Dependencies:** [{dep1}, {dep2}] or []
-- **Blocks:** []
+```json
+{
+  "status": "open",
+  "dependencies": ["dep1", "dep2"],
+  "blocks": []
+}
 ```
+
+Omit `dependencies` if the array is empty. Use only string values for dependency names (e.g., `"2.1-some-issue"`).
 
 **Generate lightweight plan.md:**
 
@@ -976,7 +988,11 @@ ${ISSUE_DESCRIPTION}
 ...
 ```
 
-3. Create the issue, passing the generated plan.md file path:
+3. Create the issue, passing the generated plan.md file path.
+
+**JSON escaping:** All interpolated string values ({issue-name}, {one-line description}, dependency names, and
+{full index.json content}) must be valid JSON string values. Escape any double quotes as `\"` and backslashes
+as `\\` before embedding them in the JSON argument.
 
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/client/bin/create-issue" --json '{
@@ -1025,8 +1041,28 @@ STATE_FILE="${AUTO_DETECTED_DEP_PATHS[$i]}"
 update_state_dependency "$STATE_FILE" "$NEW_ISSUE_ID"
 ```
 
-After updating all index.json files, commit all changes with a `planning:` commit message such as:
+After updating all auto-detected dependency index.json files, commit with a `planning:` commit message such as:
 `planning: add {new-issue-id} as dependency of auto-detected dependent issues`
+
+**Apply blocker dependency updates (if any):**
+
+If BLOCKED_ISSUES is non-empty (from issue_discuss_and_requirements), for each blocked issue, add the new
+issue as a dependency in that blocked issue's index.json. BLOCKED_ISSUES contains bare issue directory names
+(e.g., `fix-something`, not full issue IDs like `2.1-fix-something`). The AskUserQuestion in
+issue_discuss_and_requirements must present options using bare directory names only. Iterate over each entry:
+
+```bash
+NEW_ISSUE_ID="{new-issue-id}"
+for BLOCKED_ISSUE_NAME in "${BLOCKED_ISSUES[@]}"; do
+    BLOCKED_ISSUE_DIR=".cat/issues/v$MAJOR/v$MAJOR.$MINOR/$BLOCKED_ISSUE_NAME"
+    BLOCKED_STATE_FILE="$BLOCKED_ISSUE_DIR/index.json"
+
+    update_state_dependency "$BLOCKED_STATE_FILE" "$NEW_ISSUE_ID"
+done
+```
+
+After updating all blocked issues' index.json files, commit with a `planning:` commit message such as:
+`planning: add {new-issue-id} as dependency of blocked issues`
 
 </step>
 
@@ -1039,7 +1075,7 @@ After creating a sub-issue, verify if it's being added to a decomposed parent is
 ```bash
 # Check if this issue is a sub-issue of a decomposed parent
 PARENT_ISSUE_DIR=$(dirname "${ISSUE_DIR}")
-if [[ -f "${PARENT_ISSUE_DIR}/index.json" ]] && grep -q "^## Decomposed Into" "${PARENT_ISSUE_DIR}/index.json"; then
+if [[ -f "${PARENT_ISSUE_DIR}/index.json" ]] && grep -q '"decomposedInto"' "${PARENT_ISSUE_DIR}/index.json"; then
   PARENT_NAME=$(basename "${PARENT_ISSUE_DIR}")
 
   # Output warning about parent completion requirements
@@ -1071,10 +1107,7 @@ This check ensures the agent is reminded that decomposed parents require all sub
 Run the renderer and output its result verbatim:
 
 ```bash
-CLIENT_BIN="${WORKTREE_PATH}/client/target/jlink/bin"
-if [[ ! -x "$CLIENT_BIN/get-add-output" ]]; then
-  CLIENT_BIN="${CLAUDE_PROJECT_DIR}/client/target/jlink/bin"
-fi
+CLIENT_BIN="${CLAUDE_PROJECT_DIR}/client/target/jlink/bin"
 "$CLIENT_BIN/get-add-output" --type issue --name "{issue-name}" --version "{version}" --issue-type "{type}" --dependencies "{dependencies}"
 ```
 
@@ -1101,7 +1134,7 @@ fi
 - List available major versions:
 
 ```bash
-[ -z "$(ls -d .cat/v[0-9]* 2>/dev/null)" ] && echo "No major versions exist." && exit 0
+[ -z "$(ls -d .cat/issues/v[0-9]* 2>/dev/null)" ] && echo "No major versions exist." && exit 0
 ```
 
 If no major versions exist:
@@ -1110,7 +1143,7 @@ If no major versions exist:
 - Go to step: version_find_next
 
 ```bash
-ls -1d .cat/v[0-9]* 2>/dev/null | sed 's|.cat/v||' | sort -V
+ls -1d .cat/issues/v[0-9]* 2>/dev/null | sed 's|.cat/issues/v||' | sort -V
 ```
 
 Use AskUserQuestion:
@@ -1131,7 +1164,7 @@ find .cat -maxdepth 2 -type d -name "v[0-9]*.[0-9]*" 2>/dev/null | while read d;
     VERSION=$(basename "$d" | sed 's/v//')
     MAJOR=$(echo "$VERSION" | cut -d. -f1)
     MINOR=$(echo "$VERSION" | cut -d. -f2)
-    STATUS=$(grep -oP '(?<=\*\*Status:\*\* )\w+' "$d/index.json" 2>/dev/null || echo "open")
+    STATUS=$(grep -oP '(?<="status":")[^"]+' "$d/index.json" 2>/dev/null || echo "open")
     PATCH_COUNT=$(find "$d" -maxdepth 1 -type d -name "v$MAJOR.$MINOR.*" 2>/dev/null | wc -l)
     echo "$MAJOR.$MINOR ($STATUS, $PATCH_COUNT patches)"
 done | sort -V
@@ -1179,7 +1212,7 @@ PARENT_PATH=".cat/issues/v$MAJOR/v$MAJOR.$MINOR"
 **If VERSION_TYPE is "major":**
 
 ```bash
-NEXT_NUMBER=$(ls -1d .cat/v[0-9]* 2>/dev/null | sed 's|.cat/v||' | sort -V | tail -1)
+NEXT_NUMBER=$(ls -1d .cat/issues/v[0-9]* 2>/dev/null | sed 's|.cat/issues/v||' | sort -V | tail -1 | tr -d '[:space:]')
 if [ -z "$NEXT_NUMBER" ]; then
     NEXT_NUMBER=1
 else
@@ -1193,7 +1226,7 @@ NEXT_VERSION="$NEXT_NUMBER"
 
 ```bash
 EXISTING=$(ls -1d "$PARENT_PATH"/v$MAJOR.[0-9]* 2>/dev/null | sed "s|$PARENT_PATH/v$MAJOR\.||" | sort -V)
-NEXT_NUMBER=$(echo "$EXISTING" | tail -1)
+NEXT_NUMBER=$(echo "$EXISTING" | tail -1 | tr -d '[:space:]')
 if [ -z "$NEXT_NUMBER" ]; then
     NEXT_NUMBER=0
 else
@@ -1207,7 +1240,7 @@ NEXT_VERSION="$MAJOR.$NEXT_NUMBER"
 
 ```bash
 EXISTING=$(ls -1d "$PARENT_PATH"/v$MAJOR.$MINOR.[0-9]* 2>/dev/null | sed "s|$PARENT_PATH/v$MAJOR.$MINOR\.||" | sort -V)
-NEXT_NUMBER=$(echo "$EXISTING" | tail -1)
+NEXT_NUMBER=$(echo "$EXISTING" | tail -1 | tr -d '[:space:]')
 if [ -z "$NEXT_NUMBER" ]; then
     NEXT_NUMBER=1
 else
@@ -1247,28 +1280,34 @@ If user specified a custom number:
 **If VERSION_TYPE is "major":**
 
 ```bash
+VERSION_EXISTS=false
 if [ -d ".cat/issues/v$REQUESTED_NUMBER" ]; then
     echo "Version $REQUESTED_NUMBER already exists."
+    VERSION_EXISTS=true
 fi
 ```
 
 **If VERSION_TYPE is "minor":**
 
 ```bash
+VERSION_EXISTS=false
 if [ -d "$PARENT_PATH/v$MAJOR.$REQUESTED_NUMBER" ]; then
     echo "Version $MAJOR.$REQUESTED_NUMBER already exists."
+    VERSION_EXISTS=true
 fi
 ```
 
 **If VERSION_TYPE is "patch":**
 
 ```bash
+VERSION_EXISTS=false
 if [ -d "$PARENT_PATH/v$MAJOR.$MINOR.$REQUESTED_NUMBER" ]; then
     echo "Patch version $MAJOR.$MINOR.$REQUESTED_NUMBER already exists."
+    VERSION_EXISTS=true
 fi
 ```
 
-**If version already exists:**
+**If VERSION_EXISTS is true:** (Do NOT proceed to version_create without resolving the conflict.)
 
 Use AskUserQuestion:
 - header: "Version Conflict"
@@ -1296,16 +1335,28 @@ Use AskUserQuestion:
 
 This is a significant operation. Renumber all versions >= REQUESTED_NUMBER by +1.
 
+**Sed pattern safety:** The sed replacements below target only version references that belong to the version
+being renumbered. Use word-boundary-safe patterns to avoid corrupting references to other versions or prose text.
+For major renumbering, use `\bv$v\.\b` (not bare `v$v\.`) and `\bMajor $v\b` to prevent matching substrings in
+unrelated contexts. If the sed implementation does not support `\b`, use anchored patterns or verify each match
+manually after the operation.
+
 **If VERSION_TYPE is "major":**
 
 ```bash
-for v in $(ls -1d .cat/v[0-9]* 2>/dev/null | sed 's|.cat/v||' | sort -rV); do
+for v in $(ls -1d .cat/issues/v[0-9]* 2>/dev/null | sed 's|.cat/issues/v||' | sort -rV); do
     if [ "$v" -ge "$REQUESTED_NUMBER" ]; then
         NEW_V=$((v + 1))
         echo "Renumbering v$v -> v$NEW_V"
         mv ".cat/issues/v$v" ".cat/issues/v$NEW_V"
-        find ".cat/issues/v$NEW_V" -name "*.md" -exec \
-            sed -i "s/v$v\./v$NEW_V./g; s/Major $v/Major $NEW_V/g" {} \;
+        # Replace version references (v-prefixed) and dependency IDs (no v-prefix).
+        # Pattern: v{old}. followed by a digit (to match v1.0, v1.1, etc. but not prose).
+        # Also update dependency IDs like "1.0-some-issue" -> "2.0-some-issue".
+        find ".cat/issues/v$NEW_V" \( -name "*.md" -o -name "*.json" \) -exec \
+            sed -i "s/v${v}\.\([0-9]\)/v${NEW_V}.\1/g; s/\bMajor ${v}\b/Major ${NEW_V}/g; s/\b${v}\.\([0-9][0-9]*-\)/${NEW_V}.\1/g" {} \;
+        # Update cross-references from OTHER versions that depend on issues in the renumbered version.
+        find .cat/issues/ \( -name "*.json" \) -not -path ".cat/issues/v$NEW_V/*" -exec \
+            sed -i "s/\b${v}\.\([0-9][0-9]*-\)/${NEW_V}.\1/g" {} \;
     fi
 done
 ```
@@ -1318,8 +1369,14 @@ for v in $(ls -1d "$PARENT_PATH"/v$MAJOR.[0-9]* 2>/dev/null | sed "s|$PARENT_PAT
         NEW_V=$((v + 1))
         echo "Renumbering v$MAJOR.$v -> v$MAJOR.$NEW_V"
         mv "$PARENT_PATH/v$MAJOR.$v" "$PARENT_PATH/v$MAJOR.$NEW_V"
-        find "$PARENT_PATH/v$MAJOR.$NEW_V" -name "*.md" -exec \
-            sed -i "s/v$MAJOR\.$v/v$MAJOR.$NEW_V/g" {} \;
+        # Replace version references (v-prefixed) and dependency IDs (no v-prefix, e.g., "2.0-issue-name").
+        find "$PARENT_PATH/v$MAJOR.$NEW_V" \( -name "*.md" -o -name "*.json" \) -exec \
+            sed -i "s/v$MAJOR\.$v\b/v$MAJOR.$NEW_V/g; s/\b$MAJOR\.$v-/$MAJOR.$NEW_V-/g" {} \;
+        # Update the parent major index.json (minorVersions array references)
+        sed -i "s/v$MAJOR\.$v\b/v$MAJOR.$NEW_V/g" "$PARENT_PATH/index.json"
+        # Update cross-references from OTHER versions that depend on issues in the renumbered version.
+        find .cat/issues/ \( -name "*.json" \) -not -path "$PARENT_PATH/v$MAJOR.$NEW_V/*" -exec \
+            sed -i "s/\b$MAJOR\.$v-/$MAJOR.$NEW_V-/g" {} \;
     fi
 done
 ```
@@ -1332,13 +1389,52 @@ for p in $(ls -1d "$PARENT_PATH"/v$MAJOR.$MINOR.[0-9]* 2>/dev/null | sed "s|$PAR
         NEW_P=$((p + 1))
         echo "Renumbering v$MAJOR.$MINOR.$p -> v$MAJOR.$MINOR.$NEW_P"
         mv "$PARENT_PATH/v$MAJOR.$MINOR.$p" "$PARENT_PATH/v$MAJOR.$MINOR.$NEW_P"
-        find "$PARENT_PATH/v$MAJOR.$MINOR.$NEW_P" -name "*.md" -exec \
-            sed -i "s/v$MAJOR\.$MINOR\.$p/v$MAJOR.$MINOR.$NEW_P/g" {} \;
+        # Replace version references (v-prefixed) and dependency IDs (no v-prefix, e.g., "2.1.0-issue-name").
+        find "$PARENT_PATH/v$MAJOR.$MINOR.$NEW_P" \( -name "*.md" -o -name "*.json" \) -exec \
+            sed -i "s/v$MAJOR\.$MINOR\.$p\b/v$MAJOR.$MINOR.$NEW_P/g; s/\b$MAJOR\.$MINOR\.$p-/$MAJOR.$MINOR.$NEW_P-/g" {} \;
+        # Update the parent minor index.json (patchVersions array references)
+        sed -i "s/v$MAJOR\.$MINOR\.$p\b/v$MAJOR.$MINOR.$NEW_P/g" "$PARENT_PATH/index.json"
+        # Update cross-references from OTHER versions that depend on issues in the renumbered version.
+        find .cat/issues/ \( -name "*.json" \) -not -path "$PARENT_PATH/v$MAJOR.$MINOR.$NEW_P/*" -exec \
+            sed -i "s/\b$MAJOR\.$MINOR\.$p-/$MAJOR.$MINOR.$NEW_P-/g" {} \;
     fi
 done
 ```
 
-**Update ROADMAP.md with new version numbers.**
+**Update ROADMAP.md with new version numbers.** Apply the same version renumbering to `.cat/ROADMAP.md`:
+
+```bash
+if [ -f .cat/ROADMAP.md ]; then
+    if [ "$VERSION_TYPE" = "major" ]; then
+        for v in $(seq $((REQUESTED_NUMBER + $(ls -1d .cat/issues/v[0-9]* 2>/dev/null | wc -l) - REQUESTED_NUMBER)) -1 "$REQUESTED_NUMBER"); do
+            NEW_V=$((v + 1))
+            sed -i "s/v${v}\.\([0-9]\)/v${NEW_V}.\1/g; s/\bMajor ${v}\b/Major ${NEW_V}/g; s/\b${v}\.\([0-9][0-9]*-\)/${NEW_V}.\1/g" .cat/ROADMAP.md
+        done
+    elif [ "$VERSION_TYPE" = "minor" ]; then
+        for v in $(seq $((REQUESTED_NUMBER + $(ls -1d "$PARENT_PATH"/v$MAJOR.[0-9]* 2>/dev/null | wc -l) - REQUESTED_NUMBER)) -1 "$REQUESTED_NUMBER"); do
+            NEW_V=$((v + 1))
+            sed -i "s/v$MAJOR\.$v\b/v$MAJOR.$NEW_V/g; s/\b$MAJOR\.$v-/$MAJOR.$NEW_V-/g" .cat/ROADMAP.md
+        done
+    elif [ "$VERSION_TYPE" = "patch" ]; then
+        for p in $(seq $((REQUESTED_NUMBER + $(ls -1d "$PARENT_PATH"/v$MAJOR.$MINOR.[0-9]* 2>/dev/null | wc -l) - REQUESTED_NUMBER)) -1 "$REQUESTED_NUMBER"); do
+            NEW_P=$((p + 1))
+            sed -i "s/v$MAJOR\.$MINOR\.$p\b/v$MAJOR.$MINOR.$NEW_P/g; s/\b$MAJOR\.$MINOR\.$p-/$MAJOR.$MINOR.$NEW_P-/g" .cat/ROADMAP.md
+        done
+    fi
+fi
+```
+
+**Commit renumbered versions immediately** to prevent an inconsistent working tree if subsequent steps fail:
+
+```bash
+git add .cat/issues/ .cat/ROADMAP.md && \
+git commit -m "$(cat <<'EOF'
+planning: renumber versions to make room for v{version_number}
+
+Renumbered all {VERSION_TYPE} versions >= {REQUESTED_NUMBER} by +1 to insert at the requested position.
+EOF
+)"
+```
 
 Set version number to REQUESTED_NUMBER and continue.
 
@@ -1463,26 +1559,43 @@ Append custom conditions to standard conditions.
 ```bash
 MAJOR=$VERSION_NUMBER
 VERSION_PATH=".cat/issues/v$MAJOR"
-mkdir -p "$VERSION_PATH/v$MAJOR.0/issue"
+mkdir -p "$VERSION_PATH/v$MAJOR.0"
 ```
 
-**Create major index.json:**
+**Create major index.json** (include the initial minor version in `minorVersions`):
 
 ```bash
 cat > "$VERSION_PATH/index.json" << EOF
-# Major Version $MAJOR State
-
-## Status
-- **Status:** open
-- **Progress:** 0%
-
-## Minor Versions
-- v$MAJOR.0
-
-## Summary
-$VERSION_DESCRIPTION
+{
+  "status": "open",
+  "minorVersions": ["v$MAJOR.0"]
+}
 EOF
 [ -f "$VERSION_PATH/index.json" ] || echo "ERROR: Major index.json not created"
+```
+
+**Create major plan.md** using the template at `${CLAUDE_PLUGIN_ROOT}/templates/major-plan.md`:
+
+```bash
+cat > "$VERSION_PATH/plan.md" << EOF
+# Plan: v$MAJOR - $VERSION_TITLE
+
+## Vision
+$VERSION_VISION
+
+## Scope
+$VERSION_SCOPE
+
+## Requirements
+$VERSION_REQUIREMENTS
+
+## Pre-conditions
+$PRECONDITIONS
+
+## Post-conditions
+$POSTCONDITIONS
+EOF
+[ -f "$VERSION_PATH/plan.md" ] || echo "ERROR: Major plan.md not created"
 ```
 
 **Create major CHANGELOG.md:**
@@ -1521,27 +1634,17 @@ section below. The templates use `$VERSION_PATH`, `$MAJOR`, `$MINOR`, and `$VERS
 MINOR=$VERSION_NUMBER
 VERSION_PATH="$PARENT_PATH/v$MAJOR.$MINOR"
 VERSION_SUMMARY="$VERSION_DESCRIPTION"
-mkdir -p "$VERSION_PATH/issue"
+mkdir -p "$VERSION_PATH"
 ```
 
 **Create minor index.json:**
 
 ```bash
 cat > "$VERSION_PATH/index.json" << EOF
-# Minor Version $MAJOR.$MINOR State
-
-## Status
-- **Status:** open
-- **Progress:** 0%
-
-## Issues Pending
-(No issues yet)
-
-## Issues Closed
-(None)
-
-## Summary
-$VERSION_SUMMARY
+{
+  "status": "open",
+  "progress": 0
+}
 EOF
 [ -f "$VERSION_PATH/index.json" ] || echo "ERROR: Minor index.json not created"
 ```
@@ -1596,20 +1699,10 @@ mkdir -p "$VERSION_PATH"
 
 ```bash
 cat > "$VERSION_PATH/index.json" << EOF
-# Patch Version $MAJOR.$MINOR.$PATCH State
-
-## Status
-- **Status:** open
-- **Progress:** 0%
-
-## Issues Pending
-(No issues yet)
-
-## Issues Closed
-(None)
-
-## Summary
-$VERSION_DESCRIPTION
+{
+  "status": "open",
+  "progress": 0
+}
 EOF
 [ -f "$VERSION_PATH/index.json" ] || echo "ERROR: Patch index.json not created"
 ```
@@ -1706,16 +1799,19 @@ grep -q "$MAJOR.$MINOR.$PATCH" "$ROADMAP" || echo "WARNING: Patch not added to R
 **If VERSION_TYPE is "major":**
 - Skip to step: version_commit (no parent to update)
 
+**Important:** Version index.json files are always flat JSON with no nested objects (e.g.,
+`{"status": "open"}`). The sed patterns below rely on this structure. Do NOT use these patterns on JSON
+files that may contain nested objects.
+
 **If VERSION_TYPE is "minor":**
 
 ```bash
 PARENT_STATE="$PARENT_PATH/index.json" && \
-if grep -q "^## Minor Versions" "$PARENT_STATE"; then
-  sed -i "/^## Minor Versions/a - v$MAJOR.$MINOR" "$PARENT_STATE"
+if grep -q '"minorVersions"' "$PARENT_STATE"; then
+  sed -i "s/\"minorVersions\": \[/\"minorVersions\": [\"v$MAJOR.$MINOR\", /" "$PARENT_STATE"
 else
-  echo -e "
-## Minor Versions
-- v$MAJOR.$MINOR" >> "$PARENT_STATE"
+  # Safe because version index.json is always flat JSON (no nested objects).
+  sed -i "s/\}$/,\"minorVersions\":[\"v$MAJOR.$MINOR\"]}/" "$PARENT_STATE"
 fi && \
 grep -q "v$MAJOR.$MINOR" "$PARENT_STATE" || echo "ERROR: Minor version not added to major index.json"
 ```
@@ -1724,12 +1820,11 @@ grep -q "v$MAJOR.$MINOR" "$PARENT_STATE" || echo "ERROR: Minor version not added
 
 ```bash
 PARENT_STATE="$PARENT_PATH/index.json" && \
-if grep -q "^## Patch Versions" "$PARENT_STATE"; then
-  sed -i "/^## Patch Versions/a - v$MAJOR.$MINOR.$PATCH" "$PARENT_STATE"
+if grep -q '"patchVersions"' "$PARENT_STATE"; then
+  sed -i "s/\"patchVersions\": \[/\"patchVersions\": [\"v$MAJOR.$MINOR.$PATCH\", /" "$PARENT_STATE"
 else
-  echo -e "
-## Patch Versions
-- v$MAJOR.$MINOR.$PATCH" >> "$PARENT_STATE"
+  # Safe because version index.json is always flat JSON (no nested objects).
+  sed -i "s/\}$/,\"patchVersions\":[\"v$MAJOR.$MINOR.$PATCH\"]}/" "$PARENT_STATE"
 fi && \
 grep -q "v$MAJOR.$MINOR.$PATCH" "$PARENT_STATE" || echo "ERROR: Patch version not added to minor index.json"
 ```
@@ -1787,10 +1882,7 @@ EOF
 Run the renderer and output its result verbatim:
 
 ```bash
-CLIENT_BIN="${WORKTREE_PATH}/client/target/jlink/bin"
-if [[ ! -x "$CLIENT_BIN/get-add-output" ]]; then
-  CLIENT_BIN="${CLAUDE_PROJECT_DIR}/client/target/jlink/bin"
-fi
+CLIENT_BIN="${CLAUDE_PROJECT_DIR}/client/target/jlink/bin"
 "$CLIENT_BIN/get-add-output" --type version --name "{version-name}" --version "{version}" --version-type "{VERSION_TYPE}" --parent "{parent-info}" --path "{version-path}"
 ```
 
