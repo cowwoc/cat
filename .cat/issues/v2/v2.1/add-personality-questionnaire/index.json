@@ -1,6 +1,7 @@
-# State
-
-- **Status:** open
-- **Progress:** 0%
-- **Dependencies:** [2.1-rename-config-options]
-- **Blocks:** []
+{
+  "status": "open",
+  "dependencies": [
+    "2.1-rename-config-options"
+  ],
+  "blocks": []
+}
