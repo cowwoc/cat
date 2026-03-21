@@ -236,20 +236,25 @@ public final class Feedback implements AutoCloseable
     else
       processBuilder = new ProcessBuilder("xdg-open", url);
     processBuilder.inheritIO();
-    Process process = processBuilder.start();
-    try
+    try (Process process = processBuilder.start())
     {
-      int exitCode = process.waitFor();
+      int exitCode;
+      try
+      {
+        exitCode = process.waitFor();
+      }
+      catch (InterruptedException e)
+      {
+        // Force-kill the browser process so it doesn't become an orphan if the JVM exits
+        process.destroyForcibly();
+        Thread.currentThread().interrupt();
+        throw new IOException("Browser open request was interrupted for URL: " + url, e);
+      }
       if (exitCode != 0)
       {
         throw new IOException("Browser command exited with code " + exitCode +
           " for URL: " + url);
       }
-    }
-    catch (InterruptedException e)
-    {
-      Thread.currentThread().interrupt();
-      throw new IOException("Browser open request was interrupted for URL: " + url, e);
     }
   }
 
