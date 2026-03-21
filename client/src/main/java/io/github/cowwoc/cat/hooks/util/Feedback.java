@@ -238,22 +238,19 @@ public final class Feedback implements AutoCloseable
     processBuilder.inheritIO();
     try (Process process = processBuilder.start())
     {
-      int exitCode;
       try
       {
-        exitCode = process.waitFor();
+        int exitCode = process.waitFor();
+        if (exitCode != 0)
+        {
+          throw new IOException("Browser command exited with code " + exitCode +
+            " for URL: " + url);
+        }
       }
       catch (InterruptedException e)
       {
-        // Force-kill the browser process so it doesn't become an orphan if the JVM exits
-        process.destroyForcibly();
         Thread.currentThread().interrupt();
         throw new IOException("Browser open request was interrupted for URL: " + url, e);
-      }
-      if (exitCode != 0)
-      {
-        throw new IOException("Browser command exited with code " + exitCode +
-          " for URL: " + url);
       }
     }
   }

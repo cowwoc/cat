@@ -87,8 +87,8 @@ public final class EmpiricalTestRunner
     });
 
   private final JvmScope scope;
+  private final Path sessionsPath;
   private final ObjectWriter compactWriter;
-  private final Path sessionDir;
 
   /**
    * Creates a new empirical test runner.
@@ -100,8 +100,8 @@ public final class EmpiricalTestRunner
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
+    this.sessionsPath = scope.getClaudeSessionsPath();
     this.compactWriter = scope.getJsonMapper().writer().without(SerializationFeature.INDENT_OUTPUT);
-    this.sessionDir = scope.getClaudeSessionsPath();
   }
 
   /**
@@ -356,29 +356,29 @@ public final class EmpiricalTestRunner
    * <p>
    * Session files follow this structure:
    * <pre>
-   * sessionDir/
+   * sessionsPath/
    *   {sessionId}.jsonl              — main agent session
    *   {sessionId}/subagents/
    *     agent-{agentId}.jsonl        — subagent sessions
    * </pre>
    *
-   * @param sessionDir the session directory path
+   * @param sessionsPath the path to the sessions directory
    * @param sessionId the session ID extracted from stream-json output
    * @return the list of session file paths (main first, then subagents), or empty list if
    *         sessionId is empty
    * @throws IOException if the subagents directory exists but cannot be read
    */
-  private static List<Path> collectSessionFiles(Path sessionDir, String sessionId) throws IOException
+  private static List<Path> collectSessionFiles(Path sessionsPath, String sessionId) throws IOException
   {
     if (sessionId.isEmpty())
       return List.of();
 
     List<Path> files = new ArrayList<>();
-    Path mainFile = sessionDir.resolve(sessionId + ".jsonl");
+    Path mainFile = sessionsPath.resolve(sessionId + ".jsonl");
     if (Files.isRegularFile(mainFile))
       files.add(mainFile);
 
-    Path subagentsDir = sessionDir.resolve(sessionId).resolve("subagents");
+    Path subagentsDir = sessionsPath.resolve(sessionId).resolve("subagents");
     if (Files.isDirectory(subagentsDir))
     {
       try (DirectoryStream<Path> stream = Files.newDirectoryStream(subagentsDir, "*.jsonl"))
@@ -587,7 +587,7 @@ public final class EmpiricalTestRunner
     List<Path> sessionFiles;
     try
     {
-      sessionFiles = collectSessionFiles(sessionDir, parsed.sessionId());
+      sessionFiles = collectSessionFiles(sessionsPath, parsed.sessionId());
     }
     catch (IOException _)
     {
