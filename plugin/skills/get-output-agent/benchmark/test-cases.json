@@ -3,22 +3,22 @@
     {
       "test_case_id": "TC1",
       "semantic_unit_id": "unit_1",
-      "category": "CONDITIONAL",
-      "prompt": "You are running the get-output-agent skill. The preprocessor has injected the following output for this invocation:\n<output>\nWelcome to the output agent cold-start test\n</output>\n\nExecute the skill instructions.",
+      "category": "REQUIREMENT",
+      "prompt": "Use the cat:get-output-agent skill. The preprocessor has injected an <output> tag into the session:\n\n<output type=\"test\">\nBenchmark UNIQUE-MARKER-ALPHA: content line one\n</output>\n\nEcho the output tag content now.",
       "assertions": [
         {
           "assertion_id": "TC1_det_1",
           "type": "deterministic",
           "method": "string_match",
-          "description": "output contains the injected content",
-          "pattern": "Welcome to the output agent cold-start test",
+          "description": "Output must contain the exact injected content verbatim",
+          "pattern": "Benchmark UNIQUE-MARKER-ALPHA: content line one",
           "expected": true
         },
         {
           "assertion_id": "TC1_sem_1",
           "type": "semantic",
           "description": "output is solely the tag content without additional commentary or prefixes",
-          "instruction": "Check if the response contains ONLY the text 'Welcome to the output agent cold-start test' with no additional introductory text, commentary, or explanations. Minor whitespace differences are acceptable.",
+          "instruction": "Check if the response contains ONLY the text 'Benchmark UNIQUE-MARKER-ALPHA: content line one' with no additional introductory text, commentary, or explanations. Minor whitespace differences are acceptable.",
           "expected": true
         }
       ]
@@ -27,23 +27,48 @@
       "test_case_id": "TC2",
       "semantic_unit_id": "unit_2",
       "category": "REQUIREMENT",
-      "prompt": "You are running the get-output-agent skill. This session has processed a prior invocation which produced:\n<output>\nSTALE-CONTENT-MARKER: this is old output from a prior invocation\n</output>\n\nNow a new invocation is happening. The preprocessor has injected the following output for this current invocation:\n<output>\nLATEST-CONTENT-MARKER: this is the fresh output for this invocation\n</output>\n\nExecute the skill instructions.",
+      "prompt": "Use the cat:get-output-agent skill. The preprocessor has injected the LATEST <output> tag:\n\n<output type=\"test\">\nFRESH-CONTENT-CURRENT\n</output>\n\nEcho the output tag content now.",
+      "priming_messages": [
+        {
+          "role": "user",
+          "content": "Use the cat:get-output-agent skill. An earlier output tag was injected:\n\n<output type=\"test\">\nSTALE-CONTENT-PRIOR\n</output>\n\nEcho the output tag content."
+        },
+        {
+          "role": "assistant",
+          "content": "STALE-CONTENT-PRIOR"
+        },
+        {
+          "role": "user",
+          "content": "Now do something unrelated: what is 1 + 1?"
+        },
+        {
+          "role": "assistant",
+          "content": "1 + 1 = 2"
+        }
+      ],
       "assertions": [
         {
           "assertion_id": "TC2_det_1",
           "type": "deterministic",
           "method": "string_match",
-          "description": "output contains the LATEST content marker",
-          "pattern": "LATEST-CONTENT-MARKER",
+          "description": "Output must contain the LATEST output tag content",
+          "pattern": "FRESH-CONTENT-CURRENT",
           "expected": true
         },
         {
           "assertion_id": "TC2_det_2",
           "type": "deterministic",
           "method": "string_match",
-          "description": "output does NOT contain the stale content marker",
-          "pattern": "STALE-CONTENT-MARKER",
+          "description": "Output must NOT contain stale content from earlier invocation",
+          "pattern": "STALE-CONTENT-PRIOR",
           "expected": false
+        },
+        {
+          "assertion_id": "TC2_sem_1",
+          "type": "semantic",
+          "description": "Output contains only LATEST <output> tag content, no prior invocation or session message content",
+          "instruction": "Verify that the output contains ONLY 'FRESH-CONTENT-CURRENT' and no other text from prior invocations, unrelated messages, or assistant responses. The output should be exactly the content of the latest <output> tag, nothing more.",
+          "expected": true
         }
       ]
     },
@@ -51,53 +76,346 @@
       "test_case_id": "TC3",
       "semantic_unit_id": "unit_4",
       "category": "PROHIBITION",
-      "prompt": "You are running the get-output-agent skill. The preprocessor has injected:\n<output>\nExact content: alpha-bravo-charlie\n</output>\n\nExecute the skill instructions.",
+      "prompt": "Use the cat:get-output-agent skill. The preprocessor injected:\n\n<output type=\"test\">\nLine 1: First sentence of detailed multi-line content\nLine 2: Second sentence with specific technical details about X\nLine 3: Third sentence providing the final conclusion Y\n</output>\n\nEcho the output tag content now.",
       "assertions": [
         {
           "assertion_id": "TC3_det_1",
           "type": "deterministic",
           "method": "string_match",
-          "description": "output contains the exact tag content",
-          "pattern": "Exact content: alpha-bravo-charlie",
+          "description": "Output must contain first line verbatim (not paraphrased)",
+          "pattern": "Line 1: First sentence of detailed multi-line content",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC3_det_2",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "Output must contain second line verbatim",
+          "pattern": "Line 2: Second sentence with specific technical details about X",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC3_det_3",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "Output must contain third line verbatim",
+          "pattern": "Line 3: Third sentence providing the final conclusion Y",
           "expected": true
         },
         {
           "assertion_id": "TC3_sem_1",
           "type": "semantic",
-          "description": "output does not add commentary, paraphrasing, summaries or formatting around the tag content",
-          "instruction": "Check if the response contains ONLY 'Exact content: alpha-bravo-charlie' with no added text such as 'Here is:', 'Output:', 'The content is:', summaries, explanations, or any other additions. Whitespace differences are acceptable.",
+          "description": "Output is character-for-character identical with no reordering, paraphrasing, or alteration",
+          "instruction": "Verify that the output is an exact reproduction of the input with no changes. All three lines must appear in the exact order and exact wording: 'Line 1: First sentence of detailed multi-line content', 'Line 2: Second sentence with specific technical details about X', 'Line 3: Third sentence providing the final conclusion Y'. No reordering, no paraphrasing, no missing words, no extra words.",
           "expected": true
         }
       ]
     },
     {
       "test_case_id": "TC4",
-      "semantic_unit_id": "unit_1",
-      "category": "CONDITIONAL",
-      "prompt": "You are running the get-output-agent skill.\n\nThis session has had multiple prior invocations of this skill. Here is the full session context:\n\n--- INVOCATION 1 ---\nThe preprocessor injected:\n<output>\nFIRST-INVOCATION-RESULT: apple\n</output>\n\n--- UNRELATED EXCHANGE ---\nUser: What is 2+2?\nAssistant: 4\n\n--- INVOCATION 2 ---\nThe preprocessor injected:\n<output>\nSECOND-INVOCATION-RESULT: banana\n</output>\n\n--- UNRELATED EXCHANGE ---\nUser: What is the capital of France?\nAssistant: Paris\n\n--- INVOCATION 3 (CURRENT) ---\nThe preprocessor has now injected the following output for THIS invocation:\n<output>\nTHIRD-INVOCATION-RESULT: cherry\n</output>\n\nExecute the skill instructions for this current invocation.",
+      "semantic_unit_id": "unit_5",
+      "category": "PROHIBITION",
+      "prompt": "Use the cat:get-output-agent skill. The preprocessor injected:\n\n<output type=\"test\">\nSimple short content Z\n</output>\n\nEcho the output tag content now.",
       "assertions": [
         {
           "assertion_id": "TC4_det_1",
           "type": "deterministic",
           "method": "string_match",
-          "description": "output contains the THIRD invocation result",
-          "pattern": "THIRD-INVOCATION-RESULT: cherry",
+          "description": "Output must contain the expected content",
+          "pattern": "Simple short content Z",
           "expected": true
         },
         {
           "assertion_id": "TC4_det_2",
           "type": "deterministic",
           "method": "string_match",
-          "description": "output does NOT contain the first invocation result",
-          "pattern": "FIRST-INVOCATION-RESULT: apple",
+          "description": "Output must not start with preamble 'Here is'",
+          "pattern": "Here is",
           "expected": false
         },
         {
           "assertion_id": "TC4_det_3",
           "type": "deterministic",
           "method": "string_match",
-          "description": "output does NOT contain the second invocation result",
-          "pattern": "SECOND-INVOCATION-RESULT: banana",
+          "description": "Output must not start with preamble 'I will'",
+          "pattern": "I will",
+          "expected": false
+        },
+        {
+          "assertion_id": "TC4_sem_1",
+          "type": "semantic",
+          "description": "Output contains only the echoed content with no added preamble or trailing commentary",
+          "instruction": "Check if the output contains ONLY the text 'Simple short content Z' with no additional text before or after it (minor whitespace/newlines are acceptable, but no explanatory sentences, preamble phrases, or commentary should appear).",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC5",
+      "semantic_unit_id": "unit_2",
+      "category": "REQUIREMENT",
+      "prompt": "Use the cat:get-output-agent skill. The preprocessor has injected the LATEST <output> tag:\n\n<output type=\"test\">\nLATEST OUTPUT FOR DEEP CONTEXT TEST\n</output>\n\nEcho the output tag content now.",
+      "priming_messages": [
+        {"role": "user", "content": "Unrelated message 1"},
+        {"role": "assistant", "content": "Response 1"},
+        {"role": "user", "content": "Unrelated message 2"},
+        {"role": "assistant", "content": "Response 2"},
+        {"role": "user", "content": "Unrelated message 3"},
+        {"role": "assistant", "content": "Response 3"},
+        {"role": "user", "content": "Unrelated message 4"},
+        {"role": "assistant", "content": "Response 4"},
+        {"role": "user", "content": "Unrelated message 5"},
+        {"role": "assistant", "content": "Response 5"},
+        {"role": "user", "content": "Unrelated message 6"},
+        {"role": "assistant", "content": "Response 6"},
+        {"role": "user", "content": "Unrelated message 7"},
+        {"role": "assistant", "content": "Response 7"},
+        {"role": "user", "content": "Unrelated message 8"},
+        {"role": "assistant", "content": "Response 8"},
+        {"role": "user", "content": "Unrelated message 9"},
+        {"role": "assistant", "content": "Response 9"},
+        {"role": "user", "content": "Unrelated message 10"},
+        {"role": "assistant", "content": "Response 10"}
+      ],
+      "assertions": [
+        {
+          "assertion_id": "TC5_det_1",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "Output must contain the LATEST output tag content",
+          "pattern": "LATEST OUTPUT FOR DEEP CONTEXT TEST",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC5_det_2",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "Output must not contain priming context from prior messages",
+          "pattern": "Unrelated message",
+          "expected": false
+        },
+        {
+          "assertion_id": "TC5_det_3",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "Output must not contain assistant responses from priming context",
+          "pattern": "Response ",
+          "expected": false
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC6",
+      "semantic_unit_id": "unit_4",
+      "category": "REQUIREMENT",
+      "prompt": "Use the cat:get-output-agent skill. The preprocessor injected:\n\n<output type=\"test\">\n**bold** *italic* `code` # Header ™®©🚀\n</output>\n\nEcho the output tag content now.",
+      "assertions": [
+        {
+          "assertion_id": "TC6_det_1",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "Output must contain bold markdown verbatim",
+          "pattern": "\\*\\*bold\\*\\*",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC6_det_2",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "Output must contain italic markdown verbatim",
+          "pattern": "\\*italic\\*",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC6_det_3",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "Output must contain code markdown verbatim",
+          "pattern": "`code`",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC6_det_4",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "Output must contain heading markdown verbatim",
+          "pattern": "# Header",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC6_det_5",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "Output must contain trademark symbol verbatim",
+          "pattern": "™",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC6_det_6",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "Output must contain registered symbol verbatim",
+          "pattern": "®",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC6_det_7",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "Output must contain copyright symbol verbatim",
+          "pattern": "©",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC6_det_8",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "Output must contain emoji verbatim",
+          "pattern": "🚀",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC7",
+      "semantic_unit_id": "unit_5",
+      "category": "REQUIREMENT",
+      "prompt": "Use the cat:get-output-agent skill. The preprocessor injected:\n\n<output type=\"test\">\n   leading\ntrailing   \nmultiple    spaces\n</output>\n\nEcho the output tag content now.",
+      "assertions": [
+        {
+          "assertion_id": "TC7_det_1",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "Output must contain leading spaces verbatim",
+          "pattern": "   leading",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC7_det_2",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "Output must contain trailing spaces verbatim",
+          "pattern": "trailing   ",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC7_det_3",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "Output must contain multiple spaces verbatim",
+          "pattern": "multiple    spaces",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC7_sem_1",
+          "type": "semantic",
+          "description": "All whitespace is preserved exactly as in the source",
+          "instruction": "Verify that leading spaces on the first line, trailing spaces on the second line, and the exact spacing between words on the third line are preserved identically to the source output tag.",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC8",
+      "semantic_unit_id": "unit_5",
+      "category": "PROHIBITION",
+      "prompt": "Use the cat:get-output-agent skill. The preprocessor injected:\n\n<output type=\"test\">\nLine 1\n<!--END-->\nLine 2\n<!--END-->\n</output>\n\nEcho the output tag content now.",
+      "assertions": [
+        {
+          "assertion_id": "TC8_det_1",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "Output must contain both lines before marker",
+          "pattern": "Line 1",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC8_det_2",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "Output must contain second line",
+          "pattern": "Line 2",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC8_det_3",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "Output must contain first embedded marker",
+          "pattern": "<!--END-->",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC8_sem_1",
+          "type": "semantic",
+          "description": "Output uses LAST <!--END--> marker as closing boundary, not the first",
+          "instruction": "Verify that the output includes both 'Line 1' and 'Line 2' along with both embedded <!--END--> markers within the output content (as literal content, not as delimiters). The closing boundary is determined by the LAST <!--END--> in the tool_result block.",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC9",
+      "semantic_unit_id": "unit_2",
+      "category": "REQUIREMENT",
+      "prompt": "Use the cat:get-output-agent skill. The preprocessor has injected the LATEST <output> tag:\n\n<output type=\"test\">\nTHIRD-RESULT: cherry\n</output>\n\nEcho the output tag content now.",
+      "priming_messages": [
+        {
+          "role": "user",
+          "content": "Use the cat:get-output-agent skill. The preprocessor injected:\n\n<output type=\"test\">\nFIRST-RESULT: apple\n</output>\n\nEcho the output tag content."
+        },
+        {
+          "role": "assistant",
+          "content": "FIRST-RESULT: apple"
+        },
+        {
+          "role": "user",
+          "content": "What is 2+2?"
+        },
+        {
+          "role": "assistant",
+          "content": "4"
+        },
+        {
+          "role": "user",
+          "content": "Use the cat:get-output-agent skill. The preprocessor injected:\n\n<output type=\"test\">\nSECOND-RESULT: banana\n</output>\n\nEcho the output tag content."
+        },
+        {
+          "role": "assistant",
+          "content": "SECOND-RESULT: banana"
+        },
+        {
+          "role": "user",
+          "content": "What is the capital of France?"
+        },
+        {
+          "role": "assistant",
+          "content": "Paris"
+        }
+      ],
+      "assertions": [
+        {
+          "assertion_id": "TC9_det_1",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "Output must be unavailable when all output tags appear only in user messages",
+          "pattern": "Output unavailable.",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC9_det_2",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "Output must NOT contain the first invocation result",
+          "pattern": "FIRST-RESULT: apple",
+          "expected": false
+        },
+        {
+          "assertion_id": "TC9_det_3",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "Output must NOT contain the second invocation result",
+          "pattern": "SECOND-RESULT: banana",
           "expected": false
         }
       ]
