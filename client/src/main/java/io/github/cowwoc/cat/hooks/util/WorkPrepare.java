@@ -264,8 +264,8 @@ public final class WorkPrepare
       releaseLock(issueId, input.sessionId());
       Map<String, Object> corruptResult = new LinkedHashMap<>();
       corruptResult.put("status", "CORRUPT");
-      corruptResult.put("issueId", issueId);
-      corruptResult.put("issuePath", issuePath.toString());
+      corruptResult.put("issue_id", issueId);
+      corruptResult.put("issue_path", issuePath.toString());
       corruptResult.put("message", "Issue directory is corrupt: index.json exists but plan.md is " +
         "missing at " + issuePath);
       return mapper.writeValueAsString(corruptResult);
@@ -294,8 +294,8 @@ public final class WorkPrepare
       oversizedResult.put("status", "OVERSIZED");
       oversizedResult.put("message", "Issue estimated at " + estimatedTokens + " tokens (limit: " + TOKEN_LIMIT + ")");
       oversizedResult.put("suggestion", "Use /cat:decompose-issue to break into smaller issues");
-      oversizedResult.put("issueId", issueId);
-      oversizedResult.put("estimatedTokens", estimatedTokens);
+      oversizedResult.put("issue_id", issueId);
+      oversizedResult.put("estimated_tokens", estimatedTokens);
       return mapper.writeValueAsString(oversizedResult);
     }
 
@@ -341,14 +341,14 @@ public final class WorkPrepare
       result.put("suggestion", "Use /cat:status to see available issues");
 
       if (!diagnostics.blockedIssues().isEmpty())
-        result.put("blockedIssues", diagnostics.blockedIssues());
+        result.put("blocked_issues", diagnostics.blockedIssues());
       if (!diagnostics.lockedIssues().isEmpty())
-        result.put("lockedIssues", diagnostics.lockedIssues());
+        result.put("locked_issues", diagnostics.lockedIssues());
       if (!diagnostics.circularDependencies().isEmpty())
-        result.put("circularDependencies", diagnostics.circularDependencies());
+        result.put("circular_dependencies", diagnostics.circularDependencies());
 
-      result.put("closedCount", diagnostics.closedCount());
-      result.put("totalCount", diagnostics.totalCount());
+      result.put("closed_count", diagnostics.closedCount());
+      result.put("total_count", diagnostics.totalCount());
 
       if (!warnings.isEmpty())
         result.put("warnings", warnings);
@@ -364,8 +364,8 @@ public final class WorkPrepare
         return mapper.writeValueAsString(Map.of(
           "status", "LOCKED",
           "message", msg,
-          "issueId", notExec.issueId(),
-          "lockedBy", ""));
+          "issue_id", notExec.issueId(),
+          "locked_by", ""));
       }
       return mapper.writeValueAsString(Map.of(
         "status", "ERROR",
@@ -413,8 +413,8 @@ public final class WorkPrepare
         return mapper.writeValueAsString(Map.of(
           "status", "LOCKED",
           "message", "Issue " + existingWorktree.issueId() + " is locked by another session",
-          "issueId", existingWorktree.issueId(),
-          "lockedBy", locked.sessionId()));
+          "issue_id", existingWorktree.issueId(),
+          "locked_by", locked.sessionId()));
       }
       return mapper.writeValueAsString(Map.of(
         "status", "ERROR",
@@ -478,8 +478,8 @@ public final class WorkPrepare
       return mapper.writeValueAsString(Map.of(
         "status", "LOCKED",
         "message", "Issue locked by another session: " + locked.owner(),
-        "issueId", issueId,
-        "lockedBy", locked.owner()));
+        "issue_id", issueId,
+        "locked_by", locked.owner()));
     }
 
     // Step 5: Create worktree
@@ -576,28 +576,28 @@ public final class WorkPrepare
     // Step 10: Return READY JSON
     Map<String, Object> result = new LinkedHashMap<>();
     result.put("status", "READY");
-    result.put("issueId", issueId);
+    result.put("issue_id", issueId);
     result.put("major", major);
     result.put("minor", minor);
-    result.put("issueName", issueName);
+    result.put("issue_name", issueName);
     Path relativeIssuePath = projectPath.relativize(issuePath);
-    result.put("issuePath", worktreePath.resolve(relativeIssuePath).toString());
-    result.put("worktreePath", worktreePath.toString());
-    result.put("issueBranch", issueBranch);
-    result.put("targetBranch", targetBranch);
-    result.put("estimatedTokens", estimatedTokens);
-    result.put("percentOfThreshold", (int) ((estimatedTokens / (double) TOKEN_LIMIT) * 100));
+    result.put("issue_path", worktreePath.resolve(relativeIssuePath).toString());
+    result.put("worktree_path", worktreePath.toString());
+    result.put("issue_branch", issueBranch);
+    result.put("target_branch", targetBranch);
+    result.put("estimated_tokens", estimatedTokens);
+    result.put("percent_of_threshold", (int) ((estimatedTokens / (double) TOKEN_LIMIT) * 100));
     result.put("goal", goal);
-    result.put("approachSelected", "auto");
-    result.put("lockAcquired", true);
-    result.put("hasExistingWork", existingWork.hasExistingWork());
-    result.put("existingCommits", existingWork.existingCommits());
-    result.put("commitSummary", existingWork.commitSummary());
+    result.put("approach_selected", "auto");
+    result.put("lock_acquired", true);
+    result.put("has_existing_work", existingWork.hasExistingWork());
+    result.put("existing_commits", existingWork.existingCommits());
+    result.put("commit_summary", existingWork.commitSummary());
 
     if (!suspiciousCommits.isEmpty())
     {
-      result.put("potentiallyComplete", true);
-      result.put("suspiciousCommits", suspiciousCommits);
+      result.put("potentially_complete", true);
+      result.put("suspicious_commits", suspiciousCommits);
     }
 
     if (!warnings.isEmpty())
@@ -645,8 +645,8 @@ public final class WorkPrepare
       oversizedResult.put("message", "Issue estimated at " + estimatedTokens +
         " tokens (limit: " + TOKEN_LIMIT + ")");
       oversizedResult.put("suggestion", "Use /cat:decompose-issue to break into smaller issues");
-      oversizedResult.put("issueId", existing.issueId());
-      oversizedResult.put("estimatedTokens", estimatedTokens);
+      oversizedResult.put("issue_id", existing.issueId());
+      oversizedResult.put("estimated_tokens", estimatedTokens);
       return mapper.writeValueAsString(oversizedResult);
     }
 
@@ -658,27 +658,27 @@ public final class WorkPrepare
 
     Map<String, Object> result = new LinkedHashMap<>();
     result.put("status", "READY");
-    result.put("issueId", existing.issueId());
+    result.put("issue_id", existing.issueId());
     result.put("major", existing.major());
     result.put("minor", existing.minor());
-    result.put("issueName", existing.issueName());
-    result.put("issuePath", worktreePath.resolve(relativeIssuePath).toString());
-    result.put("worktreePath", existing.worktreePath());
-    result.put("issueBranch", issueBranch);
-    result.put("targetBranch", targetBranch);
-    result.put("estimatedTokens", estimatedTokens);
-    result.put("percentOfThreshold", (int) ((estimatedTokens / (double) TOKEN_LIMIT) * 100));
+    result.put("issue_name", existing.issueName());
+    result.put("issue_path", worktreePath.resolve(relativeIssuePath).toString());
+    result.put("worktree_path", existing.worktreePath());
+    result.put("issue_branch", issueBranch);
+    result.put("target_branch", targetBranch);
+    result.put("estimated_tokens", estimatedTokens);
+    result.put("percent_of_threshold", (int) ((estimatedTokens / (double) TOKEN_LIMIT) * 100));
     result.put("goal", goal);
-    result.put("approachSelected", "auto");
-    result.put("lockAcquired", true);
-    result.put("hasExistingWork", existingWork.hasExistingWork());
-    result.put("existingCommits", existingWork.existingCommits());
-    result.put("commitSummary", existingWork.commitSummary());
+    result.put("approach_selected", "auto");
+    result.put("lock_acquired", true);
+    result.put("has_existing_work", existingWork.hasExistingWork());
+    result.put("existing_commits", existingWork.existingCommits());
+    result.put("commit_summary", existingWork.commitSummary());
 
     if (!suspiciousCommits.isEmpty())
     {
-      result.put("potentiallyComplete", true);
-      result.put("suspiciousCommits", suspiciousCommits);
+      result.put("potentially_complete", true);
+      result.put("suspicious_commits", suspiciousCommits);
     }
 
     if (!warnings.isEmpty())
@@ -951,7 +951,7 @@ public final class WorkPrepare
   /**
    * Returns a map describing the status of a dependency.
    * <p>
-   * Returns {@code {"id": depId, "status": "closed"|"open"|"in-progress"|"unknown"|"notFound"}}.
+   * Returns {@code {"id": depId, "status": "closed"|"open"|"in-progress"|"unknown"|"not_found"}}.
    *
    * @param depId the qualified dependency issue ID
    * @param issueIndex the qualified name to issue entry index
@@ -963,7 +963,7 @@ public final class WorkPrepare
   {
     IssueIndexEntry depData = issueIndex.get(depId);
     if (depData == null)
-      return Map.of("id", depId, "status", "notFound");
+      return Map.of("id", depId, "status", "not_found");
 
     try
     {
@@ -1022,8 +1022,8 @@ public final class WorkPrepare
         }
 
         Map<String, Object> blockedIssue = new LinkedHashMap<>();
-        blockedIssue.put("issueId", qualifiedIssueName);
-        blockedIssue.put("blockedBy", blockedBy);
+        blockedIssue.put("issue_id", qualifiedIssueName);
+        blockedIssue.put("blocked_by", blockedBy);
         blockedIssue.put("reason", String.join(", ", reasonParts));
         blockedIssues.add(blockedIssue);
       }
@@ -1305,8 +1305,8 @@ public final class WorkPrepare
             substring(0, lockFile.getFileName().toString().length() - ".lock".length());
 
           Map<String, Object> lockedIssue = new LinkedHashMap<>();
-          lockedIssue.put("issueId", lockIssueId);
-          lockedIssue.put("lockedBy", lockData.getOrDefault("session_id", "unknown").toString());
+          lockedIssue.put("issue_id", lockIssueId);
+          lockedIssue.put("locked_by", lockData.getOrDefault("session_id", "unknown").toString());
           lockedIssues.add(lockedIssue);
         }
         catch (IOException _)
@@ -1682,7 +1682,7 @@ public final class WorkPrepare
 
     ObjectNode node = (ObjectNode) root;
     node.put("status", "in-progress");
-    node.put("targetBranch", targetBranch);
+    node.put("target_branch", targetBranch);
 
     Files.writeString(indexFile, mapper.writeValueAsString(node));
 
@@ -1712,7 +1712,7 @@ public final class WorkPrepare
 
     Map<String, Object> state = new LinkedHashMap<>();
     state.put("status", "in-progress");
-    state.put("targetBranch", targetBranch);
+    state.put("target_branch", targetBranch);
 
     Files.writeString(indexFile, scope.getJsonMapper().writeValueAsString(state));
   }

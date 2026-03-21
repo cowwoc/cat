@@ -5,7 +5,7 @@ description: >
   Shows subagent token/context usage. For current session tokens, use /cat:token-report instead.
 model: haiku
 user-invocable: false
-argument-hint: "<catAgentId>"
+argument-hint: "<cat_agent_id>"
 ---
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" get-subagent-status-agent "$0"`

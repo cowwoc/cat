@@ -3,5 +3,5 @@
   "resolution": "implemented",
   "progress": 100,
   "dependencies": ["fix-decompose-issue-bare-names"],
-  "targetBranch": "v2.1"
+  "target_branch": "v2.1"
 }

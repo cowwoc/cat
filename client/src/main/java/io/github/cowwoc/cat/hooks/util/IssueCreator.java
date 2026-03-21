@@ -78,30 +78,30 @@ public final class IssueCreator
       throw new IOException("Input must be a JSON object, got: " + parsedNode.getNodeType());
     ObjectNode data = (ObjectNode) parsedNode;
 
-    String[] required = {"major", "minor", "issueName", "indexContent"};
+    String[] required = {"major", "minor", "issue_name", "index_content"};
     for (String field : required)
     {
       if (!data.has(field))
         throw new IOException("Missing required field: " + field);
     }
-    if (!data.has("planContent") && !data.has("planFile"))
-      throw new IOException("Missing required field: planContent or planFile (provide one)");
+    if (!data.has("plan_content") && !data.has("plan_file"))
+      throw new IOException("Missing required field: plan_content or plan_file (provide one)");
 
     int major = data.get("major").asInt();
     int minor = data.get("minor").asInt();
-    String issueName = data.get("issueName").asString();
-    String indexContent = data.get("indexContent").asString();
+    String issueName = data.get("issue_name").asString();
+    String indexContent = data.get("index_content").asString();
     String planContent;
-    if (data.has("planFile"))
+    if (data.has("plan_file"))
     {
-      Path planSourceFile = Path.of(data.get("planFile").asString());
+      Path planSourceFile = Path.of(data.get("plan_file").asString());
       planContent = Files.readString(planSourceFile, StandardCharsets.UTF_8);
     }
     else
-      planContent = data.get("planContent").asString();
+      planContent = data.get("plan_content").asString();
     String commitDesc;
-    if (data.has("commitDescription"))
-      commitDesc = data.get("commitDescription").asString();
+    if (data.has("commit_description"))
+      commitDesc = data.get("commit_description").asString();
     else
       commitDesc = "Add issue";
 

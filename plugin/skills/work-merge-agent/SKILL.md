@@ -5,7 +5,7 @@ description: >
   tool call verbatim — do not respond conversationally.
 model: sonnet
 user-invocable: false
-argument-hint: "<catAgentId> <issueId> <issuePath> <worktreePath> <issueBranch> <targetBranch> <commitsJsonPath> <trust> <verify>"
+argument-hint: "<cat_agent_id> <issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <commits_json_path> <trust> <verify>"
 allowed-tools:
   - Read
   - Bash

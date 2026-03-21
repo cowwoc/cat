@@ -105,9 +105,9 @@ public class IssueCreatorTest
       String json = """
         {
           "minor": 1,
-          "issueName": "test",
-          "indexContent": "{}",
-          "planContent": "plan"
+          "issue_name": "test",
+          "index_content": "{}",
+          "plan_content": "plan"
         }""";
       creator.execute(json);
     }
@@ -133,9 +133,9 @@ public class IssueCreatorTest
       String json = """
         {
           "major": 2,
-          "issueName": "test",
-          "indexContent": "{}",
-          "planContent": "plan"
+          "issue_name": "test",
+          "index_content": "{}",
+          "plan_content": "plan"
         }""";
       creator.execute(json);
     }
@@ -146,12 +146,12 @@ public class IssueCreatorTest
   }
 
   /**
-   * Verifies that execute rejects JSON missing required field issueName.
+   * Verifies that execute rejects JSON missing required field issue_name.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = IOException.class,
-    expectedExceptionsMessageRegExp = ".*Missing required field: issueName.*")
+    expectedExceptionsMessageRegExp = ".*Missing required field: issue_name.*")
   public void executeRejectsMissingIssueName() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -162,8 +162,8 @@ public class IssueCreatorTest
         {
           "major": 2,
           "minor": 1,
-          "indexContent": "{}",
-          "planContent": "plan"
+          "index_content": "{}",
+          "plan_content": "plan"
         }""";
       creator.execute(json);
     }
@@ -174,12 +174,12 @@ public class IssueCreatorTest
   }
 
   /**
-   * Verifies that execute rejects JSON missing required field indexContent.
+   * Verifies that execute rejects JSON missing required field index_content.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = IOException.class,
-    expectedExceptionsMessageRegExp = ".*Missing required field: indexContent.*")
+    expectedExceptionsMessageRegExp = ".*Missing required field: index_content.*")
   public void executeRejectsMissingIndexContent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -190,8 +190,8 @@ public class IssueCreatorTest
         {
           "major": 2,
           "minor": 1,
-          "issueName": "test",
-          "planContent": "plan"
+          "issue_name": "test",
+          "plan_content": "plan"
         }""";
       creator.execute(json);
     }
@@ -202,12 +202,12 @@ public class IssueCreatorTest
   }
 
   /**
-   * Verifies that execute rejects JSON missing required field planContent.
+   * Verifies that execute rejects JSON missing required field plan_content.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = IOException.class,
-    expectedExceptionsMessageRegExp = ".*Missing required field: planContent.*")
+    expectedExceptionsMessageRegExp = ".*Missing required field: plan_content or plan_file.*")
   public void executeRejectsMissingPlanContent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -218,8 +218,8 @@ public class IssueCreatorTest
         {
           "major": 2,
           "minor": 1,
-          "issueName": "test",
-          "indexContent": "{}"
+          "issue_name": "test",
+          "index_content": "{}"
         }""";
       creator.execute(json);
     }
@@ -245,9 +245,9 @@ public class IssueCreatorTest
         {
           "major": 999,
           "minor": 999,
-          "issueName": "nonexistent-test",
-          "indexContent": "{}",
-          "planContent": "plan"
+          "issue_name": "nonexistent-test",
+          "index_content": "{}",
+          "plan_content": "plan"
         }""";
 
       String result = creator.execute(json);
@@ -320,10 +320,10 @@ public class IssueCreatorTest
         {
           "major": 2,
           "minor": 1,
-          "issueName": "test-issue",
-          "indexContent": "{\\"status\\": \\"open\\"}",
-          "planContent": "# Plan\\nSteps here",
-          "commitDescription": "Test issue creation"
+          "issue_name": "test-issue",
+          "index_content": "{\\"status\\": \\"open\\"}",
+          "plan_content": "# Plan\\nSteps here",
+          "commit_description": "Test issue creation"
         }""";
 
       String result = creator.execute(json, tempDir);
@@ -355,7 +355,7 @@ public class IssueCreatorTest
   }
 
   /**
-   * Verifies that execute accepts JSON without commitDescription field.
+   * Verifies that execute accepts JSON without commit_description field.
    *
    * @throws IOException if an I/O error occurs
    * @throws InterruptedException if git process is interrupted
@@ -371,9 +371,9 @@ public class IssueCreatorTest
         {
           "major": 2,
           "minor": 1,
-          "issueName": "test-optional",
-          "indexContent": "{}",
-          "planContent": "# Plan"
+          "issue_name": "test-optional",
+          "index_content": "{}",
+          "plan_content": "# Plan"
         }""";
 
       String result = creator.execute(json, tempDir);
@@ -409,9 +409,9 @@ public class IssueCreatorTest
         {
           "major": 2,
           "minor": 1,
-          "issueName": "first-issue",
-          "indexContent": "{\\"status\\": \\"open\\"}",
-          "planContent": "# Plan"
+          "issue_name": "first-issue",
+          "index_content": "{\\"status\\": \\"open\\"}",
+          "plan_content": "# Plan"
         }""";
 
       String result1 = creator.execute(json1, tempDir);
@@ -423,9 +423,9 @@ public class IssueCreatorTest
         {
           "major": 2,
           "minor": 1,
-          "issueName": "second-issue",
-          "indexContent": "{\\"status\\": \\"open\\"}",
-          "planContent": "# Plan"
+          "issue_name": "second-issue",
+          "index_content": "{\\"status\\": \\"open\\"}",
+          "plan_content": "# Plan"
         }""";
 
       String result2 = creator.execute(json2, tempDir);
@@ -466,9 +466,9 @@ public class IssueCreatorTest
         {
           "major": 2,
           "minor": 1,
-          "issueName": "test-issue",
-          "indexContent": "{}",
-          "planContent": "# Plan"
+          "issue_name": "test-issue",
+          "index_content": "{}",
+          "plan_content": "# Plan"
         }""";
 
       creator.execute(json, tempDir);
@@ -501,9 +501,9 @@ public class IssueCreatorTest
         {
           "major": 2,
           "minor": 1,
-          "issueName": "test-readonly",
-          "indexContent": "{\\"status\\": \\"open\\"}",
-          "planContent": "# Plan"
+          "issue_name": "test-readonly",
+          "index_content": "{\\"status\\": \\"open\\"}",
+          "plan_content": "# Plan"
         }""";
 
       creator.execute(json, tempDir);

@@ -4,7 +4,7 @@ description: >
   or before deciding whether to decompose remaining work
 model: haiku
 user-invocable: false
-argument-hint: "<catAgentId>"
+argument-hint: "<cat_agent_id>"
 ---
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" token-report-agent "$0"`

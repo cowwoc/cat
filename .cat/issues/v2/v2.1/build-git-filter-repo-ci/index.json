@@ -3,5 +3,5 @@
   "resolution" : "implemented",
   "dependencies" : [ "2.1-add-feature-branch-workflow-trigger" ],
   "blocks" : [ "2.1-replace-bfg-with-git-filter-repo" ],
-  "targetBranch" : "v2.1"
+  "target_branch" : "v2.1"
 }

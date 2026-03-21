@@ -4,7 +4,7 @@ model: sonnet
 user-invocable: false
 allowed-tools:
   - Skill
-argument-hint: "<catAgentId>"
+argument-hint: "<cat_agent_id>"
 ---
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" verify-implementation-agent "$0" "$(pwd)"`

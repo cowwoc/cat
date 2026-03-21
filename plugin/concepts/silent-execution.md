@@ -63,20 +63,20 @@ Skill B's preprocessor runs the command invisibly using the passed arguments.
 ┌──────────────────────────────────────────────────────┐
 │ Skill A (orchestrator)                               │
 │                                                      │
-│   1. Agent determines issueId, targetBranch, etc.    │
-│   2. Invokes: /cat:skill-b issueId targetBranch      │
+│   1. Agent determines issue_id, target_branch, etc.    │
+│   2. Invokes: /cat:skill-b issue_id target_branch      │
 └──────────────────┬───────────────────────────────────┘
                    │
                    ▼
 ┌──────────────────────────────────────────────────────┐
 │ Skill B (silent executor)                            │
 │                                                      │
-│ arguments: [completedIssue, targetBranch]              │
+│ arguments: [completed_issue, target_branch]              │
 │                                                      │
 │ Preprocessing (invisible to user):                   │
-│   $completedIssue → "2.1-fix-bug"                    │
-│   $targetBranch → "v2.1"                               │
-│   !`launcher $completedIssue $targetBranch` → output   │
+│   $completed_issue → "2.1-fix-bug"                    │
+│   $target_branch → "v2.1"                               │
+│   !`launcher $completed_issue $target_branch` → output   │
 │                                                      │
 │ Agent receives: command output as skill content      │
 └──────────────────────────────────────────────────────┘
@@ -88,7 +88,7 @@ Skill B's preprocessor runs the command invisibly using the passed arguments.
 
 ```markdown
 ## Next Issue
-Run `get-next-issue-box --completed-issue "${issueId}" ...` to generate the box.
+Run `get-next-issue-box --completed-issue "${issue_id}" ...` to generate the box.
 ```
 
 Agent makes a visible Bash tool call. User sees the command.
@@ -98,15 +98,15 @@ Agent makes a visible Bash tool call. User sees the command.
 ```markdown
 ---
 arguments:
-  - completedIssue
-  - targetBranch
+  - completed_issue
+  - target_branch
 ---
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-next-issue-box" $completedIssue $targetBranch`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-next-issue-box" $completed_issue $target_branch`
 ```
 
 When `/cat:work-complete-agent 2.1-fix-bug v2.1` is invoked:
 
-1. `$completedIssue` → `2.1-fix-bug`, `$targetBranch` → `v2.1`
+1. `$completed_issue` → `2.1-fix-bug`, `$target_branch` → `v2.1`
 2. `${CLAUDE_PLUGIN_ROOT}` → `/path/to/plugin`
 3. Command executes: `get-next-issue-box 2.1-fix-bug v2.1`
 4. Output (Issue Complete box) replaces the directive

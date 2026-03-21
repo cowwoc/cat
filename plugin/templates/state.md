@@ -12,7 +12,7 @@
 | `dependencies` | Always | Array of issue slugs this depends on; use `[]` if none |
 | `blocks` | Always | Array of issue slugs this blocks; use `[]` if none |
 | `resolution` | Closed only | `implemented`, `duplicate`, `obsolete`, `won't-fix`, or `not-applicable` |
-| `targetBranch` | Optional | The branch this issue merges into (e.g., `v2.1`, `main`) |
+| `target_branch` | Optional | The branch this issue merges into (e.g., `v2.1`, `main`) |
 | `parent` | Sub-issues only | Parent issue slug |
 | `decomposedInto` | Decomposed issues only | Array of sub-issue slugs |
 

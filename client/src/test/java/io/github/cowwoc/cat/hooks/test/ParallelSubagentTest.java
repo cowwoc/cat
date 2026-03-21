@@ -59,10 +59,10 @@ public class ParallelSubagentTest
       JsonNode node = mapper.readTree(json);
       String status = node.path("status").asString();
       requireThat(status, "status").isEqualTo("READY");
-      int tokens = node.path("estimatedTokens").asInt();
+      int tokens = node.path("estimated_tokens").asInt();
       requireThat(tokens, "tokens").isEqualTo(16_000);
 
-      worktreePath = Path.of(node.path("worktreePath").asString());
+      worktreePath = Path.of(node.path("worktree_path").asString());
     }
     finally
     {
@@ -100,11 +100,11 @@ public class ParallelSubagentTest
       JsonNode node = mapper.readTree(json);
       String status = node.path("status").asString();
       requireThat(status, "status").isEqualTo("READY");
-      int tokens = node.path("estimatedTokens").asInt();
+      int tokens = node.path("estimated_tokens").asInt();
       // 2 top-level items only (sub-items with indentation ignored)
       requireThat(tokens, "tokens").isEqualTo(14_000);
 
-      worktreePath = Path.of(node.path("worktreePath").asString());
+      worktreePath = Path.of(node.path("worktree_path").asString());
     }
     finally
     {
@@ -141,11 +141,11 @@ public class ParallelSubagentTest
       JsonNode node = mapper.readTree(json);
       String status = node.path("status").asString();
       requireThat(status, "status").isEqualTo("READY");
-      int tokens = node.path("estimatedTokens").asInt();
+      int tokens = node.path("estimated_tokens").asInt();
       // No files to create/modify and no execution items: base estimate only
       requireThat(tokens, "tokens").isEqualTo(10_000);
 
-      worktreePath = Path.of(node.path("worktreePath").asString());
+      worktreePath = Path.of(node.path("worktree_path").asString());
     }
     finally
     {

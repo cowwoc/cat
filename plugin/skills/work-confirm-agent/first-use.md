@@ -11,19 +11,19 @@ stakeholder quality review. Spawns a verify subagent, handles fix iteration if c
 ## Arguments Format
 
 ```
-<catAgentId> <issueId> <issuePath> <worktreePath> <issueBranch> <targetBranch> <executionCommitsJsonPath> <filesChanged> <trust> <verify>
+<cat_agent_id> <issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <execution_commits_json_path> <files_changed> <trust> <verify>
 ```
 
 | Position | Name | Example |
 |----------|------|---------|
-| 1 | catAgentId | agent ID passed through from parent |
-| 2 | issueId | `2.1-issue-name` |
-| 3 | issuePath | `/workspace/.cat/issues/v2/v2.1/issue-name` |
-| 4 | worktreePath | `${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name` |
-| 5 | issueBranch | `2.1-issue-name` |
-| 6 | targetBranch | `v2.1` |
-| 7 | executionCommitsJsonPath | Path to JSON file containing commit objects from the implement phase |
-| 8 | filesChanged | integer count of files changed |
+| 1 | cat_agent_id | agent ID passed through from parent |
+| 2 | issue_id | `2.1-issue-name` |
+| 3 | issue_path | `/workspace/.cat/issues/v2/v2.1/issue-name` |
+| 4 | worktree_path | `${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name` |
+| 5 | issue_branch | `2.1-issue-name` |
+| 6 | target_branch | `v2.1` |
+| 7 | execution_commits_json_path | Path to JSON file containing commit objects from the implement phase |
+| 8 | files_changed | integer count of files changed |
 | 9 | trust | `medium` |
 | 10 | verify | `changed` |
 
@@ -34,8 +34,8 @@ Return JSON when complete:
 ```json
 {
   "status": "COMPLETE|PARTIAL|INCOMPLETE",
-  "executionCommitsJson": "[{...}]",
-  "filesChanged": 5
+  "execution_commits_json": "[{...}]",
+  "files_changed": 5
 }
 ```
 
@@ -103,8 +103,8 @@ Task tool:
     Do NOT ask the main agent to provide this content — it is authoritative in plan.md.
 
     ## Execution Result
-    Commits: ${executionCommitsJson}
-    Files changed: ${filesChanged}
+    Commits: ${execution_commits_json}
+    Files changed: ${files_changed}
 
     ## Your Task
     1. Invoke the verify-implementation skill to check all plan.md post-conditions:
@@ -113,12 +113,12 @@ Task tool:
          skill: "cat:verify-implementation-agent"
          args: |
            {
-             "issueId": "${ISSUE_ID}",
-             "issuePath": "${ISSUE_PATH}",
-             "worktreePath": "${WORKTREE_PATH}",
+             "issue_id": "${ISSUE_ID}",
+             "issue_path": "${ISSUE_PATH}",
+             "worktree_path": "${WORKTREE_PATH}",
              "execution_result": {
-               "commits": ${executionCommitsJson},
-               "filesChanged": ${filesChanged}
+               "commits": ${execution_commits_json},
+               "files_changed": ${files_changed}
              }
            }
        ```
@@ -180,7 +180,7 @@ Extract detail file paths for use in fix subagent prompts:
 - Collect `e2e.detail_file`
 - Combine into a list: this is `DETAIL_FILE_PATHS` (used as `${detail_file_paths_from_compact_json}` in subagent prompts)
 
-Also store the parsed `executionCommitsJson` (from `EXECUTION_COMMITS_JSON` argument) as a
+Also store the parsed `execution_commits_json` (from `EXECUTION_COMMITS_JSON` argument) as a
 mutable variable `CURRENT_COMMITS_JSON`. This is the variable that step 5 updates and that
 re-spawned verify prompts must use — always use `CURRENT_COMMITS_JSON` (never the original
 `EXECUTION_COMMITS_JSON`) when constructing re-verification prompts after any fix iteration.
@@ -320,7 +320,7 @@ the first result is PARTIAL or INCOMPLETE. Do NOT re-initialize inside any branc
        {
          "status": "SUCCESS|PARTIAL|FAILED",
          "commits": [{"hash": "...", "message": "...", "type": "..."}],
-         "filesChanged": N,
+         "files_changed": N,
          "criteria_addressed": N
        }
        ```

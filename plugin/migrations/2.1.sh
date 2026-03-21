@@ -41,8 +41,9 @@ set -euo pipefail
 # 17. Convert bare sub-issue names to qualified names in "Decomposed Into" sections
 # 18. Rename PLAN.md → plan.md in all issue directories under .cat/issues/
 # 19. Convert STATE.md → index.json in all directories under .cat/issues/,
-#     extracting: status, resolution, targetBranch, dependencies, blocks, parent, decomposedInto
+#     extracting: status, resolution, target_branch, dependencies, blocks, parent, decomposedInto
 #     Strips Progress, Last Updated, Completed, and any narrative content.
+# 20. Rename targetBranch → target_branch in all index.json files under .cat/issues/
 
 trap 'echo "ERROR in 2.1.sh at line $LINENO: $BASH_COMMAND" >&2; exit 1' ERR
 
@@ -1436,11 +1437,11 @@ else
   \"resolution\": \"${resolution}\""
         fi
 
-        # targetBranch only if non-empty
+        # target_branch only if non-empty
         if [[ -n "$targetBranch" ]]; then
             targetBranch="${targetBranch//\"/\\\"}"
             json="${json},
-  \"targetBranch\": \"${targetBranch}\""
+  \"target_branch\": \"${targetBranch}\""
         fi
 
         # dependencies only if non-empty list
@@ -1516,6 +1517,24 @@ else
 
     log_migration "Phase 19 complete: $phase19_migrated files converted, $phase19_skipped already up to date"
 fi
+
+# Phase 20: Rename targetBranch → target_branch in index.json files
+# Idempotent: only renames if targetBranch key is present (not already target_branch)
+phase20_migrated=0
+phase20_skipped=0
+
+while IFS= read -r index_file; do
+    [[ -z "$index_file" ]] && continue
+    if grep -q '"targetBranch"' "$index_file" 2>/dev/null; then
+        sed -i 's/"targetBranch"/"target_branch"/g' "$index_file"
+        ((phase20_migrated++)) || true
+        log_migration "  Renamed targetBranch → target_branch in: $index_file"
+    else
+        ((phase20_skipped++)) || true
+    fi
+done < <(find "$issues_dir" -name "index.json" -type f 2>/dev/null || true)
+
+log_migration "Phase 20 complete: $phase20_migrated files updated, $phase20_skipped already up to date"
 
 log_success "Migration to 2.1 completed"
 exit 0

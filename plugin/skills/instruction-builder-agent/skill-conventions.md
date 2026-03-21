@@ -73,22 +73,22 @@ Do NOT add fields set to their default value — it adds noise and obscures inte
 content MUST specify `argument-hint` in frontmatter. See `concepts/skill-loading.md`
 § Skill Arguments for full argument-hint syntax, quoting rules, and variable substitution.
 
-**catAgentId requirement**: If `user-invocable: false` AND the preprocessor directive uses
+**cat_agent_id requirement**: If `user-invocable: false` AND the preprocessor directive uses
 `get-skill` (with `$ARGUMENTS` or fixed `$N` positional refs), then `argument-hint` MUST
-start with `<catAgentId>`. Omitting it causes runtime failures:
+start with `<cat_agent_id>`. Omitting it causes runtime failures:
 `catAgentId '<first-arg>' does not match a valid format`.
 
 - [ ] If `user-invocable: false` and skill uses `get-skill "$ARGUMENTS"`: argument-hint
-      starts with `<catAgentId>`
+      starts with `<cat_agent_id>`
 - [ ] If `user-invocable: false` and skill uses `get-skill` with fixed `$N` refs (e.g.,
-      `!get-skill <name> "$0" "$1"`): argument-hint starts with `<catAgentId>`
+      `!get-skill <name> "$0" "$1"`): argument-hint starts with `<cat_agent_id>`
 
 **Positional argument completeness**: If the preprocessor directive references `$0`...`$N`,
 `argument-hint` MUST document ALL positional args (including `$0`). Every `$N` reference
 must have a corresponding token in `argument-hint`.
 
 - [ ] Count of tokens in argument-hint matches the highest `$N` reference + 1
-- [ ] Each positional arg has a descriptive name (e.g., `<catAgentId>`, `<issue-path>`)
+- [ ] Each positional arg has a descriptive name (e.g., `<cat_agent_id>`, `<issue-path>`)
 
 ---
 

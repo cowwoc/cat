@@ -19,7 +19,7 @@ See LICENSE.md in the project root for license terms.
 ## How Session IDs Work
 
 Claude Code assigns a unique session ID (UUID v4) to each conversation session. This ID is used for:
-- Naming conversation history files: `${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/{sessionId}.jsonl`
+- Naming conversation history files: `${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/{session_id}.jsonl`
 - Session-specific TODO list tracking
 - Hook coordination across tools
 - Issue ownership in multi-instance scenarios

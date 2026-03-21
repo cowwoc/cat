@@ -5,7 +5,7 @@ description: >
   Use for validating agent adherence to instructions and guidelines.
 model: sonnet
 user-invocable: false
-argument-hint: "<catAgentId>"
+argument-hint: "<cat_agent_id>"
 ---
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" empirical-test-agent "$0"`

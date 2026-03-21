@@ -11,18 +11,18 @@ and orchestrates subagent execution of the implementation plan.
 ## Arguments Format
 
 ```
-<catAgentId> <issueId> <issuePath> <worktreePath> <issueBranch> <targetBranch> <estimatedTokens> <trust> <verify>
+<cat_agent_id> <issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <estimated_tokens> <trust> <verify>
 ```
 
 | Position | Name | Example |
 |----------|------|---------|
-| 1 | catAgentId | agent ID passed through from parent |
-| 2 | issueId | `2.1-issue-name` |
-| 3 | issuePath | `/workspace/.cat/issues/v2/v2.1/issue-name` |
-| 4 | worktreePath | `${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name` |
-| 5 | issueBranch | `2.1-issue-name` |
-| 6 | targetBranch | `v2.1` |
-| 7 | estimatedTokens | `45000` |
+| 1 | cat_agent_id | agent ID passed through from parent |
+| 2 | issue_id | `2.1-issue-name` |
+| 3 | issue_path | `/workspace/.cat/issues/v2/v2.1/issue-name` |
+| 4 | worktree_path | `${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name` |
+| 5 | issue_branch | `2.1-issue-name` |
+| 6 | target_branch | `v2.1` |
+| 7 | estimated_tokens | `45000` |
 | 8 | trust | `medium` |
 | 9 | verify | `changed` |
 
@@ -37,7 +37,7 @@ Return JSON when complete:
   "commits": [
     {"hash": "abc123", "message": "feature: description", "type": "feature"}
   ],
-  "filesChanged": 5,
+  "files_changed": 5,
   "tokens_used": 12000,
   "compaction_events": 0
 }
@@ -401,7 +401,7 @@ Task tool:
       "commits": [
         {"hash": "abc123", "message": "feature: description", "type": "feature"}
       ],
-      "filesChanged": <actual>,
+      "files_changed": <actual>,
       "issue_metrics": {},
       "discovered_issues": [],
       "verification": {
@@ -436,7 +436,7 @@ Skill tool:
 Where `SUBAGENT_RAW_ID` is the `agentId:` value from the Task tool result footer, and
 `subagentCommitsJsonPath` is a temp file path to write the collected commits JSON.
 
-The catAgentId format for a subagent is `{sessionId}/subagents/{agentId}` — do NOT omit the
+The cat_agent_id format for a subagent is `{session_id}/subagents/{agent_id}` — do NOT omit the
 `/subagents/` segment or the call will be rejected with a format validation error.
 
 Then validate and merge its commits back into the issue branch:
@@ -606,7 +606,7 @@ Task tool:
       "commits": [
         {"hash": "abc123", "message": "feature: description", "type": "feature"}
       ],
-      "filesChanged": <actual>,
+      "files_changed": <actual>,
       "issue_metrics": {},
       "discovered_issues": [],
       "verification": {
@@ -643,7 +643,7 @@ Skill tool:
 ```
 
 Where `SUBAGENT_RAW_ID` is the `agentId:` value from that group's Task tool result footer.
-The catAgentId format for a subagent is `{sessionId}/subagents/{agentId}` — do NOT omit the
+The cat_agent_id format for a subagent is `{session_id}/subagents/{agent_id}` — do NOT omit the
 `/subagents/` segment or the call will be rejected with a format validation error.
 
 Then validate and merge each subagent branch back into the issue branch in alphabetical order
@@ -683,7 +683,7 @@ The subagent branch name and worktree path for each group are returned in the Ta
 
 - Collect commits from all groups into a single combined list
 - If any group returns FAILED or BLOCKED, stop and report failure
-- Aggregate `filesChanged`, `tokens_used`, and `compaction_events` across all groups
+- Aggregate `files_changed`, `tokens_used`, and `compaction_events` across all groups
 
 ### Handle Execution Result
 

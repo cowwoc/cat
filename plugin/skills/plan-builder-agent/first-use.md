@@ -15,12 +15,12 @@ plan.md generation is consistent regardless of which workflow invokes it.
 Positional space-separated arguments:
 
 ```
-<catAgentId> <effort> <mode> <contextPath> [revision-context]
+<cat_agent_id> <effort> <mode> <contextPath> [revision-context]
 ```
 
 | Position | Name | Description |
 |----------|------|-------------|
-| 1 | catAgentId | CAT session identifier |
+| 1 | cat_agent_id | CAT session identifier |
 | 2 | effort | Planning depth: `low`, `medium`, or `high` |
 | 3 | mode | `revise` |
 | 4 | contextPath | Path to a file containing context (see below) |

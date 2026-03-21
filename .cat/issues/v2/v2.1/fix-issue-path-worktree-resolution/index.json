@@ -1,5 +1,5 @@
 {
   "status": "closed",
-  "targetBranch": "v2.1",
+  "target_branch": "v2.1",
   "blocks": ["2.1-add-catagentid-check-to-skill-builder"]
 }

@@ -43,7 +43,7 @@ public final class StateSchemaValidator implements FileWriteHandler
     Set.of("implemented", "duplicate", "obsolete", "won't-fix", "not-applicable");
   private static final Set<String> MANDATORY_FIELDS = Set.of("status");
   private static final Set<String> OPTIONAL_FIELDS =
-    Set.of("resolution", "targetBranch", "dependencies", "blocks", "parent", "decomposedInto");
+    Set.of("resolution", "target_branch", "dependencies", "blocks", "parent", "decomposedInto");
   private static final Set<String> ALL_VALID_FIELDS;
   private static final String MANDATORY_FIELDS_LIST;
   private static final String OPTIONAL_FIELDS_LIST;

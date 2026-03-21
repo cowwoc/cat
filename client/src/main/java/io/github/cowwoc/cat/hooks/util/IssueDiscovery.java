@@ -257,7 +257,7 @@ public final class IssueDiscovery
         requireThat(mapper, "mapper").isNotNull();
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("status", "found");
-        result.put("issueId", issueId);
+        result.put("issue_id", issueId);
         result.put("major", major);
         if (!minor.isEmpty())
         {
@@ -265,8 +265,8 @@ public final class IssueDiscovery
           if (!patch.isEmpty())
             result.put("patch", patch);
         }
-        result.put("issueName", issueName);
-        result.put("issuePath", issuePath);
+        result.put("issue_name", issueName);
+        result.put("issue_path", issuePath);
         result.put("scope", scope);
         return mapper.writeValueAsString(result);
       }
@@ -301,13 +301,13 @@ public final class IssueDiscovery
       {
         requireThat(mapper, "mapper").isNotNull();
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("status", "notFound");
+        result.put("status", "not_found");
         if (!excludePattern.isEmpty() && excludedCount > 0)
         {
           result.put("message", "No executable issues found (" + excludedCount + " excluded by pattern)");
           result.put("scope", scope);
-          result.put("excludePattern", excludePattern);
-          result.put("excludedCount", excludedCount);
+          result.put("exclude_pattern", excludePattern);
+          result.put("excluded_count", excludedCount);
         }
         else
         {
@@ -341,9 +341,9 @@ public final class IssueDiscovery
       {
         requireThat(mapper, "mapper").isNotNull();
         return mapper.writeValueAsString(Map.of(
-          "status", "alreadyComplete",
+          "status", "already_complete",
           "message", "Issue " + issueId + " is already closed - no work needed",
-          "issueId", issueId));
+          "issue_id", issueId));
       }
     }
 
@@ -373,9 +373,9 @@ public final class IssueDiscovery
       {
         requireThat(mapper, "mapper").isNotNull();
         return mapper.writeValueAsString(Map.of(
-          "status", "notExecutable",
+          "status", "not_executable",
           "message", reason,
-          "issueId", issueId));
+          "issue_id", issueId));
       }
     }
 
@@ -408,7 +408,7 @@ public final class IssueDiscovery
         return mapper.writeValueAsString(Map.of(
           "status", "blocked",
           "message", "Dependencies not satisfied",
-          "issueId", issueId,
+          "issue_id", issueId,
           "blocking", blockingIssues));
       }
     }
@@ -438,7 +438,7 @@ public final class IssueDiscovery
         return mapper.writeValueAsString(Map.of(
           "status", "decomposed",
           "message", "Issue is a decomposed parent task - execute sub-issues instead",
-          "issueId", issueId));
+          "issue_id", issueId));
       }
     }
 
@@ -486,8 +486,8 @@ public final class IssueDiscovery
       {
         requireThat(mapper, "mapper").isNotNull();
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("status", "existingWorktree");
-        result.put("issueId", issueId);
+        result.put("status", "existing_worktree");
+        result.put("issue_id", issueId);
         result.put("major", major);
         if (!minor.isEmpty())
         {
@@ -495,9 +495,9 @@ public final class IssueDiscovery
           if (!patch.isEmpty())
             result.put("patch", patch);
         }
-        result.put("issueName", issueName);
-        result.put("issuePath", issuePath);
-        result.put("worktreePath", worktreePath);
+        result.put("issue_name", issueName);
+        result.put("issue_path", issuePath);
+        result.put("worktree_path", worktreePath);
         result.put("message", "Issue has existing worktree - likely in use by another session");
         return mapper.writeValueAsString(result);
       }

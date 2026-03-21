@@ -3,7 +3,7 @@ description: Organize scattered documentation using a four-phase classify-extrac
 model: sonnet
 disable-model-invocation: true
 user-invocable: false
-argument-hint: "<catAgentId>"
+argument-hint: "<cat_agent_id>"
 ---
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" instruction-organizer-agent "$0"`

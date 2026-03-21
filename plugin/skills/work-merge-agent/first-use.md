@@ -21,7 +21,7 @@ commit squashing, branch merging, worktree cleanup, and state updates.
 
 ## Arguments and Configuration
 
-`<catAgentId> <issueId> <issuePath> <worktreePath> <issueBranch> <targetBranch> <commitsJsonPath> <trust> <verify>`
+`<cat_agent_id> <issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <commits_json_path> <trust> <verify>`
 
 ```bash
 read CAT_AGENT_ID ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH COMMITS_JSON_PATH TRUST VERIFY <<< "$ARGUMENTS"
@@ -29,7 +29,7 @@ PLAN_MD="${ISSUE_PATH}/plan.md"
 COMMITS_JSON=$(cat "$COMMITS_JSON_PATH")
 ```
 
-Return JSON: `{"status": "SUCCESS|ABORTED|CHANGES_REQUESTED|FAILED", "issueId": "...", "commits": [...], "filesChanged": N, "merged": true}`
+Return JSON: `{"status": "SUCCESS|ABORTED|CHANGES_REQUESTED|FAILED", "issue_id": "...", "commits": [...], "files_changed": N, "merged": true}`
 
 ## Issue Lifecycle States
 
@@ -62,7 +62,7 @@ UNMET=$(grep -E '"status"[[:space:]]*:[[:space:]]*"(Partial|Missing)"' "${CRITER
 
 If `UNMET` is non-empty, display a blocking error listing criterion name + status pairs and return FAILED:
 ```json
-{"status": "FAILED", "phase": "pre-gate-check", "message": "Approval gate blocked: unmet post-conditions", "issueId": "${ISSUE_ID}", "lock_retained": true}
+{"status": "FAILED", "phase": "pre-gate-check", "message": "Approval gate blocked: unmet post-conditions", "issue_id": "${ISSUE_ID}", "lock_retained": true}
 ```
 
 ## Step 8: Squash Commits by Topic Before Review (MANDATORY)
@@ -326,17 +326,25 @@ remaining, offer only: ["Approve and merge (with known concerns)", "Request chan
    `Skill("cat:stakeholder-review-agent", "${ISSUE_ID} ${WORKTREE_PATH} ${VERIFY} ${ALL_COMMITS_COMPACT}")`
 5. Increment `FIX_ITERATION`. Return to Step 11.
 
-**If "Request changes" selected:**
-```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/write-session-marker" "${CLAUDE_SESSION_ID}" "${ISSUE_ID}" "approved:invalidated"
+**If changes requested:** Return to user with feedback for iteration. Return status:
+```json
+{
+  "status": "CHANGES_REQUESTED",
+  "issue_id": "${ISSUE_ID}",
+  "feedback": "user feedback text"
+}
 ```
-Return `{"status": "CHANGES_REQUESTED", "issueId": "${ISSUE_ID}", "feedback": "user feedback text"}`
+Return `{"status": "CHANGES_REQUESTED", "issue_id": "${ISSUE_ID}", "feedback": "user feedback text"}`
 
-**If "Abort" selected:**
-```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/write-session-marker" "${CLAUDE_SESSION_ID}" "${ISSUE_ID}" "approved:invalidated"
+**If aborted:** Clean up and return ABORTED status:
+```json
+{
+  "status": "ABORTED",
+  "issue_id": "${ISSUE_ID}",
+  "message": "User aborted merge"
+}
 ```
-Return `{"status": "ABORTED", "issueId": "${ISSUE_ID}", "message": "User aborted merge"}`
+Return `{"status": "ABORTED", "issue_id": "${ISSUE_ID}", "message": "User aborted merge"}`
 
 ## Step 13: Merge Phase
 
@@ -418,9 +426,9 @@ If verification fails: STOP — do NOT invoke `work-complete`. Re-execute Step 1
 ```json
 {
   "status": "SUCCESS",
-  "issueId": "${ISSUE_ID}",
+  "issue_id": "${ISSUE_ID}",
   "commits": [...],
-  "filesChanged": N,
+  "files_changed": N,
   "tokens_used": N,
   "merged": true
 }
@@ -456,7 +464,7 @@ Classify errors in order:
   "status": "FAILED",
   "phase": "squash|rebase|merge",
   "message": "actual error message",
-  "issueId": "${ISSUE_ID}",
+  "issue_id": "${ISSUE_ID}",
   "lock_retained": true
 }
 ```

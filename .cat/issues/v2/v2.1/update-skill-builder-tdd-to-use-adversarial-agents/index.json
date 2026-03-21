@@ -1,6 +1,6 @@
 {
   "status": "closed",
   "resolution": "implemented (TDD adversarial hardening, work-merge-agent prevention, shared protocol extracted, SHA-only main agent communication, effort gate added for low-effort skipping)",
-  "targetBranch": "v2.1",
+  "target_branch": "v2.1",
   "dependencies": ["2.1-generalize-adversarial-agents-for-multi-target"]
 }

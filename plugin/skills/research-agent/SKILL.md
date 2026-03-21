@@ -6,7 +6,7 @@ description: >
   IMPORTANT: After invoking this skill, forward the AskUserQuestion tool call verbatim — do not respond
   conversationally.
 model: sonnet
-argument-hint: "<catAgentId> <research-type> <topic>"
+argument-hint: "<cat_agent_id> <research-type> <topic>"
 allowed-tools:
   - Task
   - AskUserQuestion

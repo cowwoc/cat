@@ -4,7 +4,7 @@ description: >
   Required for approval gates, code reviews, change summaries.
 model: haiku
 user-invocable: false
-argument-hint: "<catAgentId> <issue-path>"
+argument-hint: "<cat_agent_id> <issue-path>"
 ---
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" get-diff-agent "$0" "$1"`

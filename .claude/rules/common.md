@@ -239,7 +239,7 @@ from `config.json`.
 | Value | Source |
 |-------|--------|
 | `trust`, `verify`, `effort` | `.cat/config.json` field values |
-| `targetBranch`, `issueId` | Parameters from `work-prepare` phase output |
+| `target_branch`, `issue_id` | Parameters from `work-prepare` phase output |
 | Current branch | `git branch --show-current` |
 | Worktree path | Parameters from `work-prepare` phase output |
 
@@ -257,9 +257,9 @@ fi
 TRUST=$(echo "$CONFIG" | grep -o '"trust"[[:space:]]*:[[:space:]]*"[^"]*"' \
   | sed 's/.*"trust"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 
-# 2. Use targetBranch from parameter (not from config.json)
+# 2. Use target_branch from parameter (not from config.json)
 if [[ -z "${TARGET_BRANCH:-}" ]]; then
-  echo "ERROR: targetBranch parameter is missing" >&2
+  echo "ERROR: target_branch parameter is missing" >&2
   exit 1
 fi
 git rebase "$TARGET_BRANCH"
@@ -415,6 +415,46 @@ Tests must be **self-contained**, **thread-safe**, and must **never impact the p
 
 **Why:** A leaky test that runs `git reset --soft HEAD~1 && git commit` against the real repo will silently corrupt the
 working branch on every build. This is catastrophic when builds automatically or in parallel.
+
+## Naming Conventions
+
+### Variable Names in Markdown Files
+
+Variable and parameter names referenced in Markdown (MD) files use **snake_case**.
+
+This applies to:
+- Skill parameter names in argument-hint frontmatter and argument tables (e.g., `cat_agent_id`, `issue_id`,
+  `worktree_path`, `target_branch`)
+- Agent variable references embedded in Bash commands within skill instructions (e.g., `${issue_id}`,
+  `${worktree_path}`)
+- Named identifiers used in skill invocation `args:` strings
+
+**Correct (snake_case):**
+```
+<cat_agent_id> <issue_id> <worktree_path> <target_branch>
+```
+
+**Incorrect (camelCase):**
+```
+<catAgentId> <issueId> <worktreePath> <targetBranch>
+```
+
+### Variable Names in Java Source Files
+
+Variable names in Java source files use **camelCase** per Java language convention (e.g., `catAgentId`,
+`issueId`, `worktreePath`, `targetBranch`).
+
+### JSON Field Names
+
+JSON field names in API output contracts (from Java CLI tools) use **snake_case**
+(e.g., `"issue_id"`, `"worktree_path"`, `"target_branch"`). This is consistent with the Configuration Reads
+table which already shows `target_branch` and `issue_id` in snake_case.
+
+### All-Caps Shell Variables
+
+Shell environment variables use **SCREAMING_SNAKE_CASE** per POSIX convention (e.g., `WORKTREE_PATH`,
+`CLAUDE_SESSION_ID`, `TARGET_BRANCH`). This is a separate convention from the agent variable names described
+above.
 
 ## Enforcement
 

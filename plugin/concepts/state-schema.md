@@ -15,7 +15,7 @@ All issue `index.json` files MUST be valid JSON containing only the following fi
 |-------|----------|--------|
 | `status` | Always | `open`, `in-progress`, `blocked`, or `closed` |
 | `resolution` | Closed issues only | `implemented`, `duplicate (...)`, `obsolete (...)`, `won't-fix (...)`, or `not-applicable (...)` |
-| `targetBranch` | Optional | The branch this issue merges into (e.g., `v2.1`, `main`) |
+| `target_branch` | Optional | The branch this issue merges into (e.g., `v2.1`, `main`) |
 | `dependencies` | Optional | `["issue-slug", ...]` — issues this issue depends on |
 | `blocks` | Optional | `["issue-slug", ...]` — issues this issue blocks |
 | `parent` | Optional (sub-issues only) | Parent issue slug string |

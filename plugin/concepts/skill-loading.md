@@ -89,7 +89,7 @@ and preprocessor-based plugin skills.
 
 The `argument-hint` frontmatter field documents the arguments passed to the SKILL.md preprocessor command
 (the `!` backtick directive), not the arguments received by `first-use.md`. For skills using `get-skill`,
-this includes `catAgentId` as the first argument — `get-skill` consumes `catAgentId` internally and passes
+this includes `cat_agent_id` as the first argument — `get-skill` consumes `cat_agent_id` internally and passes
 the remaining arguments to `first-use.md`.
 
 The field is also shown as a display-only hint in the CLI prompt bar when users type the slash command.
@@ -180,16 +180,16 @@ behavior.
 GetSkill tracks which skills have been loaded via **per-agent** marker files:
 
 ```
-${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/{sessionId}/skills-loaded               ← main agent
-${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/{sessionId}/subagents/{agent_id}/skills-loaded  ← subagent
+${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/{session_id}/skills-loaded               ← main agent
+${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/{session_id}/subagents/{agent_id}/skills-loaded  ← subagent
 ```
 
-The `catAgentId` encodes the full relative path from `projects/${ENCODED_PROJECT_DIR}/`:
+The `cat_agent_id` encodes the full relative path from `projects/${ENCODED_PROJECT_DIR}/`:
 
-| Agent | catAgentId value | Resolved marker path |
-|-------|------------------|----------------------|
-| Main agent | `{sessionId}` | `${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/{sessionId}/skills-loaded` |
-| Subagent | `{sessionId}/subagents/{agent_id}` | `${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/{sessionId}/subagents/{agent_id}/skills-loaded` |
+| Agent | cat_agent_id value | Resolved marker path |
+|-------|-------------------|----------------------|
+| Main agent | `{session_id}` | `${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/{session_id}/skills-loaded` |
+| Subagent | `{session_id}/subagents/{agent_id}` | `${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/{session_id}/subagents/{agent_id}/skills-loaded` |
 
 Each agent instance (main agent, each subagent) has its own marker file. Parent and subagents track
 skill loading independently — a skill invoked by the parent does not affect a subagent's first-use
@@ -272,12 +272,12 @@ prompt: |
 
 Skills that can be invoked by both users and the model exist as paired directories:
 
-| Directory | Audience | Frontmatter flag | catAgentId source |
+| Directory | Audience | Frontmatter flag | cat_agent_id source |
 |-----------|----------|-----------------|------------------|
 | `{skill-name}/` | Users (slash command) | `disable-model-invocation: true` | `${CLAUDE_SESSION_ID}` |
 | `{skill-name}-agent/` | Model (Skill tool) | `user-invocable: false` | `$0` (caller-supplied) |
 
-**Why the split is necessary:** Skills that use a catAgentId to locate per-agent state (skill markers, subagent
+**Why the split is necessary:** Skills that use a cat_agent_id to locate per-agent state (skill markers, subagent
 context) must receive the correct ID for the caller. When a user invokes a skill, `${CLAUDE_SESSION_ID}` always
 identifies the main session correctly. When the model invokes a skill — especially from a subagent — it must pass
 its own agent ID via `$0`. Using `${CLAUDE_SESSION_ID}` in a subagent context writes to the wrong marker file,
@@ -291,7 +291,7 @@ causing skills to misbehave (e.g., first-use check passes for the wrong agent).
 - `user-invocable: false` — hides the skill from the slash command menu. Use on agent-facing variants so users
   never see the `cat:{skill-name}-agent` command.
 
-**catAgentId in preprocessor commands:**
+**cat_agent_id in preprocessor commands:**
 ```yaml
 # User-facing: always the main session
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" add-agent "${CLAUDE_SESSION_ID}"`
@@ -311,7 +311,7 @@ pass `$0` directly and ensure the invoking context received it from SubagentStar
 - Agent-facing: trigger-oriented — describe when the model should invoke it, including keyword triggers and usage
   conditions (e.g., "Use when user says 'add an issue'. IMPORTANT: forward AskUserQuestion verbatim.").
 
-**When to create variants:** Create a paired `-agent` variant whenever the skill uses `catAgentId` to locate
+**When to create variants:** Create a paired `-agent` variant whenever the skill uses `cat_agent_id` to locate
 per-agent state. Skills that perform stateless operations (e.g., format a document) do not need variants — use
 `disable-model-invocation: true` or `user-invocable: false` alone based on the intended audience.
 
@@ -441,9 +441,9 @@ message: `"see your earlier Read result for {filename}"`.
 
 ### Tracking
 
-Marker files are stored under `{sessionBasePath}/{catAgentId}/files-loaded/` using the URL-encoded file
+Marker files are stored under `{sessionBasePath}/{cat_agent_id}/files-loaded/` using the URL-encoded file
 path as the marker filename. Main agents use the session ID as their agent path; subagents use
-`{sessionId}/subagents/{agentId}`. Different file paths produce independent markers.
+`{session_id}/subagents/{agent_id}`. Different file paths produce independent markers.
 
 ### Usage in Skill Files
 

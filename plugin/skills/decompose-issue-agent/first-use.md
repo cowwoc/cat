@@ -238,13 +238,13 @@ sub-issue in Wave N+1 can begin.
 sub-issues:
   - id: 1.2-parser-lexer
     dependencies: []
-    estimatedTokens: 25000
+    estimated_tokens: 25000
   - id: 1.2-parser-ast
     dependencies: [1.2-parser-lexer]
-    estimatedTokens: 30000
+    estimated_tokens: 30000
   - id: 1.2-parser-tests
     dependencies: []
-    estimatedTokens: 20000
+    estimated_tokens: 20000
 
 # Wave-based parallel plan
 parallel_execution_plan:

@@ -575,8 +575,10 @@ public class IssueDiscoveryTest
 
       requireThat(json, "json").contains("\"status\"");
       requireThat(json, "json").contains("\"found\"");
-      requireThat(json, "json").contains("\"issueId\"");
+      requireThat(json, "json").contains("\"issue_id\"");
       requireThat(json, "json").contains("\"2.1-my-feature\"");
+      requireThat(json, "json").contains("\"issue_name\"");
+      requireThat(json, "json").contains("\"issue_path\"");
     }
   }
 
@@ -596,7 +598,7 @@ public class IssueDiscoveryTest
       String json = notFound.toJson(mapper);
 
       requireThat(json, "json").contains("\"status\"");
-      requireThat(json, "json").contains("\"notFound\"");
+      requireThat(json, "json").contains("\"not_found\"");
       requireThat(json, "json").contains("\"scope\"");
     }
   }
@@ -619,7 +621,7 @@ public class IssueDiscoveryTest
 
       requireThat(json, "json").contains("\"status\"");
       requireThat(json, "json").contains("\"blocked\"");
-      requireThat(json, "json").contains("\"issueId\"");
+      requireThat(json, "json").contains("\"issue_id\"");
       requireThat(json, "json").contains("\"blocking\"");
       requireThat(json, "json").contains("2.1-dep-a");
     }
@@ -640,10 +642,94 @@ public class IssueDiscoveryTest
 
       String json = notFound.toJson(mapper);
 
-      requireThat(json, "json").contains("\"excludedCount\"");
-      requireThat(json, "json").contains("\"excludePattern\"");
+      requireThat(json, "json").contains("\"excluded_count\"");
+      requireThat(json, "json").contains("\"exclude_pattern\"");
       requireThat(json, "json").contains("compress");
       requireThat(json, "json").contains("excluded by pattern");
+    }
+  }
+
+  /**
+   * Verifies that the AlreadyComplete result produces valid JSON.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void alreadyCompleteResultProducesValidJson() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DiscoveryResult.AlreadyComplete alreadyComplete = new DiscoveryResult.AlreadyComplete("2.1-my-feature");
+
+      String json = alreadyComplete.toJson(mapper);
+
+      requireThat(json, "json").contains("\"status\"");
+      requireThat(json, "json").contains("\"already_complete\"");
+    }
+  }
+
+  /**
+   * Verifies that the NotExecutable result produces valid JSON.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void notExecutableResultProducesValidJson() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DiscoveryResult.NotExecutable notExecutable = new DiscoveryResult.NotExecutable(
+        "2.1-my-feature", "Issue status is blocked");
+
+      String json = notExecutable.toJson(mapper);
+
+      requireThat(json, "json").contains("\"status\"");
+      requireThat(json, "json").contains("\"not_executable\"");
+    }
+  }
+
+  /**
+   * Verifies that the Decomposed result produces valid JSON.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void decomposedResultProducesValidJson() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DiscoveryResult.Decomposed decomposed = new DiscoveryResult.Decomposed("2.1-my-feature");
+
+      String json = decomposed.toJson(mapper);
+
+      requireThat(json, "json").contains("\"status\"");
+      requireThat(json, "json").contains("\"decomposed\"");
+      requireThat(json, "json").contains("\"issue_id\"");
+    }
+  }
+
+  /**
+   * Verifies that the ExistingWorktree result produces valid JSON.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void existingWorktreeResultProducesValidJson() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DiscoveryResult.ExistingWorktree existingWorktree = new DiscoveryResult.ExistingWorktree(
+        "2.1-my-feature", "2", "1", "", "my-feature", "/path/to/issue", "/path/to/worktree");
+
+      String json = existingWorktree.toJson(mapper);
+
+      requireThat(json, "json").contains("\"status\"");
+      requireThat(json, "json").contains("\"existing_worktree\"");
+      requireThat(json, "json").contains("\"worktree_path\"");
     }
   }
 
@@ -1173,7 +1259,7 @@ public class IssueDiscoveryTest
 
       requireThat(json, "json").contains("\"status\"");
       requireThat(json, "json").contains("\"found\"");
-      requireThat(json, "json").contains("\"issueId\"");
+      requireThat(json, "json").contains("\"issue_id\"");
       requireThat(json, "json").contains("\"2.1.3-patch-fix\"");
       requireThat(json, "json").contains("\"patch\"");
       requireThat(json, "json").contains("\"3\"");
@@ -1302,7 +1388,7 @@ public class IssueDiscoveryTest
 
       requireThat(json, "json").contains("\"status\"");
       requireThat(json, "json").contains("\"found\"");
-      requireThat(json, "json").contains("\"issueId\"");
+      requireThat(json, "json").contains("\"issue_id\"");
       requireThat(json, "json").contains("\"2-my-feature\"");
       requireThat(json, "json").contains("\"major\"");
       requireThat(json, "json").doesNotContain("\"minor\"");

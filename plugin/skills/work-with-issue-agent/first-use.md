@@ -50,7 +50,7 @@ are additionally enforced by hooks or explicit STOP instructions that block prog
 ## Arguments and Configuration
 
 The main `/cat:work` skill invokes this with positional space-separated arguments:
-`<issueId> <issuePath> <worktreePath> <issueBranch> <targetBranch> <estimatedTokens> <trust> <verify>`
+`<issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <estimated_tokens> <trust> <verify>`
 
 ```bash
 read ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH ESTIMATED_TOKENS TRUST VERIFY <<< "$ARGUMENTS"
@@ -64,7 +64,7 @@ Before invoking any phase skill, validate that `ISSUE_PATH`, `WORKTREE_PATH`, an
 components (`..`). If either check fails, STOP immediately and display:
 
 ```
-ERROR: issuePath is not well-formed.
+ERROR: issue_path is not well-formed.
 Expected: a canonical path (no '..') containing /.cat/issues/
 Actual:   <value of ISSUE_PATH>
 ```
@@ -80,7 +80,7 @@ Only suggest a replacement when a path segment differs from `.cat` by one charac
 substitution). Do not suggest replacements for unrelated segments like `.catalog` or `.cattle`.
 
 ```
-STOP. Fix the issuePath before re-invoking /cat:work.
+STOP. Fix the issue_path before re-invoking /cat:work.
 ```
 
 **WORKTREE_PATH:** Check that `WORKTREE_PATH` is a non-empty absolute path (starts with `/`). If not, STOP with an
@@ -180,9 +180,9 @@ Return the final status to the `/cat:work` skill:
 ```json
 {
   "status": "SUCCESS|ABORTED|CHANGES_REQUESTED|FAILED",
-  "issueId": "${ISSUE_ID}",
+  "issue_id": "${ISSUE_ID}",
   "commits": [...],
-  "filesChanged": N,
+  "files_changed": N,
   "tokens_used": N,  // from implement phase only
   "merged": true
 }
@@ -201,7 +201,7 @@ If any phase fails:
   "status": "FAILED",
   "phase": "implement|confirm|review|merge",
   "message": "actual error message",
-  "issueId": "${ISSUE_ID}"
+  "issue_id": "${ISSUE_ID}"
 }
 ```
 

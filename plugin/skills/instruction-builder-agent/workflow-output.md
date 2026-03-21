@@ -93,7 +93,7 @@ Main agent shows result summary
 
 | Phase Batch | Operations Bundled | Returns |
 |-------------|-------------------|---------|
-| **Preparation** | Read index.json, plan.md, check deps, create worktree | {ready, worktreePath, estimate} |
+| **Preparation** | Read index.json, plan.md, check deps, create worktree | {ready, worktree_path, estimate} |
 | **Exploration** | Search codebase, find patterns, check duplicates | {findings, filesToModify} |
 | **Planning** | Make decisions, create implementation spec | {spec, approach, steps} |
 | **Implementation** | All code changes, tests, commits | {commits, filesChanged, tokens} |

@@ -595,7 +595,7 @@ public final class GitRebase
   {
     ObjectNode json = scope.getJsonMapper().createObjectNode();
     json.put("status", "OK");
-    json.put("targetBranch", target);
+    json.put("target_branch", target);
     json.put("commits_rebased", commitsRebased);
     json.put("backup_cleaned", true);
     ArrayNode orphansArray = json.putArray("deleted_orphans");
@@ -618,7 +618,7 @@ public final class GitRebase
   {
     ObjectNode json = scope.getJsonMapper().createObjectNode();
     json.put("status", "CONFLICT");
-    json.put("targetBranch", target);
+    json.put("target_branch", target);
     json.put("backup_branch", backupBranch);
     ArrayNode filesArray = json.putArray("conflicting_files");
     for (String file : conflictingFiles.split("\n"))

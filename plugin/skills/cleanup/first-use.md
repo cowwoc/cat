@@ -84,8 +84,8 @@ Analyze survey results to classify artifacts:
 
 For each lock, check status and record the full `session_id` (complete UUID, not truncated) for use in Steps 4 and 5:
 ```bash
-issueId="<from-survey>"
-"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" check "$issueId"
+issue_id="<from-survey>"
+"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" check "$issue_id"
 ```
 
 Derive age from the branch's last commit time (not the lock file). If the branch does not exist, treat the artifact
@@ -209,7 +209,7 @@ Generate the cleanup plan box by invoking the handler with your analysis. **Excl
 SKIP-flagged in Step 3** (branch name did not match the expected `<version>-<issue-name>` format). Only worktrees
 that passed branch-name parsing in Step 3 may appear in `worktrees_to_remove` and `branches_to_remove` below.
 
-For each lock, include `issueId`, `session` (first 8 chars of session ID, for display only), and `age_seconds`
+For each lock, include `issue_id`, `session` (first 8 chars of session ID, for display only), and `age_seconds`
 (derived from the branch's last commit time via `git log -1 --format=%ct <branch>`). For each worktree, include
 `age_seconds` (same source). **Note:** The `session` field in the JSON below is truncated for display purposes
 only. You must retain the full session UUID (recorded in Step 2) separately for use in Step 5 re-validation:
@@ -220,7 +220,7 @@ echo '{
   "context": {
     "phase": "plan",
     "locks_to_remove": [
-      {"issueId": "2.1-issue-name", "session": "eb68bb02", "age_seconds": 326}
+      {"issue_id": "2.1-issue-name", "session": "eb68bb02", "age_seconds": 326}
     ],
     "worktrees_to_remove": [
       {"path": "${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name",
@@ -293,25 +293,25 @@ For each issue that has both a worktree and a lock to remove, process them as an
 
 ```bash
 WORKTREE_PATH="<from-plan>"
-issueId="<issue-id-for-this-worktree>"
+issue_id="<issue-id-for-this-worktree>"
 EXPECTED_SESSION="<full-session-id-from-step-2>"
 
 # Re-validate: check the lock is still held by the expected session
-CURRENT_LOCK=$("${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" check "$issueId" 2>&1)
+CURRENT_LOCK=$("${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" check "$issue_id" 2>&1)
 if echo "$CURRENT_LOCK" | grep -qF "$EXPECTED_SESSION"; then
   # Lock still held by the same (abandoned) session — safe to remove worktree then release lock
   cd /workspace
   if git worktree remove "$WORKTREE_PATH" --force; then
-    if "${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" force-release "$issueId"; then
-      echo "OK: Worktree removed and lock released for '$issueId'."
+    if "${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" force-release "$issue_id"; then
+      echo "OK: Worktree removed and lock released for '$issue_id'."
     else
-      echo "ERROR: Worktree removed but lock release failed for '$issueId'. Lock may still be held — manual release may be needed."
+      echo "ERROR: Worktree removed but lock release failed for '$issue_id'. Lock may still be held — manual release may be needed."
     fi
   else
-    echo "ERROR: Failed to remove worktree '$WORKTREE_PATH'. Lock for '$issueId' NOT released (preserving invariant)."
+    echo "ERROR: Failed to remove worktree '$WORKTREE_PATH'. Lock for '$issue_id'.NOT released (preserving invariant)."
   fi
 else
-  echo "WARNING: Lock for '$issueId' is now held by a different session. Skipping worktree and lock."
+  echo "WARNING: Lock for '$issue_id'.is now held by a different session. Skipping worktree and lock."
 fi
 ```
 
@@ -322,11 +322,11 @@ and started using the worktree. Re-check before removing:
 
 ```bash
 WORKTREE_PATH="<from-plan>"
-issueId="<issue-id-for-this-worktree>"
+issue_id="<issue-id-for-this-worktree>"
 # Re-check: if a lock now exists, a new session has claimed this worktree
-CURRENT_LOCK=$("${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" check "$issueId" 2>&1)
+CURRENT_LOCK=$("${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" check "$issue_id" 2>&1)
 if echo "$CURRENT_LOCK" | grep -q "locked"; then
-  echo "WARNING: Worktree for '$issueId' is now locked by a new session. Skipping removal."
+  echo "WARNING: Worktree for '$issue_id'.is now locked by a new session. Skipping removal."
 else
   cd /workspace
   git worktree remove "$WORKTREE_PATH" --force
@@ -338,14 +338,14 @@ fi
 For locks that have no associated worktree (lock-only cleanup), re-validate and release:
 
 ```bash
-issueId="<from-plan>"
+issue_id="<from-plan>"
 EXPECTED_SESSION="<full-session-id-from-step-2>"
 # Re-check current lock owner (use -F for literal string match, not regex substring)
-CURRENT_LOCK=$("${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" check "$issueId" 2>&1)
+CURRENT_LOCK=$("${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" check "$issue_id" 2>&1)
 if echo "$CURRENT_LOCK" | grep -qF "$EXPECTED_SESSION"; then
-  "${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" force-release "$issueId"
+  "${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" force-release "$issue_id"
 else
-  echo "WARNING: Lock for '$issueId' is now held by a different session. Skipping."
+  echo "WARNING: Lock for '$issue_id'.is now held by a different session. Skipping."
 fi
 ```
 

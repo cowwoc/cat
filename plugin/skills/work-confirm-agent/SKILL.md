@@ -2,7 +2,7 @@
 description: Internal confirm phase (invoked by /cat:work-with-issue) - verifies plan.md post-conditions via verify-implementation skill
 model: sonnet
 user-invocable: false
-argument-hint: "<catAgentId> <issueId> <issuePath> <worktreePath> <issueBranch> <targetBranch> <executionCommitsJsonPath> <filesChanged> <trust> <verify>"
+argument-hint: "<cat_agent_id> <issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <execution_commits_json_path> <files_changed> <trust> <verify>"
 allowed-tools:
   - Read
   - Bash

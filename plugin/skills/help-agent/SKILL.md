@@ -4,7 +4,7 @@ model: haiku
 allowed-tools:
   - Skill
 user-invocable: false
-argument-hint: "<catAgentId>"
+argument-hint: "<cat_agent_id>"
 ---
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" help-agent "$0"`

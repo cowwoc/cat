@@ -965,10 +965,10 @@ later by `cat:work-implement-agent` when work begins.
 1. Create a unique temporary plan.md file (multi-instance safe):
 
 ```bash
-planTempFile=$(mktemp --suffix=.md)
+plan_temp_file=$(mktemp --suffix=.md)
 ```
 
-2. Write the lightweight plan.md to `${planTempFile}` using the Write tool with the following structure:
+2. Write the lightweight plan.md to `${plan_temp_file}` using the Write tool with the following structure:
 
 ```
 # Plan
@@ -998,12 +998,12 @@ as `\\` before embedding them in the JSON argument.
 "${CLAUDE_PLUGIN_ROOT}/client/bin/create-issue" --json '{
   "major": "{major}",
   "minor": "{minor}",
-  "issueName": "{issue-name}",
+  "issue_name": "{issue-name}",
   "issue_type": "{issue-type}",
   "dependencies": ["{dep1}", "{dep2}"],
-  "indexContent": "{full index.json content}",
-  "planFile": "'"${planTempFile}"'",
-  "commitDescription": "{one-line description}"
+  "index_content": "{full index.json content}",
+  "plan_file": "'"${plan_temp_file}"'",
+  "commit_description": "{one-line description}"
 }'
 ```
 
@@ -1017,13 +1017,13 @@ Check the JSON output for success status. If create-issue returns an error, clea
 before reporting the error and stopping:
 
 ```bash
-rm -f "${planTempFile}"
+rm -f "${plan_temp_file}"
 ```
 
 Clean up the temporary plan file after a successful create-issue call:
 
 ```bash
-rm -f "${planTempFile}"
+rm -f "${plan_temp_file}"
 ```
 
 **Apply auto-detected skill dependency updates (if any):**
