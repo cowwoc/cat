@@ -68,6 +68,35 @@ rationale. The gap is that there is no test explicitly verifying the `.cat/` sub
 - Run `mvn -f client/pom.xml test` and verify exit code 0 (all tests pass)
 - Update STATE.md to Status: closed, Progress: 100%
   - Files: `.cat/issues/2.1/add-worktree-redirect-to-isolation-hook/STATE.md`
+- Move `writeLockFile(JvmScope, String, String)` and `createWorktreeDir(JvmScope, String)` into `TestUtils` as
+  public static methods; remove the duplicate copies from all 5 test classes that currently define them
+  (`EnforceWorktreePathIsolationTest`, `WarnBaseBranchEditTest`, `PreReadHookTest`, `BlockMainRebaseTest`,
+  `BlockWorktreeIsolationViolationTest`) and update each caller to use `TestUtils.writeLockFile(...)` and
+  `TestUtils.createWorktreeDir(...)`
+  - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/TestUtils.java`,
+    `client/src/test/java/io/github/cowwoc/cat/hooks/test/EnforceWorktreePathIsolationTest.java`,
+    `client/src/test/java/io/github/cowwoc/cat/hooks/test/WarnBaseBranchEditTest.java`,
+    `client/src/test/java/io/github/cowwoc/cat/hooks/test/PreReadHookTest.java`,
+    `client/src/test/java/io/github/cowwoc/cat/hooks/test/BlockMainRebaseTest.java`,
+    `client/src/test/java/io/github/cowwoc/cat/hooks/test/BlockWorktreeIsolationViolationTest.java`
+- Replace `StringBuilder output` with `StringJoiner output = new StringJoiner("\n")` in
+  `TestUtils.runGitCommandWithOutput`, replacing `output.append(line)` with `output.add(line)` and removing the
+  conditional `if (output.length() > 0) output.append('\n')` delimiter guard
+  - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/TestUtils.java`
+- Add assertion to `catSubdirectoryShowsCorrectedWorktreePath` (and any other write-blocked test) verifying that
+  the blocked reason contains the full isolation explanation text: "The worktree exists to isolate changes from the
+  main workspace until merge" — this closes post-condition #2 which requires the isolation rationale, not just the
+  corrected path
+  - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/EnforceWorktreePathIsolationTest.java`
+- Add `assertThat(reason).contains("Use the corrected worktree path")` to `readBlockedMessageShowsCorrectedPath()`
+  (lines 564–588) to match the assertion already present in the write-blocked counterpart test, ensuring consistent
+  validation of the redirect hint across both read and write block scenarios
+  - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/EnforceWorktreePathIsolationTest.java`
+- Add a test `gitOutputPreservesLineBreaks` (or extend an existing git-output test) that invokes
+  `TestUtils.runGitCommandWithOutput` on a multi-line git command (e.g., `git log --oneline -2`) and asserts that
+  the returned string contains a newline between lines — confirming that `StringJoiner("\n")` produces correct
+  line-separated output and that git command parsing is unaffected by the StringBuilder-to-StringJoiner refactor
+  - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/TestUtils.java` (or a dedicated test class)
 
 ## Post-conditions
 - [ ] The error message for a blocked `.cat/` subdirectory write includes the corrected worktree-equivalent
