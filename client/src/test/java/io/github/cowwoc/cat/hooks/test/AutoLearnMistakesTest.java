@@ -84,7 +84,7 @@ public final class AutoLearnMistakesTest
     try (TestJvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      AutoLearnMistakes handler = new AutoLearnMistakes();
+      AutoLearnMistakes handler = new AutoLearnMistakes(scope);
       JsonNode result = toolResult(mapper, "BUILD FAILURE", 0);
       JsonNode hook = hookData(mapper, sessionId);
 
@@ -109,7 +109,7 @@ public final class AutoLearnMistakesTest
     try (TestJvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      AutoLearnMistakes handler = new AutoLearnMistakes();
+      AutoLearnMistakes handler = new AutoLearnMistakes(scope);
       JsonNode result = toolResult(mapper, "Tests run: 1, Failures: 1, Errors: 0, Skipped: 0", 0);
       JsonNode hook = hookData(mapper, sessionId);
 
@@ -131,7 +131,7 @@ public final class AutoLearnMistakesTest
     try (TestJvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      AutoLearnMistakes handler = new AutoLearnMistakes();
+      AutoLearnMistakes handler = new AutoLearnMistakes(scope);
       JsonNode result = toolResult(mapper, "BUILD FAILURE", 1);
       JsonNode hook = hookData(mapper, sessionId);
 
@@ -153,7 +153,7 @@ public final class AutoLearnMistakesTest
     try (TestJvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      AutoLearnMistakes handler = new AutoLearnMistakes();
+      AutoLearnMistakes handler = new AutoLearnMistakes(scope);
       JsonNode result = toolResult(mapper, "Tests run: 1, Failures: 1, Errors: 0, Skipped: 0", 1);
       JsonNode hook = hookData(mapper, sessionId);
 
@@ -174,7 +174,7 @@ public final class AutoLearnMistakesTest
     try (TestJvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      AutoLearnMistakes handler = new AutoLearnMistakes();
+      AutoLearnMistakes handler = new AutoLearnMistakes(scope);
       JsonNode result = toolResult(mapper, "FAIL: progress-banner launcher failed");
       JsonNode hook = hookData(mapper, sessionId);
 
@@ -195,7 +195,7 @@ public final class AutoLearnMistakesTest
     try (TestJvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      AutoLearnMistakes handler = new AutoLearnMistakes();
+      AutoLearnMistakes handler = new AutoLearnMistakes(scope);
       JsonNode result = toolResult(mapper, "FAIL: some phase error");
       JsonNode hook = hookData(mapper, sessionId);
 
@@ -217,7 +217,7 @@ public final class AutoLearnMistakesTest
     try (TestJvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      AutoLearnMistakes handler = new AutoLearnMistakes();
+      AutoLearnMistakes handler = new AutoLearnMistakes(scope);
       JsonNode result = toolResult(mapper, "Tests run: 5, Failures: 2, Errors: 0, Skipped: 0", 1);
       JsonNode hook = hookData(mapper, sessionId);
 
@@ -238,7 +238,7 @@ public final class AutoLearnMistakesTest
     try (TestJvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      AutoLearnMistakes handler = new AutoLearnMistakes();
+      AutoLearnMistakes handler = new AutoLearnMistakes(scope);
       JsonNode result = toolResult(mapper, "3 tests failed", 1);
       JsonNode hook = hookData(mapper, sessionId);
 
@@ -259,7 +259,7 @@ public final class AutoLearnMistakesTest
     try (TestJvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      AutoLearnMistakes handler = new AutoLearnMistakes();
+      AutoLearnMistakes handler = new AutoLearnMistakes(scope);
       JsonNode result = toolResult(mapper, "FAIL: some documentation error message");
       JsonNode hook = hookData(mapper, sessionId);
 
@@ -281,7 +281,7 @@ public final class AutoLearnMistakesTest
     try (TestJvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      AutoLearnMistakes handler = new AutoLearnMistakes();
+      AutoLearnMistakes handler = new AutoLearnMistakes(scope);
       JsonNode result = toolResult(mapper, "MyTest.testMethod ... FAILED", 1);
       JsonNode hook = hookData(mapper, sessionId);
 
@@ -302,7 +302,7 @@ public final class AutoLearnMistakesTest
     try (TestJvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      AutoLearnMistakes handler = new AutoLearnMistakes();
+      AutoLearnMistakes handler = new AutoLearnMistakes(scope);
       JsonNode result = toolResult(mapper, "5 failures", 1);
       JsonNode hook = hookData(mapper, sessionId);
 
@@ -323,7 +323,7 @@ public final class AutoLearnMistakesTest
     try (TestJvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      AutoLearnMistakes handler = new AutoLearnMistakes();
+      AutoLearnMistakes handler = new AutoLearnMistakes(scope);
       JsonNode result = toolResult(mapper, "1 test failed", 1);
       JsonNode hook = hookData(mapper, sessionId);
 
@@ -344,7 +344,7 @@ public final class AutoLearnMistakesTest
     try (TestJvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      AutoLearnMistakes handler = new AutoLearnMistakes();
+      AutoLearnMistakes handler = new AutoLearnMistakes(scope);
       JsonNode result = toolResult(mapper, "Tests run: 5, Failures: 0, Errors: 0, Skipped: 0");
       JsonNode hook = hookData(mapper, sessionId);
 
@@ -366,7 +366,7 @@ public final class AutoLearnMistakesTest
     try (TestJvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      AutoLearnMistakes handler = new AutoLearnMistakes();
+      AutoLearnMistakes handler = new AutoLearnMistakes(scope);
       JsonNode result = toolResult(mapper, "TESTS RUN: 5, FAILURES: 2, ERRORS: 0, SKIPPED: 0", 1);
       JsonNode hook = hookData(mapper, sessionId);
 
@@ -388,7 +388,7 @@ public final class AutoLearnMistakesTest
     try (TestJvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      AutoLearnMistakes handler = new AutoLearnMistakes();
+      AutoLearnMistakes handler = new AutoLearnMistakes(scope);
       JsonNode result = toolResult(mapper, "  MyTest.testMethod ... FAILED", 1);
       JsonNode hook = hookData(mapper, sessionId);
 
@@ -412,7 +412,7 @@ public final class AutoLearnMistakesTest
     try (TestJvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      AutoLearnMistakes handler = new AutoLearnMistakes();
+      AutoLearnMistakes handler = new AutoLearnMistakes(scope);
       JsonNode result = toolResult(mapper, "Must fix critical issues");
       JsonNode hook = hookData(mapper, sessionId);
 
@@ -436,7 +436,7 @@ public final class AutoLearnMistakesTest
     try (TestJvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      AutoLearnMistakes handler = new AutoLearnMistakes();
+      AutoLearnMistakes handler = new AutoLearnMistakes(scope);
       JsonNode result = toolResult(mapper, "critical error in severity table");
       JsonNode hook = hookData(mapper, sessionId);
 
@@ -460,7 +460,7 @@ public final class AutoLearnMistakesTest
     try (TestJvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      AutoLearnMistakes handler = new AutoLearnMistakes();
+      AutoLearnMistakes handler = new AutoLearnMistakes(scope);
       JsonNode result = toolResult(mapper, "CRITICAL | Blocks release");
       JsonNode hook = hookData(mapper, sessionId);
 
@@ -485,7 +485,7 @@ public final class AutoLearnMistakesTest
     try (TestJvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      AutoLearnMistakes handler = new AutoLearnMistakes();
+      AutoLearnMistakes handler = new AutoLearnMistakes(scope);
       JsonNode result = toolResult(mapper, "I made a critical error");
       JsonNode hook = hookData(mapper, sessionId);
 
@@ -506,7 +506,7 @@ public final class AutoLearnMistakesTest
     try (TestJvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      AutoLearnMistakes handler = new AutoLearnMistakes();
+      AutoLearnMistakes handler = new AutoLearnMistakes(scope);
       JsonNode result = toolResult(mapper, "some output");
       JsonNode hook = hookData(mapper, "not-a-valid-uuid");
 
@@ -527,7 +527,7 @@ public final class AutoLearnMistakesTest
     try (TestJvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      AutoLearnMistakes handler = new AutoLearnMistakes();
+      AutoLearnMistakes handler = new AutoLearnMistakes(scope);
       // Simulates actual Maven build failure output — real build failure with non-zero exit code.
       String mavenOutput = """
         [INFO] --- maven-compiler-plugin:3.11.0:compile (default-compile) @ cat-hooks ---
