@@ -1,0 +1,5 @@
+{
+  "status": "open",
+  "dependencies": [],
+  "blocks": ["2.1-remove-skill-user-invocable-wrappers", "2.1-add-feature-branch-workflow-trigger"]
+}
