@@ -1,4 +1,5 @@
 {
-  "status": "in-progress",
-  "targetBranch": "v2.1"
+  "status" : "closed",
+  "resolution" : "implemented",
+  "targetBranch" : "v2.1"
 }
