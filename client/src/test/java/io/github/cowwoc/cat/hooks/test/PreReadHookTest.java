@@ -38,39 +38,6 @@ public final class PreReadHookTest
   private static final String ISSUE_ID = "2.1-test-task";
 
   /**
-   * Creates a lock file associating {@code sessionId} with {@code issueId}.
-   *
-   * @param scope the JVM scope providing the lock directory path
-   * @param issueId the issue identifier
-   * @param sessionId the session ID to embed in the lock content
-   * @throws IOException if the lock file cannot be written
-   */
-  private static void writeLockFile(JvmScope scope, String issueId, String sessionId) throws IOException
-  {
-    Path lockDir = scope.getCatWorkPath().resolve("locks");
-    Files.createDirectories(lockDir);
-    String content = """
-      {"session_id": "%s", "worktrees": {}, "created_at": 1000000, "created_iso": "2026-01-01T00:00:00Z"}
-      """.formatted(sessionId);
-    Files.writeString(lockDir.resolve(issueId + ".lock"), content);
-  }
-
-  /**
-   * Creates the worktree directory for the given issue ID.
-   *
-   * @param scope the JVM scope providing the worktree base path
-   * @param issueId the issue identifier
-   * @return the created worktree directory path
-   * @throws IOException if the directory cannot be created
-   */
-  private static Path createWorktreeDir(JvmScope scope, String issueId) throws IOException
-  {
-    Path worktreeDir = scope.getCatWorkPath().resolve("worktrees").resolve(issueId);
-    Files.createDirectories(worktreeDir);
-    return worktreeDir;
-  }
-
-  /**
    * Builds a HookInput for a Read/Glob/Grep tool call with an explicit file_path.
    *
    * @param mapper the JSON mapper
@@ -108,8 +75,8 @@ public final class PreReadHookTest
     Path pluginRoot = Files.createTempDirectory("prh-plugin-");
     try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
-      writeLockFile(scope, ISSUE_ID, SESSION_ID);
-      createWorktreeDir(scope, ISSUE_ID);
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      TestUtils.createWorktreeDir(scope, ISSUE_ID);
 
       JsonMapper mapper = scope.getJsonMapper();
       // Attempt to read a file in the main workspace (outside worktree)
@@ -144,8 +111,8 @@ public final class PreReadHookTest
     Path pluginRoot = Files.createTempDirectory("prh-plugin-");
     try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
-      writeLockFile(scope, ISSUE_ID, SESSION_ID);
-      Path worktreeDir = createWorktreeDir(scope, ISSUE_ID);
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
 
       JsonMapper mapper = scope.getJsonMapper();
       // Read a file inside the active worktree
@@ -183,8 +150,8 @@ public final class PreReadHookTest
     Path pluginRoot = Files.createTempDirectory("prh-plugin-");
     try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
     {
-      writeLockFile(scope, ISSUE_ID, SESSION_ID);
-      createWorktreeDir(scope, ISSUE_ID);
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      TestUtils.createWorktreeDir(scope, ISSUE_ID);
 
       JsonMapper mapper = scope.getJsonMapper();
       // Use Glob tool — even with a project-root path, it must not be blocked

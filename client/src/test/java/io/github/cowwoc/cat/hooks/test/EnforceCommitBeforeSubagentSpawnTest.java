@@ -55,26 +55,6 @@ public final class EnforceCommitBeforeSubagentSpawnTest
   }
 
   /**
-   * Creates a lock file for the given session pointing to a worktree.
-   *
-   * @param scope the JVM scope
-   * @param sessionId the session ID
-   * @param issueId the issue ID (worktree name)
-   * @throws IOException if lock file creation fails
-   */
-  private static void createLockFile(JvmScope scope, String sessionId, String issueId) throws IOException
-  {
-    Path lockDir = scope.getCatWorkPath().resolve("locks");
-    Files.createDirectories(lockDir);
-    String lockContent = """
-      {
-        "session_id": "%s"
-      }
-      """.formatted(sessionId);
-    Files.writeString(lockDir.resolve(issueId + ".lock"), lockContent);
-  }
-
-  /**
    * Creates a worktree directory linked to the main git repo.
    *
    * @param mainRepo the main repository
@@ -163,7 +143,7 @@ public final class EnforceCommitBeforeSubagentSpawnTest
       JsonMapper mapper = scope.getJsonMapper();
       String issueId = "2.1-clean-issue";
 
-      createLockFile(scope, sessionId, issueId);
+      TestUtils.writeLockFile(scope, issueId, sessionId);
       worktreePath = createWorktree(mainRepo, scope, issueId);
 
       EnforceCommitBeforeSubagentSpawn handler = new EnforceCommitBeforeSubagentSpawn(scope);
@@ -201,7 +181,7 @@ public final class EnforceCommitBeforeSubagentSpawnTest
       JsonMapper mapper = scope.getJsonMapper();
       String issueId = "2.1-dirty-issue";
 
-      createLockFile(scope, sessionId, issueId);
+      TestUtils.writeLockFile(scope, issueId, sessionId);
       worktreePath = createWorktree(mainRepo, scope, issueId);
 
       // Create an uncommitted file in the worktree
@@ -241,7 +221,7 @@ public final class EnforceCommitBeforeSubagentSpawnTest
       JsonMapper mapper = scope.getJsonMapper();
       String issueId = "2.1-staged-issue";
 
-      createLockFile(scope, sessionId, issueId);
+      TestUtils.writeLockFile(scope, issueId, sessionId);
       worktreePath = createWorktree(mainRepo, scope, issueId);
 
       // Create a staged (but not committed) file in the worktree

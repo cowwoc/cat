@@ -43,29 +43,6 @@ public final class EnforceCollectAfterAgentTest
   }
 
   /**
-   * Creates a worktree lock and worktree directory, simulating an active worktree context.
-   * <p>
-   * The lock file is written to {@code {projectCatDir}/locks/{issueId}.lock} and the
-   * worktree directory is created at {@code {projectCatDir}/worktrees/{issueId}/}.
-   *
-   * @param scope the JVM scope
-   * @param sessionId the session ID to record in the lock file
-   * @param issueId the issue ID to use for the lock and worktree directory names
-   * @throws IOException if lock or directory creation fails
-   */
-  private static void createWorktreeLock(JvmScope scope, String sessionId, String issueId)
-    throws IOException
-  {
-    Path projectCatDir = scope.getCatWorkPath();
-    Path locksDir = projectCatDir.resolve("locks");
-    Files.createDirectories(locksDir);
-    Path lockFile = locksDir.resolve(issueId + ".lock");
-    Files.writeString(lockFile, "{\"session_id\": \"" + sessionId + "\"}");
-    Path worktreeDir = projectCatDir.resolve("worktrees").resolve(issueId);
-    Files.createDirectories(worktreeDir);
-  }
-
-  /**
    * Creates a tool input for a Skill invocation.
    *
    * @param mapper the JSON mapper
@@ -194,7 +171,8 @@ public final class EnforceCollectAfterAgentTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       createFlagFile(scope, sessionId);
-      createWorktreeLock(scope, sessionId, issueId);
+      TestUtils.writeLockFile(scope, issueId, sessionId);
+      TestUtils.createWorktreeDir(scope, issueId);
 
       EnforceCollectAfterAgent handler = new EnforceCollectAfterAgent(scope);
       JsonNode toolInput = createSkillInput(mapper, "cat:work-merge-agent");
@@ -227,7 +205,8 @@ public final class EnforceCollectAfterAgentTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       createFlagFile(scope, sessionId);
-      createWorktreeLock(scope, sessionId, issueId);
+      TestUtils.writeLockFile(scope, issueId, sessionId);
+      TestUtils.createWorktreeDir(scope, issueId);
 
       EnforceCollectAfterAgent handler = new EnforceCollectAfterAgent(scope);
       JsonNode toolInput = createTaskInput(mapper, "cat:work-execute");
@@ -260,7 +239,8 @@ public final class EnforceCollectAfterAgentTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       createFlagFile(scope, sessionId);
-      createWorktreeLock(scope, sessionId, issueId);
+      TestUtils.writeLockFile(scope, issueId, sessionId);
+      TestUtils.createWorktreeDir(scope, issueId);
 
       EnforceCollectAfterAgent handler = new EnforceCollectAfterAgent(scope);
       JsonNode toolInput = createSkillInput(mapper, "cat:status-agent");
@@ -294,7 +274,8 @@ public final class EnforceCollectAfterAgentTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       createFlagFile(scope, sessionId);
-      createWorktreeLock(scope, sessionId, issueId);
+      TestUtils.writeLockFile(scope, issueId, sessionId);
+      TestUtils.createWorktreeDir(scope, issueId);
 
       EnforceCollectAfterAgent handler = new EnforceCollectAfterAgent(scope);
       JsonNode toolInput = createSkillInput(mapper, "cat:status-agent");

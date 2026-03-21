@@ -4,11 +4,11 @@
 // See LICENSE.md in the project root for license terms.
 package io.github.cowwoc.cat.hooks.test;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.PostToolHandler;
 import io.github.cowwoc.cat.hooks.failure.ResetFailureCounter;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,15 +30,14 @@ public final class ResetFailureCounterTest
   public void deletesTrackingFileWhenPresent() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-reset-test-");
-    try
+    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-reset-" + System.nanoTime();
       Path trackingFile = trackingDirectory.resolve("cat-failure-tracking-" + sessionId + ".count");
       Files.writeString(trackingFile, "3");
 
-      JsonMapper mapper = JsonMapper.builder().build();
-      JsonNode toolResult = mapper.createObjectNode();
-      JsonNode hookData = mapper.createObjectNode();
+      JsonNode toolResult = scope.getJsonMapper().createObjectNode();
+      JsonNode hookData = scope.getJsonMapper().createObjectNode();
       ResetFailureCounter handler = new ResetFailureCounter(trackingDirectory);
 
       PostToolHandler.Result result = handler.check("Bash", toolResult, sessionId, hookData);
@@ -60,13 +59,12 @@ public final class ResetFailureCounterTest
   public void succeedsWhenTrackingFileAbsent() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-reset-test-");
-    try
+    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-absent-" + System.nanoTime();
 
-      JsonMapper mapper = JsonMapper.builder().build();
-      JsonNode toolResult = mapper.createObjectNode();
-      JsonNode hookData = mapper.createObjectNode();
+      JsonNode toolResult = scope.getJsonMapper().createObjectNode();
+      JsonNode hookData = scope.getJsonMapper().createObjectNode();
       ResetFailureCounter handler = new ResetFailureCounter(trackingDirectory);
 
       PostToolHandler.Result result = handler.check("Bash", toolResult, sessionId, hookData);
@@ -88,7 +86,7 @@ public final class ResetFailureCounterTest
   public void returnsAllowWhenDeleteFails() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-reset-test-");
-    try
+    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-nodelperm-" + System.nanoTime();
       Path trackingFile = trackingDirectory.resolve("cat-failure-tracking-" + sessionId + ".count");
@@ -100,9 +98,8 @@ public final class ResetFailureCounterTest
         PosixFilePermission.OWNER_EXECUTE);
       Files.setPosixFilePermissions(trackingDirectory, noWrite);
 
-      JsonMapper mapper = JsonMapper.builder().build();
-      JsonNode toolResult = mapper.createObjectNode();
-      JsonNode hookData = mapper.createObjectNode();
+      JsonNode toolResult = scope.getJsonMapper().createObjectNode();
+      JsonNode hookData = scope.getJsonMapper().createObjectNode();
       ResetFailureCounter handler = new ResetFailureCounter(trackingDirectory);
 
       PostToolHandler.Result result = handler.check("Bash", toolResult, sessionId, hookData);
@@ -136,11 +133,10 @@ public final class ResetFailureCounterTest
   public void blankSessionIdThrows() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-reset-test-");
-    try
+    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
     {
-      JsonMapper mapper = JsonMapper.builder().build();
-      JsonNode toolResult = mapper.createObjectNode();
-      JsonNode hookData = mapper.createObjectNode();
+      JsonNode toolResult = scope.getJsonMapper().createObjectNode();
+      JsonNode hookData = scope.getJsonMapper().createObjectNode();
       ResetFailureCounter handler = new ResetFailureCounter(trackingDirectory);
 
       handler.check("Bash", toolResult, "", hookData);
@@ -158,13 +154,12 @@ public final class ResetFailureCounterTest
   public void alwaysReturnsAllow() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-reset-test-");
-    try
+    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-allow-" + System.nanoTime();
 
-      JsonMapper mapper = JsonMapper.builder().build();
-      JsonNode toolResult = mapper.createObjectNode();
-      JsonNode hookData = mapper.createObjectNode();
+      JsonNode toolResult = scope.getJsonMapper().createObjectNode();
+      JsonNode hookData = scope.getJsonMapper().createObjectNode();
       ResetFailureCounter handler = new ResetFailureCounter(trackingDirectory);
 
       PostToolHandler.Result result = handler.check("Read", toolResult, sessionId, hookData);
