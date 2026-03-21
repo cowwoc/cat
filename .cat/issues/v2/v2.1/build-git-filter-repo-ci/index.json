@@ -1,7 +1,7 @@
 {
   "status" : "closed",
   "resolution" : "implemented",
-  "dependencies" : [ ],
+  "dependencies" : [ "2.1-add-feature-branch-workflow-trigger" ],
   "blocks" : [ "2.1-replace-bfg-with-git-filter-repo" ],
   "targetBranch" : "v2.1"
 }
