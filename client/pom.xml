@@ -16,7 +16,7 @@
 		<maven.version>3.9.12</maven.version>
 		<maven.compiler.release>26</maven.compiler.release>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<jackson.version>3.1.0-rc1</jackson.version>
+		<jackson.version>3.1.0</jackson.version>
 		<testng.version>7.12.0</testng.version>
 		<requirements.version>13.2</requirements.version>
 		<pouch.version>10.3</pouch.version>
