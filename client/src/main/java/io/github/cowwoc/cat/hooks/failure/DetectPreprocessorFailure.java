@@ -20,7 +20,13 @@ public final class DetectPreprocessorFailure implements PostToolHandler
 {
   private static final String PREPROCESSOR_FAILURE_PATTERN = "Bash command failed for pattern \"!`\"";
   private static final String FEEDBACK_MESSAGE =
-    "A skill preprocessor command failed. Tell the user to run /cat:feedback to report this issue.";
+    "A skill preprocessor command failed. This is a plugin bug, not a user error.\n" +
+    "\n" +
+    "Tell the user: \"A skill preprocessor command failed unexpectedly. Please run /cat:feedback " +
+    "to report this issue so it can be investigated and fixed.\"\n" +
+    "\n" +
+    "Do not retry the skill invocation — the preprocessor will fail again until the underlying " +
+    "plugin issue is resolved.";
 
   /**
    * Creates a new DetectPreprocessorFailure handler.
@@ -35,8 +41,10 @@ public final class DetectPreprocessorFailure implements PostToolHandler
     JsonNode errorNode = hookData.get("error");
     if (errorNode == null)
       return Result.allow();
+    if (!errorNode.isString())
+      return Result.allow();
     String error = errorNode.asString();
-    if (error == null || !error.contains(PREPROCESSOR_FAILURE_PATTERN))
+    if (!error.contains(PREPROCESSOR_FAILURE_PATTERN))
       return Result.allow();
     return Result.context(FEEDBACK_MESSAGE);
   }

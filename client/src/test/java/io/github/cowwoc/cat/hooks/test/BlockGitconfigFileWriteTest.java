@@ -7,10 +7,14 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.write.BlockGitconfigFileWrite;
 import org.testng.annotations.Test;
-import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -19,137 +23,193 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  */
 public final class BlockGitconfigFileWriteTest
 {
-  private static final JsonMapper MAPPER = JsonMapper.builder().build();
-
-  /**
-   * Builds a tool input node with the given file_path.
-   *
-   * @param filePath the file path value
-   * @return an ObjectNode with file_path set
-   */
-  private static ObjectNode inputWithPath(String filePath)
-  {
-    ObjectNode node = MAPPER.createObjectNode();
-    node.put("file_path", filePath);
-    return node;
-  }
-
   /**
    * Verifies that writing to ~/.gitconfig (tilde form) is blocked.
    */
   @Test
-  public void writeTildeGitconfigIsBlocked()
+  public void writeTildeGitconfigIsBlocked() throws IOException
   {
-    BlockGitconfigFileWrite handler = new BlockGitconfigFileWrite();
-    String home = System.getProperty("user.home");
-    ObjectNode input = inputWithPath(home + "/.gitconfig");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      BlockGitconfigFileWrite handler = new BlockGitconfigFileWrite();
+      String home = System.getProperty("user.home");
+      ObjectNode input = scope.getJsonMapper().createObjectNode();
+      input.put("file_path", home + "/.gitconfig");
 
-    FileWriteHandler.Result result = handler.check(input, "session1");
+      FileWriteHandler.Result result = handler.check(input, "session1");
 
-    requireThat(result.blocked(), "blocked").isTrue();
-    requireThat(result.reason(), "reason").contains("gitconfig");
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("gitconfig");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
    * Verifies that writing to ~/.config/git/config is blocked.
    */
   @Test
-  public void writeXdgGitConfigIsBlocked()
+  public void writeXdgGitConfigIsBlocked() throws IOException
   {
-    BlockGitconfigFileWrite handler = new BlockGitconfigFileWrite();
-    String home = System.getProperty("user.home");
-    ObjectNode input = inputWithPath(home + "/.config/git/config");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      BlockGitconfigFileWrite handler = new BlockGitconfigFileWrite();
+      String home = System.getProperty("user.home");
+      ObjectNode input = scope.getJsonMapper().createObjectNode();
+      input.put("file_path", home + "/.config/git/config");
 
-    FileWriteHandler.Result result = handler.check(input, "session1");
+      FileWriteHandler.Result result = handler.check(input, "session1");
 
-    requireThat(result.blocked(), "blocked").isTrue();
-    requireThat(result.reason(), "reason").contains("gitconfig");
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("gitconfig");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
    * Verifies that writing to /etc/gitconfig is blocked.
    */
   @Test
-  public void writeEtcGitconfigIsBlocked()
+  public void writeEtcGitconfigIsBlocked() throws IOException
   {
-    BlockGitconfigFileWrite handler = new BlockGitconfigFileWrite();
-    ObjectNode input = inputWithPath("/etc/gitconfig");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      BlockGitconfigFileWrite handler = new BlockGitconfigFileWrite();
+      ObjectNode input = scope.getJsonMapper().createObjectNode();
+      input.put("file_path", "/etc/gitconfig");
 
-    FileWriteHandler.Result result = handler.check(input, "session1");
+      FileWriteHandler.Result result = handler.check(input, "session1");
 
-    requireThat(result.blocked(), "blocked").isTrue();
-    requireThat(result.reason(), "reason").contains("gitconfig");
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("gitconfig");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
    * Verifies that writing to an unrelated file is allowed.
    */
   @Test
-  public void writeUnrelatedFileIsAllowed()
+  public void writeUnrelatedFileIsAllowed() throws IOException
   {
-    BlockGitconfigFileWrite handler = new BlockGitconfigFileWrite();
-    ObjectNode input = inputWithPath("/workspace/README.md");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      BlockGitconfigFileWrite handler = new BlockGitconfigFileWrite();
+      ObjectNode input = scope.getJsonMapper().createObjectNode();
+      input.put("file_path", "/tmp/README.md");
 
-    FileWriteHandler.Result result = handler.check(input, "session1");
+      FileWriteHandler.Result result = handler.check(input, "session1");
 
-    requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
    * Verifies that writing to a file whose name contains "gitconfig" but is not a canonical path is allowed.
    */
   @Test
-  public void writeNonCanonicalGitconfigFileIsAllowed()
+  public void writeNonCanonicalGitconfigFileIsAllowed() throws IOException
   {
-    BlockGitconfigFileWrite handler = new BlockGitconfigFileWrite();
-    ObjectNode input = inputWithPath("/workspace/test.gitconfig");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      BlockGitconfigFileWrite handler = new BlockGitconfigFileWrite();
+      ObjectNode input = scope.getJsonMapper().createObjectNode();
+      input.put("file_path", "/tmp/test.gitconfig");
 
-    FileWriteHandler.Result result = handler.check(input, "session1");
+      FileWriteHandler.Result result = handler.check(input, "session1");
 
-    requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
    * Verifies that missing file_path field results in allow.
    */
   @Test
-  public void missingFilePathIsAllowed()
+  public void missingFilePathIsAllowed() throws IOException
   {
-    BlockGitconfigFileWrite handler = new BlockGitconfigFileWrite();
-    ObjectNode input = MAPPER.createObjectNode();
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      BlockGitconfigFileWrite handler = new BlockGitconfigFileWrite();
+      ObjectNode input = scope.getJsonMapper().createObjectNode();
 
-    FileWriteHandler.Result result = handler.check(input, "session1");
+      FileWriteHandler.Result result = handler.check(input, "session1");
 
-    requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
    * Verifies that empty file_path results in allow.
    */
   @Test
-  public void emptyFilePathIsAllowed()
+  public void emptyFilePathIsAllowed() throws IOException
   {
-    BlockGitconfigFileWrite handler = new BlockGitconfigFileWrite();
-    ObjectNode input = inputWithPath("");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      BlockGitconfigFileWrite handler = new BlockGitconfigFileWrite();
+      ObjectNode input = scope.getJsonMapper().createObjectNode();
+      input.put("file_path", "");
 
-    FileWriteHandler.Result result = handler.check(input, "session1");
+      FileWriteHandler.Result result = handler.check(input, "session1");
 
-    requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
    * Verifies that the block message instructs the user to request the change explicitly.
    */
   @Test
-  public void blockMessageMentionsExplicitUserRequest()
+  public void blockMessageMentionsExplicitUserRequest() throws IOException
   {
-    BlockGitconfigFileWrite handler = new BlockGitconfigFileWrite();
-    String home = System.getProperty("user.home");
-    ObjectNode input = inputWithPath(home + "/.gitconfig");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      BlockGitconfigFileWrite handler = new BlockGitconfigFileWrite();
+      String home = System.getProperty("user.home");
+      ObjectNode input = scope.getJsonMapper().createObjectNode();
+      input.put("file_path", home + "/.gitconfig");
 
-    FileWriteHandler.Result result = handler.check(input, "session1");
+      FileWriteHandler.Result result = handler.check(input, "session1");
 
-    requireThat(result.blocked(), "blocked").isTrue();
-    requireThat(result.reason(), "reason").contains("explicitly");
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("explicitly");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 }

@@ -7,13 +7,15 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.HookInput;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import org.testng.annotations.Test;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -27,29 +29,43 @@ public final class HookInputTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Invalid session_id format.*")
-  public void invalidSessionIdThrowsException()
+  public void invalidSessionIdThrowsException() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    String json = """
-      {"session_id": "../etc/passwd", "tool_name": "Bash"}
-      """;
-    ByteArrayInputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-    HookInput.readFrom(mapper, inputStream);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      String json = """
+        {"session_id": "../etc/passwd", "tool_name": "Bash"}
+        """;
+      ByteArrayInputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+      HookInput.readFrom(scope.getJsonMapper(), inputStream);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
    * Verifies that a valid UUID-style session ID is accepted.
    */
   @Test
-  public void validSessionIdIsReturned()
+  public void validSessionIdIsReturned() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    String sessionId = "550e8400-e29b-41d4-a716-446655440000";
-    String json = "{\"session_id\": \"" + sessionId + "\", \"tool_name\": \"Bash\"}";
-    ByteArrayInputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-    HookInput input = HookInput.readFrom(mapper, inputStream);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      String sessionId = "550e8400-e29b-41d4-a716-446655440000";
+      String json = "{\"session_id\": \"" + sessionId + "\", \"tool_name\": \"Bash\"}";
+      ByteArrayInputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+      HookInput input = HookInput.readFrom(scope.getJsonMapper(), inputStream);
 
-    requireThat(input.getSessionId(), "sessionId").isEqualTo(sessionId);
+      requireThat(input.getSessionId(), "sessionId").isEqualTo(sessionId);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -57,14 +73,21 @@ public final class HookInputTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Invalid session_id format.*")
-  public void sessionIdWithSlashThrowsException()
+  public void sessionIdWithSlashThrowsException() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    String json = """
-      {"session_id": "valid/but/slashes", "tool_name": "Bash"}
-      """;
-    ByteArrayInputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-    HookInput.readFrom(mapper, inputStream);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      String json = """
+        {"session_id": "valid/but/slashes", "tool_name": "Bash"}
+        """;
+      ByteArrayInputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+      HookInput.readFrom(scope.getJsonMapper(), inputStream);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -72,55 +95,83 @@ public final class HookInputTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*session_id.*")
-  public void missingSessionIdThrows()
+  public void missingSessionIdThrows() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    String json = """
-      {"tool_name": "Bash"}
-      """;
-    ByteArrayInputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-    HookInput.readFrom(mapper, inputStream);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      String json = """
+        {"tool_name": "Bash"}
+        """;
+      ByteArrayInputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+      HookInput.readFrom(scope.getJsonMapper(), inputStream);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
    * Verifies that a session ID with underscores and hyphens is accepted.
    */
   @Test
-  public void sessionIdWithUnderscoresAndHyphensIsAccepted()
+  public void sessionIdWithUnderscoresAndHyphensIsAccepted() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    String sessionId = "test-session_abc123";
-    String json = "{\"session_id\": \"" + sessionId + "\", \"tool_name\": \"Bash\"}";
-    ByteArrayInputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-    HookInput input = HookInput.readFrom(mapper, inputStream);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      String sessionId = "test-session_abc123";
+      String json = "{\"session_id\": \"" + sessionId + "\", \"tool_name\": \"Bash\"}";
+      ByteArrayInputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+      HookInput input = HookInput.readFrom(scope.getJsonMapper(), inputStream);
 
-    requireThat(input.getSessionId(), "sessionId").isEqualTo(sessionId);
+      requireThat(input.getSessionId(), "sessionId").isEqualTo(sessionId);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
-   * Verifies that an empty session ID throws IllegalStateException.
+   * Verifies that an empty session ID throws IllegalArgumentException.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*sessionId is empty.*")
   public void emptySessionIdThrows() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    String json = "{\"session_id\": \"\"}";
-    InputStream stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-    HookInput.readFrom(mapper, stream);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      String json = "{\"session_id\": \"\"}";
+      InputStream stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+      HookInput.readFrom(scope.getJsonMapper(), stream);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
-   * Verifies that a whitespace-only session ID throws IllegalStateException.
+   * Verifies that a whitespace-only session ID throws IllegalArgumentException.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*sessionId is empty.*")
   public void whitespaceSessionIdThrows() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    String json = "{\"session_id\": \"   \"}";
-    InputStream stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-    HookInput.readFrom(mapper, stream);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      String json = "{\"session_id\": \"   \"}";
+      InputStream stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+      HookInput.readFrom(scope.getJsonMapper(), stream);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -128,12 +179,19 @@ public final class HookInputTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Invalid session_id format.*")
-  public void sessionIdWithDollarSignThrowsException()
+  public void sessionIdWithDollarSignThrowsException() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    String json = "{\"session_id\": \"test$id\"}";
-    InputStream stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-    HookInput.readFrom(mapper, stream);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      String json = "{\"session_id\": \"test$id\"}";
+      InputStream stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+      HookInput.readFrom(scope.getJsonMapper(), stream);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -141,11 +199,18 @@ public final class HookInputTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Invalid session_id format.*")
-  public void sessionIdWithSpaceThrowsException()
+  public void sessionIdWithSpaceThrowsException() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    String json = "{\"session_id\": \"test id\"}";
-    InputStream stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-    HookInput.readFrom(mapper, stream);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      String json = "{\"session_id\": \"test id\"}";
+      InputStream stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+      HookInput.readFrom(scope.getJsonMapper(), stream);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 }

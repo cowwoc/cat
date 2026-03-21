@@ -6,15 +6,17 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.BatchReader;
 import io.github.cowwoc.cat.hooks.util.BatchReader.Config;
 import io.github.cowwoc.cat.hooks.util.BatchReader.Result;
 import io.github.cowwoc.cat.hooks.util.OperationStatus;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -102,18 +104,25 @@ public class BatchReaderTest
       "/working/dir",
       "2024-01-01T00:00:00Z");
 
-    JsonMapper mapper = JsonMapper.builder().build();
-    String json = result.toJson(mapper);
+    Path tempDir = Files.createTempDirectory("test-batch-reader-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      String json = result.toJson(scope.getJsonMapper());
 
-    JsonNode root = mapper.readTree(json);
-    requireThat(root.get("status").asString(), "status").isEqualTo("success");
-    requireThat(root.get("message").asString(), "message").isEqualTo("Test message");
-    requireThat(root.get("duration_seconds").asLong(), "duration_seconds").isEqualTo(1L);
-    requireThat(root.get("pattern").asString(), "pattern").isEqualTo("test-pattern");
-    requireThat(root.get("files_found").asInt(), "files_found").isEqualTo(3);
-    requireThat(root.get("files_read").asInt(), "files_read").isEqualTo(3);
-    requireThat(root.get("working_directory").asString(), "working_directory").isEqualTo("/working/dir");
-    requireThat(root.get("timestamp").asString(), "timestamp").isEqualTo("2024-01-01T00:00:00Z");
+      JsonNode root = scope.getJsonMapper().readTree(json);
+      requireThat(root.get("status").asString(), "status").isEqualTo("success");
+      requireThat(root.get("message").asString(), "message").isEqualTo("Test message");
+      requireThat(root.get("duration_seconds").asLong(), "duration_seconds").isEqualTo(1L);
+      requireThat(root.get("pattern").asString(), "pattern").isEqualTo("test-pattern");
+      requireThat(root.get("files_found").asInt(), "files_found").isEqualTo(3);
+      requireThat(root.get("files_read").asInt(), "files_read").isEqualTo(3);
+      requireThat(root.get("working_directory").asString(), "working_directory").isEqualTo("/working/dir");
+      requireThat(root.get("timestamp").asString(), "timestamp").isEqualTo("2024-01-01T00:00:00Z");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**

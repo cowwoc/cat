@@ -6,12 +6,16 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.PostToolHandler;
 import io.github.cowwoc.cat.hooks.failure.DetectPreprocessorFailure;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
-import tools.jackson.databind.json.JsonMapper;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -25,86 +29,126 @@ public final class DetectPreprocessorFailureTest
    * containing the feedback instruction.
    */
   @Test
-  public void matchingErrorReturnsContextWithFeedbackInstruction()
+  public void matchingErrorReturnsContextWithFeedbackInstruction() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    ObjectNode hookData = mapper.createObjectNode();
-    hookData.put("error", "Bash command failed for pattern \"!`\": exit code 1");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ObjectNode hookData = scope.getJsonMapper().createObjectNode();
+      hookData.put("error", "Bash command failed for pattern \"!`\": exit code 1");
 
-    DetectPreprocessorFailure handler = new DetectPreprocessorFailure();
-    PostToolHandler.Result result = handler.check("Skill", mapper.createObjectNode(), "test-session", hookData);
+      DetectPreprocessorFailure handler = new DetectPreprocessorFailure();
+      PostToolHandler.Result result = handler.check("Skill", scope.getJsonMapper().createObjectNode(),
+        "test-session", hookData);
 
-    requireThat(result.warning(), "warning").isEmpty();
-    requireThat(result.additionalContext(), "additionalContext").contains("/cat:feedback");
-    requireThat(result.additionalContext(), "additionalContext").contains("preprocessor command failed");
+      requireThat(result.warning(), "warning").isEmpty();
+      requireThat(result.additionalContext(), "additionalContext").contains("/cat:feedback");
+      requireThat(result.additionalContext(), "additionalContext").contains("preprocessor command failed");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
    * Verifies that a non-matching error field returns an allow result.
    */
   @Test
-  public void nonMatchingErrorReturnsAllow()
+  public void nonMatchingErrorReturnsAllow() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    ObjectNode hookData = mapper.createObjectNode();
-    hookData.put("error", "Some other unrelated error occurred");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ObjectNode hookData = scope.getJsonMapper().createObjectNode();
+      hookData.put("error", "Some other unrelated error occurred");
 
-    DetectPreprocessorFailure handler = new DetectPreprocessorFailure();
-    PostToolHandler.Result result = handler.check("Bash", mapper.createObjectNode(), "test-session", hookData);
+      DetectPreprocessorFailure handler = new DetectPreprocessorFailure();
+      PostToolHandler.Result result = handler.check("Bash", scope.getJsonMapper().createObjectNode(),
+        "test-session", hookData);
 
-    requireThat(result.warning(), "warning").isEmpty();
-    requireThat(result.additionalContext(), "additionalContext").isEmpty();
+      requireThat(result.warning(), "warning").isEmpty();
+      requireThat(result.additionalContext(), "additionalContext").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
    * Verifies that a missing error field returns an allow result.
    */
   @Test
-  public void missingErrorFieldReturnsAllow()
+  public void missingErrorFieldReturnsAllow() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    JsonNode hookData = mapper.createObjectNode();
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonNode hookData = scope.getJsonMapper().createObjectNode();
 
-    DetectPreprocessorFailure handler = new DetectPreprocessorFailure();
-    PostToolHandler.Result result = handler.check("Bash", mapper.createObjectNode(), "test-session", hookData);
+      DetectPreprocessorFailure handler = new DetectPreprocessorFailure();
+      PostToolHandler.Result result = handler.check("Bash", scope.getJsonMapper().createObjectNode(),
+        "test-session", hookData);
 
-    requireThat(result.warning(), "warning").isEmpty();
-    requireThat(result.additionalContext(), "additionalContext").isEmpty();
+      requireThat(result.warning(), "warning").isEmpty();
+      requireThat(result.additionalContext(), "additionalContext").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
    * Verifies that an error containing the pattern anywhere in the string is matched.
    */
   @Test
-  public void errorWithPatternEmbeddedReturnsContextResult()
+  public void errorWithPatternEmbeddedReturnsContextResult() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    ObjectNode hookData = mapper.createObjectNode();
-    hookData.put("error", "prefix text Bash command failed for pattern \"!`\" suffix text");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ObjectNode hookData = scope.getJsonMapper().createObjectNode();
+      hookData.put("error", "prefix text Bash command failed for pattern \"!`\" suffix text");
 
-    DetectPreprocessorFailure handler = new DetectPreprocessorFailure();
-    PostToolHandler.Result result = handler.check("Skill", mapper.createObjectNode(), "test-session", hookData);
+      DetectPreprocessorFailure handler = new DetectPreprocessorFailure();
+      PostToolHandler.Result result = handler.check("Skill", scope.getJsonMapper().createObjectNode(),
+        "test-session", hookData);
 
-    requireThat(result.warning(), "warning").isEmpty();
-    requireThat(result.additionalContext(), "additionalContext").contains("/cat:feedback");
-    requireThat(result.additionalContext(), "additionalContext").contains("preprocessor command failed");
+      requireThat(result.warning(), "warning").isEmpty();
+      requireThat(result.additionalContext(), "additionalContext").contains("/cat:feedback");
+      requireThat(result.additionalContext(), "additionalContext").contains("preprocessor command failed");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
    * Verifies that an empty error string returns an allow result.
    */
   @Test
-  public void emptyErrorStringReturnsAllow()
+  public void emptyErrorStringReturnsAllow() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    ObjectNode hookData = mapper.createObjectNode();
-    hookData.put("error", "");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ObjectNode hookData = scope.getJsonMapper().createObjectNode();
+      hookData.put("error", "");
 
-    DetectPreprocessorFailure handler = new DetectPreprocessorFailure();
-    PostToolHandler.Result result = handler.check("Bash", mapper.createObjectNode(), "test-session", hookData);
+      DetectPreprocessorFailure handler = new DetectPreprocessorFailure();
+      PostToolHandler.Result result = handler.check("Bash", scope.getJsonMapper().createObjectNode(),
+        "test-session", hookData);
 
-    requireThat(result.warning(), "warning").isEmpty();
-    requireThat(result.additionalContext(), "additionalContext").isEmpty();
+      requireThat(result.warning(), "warning").isEmpty();
+      requireThat(result.additionalContext(), "additionalContext").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -113,17 +157,25 @@ public final class DetectPreprocessorFailureTest
    * so the pattern does not match and the result is allow.
    */
   @Test
-  public void numericErrorFieldReturnsAllow()
+  public void numericErrorFieldReturnsAllow() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    ObjectNode hookData = mapper.createObjectNode();
-    hookData.put("error", 42);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ObjectNode hookData = scope.getJsonMapper().createObjectNode();
+      hookData.put("error", 42);
 
-    DetectPreprocessorFailure handler = new DetectPreprocessorFailure();
-    PostToolHandler.Result result = handler.check("Bash", mapper.createObjectNode(), "test-session", hookData);
+      DetectPreprocessorFailure handler = new DetectPreprocessorFailure();
+      PostToolHandler.Result result = handler.check("Bash", scope.getJsonMapper().createObjectNode(),
+        "test-session", hookData);
 
-    requireThat(result.warning(), "warning").isEmpty();
-    requireThat(result.additionalContext(), "additionalContext").isEmpty();
+      requireThat(result.warning(), "warning").isEmpty();
+      requireThat(result.additionalContext(), "additionalContext").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -132,17 +184,25 @@ public final class DetectPreprocessorFailureTest
    * so the pattern does not match and the result is allow.
    */
   @Test
-  public void booleanErrorFieldReturnsAllow()
+  public void booleanErrorFieldReturnsAllow() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    ObjectNode hookData = mapper.createObjectNode();
-    hookData.put("error", true);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ObjectNode hookData = scope.getJsonMapper().createObjectNode();
+      hookData.put("error", true);
 
-    DetectPreprocessorFailure handler = new DetectPreprocessorFailure();
-    PostToolHandler.Result result = handler.check("Bash", mapper.createObjectNode(), "test-session", hookData);
+      DetectPreprocessorFailure handler = new DetectPreprocessorFailure();
+      PostToolHandler.Result result = handler.check("Bash", scope.getJsonMapper().createObjectNode(),
+        "test-session", hookData);
 
-    requireThat(result.warning(), "warning").isEmpty();
-    requireThat(result.additionalContext(), "additionalContext").isEmpty();
+      requireThat(result.warning(), "warning").isEmpty();
+      requireThat(result.additionalContext(), "additionalContext").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -150,17 +210,25 @@ public final class DetectPreprocessorFailureTest
    * Jackson's asString() on a null node returns null, triggering the null check.
    */
   @Test
-  public void jsonNullErrorFieldReturnsAllow()
+  public void jsonNullErrorFieldReturnsAllow() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    ObjectNode hookData = mapper.createObjectNode();
-    hookData.putNull("error");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ObjectNode hookData = scope.getJsonMapper().createObjectNode();
+      hookData.putNull("error");
 
-    DetectPreprocessorFailure handler = new DetectPreprocessorFailure();
-    PostToolHandler.Result result = handler.check("Bash", mapper.createObjectNode(), "test-session", hookData);
+      DetectPreprocessorFailure handler = new DetectPreprocessorFailure();
+      PostToolHandler.Result result = handler.check("Bash", scope.getJsonMapper().createObjectNode(),
+        "test-session", hookData);
 
-    requireThat(result.warning(), "warning").isEmpty();
-    requireThat(result.additionalContext(), "additionalContext").isEmpty();
+      requireThat(result.warning(), "warning").isEmpty();
+      requireThat(result.additionalContext(), "additionalContext").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -168,16 +236,24 @@ public final class DetectPreprocessorFailureTest
    * This confirms the implementation intentionally uses case-sensitive string contains.
    */
   @Test
-  public void lowercasePatternReturnsAllow()
+  public void lowercasePatternReturnsAllow() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    ObjectNode hookData = mapper.createObjectNode();
-    hookData.put("error", "bash command failed for pattern \"!`\": exit code 1");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ObjectNode hookData = scope.getJsonMapper().createObjectNode();
+      hookData.put("error", "bash command failed for pattern \"!`\": exit code 1");
 
-    DetectPreprocessorFailure handler = new DetectPreprocessorFailure();
-    PostToolHandler.Result result = handler.check("Bash", mapper.createObjectNode(), "test-session", hookData);
+      DetectPreprocessorFailure handler = new DetectPreprocessorFailure();
+      PostToolHandler.Result result = handler.check("Bash", scope.getJsonMapper().createObjectNode(),
+        "test-session", hookData);
 
-    requireThat(result.warning(), "warning").isEmpty();
-    requireThat(result.additionalContext(), "additionalContext").isEmpty();
+      requireThat(result.warning(), "warning").isEmpty();
+      requireThat(result.additionalContext(), "additionalContext").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 }

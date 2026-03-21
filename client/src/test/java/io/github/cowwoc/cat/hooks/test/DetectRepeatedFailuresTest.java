@@ -6,11 +6,11 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.PostToolHandler;
 import io.github.cowwoc.cat.hooks.failure.DetectRepeatedFailures;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -38,13 +38,12 @@ public final class DetectRepeatedFailuresTest
   public void firstFailureAllowsQuietly() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
-    try
+    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-" + System.nanoTime();
 
-      JsonMapper mapper = JsonMapper.builder().build();
-      JsonNode toolResult = mapper.createObjectNode();
-      JsonNode hookData = mapper.createObjectNode();
+      JsonNode toolResult = scope.getJsonMapper().createObjectNode();
+      JsonNode hookData = scope.getJsonMapper().createObjectNode();
       DetectRepeatedFailures handler = new DetectRepeatedFailures(Clock.systemUTC(), trackingDirectory);
 
       PostToolHandler.Result result = handler.check("Bash", toolResult, sessionId, hookData);
@@ -65,13 +64,12 @@ public final class DetectRepeatedFailuresTest
   public void secondFailureReturnsWarning() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
-    try
+    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-" + System.nanoTime();
 
-      JsonMapper mapper = JsonMapper.builder().build();
-      JsonNode toolResult = mapper.createObjectNode();
-      JsonNode hookData = mapper.createObjectNode();
+      JsonNode toolResult = scope.getJsonMapper().createObjectNode();
+      JsonNode hookData = scope.getJsonMapper().createObjectNode();
       DetectRepeatedFailures handler = new DetectRepeatedFailures(Clock.systemUTC(), trackingDirectory);
 
       // First failure - no warning
@@ -97,13 +95,12 @@ public final class DetectRepeatedFailuresTest
   public void thirdFailureContinuesToWarn() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
-    try
+    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-" + System.nanoTime();
 
-      JsonMapper mapper = JsonMapper.builder().build();
-      JsonNode toolResult = mapper.createObjectNode();
-      JsonNode hookData = mapper.createObjectNode();
+      JsonNode toolResult = scope.getJsonMapper().createObjectNode();
+      JsonNode hookData = scope.getJsonMapper().createObjectNode();
       DetectRepeatedFailures handler = new DetectRepeatedFailures(Clock.systemUTC(), trackingDirectory);
 
       handler.check("Bash", toolResult, sessionId, hookData);
@@ -126,13 +123,12 @@ public final class DetectRepeatedFailuresTest
   public void failureCountPersistsAcrossInstances() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
-    try
+    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-" + System.nanoTime();
 
-      JsonMapper mapper = JsonMapper.builder().build();
-      JsonNode toolResult = mapper.createObjectNode();
-      JsonNode hookData = mapper.createObjectNode();
+      JsonNode toolResult = scope.getJsonMapper().createObjectNode();
+      JsonNode hookData = scope.getJsonMapper().createObjectNode();
 
       // First instance records one failure
       DetectRepeatedFailures handler1 = new DetectRepeatedFailures(Clock.systemUTC(), trackingDirectory);
@@ -158,14 +154,13 @@ public final class DetectRepeatedFailuresTest
   public void differentSessionsAreIndependent() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
-    try
+    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
     {
       String sessionId1 = "test-session-a-" + System.nanoTime();
       String sessionId2 = "test-session-b-" + System.nanoTime();
 
-      JsonMapper mapper = JsonMapper.builder().build();
-      JsonNode toolResult = mapper.createObjectNode();
-      JsonNode hookData = mapper.createObjectNode();
+      JsonNode toolResult = scope.getJsonMapper().createObjectNode();
+      JsonNode hookData = scope.getJsonMapper().createObjectNode();
       DetectRepeatedFailures handler = new DetectRepeatedFailures(Clock.systemUTC(), trackingDirectory);
 
       // First failure on session 1 - no warning
@@ -189,13 +184,12 @@ public final class DetectRepeatedFailuresTest
   public void warningContainsDriftRecoveryGuidance() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
-    try
+    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-" + System.nanoTime();
 
-      JsonMapper mapper = JsonMapper.builder().build();
-      JsonNode toolResult = mapper.createObjectNode();
-      JsonNode hookData = mapper.createObjectNode();
+      JsonNode toolResult = scope.getJsonMapper().createObjectNode();
+      JsonNode hookData = scope.getJsonMapper().createObjectNode();
       DetectRepeatedFailures handler = new DetectRepeatedFailures(Clock.systemUTC(), trackingDirectory);
 
       handler.check("Bash", toolResult, sessionId, hookData);
@@ -224,11 +218,10 @@ public final class DetectRepeatedFailuresTest
   public void blankSessionIdThrows() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
-    try
+    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
     {
-      JsonMapper mapper = JsonMapper.builder().build();
-      JsonNode toolResult = mapper.createObjectNode();
-      JsonNode hookData = mapper.createObjectNode();
+      JsonNode toolResult = scope.getJsonMapper().createObjectNode();
+      JsonNode hookData = scope.getJsonMapper().createObjectNode();
       DetectRepeatedFailures handler = new DetectRepeatedFailures(Clock.systemUTC(), trackingDirectory);
 
       handler.check("Bash", toolResult, "", hookData);
@@ -247,15 +240,14 @@ public final class DetectRepeatedFailuresTest
   public void corruptedTrackingFileResetsCounter() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
-    try
+    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-corrupt-" + System.nanoTime();
       Path trackingFile = trackingDirectory.resolve("cat-failure-tracking-" + sessionId + ".count");
       Files.writeString(trackingFile, "not-a-number");
 
-      JsonMapper mapper = JsonMapper.builder().build();
-      JsonNode toolResult = mapper.createObjectNode();
-      JsonNode hookData = mapper.createObjectNode();
+      JsonNode toolResult = scope.getJsonMapper().createObjectNode();
+      JsonNode hookData = scope.getJsonMapper().createObjectNode();
       DetectRepeatedFailures handler = new DetectRepeatedFailures(Clock.systemUTC(), trackingDirectory);
 
       PostToolHandler.Result result = handler.check("Bash", toolResult, sessionId, hookData);
@@ -276,14 +268,14 @@ public final class DetectRepeatedFailuresTest
   public void trackingFileHasOwnerOnlyPermissions() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
-    try
+    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-perms-" + System.nanoTime();
       Path trackingFile = trackingDirectory.resolve("cat-failure-tracking-" + sessionId + ".count");
 
       DetectRepeatedFailures handler = new DetectRepeatedFailures(Clock.systemUTC(), trackingDirectory);
-      JsonMapper mapper = JsonMapper.builder().build();
-      handler.check("Bash", mapper.createObjectNode(), sessionId, mapper.createObjectNode());
+      handler.check("Bash", scope.getJsonMapper().createObjectNode(), sessionId,
+        scope.getJsonMapper().createObjectNode());
 
       Set<PosixFilePermission> perms = Files.getPosixFilePermissions(trackingFile);
       requireThat(perms, "perms").containsExactly(Set.of(
@@ -304,7 +296,7 @@ public final class DetectRepeatedFailuresTest
   public void symlinkTrackingFilesAreSkippedDuringCleanup() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
-    try
+    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-symlink-" + System.nanoTime();
       Path realFile = Files.createTempFile(trackingDirectory, "cat-failure-real-", ".tmp");
@@ -313,9 +305,9 @@ public final class DetectRepeatedFailuresTest
 
       // Handler should not throw even with symlink in tracking directory
       DetectRepeatedFailures handler = new DetectRepeatedFailures(Clock.systemUTC(), trackingDirectory);
-      JsonMapper mapper = JsonMapper.builder().build();
       String otherSession = "test-session-other-" + System.nanoTime();
-      handler.check("Bash", mapper.createObjectNode(), otherSession, mapper.createObjectNode());
+      handler.check("Bash", scope.getJsonMapper().createObjectNode(), otherSession,
+        scope.getJsonMapper().createObjectNode());
       // Symlink should still exist (not deleted)
       requireThat(Files.exists(symlinkFile, LinkOption.NOFOLLOW_LINKS), "symlinkExists").isTrue();
     }
@@ -333,7 +325,7 @@ public final class DetectRepeatedFailuresTest
   {
     Instant now = Instant.parse("2025-06-01T12:00:00Z");
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
-    try
+    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-ttl-" + System.nanoTime();
       Path trackingFile = trackingDirectory.resolve("cat-failure-tracking-" + sessionId + ".count");
@@ -347,8 +339,8 @@ public final class DetectRepeatedFailuresTest
       String otherSession = "test-session-trigger-" + System.nanoTime();
       Clock clock = Clock.fixed(now, ZoneOffset.UTC);
       DetectRepeatedFailures handler = new DetectRepeatedFailures(clock, trackingDirectory);
-      JsonMapper mapper = JsonMapper.builder().build();
-      handler.check("Bash", mapper.createObjectNode(), otherSession, mapper.createObjectNode());
+      handler.check("Bash", scope.getJsonMapper().createObjectNode(), otherSession,
+        scope.getJsonMapper().createObjectNode());
 
       // The old file should have been cleaned up
       requireThat(Files.exists(trackingFile), "trackingFileExists").isFalse();
@@ -368,13 +360,13 @@ public final class DetectRepeatedFailuresTest
     Instant now = Instant.parse("2025-06-01T12:00:00Z");
     Clock clock = Clock.fixed(now, ZoneOffset.UTC);
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
-    try
+    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
     {
       // First call sets lastCleanup = now (cleanup runs because lastCleanup starts at EPOCH)
       String triggerSession = "test-session-trigger-" + System.nanoTime();
       DetectRepeatedFailures handler = new DetectRepeatedFailures(clock, trackingDirectory);
-      JsonMapper mapper = JsonMapper.builder().build();
-      handler.check("Bash", mapper.createObjectNode(), triggerSession, mapper.createObjectNode());
+      handler.check("Bash", scope.getJsonMapper().createObjectNode(), triggerSession,
+        scope.getJsonMapper().createObjectNode());
 
       // Now create an old tracking file
       String sessionId = "test-session-interval-" + System.nanoTime();
@@ -385,7 +377,8 @@ public final class DetectRepeatedFailuresTest
 
       // Second call on same handler instance - cleanup should NOT run (now is within 6h of now)
       String otherSession = "test-session-noclean-" + System.nanoTime();
-      handler.check("Bash", mapper.createObjectNode(), otherSession, mapper.createObjectNode());
+      handler.check("Bash", scope.getJsonMapper().createObjectNode(), otherSession,
+        scope.getJsonMapper().createObjectNode());
 
       // The old file should still exist (cleanup didn't run)
       requireThat(Files.exists(trackingFile), "trackingFileExists").isTrue();
@@ -404,7 +397,7 @@ public final class DetectRepeatedFailuresTest
   public void unreadableTrackingFileResetsCounter() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
-    try
+    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-unreadable-" + System.nanoTime();
       Path trackingFile = trackingDirectory.resolve("cat-failure-tracking-" + sessionId + ".count");
@@ -415,10 +408,9 @@ public final class DetectRepeatedFailuresTest
       Files.setPosixFilePermissions(trackingFile, noRead);
 
       DetectRepeatedFailures handler = new DetectRepeatedFailures(Clock.systemUTC(), trackingDirectory);
-      JsonMapper mapper = JsonMapper.builder().build();
       // First call should treat as count=0 (can't read), increment to 1
-      PostToolHandler.Result result = handler.check("Bash", mapper.createObjectNode(), sessionId,
-        mapper.createObjectNode());
+      PostToolHandler.Result result = handler.check("Bash", scope.getJsonMapper().createObjectNode(), sessionId,
+        scope.getJsonMapper().createObjectNode());
       // Count is 1, below threshold of 2 → allow
       requireThat(result.warning(), "warning").isEmpty();
     }

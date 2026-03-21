@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringJoiner;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -256,16 +257,14 @@ public final class TestUtils
       pb.redirectErrorStream(true);
       Process process = pb.start();
 
-      StringBuilder output = new StringBuilder();
+      StringJoiner output = new StringJoiner("\n");
       try (BufferedReader reader = new BufferedReader(
         new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
       {
         String line = reader.readLine();
         while (line != null)
         {
-          if (output.length() > 0)
-            output.append('\n');
-          output.append(line);
+          output.add(line);
           line = reader.readLine();
         }
       }
@@ -312,6 +311,41 @@ public final class TestUtils
     {
       throw WrappedCheckedException.wrap(e);
     }
+  }
+
+  /**
+   * Writes a lock file for the given session and issue ID using the scope's project CAT directory.
+   *
+   * @param scope the JVM scope providing the lock directory path
+   * @param issueId the issue identifier (becomes the lock filename stem)
+   * @param sessionId the session ID to embed in the lock content
+   * @throws IOException if the lock file cannot be written
+   * @throws NullPointerException if {@code scope}, {@code issueId}, or {@code sessionId} are null
+   */
+  public static void writeLockFile(JvmScope scope, String issueId, String sessionId) throws IOException
+  {
+    Path lockDir = scope.getCatWorkPath().resolve("locks");
+    Files.createDirectories(lockDir);
+    String content = """
+      {"session_id": "%s", "worktrees": {}, "created_at": 1000000, "created_iso": "2026-01-01T00:00:00Z"}
+      """.formatted(sessionId);
+    Files.writeString(lockDir.resolve(issueId + ".lock"), content);
+  }
+
+  /**
+   * Creates the worktree directory for the given issue ID using the scope's project CAT directory.
+   *
+   * @param scope the JVM scope providing the worktree base path
+   * @param issueId the issue identifier
+   * @return the created worktree directory path
+   * @throws IOException if the directory cannot be created
+   * @throws NullPointerException if {@code scope} or {@code issueId} are null
+   */
+  public static Path createWorktreeDir(JvmScope scope, String issueId) throws IOException
+  {
+    Path worktreeDir = scope.getCatWorkPath().resolve("worktrees").resolve(issueId);
+    Files.createDirectories(worktreeDir);
+    return worktreeDir;
   }
 
   /**
