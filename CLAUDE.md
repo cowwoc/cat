@@ -6,45 +6,44 @@
 |------|-------------|--------|
 | `plugin/**` (except README.md, concepts/) | `feature:` / `refactor:` / `bugfix:` | Plugin source code and skills |
 | `plugin/concepts/` | `config:` | Plugin's bundled reference docs (Claude-facing) |
+| `client/**` | `feature:` / `refactor:` / `bugfix:` / `test:` | Java client source code |
 | `.cat/issues/` | `planning:` | Issue tracking |
 | `.claude/**` (other), `CLAUDE.md` | `config:` | Project configuration |
 | `**/README.md`, `docs/` | `docs:` | User-facing documentation |
-
-**Note on (Mxxx) labels:** Some rules below include a parenthetical like `(M352)` indicating which mistake prompted
-the rule. These labels are provenance markers for CLAUDE.md rules only — do NOT copy this pattern into Java source
-code, Javadoc, or plugin Markdown files. Source code comments must describe current behavior, not reference historical
-mistake IDs. See `common.md` § "No retrospective commentary".
-
 **Rules:**
-- `plugin/` files use semantic types: `feature:` (new capability), `refactor:` (restructure), `bugfix:` (fix), `test:` (tests), `performance:` (optimization)
+- `plugin/` and `client/` files use semantic types: `feature:` (new capability), `refactor:` (restructure),
+  `bugfix:` (fix), `test:` (tests), `performance:` (optimization)
 - `.cat/issues/` files use `planning:`
 - Other `.claude/` files and `CLAUDE.md` use `config:`
 - `plugin/**/README.md` is `docs:`, not a plugin file
 - Mixed commits: if a commit touches plugin files, the type follows the plugin work (even if `.claude/` files are also modified)
-- **Convention changes belong with their application (M352):** When adding a new convention to a language or style file (e.g., `java.md`) AND applying it across files in the same session, include the convention file change in the SAME commit as the files that apply it. Group by topic (establish + apply = one unit), not by file location.
-- **STATE.md belongs with implementation (M487):** When closing an issue, STATE.md updates belong in the SAME commit as the implementation work, using the implementation's commit type (feature:/bugfix:/docs:/etc), NOT in a separate planning: commit
+- **Convention changes belong with their application:** When adding a new convention to a language or style file (e.g., `java.md`) AND applying it across files in the same session, include the convention file change in the SAME commit as the files that apply it. Group by topic (establish + apply = one unit), not by file location.
+- **STATE.md belongs with implementation:** When closing an issue, STATE.md updates belong in the SAME commit as the implementation work, using the implementation's commit type (feature:/bugfix:/docs:/etc), NOT in a separate planning: commit
 - If a commit would touch both docs and non-docs files, split it into separate commits
 - **Do not update closed issue files:** Never modify PLAN.md or STATE.md of closed issues unless the user explicitly
   instructs you to. Closed issues are historical records.
 
-## Issue Workflow vs Direct Implementation (M553)
+## Issue Workflow vs Direct Implementation
 
-When a user says "update skill X to do Y" or "modify plugin Z to support W", treat this as a feature request
-requiring the CAT issue workflow — do NOT directly read, analyze, or edit plugin source files.
+When a user says "update skill X to do Y", "modify plugin Z to support W", or "upgrade client/pom.xml to use
+JDK 26", treat this as a feature request requiring the CAT issue workflow — do NOT directly read, analyze, or
+edit `plugin/` or `client/` source files.
 
 **Correct interpretation:** Create an issue via `/cat:add` that captures the requested change as work to be
 done. The issue's PLAN.md describes what to update and why. Implementation happens later via `/cat:work`.
 
-**Wrong interpretation:** Reading skill source code, analyzing it, and proposing or making edits inline.
+**Wrong interpretation:** Reading source code, analyzing it, and proposing or making edits inline — whether
+to `plugin/` files, `client/` files, or configuration files inside those directories (e.g., `client/pom.xml`).
 
 **The distinction:** Direct edits bypass worktree isolation and skip the planning, review, and merge process
-that protects the codebase. Every plugin change goes through an issue — even when the user frames the request
-as an immediate action.
+that protects the codebase. Every `plugin/` or `client/` change goes through an issue — even when the user
+frames the request as an immediate action or a "simple update."
 
 **Exception:** If the user explicitly asks for a "quick fix" or "one-line change" AND the change is trivial
-enough to fit in a single commit, create a minimal worktree branch (still not direct edits to main workspace).
+enough to fit in a single commit, create a minimal worktree branch via `/cat:add` + `/cat:work` (still not
+direct edits to main workspace, and still not a raw `git worktree add` without a CAT issue).
 
-## Approval Gate Workflow (M560)
+## Approval Gate Workflow
 
 **MANDATORY: Squash commits by topic before EVERY approval gate, even after making code changes in response to user feedback.**
 
@@ -70,16 +69,16 @@ When editing CAT plugin files, always edit the source files in `/workspace/plugi
 
 The cache is a read-only copy that gets overwritten on plugin updates.
 
-**Binary Launcher Locations (M430):** Compiled jlink binary launchers (e.g., `get-status-output`, `skill-loader`) are
+**Binary Launcher Locations:** Compiled jlink binary launchers (e.g., `get-status-output`, `skill-loader`) are
 generated by the jlink build process and live under the plugin cache path:
 `/home/node/.config/claude/plugins/cache/cat/cat/2.1/client/bin/`. The workspace `client/` directory contains only
 Java source code (`src/main/java/`) — there are no compiled binaries in `/workspace/client/bin/`.
 
-**Worktree Path Handling (M267):** When working in a worktree (e.g., `/workspace/.cat/worktrees/task-name/`), use
+**Worktree Path Handling:** When working in a worktree (e.g., `/workspace/.cat/worktrees/task-name/`), use
 relative paths like `plugin/skills/` instead of absolute paths like `/workspace/plugin/`. Absolute paths to
 `/workspace/` bypass worktree isolation and modify the main workspace instead.
 
-**All code changes require a worktree (M453):** Any modification to `plugin/` or `client/` source files — including
+**All code changes require a worktree:** Any modification to `plugin/` or `client/` source files — including
 user-requested "direct fix" changes — must be made inside an issue worktree, never directly in the main workspace.
 When a user asks for a "direct fix", create a minimal single-commit worktree branch rather than editing `/workspace/`
 directly. The `EnforceWorktreePathIsolation` hook blocks edits to the main workspace when an active worktree exists.
