@@ -2550,5 +2550,225 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M577",
+    "timestamp" : "2026-03-19T15:02:16Z",
+    "category" : "",
+    "description" : "",
+    "root_cause" : "phase-prevent.md Step 9 blocking gate item 5 contains stale guidance that says DO NOT COMMIT here. All commits happen in Phase 4 Step 13 — but Phase 4 Step 13 no longer exists. The current architecture requires the subagent to commit prevention changes in Phase 3 and include the commit hash in its output.",
+    "cause_signature" : "compliance_failure:doc_missing:skill_execution",
+    "prevention_type" : "skill",
+    "prevention_path" : "plugin/skills/learn/phase-prevent.md",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
+  }, {
+    "id" : "M578",
+    "timestamp" : "2026-03-19T15:04:02Z",
+    "category" : "",
+    "description" : "",
+    "root_cause" : "The skill work-implement-agent/first-use.md documented the catAgentId argument for collect-results-agent as ${CAT_AGENT_ID}/${SUBAGENT_RAW_ID}. When the agent substituted the raw agentId, this produced UUID/rawId — missing the required /subagents/ path segment.",
+    "cause_signature" : "knowledge_gap:doc_missing:skill_execution",
+    "prevention_type" : "documentation",
+    "prevention_path" : "plugin/skills/work-implement-agent/first-use.md",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
+  }, {
+    "id" : "M579",
+    "timestamp" : "2026-03-19T15:44:12Z",
+    "category" : "",
+    "description" : "When merging branch 2.1-add-benchmark-runner-tests onto v2.1, agent bypassed cat:git-merge-linear-agent and used manual bash. Ran git merge-base --is-ancestor (returned exit 1 = not fast-forward) but proceeded to git update-ref refs/heads/v2.1 anyway, losing 3 commits (M576/M577/M578) from v2.1.",
+    "root_cause" : "",
+    "cause_signature" : "compliance_failure:hook_absent:git_operations",
+    "prevention_type" : "hook",
+    "prevention_path" : "client/src/main/java/io/github/cowwoc/cat/hooks/bash/BlockDirectBranchPointerModification.java",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "correct_behavior" : ""
+  }, {
+    "id" : "M580",
+    "timestamp" : "2026-03-19T19:44:39Z",
+    "category" : "",
+    "description" : "",
+    "root_cause" : "",
+    "cause_signature" : "knowledge_gap:doc_missing:skill_execution",
+    "prevention_type" : "documentation",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
+  }, {
+    "id" : "M581",
+    "timestamp" : "2026-03-19T20:56:00Z",
+    "category" : "protocol_violation",
+    "description" : "User said 'upgrade client/pom.xml to use JDK 26'. Agent read pom.xml directly, created a raw git worktree (upgrade-jdk-26) without using cat:add or cat:work, implemented the change, and only created a formal CAT issue when the user explicitly asked. The CLAUDE.md Issue Workflow section (M553) only mentioned plugin/ files, not client/ files.",
+    "root_cause" : "CLAUDE.md § Issue Workflow vs Direct Implementation listed only plugin/ files in its examples and rule scope. The agent correctly knew client/ changes require a worktree (from Plugin Development section) but did not know that client/ changes also require a formal CAT issue first. The documentation gap allowed the agent to bypass cat:add + cat:work in favor of a raw git worktree.",
+    "cause_signature" : "knowledge_gap:doc_missing:issue_workflow",
+    "rca_method" : "C",
+    "rca_method_name" : "causal-barrier",
+    "prevention_type" : "documentation",
+    "prevention_path" : "${CLAUDE_PROJECT_DIR}/CLAUDE.md",
+    "pattern_keywords" : [ "client_pom", "raw_worktree", "bypass_cat_add", "bypass_cat_work", "issue_workflow_gap", "client_change" ],
+    "prevention_implemented" : true,
+    "prevention_commit_hash" : "eccdb86f246e1c2055c3a809cd205d59520fb8e2",
+    "prevention_verified" : true,
+    "recurrence_of" : "M553",
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : "When a user says 'upgrade client/pom.xml to use JDK 26' or any similar client/ or plugin/ change request, invoke /cat:add to create a formal issue first. Implementation happens via /cat:work in an isolated worktree. Never use raw 'git worktree add' to bypass the CAT issue workflow."
+  }, {
+    "id" : "M582",
+    "timestamp" : "2026-03-19T21:32:34Z",
+    "category" : "",
+    "description" : "",
+    "root_cause" : "",
+    "cause_signature" : "knowledge_gap:doc_missing:issue_workflow",
+    "prevention_type" : "documentation",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
+  }, {
+    "id" : "M583",
+    "timestamp" : "2026-03-19T22:00:00Z",
+    "category" : "protocol_violation",
+    "description" : "Agent committed client/pom.xml (implementing the upgrade-compiler-to-jdk26 feature issue) with commit type config: instead of feature:. The Commit Types table in CLAUDE.md had an entry for plugin/** mapped to semantic types but no entry for client/**, causing the agent to fall through to the config: default.",
+    "root_cause" : "CLAUDE.md § Commit Types table listed plugin/** with semantic commit types (feature:/refactor:/bugfix:) but had no row for client/**. With no explicit guidance, the agent applied config: (the fallback for configuration files) to client/pom.xml even though the change was implementing a feature issue.",
+    "cause_signature" : "knowledge_gap:doc_missing:git_operations",
+    "rca_method" : "C",
+    "rca_method_name" : "causal-barrier",
+    "prevention_type" : "documentation",
+    "prevention_path" : "${CLAUDE_PROJECT_DIR}/CLAUDE.md",
+    "pattern_keywords" : [ "client_pom", "commit_type", "config_instead_of_feature", "missing_client_row" ],
+    "prevention_implemented" : true,
+    "prevention_commit_hash" : "db3592ba2e3eaebabc1d5775dd59930849cd9796",
+    "prevention_verified" : true,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : "client/** files use semantic commit types: feature: (new capability), refactor: (restructure), bugfix: (fix), test: (tests). Use the same rules as plugin/** files."
+  }, {
+    "id" : "M584",
+    "timestamp" : "2026-03-19T21:45:21Z",
+    "category" : "",
+    "description" : "",
+    "root_cause" : "",
+    "cause_signature" : "knowledge_gap:doc_missing:git_operations",
+    "prevention_type" : "documentation",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
+  }, {
+    "id" : "M585",
+    "timestamp" : "2026-03-19T22:49:38Z",
+    "category" : "",
+    "description" : "",
+    "root_cause" : "",
+    "cause_signature" : null,
+    "prevention_type" : "",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "correct_behavior" : ""
+  }, {
+    "id" : "M586",
+    "timestamp" : "2026-03-20T14:00:00Z",
+    "category" : "protocol_violation",
+    "description" : "During merge phase Step 9, cat:git-squash-agent was invoked to squash by topic before the approval gate, but the prior work-squash subagent (Step 7) had already squashed all 16 commits into 1 single implementation commit, including planning commits. The planning commits (index.json, plan.md updates) were combined with the implementation commit, violating squash-by-topic.",
+    "root_cause" : "DOCUMENTATION GAP: work-squash.md Step 3 instructed the agent to consolidate all commits into a single implementation commit using git-squash, without any awareness of planning-type commits. The git-squash binary squashes every commit ahead of TARGET_BRANCH into one, so planning commits (planning: close issue, planning: remove OOS entries) were collapsed into the implementation commit. When Step 9 ran cat:git-squash-agent, it found only 1 commit and could not apply topic separation to restore the planning commits.",
+    "cause_signature" : "compliance_failure:skill_incomplete:git_operations",
+    "prevention_type" : "skill",
+    "prevention_path" : "${CLAUDE_PROJECT_DIR}/plugin/agents/work-squash.md",
+    "pattern_keywords" : [ "work-squash", "planning-commits", "squash-by-topic", "topic-separation", "git-squash" ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "prevention_commit_hash" : "80c2af51c1735951e5c7d8718a1ef320089647bc",
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : "work-squash.md Step 3 identifies planning-only commits before squashing, runs git-squash on all commits (which collapses everything including planning into one), then re-applies the planning commits as separate commits on top of the implementation commit. This preserves squash-by-topic structure so Step 9 cat:git-squash-agent sees the correct commit grouping at the approval gate."
+  }, {
+    "id" : "M587",
+    "timestamp" : "2026-03-20T15:22:31Z",
+    "category" : "protocol-violation",
+    "description" : "",
+    "root_cause" : "Agent skipped verify-implementation-agent invocation BEFORE presenting approval gate; marked index.json as closed despite post-conditions unsatisfied",
+    "cause_signature" : null,
+    "prevention_type" : "",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "correct_behavior" : ""
+  }, {
+    "id" : "M588",
+    "timestamp" : "2026-03-19T14:53:44Z",
+    "category" : "misleading_documentation",
+    "description" : "",
+    "root_cause" : "The work-implement-agent/first-use.md skill showed the pattern args: ${CAT_AGENT_ID}/${SUBAGENT_RAW_ID} which is missing the required /subagents/ segment. The correct format is ${CAT_AGENT_ID}/subagents/${SUBAGENT_RAW_ID}. The misleading template in the skill file primed the agent to construct the wrong format.",
+    "cause_signature" : "knowledge_gap:doc_missing:skill_execution",
+    "prevention_type" : "documentation",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }

@@ -193,15 +193,12 @@ skips the entire confirm phase.
   `cd "${WORKTREE_PATH}" && git add plugin/skills/work/first-use.md && git commit -m "feature: add post-condition verification gate to potentially-complete closure path"`
   - Files: `plugin/skills/work/first-use.md`
 
-- After the implementation commit above, update the issue STATE.md to `closed`. The issue directory
-  is at `.cat/issues/v2/v2.1/add-criteria-verification-gate/` (created when the issue was added via
-  `/cat:add`). Set the `status:` field in
-  `.cat/issues/v2/v2.1/add-criteria-verification-gate/STATE.md` to `closed`. Then commit:
+- After the implementation commit above, update the issue `index.json` to `closed`. Set the
+  `status:` field to `closed`. Then commit:
   ```bash
-  cd "${WORKTREE_PATH}" && git add .cat/issues/v2/v2.1/add-criteria-verification-gate/STATE.md && git commit -m "planning: close add-criteria-verification-gate"
+  cd "${WORKTREE_PATH}" && git add .cat/issues/v2/v2.1/this-issue/index.json && git commit -m "planning: close this-issue"
   ```
   This is a separate commit from the implementation commit above (different commit type).
-  - Files: `.cat/issues/v2/v2.1/add-criteria-verification-gate/STATE.md`
 
 ## Post-conditions
 

@@ -116,20 +116,11 @@ as obsolete before or during this work.
 
 ### Wave 6 — Fix Remaining Unmigrated Issues
 
-1. Manually convert `.cat/issues/v2/v2.1/add-criteria-verification-gate/PLAN.md` to `plan.md` by
-   renaming the file (git mv) in the worktree, then delete the original `PLAN.md`
-2. Manually convert `.cat/issues/v2/v2.1/add-criteria-verification-gate/STATE.md` to `index.json`
-   by reading its key-value content, reformatting as JSON with the correct schema fields (status,
-   and conditionally resolution, targetBranch, dependencies, blocks, parent, decomposedInto —
-   no Progress field), writing `index.json`, and deleting `STATE.md`
-3. Manually convert `.cat/issues/v2/v2.1/rename-skill-builder-to-instruction-builder/PLAN.md` to
-   `plan.md` using git mv, then delete the original `PLAN.md`
-4. Manually convert `.cat/issues/v2/v2.1/rename-skill-builder-to-instruction-builder/STATE.md` to
-   `index.json` by reading its key-value content, reformatting as JSON with the correct schema
-   fields, writing `index.json`, and deleting `STATE.md`
-5. Verify no `PLAN.md` or `STATE.md` files remain under `.cat/issues/`:
+1. Verify all issues under `.cat/issues/v2/v2.1/` have `plan.md` and `index.json` (migrated from
+   `PLAN.md` and `STATE.md`)
+2. Verify no `PLAN.md` or `STATE.md` files remain under `.cat/issues/`:
    `find .cat/issues -name PLAN.md -o -name STATE.md` must return empty output
-6. Verify both converted directories now contain `plan.md` and `index.json` with valid JSON schemas
+3. Verify all converted directories contain `plan.md` and `index.json` with valid JSON schemas
 
 ### Wave 7 — Remove Post-condition Extraction from VerifyAudit
 
