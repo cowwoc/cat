@@ -430,11 +430,14 @@ The `EnforceCollectAfterAgent` hook blocks all Skill and Task calls until collec
 ```
 Skill tool:
   skill: "cat:collect-results-agent"
-  args: "${CAT_AGENT_ID}/${SUBAGENT_RAW_ID} ${ISSUE_PATH} <subagentCommitsJsonPath>"
+  args: "${CAT_AGENT_ID}/subagents/${SUBAGENT_RAW_ID} ${ISSUE_PATH} <subagentCommitsJsonPath>"
 ```
 
 Where `SUBAGENT_RAW_ID` is the `agentId:` value from the Task tool result footer, and
 `subagentCommitsJsonPath` is a temp file path to write the collected commits JSON.
+
+The catAgentId format for a subagent is `{sessionId}/subagents/{agentId}` — do NOT omit the
+`/subagents/` segment or the call will be rejected with a format validation error.
 
 Then validate and merge its commits back into the issue branch:
 
@@ -636,10 +639,12 @@ For each completed subagent, call collect-results-agent:
 ```
 Skill tool:
   skill: "cat:collect-results-agent"
-  args: "${CAT_AGENT_ID}/${SUBAGENT_RAW_ID} ${ISSUE_PATH} <subagentCommitsJsonPath>"
+  args: "${CAT_AGENT_ID}/subagents/${SUBAGENT_RAW_ID} ${ISSUE_PATH} <subagentCommitsJsonPath>"
 ```
 
 Where `SUBAGENT_RAW_ID` is the `agentId:` value from that group's Task tool result footer.
+The catAgentId format for a subagent is `{sessionId}/subagents/{agentId}` — do NOT omit the
+`/subagents/` segment or the call will be rejected with a format validation error.
 
 Then validate and merge each subagent branch back into the issue branch in alphabetical order
 (A first, then B, C, ...):

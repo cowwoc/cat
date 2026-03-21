@@ -750,9 +750,16 @@ BEFORE proceeding to next step, you MUST complete this gate:
    The prevention_path in the JSON entry MUST match a file listed above.
    If they don't match, the learning system is corrupted.
 
-5. **DO NOT COMMIT here.** All commits happen in Phase 4 Step 13 — prevention files AND retrospective metadata go into
-   a SINGLE commit. Committing prevention files now creates a split-commit mistake where the retrospective counter
-   update lands in a separate commit, violating the single-commit rule.
+5. **Commit your changes here.** After all edited files are verified:
+   ```bash
+   git add <file1> <file2> ...  # Stage each edited file explicitly by path
+   git commit -m "bugfix: <description of prevention>"
+   PREVENTION_COMMIT_HASH=$(git log -1 --format="%H")
+   echo "PREVENTION_COMMIT_HASH=${PREVENTION_COMMIT_HASH}"
+   ```
+   Record the resulting commit hash — it MUST be reported as `prevention_commit_hash` in the output JSON.
+   Setting `prevention_implemented: true` without committing and providing this hash will cause Step 4a
+   validation to fail in the orchestrator.
 
 ## Step 9b: Verify Fix Doesn't Introduce Priming
 

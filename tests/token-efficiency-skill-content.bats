@@ -15,6 +15,7 @@
 PROJECT_ROOT="$(cd "${BATS_TEST_DIRNAME}/.." && pwd)"
 OPTIMIZE_SKILL="${PROJECT_ROOT}/plugin/skills/optimize-execution/first-use.md"
 INSTRUCTION_SKILL="${PROJECT_ROOT}/plugin/skills/instruction-builder-agent/first-use.md"
+FIXTURES_DIR="${BATS_TEST_DIRNAME}/token-efficiency-fixtures"
 
 # ---------------------------------------------------------------------------
 # Wave 1, Item 1: Verify optimize-execution Token Efficiency reporting
@@ -218,4 +219,113 @@ INSTRUCTION_SKILL="${PROJECT_ROOT}/plugin/skills/instruction-builder-agent/first
 @test "optimize-execution Token Efficiency section ordered by estimated savings" {
   # REQ-001: Flagged patterns must be ordered by estimated token savings
   grep -q "ordered by estimated savings\|ordered by.*savings" "${OPTIMIZE_SKILL}"
+}
+
+# ---------------------------------------------------------------------------
+# Wave 3, Item 4: False-positive and detection-gap fixture validation
+# ---------------------------------------------------------------------------
+
+@test "token-efficiency-fixtures directory exists" {
+  [ -d "${FIXTURES_DIR}" ]
+}
+
+@test "verbose-headings true-positive fixtures exist (3 files)" {
+  [ -f "${FIXTURES_DIR}/verbose-headings-true-positive-1.md" ]
+  [ -f "${FIXTURES_DIR}/verbose-headings-true-positive-2.md" ]
+  [ -f "${FIXTURES_DIR}/verbose-headings-true-positive-3.md" ]
+}
+
+@test "verbose-headings false-positive fixtures exist (2 files)" {
+  [ -f "${FIXTURES_DIR}/verbose-headings-false-positive-1.md" ]
+  [ -f "${FIXTURES_DIR}/verbose-headings-false-positive-2.md" ]
+}
+
+@test "leading-spaces true-positive fixture exists" {
+  [ -f "${FIXTURES_DIR}/leading-spaces-true-positive.md" ]
+}
+
+@test "leading-spaces false-positive fixtures exist (2 files)" {
+  [ -f "${FIXTURES_DIR}/leading-spaces-false-positive-1.md" ]
+  [ -f "${FIXTURES_DIR}/leading-spaces-false-positive-2.md" ]
+}
+
+@test "boilerplate true-positive and false-positive fixtures exist" {
+  [ -f "${FIXTURES_DIR}/boilerplate-true-positive.md" ]
+  [ -f "${FIXTURES_DIR}/boilerplate-false-positive.md" ]
+}
+
+@test "unused-section true-positive and false-positive fixtures exist" {
+  [ -f "${FIXTURES_DIR}/unused-section-true-positive.md" ]
+  [ -f "${FIXTURES_DIR}/unused-section-false-positive.md" ]
+}
+
+@test "detection-gap-analysis document exists" {
+  [ -f "${FIXTURES_DIR}/detection-gap-analysis.md" ]
+}
+
+@test "detection-gap-analysis covers all 4 detection patterns" {
+  grep -q "Verbose Section Heading\|Verbose section heading\|Pattern 1" \
+    "${FIXTURES_DIR}/detection-gap-analysis.md"
+  grep -q "Redundant Leading Space\|leading.space\|Pattern 2" \
+    "${FIXTURES_DIR}/detection-gap-analysis.md"
+  grep -q "[Bb]oilerplate [Rr]epetition\|Pattern 3" \
+    "${FIXTURES_DIR}/detection-gap-analysis.md"
+  grep -q "[Uu]nused [Oo]utput\|Pattern 4" \
+    "${FIXTURES_DIR}/detection-gap-analysis.md"
+}
+
+@test "detection-gap-analysis documents true positive recall results" {
+  grep -q "true positive\|TP Recall\|3/3\|1/1" \
+    "${FIXTURES_DIR}/detection-gap-analysis.md"
+}
+
+@test "detection-gap-analysis documents false positive precision results" {
+  grep -q "false positive\|FP Precision\|not flagged" \
+    "${FIXTURES_DIR}/detection-gap-analysis.md"
+}
+
+@test "verbose-headings true-positive fixtures contain redundant heading text" {
+  # Each TP fixture must have a heading that restates prior context
+  grep -q "Configuration Analysis Steps\|Build Pipeline.*Steps\|Dependency Audit.*Steps" \
+    "${FIXTURES_DIR}/verbose-headings-true-positive-1.md"
+}
+
+@test "verbose-headings false-positive fixtures contain distinct topic headings" {
+  # FP fixtures must have headings that introduce new topics (not redundant)
+  grep -q "Merge Conflict Resolution\|Security Hardening Review" \
+    "${FIXTURES_DIR}/verbose-headings-false-positive-1.md" \
+    "${FIXTURES_DIR}/verbose-headings-false-positive-2.md"
+}
+
+@test "leading-spaces true-positive fixture contains non-fenced indented lines" {
+  # TP must have indented lines outside a fenced code block
+  grep -q "^    " "${FIXTURES_DIR}/leading-spaces-true-positive.md"
+  # Must NOT be inside a fenced block (verify no triple-backtick wrapper)
+  run grep -c '```' "${FIXTURES_DIR}/leading-spaces-true-positive.md"
+  [ "${output}" -eq 0 ]
+}
+
+@test "leading-spaces false-positive-1 fixture uses fenced code block for indented content" {
+  # FP-1 must have indented content inside a fenced code block (exempt context)
+  grep -q '```' "${FIXTURES_DIR}/leading-spaces-false-positive-1.md"
+}
+
+@test "boilerplate true-positive fixture has verbatim repeated text (50+ chars)" {
+  # Must contain the repeated text at least twice
+  local count
+  count=$(grep -c "YAML frontmatter must include" \
+    "${FIXTURES_DIR}/boilerplate-true-positive.md")
+  [ "${count}" -ge 2 ]
+}
+
+@test "unused-section true-positive fixture has an empty table" {
+  # True positive must contain a Markdown table with only headers and a separator
+  grep -q "| Package.*Reason Skipped" \
+    "${FIXTURES_DIR}/unused-section-true-positive.md"
+}
+
+@test "unused-section false-positive fixture documents conditional content" {
+  # False positive must document that the section is conditional (not always empty)
+  grep -q -i "conditional\|only if\|when" \
+    "${FIXTURES_DIR}/unused-section-false-positive.md"
 }
