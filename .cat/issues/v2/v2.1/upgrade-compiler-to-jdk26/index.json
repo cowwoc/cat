@@ -1,0 +1,7 @@
+{
+  "status" : "closed",
+  "resolution" : "implemented",
+  "dependencies" : [ ],
+  "blocks" : [ ],
+  "targetBranch" : "v2.1"
+}
