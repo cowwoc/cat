@@ -147,9 +147,10 @@ Task tool:
     ## Return Format
     Return the complete designed skill as a markdown code block (the full SKILL.md or first-use.md content).
     Do NOT spawn subagents. Do NOT invoke the Task tool. Do NOT use Bash, Write, Edit, NotebookEdit,
-    Glob, Grep, WebFetch, WebSearch, or any other tool besides Read. The ONLY permitted tool is Read —
-    no other tool may be used under any circumstances, regardless of whether it appears in the list above.
-    Nothing else — no exceptions.
+    Glob, Grep, WebFetch, WebSearch, TaskOutput, ToolSearch, Skill, or any other tool besides Read.
+    Do NOT invoke any skill (e.g., cat:grep-and-read-agent, cat:batch-read-agent, or any other
+    cat: skill). The ONLY permitted tool is Read — no other tool may be used under any circumstances,
+    regardless of whether it appears in the list above. Nothing else — no exceptions.
     Only read the two files referenced above (design-methodology.md and skill-conventions.md) and, if
     updating, the existing skill files at EXISTING_SKILL_PATH. Do NOT read other files.
 ```
@@ -222,11 +223,18 @@ entirely. Proceed directly to ## Output Format with a single-run sanity check: s
 subagent with the skill active on a scenario that exercises the skill's primary purpose (i.e., a prompt
 that triggers the skill's main workflow, not an empty or no-op input). Verify the output contains at least
 one substantive result from the skill's procedure (e.g., a generated step, a produced artifact, or a
-decision — not merely an echo of the prompt or a generic acknowledgment). Report the result to the user.
+decision — not merely an echo of the prompt or a generic acknowledgment). If the sanity check fails
+(no substantive result), do NOT proceed to Output Format — report the failure to the user and return to
+Step 2 to redesign the skill draft. Report the result to the user.
 
-At the start of Step 4, compute `BENCHMARK_ARTIFACTS_DIR` as
-`<worktree-root>/benchmark-artifacts/${CLAUDE_SESSION_ID}` (expanding `${CLAUDE_SESSION_ID}` to its actual
-value). Pass this resolved path as a literal string to all subagents — do NOT pass variable references.
+At the start of Step 4, compute `BENCHMARK_ARTIFACTS_DIR` as the `benchmark/` subdirectory adjacent to the
+skill file being improved:
+```bash
+# SKILL_TEXT_PATH is worktree-relative (e.g., plugin/skills/foo/SKILL.md)
+SKILL_ABS_PATH="${CLAUDE_PROJECT_DIR}/${SKILL_TEXT_PATH}"
+BENCHMARK_ARTIFACTS_DIR="$(dirname "$SKILL_ABS_PATH")/benchmark"
+```
+Pass this resolved path as a literal string to all subagents — do NOT pass variable references.
 
 **Model selection:** Read the target skill's `model:` frontmatter field to determine which model to use for
 benchmark-run subagents. Run:
@@ -238,11 +246,16 @@ The script prints the model name (e.g., `sonnet`, `haiku`) or falls back to `hai
 Store the result as `BENCHMARK_MODEL` and pass it as a resolved literal string to all benchmark-run and grader
 subagents. Do NOT hardcode `haiku` — always use the value from `extract-model`.
 
-**Context isolation:** `BENCHMARK_ARTIFACTS_DIR` includes the session ID in its path, ensuring that concurrent
-benchmark-run subagents from different sessions write to separate directories and never collide. Each
-benchmark-run subagent receives `BENCHMARK_ARTIFACTS_DIR`, `CLAUDE_SESSION_ID`, and `BENCHMARK_MODEL` as
-pre-resolved literal strings, so no subagent ever expands these variables independently. Subagents must not
-derive their own session ID — they must use the value passed by the main agent.
+**Artifact location:** `BENCHMARK_ARTIFACTS_DIR` is the stable `benchmark/` directory adjacent to the skill
+file. Artifacts written here can be committed alongside the skill and compared across sessions to detect
+regressions or improvements. Each benchmark-run subagent receives `BENCHMARK_ARTIFACTS_DIR`, `CLAUDE_SESSION_ID`,
+and `BENCHMARK_MODEL` as pre-resolved literal strings, so no subagent ever expands these variables
+independently. Subagents must not derive their own session ID — they must use the value passed by the main agent.
+
+**Single-session assumption:** This workflow assumes only one session benchmarks a given skill at a time.
+Two concurrent sessions targeting the same skill would both write to the same `benchmark.json` file, causing
+overwrites and corrupted results. No file locking is implemented. If concurrent benchmarking of the same skill
+is needed in the future, add a lock file under `BENCHMARK_ARTIFACTS_DIR` keyed by session ID before proceeding.
 
 #### Step 4.1: Auto-Generate Test Cases
 
@@ -499,21 +512,29 @@ Pass each subagent only scalar references (test case ID, run index, `BENCHMARK_A
 the prompt. The benchmark-run subagent reads assertions from
 `cat {BENCHMARK_ARTIFACTS_DIR}/test-cases.json`.
 
-The benchmark-run subagent prompt must include the prohibition: "Do NOT read benchmark-artifacts (other than
-test-cases.json to read the prompt and assertions), grading files, run-output files from other subagents,
-or any file under benchmark-artifacts/ other than test-cases.json, via any mechanism (Read tool, Bash,
-Grep, or otherwise). This prohibition is absolute — it applies regardless of the file's content or purpose,
+The benchmark-run subagent prompt must include the prohibition: "Do NOT read any benchmark artifact files
+(other than test-cases.json to read the prompt and assertions), grading files, or run-output files from
+other subagents. The ONLY permitted read from {BENCHMARK_ARTIFACTS_DIR} is test-cases.json. Do NOT read
+any other file under {BENCHMARK_ARTIFACTS_DIR} via any mechanism (Read tool, Bash, Grep, or otherwise).
+This prohibition is absolute — it applies regardless of the file's content or purpose,
 including peer subagent output files. Do NOT run any git command that could reveal skill content or commit
 history — this includes git log, git show, git diff, git rev-list, git shortlog, git format-patch, and any
 other command that outputs committed content or commit messages.
 Bash commands are restricted to the following allowlist: cat, head, tail, wc, grep, mkdir.
+This allowlist applies to both external commands and shell built-ins — do NOT use shell built-ins
+(echo, printf, read, source, eval, set, export) or process substitution (<(...), >(...)) outside
+this allowlist. Do NOT use the Write tool, Edit tool, NotebookEdit tool, TaskOutput tool, or
+Skill tool. Do NOT invoke any skill (e.g., cat:grep-and-read-agent, cat:batch-read-agent, or any
+other cat: skill) — the Skill tool is prohibited entirely.
 The ONLY files you may read (via cat, head, tail, grep, or the Read tool) are:
 (1) `{BENCHMARK_ARTIFACTS_DIR}/test-cases.json` and (2) your own output file at the path above.
 Do NOT use cat, head, tail, grep, or the Read tool on any other path — including peer subagent output files
-under `/tmp/benchmark-runs/`, files under `benchmark-artifacts/` other than test-cases.json, worktree files
-(e.g., findings.json, benchmark.json), or any path not listed in (1)-(2).
+under `/tmp/benchmark-runs/`, other files under `{BENCHMARK_ARTIFACTS_DIR}` (e.g., benchmark.json), worktree files
+(e.g., findings.json), or any path not listed in (1)-(2).
 The ONLY file you may write is your output file at `/tmp/benchmark-runs/<CLAUDE_SESSION_ID>/<case-id>_run_<N>.txt`
-(use `mkdir -p` to create the parent directory). Do NOT use shell redirection operators (>, >>) to write to any
+(use `mkdir -p /tmp/benchmark-runs/<CLAUDE_SESSION_ID>` to create the parent directory — mkdir may ONLY be used
+with this exact path pattern; do NOT use mkdir to create any other directory).
+Do NOT use shell redirection operators (>, >>) to write to any
 other path. Do NOT use any Bash command not on this allowlist. Do NOT use commands that could discover or read
 peer subagent output files (e.g., find, ls, grep -r, grep -rl, or glob patterns on `/tmp/benchmark-runs/`).
 Do NOT use grep with recursive flags (-r, -R, --include, -l combined with directory paths) as this provides
@@ -564,7 +585,7 @@ benchmark and return `{"error": "batch contamination: fresh subagent spawn faile
 for <run_id>"}`.
 
 **Check 2 — Prohibition verification:** Inspect the return value for evidence of prohibited behavior:
-- If the return value references file paths under `benchmark-artifacts/` other than `test-cases.json`
+- If the return value references file paths under `{BENCHMARK_ARTIFACTS_DIR}/` other than `test-cases.json`
   (e.g., in an `output_path` or any explanation field), reject the run.
 - If the return value contains content that could only come from a peer subagent's output file (e.g., it
   quotes or references run output from a different `run_id`), reject the run.
@@ -582,7 +603,7 @@ corroborating signals only — if spawn parameters were correct but symptoms app
 **Minimal happy-path example (single TC, single run):**
 
     Input scalar references passed to benchmark-run subagent:
-      test_case_id: "TC1", run_index: 1, BENCHMARK_ARTIFACTS_DIR: ".../benchmark-artifacts",
+      test_case_id: "TC1", run_index: 1, BENCHMARK_ARTIFACTS_DIR: ".../plugin/skills/my-skill/benchmark",
       CLAUDE_SESSION_ID: "abc123", model: BENCHMARK_MODEL
 
     Subagent reads test-cases.json, executes the TC1 prompt, grades deterministic assertions inline.
@@ -624,7 +645,9 @@ with `semantic_pending` entries, spawn one `BENCHMARK_MODEL` grader subagent per
   These commands may ONLY be used against the specified output file at {output_path} — do NOT pass any other
   file path as an argument to these commands. Do NOT use any Bash command not on this allowlist. Do NOT use
   shell redirection operators (>, >>) or any command that writes, moves, copies, or deletes files.
-  Do NOT use the Glob tool."
+  Do NOT use the Write tool, Edit tool, NotebookEdit tool, TaskOutput tool, or Skill tool — no file
+  may be created or modified by any mechanism. Do NOT invoke any skill (e.g., cat:grep-and-read-agent,
+  cat:batch-read-agent, or any other cat: skill). Do NOT use the Glob tool."
 - Returns: `{"assertion_id": "<id>", "passed": true|false}`
 
 **Grader prohibition verification:** After each grader subagent returns, verify compliance before
@@ -680,25 +703,12 @@ benchmark-run subagent return value:
 }
 ```
 
-Commit with message `benchmark: SPRT result [session: ${CLAUDE_SESSION_ID}]`. Store SHA as `BENCHMARK_SHA`.
+Commit `${BENCHMARK_ARTIFACTS_DIR}/test-cases.json` and `${BENCHMARK_ARTIFACTS_DIR}/benchmark.json` with
+message `benchmark: SPRT result [session: ${CLAUDE_SESSION_ID}]`. Store SHA as `BENCHMARK_SHA`. Both files
+are written to the skill-adjacent `benchmark/` directory and committed there directly — no separate persist
+step is needed.
 
-**Persist benchmark artifacts:** After committing benchmark.json, persist the approved test cases and a
-skill-level benchmark metadata record to the skill's own directory:
-```bash
-WORKTREE_ROOT=$(git rev-parse --show-toplevel)
-"${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner" persist-artifacts \
-  "${SKILL_TEXT_PATH}" \
-  "${BENCHMARK_ARTIFACTS_DIR}" \
-  "${CLAUDE_SESSION_ID}" \
-  "${WORKTREE_ROOT}" \
-  "sprt"
-```
-This copies `test-cases.json` to `<skill-dir>/benchmark/test-cases.json`, writes
-`<skill-dir>/benchmark/benchmark.json` (containing skill SHA-256, test-cases SHA-256, session ID, phase,
-and timestamp), and commits both files with message
-`benchmark: persist artifacts [session: ${CLAUDE_SESSION_ID}, phase: sprt]`.
-
-**Token summary display:** After persisting artifacts, display a token usage summary to the user:
+**Token summary display:** After committing benchmark artifacts, display a token usage summary to the user:
 
 ```
 TOKEN USAGE SUMMARY
@@ -720,6 +730,11 @@ When SPRT rejects one or more test cases, automatically run a structured failure
 presenting results to the user. The investigation examines raw subagent conversation transcripts to
 distinguish genuine skill failures from test environment artifacts (batch contamination, shared context
 priming, model-default behaviors).
+
+**RESTRICTION:** The investigation phase is a read-only analysis. Do NOT use the Write tool, Edit tool,
+NotebookEdit tool, or Skill tool during this phase. Do NOT modify the skill file, benchmark.json,
+test-cases.json, or any benchmark artifact. The only permitted operations are: reading transcripts via
+cat:get-history-agent, running session-analyzer search commands via Bash, and interpreting the results.
 
 **Investigation procedure:**
 
@@ -743,6 +758,16 @@ ANALYZE_OUTPUT=$("$SESSION_ANALYZER" analyze "${CLAUDE_SESSION_ID}")
 AGENT_IDS=$(echo "$ANALYZE_OUTPUT" | grep -i "benchmark-run\|rejected" | awk '{print $1}')
 # Cap to maximum 5 AGENT_IDs per rejected test case to limit investigation scope.
 AGENT_IDS=$(echo "$AGENT_IDS" | head -5)
+# Sanitize: reject any AGENT_ID containing shell metacharacters.
+# Allowed characters: alphanumeric, hyphens, underscores, slashes, and periods (to support
+# full-path subagent IDs like "{session_id}/subagents/{agent_id}").
+SANITIZED_IDS=""
+for RAW_ID in $AGENT_IDS; do
+  if [[ "$RAW_ID" =~ ^[a-zA-Z0-9_/.-]+$ ]] && [[ "$RAW_ID" != *..* ]]; then
+    SANITIZED_IDS="${SANITIZED_IDS} ${RAW_ID}"
+  fi
+done
+AGENT_IDS="$SANITIZED_IDS"
 ```
 
 If no subagent IDs can be determined, record "subagent IDs not available" and continue.
@@ -750,7 +775,7 @@ If no subagent IDs can be determined, record "subagent IDs not available" and co
 **For each `AGENT_ID` in `AGENT_IDS` (one per iteration), execute sub-steps 3–7:**
 
 ```bash
-for AGENT_ID in ${AGENT_IDS}; do
+for AGENT_ID in $AGENT_IDS; do
   # Sub-steps 3–7 execute here, once per AGENT_ID
 done
 ```
@@ -783,7 +808,9 @@ as a "compliance failure" candidate.
 
 Reuse `ANALYZE_OUTPUT` from sub-step 2 (do NOT invoke session-analyzer again). Check the output for
 subagent freshness: each benchmark-run subagent should appear as a separate, independent entry with
-`resume: false`. If two or more runs share a subagent ID, batch contamination is confirmed.
+no `resume` field present (the pre-spawn gate requires `resume` to be entirely absent, not set to any value).
+If a subagent entry contains `resume: true`, `resume: false`, or a `conversation_id` field, it was not
+spawned correctly. If two or more runs share a subagent ID, batch contamination is confirmed.
 
 Interpret: signs of batch contamination in the transcripts from sub-step 3:
 - Runs 1–N pass, then runs N+1–M fail within the same subagent conversation
@@ -927,13 +954,17 @@ Task tool:
     (SKILL_TEXT_PATH is worktree-relative; prepend WORKTREE_ROOT for the absolute path.)
 
     RESTRICTION: This is a read-only analysis task. Do NOT modify the skill file, benchmark
-    artifacts, findings.json, or any other file in the worktree. Do NOT use the Write or
-    Edit tools. Bash commands are restricted to the following allowlist of read-only commands:
+    artifacts, findings.json, or any other file in the worktree. Do NOT use the Write, Edit,
+    NotebookEdit, or Skill tools. Do NOT invoke any skill (e.g., cat:grep-and-read-agent,
+    cat:batch-read-agent, or any other cat: skill).
+    Bash commands are restricted to the following allowlist of read-only commands:
     cat, head, tail, grep, wc, sort, uniq, diff, stat.
     Do NOT use find, ls, or the Glob tool to discover or enumerate files.
-    The ONLY files you may read (via cat, head, tail, grep, or the Read tool) are:
+    The ONLY files you may read or access (via cat, head, tail, grep, wc, sort, uniq, diff, stat,
+    or the Read tool) are:
     (1) the skill file at {WORKTREE_ROOT}/{SKILL_TEXT_PATH} and (2) the benchmark results file
-    whose path is provided to you. Do NOT read test-cases.json, benchmark.json,
+    whose path is provided to you. Do NOT use any allowlisted command against any file not in this list.
+    Do NOT read test-cases.json, benchmark.json,
     protected-sections.txt, or any file under {BENCHMARK_ARTIFACTS_DIR} other than the specific
     benchmark results file provided.
     Do NOT use any Bash command not on this allowlist. In particular, do NOT use shell redirection
@@ -1020,6 +1051,9 @@ The ONLY valid execution path is:
 If you are reading this and thinking "I should now run the loop", stop — you are primed incorrectly.
 Return to Step 5 and spawn Task tool subagents.
 
+**Effort gate:** Read `effort` from `${CLAUDE_PROJECT_DIR}/.cat/config.json`. If `effort = low`, skip
+in-place hardening entirely and report "Skipping in-place hardening (effort=low)." to the user.
+
 In-place hardening mode runs the adversarial TDD loop against a skill file in a worktree in a single session,
 producing one commit per round as the loop progresses.
 
@@ -1029,9 +1063,8 @@ In-place hardening mode activates when the caller passes a single skill file pat
 This mode is intended for hardening existing, already-functional skills — it applies adversarial instruction
 review only and does NOT run the benchmark evaluation loop (Step 4). Before entering in-place mode,
 the orchestrator must verify that a prior benchmark exists for this skill by checking whether
-`benchmark-artifacts/*/benchmark.json` contains an entry whose skill path matches the target file (search
-via `git log --all --oneline -- 'benchmark-artifacts/*/benchmark.json'` to find benchmark commits, then
-verify at least one exists). If no prior benchmark is found, the orchestrator must abort in-place mode and
+`<skill-dir>/benchmark/benchmark.json` exists (where `<skill-dir>` is the directory containing the target
+skill file). If no prior benchmark is found, the orchestrator must abort in-place mode and
 fall back to the full workflow (Steps 1-5) with the message: "No prior benchmark found for this skill —
 running full workflow including benchmark evaluation."
 
@@ -1115,6 +1148,11 @@ failures before proceeding to compression.
 
 #### Step 7.2: Compress
 
+Before invoking the compression subagent, derive `{skill-filename}` as the basename of `SKILL_TEXT_PATH`
+(e.g., `first-use` from `plugin/skills/my-skill/first-use.md`). Sanitize `{skill-filename}` by stripping
+any path separator characters (`/`, `\`, `..`) — reject and abort if the basename contains path traversal
+sequences. The resulting filename must be a simple name with no directory components.
+
 Invoke a general-purpose subagent to compress the skill file:
 
 ```
@@ -1135,10 +1173,12 @@ Task tool:
     ## Output
     Write the compressed file to: {BENCHMARK_ARTIFACTS_DIR}/compressed-{skill-filename}.md
 
-    RESTRICTION: The ONLY files you may read (via cat, head, tail, grep, the Read tool, or any other
-    mechanism) are: (1) the skill file at {SKILL_TEXT_PATH} (this is the input to compress),
-    (2) {BENCHMARK_ARTIFACTS_DIR}/protected-sections.txt (if provided), and
+    RESTRICTION: The ONLY files you may read (via cat, head, tail, grep, wc, sort, uniq, diff, stat,
+    the Read tool, or any other mechanism) are: (1) the skill file at {SKILL_TEXT_PATH} (this is the
+    input to compress), (2) {BENCHMARK_ARTIFACTS_DIR}/protected-sections.txt (if provided), and
     (3) ${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder-agent/compression-protocol.md.
+    Do NOT use any allowlisted command (including diff, sort, uniq, stat) against any file not in
+    this list — doing so constitutes a file read even if the command is nominally "read-only".
     Do NOT read any other file — including test-cases.json, benchmark.json, findings.json, config
     files, peer subagent output files, or any file not listed in (1)-(3) regardless of its location.
     Do NOT list or explore the skill directory's benchmark/ subdirectory. Do NOT use the Glob tool to
@@ -1146,7 +1186,9 @@ Task tool:
     with directory paths) as this provides directory discovery. Do NOT modify {SKILL_TEXT_PATH}. Use
     the Write tool to write the compressed output to
     {BENCHMARK_ARTIFACTS_DIR}/compressed-{skill-filename}.md — this is the ONLY file you may write
-    and the Write tool is the ONLY permitted mechanism for writing it. Do NOT use the Edit tool.
+    and the Write tool is the ONLY permitted mechanism for writing it. Do NOT use the Edit tool,
+    NotebookEdit tool, or the Skill tool. Do NOT invoke any skill (e.g., cat:batch-write-agent,
+    cat:grep-and-read-agent, cat:batch-read-agent, or any other cat: skill).
     Bash commands are restricted to the following allowlist of read-only commands: cat, head, tail,
     grep, wc, sort, uniq, diff, stat. Do NOT use any Bash command not on this allowlist. Do NOT use
     shell redirection operators (>, >>) or any command that writes, moves, copies, or deletes files.
@@ -1253,7 +1295,7 @@ implementation details (trust levels, internal architecture, etc.).
 - [ ] Test cases include both deterministic and semantic assertion types where appropriate
 - [ ] Skill-builder maximizes deterministic-to-semantic assertion ratio when generating test cases
 - [ ] Benchmark commit message prefix uses `benchmark:`
-- [ ] Benchmark artifacts directory is `benchmark-artifacts/`
+- [ ] Benchmark artifacts directory is the skill-adjacent `<skill-dir>/benchmark/` (derived from dirname of SKILL_TEXT_PATH)
 - [ ] Variables use `BENCHMARK_ARTIFACTS_DIR` and `BENCHMARK_SET_SHA`
 - [ ] SPRT decision logic uses p0=0.95, p1=0.85, α=0.05, β=0.05 with boundaries A≈2.944, B≈-2.944
 - [ ] Each test case runs its own independent SPRT; rejection of any case stops all remaining cases
@@ -1289,7 +1331,7 @@ implementation details (trust levels, internal architecture, etc.).
 - [ ] Step 2 design subagent validation verifies Read tool was used only on permitted files
 - [ ] Step 5 blue-team patch constraints explicitly protect verification checklist items from removal or weakening
 - [ ] Step 5 does not embed file content inline in subagent prompts — subagents read from TARGET_FILE_PATH
-- [ ] Step 6 in-place mode verifies prior benchmark existence before skipping Steps 1-4 (checking benchmark-artifacts/*/benchmark.json)
+- [ ] Step 6 in-place mode verifies prior benchmark existence before skipping Steps 1-4 (checking `<skill-dir>/benchmark/benchmark.json`)
 - [ ] Step 6 batch mode uses per-skill findings paths (`findings-<skill-name>.json`) to avoid collisions
 - [ ] Step 6 batch mode passes `FINDINGS_PATH` parameter to override default findings.json path in subagent prompts
 - [ ] Step 6 distinguishes filesystem operations (use WORKTREE_ROOT prefix) from git show (use repo-relative paths)
@@ -1315,8 +1357,7 @@ implementation details (trust levels, internal architecture, etc.).
 - [ ] benchmark.json sprt section includes `total_tokens` and `total_duration_ms` per test case and overall
 - [ ] Token usage summary table is displayed after SPRT completes showing per-test-case and aggregate totals
 - [ ] Token counts are accumulated from each benchmark-run subagent return value (not estimated)
-- [ ] `${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner persist-artifacts` is called after each SPRT commit to persist test cases to `<skill-dir>/benchmark/`
-- [ ] `${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner persist-artifacts` commits `benchmark/benchmark.json` (with skill SHA, test-case SHA, session, phase, timestamp) to skill directory
+- [ ] `test-cases.json` and `benchmark.json` are committed directly to `<skill-dir>/benchmark/` after SPRT completes (no separate persist step)
 - [ ] `${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner extract-model` falls back to "haiku" when skill has no model: frontmatter field
 - [ ] Step 3 compact-output pass applied to SKILL_DRAFT before writing to disk
 - [ ] Step 3 compact-output pass lists all correctness exemptions (YAML frontmatter, Makefile targets, fenced code blocks, semantic whitespace, visual alignment)
