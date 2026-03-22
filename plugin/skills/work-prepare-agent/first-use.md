@@ -463,7 +463,61 @@ status is always OVERSIZED regardless of whether lock release succeeded or faile
 `"error"` key for this purpose — an `"error"` key in the response JSON is reserved for ERROR-status
 responses only.
 
-### Step 4: Create Worktree
+### Step 4: Check Pre-conditions
+
+**Read pre-conditions from plan.md and evaluate each one before proceeding.**
+
+```bash
+PLAN_MD="${CLAUDE_PROJECT_DIR}/.cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${ISSUE_NAME}/plan.md"
+```
+
+`MAJOR`, `MINOR`, and `ISSUE_NAME` are parsed from the work-prepare script JSON output in Step 2.
+
+```bash
+if [[ ! -f "${PLAN_MD}" ]]; then
+  # plan.md doesn't exist yet (e.g., new issue not yet planned) — skip pre-condition check
+  # continue to Step 5
+fi
+```
+
+If the file exists, locate the `## Pre-conditions` section in plan.md. Extract each checkbox item
+(`- [ ]` or `- [x]`). If the section is absent or contains no checkboxes, skip this step and proceed to Step 5.
+
+```bash
+UNMET=$(awk '/^## Pre-conditions/{found=1; next} found && /^## /{found=0} found && /^- \[ \]/{print}' "${PLAN_MD}")
+```
+
+For each unchecked pre-condition (`- [ ]`): treat it as unmet. An unchecked checkbox means the
+condition has not been confirmed satisfied.
+
+**If any pre-conditions are unchecked:**
+
+Output a warning (do NOT return ERROR or BLOCKED — this is a warning, not a hard stop):
+
+```
+⚠ Pre-conditions check: the following conditions were not confirmed:
+  - [ ] {condition text}
+  - [ ] {condition text}
+
+These conditions must be satisfied before implementation begins. Proceeding without them may cause
+the issue to fail at verification time.
+
+The workflow continues automatically to the next step. Resolve any unmet conditions before the
+implementation phase begins to avoid verification failures.
+```
+
+**After displaying the warning**, continue to Step 5. Pre-condition warnings are advisory — they do NOT
+block issue selection or worktree creation. The agent reports the unmet conditions so the user is aware, but
+does not require confirmation before proceeding. This mirrors how post-condition failures are surfaced at the
+confirm phase: as findings to address, not as hard stops.
+
+**If all pre-conditions are checked:**
+
+Output: "✓ All pre-conditions satisfied"
+
+Then proceed to Step 5.
+
+### Step 5: Create Worktree
 
 ```bash
 ISSUE_BRANCH="${MAJOR}.${MINOR}-${ISSUE_NAME}"
@@ -473,7 +527,7 @@ WORKTREE_PATH="${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/${ISSUE_BRANCH}"
 git worktree add -b "${ISSUE_BRANCH}" "${WORKTREE_PATH}" HEAD
 ```
 
-### Step 5: Verify Worktree Branch
+### Step 6: Verify Worktree Branch
 
 **MANDATORY: Verify the worktree is on the correct branch before proceeding.**
 
@@ -491,7 +545,7 @@ fi
 **Why this matters:** Without verification, a worktree may be created but remain on the base
 branch, causing commits to go to the wrong branch and bypass the review/merge workflow.
 
-### Step 6: Check for Existing Work
+### Step 7: Check for Existing Work
 
 **MANDATORY: Use the `check-existing-work` Java launcher to detect existing commits.**
 
@@ -522,7 +576,7 @@ returns JSON. Using a Java tool instead of inline LLM instructions ensures:
 - Consistent behavior across invocations
 - No risk of LLM misimplementing the check
 
-### Step 6b: Check for Work Merged to Base
+### Step 8: Check for Work Merged to Base
 
 **MANDATORY: Check if issue was already implemented on target branch.**
 
@@ -601,11 +655,11 @@ reference the issue ID — message-only search misses these cases. When suspicio
 **This prevents duplicate work** when index.json shows `in-progress` but the actual implementation
 already exists on the target branch.
 
-### Step 7: Update index.json
+### Step 9: Update index.json
 
 **MANDATORY: Update index.json in the WORKTREE, not in the main workspace.**
 
-The worktree was created in Step 4. Update the index.json copy inside it:
+The worktree was created in Step 5. Update the index.json copy inside it:
 
 ```bash
 # CORRECT: Edit in worktree
@@ -637,7 +691,7 @@ sed -i 's/"status"[[:space:]]*:[[:space:]]*"[^"]*"/"status": "in-progress"/' "$I
 **Do NOT modify any files in `${CLAUDE_PROJECT_DIR}` directly.** All file modifications
 must be in `${WORKTREE_PATH}` so they are isolated to the issue branch.
 
-### Step 8: Return Result
+### Step 10: Return Result
 
 Output the JSON result with all required fields.
 
@@ -651,6 +705,7 @@ Output the JSON result with all required fields.
 - Existing worktree without lock file (orphaned): Apply Orphaned Worktree Recovery Protocol (Step 2)
 - Issue exceeds hard limit: Release lock (Step 3), then return OVERSIZED
 - **Worktree on wrong branch:** Clean up and return ERROR
+- **Unmet pre-conditions:** Warn the user but do NOT block — continue to Step 5
 
 ## Context Loaded
 

@@ -1,4 +1,6 @@
 {
-  "status": "open",
-  "dependencies": ["2.1-defer-plan-generation-to-work-phase"]
+  "status": "closed",
+  "resolution": "implemented",
+  "dependencies": ["2.1-defer-plan-generation-to-work-phase"],
+  "target_branch": "v2.1"
 }
