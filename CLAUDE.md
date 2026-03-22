@@ -32,17 +32,6 @@ edit `plugin/` or `client/` source files.
 **Correct interpretation:** Create an issue via `/cat:add` that captures the requested change as work to be
 done. The issue's PLAN.md describes what to update and why. Implementation happens later via `/cat:work`.
 
-**Invoking add-agent with description:** When the intent is clear (e.g., a bug fix or specific feature
-request), pass the description as the second argument to `cat:add-agent` to skip the type-selection menu
-and go directly to issue creation:
-
-```
-skill: "cat:add-agent", args: "<cat_agent_id> fix work-prepare bug where agent ID is misinterpreted"
-```
-
-This routes directly to issue creation without asking the user to select between Issue / Patch version /
-Minor version / Major version. Pass description whenever the intent is to create an issue (not a version).
-
 **Wrong interpretation:** Reading source code, analyzing it, and proposing or making edits inline — whether
 to `plugin/` files, `client/` files, or configuration files inside those directories (e.g., `client/pom.xml`).
 

@@ -20,3 +20,16 @@ subAgents: []
 
 **CRITICAL**: User selecting an implementation option from AskUserQuestion does NOT bypass this rule.
 Create the issue first, then ask Claude to work on it. Direct implementation is only for true trivial fixes.
+
+## Passing a Description to add-agent
+
+**Passing a description to add-agent:** When the intent is clear (e.g., a bug fix or specific feature
+request), pass the description as the second argument to `cat:add-agent` to skip the type-selection menu
+and go directly to issue creation:
+
+```
+skill: "cat:add-agent", args: "<cat_agent_id> fix work-prepare bug where agent ID is misinterpreted"
+```
+
+This routes directly to issue creation without asking the user to select between Issue / Patch version /
+Minor version / Major version. Pass description whenever the intent is to create an issue (not a version).
