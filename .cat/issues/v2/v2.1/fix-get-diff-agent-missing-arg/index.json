@@ -1,3 +1,5 @@
 {
-  "status": "open"
+  "status" : "closed",
+  "resolution" : "implemented fix: replaced Bash parameter expansion with simple $1 in get-diff-agent directive; documented preprocessor syntax limits in skills.md",
+  "target_branch" : "v2.1"
 }

@@ -206,7 +206,7 @@ Build COMMITS_COMPACT from the execution result's commits array.
 ```
 Skill tool:
   skill: "cat:stakeholder-review-agent"
-  args: "${ISSUE_ID} ${WORKTREE_PATH} ${VERIFY} ${COMMITS_COMPACT}"
+  args: "${CAT_AGENT_ID} ${ISSUE_ID} ${WORKTREE_PATH} ${VERIFY} ${COMMITS_COMPACT}"
 ```
 
 The stakeholder-review skill will spawn its own reviewer subagents and return aggregated results.
@@ -817,7 +817,7 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
    ```
    Skill tool:
      skill: "cat:stakeholder-review-agent"
-     args: "${ISSUE_ID} ${WORKTREE_PATH} ${VERIFY} ${ALL_COMMITS_COMPACT}"
+     args: "${CAT_AGENT_ID} ${ISSUE_ID} ${WORKTREE_PATH} ${VERIFY} ${ALL_COMMITS_COMPACT}"
    ```
 14. **Merge prior unresolved concerns (MANDATORY):** After parsing the new review result into `ALL_CONCERNS`, merge
    `PRIOR_UNRESOLVED_CONCERNS` back: for each concern in `PRIOR_UNRESOLVED_CONCERNS`, check whether a concern with

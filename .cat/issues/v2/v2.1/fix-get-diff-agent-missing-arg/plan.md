@@ -101,6 +101,41 @@ Both must be fixed.
    change is needed; if it says `cat:get-diff` (bare), update to `cat:get-diff-agent`. (This is a
    documentation consistency fix — does not affect runtime behavior.)
 
+### Wave 2
+
+Integration-level tests for skill invocation argument passing.
+
+1. **Create workflow test for work-merge-agent skill invocation.**
+
+   Create a new test file `tests/integration/skills/work-merge-agent-skill-invocation.bats` that verifies
+   skill invocation argument passing for `cat:get-diff-agent`:
+
+   - Mock or stub the merge workflow environment with required variables (`ISSUE_PATH`, `CAT_AGENT_ID`, etc.)
+   - Verify the Skill tool call to `cat:get-diff-agent` is invoked with exactly 2 arguments:
+     - First argument: CAT agent ID
+     - Second argument: Issue path (absolute path to issue directory)
+   - Verify the `get-output get-diff` CLI tool receives the issue path correctly (not empty/missing)
+   - Verify the diff table output is generated successfully without "Expected exactly 1 argument" errors
+
+2. **Create workflow test for work-review-agent skill invocation.**
+
+   Create a new test file `tests/integration/skills/work-review-agent-skill-invocation.bats` that verifies
+   skill invocation argument passing for `cat:stakeholder-review-agent`:
+
+   - Mock or stub the review workflow environment with required variables (`CAT_AGENT_ID`, worktree path, branch info, etc.)
+   - Verify the Skill tool call to `cat:stakeholder-review-agent` is invoked with the correct number of arguments
+   - Verify all required arguments are passed without gaps or missing values
+   - Verify the skill invocation does not fail due to argument count mismatch
+
+3. **Create unit test for argument forwarding in get-diff-agent preprocessor.**
+
+   Create or extend a test file `tests/unit/skills/get-diff-agent-arg-forwarding.bats` that verifies:
+
+   - `plugin/skills/get-diff-agent/first-use.md` preprocessor correctly forwards the `$1` (issue path) argument
+   - When `cat:get-diff-agent` is invoked with 2 arguments, the second argument is passed to `get-output get-diff`
+   - The `GetDiffOutput` Java tool receives the issue path as its only argument (not empty array)
+   - Edge case: Verify no argument is passed if caller provides fewer than 2 arguments (let the validation fail early)
+
 ## Post-conditions
 
 - `plugin/skills/work-merge-agent/first-use.md` approval gate Skill tool invocation for
