@@ -44,7 +44,7 @@ are additionally enforced by hooks or explicit STOP instructions that block prog
   Step 8 without completing this step
 - **Step 8: Rebase onto Target Branch Before Approval Gate** — always rebase the squashed branch onto the current tip
   of the target branch before the approval gate; do not proceed to Step 9 without completing this step
-- **Step 9 (sub-step): Skill-Builder Review** — always invoke `cat:skill-builder` for modified skill or
+- **Step 9 (sub-step): Instruction-Builder Review** — always invoke `cat:instruction-builder-agent` for modified skill or
   command files before presenting the approval gate
 
 ## Arguments and Configuration

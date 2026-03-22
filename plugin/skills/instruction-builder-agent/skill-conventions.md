@@ -882,7 +882,7 @@ This skill uses silent preprocessing (exclamation-backtick syntax) for output.
 ```
 
 This applies to any invocable skill (listed in plugin.json). Reference documentation that is not
-directly invoked (like this skill-builder) can safely contain the patterns for teaching purposes.
+directly invoked (like this instruction-builder) can safely contain the patterns for teaching purposes.
 
 **Why this is the preferred approach:**
 - **Guaranteed correctness**: Output is computed, not approximated by the LLM

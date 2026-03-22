@@ -194,13 +194,13 @@ a benchmark JSON object used by skill-analyzer-agent and displayed in the review
 
 ## Benchmark/Iterate Workflow
 
-### Step 1: Write Test Cases (skill-builder Step 9)
+### Step 1: Write Test Cases (instruction-builder Step 9)
 
 Create an eval set JSON with 2-5 test cases. Each case has a `prompt` and an `assertions` array.
 For subjective skills, include only `prompt` with an empty `assertions` array and rely on the
 human review step.
 
-### Step 2: Spawn Parallel Runs (skill-builder Step 10)
+### Step 2: Spawn Parallel Runs (instruction-builder Step 10)
 
 For each test case, spawn **two subagents in the same turn** — one with the skill active and one
 without. Pass each subagent its prompt, whether the skill is active, and instructions to record
@@ -209,14 +209,14 @@ without. Pass each subagent its prompt, whether the skill is active, and instruc
 Do not run test cases sequentially: all test cases for all configs must be in flight simultaneously
 to minimize total elapsed time.
 
-### Step 3: Grade and Aggregate (skill-builder Step 11)
+### Step 3: Grade and Aggregate (instruction-builder Step 11)
 
 For each completed run:
 1. Invoke `skill-grader-agent` with the run's output and assertion list. Record the grading JSON.
 2. After all runs are graded, call the BenchmarkAggregator Java tool with all grading outputs.
    The tool returns the benchmark JSON.
 
-### Step 4: Analyze and Review (skill-builder Step 12)
+### Step 4: Analyze and Review (instruction-builder Step 12)
 
 1. Invoke `skill-analyzer-agent` with the benchmark JSON. The agent returns a pattern analysis report.
 2. Display the benchmark summary table and the pattern analysis report to the user.
@@ -234,7 +234,7 @@ without-skill |   50%     |    3100 ms    |      300 ms     |    1100     |     
 DELTA         |  +33%     |   +1100 ms    |                 |    +400     |
 ```
 
-### Step 5: Improve and Iterate (skill-builder Step 13)
+### Step 5: Improve and Iterate (instruction-builder Step 13)
 
 If the user requests improvement:
 1. Apply targeted changes to the skill based on the pattern analysis and user feedback.

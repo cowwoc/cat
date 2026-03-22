@@ -3,7 +3,7 @@ Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
-# Skill Builder
+# Instruction Builder
 
 ## Purpose
 
@@ -20,7 +20,7 @@ which reads detailed methodology and conventions from separate files.
 - Any procedure where the goal is clear but the path is not
 
 **Note:** Both `skills/` and `commands/` are agent-facing prompt files that define behavior.
-Use skill-builder for BOTH types.
+Use instruction-builder for BOTH types.
 
 ---
 
@@ -1015,7 +1015,7 @@ The ONLY valid execution path is:
   patching, arbitration, or diff validation — without a Task tool subagent
 - Delegating to `cat:work-execute` — this is an implementation subagent, not a hardening subagent
 - Delegating to any non-Task-tool path
-- Announcing "executing skill-builder in-place hardening mode" and then doing it yourself
+- Announcing "executing instruction-builder in-place hardening mode" and then doing it yourself
 
 If you are reading this and thinking "I should now run the loop", stop — you are primed incorrectly.
 Return to Step 5 and spawn Task tool subagents.

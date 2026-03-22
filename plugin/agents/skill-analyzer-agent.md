@@ -3,7 +3,7 @@ name: skill-analyzer-agent
 description: >
   Internal subagent — reads a benchmark JSON produced by BenchmarkAggregator and surfaces actionable
   patterns: non-discriminating assertions, high-variance evals, and time/token tradeoffs. Returns a
-  structured analysis report for the skill-builder review step.
+  structured analysis report for the instruction-builder review step.
 model: sonnet
 ---
 
@@ -13,7 +13,7 @@ model: sonnet
 
 Given a benchmark JSON object produced by the BenchmarkAggregator Java tool, identify patterns that
 indicate the eval set or skill implementation needs attention. This supports Step 12 of the
-skill-builder eval loop (analyze and review).
+instruction-builder eval loop (analyze and review).
 
 ## Inputs
 
