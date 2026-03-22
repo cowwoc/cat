@@ -2822,5 +2822,25 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M592",
+    "timestamp" : "2026-03-22T14:00:00Z",
+    "category" : "incorrect_implementation",
+    "description" : "Prevention commit for M591 reconstructed the issue_path example using ${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name/ instead of ${WORKTREE_PATH}, duplicating the worktree path and obscuring the derivation relationship between worktree_path and issue_path arguments.",
+    "root_cause" : "DOCUMENTATION GAP: The work phase skill files (work-confirm-agent, work-implement-agent, work-review-agent) showed issue_path and worktree_path as independent path examples. Because worktree_path was shown as ${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name and issue_path was to be fixed from /workspace/.cat/issues/... to a worktree-relative path, the agent reconstructed the full path by inlining ${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name/ as a prefix rather than using the ${WORKTREE_PATH} variable that is already defined in argument position 4. No convention existed stating that issue_path examples should be expressed as ${WORKTREE_PATH}/<suffix>.",
+    "cause_signature" : "knowledge_gap:doc_missing:skill_execution",
+    "prevention_type" : "skill",
+    "prevention_path" : "plugin/skills/work-confirm-agent/first-use.md",
+    "prevention_commit" : "5f8cc76ed3a53daa91a8961cc17ff0ef81bcfc83",
+    "pattern_keywords" : [ "issue_path", "worktree_path", "WORKTREE_PATH", "CLAUDE_PROJECT_DIR" ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : "M591",
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : "When writing issue_path examples in work phase skill argument tables, express the path as ${WORKTREE_PATH}/.cat/issues/... to show that issue_path is derived from worktree_path. Do not reconstruct the full path using ${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/<issue-id>/."
   } ]
 }
