@@ -244,7 +244,7 @@ When trust >= medium, CAT auto-continues to the next task within scope.
 
 | Command | What It Does |
 |---------|--------------|
-| `/cat:skill-builder` | Design or update skills/commands using backward reasoning |
+| `/cat:instruction-builder-agent` | Design or update skills/commands using backward reasoning |
 
 ---
 

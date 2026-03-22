@@ -5,7 +5,7 @@ See LICENSE.md in the project root for license terms.
 -->
 # Validation Protocol
 
-**Reference document** — Used by skill-builder for two purposes:
+**Reference document** — Used by instruction-builder for two purposes:
 - **Section 1 (Extraction):** Auto-generating test cases from skill instructions, and extracting units for
   the semantic pre-check during compression
 - **Section 2 (Comparison):** The optional semantic pre-check gate during compression

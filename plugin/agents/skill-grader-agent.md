@@ -12,7 +12,7 @@ model: haiku
 
 Given one test-case output and a list of assertions, evaluate each assertion against the output,
 assign a PASS or FAIL verdict, and return a structured grading JSON object. This supports
-quantitative benchmarking in the skill-builder eval loop (Step 11).
+quantitative benchmarking in the instruction-builder eval loop (Step 11).
 
 ## Inputs
 

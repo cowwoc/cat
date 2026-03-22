@@ -168,13 +168,13 @@ Also check the content of expanded skill files (from `skill_invocations`): revie
 content that subagents received for any of the above patterns, especially cognitive anchors establishing default paths
 or values.
 
-**SKILL EXECUTION FAILURES - Use skill-builder:**
+**SKILL EXECUTION FAILURES - Use instruction-builder:**
 
 When the mistake involves an agent failing to execute a **skill** correctly (wrong output, skipped steps,
-manual construction instead of preprocessing), analyze the skill using skill-builder:
+manual construction instead of preprocessing), analyze the skill using instruction-builder:
 
 ```
-Read the skill file and apply skill-builder's Priming Prevention Checklist:
+Read the skill file and apply instruction-builder's Priming Prevention Checklist:
 - Information Ordering Check (does skill teach HOW before WHAT to invoke?)
 - Output Format Check (does output format contain expected values?)
 - Cost/Efficiency Language Check (does skill suggest proper approach is "expensive"?)

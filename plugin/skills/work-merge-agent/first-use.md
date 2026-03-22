@@ -11,9 +11,9 @@ commit squashing, branch merging, worktree cleanup, and state updates.
 ## MANDATORY STEPS
 
 - **Step 7: Post-Condition Gate Check** — verify all post-conditions are Done before squashing/rebasing
-- **Step 8: Squash Commits by Topic Before Review** — squash commits before rebase and skill-builder review
+- **Step 8: Squash Commits by Topic Before Review** — squash commits before rebase and instruction-builder review
 - **Step 9: Rebase onto Target Branch** — rebase before approval gate; do not skip
-- **Step 10: Skill-Builder Review** — invoke `cat:skill-builder` for modified skill/command files before gate
+- **Step 10: Instruction-Builder Review** — invoke `cat:instruction-builder-agent` for modified skill/command files before gate
 - **Step 11: Squash Before Approval Gate** — squash immediately before presenting gate. Re-squash ALL commits
   on EVERY presentation, including after user feedback.
 - **Step 11 (sub-step): Background Task Completion** — ALL background tasks launched in Steps 9-11 must have
@@ -184,17 +184,17 @@ If implementation was already committed, spawn a code-revision subagent to apply
 
 **HIGH:** Write `${ISSUE_PATH}/rebase-conflict-proposal.md` summarizing the conflict, then present via AskUserQuestion.
 
-## Step 10: Skill-Builder Review (MANDATORY — BLOCKING)
+## Step 10: Instruction-Builder Review (MANDATORY — BLOCKING)
 
 ```bash
 git diff --name-only "${TARGET_BRANCH}..HEAD" | grep -E '^plugin/(skills|commands)/'
 ```
 
-If skill/command files were modified: invoke `/cat:skill-builder` for each. Address any issues found.
+If skill/command files were modified: invoke `/cat:instruction-builder-agent` for each. Address any issues found.
 
 If none modified: skip to artifact cleanup.
 
-### Post-Skill-Builder Artifact Cleanup (MANDATORY)
+### Post-Instruction-Builder Artifact Cleanup (MANDATORY)
 
 ```bash
 cd "${WORKTREE_PATH}"
