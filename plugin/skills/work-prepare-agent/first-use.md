@@ -40,7 +40,7 @@ Return JSON on success:
   "major": "2",
   "minor": "1",
   "issue_name": "issue-name",
-  "issue_path": "/workspace/.cat/issues/v2/v2.1/issue-name",
+  "issue_path": "${WORKTREE_PATH}/.cat/issues/v2/v2.1/issue-name",
   "worktree_path": "${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name",
   "issue_branch": "2.1-issue-name",
   "target_branch": "v2.1",
