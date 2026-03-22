@@ -2844,5 +2844,19 @@
       "catches_variations" : true
     },
     "correct_behavior" : "When writing issue_path examples in work phase skill argument tables, express the path as ${WORKTREE_PATH}/.cat/issues/... to show that issue_path is derived from worktree_path. Do not reconstruct the full path using ${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/<issue-id>/."
+  }, {
+    "id" : "M593",
+    "timestamp" : "2026-03-22T15:38:34Z",
+    "category" : "protocol_violation",
+    "description" : "",
+    "root_cause" : "Main agent misinterpreted Skill tool response ('The Skill tool is returning documentation instead of executing') and bypassed it by spawning a manual Agent task with a simplified delegation prompt. The manual prompt lacked AskUserQuestion requirement. Merge subagent used bash echo to display options. Main agent then self-approved without any user input.",
+    "cause_signature" : "compliance_failure:skill_incomplete:issue_workflow",
+    "prevention_type" : "documentation",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : "M459",
+    "correct_behavior" : ""
   } ]
 }
