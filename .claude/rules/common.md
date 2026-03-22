@@ -100,7 +100,7 @@ Instances must NEVER:
 - ❌ Use hardcoded paths like `../repo-clean.git` or `/tmp/shared-work/`
 - ❌ Use paths like `${WORKTREE_PARENT}/shared-dir/` (multiple instances share the parent)
 
-**Example: BFG bare clone for history rewriting**
+**Example: History rewriting with isolated temp directories**
 ```bash
 # WRONG: All instances write to same path
 BARE_REPO="../repo-clean.git"

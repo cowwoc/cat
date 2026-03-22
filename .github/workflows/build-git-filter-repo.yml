@@ -4,6 +4,10 @@
 # See LICENSE.md in the project root for license terms.
 name: Build git-filter-repo Binaries
 
+# How to trigger a build:
+#   Go to Actions > Build git-filter-repo Binaries > Run workflow
+#   Enter the git-filter-repo version tag (e.g., v2.38.0)
+
 on:
   workflow_dispatch:
     inputs:
@@ -11,6 +15,9 @@ on:
         description: 'git-filter-repo version tag (e.g., v2.38.0)'
         required: true
         default: 'v2.38.0'
+  push:
+    tags:
+      - 'git-filter-repo-v*'
 
 jobs:
   build:
@@ -18,7 +25,6 @@ jobs:
       contents: read
 
     strategy:
-      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
@@ -33,7 +39,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     env:
-      VERSION: ${{ github.event.inputs.version }}
+      VERSION: ${{ github.event.inputs.version || github.ref_name }}
 
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -41,6 +47,9 @@ jobs:
       - name: Validate version input
         run: |
           set -euo pipefail
+          # Strip the 'git-filter-repo-' prefix if the workflow was triggered by a tag push
+          VERSION="${VERSION#git-filter-repo-}"
+          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
           if ! echo "${VERSION}" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
             echo "ERROR: Version '${VERSION}' does not match required format vX.Y.Z (e.g., v2.38.0)." >&2
             exit 1
@@ -63,8 +72,20 @@ jobs:
       - name: Verify source integrity
         run: |
           set -euo pipefail
-          SOURCE_SHA256=$(grep 'SOURCE_SHA256=' plugin/.git-filter-repo-config/release.conf | sed 's/SOURCE_SHA256="//;s/"//')
-          echo "${SOURCE_SHA256}  git-filter-repo.py" | sha256sum --check
+          sha256sum_portable() {
+            if command -v sha256sum >/dev/null 2>&1; then
+              sha256sum "$@"
+            else
+              shasum -a 256 "$@"
+            fi
+          }
+          SOURCE_SHA256=$(grep '^SOURCE_SHA256=' plugin/.git-filter-repo-config/release.conf \
+            | sed 's/^SOURCE_SHA256="\(.*\)"$/\1/' | head -1)
+          if [[ -z "${SOURCE_SHA256}" ]] || ! echo "${SOURCE_SHA256}" | grep -qE '^[a-f0-9]{64}$'; then
+            echo "ERROR: SOURCE_SHA256 in release.conf is missing or not a valid 64-char hex string." >&2
+            exit 1
+          fi
+          echo "${SOURCE_SHA256}  git-filter-repo.py" | sha256sum_portable --check
 
       - name: Build standalone binary with PyInstaller
         run: |
@@ -83,8 +104,15 @@ jobs:
       - name: Generate SHA256 checksum
         run: |
           set -euo pipefail
+          sha256sum_portable() {
+            if command -v sha256sum >/dev/null 2>&1; then
+              sha256sum "$@"
+            else
+              shasum -a 256 "$@"
+            fi
+          }
           cd dist
-          sha256sum git-filter-repo > git-filter-repo-${{ matrix.platform }}.sha256
+          sha256sum_portable git-filter-repo > git-filter-repo-${{ matrix.platform }}.sha256
           cat git-filter-repo-${{ matrix.platform }}.sha256
 
       - name: Rename binary for platform
@@ -108,9 +136,16 @@ jobs:
       contents: write
 
     env:
-      VERSION: ${{ github.event.inputs.version }}
+      VERSION: ${{ github.event.inputs.version || github.ref_name }}
 
     steps:
+      - name: Normalize version
+        run: |
+          set -euo pipefail
+          # Strip the 'git-filter-repo-' prefix if the workflow was triggered by a tag push
+          VERSION="${VERSION#git-filter-repo-}"
+          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
+
       - name: Download all artifacts
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
