@@ -13,19 +13,19 @@ Additionally, three `ClaudeEnv` methods carry redundant `Claude` prefixes:
 
 ## Target State
 
-- `JvmScope` / `AbstractJvmScope` no longer declare `getClaudeSessionId()`, `getProjectPath()`,
-  `getClaudePluginRoot()`, or `getClaudeEnvFile()`.
-- `ClaudeTool` interface — declares `getProjectPath()`, `getPluginRoot()`, `getSessionId()`, `getEnvFile()`.
-- `AbstractClaudeTool extends AbstractJvmScope, implements ClaudeTool` — tool-context scope.
-  - `MainClaudeTool extends AbstractClaudeTool` — replaces `MainJvmScope`.
-  - `TestClaudeTool extends AbstractClaudeTool` — replaces `TestJvmScope`.
+- `ClaudeEnv` is deleted; its env-reading logic and fields are absorbed into `AbstractClaudeTool`.
+- `AbstractJvmScope` uses `protected abstract` accessors (`getSessionId()`, `getProjectPath()`,
+  `getPluginRoot()`, `getEnvFile()`) instead of a `ClaudeEnv` constructor parameter.
+- `ClaudeTool` interface — declares `getSessionId()`, `getProjectPath()`, `getPluginRoot()`, `getEnvFile()`.
+  - `AbstractClaudeTool extends AbstractJvmScope, implements ClaudeTool` — stores env-var fields directly.
+    - `MainClaudeTool extends AbstractClaudeTool` — replaces `MainJvmScope`.
+    - `TestClaudeTool extends AbstractClaudeTool` — replaces `TestJvmScope`.
 - `ClaudeHook` interface — replaces `HookInput` + `HookOutput`.
   - `AbstractClaudeHook extends AbstractJvmScope, implements ClaudeHook`.
     - `MainClaudeHook extends AbstractClaudeHook`.
     - `TestClaudeHook extends AbstractClaudeHook`.
-- `ClaudeEnv.getClaudeSessionId()` → `ClaudeEnv.getSessionId()`
-- `ClaudeEnv.getClaudePluginRoot()` → `ClaudeEnv.getPluginRoot()`
-- `ClaudeEnv.getClaudeEnvFile()` → `ClaudeEnv.getEnvFile()`
+- `JvmScope` / `AbstractJvmScope` no longer declare `getClaudeSessionId()`, `getProjectPath()`,
+  `getClaudePluginRoot()`, or `getClaudeEnvFile()` as interface/public methods.
 - All call sites updated throughout `client/src/`.
 
 ## Parent Requirements
