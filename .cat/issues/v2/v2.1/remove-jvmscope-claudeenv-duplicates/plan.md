@@ -15,7 +15,8 @@ Additionally, three `ClaudeEnv` methods carry redundant `Claude` prefixes:
 
 - `JvmScope` / `AbstractJvmScope` no longer declare `getClaudeSessionId()`, `getProjectPath()`,
   `getClaudePluginRoot()`, or `getClaudeEnvFile()`.
-- `AbstractClaudeTool extends AbstractJvmScope` — exposes `getClaudeEnv()` for tool-context scopes.
+- `ClaudeTool` interface — declares `getProjectPath()`, `getPluginRoot()`, `getSessionId()`, `getEnvFile()`.
+- `AbstractClaudeTool extends AbstractJvmScope, implements ClaudeTool` — tool-context scope.
   - `MainClaudeTool extends AbstractClaudeTool` — replaces `MainJvmScope`.
   - `TestClaudeTool extends AbstractClaudeTool` — replaces `TestJvmScope`.
 - `ClaudeHook` interface — replaces `HookInput` + `HookOutput`.
