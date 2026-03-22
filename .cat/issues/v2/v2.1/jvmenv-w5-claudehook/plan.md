@@ -27,6 +27,10 @@ New file: `client/src/main/java/io/github/cowwoc/cat/hooks/ClaudeHook.java`
 - Methods from `HookInput`: input access methods (tool name, tool input JSON, session ID, etc.)
 - Methods from `HookOutput`: decision/response methods (block, allow, warn, etc.)
 
+**Naming convention:** Methods inside `ClaudeHook` omit "Claude" from their names since the
+interface is already Claude-specific. The exception is methods that have a CAT-equivalent
+counterpart, where "Claude" is kept to disambiguate.
+
 ### Create AbstractClaudeHook
 
 New file: `client/src/main/java/io/github/cowwoc/cat/hooks/AbstractClaudeHook.java`
