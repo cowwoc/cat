@@ -1,11 +1,8 @@
----
-description: >
-  Internal subagent — generates calibration queries from a skill's description frontmatter and
-  evaluates whether each query would trigger the skill. Used to audit trigger description coverage.
-model: haiku
-user-invocable: false
----
-
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Description Tester
 
 ## Purpose

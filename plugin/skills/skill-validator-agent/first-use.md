@@ -1,11 +1,8 @@
----
-description: >
-  Internal subagent — validates a skill against should-trigger and should-not-trigger test prompts.
-  Invoked by instruction-builder-agent Step 8 to run calibration prompts and return per-prompt pass/fail results.
-model: haiku
-user-invocable: false
----
-
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Skill Validator
 
 ## Purpose

@@ -72,34 +72,17 @@ Your responsibilities:
 Always provide specific, actionable feedback with code examples.
 ```
 
-## Agents to Migrate
-
-The following components will be migrated to this directory:
-
-### From `plugin/stakeholders/` (COMPLETED)
-All stakeholder files have been migrated to this directory with proper agent format:
-- stakeholder-architecture.md
-- stakeholder-business.md
-- stakeholder-deployment.md
-- stakeholder-design.md
-- stakeholder-legal.md
-- stakeholder-performance.md
-- stakeholder-requirements.md
-- stakeholder-security.md
-- stakeholder-testing.md
-- stakeholder-ux.md
-
-### From `plugin/skills/` (subagent-style skills)
-- work-merge (uses client/bin/git-squash Java tool, needs git-merge-linear, validate-git-safety preloaded)
-- Future skills that use delegation patterns
 
 ## Directory Structure
 
 ```
 plugin/agents/
 ├── README.md                      # This file
-├── work-execute.md                # Implementation specialist (Phase 2)
-├── work-merge.md                  # Work merge agent
+├── blue-team-agent.md             # Internal subagent — closes loopholes identified by the red-team
+├── diff-validation-agent.md       # Internal subagent — verifies blue-team patches address red-team findings
+├── red-team-agent.md              # Internal subagent — adversarially probes a target for loopholes
+├── skill-analyzer-agent.md        # Internal subagent — surfaces patterns from benchmark JSON
+├── skill-grader-agent.md          # Internal subagent — grades assertions against test-case output, returns commit SHA
 ├── stakeholder-architecture.md    # Architecture review
 ├── stakeholder-business.md        # Commercial readiness review (sales + marketing)
 ├── stakeholder-deployment.md      # Deployment/release review
@@ -109,7 +92,9 @@ plugin/agents/
 ├── stakeholder-requirements.md    # Requirements verification review
 ├── stakeholder-security.md        # Security review
 ├── stakeholder-testing.md         # Test coverage review
-└── stakeholder-ux.md              # UX/accessibility review
+├── stakeholder-ux.md              # UX/accessibility review
+├── work-execute.md                # Implementation specialist (Phase 2)
+└── work-merge.md                  # Work merge agent
 ```
 
 ## Usage

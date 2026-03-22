@@ -1,10 +1,10 @@
 ---
+name: diff-validation-agent
 description: >
   Internal subagent — verifies that blue-team patch commits address each finding in the red-team's
   findings.json. Returns a validation report with PASS/FAIL/SKIPPED status per finding and exits
   non-zero when any non-disputed CRITICAL or HIGH finding has no matching patch hunk.
 model: haiku
-user-invocable: false
 ---
 
 # Diff Validation Agent

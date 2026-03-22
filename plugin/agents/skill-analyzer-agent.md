@@ -1,10 +1,10 @@
 ---
+name: skill-analyzer-agent
 description: >
   Internal subagent — reads a benchmark JSON produced by BenchmarkAggregator and surfaces actionable
   patterns: non-discriminating assertions, high-variance evals, and time/token tradeoffs. Returns a
   structured analysis report for the skill-builder review step.
 model: sonnet
-user-invocable: false
 ---
 
 # Skill Analyzer
