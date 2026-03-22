@@ -87,18 +87,9 @@ aggregated results.
 **During execution:** Task tool invocations appear for each reviewer spawn, but their
 internal file reads and analysis are invisible.
 
-**On completion:**
-```
-✓ Review complete: {APPROVED|CONCERNS|REJECTED}
-  → requirements: ✓
-  → architecture: ✓
-  → security: ⚠ 1 HIGH
-  → testing: ✓
-  → performance: ✓
-```
-
-The aggregated result provides all necessary information without exposing 50+ internal
-tool calls from reviewers.
+**On completion:** The `report` step invokes `cat:stakeholder-review-box-agent` and
+`cat:stakeholder-concern-box-agent` via the Skill tool. These preprocessing calls generate the review
+summary box. The boxes are the sole user-facing output — do NOT write a text summary.
 
 ## Process
 
@@ -799,11 +790,14 @@ each reviewer as a separate space-separated argument (that produces 8+ args inst
 
 ```bash
 # Correct: build comma-separated string first, then pass as single arg
-REVIEWER_STATUS_LIST="requirements:✓ APPROVED,architecture:✓ APPROVED,security:⚠ 1 HIGH"
+# Each entry is "stakeholder:<approval>" where approval comes from the reviewer's JSON response
+# (e.g., "APPROVED", "CONCERNS", or "REJECTED")
+REVIEWER_STATUS_LIST=$(build from each reviewer's parsed approval field)
 ```
 
-The second argument is a comma-separated list of `stakeholder:status` pairs
-(e.g., `"architecture:✓ APPROVED,design:⚠ 1 HIGH"`).
+The second argument is a comma-separated list of `stakeholder:approval` pairs where `approval` is the
+`approval` field from the reviewer's JSON response (e.g., `"requirements:APPROVED"`). The box skill
+renders icons from these values — do NOT pre-render icons in the skill.
 
 For each concern, generate a concern box by invoking via the Skill tool:
 
@@ -813,10 +807,6 @@ Skill tool:
 
 Where `${SEVERITY}` is CRITICAL, HIGH, MEDIUM, or LOW.
 
-**Status icons:**
-- `✓` - APPROVED
-- `⚠` - CONCERNS (shows HIGH count if any)
-- `✗` - REJECTED (shows CRITICAL or HIGH count)
 
 </step>
 
@@ -851,24 +841,6 @@ The review box skills (`cat:stakeholder-review-box-agent` and `cat:stakeholder-c
 user-facing output. Invoke them via the Skill tool in the `report` step — they provide all information users need
 (stakeholder names, concern counts, icons, overall result). No additional output is needed after the boxes are
 rendered.
-
-**Internal Result Contract (for work-with-issue only):**
-
-When invoked by `work-with-issue`, the skill's final internal state is consumed by the caller as a structured object.
-The caller parses these fields:
-
-- `review_status`: `"APPROVED"`, `"CONCERNS"`, or `"REJECTED"`
-- `concerns[]`: flat list of concern objects, each with:
-  - `severity`: `"CRITICAL"`, `"HIGH"`, `"MEDIUM"`, or `"LOW"`
-  - `stakeholder`: name of the reviewing stakeholder (e.g., `"security"`)
-  - `location`: file and line reference (e.g., `"src/UserDao.java:45"`)
-  - `explanation`: brief description of the concern
-  - `recommendation`: brief remediation guidance
-  - `detail_file`: absolute path to detailed reviewer analysis (e.g., `"${WORKTREE_PATH}/.cat/work/review/security-concerns.json"`)
-- `summary`: brief summary of review outcome
-
-The `detail_file` path points to the comprehensive analysis written by the reviewer subagent. The main agent must NOT
-read these detail files — pass the paths to fix subagents instead.
 
 ## Integration with work
 
