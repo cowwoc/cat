@@ -1,4 +1,5 @@
 {
-  "status": "open",
+  "status": "closed",
+  "resolution": "obsolete (superseded by 2.1-fix-lock-worktree-path-at-acquire (e310a0c8))",
   "target_branch": "v2.1"
 }
