@@ -1,7 +1,7 @@
 ---
 issue: 2.1-jvmenv-w2-interface
 parent: 2.1-remove-jvmscope-claudeenv-duplicates
-sequence: 2 of 4
+sequence: 2 of 5
 ---
 
 # Plan: jvmenv-w2-interface
@@ -24,17 +24,17 @@ File: `client/src/main/java/io/github/cowwoc/cat/hooks/JvmScope.java`
 - Remove declarations of `getClaudeSessionId()`, `getProjectPath()`, `getClaudePluginRoot()`,
   `getClaudeEnvFile()`.
 
-### MainJvmScope
+### MainClaudeTool
 
-File: `client/src/main/java/io/github/cowwoc/cat/hooks/MainJvmScope.java`
+File: `client/src/main/java/io/github/cowwoc/cat/hooks/MainClaudeTool.java`
 
 - Remove `ConcurrentLazyReference` fields `claudeProjectPath`, `claudePluginRoot`, `claudeSessionId`,
   `claudeEnvFile` and their `@Override` methods.
 - Change the constructor to call `super(new ClaudeEnv())`.
 
-### TestJvmScope
+### TestClaudeTool
 
-File: `client/src/test/java/io/github/cowwoc/cat/hooks/test/TestJvmScope.java`
+File: `client/src/test/java/io/github/cowwoc/cat/hooks/test/TestClaudeTool.java`
 
 - Remove `@Override getProjectPath()`, `@Override getClaudePluginRoot()`,
   `@Override getClaudeSessionId()`, `@Override getClaudeEnvFile()` method bodies and their backing
@@ -50,6 +50,6 @@ File: `client/src/test/java/io/github/cowwoc/cat/hooks/test/TestJvmScope.java`
 ## Post-conditions
 
 - [ ] No method named `getClaudeSessionId`, `getProjectPath`, `getClaudePluginRoot`, or
-  `getClaudeEnvFile` exists in `JvmScope`, `MainJvmScope`, or `TestJvmScope`
-- [ ] `MainJvmScope` and `TestJvmScope` pass a `ClaudeEnv` to `AbstractJvmScope` via `super()`
+  `getClaudeEnvFile` exists in `JvmScope`, `MainClaudeTool`, or `TestClaudeTool`
+- [ ] `MainClaudeTool` and `TestClaudeTool` pass a `ClaudeEnv` to `AbstractJvmScope` via `super()`
 - [ ] Code compiles (call sites in Wave 3/4 are updated next)

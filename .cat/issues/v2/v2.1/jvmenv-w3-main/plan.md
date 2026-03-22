@@ -1,7 +1,7 @@
 ---
 issue: 2.1-jvmenv-w3-main
 parent: 2.1-remove-jvmscope-claudeenv-duplicates
-sequence: 3 of 4
+sequence: 3 of 5
 ---
 
 # Plan: jvmenv-w3-main
