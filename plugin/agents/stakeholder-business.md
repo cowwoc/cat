@@ -3,7 +3,7 @@ name: stakeholder-business
 description: "Business stakeholder for code review and research. Focus: customer value, competitive positioning, market readiness, go-to-market strategy"
 tools: Read, Grep, Glob, WebSearch, WebFetch
 model: haiku
-skills: [cat:stakeholder-common]
+skills: [cat:stakeholder-common-agent]
 ---
 
 # Stakeholder: Business

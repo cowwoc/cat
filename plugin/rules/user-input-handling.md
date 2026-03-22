@@ -32,7 +32,7 @@ subAgents: []
 **TaskList cleanup after major operations**: See `plugin/rules/tasklist-lifecycle.md` for cleanup rules after major CAT operations.
 
 **"IMPORTANT: After completing your current task"** means after your CURRENT tool call completes,
- NOT after the entire /cat:work or skill workflow finishes. Respond in your very next message.
+ NOT after the entire work skill or skill workflow finishes. Respond in your very next message.
 
 **Common failure**: Continuing to analyze tool output while ignoring embedded user request.
 **Common failure**: NOT using TaskCreate for user requests mid-operation (step 2 is MANDATORY).

@@ -127,7 +127,7 @@ the full merge phase (squash + approval gate) completes. Stakeholder review conc
 to the source branch in the worktree. Fast-forwarding the source branch to the target branch before review completes
 bypasses isolation and causes subsequent fixes to land directly on the target branch.
 
-**Planning commits created mid-implementation belong on the source branch.** When `/cat:add` is invoked during
+**Planning commits created mid-implementation belong on the source branch.** When the add skill is invoked during
 implementation (e.g., to track a newly discovered issue), the resulting `planning:` commit lands on the current
 branch — the source branch. This is correct behavior. Do NOT treat such a commit as a mistake or attempt to move it to
 the target branch. The planning commit will flow through the normal squash+merge process along with the implementation

@@ -778,7 +778,7 @@ Skip only when: fix is unique to one file (typo) or no similar files exist (veri
 **MANDATORY when `prevention_type` is `skill` AND the mistake category is `protocol_violation`:**
 
 Documentation changes for compliance failures require empirical verification — committing a skill edit without running
-`/cat:empirical-test` provides no feedback loop and allows the same failure to recur immediately.
+skipping empirical verification provides no feedback loop and allows the same failure to recur immediately.
 
 **Invoke `/cat:empirical-test-agent` before recording the prevention as complete:**
 

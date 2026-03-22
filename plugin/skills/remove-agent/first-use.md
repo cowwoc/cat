@@ -33,8 +33,8 @@ Use AskUserQuestion FIRST:
   - "Cleanup worktree/branch only (keep in planning)" - Use /cat:cleanup to remove worktree and branch
   - "Remove from planning entirely" - Proceed with this remove workflow
 
-**This skill (/cat:remove) is for PERMANENT removal from planning.**
-**For worktree/branch cleanup, use /cat:cleanup instead.**
+**This skill (cat:remove-agent) is for PERMANENT removal from planning.**
+**For worktree/branch cleanup, use cat:cleanup-agent instead.**
 
 </terminology>
 
@@ -137,7 +137,7 @@ Current status: in-progress
 Progress: {progress}%
 
 Options:
-1. Complete the issue first with /cat:work
+1. Complete the issue first by asking Claude to work on the issue
 2. Manually reset status to 'pending' in index.json if you want to discard work
 ```
 
@@ -351,7 +351,7 @@ find .cat -maxdepth 3 -type d -name "v[0-9]*.[0-9]*.[0-9]*" 2>/dev/null | while 
     MINOR=$(echo "$VERSION" | cut -d. -f2)
     PATCH=$(echo "$VERSION" | cut -d. -f3)
     ISSUE_COUNT=$(find "$d" -mindepth 1 -maxdepth 1 -type d ! -name "v*" 2>/dev/null | wc -l)
-    STATUS=$(grep -oP '(?<=\*\*Status:\*\* )\w+' "$d/index.json" 2>/dev/null || echo "open")
+    STATUS=$(grep '\*\*Status:\*\*' "$d/index.json" 2>/dev/null | sed 's/.*\*\*Status:\*\* //;s/ .*//' || echo "open")
     echo "$MAJOR.$MINOR.$PATCH ($ISSUE_COUNT issues, $STATUS)"
 done | sort -V
 ```

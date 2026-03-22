@@ -48,7 +48,7 @@ None
 - `plugin/skills/skill-builder-agent/first-use.md` - Update config filename references
 - `plugin/skills/tdd-implementation-agent/first-use.md` - Update config filename references
 - `plugin/skills/stakeholder-review-agent/first-use.md` - Update config filename references
-- `plugin/skills/learn/RELATED-FILES-CHECK.md` - Update config filename references
+- `plugin/skills/learn/related-files-check.md` - Update config filename references
 - `plugin/rules/work-request-handling.md` - Update config filename references
 - `plugin/concepts/build-verification.md` - Update config filename references
 - `plugin/concepts/worktree-isolation.md` - Update config filename references

@@ -6,7 +6,7 @@ subAgents: []
 **CRITICAL**: Main agent orchestrates; subagents implement.
 
 The main agent MUST NOT mutate any file by any means — regardless of change size, framing (fix/correction/cleanup),
-or whether the request came from `/cat:work`, a direct user request, or an ad-hoc ask. This prohibition covers all
+or whether the request came from the work skill, a direct user request, or an ad-hoc ask. This prohibition covers all
 file-modifying tools and Bash commands, including but not limited to:
 - Edit, Write, NotebookEdit tools
 - Bash commands that write files: `sed -i`, `cat >`, `echo >>`, `tee`, heredoc (`<<EOF`), `awk ... > file`, `cp`,

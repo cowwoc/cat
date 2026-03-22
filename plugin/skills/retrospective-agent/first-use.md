@@ -14,7 +14,7 @@ Implements the full workflow defined in `retrospectives.json`.
 ## When to Use
 
 - Automatically triggered by `learn` when thresholds met
-- Manually invoked with `/cat:retrospective`
+- Manually triggered by asking Claude to run a retrospective
 - After significant project milestones
 - When pattern recurrence is suspected
 
@@ -286,7 +286,7 @@ trigger_check:
     THRESHOLD=$(jq '.config.mistake_count_threshold' "$INDEX_FILE")
     if [[ $MISTAKES -ge $THRESHOLD ]]; then
       echo "RETROSPECTIVE THRESHOLD REACHED ($MISTAKES >= $THRESHOLD)"
-      echo "Run: /cat:retrospective"
+      echo "RETROSPECTIVE THRESHOLD REACHED: ask Claude to run a retrospective"
     fi
 ```
 
@@ -308,4 +308,4 @@ Before completing retrospective:
 
 - `cat:learn` - Records individual mistakes, triggers this skill
 - `cat:token-report-agent` - Provides context metrics for analysis
-- `cat:work` - Can be used to implement action items
+- `cat:work-agent` - Can be used to implement action items

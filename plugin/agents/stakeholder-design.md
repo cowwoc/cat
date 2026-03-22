@@ -3,7 +3,7 @@ name: stakeholder-design
 description: "Design Quality Engineer stakeholder for code review and research. Focus: code quality, maintainability, duplication, complexity"
 tools: Read, Grep, Glob, WebSearch, WebFetch
 model: sonnet
-skills: [cat:stakeholder-common]
+skills: [cat:stakeholder-common-agent]
 ---
 
 # Stakeholder: Design

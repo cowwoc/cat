@@ -14,12 +14,12 @@ its own context, keeping main agent context minimal (~5-10K tokens).
 
 | Format | Example | Behavior |
 |--------|---------|----------|
-| Empty | `/cat:work` | Work on next available issue |
-| Version | `/cat:work 2.1` | Work on issues in version 2.1 |
-| Issue ID | `/cat:work 2.1-migrate-api` | Work on specific issue |
-| Bare name | `/cat:work migrate-api` | Work on specific issue by name only (resolves to current branch version) |
-| Resume | `/cat:work resume 2.1-migrate-api` | Resume a specific issue (`resume`/`continue` prefix is stripped) |
-| Filter | `/cat:work skip compression` | Filter issue selection (natural language) |
+| Empty | `work on the next issue` | Work on next available issue |
+| Version | `work on issues in version 2.1` | Work on issues in version 2.1 |
+| Issue ID | `work on 2.1-migrate-api` | Work on specific issue |
+| Bare name | `work on migrate-api` | Work on specific issue by name only (resolves to current branch version) |
+| Resume | `resume 2.1-migrate-api` | Resume a specific issue (`resume`/`continue` prefix is stripped) |
+| Filter | `work on the next issue, skip compression` | Filter issue selection (natural language) |
 
 **Flags:**
 - `--override-gate` - Skip the **merge approval gate only** (Phase 4). Does NOT skip stakeholder review,
@@ -126,7 +126,7 @@ When prepare phase returns NO_ISSUES, use extended failure fields to provide spe
 
 1. If `blocked_issues` is non-empty: list each blocked issue and what it's blocked by
 2. If `locked_issues` is non-empty: suggest `/cat:cleanup` to clear stale locks
-3. If `closed_count == total_count`: all issues done — suggest `/cat:add` for new work
+3. If `closed_count == total_count`: all issues done — suggest asking Claude to add a new issue for new work
 4. Otherwise: display the `message` field from work-prepare and suggest `/cat:status` to review
    issue state. Do NOT re-run work-prepare — stop.
 
@@ -136,7 +136,7 @@ Fallback to `message` field if extended fields are absent:
 |------------------|------------------|
 | "locked" | Suggest `/cat:cleanup` to clear stale locks, or wait for other sessions |
 | "blocked" | Suggest resolving blocking dependencies first |
-| "closed" | All issues done — suggest `/cat:status` to verify or `/cat:add` for new work |
+| "closed" | All issues done — suggest `/cat:status` to verify or asking Claude to add a new issue for new work |
 | other | Display the message and suggest `/cat:status` to review issue state. Do NOT re-run work-prepare — stop |
 
 **NEVER suggest working on a previous version** — if user is on v2.1, suggesting v2.0 is unhelpful.
@@ -155,7 +155,7 @@ executed without recovery.
      question: "<message from CORRUPT JSON>"
      options:
        - "Delete directory" (invoke /cat:safe-rm-agent on issue_path from JSON, then retry work-prepare)
-       - "Create plan.md (guided)" (invoke /cat:add with the issue_id as context, then retry work-prepare)
+       - "Create plan.md (guided)" (invoke cat:add-agent with the issue_id as context, then retry work-prepare)
        - "Skip this issue" (release lock, retry work-prepare to find next issue)
    ```
 
@@ -166,7 +166,7 @@ executed without recovery.
 
 4. If user selects **"Create plan.md (guided)"**:
    - Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
-   - Invoke `cat:add` with the `issue_id` from the CORRUPT JSON as context to guide plan.md creation
+   - Invoke `cat:add-agent` with the `issue_id` from the CORRUPT JSON as context to guide plan.md creation
    - After plan.md is created, retry `work-prepare` to validate and continue
 
 5. If user selects **"Skip this issue"**:
@@ -322,7 +322,7 @@ branch with index.json not reflecting completion (e.g., stale merge overwrote st
         ```
         BLOCKED: ${issue_id} cannot be closed — ${N} post-condition(s) are unmet.
         Review the criteria above, then either:
-          - Fix the missing implementation and re-run /cat:work
+          - Fix the missing implementation and ask Claude to work on the issue again
           - Select "Not complete, continue" to run the full implement→confirm→review→merge workflow
         ```
         Release the lock:
@@ -354,7 +354,7 @@ branch with index.json not reflecting completion (e.g., stale merge overwrote st
       procedure)
    5. Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
    6. Clean up worktree using `/cat:safe-rm-agent`
-   7. Select next issue by invoking `/cat:work` with the same version scope
+   7. Select next issue by invoking `cat:work-agent` with the same version scope
 
 Do NOT ask the user when the commits are clearly unrelated — that interruption is unnecessary
 friction.
@@ -473,14 +473,14 @@ NOT re-read `config.json`):
 |-----------|--------|
 | No next issue | Scope complete — stop |
 | Next issue + trust == "low" | Display box, stop for user |
-| Next issue + trust >= "medium" | Display box, auto-continue to `/cat:work ${next_issue_id}` |
+| Next issue + trust >= "medium" | Display box, auto-continue to `cat:work-agent ${next_issue_id}` |
 
 **Low-trust stop message:**
 
 If trust == "low" and next issue found, display after the box:
 
 ```
-Ready to continue to next issue. Use /cat:work to continue, or /cat:status to review remaining issues.
+Ready to continue to next issue. Ask Claude to work on the next issue to continue, or use /cat:status to review remaining issues.
 ```
 
 **Auto-continue (trust >= medium):**

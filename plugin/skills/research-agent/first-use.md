@@ -89,7 +89,7 @@ Task tool:
 
 **Example usage:**
 ```
-User: /cat:research stakeholder-research payment-processing
+User: Research stakeholder concerns for payment-processing
 Main agent: [Spawns subagent with template above, substituting {topic}]
 ```
 
@@ -139,7 +139,7 @@ Task tool:
 
 **Example usage:**
 ```
-User: /cat:research implementation rate-limiting-middleware
+User: Research how to implement rate-limiting-middleware
 Main agent: [Spawns subagent with template above]
 ```
 
@@ -189,7 +189,7 @@ Task tool:
 
 **Example usage:**
 ```
-User: /cat:research codebase authentication-system
+User: Explore the codebase to understand authentication-system
 Main agent: [Spawns subagent with template above]
 ```
 
@@ -239,7 +239,7 @@ Task tool:
 
 **Example usage:**
 ```
-User: /cat:research external-docs stripe-connect-api
+User: Research external documentation for stripe-connect-api
 Main agent: [Spawns subagent with template above]
 ```
 

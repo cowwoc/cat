@@ -3,7 +3,7 @@ name: stakeholder-performance
 description: "Performance Engineer stakeholder for code review and research. Focus: algorithmic efficiency, memory usage, resource utilization, scalability"
 tools: Read, Grep, Glob, WebSearch, WebFetch
 model: sonnet
-skills: [cat:stakeholder-common]
+skills: [cat:stakeholder-common-agent]
 ---
 
 # Stakeholder: Performance

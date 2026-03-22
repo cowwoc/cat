@@ -82,7 +82,7 @@ Operations requiring specific environment state must verify before proceeding.
 GIT_DIR=$(git rev-parse --git-dir 2>/dev/null)
 GIT_DIR_PARENT=$(dirname "$GIT_DIR")
 if [[ "$(basename "$GIT_DIR_PARENT")" != "worktrees" ]]; then
-    echo "ERROR: Not in a CAT issue worktree. Run /cat:work to create one."
+    echo "ERROR: Not in a CAT issue worktree. Ask Claude to work on the issue to create one."
     exit 1
 fi
 ```
@@ -189,7 +189,7 @@ Lines 45-52 have conflicting changes from:
 **Suggested Actions:**
 1. Review conflict in Parser.java
 2. Decide which changes to keep
-3. Resume with /cat:work
+3. Ask Claude to resume work on the issue
 ```
 
 ### Main Agent Response to Subagent Skill Failures
@@ -246,7 +246,7 @@ If session ends during execution:
 
 1. index.json reflects last known state
 2. Worktree may exist with partial work
-3. User resumes with `/cat:work`
+3. Ask Claude to resume work on the issue
 4. Main agent assesses state and continues or restarts
 
 ## Learn-from-Mistakes Integration

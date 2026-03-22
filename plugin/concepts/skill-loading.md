@@ -321,7 +321,7 @@ per-agent state. Skills that perform stateless operations (e.g., format a docume
 |----------|-------------------------------|--------------------------|-------------------------------|
 | User-only (model never invokes) | `init`, `statusline` | Yes | No |
 | Agent-only (user never invokes) | `get-output`, `recover-from-drift` | No | Yes (only) |
-| Both (user and model invoke) | `add`, `status`, `work`, `learn`, `help` | Yes | Yes |
+| Both (user and model invoke) | `status`, `learn`, `help` | Yes | Yes |
 
 - **User-only**: Base directory only (`{name}/`). No paired `-agent` directory.
 - **Agent-only**: `-agent` directory only (`{name}-agent/`, `user-invocable: false`). No base directory.
@@ -474,22 +474,22 @@ An output path change is any modification to:
 
 For each output path change:
 
-1. **Before modification:** Run `/cat:empirical-test` on the affected skill to establish baseline behavior
-2. **After modification:** Run `/cat:empirical-test` again to verify the skill produces output
+1. **Before modification:** Run `cat:empirical-test-agent` on the affected skill to establish baseline behavior
+2. **After modification:** Run `cat:empirical-test-agent` again to verify the skill produces output
 3. **Success criteria:** Both tests must achieve ≥95% compliance on the haiku model
 
 ### Example Workflow
 
 ```
 # 1. Baseline test
-/cat:empirical-test /cat:status
+cat:empirical-test-agent /cat:status
 
 # 2. Modify the skill (e.g., change from INVOKE: to <output> pattern)
 # Edit: plugin/skills/status/first-use.md
 # Edit: client/src/main/java/.../GetStatusOutput.java
 
 # 3. Verify fix
-/cat:empirical-test /cat:status
+cat:empirical-test-agent /cat:status
 
 # 4. If both tests pass, proceed to commit
 # If second test fails, investigate output generation and re-test

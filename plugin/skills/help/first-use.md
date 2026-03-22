@@ -9,125 +9,110 @@ Output the following content verbatim. Do not summarize, interpret, or add comme
 
 # CAT Command Reference
 
-**CAT** enables hierarchical project planning with multi-agent issue execution.
+**CAT** — hierarchical project planning with multi-agent issue execution.
 
 ---
 
-## Essential Commands (Start Here)
+## Common Operations
 
-These three commands cover 90% of daily use:
+Everything below uses natural language. Slash commands work where shown.
+
+**Initialize a project**
+```
+/cat:init
+"Set up this project"
+"Initialize CAT for this codebase"
+```
+
+**Check status**
+```
+/cat:status
+"What's the status?"
+"What should I work on next?"
+```
+
+**Add an issue**
+```
+"Fix the login"
+"Add an issue to fix login"
+"I need to track a new issue: improve error messages"
+```
+
+**Work on an issue**
+```
+"Next issue"
+"Work on 2.1-fix-login"
+"Resume 2.1-fix-login"
+"Let's keep going on 2.1-fix-login"
+```
+
+**Research a version**
+```
+"Research v1.0"
+"Research best practices before planning v1.0"
+```
+
+**Remove an issue**
+```
+"Remove issue v1.0-parse-tokens"
+```
+
+**Remove a version**
+```
+"Remove the v1.0 version"
+```
+
+**Run a retrospective**
+```
+"Run a retrospective"
+```
+
+**Configure settings**
+```
+/cat:config
+"Set my trust level to high"
+```
+
+---
+
+## Commands
 
 | Command | What It Does |
 |---------|--------------|
 | `/cat:init` | Set up a new or existing project |
 | `/cat:status` | See what's happening and what to do next |
-| `/cat:work` | Execute the next available issue |
-
-**Minimum viable workflow:**
-```
-/cat:init --> /cat:add --> /cat:work
-    ^                          |
-    +------ /cat:status -------+
-```
+| `/cat:config` | Change trust level and workflow preferences |
+| `/cat:cleanup` | Remove stale locks and abandoned worktrees |
 
 ---
 
-## Planning Commands
+## Reference
 
-Use these when you need to structure your work:
+### Work Scope
 
-| Command | What It Does |
-|---------|--------------|
-| `/cat:add [desc]` | Add issues/versions. With desc, creates issue directly |
-| `/cat:remove` | Remove issues or versions (with safety checks) |
-| `/cat:config` | Change workflow mode, trust level, preferences |
+Ask Claude to work at different scopes:
 
----
+| Scope | Example | Behavior |
+|-------|---------|----------|
+| all | "Next issue" | Work through all incomplete issues |
+| major | "Work on v1 issues" | All issues in v1.x.x |
+| minor | "Work on v1.0 issues" | All issues in v1.0.x |
+| patch | "Work on v1.0.1 issues" | All issues in v1.0.1 |
+| specific | "Work on 1.0-parse" | One specific issue |
 
-## Advanced Commands
-
-Power user features for complex workflows:
-
-| Command | What It Does |
-|---------|--------------|
-| `/cat:research` | Run stakeholder research on pending versions |
-| `/cat:cleanup` | Clean up abandoned worktrees and stale locks |
-| `/cat:get-subagent-status` | Check status of running subagents |
-| `/cat:collect-results-agent` | Gather results from completed subagents |
-| `/cat:merge-subagent-agent` | Merge subagent branch into issue branch |
-| `/cat:token-report-agent` | Generate token usage report |
-| `/cat:decompose-issue-agent` | Split oversized issue into smaller issues |
-
----
-
-## Full Reference
-
-<details>
-<summary>Hierarchy Structure</summary>
-
-CAT supports flexible version schemes:
-- **2-level:** MAJOR --> MINOR --> ISSUE (e.g., v1.0)
-- **3-level:** MAJOR --> MINOR --> PATCH --> ISSUE (e.g., v1.0.1)
-
-```
-.cat/
-+-- PROJECT.md              # Project overview
-+-- ROADMAP.md              # Version summaries
-+-- config.json             # Configuration
-+-- v{major}/
-    +-- index.json            # Major version state
-    +-- plan.md             # Business-level plan
-    +-- v{major}.{minor}/
-        +-- index.json        # Minor version state
-        +-- plan.md         # Feature-level plan
-        +-- {issue-name}/    # Issues at minor level (2-level scheme)
-        +-- v{major}.{minor}.{patch}/
-            +-- index.json    # Patch version state (optional 3-level)
-            +-- plan.md     # Patch-level plan
-            +-- {issue-name}/  # Issues at patch level
-```
-
-Issue changelog content is embedded in commit messages.
-
-</details>
-
-<details>
-<summary>/cat:init Details</summary>
-
-Initialize CAT planning structure (new or existing project).
-- Creates PROJECT.md, ROADMAP.md, config.json
-- Asks for trust level (how much autonomy your partner has)
-- For new projects: Deep questioning to gather project context
-- For existing codebases: Detects patterns and infers current state
-- Offers guided first-issue creation after setup
-
-</details>
-
-<details>
-<summary>/cat:work Scope Options</summary>
-
-| Scope Format | Example | Behavior |
-|--------------|---------|----------|
-| (none) | `/cat:work` | Work through all incomplete issues |
-| major | `/cat:work 1` | Work through all issues in v1.x.x |
-| minor | `/cat:work 1.0` | Work through all issues in v1.0.x |
-| patch | `/cat:work 1.0.1` | Work through all issues in v1.0.1 |
-| issue | `/cat:work 1.0-parse` | Work on specific issue (2-level) |
-| issue | `/cat:work 1.0.1-parse` | Work on specific issue (3-level) |
-
-**Features:**
 - Auto-continues to next issue when trust >= medium
 - Creates worktree and issue branch per issue
-- Spawns subagent for isolated execution
-- Monitors token usage
-- Runs approval gate (when trust < high)
-- Squashes commits by type
-- Merges to main and cleans up
+- Runs approval gate when trust < high
 
-</details>
+### /cat:init Details
 
-<details>
-<summary>Issue Naming Rules</summary>
+- Creates PROJECT.md, ROADMAP.md, config.json
+- Asks for trust level (how much autonomy your partner has)
+- For new projects: gathers project context through guided questions
+- For existing codebases: detects patterns and infers current state
+- Offers guided first-issue creation after setup
+
+### Issue Naming
 
 - Lowercase letters and hyphens only
 - Maximum 50 characters
@@ -136,10 +121,25 @@ Initialize CAT planning structure (new or existing project).
 **Valid:** `parse-tokens`, `fix-memory-leak`, `add-user-auth`
 **Invalid:** `Parse_Tokens`, `fix memory leak`, `add-very-long-issue-name-that-exceeds-limit`
 
-</details>
+### Project Structure
 
-<details>
-<summary>Branch Naming</summary>
+CAT supports 2-level (MAJOR → MINOR → ISSUE) and 3-level (MAJOR → MINOR → PATCH → ISSUE) schemes.
+
+```
+.cat/
+├── PROJECT.md              # Project overview
+├── ROADMAP.md              # Version summaries
+├── config.json             # Configuration
+└── v{major}/
+    └── v{major}.{minor}/
+        ├── {issue-name}/   # Issues (2-level)
+        └── v{major}.{minor}.{patch}/
+            └── {issue-name}/  # Issues (3-level)
+```
+
+Issue changelog content is embedded in commit messages.
+
+### Branch Naming
 
 | Type | Pattern | Example |
 |------|---------|---------|
@@ -147,66 +147,3 @@ Initialize CAT planning structure (new or existing project).
 | Issue (3-level) | `{major}.{minor}.{patch}-{issue-name}` | `1.0.1-fix-edge-case` |
 | Subagent | `{issue-branch}-sub-{uuid}` | `1.0-parse-tokens-sub-a1b2c3` |
 
-</details>
-
----
-
-## Workflow Modes
-
-Set during `/cat:init` in config.json:
-
-**Trust Levels**
-
-- **Low** - Check in often, verify each move
-- **Medium** (default) - Trust routine calls, review key decisions
-- **High** - Full autonomy, auto-merges on issue completion
-
-Change anytime with `/cat:config` or edit `.cat/config.json`
-
----
-
-## Common Workflows
-
-**Starting a new project:**
-```
-/cat:init
-/cat:add          # Select "Major version", then "Issue"
-/cat:work
-```
-
-**Checking progress:**
-```
-/cat:status
-```
-
-**Adding more work:**
-```
-/cat:add                       # Interactive: choose Issue, Minor, or Major
-/cat:add make install easier   # Quick: creates issue with description
-```
-
-**Removing planned work:**
-```
-/cat:remove       # Interactive: choose Issue, Minor, or Major
-```
-
-## Configuration Options
-
-config.json:
-```json
-{
-  "trust": "medium",            // low | medium | high (autonomy level)
-  "verify": "changed",          // changed | all (verification scope)
-  "effort": "medium",        // low | medium | high (exploration level)
-  "patience": "medium"          // low | medium | high (refactoring tolerance)
-}
-```
-
-**Note:** Context limits are fixed at 200K/40%/80% - see agent-architecture.md for details.
-
-## Getting Help
-
-- Read `.cat/PROJECT.md` for project vision
-- Check `.cat/ROADMAP.md` for version overview
-- Use `/cat:status` to see current state
-- Review individual index.json files for detailed progress

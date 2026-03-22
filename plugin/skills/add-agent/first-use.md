@@ -12,7 +12,7 @@ Unified command for adding issues or versions to the CAT planning structure.
 Unified command for adding issues or versions to the CAT planning structure. Routes to the appropriate
 workflow based on user selection.
 
-**Shortcut:** When invoked with a description argument (e.g., `/cat:add make installation easier`),
+**Shortcut:** When invoked with a description argument (e.g., say 'add an issue: make installation easier'),
 treats the argument as a issue description and skips directly to issue creation workflow.
 
 **Efficiency:** Independent questions are batched into single AskUserQuestion calls (up to 4 questions per call)
@@ -48,7 +48,7 @@ If output.planning_valid is false:
 
 **Check if description argument was provided:**
 
-If the command was invoked with arguments (e.g., `/cat:add make installation easier`):
+If the skill was invoked with arguments (e.g., user said 'add an issue: make installation easier'):
 - First, check if the argument text indicates version creation intent. If the text matches any of these patterns,
   route to step: select_type instead of treating it as an issue description:
   - Contains "version" AND one of: "major", "minor", "patch", "new", "create", "add"
@@ -689,13 +689,13 @@ same pattern as AUTO_DETECTED_DEPS. Do NOT modify blocked issues' index.json fil
 Display to user:
 ```
 Research needed for: {UNKNOWNS}
-Running /cat:research to gather information...
+Running research to gather information...
 ```
 
 Invoke the research skill:
 ```bash
 # Use Skill tool to invoke research
-Skill: "cat:research"
+Skill: "cat:research-agent"
 Args: "{ISSUE_DESCRIPTION}"
 ```
 
@@ -862,7 +862,7 @@ Loop back to the start of issue_impact_analysis to re-evaluate the revised descr
 
 **If "Split into multiple issues":**
 
-Inform user: "Restart `/cat:add` for each sub-issue. You may use the current description as a starting point for
+Inform user: "Say 'add an issue' for each sub-issue. You may use the current description as a starting point for
 each." Then STOP execution.
 
 **If "Add impact notes to plan":**
@@ -917,7 +917,7 @@ Loop back to the start of issue_impact_analysis to re-evaluate the revised descr
 
 **If "Split into multiple issues":**
 
-Inform user: "Restart `/cat:add` for each sub-issue. You may use the current description as a starting point for
+Inform user: "Say 'add an issue' for each sub-issue. You may use the current description as a starting point for
 each." Then STOP execution.
 
 **If "Add impact notes to plan":**
@@ -1164,7 +1164,7 @@ find .cat -maxdepth 2 -type d -name "v[0-9]*.[0-9]*" 2>/dev/null | while read d;
     VERSION=$(basename "$d" | sed 's/v//')
     MAJOR=$(echo "$VERSION" | cut -d. -f1)
     MINOR=$(echo "$VERSION" | cut -d. -f2)
-    STATUS=$(grep -oP '(?<="status":")[^"]+' "$d/index.json" 2>/dev/null || echo "open")
+    STATUS=$(grep '"status"' "$d/index.json" 2>/dev/null | sed 's/.*"status"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/' || echo "open")
     PATCH_COUNT=$(find "$d" -maxdepth 1 -type d -name "v$MAJOR.$MINOR.*" 2>/dev/null | wc -l)
     echo "$MAJOR.$MINOR ($STATUS, $PATCH_COUNT patches)"
 done | sort -V
