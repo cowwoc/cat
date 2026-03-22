@@ -388,6 +388,13 @@ Task tool:
     - If steps say to invoke a skill that was pre-invoked above, use the provided results
     - Update index.json in the SAME commit as implementation (status: closed, progress: 100%)
     - Run tests if applicable
+    - **Honest test result reporting:** If empirical test execution (e.g., via `cat:empirical-test-agent`)
+      cannot be completed, you MUST explicitly report the failure with the specific reason rather than
+      fabricating output values. Acceptable failure reasons: runtime unavailable (e.g., Java not on PATH,
+      missing dependency), test framework error (e.g., TestNG configuration failure, missing test class),
+      config incompatibility (e.g., unsupported OS, missing environment variable), or any other concrete
+      blocker. Never invent pass/fail counts, scores, or compliance verdicts — fabricated results create
+      false confidence and prevent detection of real compliance issues.
     - Commit your changes using the commit type from plan.md (e.g., `feature:`, `bugfix:`, `docs:`). The commit message must follow the format: `<type>: <descriptive summary>`. Example: `feature: add user authentication with JWT tokens`. Do NOT use generic messages like 'squash commit' or 'fix'.
 
     ## Return Format
@@ -591,6 +598,13 @@ Task tool:
       else "NOT the index.json owner"]. [If owner: "Update index.json in your final commit: status: closed,
       progress: 100%." Else: "Do NOT modify index.json in any commit."]
     - Run tests if applicable
+    - **Honest test result reporting:** If empirical test execution (e.g., via `cat:empirical-test-agent`)
+      cannot be completed, you MUST explicitly report the failure with the specific reason rather than
+      fabricating output values. Acceptable failure reasons: runtime unavailable (e.g., Java not on PATH,
+      missing dependency), test framework error (e.g., TestNG configuration failure, missing test class),
+      config incompatibility (e.g., unsupported OS, missing environment variable), or any other concrete
+      blocker. Never invent pass/fail counts, scores, or compliance verdicts — fabricated results create
+      false confidence and prevent detection of real compliance issues.
     - Commit your changes using the commit type from plan.md (e.g., `feature:`, `bugfix:`, `docs:`). The commit
       message must follow the format: `<type>: <descriptive summary>`. Do NOT use generic messages.
 
