@@ -274,7 +274,7 @@ Use AskUserQuestion:
 
 ```
 Use `/cat:status` to see overall progress.
-Use `/cat:add` to add more issues or versions.
+Ask Claude to add more issues or versions.
 ```
 
 ---

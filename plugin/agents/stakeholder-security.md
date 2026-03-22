@@ -3,7 +3,7 @@ name: stakeholder-security
 description: "Security Engineer stakeholder for code review and research. Focus: vulnerabilities, attack vectors, input validation, secure coding practices"
 tools: Read, Grep, Glob, WebSearch, WebFetch
 model: sonnet
-skills: [cat:stakeholder-common]
+skills: [cat:stakeholder-common-agent]
 ---
 
 # Stakeholder: Security

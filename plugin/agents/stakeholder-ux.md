@@ -3,7 +3,7 @@ name: stakeholder-ux
 description: "UX Engineer stakeholder for code review and research. Focus: user experience, usability, accessibility, interaction design"
 tools: Read, Grep, Glob, WebSearch, WebFetch
 model: haiku
-skills: [cat:stakeholder-common]
+skills: [cat:stakeholder-common-agent]
 ---
 
 # Stakeholder: UX

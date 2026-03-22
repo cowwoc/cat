@@ -1,4 +1,6 @@
 {
-  "status": "open",
-  "dependencies": ["2.1-defer-plan-generation-to-work-phase", "2.1-fix-add-skill-index-json-format"]
+  "status" : "closed",
+  "resolution" : "implemented",
+  "dependencies" : [ "2.1-defer-plan-generation-to-work-phase", "2.1-fix-add-skill-index-json-format" ],
+  "target_branch" : "v2.1"
 }

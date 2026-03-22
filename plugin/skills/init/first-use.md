@@ -380,8 +380,8 @@ Use AskUserQuestion:
 - header: "Research"
 - question: "Run stakeholder research for pending versions?"
 - options:
-  - "Yes, research all pending (Recommended)" - run /cat:research for each
-  - "Skip for now" - research later with /cat:research
+  - "Yes, research all pending (Recommended)" - ask Claude to research each pending version
+  - "Skip for now" - research later by asking Claude (e.g., "research v1.0")
 
 **If "Yes, research all pending":**
 
@@ -403,7 +403,7 @@ Running stakeholder research for pending versions...
 Note in PROJECT.md:
 ```markdown
 ## Notes
-- Research not run during init. Use `/cat:research {version}` for pending versions.
+- Research not run during init. Ask Claude to research pending versions (e.g., "research v1.0").
 ```
 
 INVOKE: Skill("cat:get-output-agent", args="init.research-skipped {PENDING_VERSION}")
@@ -847,13 +847,13 @@ Replace `{trust}`, `{effort}`, `{patience}` with actual preference values.
 **New projects:**
 ```
 Initialized: PROJECT.md, ROADMAP.md, config.json, rules/, conventions/
-Next: /clear -> /cat:add-major-version
+Next: /clear -> ask Claude to add a major version
 ```
 
 **Existing codebases:**
 ```
 Initialized with [N] major versions, [N] minor versions, [N] issues
-Next: /clear -> /cat:work {issue} OR /cat:add
+Next: /clear -> /cat:work {issue} OR ask Claude to add an issue
 ```
 
 </step>

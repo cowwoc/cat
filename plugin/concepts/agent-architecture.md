@@ -62,7 +62,7 @@ If answers are YES/YES/YES → **SPAWN SUBAGENT INSTEAD**
 
 This ensures all work is tracked in the planning structure. The agent should respond:
 
-> "I'll create an issue for this so it's tracked properly. Let me add it via `/cat:add`."
+> "I'll create an issue for this so it's tracked properly."
 
 **Trust-level variations:**
 
@@ -70,7 +70,7 @@ This ensures all work is tracked in the planning structure. The agent should res
 |-------------|----------|
 | `low` | Always ask before any work, even trivial changes |
 | `medium` | Propose issue creation for non-trivial work; ask for trivial |
-| `high` | Create issue automatically via `/cat:add`, then proceed to `/cat:work` |
+| `high` | Create issue automatically, then start working on it |
 
 **Trivial work definition:**
 - Single-line changes (typos, import fixes, obvious corrections)
@@ -83,8 +83,7 @@ When overridden, the agent should still warn: "Working directly without issue tr
 **Example interactions:**
 
 User: "Fix the bug where parsing fails on empty input"
-Agent (medium trust): "I'll create an issue for this so it's tracked properly. Running `/cat:add fix parsing failure on
-empty input`..."
+Agent (medium trust): "I'll create an issue for this so it's tracked properly."
 
 User: "Fix the typo in README"
 Agent (medium trust): "This looks like a trivial fix. Should I create an issue for tracking, or just fix it directly?"
@@ -93,7 +92,7 @@ User: "Just fix it"
 Agent: "Working directly without issue tracking. [proceeds to fix]"
 
 **What this does NOT change:**
-- `/cat:work` workflow remains unchanged
+- The issue workflow remains unchanged
 - Subagent delegation rules remain unchanged
 - Main agent still does not write production code directly
 

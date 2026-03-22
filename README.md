@@ -89,19 +89,15 @@ Your answers shape how CAT makes decisions throughout your project.
 
 ### Step 3: Chart Your Course
 
-```bash
-# Add structure (versions and tasks)
-/cat:add
+Tell Claude to add a version or task (e.g., "add a task to implement login"), then check your progress:
 
-# See your project status
+```bash
 /cat:status
 ```
 
 ### Step 4: Start Working
 
-```bash
-/cat:work
-```
+Tell Claude to work on an issue (e.g., "work on the next task" or "work on v1.0-setup-auth").
 
 CAT spawns a subagent in an isolated worktree, executes the task, and presents
 you with results at a checkpoint:
@@ -206,39 +202,39 @@ end users but appear in STATE.md files for decomposed issues.
 
 ### Your Main Actions
 
-| Command | What It Does |
-|---------|--------------|
+| Command / Trigger | What It Does |
+|-------------------|--------------|
 | `/cat:init` | Initialize project structure |
 | `/cat:status` | View project status and progress |
-| `/cat:work [scope]` | Execute tasks (see below) |
+| Tell Claude to work on tasks | Execute tasks (see scope options below) |
 | `/cat:help` | Quick reference for all commands |
 
-**`/cat:work` scope options:**
+**Work scope options** — when telling Claude to work on tasks, you can specify a scope:
 
 | Scope | Example | What Happens |
 |-------|---------|--------------|
-| (none) | `/cat:work` | Work through ALL incomplete tasks |
-| major | `/cat:work 0` | Complete all tasks in v0.x |
-| minor | `/cat:work 0.5` | Complete all tasks in v0.5 |
-| task | `/cat:work 0.5-auth` | Complete single task only |
+| (none) | "work on the next task" | Work through ALL incomplete tasks |
+| major | "work on v0" | Complete all tasks in v0.x |
+| minor | "work on v0.5" | Complete all tasks in v0.5 |
+| task | "work on v0.5-auth" | Complete single task only |
 
 When trust >= medium, CAT auto-continues to the next task within scope.
 
 ### Building Your Map
 
-| Command | What It Does |
-|---------|--------------|
-| `/cat:add [description]` | Add a task or version. With description, creates task directly |
-| `/cat:research` | Research before committing to an approach |
+| How to Trigger | What It Does |
+|----------------|--------------|
+| Tell Claude to add a task or version | Starts an interactive wizard to add a task or version to the project |
+| Tell Claude to research an approach | Researches technical options before committing to an implementation strategy |
 
 ### Housekeeping
 
-| Command | What It Does |
-|---------|--------------|
+| Command / Trigger | What It Does |
+|-------------------|--------------|
 | `/cat:cleanup` | Clear abandoned worktrees and orphaned branches |
 | `/cat:config` | Change your preferences |
 | `/cat:learn` | Analyze and learn from mistakes |
-| `/cat:remove` | Remove a task or version |
+| Tell Claude to remove a task or version | Removes a task or version from the project |
 
 ### Plugin Development
 
@@ -371,13 +367,13 @@ find your rhythm.
 **Check status** — Run `/cat:status` often. It shows where you are and
 suggests next steps.
 
-**Scout unfamiliar territory** — Use `/cat:research` before tackling complex
+**Scout unfamiliar territory** — Ask Claude to research an approach before tackling complex
 features in unknown domains.
 
 **Clear the fog** — Run `/clear` between tasks to start fresh with full context.
 
 **Trust the process** — CAT tracks state automatically. If a session ends
-mid-task, just run `/cat:work` to continue where you left off.
+mid-task, just tell Claude to continue working to pick up where you left off.
 
 ---
 

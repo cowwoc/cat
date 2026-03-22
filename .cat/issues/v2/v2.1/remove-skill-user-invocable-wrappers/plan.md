@@ -100,10 +100,39 @@ None
   `plugin/rules/user-input-handling.md`
 - Update `plugin/concepts/skill-loading.md`, `plugin/concepts/agent-architecture.md`
 
+### Wave 3b: Fix remaining slash command references in plugin/concepts/
+- In `plugin/concepts/version-completion.md` line 277, replace the user-facing instruction
+  `Use /cat:add to add more issues or versions.` with natural language equivalent
+  (e.g., "Ask Claude to add more issues or versions.")
+  - Files: `plugin/concepts/version-completion.md`
+- In `plugin/concepts/error-handling.md` line 192, replace the user-facing recovery instruction
+  `Resume with /cat:work` with natural language equivalent (e.g., "Ask Claude to resume work on the issue")
+  - Files: `plugin/concepts/error-handling.md`
+
+### Wave 3c: Fix remaining slash command references (iteration 2)
+- In `plugin/concepts/error-handling.md` line 249, replace `User resumes with /cat:work` with
+  natural language equivalent (e.g., "Ask Claude to resume work on the issue")
+  - Files: `plugin/concepts/error-handling.md`
+- In `plugin/concepts/worktree-isolation.md` line 214, replace the parenthetical example
+  `Run \`/cat:work\` to create the worktree` with natural language equivalent
+  (e.g., `Ask Claude to resume work on the issue to create the worktree`)
+  - Files: `plugin/concepts/worktree-isolation.md`
+
 ### Wave 4: Update README.md
 - Replace slash command references for removed skills with natural language trigger descriptions;
   update the command reference table
   - Files: `README.md`
+
+### Wave 5: Fix stakeholder review concerns
+- In `README.md` line 243, replace `/cat:skill-builder` with `/cat:instruction-builder-agent`
+  - Files: `README.md`
+- In `plugin/skills/remove-agent/first-use.md` line 354 and `plugin/skills/add-agent/first-use.md` line 1167,
+  replace `grep -oP` (Perl regex, not POSIX-compatible) with POSIX-compatible grep+sed pattern
+  - Files: `plugin/skills/remove-agent/first-use.md`, `plugin/skills/add-agent/first-use.md`
+- In `plugin/concepts/parallel-execution.md` line 14, `plugin/concepts/version-scheme.md` line 35, and
+  `plugin/concepts/work.md` line 130, replace `/cat:work` and `/cat:add` slash commands with natural language
+  or qualified skill names (`cat:work-agent`, `cat:add-agent`)
+  - Files: `plugin/concepts/parallel-execution.md`, `plugin/concepts/version-scheme.md`, `plugin/concepts/work.md`
 
 ## Post-conditions
 - [ ] None of `plugin/skills/add/`, `plugin/skills/empirical-test/`, `plugin/skills/load-skill/`,

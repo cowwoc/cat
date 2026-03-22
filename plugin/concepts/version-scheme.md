@@ -32,7 +32,7 @@ See [version-paths.md](version-paths.md) for the `detect_version_scheme()` imple
 
 ## Version Boundary Detection
 
-When comparing versions (e.g., for `/cat:work` auto-continue), boundary detection adapts to the scheme:
+When comparing versions (e.g., for work skill auto-continue), boundary detection adapts to the scheme:
 
 | Scheme | Boundary Crossed When |
 |--------|----------------------|

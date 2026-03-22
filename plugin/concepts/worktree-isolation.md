@@ -74,7 +74,7 @@ Before any merge or rebase operation:
    ```bash
    if [[ -z "${TARGET_BRANCH:-}" ]]; then
      echo "ERROR: target_branch parameter is missing" >&2
-     echo "Ensure this value was passed through from /cat:work preparation output" >&2
+     echo "Ensure this value was passed through from work preparation output" >&2
      exit 1
    fi
    ```
@@ -191,9 +191,9 @@ When a worktree is created, the following context is established:
 
 | Variable | Source | Example | Usage |
 |----------|--------|---------|-------|
-| `WORKTREE_PATH` | `/cat:work` preparation output | `/workspace/.cat/work/worktrees/2.1-issue` | Directory to `cd` into |
-| `ISSUE_ID` | `/cat:work` preparation output | `2.1-issue-name` | Identifying the issue |
-| `TARGET_BRANCH` | `/cat:work` preparation output | `v2.1` | Merge target |
+| `WORKTREE_PATH` | work preparation output | `/workspace/.cat/work/worktrees/2.1-issue` | Directory to `cd` into |
+| `ISSUE_ID` | work preparation output | `2.1-issue-name` | Identifying the issue |
+| `TARGET_BRANCH` | work preparation output | `v2.1` | Merge target |
 | `TRUST` | `config.json` field `"trust"` | `medium` | Approval gate behavior |
 | `VERIFY` | `config.json` field `"verify"` | `all` | Review level |
 
@@ -211,7 +211,7 @@ includes:
 1. **What was checked** — the verification step that failed
 2. **What was expected** — the value or state that should exist
 3. **What was found** — the actual value or state observed
-4. **How to fix it** — the action to recover (e.g., "Run `/cat:work` to create the worktree")
+4. **How to fix it** — the action to recover (e.g., "Ask Claude to create the worktree")
 
 **Example — CORRECT:**
 ```bash
@@ -219,7 +219,7 @@ if [[ "$(git branch --show-current)" != "2.1-issue" ]]; then
   echo "ERROR: Cannot proceed — on wrong branch" >&2
   echo "Current branch: $(git branch --show-current)" >&2
   echo "Expected branch: 2.1-issue" >&2
-  echo "Fix: Run 'git checkout 2.1-issue' or use /cat:work to start fresh" >&2
+  echo "Fix: Run 'git checkout 2.1-issue' or ask Claude to start fresh on the issue" >&2
   exit 1
 fi
 ```

@@ -543,7 +543,7 @@ protected. A follow-up issue must be created so the prevention is not lost.
    ```
    Error: Cannot create follow-up issue — issue_creation_info is incomplete.
    Missing fields: [list the missing field names]
-   Please create the issue manually using /cat:add.
+   Please ask Claude to add the issue manually with the following values:
    Suggested title: {suggested_title or "(not provided)"}
    Suggested description: {suggested_description or "(not provided)"}
    Suggested acceptance criteria:
@@ -561,7 +561,7 @@ protected. A follow-up issue must be created so the prevention is not lost.
    If `cat:add-agent` fails or returns an error, display:
    ```
    Error: Failed to create follow-up issue via cat:add-agent.
-   You can create the issue manually using /cat:add with the following values:
+   Ask Claude to add the issue manually with the following values:
    Title: {suggested_title}
    Description: {suggested_description}
    Acceptance criteria: {suggested_acceptance_criteria}
@@ -595,7 +595,7 @@ options:
   - label: "Run now"
     action: "Invoke /cat:retrospective-agent immediately"
   - label: "Later"
-    action: "Inform user to run /cat:retrospective when ready"
+    action: "Inform user to ask Claude to run a retrospective when ready"
   - label: "Skip this cycle"
     action: "Reset counter without running"
 ```

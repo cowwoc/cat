@@ -13,7 +13,7 @@
 
 ## Research
 
-*Populated by stakeholder research during version planning. If empty, run `/cat:research`.*
+*Populated by stakeholder research during version planning. If empty, ask Claude to research the version (e.g., "research v1.0").*
 
 ### Stack
 | Library | Purpose | Version | Rationale |

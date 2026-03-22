@@ -3,7 +3,7 @@ name: stakeholder-testing
 description: "Test Engineer stakeholder for code review and research. Focus: test coverage, test quality, edge cases, validation completeness"
 tools: Read, Grep, Glob, WebSearch, WebFetch
 model: haiku
-skills: [cat:stakeholder-common]
+skills: [cat:stakeholder-common-agent]
 ---
 
 # Stakeholder: Testing

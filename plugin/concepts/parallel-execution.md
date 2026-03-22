@@ -11,7 +11,7 @@ section with multiple `### Wave N` subsections.
 
 ## How It Works
 
-When `/cat:work` starts executing an issue:
+When the work skill starts executing an issue:
 
 1. `work-with-issue` reads plan.md directly to detect `## Execution Waves` sections.
 2. For each `### Wave N` subsection, the LLM counts the top-level bullet items.
