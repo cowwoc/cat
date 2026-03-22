@@ -400,6 +400,16 @@ public final class IssueLock
 
     validateSessionId(sessionId);
 
+    // A session may only hold one lock at a time to prevent subagents from
+    // inheriting an ambiguous active-worktree context.
+    String conflictingIssueId = scanForConflictingLock(issueId, sessionId);
+    if (!conflictingIssueId.isEmpty())
+    {
+      return new LockResult.Error("error",
+        "Session already holds a lock for issue '" + conflictingIssueId + "'. " +
+        "Release that lock first before acquiring a lock for '" + issueId + "'.");
+    }
+
     Files.createDirectories(lockDir);
     Path lockFile = getLockFile(issueId);
 
@@ -746,6 +756,45 @@ public final class IssueLock
   }
 
   /**
+   * Scans all lock files to detect whether this session already holds a lock for a different issue.
+   * <p>
+   * Returns the conflicting issue ID if found, or empty string if none.
+   *
+   * @param issueId   the issue being acquired (excluded from the scan)
+   * @param sessionId the session performing the acquire
+   * @return the conflicting issue ID, or "" if no conflict exists
+   * @throws IOException if the lock directory cannot be listed
+   */
+  private String scanForConflictingLock(String issueId, String sessionId) throws IOException
+  {
+    if (Files.notExists(lockDir))
+      return "";
+    List<Path> lockFiles;
+    try (Stream<Path> stream = Files.list(lockDir))
+    {
+      lockFiles = stream.
+        filter(path -> path.toString().endsWith(".lock")).
+        toList();
+    }
+    for (Path lockFile : lockFiles)
+    {
+      String fileName = lockFile.getFileName().toString();
+      String candidateIssueId = fileName.substring(0, fileName.length() - ".lock".length());
+      // Skip the lock file for the issue being acquired — same-issue re-acquire is handled separately
+      if (sanitizeIssueId(issueId).equals(candidateIssueId))
+        continue;
+      JsonNode node = parseLockFile(lockFile);
+      if (node == null)
+        continue;
+      // Check top-level session_id field
+      JsonNode sessionNode = node.get("session_id");
+      if (sessionNode != null && sessionNode.isString() && sessionNode.asString().equals(sessionId))
+        return candidateIssueId;
+    }
+    return "";
+  }
+
+  /**
    * Validates that a session ID is a valid UUID.
    *
    * @param sessionId the session ID to validate
@@ -777,7 +826,7 @@ public final class IssueLock
       String content = Files.readString(lockFile);
       return jsonMapper.readTree(content);
     }
-    catch (IOException _)
+    catch (IOException | JacksonException _)
     {
       return null;
     }

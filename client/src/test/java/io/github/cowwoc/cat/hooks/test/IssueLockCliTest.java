@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks.test;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.IssueLock;
 import org.testng.annotations.Test;
+import tools.jackson.databind.JsonNode;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -370,6 +371,46 @@ public class IssueLockCliTest
 
         requireThat(worktrees, "worktrees").isNotNull();
         requireThat(worktrees.get(worktreePath), "worktreeValue").isEqualTo(sessionId);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that acquiring a lock when the session already holds one for a different issue outputs
+   * JSON with {@code "status": "error"} and the conflicting issue ID in the message.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquireConflictErrorOutputsCorrectJson() throws IOException
+  {
+    Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      try
+      {
+        String sessionId = UUID.randomUUID().toString();
+
+        // Acquire a lock for issue-a first
+        IssueLock lock = new IssueLock(scope);
+        lock.acquire("issue-a", sessionId, "/worktree-a");
+
+        // Now attempt to acquire a lock for issue-b via the CLI entry point
+        ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
+        PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
+        IssueLock.run(new String[]{"acquire", "issue-b", sessionId, "/worktree-b"}, scope, out);
+
+        String output = outBytes.toString(StandardCharsets.UTF_8);
+        requireThat(output, "output").contains("\"status\"");
+        requireThat(output, "output").contains("\"error\"");
+        // Verify the conflicting issue ID appears specifically within the message field
+        JsonNode parsed = scope.getJsonMapper().readTree(output);
+        String message = parsed.get("message").asString();
+        requireThat(message, "message").contains("issue-a");
       }
       finally
       {

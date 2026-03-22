@@ -986,4 +986,219 @@ public class IssueLockTest
       }
     }
   }
+
+  /**
+   * Verifies that acquire fails when the same session already holds a lock for a different issue.
+   * <p>
+   * A session may only hold one lock at a time to prevent subagents from inheriting an ambiguous
+   * active-worktree context.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquireFailsWhenSessionAlreadyHoldsLockForDifferentIssue() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+
+        lock.acquire("issue-a", sessionId, "/worktree-a");
+        LockResult result = lock.acquire("issue-b", sessionId, "/worktree-b");
+
+        requireThat(result, "result").isInstanceOf(LockResult.Error.class);
+        LockResult.Error error = (LockResult.Error) result;
+        requireThat(error.status(), "status").isEqualTo("error");
+        requireThat(error.message(), "message").contains("issue-a");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that acquire succeeds for a different issue after the prior lock is released.
+   * <p>
+   * Once the first issue lock is released, the session is free to acquire a lock for another issue.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquireSucceedsAfterReleasingPriorLock() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+
+        lock.acquire("issue-a", sessionId, "/worktree-a");
+        lock.release("issue-a", sessionId);
+        LockResult result = lock.acquire("issue-b", sessionId, "/worktree-b");
+
+        requireThat(result, "result").isInstanceOf(LockResult.Acquired.class);
+        LockResult.Acquired acquired = (LockResult.Acquired) result;
+        requireThat(acquired.status(), "status").isEqualTo("acquired");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that same-session re-acquire of the same issue is idempotent.
+   * <p>
+   * The conflict scan must skip the lock file for the issue being re-acquired; otherwise
+   * idempotent re-acquire would incorrectly return an error.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquireIsIdempotentForSameIssueReacquire() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+
+        lock.acquire("issue-a", sessionId, "/worktree-a");
+        LockResult result = lock.acquire("issue-a", sessionId, "/worktree-a");
+
+        requireThat(result, "result").isInstanceOf(LockResult.Acquired.class);
+        LockResult.Acquired acquired = (LockResult.Acquired) result;
+        requireThat(acquired.status(), "status").isEqualTo("acquired");
+        requireThat(acquired.message(), "message").contains("already held");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that two distinct sessions can each hold a lock for a different issue without blocking each other.
+   * <p>
+   * The conflict detection must only reject a session that already owns a lock, not a different session.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquireAllowsDifferentSessionsToHoldSeparateIssues() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId1 = UUID.randomUUID().toString();
+        String sessionId2 = UUID.randomUUID().toString();
+
+        LockResult result1 = lock.acquire("issue-a", sessionId1, "/worktree-a");
+        LockResult result2 = lock.acquire("issue-b", sessionId2, "/worktree-b");
+
+        requireThat(result1, "result1").isInstanceOf(LockResult.Acquired.class);
+        requireThat(result2, "result2").isInstanceOf(LockResult.Acquired.class);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that acquire() succeeds when the locks directory contains a corrupted lock file.
+   * The corrupted file should be silently skipped during the conflict scan.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquireSucceedsDespiteCorruptedLockFileInScanPath() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String otherSessionId = UUID.randomUUID().toString();
+
+        // Create a valid lock for a different issue with a different session
+        lock.acquire("issue-other", otherSessionId, "/worktree-other");
+
+        // Write a malformed/invalid JSON lock file into the locks directory
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
+        Path corruptedLock = lockDir.resolve("corrupted-issue.lock");
+        Files.writeString(corruptedLock, "this is not valid JSON {{{");
+
+        // Acquire a lock for a third issue with yet another new session
+        String newSessionId = UUID.randomUUID().toString();
+        LockResult result = lock.acquire("issue-new", newSessionId, "/worktree-new");
+
+        // Acquisition must succeed despite the corrupted file being present
+        requireThat(result, "result").isInstanceOf(LockResult.Acquired.class);
+        LockResult.Acquired acquired = (LockResult.Acquired) result;
+        requireThat(acquired.status(), "status").isEqualTo("acquired");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that acquire() correctly detects a conflict when many lock files exist in the locks directory.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquireCorrectlyDetectsConflictWithManyLockFiles() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+
+        // Create 50 lock files for different issues, each with a unique session ID
+        for (int i = 0; i < 50; ++i)
+        {
+          String uniqueSessionId = UUID.randomUUID().toString();
+          lock.acquire("issue-" + i, uniqueSessionId, "/worktree-" + i);
+        }
+
+        // Acquire a lock for "issue-target" with a known session ID
+        String targetSessionId = UUID.randomUUID().toString();
+        lock.acquire("issue-target", targetSessionId, "/worktree-target");
+
+        // Now attempt to acquire a different issue using the same session that holds "issue-target"
+        LockResult result = lock.acquire("issue-new", targetSessionId, "/worktree-new");
+
+        // Verify that acquire() returns LockResult.Error containing "issue-target" in the message
+        requireThat(result, "result").isInstanceOf(LockResult.Error.class);
+        LockResult.Error error = (LockResult.Error) result;
+        requireThat(error.message(), "message").contains("issue-target");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
 }
