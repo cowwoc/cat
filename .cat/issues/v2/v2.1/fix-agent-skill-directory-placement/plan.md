@@ -69,6 +69,10 @@ None
   - Add `name: skill-analyzer-agent` to frontmatter
   - Remove `user-invocable: false` from frontmatter
   - Body content unchanged
+- `plugin/skills/skill-grader-agent/` → `plugin/agents/skill-grader-agent.md`
+  - Merge SKILL.md frontmatter (description, model) with first-use.md body into flat agent format
+  - Add `name: skill-grader-agent` to frontmatter
+  - Body content from first-use.md (license header excluded)
 
 **Group 2 — Move to plugin/skills/:**
 - `plugin/agents/skill-validator-agent/SKILL.md` → `plugin/skills/skill-validator-agent/SKILL.md`
@@ -76,8 +80,6 @@ None
 - `plugin/agents/description-tester-agent/SKILL.md` → `plugin/skills/description-tester-agent/SKILL.md`
   - File content unchanged
 - `plugin/agents/skill-comparison-agent/SKILL.md` → `plugin/skills/skill-comparison-agent/SKILL.md`
-  - File content unchanged
-- `plugin/agents/skill-grader-agent/SKILL.md` → `plugin/skills/skill-grader-agent/SKILL.md`
   - File content unchanged
 
 **Documentation:**
@@ -105,8 +107,8 @@ None
 - Commit: `refactor: convert subagent SKILL.md files to top-level agent configs`
 
 ### Wave 2 — Group 2: Move skills to plugin/skills/
-- For each of the 4 skill files (skill-validator-agent, description-tester-agent,
-  skill-comparison-agent, skill-grader-agent):
+- For each of the 3 skill files (skill-validator-agent, description-tester-agent,
+  skill-comparison-agent):
   - `mkdir -p plugin/skills/{name}/`
   - `git mv plugin/agents/{name}/SKILL.md plugin/skills/{name}/SKILL.md`
   - If the source directory is now empty, remove it: `git rm -r plugin/agents/{name}/`
@@ -137,7 +139,7 @@ None
 - [ ] `plugin/skills/skill-validator-agent/SKILL.md` exists
 - [ ] `plugin/skills/description-tester-agent/SKILL.md` exists
 - [ ] `plugin/skills/skill-comparison-agent/SKILL.md` exists
-- [ ] `plugin/skills/skill-grader-agent/SKILL.md` exists
+- [ ] `plugin/agents/skill-grader-agent.md` exists with `name: skill-grader-agent` in frontmatter
 - [ ] `plugin/agents/` contains no subdirectories (only top-level `.md` files and `README.md`)
 - [ ] `plugin/agents/README.md` directory structure table reflects the 4 new top-level agent files
 - [ ] `git status` is clean (no untracked or modified files)

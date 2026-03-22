@@ -1,10 +1,10 @@
 ---
+name: red-team-agent
 description: >
   Internal subagent — adversarially probes a target (skill instructions, test code, or source code)
   to find concrete loopholes, bypass vectors, and under-specified rules. Returns structured
   findings.json for use by the adversarial TDD loop.
 model: opus
-user-invocable: false
 ---
 
 # Red Team Agent

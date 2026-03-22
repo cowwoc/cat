@@ -830,7 +830,7 @@ implementation details (trust levels, internal architecture, etc.).
 - **subagent-context-minimization**: When to delegate to subagents and how to pass references instead of
   content — `plugin/concepts/subagent-context-minimization.md`
 - **skill-analyzer-agent**: Detects delegation opportunities and content relay anti-patterns in skill
-  procedures — `plugin/agents/skill-analyzer-agent/SKILL.md`
+  procedures — `plugin/agents/skill-analyzer-agent.md`
 
 ## Verification
 
