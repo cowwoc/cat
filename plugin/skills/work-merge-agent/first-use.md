@@ -242,7 +242,7 @@ presenting pre-gate output or AskUserQuestion. Do NOT assume completion based on
 
 Output all of the following in the current turn, in this order, before invoking AskUserQuestion:
 
-1. **Diff** — `Skill("cat:get-diff-agent")`
+1. **Diff** — `Skill("cat:get-diff-agent", "${CAT_AGENT_ID} ${ISSUE_PATH}")`
 2. **Commit summary and issue goal:**
    ```bash
    cd "${WORKTREE_PATH}" && git log --oneline ${TARGET_BRANCH}..HEAD && \
