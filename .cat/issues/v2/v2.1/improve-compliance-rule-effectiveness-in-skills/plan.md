@@ -345,19 +345,33 @@ Files:
 
 ## Post-conditions
 
-- [ ] `compression-protocol.md` contains an explicit exception preserving WHY paragraphs that justify
-  prohibition or requirement rules — verified by reading the file and confirming the exception text is
-  present in the "Elaboration" or "Condense explanations" section.
+- [ ] `compression-protocol.md` — Wave 1 makes two independent changes; verify BOTH are present:
+  - The "Elaboration" bullet (line ~62) has a nested sub-bullet starting with
+    `**Exception — Prohibition WHY reasoning:**`
+  - The `**Condense explanations:**` section (lines ~74–78) has a fifth bullet starting with
+    `**Exception — Prohibition WHY:**`
 - [ ] `validation-protocol.md` contains a CONSEQUENCE severity upgrade rule that classifies prohibition-
-  justifying CONSEQUENCE units as HIGH — verified by reading the file and confirming the upgrade rule text
-  is present.
+  justifying CONSEQUENCE units as HIGH — verified by reading the file and confirming:
+  - The upgrade rule text (including the "sibling" definition with the 5-line proximity heuristic) is
+    present after the severity table in Section 2.
+  - If the section contains an explicit gate condition (e.g., "FAIL if any HIGH unit is lost, WARN if
+    any MEDIUM unit is lost"), a note is present confirming the CONSEQUENCE upgrade feeds into the HIGH
+    gate. If no gate condition exists, this sub-check is N/A.
 - [ ] `skill-conventions.md` contains a new "Instruction Effectiveness for Compliance Rules" section with
   all six subsections (Four-Component Structure, CAPS Label Frequency, Zero-Tolerance Rules, Framing for
   Verbatim Output, Escalation, Structuring with XML Tags) — verified by reading the file.
-- [ ] `first-use.md` PROHIBITION test case generation requires at least 2 test cases with different bypass
-  vectors — verified by reading the relevant step and confirming the "2 scenarios" instruction is present.
+- [ ] `first-use.md` PROHIBITION test case generation requires 2 test cases — verified by reading line ~263
+  and confirming:
+  - The PROHIBITION entry now has two numbered sub-entries (Direct bypass and Plausible workaround)
+  - The format uses inline sub-entries matching the style of CONDITIONAL and DEPENDENCY entries in the
+    same list (not a standalone numbered list or bold-header block)
 - [ ] `phase-prevent.md` contains a "Compliance Rule Structure (for prohibition-type preventions)"
   subsection with all four components (label, WHY, prohibited list, positive alternative) — verified by
-  reading the file.
+  reading the file and confirming:
+  - All four numbered components are present (Short label, WHY paragraph, Prohibited list, Positive
+    alternative)
+  - The subsection is placed AFTER the language requirements self-check (line ~608) and BEFORE the
+    `**Fail-Fast Error Handling:**` section
+  - The "Escalation from Documentation Prevention" note cross-references Step 8
 - [ ] E2E: Read each modified file and confirm the new content is present, correctly formatted (matching
   the document's existing style), and not duplicating existing guidance already in the file.
