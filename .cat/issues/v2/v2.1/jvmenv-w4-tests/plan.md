@@ -1,7 +1,7 @@
 ---
 issue: 2.1-jvmenv-w4-tests
 parent: 2.1-remove-jvmscope-claudeenv-duplicates
-sequence: 4 of 4
+sequence: 4 of 5
 ---
 
 # Plan: jvmenv-w4-tests
@@ -35,7 +35,7 @@ For each file listed below:
 - `InjectSubAgentRulesTest.java`: getProjectPath (6 occurrences) and getClaudePluginRoot (3 occurrences)
 - `GetAddOutputPlanningDataTest.java`: all getProjectPath occurrences
 - `SessionEndHookTest.java`: getProjectPath
-- `TestJvmScopeTest.java` line 82: getProjectPath
+- `TestClaudeToolTest.java` line 82: getProjectPath
 - `ClaudeEnvTest.java`: update method names in test method bodies and Javadoc:
   `getClaudeSessionId()` → `getSessionId()`, `getClaudePluginRoot()` → `getPluginRoot()`,
   `getClaudeEnvFile()` → `getEnvFile()`
