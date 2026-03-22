@@ -261,7 +261,6 @@ public final class WorkPrepare
     // Check for corrupt directory (index.json present, plan.md absent)
     if (found.isCorrupt())
     {
-      releaseLock(issueId, input.sessionId());
       Map<String, Object> corruptResult = new LinkedHashMap<>();
       corruptResult.put("status", "CORRUPT");
       corruptResult.put("issue_id", issueId);
@@ -289,7 +288,6 @@ public final class WorkPrepare
     // Check if oversized
     if (estimatedTokens > TOKEN_LIMIT)
     {
-      releaseLock(issueId, input.sessionId());
       Map<String, Object> oversizedResult = new LinkedHashMap<>();
       oversizedResult.put("status", "OVERSIZED");
       oversizedResult.put("message", "Issue estimated at " + estimatedTokens + " tokens (limit: " + TOKEN_LIMIT + ")");
@@ -485,7 +483,7 @@ public final class WorkPrepare
     // Step 5: Create worktree
     try
     {
-      createWorktree(projectPath, issueBranch);
+      createWorktree(projectPath, issueBranch, worktreePath);
     }
     catch (IOException e)
     {
@@ -1402,15 +1400,13 @@ public final class WorkPrepare
    * <p>
    * If the branch already exists (stale from a previous session), it is deleted first.
    *
-   * @param projectPath the project root directory
-   * @param issueBranch the branch name for the issue
-   * @return the path to the created worktree
+   * @param projectPath  the project root directory
+   * @param issueBranch  the branch name for the issue
+   * @param worktreePath the path where the worktree will be created
    * @throws IOException if worktree creation fails
    */
-  private Path createWorktree(Path projectPath, String issueBranch) throws IOException
+  private void createWorktree(Path projectPath, String issueBranch, Path worktreePath) throws IOException
   {
-    Path worktreePath = scope.getCatWorkPath().resolve("worktrees").resolve(issueBranch);
-
     // Check if branch already exists (stale from previous session)
     try
     {
@@ -1426,8 +1422,6 @@ public final class WorkPrepare
     // Create worktree
     GitCommands.runGit(projectPath, "worktree", "add", "-b", issueBranch, worktreePath.toString(),
       "HEAD");
-
-    return worktreePath;
   }
 
   /**

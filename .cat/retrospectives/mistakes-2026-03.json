@@ -2805,14 +2805,16 @@
     "correct_behavior" : ""
   }, {
     "id" : "M591",
-    "timestamp" : "2026-03-22T09:15:19Z",
-    "category" : "",
-    "description" : "",
-    "root_cause" : "",
+    "timestamp" : "2026-03-22T08:31:23Z",
+    "category" : "documentation_priming",
+    "description" : "work-with-issue-agent invoked work-merge-agent with issue_path pointing to the main workspace path instead of the worktree path. The correct worktree path was used for implement, confirm, and review phases but reverted to the main workspace path when constructing the work-merge-agent invocation.",
+    "root_cause" : "DOCUMENTATION PRIMING: work-review-agent/first-use.md, work-confirm-agent/first-use.md, and work-implement-agent/first-use.md all contained a cognitive anchor in the Arguments table: issue_path example showed /workspace/.cat/issues/v2/v2.1/issue-name (main workspace path) instead of ${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name/.cat/issues/v2/v2.1/issue-name (worktree path). When work-with-issue-agent read these skill docs, the example path primed it to use the main workspace path when constructing skill invocations.",
     "cause_signature" : "knowledge_gap:skill_incomplete:issue_workflow",
+    "rca_method" : "C",
+    "rca_method_name" : "causal-barrier",
     "prevention_type" : "skill",
-    "prevention_path" : "plugin/skills/work-review-agent/first-use.md",
-    "pattern_keywords" : [ ],
+    "prevention_path" : "${CLAUDE_PROJECT_DIR}/plugin/skills/work-review-agent/first-use.md",
+    "pattern_keywords" : [ "issue_path", "worktree_path", "cognitive_anchor", "example_value", "work-merge-agent" ],
     "prevention_implemented" : true,
     "prevention_verified" : false,
     "recurrence_of" : null,
@@ -2821,7 +2823,7 @@
       "fragility" : "low",
       "catches_variations" : true
     },
-    "correct_behavior" : ""
+    "correct_behavior" : "The issue_path example in all work phase skill docs (implement, confirm, review) shows the worktree-relative path ${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name/.cat/issues/v2/v2.1/issue-name, matching the actual path provided by work-prepare-output during an active work session."
   }, {
     "id" : "M592",
     "timestamp" : "2026-03-22T14:00:00Z",
