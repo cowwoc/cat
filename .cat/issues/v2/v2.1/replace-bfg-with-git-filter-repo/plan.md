@@ -144,6 +144,22 @@ Match the existing jlink bundle platforms:
 - Commit: `refactor: replace BFG with git filter-repo in git-rewrite-history-agent skill`
 - Update STATE.md: status=closed, progress=100%
 
+### Wave 3: Fix missing post-conditions (iteration 1)
+
+- Update `plugin/skills/git-rewrite-history-agent/SKILL.md` frontmatter description to remove the
+  "or BFG" reference: change the description value to
+  `"MANDATORY: Use instead of git filter-branch - git filter-repo with Python detection and on-demand binary download"`
+  so the description contains no mention of BFG
+  - Files: `plugin/skills/git-rewrite-history-agent/SKILL.md`
+
+- Set the executable permission bit on `plugin/scripts/download-git-filter-repo.sh` so it can be
+  invoked directly via `$()` subshell as `"${CLAUDE_PLUGIN_ROOT}/scripts/download-git-filter-repo.sh"`:
+  run `chmod +x plugin/scripts/download-git-filter-repo.sh` and stage the mode change with
+  `git add plugin/scripts/download-git-filter-repo.sh` (git tracks the 100755 mode)
+  - Files: `plugin/scripts/download-git-filter-repo.sh`
+
+- Commit: `bugfix: remove BFG from SKILL.md description and set executable bit on download script`
+
 ## Post-conditions
 
 - [ ] `first-use.md` contains no reference to BFG or `bfg.jar`

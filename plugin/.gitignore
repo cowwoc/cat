@@ -2,3 +2,6 @@
 __pycache__/
 *.pyc
 *.pyo
+
+# Downloaded binaries (cached on first use, not tracked in git)
+lib/git-filter-repo-*

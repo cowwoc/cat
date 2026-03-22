@@ -66,6 +66,14 @@ public final class WorkPrepare
   private static final Pattern EXECUTION_WAVES_PATTERN =
     Pattern.compile("## Execution Waves\\s+(.*?)(?=\\n## [^#]|\\Z)", Pattern.DOTALL);
   /**
+   * Matches a CAT agent ID token at the start of a string. The token is either a plain UUID or a
+   * subagent ID of the form {@code uuid/subagents/name}. Skills expand {@code $ARGUMENTS} to include
+   * this token as the first word, so it must be stripped before interpreting the remaining arguments.
+   */
+  private static final Pattern CAT_AGENT_ID_TOKEN =
+    Pattern.compile(
+      "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(/subagents/[0-9a-zA-Z_-]+)?");
+  /**
    * Tokenizes a glob pattern into {@code **}, {@code *}, or literal text segments.
    */
   private static final Pattern GLOB_TOKEN_PATTERN = Pattern.compile("\\*\\*|\\*|[^*]+");
@@ -1834,6 +1842,11 @@ public final class WorkPrepare
   /**
    * Parses raw {@code --arguments} input into a structured result.
    * <p>
+   * Skills pass {@code $ARGUMENTS} with the CAT agent ID (a UUID, or a subagent ID of the form
+   * {@code uuid/subagents/name}) as the first token. This prefix is mandatory: if
+   * {@code rawArguments} is non-blank and does not start with a valid CAT agent ID, an
+   * {@link IllegalArgumentException} is thrown.
+   * <p>
    * Leading modifier keywords ({@code resume}, {@code continue}) are stripped before matching,
    * so {@code "resume 2.1-fix-bug"} resolves to issue ID {@code "2.1-fix-bug"}.
    * Keyword stripping is case-sensitive and requires at least one space after the keyword;
@@ -1846,6 +1859,9 @@ public final class WorkPrepare
    * @param issueId the explicit issue ID already set via {@code --issue-id}, or empty string
    * @param excludePattern the explicit exclude pattern already set via {@code --exclude-pattern}, or empty string
    * @return parsed result with resolved issueId and excludePattern (never null; fields may be empty)
+   * @throws IllegalArgumentException if {@code rawArguments} is non-blank, {@code issueId} and
+   *   {@code excludePattern} are both empty, and {@code rawArguments} does not start with a valid
+   *   CAT agent ID
    */
   public static ParsedArguments parseRawArguments(String rawArguments, String issueId,
     String excludePattern)
@@ -1854,6 +1870,19 @@ public final class WorkPrepare
       return new ParsedArguments(issueId, excludePattern);
 
     String raw = rawArguments.strip();
+    // Skills pass $ARGUMENTS with the catAgentId as the first token. It must be present and stripped
+    // before interpreting the remainder as user-supplied arguments.
+    Matcher agentIdMatcher = CAT_AGENT_ID_TOKEN.matcher(raw);
+    if (!agentIdMatcher.lookingAt())
+    {
+      throw new IllegalArgumentException(
+        "rawArguments does not start with a valid catAgentId. " +
+          "Skills must pass $ARGUMENTS which prepends the CAT agent ID as the first token. " +
+          "rawArguments: '" + rawArguments + "'");
+    }
+    raw = raw.substring(agentIdMatcher.end()).strip();
+    if (raw.isBlank())
+      return new ParsedArguments("", "");
     // Strip leading modifier keywords that users naturally prepend (e.g. "resume 2.1-fix-bug")
     for (String keyword : new String[]{"resume", "continue"})
     {
