@@ -199,11 +199,6 @@ recurrence_independence_gate:
     your_answer: "_______________"
 ```
 
-**Why this gate exists (M416):** When a mistake recurs, historical information about past mistake
-chains makes it hard to analyze independently. This gate ensures you form your own conclusions from
-source files first, before reading mistakes.json or past mistake entries. Recurrence checks happen
-AFTER independent RCA is complete.
-
 **BLOCKING CONDITION:** Do NOT proceed to Question 5 below until:
 1. `step_1.your_independent_root_cause` is filled in with a cause based on reading source code ONLY
 2. `step_3.your_answer` is filled in with recurrence information checked AFTER steps 1 and 2 are
@@ -248,13 +243,13 @@ If ANY answer is blank or says "agent should have...":
 - Investigate what DOCUMENTATION or SYSTEM enabled the mistake
 - Only proceed when you can point to a SPECIFIC file to change
 
-**Why this gate exists:** M299 showed that completion bias causes premature RCA termination.
+Completion bias causes premature RCA termination.
 Stopping at "agent did X wrong" is describing the SYMPTOM, not the CAUSE.
 The cause is always in the system that allowed or encouraged the wrong action.
 
 ## Step 3c: Multiple Independent Mistakes
 
-**If investigation reveals multiple independent mistakes:** Read `MULTIPLE-MISTAKES.md` and follow its
+**If investigation reveals multiple independent mistakes:** Read `multiple-mistakes.md` and follow its
 workflow.
 
 Each independent mistake gets its own `/cat:learn-agent` invocation with full RCA and prevention
@@ -336,7 +331,7 @@ minimal - remove all explanatory content that could prime analytical thinking.
 
 ## Step 3e: Investigate Hook Workarounds
 
-**If mistake involves bypassing a hook:** Read `HOOK-WORKAROUNDS.md` and follow its investigation
+**If mistake involves bypassing a hook:** Read `hook-workarounds.md` and follow its investigation
 checklist.
 
 Check: Was the right thing possible? Did guidance exist? Why wasn't it followed?

@@ -3,7 +3,7 @@ Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
-# Investigate Hook Workarounds (M398)
+# Investigate Hook Workarounds
 
 Lazy-loaded when a mistake involves bypassing or working around a hook.
 
@@ -50,7 +50,7 @@ hook_workaround_analysis:
     action: "Fix the specific gap identified"
 ```
 
-## Example - M398
+## Example
 
 ```yaml
 # Agent used: git -C /workspace worktree remove /path --force
