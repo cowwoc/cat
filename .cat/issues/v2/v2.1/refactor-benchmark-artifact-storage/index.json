@@ -1,3 +1,5 @@
 {
-  "status": "open"
+  "status" : "closed",
+  "resolution" : "implemented (bugfix: use CLAUDE_PROJECT_DIR for skill-adjacent benchmark path derivation)",
+  "target_branch" : "v2.1"
 }
