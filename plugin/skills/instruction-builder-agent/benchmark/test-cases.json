@@ -3,7 +3,7 @@
   "test_cases": [
     {
       "test_case_id": "TC1",
-      "semantic_unit_id": "unit_1",
+      "semantic_unit_id": "unit_step1_decompose",
       "category": "REQUIREMENT",
       "prompt": "You are given a goal: improve the performance of a Python web service that handles 10,000 requests per second. Decompose this into forward implementation steps using backward reasoning.",
       "assertions": [
@@ -75,6 +75,335 @@
           "description": "Response does not contain Step 0 (no 0-based numbering)",
           "pattern": "### Step 0",
           "expected": false
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC2",
+      "semantic_unit_id": "unit_step44_guard",
+      "category": "CONDITIONAL",
+      "prompt": "You are executing Step 4.4 of the instruction-builder skill. The SPRT benchmark just completed with overall_decision = 'Accept'. TC1: Accept (log_ratio 2.944), TC2: Accept (log_ratio 2.944). What do you do next?",
+      "assertions": [
+        {
+          "assertion_id": "TC2_det_1",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "agent explicitly states it is skipping Step 4.4 because overall_decision is Accept",
+          "pattern": "[Ss]kipping Step 4\\.4|[Ss]kip.*Step 4\\.4.*[Aa]ccept|overall_decision.*[Aa]ccept.*[Ss]kip",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC2_det_2",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "agent does NOT run the investigation procedure when overall_decision is Accept",
+          "pattern": "SPRT FAILURE INVESTIGATION",
+          "expected": false
+        },
+        {
+          "assertion_id": "TC2_det_3",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "agent proceeds to Step 4.5",
+          "pattern": "Step 4.5",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC3",
+      "semantic_unit_id": "unit_step44_reject",
+      "category": "CONDITIONAL",
+      "prompt": "You are executing Step 4.4. The SPRT benchmark just completed with overall_decision = 'Reject'. TC1: Reject (log_ratio -2.944, pass 1, fail 4), TC2: Accept (log_ratio 2.944). SESSION_ANALYZER is available at /opt/cat/client/bin/session-analyzer. CLAUDE_SESSION_ID = 'sess-abc123'. What do you do?",
+      "assertions": [
+        {
+          "assertion_id": "TC3_det_1",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "agent runs session-analyzer analyze to discover subagent IDs",
+          "pattern": "session-analyzer",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC3_det_2",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "agent invokes cat:get-history-agent to retrieve transcripts",
+          "pattern": "cat:get-history-agent",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC3_det_3",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "investigation report contains SPRT FAILURE INVESTIGATION header",
+          "pattern": "SPRT FAILURE INVESTIGATION",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC3_det_4",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "investigation report identifies the rejected test case TC1",
+          "pattern": "TC1",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC3_det_5",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "compliance failure search uses correct regex pattern",
+          "pattern": "Would you like\\|What would you\\|follow.up",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC4",
+      "semantic_unit_id": "unit_step44_contamination",
+      "category": "CONSEQUENCE",
+      "prompt": "You are executing Step 4.4 investigation sub-step 5. session-analyzer analyze output shows that benchmark runs TC1_run_1, TC1_run_2, and TC1_run_3 all share the same subagent ID 'agent-xyz789' (resume: true for runs 2 and 3). What is your conclusion about batch contamination and what is the next step?",
+      "assertions": [
+        {
+          "assertion_id": "TC4_det_1",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "agent detects batch contamination when runs share a subagent ID",
+          "pattern": "contamination",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC4_det_2",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "agent recommends rerunning benchmark rather than modifying skill for test artifact",
+          "pattern": "[Rr]erun|[Rr]e-run",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC4_det_3",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "thinking block search uses correct pattern with context:10",
+          "pattern": "<thinking>.*--context 10|--context 10.*<thinking>",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC4_det_4",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "agent correctly records 'no thinking blocks found' or 'none' when thinking block search returns empty",
+          "pattern": "no thinking blocks|none found|no.*thinking|thinking.*none",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC4_sem_1",
+          "type": "semantic",
+          "description": "agent concludes 'Test environment artifact' not 'Genuine skill defect' for batch contamination",
+          "instruction": "Check that the agent's conclusion is 'Test environment artifact' or equivalent, not 'Genuine skill defect', given that multiple runs shared a single subagent context.",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC5",
+      "semantic_unit_id": "unit_step44_conclusion_defect",
+      "category": "CONSEQUENCE",
+      "prompt": "You are writing the investigation report for Step 4.4. Findings: no batch contamination (each run had a fresh subagent), TC1 failed because the agent asked 'Would you like me to explain my reasoning?' instead of producing output, no priming sources found, no thinking blocks found. Format the Failure pattern section of the report. Agent ID is 'agent-abc1', run number is 2.",
+      "assertions": [
+        {
+          "assertion_id": "TC5_det_1",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "agent concludes genuine skill defect",
+          "pattern": "[Gg]enuine skill defect|[Gg]enuine [Ss]kill [Dd]efect",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC5_det_2",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "next step points to Step 4.5 or skill-analyzer-agent",
+          "pattern": "4.5",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC5_det_3",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "failure pattern entry uses the required format: TC<n>, run <m> (agent <id>)",
+          "pattern": "TC1, run 2 \\(agent agent-abc1\\)",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC5_det_4",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "verbatim transcript quote is wrapped in triple backticks",
+          "pattern": "```[\\s\\S]*Would you like me to explain my reasoning[\\s\\S]*```",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC6",
+      "semantic_unit_id": "unit_step44_thinking",
+      "category": "REQUIREMENT",
+      "prompt": "You are executing Step 4.4 investigation sub-step 6. The session-analyzer search for '<thinking>' in agent 'abc123' returns: '<thinking>The skill says I should output directly, but the user might want clarification. I\\'ll ask a follow-up question.</thinking>'. What do you record in the investigation report for the thinking blocks field?",
+      "assertions": [
+        {
+          "assertion_id": "TC6_det_1",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "agent includes the thinking block content in the report",
+          "pattern": "thinking",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC6_det_2",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "priming source search uses correct regex pattern with context:3",
+          "pattern": "(unless|except|if user|may|optional).*--context 3|--context 3.*(unless|except|if user|may|optional)",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC6_sem_1",
+          "type": "semantic",
+          "description": "agent correctly identifies the thinking block as evidence the subagent intended to deviate from skill instructions",
+          "instruction": "Check that the agent notes the thinking block content shows the benchmark-run subagent reasoned about deviating from the skill's direct-output instruction.",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC7",
+      "semantic_unit_id": "unit_step44_output_order",
+      "category": "SEQUENCE",
+      "prompt": "SPRT benchmark completed with overall_decision = 'Reject'. TC1: Reject. You have completed the investigation (Step 4.4). Present the results to the user in the correct order before proceeding to Step 4.5.",
+      "assertions": [
+        {
+          "assertion_id": "TC7_det_1",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "output does NOT re-display SPRT benchmark summary (already shown at end of Step 4.3)",
+          "pattern": "TOKEN USAGE SUMMARY|Test Case.*Runs.*Total Tokens",
+          "expected": false
+        },
+        {
+          "assertion_id": "TC7_sem_1",
+          "type": "semantic",
+          "description": "investigation report is presented without re-displaying the SPRT benchmark summary",
+          "instruction": "Check that the output contains the SPRT FAILURE INVESTIGATION block but does NOT re-present the full benchmark summary table (token usage table, per-case decisions table) — those were already shown at the end of Step 4.3 and must not be repeated here.",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC8",
+      "semantic_unit_id": "unit_step44_error_handling",
+      "category": "CONSEQUENCE",
+      "prompt": "You are executing Step 4.4 investigation sub-steps 4–7. For agent ID 'agent-fail99', session-analyzer returns an error: 'Error: session not found for agent-fail99'. For agent ID 'agent-ok01', session-analyzer succeeds. What do you record in the investigation report and do you continue?",
+      "assertions": [
+        {
+          "assertion_id": "TC8_det_1",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "agent records session-analyzer unavailability for the failing agent ID",
+          "pattern": "session-analyzer unavailable for agent agent-fail99|session-analyzer.*unavailable.*agent-fail99",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC8_det_2",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "agent continues investigation with the remaining agent (does not abort)",
+          "pattern": "agent-ok01",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC8_sem_1",
+          "type": "semantic",
+          "description": "agent does not abort the full investigation due to a single tool failure",
+          "instruction": "Check that the agent records the error for agent-fail99 in the report and continues processing agent-ok01, rather than stopping the entire investigation.",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC8_sem_2",
+          "type": "semantic",
+          "description": "agent handles subagent ID discovery returning empty results gracefully",
+          "instruction": "If session-analyzer discover returns no agent IDs (empty result), verify that the agent either notes this in the report and concludes investigation is not applicable, or attempts alternative methods to locate subagent transcripts. The agent should not crash or fail silently when no IDs are discovered.",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC9",
+      "semantic_unit_id": "unit_step44_get_history",
+      "category": "REQUIREMENT",
+      "prompt": "You are executing Step 4.4 sub-step 3. CLAUDE_SESSION_ID = 'sess-abc123'. AGENT_IDS contains two IDs: 'sub-agent-001' and 'sub-agent-002'. Invoke cat:get-history-agent to retrieve transcripts for each agent. Show the exact invocation arguments you would use for each.",
+      "assertions": [
+        {
+          "assertion_id": "TC9_det_1",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "invocation includes the correct skill name",
+          "pattern": "cat:get-history-agent",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC9_det_2",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "invocation args use correct format: <cat_agent_id> <session_id>/subagents/<agent_id>",
+          "pattern": "sess-abc123/subagents/sub-agent-001",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC9_det_3",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "invocation includes second agent ID with correct format",
+          "pattern": "sess-abc123/subagents/sub-agent-002",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC9_sem_1",
+          "type": "semantic",
+          "description": "agent handles cat:get-history-agent failures gracefully and continues with other agents",
+          "instruction": "If one cat:get-history-agent invocation fails (e.g., session not found for an agent), check that the agent records the error and continues processing other agents rather than aborting the entire investigation. Failure to retrieve one agent's transcript should not prevent analyzing remaining agents.",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC10",
+      "semantic_unit_id": "unit_step44_inconclusive",
+      "category": "CONSEQUENCE",
+      "prompt": "You are writing the Step 4.4 investigation report. Findings: no batch contamination detected (each run used a fresh subagent), thinking blocks show the agent expressed uncertainty ('I am unsure whether the skill wants me to output X or Y') but no clear intent to override, compliance search found one match that could be either a follow-up question or a clarifying output prefix, priming sources search found a vague escape clause 'when appropriate'. The evidence is contradictory. What conclusion do you state?",
+      "assertions": [
+        {
+          "assertion_id": "TC10_det_1",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "agent concludes Inconclusive when evidence is contradictory",
+          "pattern": "[Ii]nconclusive",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC10_det_2",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "agent recommends gathering additional evidence rather than modifying the skill",
+          "pattern": "[Gg]ather.*evidence|[Aa]dditional.*evidence|[Mm]ore.*evidence",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC10_sem_1",
+          "type": "semantic",
+          "description": "agent does not conclude Genuine skill defect or Test environment artifact when evidence is contradictory",
+          "instruction": "Check that the agent's conclusion is 'Inconclusive' and not 'Genuine skill defect' or 'Test environment artifact'. The evidence described is contradictory and does not support a definitive conclusion.",
+          "expected": true
         }
       ]
     }

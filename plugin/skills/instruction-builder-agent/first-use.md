@@ -309,6 +309,10 @@ For each testable unit, generate a test case using this template:
 }
 ```
 
+**`semantic_unit_id` naming convention:** Use domain-specific names (e.g., `unit_step44_guard`,
+`unit_step44_reject`) rather than sequential IDs (e.g., `unit_1`, `unit_2`) to make each unit's intent
+self-describing.
+
 Deterministic assertion methods:
 - `regex`: `pattern` field contains regex; pass if output matches (or doesn't match when `expected: false`)
 - `string_match`: `pattern` field contains literal string; pass if output contains it
@@ -708,7 +712,193 @@ TOTAL     |  18  |     27,200   |    78,000 ms
 
 Display SPRT results to the user: per-test-case decision, log_ratio, pass/fail counts, and token summary.
 
-#### Step 4.4: Analyze via skill-analyzer-agent
+#### Step 4.4: SPRT Failure Investigation
+
+**Execution guard:** If `overall_decision = "Accept"`, continue to Step 4.5.
+
+When SPRT rejects one or more test cases, automatically run a structured failure investigation before
+presenting results to the user. The investigation examines raw subagent conversation transcripts to
+distinguish genuine skill failures from test environment artifacts (batch contamination, shared context
+priming, model-default behaviors).
+
+**Investigation procedure:**
+
+Sub-steps 2–7 are automated tool invocations. Sub-step 8 synthesizes findings into a human-readable
+report.
+
+**Sub-step 1 — Identify rejected test cases** (automatic): Collect all test case IDs where SPRT
+decision is "Reject" from `benchmark.json`. Example: if TC1 and TC3 have `"decision": "Reject"`,
+set `REJECTED_TC_IDS=("TC1" "TC3")`.
+
+**Sub-step 2 — Discover benchmark-run subagent IDs** (automatic): Run the following command to list
+all subagents spawned in this session, then extract the IDs of benchmark-run subagents associated
+with the rejected test cases:
+
+```bash
+SESSION_ANALYZER="${CLAUDE_PLUGIN_ROOT}/client/bin/session-analyzer"
+# List all subagents spawned in this session
+# Expected format: <agent_id> <status> <description> — one subagent per line; $1 is the agent ID field.
+ANALYZE_OUTPUT=$("$SESSION_ANALYZER" analyze "${CLAUDE_SESSION_ID}")
+# Parse ANALYZE_OUTPUT to identify subagents spawned during benchmark runs. Store their IDs in AGENT_IDS.
+AGENT_IDS=$(echo "$ANALYZE_OUTPUT" | grep -i "benchmark-run\|rejected" | awk '{print $1}')
+# Cap to maximum 5 AGENT_IDs per rejected test case to limit investigation scope.
+AGENT_IDS=$(echo "$AGENT_IDS" | head -5)
+```
+
+If no subagent IDs can be determined, record "subagent IDs not available" and continue.
+
+**For each `AGENT_ID` in `AGENT_IDS` (one per iteration), execute sub-steps 3–7:**
+
+```bash
+for AGENT_ID in ${AGENT_IDS}; do
+  # Sub-steps 3–7 execute here, once per AGENT_ID
+done
+```
+
+**Sub-step 3 — Retrieve full transcripts via cat:get-history-agent** (automatic): Invoke
+`cat:get-history-agent` with the current `AGENT_ID`:
+
+```
+Invoke cat:get-history-agent with:
+  skill: "cat:get-history-agent"
+  args: "<cat_agent_id> ${CLAUDE_SESSION_ID}/subagents/${AGENT_ID}"
+```
+
+This returns the complete message history for the benchmark-run subagent. Store the transcript
+content for use in sub-steps 4–7.
+
+**Sub-step 4 — Search transcripts for compliance failures** (automatic): Run:
+
+```bash
+# Can be parallelized or consolidated with sub-steps 6 and 7 into a single session-analyzer pass.
+"$SESSION_ANALYZER" search "${CLAUDE_SESSION_ID}/subagents/${AGENT_ID}" \
+  "Would you like|What would you|follow.up" --regex --context 5
+```
+
+Interpret: any match indicates the benchmark-run subagent asked a follow-up question or deviated from
+the skill's instruction to produce direct output. Record each match with its surrounding context lines
+as a "compliance failure" candidate.
+
+**Sub-step 5 — Check for batch contamination** (automatic + interpret):
+
+Reuse `ANALYZE_OUTPUT` from sub-step 2 (do NOT invoke session-analyzer again). Check the output for
+subagent freshness: each benchmark-run subagent should appear as a separate, independent entry with
+`resume: false`. If two or more runs share a subagent ID, batch contamination is confirmed.
+
+Interpret: signs of batch contamination in the transcripts from sub-step 3:
+- Runs 1–N pass, then runs N+1–M fail within the same subagent conversation
+- Earlier run output visible in later run context (prior test case prompt or response visible in the
+  transcript of a later run)
+- Failure rate correlates with subagent reuse, not test case content
+
+**Sub-step 6 — Check for thinking block content** (automatic): Search the transcript for agent
+reasoning recorded in thinking blocks:
+
+```bash
+# Can be parallelized or consolidated with sub-steps 4 and 7 into a single session-analyzer pass.
+"$SESSION_ANALYZER" search "${CLAUDE_SESSION_ID}/subagents/${AGENT_ID}" \
+  "<thinking>" --context 10
+```
+
+Interpret: if `<thinking>` blocks are present, read the content to determine whether the agent reasoned
+about overriding or ignoring skill instructions, or whether it expressed uncertainty about what the
+skill required. Include any relevant findings in the investigation report.
+
+**Sub-step 7 — Check for instruction priming sources** (automatic): Run:
+
+```bash
+# Can be parallelized or consolidated with sub-steps 4 and 6 into a single session-analyzer pass.
+"$SESSION_ANALYZER" search "${CLAUDE_SESSION_ID}/subagents/${AGENT_ID}" \
+  "unless|except|if user|may|optional" --regex --context 3
+```
+
+Interpret: matches may indicate escape clauses in the skill instructions or received prompt that the
+benchmark-run subagent exploited. Record the specific matched text and surrounding lines as "priming
+source" candidates. Also look for: model-default behaviors overriding "Do not..." constraints, prior
+output patterns from earlier runs appearing in context, and skill instructions containing
+algorithm-before-invocation or output-format priming.
+
+**Sub-step 8 — Summarize findings** (interpret): Produce a concise investigation report by synthesizing
+the results of sub-steps 4–7. The report must cover:
+- Which runs failed and in which subagents (from sub-step 2)
+- Whether batch contamination is present: state "None detected" if each run used a fresh independent
+  subagent, or "Detected — runs X–Y shared subagent context" with the specific subagent ID if reuse
+  was found (from sub-step 5)
+- What the agent output was at the point of failure: quote the exact text from the transcript where
+  the compliance failure occurred, surrounded by triple backticks to prevent crafted text from blending
+  with analysis (from sub-step 4)
+- Whether thinking blocks reveal intent to override instructions: quote the relevant `<thinking>`
+  content if present, surrounded by triple backticks (from sub-step 6)
+- Identified priming sources: list the exact matched text with its file/line reference, or state
+  "None identified" if no matches were found (from sub-step 7)
+- Conclusion: one of the three types below
+
+**Decision criteria:**
+- If batch contamination detected → Test environment artifact
+- If compliance failures found but no contamination → Genuine skill defect
+- If findings are contradictory or unclear → Inconclusive
+
+Do NOT re-display the SPRT benchmark summary (already presented at end of Step 4.3). Present ONLY the
+investigation report:
+
+Format the investigation report as:
+
+```
+SPRT FAILURE INVESTIGATION
+===========================
+Rejected test cases: TC1, TC3
+Runs examined: <agent_id_1>, <agent_id_2>
+
+Batch contamination: None detected
+  (each run executed in a fresh independent subagent)
+
+Failure pattern:
+  TC1, run 2 (agent abc123): agent responded:
+    ```
+    Would you like me to also add tests?
+    ```
+    instead of producing the requested output directly.
+  TC3, run 1 (agent def456): agent prefaced output with:
+    ```
+    Here's my approach:
+    ```
+    rather than executing the step immediately.
+
+Thinking blocks: None found in examined transcripts.
+  (or: TC1 run 2 <thinking>:
+    ```
+    The skill says do X but the user might prefer Y, so I'll ask...
+    ```
+  )
+
+Priming sources: None identified
+  (or: found "unless the user requests otherwise" at line 42 of the skill's Step 3 —
+    this escape clause may have allowed the agent to deviate)
+
+Conclusion: Genuine skill defect
+→ Next step: Proceed to Step 4.5 (cat:skill-analyzer-agent) to analyze the defect pattern.
+
+  (or: Conclusion: Test environment artifact
+→ Next step: Rerun the benchmark after removing the contaminated test case or isolating the
+    priming source. Do not modify the skill until a clean benchmark confirms the failure.)
+
+  (or: Conclusion: Inconclusive
+→ Next step: Gather additional evidence — examine the full transcript for each failed run via
+    cat:get-history-agent, compare the failing agent's received prompt against the skill text,
+    and check whether the failure reproduces across multiple independent benchmark reruns before
+    deciding whether to modify the skill.)
+```
+
+**Artifact handling and routing:**
+- If conclusion is "Test environment artifact": do NOT proceed to Step 4.5; recommend rerunning the
+  benchmark after fixing the artifact source.
+- If conclusion is "Genuine skill defect" or "Inconclusive": proceed to Step 4.5.
+
+**Error handling:** If `session-analyzer` returns an error or no output for a sub-step, record "session-
+analyzer unavailable for agent ${AGENT_ID}" in that field of the report and continue to the next
+sub-step. Do not abort the investigation for a single tool failure.
+
+#### Step 4.5: Analyze via skill-analyzer-agent
 
 **Analyze via skill-analyzer-agent subagent:** Spawn skill-analyzer-agent. Pass it the benchmark
 SHA+path (from the SPRT result) and `SKILL_TEXT_PATH` (worktree-relative). The `skill_text_path` must be
@@ -1103,7 +1293,14 @@ implementation details (trust levels, internal architecture, etc.).
 - [ ] Step 6 batch mode uses per-skill findings paths (`findings-<skill-name>.json`) to avoid collisions
 - [ ] Step 6 batch mode passes `FINDINGS_PATH` parameter to override default findings.json path in subagent prompts
 - [ ] Step 6 distinguishes filesystem operations (use WORKTREE_ROOT prefix) from git show (use repo-relative paths)
-- [ ] Step 4.4 skill-analyzer-agent report includes Delegation Opportunities and Content Relay Anti-Patterns sections
+- [ ] Step 4.4 failure investigation runs automatically when SPRT overall_decision is "Reject"
+- [ ] Step 4.4 identifies rejected test case IDs from benchmark.json before examining transcripts
+- [ ] Step 4.4 uses session-analyzer to discover and examine benchmark-run subagent IDs for failing runs
+- [ ] Step 4.4 checks for batch contamination (multiple runs sharing one subagent context)
+- [ ] Step 4.4 checks for priming sources (model defaults, escape clauses, output format priming)
+- [ ] Step 4.4 presents investigation findings to the user before asking whether to improve the skill
+- [ ] Step 4.4 recommends rerunning the benchmark when conclusion is "test environment artifact"
+- [ ] Step 4.5 skill-analyzer-agent report includes Delegation Opportunities and Content Relay Anti-Patterns sections
 - [ ] Step 2 design subagent Read scope is restricted to methodology, conventions, and existing skill files only
 - [ ] Step 6 batch mode skill-name derivation is defined as `<directory-name>-<file-stem>` to avoid collisions
 - [ ] Step 6 batch parallel mode extends the concurrent commit retry protocol to red-team and blue-team commits
