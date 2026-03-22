@@ -68,30 +68,38 @@ Research findings on Claude compliance (evidence base for this issue):
 
 Edit `plugin/skills/instruction-builder-agent/compression-protocol.md`:
 
-Locate the section titled "Content Safe to Remove" (or similar). Inside that section, find the item about
-"Elaboration" which lists "Extended justifications or background that don't affect decisions" as removable.
-Add an exception paragraph immediately after that item using this exact text (adjust minor wording if needed
-to fit context, but preserve all semantic content):
+Locate the `## Content Safe to Remove` section (line 56). Find the "Elaboration" bullet at approximately
+line 62:
 
 ```
-**Exception — Prohibition WHY reasoning:** A WHY paragraph that is the primary justification for a
-sibling PROHIBITION or REQUIREMENT rule must be preserved even when it reads as elaboration. Indicators
-that a paragraph is a prohibition WHY:
-- Uses causal connectors: "because", "otherwise", "this prevents", "this ensures", "without this"
-- Immediately precedes or follows a PROHIBITION semantic unit
-- Removing it would leave the prohibition with no stated reason
-
-WHY reasoning tied to prohibition rules is not decoration — it is the mechanism by which Claude
-evaluates whether to comply. Stripping it degrades compliance in proportion to the temptation to
-bypass the rule.
+- **Elaboration**: Extended justifications or background that don't affect decisions
 ```
 
-Also locate the "Condense explanations" item (which currently says something like "Remove 'Why This
-Ordering Matters' verbose sections → keep ordering statement"). Add an exception at the end of that item:
+Add the exception as a nested sub-bullet directly under the "Elaboration" bullet (indented with two spaces
+to show it is a sub-note of that entry). The Haiku agent must NOT add a standalone paragraph — it must
+use a nested bullet so the result looks like:
 
 ```
-Exception: Do not condense or remove WHY paragraphs that are the sole justification for a prohibition
-or requirement rule. Condensing a prohibition's WHY to zero words is equivalent to stripping it.
+- **Elaboration**: Extended justifications or background that don't affect decisions
+  - **Exception — Prohibition WHY reasoning:** A WHY paragraph that is the primary justification for a
+    prohibition or requirement rule must be preserved even when it reads as elaboration. Indicators that a
+    paragraph is a prohibition WHY: it uses causal connectors ("because", "otherwise", "this prevents",
+    "this ensures", "without this"); it immediately precedes or follows a PROHIBITION semantic unit; or
+    removing it would leave the prohibition with no stated reason. WHY reasoning tied to prohibition rules
+    is not decoration — it is the mechanism by which Claude evaluates whether to comply. Stripping it
+    degrades compliance in proportion to the temptation to bypass the rule.
+```
+
+(Do not add a trailing `---` or other separator — just the nested bullet.)
+
+Also locate the `**Condense explanations:**` section (lines 74–78). Add a fifth bullet at the end of
+its list, matching the existing dash-bullet style:
+
+```
+- **Exception — Prohibition WHY:** Do not condense or remove WHY paragraphs that are the sole
+  justification for a prohibition or requirement rule. Condensing a prohibition's WHY to zero words
+  is equivalent to stripping it. This exception itself is a prohibition rule and must not be
+  compressed or reframed to a positive form.
 ```
 
 Files:
@@ -114,10 +122,18 @@ table, using this exact language (adjust formatting to match the document's exis
 
 ```
 **CONSEQUENCE severity upgrade rule:** A CONSEQUENCE unit is classified as HIGH (not MEDIUM) when
-it is the primary justification for a sibling PROHIBITION or REQUIREMENT unit. Indicators:
+it is the primary justification for a sibling PROHIBITION or REQUIREMENT unit.
+
+**Definition of "sibling":** A CONSEQUENCE unit is a sibling of a PROHIBITION/REQUIREMENT unit when
+both appear within 5 lines of each other in the original source document AND share the same subject
+(i.e., the CONSEQUENCE describes what goes wrong if the PROHIBITION is violated). The extraction
+algorithm stores units as a flat list with no explicit relationship fields — use document proximity
+and shared subject matter as the detection heuristic.
+
+Indicators that the upgrade applies:
 - The CONSEQUENCE unit uses causal language about what goes wrong if the prohibition is violated
   (e.g., "Agents bypass the rule because they cannot see why it exists")
-- The sibling PROHIBITION unit has no other stated justification
+- The sibling PROHIBITION unit has no other stated justification within those 5 lines
 - Removing the CONSEQUENCE would leave the prohibition unjustified
 
 When the upgrade rule applies, losing this CONSEQUENCE unit during compression is a FAIL, not a WARN.
@@ -138,8 +154,14 @@ Edit `plugin/skills/instruction-builder-agent/skill-conventions.md`:
 Find the "IMPORTANT - Fail-Fast, Not Fallback" section (already present). Immediately AFTER this section
 (not inside it), add a new section titled "## Instruction Effectiveness for Compliance Rules".
 
-The new section must include all five subsections below. Match the formatting style of the surrounding
-document (heading levels, table syntax, code block style):
+Note on file length: `skill-conventions.md` is already a large reference document loaded on-demand
+(not injected on every session). The 200-line guideline from the research applies to session-context
+files (CLAUDE.md, rules/) where all content competes for context budget simultaneously. This file
+is exempt from that guideline.
+
+The new section must include all SIX subsections below (including the new "Structuring with XML Tags"
+subsection). Match the formatting style of the surrounding document (heading levels, table syntax, code
+block style):
 
 ```markdown
 ## Instruction Effectiveness for Compliance Rules
@@ -202,6 +224,33 @@ content from the prompt — explanations prime analytical thinking, which defeat
 If a rule was documented and the agent still violated it, documentation is not the right prevention
 level. Escalate to hooks. Do not add a stronger-worded version of the same rule — that is a
 documentation prevention that already failed.
+
+### Structuring with XML Tags
+
+For prohibition rules and fail-fast guards, wrapping content in XML tags improves structural parsing
+reliability. Claude treats XML-tagged content as structured data rather than prose, reducing the chance
+that surrounding context bleeds into interpretation.
+
+```xml
+<fail_fast_rule>
+BLOCKED: When a skill outputs an error, STOP immediately and output the error verbatim.
+
+Because attempting workarounds produces incorrect results — the skill's failure indicates
+missing preconditions that a workaround cannot satisfy.
+
+DO NOT: manually perform what the skill should have done, read files to gather data the skill
+should have provided, provide a degraded output.
+
+Instead: output the error message and halt.
+</fail_fast_rule>
+```
+
+Use XML tags when:
+- The rule must be unambiguous (no surrounding prose should influence interpretation)
+- The prohibition is embedded in a longer document where it might be skimmed past
+- The rule has a clear four-component structure (label + WHY + prohibited list + alternative)
+
+Do NOT use XML tags for general guidance or explanations — reserve them for enforcement rules.
 ```
 
 Files:
@@ -216,25 +265,26 @@ Find Step 4.1 (or the step that generates test cases from semantic units for SPR
 Locate the part that describes how to generate test cases for PROHIBITION semantic units. It currently
 says something like "scenario where forbidden action is tempting" (one test case per unit).
 
-Change the PROHIBITION test case generation instruction to require at least 2 test cases per PROHIBITION
-unit. The two test cases must use different workaround vectors. Use this language (adapt to fit the
-document's style and exact location):
+Change the PROHIBITION entry in the test case generation list at line 263. The current text is:
+```
+   - For PROHIBITION: scenario where the forbidden action is tempting but must be avoided
+```
+
+Replace that single bullet with two sub-entries, matching the style already used for CONDITIONAL
+("two scenarios — one triggering..., one not") and DEPENDENCY ("scenario with dependency present,
+scenario with dependency absent"):
 
 ```
-For each PROHIBITION semantic unit, generate at least 2 test cases using different bypass vectors:
-
-1. **Direct bypass scenario:** A situation where the forbidden action is the most obvious path and the
-   agent must choose not to take it. Example: if the rule prohibits editing files outside a worktree,
-   test a prompt that asks for a "quick fix" to a specific file.
-
-2. **Plausible workaround scenario:** A situation where the agent might use a semantically equivalent
-   alternative that still violates the prohibition. Example: if the rule prohibits `rm -rf`, test a
-   prompt where the agent might use `find . -exec rm` or a Bash loop to delete files instead.
-
-**Why 2 scenarios:** A single test case verifies the canonical violation. A second test with a
-different workaround vector verifies that the rule generalizes — that the agent cannot satisfy the
-test by memorizing "don't do X" while still doing X via Y.
+   - For PROHIBITION: two scenarios using different bypass vectors:
+     1. Direct bypass: situation where the forbidden action is the most obvious path and the agent
+        must choose not to take it (canonical violation test)
+     2. Plausible workaround: situation where the agent might use a semantically equivalent
+        alternative that still violates the rule — verifies the prohibition generalizes beyond
+        "don't do X literally" to "don't accomplish X via Y either"
 ```
+
+Do not add a standalone numbered list or bold headers — use the same inline style as CONDITIONAL and
+DEPENDENCY already use in the surrounding list.
 
 Files:
 - `plugin/skills/instruction-builder-agent/first-use.md`
@@ -243,12 +293,12 @@ Files:
 
 Edit `plugin/skills/learn/phase-prevent.md`:
 
-Find the section about language requirements for prevention documentation (the part that mentions
-positive over negative framing, or how to write prevention instructions). This is likely in "Step 9"
-of the phase-prevent workflow.
+Find the `**Language requirements for documentation/prompt changes:**` heading in Step 9 (line 584).
+This section ends with the sentence "Keep negative language only when no actionable positive alternative
+exists (e.g., security warnings where the 'don't' is the entire point)." at approximately line 607–608.
 
-Immediately after the existing language/framing guidance, add a new subsection titled
-"**Compliance Rule Structure (for prohibition-type preventions)**" with this content:
+The new subsection goes immediately AFTER that sentence and BEFORE the `**Fail-Fast Error Handling:**`
+heading that follows. Add it there with this content:
 
 ```markdown
 **Compliance Rule Structure (for prohibition-type preventions)**
@@ -279,14 +329,15 @@ the rule using all four components:
 > Because the worktree isolation hook cannot protect the main branch if edits bypass it — every
 > edit made outside a worktree goes directly to the protected branch without review.
 >
-> Do NOT use: Edit tool on /workspace/plugin/**, Write tool on /workspace/plugin/**,
-> Bash commands that write to /workspace/plugin/** (cat >, echo >>, tee, sed -i, etc.)
+> Do NOT use: Edit tool on plugin/**, Write tool on plugin/**,
+> Bash commands that write to plugin/** (cat >, echo >>, tee, sed -i, etc.)
 >
 > Instead: Create an issue via /cat:add and work in an isolated worktree via /cat:work.
 
-**Escalation rule:** If a similar documentation rule for this violation already exists AND the agent
-violated it anyway, do NOT add another documentation rule. Escalate to a hook (prevention level: hook).
-Documentation that was already ignored will continue to be ignored.
+**Escalation from Documentation Prevention:** If a similar documentation rule for this violation
+already exists AND the agent violated it anyway, do NOT add another documentation rule. Escalate to a
+hook (prevention level: hook). Documentation that was already ignored will continue to be ignored.
+(See Step 8 for the full escalation ladder from documentation → config → hook → code_fix.)
 ```
 
 Files:
@@ -301,8 +352,8 @@ Files:
   justifying CONSEQUENCE units as HIGH — verified by reading the file and confirming the upgrade rule text
   is present.
 - [ ] `skill-conventions.md` contains a new "Instruction Effectiveness for Compliance Rules" section with
-  all five subsections (Four-Component Structure, CAPS Label Frequency, Zero-Tolerance Rules, Framing for
-  Verbatim Output, Escalation) — verified by reading the file.
+  all six subsections (Four-Component Structure, CAPS Label Frequency, Zero-Tolerance Rules, Framing for
+  Verbatim Output, Escalation, Structuring with XML Tags) — verified by reading the file.
 - [ ] `first-use.md` PROHIBITION test case generation requires at least 2 test cases with different bypass
   vectors — verified by reading the relevant step and confirming the "2 scenarios" instruction is present.
 - [ ] `phase-prevent.md` contains a "Compliance Rule Structure (for prohibition-type preventions)"
