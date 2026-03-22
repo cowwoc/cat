@@ -3,7 +3,7 @@ Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
-# Verify Fix Doesn't Introduce Priming (M370)
+# Verify Fix Doesn't Introduce Priming
 
 Lazy-loaded after implementing documentation fixes to verify no new priming patterns introduced.
 
@@ -37,10 +37,5 @@ priming_check:
 | Result table with scores | Agent produces those exact scores | Use `{actual score}` placeholder |
 | Status examples like "SUCCESS" | Agent reports success without verification | Use `{status}` |
 | Concrete token counts | Agent fabricates similar counts | Use `{count}` |
-
-## Why This Gate Exists
-
-M370: When fixing M369, example result tables were added with concrete values (1.0, 0.87),
-which would prime agents to produce those values instead of running actual validation.
 
 **Reference:** See `/cat:instruction-builder-agent` § "Priming Prevention Checklist" for complete patterns.

@@ -617,11 +617,11 @@ matching entry triggers recurrence detection — setting `recurrence_of` to the 
 
 ## Examples
 
-**For context analysis examples:** Read `EXAMPLES.md` for context-related, non-context, and ambiguous cases.
+**For context analysis examples:** Read `examples.md` for context-related, non-context, and ambiguous cases.
 
 ## Anti-Patterns
 
-**For common mistakes when using this skill:** Read `ANTI-PATTERNS.md`.
+**For common mistakes when using this skill:** Read `anti-patterns.md`.
 
 Key anti-patterns to avoid:
 - Stopping barrier analysis too early (missing context degradation as root cause)

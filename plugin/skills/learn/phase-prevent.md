@@ -184,7 +184,7 @@ prevention_quality_check:
 whether a general solution is achievable (e.g., process change, root cause elimination) before implementing the
 specific check.
 
-## Step 7b: Replay Scenario Verification (BLOCKING GATE - M305)
+## Step 7b: Replay Scenario Verification (BLOCKING GATE)
 
 **MANDATORY: Verify prevention would have prevented THIS specific problem.**
 
@@ -290,9 +290,9 @@ scenario_replay:
     prevents_root_cause: true  # Addresses stale working directory state
 ```
 
-**Why this gate exists:** M305 showed that proposed solutions may sound reasonable but fail
-to actually prevent the failure. Replaying the exact scenario exposes whether prevention
-changes the outcome or just adds noise (warnings, documentation).
+**Why this gate exists:** Proposed solutions may sound reasonable but fail to actually prevent the failure.
+Replaying the exact scenario exposes whether prevention changes the outcome or just adds noise
+(warnings, documentation).
 
 ## Step 8: Check If Prevention Already Exists (MANDATORY)
 
@@ -346,7 +346,7 @@ action: |
 **The prevention step MUST take NEW action.** Recording a mistake without implementing NEW prevention
 (beyond what already existed) is not learning - it's just logging. The same mistake WILL recur.
 
-**BLOCKING CRITERIA (A002):** See
+**BLOCKING CRITERIA:** See
 [prevention-hierarchy.md § Documentation Prevention Blocked When](prevention-hierarchy.md) for the full blocking
 table and priming exception. Documentation-level prevention is NOT ALLOWED when conditions in that table are met.
 
@@ -367,7 +367,7 @@ action: "STOP. Escalate to hook, validation, or code_fix instead."
 1. "Did prevention for this already exist?" → If YES, it failed and must be escalated
 2. "What NEW mechanism will prevent this tomorrow?" → Must be different from what failed today
 3. "Is this prevention stronger than what failed?" → Must be higher in the hierarchy
-4. "Am I choosing documentation because it's easy?" → If YES, find a stronger approach (A002)
+4. "Am I choosing documentation because it's easy?" → If YES, find a stronger approach
 
 **If you cannot identify NEW prevention stronger than what already exists, you have NOT learned.**
 
@@ -763,17 +763,17 @@ BEFORE proceeding to next step, you MUST complete this gate:
 
 ## Step 9b: Verify Fix Doesn't Introduce Priming
 
-**MANDATORY: After editing documentation, read `PRIMING-VERIFICATION.md` to verify no new priming introduced.**
+**MANDATORY: After editing documentation, read `priming-verification.md` to verify no new priming introduced.**
 
 Quick check: Do edited files contain concrete values (1.0, SUCCESS) in output formats? Replace with placeholders.
 
 ## Step 9c: Check Related Files for Similar Mistakes
 
-**MANDATORY: After fixing a file, read `RELATED-FILES-CHECK.md` to find and fix similar vulnerabilities.**
+**MANDATORY: After fixing a file, read `related-files-check.md` to find and fix similar vulnerabilities.**
 
 Skip only when: fix is unique to one file (typo) or no similar files exist (verified).
 
-## Step 9d: Empirical Verification for Compliance Fixes (M422)
+## Step 9d: Empirical Verification for Compliance Fixes
 
 **MANDATORY when `prevention_type` is `skill` AND the mistake category is `protocol_violation`:**
 
