@@ -2858,5 +2858,24 @@
     "prevention_verified" : false,
     "recurrence_of" : "M459",
     "correct_behavior" : ""
+  }, {
+    "id" : "M594",
+    "timestamp" : "2026-03-22T20:53:15Z",
+    "category" : "incorrect_implementation",
+    "description" : "work-merge-agent Step 7 used ${CLAUDE_PROJECT_DIR} to construct the VERIFY_DIR path when checking for criteria-analysis.json, but the verify subagent (spawned by work-confirm-agent inside the issue worktree) writes the file to ${WORKTREE_PATH}/.cat/work/verify/${CLAUDE_SESSION_ID}/ due to worktree isolation hook redirection. The path mismatch caused the criteria file not to be found, and the main agent asked the user to manually copy the file.",
+    "root_cause" : "SKILL_BUG: work-merge-agent/first-use.md Step 7 constructs VERIFY_DIR using ${CLAUDE_PROJECT_DIR} but the verify subagent runs inside the issue worktree where the EnforceWorktreePathIsolation hook redirects all file writes from ${CLAUDE_PROJECT_DIR} paths to ${WORKTREE_PATH}. The criteria-analysis.json file is written to ${WORKTREE_PATH}/.cat/work/verify/${CLAUDE_SESSION_ID}/ but Step 7 reads from ${CLAUDE_PROJECT_DIR}/.cat/work/verify/${CLAUDE_SESSION_ID}/. The fix is to use ${WORKTREE_PATH} in Step 7 to match where the file is actually written.",
+    "cause_signature" : "knowledge_gap:skill_incomplete:issue_workflow",
+    "prevention_type" : "skill",
+    "prevention_path" : "plugin/skills/work-merge-agent/first-use.md",
+    "pattern_keywords" : [ "VERIFY_DIR", "criteria-analysis", "CLAUDE_PROJECT_DIR", "WORKTREE_PATH", "worktree_isolation", "work-merge-agent", "work-confirm-agent" ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : "work-merge-agent Step 7 must set VERIFY_DIR using ${WORKTREE_PATH}/.cat/work/verify/${CLAUDE_SESSION_ID} to match the location where the verify subagent writes criteria-analysis.json inside the issue worktree."
   } ]
 }
