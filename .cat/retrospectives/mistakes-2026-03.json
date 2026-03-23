@@ -2957,5 +2957,19 @@
       "catches_variations" : true
     },
     "correct_behavior" : "After compression is accepted, commit only the compressed skill file. The post-compression SPRT results are intermediate verification artifacts and must not be committed."
+  }, {
+    "id" : "M599",
+    "timestamp" : "2026-03-23T13:17:10Z",
+    "category" : "workflow-enforcement",
+    "description" : "",
+    "root_cause" : "",
+    "cause_signature" : null,
+    "prevention_type" : "",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "correct_behavior" : ""
   } ]
 }
