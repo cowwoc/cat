@@ -1023,4 +1023,76 @@ public class GitRebaseTest
       }
     }
   }
+
+  /**
+   * Verifies that files not modified by the issue's commits are not flagged as content conflicts,
+   * even when those files contain stale old-path references.
+   * <p>
+   * Scenario: the merge base has {@code old-tools/helper.sh} and {@code plan.md} (which references
+   * {@code old-tools} as text). The target branch renames {@code old-tools/helper.sh} to
+   * {@code new-tools/helper.sh}. The feature branch only adds a new unrelated file, leaving both
+   * {@code old-tools/helper.sh} and {@code plan.md} untouched. The pre-rebase {@code git grep}
+   * check finds {@code plan.md} containing {@code old-tools}; before the fix this produced a false
+   * positive in the content-reference section. After the fix, {@code plan.md} is excluded from
+   * content conflicts because the feature's commits never modified it.
+   * <p>
+   * The test also confirms that the tracked-path section of the block correctly identifies
+   * {@code old-tools/helper.sh} as a true positive (the feature still has it at the old path),
+   * and that the content-reference section does NOT mention {@code plan.md}.
+   */
+  @Test
+  public void executeDoesNotFlagUntouchedFilesWithStalePathReferences() throws IOException
+  {
+    Path repoDir = TestUtils.createTempGitRepo("main");
+    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    {
+      try
+      {
+        // Merge-base state:
+        //   old-tools/helper.sh — the file that will be renamed on main
+        //   plan.md — a planning file that references old-tools as text (never touched by feature)
+        Files.createDirectories(repoDir.resolve("old-tools"));
+        Files.writeString(repoDir.resolve("old-tools").resolve("helper.sh"), "#!/bin/sh\nhelp");
+        Files.writeString(repoDir.resolve("plan.md"),
+          "Migrate callers from old-tools to new-tools.");
+        TestUtils.runGit(repoDir, "add", "old-tools/", "plan.md");
+        TestUtils.runGit(repoDir, "commit", "-m", "add old-tools and plan.md");
+
+        // Feature branch: only adds a new unrelated file.
+        // Does NOT touch plan.md or old-tools/helper.sh.
+        TestUtils.runGit(repoDir, "checkout", "-b", "feature");
+        Files.writeString(repoDir.resolve("feature-work.txt"), "new feature work");
+        TestUtils.runGit(repoDir, "add", "feature-work.txt");
+        TestUtils.runGit(repoDir, "commit", "-m", "add feature-work.txt");
+
+        // Target branch (main): renames old-tools/helper.sh to new-tools/helper.sh.
+        // plan.md is NOT updated — it still contains old-tools as text.
+        // This triggers both the tracked-path check (old-tools/helper.sh) and the
+        // content-reference check (plan.md found by git grep for "old-tools").
+        TestUtils.runGit(repoDir, "checkout", "main");
+        Files.createDirectories(repoDir.resolve("new-tools"));
+        TestUtils.runGit(repoDir, "mv", "old-tools/helper.sh", "new-tools/helper.sh");
+        TestUtils.runGit(repoDir, "commit", "-m", "rename old-tools/helper.sh to new-tools/helper.sh");
+
+        // Switch to feature branch — plan.md and old-tools/helper.sh are both untouched by
+        // the feature's commits. The tracked-path check correctly flags old-tools/helper.sh
+        // (true positive). The content-reference check must NOT flag plan.md (false positive
+        // removed by the fix).
+        TestUtils.runGit(repoDir, "checkout", "feature");
+
+        GitRebase cmd = new GitRebase(scope, repoDir);
+        String result = cmd.execute("main");
+
+        // The tracked-path conflict for old-tools/helper.sh is a true positive — correctly blocked.
+        requireThat(result, "result").contains("old-tools/helper.sh");
+        // plan.md must NOT appear in the content-reference section: it was not modified by the
+        // feature's commits, so it is excluded by the fix even though git grep finds it.
+        requireThat(result, "result").doesNotContain("plan.md");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(repoDir);
+      }
+    }
+  }
 }

@@ -305,6 +305,11 @@ public final class GitRebase
     // When the current branch performs the same rename as the target, it is not a conflict.
     Set<String> currentBranchRenamedPrefixes = detectCurrentBranchRenamedPrefixes(mergeBase);
 
+    // Collect files actually modified by the issue's commits (merge base to HEAD).
+    // Content-reference conflicts are only meaningful for files the issue touched; untouched
+    // files will take the target's version during rebase, resolving stale references automatically.
+    Set<String> filesChangedByIssue = detectFilesChangedByIssue(mergeBase);
+
     Set<String> trackedConflicts = new LinkedHashSet<>();
     // Map from file path to list of old paths it references
     Map<String, List<String>> contentConflicts = new LinkedHashMap<>();
@@ -346,8 +351,14 @@ public final class GitRebase
         for (String file : grepResult.stdout().split("\n"))
         {
           String fileTrimmed = file.strip();
-          if (!fileTrimmed.isEmpty())
-            contentConflicts.computeIfAbsent(fileTrimmed, _ -> new ArrayList<>()).add(oldPrefix);
+          if (fileTrimmed.isEmpty())
+            continue;
+          // Only flag files that the issue's commits actually modified. Files not touched by
+          // the issue will take the target's version during rebase, resolving any stale
+          // old-path references automatically without requiring manual intervention.
+          if (!filesChangedByIssue.contains(fileTrimmed))
+            continue;
+          contentConflicts.computeIfAbsent(fileTrimmed, _ -> new ArrayList<>()).add(oldPrefix);
         }
       }
     }
@@ -398,6 +409,32 @@ public final class GitRebase
       prefixes.add(computeChangedPrefix(oldPath, newPath));
     }
     return prefixes;
+  }
+
+  /**
+   * Returns the set of file paths modified by the issue's commits (from merge base to HEAD).
+   * <p>
+   * Only files in this set were touched by the issue's work. Files not in this set will take the
+   * target branch's version during rebase, so any stale path references in those files will be
+   * resolved automatically by the rebase.
+   *
+   * @param mergeBase the merge-base commit hash between the current branch and target
+   * @return set of file paths changed between the merge base and HEAD
+   * @throws IOException if the git command fails unexpectedly
+   */
+  private Set<String> detectFilesChangedByIssue(String mergeBase) throws IOException
+  {
+    ProcessRunner.Result result = runGit("diff", "--name-only", mergeBase, "HEAD");
+    Set<String> files = new HashSet<>();
+    if (result.exitCode() != 0 || result.stdout().isBlank())
+      return files;
+    for (String line : result.stdout().split("\n"))
+    {
+      String trimmed = line.strip();
+      if (!trimmed.isEmpty())
+        files.add(trimmed);
+    }
+    return files;
   }
 
   /**
