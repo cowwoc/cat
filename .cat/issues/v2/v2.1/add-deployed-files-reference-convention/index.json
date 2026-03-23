@@ -1,5 +1,5 @@
 {
-  "status": "open",
-  "resolution": "pending",
-  "target_branch": "v2.1"
+  "status" : "closed",
+  "resolution" : "implemented",
+  "target_branch" : "v2.1"
 }
