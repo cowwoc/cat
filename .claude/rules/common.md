@@ -83,6 +83,9 @@ project/
 └── docs/                   # Documentation
 ```
 
+Files under `plugin/` are deployed to end-user machines. They must not reference source-only paths (`.claude/rules/`,
+`.cat/rules/`, etc.) that are not shipped. See `.claude/rules/plugin-file-references.md` for the full convention.
+
 ## Multi-Instance Safety
 
 **MANDATORY:** All changes must be safe when multiple Claude instances run concurrently, each in its own isolated worktree.
