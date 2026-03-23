@@ -40,7 +40,7 @@ if command -v git-filter-repo &>/dev/null; then
 fi
 
 # Parse release.conf safely without executing arbitrary shell code
-RELEASE_TAG=$(grep -E '^RELEASE_TAG=' "${CONF}" | sed 's/^RELEASE_TAG="\(.*\)"$/\1/' | head -1)
+RELEASE_TAG=$(grep -E '^RELEASE_TAG=' "${CONF}" | sed 's/^RELEASE_TAG="\(.*\)"$/\1/' | head -1 || true)
 if [[ -z "${RELEASE_TAG}" ]]; then
   echo "ERROR: RELEASE_TAG not found in ${CONF}" >&2
   exit 1
@@ -56,7 +56,9 @@ declare -A PLATFORM_HASHES
 VALIDATION_ERRORS=""
 for PLATFORM_NAME in linux_x64 linux_aarch64 macos_x64 macos_aarch64; do
   VAR_NAME="PLATFORM_SHA256_${PLATFORM_NAME}"
-  HASH=$(grep -E "^${VAR_NAME}=" "${CONF}" | sed "s/^${VAR_NAME}=\"\(.*\)\"$/\1/" | head -1)
+  # Note: VAR_NAME is always one of {PLATFORM_SHA256_linux_x64, linux_aarch64, macos_x64, macos_aarch64},
+  # containing no regex metacharacters, so direct interpolation is safe.
+  HASH=$(grep -E "^${VAR_NAME}=" "${CONF}" | sed "s/^$(printf '%s\n' "${VAR_NAME}" | sed -e 's/[\/&]/\\&/g')=\"\(.*\)\"$/\1/" | head -1 || true)
   if [[ -z "${HASH}" ]]; then
     VALIDATION_ERRORS="${VALIDATION_ERRORS}\n  Missing: ${VAR_NAME}"
   elif ! echo "${HASH}" | grep -qE '^[a-f0-9]{64}$'; then
