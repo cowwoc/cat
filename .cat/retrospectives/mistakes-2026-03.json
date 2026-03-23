@@ -2938,5 +2938,19 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M598",
+    "timestamp" : "2026-03-23T12:47:52Z",
+    "category" : "misleading_documentation",
+    "description" : "",
+    "root_cause" : "DOCUMENTATION PRIMING: instruction-builder-agent/first-use.md Step 7.4 explicitly instructed agents to commit post-compression benchmark.json with a specific message, treating an intermediate artifact as a permanent output",
+    "cause_signature" : "knowledge_gap:skill_incomplete:skill_execution",
+    "prevention_type" : "documentation",
+    "prevention_path" : "plugin/skills/instruction-builder-agent/first-use.md",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "correct_behavior" : ""
   } ]
 }
