@@ -1,4 +1,4 @@
 {
   "status": "open",
-  "progress": 0
+  "dependencies": ["2.1-fix-work-merge-git-checkout-worktree"]
 }
