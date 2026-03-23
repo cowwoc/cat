@@ -37,9 +37,19 @@ write_sha256sum_stub() {
     mkdir -p "${bin_dir}"
     cat > "${bin_dir}/sha256sum" <<EOF
 #!/usr/bin/env bash
-echo "${expected_hash}  \$1"
+printf '%s  %s\n' "${expected_hash}" "\$1"
 EOF
     chmod +x "${bin_dir}/sha256sum"
+}
+
+# Write a stub python3 binary that always fails (exit 1)
+write_python3_stub() {
+    mkdir -p "${STUB_BIN_DIR}"
+    cat > "${STUB_BIN_DIR}/python3" <<'EOF'
+#!/usr/bin/env bash
+exit 1
+EOF
+    chmod +x "${STUB_BIN_DIR}/python3"
 }
 
 setup() {
@@ -53,6 +63,11 @@ setup() {
     # Create a stub bin dir for PATH overrides
     STUB_BIN_DIR="$(mktemp -d)"
     export STUB_BIN_DIR
+
+    # SAFE_PATH contains only standard system directories, excluding user-local paths
+    # (e.g. ~/.local/bin) that may contain real binaries we want to stub or exclude.
+    SAFE_PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    export SAFE_PATH
 }
 
 teardown() {
@@ -73,7 +88,7 @@ EOF
     chmod +x "${STUB_BIN_DIR}/python3"
 
     # Put stub at front of PATH so the real python3 is shadowed
-    run env PATH="${STUB_BIN_DIR}:${PATH}" bash "${DOWNLOAD_SCRIPT}"
+    run env PATH="${STUB_BIN_DIR}:${SAFE_PATH}" bash "${DOWNLOAD_SCRIPT}"
 
     [ "${status}" -eq 0 ]
     [ "${output}" = "python3 -m git_filter_repo" ]
@@ -85,11 +100,7 @@ EOF
 
 @test "returns path to git-filter-repo binary when it is on PATH (no python3 module)" {
     # Stub python3 that fails the import check (exit 1 for any invocation)
-    cat > "${STUB_BIN_DIR}/python3" <<'EOF'
-#!/usr/bin/env bash
-exit 1
-EOF
-    chmod +x "${STUB_BIN_DIR}/python3"
+    write_python3_stub
 
     # Provide git-filter-repo binary on PATH
     cat > "${STUB_BIN_DIR}/git-filter-repo" <<'EOF'
@@ -98,7 +109,7 @@ exit 0
 EOF
     chmod +x "${STUB_BIN_DIR}/git-filter-repo"
 
-    run env PATH="${STUB_BIN_DIR}:${PATH}" bash "${DOWNLOAD_SCRIPT}"
+    run env PATH="${STUB_BIN_DIR}:${SAFE_PATH}" bash "${DOWNLOAD_SCRIPT}"
 
     [ "${status}" -eq 0 ]
     [ "${output}" = "${STUB_BIN_DIR}/git-filter-repo" ]
@@ -123,11 +134,7 @@ EOF
 
 @test "returns cached binary path when SHA256 matches without downloading" {
     # No python3, no git-filter-repo on PATH — force tier-3 resolution
-    cat > "${STUB_BIN_DIR}/python3" <<'EOF'
-#!/usr/bin/env bash
-exit 1
-EOF
-    chmod +x "${STUB_BIN_DIR}/python3"
+    write_python3_stub
 
     # Detect the current platform to know which binary name to create
     LOCAL_OS=$(uname -s)
@@ -156,7 +163,7 @@ EOF
 
     write_sha256sum_stub "${STUB_BIN_DIR}" "${EXPECTED_HASH}"
 
-    run env PATH="${STUB_BIN_DIR}:${PATH}" bash "${DOWNLOAD_SCRIPT}"
+    run env PATH="${STUB_BIN_DIR}:${SAFE_PATH}" bash "${DOWNLOAD_SCRIPT}"
 
     [ "${status}" -eq 0 ]
     [ "${output}" = "${CACHE_DIR}/${BINARY_NAME}" ]
@@ -167,6 +174,8 @@ EOF
 # ---------------------------------------------------------------------------
 
 @test "fails with error when RELEASE_TAG is missing from release.conf" {
+    write_python3_stub
+
     # Write a conf that omits RELEASE_TAG
     local conf_dir="${FAKE_PLUGIN_ROOT}/.git-filter-repo-config"
     mkdir -p "${conf_dir}"
@@ -177,7 +186,7 @@ PLATFORM_SHA256_macos_x64="${FAKE_SHA256_MACOS_X64}"
 PLATFORM_SHA256_macos_aarch64="${FAKE_SHA256_MACOS_AARCH64}"
 EOF
 
-    run bash "${DOWNLOAD_SCRIPT}"
+    run env PATH="${STUB_BIN_DIR}:${SAFE_PATH}" bash "${DOWNLOAD_SCRIPT}"
 
     [ "${status}" -ne 0 ]
     [[ "${output}" == *"RELEASE_TAG"* ]] || [[ "${lines[*]}" == *"RELEASE_TAG"* ]]
@@ -188,12 +197,8 @@ EOF
 # ---------------------------------------------------------------------------
 
 @test "fails with error when SHA256 value has invalid format (not 64 hex chars)" {
-    # Stub python3 and git-filter-repo to fail so SHA256 parsing is reached
-    cat > "${STUB_BIN_DIR}/python3" <<'EOF'
-#!/usr/bin/env bash
-exit 1
-EOF
-    chmod +x "${STUB_BIN_DIR}/python3"
+    # Stub python3 to fail so SHA256 parsing is reached; git-filter-repo excluded via SAFE_PATH
+    write_python3_stub
 
     # Write a conf with a malformed SHA256 (non-hex chars — 'Z' is not valid hex)
     local conf_dir="${FAKE_PLUGIN_ROOT}/.git-filter-repo-config"
@@ -207,7 +212,7 @@ PLATFORM_SHA256_macos_x64="${FAKE_SHA256_MACOS_X64}"
 PLATFORM_SHA256_macos_aarch64="${FAKE_SHA256_MACOS_AARCH64}"
 EOF
 
-    run env PATH="${STUB_BIN_DIR}:${PATH}" bash "${DOWNLOAD_SCRIPT}"
+    run env PATH="${STUB_BIN_DIR}:${SAFE_PATH}" bash "${DOWNLOAD_SCRIPT}"
 
     [ "${status}" -ne 0 ]
     [[ "${output}" == *"Invalid SHA256"* ]] || [[ "${lines[*]}" == *"Invalid SHA256"* ]]
@@ -218,12 +223,8 @@ EOF
 # ---------------------------------------------------------------------------
 
 @test "fails with error when a PLATFORM_SHA256 field is missing from release.conf" {
-    # Stub python3 and git-filter-repo to fail so SHA256 parsing is reached
-    cat > "${STUB_BIN_DIR}/python3" <<'EOF'
-#!/usr/bin/env bash
-exit 1
-EOF
-    chmod +x "${STUB_BIN_DIR}/python3"
+    # Stub python3 to fail so SHA256 parsing is reached; git-filter-repo excluded via SAFE_PATH
+    write_python3_stub
 
     # Write a conf that omits PLATFORM_SHA256_linux_x64
     local conf_dir="${FAKE_PLUGIN_ROOT}/.git-filter-repo-config"
@@ -236,10 +237,72 @@ PLATFORM_SHA256_macos_x64="${FAKE_SHA256_MACOS_X64}"
 PLATFORM_SHA256_macos_aarch64="${FAKE_SHA256_MACOS_AARCH64}"
 EOF
 
-    run env PATH="${STUB_BIN_DIR}:${PATH}" bash "${DOWNLOAD_SCRIPT}"
+    run env PATH="${STUB_BIN_DIR}:${SAFE_PATH}" bash "${DOWNLOAD_SCRIPT}"
 
     [ "${status}" -ne 0 ]
     [[ "${output}" == *"PLATFORM_SHA256_linux_x64"* ]] || [[ "${lines[*]}" == *"PLATFORM_SHA256_linux_x64"* ]]
+}
+
+@test "reports all four platforms as missing when all PLATFORM_SHA256 fields are absent" {
+    # Stub python3 to fail; git-filter-repo excluded via SAFE_PATH
+    write_python3_stub
+
+    local conf_dir="${FAKE_PLUGIN_ROOT}/.git-filter-repo-config"
+    mkdir -p "${conf_dir}"
+    cat > "${conf_dir}/release.conf" <<EOF
+RELEASE_TAG="git-filter-repo-v2.38.0"
+SOURCE_SHA256="69d2dae2d2331ce73b9c46d2a993046ec4bc26fd3c2328c2bcffb323b8338f8f"
+EOF
+
+    run env PATH="${STUB_BIN_DIR}:${SAFE_PATH}" bash "${DOWNLOAD_SCRIPT}"
+
+    [ "${status}" -ne 0 ]
+    [[ "${output}" == *"Missing: PLATFORM_SHA256_linux_x64"* ]] || [[ "${lines[*]}" == *"Missing: PLATFORM_SHA256_linux_x64"* ]]
+    [[ "${output}" == *"Missing: PLATFORM_SHA256_linux_aarch64"* ]] || [[ "${lines[*]}" == *"Missing: PLATFORM_SHA256_linux_aarch64"* ]]
+    [[ "${output}" == *"Missing: PLATFORM_SHA256_macos_x64"* ]] || [[ "${lines[*]}" == *"Missing: PLATFORM_SHA256_macos_x64"* ]]
+    [[ "${output}" == *"Missing: PLATFORM_SHA256_macos_aarch64"* ]] || [[ "${lines[*]}" == *"Missing: PLATFORM_SHA256_macos_aarch64"* ]]
+}
+
+@test "reports both missing and malformed errors when SHA256 fields have mixed validity" {
+    # Stub python3 to fail; git-filter-repo excluded via SAFE_PATH
+    write_python3_stub
+
+    local conf_dir="${FAKE_PLUGIN_ROOT}/.git-filter-repo-config"
+    mkdir -p "${conf_dir}"
+    cat > "${conf_dir}/release.conf" <<EOF
+RELEASE_TAG="git-filter-repo-v2.38.0"
+SOURCE_SHA256="69d2dae2d2331ce73b9c46d2a993046ec4bc26fd3c2328c2bcffb323b8338f8f"
+PLATFORM_SHA256_linux_aarch64="ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+PLATFORM_SHA256_macos_x64="${FAKE_SHA256_MACOS_X64}"
+PLATFORM_SHA256_macos_aarch64="${FAKE_SHA256_MACOS_AARCH64}"
+EOF
+
+    run env PATH="${STUB_BIN_DIR}:${SAFE_PATH}" bash "${DOWNLOAD_SCRIPT}"
+
+    [ "${status}" -ne 0 ]
+    [[ "${output}" == *"Missing: PLATFORM_SHA256_linux_x64"* ]] || [[ "${lines[*]}" == *"Missing: PLATFORM_SHA256_linux_x64"* ]]
+    [[ "${output}" == *"Invalid SHA256 format for PLATFORM_SHA256_linux_aarch64"* ]] || [[ "${lines[*]}" == *"Invalid SHA256 format for PLATFORM_SHA256_linux_aarch64"* ]]
+}
+
+@test "reports errors for three invalid fields when exactly one PLATFORM_SHA256 field is valid" {
+    # Stub python3 to fail; git-filter-repo excluded via SAFE_PATH
+    write_python3_stub
+
+    local conf_dir="${FAKE_PLUGIN_ROOT}/.git-filter-repo-config"
+    mkdir -p "${conf_dir}"
+    cat > "${conf_dir}/release.conf" <<EOF
+RELEASE_TAG="git-filter-repo-v2.38.0"
+SOURCE_SHA256="69d2dae2d2331ce73b9c46d2a993046ec4bc26fd3c2328c2bcffb323b8338f8f"
+PLATFORM_SHA256_linux_x64="${FAKE_SHA256_LINUX_X64}"
+PLATFORM_SHA256_macos_x64="invalid"
+EOF
+
+    run env PATH="${STUB_BIN_DIR}:${SAFE_PATH}" bash "${DOWNLOAD_SCRIPT}"
+
+    [ "${status}" -ne 0 ]
+    [[ "${output}" == *"Missing: PLATFORM_SHA256_linux_aarch64"* ]] || [[ "${lines[*]}" == *"Missing: PLATFORM_SHA256_linux_aarch64"* ]]
+    [[ "${output}" == *"Invalid SHA256 format for PLATFORM_SHA256_macos_x64"* ]] || [[ "${lines[*]}" == *"Invalid SHA256 format for PLATFORM_SHA256_macos_x64"* ]]
+    [[ "${output}" == *"Missing: PLATFORM_SHA256_macos_aarch64"* ]] || [[ "${lines[*]}" == *"Missing: PLATFORM_SHA256_macos_aarch64"* ]]
 }
 
 # ---------------------------------------------------------------------------
@@ -258,14 +321,10 @@ fi
 EOF
     chmod +x "${STUB_BIN_DIR}/uname"
 
-    # Stub python3 to fail so we reach OS detection
-    cat > "${STUB_BIN_DIR}/python3" <<'EOF'
-#!/usr/bin/env bash
-exit 1
-EOF
-    chmod +x "${STUB_BIN_DIR}/python3"
+    # Stub python3 to fail so we reach OS detection; git-filter-repo excluded via SAFE_PATH
+    write_python3_stub
 
-    run env PATH="${STUB_BIN_DIR}:${PATH}" bash "${DOWNLOAD_SCRIPT}"
+    run env PATH="${STUB_BIN_DIR}:${SAFE_PATH}" bash "${DOWNLOAD_SCRIPT}"
 
     [ "${status}" -ne 0 ]
     [[ "${output}" == *"FreeBSD"* ]] || [[ "${lines[*]}" == *"FreeBSD"* ]]
@@ -287,14 +346,10 @@ fi
 EOF
     chmod +x "${STUB_BIN_DIR}/uname"
 
-    # Stub python3 to fail so we reach architecture detection
-    cat > "${STUB_BIN_DIR}/python3" <<'EOF'
-#!/usr/bin/env bash
-exit 1
-EOF
-    chmod +x "${STUB_BIN_DIR}/python3"
+    # Stub python3 to fail so we reach architecture detection; git-filter-repo excluded via SAFE_PATH
+    write_python3_stub
 
-    run env PATH="${STUB_BIN_DIR}:${PATH}" bash "${DOWNLOAD_SCRIPT}"
+    run env PATH="${STUB_BIN_DIR}:${SAFE_PATH}" bash "${DOWNLOAD_SCRIPT}"
 
     [ "${status}" -ne 0 ]
     [[ "${output}" == *"i686"* ]] || [[ "${lines[*]}" == *"i686"* ]]
@@ -305,12 +360,8 @@ EOF
 # ---------------------------------------------------------------------------
 
 @test "fails with error when curl exits non-zero during download" {
-    # Stub python3 and git-filter-repo to fail so we reach download phase
-    cat > "${STUB_BIN_DIR}/python3" <<'EOF'
-#!/usr/bin/env bash
-exit 1
-EOF
-    chmod +x "${STUB_BIN_DIR}/python3"
+    # Stub python3 to fail so we reach download phase; git-filter-repo excluded via SAFE_PATH
+    write_python3_stub
 
     # Stub uname to return a known-good platform so platform detection succeeds
     cat > "${STUB_BIN_DIR}/uname" <<'EOF'
@@ -333,7 +384,7 @@ exit 6
 EOF
     chmod +x "${STUB_BIN_DIR}/curl"
 
-    run env PATH="${STUB_BIN_DIR}:${PATH}" bash "${DOWNLOAD_SCRIPT}"
+    run env PATH="${STUB_BIN_DIR}:${SAFE_PATH}" bash "${DOWNLOAD_SCRIPT}"
 
     [ "${status}" -ne 0 ]
     [[ "${output}" == *"ERROR"* ]] || [[ "${lines[*]}" == *"ERROR"* ]]
