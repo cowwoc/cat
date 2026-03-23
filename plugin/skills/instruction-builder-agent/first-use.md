@@ -1241,9 +1241,9 @@ Commit protected-sections.txt with message
   not preserve compliance after 3 retries — accepting uncompressed version."
 
 **On acceptance:** Copy compressed file to `SKILL_TEXT_PATH` (overwrite original), commit with message
-`benchmark: accept final [session: ${CLAUDE_SESSION_ID}]`. Commit
-post-compression benchmark.json with message
-`benchmark: post-compression SPRT [session: ${CLAUDE_SESSION_ID}]`.
+`benchmark: accept final [session: ${CLAUDE_SESSION_ID}]`. Do NOT commit the post-compression SPRT results
+separately — they are intermediate verification artifacts only. The accepted compressed skill file is the
+permanent output; the SPRT run that verified it is transient and must not be persisted to the repository.
 
 Present the final size reduction and compliance metrics to the user.
 

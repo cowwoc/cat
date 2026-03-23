@@ -1,0 +1,59 @@
+{
+  "sprt": {
+    "test_cases": [
+      {
+        "test_case_id": "TC1",
+        "decision": "Accept",
+        "log_ratio": 3.0024,
+        "pass_count": 27,
+        "fail_count": 0,
+        "total_runs": 27,
+        "total_tokens": 0,
+        "total_duration_ms": 0
+      },
+      {
+        "test_case_id": "TC2",
+        "decision": "Accept",
+        "log_ratio": 3.0024,
+        "pass_count": 27,
+        "fail_count": 0,
+        "total_runs": 27,
+        "total_tokens": 0,
+        "total_duration_ms": 0
+      },
+      {
+        "test_case_id": "TC3",
+        "decision": "Accept",
+        "log_ratio": 3.0024,
+        "pass_count": 27,
+        "fail_count": 0,
+        "total_runs": 27,
+        "total_tokens": 0,
+        "total_duration_ms": 0
+      },
+      {
+        "test_case_id": "TC4",
+        "decision": "Accept",
+        "log_ratio": 3.0024,
+        "pass_count": 27,
+        "fail_count": 0,
+        "total_runs": 27,
+        "total_tokens": 0,
+        "total_duration_ms": 0
+      },
+      {
+        "test_case_id": "TC5",
+        "decision": "Accept",
+        "log_ratio": 3.0024,
+        "pass_count": 27,
+        "fail_count": 0,
+        "total_runs": 27,
+        "total_tokens": 0,
+        "total_duration_ms": 0
+      }
+    ],
+    "overall_decision": "Accept",
+    "total_tokens": 0,
+    "total_duration_ms": 0
+  }
+}

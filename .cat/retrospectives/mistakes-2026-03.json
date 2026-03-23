@@ -2940,17 +2940,22 @@
     "correct_behavior" : ""
   }, {
     "id" : "M598",
-    "timestamp" : "2026-03-23T12:47:52Z",
+    "timestamp" : "2026-03-23T12:00:00Z",
     "category" : "misleading_documentation",
-    "description" : "",
-    "root_cause" : "DOCUMENTATION PRIMING: instruction-builder-agent/first-use.md Step 7.4 explicitly instructed agents to commit post-compression benchmark.json with a specific message, treating an intermediate artifact as a permanent output",
+    "description" : "instruction-builder-agent committed benchmark-post-compression.json as a persistent artifact; it is an intermediate file from the compression verification phase and must not be committed",
+    "root_cause" : "DOCUMENTATION: instruction-builder-agent/first-use.md Step 7.4 On Acceptance section (lines 1243-1246) explicitly instructed agents to commit post-compression benchmark.json. The instruction was incorrect — the post-compression SPRT run is a transient verification step, not a permanent benchmark artifact. The agent followed the documented instruction, committing the intermediate file.",
     "cause_signature" : "knowledge_gap:skill_incomplete:skill_execution",
     "prevention_type" : "documentation",
     "prevention_path" : "plugin/skills/instruction-builder-agent/first-use.md",
-    "pattern_keywords" : [ ],
+    "pattern_keywords" : [ "benchmark-post-compression", "intermediate", "commit" ],
     "prevention_implemented" : true,
     "prevention_verified" : false,
     "recurrence_of" : null,
-    "correct_behavior" : ""
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : "After compression is accepted, commit only the compressed skill file. The post-compression SPRT results are intermediate verification artifacts and must not be committed."
   } ]
 }
