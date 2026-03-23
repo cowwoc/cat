@@ -1,0 +1,200 @@
+{
+  "test_cases": [
+    {
+      "test_case_id": "TC1",
+      "semantic_unit_id": "unit_seq_position",
+      "category": "SEQUENCE",
+      "prompt": "You are following the work-implement-agent skill. All pending changes have been committed to the worktree. The issue index.json was just committed. Should you run the schema migration coverage check now, before spawning the implementation subagent? State Yes or No and what you do next.",
+      "assertions": [
+        {
+          "assertion_id": "TC1_det_1",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "output confirms the check runs at this point (yes or schema migration mentioned)",
+          "pattern": "(?i)(yes|schema migration|coverage check)",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC1_det_2",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "output does not defer check to after spawning",
+          "pattern": "(?i)(after spawning|skip.*check|defer.*check)",
+          "expected": false
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC2",
+      "semantic_unit_id": "unit_req_schema_files",
+      "category": "REQUIREMENT",
+      "prompt": "You are checking schema-relevant files. Which of these basenames are schema-relevant per the work-implement-agent skill? List them: config.json, index.json, plan.md, plugin.sh",
+      "assertions": [
+        {
+          "assertion_id": "TC2_det_1",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "index.json is identified as schema-relevant",
+          "pattern": "index.json",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC2_det_2",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "plan.md is identified as schema-relevant",
+          "pattern": "plan.md",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC2_det_3",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "config.json is NOT positively identified as schema-relevant",
+          "pattern": "(?i)config\\.json\\s+(?:is|are|listed\\s+as|identified\\s+as|considered)\\s+schema.relevant",
+          "expected": false
+        },
+        {
+          "assertion_id": "TC2_det_4",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "plugin.sh is NOT positively identified as schema-relevant",
+          "pattern": "(?i)plugin\\.sh\\s+(?:is|are|listed\\s+as|identified\\s+as|considered)\\s+schema.relevant",
+          "expected": false
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC3",
+      "semantic_unit_id": "unit_req_literal_match",
+      "category": "REQUIREMENT",
+      "prompt": "You are writing the grep command for the schema migration check. Should you use `grep -l` or `grep -lF`? Explain why, citing the skill's definition of what 'references' means.",
+      "assertions": [
+        {
+          "assertion_id": "TC3_det_1",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "response specifies -lF or -F flag",
+          "pattern": "-lF|-F",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC3_sem_1",
+          "type": "semantic",
+          "description": "explanation correctly states -F is for literal/fixed-string matching to avoid regex interpretation",
+          "instruction": "Check if the output correctly explains that -F (or --fixed-strings) is needed to perform literal fixed-string matching, avoiding regex interpretation of characters like the dot in filenames such as plan.md. The explanation should reference the skill's definition that a file 'references' a basename when that exact string appears as a literal substring.",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC4",
+      "semantic_unit_id": "unit_req_scope",
+      "category": "REQUIREMENT",
+      "prompt": "The schema migration check finds referencing files. Which directories are explicitly excluded from the search scope per the work-implement-agent skill? List them.",
+      "assertions": [
+        {
+          "assertion_id": "TC4_det_1",
+          "type": "deterministic",
+          "method": "regex",
+          "description": ".git directory is excluded",
+          "pattern": "\\.git",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC4_det_2",
+          "type": "deterministic",
+          "method": "regex",
+          "description": ".cat directory is excluded (not merely .cat/issues)",
+          "pattern": "\\.cat(?!/issues)",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC4_det_3",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "target directory is excluded",
+          "pattern": "target",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC5",
+      "semantic_unit_id": "unit_prohibition_block",
+      "category": "PROHIBITION",
+      "prompt": "You ran the schema migration coverage check and it emitted a WARNING that plan.md was modified but plugin/skills/foo.md still references it. Do you stop and refuse to spawn the implementation subagent until the issue is resolved? What do you do?",
+      "assertions": [
+        {
+          "assertion_id": "TC5_det_1",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "response does not block subagent delegation",
+          "pattern": "(?i)((?<!not\\s)(?<!n't\\s)stop\\b|(?<!not\\s)(?<!n't\\s)block\\b|(?<!not\\s)(?<!n't\\s)refuse\\b|cannot proceed|will not spawn|do not spawn).{0,50}(warning|check|coverage)",
+          "expected": false
+        },
+        {
+          "assertion_id": "TC5_sem_1",
+          "type": "semantic",
+          "description": "response correctly states the check is advisory-only and subagent delegation continues regardless",
+          "instruction": "Check if the output correctly explains that the schema migration coverage check is advisory-only (warns but does not block), and that subagent delegation proceeds regardless of the warning output. The response should indicate the agent will continue spawning the subagent despite the warning.",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC6",
+      "semantic_unit_id": "unit_cond_warning",
+      "category": "CONDITIONAL",
+      "prompt": "The schema migration check runs. No schema-relevant files (index.json, plan.md) were modified in the current commit set. Does the check emit any warning? What does it output?",
+      "assertions": [
+        {
+          "assertion_id": "TC6_det_1",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "no WARNING emitted when no schema-relevant files changed",
+          "pattern": "(?i)(?:emits?|outputs?|generates?|produces?)\\s+(?:a\\s+|an\\s+|one\\s+|two\\s+|some\\s+|several\\s+)warnings?\\b(?!\\s*(?:when|if|only\\b))|(?:will|shall)\\s+warn\\b(?!\\s*(?:when|if|only\\b))",
+          "expected": false
+        },
+        {
+          "assertion_id": "TC6_sem_1",
+          "type": "semantic",
+          "description": "response correctly explains check is silently skipped when no schema-relevant files changed",
+          "instruction": "Check if the output correctly explains that when no schema-relevant files (index.json, plan.md) are in the changed set, the schema migration check produces no output or warning — it runs silently. The response should indicate no warning is emitted in this case.",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC7",
+      "semantic_unit_id": "unit_req_rel_paths",
+      "category": "REQUIREMENT",
+      "prompt": "The schema migration check found that /workspace/.cat/work/worktrees/my-issue/plugin/skills/foo.md references plan.md. The WORKTREE_PATH is /workspace/.cat/work/worktrees/my-issue. What path should be shown in the WARNING output per the work-implement-agent skill?",
+      "assertions": [
+        {
+          "assertion_id": "TC7_det_1",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "WARNING shows repo-relative path plugin/skills/foo.md",
+          "pattern": "plugin/skills/foo.md",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC7_det_2",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "model does NOT positively recommend showing the absolute worktree path in WARNING",
+          "pattern": "(?i)(?:should|will|must)\\s+(?:show|display|be)\\s+[`\"]?/workspace/\\.cat/work/worktrees/my-issue",
+          "expected": false
+        },
+        {
+          "assertion_id": "TC7_sem_1",
+          "type": "semantic",
+          "description": "model correctly recommends repo-relative path for WARNING, not the absolute worktree path",
+          "instruction": "Check if the output correctly states that the path shown in the WARNING should be the repo-relative path `plugin/skills/foo.md` (after stripping the WORKTREE_PATH prefix), NOT the absolute worktree path. The response should recommend showing the relative path, not the absolute worktree path, as the correct output format for the WARNING.",
+          "expected": true
+        }
+      ]
+    }
+  ]
+}
