@@ -317,11 +317,36 @@ Parse the result and handle statuses:
 - `found` - Continue to worktree creation
 - `not_found` - Return NO_ISSUES with extended info (see below)
 - `locked` - Return LOCKED status with owner info
-- `existing_worktree` - Check whether a lock file exists for this issue:
-  - **Lock file present:** Treat as locked by another session. Return LOCKED status. Do NOT investigate, inspect, or
-    remove the worktree. Pick a different issue.
-  - **No lock file (orphaned worktree):** The worktree was left behind by a previous session. Apply the Orphaned
-    Worktree Recovery Protocol below.
+- Error with foreign session lock (`status: ERROR` + `locked_by` field present) - Check whether the `ERROR` response includes a `locked_by` field:
+  - **`locked_by` present (foreign-session lock):** Present a confirmation dialog to the user:
+
+    ```
+    Issue {issue_id} has an existing worktree locked by a previous session.
+    Lock holder: {locked_by}  (age: {lock_age_seconds}s)
+    Worktree: {worktree_path}
+    ```
+
+    Options:
+    1. **Resume** — atomically transfer the lock to the current session, then return READY
+       with the existing worktree path
+    2. **Skip** — pick a different issue; do NOT remove the worktree or release the lock
+    3. **Abort** — stop without working on any issue
+
+    **If user selects Resume:**
+    ```bash
+    TRANSFER_RESULT=$("${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" transfer "${ISSUE_ID}" "${locked_by}" "${CLAUDE_SESSION_ID}" "${worktree_path}")
+    TRANSFER_STATUS=$(echo "${TRANSFER_RESULT}" | grep -o '"status"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"status"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+    if [[ "${TRANSFER_STATUS}" != "acquired" ]]; then
+      TRANSFER_MESSAGE=$(echo "${TRANSFER_RESULT}" | grep -o '"message"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"message"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+      echo "Transfer failed: ${TRANSFER_MESSAGE}. The lock owner may have changed. Abort and ask the user to retry."
+      exit 1
+    fi
+    ```
+    Then return READY using the existing worktree path (same as Orphaned Worktree Recovery step 4,
+    with `has_existing_work: true`).
+
+  - **No `locked_by` field (orphaned worktree — no lock):** The worktree was left behind by a previous session.
+    Apply the Orphaned Worktree Recovery Protocol below.
 
 #### Orphaned Worktree Recovery Protocol
 
@@ -700,9 +725,9 @@ Output the JSON result with all required fields.
 - Planning structure missing: Return ERROR immediately
 - Script returns error: Return ERROR with message
 - Lock unavailable: Return LOCKED, do NOT investigate
-- Existing worktree with lock file (`existing_worktree` status, lock present): Return LOCKED, do NOT investigate or
-  remove the worktree
-- Existing worktree without lock file (orphaned): Apply Orphaned Worktree Recovery Protocol (Step 2)
+- Existing worktree locked by foreign session (`status: ERROR` + `locked_by` field present): Present resume
+  confirmation dialog (user may transfer the lock and take over)
+- `status: ERROR` + `locked_by` absent (orphaned worktree — no lock file): Apply Orphaned Worktree Recovery Protocol (Step 2)
 - Issue exceeds hard limit: Release lock (Step 3), then return OVERSIZED
 - **Worktree on wrong branch:** Clean up and return ERROR
 - **Unmet pre-conditions:** Warn the user but do NOT block — continue to Step 5

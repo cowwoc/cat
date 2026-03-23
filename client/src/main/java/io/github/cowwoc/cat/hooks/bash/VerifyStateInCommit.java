@@ -36,7 +36,7 @@ import java.util.regex.Pattern;
 public final class VerifyStateInCommit implements BashHandler
 {
   private static final Pattern IMPLEMENTATION_COMMIT_PATTERN = Pattern.compile(
-    "git\\s+commit(?!.*--amend).*-m\\s+.*?(bugfix|feature):", Pattern.DOTALL);
+    "git\\s+commit(?!-tree)(?!.*--amend).*-m\\s+.*?(bugfix|feature):", Pattern.DOTALL);
   private static final Pattern CD_PATTERN = Pattern.compile("(?:^|[;&|])\\s*cd\\s+([^;&|\\s]+)");
 
   /**

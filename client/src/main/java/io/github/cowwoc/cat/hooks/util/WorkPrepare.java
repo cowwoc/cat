@@ -407,7 +407,8 @@ public final class WorkPrepare
     {
       // The issue has an existing worktree. Check the lock state to determine the correct response:
       // - Locked by current session: resume with READY response
-      // - Locked by another session: return LOCKED so the agent does not attempt to use the worktree
+      // - Locked by another session: return ERROR with locked_by/lock_age_seconds so the skill can
+      //   show a confirmation dialog before the user decides whether to resume across sessions
       // - Unlocked: return ERROR about the existing worktree
       IssueLock issueLock = new IssueLock(scope);
       IssueLock.LockResult lockCheck = issueLock.check(existingWorktree.issueId());
@@ -416,11 +417,15 @@ public final class WorkPrepare
       {
         if (locked.sessionId().equals(input.sessionId()))
           return resumeWithExistingWorktree(existingWorktree, projectPath, mapper);
-        return mapper.writeValueAsString(Map.of(
-          "status", "LOCKED",
-          "message", "Issue " + existingWorktree.issueId() + " is locked by another session",
-          "issue_id", existingWorktree.issueId(),
-          "locked_by", locked.sessionId()));
+        Map<String, Object> errorResult = new LinkedHashMap<>();
+        errorResult.put("status", "ERROR");
+        errorResult.put("message", "Issue " + existingWorktree.issueId() +
+          " has an existing worktree locked by another session");
+        errorResult.put("issue_id", existingWorktree.issueId());
+        errorResult.put("locked_by", locked.sessionId());
+        errorResult.put("lock_age_seconds", locked.ageSeconds());
+        errorResult.put("worktree_path", existingWorktree.worktreePath());
+        return mapper.writeValueAsString(errorResult);
       }
       return mapper.writeValueAsString(Map.of(
         "status", "ERROR",

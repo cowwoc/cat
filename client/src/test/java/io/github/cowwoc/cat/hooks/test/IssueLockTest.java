@@ -1201,4 +1201,119 @@ public class IssueLockTest
       }
     }
   }
+
+  /**
+   * Verifies that transfer succeeds when the lock is held by the expected session.
+   * The lock file should be updated to the new session ID after transfer.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void transferSucceedsWhenLockHeldByExpectedSession() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String oldSessionId = UUID.randomUUID().toString();
+        String newSessionId = UUID.randomUUID().toString();
+        String issueId = "test-issue";
+        String worktree = "/path/to/worktree";
+
+        // First, acquire a lock for the old session
+        lock.acquire(issueId, oldSessionId, worktree);
+
+        // Transfer the lock to the new session
+        LockResult result = lock.transfer(issueId, oldSessionId, newSessionId, worktree);
+
+        requireThat(result, "result").isInstanceOf(LockResult.Acquired.class);
+        LockResult.Acquired acquired = (LockResult.Acquired) result;
+        requireThat(acquired.status(), "status").isEqualTo("acquired");
+
+        // Verify the lock file now contains the new session ID
+        Path lockFile = lock.getLockFile(issueId);
+        String content = Files.readString(lockFile);
+        JsonMapper mapper = scope.getJsonMapper();
+        JsonNode lockData = mapper.readTree(content);
+        String actualSessionId = lockData.get("session_id").asString();
+        requireThat(actualSessionId, "actualSessionId").isEqualTo(newSessionId);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that transfer fails when the lock is not held by the expected session.
+   * A LockResult.Locked is returned with the actual owner.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void transferFailsWhenLockNotHeldByExpectedSession() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String someOtherSessionId = UUID.randomUUID().toString();
+        String oldSessionId = UUID.randomUUID().toString();
+        String newSessionId = UUID.randomUUID().toString();
+        String issueId = "test-issue";
+        String worktree = "/path/to/worktree";
+
+        // Create a lock held by someOtherSessionId (not oldSessionId)
+        lock.acquire(issueId, someOtherSessionId, worktree);
+
+        // Attempt to transfer, claiming oldSessionId holds the lock
+        LockResult result = lock.transfer(issueId, oldSessionId, newSessionId, worktree);
+
+        requireThat(result, "result").isInstanceOf(LockResult.Locked.class);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that transfer fails when no lock exists for the issue.
+   * A LockResult.Error is returned indicating no lock to transfer.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void transferFailsWhenNoLockExists() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String oldSessionId = UUID.randomUUID().toString();
+        String newSessionId = UUID.randomUUID().toString();
+        String issueId = "test-issue";
+        String worktree = "/path/to/worktree";
+
+        // Call transfer with no lock file present
+        LockResult result = lock.transfer(issueId, oldSessionId, newSessionId, worktree);
+
+        requireThat(result, "result").isInstanceOf(LockResult.Error.class);
+        LockResult.Error error = (LockResult.Error) result;
+        requireThat(error.message(), "message").contains(issueId);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
 }
