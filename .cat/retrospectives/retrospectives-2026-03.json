@@ -211,6 +211,34 @@
           "ESCALATE-A020"
         ]
       }
+    },
+    {
+      "id": "R031",
+    "timestamp": "2026-03-23T13:18:51Z",
+    "trigger": "count_based",
+    "period_analyzed": "2026-03-16T18:30:00Z to 2026-03-23T13:18:51Z",
+    "mistakes_analyzed": 35,
+    "summary": "35 mistakes analyzed (M565-M599). Substantive entries: M565 (rules re-injection assumption), M567 (skill_structure_violation in instruction-builder), M571 (ClaudeEnv convention gap), M572 (data loss from rebase conflict), M576 (VerifyStateInCommit.java glob suggestion), M579 (manual merge data loss), M581 (client/ bypass of cat:add+cat:work), M583 (wrong commit type for client/**), M586 (work-squash collapses planning commits), M587 (skip verify-implementation-agent), M591/M592 (issue_path cognitive anchor), M593 (approval gate bypass via manual Agent task), M594 (WORKTREE_PATH vs CLAUDE_PROJECT_DIR in work-merge-agent), M595 (cat:add invoked without description), M596/M597 (stakeholder-review fabrication from output template priming), M598 (incorrect instruction to commit intermediate file). 2 new patterns (PATTERN-030: skill_output_format_priming, PATTERN-031: skill_incorrect_instruction). 2 new action items (A036, A037). 3 escalations created (ESCALATE-2026-03-23-001/002/003) for persistently ineffective A001, A003, A020. PATTERN-003 (path_config_assumption) continues WORSENING with M594. PATTERN-017 (approval_gate_bypass) has new recurrence M593. PATTERN-030 is a structural recurrence of output fabrication pattern.",
+    "findings": {
+      "category_breakdown": {
+        "protocol_violation": 5,
+        "documentation_priming": 3,
+        "incorrect_implementation": 3,
+        "misleading_documentation": 2,
+        "assumption_without_verification": 1,
+        "data_loss": 1,
+        "skill_structure_violation": 1,
+        "tool_misuse": 1,
+        "workflow_enforcement": 1
+      },
+      "worsening_patterns": ["PATTERN-003"],
+      "no_improvement_patterns": [],
+      "improving_patterns": ["PATTERN-001", "PATTERN-004", "PATTERN-005", "PATTERN-008", "PATTERN-013", "PATTERN-015", "PATTERN-016", "PATTERN-017", "PATTERN-018", "PATTERN-023"],
+      "new_patterns": ["PATTERN-030", "PATTERN-031"],
+      "new_action_items": ["A036", "A037"],
+      "open_action_items": ["A001", "A003", "A020", "A028", "A029", "A030", "A031", "A032", "A033", "A034", "A035"],
+      "escalations_created": ["ESCALATE-2026-03-23-001", "ESCALATE-2026-03-23-002", "ESCALATE-2026-03-23-003"]
     }
+  }
   ]
 }
