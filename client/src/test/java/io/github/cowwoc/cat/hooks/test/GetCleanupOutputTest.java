@@ -1611,7 +1611,8 @@ public class GetCleanupOutputTest
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<GetCleanupOutput.CorruptIssue> corruptIssues = List.of(
-        new GetCleanupOutput.CorruptIssue("2.1-orphaned-issue", "/path/to/2.1-orphaned-issue"));
+        new GetCleanupOutput.CorruptIssue("2.1-orphaned-issue", "/path/to/2.1-orphaned-issue",
+          "plan.md is missing"));
 
       String result = handler.getSurveyOutput(
         List.of(),
@@ -1709,6 +1710,76 @@ public class GetCleanupOutputTest
 
       requireThat(result, "result").size().isEqualTo(1);
       requireThat(result.get(0).issueId(), "issueId").isEqualTo("empty-issue");
+    }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that gatherCorruptIssues detects issue directories with an empty index.json.
+   * <p>
+   * An empty index.json (zero bytes or whitespace-only) is classified as corrupt with reason
+   * "index.json is empty".
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void gatherCorruptIssuesDetectsEmptyIndexJson() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    {
+      // Create an issue directory with an empty index.json and a valid plan.md
+      Path issueDir = projectPath.resolve(".cat").resolve("issues").
+        resolve("v2").resolve("v2.1").resolve("empty-json-issue");
+      Files.createDirectories(issueDir);
+      Files.writeString(issueDir.resolve("index.json"), "");
+      Files.writeString(issueDir.resolve("plan.md"), "# Plan\n\n## Goal\n\nDo something.\n");
+
+      GetCleanupOutput handler = new GetCleanupOutput(scope);
+      List<GetCleanupOutput.CorruptIssue> result = handler.gatherCorruptIssues(projectPath);
+
+      requireThat(result, "result").size().isEqualTo(1);
+      requireThat(result.get(0).issueId(), "issueId").isEqualTo("empty-json-issue");
+      requireThat(result.get(0).reason(), "reason").contains("empty");
+    }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that gatherCorruptIssues detects issue directories with a non-object index.json.
+   * <p>
+   * An index.json containing a JSON string (not a JSON object) is classified as corrupt with
+   * reason containing "JSON object".
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void gatherCorruptIssuesDetectsInvalidJsonInIndexJson() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    {
+      // Create an issue directory with index.json containing a JSON string, not an object
+      Path issueDir = projectPath.resolve(".cat").resolve("issues").
+        resolve("v2").resolve("v2.1").resolve("invalid-json-issue");
+      Files.createDirectories(issueDir);
+      Files.writeString(issueDir.resolve("index.json"), "\"not-an-object\"");
+      Files.writeString(issueDir.resolve("plan.md"), "# Plan\n\n## Goal\n\nDo something.\n");
+
+      GetCleanupOutput handler = new GetCleanupOutput(scope);
+      List<GetCleanupOutput.CorruptIssue> result = handler.gatherCorruptIssues(projectPath);
+
+      requireThat(result, "result").size().isEqualTo(1);
+      requireThat(result.get(0).issueId(), "issueId").isEqualTo("invalid-json-issue");
+      requireThat(result.get(0).reason(), "reason").contains("JSON object");
     }
     finally
     {
