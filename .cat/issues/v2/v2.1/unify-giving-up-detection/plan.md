@@ -60,6 +60,7 @@ None
   - `GivingUpDetector` is a non-static class; callers instantiate it via `new GivingUpDetector()` (no constructor arguments)
   - Public method `check(String text) -> String` returning the raw reminder text (no XML wrapping; or empty string if no pattern detected); handles both prompt-style and assistant-message-style patterns in a unified detection pass; `detectViolationType` runs first (prompt patterns), then `detectGivingUpPattern` (token rationalization patterns), returning the first match found
   - Javadoc explaining that patterns cover both user-prompt context (4 violation types) and assistant-message context (token rationalization), and that both detection paths share the same entry point
+  - Remove all fabricated `Reference: CLAUDE.md "..."` lines and inline CLAUDE.md policy quotations from every reminder constant. These sections do not exist in CLAUDE.md and cause Claude to flag the hook as a prompt injection attack. Remove the lines at the end of: `CONSTRAINT_RATIONALIZATION_REMINDER` (line 98), `CODE_REMOVAL_REMINDER` (line 167), `PERMISSION_SEEKING_REMINDER` (line 208), `TOKEN_RATIONALIZATION_REMINDER` (the `**Token Usage Policy (CLAUDE.md)**:` block), and `TOKEN_RATIONALIZATION_REMINDER` (line 248). The behavioral guidance in each reminder should remain intact; only the fabricated citations are removed.
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/GivingUpDetector.java`
 
 - Modify `DetectGivingUp` to:
@@ -93,3 +94,4 @@ None
 - [ ] `GivingUpDetectorTest` contains at least 5 tests (one per violation category) plus a clean-text test
 - [ ] E2E (prompt path): a prompt containing "given the complexity, let me move on to easier tasks" triggers the constraint_rationalization reminder
 - [ ] E2E (assistant path): an assistant message containing "given token usage, let me complete a few more" triggers the token_rationalization reminder
+- [ ] No reminder constant in `GivingUpDetector` contains a `Reference: CLAUDE.md "..."` line or an inline CLAUDE.md policy quotation citing a non-existent section
