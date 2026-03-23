@@ -2683,6 +2683,100 @@ public class WorkPrepareTest
   }
 
   /**
+   * Verifies that when {@code --arguments} contains only a CAT agent ID UUID (no trailing issue name),
+   * {@code run()} strips the UUID and returns READY for the next available issue (not NO_ISSUES).
+   * <p>
+   * This is the end-to-end regression test for the bug where UUIDs were matched as bare issue names.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void runReturnsReadyWhenArgumentsContainsOnlyUuid() throws IOException
+  {
+    Path projectPath = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    {
+      createIssue(projectPath, "2", "1", "my-feature", "open");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "planning: add issue my-feature");
+
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+
+      String sessionId = UUID.randomUUID().toString();
+      // Pass UUID as the sole --arguments token — simulates /cat:work invocation with no explicit issue
+      String uuid = "92289cdd-76a1-4d7e-8cf3-be5618ec270a";
+      WorkPrepare.run(scope, new String[]{"--session-id", sessionId, "--arguments", uuid}, out);
+
+      String output = buffer.toString(StandardCharsets.UTF_8).strip();
+      requireThat(output, "output").isNotBlank();
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(output);
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+
+      worktreePath = Path.of(node.path("worktree_path").asString());
+      String issueId = node.path("issue_id").asString();
+      requireThat(issueId, "issueId").endsWith("my-feature");
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that when {@code --arguments} contains a CAT agent ID UUID followed by an issue name,
+   * {@code run()} strips the UUID and selects the named issue, returning READY with the correct
+   * {@code issue_id}.
+   * <p>
+   * This is the end-to-end regression test for the bug where UUIDs were matched as bare issue names,
+   * covering the case where the agent ID and issue name appear together in {@code --arguments}.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void runReturnsReadyWhenArgumentsContainsUuidAndIssueName() throws IOException
+  {
+    Path projectPath = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    {
+      createIssue(projectPath, "2", "1", "my-feature", "open");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "planning: add issue my-feature");
+
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+
+      String sessionId = UUID.randomUUID().toString();
+      // Pass UUID + issue name as --arguments — simulates /cat:work invocation with an explicit issue
+      String arguments = "92289cdd-76a1-4d7e-8cf3-be5618ec270a my-feature";
+      WorkPrepare.run(scope, new String[]{"--session-id", sessionId, "--arguments", arguments}, out);
+
+      String output = buffer.toString(StandardCharsets.UTF_8).strip();
+      requireThat(output, "output").isNotBlank();
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(output);
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+
+      // Confirm the UUID was stripped and the named issue was selected
+      String issueId = node.path("issue_id").asString();
+      requireThat(issueId, "issueId").endsWith("my-feature");
+
+      worktreePath = Path.of(node.path("worktree_path").asString());
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
    * Verifies that a PLAN.md containing backtick-quoted text with regex metacharacters
    * (e.g., "[]") does not cause a PatternSyntaxException during execute.
    *
