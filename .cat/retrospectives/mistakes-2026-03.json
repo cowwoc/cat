@@ -2971,5 +2971,24 @@
     "prevention_verified" : false,
     "recurrence_of" : null,
     "correct_behavior" : ""
+  }, {
+    "id" : "M600",
+    "timestamp" : "2026-03-23T15:10:00Z",
+    "category" : "protocol_violation",
+    "description" : "",
+    "root_cause" : "The main agent directly spawned a cat:work-execute subagent via Agent tool without invoking cat:work-implement-agent first. No PreToolUse hook exists to verify that the current session holds an issue lock before allowing cat:work-execute spawns.",
+    "cause_signature" : "compliance_failure:hook_absent:subagent_delegation",
+    "prevention_type" : "hook",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }
