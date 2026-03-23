@@ -23,7 +23,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -172,21 +174,24 @@ public final class GetCleanupOutput implements SkillOutput
    *
    * @param issueId the issue ID
    * @param issuePath the absolute path to the issue directory
+   * @param reason human-readable description of why the directory is corrupt
    */
-  public record CorruptIssue(String issueId, String issuePath)
+  public record CorruptIssue(String issueId, String issuePath, String reason)
   {
     /**
      * Creates a corrupt issue entry.
      *
      * @param issueId the issue ID
      * @param issuePath the absolute path to the issue directory
+     * @param reason human-readable description of why the directory is corrupt
      * @throws NullPointerException if any parameter is null
-     * @throws IllegalArgumentException if issueId or issuePath is blank
+     * @throws IllegalArgumentException if {@code issueId}, {@code issuePath}, or {@code reason} is blank
      */
     public CorruptIssue
     {
       requireThat(issueId, "issueId").isNotBlank();
       requireThat(issuePath, "issuePath").isNotBlank();
+      requireThat(reason, "reason").isNotBlank();
     }
   }
 
@@ -274,8 +279,8 @@ public final class GetCleanupOutput implements SkillOutput
   }
 
   /**
-   * Scans all issue directories under {@code .cat/issues/} for the corrupt condition
-   * (index.json present, plan.md absent).
+   * Scans all issue directories under {@code .cat/issues/} for corrupt conditions: plan.md absent,
+   * index.json empty, or index.json containing invalid JSON.
    *
    * @param projectPath the project root directory
    * @return list of corrupt issue entries (empty if none found or directory does not exist)
@@ -295,14 +300,14 @@ public final class GetCleanupOutput implements SkillOutput
   }
 
   /**
-   * Recursively scans issue directories for the corrupt condition.
+   * Recursively scans issue directories for corrupt conditions.
    *
    * @param dir the directory to scan
    * @param result the list to append corrupt issue entries to
    */
   private void scanForCorruptIssues(Path dir, List<CorruptIssue> result)
   {
-    try (java.util.stream.Stream<Path> entries = Files.list(dir))
+    try (Stream<Path> entries = Files.list(dir))
     {
       for (Path entry : entries.toList())
       {
@@ -321,7 +326,43 @@ public final class GetCleanupOutput implements SkillOutput
         if (!Files.isRegularFile(planMd))
         {
           // Issue directory with plan.md absent — corrupt
-          result.add(new CorruptIssue(dirName, entry.toString()));
+          result.add(new CorruptIssue(dirName, entry.toString(), "plan.md is missing"));
+          continue;
+        }
+
+        Path indexJson = entry.resolve("index.json");
+        if (!Files.isRegularFile(indexJson))
+          continue;
+
+        // index.json exists — check that it is non-empty and contains a valid JSON object
+        try
+        {
+          String content = Files.readString(indexJson);
+          if (content.isBlank())
+          {
+            result.add(new CorruptIssue(dirName, entry.toString(), "index.json is empty"));
+            continue;
+          }
+          JsonMapper mapper = scope.getJsonMapper();
+          JsonNode node;
+          try
+          {
+            node = mapper.readTree(content);
+          }
+          catch (JacksonException _)
+          {
+            result.add(new CorruptIssue(dirName, entry.toString(),
+              "index.json does not contain a JSON object"));
+            continue;
+          }
+          if (!node.isObject())
+            result.add(new CorruptIssue(dirName, entry.toString(),
+              "index.json does not contain a JSON object"));
+        }
+        catch (IOException e)
+        {
+          result.add(new CorruptIssue(dirName, entry.toString(),
+            "index.json could not be read: " + e.getMessage()));
         }
       }
     }
@@ -693,7 +734,7 @@ public final class GetCleanupOutput implements SkillOutput
     // Corrupt issues inner box
     List<String> corruptItems = new ArrayList<>();
     for (CorruptIssue corrupt : corruptIssues)
-      corruptItems.add(corrupt.issueId() + ": " + corrupt.issuePath());
+      corruptItems.add(corrupt.issueId() + ": " + corrupt.issuePath() + " (" + corrupt.reason() + ")");
     if (corruptItems.isEmpty())
       corruptItems.add("None found");
     allInnerBoxes.addAll(display.buildInnerBox("⚠ Corrupt Issue Directories", corruptItems));
