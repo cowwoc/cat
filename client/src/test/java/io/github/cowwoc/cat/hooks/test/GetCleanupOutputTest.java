@@ -62,6 +62,11 @@ public class GetCleanupOutputTest
 
       requireThat(result, "result").contains("🔍 Survey Results");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -86,6 +91,11 @@ public class GetCleanupOutputTest
         List.of());
 
       requireThat(result, "result").contains("📁 Worktrees");
+    }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
     }
   }
 
@@ -112,6 +122,11 @@ public class GetCleanupOutputTest
 
       requireThat(result, "result").contains("🔒 Issue Locks");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -136,6 +151,11 @@ public class GetCleanupOutputTest
         List.of());
 
       requireThat(result, "result").contains("🌿 CAT Branches");
+    }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
     }
   }
 
@@ -162,6 +182,11 @@ public class GetCleanupOutputTest
 
       requireThat(result, "result").contains("⏳ Stale Remotes");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -187,6 +212,11 @@ public class GetCleanupOutputTest
 
       requireThat(result, "result").contains("📝 Context: .claude/context.md");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -211,6 +241,11 @@ public class GetCleanupOutputTest
         List.of());
 
       requireThat(result, "result").contains("📝 Context: None");
+    }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
     }
   }
 
@@ -242,6 +277,11 @@ public class GetCleanupOutputTest
       requireThat(result, "result").contains("/path/to/worktree1").contains("branch1").
         contains("[detached]").contains("/path/to/worktree2").contains("branch2");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -271,6 +311,11 @@ public class GetCleanupOutputTest
       requireThat(result, "result").contains("v2.0-my-task").contains("session1").
         contains("300s");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -297,6 +342,11 @@ public class GetCleanupOutputTest
         List.of());
 
       requireThat(result, "result").contains("2.0-task1").contains("2.0-task2");
+    }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
     }
   }
 
@@ -327,6 +377,11 @@ public class GetCleanupOutputTest
       requireThat(result, "result").contains("2.0-old-task").contains("user123").
         contains("3 days ago");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -351,6 +406,11 @@ public class GetCleanupOutputTest
         List.of());
 
       requireThat(result, "result").contains("None found");
+    }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
     }
   }
 
@@ -378,6 +438,11 @@ public class GetCleanupOutputTest
       requireThat(result, "result").contains("Found: 1 worktrees").contains("1 locks").
         contains("2 branches").contains("1 stale remotes");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -400,6 +465,11 @@ public class GetCleanupOutputTest
         List.of());
 
       requireThat(result, "result").contains("Cleanup Plan");
+    }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
     }
   }
 
@@ -427,6 +497,11 @@ public class GetCleanupOutputTest
 
       requireThat(result, "result").contains("/path/to/wt").contains("task-branch");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -451,6 +526,11 @@ public class GetCleanupOutputTest
         List.of());
 
       requireThat(result, "result").contains("2.0-old-branch");
+    }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
     }
   }
 
@@ -478,6 +558,11 @@ public class GetCleanupOutputTest
 
       requireThat(result, "result").contains("old-branch").contains("very stale");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -500,6 +585,11 @@ public class GetCleanupOutputTest
         List.of());
 
       requireThat(result, "result").contains("Confirm cleanup?");
+    }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
     }
   }
 
@@ -525,6 +615,11 @@ public class GetCleanupOutputTest
 
       requireThat(result, "result").contains("Total items to remove: 4");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -548,6 +643,11 @@ public class GetCleanupOutputTest
 
       requireThat(result, "result").contains("(none)");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -570,6 +670,11 @@ public class GetCleanupOutputTest
         List.of());
 
       requireThat(result, "result").contains("Locks to Remove").contains("my-lock-id");
+    }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
     }
   }
 
@@ -595,6 +700,11 @@ public class GetCleanupOutputTest
 
       requireThat(result, "result").contains("stale-issue").contains("[stale]");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -618,6 +728,11 @@ public class GetCleanupOutputTest
         List.of());
 
       requireThat(result, "result").contains("recent-issue").contains("[recent]");
+    }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
     }
   }
 
@@ -646,6 +761,11 @@ public class GetCleanupOutputTest
         contains("session eb68bb02").
         contains("326s");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -673,6 +793,11 @@ public class GetCleanupOutputTest
         contains("task-branch").
         contains("[stale]");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -698,6 +823,11 @@ public class GetCleanupOutputTest
 
       requireThat(result, "result").contains("1 stale").contains("1 recent");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -721,6 +851,11 @@ public class GetCleanupOutputTest
         List.of());
 
       requireThat(result, "result").contains("5h 30m");
+    }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
     }
   }
 
@@ -746,6 +881,11 @@ public class GetCleanupOutputTest
 
       requireThat(result, "result").contains("✅ Cleanup Complete");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -770,6 +910,11 @@ public class GetCleanupOutputTest
       requireThat(result, "result").contains("2 lock(s)").contains("3 worktree(s)").
         contains("4 branch(es)");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -793,6 +938,11 @@ public class GetCleanupOutputTest
 
       requireThat(result, "result").contains("0 lock(s)").contains("0 worktree(s)").
         contains("0 branch(es)");
+    }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
     }
   }
 
@@ -821,6 +971,11 @@ public class GetCleanupOutputTest
 
       requireThat(result, "result").contains("╭").contains("╰").contains("│");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -844,6 +999,11 @@ public class GetCleanupOutputTest
 
       requireThat(result, "result").contains("╭").contains("╰").contains("│");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -866,6 +1026,11 @@ public class GetCleanupOutputTest
         new RemovedCounts(0, 0, 0));
 
       requireThat(result, "result").contains("╭").contains("╰").contains("│");
+    }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
     }
   }
 
@@ -900,6 +1065,11 @@ public class GetCleanupOutputTest
 
       requireThat(result, "result").isNotEmpty();
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -928,6 +1098,11 @@ public class GetCleanupOutputTest
 
       requireThat(result, "result").isNotEmpty();
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -955,6 +1130,11 @@ public class GetCleanupOutputTest
 
       requireThat(result, "result").isNotEmpty();
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -977,6 +1157,11 @@ public class GetCleanupOutputTest
         new RemovedCounts(2, 1, 3));
 
       requireThat(result, "result").contains("Remaining Worktrees").contains("active-task");
+    }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
     }
   }
 
@@ -1001,6 +1186,11 @@ public class GetCleanupOutputTest
 
       requireThat(result, "result").contains("Remaining CAT Branches").contains("main");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -1023,6 +1213,11 @@ public class GetCleanupOutputTest
         new RemovedCounts(0, 0, 0));
 
       requireThat(result, "result").contains("Remaining Locks").contains("(none)");
+    }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
     }
   }
 
@@ -1051,6 +1246,11 @@ public class GetCleanupOutputTest
       int noneCount = result.split("\\(none\\)", -1).length - 1;
       requireThat(noneCount, "noneCount").isGreaterThanOrEqualTo(3);
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   // --- Data gathering tests ---
@@ -1071,6 +1271,11 @@ public class GetCleanupOutputTest
       List<Worktree> result = handler.parseWorktreesPorcelain("");
 
       requireThat(result, "result").isEmpty();
+    }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
     }
   }
 
@@ -1099,6 +1304,11 @@ public class GetCleanupOutputTest
       requireThat(result.get(0).path(), "path").isEqualTo("/workspace");
       requireThat(result.get(0).branch(), "branch").isEqualTo("main");
       requireThat(result.get(0).state(), "state").isEmpty();
+    }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
     }
   }
 
@@ -1132,6 +1342,11 @@ public class GetCleanupOutputTest
       requireThat(result.get(1).path(), "path2").isEqualTo("/workspace/.worktrees/task-123");
       requireThat(result.get(1).branch(), "branch2").isEqualTo("2.1-task-123");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -1158,6 +1373,11 @@ public class GetCleanupOutputTest
 
       requireThat(result.size(), "size").isEqualTo(1);
       requireThat(result.get(0).state(), "state").isEqualTo("detached");
+    }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
     }
   }
 
@@ -1186,6 +1406,11 @@ public class GetCleanupOutputTest
       requireThat(result.size(), "size").isEqualTo(1);
       requireThat(result.get(0).state(), "state").isEqualTo("bare");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -1212,6 +1437,11 @@ public class GetCleanupOutputTest
       requireThat(result.size(), "size").isEqualTo(1);
       requireThat(result.get(0).branch(), "branch").isEqualTo("feature-branch");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -1237,6 +1467,11 @@ public class GetCleanupOutputTest
       requireThat(result.size(), "size").isEqualTo(1);
       requireThat(result.get(0).branch(), "branch").isEqualTo("main");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -1256,6 +1491,11 @@ public class GetCleanupOutputTest
 
       requireThat(result, "result").isEmpty();
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -1274,6 +1514,11 @@ public class GetCleanupOutputTest
       String result = handler.gatherContextFile(projectPath);
 
       requireThat(result, "result").isNull();
+    }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
     }
   }
 
@@ -1313,6 +1558,11 @@ public class GetCleanupOutputTest
 
       requireThat(result, "result").isNotEmpty().contains("2.1-issue-name");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -1346,6 +1596,11 @@ public class GetCleanupOutputTest
       String result = handler.formatPlanFromJson(json);
 
       requireThat(result, "result").isNotEmpty().contains("(none)");
+    }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
     }
   }
 
@@ -1382,6 +1637,11 @@ public class GetCleanupOutputTest
       requireThat(result, "result").isNotEmpty().
         contains("1 lock(s)").contains("1 worktree(s)").contains("2 branch(es)");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -1415,6 +1675,11 @@ public class GetCleanupOutputTest
       String result = handler.formatVerifyFromJson(json);
 
       requireThat(result, "result").isNotEmpty().contains("(none)");
+    }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
     }
   }
 
@@ -1625,6 +1890,11 @@ public class GetCleanupOutputTest
       requireThat(result, "result").contains("⚠ Corrupt Issue Directories");
       requireThat(result, "result").contains("2.1-orphaned-issue");
     }
+    finally
+    {
+      deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
@@ -1654,6 +1924,7 @@ public class GetCleanupOutputTest
     finally
     {
       deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
     }
   }
 
@@ -1684,6 +1955,7 @@ public class GetCleanupOutputTest
     finally
     {
       deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
     }
   }
 
@@ -1714,6 +1986,7 @@ public class GetCleanupOutputTest
     finally
     {
       deleteDirectoryRecursively(projectPath);
+      deleteDirectoryRecursively(pluginRoot);
     }
   }
 
