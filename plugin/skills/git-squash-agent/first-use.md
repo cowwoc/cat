@@ -11,57 +11,32 @@ See LICENSE.md in the project root for license terms.
 
 **This skill covers squash and rebase only.** After squash completes, return results to the caller and stop.
 
-Subsequent operations — `git merge`, worktree removal (`git worktree remove`), branch deletion (`git branch -D`),
-and invoking `work-complete` — are NOT part of this skill. Performing them without explicit user approval is a
-protocol violation. These operations require the full `work-with-issue` approval gate before they can proceed.
+Subsequent operations — `git merge`, `git push`, `git push --force`, worktree removal (`git worktree remove`),
+branch deletion (`git branch -D`), `git tag`, and invoking `work-complete` — are NOT part of this skill. Performing
+them without explicit user approval is a protocol violation. These operations require the full `work-with-issue`
+approval gate before they can proceed.
 
 ## MANDATORY: Use This Skill
 
 **NEVER manually run `git reset --soft` for squashing.** Always use this skill.
 
-Manual `git reset --soft` captures working directory state, which may contain stale files if the worktree diverged from
-its target branch. This skill uses `commit-tree` which creates commits from committed tree objects, ignoring working
-directory entirely.
-
-**What goes wrong with manual reset:**
-1. Worktree created from base at commit A
-2. Base advances to commit D (with fixes)
-3. Manual `git reset --soft base` keeps stale working directory
-4. Commit captures pre-fix file versions, reverting the fixes
-
-**This skill prevents this** by using `commit-tree` to build from HEAD's tree object.
+**Why:** Manual `git reset --soft` captures the working directory, which may contain stale files when the base
+advanced. This skill uses `commit-tree` to build commits from HEAD's tree object, ignoring the working directory.
 
 ## Read PROJECT.md Squash Policy
 
 **Check PROJECT.md for configured squash preferences before proceeding.**
 
 ```bash
-# Read squash policy from PROJECT.md
 SQUASH_POLICY=$(grep -A10 "### Squash Policy" .cat/PROJECT.md 2>/dev/null | grep "Strategy:" | \
   sed 's/.*Strategy:\s*//' | head -1)
-
-if [[ "$SQUASH_POLICY" == *"keep all"* || "$SQUASH_POLICY" == *"Keep all"* || "$SQUASH_POLICY" == *"keep-all"* ]]; then
-  echo "⚠️ PROJECT.md configured for 'Keep all commits'"
-  echo "Squashing will override this preference."
-  echo ""
-  echo "Options:"
-  echo "  1. Proceed with squash (override PROJECT.md preference)"
-  echo "  2. Cancel to preserve commits as configured"
-  echo ""
-  echo "To proceed, continue with this skill."
-  echo "To honor PROJECT.md preference, abort the squash operation."
-fi
-
-if [[ "$SQUASH_POLICY" == *"single"* || "$SQUASH_POLICY" == *"Single"* ]]; then
-  echo "📋 PROJECT.md configured for 'Single commit' squashing"
-  echo "All commits will be squashed into one (not by type)."
-fi
-
-if [[ "$SQUASH_POLICY" == *"by-type"* || "$SQUASH_POLICY" == *"by type"* ]]; then
-  echo "📋 PROJECT.md configured for 'Squash by type'"
-  echo "Commits will be grouped by type prefix."
-fi
 ```
+
+- `keep all` / `Keep all` / `keep-all`: **MANDATORY** — do NOT proceed until the user explicitly confirms the
+  override. Ask: "PROJECT.md is configured for 'keep all commits'. Override and squash anyway?" The agent's own
+  invocation does NOT count as confirmation.
+- `single` / `Single`: all commits squashed into one (not by type)
+- `by-type` / `by type`: commits grouped by type prefix
 
 ## Default Behavior: Squash by Topic
 
@@ -74,70 +49,41 @@ fi
   ONE implementation commit — squash them together, choosing the type that describes the primary change
 - Keep separate only when commits belong to different categories: implementation vs. config/infrastructure
 
-**Example:** If branch has these commits:
+**Example:** Squash these commits:
 ```
 config: add handler registry
 config: fix null handling in registry
 config: add if/else convention
 docs: update README
 ```
-
-Squash to:
+To:
 ```
 config: add handler registry with null handling and conventions
 docs: update README
 ```
 
-**Cross-type example (same topic, different prefixes):**
-```
-bugfix: fix GetSkill argument parsing with ShellParser.tokenize()
-refactor: change GetSkill to accept pre-tokenized arguments
-```
-
-These two commits both change `GetSkill.java` and `GetSkillTest.java` and address the same argument-handling
-concern. Squash to one commit, choosing the type that best describes the combined change:
-```
-bugfix: fix GetSkill argument parsing and pre-tokenize inputs
-```
+**Cross-type example (same topic, different prefixes):** Commits `bugfix: fix GetSkill argument parsing` and
+`refactor: change GetSkill to accept pre-tokenized arguments` both touch `GetSkill.java` and address the same
+concern. Squash to one: `bugfix: fix GetSkill argument parsing and pre-tokenize inputs`
 
 **What is NOT the same topic (keep separate):**
-- Learning/retrospective changes - these are meta-work, not issue implementation
+- Learning/retrospective changes — meta-work, not issue implementation
 - Changes to shared infrastructure (build-verification.md, session instructions)
 - Convention updates that don't directly enable the implementation
 
-Even if commits share the same type prefix (e.g., `config:`), they may be different topics. The test: "Would reverting
-this commit break the issue implementation?" If no, it's a different topic.
+Even if commits share the same type prefix, they may be different topics. The test: "Would reverting this commit
+break the issue implementation?" If no, it's a different topic.
 
-**Analyze ALL files in each commit:**
-
-When determining commit topics, examine EVERY file modified by the commit, not just one file type:
-
-```bash
-# For each commit, list ALL modified files
-git show --stat <commit-hash>
-
-# Don't stop after seeing one file type
-# A commit may contain BOTH convention changes AND implementation changes
-```
-
-Apply the revert test to ALL files: If reverting the commit would remove implementation changes, it breaks the
-implementation - therefore it's the same topic.
+**Analyze ALL files in each commit** (`git show --stat <commit-hash>`). A commit may contain both convention
+changes AND implementation changes. Apply the revert test to all files — if reverting removes implementation
+changes, it's the same topic.
 
 ## Workflow Selection
 
 **CRITICAL: Choose workflow based on commit position.**
 
-```bash
-# Check if commits are at tip of branch
-LAST_COMMIT="<last-commit-to-squash>"
-BRANCH_TIP=$(git rev-parse HEAD)
-
-if [ "$(git rev-parse $LAST_COMMIT)" = "$BRANCH_TIP" ]; then
-    echo "Commits at tip → Use Quick Workflow (script)"
-else
-    echo "Commits in middle of history → Use Interactive Rebase Workflow"
-fi
-```
+If the last commit to squash equals `HEAD` (`git rev-parse <last-commit>` == `git rev-parse HEAD`):
+use the **Quick Workflow**. Otherwise use the **Interactive Rebase Workflow**.
 
 ## Quick Workflow (Commits at Branch Tip Only)
 
@@ -162,43 +108,73 @@ The script implements: rebase onto target, backup, commit-tree squash, verify, c
 
 ### CONCURRENT_MODIFICATION Warnings
 
-When the `OK` response includes a `warnings` array with `type: "CONCURRENT_MODIFICATION"`, it means the listed files
-were modified on both the source branch and the target branch. The rebase auto-resolved the changes. **This is expected
-normal behavior when the target branch advanced since the worktree was created.**
+When the `OK` response includes a `warnings` array with `type: "CONCURRENT_MODIFICATION"`, the listed files were
+modified on both branches and auto-resolved. **This is expected normal behavior when the target branch advanced
+since the worktree was created.**
 
 **Correct response to CONCURRENT_MODIFICATION:**
 1. Complete the standard Post-Squash Working Tree Verification below
-2. For each flagged file, confirm the final content is correct by reviewing what both branches changed:
-   - Issue branch change: what the issue was implementing (e.g., removing a feature)
-   - Target branch change: what was committed to the target since the worktree was created
-   - Verify the rebase preserved both changes correctly (e.g., issue deletions are present, base additions are present)
-3. If auto-resolution is correct, proceed normally — no learn session required
-4. If auto-resolution is incorrect, restore from backup and resolve the conflict manually
+2. For each flagged file, confirm the final content is correct — verify that both the issue branch change and the
+   target branch change were preserved correctly
+3. For auto-resolved comments, documentation, or test descriptions: verify the merged text accurately describes
+   actual code behavior (see Post-Squash Comment Semantic Verification for the full procedure)
+4. If auto-resolution is correct and all comments are semantically accurate, proceed normally — no learn session required
+5. If a comment is semantically wrong but code is correct: update the comment, then **amend** into the squashed
+   commit (`git commit --amend --no-edit`). Do NOT create a separate correction commit
+6. If auto-resolution of code is incorrect (wrong logic preserved or lost), restore from backup and resolve manually
 
-**Do NOT trigger `cat:learn` for CONCURRENT_MODIFICATION warnings that were auto-resolved correctly.** These warnings
-are informational — they signal that manual verification is needed, not that a mistake occurred.
+**Do NOT trigger `cat:learn` for CONCURRENT_MODIFICATION warnings that were auto-resolved correctly.** These
+warnings signal that manual verification is needed, not that a mistake occurred.
 
 ### Post-Squash Working Tree Verification (MANDATORY on `OK`)
 
-After receiving `OK`, verify the working tree in the worktree is clean and the branch points to the squashed commit:
-
 ```bash
 cd "$WORKTREE_PATH"
-# Confirm the source branch is at the squashed commit
-git log --oneline -1
-# Output must show the squashed commit hash from the OK response
-
-# Confirm the working tree is clean (no diverged state)
-git status --porcelain
-# Output must be empty — any output indicates a diverged working tree
+git log --oneline -1       # Must show the squashed commit hash from the OK response
+git status --porcelain     # Must be empty — any output indicates a diverged working tree
 
 # If working tree shows diverged state (output not empty):
 git reset --hard HEAD
 ```
 
-**Why this check is required:** `backup_verified: true` in the OK response confirms content correctness but does
-NOT confirm the working tree was updated. If the worktree is in a diverged state, `git log` will show the squashed
-commit but on-disk files will differ from HEAD. The `git status --porcelain` check catches this immediately.
+**Why:** `backup_verified: true` confirms content correctness but NOT that the working tree was updated. If the
+worktree is diverged, `git log` shows the squashed commit but on-disk files differ from HEAD.
+
+### Post-Squash Comment Semantic Verification (MANDATORY on `OK`)
+
+After the working tree verification above passes, verify that comments and documentation in files modified by the
+squash still accurately describe the code. This check applies to ALL successful squashes, not only those with
+CONCURRENT_MODIFICATION warnings. The rebase performed by the Quick Workflow script may auto-resolve merges that
+leave comments describing old behavior without flagging CONCURRENT_MODIFICATION.
+
+```bash
+cd "$WORKTREE_PATH"
+# List files modified between the target branch and HEAD
+git diff --name-only "$TARGET_BRANCH"...HEAD
+```
+
+For each modified file with a source code extension (`.java`, `.sh`, `.bash`, `.md`, `.ts`, `.js`, `.py`, `.xml`,
+`.yaml`, `.yml`, `.properties`, `.toml`, `.gradle`, `.kt`, `.kts`, or any other text file that contains
+comment syntax), verify comments and documentation strings. Binary files, images, and `.json` files are excluded
+(JSON has no comments). For every qualifying file:
+1. Read the **entire file** — do not stop after the first screen or first few lines. Every comment in the file must
+   be checked, regardless of file length.
+2. For `.md` files, treat all prose descriptions of code behavior as documentation strings subject to verification
+   (e.g., "this function returns X" or "the script does Y").
+3. Read each comment or documentation string in the file
+4. Read the corresponding code that the comment describes
+5. Confirm the comment matches what the code actually does
+6. **Common failure mode:** A comment says "Returns null if not found" but the code now throws an exception.
+   The rebase carried the comment forward unchanged while the code changed around it.
+
+Do NOT skip a qualifying file by claiming its comments are trivial or unchanged — the rebase may have changed code
+around unchanged comments, making them stale. Do NOT perform a shallow read (e.g., reading only the top of a file)
+and claim verification is complete.
+
+If a comment is semantically wrong but the code is correct: update the comment to accurately describe the code,
+then **re-squash** the correction into the squashed commit using `git commit --amend --no-edit` (or re-invoke this
+skill) so the branch remains at a single squashed commit. Do NOT create a separate correction commit and proceed —
+the branch must stay at the squash commit count established by the squash operation.
 
 ## Interactive Rebase Workflow (Commits in Middle of History)
 
@@ -208,97 +184,99 @@ commit but on-disk files will differ from HEAD. The `git status --porcelain` che
 
 **When you need to both DROP and SQUASH commits in the middle of history, do NOT combine them into one operation.**
 
-Why: Complex interactive rebases that both drop and squash commits can silently lose content from commits before the squash range. The tree-building process doesn't properly preserve all file changes.
+Why: Complex interactive rebases that both drop and squash commits can silently lose content from commits before the
+squash range.
 
 **Instead, use two separate operations:**
 
 #### Step 1: Drop Unwanted Commits (Simple Rebase)
 
 ```bash
-# First, remove commits you don't want using a simple rebase
-# This is a straightforward operation with minimal risk
-COMMITS_TO_DROP="ccfd263f 06635253"  # List the commits to remove
+COMMITS_TO_DROP="ccfd263f 06635253"
 BASE=$(git rev-parse main)  # or your target branch
-
-# Create backup
 BACKUP="backup-before-drop-$(date +%Y%m%d-%H%M%S)"
 git branch "$BACKUP"
 
-# Simple rebase to drop the commits
-# List all commits you want to KEEP (inverse of drop list)
-git rebase $BASE  # This starts with the commits to drop already excluded
+git rebase $BASE  # starts with the commits to drop already excluded
 
-# Verify
-git diff "$BACKUP"  # Should be empty (or only show dropped commits removed)
+# Verify: diff must only contain changes from the dropped commits
+git diff "$BACKUP"
+# Every file in the diff must appear in files touched by dropped commits:
+git log --oneline --name-only $COMMITS_TO_DROP | sort -u
+# If any diff file was NOT modified by a dropped commit, content was lost — restore from backup.
 ```
 
 #### Step 2: Squash Remaining Commits (Separate Operation)
 
-After dropping unwanted commits, NOW use the Interactive Rebase Workflow below to squash the commits you want to combine.
-
-**Benefits of this approach:**
-- Simple rebase for dropping: easy to verify, low risk
-- Separate squash operation: tree-building is clean and predictable
-- Prevents any file loss (not just index.json-specific)
-- Each step is independently verifiable
+After dropping, use the Interactive Rebase Workflow below. Each step is independently verifiable, preventing
+accidental file loss.
 
 ### Safety Pattern: Backup-Verify-Cleanup
 
-**ALWAYS follow this pattern for the squash operation:**
+**ALWAYS follow this pattern:**
 1. Create timestamped backup branch
 2. Execute the rebase
 3. Handle conflicts if any
-4. **Verify immediately** - no changes lost or added
+4. **Verify immediately** — no changes lost or added
 5. Cleanup backup only after verification passes
 
 ### Interactive Rebase Steps
 
 ```bash
-# 1. Find merge-base commit (common ancestor with target branch)
+# 1. Find merge-base commit
 BASE=$(git merge-base HEAD "$TARGET_BRANCH")
 
-# 2. Create backup of current branch
+# 2. Create backup
 BACKUP="backup-before-squash-$(date +%Y%m%d-%H%M%S)"
 git branch "$BACKUP"
 
-# 3. Create sequence editor script
-FIRST_COMMIT="<first-commit-to-squash>"  # Keep this one, squash others into it
-COMMITS_TO_SQUASH="<second-commit> <third-commit> ..."  # These get squashed
+# 3. Create isolated temp directory (multi-instance safe)
+SQUASH_TMPDIR=$(mktemp -d)
 
-cat > /tmp/squash-editor.sh << EOF
+# 4. Create sequence editor script
+FIRST_COMMIT="<first-commit-to-squash>"
+COMMITS_TO_SQUASH="<second-commit> <third-commit> ..."
+
+cat > "$SQUASH_TMPDIR/squash-editor.sh" << EOF
 #!/bin/bash
 $(for c in $COMMITS_TO_SQUASH; do echo "sed -i 's/^pick $c/squash $c/' \"\$1\""; done)
 EOF
-chmod +x /tmp/squash-editor.sh
+chmod +x "$SQUASH_TMPDIR/squash-editor.sh"
 
-# 4. Generate unified commit message from existing commits
-# Review all commit messages being squashed
+# 5. Craft unified commit message from all commits being squashed
 git log --oneline $FIRST_COMMIT^..HEAD
-# Example: abc1234 config: add handler registry
-#          def5678 config: fix null handling
-# Craft unified message that describes the complete change
 MESSAGE="config: add handler registry with null handling"
 
-# 5. Create commit message editor script
-cat > /tmp/msg-editor.sh << EOF
+# 6. Create commit message editor script
+cat > "$SQUASH_TMPDIR/msg-editor.sh" << EOF
 #!/bin/bash
 cat > "\$1" << 'MSG'
 $MESSAGE
 MSG
 EOF
-chmod +x /tmp/msg-editor.sh
+chmod +x "$SQUASH_TMPDIR/msg-editor.sh"
 
 # 7. Run interactive rebase
-# NOTE: Use GIT_EDITOR (not EDITOR) - git uses GIT_EDITOR for commit messages during rebase
-BASE_COMMIT=$(git rev-parse $BASE^)  # Parent of base for rebase
-GIT_SEQUENCE_EDITOR=/tmp/squash-editor.sh GIT_EDITOR=/tmp/msg-editor.sh git rebase -i $BASE_COMMIT
+# NOTE: Use GIT_EDITOR (not EDITOR) — git uses GIT_EDITOR for commit messages during rebase
+BASE_COMMIT=$(git rev-parse $BASE^)
+GIT_SEQUENCE_EDITOR="$SQUASH_TMPDIR/squash-editor.sh" GIT_EDITOR="$SQUASH_TMPDIR/msg-editor.sh" git rebase -i $BASE_COMMIT
 
 # 8. Verify no changes lost
 git diff "$BACKUP"  # Must be empty
 
-# 9. Cleanup
+# 9. Post-Squash Comment Semantic Verification (MANDATORY)
+# Same verification required by the Quick Workflow — applies to ALL squash workflows.
+git diff --name-only "$TARGET_BRANCH"...HEAD
+# Follow the EXACT procedure in the Quick Workflow's "Post-Squash Comment Semantic Verification"
+# section above. All rules apply identically:
+# - Read the ENTIRE file (not just the top)
+# - Check every comment and documentation string against actual code behavior
+# - Do NOT skip a qualifying file by claiming its comments are trivial or unchanged
+# - If a comment is stale, amend the correction into the squashed commit (do NOT create a separate commit)
+
+# 10. Cleanup
 git branch -D "$BACKUP"
-rm /tmp/squash-editor.sh /tmp/msg-editor.sh
+rm -rf "$SQUASH_TMPDIR"
 ```
 
 ### Delegate Complex Squash Operations
@@ -311,10 +289,7 @@ Complex squash operations include:
 - Any operation that may cause merge conflicts due to reordering
 - Squashing 5+ commits with multiple topics
 
-**Why delegate:**
-- Subagent isolation prevents main context pollution from conflict resolution
-- Failed squash attempts don't waste main agent context
-- Subagent can retry with different strategies if conflicts occur
+Delegation isolates conflict resolution from the main context and allows retry with different strategies.
 
 **Simple squash (do NOT delegate):**
 - Squashing all commits into one (single topic)
@@ -327,8 +302,6 @@ Complex squash operations include:
 
 **CRITICAL: Follow commit grouping rules from [commit-types.md](../../concepts/commit-types.md).**
 
-**Squash categories (from commit-types.md):**
-
 | Category | Types | Squash to |
 |----------|-------|-----------|
 | Implementation | `feature:`, `bugfix:`, `test:`, `refactor:`, `docs:` | ONE commit |
@@ -337,12 +310,11 @@ Complex squash operations include:
 
 **Key rules when squashing:**
 - **Issue index.json** → same commit as implementation
-- **Test commits for the issue implementation** → same commit as implementation (tests verify the fix,
-  they are part of it)
-- **Same topic, different type prefixes** (`bugfix:` + `refactor:` on same code) → combine into one commit; choose
-  the type that best describes the combined change
-- **Different implementation types on the same issue** (`feature:` + `test:` + `refactor:`) → combine into ONE
-  implementation commit; use the type that best describes the primary change
+- **Test commits for the issue implementation** → same commit as implementation
+- **Same topic, different type prefixes** (`bugfix:` + `refactor:` on same code) → combine; choose type that best
+  describes the combined change
+- **Different implementation types on the same issue** (`feature:` + `test:` + `refactor:`) → ONE implementation
+  commit; use the type that best describes the primary change
 - **Implementation vs general config** (`feature:` vs `config:` for a new dependency) → keep separate
 - **Related same-type commits** → can combine
 
@@ -370,7 +342,7 @@ See `git-commit` skill for detailed message guidance.
 | `squash` | Combines all messages | Different features being combined |
 | `fixup` | Discards secondary messages | Trivial fixes (typos, forgotten files) |
 
-**When in doubt, use squash** - you can edit the combined message.
+**When in doubt, use squash** — you can edit the combined message.
 
 ## Error Recovery
 
@@ -382,6 +354,11 @@ If anything goes wrong:
 
 - [ ] Backup created before squash
 - [ ] No changes lost (diff with backup is empty)
-- [ ] Single commit created with all changes (or commits properly grouped by topic)
+- [ ] Single commit created with all changes (or commits properly grouped by topic) — any post-squash comment
+      corrections must be amended into the squash commit, not left as separate commits
 - [ ] Meaningful commit message (not "squashed commits")
 - [ ] Backup removed after verification
+- [ ] For ALL modified source code files: comments and documentation semantically verified against actual code
+      behavior (applies to every squash, not only CONCURRENT_MODIFICATION cases)
+- [ ] For each CONCURRENT_MODIFICATION flagged file: additional verification that rebase preserved both branch
+      changes correctly, and any stale comments corrected and committed before proceeding

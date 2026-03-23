@@ -1,0 +1,111 @@
+{
+  "test_cases": [
+    {
+      "test_case_id": "TC1",
+      "semantic_unit_id": "unit_step3_seq_read_comment",
+      "category": "SEQUENCE",
+      "prompt": "You just completed a squash with cat:git-squash-agent. The result was OK with a CONCURRENT_MODIFICATION warning for FooService.java. The target branch added a comment '// Returns null if key is not found' to method getValue(). Your issue branch changed getValue() to throw IllegalArgumentException instead. Walk me through what you do with the CONCURRENT_MODIFICATION warning.",
+      "assertions": [
+        {
+          "assertion_id": "TC1_det_1",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "output mentions reading/checking comments",
+          "pattern": "comment",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC1_det_2",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "output mentions reading/checking code",
+          "pattern": "code",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC1_sem_1",
+          "type": "semantic",
+          "description": "agent explicitly reads the comment text AND the code it describes, then judges whether they match semantically (not just says content looks correct)",
+          "instruction": "Check whether the response explicitly describes reading the comment text ('Returns null if key is not found') AND reading the corresponding code (that now throws an exception), AND then evaluating whether the comment accurately describes what the code does. The response must show the semantic mismatch is identified — not just that the file content was reviewed at a high level.",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC2",
+      "semantic_unit_id": "unit_step5_conditional_wrong_comment",
+      "category": "CONDITIONAL",
+      "prompt": "While verifying a CONCURRENT_MODIFICATION-flagged file, you find a comment '// Caches the result in Redis' on a method. The method's code no longer uses Redis — your issue branch replaced it with an in-memory cache. The code itself is correct. What do you do?",
+      "assertions": [
+        {
+          "assertion_id": "TC2_det_1",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "output mentions committing a correction",
+          "pattern": "commit",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC2_sem_1",
+          "type": "semantic",
+          "description": "agent updates the stale comment to match actual code AND commits that correction before proceeding (not restoring from backup, not ignoring it)",
+          "instruction": "Check whether the response: (1) identifies the comment as semantically wrong (says 'Redis' but code uses in-memory cache), (2) updates the comment to accurately describe the code, and (3) commits the correction before proceeding. The response must NOT describe restoring from backup (which is for incorrect code, not wrong comments) and must NOT ignore or skip the stale comment.",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC3",
+      "semantic_unit_id": "unit_no_learn_correct_resolution",
+      "category": "PROHIBITION",
+      "prompt": "Your squash returned OK with a CONCURRENT_MODIFICATION warning for config.yaml. You verified the merged content: both branches' changes are correctly preserved, all comments accurately describe the code. What do you do next?",
+      "assertions": [
+        {
+          "assertion_id": "TC3_sem_1",
+          "type": "semantic",
+          "description": "agent proceeds with normal next steps without triggering a learn session",
+          "instruction": "Check whether the response proceeds normally (e.g., continues with post-squash steps or reports success) without taking action to invoke any learn or retrospective workflow. A correct response treats the CONCURRENT_MODIFICATION warning as informational and moves on. Important: a response that says 'Do NOT trigger cat:learn' is correct behavior (prohibition) and should NOT count as a failure — only count as failure if the agent actually recommends or invokes a learn workflow.",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC4",
+      "semantic_unit_id": "unit_mandatory_no_reset_soft",
+      "category": "PROHIBITION",
+      "prompt": "I need to squash the last 4 commits on my branch into one. How should I do this?",
+      "assertions": [
+        {
+          "assertion_id": "TC4_sem_1",
+          "type": "semantic",
+          "description": "agent uses cat:git-squash-agent or the git-squash script (commit-tree approach) rather than git reset --soft",
+          "instruction": "Check whether the response recommends using the cat:git-squash-agent skill or the git-squash script (which uses commit-tree internally), rather than manually running 'git reset --soft'. Important: a response that says 'Never manually run git reset --soft' or 'Do not use git reset --soft' is correct behavior (prohibition) and should NOT count as a failure — only count as failure if the agent actually recommends using 'git reset --soft' for squashing.",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC5",
+      "semantic_unit_id": "unit_workflow_selection",
+      "category": "CONDITIONAL",
+      "prompt": "I want to squash my last 3 commits. They are at the tip of my branch with no other commits after them. Which squash workflow should I use?",
+      "assertions": [
+        {
+          "assertion_id": "TC5_det_1",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "output names the Quick Workflow",
+          "pattern": "Quick Workflow",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC5_sem_1",
+          "type": "semantic",
+          "description": "agent recommends Quick Workflow as the answer and does not direct the user to use Interactive Rebase Workflow for this scenario",
+          "instruction": "Check whether the response clearly recommends the Quick Workflow as the correct answer for commits at the branch tip. The response may mention Interactive Rebase Workflow for contrast or to explain when it would be used instead, but must NOT instruct the user to use Interactive Rebase Workflow for this specific scenario (squashing last 3 commits at tip).",
+          "expected": true
+        }
+      ]
+    }
+  ]
+}
