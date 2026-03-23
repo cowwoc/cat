@@ -1,1 +1,4 @@
-{"status": "open"}
+{
+  "status" : "in-progress",
+  "target_branch" : "v2.1"
+}
