@@ -666,16 +666,17 @@ public class WorkPrepareTest
   }
 
   /**
-   * Verifies that execute returns LOCKED (not ERROR) when the issue is locked by another session
-   * AND an existing worktree directory is present for that issue.
+   * Verifies that execute returns ERROR with locked_by and lock_age_seconds when the issue is
+   * locked by a foreign session AND an existing worktree directory is present for that issue.
    * <p>
-   * Regression test: previously the worktree check ran before the lock check, causing the agent to
-   * show a misleading "existing worktree — clean up?" prompt instead of the correct LOCKED response.
+   * This allows the skill to show a confirmation dialog with lock-holder info so the user can
+   * decide whether to resume work across sessions, rather than silently skipping the issue.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeReturnsLockedWhenIssueIsLockedAndWorktreeExists() throws IOException
+  public void executeReturnsErrorWithLockedByWhenForeignSessionLockAndWorktreeExists()
+    throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
@@ -713,8 +714,15 @@ public class WorkPrepareTest
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree(json);
-      requireThat(node.path("status").asString(), "status").isEqualTo("LOCKED");
+      // ERROR (not LOCKED) so the skill can present a confirmation dialog
+      requireThat(node.path("status").asString(), "status").isEqualTo("ERROR");
       requireThat(node.path("message").asString(), "message").contains("locked");
+      requireThat(node.path("issue_id").asString(), "issueId").isEqualTo("2.1-locked-with-wt");
+      requireThat(node.path("locked_by").asString(), "lockedBy").isEqualTo(otherSession);
+      requireThat(node.path("lock_age_seconds").asLong(), "lockAgeSeconds").
+        isGreaterThanOrEqualTo(0L);
+      requireThat(node.path("worktree_path").asString(), "worktreePath").
+        isEqualTo(worktreePath.toString());
     }
     finally
     {

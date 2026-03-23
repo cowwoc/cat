@@ -638,6 +638,91 @@ public final class IssueLock
   }
 
   /**
+   * Transfers a lock from one session to another.
+   * <p>
+   * Uses a double-read pattern to reduce the TOCTOU window: the lock is read before and after
+   * writing the replacement file. If the lock changed between reads, the transfer is aborted
+   * and the current owner is returned.
+   * <p>
+   * A narrow race window remains between the second read and the atomic file move. A concurrent
+   * transfer completing in that window would be silently overwritten. Full atomicity would
+   * require OS-level advisory locks (e.g., {@link java.nio.channels.FileLock}), which are not
+   * used here.
+   *
+   * @param issueId      the issue identifier
+   * @param oldSessionId the session expected to currently hold the lock
+   * @param newSessionId the session to transfer the lock to
+   * @param worktree     the worktree path for the new lock
+   * @return {@link LockResult.Acquired} on success;
+   *   {@link LockResult.Error} if no lock exists for the issue;
+   *   {@link LockResult.Locked} if the lock is not held by {@code oldSessionId}
+   * @throws IOException if file operations fail
+   */
+  public LockResult transfer(String issueId, String oldSessionId, String newSessionId, String worktree)
+    throws IOException
+  {
+    requireThat(issueId, "issueId").isNotBlank();
+    requireThat(oldSessionId, "oldSessionId").isNotBlank();
+    requireThat(newSessionId, "newSessionId").isNotBlank();
+    requireThat(worktree, "worktree").isNotBlank();
+
+    validateSessionId(oldSessionId);
+    validateSessionId(newSessionId);
+
+    Path lockFile = getLockFile(issueId);
+
+    // First read: verify the lock exists and is held by oldSessionId
+    if (Files.notExists(lockFile))
+      return new LockResult.Error("error", "No lock exists for issue '" + issueId + "'. Cannot transfer.");
+
+    String firstContent = Files.readString(lockFile);
+    @SuppressWarnings("unchecked")
+    Map<String, Object> firstLockData = scope.getJsonMapper().readValue(firstContent, Map.class);
+    String firstSessionId = firstLockData.get("session_id").toString();
+    long firstCreatedAt = ((Number) firstLockData.get("created_at")).longValue();
+
+    if (!firstSessionId.equals(oldSessionId))
+    {
+      return new LockResult.Locked("locked", "Issue locked by another session", firstSessionId,
+        "FIND_ANOTHER_ISSUE",
+        "Do NOT investigate, remove, or question this lock. Execute a different issue instead. " +
+        "If you believe this is a stale lock from a crashed session, ask the USER to run /cat:cleanup.");
+    }
+
+    // Write new lock to a temp file before the second read
+    Path tempFile = writeLockToTempFile(issueId, newSessionId, worktree);
+
+    // Second read: re-verify lock still has same session_id and created_at as first read.
+    // Another process might have replaced it in the window between the first read and now.
+    if (Files.notExists(lockFile))
+    {
+      Files.deleteIfExists(tempFile);
+      return new LockResult.Error("error", "No lock exists for issue '" + issueId + "'. Cannot transfer.");
+    }
+
+    String secondContent = Files.readString(lockFile);
+    @SuppressWarnings("unchecked")
+    Map<String, Object> secondLockData = scope.getJsonMapper().readValue(secondContent, Map.class);
+    String secondSessionId = secondLockData.get("session_id").toString();
+    long secondCreatedAt = ((Number) secondLockData.get("created_at")).longValue();
+
+    if (!secondSessionId.equals(firstSessionId) || secondCreatedAt != firstCreatedAt)
+    {
+      // The lock changed between first and second read
+      Files.deleteIfExists(tempFile);
+      return new LockResult.Locked("locked", "Issue locked by another session", secondSessionId,
+        "FIND_ANOTHER_ISSUE",
+        "Do NOT investigate, remove, or question this lock. Execute a different issue instead. " +
+        "If you believe this is a stale lock from a crashed session, ask the USER to run /cat:cleanup.");
+    }
+
+    // Atomic move: replaces the existing lock file
+    Files.move(tempFile, lockFile, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+    return new LockResult.Acquired("acquired",
+      "Lock transferred from '" + oldSessionId + "' to '" + newSessionId + "'");
+  }
+
+  /**
    * Checks if an issue is locked.
    *
    * @param issueId the issue identifier
@@ -893,6 +978,7 @@ public final class IssueLock
    *   <li>{@code acquire <issue-id> <session-id> <worktree>}</li>
    *   <li>{@code release <issue-id> <session-id>}</li>
    *   <li>{@code force-release <issue-id>}</li>
+   *   <li>{@code transfer <issue-id> <old-session-id> <new-session-id> <worktree>}</li>
    *   <li>{@code check <issue-id>}</li>
    *   <li>{@code list}</li>
    * </ul>
@@ -944,7 +1030,7 @@ public final class IssueLock
     if (args.length < 1)
     {
       out.println(hookOutput.block(
-        "Usage: issue-lock <command> [args]. Commands: acquire, release, force-release, check, list"));
+        "Usage: issue-lock <command> [args]. Commands: acquire, release, force-release, transfer, check, list"));
       return;
     }
 
@@ -959,11 +1045,12 @@ public final class IssueLock
         case "acquire" -> handleAcquire(lock, mapper, hookOutput, args, out);
         case "release" -> handleRelease(lock, mapper, hookOutput, args, out);
         case "force-release" -> handleForceRelease(lock, mapper, hookOutput, args, out);
+        case "transfer" -> handleTransfer(lock, mapper, hookOutput, args, out);
         case "check" -> handleCheck(lock, mapper, hookOutput, args, out);
         case "list" -> handleList(lock, mapper, out);
         default -> out.println(hookOutput.block(
           "Unknown command: " + command +
-            ". Use acquire, release, force-release, check, or list."));
+            ". Use acquire, release, force-release, transfer, check, or list."));
       }
     }
     catch (IllegalArgumentException | IOException e)
@@ -1038,6 +1125,32 @@ public final class IssueLock
       return;
     }
     LockResult result = lock.forceRelease(args[1]);
+    out.println(result.toJson(mapper));
+  }
+
+  /**
+   * Handles the transfer subcommand.
+   *
+   * @param lock       the issue lock instance
+   * @param mapper     the JSON mapper
+   * @param hookOutput the hook output for block responses
+   * @param args       the command-line arguments
+   * @param out        the output stream
+   * @throws IOException if the operation fails
+   */
+  private static void handleTransfer(IssueLock lock, JsonMapper mapper, HookOutput hookOutput, String[] args,
+    PrintStream out) throws IOException
+  {
+    if (args.length < 5)
+    {
+      out.println(hookOutput.block("Usage: transfer <issue-id> <old-session-id> <new-session-id> <worktree>"));
+      return;
+    }
+    String issueId = args[1];
+    String oldSessionId = args[2];
+    String newSessionId = args[3];
+    String worktree = args[4];
+    LockResult result = lock.transfer(issueId, oldSessionId, newSessionId, worktree);
     out.println(result.toJson(mapper));
   }
 
