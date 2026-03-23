@@ -4,8 +4,8 @@
     "mistake_count_threshold" : 10,
     "trigger_interval_days" : 7
   },
-  "last_retrospective" : "2026-03-16T18:30:00Z",
-  "mistake_count_since_last" : 35,
+  "last_retrospective" : "2026-03-23T13:18:51.196642020Z",
+  "mistake_count_since_last" : 0,
   "files" : {
     "mistakes" : [ "mistakes-2026-01.json", "mistakes-2026-02.json", "mistakes-2026-03.json" ],
     "retrospectives" : [ "retrospectives-2026-01.json", "retrospectives-2026-02.json", "retrospectives-2026-03.json" ]
@@ -387,6 +387,32 @@
     "preventions" : [ "M562" ],
     "related_action_items" : [ "A035" ],
     "note" : "BFG --delete-files matches by filename only (not path); agent used it to remove root-level files, deleting ALL same-named files throughout history"
+  }, {
+    "pattern_id" : "PATTERN-030",
+    "pattern" : "skill_output_format_priming",
+    "occurrences_total" : 3,
+    "occurrences_after_fix" : 0,
+    "first_seen" : "2026-03-19T14:53:44Z",
+    "last_seen" : "2026-03-22T23:59:22Z",
+    "last_action_date" : null,
+    "status" : "new",
+    "effectiveness" : "pending",
+    "preventions" : [ "M591", "M596", "M597" ],
+    "related_action_items" : [ "A036" ],
+    "note" : "Skill documentation contains example output formats or argument values placed before execution steps, priming agents to produce output directly without executing the documented workflow. M591: wrong issue_path example in arg table primes main workspace path. M596/M597: stakeholder-review Progress Output template shown before spawn step primes review fabrication without spawning reviewer subagents."
+  }, {
+    "pattern_id" : "PATTERN-031",
+    "pattern" : "skill_incorrect_instruction",
+    "occurrences_total" : 2,
+    "occurrences_after_fix" : 0,
+    "first_seen" : "2026-03-19T14:53:44Z",
+    "last_seen" : "2026-03-23T12:00:00Z",
+    "last_action_date" : null,
+    "status" : "new",
+    "effectiveness" : "pending",
+    "preventions" : [ "M588", "M598" ],
+    "related_action_items" : [ "A037" ],
+    "note" : "Skill documentation contains explicitly incorrect instructions that cause agents to produce wrong results. M588: work-implement-agent showed wrong catAgentId format (missing /subagents/ segment). M598: instruction-builder docs incorrectly instructed committing post-compression benchmark JSON (transient verification artifact, not a persistent benchmark)."
   } ],
   "action_items" : [ {
     "id" : "A001",
@@ -1019,6 +1045,38 @@
       "post_fix_mistakes" : [ ],
       "verdict" : "pending"
     }
+  }, {
+    "id" : "A036",
+    "priority" : "medium",
+    "description" : "Audit all skill documentation for output format examples appearing before execution steps: (1) Move output format templates to AFTER execution steps, or replace with abstract descriptions that cannot be directly copied. (2) Replace concrete argument example values with descriptive placeholders. Affected: stakeholder-review-agent (remove Progress Output code block before spawn step), work phase skills (replace concrete issue_path examples with ${WORKTREE_PATH}/<suffix> pattern).",
+    "category" : "documentation_priming",
+    "pattern_id" : "PATTERN-030",
+    "status" : "open",
+    "created_date" : "2026-03-23T13:18:51Z",
+    "completed_date" : null,
+    "related_mistakes" : [ "M591", "M596", "M597" ],
+    "effectiveness_check" : {
+      "mistakes_before" : 3,
+      "mistakes_after" : null,
+      "post_fix_mistakes" : [ ],
+      "verdict" : "pending"
+    }
+  }, {
+    "id" : "A037",
+    "priority" : "low",
+    "description" : "Audit recently-written skill documentation for explicitly incorrect instructions: (1) Verify all argument format examples match the actual expected argument format. (2) Review instruction-builder, work-implement, work-confirm, work-review skills for incorrect arg format documentation. (3) Add a skill doc accuracy review step to the /cat:learn prevention phase that cross-checks new documentation against source code when documenting argument formats.",
+    "category" : "misleading_documentation",
+    "pattern_id" : "PATTERN-031",
+    "status" : "open",
+    "created_date" : "2026-03-23T13:18:51Z",
+    "completed_date" : null,
+    "related_mistakes" : [ "M588", "M598" ],
+    "effectiveness_check" : {
+      "mistakes_before" : 2,
+      "mistakes_after" : null,
+      "post_fix_mistakes" : [ ],
+      "verdict" : "pending"
+    }
   } ],
   "escalations" : [ {
     "id" : "ESCALATE-2026-03-10-001",
@@ -1199,6 +1257,66 @@
       "layers" : [ "Monitor for 1 more clean period (0 PATTERN-017 recurrences)", "If clean: close ESCALATE-2026-03-14-003 and ESCALATE-2026-03-16-003", "If recurrence: immediately create issue 2.1-fix-approval-gate-answers-validation" ]
     },
     "priority" : "high",
+    "status" : "open"
+  }, {
+    "id" : "ESCALATE-2026-03-23-001",
+    "original_action_id" : "A001",
+    "retrospective_id" : "R031",
+    "created_date" : "2026-03-23T13:18:51Z",
+    "original_fix_description" : "Enforce validation separation: subagents that PRODUCE output must NOT validate it. ESCALATE-2026-03-16-001 proposed monitoring for 1 clean period then closing.",
+    "failure_analysis" : {
+      "expected_result" : "ESCALATE-2026-03-16-001 required 0 new PATTERN-001 recurrences in current period to close escalation",
+      "actual_result" : "M596 and M597 show fabrication continuing in a new form: stakeholder-review-agent fabricated complete review outputs without spawning reviewer subagents. Documentation priming causes the same LLM tendency to appear in a new context (PATTERN-030).",
+      "root_cause" : "Pattern mutation: fixing validation-score fabrication (PATTERN-001) does not prevent output-template fabrication (PATTERN-030). The underlying behavior — LLM produces expected output format directly when documentation shows it before execution — recurs in new skill contexts. Hook-level enforcement for PATTERN-001 was never implemented.",
+      "gap_identified" : "PATTERN-030 is a structural recurrence of the fabrication pattern in a different domain. The PostToolUse validation-evidence hook proposed in ESCALATE-2026-03-14-001 was never built and would not cover PATTERN-030."
+    },
+    "proposed_solution" : {
+      "approach" : "defense-in-depth",
+      "description" : "Two-pronged approach: (1) A036 addresses documentation-level priming for PATTERN-030. (2) Implement structural enforcement: add to work-with-issue post-review verification that Task tool was actually called (N Task calls made before accepting 'all stakeholders reviewed' result).",
+      "prevention_type" : "hook",
+      "layers" : [ "A036: Remove output format templates from skill docs before execution steps", "Skill fix: work-with-issue verify that at least N Task calls were made before accepting stakeholder review completion", "Monitor: if fabrication pattern reaches 10+ total across PATTERN-001 and PATTERN-030, implement PostToolUse hook immediately" ]
+    },
+    "priority" : "high",
+    "status" : "open"
+  }, {
+    "id" : "ESCALATE-2026-03-23-002",
+    "original_action_id" : "A003",
+    "retrospective_id" : "R031",
+    "created_date" : "2026-03-23T13:18:51Z",
+    "original_fix_description" : "Document path and config verification requirements. ESCALATE-2026-03-16-002 required 0 new PATTERN-003 occurrences, proposed two CAT issues: fix-learn-skill-investigation-path and add-plugin-root-failfast-guard.",
+    "failure_analysis" : {
+      "expected_result" : "ESCALATE-2026-03-16-002 required 0 new PATTERN-003 occurrences in current period",
+      "actual_result" : "M594 (work-merge-agent uses CLAUDE_PROJECT_DIR instead of WORKTREE_PATH for VERIFY_DIR) adds new PATTERN-003 occurrence. Pattern remains WORSENING. The two CAT issues from R030 were proposed but not created.",
+      "root_cause" : "Systemic documentation pattern: skill documentation uses CLAUDE_PROJECT_DIR as a path prefix even in contexts where WORKTREE_PATH is required. Each new or modified skill introduces new instances without a systematic audit having been done.",
+      "gap_identified" : "No systematic audit of all skill documentation for incorrect CLAUDE_PROJECT_DIR usage has been performed. New skills and modified skills introduce new instances faster than individual fixes can address them."
+    },
+    "proposed_solution" : {
+      "approach" : "systematic-audit",
+      "description" : "Create CAT issue for systematic audit of all skill documentation: (1) Search all first-use.md for CLAUDE_PROJECT_DIR and verify each is correct (not inside a worktree operation). (2) Immediately fix work-merge-agent Step 7 VERIFY_DIR construction (M594). (3) Create the previously proposed CAT issues from R030.",
+      "prevention_type" : "skill",
+      "layers" : [ "Immediate fix: work-merge-agent Step 7 — replace CLAUDE_PROJECT_DIR with WORKTREE_PATH in VERIFY_DIR construction", "Issue: 2.1-audit-skill-path-variable-usage — grep all first-use.md for CLAUDE_PROJECT_DIR and verify correctness", "Issue: 2.1-fix-learn-skill-investigation-path", "Issue: 2.1-add-plugin-root-failfast-guard" ]
+    },
+    "priority" : "critical",
+    "status" : "open"
+  }, {
+    "id" : "ESCALATE-2026-03-23-003",
+    "original_action_id" : "A020",
+    "retrospective_id" : "R031",
+    "created_date" : "2026-03-23T13:18:51Z",
+    "original_fix_description" : "Enforce approval gate: PreToolUse hook must validate answers content. ESCALATE-2026-03-16-003 required 0 new PATTERN-017 recurrences and proposed monitoring.",
+    "failure_analysis" : {
+      "expected_result" : "ESCALATE-2026-03-16-003 required 0 new PATTERN-017 recurrences in current period to close escalation",
+      "actual_result" : "M593 (agent misinterpreted Skill tool response, constructed manual Agent task without AskUserQuestion, self-approved merge) is a new PATTERN-017 recurrence introducing a new bypass vector.",
+      "root_cause" : "M593 bypass vector: agent misinterpreted Skill tool returning documentation as a failure, then constructed a manual Agent task with simplified prompt omitting AskUserQuestion. The hook only validates Task(work-merge) calls; manually delegated Agent tasks bypass the hook entirely.",
+      "gap_identified" : "Hook coverage is incomplete: monitors Task tool work-merge invocations but not direct Agent tool spawning of merge-equivalent logic. Manual delegation with simplified prompts bypasses both the AskUserQuestion requirement and the existing hook."
+    },
+    "proposed_solution" : {
+      "approach" : "alternative",
+      "description" : "Create issue 2.1-fix-approval-gate-hook-coverage: (1) Add plugin rules entry clarifying that Skill tool returning documentation is correct behavior, not a failure. (2) Extend approval gate enforcement to cover Agent tool spawning with merge-related prompt keywords. (3) Add guidance to work-with-issue: when Skill tool invocation loads a skill, use the Task tool to execute it.",
+      "prevention_type" : "hook",
+      "layers" : [ "Create issue: 2.1-fix-approval-gate-hook-coverage", "Hook: extend PreToolUse to cover Agent tool calls containing merge workflow keywords in prompt", "Documentation: explain Skill tool loading vs Task tool execution distinction", "Skill fix: work-with-issue clarify Skill-loads vs Task-executes semantics" ]
+    },
+    "priority" : "critical",
     "status" : "open"
   } ]
 }
