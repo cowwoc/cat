@@ -354,6 +354,71 @@ plan.md or index.json:
 
 Each file to be staged must be named explicitly by its full path relative to the worktree root.
 
+### Schema Migration Coverage Check
+
+After all pending changes are committed and before spawning any subagent, run a schema migration coverage check.
+This check warns when a schema-relevant file was modified in the current commit set but other unmodified source files
+still contain its filename as a literal string — indicating those files may also need updating (e.g., a skill that
+hardcodes a filename that was renamed, or a migration script referencing an old path).
+
+A file is schema-relevant if its basename matches any of the following names (case-insensitive):
+`index.json` or `plan.md`.
+
+**What "references" means:** a file references a schema-relevant basename when that exact string appears as a literal
+substring in the file's content (e.g., `grep -F "plan.md"` matches). Files that merely happen to be named similarly
+are not counted — only files whose content contains the basename string.
+
+**Scope:** The search covers `*.md`, `*.sh`, and `*.json` files under the worktree, excluding:
+- `.git/` — git internals
+- `.cat/` — issue tracking, config, and runtime data (not source files)
+- `target/` — build artifacts
+
+```bash
+{
+  CHANGED_SCHEMA_FILES=$(git -C "${WORKTREE_PATH}" diff --name-status "${TARGET_BRANCH}..HEAD" | \
+    awk '{print $NF}' | while IFS= read -r f; do
+      bn=$(basename "$f" | tr '[:upper:]' '[:lower:]')
+      case "$bn" in
+        index.json|plan.md) echo "$f" ;;
+      esac
+    done)
+
+  if [[ -n "$CHANGED_SCHEMA_FILES" ]]; then
+    CHANGED_FILES_LIST=$(git -C "${WORKTREE_PATH}" diff --name-only "${TARGET_BRANCH}..HEAD")
+
+    while IFS= read -r schema_file; do
+      [[ -z "$schema_file" ]] && continue
+      schema_basename=$(basename "$schema_file")
+
+      REFS=$(grep -r --include="*.md" --include="*.sh" --include="*.json" \
+        -lF "$schema_basename" "${WORKTREE_PATH}" 2>/dev/null | \
+        grep -v "/.git/" | \
+        grep -v "/.cat/" | \
+        grep -v "/target/" | \
+        while IFS= read -r ref_file; do
+          rel_ref="${ref_file#${WORKTREE_PATH}/}"
+          if ! echo "$CHANGED_FILES_LIST" | grep -qxF "$rel_ref"; then
+            echo "$ref_file"
+          fi
+        done)
+
+      if [[ -n "$REFS" ]]; then
+        echo "WARNING: Schema migration coverage — '${schema_basename}' was modified but the following" \
+          "unmodified files still reference it and may need updating:"
+        while IFS= read -r ref_file; do
+          [[ -z "$ref_file" ]] && continue
+          echo "  ${ref_file#${WORKTREE_PATH}/}"
+          grep -nF "$schema_basename" "$ref_file" 2>/dev/null | sed 's/^/    /'
+        done <<< "$REFS"
+        echo "  Review each file above to determine whether it needs updating."
+      fi
+    done <<< "$CHANGED_SCHEMA_FILES"
+  fi
+} || true
+```
+
+This check is advisory only — it WARNS but does not BLOCK. Continue to subagent delegation regardless of output.
+
 ### Single-Subagent Execution (no groups or only one group)
 
 Spawn a subagent to implement the issue:
