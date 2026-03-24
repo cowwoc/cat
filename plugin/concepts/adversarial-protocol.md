@@ -45,9 +45,10 @@ agent has confirmed they are false premises, not actual loopholes.
 
 **Final-round MEDIUM/LOW cleanup:** When the red-team returns `has_critical_high: false` and the `loopholes`
 array still contains MEDIUM or LOW entries, resume the blue-team one final time to patch those remaining
-findings before exiting the loop. Skip arbitration and diff-validation for this cleanup pass — MEDIUM/LOW
-findings do not warrant the full validation cycle. After the blue-team commits the cleanup patches, the loop
-terminates.
+findings before exiting the loop. Diff-validation is still skipped for this cleanup pass. However, if the
+blue-team returns `has_new_disputes: true`, run the arbitration agent (same flow as Step 3 in the main loop)
+before exiting — disputes in the MEDIUM/LOW cleanup pass still require independent verification. After the
+blue-team commits the cleanup patches (and arbitration completes if needed), the loop terminates.
 
 ## findings.json Schema
 
@@ -208,9 +209,10 @@ hash {COMMIT_HASH} (no commits since {PREV_COMMIT})" and abort.
 **Termination check:** Parse the JSON object from the last line of the red-team's response. Extract the
 `commit` field as `RED_TEAM_COMMIT_HASH` and the `has_critical_high` field. If `has_critical_high` is `false`:
 check for remaining MEDIUM/LOW findings (see "Final-round MEDIUM/LOW cleanup" in § Convergence Criterion).
-If MEDIUM/LOW findings remain, resume blue-team for one final cleanup pass, then **STOP THE LOOP**. If no
-findings remain, **STOP THE LOOP** immediately. If `has_critical_high` is `true`: proceed to Step 2
-(blue-team patching).
+If MEDIUM/LOW findings remain, resume blue-team for one final cleanup pass; if the blue-team returns
+`has_new_disputes: true`, run arbitration (Step 3) before stopping; then **STOP THE LOOP**. If no findings
+remain, **STOP THE LOOP** immediately. If `has_critical_high` is `true`: proceed to Step 2 (blue-team
+patching).
 
 **Error handling:**
 - If the red-team's last line is not valid JSON or is missing `commit` or `has_critical_high` fields: log

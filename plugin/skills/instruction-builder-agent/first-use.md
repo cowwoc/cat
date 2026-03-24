@@ -1477,7 +1477,7 @@ Overall verification passes if all non-skipped items are checked and all skipped
 - [ ] Step 2 design subagent tool prohibition explicitly lists Grep alongside Bash, Write, Edit, Glob, WebFetch, WebSearch
 - [ ] Step 2 draft validation checks that each required section contains non-empty content (not just headings)
 - [ ] Step 5 follows shared adversarial protocol from plugin/concepts/adversarial-protocol.md
-- [ ] Shared protocol performs final-round MEDIUM/LOW cleanup pass (blue-team only, no arbitration/diff-validation) before loop exit
+- [ ] Shared protocol performs final-round MEDIUM/LOW cleanup pass (no diff-validation; arbitration runs if blue-team returns has_new_disputes: true) before loop exit
 - [ ] Step 5 uses target_type: skill_instructions
 - [ ] Step 5 main agent never reads findings.json directly — uses structured JSON returns from subagents
 - [ ] In-place hardening mode produces per-round commits (one from red-team, one from blue-team per round)
