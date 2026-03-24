@@ -53,7 +53,7 @@ public final class RequireSkillForCommandTest
   /**
    * Writes the loaded markers for the given session ID under the scope's session base path.
    *
-   * @param scope the JVM scope
+   * @param scope the JVM scope providing the session base path
    * @param sessionId the session ID (used as the agent directory name for main agents)
    * @param skills the newline-separated skill names to write
    * @throws IOException if writing fails
@@ -79,7 +79,7 @@ public final class RequireSkillForCommandTest
    * <p>
    * Creates marker files in {@code sessionBasePath/{sessionId}/subagents/{nativeAgentId}/loaded/}.
    *
-   * @param scope the JVM scope
+   * @param scope the JVM scope providing the session base path
    * @param sessionId the session ID
    * @param nativeAgentId the native (non-composite) agent ID
    * @param skills the newline-separated skill names to write

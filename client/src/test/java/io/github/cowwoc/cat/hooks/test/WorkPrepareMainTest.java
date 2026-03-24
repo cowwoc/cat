@@ -25,7 +25,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * Tests for WorkPrepare.run() CLI error path handling.
  * <p>
  * Verifies that when the CLI encounters errors (invalid trust level, missing configuration),
- * it produces valid HookOutput JSON with "decision": "block" on stdout instead of throwing exceptions
+ * it produces a block response via ClaudeHook with "decision": "block" on stdout instead of throwing exceptions
  * or producing malformed output.
  * <p>
  * Tests are designed for parallel execution - each test is self-contained with no shared state.
