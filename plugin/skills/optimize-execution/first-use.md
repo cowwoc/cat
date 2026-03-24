@@ -588,7 +588,7 @@ For a session with 45 tool calls building a feature:
 ### What Went Well
 - Correctly parallelized 3 independent Grep searches in a single message
 - Delegated explore phase to Haiku subagent with 84% cache hit rate, saving 64% cost-weighted tokens
-- Used batch-read for 4 related config files instead of sequential reads
+- Parallelized 4 related config file reads in a single message instead of sequential reads
 
 ### Issues Found
 
@@ -721,7 +721,6 @@ at 10 cents on the dollar, making delegation highly cost-efficient even when raw
 ## Integration with Other Skills
 
 - **get-history**: Provides raw session data for analysis
-- **batch-read**: Implements batch optimization recommendations
 - **token-report**: Complements with token-focused metrics
 - **learn**: Optimization findings may reveal error patterns
 
@@ -736,5 +735,4 @@ at 10 cents on the dollar, making delegation highly cost-efficient even when raw
 
 - **get-history**: Session storage format and how to access raw session data — `plugin/skills/get-history-agent/first-use.md`
 - **token-report**: Token budgeting and context health metrics — `plugin/skills/token-report-agent/first-use.md`
-- **batch-read**: Efficiency patterns for reading multiple related files in one operation — `plugin/skills/batch-read-agent/first-use.md`
 - **subagent-context-minimization**: When and how to pass file paths instead of file content to subagents — `plugin/concepts/subagent-context-minimization.md`
