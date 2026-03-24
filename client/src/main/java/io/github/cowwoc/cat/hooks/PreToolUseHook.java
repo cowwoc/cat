@@ -60,7 +60,7 @@ public final class PreToolUseHook implements HookHandler
    * @param scope the JVM scope providing access to shared resources
    * @throws NullPointerException if {@code scope} is null
    */
-  public PreToolUseHook(JvmScope scope)
+  public PreToolUseHook(ClaudeHook scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.handlers = List.of(
@@ -80,7 +80,7 @@ public final class PreToolUseHook implements HookHandler
       new ValidateGitOperations(),
       new VerifyStateInCommit(),
       new WarnFileExtraction(),
-      new WarnMainWorkspaceCommit(scope),
+      new WarnMainWorkspaceCommit(),
       new RequireSkillForCommand(scope));
   }
 
@@ -95,25 +95,20 @@ public final class PreToolUseHook implements HookHandler
   }
 
   /**
-   * Processes hook input and returns the result with any warnings.
+   * Processes hook data and returns the result with any warnings.
    *
-   * @param input the hook input to process
-   * @param output the hook output builder for creating responses
+   * @param scope the hook scope providing input data and output building
    * @return the hook result containing JSON output and warnings
-   * @throws NullPointerException if {@code input} or {@code output} are null
    */
   @Override
-  public HookResult run(HookInput input, HookOutput output)
+  public HookResult run(ClaudeHook scope)
   {
-    requireThat(input, "input").isNotNull();
-    requireThat(output, "output").isNotNull();
-
-    String toolName = input.getToolName();
+    String toolName = scope.getToolName();
     if (!equalsIgnoreCase(toolName, "Bash"))
-      return HookResult.withoutWarnings(output.empty());
+      return HookResult.withoutWarnings(scope.empty());
 
-    if (input.getCommand().isEmpty())
-      return HookResult.withoutWarnings(output.empty());
+    if (scope.getCommand().isEmpty())
+      return HookResult.withoutWarnings(scope.empty());
 
     List<String> warnings = new ArrayList<>();
 
@@ -122,14 +117,14 @@ public final class PreToolUseHook implements HookHandler
     {
       try
       {
-        BashHandler.Result result = handler.check(input);
+        BashHandler.Result result = handler.check(scope);
         if (result.blocked())
         {
           String jsonOutput;
           if (result.additionalContext().isEmpty())
-            jsonOutput = output.block(result.reason());
+            jsonOutput = scope.block(result.reason());
           else
-            jsonOutput = output.block(result.reason(), result.additionalContext());
+            jsonOutput = scope.block(result.reason(), result.additionalContext());
           return new HookResult(jsonOutput, warnings);
         }
         if (!result.reason().isEmpty())
@@ -142,6 +137,6 @@ public final class PreToolUseHook implements HookHandler
     }
 
     // Allow the command
-    return new HookResult(output.empty(), warnings);
+    return new HookResult(scope.empty(), warnings);
   }
 }

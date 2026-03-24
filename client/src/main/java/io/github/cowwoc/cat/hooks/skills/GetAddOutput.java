@@ -8,7 +8,8 @@ package io.github.cowwoc.cat.hooks.skills;
 
 import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -448,7 +449,7 @@ public final class GetAddOutput implements SkillOutput
     // If no CLI args or first arg is --project-dir, produce planning data
     if (args.length == 0 || args[0].equals("--project-dir"))
     {
-      try (JvmScope scope = new MainJvmScope())
+      try (ClaudeTool scope = new MainClaudeTool())
       {
         GetAddOutput output = new GetAddOutput(scope);
         String result = output.getOutput(args);
@@ -549,7 +550,7 @@ public final class GetAddOutput implements SkillOutput
       }
     }
 
-    try (JvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
       GetAddOutput output = new GetAddOutput(scope);
       String result = output.getOutput(itemType, itemNames, version, issueType, dependencies,

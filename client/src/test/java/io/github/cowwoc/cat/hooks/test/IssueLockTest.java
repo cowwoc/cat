@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.IssueLock;
 import io.github.cowwoc.cat.hooks.util.IssueLock.LockListEntry;
 import io.github.cowwoc.cat.hooks.util.IssueLock.LockResult;
@@ -46,7 +45,7 @@ public class IssueLockTest
   public void acquireSucceedsWhenNoLockExists() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -76,7 +75,7 @@ public class IssueLockTest
   public void acquireIsIdempotentForSameSession() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -107,7 +106,7 @@ public class IssueLockTest
   public void acquireFailsWhenLockedByAnotherSession() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -143,7 +142,7 @@ public class IssueLockTest
   public void acquireRejectsInvalidSessionId() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -167,7 +166,7 @@ public class IssueLockTest
   public void releaseSucceedsWhenLockOwned() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -198,7 +197,7 @@ public class IssueLockTest
   public void releaseFailsWhenLockOwnedByAnotherSession() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -230,7 +229,7 @@ public class IssueLockTest
   public void releaseSucceedsWhenNoLockExists() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -260,7 +259,7 @@ public class IssueLockTest
   public void forceReleaseRemovesLockRegardlessOfOwner() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -292,7 +291,7 @@ public class IssueLockTest
   public void forceReleaseSucceedsWhenNoLockExists() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -321,7 +320,7 @@ public class IssueLockTest
   public void checkReturnsUnlockedWhenNoLockExists() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -350,7 +349,7 @@ public class IssueLockTest
   public void checkReturnsLockedStatusWhenLockExists() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -383,7 +382,7 @@ public class IssueLockTest
   public void listReturnsEmptyListWhenNoLocksExist() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -412,7 +411,7 @@ public class IssueLockTest
   public void listReturnsAllLocks() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -466,7 +465,7 @@ public class IssueLockTest
   public void listSkipsMalformedLockFiles() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -504,7 +503,7 @@ public class IssueLockTest
   public void checkThrowsOnMissingWorktreesMap() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -534,7 +533,7 @@ public class IssueLockTest
   public void lockFileSanitizesIssueIdWithSlashes() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -563,7 +562,7 @@ public class IssueLockTest
   @Test
   public void toJsonProducesCorrectFormatForAcquired() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       LockResult.Acquired result = new LockResult.Acquired("acquired", "Lock acquired successfully");
@@ -584,7 +583,7 @@ public class IssueLockTest
   @Test
   public void toJsonProducesCorrectFormatForLocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       LockResult.Locked result = new LockResult.Locked("locked", "Issue locked", "session-123",
@@ -609,7 +608,7 @@ public class IssueLockTest
   @Test
   public void toJsonProducesCorrectFormatForCheckLocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       LockResult.CheckLocked result = new LockResult.CheckLocked(true, "session-id", 300, "/path");
@@ -632,7 +631,7 @@ public class IssueLockTest
   @Test
   public void toJsonProducesCorrectFormatForCheckUnlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       LockResult.CheckUnlocked result = new LockResult.CheckUnlocked(false, "Issue not locked");
@@ -654,7 +653,7 @@ public class IssueLockTest
   public void lockFileSanitizesBackslashesInIssueId() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -684,7 +683,7 @@ public class IssueLockTest
   public void lockFileSanitizesColonsInIssueId() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -714,7 +713,7 @@ public class IssueLockTest
   public void acquireStoresSessionIdInLockFile() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -748,7 +747,7 @@ public class IssueLockTest
   public void acquireRejectsLockRefreshedByConcurrentSession() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -809,7 +808,7 @@ public class IssueLockTest
   public void acquireOverwritesStaleLockFromDifferentSession() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -870,7 +869,7 @@ public class IssueLockTest
   public void acquireRejectsNonStaleLockFromDifferentSession() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -924,7 +923,7 @@ public class IssueLockTest
   public void acquirePopulatesWorktreesMapImmediately() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -971,7 +970,7 @@ public class IssueLockTest
   public void acquireRejectsBlankWorktreePath() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -999,7 +998,7 @@ public class IssueLockTest
   public void acquireFailsWhenSessionAlreadyHoldsLockForDifferentIssue() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -1032,7 +1031,7 @@ public class IssueLockTest
   public void acquireSucceedsAfterReleasingPriorLock() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -1066,7 +1065,7 @@ public class IssueLockTest
   public void acquireIsIdempotentForSameIssueReacquire() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -1099,7 +1098,7 @@ public class IssueLockTest
   public void acquireAllowsDifferentSessionsToHoldSeparateIssues() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -1130,7 +1129,7 @@ public class IssueLockTest
   public void acquireSucceedsDespiteCorruptedLockFileInScanPath() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -1170,7 +1169,7 @@ public class IssueLockTest
   public void acquireCorrectlyDetectsConflictWithManyLockFiles() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -1212,7 +1211,7 @@ public class IssueLockTest
   public void transferSucceedsWhenLockHeldByExpectedSession() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -1257,7 +1256,7 @@ public class IssueLockTest
   public void transferFailsWhenLockNotHeldByExpectedSession() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -1293,7 +1292,7 @@ public class IssueLockTest
   public void transferFailsWhenNoLockExists() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {

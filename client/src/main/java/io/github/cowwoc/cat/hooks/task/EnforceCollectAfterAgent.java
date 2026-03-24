@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.hooks.task;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.TaskHandler;
 import io.github.cowwoc.cat.hooks.WorktreeContext;
 import org.slf4j.Logger;
@@ -32,7 +32,7 @@ import java.util.Optional;
 public final class EnforceCollectAfterAgent implements TaskHandler
 {
   private final Logger log = LoggerFactory.getLogger(EnforceCollectAfterAgent.class);
-  private final JvmScope scope;
+  private final ClaudeHook scope;
 
   /**
    * Creates a new EnforceCollectAfterAgent handler.
@@ -40,7 +40,7 @@ public final class EnforceCollectAfterAgent implements TaskHandler
    * @param scope the JVM scope providing the session base path
    * @throws NullPointerException if {@code scope} is null
    */
-  public EnforceCollectAfterAgent(JvmScope scope)
+  public EnforceCollectAfterAgent(ClaudeHook scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;

@@ -8,9 +8,7 @@ package io.github.cowwoc.cat.hooks.session;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.ClaudeEnv;
-import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 
 import java.io.IOException;
@@ -31,35 +29,18 @@ import java.nio.file.StandardOpenOption;
  */
 public final class InjectEnv implements SessionStartHandler
 {
-  private final JvmScope scope;
-  private final ClaudeEnv claudeEnv;
+  private final ClaudeHook scope;
 
   /**
-   * Creates a new InjectEnv handler reading the env file path from the process environment.
+   * Creates a new InjectEnv handler.
    *
-   * @param scope the JVM scope
+   * @param scope the hook scope
    * @throws NullPointerException if {@code scope} is null
    */
-  public InjectEnv(JvmScope scope)
-  {
-    this(scope, new ClaudeEnv());
-  }
-
-  /**
-   * Creates a new InjectEnv handler with an explicit ClaudeEnv.
-   * <p>
-   * Intended for tests where the process environment is not populated with Claude variables.
-   *
-   * @param scope     the JVM scope
-   * @param claudeEnv the ClaudeEnv to read the env file path from
-   * @throws NullPointerException if {@code scope} or {@code claudeEnv} are null
-   */
-  public InjectEnv(JvmScope scope, ClaudeEnv claudeEnv)
+  public InjectEnv(ClaudeHook scope)
   {
     requireThat(scope, "scope").isNotNull();
-    requireThat(claudeEnv, "claudeEnv").isNotNull();
     this.scope = scope;
-    this.claudeEnv = claudeEnv;
   }
 
   /**
@@ -72,11 +53,9 @@ public final class InjectEnv implements SessionStartHandler
    * For source="resume", writes directly to the resumed session's env directory (identified by session_id from
    * stdin JSON) using TRUNCATE_EXISTING to overwrite any previously written content.
    * <p>
-   * The env file path is obtained from {@link ClaudeEnv#getEnvFile()}.
+   * The env file path is obtained from {@link ClaudeTool#getEnvFile()} via the scope.
    *
-   * @param input the hook input
    * @return a result with a warning if a symlink was skipped, otherwise empty
-   * @throws NullPointerException if {@code input} is null
    * @throws AssertionError if required environment variables are not set (CLAUDE_ENV_FILE, CLAUDE_PROJECT_DIR,
    *   CLAUDE_PLUGIN_ROOT) or if session_id is not found in hook input
    * @throws IllegalArgumentException if any environment value contains dangerous shell characters, or if
@@ -84,20 +63,19 @@ public final class InjectEnv implements SessionStartHandler
    * @throws WrappedCheckedException if writing to the env file fails
    */
   @Override
-  public Result handle(HookInput input)
+  public Result handle(ClaudeHook scope)
   {
-    requireThat(input, "input").isNotNull();
-    Path envPath = claudeEnv.getEnvFile();
+    Path envPath = scope.getEnvFile();
     if (Files.isSymbolicLink(envPath))
       return Result.context("InjectEnv: CLAUDE_ENV_FILE is a symlink - skipping for security");
 
     // CLAUDE_SESSION_ID is empty in the hook environment. Read from stdin JSON instead.
-    String sessionId = input.getSessionId();
+    String sessionId = scope.getSessionId();
     requireThat(sessionId, "session_id").isNotEmpty();
 
     // Only write for new sessions (startup), cleared sessions (clear), or resumed sessions (resume).
     // Skip for compacted (compact) sessions — the env file is already correct after compaction.
-    String source = input.getString("source");
+    String source = scope.getString("source");
     switch (source)
     {
       case "resume" ->

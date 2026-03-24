@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetIssueCompleteOutput;
 import io.github.cowwoc.cat.hooks.util.IssueGoalReader;
 import org.testng.annotations.Test;
@@ -36,7 +35,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getIssueCompleteBoxContainsIssueNameAndBoxStructure() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getIssueCompleteBox("2.1-test", "2.1-next", "Implement feature X", "main");
@@ -52,7 +51,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getIssueCompleteBoxContainsHeader() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getIssueCompleteBox("2.1-test", "2.1-next", "Implement feature X", "main");
@@ -68,7 +67,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getIssueCompleteBoxContainsCompletedIssue() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getIssueCompleteBox("2.1-add-login", "2.1-next", "Implement feature X",
@@ -85,7 +84,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getIssueCompleteBoxContainsNextIssue() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getIssueCompleteBox("2.1-test", "2.1-add-validation",
@@ -103,7 +102,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getIssueCompleteBoxUsesMarkdownBoldNextLabel() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getIssueCompleteBox("2.1-test", "2.1-next", "Some goal", "main");
@@ -119,7 +118,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getIssueCompleteBoxContainsNextGoal() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getIssueCompleteBox("2.1-test", "2.1-next", "Add user authentication",
@@ -136,7 +135,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getIssueCompleteBoxContainsTargetBranch() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getIssueCompleteBox("2.1-test", "2.1-next", "Goal text", "v2.1");
@@ -152,7 +151,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getIssueCompleteBoxContainsContinuationInstructions() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getIssueCompleteBox("2.1-test", "2.1-next", "Goal", "main");
@@ -168,7 +167,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getIssueCompleteBoxHasBoxStructure() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getIssueCompleteBox("2.1-test", "2.1-next", "Goal", "main");
@@ -186,7 +185,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getScopeCompleteBoxContainsScopeNameAndBoxStructure() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getScopeCompleteBox("v2.1");
@@ -202,7 +201,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getScopeCompleteBoxContainsHeader() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getScopeCompleteBox("v2.1");
@@ -218,7 +217,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getScopeCompleteBoxContainsScopeName() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getScopeCompleteBox("v3.0");
@@ -234,7 +233,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getScopeCompleteBoxHasBoxStructure() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getScopeCompleteBox("v2.1");
@@ -253,7 +252,7 @@ public class GetIssueCompleteOutputTest
     expectedExceptionsMessageRegExp = ".*issueName.*")
   public void getIssueCompleteBoxThrowsOnNullIssueName() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       output.getIssueCompleteBox(null, "2.1-next", "Goal", "main");
@@ -269,7 +268,7 @@ public class GetIssueCompleteOutputTest
     expectedExceptionsMessageRegExp = ".*issueName.*")
   public void getIssueCompleteBoxThrowsOnBlankIssueName() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       output.getIssueCompleteBox("", "2.1-next", "Goal", "main");
@@ -285,7 +284,7 @@ public class GetIssueCompleteOutputTest
     expectedExceptionsMessageRegExp = ".*nextIssue.*")
   public void getIssueCompleteBoxThrowsOnNullNextIssue() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       output.getIssueCompleteBox("2.1-test", null, "Goal", "main");
@@ -301,7 +300,7 @@ public class GetIssueCompleteOutputTest
     expectedExceptionsMessageRegExp = ".*nextIssue.*")
   public void getIssueCompleteBoxThrowsOnBlankNextIssue() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       output.getIssueCompleteBox("2.1-test", "", "Goal", "main");
@@ -317,7 +316,7 @@ public class GetIssueCompleteOutputTest
     expectedExceptionsMessageRegExp = ".*nextGoal.*")
   public void getIssueCompleteBoxThrowsOnNullNextGoal() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       output.getIssueCompleteBox("2.1-test", "2.1-next", null, "main");
@@ -333,7 +332,7 @@ public class GetIssueCompleteOutputTest
     expectedExceptionsMessageRegExp = ".*nextGoal.*")
   public void getIssueCompleteBoxThrowsOnBlankNextGoal() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       output.getIssueCompleteBox("2.1-test", "2.1-next", "", "main");
@@ -349,7 +348,7 @@ public class GetIssueCompleteOutputTest
     expectedExceptionsMessageRegExp = ".*scopeName.*")
   public void getScopeCompleteBoxThrowsOnNullScope() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       output.getScopeCompleteBox(null);
@@ -365,7 +364,7 @@ public class GetIssueCompleteOutputTest
     expectedExceptionsMessageRegExp = ".*scopeName.*")
   public void getScopeCompleteBoxThrowsOnBlankScope() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       output.getScopeCompleteBox("");
@@ -394,7 +393,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getOutputZeroArgsReturnEmpty() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getOutput(new String[]{});
@@ -410,7 +409,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getOutputSingleArgRoutesToScopeComplete() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getOutput(new String[]{"v2.1"});
@@ -428,7 +427,7 @@ public class GetIssueCompleteOutputTest
     expectedExceptionsMessageRegExp = ".*Expected 1 or 2 arguments.*")
   public void getOutputThreeArgsThrowsIllegalArgument() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       output.getOutput(new String[]{"a", "b", "c"});
@@ -444,7 +443,7 @@ public class GetIssueCompleteOutputTest
   public void getOutputTwoArgDiscoveriesNextIssue() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("get-issue-complete-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssueWithPlan(projectPath, "2", "1", "next-feature", "open",
         "## Goal\n\nImplement the next feature.\n");
@@ -470,7 +469,7 @@ public class GetIssueCompleteOutputTest
   public void getOutputTwoArgNoNextIssueRendersScope() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("get-issue-complete-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getOutput(new String[]{"2.1-current-issue", "v2.1"});
@@ -497,7 +496,7 @@ public class GetIssueCompleteOutputTest
     expectedExceptionsMessageRegExp = ".*issueName.*")
   public void discoverAndRenderNullIssueNameThrows() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       new GetIssueCompleteOutput(scope).discoverAndRender(null, "main");
     }
@@ -512,7 +511,7 @@ public class GetIssueCompleteOutputTest
     expectedExceptionsMessageRegExp = ".*issueName.*")
   public void discoverAndRenderBlankIssueNameThrows() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       new GetIssueCompleteOutput(scope).discoverAndRender("", "main");
     }
@@ -527,7 +526,7 @@ public class GetIssueCompleteOutputTest
     expectedExceptionsMessageRegExp = ".*targetBranch.*")
   public void discoverAndRenderNullTargetBranchThrows() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       new GetIssueCompleteOutput(scope).discoverAndRender("2.1-fix-bug", null);
     }
@@ -542,7 +541,7 @@ public class GetIssueCompleteOutputTest
     expectedExceptionsMessageRegExp = ".*targetBranch.*")
   public void discoverAndRenderBlankTargetBranchThrows() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       new GetIssueCompleteOutput(scope).discoverAndRender("2.1-fix-bug", "");
     }
@@ -556,7 +555,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void discoverAndRenderIssueNameNoDashFallsBackToScope() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       String result = new GetIssueCompleteOutput(scope).discoverAndRender("nodash", "main");
       requireThat(result, "result").contains("Scope Complete");
@@ -572,7 +571,7 @@ public class GetIssueCompleteOutputTest
   public void discoverAndRenderNotFoundRendersScope() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("get-issue-complete-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       String result = new GetIssueCompleteOutput(scope).discoverAndRender("2.1-done-issue", "v2.1");
       requireThat(result, "result").contains("Scope Complete");
@@ -594,7 +593,7 @@ public class GetIssueCompleteOutputTest
   public void discoverAndRenderSuccessPathRendersIssueComplete() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("get-issue-complete-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssueWithPlan(projectPath, "2", "1", "next-issue", "open",
         "## Goal\n\nBuild the API layer.\n");
@@ -625,7 +624,7 @@ public class GetIssueCompleteOutputTest
   public void discoverAndRenderExcludesCompletedIssue() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("get-issue-complete-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // Only the completed issue exists; no other open issues in this version
       createIssueWithPlan(projectPath, "2", "1", "completed-feature", "open",
@@ -659,7 +658,7 @@ public class GetIssueCompleteOutputTest
   public void discoverAndRenderSkipsCompletedAndFindsOtherIssue() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("get-issue-complete-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssueWithPlan(projectPath, "2", "1", "done-feature", "open",
         "## Goal\n\nAlready merged.\n");
@@ -694,7 +693,7 @@ public class GetIssueCompleteOutputTest
   public void discoverAndRenderExcludesCompletedIssueWithPatchVersion() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("get-issue-complete-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // Create a patch-version issue under .cat/issues/v2/v2.1/v2.1.3/completed-feature
       createIssueWithPlan(projectPath, "2", "1", "3", "completed-feature", "open",

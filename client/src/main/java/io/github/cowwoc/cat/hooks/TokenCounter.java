@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks;
 
+import static io.github.cowwoc.cat.hooks.Strings.block;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import com.knuddels.jtokkit.Encodings;
@@ -67,27 +68,27 @@ public final class TokenCounter
     Encoding encoding = registry.getEncoding("cl100k_base").orElseThrow(
         () -> new IllegalStateException("cl100k_base encoding not found"));
 
-    try (JvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      ObjectNode result = mapper.createObjectNode();
-
-      for (String filePath : args)
+      try
       {
-        requireThat(filePath, "filePath").isNotNull();
-        int tokenCount = countTokens(filePath, encoding);
-        result.put(filePath, tokenCount);
+        JsonMapper mapper = scope.getJsonMapper();
+        ObjectNode result = mapper.createObjectNode();
+
+        for (String filePath : args)
+        {
+          requireThat(filePath, "filePath").isNotNull();
+          int tokenCount = countTokens(filePath, encoding);
+          result.put(filePath, tokenCount);
+        }
+
+        System.out.println(mapper.writeValueAsString(result));
       }
-
-      System.out.println(mapper.writeValueAsString(result));
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(TokenCounter.class);
-      log.error("Unexpected error", e);
-      try (MainJvmScope errorScope = new MainJvmScope())
+      catch (RuntimeException | AssertionError e)
       {
-        System.out.println(new HookOutput(errorScope).block(
+        Logger log = LoggerFactory.getLogger(TokenCounter.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }

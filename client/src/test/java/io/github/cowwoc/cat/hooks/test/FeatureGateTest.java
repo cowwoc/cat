@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+
 import io.github.cowwoc.cat.hooks.licensing.FeatureGate;
 import io.github.cowwoc.cat.hooks.licensing.Tier;
 import org.testng.annotations.Test;
@@ -33,7 +33,7 @@ public final class FeatureGateTest
     Path pluginRoot = createTempPluginRoot();
     Path projectPath = Files.createTempDirectory("project-");
 
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       try
       {
@@ -62,7 +62,7 @@ public final class FeatureGateTest
     Path pluginRoot = createTempPluginRoot();
     Path projectPath = Files.createTempDirectory("project-");
 
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       try
       {
@@ -93,7 +93,7 @@ public final class FeatureGateTest
     Path pluginRoot = createTempPluginRoot();
     Path projectPath = Files.createTempDirectory("project-");
 
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       try
       {
@@ -124,7 +124,7 @@ public final class FeatureGateTest
     Path pluginRoot = createTempPluginRoot();
     Path projectPath = Files.createTempDirectory("project-");
 
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       try
       {
@@ -154,7 +154,7 @@ public final class FeatureGateTest
     Path pluginRoot = createTempPluginRoot();
     Path projectPath = Files.createTempDirectory("project-");
 
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       try
       {

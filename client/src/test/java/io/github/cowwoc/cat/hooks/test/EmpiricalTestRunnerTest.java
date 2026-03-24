@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.hooks.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+
 import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner;
 import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner.CriterionGrade;
 import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner.CriterionMetadata;
@@ -44,7 +44,7 @@ public final class EmpiricalTestRunnerTest
   public void buildInputWithEmptyPriming() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       JsonMapper mapper = scope.getJsonMapper();
@@ -78,7 +78,7 @@ public final class EmpiricalTestRunnerTest
   public void buildInputWithStringOnlyPriming() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       JsonMapper mapper = scope.getJsonMapper();
@@ -122,7 +122,7 @@ public final class EmpiricalTestRunnerTest
   public void buildInputWithToolUseOnlyPriming() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       JsonMapper mapper = scope.getJsonMapper();
@@ -177,7 +177,7 @@ public final class EmpiricalTestRunnerTest
   public void buildInputWithMixedPriming() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       JsonMapper mapper = scope.getJsonMapper();
@@ -320,7 +320,7 @@ public final class EmpiricalTestRunnerTest
   public void buildInputProducesValidJsonl() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       JsonMapper mapper = scope.getJsonMapper();
@@ -353,7 +353,7 @@ public final class EmpiricalTestRunnerTest
   public void parseOutputExtractsText() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
 
@@ -379,7 +379,7 @@ public final class EmpiricalTestRunnerTest
   public void parseOutputExtractsToolUse() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
 
@@ -405,7 +405,7 @@ public final class EmpiricalTestRunnerTest
   public void parseOutputExtractsResultText() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
 
@@ -430,7 +430,7 @@ public final class EmpiricalTestRunnerTest
   public void parseOutputHandlesMalformedJson() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
 
@@ -457,7 +457,7 @@ public final class EmpiricalTestRunnerTest
   public void parseOutputHandlesMissingTypeField() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
 
@@ -481,7 +481,7 @@ public final class EmpiricalTestRunnerTest
   public void parseOutputHandlesContentBlockMissingType() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
 
@@ -507,7 +507,7 @@ public final class EmpiricalTestRunnerTest
   public void parseOutputHandlesNonStringTypeField() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
 
@@ -532,7 +532,7 @@ public final class EmpiricalTestRunnerTest
   public void parseOutputHandlesEmptyOutput() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
 
@@ -553,7 +553,7 @@ public final class EmpiricalTestRunnerTest
   public void evaluateOutputMustContainIsCaseInsensitive() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
 
@@ -578,7 +578,7 @@ public final class EmpiricalTestRunnerTest
   public void evaluateOutputMustContainFailsWhenAbsent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
 
@@ -603,7 +603,7 @@ public final class EmpiricalTestRunnerTest
   public void evaluateOutputMustNotContainPassesWhenAbsent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
 
@@ -628,7 +628,7 @@ public final class EmpiricalTestRunnerTest
   public void evaluateOutputMustNotContainFailsWhenPresent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
 
@@ -652,7 +652,7 @@ public final class EmpiricalTestRunnerTest
   public void evaluateOutputMustUseToolsPasses() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
 
@@ -677,7 +677,7 @@ public final class EmpiricalTestRunnerTest
   public void evaluateOutputMustUseToolsFailsWhenAbsent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
 
@@ -701,7 +701,7 @@ public final class EmpiricalTestRunnerTest
   public void evaluateOutputMustNotUseToolsPasses() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
 
@@ -726,7 +726,7 @@ public final class EmpiricalTestRunnerTest
   public void evaluateOutputMustNotUseToolsFailsWhenPresent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
 
@@ -750,7 +750,7 @@ public final class EmpiricalTestRunnerTest
   public void evaluateOutputWithEmptyCriteriaPasses() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
 
@@ -775,7 +775,7 @@ public final class EmpiricalTestRunnerTest
   public void evaluateOutputPreservesFullTermInKey() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
 
@@ -804,7 +804,7 @@ public final class EmpiricalTestRunnerTest
   public void buildInputWithToolUseComplexInput() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       JsonMapper mapper = scope.getJsonMapper();
@@ -842,7 +842,7 @@ public final class EmpiricalTestRunnerTest
   public void parseOutputHandlesToolUseWithNullFields() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
 
@@ -908,7 +908,7 @@ public final class EmpiricalTestRunnerTest
   public void buildInputWithMultipleToolUsesGeneratesSequentialIds() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       JsonMapper mapper = scope.getJsonMapper();
@@ -971,7 +971,7 @@ public final class EmpiricalTestRunnerTest
   public void evaluateOutputWithMultipleCriteriaMixedResults() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
 
@@ -997,7 +997,7 @@ public final class EmpiricalTestRunnerTest
   public void parseOutputWithMixedContent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
 
@@ -1039,7 +1039,7 @@ public final class EmpiricalTestRunnerTest
   public void buildInputRejectsNullPrimingMessages() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       runner.buildInput(null, List.of(new TestMessage("prompt", Map.of())), List.of());
@@ -1058,7 +1058,7 @@ public final class EmpiricalTestRunnerTest
   public void buildInputRejectsNullMessages() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       runner.buildInput(List.of(), null, List.of());
@@ -1077,7 +1077,7 @@ public final class EmpiricalTestRunnerTest
   public void parseOutputRejectsNullOutput() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       runner.parseOutput(null);
@@ -1096,7 +1096,7 @@ public final class EmpiricalTestRunnerTest
   public void evaluateOutputRejectsNullTexts() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       runner.evaluateOutput(null, List.of(), Map.of());
@@ -1115,7 +1115,7 @@ public final class EmpiricalTestRunnerTest
   public void evaluateOutputRejectsNullToolUses() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       runner.evaluateOutput(List.of(), null, Map.of());
@@ -1134,7 +1134,7 @@ public final class EmpiricalTestRunnerTest
   public void evaluateOutputRejectsNullCriteria() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       runner.evaluateOutput(List.of(), List.of(), null);
@@ -1206,7 +1206,7 @@ public final class EmpiricalTestRunnerTest
   public void configResultSerializesToJson() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
 
@@ -1265,7 +1265,7 @@ public final class EmpiricalTestRunnerTest
   public void buildInputWithSystemReminders() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       JsonMapper mapper = scope.getJsonMapper();
@@ -1299,7 +1299,7 @@ public final class EmpiricalTestRunnerTest
   public void buildInputWithSystemRemindersAndPriming() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       JsonMapper mapper = scope.getJsonMapper();
@@ -1338,7 +1338,7 @@ public final class EmpiricalTestRunnerTest
   public void buildCommandWithSystemPrompt() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
 
@@ -1364,7 +1364,7 @@ public final class EmpiricalTestRunnerTest
   public void buildCommandWithoutSystemPrompt() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
 
@@ -1387,7 +1387,7 @@ public final class EmpiricalTestRunnerTest
   public void buildInputWithEmptySystemReminders() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       JsonMapper mapper = scope.getJsonMapper();
@@ -1415,7 +1415,7 @@ public final class EmpiricalTestRunnerTest
   public void trialResultSerializesToJson() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
 
@@ -1457,7 +1457,7 @@ public final class EmpiricalTestRunnerTest
   public void parseOutputGroupsTurnsByAssistantEvents() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
 
@@ -1504,7 +1504,7 @@ public final class EmpiricalTestRunnerTest
   public void buildInputWithMultipleTestMessages() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       JsonMapper mapper = scope.getJsonMapper();
@@ -1545,7 +1545,7 @@ public final class EmpiricalTestRunnerTest
   public void buildInputWithMultipleMessagesAndSystemReminders() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       JsonMapper mapper = scope.getJsonMapper();
@@ -1752,7 +1752,7 @@ public final class EmpiricalTestRunnerTest
   public void gradeOutputMustContainPass() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       List<String> texts = List.of("The answer is correct and complete.");
@@ -1782,7 +1782,7 @@ public final class EmpiricalTestRunnerTest
   public void gradeOutputMustContainFail() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       List<String> texts = List.of("The answer is wrong.");
@@ -1808,7 +1808,7 @@ public final class EmpiricalTestRunnerTest
   public void gradeOutputUsesRichMetadata() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       List<String> texts = List.of("Output contains magic word.");
@@ -1847,7 +1847,7 @@ public final class EmpiricalTestRunnerTest
   public void gradeOutputDefaultsMetadataWhenAbsent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       Map<String, Object> criteria = Map.of("must_contain", List.of("hello"));
@@ -1872,7 +1872,7 @@ public final class EmpiricalTestRunnerTest
   public void gradeOutputSortsBySeverity() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       List<String> texts = List.of("alpha beta gamma");
@@ -1913,7 +1913,7 @@ public final class EmpiricalTestRunnerTest
   public void gradeOutputWithEmptyCriteriaPassesWithNoGrades() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
 
@@ -1997,7 +1997,7 @@ public final class EmpiricalTestRunnerTest
   public void analyzeFailedTrialWithNoFailuresReturnsMaxScore() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       List<String> texts = List.of("Output is correct and helpful.");
@@ -2023,7 +2023,7 @@ public final class EmpiricalTestRunnerTest
   public void analyzeFailedTrialIdentifiesInstructionViolation() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       List<String> texts = List.of("The output is wrong.");
@@ -2049,7 +2049,7 @@ public final class EmpiricalTestRunnerTest
   public void analyzeFailedTrialCategoriesToolUsageForMissingTool() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       List<String> texts = List.of("Done without using any tools.");
@@ -2074,7 +2074,7 @@ public final class EmpiricalTestRunnerTest
   public void analyzeFailedTrialSuggestionsAreSortedBySeverity() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       List<String> texts = List.of("Something output here.");
@@ -2111,7 +2111,7 @@ public final class EmpiricalTestRunnerTest
   public void analyzeFailedTrialMinScoreWhenAllFail() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       List<String> texts = List.of("completely wrong output with nothing right");
@@ -2136,7 +2136,7 @@ public final class EmpiricalTestRunnerTest
   public void analyzeFailedTrialWithEmptyCriteriaReturnsMaxScore() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
 
@@ -2197,7 +2197,7 @@ public final class EmpiricalTestRunnerTest
   public void computeRubricScoreReturnsDefaultWhenNoTrials() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       EmpiricalTestRunner.ConfigResult result =
@@ -2223,7 +2223,7 @@ public final class EmpiricalTestRunnerTest
   public void computeRubricScoreAssignsFiveForPerfectPassRate() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       List<EmpiricalTestRunner.TrialResult> trials = List.of(
@@ -2271,7 +2271,7 @@ public final class EmpiricalTestRunnerTest
   public void gradeOutputMustNotContainFailWithQuote() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       List<String> texts = List.of("An error occurred during processing.");
@@ -2300,7 +2300,7 @@ public final class EmpiricalTestRunnerTest
   public void gradeOutputMustNotContainPassWithEmptyQuote() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       List<String> texts = List.of("Operation completed successfully.");
@@ -2326,7 +2326,7 @@ public final class EmpiricalTestRunnerTest
   public void gradeOutputMustUseToolsPass() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       List<String> toolUses = List.of("Bash", "Read");
@@ -2354,7 +2354,7 @@ public final class EmpiricalTestRunnerTest
   public void gradeOutputMustUseToolsFail() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       List<String> toolUses = List.of("Read");
@@ -2380,7 +2380,7 @@ public final class EmpiricalTestRunnerTest
   public void gradeOutputMustNotUseToolsPass() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       List<String> toolUses = List.of("Read");
@@ -2406,7 +2406,7 @@ public final class EmpiricalTestRunnerTest
   public void gradeOutputMustNotUseToolsFail() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       List<String> toolUses = List.of("Bash");
@@ -2432,7 +2432,7 @@ public final class EmpiricalTestRunnerTest
   public void criterionGradeHasExpectedAndActualFields() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       List<String> texts = List.of("The answer is correct.");
@@ -2460,7 +2460,7 @@ public final class EmpiricalTestRunnerTest
   public void analyzeFailedTrialCategorizesNotContainsErrorAsErrorHandling() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       List<String> texts = List.of("An error occurred in processing.");
@@ -2484,7 +2484,7 @@ public final class EmpiricalTestRunnerTest
   public void analyzeFailedTrialCategorizesNotUsesToolAsToolUsage() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       List<String> toolUses = List.of("Bash");
@@ -2509,7 +2509,7 @@ public final class EmpiricalTestRunnerTest
   public void analyzeFailedTrialUsesMessageIndex() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       List<String> texts = List.of("All criteria satisfied.");
@@ -2538,7 +2538,7 @@ public final class EmpiricalTestRunnerTest
   public void computeRubricScoreToolDimensionFromChecks() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       // All tool checks pass → tool dimension should be 5
@@ -2567,7 +2567,7 @@ public final class EmpiricalTestRunnerTest
   public void computeRubricScoreDefaultsToThreeForMissingDimensions() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       // Only text criteria — tool and error dimensions should default to 3
@@ -2595,7 +2595,7 @@ public final class EmpiricalTestRunnerTest
   public void computeRubricScoreTotalIsSumOfDimensions() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       EmpiricalTestRunner.ConfigResult result =
@@ -2623,7 +2623,7 @@ public final class EmpiricalTestRunnerTest
   {
     Path tempDir = Files.createTempDirectory("test-");
     Path configFile = Files.createTempFile(tempDir, "config", ".json");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       Files.writeString(configFile,
@@ -2645,7 +2645,7 @@ public final class EmpiricalTestRunnerTest
   {
     Path tempDir = Files.createTempDirectory("test-");
     Path configFile = Files.createTempFile(tempDir, "config", ".json");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       Files.writeString(configFile,
@@ -2667,7 +2667,7 @@ public final class EmpiricalTestRunnerTest
   {
     Path tempDir = Files.createTempDirectory("test-");
     Path configFile = Files.createTempFile(tempDir, "config", ".json");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       Files.writeString(configFile, "{\"configs\":{}}");
@@ -2688,7 +2688,7 @@ public final class EmpiricalTestRunnerTest
   {
     Path tempDir = Files.createTempDirectory("test-");
     Path configFile = Files.createTempFile(tempDir, "config", ".json");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       Files.writeString(configFile, "{\"configs\":{}}");
@@ -2708,7 +2708,7 @@ public final class EmpiricalTestRunnerTest
   {
     Path tempDir = Files.createTempDirectory("test-");
     Path configFile = Files.createTempFile(tempDir, "config", ".json");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       Files.writeString(configFile,
@@ -2754,7 +2754,7 @@ public final class EmpiricalTestRunnerTest
   public void gradeOutputMustContainExpectedDescribesTerm() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       Map<String, Object> criteria = Map.of("must_contain", List.of("hello"));
@@ -2778,7 +2778,7 @@ public final class EmpiricalTestRunnerTest
   public void gradeOutputMustContainActualWhenAbsentSaysNotFound() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       Map<String, Object> criteria = Map.of("must_contain", List.of("missing"));
@@ -2873,7 +2873,7 @@ public final class EmpiricalTestRunnerTest
   public void gradeOutputQuoteDoesNotExceedMaxPreviewChars() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       // Create a very long text to ensure truncation happens
@@ -2900,7 +2900,7 @@ public final class EmpiricalTestRunnerTest
   public void buildCommandRejectsInvalidModel() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       runner.buildCommand("not-a-real-model-xyz", "system prompt");
@@ -2919,7 +2919,7 @@ public final class EmpiricalTestRunnerTest
   public void gradeOutputRejectsNullTexts() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       runner.gradeOutput(0, null, List.of(), Map.of());
@@ -2942,7 +2942,7 @@ public final class EmpiricalTestRunnerTest
     IllegalAccessException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       Path expected = scope.getClaudeSessionsPath();

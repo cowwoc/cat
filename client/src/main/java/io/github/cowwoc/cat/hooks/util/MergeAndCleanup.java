@@ -10,10 +10,12 @@ import static io.github.cowwoc.cat.hooks.util.GitCommands.runGit;
 import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandSingleLineInDirectory;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import static io.github.cowwoc.cat.hooks.Strings.block;
+
 import io.github.cowwoc.cat.hooks.Config;
-import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.databind.node.ObjectNode;
@@ -438,50 +440,49 @@ public final class MergeAndCleanup
    */
   public static void main(String[] args) throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
-      HookOutput hookOutput = new HookOutput(scope);
-      if (args.length < 4)
-      {
-        System.out.println(hookOutput.block(
-          "Usage: merge-and-cleanup <project-dir> <issue-id> <session-id> <target-branch> [--worktree <path>]"));
-        return;
-      }
-
-      String projectPath = args[0];
-      String issueId = args[1];
-      String sessionId = args[2];
-      String targetBranch = args[3];
-      String worktreePath = "";
-
-      for (int i = 4; i < args.length; ++i)
-      {
-        if (args[i].equals("--worktree") && i + 1 < args.length)
-        {
-          worktreePath = args[i + 1];
-          ++i;
-        }
-      }
-
-      String pluginRoot = scope.getPluginRoot().toString();
-      MergeAndCleanup cmd = new MergeAndCleanup(scope);
       try
       {
-        String result = cmd.execute(projectPath, issueId, sessionId, targetBranch, worktreePath, pluginRoot);
-        System.out.println(result);
+        if (args.length < 4)
+        {
+          System.out.println(block(scope,
+            "Usage: merge-and-cleanup <project-dir> <issue-id> <session-id> <target-branch> [--worktree <path>]"));
+          return;
+        }
+
+        String projectPath = args[0];
+        String issueId = args[1];
+        String sessionId = args[2];
+        String targetBranch = args[3];
+        String worktreePath = "";
+
+        for (int i = 4; i < args.length; ++i)
+        {
+          if (args[i].equals("--worktree") && i + 1 < args.length)
+          {
+            worktreePath = args[i + 1];
+            ++i;
+          }
+        }
+
+        String pluginRoot = scope.getPluginRoot().toString();
+        MergeAndCleanup cmd = new MergeAndCleanup(scope);
+        try
+        {
+          String result = cmd.execute(projectPath, issueId, sessionId, targetBranch, worktreePath, pluginRoot);
+          System.out.println(result);
+        }
+        catch (IOException e)
+        {
+          System.out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+        }
       }
-      catch (IOException e)
+      catch (RuntimeException | AssertionError e)
       {
-        System.out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
-      }
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(MergeAndCleanup.class);
-      log.error("Unexpected error", e);
-      try (MainJvmScope errorScope = new MainJvmScope())
-      {
-        System.out.println(new HookOutput(errorScope).block(
+        Logger log = LoggerFactory.getLogger(MergeAndCleanup.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }

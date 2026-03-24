@@ -7,7 +7,6 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.write.WarnBaseBranchEdit;
 import org.testng.annotations.Test;
 import tools.jackson.databind.json.JsonMapper;
@@ -48,7 +47,7 @@ public final class WarnBaseBranchEditTest
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("wbbe-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
     {
       WarnBaseBranchEdit handler = new WarnBaseBranchEdit(scope);
       JsonMapper mapper = scope.getJsonMapper();
@@ -80,7 +79,7 @@ public final class WarnBaseBranchEditTest
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("wbbe-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
     {
       // No lock file — session has no active worktree (main context)
       WarnBaseBranchEdit handler = new WarnBaseBranchEdit(scope);
@@ -118,7 +117,7 @@ public final class WarnBaseBranchEditTest
     // Create the main repo on a non-base branch so the base branch check doesn't fire first
     Path mainRepo = TestUtils.createTempGitRepo("feature-dev");
     Path pluginRoot = Files.createTempDirectory("wbbe-test-");
-    try (JvmScope scope = new TestJvmScope(mainRepo, pluginRoot))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, pluginRoot, mainRepo))
     {
       // Create worktree and lock so the handler sees an active worktree context
       Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
@@ -160,7 +159,7 @@ public final class WarnBaseBranchEditTest
   {
     Path mainRepo = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("wbbe-test-");
-    try (JvmScope scope = new TestJvmScope(mainRepo, pluginRoot))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, pluginRoot, mainRepo))
     {
       // Create a real git worktree so branch detection works
       Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
@@ -197,7 +196,7 @@ public final class WarnBaseBranchEditTest
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("wbbe-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
     {
       WarnBaseBranchEdit handler = new WarnBaseBranchEdit(scope);
       JsonMapper mapper = scope.getJsonMapper();

@@ -7,7 +7,7 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.Config;
-import io.github.cowwoc.cat.hooks.JvmScope;
+
 import io.github.cowwoc.cat.hooks.skills.GetConfigOutput;
 import io.github.cowwoc.cat.hooks.util.ConcernSeverity;
 import io.github.cowwoc.cat.hooks.util.EffortLevel;
@@ -43,7 +43,7 @@ public class ConfigTest
   public void configUsesDefaultTrustWhenConfigMissing() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Config config = Config.load(mapper, tempDir);
@@ -64,7 +64,7 @@ public class ConfigTest
   public void configUsesDefaultVerifyWhenConfigMissing() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Config config = Config.load(mapper, tempDir);
@@ -87,7 +87,7 @@ public class ConfigTest
   public void configReadsValuesFromFile() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
@@ -119,7 +119,7 @@ public class ConfigTest
   public void configUsesDefaultsForMissingKeys() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
@@ -154,7 +154,7 @@ public class ConfigTest
   public void configThrowsOnInvalidJson() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
@@ -176,7 +176,7 @@ public class ConfigTest
   public void configAsMapReturnsAllDefaults() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Config config = Config.load(mapper, tempDir);
@@ -206,7 +206,7 @@ public class ConfigTest
   public void getConfigOutputFormatsSettingsCorrectly() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
@@ -245,7 +245,7 @@ public class ConfigTest
   public void localConfigOverridesBaseConfig() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
@@ -291,7 +291,7 @@ public class ConfigTest
   public void getOutputRejectsUnknownPage() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetConfigOutput generator = new GetConfigOutput(scope);
       generator.getOutput(new String[]{"unexpected"});
@@ -311,7 +311,7 @@ public class ConfigTest
   public void getOutputContainsExpectedBoxHeaders() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
@@ -343,7 +343,7 @@ public class ConfigTest
   public void getOutputWorksWithoutConfigFile() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetConfigOutput handler = new GetConfigOutput(scope);
       String result = handler.getOutput(new String[]{"settings"});
@@ -366,7 +366,7 @@ public class ConfigTest
   public void getOutputPropagatesIOException() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
@@ -388,7 +388,7 @@ public class ConfigTest
   public void getTrustDefaultsToMedium() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Config config = Config.load(mapper, tempDir);
@@ -408,7 +408,7 @@ public class ConfigTest
   public void getTrustParsesHighFromConfig() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
@@ -437,7 +437,7 @@ public class ConfigTest
   public void getTrustThrowsForInvalidValue() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
@@ -464,7 +464,7 @@ public class ConfigTest
   public void getVerifyDefaultsToChanged() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Config config = Config.load(mapper, tempDir);
@@ -484,7 +484,7 @@ public class ConfigTest
   public void getVerifyParsesAllFromConfig() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
@@ -513,7 +513,7 @@ public class ConfigTest
   public void getVerifyThrowsForInvalidValue() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
@@ -540,7 +540,7 @@ public class ConfigTest
   public void getEffortDefaultsToMedium() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Config config = Config.load(mapper, tempDir);
@@ -560,7 +560,7 @@ public class ConfigTest
   public void getEffortParsesHighFromConfig() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
@@ -588,7 +588,7 @@ public class ConfigTest
   public void getEffortParsesMediumFromConfig() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
@@ -618,7 +618,7 @@ public class ConfigTest
   public void getEffortThrowsForInvalidValue() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
@@ -645,7 +645,7 @@ public class ConfigTest
   public void getPatienceDefaultsToHigh() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Config config = Config.load(mapper, tempDir);
@@ -665,7 +665,7 @@ public class ConfigTest
   public void getPatienceParsesLowFromConfig() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
@@ -695,7 +695,7 @@ public class ConfigTest
   public void getPatienceThrowsForInvalidValue() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
@@ -722,7 +722,7 @@ public class ConfigTest
   public void getMinSeverityDefaultsToLow() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Config config = Config.load(mapper, tempDir);
@@ -742,7 +742,7 @@ public class ConfigTest
   public void getMinSeverityParsesMediumFromConfig() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
@@ -770,7 +770,7 @@ public class ConfigTest
   public void getMinSeverityParsesHighFromConfig() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
@@ -798,7 +798,7 @@ public class ConfigTest
   public void getMinSeverityParsesCriticalFromConfig() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
@@ -827,7 +827,7 @@ public class ConfigTest
   public void getMinSeverityThrowsForInvalidValue() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
@@ -859,7 +859,7 @@ public class ConfigTest
   public void configAsMapContainsBothDefaultsAndOverrides() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
@@ -895,7 +895,7 @@ public class ConfigTest
   public void configAsMapIncludesMinSeverityDefault() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Config config = Config.load(mapper, tempDir);
@@ -920,7 +920,7 @@ public class ConfigTest
   public void configRejectsUnknownKeys() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
@@ -951,7 +951,7 @@ public class ConfigTest
   public void configUnknownKeyErrorIncludesKnownKeys() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
@@ -991,7 +991,7 @@ public class ConfigTest
   public void configRejectsLicenseInBaseConfig() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
@@ -1019,7 +1019,7 @@ public class ConfigTest
   public void configAcceptsLicenseInLocalConfig() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".cat");
@@ -1050,7 +1050,7 @@ public class ConfigTest
   public void getEffectiveConfigReturnsAllDefaults() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetConfigOutput handler = new GetConfigOutput(scope);
       String result = handler.getEffectiveConfig(tempDir);
@@ -1085,7 +1085,7 @@ public class ConfigTest
   public void getEffectiveConfigMergesFileWithDefaults() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
@@ -1126,7 +1126,7 @@ public class ConfigTest
   public void getOutputEffectiveReturnsJson() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetConfigOutput handler = new GetConfigOutput(scope);
       String result = handler.getOutput(new String[]{"effective"});

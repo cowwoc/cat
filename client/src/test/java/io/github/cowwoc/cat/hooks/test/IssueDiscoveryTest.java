@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.SharedSecrets;
 import io.github.cowwoc.cat.hooks.util.IssueDiscovery;
 import io.github.cowwoc.cat.hooks.util.IssueDiscovery.DiscoveryResult;
@@ -44,7 +43,7 @@ public class IssueDiscoveryTest
   public void findsOpenIssueWhenScanningAll() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -78,7 +77,7 @@ public class IssueDiscoveryTest
   public void findsInProgressIssue() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -107,7 +106,7 @@ public class IssueDiscoveryTest
   public void doesNotReturnClosedIssue() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -136,7 +135,7 @@ public class IssueDiscoveryTest
   public void doesNotReturnBlockedStatusIssue() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -165,7 +164,7 @@ public class IssueDiscoveryTest
   public void findsSpecificIssueById() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -197,7 +196,7 @@ public class IssueDiscoveryTest
   public void specificIssueAlreadyClosedReturnsAlreadyComplete() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -228,7 +227,7 @@ public class IssueDiscoveryTest
   public void specificIssueNotFoundReturnsNotFound() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -256,7 +255,7 @@ public class IssueDiscoveryTest
   public void issueWithUnsatisfiedDependenciesIsSkipped() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -292,7 +291,7 @@ public class IssueDiscoveryTest
   public void issueWithSatisfiedDependenciesIsEligible() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -326,7 +325,7 @@ public class IssueDiscoveryTest
   public void specificIssueWithUnsatisfiedDependenciesReturnsBlocked() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -362,7 +361,7 @@ public class IssueDiscoveryTest
   public void decomposedParentWithOpenSubissuesIsSkipped() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -398,7 +397,7 @@ public class IssueDiscoveryTest
   public void decomposedParentWithAllSubissuesClosedIsEligible() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -431,7 +430,7 @@ public class IssueDiscoveryTest
   public void issuesMatchingExcludePatternAreSkipped() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -462,7 +461,7 @@ public class IssueDiscoveryTest
   public void minorScopeSearchesOnlySpecifiedVersion() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -494,7 +493,7 @@ public class IssueDiscoveryTest
   public void bareNameScopeFindsIssueByBaseName() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -525,7 +524,7 @@ public class IssueDiscoveryTest
   public void returnsNotFoundWhenNoIssuesExist() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -551,7 +550,7 @@ public class IssueDiscoveryTest
     expectedExceptionsMessageRegExp = ".*Not a CAT project.*")
   public void constructorThrowsOnInvalidProjectDirectory()
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       new IssueDiscovery(scope);
     }
@@ -565,7 +564,7 @@ public class IssueDiscoveryTest
   @Test
   public void foundResultProducesValidJson() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       DiscoveryResult.Found found = new DiscoveryResult.Found(
@@ -590,7 +589,7 @@ public class IssueDiscoveryTest
   @Test
   public void notFoundResultProducesValidJson() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       DiscoveryResult.NotFound notFound = new DiscoveryResult.NotFound("all", "", 0);
@@ -611,7 +610,7 @@ public class IssueDiscoveryTest
   @Test
   public void blockedResultProducesValidJson() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       DiscoveryResult.Blocked blocked = new DiscoveryResult.Blocked(
@@ -635,7 +634,7 @@ public class IssueDiscoveryTest
   @Test
   public void notFoundWithExcludedCountIncludesPatternDetails() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       DiscoveryResult.NotFound notFound = new DiscoveryResult.NotFound("all", "compress*", 3);
@@ -657,7 +656,7 @@ public class IssueDiscoveryTest
   @Test
   public void alreadyCompleteResultProducesValidJson() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       DiscoveryResult.AlreadyComplete alreadyComplete = new DiscoveryResult.AlreadyComplete("2.1-my-feature");
@@ -677,7 +676,7 @@ public class IssueDiscoveryTest
   @Test
   public void notExecutableResultProducesValidJson() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       DiscoveryResult.NotExecutable notExecutable = new DiscoveryResult.NotExecutable(
@@ -698,7 +697,7 @@ public class IssueDiscoveryTest
   @Test
   public void decomposedResultProducesValidJson() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       DiscoveryResult.Decomposed decomposed = new DiscoveryResult.Decomposed("2.1-my-feature");
@@ -719,7 +718,7 @@ public class IssueDiscoveryTest
   @Test
   public void existingWorktreeResultProducesValidJson() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       DiscoveryResult.ExistingWorktree existingWorktree = new DiscoveryResult.ExistingWorktree(
@@ -742,7 +741,7 @@ public class IssueDiscoveryTest
   public void issueWithExistingWorktreeIsSkipped() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -779,7 +778,7 @@ public class IssueDiscoveryTest
   public void specificIssueWithExistingWorktreeReturnsExistingWorktree() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -814,7 +813,7 @@ public class IssueDiscoveryTest
   public void postconditionIssueIsEnforcedWhenPrerequisitesAreOpen() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -852,7 +851,7 @@ public class IssueDiscoveryTest
   public void majorScopeSearchesOnlySpecifiedVersion() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -884,7 +883,7 @@ public class IssueDiscoveryTest
   public void postconditionIssueSkippedWhenOverridePostconditionsIsTrue() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -944,7 +943,7 @@ public class IssueDiscoveryTest
   @Test(dataProvider = "canonicalStatusProvider")
   public void canonicalStatusIsAccepted(String status) throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       String content = "{\"status\":\"" + status + "\"}";
       Path fakePath = Path.of("fake/index.json");
@@ -983,7 +982,7 @@ public class IssueDiscoveryTest
     expectedExceptionsMessageRegExp = ".*Unknown status.*")
   public void nonCanonicalStatusIsRejected(String status) throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       String content = "{\"status\":\"" + status + "\"}";
       Path fakePath = Path.of("fake/index.json");
@@ -1000,7 +999,7 @@ public class IssueDiscoveryTest
   public void versionWithUnsatisfiedDependenciesIsSkipped() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -1038,7 +1037,7 @@ public class IssueDiscoveryTest
   public void blockedResultContainsAllUnsatisfiedDependencies() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -1080,7 +1079,7 @@ public class IssueDiscoveryTest
   public void bareNameWithMultipleMatchesSelectsFirstVersionInSortOrder() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -1115,7 +1114,7 @@ public class IssueDiscoveryTest
   public void excludePatternWithRegexSpecialCharsWorksCorrectly() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -1150,7 +1149,7 @@ public class IssueDiscoveryTest
   public void findsPatchLevelIssue() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -1185,7 +1184,7 @@ public class IssueDiscoveryTest
   public void specificPatchLevelIssueById() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -1218,7 +1217,7 @@ public class IssueDiscoveryTest
   public void bareNameResolvesPatchLevelIssue() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -1249,7 +1248,7 @@ public class IssueDiscoveryTest
   @Test
   public void patchLevelIssueProducesValidJson() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       DiscoveryResult.Found found = new DiscoveryResult.Found(
@@ -1276,7 +1275,7 @@ public class IssueDiscoveryTest
   public void findsMajorOnlyIssue() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -1311,7 +1310,7 @@ public class IssueDiscoveryTest
   public void specificMajorOnlyIssueById() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -1346,7 +1345,7 @@ public class IssueDiscoveryTest
   public void bareNameResolvesMajorOnlyIssue() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -1378,7 +1377,7 @@ public class IssueDiscoveryTest
   @Test
   public void majorOnlyIssueProducesValidJson() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       DiscoveryResult.Found found = new DiscoveryResult.Found(
@@ -1594,7 +1593,7 @@ public class IssueDiscoveryTest
   public void issueInSimpleCircularDependencyIsBlocked() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -1626,7 +1625,7 @@ public class IssueDiscoveryTest
   public void issueInComplexCircularDependencyIsBlocked() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -1659,7 +1658,7 @@ public class IssueDiscoveryTest
   public void issueNotInCycleIsFoundDespiteExistingCycle() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -1699,7 +1698,7 @@ public class IssueDiscoveryTest
   public void selectsOldestIssueFirst() throws IOException
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -1754,7 +1753,7 @@ public class IssueDiscoveryTest
   public void nonGitEnvironmentFallsBackToAlphabeticalSort() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -1789,7 +1788,7 @@ public class IssueDiscoveryTest
   public void tiedTimestampsUsesAlphabeticalTiebreaker() throws IOException
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -1842,7 +1841,7 @@ public class IssueDiscoveryTest
   public void gitCommandFailureFallsBackToAlphabeticalSort() throws IOException
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -1877,7 +1876,7 @@ public class IssueDiscoveryTest
   public void findIssueInDirIncludesPlanMdOnlyDir() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -1915,7 +1914,7 @@ public class IssueDiscoveryTest
   public void hasOpenIssuesReturnsTrueForPlanMdOnlyDir() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -1952,7 +1951,7 @@ public class IssueDiscoveryTest
   @Test
   public void getIssueStatusReturnOpenWhenStatusFieldMissing() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       String content = "{\"resolution\":\"completed\"}";
       Path fakePath = Path.of("fake/index.json");
@@ -1969,7 +1968,7 @@ public class IssueDiscoveryTest
   @Test
   public void getIssueStatusReturnOpenWhenFileIsEmpty() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       String content = "";
       Path fakePath = Path.of("fake/index.json");
@@ -1987,7 +1986,7 @@ public class IssueDiscoveryTest
   public void findSpecificIssueWithNullIndexJsonTreatsAsOpen() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -2030,7 +2029,7 @@ public class IssueDiscoveryTest
   public void allScopeDiscoveryReleasesLockWhenWorktreeExists() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -2072,7 +2071,7 @@ public class IssueDiscoveryTest
   public void foundResultIsCorruptWhenIndexJsonExistsButNoPlanMd() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -2111,7 +2110,7 @@ public class IssueDiscoveryTest
   public void foundResultIsNotCorruptWhenBothIndexJsonAndPlanMdExist() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -2157,7 +2156,7 @@ public class IssueDiscoveryTest
   public void foundResultIsCorruptAndCreateIndexJsonWhenNeitherFileExists() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -2199,7 +2198,7 @@ public class IssueDiscoveryTest
   public void decomposedParentWithQualifiedSubissueNamesIsProcessed() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -2241,7 +2240,7 @@ public class IssueDiscoveryTest
   public void decomposedParentWithBareSubissueNamesSkipsBareEntries() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -2284,7 +2283,7 @@ public class IssueDiscoveryTest
     throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-migration-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {
@@ -2503,7 +2502,7 @@ public class IssueDiscoveryTest
   public void decomposedParentWithLetterSuffixedVersionPrefixIsHandled() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       try
       {

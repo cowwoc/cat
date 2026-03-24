@@ -9,9 +9,10 @@ package io.github.cowwoc.cat.hooks.skills;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
 
-import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import static io.github.cowwoc.cat.hooks.Strings.block;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -253,34 +254,30 @@ public final class GetSubagentStatusOutput implements SkillOutput
       }
     }
 
-    try (MainJvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
-      HookOutput hookOutput = new HookOutput(scope);
-      // Use scope-provided session base path if not overridden via --session-base
-      String sessionBase;
-      if (!sessionBaseOverride.isEmpty())
-        sessionBase = sessionBaseOverride;
-      else
-        sessionBase = scope.getClaudeSessionsPath().toString();
-
       try
       {
+        // Use scope-provided session base path if not overridden via --session-base
+        String sessionBase;
+        if (!sessionBaseOverride.isEmpty())
+          sessionBase = sessionBaseOverride;
+        else
+          sessionBase = scope.getClaudeSessionsPath().toString();
+
         JsonMapper mapper = scope.getJsonMapper();
         StatusResult result = getStatus(sessionBase, mapper);
         System.out.println(result.toJson(mapper));
       }
       catch (IOException e)
       {
-        System.out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+        System.out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(GetSubagentStatusOutput.class);
-      log.error("Unexpected error", e);
-      try (MainJvmScope errorScope = new MainJvmScope())
+      catch (RuntimeException | AssertionError e)
       {
-        System.out.println(new HookOutput(errorScope).block(
+        Logger log = LoggerFactory.getLogger(GetSubagentStatusOutput.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }

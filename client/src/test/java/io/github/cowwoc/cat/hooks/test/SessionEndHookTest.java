@@ -8,15 +8,12 @@ package io.github.cowwoc.cat.hooks.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.HookOutput;
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.HookResult;
 import io.github.cowwoc.cat.hooks.SessionEndHook;
 
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
@@ -28,21 +25,22 @@ import java.time.temporal.ChronoUnit;
  * <p>
  * Lock files are stored in the external CAT storage location:
  * {@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/locks/}.
- * Tests use {@link JvmScope#getCatWorkPath()} to resolve this path correctly.
+ * Tests use {@link io.github.cowwoc.cat.hooks.AbstractJvmScope#getCatWorkPath()} to resolve this
+ * path correctly.
  * <p>
  * Session-scoped files are managed independently by the broader session cleanup pipeline.
  */
 public final class SessionEndHookTest
 {
   /**
-   * Creates a SessionEndHook instance for testing.
+   * Builds a hook payload JSON string with the given session ID.
    *
-   * @param scope the JVM scope
-   * @return a new SessionEndHook instance
+   * @param sessionId the session ID to embed
+   * @return the JSON payload string
    */
-  private SessionEndHook createSessionEndHook(JvmScope scope)
+  private static String sessionPayload(String sessionId)
   {
-    return new SessionEndHook(scope);
+    return "{\"session_id\": \"" + sessionId + "\"}";
   }
 
   /**
@@ -51,10 +49,11 @@ public final class SessionEndHookTest
   @Test
   public void projectLockRemoved() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
+    try
     {
-      Path tempDir = Files.createTempDirectory("session-end-hook-test");
-      try
+      try (TestClaudeHook scope = new TestClaudeHook(sessionPayload("test-session"),
+        tempDir, tempDir, tempDir))
       {
         Path lockDir = scope.getCatWorkPath().resolve("locks");
         Files.createDirectories(lockDir);
@@ -63,17 +62,14 @@ public final class SessionEndHookTest
         Path lockFile = lockDir.resolve(projectName + ".lock");
         Files.writeString(lockFile, "locked");
 
-        HookInput input = TestUtils.dummyInput(scope);
-        HookOutput output = new HookOutput(scope);
-
-        createSessionEndHook(scope).runWithProjectDir(input, output, tempDir);
+        new SessionEndHook(scope).runWithProjectDir(scope, tempDir);
 
         requireThat(Files.exists(lockFile), "lockFileExists").isFalse();
       }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -83,10 +79,11 @@ public final class SessionEndHookTest
   @Test
   public void taskLocksRemovedForSession() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
+    try
     {
-      Path tempDir = Files.createTempDirectory("session-end-hook-test");
-      try
+      try (TestClaudeHook scope = new TestClaudeHook(sessionPayload("session123"),
+        tempDir, tempDir, tempDir))
       {
         Path lockDir = scope.getCatWorkPath().resolve("locks");
         Files.createDirectories(lockDir);
@@ -96,20 +93,15 @@ public final class SessionEndHookTest
         Files.writeString(taskLock1, "session_id=session123");
         Files.writeString(taskLock2, "session_id=session456");
 
-        String json = "{\"session_id\": \"session123\"}";
-        HookInput input = HookInput.readFrom(scope.getJsonMapper(),
-          new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
-        HookOutput output = new HookOutput(scope);
-
-        createSessionEndHook(scope).runWithProjectDir(input, output, tempDir);
+        new SessionEndHook(scope).runWithProjectDir(scope, tempDir);
 
         requireThat(Files.exists(taskLock1), "taskLock1Exists").isFalse();
         requireThat(Files.exists(taskLock2), "taskLock2Exists").isTrue();
       }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -119,10 +111,11 @@ public final class SessionEndHookTest
   @Test
   public void staleLocksRemoved() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
+    try
     {
-      Path tempDir = Files.createTempDirectory("session-end-hook-test");
-      try
+      try (TestClaudeHook scope = new TestClaudeHook(sessionPayload("test-session"),
+        tempDir, tempDir, tempDir))
       {
         Path lockDir = scope.getCatWorkPath().resolve("locks");
         Files.createDirectories(lockDir);
@@ -135,31 +128,29 @@ public final class SessionEndHookTest
         Instant staleTime = Instant.now().minus(25, ChronoUnit.HOURS);
         Files.setLastModifiedTime(staleLock, FileTime.from(staleTime));
 
-        HookInput input = TestUtils.dummyInput(scope);
-        HookOutput output = new HookOutput(scope);
-
-        createSessionEndHook(scope).runWithProjectDir(input, output, tempDir);
+        new SessionEndHook(scope).runWithProjectDir(scope, tempDir);
 
         requireThat(Files.exists(staleLock), "staleLockExists").isFalse();
         requireThat(Files.exists(freshLock), "freshLockExists").isTrue();
       }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
   /**
-   * Verifies that empty session ID does not clean task locks.
+   * Verifies that when the session ID does not match any task lock's session, no task locks are removed.
    */
   @Test
-  public void emptySessionIdSkipsLockCleaning() throws IOException
+  public void nonMatchingSessionIdSkipsLockCleaning() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
+    try
     {
-      Path tempDir = Files.createTempDirectory("session-end-hook-test");
-      try
+      try (TestClaudeHook scope = new TestClaudeHook(sessionPayload("other-session"),
+        tempDir, tempDir, tempDir))
       {
         Path taskLockDir = scope.getCatWorkPath().resolve("locks");
         Files.createDirectories(taskLockDir);
@@ -167,17 +158,14 @@ public final class SessionEndHookTest
         Path taskLock = taskLockDir.resolve("task1.lock");
         Files.writeString(taskLock, "session_id=session123");
 
-        HookInput input = TestUtils.dummyInput(scope);
-        HookOutput output = new HookOutput(scope);
-
-        createSessionEndHook(scope).runWithProjectDir(input, output, tempDir);
+        new SessionEndHook(scope).runWithProjectDir(scope, tempDir);
 
         requireThat(Files.exists(taskLock), "taskLockExists").isTrue();
       }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -187,10 +175,11 @@ public final class SessionEndHookTest
   @Test
   public void twentyFourHourBoundaryRespected() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
+    try
     {
-      Path tempDir = Files.createTempDirectory("session-end-hook-test");
-      try
+      try (TestClaudeHook scope = new TestClaudeHook(sessionPayload("test-session"),
+        tempDir, tempDir, tempDir))
       {
         Path lockDir = scope.getCatWorkPath().resolve("locks");
         Files.createDirectories(lockDir);
@@ -206,18 +195,15 @@ public final class SessionEndHookTest
         Files.setLastModifiedTime(justWithinBoundary, FileTime.from(within));
         Files.setLastModifiedTime(justBeyondBoundary, FileTime.from(beyond));
 
-        HookInput input = TestUtils.dummyInput(scope);
-        HookOutput output = new HookOutput(scope);
-
-        createSessionEndHook(scope).runWithProjectDir(input, output, tempDir);
+        new SessionEndHook(scope).runWithProjectDir(scope, tempDir);
 
         requireThat(Files.exists(justWithinBoundary), "justWithinBoundary").isTrue();
         requireThat(Files.exists(justBeyondBoundary), "justBeyondBoundary").isFalse();
       }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -227,27 +213,22 @@ public final class SessionEndHookTest
   @Test
   public void nonexistentLockDirectoryHandledGracefully() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
+    try
     {
-      Path tempDir = Files.createTempDirectory("session-end-hook-test");
-      try
+      try (TestClaudeHook scope = new TestClaudeHook(sessionPayload("session123"),
+        tempDir, tempDir, tempDir))
       {
-        String json = "{\"session_id\": \"session123\"}";
-        HookInput input = HookInput.readFrom(scope.getJsonMapper(),
-          new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
-        HookOutput output = new HookOutput(scope);
-
-        io.github.cowwoc.cat.hooks.HookResult result = createSessionEndHook(scope).
-          runWithProjectDir(input, output, tempDir);
+        HookResult result = new SessionEndHook(scope).runWithProjectDir(scope, tempDir);
 
         Path lockDir = scope.getCatWorkPath().resolve("locks");
         requireThat(Files.exists(lockDir), "lockDirExists").isFalse();
         requireThat(result.output(), "output").contains("{}");
       }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -257,10 +238,11 @@ public final class SessionEndHookTest
   @Test
   public void multipleLocksOnlyCorrectPreserved() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
+    try
     {
-      Path tempDir = Files.createTempDirectory("session-end-hook-test");
-      try
+      try (TestClaudeHook scope = new TestClaudeHook(sessionPayload("session456"),
+        tempDir, tempDir, tempDir))
       {
         Path lockDir = scope.getCatWorkPath().resolve("locks");
         Files.createDirectories(lockDir);
@@ -272,26 +254,21 @@ public final class SessionEndHookTest
         Files.writeString(lockB, "session_id=session456");
         Files.writeString(lockC, "session_id=session789");
 
-        String json = "{\"session_id\": \"session456\"}";
-        HookInput input = HookInput.readFrom(scope.getJsonMapper(),
-          new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
-        HookOutput output = new HookOutput(scope);
-
-        createSessionEndHook(scope).runWithProjectDir(input, output, tempDir);
+        new SessionEndHook(scope).runWithProjectDir(scope, tempDir);
 
         requireThat(Files.exists(lockA), "lockA").isTrue();
         requireThat(Files.exists(lockB), "lockB").isFalse();
         requireThat(Files.exists(lockC), "lockC").isTrue();
       }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
   /**
-   * Verifies that {@link SessionEndHook#run(HookInput, HookOutput)} uses
+   * Verifies that {@link SessionEndHook#run(io.github.cowwoc.cat.hooks.ClaudeHook)} uses
    * {@code scope.getProjectPath()} to derive the project lock file name.
    * <p>
    * The hook must delete a lock file named after the project directory's last path component
@@ -303,7 +280,8 @@ public final class SessionEndHookTest
   public void runUsesGetProjectPathForLockFileName() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-hook-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(sessionPayload("test-session"),
+      tempDir, tempDir, tempDir))
     {
       Path lockDir = scope.getCatWorkPath().resolve("locks");
       Files.createDirectories(lockDir);
@@ -313,11 +291,8 @@ public final class SessionEndHookTest
       Path lockFile = lockDir.resolve(projectName + ".lock");
       Files.writeString(lockFile, "locked");
 
-      HookInput input = TestUtils.dummyInput(scope);
-      HookOutput output = new HookOutput(scope);
-
       // run() derives the project name from scope.getProjectPath() and must delete this lock file
-      createSessionEndHook(scope).run(input, output);
+      new SessionEndHook(scope).run(scope);
 
       requireThat(Files.exists(lockFile), "lockFileExists").isFalse();
     }
@@ -328,86 +303,40 @@ public final class SessionEndHookTest
   }
 
   /**
-   * Verifies that null input throws NullPointerException.
-   */
-  @Test(expectedExceptions = NullPointerException.class,
-    expectedExceptionsMessageRegExp = ".*input.*")
-  public void nullInputThrowsException() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      Path tempDir = Files.createTempDirectory("session-end-hook-test");
-      try
-      {
-        HookOutput output = new HookOutput(scope);
-
-        createSessionEndHook(scope).runWithProjectDir(null, output, tempDir);
-      }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
-    }
-  }
-
-  /**
-   * Verifies that null output throws NullPointerException.
-   */
-  @Test(expectedExceptions = NullPointerException.class,
-    expectedExceptionsMessageRegExp = ".*output.*")
-  public void nullOutputThrowsException() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      Path tempDir = Files.createTempDirectory("session-end-hook-test");
-      try
-      {
-        HookInput input = TestUtils.dummyInput(scope);
-        createSessionEndHook(scope).runWithProjectDir(input, null, tempDir);
-      }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
-    }
-  }
-
-  /**
    * Verifies that null project path throws NullPointerException.
    */
   @Test(expectedExceptions = NullPointerException.class,
     expectedExceptionsMessageRegExp = ".*projectPath.*")
   public void nullProjectPathThrowsException() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
+    try (TestClaudeHook scope = new TestClaudeHook(sessionPayload("test-session"),
+      tempDir, tempDir, tempDir))
     {
-      HookInput input = TestUtils.dummyInput(scope);
-      HookOutput output = new HookOutput(scope);
-
-      createSessionEndHook(scope).runWithProjectDir(input, output, null);
+      new SessionEndHook(scope).runWithProjectDir(scope, null);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
   /**
-   * Verifies that whitespace-only session ID throws IllegalStateException.
+   * Verifies that a whitespace-only session ID throws IllegalArgumentException on construction.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*sessionId is empty.*")
+    expectedExceptionsMessageRegExp = "(?i).*session.?id.*")
   public void whitespaceSessionIdThrows() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
+    try
     {
-      Path tempDir = Files.createTempDirectory("session-end-hook-test");
-      try
-      {
-        String json = "{\"session_id\": \"   \"}";
-        HookInput.readFrom(scope.getJsonMapper(),
-          new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
-      }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
+      // TestClaudeHook validates session_id on construction — a whitespace-only value is rejected
+      new TestClaudeHook("{\"session_id\": \"   \"}", tempDir, tempDir, tempDir);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -417,10 +346,11 @@ public final class SessionEndHookTest
   @Test
   public void ioExceptionReadingLockFileHandled() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
+    try
     {
-      Path tempDir = Files.createTempDirectory("session-end-hook-test");
-      try
+      try (TestClaudeHook scope = new TestClaudeHook(sessionPayload("session123"),
+        tempDir, tempDir, tempDir))
       {
         Path lockDir = scope.getCatWorkPath().resolve("locks");
         Files.createDirectories(lockDir);
@@ -428,19 +358,14 @@ public final class SessionEndHookTest
         Path directoryLock = lockDir.resolve("directory.lock");
         Files.createDirectories(directoryLock);
 
-        String json = "{\"session_id\": \"session123\"}";
-        HookInput input = HookInput.readFrom(scope.getJsonMapper(),
-          new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
-        HookOutput output = new HookOutput(scope);
-
-        createSessionEndHook(scope).runWithProjectDir(input, output, tempDir);
+        new SessionEndHook(scope).runWithProjectDir(scope, tempDir);
 
         requireThat(Files.exists(directoryLock), "directoryLockExists").isTrue();
       }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -450,10 +375,11 @@ public final class SessionEndHookTest
   @Test
   public void projectLockDeletionErrorHandledGracefully() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
+    try
     {
-      Path tempDir = Files.createTempDirectory("session-end-hook-test");
-      try
+      try (TestClaudeHook scope = new TestClaudeHook(sessionPayload("test-session"),
+        tempDir, tempDir, tempDir))
       {
         Path lockDir = scope.getCatWorkPath().resolve("locks");
         Files.createDirectories(lockDir);
@@ -465,18 +391,15 @@ public final class SessionEndHookTest
         Path nestedFile = lockFile.resolve("nested.txt");
         Files.writeString(nestedFile, "content");
 
-        HookInput input = TestUtils.dummyInput(scope);
-        HookOutput output = new HookOutput(scope);
-
-        createSessionEndHook(scope).runWithProjectDir(input, output, tempDir);
+        new SessionEndHook(scope).runWithProjectDir(scope, tempDir);
 
         // IOException was caught gracefully — lock file still exists (deletion failed)
         requireThat(Files.exists(lockFile), "lockFileStillExists").isTrue();
       }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -486,10 +409,11 @@ public final class SessionEndHookTest
   @Test
   public void staleLockAttributeReadErrorHandledGracefully() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
+    try
     {
-      Path tempDir = Files.createTempDirectory("session-end-hook-test");
-      try
+      try (TestClaudeHook scope = new TestClaudeHook(sessionPayload("test-session"),
+        tempDir, tempDir, tempDir))
       {
         Path lockDir = scope.getCatWorkPath().resolve("locks");
         Files.createDirectories(lockDir);
@@ -500,18 +424,15 @@ public final class SessionEndHookTest
         Path nestedFile = directoryAsLockFile.resolve("nested.txt");
         Files.writeString(nestedFile, "content");
 
-        HookInput input = TestUtils.dummyInput(scope);
-        HookOutput output = new HookOutput(scope);
-
-        createSessionEndHook(scope).runWithProjectDir(input, output, tempDir);
+        new SessionEndHook(scope).runWithProjectDir(scope, tempDir);
 
         // IOException was caught gracefully — directory-as-lock still exists (deletion failed)
         requireThat(Files.exists(directoryAsLockFile), "directoryLockStillExists").isTrue();
       }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 }

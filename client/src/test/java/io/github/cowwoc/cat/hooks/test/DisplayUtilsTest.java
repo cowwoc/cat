@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+
 import io.github.cowwoc.cat.hooks.skills.DisplayUtils;
 import org.testng.annotations.Test;
 
@@ -39,7 +39,7 @@ public class DisplayUtilsTest
   public void emptyStringHasWidthZero() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       int width = display.displayWidth("");
@@ -60,7 +60,7 @@ public class DisplayUtilsTest
   public void asciiTextWidthEqualsLength() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       int width1 = display.displayWidth("hello");
@@ -86,7 +86,7 @@ public class DisplayUtilsTest
   public void buildLinePadsShortContent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String line = display.buildLine("hi", 20);
@@ -114,7 +114,7 @@ public class DisplayUtilsTest
   public void buildLineConsistentWidthAcrossContentTypes() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
 
@@ -141,7 +141,7 @@ public class DisplayUtilsTest
   public void buildLineDoesNotTruncateLongContent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
 
@@ -170,7 +170,7 @@ public class DisplayUtilsTest
   public void buildTopBorderProducesTopBorder() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String border = display.buildTopBorder(10);
@@ -192,7 +192,7 @@ public class DisplayUtilsTest
   public void buildBottomBorderProducesBottomBorder() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String border = display.buildBottomBorder(10);
@@ -216,7 +216,7 @@ public class DisplayUtilsTest
   public void bordersAlignWithBuildLine() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
 
@@ -246,7 +246,7 @@ public class DisplayUtilsTest
   public void buildHeaderBoxProducesMultiLineOutput() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildHeaderBox("Test Header", List.of("Line 1", "Line 2"));
@@ -272,7 +272,7 @@ public class DisplayUtilsTest
   public void buildProgressBarProducesCorrectLength() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
 
@@ -297,7 +297,7 @@ public class DisplayUtilsTest
   public void buildProgressBarZeroPercentAllEmpty() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String bar = display.buildProgressBar(0, 10);
@@ -319,7 +319,7 @@ public class DisplayUtilsTest
   public void buildProgressBarMaxPercentMostlyFilled() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String bar = display.buildProgressBar(99, 10);
@@ -349,7 +349,7 @@ public class DisplayUtilsTest
   public void buildProgressBarPartialProgressHasBothCharacters() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String bar = display.buildProgressBar(50, 10);
@@ -375,7 +375,7 @@ public class DisplayUtilsTest
   public void buildLineWithNullContentThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       display.buildLine(null, 20);
@@ -396,7 +396,7 @@ public class DisplayUtilsTest
   public void buildHeaderBoxWithNullHeaderThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       display.buildHeaderBox(null, List.of("content"));
@@ -417,7 +417,7 @@ public class DisplayUtilsTest
   public void buildHeaderBoxWithNullContentLinesThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       display.buildHeaderBox("Header", null);
@@ -438,7 +438,7 @@ public class DisplayUtilsTest
   public void buildProgressBarNegativePercentThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       display.buildProgressBar(-1, 10);
@@ -459,7 +459,7 @@ public class DisplayUtilsTest
   public void buildProgressBarOverHundredPercentThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       display.buildProgressBar(101, 10);
@@ -480,7 +480,7 @@ public class DisplayUtilsTest
   public void buildProgressBarZeroWidthThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       display.buildProgressBar(50, 0);
@@ -501,7 +501,7 @@ public class DisplayUtilsTest
   public void buildProgressBarNegativeWidthThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       display.buildProgressBar(50, -5);
@@ -522,7 +522,7 @@ public class DisplayUtilsTest
   public void displayWidthWithNullTextThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       display.displayWidth(null);
@@ -548,7 +548,7 @@ public class DisplayUtilsTest
   public void buildProgressBarHundredPercentThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       display.buildProgressBar(100, 10);
@@ -628,7 +628,7 @@ public class DisplayUtilsTest
   public void buildHeaderBoxHasBoxStructure() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildHeaderBox("Title", List.of("content line"));
@@ -652,7 +652,7 @@ public class DisplayUtilsTest
   public void buildHeaderBoxWithEmptyContentProducesValidBox() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildHeaderBox("Title", List.of());
@@ -676,7 +676,7 @@ public class DisplayUtilsTest
   public void buildLineWithZeroMinWidth() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String line = display.buildLine("content", 0);
@@ -701,7 +701,7 @@ public class DisplayUtilsTest
   public void variationSelectorDoesNotAddWidth() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       // ☑️ is ☑ (U+2611) + variation selector (U+FE0F)
@@ -725,7 +725,7 @@ public class DisplayUtilsTest
   public void boxDrawingCharactersHaveWidthOne() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
 
@@ -751,7 +751,7 @@ public class DisplayUtilsTest
   public void buildSeparatorReturnsString() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildSeparator(10);
@@ -772,7 +772,7 @@ public class DisplayUtilsTest
   public void buildSeparatorStartsWithLeftConnector() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildSeparator(10);
@@ -793,7 +793,7 @@ public class DisplayUtilsTest
   public void buildSeparatorEndsWithRightConnector() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildSeparator(10);
@@ -814,7 +814,7 @@ public class DisplayUtilsTest
   public void buildSeparatorContainsDashes() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildSeparator(10);
@@ -835,7 +835,7 @@ public class DisplayUtilsTest
   public void buildSeparatorDashCountIsWidthPlusTwo() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildSeparator(10);
@@ -857,7 +857,7 @@ public class DisplayUtilsTest
   public void buildSeparatorVariousWidths() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       for (int width : new int[]{5, 20, 50})
@@ -885,7 +885,7 @@ public class DisplayUtilsTest
   public void buildHeaderTopReturnsString() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildHeaderTop("Header", 20);
@@ -906,7 +906,7 @@ public class DisplayUtilsTest
   public void buildHeaderTopStartsWithCorner() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildHeaderTop("Test", 20);
@@ -927,7 +927,7 @@ public class DisplayUtilsTest
   public void buildHeaderTopEndsWithCorner() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildHeaderTop("Test", 20);
@@ -948,7 +948,7 @@ public class DisplayUtilsTest
   public void buildHeaderTopContainsHeaderText() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildHeaderTop("My Header", 30);
@@ -969,7 +969,7 @@ public class DisplayUtilsTest
   public void buildHeaderTopHasPrefixDashes() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildHeaderTop("Test", 20);
@@ -990,7 +990,7 @@ public class DisplayUtilsTest
   public void buildHeaderTopHasSuffixDashes() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildHeaderTop("Test", 20);
@@ -1016,7 +1016,7 @@ public class DisplayUtilsTest
   public void buildSimpleBoxBasicStructure() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildSimpleBox("📊", "Test Title", List.of("Content line"));
@@ -1040,7 +1040,7 @@ public class DisplayUtilsTest
   public void buildSimpleBoxWithMultipleContentLines() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildSimpleBox("✅", "Header",
@@ -1062,7 +1062,7 @@ public class DisplayUtilsTest
   public void buildSimpleBoxContentLinesHaveConsistentWidth() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildSimpleBox("📊", "TEST",
@@ -1099,7 +1099,7 @@ public class DisplayUtilsTest
   public void buildSimpleBoxHeaderAndFooterSameWidth() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildSimpleBox("✅", "TITLE", List.of("Content"));
@@ -1123,7 +1123,7 @@ public class DisplayUtilsTest
   public void buildSimpleBoxAllLinesSameWidth() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildSimpleBox("🔧", "Settings",
@@ -1151,7 +1151,7 @@ public class DisplayUtilsTest
   public void buildSimpleBoxEmptyContent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildSimpleBox("ℹ️", "INFO", List.of());
@@ -1175,7 +1175,7 @@ public class DisplayUtilsTest
   public void buildSimpleBoxEmojiIcon() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildSimpleBox("🐱", "CAT", List.of("Content"));
@@ -1197,7 +1197,7 @@ public class DisplayUtilsTest
   public void buildSimpleBoxLongContent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String longLine = "A".repeat(100);
@@ -1228,7 +1228,7 @@ public class DisplayUtilsTest
   public void wrapLineShortLineReturnsSingleElement() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       List<String> result = display.wrapLine("short line", 40, 0);
@@ -1250,7 +1250,7 @@ public class DisplayUtilsTest
   public void wrapLineExactWidthReturnsSingleElement() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String line = "A".repeat(20);
@@ -1273,7 +1273,7 @@ public class DisplayUtilsTest
   public void wrapLineOneCharOverWrapsToTwoLines() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       // "word1 word2" = 11 chars; maxWidth=10 causes wrap at the space
@@ -1297,7 +1297,7 @@ public class DisplayUtilsTest
   public void wrapLineContinuationLinesHaveCorrectIndent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       List<String> result = display.wrapLine("word1 word2 word3", 12, 3);
@@ -1320,7 +1320,7 @@ public class DisplayUtilsTest
   public void wrapLineLongBlockedByListWraps() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       // Simulate a blocked-by line with many dependencies, like the real use case
@@ -1354,7 +1354,7 @@ public class DisplayUtilsTest
   public void wrapLineWithNullLineThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       display.wrapLine(null, 80, 0);
@@ -1375,7 +1375,7 @@ public class DisplayUtilsTest
   public void wrapLineWithNegativeMaxWidthThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       display.wrapLine("hello", -1, 0);
@@ -1396,7 +1396,7 @@ public class DisplayUtilsTest
   public void wrapLineWithNegativeIndentWidthThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       display.wrapLine("hello", 80, -1);
@@ -1416,7 +1416,7 @@ public class DisplayUtilsTest
   public void wrapLinePreservesAllContent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       String line = "alpha beta gamma delta epsilon zeta eta theta";
@@ -1441,7 +1441,7 @@ public class DisplayUtilsTest
   public void wrapLineWrapsAtComma() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       // "aaa, bbb" = 8 chars; maxWidth=6 should break at the comma
@@ -1464,7 +1464,7 @@ public class DisplayUtilsTest
   public void wrapLineEmptyStringReturnsSingleEmptyElement() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       List<String> result = display.wrapLine("", 80, 0);
@@ -1490,7 +1490,7 @@ public class DisplayUtilsTest
   public void wrapLineZeroMaxWidthProducesFiniteResult() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       List<String> result = display.wrapLine("abc", 0, 0);
@@ -1519,7 +1519,7 @@ public class DisplayUtilsTest
   public void wrapLineWordExceedingMaxWidthWithNoBreakPointForceBreaks() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       List<String> result = display.wrapLine("HelloWorld", 5, 0);
@@ -1555,7 +1555,7 @@ public class DisplayUtilsTest
   public void wrapLineWithLargeIndentWidthReducingEffectiveMax() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       DisplayUtils display = new DisplayUtils(scope);
       // maxWidth=10, indentWidth=4: continuation effectiveMax = 10 - 4 = 6

@@ -9,7 +9,6 @@ package io.github.cowwoc.cat.hooks.test;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.write.StateSchemaValidator;
 import org.testng.annotations.Test;
 import tools.jackson.databind.json.JsonMapper;
@@ -32,7 +31,7 @@ public final class StateSchemaValidatorTest
   public void validOpenIndexIsAccepted() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -65,7 +64,7 @@ public final class StateSchemaValidatorTest
   public void validInProgressIndexIsAccepted() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -100,7 +99,7 @@ public final class StateSchemaValidatorTest
   public void validBlockedIndexIsAccepted() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -135,7 +134,7 @@ public final class StateSchemaValidatorTest
   public void validClosedIndexWithResolutionIsAccepted() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -169,7 +168,7 @@ public final class StateSchemaValidatorTest
   public void closedIndexWithDuplicateResolutionIsAccepted() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -203,7 +202,7 @@ public final class StateSchemaValidatorTest
   public void indexWithParentIsAccepted() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -237,7 +236,7 @@ public final class StateSchemaValidatorTest
   public void indexWithDependenciesIsAccepted() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -271,7 +270,7 @@ public final class StateSchemaValidatorTest
   public void indexWithAllOptionalFieldsIsAccepted() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -310,7 +309,7 @@ public final class StateSchemaValidatorTest
   public void missingStatusFieldIsRejected() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -344,7 +343,7 @@ public final class StateSchemaValidatorTest
   public void nonStandardFieldIsRejected() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -378,7 +377,7 @@ public final class StateSchemaValidatorTest
   public void invalidStatusValueIsRejected() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -411,7 +410,7 @@ public final class StateSchemaValidatorTest
   public void closedStatusWithoutResolutionIsRejected() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -444,7 +443,7 @@ public final class StateSchemaValidatorTest
   public void invalidResolutionValueIsRejected() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -478,7 +477,7 @@ public final class StateSchemaValidatorTest
   public void invalidParentFormatIsRejected() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -512,7 +511,7 @@ public final class StateSchemaValidatorTest
   public void nonIndexJsonFilesAreAllowed() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -541,7 +540,7 @@ public final class StateSchemaValidatorTest
   public void versionLevelJsonFileIsAllowed() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -571,7 +570,7 @@ public final class StateSchemaValidatorTest
   public void emptyContentIsAllowed() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -598,7 +597,7 @@ public final class StateSchemaValidatorTest
   public void obsoleteResolutionWithExplanationIsAccepted() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -632,7 +631,7 @@ public final class StateSchemaValidatorTest
   public void wontFixResolutionWithExplanationIsAccepted() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -666,7 +665,7 @@ public final class StateSchemaValidatorTest
   public void notApplicableResolutionWithExplanationIsAccepted() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -700,7 +699,7 @@ public final class StateSchemaValidatorTest
   public void invalidJsonContentIsRejected() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -729,7 +728,7 @@ public final class StateSchemaValidatorTest
   public void jsonArrayRootIsRejected() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -758,7 +757,7 @@ public final class StateSchemaValidatorTest
   public void multipleViolationsReportsFirstError() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -792,7 +791,7 @@ public final class StateSchemaValidatorTest
   public void resolutionFieldAllowedWhenStatusIsOpen() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -826,7 +825,7 @@ public final class StateSchemaValidatorTest
   public void progressFieldIsRejected() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -860,7 +859,7 @@ public final class StateSchemaValidatorTest
   public void targetBranchFieldIsAccepted() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -894,7 +893,7 @@ public final class StateSchemaValidatorTest
   public void lastUpdatedFieldIsRejected() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       StateSchemaValidator validator = new StateSchemaValidator(scope);
@@ -929,7 +928,7 @@ public final class StateSchemaValidatorTest
   public void editOperationAppliesReplacementBeforeValidation() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       // Create a valid index.json file on disk
       Path issueDir = tempDir.resolve(".cat").resolve("issues").resolve("v2").

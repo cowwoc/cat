@@ -8,7 +8,8 @@ package io.github.cowwoc.cat.hooks.skills;
 
 import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.util.IssueLock;
 import io.github.cowwoc.cat.hooks.util.ProcessRunner;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
@@ -1026,7 +1027,7 @@ public final class GetCleanupOutput implements SkillOutput
       }
     }
 
-    try (JvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
       GetCleanupOutput output = new GetCleanupOutput(scope);
       String result;

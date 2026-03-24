@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.hooks.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+
 import io.github.cowwoc.cat.hooks.TaskHandler;
 import io.github.cowwoc.cat.hooks.task.EnforceCollectAfterAgent;
 import org.testng.annotations.Test;
@@ -35,7 +35,7 @@ public final class EnforceCollectAfterAgentTest
    * @param sessionId the session ID
    * @throws IOException if flag file creation fails
    */
-  private static void createFlagFile(JvmScope scope, String sessionId) throws IOException
+  private static void createFlagFile(TestClaudeHook scope, String sessionId) throws IOException
   {
     Path flagPath = scope.getCatWorkPath().resolve("sessions").resolve(sessionId).resolve("pending-agent-result");
     Files.createDirectories(flagPath.getParent());
@@ -78,7 +78,7 @@ public final class EnforceCollectAfterAgentTest
   {
     Path tempDir = Files.createTempDirectory("enforce-collect-after-agent-test-");
     String sessionId = UUID.randomUUID().toString();
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       EnforceCollectAfterAgent handler = new EnforceCollectAfterAgent(scope);
@@ -106,7 +106,7 @@ public final class EnforceCollectAfterAgentTest
   {
     Path tempDir = Files.createTempDirectory("enforce-collect-after-agent-test-");
     String sessionId = UUID.randomUUID().toString();
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       createFlagFile(scope, sessionId);
@@ -136,7 +136,7 @@ public final class EnforceCollectAfterAgentTest
   {
     Path tempDir = Files.createTempDirectory("enforce-collect-after-agent-test-");
     String sessionId = UUID.randomUUID().toString();
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       createFlagFile(scope, sessionId);
@@ -167,7 +167,7 @@ public final class EnforceCollectAfterAgentTest
     Path tempDir = Files.createTempDirectory("enforce-collect-after-agent-test-");
     String sessionId = UUID.randomUUID().toString();
     String issueId = "v2.1-test-issue";
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       createFlagFile(scope, sessionId);
@@ -201,7 +201,7 @@ public final class EnforceCollectAfterAgentTest
     Path tempDir = Files.createTempDirectory("enforce-collect-after-agent-test-");
     String sessionId = UUID.randomUUID().toString();
     String issueId = "v2.1-test-issue";
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       createFlagFile(scope, sessionId);
@@ -235,7 +235,7 @@ public final class EnforceCollectAfterAgentTest
     Path tempDir = Files.createTempDirectory("enforce-collect-after-agent-test-");
     String sessionId = UUID.randomUUID().toString();
     String issueId = "v2.1-test-issue";
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       createFlagFile(scope, sessionId);
@@ -270,7 +270,7 @@ public final class EnforceCollectAfterAgentTest
     Path tempDir = Files.createTempDirectory("enforce-collect-after-agent-test-");
     String sessionId = UUID.randomUUID().toString();
     String issueId = "v2.1-test-issue";
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       createFlagFile(scope, sessionId);
@@ -303,7 +303,7 @@ public final class EnforceCollectAfterAgentTest
   {
     Path tempDir = Files.createTempDirectory("enforce-collect-after-agent-test-");
     String sessionId = UUID.randomUUID().toString();
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       createFlagFile(scope, sessionId);

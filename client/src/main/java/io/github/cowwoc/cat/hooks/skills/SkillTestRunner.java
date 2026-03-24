@@ -6,9 +6,10 @@
  */
 package io.github.cowwoc.cat.hooks.skills;
 
-import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import static io.github.cowwoc.cat.hooks.Strings.block;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.util.ProcessRunner;
 import io.github.cowwoc.cat.hooks.util.SkillDiscovery;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
@@ -55,9 +56,9 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * Dispatches 10 subcommands: extract-units, detect-changes, map-units, extract-model,
  * persist-artifacts, init-sprt, update-sprt, check-boundary, smoke-status, merge-results.
  * <p>
- * All output is written to stdout as JSON. Expected errors are reported via
- * {@link HookOutput#block(String)} on stdout with exit code 0. Unexpected errors are logged
- * to stderr and also reported via {@code HookOutput.block()} on stdout with exit code 0.
+ * All output is written to stdout as JSON. Expected errors are reported as a block response
+ * on stdout with exit code 0. Unexpected errors are logged
+ * to stderr and also reported as a block response on stdout with exit code 0.
  */
 public final class SkillTestRunner
 {
@@ -1315,32 +1316,29 @@ public final class SkillTestRunner
    * <p>
    * Reads the subcommand and its arguments from {@code args}, dispatches to the appropriate
    * handler, and prints the JSON result to {@code System.out}. Expected errors (invalid arguments,
-   * I/O failures) are reported as {@code HookOutput.block()} on stdout with exit code 0.
-   * Unexpected errors are logged and also reported via {@code HookOutput.block()} on stdout.
+   * I/O failures) are reported as a block response on stdout with exit code 0.
+   * Unexpected errors are logged and also reported as a block response on stdout.
    *
    * @param args the command-line arguments
    */
   public static void main(String[] args)
   {
-    try (MainJvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
-      new SkillTestRunner(scope).run(args, System.out);
-    }
-    catch (IllegalArgumentException | IOException e)
-    {
-      try (MainJvmScope errorScope = new MainJvmScope())
+      try
       {
-        System.out.println(new HookOutput(errorScope).block(
+        new SkillTestRunner(scope).run(args, System.out);
+      }
+      catch (IllegalArgumentException | IOException e)
+      {
+        System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(SkillTestRunner.class);
-      log.error("Unexpected error", e);
-      try (MainJvmScope errorScope = new MainJvmScope())
+      catch (RuntimeException | AssertionError e)
       {
-        System.out.println(new HookOutput(errorScope).block(
+        Logger log = LoggerFactory.getLogger(SkillTestRunner.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }

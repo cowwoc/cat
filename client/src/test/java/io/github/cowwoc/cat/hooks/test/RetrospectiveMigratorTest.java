@@ -31,7 +31,7 @@ public final class RetrospectiveMigratorTest
     Path tempDir = Files.createTempDirectory("retro-test-");
     try
     {
-      RetrospectiveMigrator migrator = new RetrospectiveMigrator(new TestJvmScope());
+      RetrospectiveMigrator migrator = new RetrospectiveMigrator(new TestClaudeTool());
       JsonNode result = migrator.migrate(tempDir, false).stats();
 
       requireThat(result.path("status").asString(), "status").isEqualTo("skipped");
@@ -61,7 +61,7 @@ public final class RetrospectiveMigratorTest
     {
       Files.writeString(indexFile, "{}");
 
-      RetrospectiveMigrator migrator = new RetrospectiveMigrator(new TestJvmScope());
+      RetrospectiveMigrator migrator = new RetrospectiveMigrator(new TestClaudeTool());
       JsonNode result = migrator.migrate(tempDir, false).stats();
 
       requireThat(result.path("status").asString(), "status").isEqualTo("skipped");
@@ -99,7 +99,7 @@ public final class RetrospectiveMigratorTest
         """;
       Files.writeString(mistakesFile, mistakesJson);
 
-      RetrospectiveMigrator migrator = new RetrospectiveMigrator(new TestJvmScope());
+      RetrospectiveMigrator migrator = new RetrospectiveMigrator(new TestClaudeTool());
       JsonNode result = migrator.migrate(tempDir, true).stats();
 
       requireThat(result.path("mistakes_total").asInt(), "mistakes_total").isEqualTo(2);
@@ -147,7 +147,7 @@ public final class RetrospectiveMigratorTest
         """;
       Files.writeString(mistakesFile, mistakesJson);
 
-      RetrospectiveMigrator migrator = new RetrospectiveMigrator(new TestJvmScope());
+      RetrospectiveMigrator migrator = new RetrospectiveMigrator(new TestClaudeTool());
       JsonNode result = migrator.migrate(tempDir, false).stats();
 
       requireThat(result.path("status").asString(), "status").isEqualTo("success");
@@ -159,7 +159,7 @@ public final class RetrospectiveMigratorTest
       requireThat(Files.exists(jan2025File), "jan_file_exists").isTrue();
       requireThat(Files.exists(feb2025File), "feb_file_exists").isTrue();
 
-      JsonNode janData = new TestJvmScope().getJsonMapper().readTree(Files.readString(jan2025File));
+      JsonNode janData = new TestClaudeTool().getJsonMapper().readTree(Files.readString(jan2025File));
       requireThat(janData.path("period").asString(), "jan_period").isEqualTo("2025-01");
       requireThat(janData.path("mistakes").size(), "jan_mistakes_count").isEqualTo(2);
       requireThat(janData.path("mistakes").get(0).path("id").asString(), "first_mistake_id").
@@ -167,7 +167,7 @@ public final class RetrospectiveMigratorTest
       requireThat(janData.path("mistakes").get(1).path("id").asString(), "second_mistake_id").
         isEqualTo("M2");
 
-      JsonNode febData = new TestJvmScope().getJsonMapper().readTree(Files.readString(feb2025File));
+      JsonNode febData = new TestClaudeTool().getJsonMapper().readTree(Files.readString(feb2025File));
       requireThat(febData.path("period").asString(), "feb_period").isEqualTo("2025-02");
       requireThat(febData.path("mistakes").size(), "feb_mistakes_count").isEqualTo(1);
       requireThat(febData.path("mistakes").get(0).path("id").asString(), "third_mistake_id").
@@ -211,7 +211,7 @@ public final class RetrospectiveMigratorTest
         """;
       Files.writeString(retroFile, retroJson);
 
-      RetrospectiveMigrator migrator = new RetrospectiveMigrator(new TestJvmScope());
+      RetrospectiveMigrator migrator = new RetrospectiveMigrator(new TestClaudeTool());
       JsonNode result = migrator.migrate(tempDir, false).stats();
 
       requireThat(result.path("status").asString(), "status").isEqualTo("success");
@@ -223,11 +223,11 @@ public final class RetrospectiveMigratorTest
       requireThat(Files.exists(jan2025File), "jan_file_exists").isTrue();
       requireThat(Files.exists(feb2025File), "feb_file_exists").isTrue();
 
-      JsonNode janData = new TestJvmScope().getJsonMapper().readTree(Files.readString(jan2025File));
+      JsonNode janData = new TestClaudeTool().getJsonMapper().readTree(Files.readString(jan2025File));
       requireThat(janData.path("period").asString(), "jan_period").isEqualTo("2025-01");
       requireThat(janData.path("retrospectives").size(), "jan_retros_count").isEqualTo(1);
 
-      JsonNode febData = new TestJvmScope().getJsonMapper().readTree(Files.readString(feb2025File));
+      JsonNode febData = new TestClaudeTool().getJsonMapper().readTree(Files.readString(feb2025File));
       requireThat(febData.path("period").asString(), "feb_period").isEqualTo("2025-02");
       requireThat(febData.path("retrospectives").size(), "feb_retros_count").isEqualTo(1);
     }
@@ -278,13 +278,13 @@ public final class RetrospectiveMigratorTest
         """;
       Files.writeString(retroFile, retroJson);
 
-      RetrospectiveMigrator migrator = new RetrospectiveMigrator(new TestJvmScope());
+      RetrospectiveMigrator migrator = new RetrospectiveMigrator(new TestClaudeTool());
       migrator.migrate(tempDir, false);
 
       Path indexFile = retroDir.resolve("index.json");
       requireThat(Files.exists(indexFile), "index_file_exists").isTrue();
 
-      JsonNode index = new TestJvmScope().getJsonMapper().readTree(Files.readString(indexFile));
+      JsonNode index = new TestClaudeTool().getJsonMapper().readTree(Files.readString(indexFile));
       requireThat(index.path("version").asString(), "version").isEqualTo("2.0");
       requireThat(index.path("config").path("mistake_count_threshold").asInt(), "threshold").
         isEqualTo(10);
@@ -348,7 +348,7 @@ public final class RetrospectiveMigratorTest
         """;
       Files.writeString(retroFile, retroJson);
 
-      RetrospectiveMigrator migrator = new RetrospectiveMigrator(new TestJvmScope());
+      RetrospectiveMigrator migrator = new RetrospectiveMigrator(new TestClaudeTool());
       migrator.migrate(tempDir, false);
 
       requireThat(Files.exists(mistakesFile), "original_mistakes_exists").isFalse();
@@ -360,7 +360,7 @@ public final class RetrospectiveMigratorTest
       requireThat(Files.exists(mistakesBackup), "mistakes_backup_exists").isTrue();
       requireThat(Files.exists(retroBackup), "retro_backup_exists").isTrue();
 
-      JsonNode mistakesBackupData = new TestJvmScope().getJsonMapper().readTree(Files.readString(mistakesBackup));
+      JsonNode mistakesBackupData = new TestClaudeTool().getJsonMapper().readTree(Files.readString(mistakesBackup));
       requireThat(mistakesBackupData.path("mistakes").size(), "backed_up_mistakes_count").
         isEqualTo(1);
     }
@@ -385,7 +385,7 @@ public final class RetrospectiveMigratorTest
 
     try
     {
-      RetrospectiveMigrator migrator = new RetrospectiveMigrator(new TestJvmScope());
+      RetrospectiveMigrator migrator = new RetrospectiveMigrator(new TestClaudeTool());
       JsonNode result = migrator.migrate(tempDir, false).stats();
 
       requireThat(result.path("status").asString(), "status").isEqualTo("success");
@@ -424,7 +424,7 @@ public final class RetrospectiveMigratorTest
         """;
       Files.writeString(mistakesFile, mistakesJson);
 
-      RetrospectiveMigrator migrator = new RetrospectiveMigrator(new TestJvmScope());
+      RetrospectiveMigrator migrator = new RetrospectiveMigrator(new TestClaudeTool());
       JsonNode result = migrator.migrate(tempDir, false).stats();
 
       requireThat(result.path("status").asString(), "status").isEqualTo("success");
@@ -434,7 +434,7 @@ public final class RetrospectiveMigratorTest
         isEqualTo(2);
 
       Path jan2025File = retroDir.resolve("mistakes-2025-01.json");
-      JsonNode janData = new TestJvmScope().getJsonMapper().readTree(Files.readString(jan2025File));
+      JsonNode janData = new TestClaudeTool().getJsonMapper().readTree(Files.readString(jan2025File));
       requireThat(janData.path("mistakes").size(), "jan_mistakes").isEqualTo(2);
     }
     finally
@@ -470,11 +470,11 @@ public final class RetrospectiveMigratorTest
         """;
       Files.writeString(mistakesFile, mistakesJson);
 
-      RetrospectiveMigrator migrator = new RetrospectiveMigrator(new TestJvmScope());
+      RetrospectiveMigrator migrator = new RetrospectiveMigrator(new TestClaudeTool());
       migrator.migrate(tempDir, false);
 
       Path jan2025File = retroDir.resolve("mistakes-2025-01.json");
-      JsonNode janData = new TestJvmScope().getJsonMapper().readTree(Files.readString(jan2025File));
+      JsonNode janData = new TestClaudeTool().getJsonMapper().readTree(Files.readString(jan2025File));
 
       requireThat(janData.path("mistakes").get(0).path("id").asString(), "first_id").isEqualTo("M1");
       requireThat(janData.path("mistakes").get(1).path("id").asString(), "second_id").isEqualTo("M2");

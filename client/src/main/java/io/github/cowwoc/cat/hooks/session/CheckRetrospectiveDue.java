@@ -8,8 +8,7 @@ package io.github.cowwoc.cat.hooks.session;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.JsonNode;
 
@@ -36,7 +35,7 @@ public final class CheckRetrospectiveDue implements SessionStartHandler
 {
   private static final int DEFAULT_TRIGGER_DAYS = 14;
   private static final int DEFAULT_MISTAKE_THRESHOLD = 10;
-  private final JvmScope scope;
+  private final ClaudeHook scope;
 
   /**
    * Creates a new CheckRetrospectiveDue handler.
@@ -44,7 +43,7 @@ public final class CheckRetrospectiveDue implements SessionStartHandler
    * @param scope the JVM scope providing environment configuration
    * @throws NullPointerException if scope is null
    */
-  public CheckRetrospectiveDue(JvmScope scope)
+  public CheckRetrospectiveDue(ClaudeHook scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -53,15 +52,12 @@ public final class CheckRetrospectiveDue implements SessionStartHandler
   /**
    * Checks if a retrospective is due and returns a reminder if so.
    *
-   * @param input the hook input
    * @return a result with stderr reminder if retrospective is due, empty otherwise
-   * @throws NullPointerException if input is null
    * @throws WrappedCheckedException if the retrospective configuration cannot be read
    */
   @Override
-  public Result handle(HookInput input)
+  public Result handle(ClaudeHook scope)
   {
-    requireThat(input, "input").isNotNull();
     // Early exit if not in a CAT project
     if (!Files.isDirectory(scope.getCatDir()))
       return Result.empty();

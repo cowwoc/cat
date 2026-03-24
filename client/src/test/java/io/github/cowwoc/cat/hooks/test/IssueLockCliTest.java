@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.IssueLock;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
@@ -40,7 +39,7 @@ public class IssueLockCliTest
   public void acquireWithValidArgsWritesAcquiredToStdout() throws IOException
   {
     Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -70,7 +69,7 @@ public class IssueLockCliTest
   public void acquireWithMissingSessionIdWritesBlockErrorToStdout() throws IOException
   {
     Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -100,7 +99,7 @@ public class IssueLockCliTest
   public void acquireWithInvalidUuidSessionIdWritesBlockErrorToStdout() throws IOException
   {
     Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -130,7 +129,7 @@ public class IssueLockCliTest
   public void releaseWithValidArgsWritesReleasedToStdout() throws IOException
   {
     Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -163,7 +162,7 @@ public class IssueLockCliTest
   public void checkWithValidIssueReturnsLockedFalseJson() throws IOException
   {
     Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -192,7 +191,7 @@ public class IssueLockCliTest
   public void listCommandReturnsJsonArray() throws IOException
   {
     Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -221,7 +220,7 @@ public class IssueLockCliTest
   public void unknownCommandWritesBlockErrorToStdout() throws IOException
   {
     Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -252,7 +251,7 @@ public class IssueLockCliTest
   public void forceReleaseWithValidIssueWritesReleasedToStdout() throws IOException
   {
     Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -284,7 +283,7 @@ public class IssueLockCliTest
   public void noArgsWritesBlockErrorToStdout() throws IOException
   {
     Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -314,7 +313,7 @@ public class IssueLockCliTest
   public void acquireWithBlankWorktreeArgWritesBlockErrorToStdout() throws IOException
   {
     Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -346,7 +345,7 @@ public class IssueLockCliTest
   public void acquireWithWorktreeArgPopulatesWorktreesMap() throws IOException
   {
     Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -389,7 +388,7 @@ public class IssueLockCliTest
   public void acquireConflictErrorOutputsCorrectJson() throws IOException
   {
     Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {

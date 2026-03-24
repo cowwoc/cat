@@ -9,8 +9,7 @@ package io.github.cowwoc.cat.hooks.bash;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
-import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.skills.DisplayUtils;
 
 import java.util.ArrayList;
@@ -29,7 +28,7 @@ import java.util.StringJoiner;
 public final class ComputeBoxLines implements BashHandler
 {
   private static final String BOX_COMPUTE_MARKER = "#BOX_COMPUTE";
-  private final JvmScope scope;
+  private final ClaudeHook scope;
 
   /**
    * Creates a new handler for computing box lines.
@@ -37,16 +36,16 @@ public final class ComputeBoxLines implements BashHandler
    * @param scope the JVM scope providing access to DisplayUtils
    * @throws NullPointerException if {@code scope} is null
    */
-  public ComputeBoxLines(JvmScope scope)
+  public ComputeBoxLines(ClaudeHook scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
   }
 
   @Override
-  public Result check(HookInput input)
+  public Result check(ClaudeHook scope)
   {
-    String command = input.getCommand();
+    String command = scope.getCommand();
 
     // Check for the BOX_COMPUTE marker
     String[] lines = command.split("\n");

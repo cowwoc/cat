@@ -84,9 +84,9 @@ public interface BashHandler
   /**
    * Check a bash command.
    *
-   * @param input the hook input containing command, working directory, session info, and tool result
+   * @param scope the hook scope providing command, working directory, session info, and tool result
    * @return the check result
-   * @throws NullPointerException if {@code input} is null
+   * @throws NullPointerException if {@code scope} is null
    */
-  Result check(HookInput input);
+  Result check(ClaudeHook scope);
 }

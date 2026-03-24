@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 import io.github.cowwoc.cat.hooks.util.TrustLevel;
 import io.github.cowwoc.cat.hooks.util.WorkPrepare;
@@ -42,7 +41,7 @@ public class ParallelSubagentTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "wave-estimate", "open");
       createPlanWithExecutionWaves(projectPath, "2", "1", "wave-estimate");
@@ -83,7 +82,7 @@ public class ParallelSubagentTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "sub-items", "open");
       createPlanWithWaveSubItems(projectPath, "2", "1", "sub-items");
@@ -124,7 +123,7 @@ public class ParallelSubagentTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "no-execution", "open");
       createPlanWithoutExecutionSection(projectPath, "2", "1", "no-execution");

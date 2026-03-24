@@ -9,11 +9,11 @@ package io.github.cowwoc.cat.hooks.util;
 import static io.github.cowwoc.cat.hooks.util.GitCommands.runGit;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.ClaudeEnv;
+import static io.github.cowwoc.cat.hooks.Strings.block;
+
 import io.github.cowwoc.cat.hooks.Config;
-import io.github.cowwoc.cat.hooks.HookOutput;
-import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.Strings;
 import io.github.cowwoc.cat.hooks.WorktreeContext;
 import org.slf4j.Logger;
@@ -65,7 +65,7 @@ public final class RecordLearning
   private static final int DEFAULT_INTERVAL_DAYS = 7;
   private static final int MAX_STDIN_BYTES = 10 * 1024 * 1024;
 
-  private final JvmScope scope;
+  private final ClaudeTool scope;
   private final Path projectPath;
   private final Clock clock;
 
@@ -77,7 +77,7 @@ public final class RecordLearning
    * @param clock the clock to use for timestamp generation
    * @throws NullPointerException if any parameter is null
    */
-  public RecordLearning(JvmScope scope, Path projectPath, Clock clock)
+  public RecordLearning(ClaudeTool scope, Path projectPath, Clock clock)
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(projectPath, "projectPath").isNotNull();
@@ -592,17 +592,17 @@ public final class RecordLearning
    */
   public static void main(String[] args)
   {
-    try (MainJvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
-      run(scope, System.in, System.out, () -> scope.getProjectPath().toString());
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(RecordLearning.class);
-      log.error("Unexpected error", e);
-      try (MainJvmScope errorScope = new MainJvmScope())
+      try
       {
-        System.out.println(new HookOutput(errorScope).block(
+        run(scope, System.in, System.out, () -> scope.getProjectPath().toString());
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(RecordLearning.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
@@ -618,17 +618,14 @@ public final class RecordLearning
    * @param in    the input stream to read Phase 3 JSON from
    * @param out   the output stream to write JSON to
    * @param projectPathProvider supplier that provides CLAUDE_PROJECT_DIR
-   * @throws NullPointerException if {@code scope}, {@code in}, {@code out}, or {@code projectPathProvider} are null
+   * @throws NullPointerException if {@code in}, {@code out}, or {@code projectPathProvider} are null
    */
-  public static void run(JvmScope scope, InputStream in, PrintStream out,
+  public static void run(ClaudeTool scope, InputStream in, PrintStream out,
     Supplier<String> projectPathProvider)
   {
-    requireThat(scope, "scope").isNotNull();
     requireThat(in, "in").isNotNull();
     requireThat(out, "out").isNotNull();
     requireThat(projectPathProvider, "projectPathProvider").isNotNull();
-
-    HookOutput hookOutput = new HookOutput(scope);
 
     Path projectPath;
     try
@@ -638,7 +635,7 @@ public final class RecordLearning
     }
     catch (AssertionError _)
     {
-      out.println(hookOutput.block(
+      out.println(block(scope,
         "CLAUDE_PROJECT_DIR environment variable is not set. " +
           "The record-learning hook requires this variable to locate the project root directory."));
       return;
@@ -655,7 +652,7 @@ public final class RecordLearning
         sb.append(line).append('\n');
         if (sb.length() > MAX_STDIN_BYTES)
         {
-          out.println(hookOutput.block("Input exceeds maximum allowed size of 10 MB"));
+          out.println(block(scope, "Input exceeds maximum allowed size of 10 MB"));
           return;
         }
         line = reader.readLine();
@@ -664,14 +661,14 @@ public final class RecordLearning
     }
     catch (IOException e)
     {
-      out.println(hookOutput.block(
+      out.println(block(scope,
         "Failed to read stdin: " + Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       return;
     }
 
     if (stdinJson.isEmpty())
     {
-      out.println(hookOutput.block("No input provided on stdin. Expected Phase 3 JSON."));
+      out.println(block(scope, "No input provided on stdin. Expected Phase 3 JSON."));
       return;
     }
 
@@ -681,19 +678,19 @@ public final class RecordLearning
       JsonNode parsed = scope.getJsonMapper().readTree(stdinJson);
       if (!parsed.isObject())
       {
-        out.println(hookOutput.block("Stdin JSON is not an object. Expected Phase 3 JSON object."));
+        out.println(block(scope, "Stdin JSON is not an object. Expected Phase 3 JSON object."));
         return;
       }
       phase3Input = (ObjectNode) parsed;
     }
     catch (Exception e)
     {
-      out.println(hookOutput.block(
+      out.println(block(scope,
         "Failed to parse stdin as JSON: " + Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       return;
     }
 
-    String sessionId = new ClaudeEnv().getSessionId();
+    String sessionId = scope.getSessionId();
     RecordLearning cmd = new RecordLearning(scope, projectPath, Clock.systemUTC());
 
     try
@@ -703,7 +700,7 @@ public final class RecordLearning
     }
     catch (IOException e)
     {
-      out.println(hookOutput.block(
+      out.println(block(scope,
         Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }

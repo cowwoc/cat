@@ -36,7 +36,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void planningValidFalseWhenNoPlanningStructure() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -61,7 +61,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void errorMessageUsesRelativePath() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path projectPath = scope.getProjectPath();
 
@@ -89,7 +89,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void inProgressVersionIsIncluded() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path projectPath = scope.getProjectPath();
       Path issuesDir = projectPath.resolve(".cat/issues");
@@ -139,7 +139,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void closedVersionIsExcluded() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path projectPath = scope.getProjectPath();
       Path issuesDir = projectPath.resolve(".cat/issues");
@@ -168,7 +168,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void missingIndexJsonTreatedAsClosed() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path projectPath = scope.getProjectPath();
       Path issuesDir = projectPath.resolve(".cat/issues");
@@ -199,7 +199,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void mixedVersionStatusesHandledCorrectly() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path projectPath = scope.getProjectPath();
       Path issuesDir = projectPath.resolve(".cat/issues");
@@ -242,7 +242,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void versionsSortedLexicographically() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path projectPath = scope.getProjectPath();
       Path issuesDir = projectPath.resolve(".cat/issues");
@@ -283,7 +283,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void emptyIssueListWhenNoIssueDirs() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path projectPath = scope.getProjectPath();
       Path issuesDir = projectPath.resolve(".cat/issues");
@@ -312,7 +312,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void regularFilesNotListedAsIssues() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path projectPath = scope.getProjectPath();
       Path issuesDir = projectPath.resolve(".cat/issues");
@@ -346,7 +346,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void issueNamesWithSpecialCharactersListed() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path projectPath = scope.getProjectPath();
       Path issuesDir = projectPath.resolve(".cat/issues");
@@ -380,7 +380,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void issueCountEqualsExistingIssuesSize() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path projectPath = scope.getProjectPath();
       Path issuesDir = projectPath.resolve(".cat/issues");
@@ -414,7 +414,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void issueCountZeroWhenNoIssues() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path projectPath = scope.getProjectPath();
       Path issuesDir = projectPath.resolve(".cat/issues");
@@ -445,7 +445,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void summaryEmptyWhenNoGoalSection() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path projectPath = scope.getProjectPath();
       Path issuesDir = projectPath.resolve(".cat/issues");
@@ -473,7 +473,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void summaryEmptyWhenGoalAtEof() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path projectPath = scope.getProjectPath();
       Path issuesDir = projectPath.resolve(".cat/issues");
@@ -501,7 +501,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void summarySkipsMultipleBlankLinesAfterGoal() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path projectPath = scope.getProjectPath();
       Path issuesDir = projectPath.resolve(".cat/issues");
@@ -530,7 +530,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void summaryPreservesSpecialCharacters() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path projectPath = scope.getProjectPath();
       Path issuesDir = projectPath.resolve(".cat/issues");
@@ -563,7 +563,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void missingStatusFieldThrowsIOException() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path projectPath = scope.getProjectPath();
       Path issuesDir = projectPath.resolve(".cat/issues");
@@ -585,7 +585,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void openStatusReadFromIndexJson() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path projectPath = scope.getProjectPath();
       Path issuesDir = projectPath.resolve(".cat/issues");
@@ -613,7 +613,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void nonStringStatusFieldThrowsIOException() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path projectPath = scope.getProjectPath();
       Path issuesDir = projectPath.resolve(".cat/issues");
@@ -638,7 +638,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void summaryAt120CharactersNotTruncated() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path projectPath = scope.getProjectPath();
       Path issuesDir = projectPath.resolve(".cat/issues");
@@ -669,7 +669,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void summaryTruncatedAt120Characters() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path projectPath = scope.getProjectPath();
       Path issuesDir = projectPath.resolve(".cat/issues");
@@ -701,7 +701,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void summaryAt119CharactersNotTruncated() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path projectPath = scope.getProjectPath();
       Path issuesDir = projectPath.resolve(".cat/issues");
@@ -734,7 +734,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void invalidMinorVersionFormatExcluded() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path projectPath = scope.getProjectPath();
       Path issuesDir = projectPath.resolve(".cat/issues");
@@ -760,7 +760,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void singleDigitMinorVersionIncluded() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path projectPath = scope.getProjectPath();
       Path issuesDir = projectPath.resolve(".cat/issues");
@@ -788,7 +788,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void majorDirAtVersionLevelExcluded() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path projectPath = scope.getProjectPath();
       Path issuesDir = projectPath.resolve(".cat/issues");
@@ -817,7 +817,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void allRequiredTopLevelFieldsPresent() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path projectPath = scope.getProjectPath();
       Path issuesDir = projectPath.resolve(".cat/issues");
@@ -846,7 +846,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void versionNodeHasAllRequiredFields() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path projectPath = scope.getProjectPath();
       Path issuesDir = projectPath.resolve(".cat/issues");
@@ -880,7 +880,7 @@ public class GetAddOutputPlanningDataTest
   @SuppressWarnings("try")
   public void nullArgsThrowsNullPointerException() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetAddOutput handler = new GetAddOutput(scope);
       handler.getOutput(null);

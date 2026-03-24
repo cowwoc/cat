@@ -40,7 +40,7 @@ public class WriteAndCommitMainTest
   public void wrongArgCountProducesBlockResponse() throws IOException
   {
     Path tempDir = Files.createTempDirectory("write-and-commit-main-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -83,7 +83,7 @@ public class WriteAndCommitMainTest
   public void nullArgsThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("write-and-commit-main-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       WriteAndCommit.run(scope, null,
         new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8));
@@ -104,7 +104,7 @@ public class WriteAndCommitMainTest
   public void nullOutThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("write-and-commit-main-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       WriteAndCommit.run(scope, new String[]{}, null);
     }

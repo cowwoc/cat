@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.hooks.session;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.util.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +45,7 @@ public final class SessionEndHandler
   private static final Pattern SESSION_ID_PATTERN = Pattern.compile(
     "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
     Pattern.CASE_INSENSITIVE);
-  private final JvmScope scope;
+  private final ClaudeHook scope;
 
   /**
    * Creates a new SessionEndHandler.
@@ -53,7 +53,7 @@ public final class SessionEndHandler
    * @param scope the JVM scope providing environment configuration
    * @throws NullPointerException if {@code scope} is null
    */
-  public SessionEndHandler(JvmScope scope)
+  public SessionEndHandler(ClaudeHook scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;

@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+
 import io.github.cowwoc.cat.hooks.licensing.Entitlements;
 import io.github.cowwoc.cat.hooks.licensing.Tier;
 import org.testng.annotations.Test;
@@ -42,7 +42,7 @@ public final class EntitlementsTest
         }
         """);
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -84,7 +84,7 @@ public final class EntitlementsTest
         }
         """);
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -128,7 +128,7 @@ public final class EntitlementsTest
         }
         """);
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -174,7 +174,7 @@ public final class EntitlementsTest
         }
         """);
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -218,7 +218,7 @@ public final class EntitlementsTest
         }
         """);
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -256,7 +256,7 @@ public final class EntitlementsTest
         }
         """);
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -294,7 +294,7 @@ public final class EntitlementsTest
         }
         """);
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -329,7 +329,7 @@ public final class EntitlementsTest
         }
         """);
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -364,7 +364,7 @@ public final class EntitlementsTest
         }
         """);
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {

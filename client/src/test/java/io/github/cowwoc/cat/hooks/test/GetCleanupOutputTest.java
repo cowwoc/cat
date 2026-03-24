@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -49,7 +49,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -79,7 +79,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -109,7 +109,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -139,7 +139,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -169,7 +169,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -199,7 +199,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -229,7 +229,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -259,7 +259,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<Worktree> worktrees = List.of(
@@ -294,7 +294,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<Lock> locks = List.of(
@@ -328,7 +328,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<String> branches = List.of("2.0-task1", "2.0-task2");
@@ -360,7 +360,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<StaleRemote> remotes = List.of(
@@ -394,7 +394,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -424,7 +424,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -455,7 +455,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getPlanOutput(
@@ -483,7 +483,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<WorktreeToRemove> worktrees = List.of(
@@ -514,7 +514,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<String> branches = List.of("2.0-old-branch");
@@ -544,7 +544,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<StaleRemote> remotes = List.of(
@@ -575,7 +575,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getPlanOutput(
@@ -603,7 +603,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getPlanOutput(
@@ -632,7 +632,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getPlanOutput(
@@ -660,7 +660,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getPlanOutput(
@@ -688,7 +688,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       // 14_400 seconds = exactly 4 hours (stale threshold)
@@ -717,7 +717,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       // 3600 seconds = 1 hour (below stale threshold)
@@ -746,7 +746,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       // Use a full UUID-style session ID; output should show only first 8 chars
@@ -778,7 +778,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       // 18_000 seconds = 5 hours (stale)
@@ -810,7 +810,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getPlanOutput(
@@ -840,7 +840,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       // 5h 30m = 19_800 seconds
@@ -870,7 +870,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -898,7 +898,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -927,7 +927,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -958,7 +958,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -988,7 +988,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getPlanOutput(
@@ -1016,7 +1016,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -1050,7 +1050,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -1086,7 +1086,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getPlanOutput(
@@ -1119,7 +1119,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -1147,7 +1147,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -1175,7 +1175,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -1203,7 +1203,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -1234,7 +1234,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -1265,7 +1265,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<Worktree> result = handler.parseWorktreesPorcelain("");
@@ -1289,7 +1289,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String input = """
@@ -1322,7 +1322,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String input = """
@@ -1359,7 +1359,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String input = """
@@ -1391,7 +1391,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String input = """
@@ -1423,7 +1423,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String input = """
@@ -1454,7 +1454,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String input = """
@@ -1484,7 +1484,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<Lock> result = handler.gatherLocks(Path.of("/nonexistent"));
@@ -1508,7 +1508,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.gatherContextFile(projectPath);
@@ -1536,7 +1536,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String worktreePath = scope.getCatWorkPath().resolve("worktrees").resolve("2.1-issue-name").toString();
@@ -1577,7 +1577,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String json = """
@@ -1616,7 +1616,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String json = """
@@ -1656,7 +1656,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String json = """
@@ -1715,7 +1715,7 @@ public class GetCleanupOutputTest
     expectedExceptionsMessageRegExp = ".*args.*")
   public void getOutputNullArgsThrowsNullPointerException() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       handler.getOutput(null);
@@ -1730,7 +1730,7 @@ public class GetCleanupOutputTest
   @Test
   public void getOutputEmptyArgsReturnsNonNull() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getOutput(new String[]{});
@@ -1747,7 +1747,7 @@ public class GetCleanupOutputTest
   public void getOutputWithProjectDirUsesProvidedPath() throws IOException
   {
     Path projectPath = Files.createTempDirectory("test-project");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getOutput(new String[]{"--project-dir", projectPath.toString()});
@@ -1764,7 +1764,7 @@ public class GetCleanupOutputTest
     expectedExceptionsMessageRegExp = ".*Missing PATH argument.*")
   public void getOutputMissingProjectDirValueThrowsIllegalArgumentException() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       handler.getOutput(new String[]{"--project-dir"});
@@ -1780,7 +1780,7 @@ public class GetCleanupOutputTest
     expectedExceptionsMessageRegExp = ".*Unknown argument.*--unknown-flag.*")
   public void getOutputUnknownFlagThrowsIllegalArgumentException() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       handler.getOutput(new String[]{"--unknown-flag"});
@@ -1872,7 +1872,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<GetCleanupOutput.CorruptIssue> corruptIssues = List.of(
@@ -1907,7 +1907,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       // Create a corrupt issue directory: index.json present, plan.md absent
       Path issueDir = projectPath.resolve(".cat").resolve("issues").
@@ -1938,7 +1938,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       // Create a valid issue directory: both index.json and plan.md present
       Path issueDir = projectPath.resolve(".cat").resolve("issues").
@@ -1969,7 +1969,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       // Create an issue directory with neither index.json nor plan.md
       Path issueDir = projectPath.resolve(".cat").resolve("issues").
@@ -2003,7 +2003,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       // Create an issue directory with an empty index.json and a valid plan.md
       Path issueDir = projectPath.resolve(".cat").resolve("issues").
@@ -2038,7 +2038,7 @@ public class GetCleanupOutputTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       // Create an issue directory with index.json containing a JSON string, not an object
       Path issueDir = projectPath.resolve(".cat").resolve("issues").

@@ -47,27 +47,27 @@ public final class SubagentStartHook implements HookHandler
    * @param scope the JVM scope providing environment configuration
    * @throws NullPointerException if {@code scope} is null
    */
-  public SubagentStartHook(JvmScope scope)
+  public SubagentStartHook(ClaudeHook scope)
   {
     this(scope, List.of(
-      input -> SubagentStartHandler.Result.context(
-        InjectCatAgentId.getSubagentContext(input.getSessionId(), input.getAgentId())),
-      input -> SubagentStartHandler.Result.ofStderr(
+      s -> SubagentStartHandler.Result.context(
+        InjectCatAgentId.getSubagentContext(s.getSessionId(), s.getAgentId())),
+      s -> SubagentStartHandler.Result.ofStderr(
         new ClearAgentMarkers(scope).clearSubagentMarker(
-          input.getSessionId(), input.getAgentId())),
-      input -> SubagentStartHandler.Result.ofContext(
+          s.getSessionId(), s.getAgentId())),
+      s -> SubagentStartHandler.Result.ofContext(
         SkillDiscovery.getSubagentSkillListing(scope)),
-      new InjectSubAgentRules(scope)));
+      new InjectSubAgentRules()));
   }
 
   /**
    * Creates a new SubagentStartHook with custom handlers (for testing).
    *
-   * @param scope    the JVM scope providing environment configuration
+   * @param scope    the hook scope providing environment configuration
    * @param handlers the handlers to run
    * @throws NullPointerException if {@code scope} or {@code handlers} are null
    */
-  public SubagentStartHook(JvmScope scope, List<SubagentStartHandler> handlers)
+  public SubagentStartHook(ClaudeHook scope, List<SubagentStartHandler> handlers)
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(handlers, "handlers").isNotNull();
@@ -87,25 +87,20 @@ public final class SubagentStartHook implements HookHandler
   /**
    * Processes the SubagentStart hook by running all subagent start handlers and combining their output.
    *
-   * @param input  the hook input to process
-   * @param output the hook output builder for creating responses
+   * @param scope the hook scope providing input data and output building
    * @return the hook result containing JSON output with the combined context and warnings
-   * @throws NullPointerException     if {@code input} or {@code output} are null
    * @throws IllegalArgumentException if {@code session_id} or {@code agent_id} are blank
    */
   @Override
-  public HookResult run(HookInput input, HookOutput output)
+  public HookResult run(ClaudeHook scope)
   {
-    requireThat(input, "input").isNotNull();
-    requireThat(output, "output").isNotNull();
-
-    String sessionId = input.getSessionId();
+    String sessionId = scope.getSessionId();
     if (sessionId.isBlank())
     {
       throw new IllegalArgumentException(
         "session_id is blank. SubagentStart hook requires a valid session ID.");
     }
-    String agentId = input.getAgentId();
+    String agentId = scope.getAgentId();
     if (agentId.isBlank())
     {
       throw new IllegalArgumentException(
@@ -117,7 +112,7 @@ public final class SubagentStartHook implements HookHandler
 
     for (SubagentStartHandler handler : handlers)
     {
-      SubagentStartHandler.Result result = handler.handle(input);
+      SubagentStartHandler.Result result = handler.handle(scope);
       if (!result.stderr().isEmpty())
         warnings.add(result.stderr());
       if (!result.additionalContext().isEmpty())
@@ -125,8 +120,8 @@ public final class SubagentStartHook implements HookHandler
     }
 
     if (combinedContext.length() == 0)
-      return new HookResult(output.empty(), warnings);
-    return new HookResult(output.additionalContext("SubagentStart",
+      return new HookResult(scope.empty(), warnings);
+    return new HookResult(scope.additionalContext("SubagentStart",
       combinedContext.toString()), warnings);
   }
 }

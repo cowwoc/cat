@@ -7,10 +7,9 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
-import io.github.cowwoc.cat.hooks.JvmScope;
+
 import io.github.cowwoc.cat.hooks.bash.BlockWorktreeIsolationViolation;
 import org.testng.annotations.Test;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -46,15 +45,14 @@ public final class BlockWorktreeIsolationViolationTest
   public void noLockFileForSession() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       String outsidePath = projectPath.resolve("plugin/file.txt").toString();
       String command = "echo \"text\" > " + outsidePath;
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -75,16 +73,15 @@ public final class BlockWorktreeIsolationViolationTest
   public void lockExistsButWorktreeNotCreated() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
-      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       String outsidePath = projectPath.resolve("plugin/file.txt").toString();
       String command = "echo \"text\" > " + outsidePath;
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -103,17 +100,16 @@ public final class BlockWorktreeIsolationViolationTest
   public void shellRedirectInsideWorktreeIsAllowed() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
       String insidePath = worktreeDir.resolve("plugin/file.txt").toString();
       String command = "echo \"text\" > " + insidePath;
 
-      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -135,17 +131,16 @@ public final class BlockWorktreeIsolationViolationTest
   public void shellRedirectOutsideWorktreeIsBlocked() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
       Path outsidePath = projectPath.resolve("plugin/file.txt");
       String command = "echo \"text\" > " + outsidePath;
 
-      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -167,17 +162,16 @@ public final class BlockWorktreeIsolationViolationTest
   public void appendRedirectOutsideWorktreeIsBlocked() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       TestUtils.createWorktreeDir(scope, ISSUE_ID);
       Path outsidePath = projectPath.resolve("plugin/file.txt");
       String command = "echo \"text\" >> " + outsidePath;
 
-      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -197,17 +191,16 @@ public final class BlockWorktreeIsolationViolationTest
   public void teeOutsideWorktreeIsBlocked() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       TestUtils.createWorktreeDir(scope, ISSUE_ID);
       Path outsidePath = projectPath.resolve("plugin/file.txt");
       String command = "cat source.txt | tee " + outsidePath;
 
-      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -227,17 +220,16 @@ public final class BlockWorktreeIsolationViolationTest
   public void teeAppendOutsideWorktreeIsBlocked() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       TestUtils.createWorktreeDir(scope, ISSUE_ID);
       Path outsidePath = projectPath.resolve("plugin/file.txt");
       String command = "echo \"text\" | tee -a " + outsidePath;
 
-      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -257,17 +249,16 @@ public final class BlockWorktreeIsolationViolationTest
   public void teeInsideWorktreeIsAllowed() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
       String insidePath = worktreeDir.resolve("plugin/file.txt").toString();
       String command = "cat source.txt | tee " + insidePath;
 
-      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -286,7 +277,7 @@ public final class BlockWorktreeIsolationViolationTest
   public void cpDestinationOutsideWorktreeIsBlocked() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       TestUtils.createWorktreeDir(scope, ISSUE_ID);
@@ -294,10 +285,9 @@ public final class BlockWorktreeIsolationViolationTest
       Path destPath = projectPath.resolve("plugin/file.txt");
       String command = "cp " + sourcePath + " " + destPath;
 
-      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -317,7 +307,7 @@ public final class BlockWorktreeIsolationViolationTest
   public void cpDestinationInsideWorktreeIsAllowed() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
@@ -325,10 +315,9 @@ public final class BlockWorktreeIsolationViolationTest
       Path destPath = worktreeDir.resolve("plugin/file.txt");
       String command = "cp " + sourcePath + " " + destPath;
 
-      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -347,7 +336,7 @@ public final class BlockWorktreeIsolationViolationTest
   public void mvDestinationOutsideWorktreeIsBlocked() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       TestUtils.createWorktreeDir(scope, ISSUE_ID);
@@ -355,10 +344,9 @@ public final class BlockWorktreeIsolationViolationTest
       Path destPath = projectPath.resolve("plugin/file.txt");
       String command = "mv " + sourcePath + " " + destPath;
 
-      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -378,7 +366,7 @@ public final class BlockWorktreeIsolationViolationTest
   public void mvDestinationInsideWorktreeIsAllowed() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
@@ -386,10 +374,9 @@ public final class BlockWorktreeIsolationViolationTest
       Path destPath = worktreeDir.resolve("plugin/file.txt");
       String command = "mv " + sourcePath + " " + destPath;
 
-      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -411,16 +398,15 @@ public final class BlockWorktreeIsolationViolationTest
   public void writeOutsideProjectDirectoryIsAllowed() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       TestUtils.createWorktreeDir(scope, ISSUE_ID);
       String command = "echo \"text\" > /tmp/output.txt";
 
-      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -443,17 +429,16 @@ public final class BlockWorktreeIsolationViolationTest
   public void relativeRedirectOutsideWorktreeIsBlocked() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       TestUtils.createWorktreeDir(scope, ISSUE_ID);
       // Working directory is projectPath; relative path resolves to projectPath/plugin/file.txt
       String command = "echo \"text\" > plugin/file.txt";
 
-      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -473,17 +458,16 @@ public final class BlockWorktreeIsolationViolationTest
   public void teeAppendLongFormOutsideWorktreeIsBlocked() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       TestUtils.createWorktreeDir(scope, ISSUE_ID);
       Path outsidePath = projectPath.resolve("plugin/file.txt");
       String command = "echo \"text\" | tee --append " + outsidePath;
 
-      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -505,7 +489,7 @@ public final class BlockWorktreeIsolationViolationTest
   public void teeMultipleTargetsSecondTargetOutsideWorktreeIsBlocked() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
@@ -513,10 +497,9 @@ public final class BlockWorktreeIsolationViolationTest
       Path outsidePath = projectPath.resolve("plugin/file2.txt");
       String command = "echo x | tee " + insidePath + " " + outsidePath;
 
-      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -536,7 +519,7 @@ public final class BlockWorktreeIsolationViolationTest
   public void teeMultipleTargetsBothInsideWorktreeIsAllowed() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
@@ -544,10 +527,9 @@ public final class BlockWorktreeIsolationViolationTest
       String insidePath2 = worktreeDir.resolve("plugin/file2.txt").toString();
       String command = "echo x | tee " + insidePath1 + " " + insidePath2;
 
-      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -568,16 +550,15 @@ public final class BlockWorktreeIsolationViolationTest
   public void variableExpansionDollarSignIsBlocked() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
       String command = "echo \"text\" > $CLAUDE_PROJECT_DIR/plugin/file.txt";
 
-      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("variable-expanded");
@@ -601,16 +582,15 @@ public final class BlockWorktreeIsolationViolationTest
   public void backtickExpansionIsBlocked() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
       String command = "echo \"text\" > `echo /some/path`";
 
-      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("variable-expanded");
@@ -634,17 +614,16 @@ public final class BlockWorktreeIsolationViolationTest
   public void quotedPathWithSpacesOutsideWorktreeIsBlocked() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       TestUtils.createWorktreeDir(scope, ISSUE_ID);
       Path outsidePath = projectPath.resolve("plugin/path with spaces/file.txt");
       String command = "echo \"text\" > \"" + outsidePath + "\"";
 
-      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Worktree isolation violation");
@@ -666,16 +645,15 @@ public final class BlockWorktreeIsolationViolationTest
   public void readOnlyCommandIsAllowed() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       TestUtils.createWorktreeDir(scope, ISSUE_ID);
       String command = "cat " + projectPath.resolve("plugin/file.txt") + " | grep pattern";
 
-      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -697,17 +675,16 @@ public final class BlockWorktreeIsolationViolationTest
   public void blockedMessageContainsCorrectedPath() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
       Path outsidePath = projectPath.resolve("plugin/file.txt");
       String command = "echo \"text\" > " + outsidePath;
 
-      JsonMapper mapper = scope.getJsonMapper();
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       Path expectedCorrected = worktreeDir.resolve("plugin/file.txt").toAbsolutePath().normalize();
       requireThat(result.blocked(), "blocked").isTrue();

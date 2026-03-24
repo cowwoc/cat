@@ -40,7 +40,7 @@ public class GitRebaseMainTest
   public void noArgsProducesBlockResponse() throws IOException
   {
     Path tempDir = Files.createTempDirectory("git-rebase-main-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -82,7 +82,7 @@ public class GitRebaseMainTest
   public void nullArgsThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("git-rebase-main-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       GitRebase.run(scope, null,
         new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8));
@@ -103,7 +103,7 @@ public class GitRebaseMainTest
   public void nullOutThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("git-rebase-main-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       GitRebase.run(scope, new String[]{}, null);
     }

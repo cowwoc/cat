@@ -21,11 +21,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import io.github.cowwoc.cat.hooks.ClaudeEnv;
 import io.github.cowwoc.cat.hooks.Config;
-import io.github.cowwoc.cat.hooks.HookOutput;
-import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.IssueStatus;
 import io.github.cowwoc.cat.hooks.licensing.LicenseResult;
 import io.github.cowwoc.cat.hooks.licensing.LicenseValidator;
@@ -36,6 +34,7 @@ import io.github.cowwoc.cat.hooks.util.SkillOutput;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 
+import static io.github.cowwoc.cat.hooks.Strings.block;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import org.slf4j.Logger;
@@ -57,7 +56,7 @@ public final class GetStatusOutput implements SkillOutput
 
   private final Logger log = LoggerFactory.getLogger(GetStatusOutput.class);
   private final DisplayUtils display;
-  private final JvmScope scope;
+  private final ClaudeTool scope;
   private Map<String, String> branchStatusCache;
 
   /**
@@ -66,7 +65,7 @@ public final class GetStatusOutput implements SkillOutput
    * @param scope the JVM scope for accessing shared services
    * @throws NullPointerException if scope is null
    */
-  public GetStatusOutput(JvmScope scope)
+  public GetStatusOutput(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -573,7 +572,7 @@ public final class GetStatusOutput implements SkillOutput
                      data.overallCompleted + "/" + data.overallTotal + " issues");
     contentItems.add("");
 
-    String envSessionId = new ClaudeEnv().getSessionId();
+    String envSessionId = scope.getSessionId();
     List<Agent> agents = getActiveAgents(catDir, envSessionId);
 
     if (!agents.isEmpty())
@@ -1256,24 +1255,24 @@ public final class GetStatusOutput implements SkillOutput
    */
   public static void main(String[] args)
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
-      GetStatusOutput generator = new GetStatusOutput(scope);
-      String output = generator.getOutput(args);
-      System.out.println(output);
-    }
-    catch (IOException e)
-    {
-      System.err.println("Error generating status: " + e.getMessage());
-      System.exit(1);
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(GetStatusOutput.class);
-      log.error("Unexpected error", e);
-      try (MainJvmScope errorScope = new MainJvmScope())
+      try
       {
-        System.out.println(new HookOutput(errorScope).block(
+        GetStatusOutput generator = new GetStatusOutput(scope);
+        String output = generator.getOutput(args);
+        System.out.println(output);
+      }
+      catch (IOException e)
+      {
+        System.err.println("Error generating status: " + e.getMessage());
+        System.exit(1);
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(GetStatusOutput.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }

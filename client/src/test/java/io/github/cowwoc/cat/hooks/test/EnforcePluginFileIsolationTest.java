@@ -7,7 +7,7 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
-import io.github.cowwoc.cat.hooks.JvmScope;
+
 import io.github.cowwoc.cat.hooks.write.EnforcePluginFileIsolation;
 import org.testng.annotations.Test;
 import tools.jackson.databind.json.JsonMapper;
@@ -37,7 +37,7 @@ public class EnforcePluginFileIsolationTest
   @Test
   public void nonPluginFilesAreAllowed() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
       JsonMapper mapper = scope.getJsonMapper();
@@ -57,7 +57,7 @@ public class EnforcePluginFileIsolationTest
   public void pluginFilesBlockedOnMain() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
       JsonMapper mapper = scope.getJsonMapper();
@@ -82,7 +82,7 @@ public class EnforcePluginFileIsolationTest
   public void pluginFilesBlockedOnV21() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
       JsonMapper mapper = scope.getJsonMapper();
@@ -107,7 +107,7 @@ public class EnforcePluginFileIsolationTest
   public void pluginFilesBlockedOnVersionBranch() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("v1.0");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
       JsonMapper mapper = scope.getJsonMapper();
@@ -134,7 +134,7 @@ public class EnforcePluginFileIsolationTest
   public void pluginFilesAllowedOnTaskBranch() throws IOException
   {
     Path mainDir = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainDir, mainDir))
+    try (TestClaudeTool scope = new TestClaudeTool(mainDir, mainDir))
     {
       Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
@@ -175,7 +175,7 @@ public class EnforcePluginFileIsolationTest
     Path mainDir = TestUtils.createTempGitRepo("v2.1");
     try
     {
-      try (JvmScope scope = new TestJvmScope(mainDir, mainDir))
+      try (TestClaudeTool scope = new TestClaudeTool(mainDir, mainDir))
       {
         Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
         Files.createDirectories(worktreesDir);
@@ -214,7 +214,7 @@ public class EnforcePluginFileIsolationTest
   @Test
   public void nonExistentPluginFileIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
       JsonMapper mapper = scope.getJsonMapper();
@@ -234,7 +234,7 @@ public class EnforcePluginFileIsolationTest
   @Test
   public void emptyFilePathIsAllowed() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
       JsonMapper mapper = scope.getJsonMapper();
@@ -253,7 +253,7 @@ public class EnforcePluginFileIsolationTest
   @Test
   public void missingFilePathIsAllowed() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
       JsonMapper mapper = scope.getJsonMapper();
@@ -272,7 +272,7 @@ public class EnforcePluginFileIsolationTest
   public void clientFilesBlockedOnMain() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
       JsonMapper mapper = scope.getJsonMapper();
@@ -297,7 +297,7 @@ public class EnforcePluginFileIsolationTest
   public void clientFilesBlockedOnV21() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
       JsonMapper mapper = scope.getJsonMapper();
@@ -324,7 +324,7 @@ public class EnforcePluginFileIsolationTest
   public void clientFilesAllowedOnTaskBranch() throws IOException
   {
     Path mainDir = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainDir, mainDir))
+    try (TestClaudeTool scope = new TestClaudeTool(mainDir, mainDir))
     {
       Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
@@ -361,7 +361,7 @@ public class EnforcePluginFileIsolationTest
   public void deepPluginPathIsDetected() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
       JsonMapper mapper = scope.getJsonMapper();

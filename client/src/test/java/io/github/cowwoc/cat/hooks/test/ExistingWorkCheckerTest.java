@@ -247,7 +247,7 @@ public class ExistingWorkCheckerTest
   @Test
   public void toJsonProducesCorrectFormatForNoExistingWork() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       CheckResult result = new CheckResult(false, 0, "");
 
@@ -269,7 +269,7 @@ public class ExistingWorkCheckerTest
   @Test
   public void toJsonProducesCorrectFormatForExistingWork() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       CheckResult result = new CheckResult(true, 3, "abc1234 First|def5678 Second");
 
@@ -293,7 +293,7 @@ public class ExistingWorkCheckerTest
   public void runWithValidArgsWritesJsonToStdout() throws IOException
   {
     Path tempDir = createTempGitRepo();
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       try
       {
@@ -332,7 +332,7 @@ public class ExistingWorkCheckerTest
   @Test
   public void runWithMissingWorktreeWritesErrorToStderr() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
       ByteArrayOutputStream errBytes = new ByteArrayOutputStream();
@@ -359,7 +359,7 @@ public class ExistingWorkCheckerTest
   public void runWithMissingTargetBranchWritesErrorToStderr() throws IOException
   {
     Path tempDir = createTempGitRepo();
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       try
       {

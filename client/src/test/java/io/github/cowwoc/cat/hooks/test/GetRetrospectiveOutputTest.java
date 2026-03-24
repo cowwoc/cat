@@ -34,7 +34,7 @@ public final class GetRetrospectiveOutputTest
   public void getOutputRejectsUnexpectedArguments() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       handler.getOutput(new String[]{"unexpected"});
@@ -52,7 +52,7 @@ public final class GetRetrospectiveOutputTest
   public void missingRetrospectivesDirectory() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
@@ -72,7 +72,7 @@ public final class GetRetrospectiveOutputTest
   public void missingIndexFile() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -96,7 +96,7 @@ public final class GetRetrospectiveOutputTest
   public void malformedIndexFile() throws Exception
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -119,7 +119,7 @@ public final class GetRetrospectiveOutputTest
   public void triggerNotMet() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -165,7 +165,7 @@ public final class GetRetrospectiveOutputTest
   public void timeBasedTrigger() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -213,7 +213,7 @@ public final class GetRetrospectiveOutputTest
   public void countBasedTrigger() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -260,7 +260,7 @@ public final class GetRetrospectiveOutputTest
   public void firstRetrospectiveTrigger() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -322,7 +322,7 @@ public final class GetRetrospectiveOutputTest
   public void effectivenessReporting() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -387,7 +387,7 @@ public final class GetRetrospectiveOutputTest
   public void emptyPatternsArray() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -432,7 +432,7 @@ public final class GetRetrospectiveOutputTest
   public void emptyActionItemsArray() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -478,7 +478,7 @@ public final class GetRetrospectiveOutputTest
   public void missingMistakesFileThrowsIOException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -522,7 +522,7 @@ public final class GetRetrospectiveOutputTest
   public void unparseableMistakesFilePropagatesError() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -568,7 +568,7 @@ public final class GetRetrospectiveOutputTest
   public void patternStatusFiltersAddressed() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -636,7 +636,7 @@ public final class GetRetrospectiveOutputTest
   public void openActionItemsSortedByPriority() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -740,7 +740,7 @@ public final class GetRetrospectiveOutputTest
   public void categoryBreakdownWithMistakes() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -819,7 +819,7 @@ public final class GetRetrospectiveOutputTest
   public void invalidTimestampInMistakeSkipped() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -890,7 +890,7 @@ public final class GetRetrospectiveOutputTest
   public void invalidPriorityDefaultsToMedium() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -943,7 +943,7 @@ public final class GetRetrospectiveOutputTest
   public void missingConfigObjectUsesDefaults() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -985,7 +985,7 @@ public final class GetRetrospectiveOutputTest
   public void actionItemWithNullStatusIsExcluded() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -1035,7 +1035,7 @@ public final class GetRetrospectiveOutputTest
   public void mistakesFileWithoutMistakesArray() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -1086,7 +1086,7 @@ public final class GetRetrospectiveOutputTest
   public void missingFilesNodeResultsInZeroMistakes() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -1126,7 +1126,7 @@ public final class GetRetrospectiveOutputTest
   public void patternWithMissingOccurrencesDefaultsToZero() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -1176,7 +1176,7 @@ public final class GetRetrospectiveOutputTest
   public void missingLastRetrospectiveFieldTreatedAsNull() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -1235,7 +1235,7 @@ public final class GetRetrospectiveOutputTest
   public void truncationBoundary60CharsNotTruncated() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -1291,7 +1291,7 @@ public final class GetRetrospectiveOutputTest
   public void truncationBoundary61CharsTruncated() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -1347,7 +1347,7 @@ public final class GetRetrospectiveOutputTest
   public void effectivenessWithoutDescription() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -1401,7 +1401,7 @@ public final class GetRetrospectiveOutputTest
   public void patternWithoutPatternField() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -1454,7 +1454,7 @@ public final class GetRetrospectiveOutputTest
   public void counterResetAfterSuccessfulAnalysis() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -1515,7 +1515,7 @@ public final class GetRetrospectiveOutputTest
   public void counterNotResetWhenThresholdNotMet() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -1574,7 +1574,7 @@ public final class GetRetrospectiveOutputTest
   public void counterNotResetOnErrorPath() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       // No .cat/retrospectives directory created — triggers missing-directory error
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
@@ -1602,7 +1602,7 @@ public final class GetRetrospectiveOutputTest
   public void counterResetOnFirstRetrospective() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -1675,7 +1675,7 @@ public final class GetRetrospectiveOutputTest
   public void counterResetOnMistakeThresholdTrigger() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -1731,7 +1731,7 @@ public final class GetRetrospectiveOutputTest
   public void counterNotResetOnErrorPathMissingIndexFile() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);

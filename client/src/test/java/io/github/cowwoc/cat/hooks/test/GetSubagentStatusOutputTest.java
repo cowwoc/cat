@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetSubagentStatusOutput;
 import io.github.cowwoc.cat.hooks.skills.GetSubagentStatusOutput.StatusResult;
 import io.github.cowwoc.cat.hooks.skills.GetSubagentStatusOutput.SubagentInfo;
@@ -40,7 +39,7 @@ public class GetSubagentStatusOutputTest
   public void getOutputReturnsJsonString() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-subagent-status-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetSubagentStatusOutput handler = new GetSubagentStatusOutput(scope);
       String result = handler.getOutput(new String[]{});
@@ -66,7 +65,7 @@ public class GetSubagentStatusOutputTest
   public void nullArgsThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-subagent-status-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetSubagentStatusOutput handler = new GetSubagentStatusOutput(scope);
       try
@@ -111,7 +110,7 @@ public class GetSubagentStatusOutputTest
   public void emptyArgsReturnsValidJson() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-subagent-status-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetSubagentStatusOutput handler = new GetSubagentStatusOutput(scope);
       String result = handler.getOutput(new String[]{});
@@ -140,7 +139,7 @@ public class GetSubagentStatusOutputTest
   public void outputContainsExpectedJsonStructure() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-subagent-status-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetSubagentStatusOutput handler = new GetSubagentStatusOutput(scope);
       String result = handler.getOutput(new String[]{});
@@ -165,7 +164,7 @@ public class GetSubagentStatusOutputTest
   public void monitorReturnsEmptyWhenNoSubagents() throws IOException
   {
     Path sessionBase = Files.createTempDirectory("session-test");
-    try (JvmScope scope = new TestJvmScope(sessionBase, sessionBase))
+    try (TestClaudeTool scope = new TestClaudeTool(sessionBase, sessionBase))
     {
       StatusResult result = GetSubagentStatusOutput.getStatus(sessionBase.toString(), scope.getJsonMapper());
 
@@ -190,7 +189,7 @@ public class GetSubagentStatusOutputTest
   public void toJsonProducesValidJsonForEmptyResult() throws IOException
   {
     Path sessionBase = Files.createTempDirectory("session-test");
-    try (JvmScope scope = new TestJvmScope(sessionBase, sessionBase))
+    try (TestClaudeTool scope = new TestClaudeTool(sessionBase, sessionBase))
     {
       StatusResult result = GetSubagentStatusOutput.getStatus(sessionBase.toString(), scope.getJsonMapper());
       String json = result.toJson(scope.getJsonMapper());
@@ -277,7 +276,7 @@ public class GetSubagentStatusOutputTest
       new GetSubagentStatusOutput.Summary(1, 1, 0, 0));
 
     Path tempDir2 = Files.createTempDirectory("test-");
-    try (JvmScope scope2 = new TestJvmScope(tempDir2, tempDir2))
+    try (TestClaudeTool scope2 = new TestClaudeTool(tempDir2, tempDir2))
     {
       String json = result.toJson(scope2.getJsonMapper());
 
@@ -305,7 +304,7 @@ public class GetSubagentStatusOutputTest
   public void monitorHandlesNonExistentSessionBase() throws IOException
   {
     Path tempDir2 = Files.createTempDirectory("test-");
-    try (JvmScope scope2 = new TestJvmScope(tempDir2, tempDir2))
+    try (TestClaudeTool scope2 = new TestClaudeTool(tempDir2, tempDir2))
     {
       StatusResult result = GetSubagentStatusOutput.getStatus("/nonexistent/path", scope2.getJsonMapper());
 
@@ -355,7 +354,7 @@ public class GetSubagentStatusOutputTest
       new GetSubagentStatusOutput.Summary(2, 1, 1, 0));
 
     Path tempDir = Files.createTempDirectory("test-subagent-parseable-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = result.toJson(scope.getJsonMapper());
 

@@ -8,7 +8,6 @@ package io.github.cowwoc.cat.hooks.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.PostToolHandler;
 import io.github.cowwoc.cat.hooks.tool.post.SetPendingAgentResult;
 import org.testng.annotations.Test;
@@ -37,7 +36,7 @@ public final class SetPendingAgentResultTest
    * @return the path to the worktree directory
    * @throws IOException if worktree creation fails
    */
-  private static Path createWorktreeDir(Path mainRepo, JvmScope scope, String issueId) throws IOException
+  private static Path createWorktreeDir(Path mainRepo, TestClaudeHook scope, String issueId) throws IOException
   {
     Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
     Files.createDirectories(worktreesDir);
@@ -80,7 +79,7 @@ public final class SetPendingAgentResultTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     Path worktreePath = null;
     String sessionId = UUID.randomUUID().toString();
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String issueId = "2.1-test-issue";
@@ -118,7 +117,7 @@ public final class SetPendingAgentResultTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     Path worktreePath = null;
     String sessionId = UUID.randomUUID().toString();
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String issueId = "2.1-test-issue";
@@ -159,7 +158,7 @@ public final class SetPendingAgentResultTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     Path worktreePath = null;
     String sessionId = UUID.randomUUID().toString();
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String issueId = "2.1-test-issue";
@@ -198,7 +197,7 @@ public final class SetPendingAgentResultTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     Path worktreePath = null;
     String sessionId = UUID.randomUUID().toString();
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String issueId = "2.1-test-issue";
@@ -235,7 +234,7 @@ public final class SetPendingAgentResultTest
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     String sessionId = UUID.randomUUID().toString();
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       JsonMapper mapper = scope.getJsonMapper();
       SetPendingAgentResult handler = new SetPendingAgentResult(scope);
@@ -267,7 +266,7 @@ public final class SetPendingAgentResultTest
   {
     Path tempDir = Files.createTempDirectory("set-pending-agent-result-test-");
     String sessionId = UUID.randomUUID().toString();
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
 
@@ -315,7 +314,7 @@ public final class SetPendingAgentResultTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     Path worktreePath = null;
     String sessionId = UUID.randomUUID().toString();
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String issueId = "2.1-test-issue";
@@ -355,7 +354,7 @@ public final class SetPendingAgentResultTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     Path worktreePath = null;
     String sessionId = UUID.randomUUID().toString();
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String issueId = "2.1-test-issue";
@@ -393,7 +392,7 @@ public final class SetPendingAgentResultTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     Path worktreePath = null;
     String sessionId = UUID.randomUUID().toString();
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String issueId = "2.1-test-issue";
@@ -431,7 +430,7 @@ public final class SetPendingAgentResultTest
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     Path worktreePath = null;
-    try (TestJvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       // Use the scope's own session ID to align getCatSessionPath() with the check() parameter
       String sessionId = "test-session";

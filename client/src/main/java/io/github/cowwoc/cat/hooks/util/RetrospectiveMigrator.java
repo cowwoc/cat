@@ -6,13 +6,15 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
+import static io.github.cowwoc.cat.hooks.Strings.block;
 import static io.github.cowwoc.cat.hooks.skills.JsonHelper.getStringOrDefault;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.Config;
-import io.github.cowwoc.cat.hooks.HookOutput;
+
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
@@ -84,21 +86,21 @@ public final class RetrospectiveMigrator
         projectPath = arg;
     }
 
-    try (MainJvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
-      RetrospectiveMigrator migrator = new RetrospectiveMigrator(scope);
-      MigrationResult result = migrator.migrate(Path.of(projectPath), dryRun);
-      for (String message : result.messages())
-        System.out.println(message);
-      System.out.println(scope.getJsonMapper().writeValueAsString(result.stats()));
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(RetrospectiveMigrator.class);
-      log.error("Unexpected error", e);
-      try (MainJvmScope errorScope = new MainJvmScope())
+      try
       {
-        System.out.println(new HookOutput(errorScope).block(
+        RetrospectiveMigrator migrator = new RetrospectiveMigrator(scope);
+        MigrationResult result = migrator.migrate(Path.of(projectPath), dryRun);
+        for (String message : result.messages())
+          System.out.println(message);
+        System.out.println(scope.getJsonMapper().writeValueAsString(result.stats()));
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(RetrospectiveMigrator.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }

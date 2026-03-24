@@ -7,8 +7,7 @@
 package io.github.cowwoc.cat.hooks.bash;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
-import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.WorktreeContext;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 
@@ -34,7 +33,7 @@ public final class BlockMainRebase implements BashHandler
   private static final Pattern CD_TARGET_PATTERN =
     Pattern.compile("^cd\\s+['\"]?([^'\";&|]+)['\"]?");
 
-  private final JvmScope scope;
+  private final ClaudeHook scope;
   private final Path projectPath;
   private final Pattern cdProjectPattern;
 
@@ -44,7 +43,7 @@ public final class BlockMainRebase implements BashHandler
    * @param scope the JVM scope providing access to shared resources
    * @throws NullPointerException if {@code scope} is null
    */
-  public BlockMainRebase(JvmScope scope)
+  public BlockMainRebase(ClaudeHook scope)
   {
     this.scope = scope;
     this.projectPath = scope.getProjectPath();
@@ -54,11 +53,11 @@ public final class BlockMainRebase implements BashHandler
   }
 
   @Override
-  public Result check(HookInput input)
+  public Result check(ClaudeHook scope)
   {
-    String command = input.getCommand();
+    String command = scope.getCommand();
     String commandLower = GitCommands.toLowerCase(command);
-    String sessionId = input.getSessionId();
+    String sessionId = scope.getSessionId();
 
     // Check for git checkout/switch in main worktree
     if (CHECKOUT_PATTERN.matcher(commandLower).find())

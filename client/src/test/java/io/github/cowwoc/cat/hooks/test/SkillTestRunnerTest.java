@@ -33,8 +33,8 @@ public final class SkillTestRunnerTest
   @Test
   public void extractUnitsWithFrontmatter() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Create a skill file with frontmatter
       Path skillFile = tempDir.resolve("skill.md");
@@ -71,8 +71,8 @@ public final class SkillTestRunnerTest
   @Test
   public void extractUnitsWithoutFrontmatter() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillFile = tempDir.resolve("skill.md");
       Files.writeString(skillFile, """
@@ -99,8 +99,8 @@ public final class SkillTestRunnerTest
     expectedExceptionsMessageRegExp = ".*file not found.*")
   public void extractUnitsFileNotFound() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       SkillTestRunner runner = new SkillTestRunner(scope);
       runner.extractUnits(new String[]{"/nonexistent/skill.md"});
@@ -117,8 +117,8 @@ public final class SkillTestRunnerTest
   @Test
   public void extractModelFromFrontmatter() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillFile = tempDir.resolve("skill.md");
       Files.writeString(skillFile, """
@@ -145,8 +145,8 @@ public final class SkillTestRunnerTest
   @Test
   public void extractModelFallsBackToHaiku() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillFile = tempDir.resolve("skill.md");
       Files.writeString(skillFile, """
@@ -172,8 +172,8 @@ public final class SkillTestRunnerTest
   @Test
   public void mapUnitsPartitionsCorrectly() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Create test-cases.json
       Path testCasesPath = tempDir.resolve("test-cases.json");
@@ -214,8 +214,8 @@ public final class SkillTestRunnerTest
   @Test
   public void mapUnitsNoChangedUnitsCarriesForwardAll() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path testCasesPath = tempDir.resolve("test-cases.json");
       Files.writeString(testCasesPath, """
@@ -252,8 +252,8 @@ public final class SkillTestRunnerTest
   @Test
   public void initSprtFreshStateNoPrior() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       String rerunJson = "[\"TC1\",\"TC2\"]";
       SkillTestRunner runner = new SkillTestRunner(scope);
@@ -284,8 +284,8 @@ public final class SkillTestRunnerTest
   @Test
   public void initSprtUsePriorBoostWithAcceptPrior() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Prior benchmark has TC1 as ACCEPT
       Path priorPath = tempDir.resolve("prior.json");
@@ -323,8 +323,8 @@ public final class SkillTestRunnerTest
   @Test
   public void initSprtWithEmptyPrior() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Pass "none" as prior path to indicate no prior benchmark
       String rerunJson = "[\"TC1\"]";
@@ -353,8 +353,8 @@ public final class SkillTestRunnerTest
   @Test
   public void checkBoundaryWithZeroTestCases() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       // SPRT state with no entries (empty object)
       Path statePath = tempDir.resolve("sprt_state.json");
@@ -389,8 +389,8 @@ public final class SkillTestRunnerTest
   public void persistArtifactsRejectsCorruptBenchmarkJson() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Create skill file
       Path skillFile = repoDir.resolve("skill.md");
@@ -425,8 +425,8 @@ public final class SkillTestRunnerTest
   @Test
   public void updateSprtPassUpdatesLogRatioAndDecision() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Create initial state file with TC1 in INCONCLUSIVE state near ACCEPT boundary
       Path statePath = tempDir.resolve("sprt_state.json");
@@ -463,8 +463,8 @@ public final class SkillTestRunnerTest
   @Test
   public void updateSprtFailUpdatesLogRatioAndDecision() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path statePath = tempDir.resolve("sprt_state.json");
       // log_ratio -2.9 is just above REJECT (-2.944); one FAIL (-1.0986) should push it below
@@ -495,8 +495,8 @@ public final class SkillTestRunnerTest
   @Test
   public void checkBoundaryReturnsCorrectFields() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path statePath = tempDir.resolve("sprt_state.json");
       Files.writeString(statePath, """
@@ -529,8 +529,8 @@ public final class SkillTestRunnerTest
   @Test
   public void smokeStatusInSmokePhase() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path statePath = tempDir.resolve("sprt_state.json");
       Files.writeString(statePath, """
@@ -561,8 +561,8 @@ public final class SkillTestRunnerTest
   @Test
   public void smokeStatusEscalates() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path statePath = tempDir.resolve("sprt_state.json");
       Files.writeString(statePath, """
@@ -591,8 +591,8 @@ public final class SkillTestRunnerTest
   @Test
   public void mergeResultsAllAccept() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path statePath = tempDir.resolve("sprt_state.json");
       Files.writeString(statePath, """
@@ -626,8 +626,8 @@ public final class SkillTestRunnerTest
   @Test
   public void mergeResultsAnyRejectProducesRejectOverall() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path statePath = tempDir.resolve("sprt_state.json");
       Files.writeString(statePath, """
@@ -659,8 +659,8 @@ public final class SkillTestRunnerTest
   @Test
   public void runDispatchesToSubcommand() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path testCasesPath = tempDir.resolve("test-cases.json");
       Files.writeString(testCasesPath, """
@@ -692,8 +692,8 @@ public final class SkillTestRunnerTest
     expectedExceptionsMessageRegExp = ".*no command specified.*")
   public void runThrowsOnNoCommand() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       SkillTestRunner runner = new SkillTestRunner(scope);
       runner.run(new String[]{}, System.out);
@@ -711,8 +711,8 @@ public final class SkillTestRunnerTest
     expectedExceptionsMessageRegExp = ".*unknown command.*")
   public void runThrowsOnUnknownCommand() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       SkillTestRunner runner = new SkillTestRunner(scope);
       runner.run(new String[]{"nonexistent-command"}, System.out);
@@ -731,8 +731,8 @@ public final class SkillTestRunnerTest
   public void detectChangesNoChanges() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Create skill file and commit it
       Path skillFile = repoDir.resolve("skill.md");
@@ -784,8 +784,8 @@ public final class SkillTestRunnerTest
   public void detectChangesFrontmatterChanged() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Commit the old skill content
       Path skillFile = repoDir.resolve("skill.md");
@@ -847,8 +847,8 @@ public final class SkillTestRunnerTest
   public void detectChangesBodyOnlyChanged() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Commit the old skill content
       Path skillFile = repoDir.resolve("skill.md");
@@ -906,8 +906,8 @@ public final class SkillTestRunnerTest
   public void persistArtifactsWritesBenchmarkJson() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Create skill file inside the git repo
       Path skillFile = repoDir.resolve("skill.md");
@@ -966,8 +966,8 @@ public final class SkillTestRunnerTest
   public void persistArtifactsCopiesTestCasesJson() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillFile = repoDir.resolve("skill.md");
       Files.writeString(skillFile, "---\ndescription: Test\n---\n# Body\n", StandardCharsets.UTF_8);
@@ -1012,8 +1012,8 @@ public final class SkillTestRunnerTest
     expectedExceptionsMessageRegExp = ".*worktree root not found.*")
   public void persistArtifactsThrowsWhenWorktreeRootMissing() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       SkillTestRunner runner = new SkillTestRunner(scope);
       runner.persistArtifacts(
@@ -1032,8 +1032,8 @@ public final class SkillTestRunnerTest
   @Test
   public void mergeResultsCarryforwardUsePriorStats() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-benchmark-runner-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       // TC1 is ACCEPT in current SPRT state; TC2 is INCONCLUSIVE with low log_ratio
       Path statePath = tempDir.resolve("sprt_state.json");

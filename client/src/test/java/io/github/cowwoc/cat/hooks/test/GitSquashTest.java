@@ -38,7 +38,7 @@ public class GitSquashTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
       GitSquash cmd = new GitSquash(scope, tempDir.toString());
@@ -63,7 +63,7 @@ public class GitSquashTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
       GitSquash cmd = new GitSquash(scope, tempDir.toString());
@@ -88,7 +88,7 @@ public class GitSquashTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
       GitSquash cmd = new GitSquash(scope, tempDir.toString());
@@ -113,7 +113,7 @@ public class GitSquashTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
       GitSquash cmd = new GitSquash(scope, tempDir.toString());
@@ -138,7 +138,7 @@ public class GitSquashTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
       GitSquash cmd = new GitSquash(scope, tempDir.toString());
@@ -163,7 +163,7 @@ public class GitSquashTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
       GitSquash cmd = new GitSquash(scope, tempDir.toString());
@@ -188,7 +188,7 @@ public class GitSquashTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
       GitSquash cmd = new GitSquash(scope, tempDir.toString());
@@ -213,7 +213,7 @@ public class GitSquashTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
       GitSquash cmd = new GitSquash(scope, tempDir.toString());
@@ -239,7 +239,7 @@ public class GitSquashTest
     expectedExceptionsMessageRegExp = ".*Invalid commit message format.*")
   public void rejectsGenericSquashCommitMessage() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       GitSquash cmd = new GitSquash(scope, ".");
       cmd.execute("main", "squash commit");
@@ -253,7 +253,7 @@ public class GitSquashTest
     expectedExceptionsMessageRegExp = ".*Invalid commit message format.*")
   public void rejectsGenericFixTypoMessage() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       GitSquash cmd = new GitSquash(scope, ".");
       cmd.execute("main", "fix typo");
@@ -267,7 +267,7 @@ public class GitSquashTest
     expectedExceptionsMessageRegExp = ".*Invalid commit message format.*")
   public void rejectsMissingSpaceAfterColonFeature() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       GitSquash cmd = new GitSquash(scope, ".");
       cmd.execute("main", "feature:nodescription");
@@ -281,7 +281,7 @@ public class GitSquashTest
     expectedExceptionsMessageRegExp = ".*Invalid commit message format.*")
   public void rejectsMissingSpaceAfterColonBugfix() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       GitSquash cmd = new GitSquash(scope, ".");
       cmd.execute("main", "bugfix:fix");
@@ -295,7 +295,7 @@ public class GitSquashTest
     expectedExceptionsMessageRegExp = ".*Invalid commit message format.*")
   public void rejectsEmptyDescription() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       GitSquash cmd = new GitSquash(scope, ".");
       cmd.execute("main", "feature: ");
@@ -309,7 +309,7 @@ public class GitSquashTest
     expectedExceptionsMessageRegExp = ".*Invalid commit message format.*")
   public void rejectsUppercaseTypePrefix() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       GitSquash cmd = new GitSquash(scope, ".");
       cmd.execute("main", "Feature: add auth");
@@ -323,7 +323,7 @@ public class GitSquashTest
     expectedExceptionsMessageRegExp = ".*Invalid commit message format.*")
   public void rejectsMixedCaseTypePrefix() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       GitSquash cmd = new GitSquash(scope, ".");
       cmd.execute("main", "Bugfix: fix crash");
@@ -336,7 +336,7 @@ public class GitSquashTest
   @Test
   public void rejectsEmptyStringMessage() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       GitSquash cmd = new GitSquash(scope, ".");
       try
@@ -357,7 +357,7 @@ public class GitSquashTest
     expectedExceptionsMessageRegExp = ".*Invalid commit message format.*")
   public void rejectsInvalidTypePrefix() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       GitSquash cmd = new GitSquash(scope, ".");
       cmd.execute("main", "chore: update dependencies");
@@ -371,7 +371,7 @@ public class GitSquashTest
     expectedExceptionsMessageRegExp = ".*Invalid commit message format.*")
   public void rejectsWhitespaceOnlyDescription() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       GitSquash cmd = new GitSquash(scope, ".");
       cmd.execute("main", "feature:   ");
@@ -385,7 +385,7 @@ public class GitSquashTest
     expectedExceptionsMessageRegExp = ".*Invalid commit message format.*")
   public void rejectsGenericAddParserMessage() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       GitSquash cmd = new GitSquash(scope, ".");
       cmd.execute("main", "add parser");
@@ -403,7 +403,7 @@ public class GitSquashTest
     expectedExceptionsMessageRegExp = ".*Received: invalid message.*")
   public void errorMessageShowsReceivedMessage() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       GitSquash cmd = new GitSquash(scope, ".");
       cmd.execute("main", "invalid message");
@@ -417,7 +417,7 @@ public class GitSquashTest
     expectedExceptionsMessageRegExp = "(?s).*(?=.*feature:)(?=.*bugfix:)(?=.*docs:).*")
   public void errorMessageShowsValidTypePrefixes() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       GitSquash cmd = new GitSquash(scope, ".");
       cmd.execute("main", "invalid: message");
@@ -434,7 +434,7 @@ public class GitSquashTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
       GitSquash cmd = new GitSquash(scope, tempDir.toString());
@@ -464,7 +464,7 @@ public class GitSquashTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
       GitSquash cmd = new GitSquash(scope, tempDir.toString());
@@ -489,7 +489,7 @@ public class GitSquashTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
       GitSquash cmd = new GitSquash(scope, tempDir.toString());
@@ -518,7 +518,7 @@ public class GitSquashTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
 
@@ -552,7 +552,7 @@ public class GitSquashTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
 
@@ -587,7 +587,7 @@ public class GitSquashTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
 
@@ -623,7 +623,7 @@ public class GitSquashTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
 
@@ -661,7 +661,7 @@ public class GitSquashTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
 
@@ -697,7 +697,7 @@ public class GitSquashTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       // Create an issue branch that modifies multiple files
       TestUtils.runGit(tempDir, "checkout", "-b", "multi-conflict-branch");
@@ -752,7 +752,7 @@ public class GitSquashTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       // Add shared.txt on main
       Files.writeString(tempDir.resolve("shared.txt"), "line1\nline2\nline3\nline4\nline5\n");
@@ -801,7 +801,7 @@ public class GitSquashTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       // Add two shared files
       Files.writeString(tempDir.resolve("config.yaml"), "aaa\nbbb\nccc\n");
@@ -850,7 +850,7 @@ public class GitSquashTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
       GitSquash cmd = new GitSquash(scope, tempDir.toString());
@@ -876,7 +876,7 @@ public class GitSquashTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
       GitSquash cmd = new GitSquash(scope, tempDir.toString());
@@ -902,7 +902,7 @@ public class GitSquashTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       // Add shared.txt on main
       Files.writeString(tempDir.resolve("shared.txt"), "line1\nline2\nline3\nline4\nline5\n");
@@ -961,7 +961,7 @@ public class GitSquashTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
       GitSquash cmd = new GitSquash(scope, tempDir.toString());
@@ -995,7 +995,7 @@ public class GitSquashTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       // Record the base (main) commit's author date before squash
       String baseAuthorDate = TestUtils.runGitCommandWithOutput(tempDir,
@@ -1030,7 +1030,7 @@ public class GitSquashTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       // Record the base (main) commit's committer date before squash
       String baseCommitterDate = TestUtils.runGitCommandWithOutput(tempDir,

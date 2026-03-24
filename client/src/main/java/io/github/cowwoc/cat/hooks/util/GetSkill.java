@@ -9,9 +9,11 @@ package io.github.cowwoc.cat.hooks.util;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import io.github.cowwoc.cat.hooks.HookOutput;
+
+import io.github.cowwoc.cat.hooks.AbstractClaudeHook;
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
+import io.github.cowwoc.cat.hooks.MainClaudeHook;
 import io.github.cowwoc.cat.hooks.ShellParser;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -93,7 +95,7 @@ import org.slf4j.LoggerFactory;
  * <br>
  * The {@code catAgentId} argument is mandatory. Main agents pass {@code ${CLAUDE_SESSION_ID}};
  * subagents pass the value injected by SubagentStartHook (e.g., {@code {sessionId}/subagents/{agent_id}}).
- * The {@code pluginRoot} is read from the JVM environment via {@link JvmScope}.
+ * The {@code pluginRoot} is read from the JVM environment via {@link ClaudeHook}.
  *
  * @see io.github.cowwoc.cat.hooks.session.ClearAgentMarkers
  */
@@ -143,6 +145,7 @@ public final class GetSkill
    * <p>
    * The plugin root and project directory are read from {@code scope} via
    * {@link JvmScope#getPluginRoot()} and {@link JvmScope#getProjectPath()}.
+   * When invoked from {@link #main(String[])}, the scope is a {@link MainClaudeHook}.
    *
    * @param scope the JVM scope for accessing shared services and environment paths
    * @param skillArgs pre-tokenized positional arguments; the first element ({@code $0}) is the CAT agent ID,
@@ -650,7 +653,15 @@ public final class GetSkill
     try
     {
       Class<?> targetClass = Class.forName(className);
-      Object instance = targetClass.getConstructor(JvmScope.class).newInstance(scope);
+      Object instance;
+      try
+      {
+        instance = targetClass.getConstructor(JvmScope.class).newInstance(scope);
+      }
+      catch (NoSuchMethodException _)
+      {
+        instance = targetClass.getConstructor().newInstance();
+      }
       if (!(instance instanceof SkillOutput skillOutput))
       {
         throw new IOException("Class " + className + " does not implement SkillOutput");
@@ -848,7 +859,7 @@ public final class GetSkill
    * Invoked as: java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.util.GetSkill
    * skill-name catAgentId [skill-args...]
    * <p>
-   * The plugin root and project directory are read from the JVM environment via {@link MainJvmScope}.
+   * The plugin root and project directory are read from the JVM environment via {@link MainClaudeTool}.
    * The agent ID is passed as the first skill argument ({@code skill-args[0]}, i.e., {@code $0}).
    *
    * @param args command-line arguments: skill-name catAgentId [skill-args...]
@@ -865,24 +876,24 @@ public final class GetSkill
     String skillName = args[0];
     List<String> skillArgs = List.of(args).subList(1, args.length);
 
-    try (JvmScope scope = new MainJvmScope())
+    try (AbstractClaudeHook scope = new MainClaudeHook())
     {
-      GetSkill loader = new GetSkill(scope, skillArgs);
-      String result = loader.load(skillName);
-      System.out.print(result);
-    }
-    catch (IOException e)
-    {
-      System.err.println("Error loading skill: " + e.getMessage());
-      System.exit(1);
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(GetSkill.class);
-      log.error("Unexpected error", e);
-      try (MainJvmScope errorScope = new MainJvmScope())
+      try
       {
-        System.out.println(new HookOutput(errorScope).block(
+        GetSkill loader = new GetSkill(scope, skillArgs);
+        String result = loader.load(skillName);
+        System.out.print(result);
+      }
+      catch (IOException e)
+      {
+        System.err.println("Error loading skill: " + e.getMessage());
+        System.exit(1);
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(GetSkill.class);
+        log.error("Unexpected error", e);
+        System.out.println(scope.block(
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }

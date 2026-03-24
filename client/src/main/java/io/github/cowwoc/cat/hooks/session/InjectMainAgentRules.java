@@ -6,14 +6,11 @@
  */
 package io.github.cowwoc.cat.hooks.session;
 
-import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.util.RulesDiscovery;
 
 import java.nio.file.Path;
 import java.util.List;
-
-import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
  * Injects audience-filtered rules from plugin-bundled and project-local rule directories into main
@@ -26,18 +23,11 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  */
 public final class InjectMainAgentRules implements SessionStartHandler
 {
-  private final JvmScope scope;
-
   /**
    * Creates a new InjectMainAgentRules handler.
-   *
-   * @param scope the JVM scope providing environment paths
-   * @throws NullPointerException if {@code scope} is null
    */
-  public InjectMainAgentRules(JvmScope scope)
+  public InjectMainAgentRules()
   {
-    requireThat(scope, "scope").isNotNull();
-    this.scope = scope;
   }
 
   /**
@@ -50,15 +40,11 @@ public final class InjectMainAgentRules implements SessionStartHandler
    * </ol>
    * Both sources are concatenated; no filename-based deduplication is performed.
    *
-   * @param input the hook input
    * @return a result with the injected rules content, or empty if no rules apply
-   * @throws NullPointerException if {@code input} is null
    */
   @Override
-  public Result handle(HookInput input)
+  public Result handle(ClaudeHook scope)
   {
-    requireThat(input, "input").isNotNull();
-
     Path pluginRulesDir = scope.getPluginRoot().resolve("rules");
     Path projectRulesDir = scope.getCatDir().resolve("rules");
     // Rules with paths: restrictions are injected dynamically by InjectPathRules (PreToolUse hook)

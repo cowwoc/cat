@@ -5,7 +5,7 @@
 # See LICENSE.md in the project root for license terms.
 #
 # Shared bash helper functions for skill dependency detection in the add-agent workflow.
-# Sourced by plugin/skills/add/first-use.md and plugin/skills/add/tests/skill_dep_detection.bats.
+# Sourced by plugin/skills/add-agent/first-use.md and plugin/skills/add-agent/tests/skill_dep_detection.bats.
 #
 # Functions:
 #   extract_skill_names   - Parse ISSUE_DESCRIPTION to extract referenced skill names

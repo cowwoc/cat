@@ -7,10 +7,8 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.bash.RemindGitSquash;
 import org.testng.annotations.Test;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -24,22 +22,42 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public final class RemindGitSquashTest
 {
   /**
+   * Builds a hook payload with the given command embedded in tool_input.command.
+   *
+   * @param command the bash command
+   * @return the JSON payload string
+   */
+  private static String buildPayload(String command)
+  {
+    // Escape backslashes and double-quotes for JSON embedding
+    String escaped = command.replace("\\", "\\\\").replace("\"", "\\\"");
+    return """
+      {
+        "session_id": "session1",
+        "tool_name": "Bash",
+        "tool_input": {"command": "%s"}
+      }""".formatted(escaped);
+  }
+
+  /**
    * Verifies that {@code git reset --soft} without a path argument is blocked.
    */
   @Test
   public void gitResetSoftWithoutPathIsBlocked() throws IOException
   {
     Path tempDir = Files.createTempDirectory("rgs-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      RemindGitSquash handler = new RemindGitSquash();
       String command = "git reset --soft HEAD~1";
+      try (TestClaudeHook scope = new TestClaudeHook(buildPayload(command), tempDir, tempDir, tempDir))
+      {
+        RemindGitSquash handler = new RemindGitSquash();
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+        BashHandler.Result result = handler.check(scope);
 
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("/cat:git-squash");
+        requireThat(result.blocked(), "blocked").isTrue();
+        requireThat(result.reason(), "reason").contains("/cat:git-squash");
+      }
     }
     finally
     {
@@ -56,17 +74,26 @@ public final class RemindGitSquashTest
   @Test
   public void gitResetSoftWithPathArgumentIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("rgs-test-");
+    try
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      RemindGitSquash handler = new RemindGitSquash();
-      String worktreePath = scope.getCatWorkPath().resolve("worktrees").resolve("2.1-my-issue").toString();
+      // Compute the worktree path using the same formula as getCatWorkPath()
+      String worktreePath = tempDir.resolve(".cat").resolve("work").resolve("worktrees").
+        resolve("2.1-my-issue").toString();
       String command = "git -C " + worktreePath + " reset --soft v2.1";
+      try (TestClaudeHook scope = new TestClaudeHook(buildPayload(command), tempDir, tempDir, tempDir))
+      {
+        RemindGitSquash handler = new RemindGitSquash();
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+        BashHandler.Result result = handler.check(scope);
 
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("/cat:git-squash");
+        requireThat(result.blocked(), "blocked").isTrue();
+        requireThat(result.reason(), "reason").contains("/cat:git-squash");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -77,15 +104,17 @@ public final class RemindGitSquashTest
   public void normalGitCommitIsAllowed() throws IOException
   {
     Path tempDir = Files.createTempDirectory("rgs-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      RemindGitSquash handler = new RemindGitSquash();
       String command = "git commit -m \"feature: add something\"";
+      try (TestClaudeHook scope = new TestClaudeHook(buildPayload(command), tempDir, tempDir, tempDir))
+      {
+        RemindGitSquash handler = new RemindGitSquash();
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+        BashHandler.Result result = handler.check(scope);
 
-      requireThat(result.blocked(), "blocked").isFalse();
+        requireThat(result.blocked(), "blocked").isFalse();
+      }
     }
     finally
     {
@@ -100,16 +129,18 @@ public final class RemindGitSquashTest
   public void gitRebaseInteractiveTriggersWarning() throws IOException
   {
     Path tempDir = Files.createTempDirectory("rgs-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      RemindGitSquash handler = new RemindGitSquash();
       String command = "git rebase -i HEAD~3";
+      try (TestClaudeHook scope = new TestClaudeHook(buildPayload(command), tempDir, tempDir, tempDir))
+      {
+        RemindGitSquash handler = new RemindGitSquash();
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+        BashHandler.Result result = handler.check(scope);
 
-      requireThat(result.blocked(), "blocked").isFalse();
-      requireThat(result.reason(), "reason").contains("/cat:git-squash");
+        requireThat(result.blocked(), "blocked").isFalse();
+        requireThat(result.reason(), "reason").contains("/cat:git-squash");
+      }
     }
     finally
     {

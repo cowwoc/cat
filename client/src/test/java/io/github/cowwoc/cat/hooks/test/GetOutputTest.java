@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetOutput;
 import org.testng.annotations.Test;
 
@@ -37,7 +36,7 @@ public class GetOutputTest
   public void dotNotationWithPageParses() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Create minimal config for config handler to return non-null
       Path catDir = tempDir.resolve(".cat");
@@ -67,7 +66,7 @@ public class GetOutputTest
   public void singleSkillNameWithoutPageRoutes() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetOutput handler = new GetOutput(scope);
       String result = handler.getOutput(new String[]{"config.saved"});
@@ -92,7 +91,7 @@ public class GetOutputTest
   public void outputIsWrappedInTag() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetOutput handler = new GetOutput(scope);
       String result = handler.getOutput(new String[]{"config.no-changes"});
@@ -119,7 +118,7 @@ public class GetOutputTest
   public void outputContainsGuardrailInstructions() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-guardrails-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetOutput handler = new GetOutput(scope);
       String result = handler.getOutput(new String[]{"config.no-changes"});
@@ -148,7 +147,7 @@ public class GetOutputTest
   public void unknownSkillTypeThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetOutput handler = new GetOutput(scope);
       handler.getOutput(new String[]{"invalid-skill"});
@@ -169,7 +168,7 @@ public class GetOutputTest
   public void missingTypeArgumentThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetOutput handler = new GetOutput(scope);
       handler.getOutput(new String[]{});
@@ -189,7 +188,7 @@ public class GetOutputTest
   public void extraArgumentsPassThroughToHandler() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Create minimal config for config handler
       Path catDir = tempDir.resolve(".cat");
@@ -221,7 +220,7 @@ public class GetOutputTest
   public void nullArgsThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetOutput handler = new GetOutput(scope);
       handler.getOutput(null);
@@ -241,7 +240,7 @@ public class GetOutputTest
   public void wrappedOutputContainsNewlines() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetOutput handler = new GetOutput(scope);
       String result = handler.getOutput(new String[]{"config.saved"});
@@ -265,7 +264,7 @@ public class GetOutputTest
   public void multipleDotsSeparatesOnFirst() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       // init.choose-your-partner should parse as skill=init, page=choose-your-partner
       GetOutput handler = new GetOutput(scope);
@@ -292,7 +291,7 @@ public class GetOutputTest
   public void benchmarkAggregatorRoutesThroughDispatcher() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-benchmark-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetOutput handler = new GetOutput(scope);
       String runResultsJson = """
@@ -325,7 +324,7 @@ public class GetOutputTest
   public void descriptionOptimizerRoutesThroughDispatcher() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-desc-opt-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Write a minimal SKILL.md into temp dir
       Path skillFile = tempDir.resolve("SKILL.md");
@@ -379,7 +378,7 @@ public class GetOutputTest
   public void mainAgentIdAsFirstArgIsSkipped() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-skip-$0-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetOutput handler = new GetOutput(scope);
       String agentId = UUID.randomUUID().toString();
@@ -406,7 +405,7 @@ public class GetOutputTest
   public void subagentIdAsFirstArgIsSkipped() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-skip-subagent-$0-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetOutput handler = new GetOutput(scope);
       String subagentId = UUID.randomUUID() + "/subagents/abc123";
@@ -432,7 +431,7 @@ public class GetOutputTest
   public void nonAgentIdFirstArgUsedAsType() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-no-skip-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetOutput handler = new GetOutput(scope);
       // Direct invocation without agent ID prefix
@@ -458,7 +457,7 @@ public class GetOutputTest
   public void skipAgentIdAndDotNotationIntegration() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-integration-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Create minimal config for config handler
       Path catDir = tempDir.resolve(".cat");
@@ -493,7 +492,7 @@ public class GetOutputTest
   public void malformedUuidNotSkipped() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-malformed-uuid-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetOutput handler = new GetOutput(scope);
       // Malformed UUID: wrong segment lengths — must NOT be skipped, treated as type
@@ -516,7 +515,7 @@ public class GetOutputTest
   public void subagentIdWithoutIdentifierNotSkipped() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-no-subagent-id-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetOutput handler = new GetOutput(scope);
       // UUID followed by /subagents/ but no identifier — must NOT be skipped
@@ -540,7 +539,7 @@ public class GetOutputTest
   public void subagentIdWithInvalidCharsNotSkipped() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-invalid-subagent-chars-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetOutput handler = new GetOutput(scope);
       // UUID followed by /subagents/ with invalid characters (spaces) in identifier — must NOT be skipped
@@ -561,7 +560,7 @@ public class GetOutputTest
   public void generatedInstructionsReferenceOutputType() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-output-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String output = new GetOutput(scope).getOutput(new String[]{"status"});
       requireThat(output, "output").contains("<output type=\"status\">");
@@ -585,7 +584,7 @@ public class GetOutputTest
   public void typeMatchingSelectsCorrectOutput() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-type-matching-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Create minimal config for config handler
       Path catDir = tempDir.resolve(".cat");

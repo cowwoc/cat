@@ -127,7 +127,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, "");
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(new TestJvmScope());
+        new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       requireThat(result.path("tool_frequency").size(),
@@ -181,7 +181,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(new TestJvmScope());
+        new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       requireThat(result.path("tool_frequency").size(),
@@ -248,7 +248,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(new TestJvmScope());
+        new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       requireThat(result.path("token_usage").size(),
@@ -298,7 +298,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(new TestJvmScope());
+        new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       JsonNode outputSizes = result.path("output_sizes");
@@ -350,7 +350,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(new TestJvmScope());
+        new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       requireThat(result.path("cache_candidates").size(),
@@ -406,7 +406,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(new TestJvmScope());
+        new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       requireThat(result.path("batch_candidates").size(),
@@ -453,7 +453,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(new TestJvmScope());
+        new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       requireThat(result.path("parallel_candidates").size(),
@@ -530,7 +530,7 @@ public final class SessionAnalyzerTest
       Files.writeString(subagent2, subagent2Jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(new TestJvmScope());
+        new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSession(mainSession);
 
       requireThat(result.has("main"), "has_main").isTrue();
@@ -619,7 +619,7 @@ public final class SessionAnalyzerTest
         assistantMessage("compact1", "tc1", "Bash", "") + "\n";
       Files.writeString(compactionArtifact, compactionJsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSession(mainSession);
 
       requireThat(result.has("subagents"), "has_subagents").isTrue();
@@ -672,7 +672,7 @@ public final class SessionAnalyzerTest
       String mainJsonl = assistantMessage("msg1", "tool1", "Read", "") + "\n";
       Files.writeString(mainSession, mainJsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSession(mainSession);
 
       requireThat(result.has("subagents"), "has_subagents").isTrue();
@@ -705,7 +705,7 @@ public final class SessionAnalyzerTest
       String mainJsonl = assistantMessage("msg1", "tool1", "Read", "") + "\n";
       Files.writeString(mainSession, mainJsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSession(mainSession);
 
       requireThat(result.has("subagents"), "has_subagents").isTrue();
@@ -749,7 +749,7 @@ public final class SessionAnalyzerTest
       String subagent1Jsonl = assistantMessage("sub1", "t1", "Read", "") + "\n";
       Files.writeString(subagent1, subagent1Jsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSession(mainSession);
 
       requireThat(result.has("subagents"), "has_subagents").isTrue();
@@ -805,7 +805,7 @@ public final class SessionAnalyzerTest
       Files.writeString(subagent1, subagent1Jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(new TestJvmScope());
+        new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSession(mainSession);
 
       JsonNode combined = result.path("combined");
@@ -870,7 +870,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(new TestJvmScope());
+        new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       requireThat(
@@ -904,7 +904,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(new TestJvmScope());
+        new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       JsonNode outputSizes = result.path("output_sizes");
@@ -941,7 +941,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(new TestJvmScope());
+        new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.search(tempFile, "keyword", 0);
 
       requireThat(result.path("matches").size(),
@@ -979,7 +979,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, msgWithKeyword + "\n");
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(new TestJvmScope());
+        new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.search(tempFile, "keyword", 1);
 
       requireThat(result.path("matches").size(),
@@ -1013,7 +1013,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(new TestJvmScope());
+        new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.search(tempFile, "nonexistent_keyword_xyz", 0);
 
       requireThat(result.path("matches").size(),
@@ -1045,7 +1045,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(new TestJvmScope());
+        new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.search(tempFile, "", 0);
 
       // Empty keyword matches every entry — behavior is well-defined as "match all"
@@ -1082,7 +1082,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(new TestJvmScope());
+        new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.search(tempFile, "alpha|beta", 0, true);
 
       requireThat(result.path("matches").size(),
@@ -1112,7 +1112,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, msgWithKeyword + "\n");
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(new TestJvmScope());
+        new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.search(tempFile, "(?i)uppercase_keyword", 0, true);
 
       requireThat(result.path("matches").size(),
@@ -1139,7 +1139,7 @@ public final class SessionAnalyzerTest
         "\"file_path\":\"/test.txt\"") + "\n");
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(new TestJvmScope());
+        new SessionAnalyzer(new TestClaudeTool());
       try
       {
         analyzer.search(tempFile, "[invalid(regex", 0, true);
@@ -1179,7 +1179,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, bashToolUse + successResult + errorResult);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(new TestJvmScope());
+        new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.errors(tempFile);
 
       requireThat(result.path("errors").size(),
@@ -1221,7 +1221,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, buildFailedResult + errorColonResult + successResult);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(new TestJvmScope());
+        new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.errors(tempFile);
 
       requireThat(result.path("errors").size(),
@@ -1254,7 +1254,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, successResult);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(new TestJvmScope());
+        new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.errors(tempFile);
 
       requireThat(result.path("errors").size(),
@@ -1291,7 +1291,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(new TestJvmScope());
+        new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.fileHistory(tempFile, "config.json");
 
       JsonNode operations = result.path("operations");
@@ -1327,7 +1327,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(new TestJvmScope());
+        new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.fileHistory(tempFile, "config.json");
 
       requireThat(result.path("operations").size(),
@@ -1358,7 +1358,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(new TestJvmScope());
+        new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.fileHistory(tempFile, "config.json");
 
       requireThat(result.path("operations").size(),
@@ -1395,7 +1395,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(new TestJvmScope());
+        new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.fileHistory(tempFile, "pom.xml");
 
       // Should match /workspace/pom.xml (Read) and mvn -f pom.xml test (Bash) — 2 operations
@@ -1449,7 +1449,7 @@ public final class SessionAnalyzerTest
         toolResult("tool3", "write success") + "\n";
       Files.writeString(tempFile, jsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.toolCallSequences(tempFile, List.of("BUILD FAILED"), 2);
 
       requireThat(result.has("tool_call_sequences"),
@@ -1514,7 +1514,7 @@ public final class SessionAnalyzerTest
         toolResult("t4", "after 1 content") + "\n";
       Files.writeString(tempFile, jsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.toolCallSequences(tempFile, List.of("ERROR"), 2);
 
       JsonNode matches = result.path("tool_call_sequences").path("ERROR");
@@ -1554,7 +1554,7 @@ public final class SessionAnalyzerTest
         toolResult("tool1", "file contents") + "\n";
       Files.writeString(tempFile, jsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.toolCallSequences(tempFile,
         List.of("NONEXISTENT_KEYWORD_XYZ"), 2);
 
@@ -1590,7 +1590,7 @@ public final class SessionAnalyzerTest
         toolResult("t2", "ERROR: permission denied") + "\n";
       Files.writeString(tempFile, jsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.toolCallSequences(tempFile,
         List.of("BUILD FAILED", "permission"), 1);
 
@@ -1633,7 +1633,7 @@ public final class SessionAnalyzerTest
         toolResult("t2", "Compiling sources...\\nBUILD FAILED\\nTotal time: 2s") + "\n";
       Files.writeString(tempFile, jsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.mistakeTimeline(tempFile);
 
       requireThat(result.has("mistake_timeline"),
@@ -1686,7 +1686,7 @@ public final class SessionAnalyzerTest
         toolResult("t1", "success content") + "\n";
       Files.writeString(tempFile, jsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.mistakeTimeline(tempFile);
 
       requireThat(result.has("mistake_timeline"),
@@ -1726,7 +1726,7 @@ public final class SessionAnalyzerTest
         toolResult("t2", "BUILD FAILED: something broke") + "\n";
       Files.writeString(tempFile, jsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.mistakeTimeline(tempFile);
 
       JsonNode timeline = result.path("mistake_timeline");
@@ -1781,7 +1781,7 @@ public final class SessionAnalyzerTest
       }
       Files.writeString(tempFile, jsonl.toString());
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       // Request with maxMatches=3 — should cap at 3 even though 5 match
       JsonNode result = analyzer.toolCallSequences(tempFile, List.of("BUILD FAILED"), 1, 3);
 
@@ -1826,7 +1826,7 @@ public final class SessionAnalyzerTest
         append('\n');
       Files.writeString(tempFile, jsonl.toString());
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       // Cap at 5 events — should return at most 5 even though many more exist
       JsonNode result = analyzer.mistakeTimeline(tempFile, 5);
 
@@ -1851,7 +1851,7 @@ public final class SessionAnalyzerTest
     expectedExceptionsMessageRegExp = ".*filePath.*")
   public void toolCallSequencesThrowsNullPointerExceptionForNullFilePath() throws IOException
   {
-    SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+    SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
     analyzer.toolCallSequences(null, List.of("keyword"), 2);
   }
 
@@ -1872,7 +1872,7 @@ public final class SessionAnalyzerTest
         toolResult("t1", "BUILD FAILED: error") + "\n";
       Files.writeString(tempFile, jsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.mistakeTimeline(tempFile);
 
       JsonNode timeline = result.path("mistake_timeline");
@@ -1946,7 +1946,7 @@ public final class SessionAnalyzerTest
         toolResult("t1", "contents") + "\n";
       Files.writeString(tempFile, jsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       requireThat(result.path("timing").isMissingNode(), "timing_absent").isTrue();
@@ -1978,7 +1978,7 @@ public final class SessionAnalyzerTest
         toolResult("t2", "ok") + "\n";
       Files.writeString(tempFile, jsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       JsonNode timing = result.path("timing");
@@ -2022,7 +2022,7 @@ public final class SessionAnalyzerTest
         toolResult("t4", "done") + "\n";
       Files.writeString(tempFile, jsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       JsonNode timing = result.path("timing");
@@ -2083,7 +2083,7 @@ public final class SessionAnalyzerTest
         toolResult("t3", "ok") + "\n";
       Files.writeString(tempFile, jsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       JsonNode timing = result.path("timing");
@@ -2137,7 +2137,7 @@ public final class SessionAnalyzerTest
         toolResult("t1", "contents") + "\n";
       Files.writeString(tempFile, jsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       // Must not throw; timing field may be absent or have zero elapsed seconds
@@ -2171,7 +2171,7 @@ public final class SessionAnalyzerTest
         toolResult("t1", "") + "\n";
       Files.writeString(tempFile, jsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.mistakeTimeline(tempFile);
 
       // Empty content is not an error — timeline should be empty (no error found)
@@ -2204,7 +2204,7 @@ public final class SessionAnalyzerTest
         "\"content\":\"exit_code=1 BUILD FAILED: something\"}]}\n";
       Files.writeString(tempFile, malformedJson);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.errors(tempFile);
 
       // "BUILD FAILED" pattern should be detected even though JSON parsing fails
@@ -2246,7 +2246,7 @@ public final class SessionAnalyzerTest
         "{\"type\":\"tool_use\",\"id\":\"t3\",\"name\":\"Bash\",\"input\":{}}]}}";
       Files.writeString(tempFile, truncated + "\n" + invalidDate + "\n" + overflow + "\n");
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       // No valid timestamps — timing must be absent
@@ -2283,7 +2283,7 @@ public final class SessionAnalyzerTest
           "2026-03-01T10:00:30.000Z") + "\n";
       Files.writeString(tempFile, jsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       JsonNode timing = result.path("timing");
@@ -2319,7 +2319,7 @@ public final class SessionAnalyzerTest
         assistantMessageWithTimestamp("msg2", "t2", "Write", "\"file_path\":\"/b.txt\"", ts) + "\n";
       Files.writeString(tempFile, jsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       requireThat(result.path("timing").isMissingNode(), "timing_absent").isTrue();
@@ -2354,7 +2354,7 @@ public final class SessionAnalyzerTest
           "2026-03-01T10:00:40.000Z") + "\n";
       Files.writeString(tempFile, jsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       JsonNode phases = result.path("timing").path("phases");
@@ -2395,7 +2395,7 @@ public final class SessionAnalyzerTest
           "2026-03-01T10:00:20.000Z") + "\n";
       Files.writeString(tempFile, jsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       JsonNode phases = result.path("timing").path("phases");
@@ -2439,7 +2439,7 @@ public final class SessionAnalyzerTest
           "2026-03-01T10:00:20.000Z");
       Files.writeString(tempFile, malformedSkill + "\n" + missingInput + "\n" + normalTool + "\n");
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       // Must not throw; malformed Skill entries contribute as tool events but not as phase markers
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
@@ -2477,7 +2477,7 @@ public final class SessionAnalyzerTest
           tsLater) + "\n";
       Files.writeString(tempFile, jsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       JsonNode timing = result.path("timing");
@@ -2529,7 +2529,7 @@ public final class SessionAnalyzerTest
         "\",\"input\":{}}]}}";
       Files.writeString(tempFile, entry1 + "\n" + entry2 + "\n");
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       JsonNode toolsElapsed = result.path("timing").path("tools_elapsed");
@@ -2576,7 +2576,7 @@ public final class SessionAnalyzerTest
           "\"file_path\":\"/b.txt\",\"ref\":\"tool-a-id\"") + "\n";
       Files.writeString(mainSession, jsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSession(mainSession);
 
       JsonNode candidates = result.path("main").path("pipeline_candidates");
@@ -2614,7 +2614,7 @@ public final class SessionAnalyzerTest
         assistantMessage("msg2", "id-2", "Read", "\"file_path\":\"/b.txt\"") + "\n";
       Files.writeString(mainSession, jsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSession(mainSession);
 
       JsonNode candidates = result.path("main").path("pipeline_candidates");
@@ -2650,7 +2650,7 @@ public final class SessionAnalyzerTest
         assistantMessage("msg5", "t5", "Write", "\"file_path\":\"/d.txt\"") + "\n";
       Files.writeString(mainSession, jsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSession(mainSession);
 
       JsonNode candidates = result.path("main").path("script_extraction_candidates");
@@ -2701,7 +2701,7 @@ public final class SessionAnalyzerTest
         assistantMessage("msg3", "t3", "Bash", "\"command\":\"ls\"") + "\n";
       Files.writeString(mainSession, jsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSession(mainSession);
 
       JsonNode candidates = result.path("main").path("script_extraction_candidates");
@@ -2739,7 +2739,7 @@ public final class SessionAnalyzerTest
         assistantMessage("msg6", "t6", "Bash", "\"command\":\"echo 2\"") + "\n";
       Files.writeString(mainSession, jsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSession(mainSession);
 
       JsonNode candidates = result.path("main").path("script_extraction_candidates");
@@ -2792,7 +2792,7 @@ public final class SessionAnalyzerTest
           "2026-03-01T10:01:00.000Z") + "\n";
       Files.writeString(mainSession, jsonl);
 
-      SessionAnalyzer analyzer = new SessionAnalyzer(new TestJvmScope());
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSession(mainSession);
 
       // timing must be a top-level field, sibling to main/subagents/combined

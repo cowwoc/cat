@@ -6,11 +6,12 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
+import static io.github.cowwoc.cat.hooks.Strings.block;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -126,28 +127,25 @@ public final class GetFile implements SkillOutput
    */
   public static void main(String[] args)
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
-      GetFile getFile = new GetFile(scope);
-      String result = getFile.getOutput(args);
-      System.out.print(result);
-    }
-    catch (IOException e)
-    {
-      Logger log = LoggerFactory.getLogger(GetFile.class);
-      log.error("Error reading file", e);
-      try (MainJvmScope errorScope = new MainJvmScope())
+      try
       {
-        System.out.println(new HookOutput(errorScope).block(e.getMessage()));
+        GetFile getFile = new GetFile(scope);
+        String result = getFile.getOutput(args);
+        System.out.print(result);
       }
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(GetFile.class);
-      log.error("Unexpected error", e);
-      try (MainJvmScope errorScope = new MainJvmScope())
+      catch (IOException e)
       {
-        System.out.println(new HookOutput(errorScope).block(
+        Logger log = LoggerFactory.getLogger(GetFile.class);
+        log.error("Error reading file", e);
+        System.out.println(block(scope, e.getMessage()));
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(GetFile.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }

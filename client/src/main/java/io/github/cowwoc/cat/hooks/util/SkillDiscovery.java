@@ -106,11 +106,9 @@ public final class SkillDiscovery
    *
    * @param scope the JVM scope providing environment paths and configuration
    * @return the formatted skill listing, or an empty string if no skills are found
-   * @throws NullPointerException if {@code scope} is null
    */
   public static String getMainAgentSkillListing(JvmScope scope)
   {
-    requireThat(scope, "scope").isNotNull();
     List<SkillEntry> entries = new SkillDiscovery(scope).discoverAll();
     if (entries.isEmpty())
       return "";
@@ -130,11 +128,9 @@ public final class SkillDiscovery
    *
    * @param scope the JVM scope providing environment paths and configuration
    * @return the formatted skill listing, or an empty string if no skills are found
-   * @throws NullPointerException if {@code scope} is null
    */
   public static String getSubagentSkillListing(JvmScope scope)
   {
-    requireThat(scope, "scope").isNotNull();
     List<SkillEntry> entries = new SkillDiscovery(scope).discoverAll();
     if (entries.isEmpty())
       return "";

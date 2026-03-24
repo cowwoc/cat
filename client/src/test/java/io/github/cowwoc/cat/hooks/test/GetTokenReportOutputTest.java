@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetTokenReportOutput;
 import org.testng.annotations.Test;
 
@@ -36,7 +35,7 @@ public class GetTokenReportOutputTest
   @Test
   public void nonexistentSessionReturnsNull() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetTokenReportOutput handler = new GetTokenReportOutput(scope);
       String result = handler.getOutput("nonexistent-session-id-12345");
@@ -53,7 +52,7 @@ public class GetTokenReportOutputTest
   @Test
   public void emptySessionFileReturnsNoSubagentMessage() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       // Create a temp session file in the expected location
       Path sessionDir = Path.of(System.getProperty("user.home"),
@@ -89,7 +88,7 @@ public class GetTokenReportOutputTest
   @Test
   public void sessionWithNoTaskEntriesReturnsNoSubagentMessage() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path sessionDir = Path.of(System.getProperty("user.home"),
         ".config", "claude", "projects", "-workspace");
@@ -124,7 +123,7 @@ public class GetTokenReportOutputTest
   @Test
   public void sessionWithTaskDataProducesSummary() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path sessionDir = Path.of(System.getProperty("user.home"),
         ".config", "claude", "projects", "-workspace");
@@ -167,7 +166,7 @@ public class GetTokenReportOutputTest
   @Test
   public void tokenReportTableHasProperStructure() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path sessionDir = Path.of(System.getProperty("user.home"),
         ".config", "claude", "projects", "-workspace");
@@ -212,7 +211,7 @@ public class GetTokenReportOutputTest
   @Test
   public void multipleSubagentsAreTotaled() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path sessionDir = Path.of(System.getProperty("user.home"),
         ".config", "claude", "projects", "-workspace");
@@ -258,7 +257,7 @@ public class GetTokenReportOutputTest
   @Test
   public void getOutputReturnsNullWhenSessionFileMissing() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetTokenReportOutput handler = new GetTokenReportOutput(scope);
       String result = handler.getOutput("session-that-does-not-exist-xyz-99999");
@@ -274,7 +273,7 @@ public class GetTokenReportOutputTest
   @Test
   public void contextPercentageIsDisplayed() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path sessionDir = Path.of(System.getProperty("user.home"),
         ".config", "claude", "projects", "-workspace");

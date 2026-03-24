@@ -6,15 +6,10 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.PostToolUseHook;
 import org.testng.annotations.Test;
-import tools.jackson.databind.json.JsonMapper;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -26,26 +21,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  */
 public final class PostToolUseHookTest
 {
-  /**
-   * Creates a HookInput from a JSON string with the given session ID and tool name.
-   *
-   * @param mapper the JSON mapper
-   * @param sessionId the session ID to embed in the hook input
-   * @param toolName the tool name
-   * @return the parsed HookInput
-   */
-  private static HookInput createInput(JsonMapper mapper, String sessionId, String toolName)
-  {
-    String json = """
-      {
-        "session_id": "%s",
-        "tool_name": "%s",
-        "tool_result": {}
-      }
-      """.formatted(sessionId, toolName);
-    return HookInput.readFrom(mapper, new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
-  }
-
   /**
    * Verifies that the failure counter reset (ResetFailureCounter) deletes the tracking file from
    * {@code {catSessionPath}/}, not from {@code {claudeSessionsPath}/{sessionId}/}.
@@ -61,22 +36,26 @@ public final class PostToolUseHookTest
     Path tempDir = Files.createTempDirectory("post-tool-use-hook-test-");
     try
     {
-      try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+      String sessionId = "test-session";
+      String payload = """
+        {
+          "session_id": "%s",
+          "tool_name": "Bash",
+          "tool_result": {}
+        }
+        """.formatted(sessionId);
+      try (TestClaudeHook scope = new TestClaudeHook(payload, tempDir, tempDir, tempDir))
       {
-        String sessionId = "test-session";
-        JsonMapper mapper = scope.getJsonMapper();
         PostToolUseHook hook = new PostToolUseHook(scope);
-        HookOutput output = new HookOutput(scope);
 
         // Pre-create a tracking file under the NEW path ({catSessionPath})
-        Path catSessionPath = scope.getCatSessionPath("test-session");
+        Path catSessionPath = scope.getCatSessionPath(sessionId);
         Files.createDirectories(catSessionPath);
         Path trackingFile = catSessionPath.resolve("cat-failure-tracking-" + sessionId + ".count");
         Files.writeString(trackingFile, "3");
 
         // Run the hook — ResetFailureCounter should delete the tracking file
-        HookInput input = createInput(mapper, sessionId, "Bash");
-        hook.run(input, output);
+        hook.run(scope);
 
         // Tracking file must have been deleted from {catSessionPath}
         requireThat(Files.exists(trackingFile), "trackingFileDeletedFromCatSessionPath").isFalse();

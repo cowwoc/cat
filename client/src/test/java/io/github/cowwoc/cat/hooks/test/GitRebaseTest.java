@@ -42,7 +42,7 @@ public class GitRebaseTest
   public void constructorRejectsNullWorkingDirectory() throws IOException
   {
     Path tempDir = Files.createTempDirectory("git-rebase-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       new GitRebase(scope, null);
     }
@@ -59,7 +59,7 @@ public class GitRebaseTest
   public void executeSucceedsWhenBranchAlreadyOnBase() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -97,7 +97,7 @@ public class GitRebaseTest
   public void executeReportsCommitsRebased() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -137,7 +137,7 @@ public class GitRebaseTest
   public void executeFailsWhenTargetBranchDoesNotExist() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -168,7 +168,7 @@ public class GitRebaseTest
   public void executeFailsWhenTargetBranchAbsent() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -193,7 +193,7 @@ public class GitRebaseTest
   public void verifyDetectsActualContentChanges() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -230,7 +230,7 @@ public class GitRebaseTest
   public void executeSucceedsAndTreeStatePassesOnCleanRebase() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -264,7 +264,7 @@ public class GitRebaseTest
   public void executeReturnsEmptyDeletedOrphansWhenNoOrphans() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -298,7 +298,7 @@ public class GitRebaseTest
   public void executeIncludesDeletedOrphansField() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -327,7 +327,7 @@ public class GitRebaseTest
   public void executePreservesPreExistingUntrackedFiles() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -370,7 +370,7 @@ public class GitRebaseTest
   public void executeRemovesOrphanedFileAfterRetroactiveRewrite() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -417,7 +417,7 @@ public class GitRebaseTest
   public void executeRemovesOrphanedDirectoryAfterRetroactiveRewrite() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -466,7 +466,7 @@ public class GitRebaseTest
   public void executeReplaysMultipleCommitsAfterRetroactiveRewrite() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -516,7 +516,7 @@ public class GitRebaseTest
   public void executePreservesUntrackedFilesDuringRetroactiveRewrite() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -565,7 +565,7 @@ public class GitRebaseTest
   public void executeSucceedsWhenMainMovedForward() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -606,7 +606,7 @@ public class GitRebaseTest
   public void executeRemovesMultipleOrphanedFiles() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -654,7 +654,7 @@ public class GitRebaseTest
   public void executeFallsBackToMergeBaseWithCommitHash() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -687,7 +687,7 @@ public class GitRebaseTest
   public void executeHandlesUpstreamRewriteWithNewContent() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -735,7 +735,7 @@ public class GitRebaseTest
   public void executeReturnConflictStatusOnConflict() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -782,7 +782,7 @@ public class GitRebaseTest
   public void executeFailsWhenTargetBranchRenamesTrackedPath() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -834,7 +834,7 @@ public class GitRebaseTest
   public void executeFailsWhenCurrentBranchHasContentReferencingRenamedPath() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -886,7 +886,7 @@ public class GitRebaseTest
   public void executeSucceedsWithNoPathRenamesOnTarget() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -936,7 +936,7 @@ public class GitRebaseTest
   public void executeSucceedsWhenFeatureBranchPerformsSameRenameAsTarget() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -988,7 +988,7 @@ public class GitRebaseTest
   public void executeSucceedsWhenContentReferencesAlreadyUpdated() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -1044,7 +1044,7 @@ public class GitRebaseTest
   public void executeDoesNotFlagUntouchedFilesWithStalePathReferences() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (TestClaudeTool scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
