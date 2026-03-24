@@ -627,7 +627,29 @@ On rejection, discard the result and return:
 Stop the entire test — prohibition violations indicate the isolation model is broken and all results
 are suspect.
 
-**Check 3 — Symptom signals (corroborating, not primary):** After all structural checks pass, inspect for
+**Check 3 — Design-flaw detection (fail-fast):** After Check 2 passes, if the main agent independently
+verified a deterministic assertion and found FAIL (overriding the subagent's self-reported PASS), evaluate
+whether the failure is a design flaw before updating log_ratio:
+
+- Read the assertion's `semantic_unit_id` from `test-cases.json` and find the corresponding semantic unit.
+- Read the agent's output at `output_path` for the run.
+- Ask: does the agent's response demonstrate the correct skill behavior described by `semantic_unit_id`
+  (i.e., the skill's intended outcome for that unit is satisfied), even though the assertion's regex or
+  pattern still fired?
+- If yes (design flaw confirmed): the assertion is too broad — it matches in negation or qualification
+  contexts where the agent is demonstrating correct behavior (e.g., pattern `requirements.*APPROVED` fires
+  when agent writes "I will NOT write requirements: APPROVED").
+
+**Design-flaw halt:** When a design flaw is confirmed:
+1. Do NOT update log_ratio for this run.
+2. Record the flawed assertion: `{"assertion_id": "<id>", "semantic_unit_id": "<uid>",
+   "flaw_evidence": "<quoted agent text that triggered the assertion>",
+   "correct_behavior": "<brief explanation of why the agent behavior is actually correct>"}`.
+3. Halt SPRT immediately — do not spawn additional test-run subagents for any test case.
+4. Route directly to Step 4.4 with `design_flaw=true` and the recorded evidence.
+   Do NOT display the normal SPRT results summary before routing to Step 4.4.
+
+**Check 4 — Symptom signals (corroborating, not primary):** After all structural checks pass, inspect for
 contamination symptom signals described in "Batch contamination symptom signals" above. These are
 corroborating signals only — if spawn parameters were correct but symptoms appear, escalate to user.
 
@@ -755,10 +777,14 @@ Display SPRT results to the user: per-test-case decision, log_ratio, pass/fail c
 
 **Execution guard:** If `overall_decision = "Accept"`, continue to Step 4.5.
 
-When SPRT rejects one or more test cases, automatically run a structured failure investigation before
-presenting results to the user. The investigation examines raw subagent conversation transcripts to
-distinguish genuine skill failures from test environment artifacts (batch contamination, shared context
-priming, model-default behaviors).
+**Design-flaw entry point:** If Step 4.3 routed here with `design_flaw=true`, skip sub-steps 1–7.
+Proceed directly to sub-step 8 using the design-flaw evidence recorded in Check 3. The investigation
+report must cover the design-flaw classification (see "Decision criteria" below).
+
+When SPRT rejects one or more test cases (or routes here via design-flaw detection), automatically run a
+structured failure investigation before presenting results to the user. The investigation examines raw
+subagent conversation transcripts to distinguish genuine skill failures from test environment artifacts
+(batch contamination, shared context priming, model-default behaviors) and assertion design flaws.
 
 **RESTRICTION:** The investigation phase is a read-only analysis. Do NOT use the Write tool, Edit tool,
 NotebookEdit tool, or Skill tool during this phase. Do NOT modify the skill file, test-results.json,
@@ -890,6 +916,7 @@ the results of sub-steps 4–7. The report must cover:
 - Conclusion: one of the three types below
 
 **Decision criteria:**
+- If routed here with `design_flaw=true` → Assertion design flaw
 - If batch contamination detected → Test environment artifact
 - If compliance failures found but no contamination → Genuine skill defect
 - If findings are contradictory or unclear → Inconclusive
@@ -943,9 +970,23 @@ Conclusion: Genuine skill defect
     cat:get-history-agent, compare the failing agent's received prompt against the skill text,
     and check whether the failure reproduces across multiple independent test reruns before
     deciding whether to modify the skill.)
+
+  (or: Conclusion: Assertion design flaw
+  Flawed assertion: <assertion_id> (semantic_unit_id: <uid>)
+  Evidence: agent wrote:
+    ```
+    I will NOT write requirements: APPROVED
+    ```
+    which correctly demonstrates avoidance behavior, but the pattern `requirements.*APPROVED` still fired.
+→ Next step: Fix the assertion in test-cases.json to use a more specific pattern that does not
+    match negation or qualification contexts (e.g., add a negative lookahead or rewrite as a
+    semantic assertion). Do NOT modify the skill — the skill behavior is correct.)
 ```
 
 **Artifact handling and routing:**
+- If conclusion is "Assertion design flaw": do NOT proceed to Step 4.5. The skill behavior is correct;
+  the assertion must be fixed. Recommend updating the affected assertion in `test-cases.json` before
+  rerunning the test.
 - If conclusion is "Test environment artifact": do NOT proceed to Step 4.5; recommend rerunning the
   test after fixing the artifact source.
 - If conclusion is "Genuine skill defect" or "Inconclusive": proceed to Step 4.5.
@@ -1452,6 +1493,12 @@ Overall verification passes if all non-skipped items are checked and all skipped
 - [ ] Step 6 batch mode uses per-skill findings paths (`findings-<skill-name>.json`) to avoid collisions
 - [ ] Step 6 batch mode passes `FINDINGS_PATH` parameter to override default findings.json path in subagent prompts
 - [ ] Step 6 distinguishes filesystem operations (use WORKTREE_ROOT prefix) from git show (use repo-relative paths)
+- [ ] Step 4.3 Result Inspection Check 3 detects design flaws when main agent overrides subagent PASS→FAIL
+- [ ] Step 4.3 design-flaw detection halts SPRT immediately without updating log_ratio
+- [ ] Step 4.3 design-flaw detection routes to Step 4.4 with design_flaw=true and recorded evidence
+- [ ] Step 4.4 skips sub-steps 1–7 and routes directly to sub-step 8 when design_flaw=true
+- [ ] Step 4.4 decision criteria includes "Assertion design flaw" classification
+- [ ] Step 4.4 investigation report includes assertion design flaw format and routing to fix assertion
 - [ ] Step 4.4 failure investigation runs automatically when SPRT overall_decision is "Reject"
 - [ ] Step 4.4 identifies rejected test case IDs from test-results.json before examining transcripts
 - [ ] Step 4.4 uses session-analyzer to discover and examine test-run subagent IDs for failing runs
