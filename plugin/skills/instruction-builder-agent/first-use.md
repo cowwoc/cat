@@ -208,18 +208,21 @@ After applying compaction rules, store the result as `SKILL_DRAFT` (overwrite wi
 If no changes were made, proceed without noting it — this pass is silent unless changes were significant
 (>10% size reduction), in which case note "Compact-output pass reduced draft by ~{N}%."
 
-### Step 4: Benchmark Evaluation Loop
+### Step 4: Test Evaluation Loop
 
 After receiving the skill draft from the design subagent, write `SKILL_DRAFT` to its target file path on disk
 (the SKILL.md or first-use.md path where the skill will live). Store this path as `SKILL_TEXT_PATH` — a
 **worktree-relative path** (e.g., `plugin/skills/my-skill/first-use.md`), not an absolute filesystem path.
-Commit the file with message `benchmark: write skill draft [session: ${CLAUDE_SESSION_ID}]` and store the
+Commit the file with message `feature: write skill draft [session: ${CLAUDE_SESSION_ID}]` and store the
 commit SHA as `SKILL_DRAFT_SHA`. The skill text is now on disk and committed, so subagents can read it via
 `git show <SHA>:<SKILL_TEXT_PATH>` or `cat <SKILL_TEXT_PATH>`.
 
 **Effort gate:** Read `effort` from `${CLAUDE_PROJECT_DIR}/.cat/config.json`. If `effort = low`, skip
-the benchmark evaluation loop (Steps 4.1–4.4), adversarial hardening (Step 5), and compression phase (Step 7)
-entirely. Proceed directly to ## Output Format with a single-run sanity check: spawn one benchmark-run
+the test evaluation loop (Steps 4.1–4.4), adversarial hardening (Step 5), compression phase (Step 7),
+and organic test creation (Step 8) entirely. Before spawning the sanity check, compute
+`TEST_DIR` and `TEST_MODEL` using the **Model selection** paragraph below — these
+values are required even for the sanity check. Then proceed directly to ## Output Format with a single-run
+sanity check: spawn one `TEST_MODEL` test-run
 subagent with the skill active on a scenario that exercises the skill's primary purpose (i.e., a prompt
 that triggers the skill's main workflow, not an empty or no-op input). Verify the output contains at least
 one substantive result from the skill's procedure (e.g., a generated step, a produced artifact, or a
@@ -227,35 +230,56 @@ decision — not merely an echo of the prompt or a generic acknowledgment). If t
 (no substantive result), do NOT proceed to Output Format — report the failure to the user and return to
 Step 2 to redesign the skill draft. Report the result to the user.
 
-At the start of Step 4, compute `BENCHMARK_ARTIFACTS_DIR` as the `benchmark/` subdirectory adjacent to the
+At the start of Step 4, compute `TEST_DIR` as the `tests/` subdirectory adjacent to the
 skill file being improved:
 ```bash
 # SKILL_TEXT_PATH is worktree-relative (e.g., plugin/skills/foo/SKILL.md)
 SKILL_ABS_PATH="${CLAUDE_PROJECT_DIR}/${SKILL_TEXT_PATH}"
-BENCHMARK_ARTIFACTS_DIR="$(dirname "$SKILL_ABS_PATH")/benchmark"
+TEST_DIR="$(dirname "$SKILL_ABS_PATH")/tests"
 ```
 Pass this resolved path as a literal string to all subagents — do NOT pass variable references.
 
 **Model selection:** Read the target skill's `model:` frontmatter field to determine which model to use for
-benchmark-run subagents. Run:
+test-run subagents. Run:
 ```bash
-BENCHMARK_MODEL=$("${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner" extract-model \
+TEST_MODEL=$("${CLAUDE_PLUGIN_ROOT}/client/bin/skill-test-runner" extract-model \
   "<absolute-path-to-SKILL_TEXT_PATH>")
 ```
 The script prints the model name (e.g., `sonnet`, `haiku`) or falls back to `haiku` when the field is absent.
-Store the result as `BENCHMARK_MODEL` and pass it as a resolved literal string to all benchmark-run and grader
+Store the result as `TEST_MODEL` and pass it as a resolved literal string to all test-run and grader
 subagents. Do NOT hardcode `haiku` — always use the value from `extract-model`.
 
-**Artifact location:** `BENCHMARK_ARTIFACTS_DIR` is the stable `benchmark/` directory adjacent to the skill
+**Artifact location:** `TEST_DIR` is the stable `tests/` directory adjacent to the skill
 file. Artifacts written here can be committed alongside the skill and compared across sessions to detect
-regressions or improvements. Each benchmark-run subagent receives `BENCHMARK_ARTIFACTS_DIR`, `CLAUDE_SESSION_ID`,
-and `BENCHMARK_MODEL` as pre-resolved literal strings, so no subagent ever expands these variables
+regressions or improvements. Each test-run subagent receives `TEST_DIR`, `CLAUDE_SESSION_ID`,
+and `TEST_MODEL` as pre-resolved literal strings, so no subagent ever expands these variables
 independently. Subagents must not derive their own session ID — they must use the value passed by the main agent.
 
-**Single-session assumption:** This workflow assumes only one session benchmarks a given skill at a time.
-Two concurrent sessions targeting the same skill would both write to the same `benchmark.json` file, causing
-overwrites and corrupted results. No file locking is implemented. If concurrent benchmarking of the same skill
-is needed in the future, add a lock file under `BENCHMARK_ARTIFACTS_DIR` keyed by session ID before proceeding.
+**Concurrent session safety:** Each test-run subagent spawns with `isolation: "worktree"`, giving it an
+isolated copy of the repository. Each subagent writes results to its own worktree's `test-results.json`, then
+`cat:collect-results-agent` merges the changes back after each wave completes. This eliminates write contention
+without file locking — concurrent sessions targeting the same skill each work in separate worktrees.
+
+## Subagent Command Allowlist
+
+All subagents spawned by this skill operate under a strict command allowlist. Deviations are a constraint
+violation and must be treated as prohibition failures.
+
+**Test-run subagents** (read + write one output file):
+- Allowed: `cat`, `head`, `tail`, `wc`, `grep`, `mkdir`
+- `mkdir` may ONLY be used as: `mkdir -p /tmp/test-runs/<CLAUDE_SESSION_ID>`
+
+**Grader and analyzer subagents** (read-only):
+- Allowed: `cat`, `head`, `tail`, `wc`, `grep`, `sort`, `uniq`, `diff`, `stat`
+
+**All subagents** (applies to every category above):
+- This allowlist covers external commands AND all shell built-ins (echo, printf, read, source, eval,
+  set, export, type, compgen, declare, test, mapfile, readarray, command, builtin, trap, enable, hash,
+  kill, wait, and any other built-in not on the allowlist)
+- Do NOT use process substitution (`<(...)`, `>(...)`), command substitution, shell glob expansion
+  (`*`, `?`, `[...]`), or pipe operators (`|`) in arguments to or between allowlisted commands
+- Do NOT use shell redirection operators (`>`, `>>`, `<`, `<<`, `2>`) for any purpose
+- Do NOT use any Bash command not on the allowlist
 
 #### Step 4.1: Auto-Generate Test Cases
 
@@ -291,7 +315,7 @@ For each testable unit, generate a test case using this template:
 - Use semantic when: correctness of explanations, appropriateness of approach, quality beyond syntax
 - When uncertain, prefer deterministic; only fall back to semantic if the property is genuinely subjective
 
-**Test case JSON schema** (stored in `${BENCHMARK_ARTIFACTS_DIR}/test-cases.json`):
+**Test case JSON schema** (stored in `${TEST_DIR}/test-cases.json`):
 ```json
 {
   "test_cases": [
@@ -334,26 +358,26 @@ Deterministic assertion methods:
 After generating test cases, present them to the user for approval. The user may add, remove, or modify
 test cases. Auto-generated cases that appear non-discriminating are flagged for the user's review.
 
-Store the approved test cases in `${BENCHMARK_ARTIFACTS_DIR}/test-cases.json` and commit with message
-`benchmark: generate test cases [session: ${CLAUDE_SESSION_ID}]`. Store the commit SHA as
-`BENCHMARK_SET_SHA`. Do NOT retain the test case JSON in context — subagents read assertions from the
-committed file via `cat {BENCHMARK_ARTIFACTS_DIR}/test-cases.json`.
+Store the approved test cases in `${TEST_DIR}/test-cases.json` and commit with message
+`test: generate test cases [session: ${CLAUDE_SESSION_ID}]`. Store the commit SHA as
+`TEST_SET_SHA`. Do NOT retain the test case JSON in context — subagents read assertions from the
+committed file via `cat {TEST_DIR}/test-cases.json`.
 
-#### Step 4.2: Incremental Test Case Selection (Re-benchmarking only)
+#### Step 4.2: Incremental Test Case Selection (Re-testing only)
 
-When re-benchmarking an existing skill after an edit (rather than benchmarking a brand-new draft), use
-`${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner` to identify which test cases need to re-run and which can carry forward from the
-prior benchmark.
+When re-testing an existing skill after an edit (rather than testing a brand-new draft), use
+`${CLAUDE_PLUGIN_ROOT}/client/bin/skill-test-runner` to identify which test cases need to re-run and which can carry forward from
+the prior test result.
 
 **Workflow:**
 
 1. Run change detection to identify modified line ranges:
    ```bash
-   "${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner" detect-changes \
-     <SKILL_DRAFT_SHA> <SKILL_TEXT_PATH> "${BENCHMARK_ARTIFACTS_DIR}/test-cases.json"
+   "${CLAUDE_PLUGIN_ROOT}/client/bin/skill-test-runner" detect-changes \
+     <SKILL_DRAFT_SHA> <SKILL_TEXT_PATH> "${TEST_DIR}/test-cases.json"
    ```
    Output fields:
-   - `skill_changed`: false → skip re-benchmark entirely (carry all results forward)
+   - `skill_changed`: false → skip re-test entirely (carry all results forward)
    - `frontmatter_changed`: true → all test cases must re-run (model/config may have changed)
    - `body_changed` + `changed_ranges`: the line ranges in the updated skill body that changed
    - `rerun_test_case_ids`: populated when frontmatter changed (all TCs) or no body-only change
@@ -362,7 +386,7 @@ prior benchmark.
 2. When `body_changed=true` and `frontmatter_changed=false`, extract semantic units from the updated
    skill body:
    ```bash
-   "${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner" extract-units \
+   "${CLAUDE_PLUGIN_ROOT}/client/bin/skill-test-runner" extract-units \
      <SKILL_TEXT_PATH>
    ```
    This outputs the skill body with original file line numbers prepended (tab-separated). Apply the
@@ -374,13 +398,13 @@ prior benchmark.
 
 4. Map changed unit IDs to affected test cases:
    ```bash
-   "${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner" map-units \
-     "${BENCHMARK_ARTIFACTS_DIR}/test-cases.json" '["unit_1", "unit_5"]'
+   "${CLAUDE_PLUGIN_ROOT}/client/bin/skill-test-runner" map-units \
+     "${TEST_DIR}/test-cases.json" '["unit_1", "unit_5"]'
    ```
    Output: `rerun_test_case_ids` (must re-run SPRT) and `carryforward_test_case_ids` (results preserved).
 
 5. For `carryforward_test_case_ids`, copy the SPRT log_ratio and decision from the prior
-   `benchmark.json` into the new benchmark result. Only `rerun_test_case_ids` go through full SPRT.
+   `test-results.json` into the new test result. Only `rerun_test_case_ids` go through full SPRT.
 
 **Semantic unit location matching:** A unit with `location: "line 42"` overlaps changed range
 `{"start": 40, "end": 45}` if 40 ≤ 42 ≤ 45. For range locations `"lines 42-45"`, overlap exists
@@ -388,11 +412,11 @@ if the unit range and the changed range share any common line number.
 
 **Carry-forward results:** Preserved results from prior passing test cases are treated as if SPRT
 already Accepted those cases. Do NOT re-run them. Only report that they were carried forward in the
-final benchmark summary.
+final test summary.
 
-#### Step 4.3: SPRT Benchmark
+#### Step 4.3: SPRT Test Run
 
-Run the SPRT-based benchmark to measure the skill's compliance quantitatively.
+Run the SPRT-based test to measure the skill's compliance quantitatively.
 
 **SPRT parameters:**
 - p0 = 0.95 (pass rate under H₀ — skill is compliant)
@@ -415,23 +439,23 @@ After each observation:
   if runs_for_this_case >= 50 → Truncate: treat as Reject (non-compliant, stop all cases)
 ```
 
-**SPRT run cap per test case:** Each test case is limited to 50 SPRT runs within a single benchmark
+**SPRT run cap per test case:** Each test case is limited to 50 SPRT runs within a single test
 execution. If a test case reaches 50 runs without crossing either the Accept or Reject boundary, treat it
 as a Reject decision — a skill that requires more than 50 trials to demonstrate compliance is effectively
 non-compliant. This cap prevents unbounded token and time consumption when the true pass rate falls within
 the indifference zone between p0 and p1.
 
-**Mixed assertion aggregation:** A single benchmark run passes if and only if ALL assertions pass
+**Mixed assertion aggregation:** A single test run passes if and only if ALL assertions pass
 (deterministic and semantic). One failed assertion fails the entire run. SPRT receives one pass/fail per run.
 
-**SPRT independence requirement:** Each benchmark run (TC + run number) MUST spawn a completely fresh
+**SPRT independence requirement:** Each test run (TC + run number) MUST spawn a completely fresh
 subagent with no prior conversation context. Do NOT execute multiple runs inside the same subagent
 context — context from prior runs contaminates later runs and invalidates SPRT's independence assumption.
 SPRT requires each trial to be an independent Bernoulli draw from the same underlying distribution; when
 run N sees runs 1…N-1 in its conversation history, trial N is conditioned on prior trials (batch
 contamination), which produces systematically biased pass rates and spurious Accept/Reject decisions.
 
-**Pre-spawn gate — fresh-subagent parameters:** Before spawning each benchmark-run subagent, verify the
+**Pre-spawn gate — fresh-subagent parameters:** Before spawning each test-run subagent, verify the
 spawn parameters. STOP — do NOT spawn the subagent if spawn parameters include `resume: true`, `resume: false`,
 or a `conversation_id` field (regardless of whether `resume` is also present). Block if ANY of these fields
 appears — each condition independently triggers a block. The `resume` field must be entirely absent (not set to
@@ -453,24 +477,33 @@ escalate to the user rather than silently discarding — do NOT treat as a routi
 
 **Pipelining control flow:**
 
-1. Main agent spawns up to 4 benchmark-run subagents in parallel, each a fresh non-resumed `BENCHMARK_MODEL`
-   subagent assigned exactly one run (one TC + one run index). Each subagent executes that single run and
-   terminates — it is never reused for another run. Reserve at minimum 2 of the 4 slots for benchmark-run
-   subagents at all times. At most 2 grader subagents may occupy slots simultaneously. If 2 grader slots
-   are already occupied, queue additional grading work until a grader slot frees.
-2. As each subagent completes, main agent immediately performs the Result Inspection Checklist (see below)
-   before any other processing. Once the checklist passes:
+Track `WAVE_SLOTS` (initial value: 2, maximum: 16). After each wave where every run passed, double
+`WAVE_SLOTS`: `WAVE_SLOTS = min(WAVE_SLOTS * 2, 16)`. A "wave" is the set of test-run subagents
+dispatched together in one parallel message. If any run in a wave fails or any TC rejects, keep
+`WAVE_SLOTS` unchanged for the next wave.
+
+1. Main agent spawns `WAVE_SLOTS` test-run subagents simultaneously in one parallel message. Each
+   subagent is a fresh non-resumed `TEST_MODEL` subagent assigned exactly one run (one TC + one run
+   index). Each subagent executes that single run and terminates — it is never reused for another run.
+   Reserve at minimum half of `WAVE_SLOTS` (rounded up) for test-run subagents at all times.
+   At most half of `WAVE_SLOTS` (rounded down) grader subagents may occupy slots simultaneously. If the
+   grader limit is reached, queue additional grading work until a grader slot frees.
+2. Wait for all subagents in the wave to return, then main agent immediately performs the Result
+   Inspection Checklist (see below) for each before any other processing. Once the checklist passes for
+   a run:
    a. Independently verifies deterministic assertions by reading the output file and re-running each
       deterministic check (regex, string_match, structural) against the actual output — do not trust the
       subagent's self-reported results without verification
-   b. If semantic assertions exist, spawns a `BENCHMARK_MODEL` grader subagent (counts against the 4-agent limit)
+   b. If semantic assertions exist, spawns a `TEST_MODEL` grader subagent (counts against the slot limit)
    c. Once all assertions for the run are graded, updates the SPRT log_ratio for that test case
    d. Checks boundaries: if Accept or Reject, stops spawning new subagents for that test case
-3. If any test case rejects, all remaining test cases stop immediately. Once early-reject is triggered,
-   freeze SPRT state — do not update log-ratio values from in-flight results, even if they return before
-   you begin hardening. Log-ratio updates are only valid pre-reject.
-4. Freed agent slots are used for test cases still inconclusive. Every new subagent assigned to a freed
-   slot must be a completely fresh spawn — it does NOT inherit any state from the prior subagent in that slot.
+3. After all wave results are processed and graded:
+   - If ALL runs in the wave passed: `WAVE_SLOTS = min(WAVE_SLOTS * 2, 16)`. Dispatch next wave.
+   - If ANY run failed or any TC rejected: keep `WAVE_SLOTS` unchanged. If early-reject triggered,
+     freeze SPRT state — do not update log-ratio values from in-flight results, even if they return
+     before you begin hardening. Log-ratio updates are only valid pre-reject.
+4. Every new subagent in each wave must be a completely fresh spawn — it does NOT inherit any state from
+   prior subagents.
 5. Loop terminates when all test cases have accepted or any test case has rejected.
 
 **Pipelining edge case scenarios:**
@@ -480,12 +513,12 @@ escalate to the user rather than silently discarding — do NOT treat as a routi
 - **Early-reject:** TC2 reaches `log_ratio <= B` after run 5. Stop spawning ALL new subagents across ALL
   test cases. Freeze SPRT state immediately — do not update log-ratio values from any in-flight results.
   Wait for in-flight subagents to return (to avoid orphaned processes), discard their results, and proceed
-  to hardening. Do NOT spawn any additional benchmark-run or grader subagents.
+  to hardening. Do NOT spawn any additional test-run or grader subagents.
 
-**Spawn parallel benchmark-run subagents:** Each subagent runs with the skill active at `SKILL_TEXT_PATH`.
-Each benchmark-run subagent executes exactly one run (one TC + one run index) and then terminates. Never
+**Spawn parallel test-run subagents:** Each subagent runs with the skill active at `SKILL_TEXT_PATH`.
+Each test-run subagent executes exactly one run (one TC + one run index) and then terminates. Never
 assign more than one run to a single subagent.
-Each benchmark-run subagent:
+Each test-run subagent:
 1. Executes the test case prompt in its configured environment (skill present and active)
 2. Evaluates deterministic assertions inline and reports results before returning (regex, string_match,
    structural checks)
@@ -497,48 +530,46 @@ Each benchmark-run subagent:
    `total_tokens` (sum of input and output tokens consumed by the subagent invocation, including any
    tool-use overhead)
 5. Writes the full output to a temp file:
-   `/tmp/benchmark-runs/<CLAUDE_SESSION_ID>/<case-id>_run_<N>.txt` (NOT committed). Create the directory
-   with `mkdir -p /tmp/benchmark-runs/<CLAUDE_SESSION_ID>` before writing. Here `<CLAUDE_SESSION_ID>` is the
+   `/tmp/test-runs/<CLAUDE_SESSION_ID>/<case-id>_run_<N>.txt` (NOT committed). Create the directory
+   with `mkdir -p /tmp/test-runs/<CLAUDE_SESSION_ID>` before writing. Here `<CLAUDE_SESSION_ID>` is the
    literal session ID string received as a parameter from the main agent at spawn time — do NOT expand an
    environment variable; use the literal value passed to you.
 6. Returns: `{"run_id": "<TC_id>_run_<N>", "test_case_id": "<TC_id>", "assertion_results":
    [{"assertion_id": "...", "passed": true|false|null}], "semantic_pending": ["<assertion_id>"],
-   "output_path": "/tmp/benchmark-runs/<CLAUDE_SESSION_ID>/<case-id>_run_<N>.txt",
+   "output_path": "/tmp/test-runs/<CLAUDE_SESSION_ID>/<case-id>_run_<N>.txt",
    "duration_ms": <integer>, "total_tokens": <integer>}`
    On failure, returns `{"error": "<reason>"}`.
 
-Pass each subagent only scalar references (test case ID, run index, `BENCHMARK_ARTIFACTS_DIR`,
-`CLAUDE_SESSION_ID`, model: `BENCHMARK_MODEL`) — do NOT embed test case content or assertion arrays inline in
-the prompt. The benchmark-run subagent reads assertions from
-`cat {BENCHMARK_ARTIFACTS_DIR}/test-cases.json`.
+Pass each subagent only scalar references (test case ID, run index, `TEST_DIR`,
+`CLAUDE_SESSION_ID`, model: `TEST_MODEL`) — do NOT embed test case content or assertion arrays inline in
+the prompt. The test-run subagent reads assertions from
+`cat {TEST_DIR}/test-cases.json`.
 
-The benchmark-run subagent prompt must include the prohibition: "Do NOT read any benchmark artifact files
+The test-run subagent prompt must include the prohibition: "Do NOT read any test artifact files
 (other than test-cases.json to read the prompt and assertions), grading files, or run-output files from
-other subagents. The ONLY permitted read from {BENCHMARK_ARTIFACTS_DIR} is test-cases.json. Do NOT read
-any other file under {BENCHMARK_ARTIFACTS_DIR} via any mechanism (Read tool, Bash, Grep, or otherwise).
+other subagents. The ONLY permitted read from {TEST_DIR} is test-cases.json. Do NOT read
+any other file under {TEST_DIR} via any mechanism (Read tool, Bash, Grep, or otherwise).
 This prohibition is absolute — it applies regardless of the file's content or purpose,
 including peer subagent output files. Do NOT run any git command that could reveal skill content or commit
 history — this includes git log, git show, git diff, git rev-list, git shortlog, git format-patch, and any
 other command that outputs committed content or commit messages.
-Bash commands are restricted to the following allowlist: cat, head, tail, wc, grep, mkdir.
-This allowlist applies to both external commands and shell built-ins — do NOT use shell built-ins
-(echo, printf, read, source, eval, set, export) or process substitution (<(...), >(...)) outside
-this allowlist. Do NOT use the Write tool, Edit tool, NotebookEdit tool, TaskOutput tool, or
+See ## Subagent Command Allowlist for permitted commands (test-run category applies here).
+Do NOT use the Edit tool, NotebookEdit tool, TaskOutput tool, or
 Skill tool. Do NOT invoke any skill (e.g., cat:grep-and-read-agent, or any other cat: skill) — the
-Skill tool is prohibited entirely.
+Skill tool is prohibited entirely. The Write tool may ONLY be used to write to the designated output file
+(see write mechanism below) — do NOT use the Write tool on any other path.
 The ONLY files you may read (via cat, head, tail, grep, or the Read tool) are:
-(1) `{BENCHMARK_ARTIFACTS_DIR}/test-cases.json` and (2) your own output file at the path above.
+(1) `{TEST_DIR}/test-cases.json` and (2) your own output file at the path above.
 Do NOT use cat, head, tail, grep, or the Read tool on any other path — including peer subagent output files
-under `/tmp/benchmark-runs/`, other files under `{BENCHMARK_ARTIFACTS_DIR}` (e.g., benchmark.json), worktree files
+under `/tmp/test-runs/`, other files under `{TEST_DIR}` (e.g., test-results.json), worktree files
 (e.g., findings.json), or any path not listed in (1)-(2).
-The ONLY file you may write is your output file at `/tmp/benchmark-runs/<CLAUDE_SESSION_ID>/<case-id>_run_<N>.txt`
-(use `mkdir -p /tmp/benchmark-runs/<CLAUDE_SESSION_ID>` to create the parent directory — mkdir may ONLY be used
+The ONLY file you may write is your output file at `/tmp/test-runs/<CLAUDE_SESSION_ID>/<case-id>_run_<N>.txt`
+(use `mkdir -p /tmp/test-runs/<CLAUDE_SESSION_ID>` to create the parent directory — mkdir may ONLY be used
 with this exact path pattern; do NOT use mkdir to create any other directory).
-Do NOT use shell redirection operators (>, >>) to write to any
-other path. Do NOT use any Bash command not on this allowlist. Do NOT use commands that could discover or read
-peer subagent output files (e.g., find, ls, grep -r, grep -rl, or glob patterns on `/tmp/benchmark-runs/`).
-Do NOT use grep with recursive flags (-r, -R, --include, -l combined with directory paths) as this provides
-directory discovery equivalent to find or ls. Do NOT use the Glob tool."
+The ONLY permitted write mechanism is the Write tool to the designated output file. Do NOT use commands
+that could discover or read peer subagent output files (e.g., find, ls, grep -r, grep -rl, or glob patterns
+on `/tmp/test-runs/`). Do NOT use grep with recursive flags (-r, -R, --include, -l combined with directory
+paths) as this provides directory discovery equivalent to find or ls. Do NOT use the Glob or Grep tool."
 
 **Note on instruction-based isolation:** These checks verify evidence in the return value only — they
 cannot confirm the subagent did not access prohibited data and simply omitted the evidence. This is an
@@ -547,21 +578,21 @@ inherent limitation of instruction-based isolation.
 **Post-spawn freshness verification:** The Task tool guarantees that each invocation without `resume` or
 `conversation_id` creates a completely new conversation context with no access to prior subagent state.
 This is a runtime guarantee of the tool, not merely an instruction-based assumption. However, verify
-freshness post-hoc for each benchmark-run subagent by checking the following in the return value:
+freshness post-hoc for each test-run subagent by checking the following in the return value:
 - The subagent's response does not reference run indices, test case IDs, or output paths belonging to
   other subagents (cross-run leakage).
 - The subagent's `output_path` file content does not contain results or text from a different run
   (shared-state leakage).
 - The subagent does not mention "previous run", "earlier attempt", "last time", "as seen before",
   "prior result", "building on", "same approach as run", "consistent with earlier", or any other
-  phrasing that implies awareness of or reference to prior benchmark runs. Apply semantic judgment —
+  phrasing that implies awareness of or reference to prior test runs. Apply semantic judgment —
   any language that implies knowledge of other runs counts, not just the exact phrases listed here.
 If any of these checks fail, treat it as evidence that fresh-spawn isolation was violated. Stop the
-entire benchmark and return `{"error": "post-spawn freshness verification failed for <run_id>:
+entire test and return `{"error": "post-spawn freshness verification failed for <run_id>:
 <specific_violation_description>"}`. Do NOT retry — a freshness violation means the isolation model
 is broken and all results are suspect.
 
-**Result Inspection Checklist** — MANDATORY after each benchmark-run subagent returns, in this order,
+**Result Inspection Checklist** — MANDATORY after each test-run subagent returns, in this order,
 BEFORE updating SPRT state. Do not update log-ratio values until all checks pass.
 
 **Check 1 — Structural contamination check (primary):** Verify the returned `run_id` and `test_case_id`
@@ -573,27 +604,27 @@ exactly match the expected values for this slot, and that the return object cont
   assigned to this subagent).
 - Confirm `test_case_id` matches `<expected_TC_id>`.
 - Confirm no field in the return object references a `run_id` value other than the expected one.
-- Confirm `output_path` matches the exact pattern `/tmp/benchmark-runs/<CLAUDE_SESSION_ID>/<case-id>_run_<N>.txt`
+- Confirm `output_path` matches the exact pattern `/tmp/test-runs/<CLAUDE_SESSION_ID>/<case-id>_run_<N>.txt`
   where `<CLAUDE_SESSION_ID>`, `<case-id>`, and `<N>` match the values assigned to this subagent. Reject any
-  `output_path` that does not match this pattern (e.g., paths pointing to skill files, benchmark artifacts, or
-  locations outside `/tmp/benchmark-runs/`).
+  `output_path` that does not match this pattern (e.g., paths pointing to skill files, test artifacts, or
+  locations outside `/tmp/test-runs/`).
 If any of these checks fail, discard the result and treat it as a constraint violation:
 return `{"error": "single-run constraint violated: subagent <run_id> returned unexpected run_id or
 test_case_id: <actual_return>"}`. Do NOT feed a violating result into SPRT.
 If structural contamination is detected in 3 or more consecutive spawns for the same slot, stop the entire
-benchmark and return `{"error": "batch contamination: fresh subagent spawn failed 3 consecutive times
+test and return `{"error": "batch contamination: fresh subagent spawn failed 3 consecutive times
 for <run_id>"}`.
 
 **Check 2 — Prohibition verification:** Inspect the return value for evidence of prohibited behavior:
-- If the return value references file paths under `{BENCHMARK_ARTIFACTS_DIR}/` other than `test-cases.json`
+- If the return value references file paths under `{TEST_DIR}/` other than `test-cases.json`
   (e.g., in an `output_path` or any explanation field), reject the run.
 - If the return value contains content that could only come from a peer subagent's output file (e.g., it
   quotes or references run output from a different `run_id`), reject the run.
 - If the return value contains git history data (commit SHAs, commit messages, author lines), reject the
   run.
 On rejection, discard the result and return:
-`{"error": "prohibition violated by benchmark-run subagent <run_id>: <specific_violation_description>"}`.
-Stop the entire benchmark — prohibition violations indicate the isolation model is broken and all results
+`{"error": "prohibition violated by test-run subagent <run_id>: <specific_violation_description>"}`.
+Stop the entire test — prohibition violations indicate the isolation model is broken and all results
 are suspect.
 
 **Check 3 — Symptom signals (corroborating, not primary):** After all structural checks pass, inspect for
@@ -602,13 +633,13 @@ corroborating signals only — if spawn parameters were correct but symptoms app
 
 **Minimal happy-path example (single TC, single run):**
 
-    Input scalar references passed to benchmark-run subagent:
-      test_case_id: "TC1", run_index: 1, BENCHMARK_ARTIFACTS_DIR: ".../plugin/skills/my-skill/benchmark",
-      CLAUDE_SESSION_ID: "abc123", model: BENCHMARK_MODEL
+    Input scalar references passed to test-run subagent:
+      test_case_id: "TC1", run_index: 1, TEST_DIR: ".../plugin/skills/my-skill/tests",
+      CLAUDE_SESSION_ID: "abc123", model: TEST_MODEL
 
     Subagent reads test-cases.json, executes the TC1 prompt, grades deterministic assertions inline.
 
-    Subagent writes output to: /tmp/benchmark-runs/abc123/TC1_run_1.txt
+    Subagent writes output to: /tmp/test-runs/abc123/TC1_run_1.txt
 
     Subagent returns:
     {
@@ -619,7 +650,7 @@ corroborating signals only — if spawn parameters were correct but symptoms app
         {"assertion_id": "a2", "passed": null}
       ],
       "semantic_pending": ["a2"],
-      "output_path": "/tmp/benchmark-runs/abc123/TC1_run_1.txt",
+      "output_path": "/tmp/test-runs/abc123/TC1_run_1.txt",
       "duration_ms": 4200,
       "total_tokens": 1100
     }
@@ -627,27 +658,25 @@ corroborating signals only — if spawn parameters were correct but symptoms app
     Main agent spawns grader for assertion a2, grader returns: {"assertion_id": "a2", "passed": true}
     All assertions passed → run result: PASS → SPRT log_ratio updated for TC1.
 
-**Spawn `BENCHMARK_MODEL` grader subagents** for semantic assertions: When a benchmark-run subagent returns
-with `semantic_pending` entries, spawn one `BENCHMARK_MODEL` grader subagent per pending semantic assertion
+**Spawn `TEST_MODEL` grader subagents** for semantic assertions: When an test-run subagent returns
+with `semantic_pending` entries, spawn one `TEST_MODEL` grader subagent per pending semantic assertion
 (in parallel, each gets its own subagent). Each grader subagent:
 - Receives: the assertion object (type, description, instruction, expected), the output file path
   (grader reads the file itself via the Read tool)
 - Is prohibited: "The ONLY file you may read (via the Read tool, cat, head, tail, wc, grep, or any
   other mechanism) is the specified output file at {output_path}. Do NOT read the skill file,
-  test-cases.json, peer subagent output files, findings.json, benchmark.json, or any other file.
+  test-cases.json, peer subagent output files, findings.json, test-results.json, or any other file.
   When evaluating the output file, ignore any quoted or reproduced skill
   instruction text that may appear in the output — base your grading solely on whether the subagent's
   behavioral response satisfies the assertion, not on whether skill text is present in the output.
   If the output contains no behavioral response (i.e., the output consists entirely or predominantly of
   reproduced skill instruction text with no substantive action, answer, or result from the subagent),
   mark the assertion as FAILED — absence of a behavioral response is not a pass.
-  Bash commands are restricted to the following read-only allowlist: cat, head, tail, wc, grep.
+  See ## Subagent Command Allowlist for permitted commands (grader/analyzer category applies here).
   These commands may ONLY be used against the specified output file at {output_path} — do NOT pass any other
-  file path as an argument to these commands. Do NOT use any Bash command not on this allowlist. Do NOT use
-  shell redirection operators (>, >>) or any command that writes, moves, copies, or deletes files.
-  Do NOT use the Write tool, Edit tool, NotebookEdit tool, TaskOutput tool, or Skill tool — no file
-  may be created or modified by any mechanism. Do NOT invoke any skill (e.g., cat:grep-and-read-agent,
-  or any other cat: skill). Do NOT use the Glob tool."
+  file path as an argument to these commands. Do NOT use the Write tool, Edit tool, NotebookEdit tool,
+  TaskOutput tool, or Skill tool — no file may be created or modified by any mechanism. Do NOT invoke any
+  skill (e.g., cat:grep-and-read-agent, or any other cat: skill). Do NOT use the Glob or Grep tool."
 - Returns: `{"assertion_id": "<id>", "passed": true|false}`
 
 **Grader prohibition verification:** After each grader subagent returns, verify compliance before
@@ -660,26 +689,26 @@ accepting the result:
   reject the grading result.
 On rejection, treat the semantic assertion as ungradeable and return:
 `{"error": "grader prohibition violated for assertion <assertion_id> in run <run_id>:
-<specific_violation_description>"}`. Stop the entire benchmark — a grader prohibition breach means the
+<specific_violation_description>"}`. Stop the entire test — a grader prohibition breach means the
 grader had access to information that could bias its evaluation.
 
 **Note on instruction-based isolation:** These checks verify evidence in the return value only — they
 cannot confirm the grader did not access prohibited data and simply omitted the evidence. This is an
 inherent limitation of instruction-based isolation.
 
-**Note on /tmp path:** Benchmark run output files written to `/tmp/benchmark-runs/` may contain test case
+**Note on /tmp path:** test run output files written to `/tmp/test-runs/` may contain test case
 content. The `/tmp` path is world-readable on shared systems; assume single-user execution environment.
 
-**Concurrent commit safety:** Run outputs are written to temp files (NOT committed per-run). Only the
-final `benchmark.json` is committed after SPRT completes. This eliminates git lock contention. If any
-subagent needs to commit (grading summaries), retry up to 3 times with exponential backoff and jitter:
-first retry after 1–2 seconds (randomized), second after 2–4 seconds, third after 4–8 seconds. If all
-retries fail, return `{"error": "commit failed: <reason>"}`.
+**Concurrent commit safety:** Run outputs are written to temp files (NOT committed per-run). Each
+test-run subagent works in its own isolated worktree; `cat:collect-results-agent` merges
+results after each wave. The final `test-results.json` is committed once SPRT completes. If a commit
+fails, retry up to 3 times with exponential backoff: 1–2s, 2–4s, 4–8s (randomized). If all retries
+fail, return `{"error": "commit failed: <reason>"}`.
 
-**After SPRT completes:** Write results to `${BENCHMARK_ARTIFACTS_DIR}/benchmark.json` with per-test-case
+**After SPRT completes:** Write results to `${TEST_DIR}/test-results.json` with per-test-case
 SPRT log_ratios, pass/fail counts, final decision (Accept/Reject), and token/timing aggregates. The
-benchmark.json token fields are computed by accumulating `duration_ms` and `total_tokens` from each
-benchmark-run subagent return value:
+test-results.json token fields are computed by accumulating `duration_ms` and `total_tokens` from each
+test-run subagent return value:
 
 ```json
 {
@@ -703,12 +732,12 @@ benchmark-run subagent return value:
 }
 ```
 
-Commit `${BENCHMARK_ARTIFACTS_DIR}/test-cases.json` and `${BENCHMARK_ARTIFACTS_DIR}/benchmark.json` with
-message `benchmark: SPRT result [session: ${CLAUDE_SESSION_ID}]`. Store SHA as `BENCHMARK_SHA`. Both files
-are written to the skill-adjacent `benchmark/` directory and committed there directly — no separate persist
+Commit `${TEST_DIR}/test-cases.json` and `${TEST_DIR}/test-results.json` with
+message `test: SPRT result [session: ${CLAUDE_SESSION_ID}]`. Store SHA as `TEST_SHA`. Both files
+are written to the skill-adjacent `tests/` directory and committed there directly — no separate persist
 step is needed.
 
-**Token summary display:** After committing benchmark artifacts, display a token usage summary to the user:
+**Token summary display:** After committing test artifacts, display a token usage summary to the user:
 
 ```
 TOKEN USAGE SUMMARY
@@ -732,8 +761,8 @@ distinguish genuine skill failures from test environment artifacts (batch contam
 priming, model-default behaviors).
 
 **RESTRICTION:** The investigation phase is a read-only analysis. Do NOT use the Write tool, Edit tool,
-NotebookEdit tool, or Skill tool during this phase. Do NOT modify the skill file, benchmark.json,
-test-cases.json, or any benchmark artifact. The only permitted operations are: reading transcripts via
+NotebookEdit tool, or Skill tool during this phase. Do NOT modify the skill file, test-results.json,
+test-cases.json, or any test artifact. The only permitted operations are: reading transcripts via
 cat:get-history-agent, running session-analyzer search commands via Bash, and interpreting the results.
 
 **Investigation procedure:**
@@ -742,11 +771,11 @@ Sub-steps 2–7 are automated tool invocations. Sub-step 8 synthesizes findings 
 report.
 
 **Sub-step 1 — Identify rejected test cases** (automatic): Collect all test case IDs where SPRT
-decision is "Reject" from `benchmark.json`. Example: if TC1 and TC3 have `"decision": "Reject"`,
+decision is "Reject" from `test-results.json`. Example: if TC1 and TC3 have `"decision": "Reject"`,
 set `REJECTED_TC_IDS=("TC1" "TC3")`.
 
-**Sub-step 2 — Discover benchmark-run subagent IDs** (automatic): Run the following command to list
-all subagents spawned in this session, then extract the IDs of benchmark-run subagents associated
+**Sub-step 2 — Discover test-run subagent IDs** (automatic): Run the following command to list
+all subagents spawned in this session, then extract the IDs of test-run subagents associated
 with the rejected test cases:
 
 ```bash
@@ -754,8 +783,8 @@ SESSION_ANALYZER="${CLAUDE_PLUGIN_ROOT}/client/bin/session-analyzer"
 # List all subagents spawned in this session
 # Expected format: <agent_id> <status> <description> — one subagent per line; $1 is the agent ID field.
 ANALYZE_OUTPUT=$("$SESSION_ANALYZER" analyze "${CLAUDE_SESSION_ID}")
-# Parse ANALYZE_OUTPUT to identify subagents spawned during benchmark runs. Store their IDs in AGENT_IDS.
-AGENT_IDS=$(echo "$ANALYZE_OUTPUT" | grep -i "benchmark-run\|rejected" | awk '{print $1}')
+# Parse ANALYZE_OUTPUT to identify subagents spawned during test runs. Store their IDs in AGENT_IDS.
+AGENT_IDS=$(echo "$ANALYZE_OUTPUT" | grep -i "test-run\|rejected" | awk '{print $1}')
 # Cap to maximum 5 AGENT_IDs per rejected test case to limit investigation scope.
 AGENT_IDS=$(echo "$AGENT_IDS" | head -5)
 # Sanitize: reject any AGENT_ID containing shell metacharacters.
@@ -789,7 +818,7 @@ Invoke cat:get-history-agent with:
   args: "<cat_agent_id> ${CLAUDE_SESSION_ID}/subagents/${AGENT_ID}"
 ```
 
-This returns the complete message history for the benchmark-run subagent. Store the transcript
+This returns the complete message history for the test-run subagent. Store the transcript
 content for use in sub-steps 4–7.
 
 **Sub-step 4 — Search transcripts for compliance failures** (automatic): Run:
@@ -800,14 +829,14 @@ content for use in sub-steps 4–7.
   "Would you like|What would you|follow.up" --regex --context 5
 ```
 
-Interpret: any match indicates the benchmark-run subagent asked a follow-up question or deviated from
+Interpret: any match indicates the test-run subagent asked a follow-up question or deviated from
 the skill's instruction to produce direct output. Record each match with its surrounding context lines
 as a "compliance failure" candidate.
 
 **Sub-step 5 — Check for batch contamination** (automatic + interpret):
 
 Reuse `ANALYZE_OUTPUT` from sub-step 2 (do NOT invoke session-analyzer again). Check the output for
-subagent freshness: each benchmark-run subagent should appear as a separate, independent entry with
+subagent freshness: each test-run subagent should appear as a separate, independent entry with
 no `resume` field present (the pre-spawn gate requires `resume` to be entirely absent, not set to any value).
 If a subagent entry contains `resume: true`, `resume: false`, or a `conversation_id` field, it was not
 spawned correctly. If two or more runs share a subagent ID, batch contamination is confirmed.
@@ -840,7 +869,7 @@ skill required. Include any relevant findings in the investigation report.
 ```
 
 Interpret: matches may indicate escape clauses in the skill instructions or received prompt that the
-benchmark-run subagent exploited. Record the specific matched text and surrounding lines as "priming
+test-run subagent exploited. Record the specific matched text and surrounding lines as "priming
 source" candidates. Also look for: model-default behaviors overriding "Do not..." constraints, prior
 output patterns from earlier runs appearing in context, and skill instructions containing
 algorithm-before-invocation or output-format priming.
@@ -865,7 +894,7 @@ the results of sub-steps 4–7. The report must cover:
 - If compliance failures found but no contamination → Genuine skill defect
 - If findings are contradictory or unclear → Inconclusive
 
-Do NOT re-display the SPRT benchmark summary (already presented at end of Step 4.3). Present ONLY the
+Do NOT re-display the SPRT test results summary (already presented at end of Step 4.3). Present ONLY the
 investigation report:
 
 Format the investigation report as:
@@ -906,19 +935,19 @@ Conclusion: Genuine skill defect
 → Next step: Proceed to Step 4.5 (cat:skill-analyzer-agent) to analyze the defect pattern.
 
   (or: Conclusion: Test environment artifact
-→ Next step: Rerun the benchmark after removing the contaminated test case or isolating the
-    priming source. Do not modify the skill until a clean benchmark confirms the failure.)
+→ Next step: Rerun the test after removing the contaminated test case or isolating the
+    priming source. Do not modify the skill until a clean test confirms the failure.)
 
   (or: Conclusion: Inconclusive
 → Next step: Gather additional evidence — examine the full transcript for each failed run via
     cat:get-history-agent, compare the failing agent's received prompt against the skill text,
-    and check whether the failure reproduces across multiple independent benchmark reruns before
+    and check whether the failure reproduces across multiple independent test reruns before
     deciding whether to modify the skill.)
 ```
 
 **Artifact handling and routing:**
 - If conclusion is "Test environment artifact": do NOT proceed to Step 4.5; recommend rerunning the
-  benchmark after fixing the artifact source.
+  test after fixing the artifact source.
 - If conclusion is "Genuine skill defect" or "Inconclusive": proceed to Step 4.5.
 
 **Error handling:** If `session-analyzer` returns an error or no output for a sub-step, record "session-
@@ -927,18 +956,18 @@ sub-step. Do not abort the investigation for a single tool failure.
 
 #### Step 4.5: Analyze via skill-analyzer-agent
 
-**Analyze via skill-analyzer-agent subagent:** Spawn skill-analyzer-agent. Pass it the benchmark
+**Analyze via skill-analyzer-agent subagent:** Spawn skill-analyzer-agent. Pass it the test
 SHA+path (from the SPRT result) and `SKILL_TEXT_PATH` (worktree-relative). The `skill_text_path` must be
 a **worktree-relative path** (e.g., `plugin/skills/my-skill/first-use.md`) — never an absolute path.
 
 ```
 Task tool:
-  description: "Analyze skill against benchmark"
+  description: "Analyze skill against test results"
   subagent_type: "cat:skill-analyzer-agent"
   prompt: |
-    ## Benchmark
-    SHA: {BENCHMARK_SHA}
-    Path: {BENCHMARK_PATH}
+    ## Test Results
+    SHA: {TEST_SHA}
+    Path: {TEST_PATH}
 
     ## Skill Text
     skill_text_path: {SKILL_TEXT_PATH}
@@ -946,54 +975,52 @@ Task tool:
     ## Worktree Root
     WORKTREE_ROOT: {WORKTREE_ROOT}
 
-    ## Benchmark Artifacts
-    BENCHMARK_ARTIFACTS_DIR: {BENCHMARK_ARTIFACTS_DIR}
+    ## Test Artifacts
+    TEST_DIR: {TEST_DIR}
     CLAUDE_SESSION_ID: {CLAUDE_SESSION_ID}
 
     Read the skill text using: cat {WORKTREE_ROOT}/{SKILL_TEXT_PATH}
     (SKILL_TEXT_PATH is worktree-relative; prepend WORKTREE_ROOT for the absolute path.)
 
-    RESTRICTION: This is a read-only analysis task. Do NOT modify the skill file, benchmark
+    RESTRICTION: This is a read-only analysis task. Do NOT modify the skill file, test
     artifacts, findings.json, or any other file in the worktree. Do NOT use the Write, Edit,
     NotebookEdit, or Skill tools. Do NOT invoke any skill (e.g., cat:grep-and-read-agent,
     or any other cat: skill).
-    Bash commands are restricted to the following allowlist of read-only commands:
-    cat, head, tail, grep, wc, sort, uniq, diff, stat.
-    Do NOT use find, ls, or the Glob tool to discover or enumerate files.
+    See ## Subagent Command Allowlist for permitted commands (grader/analyzer category applies here).
+    Do NOT use find, ls, the Glob tool, or the Grep tool to discover or enumerate files.
     The ONLY files you may read or access (via cat, head, tail, grep, wc, sort, uniq, diff, stat,
     or the Read tool) are:
-    (1) the skill file at {WORKTREE_ROOT}/{SKILL_TEXT_PATH} and (2) the benchmark results file
+    (1) the skill file at {WORKTREE_ROOT}/{SKILL_TEXT_PATH} and (2) the test results file
     whose path is provided to you. Do NOT use any allowlisted command against any file not in this list.
-    Do NOT read test-cases.json, benchmark.json,
-    protected-sections.txt, or any file under {BENCHMARK_ARTIFACTS_DIR} other than the specific
-    benchmark results file provided.
-    Do NOT use any Bash command not on this allowlist. In particular, do NOT use shell redirection
-    operators (>, >>) or any command that writes, moves, copies, or deletes files (rm, mv, cp,
-    sed -i, tee, dd, truncate, install, patch, echo/printf with redirection, etc.).
+    Do NOT read test-cases.json, test-results.json,
+    protected-sections.txt, or any file under {TEST_DIR} other than the specific
+    test results file provided. Do NOT use shell redirection operators (>, >>, <, <<, 2>) or any command
+    that writes, moves, copies, or deletes files (rm, mv, cp, sed -i, tee, dd, truncate, install, patch,
+    echo/printf with redirection, etc.).
 ```
 
 The subagent returns the analysis commit SHA and the compact analysis report text. The main agent receives
 only the compact analysis report text (~1KB). It does NOT read the analysis file.
 
-**Display results to user:** Present the SPRT benchmark summary and the analysis report text. Ask the user:
+**Display results to user:** Present the SPRT test summary and the analysis report text. Ask the user:
 1. Are there any test cases to remove or replace based on the pattern analysis?
-2. Would you like to improve the skill and re-run the benchmark?
+2. Would you like to improve the skill and re-run the test?
 3. Are you satisfied with the current skill version?
 
 **Iterate if needed:** If the user requests improvement, apply targeted changes to the skill file at
 `SKILL_TEXT_PATH`, commit the updated file, and update `SKILL_DRAFT_SHA` before returning to Step 4.3. Cap
-at 5 benchmark iterations total. Track the best-performing iteration by storing `BEST_SCORE` and `BEST_SHA`
+at 5 test iterations total. Track the best-performing iteration by storing `BEST_SCORE` and `BEST_SHA`
 (the commit SHA of the skill file at that iteration). `BEST_SCORE` is defined as the fraction of test cases
 that reached SPRT Accept. After each iteration, compare the current BEST_SCORE and update if higher. Stop
 iterating if the absolute improvement between consecutive rounds is less than 5 percentage points — restore
 the best skill version by running `git checkout {BEST_SHA} -- {SKILL_TEXT_PATH}` and committing with
-message `benchmark: restore best iteration [session: ${CLAUDE_SESSION_ID}]`, then report "Benchmark plateau
+message `test: restore best iteration [session: ${CLAUDE_SESSION_ID}]`, then report "test plateau
 reached." If the iteration cap is reached, apply the same rollback to `BEST_SHA` if the final iteration is
-not the best, then stop and report "Benchmark iteration cap reached (5 rounds) — presenting best result."
+not the best, then stop and report "test iteration cap reached (5 rounds) — presenting best result."
 
 ### Step 5: Adversarial TDD Loop
 
-After the benchmark phase converges, harden the instructions using alternating red-team and blue-team
+After the test phase converges, harden the instructions using alternating red-team and blue-team
 subagents. Run until convergence (no CRITICAL/HIGH loopholes remain).
 
 **Effort gate:** Read `effort` from `${CLAUDE_PROJECT_DIR}/.cat/config.json`. If `effort = low`, skip
@@ -1061,12 +1088,12 @@ producing one commit per round as the loop progresses.
 
 In-place hardening mode activates when the caller passes a single skill file path inside the current worktree.
 This mode is intended for hardening existing, already-functional skills — it applies adversarial instruction
-review only and does NOT run the benchmark evaluation loop (Step 4). Before entering in-place mode,
-the orchestrator must verify that a prior benchmark exists for this skill by checking whether
-`<skill-dir>/benchmark/benchmark.json` exists (where `<skill-dir>` is the directory containing the target
-skill file). If no prior benchmark is found, the orchestrator must abort in-place mode and
-fall back to the full workflow (Steps 1-5) with the message: "No prior benchmark found for this skill —
-running full workflow including benchmark evaluation."
+review only and does NOT run the test evaluation loop (Step 4). Before entering in-place mode,
+the orchestrator must verify that a prior test exists for this skill by checking whether
+`<skill-dir>/tests/test-results.json` exists (where `<skill-dir>` is the directory containing the target
+skill file). If no prior test is found, the orchestrator must abort in-place mode and
+fall back to the full workflow (Steps 1-5) with the message: "No prior test found for this skill —
+running full workflow including test evaluation."
 
 1. Store the file path as `SKILL_FILE_PATH`. Do NOT read the file into `CURRENT_INSTRUCTIONS` and relay
    it inline to subagents — subagents read the file from `SKILL_FILE_PATH` themselves. Determine
@@ -1123,26 +1150,26 @@ After all skill files are processed (or user types `abort`), display a batch sum
 **Effort gate:** Read `effort` from `${CLAUDE_PROJECT_DIR}/.cat/config.json`. If `effort = low`, skip
 this entire step. The compression phase runs only when `effort = medium` or `high`.
 
-After hardening achieves compliance (Step 5 converges and SPRT re-benchmark accepts), compress the skill
+After hardening achieves compliance (Step 5 converges and SPRT re-test accepts), compress the skill
 file to minimize token cost while preserving behavioral compliance.
 
-**Hardening + benchmarking + compression are always run together** — never one without the others when
+**Hardening + testing + compression are always run together** — never one without the others when
 effort > low.
 
 **Sequential phases, never interleaved:**
 1. Harden until compliant (only add text) — Step 5
 2. Compress to minimize size (only remove text) — Step 7
-3. Re-benchmark to verify compression preserved compliance — Step 7 SPRT re-benchmark
+3. Re-test to verify compression preserved compliance — Step 7 SPRT re-test
 4. If compliance dropped, mark load-bearing text as protected and retry compression (up to 3 times)
 
-#### Step 7.1: Post-Hardening SPRT Re-Benchmark
+#### Step 7.1: Post-Hardening SPRT Re-Test
 
 Reset `BEST_SCORE` and `BEST_SHA` before this step — hardening may have changed the skill, so
 pre-hardening iteration tracking is stale and must not be used for rollback.
 
-Before compressing, run a full SPRT benchmark on the hardened skill to confirm compliance. Use the same
-test cases from `${BENCHMARK_ARTIFACTS_DIR}/test-cases.json` and identical SPRT parameters as Step 4.3.
-Commit benchmark results with message `benchmark: post-hardening SPRT [session: ${CLAUDE_SESSION_ID}]`.
+Before compressing, run a full SPRT test on the hardened skill to confirm compliance. Use the same
+test cases from `${TEST_DIR}/test-cases.json` and identical SPRT parameters as Step 4.3.
+Commit test results with message `test: post-hardening SPRT [session: ${CLAUDE_SESSION_ID}]`.
 Store SHA as `POST_HARDENING_SHA`. If any test case rejects, return to hardening (Step 5) to address the
 failures before proceeding to compression.
 
@@ -1171,35 +1198,35 @@ Task tool:
     All text listed there is mandatory preservation — treat it as decision-affecting requirements.}
 
     ## Output
-    Write the compressed file to: {BENCHMARK_ARTIFACTS_DIR}/compressed-{skill-filename}.md
+    Write the compressed file to: {TEST_DIR}/compressed-{skill-filename}.md
 
     RESTRICTION: The ONLY files you may read (via cat, head, tail, grep, wc, sort, uniq, diff, stat,
     the Read tool, or any other mechanism) are: (1) the skill file at {SKILL_TEXT_PATH} (this is the
-    input to compress), (2) {BENCHMARK_ARTIFACTS_DIR}/protected-sections.txt (if provided), and
+    input to compress), (2) {TEST_DIR}/protected-sections.txt (if provided), and
     (3) ${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder-agent/compression-protocol.md.
     Do NOT use any allowlisted command (including diff, sort, uniq, stat) against any file not in
     this list — doing so constitutes a file read even if the command is nominally "read-only".
-    Do NOT read any other file — including test-cases.json, benchmark.json, findings.json, config
+    Do NOT read any other file — including test-cases.json, test-results.json, findings.json, config
     files, peer subagent output files, or any file not listed in (1)-(3) regardless of its location.
-    Do NOT list or explore the skill directory's benchmark/ subdirectory. Do NOT use the Glob tool to
-    discover or enumerate files. Do NOT use grep with recursive flags (-r, -R, --include, -l combined
+    Do NOT list or explore the skill directory's tests/ subdirectory. Do NOT use the Glob or Grep tool
+    to discover or enumerate files. Do NOT use grep with recursive flags (-r, -R, --include, -l combined
     with directory paths) as this provides directory discovery. Do NOT modify {SKILL_TEXT_PATH}. Use
     the Write tool to write the compressed output to
-    {BENCHMARK_ARTIFACTS_DIR}/compressed-{skill-filename}.md — this is the ONLY file you may write
+    {TEST_DIR}/compressed-{skill-filename}.md — this is the ONLY file you may write
     and the Write tool is the ONLY permitted mechanism for writing it. Do NOT use the Edit tool,
     NotebookEdit tool, or the Skill tool. Do NOT invoke any skill (e.g., cat:batch-write-agent,
     cat:grep-and-read-agent, or any other cat: skill).
-    Bash commands are restricted to the following allowlist of read-only commands: cat, head, tail,
-    grep, wc, sort, uniq, diff, stat. Do NOT use any Bash command not on this allowlist. Do NOT use
-    shell redirection operators (>, >>) or any command that writes, moves, copies, or deletes files.
+    See ## Subagent Command Allowlist for permitted commands (grader/analyzer category applies here).
+    Do NOT use shell redirection operators (>, >>, <, <<, 2>) or any command that writes, moves,
+    copies, or deletes files.
 ```
 
-Commit the compressed file with message `benchmark: compress skill [session: ${CLAUDE_SESSION_ID}]`.
+Commit the compressed file with message `refactor: compress skill [session: ${CLAUDE_SESSION_ID}]`.
 Store SHA as `COMPRESSED_SHA`.
 
 #### Step 7.3: Semantic Pre-Check (Fast Gate)
 
-Before running the full SPRT re-benchmark, run a semantic pre-check using the comparison algorithm from
+Before running the full SPRT re-test, run a semantic pre-check using the comparison algorithm from
 `${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder-agent/validation-protocol.md` (Section 2):
 
 1. Extract semantic units from the original hardened skill (using Section 1 extraction algorithm)
@@ -1207,11 +1234,11 @@ Before running the full SPRT re-benchmark, run a semantic pre-check using the co
 3. Compare units using the Section 2 comparison algorithm
 4. If any LOST unit has severity HIGH (PROHIBITION, REQUIREMENT, CONDITIONAL, EXCLUSION) → skip SPRT and
    retry compression immediately (mark the lost unit's text as protected)
-5. If semantically EQUIVALENT or only MEDIUM/LOW losses → proceed to SPRT re-benchmark
+5. If semantically EQUIVALENT or only MEDIUM/LOW losses → proceed to SPRT re-test
 
-#### Step 7.4: Post-Compression SPRT Re-Benchmark
+#### Step 7.4: Post-Compression SPRT Re-Test
 
-Run SPRT re-benchmark on the compressed version using identical test cases and parameters as Step 7.1.
+Run SPRT re-test on the compressed version using identical test cases and parameters as Step 7.1.
 
 **Acceptance criterion:** ALL test cases must reach SPRT Accept (log_ratio ≥ A).
 
@@ -1220,7 +1247,7 @@ Run SPRT re-benchmark on the compressed version using identical test cases and p
 2. Identify which test case(s) triggered SPRT rejection and which assertions failed
 3. Cross-reference failed assertions with their source semantic units (`semantic_unit_id` in test-cases.json)
 4. Cross-reference source semantic units with diff hunks via the `location` field in the extracted unit
-5. Mark the corresponding hunks as protected in `${BENCHMARK_ARTIFACTS_DIR}/protected-sections.txt`:
+5. Mark the corresponding hunks as protected in `${TEST_DIR}/protected-sections.txt`:
 
 ```
 ## Protected Section 1
@@ -1231,7 +1258,7 @@ Text:
 ```
 
 Commit protected-sections.txt with message
-`benchmark: mark protected sections [session: ${CLAUDE_SESSION_ID}]`.
+`test: mark protected sections [session: ${CLAUDE_SESSION_ID}]`.
 
 **Retry strategy (cap at 3 attempts):**
 - Retry 1: Compress with protected sections from the first failure
@@ -1241,11 +1268,97 @@ Commit protected-sections.txt with message
   not preserve compliance after 3 retries — accepting uncompressed version."
 
 **On acceptance:** Copy compressed file to `SKILL_TEXT_PATH` (overwrite original), commit with message
-`benchmark: accept final [session: ${CLAUDE_SESSION_ID}]`. Do NOT commit the post-compression SPRT results
+`refactor: accept final compression [session: ${CLAUDE_SESSION_ID}]`. Do NOT commit the post-compression SPRT results
 separately — they are intermediate verification artifacts only. The accepted compressed skill file is the
 permanent output; the SPRT run that verified it is transient and must not be persisted to the repository.
 
 Present the final size reduction and compliance metrics to the user.
+
+### Step 8: Create Organic Test Cases
+
+After the skill is finalized (Steps 4–7 complete), create organic test cases for the skill
+being built. These test cases verify that the skill is chosen when appropriate and followed correctly —
+using realistic prompts with no system_reminders priming.
+
+**Effort gate:** Read `effort` from `${CLAUDE_PROJECT_DIR}/.cat/config.json`. If `effort = low`, skip
+this step entirely.
+
+**8.1 Read the organic test standard:**
+
+Read `plugin/skills/instruction-builder-agent/testing.md` to understand the organic test design standard before
+writing any test cases. Do NOT proceed without reading it first.
+
+**8.2 Design test cases for the skill being built:**
+
+Design test cases following the organic standard. Derive `SKILL_DIR` from `SKILL_TEXT_PATH` (set in
+Step 4) using the directory component of the path:
+```bash
+SKILL_DIR=$(dirname "${CLAUDE_PROJECT_DIR}/${SKILL_TEXT_PATH}")
+```
+For example, if `SKILL_TEXT_PATH` is `plugin/skills/my-skill/first-use.md`, then
+`SKILL_DIR` is `${CLAUDE_PROJECT_DIR}/plugin/skills/my-skill/`. The test-cases file will be written to
+`${SKILL_DIR}/tests/test-cases.json`.
+
+Requirements:
+- **Positive cases (minimum 2):** Realistic work prompts that organically require this skill.
+  - Tier 1 assertion — skill chosen: `must_use_tools: ["Skill"]` (agent invoked the skill)
+  - Tier 2 assertion — skill followed correctly: a specific behavioral criterion verifying the agent
+    executed the skill's key procedure step, not just that a tool was called.
+
+    **Tier 2 examples (concrete):**
+    - `must_use_tools: ["Bash"]` with description "Agent ran git rebase or git reset to squash commits"
+      (for a squash skill — verifies the squash action occurred, not just skill selection)
+    - Output contains a string matching `^(feat|fix|refactor):` (for a commit-message skill — verifies
+      the message format required by the procedure, not just that the Skill tool was called)
+    - `must_use_tools: ["TaskCreate"]` with description "Agent created a task before writing any files"
+      (for a work skill — verifies step ordering required by the procedure)
+
+    **Tier 2 must be falsifiable:** it must fail when the agent selects the skill but skips or
+    misexecutes its key procedure step. Assertions that are always true regardless of procedure
+    execution (e.g., "output is non-empty", "agent produced some text") are Tier 1 at best — they
+    do not count as Tier 2.
+- **Negative cases (minimum 3):** Clearly out-of-scope prompts where the skill should NOT be invoked.
+  Cover distinct out-of-scope scenarios (e.g., search-only, explicit known paths, wrong tool count).
+- **No system_reminders:** Do not list available skills in any test case. Agents must choose the skill
+  based solely on its `description:` frontmatter.
+
+**8.3 Write test cases:**
+
+Create `${SKILL_DIR}/tests/` if it does not exist, then write the test cases to
+`${SKILL_DIR}/tests/test-cases.json`. Follow the format defined in `testing.md`.
+
+**8.4 Validate empirically:**
+
+Run the `empirical-test-runner` against the positive test cases to confirm ≥80% pass rate:
+
+```bash
+RUNNER="${CLAUDE_PLUGIN_ROOT}/client/bin/empirical-test-runner"
+"$RUNNER" \
+  --config "${SKILL_DIR}/tests/test-cases.json" \
+  --trials 3 \
+  --model "${TEST_MODEL}" \
+  --cwd "${CLAUDE_PROJECT_DIR}"
+```
+
+**Tool failure handling:** If `empirical-test-runner` exits with a non-zero code or is not found:
+- Record the error output verbatim in the commit message (Step 8.5).
+- Skip empirical validation and proceed to Step 8.5, noting: "empirical-test-runner unavailable —
+  test cases committed without pass-rate validation."
+- Do NOT block the commit or abort Step 8 on a tool failure. The test cases are still valuable as
+  static documentation even without empirical confirmation.
+
+**Revision loop (cap at 2 attempts):** If any positive case falls below 80%, revise the test prompts
+to be more discriminating (clearer signal that the skill should be invoked) and re-run once. If the
+pass rate is still below 80% after the second attempt, commit the test cases as-is and note in the
+commit message: "organic tests below 80% threshold after 2 revision attempts — prompts need
+further calibration." Do NOT lower the threshold — revise the prompts or note the shortfall.
+
+**8.5 Commit:**
+
+```bash
+git add "${SKILL_DIR}/tests/test-cases.json"
+git commit -m "test: add organic test cases for <skill-name>"
+```
 
 ---
 
@@ -1253,7 +1366,7 @@ Present the final size reduction and compliance metrics to the user.
 
 **Final skill output includes:**
 
-1. **SKILL.md or first-use.md file** — The complete designed, benchmarked, hardened, and compressed skill
+1. **SKILL.md or first-use.md file** — The complete designed, tested, hardened, and compressed skill
 2. **Frontmatter** — YAML with name, description (trigger-oriented), and optional argument-hint
 3. **Purpose section** — The goal statement from the backward chaining methodology
 4. **Procedure section** — Forward-execution steps calling extracted functions
@@ -1290,31 +1403,35 @@ implementation details (trust levels, internal architecture, etc.).
 
 ## Verification
 
+**Effort-gate note:** When a step was skipped by the effort gate (e.g., `effort = low` skips Steps
+4.1–4.4, 5, 7, and 8), mark the corresponding checklist items as **N/A** (not applicable), not failed.
+Overall verification passes if all non-skipped items are checked and all skipped items are marked N/A.
+
 - [ ] Design subagent returned a complete skill draft
-- [ ] Benchmark phase ran with auto-generated test cases (one per testable semantic unit)
+- [ ] Test phase ran with auto-generated test cases (one per testable semantic unit)
 - [ ] Test cases include both deterministic and semantic assertion types where appropriate
 - [ ] Skill-builder maximizes deterministic-to-semantic assertion ratio when generating test cases
-- [ ] Benchmark commit message prefix uses `benchmark:`
-- [ ] Benchmark artifacts directory is the skill-adjacent `<skill-dir>/benchmark/` (derived from dirname of SKILL_TEXT_PATH)
-- [ ] Variables use `BENCHMARK_ARTIFACTS_DIR` and `BENCHMARK_SET_SHA`
+- [ ] Test commit message prefix uses `test:`
+- [ ] Test artifacts directory is the skill-adjacent `<skill-dir>/tests/` (derived from dirname of SKILL_TEXT_PATH)
+- [ ] Variables use `TEST_DIR` and `TEST_SET_SHA`
 - [ ] SPRT decision logic uses p0=0.95, p1=0.85, α=0.05, β=0.05 with boundaries A≈2.944, B≈-2.944
 - [ ] Each test case runs its own independent SPRT; rejection of any case stops all remaining cases
 - [ ] SPRT check runs after each individual agent completion (pipelined), not batched per wave
-- [ ] BENCHMARK_MODEL is read from skill frontmatter via `${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner extract-model` at the start of Step 4
-- [ ] Eval-run subagents use `BENCHMARK_MODEL` (not hardcoded Haiku), fresh (non-resumed) per run
+- [ ] TEST_MODEL is read from skill frontmatter via `${CLAUDE_PLUGIN_ROOT}/client/bin/skill-test-runner extract-model` at the start of Step 4
+- [ ] Eval-run subagents use `TEST_MODEL` (not hardcoded Haiku), fresh (non-resumed) per run
 - [ ] Eval-run subagents grade deterministic assertions inline before returning
-- [ ] Semantic assertions use separate `BENCHMARK_MODEL` grader subagents
-- [ ] Run outputs written to temp files (not committed per-run); only benchmark.json is committed
+- [ ] Semantic assertions use separate `TEST_MODEL` grader subagents
+- [ ] Run outputs written to temp files (not committed per-run); only test-results.json is committed after test
 - [ ] Eval-run subagent return format includes per-assertion pass/fail with null for semantic assertions
-- [ ] BENCHMARK_ARTIFACTS_DIR, CLAUDE_SESSION_ID, and BENCHMARK_MODEL passed as resolved literal strings to all subagents
-- [ ] Benchmark results show meaningful signal (SPRT log_ratios indicate compliance level)
-- [ ] Re-benchmark after hardening uses identical SPRT parameters and same test cases
-- [ ] Effort gate: hardening + benchmarking + compression phase skipped entirely when effort = low
+- [ ] TEST_DIR, CLAUDE_SESSION_ID, and TEST_MODEL passed as resolved literal strings to all subagents
+- [ ] Test results show meaningful signal (SPRT log_ratios indicate compliance level)
+- [ ] Re-test after hardening uses identical SPRT parameters and same test cases
+- [ ] Effort gate: hardening + testing + compression phase skipped entirely when effort = low
 - [ ] Hardening and compression are never interleaved — harden first, then compress
-- [ ] Compression subagent does not read test-cases.json, benchmark.json, or other benchmark artifacts
-- [ ] Post-compression SPRT acceptance criteria identical to post-hardening benchmark
+- [ ] Compression subagent does not read test-cases.json, test-results.json, or other test artifacts
+- [ ] Post-compression SPRT acceptance criteria identical to post-hardening test
 - [ ] Compression retries capped at 3 attempts; uncompressed version accepted after 3 failures
-- [ ] Semantic pre-check gates compression before full SPRT re-benchmark
+- [ ] Semantic pre-check gates compression before full SPRT re-test
 - [ ] Protected text identification cross-references SPRT failure data with diff hunks
 - [ ] Step 2 design subagent tool prohibition explicitly lists Grep alongside Bash, Write, Edit, Glob, WebFetch, WebSearch
 - [ ] Step 2 draft validation checks that each required section contains non-empty content (not just headings)
@@ -1331,35 +1448,42 @@ implementation details (trust levels, internal architecture, etc.).
 - [ ] Step 2 design subagent validation verifies Read tool was used only on permitted files
 - [ ] Step 5 blue-team patch constraints explicitly protect verification checklist items from removal or weakening
 - [ ] Step 5 does not embed file content inline in subagent prompts — subagents read from TARGET_FILE_PATH
-- [ ] Step 6 in-place mode verifies prior benchmark existence before skipping Steps 1-4 (checking `<skill-dir>/benchmark/benchmark.json`)
+- [ ] Step 6 in-place mode verifies prior test existence before skipping Steps 1-4 (checking `<skill-dir>/tests/test-results.json`)
 - [ ] Step 6 batch mode uses per-skill findings paths (`findings-<skill-name>.json`) to avoid collisions
 - [ ] Step 6 batch mode passes `FINDINGS_PATH` parameter to override default findings.json path in subagent prompts
 - [ ] Step 6 distinguishes filesystem operations (use WORKTREE_ROOT prefix) from git show (use repo-relative paths)
 - [ ] Step 4.4 failure investigation runs automatically when SPRT overall_decision is "Reject"
-- [ ] Step 4.4 identifies rejected test case IDs from benchmark.json before examining transcripts
-- [ ] Step 4.4 uses session-analyzer to discover and examine benchmark-run subagent IDs for failing runs
+- [ ] Step 4.4 identifies rejected test case IDs from test-results.json before examining transcripts
+- [ ] Step 4.4 uses session-analyzer to discover and examine test-run subagent IDs for failing runs
 - [ ] Step 4.4 checks for batch contamination (multiple runs sharing one subagent context)
 - [ ] Step 4.4 checks for priming sources (model defaults, escape clauses, output format priming)
 - [ ] Step 4.4 presents investigation findings to the user before asking whether to improve the skill
-- [ ] Step 4.4 recommends rerunning the benchmark when conclusion is "test environment artifact"
+- [ ] Step 4.4 recommends rerunning the test when conclusion is "test environment artifact"
 - [ ] Step 4.5 skill-analyzer-agent report includes Delegation Opportunities and Content Relay Anti-Patterns sections
 - [ ] Step 2 design subagent Read scope is restricted to methodology, conventions, and existing skill files only
 - [ ] Step 6 batch mode skill-name derivation is defined as `<directory-name>-<file-stem>` to avoid collisions
 - [ ] Step 6 batch parallel mode extends the concurrent commit retry protocol to red-team and blue-team commits
-- [ ] Step 4.3 benchmark plateau tracks BEST_SCORE and BEST_SHA, rolls back to best iteration on plateau or cap
+- [ ] Step 4.3 test plateau tracks BEST_SCORE and BEST_SHA, rolls back to best iteration on plateau or cap
 - [ ] Step 5 arbitration agent prompt includes explicit tool restrictions (Write/Edit limited to findings.json, no state-modifying Bash)
 - [ ] Semantic extraction uses embedded Nine-Category algorithm from validation-protocol.md (not subagent invocation)
 - [ ] Extracted units include id, category, original, normalized, quote, and location fields
 - [ ] Non-testable units (REFERENCE, CONJUNCTION) are skipped when generating test cases
-- [ ] Auto-generated test cases are presented to the user for approval before benchmarking
+- [ ] Auto-generated test cases are presented to the user for approval before testing
 - [ ] User can add, remove, or modify auto-generated test cases
-- [ ] Benchmark-run subagent return format includes `duration_ms` and `total_tokens` fields
-- [ ] benchmark.json sprt section includes `total_tokens` and `total_duration_ms` per test case and overall
+- [ ] Test-run subagent return format includes `duration_ms` and `total_tokens` fields
+- [ ] test-results.json sprt section includes `total_tokens` and `total_duration_ms` per test case and overall
 - [ ] Token usage summary table is displayed after SPRT completes showing per-test-case and aggregate totals
-- [ ] Token counts are accumulated from each benchmark-run subagent return value (not estimated)
-- [ ] `test-cases.json` and `benchmark.json` are committed directly to `<skill-dir>/benchmark/` after SPRT completes (no separate persist step)
-- [ ] `${CLAUDE_PLUGIN_ROOT}/client/bin/benchmark-runner extract-model` falls back to "haiku" when skill has no model: frontmatter field
+- [ ] Token counts are accumulated from each test-run subagent return value (not estimated)
+- [ ] `test-cases.json` and `test-results.json` are committed directly to `<skill-dir>/tests/` after SPRT completes (no separate persist step)
+- [ ] `${CLAUDE_PLUGIN_ROOT}/client/bin/skill-test-runner extract-model` falls back to "haiku" when skill has no model: frontmatter field
 - [ ] Step 3 compact-output pass applied to SKILL_DRAFT before writing to disk
 - [ ] Step 3 compact-output pass lists all correctness exemptions (YAML frontmatter, Makefile targets, fenced code blocks, semantic whitespace, visual alignment)
 - [ ] Step 3 compact-output pass does not modify SKILL_DRAFT when exemption conditions apply
 - [ ] Both semantic and visual correctness take priority over compactness in the compact-output pass
+- [ ] Step 8 reads testing.md before designing organic test cases
+- [ ] Step 8 organic test cases include at least 2 positive cases (Tier 1 and Tier 2 criteria)
+- [ ] Step 8 organic test cases include at least 3 negative cases covering distinct out-of-scope scenarios
+- [ ] Step 8 test cases contain no system_reminders listing available skills
+- [ ] Step 8 empirical validation achieves ≥80% pass rate on positive cases before committing
+- [ ] Step 8 commit uses `test:` prefix
+- [ ] Step 8 skipped when effort = low

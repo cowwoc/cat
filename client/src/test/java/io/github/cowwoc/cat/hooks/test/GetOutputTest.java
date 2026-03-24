@@ -283,7 +283,7 @@ public class GetOutputTest
 
   /**
    * Integration test: verifies that "benchmark-aggregator" type routes through GetOutput dispatcher
-   * to BenchmarkAggregator and returns wrapped output with configs and no delta for
+   * to SkillTestAggregator and returns wrapped output with configs and no delta for
    * a single config.
    *
    * @throws IOException if an I/O error occurs

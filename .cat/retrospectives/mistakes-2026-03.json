@@ -2990,5 +2990,24 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M601",
+    "timestamp" : "2026-03-24T03:20:42Z",
+    "category" : "",
+    "description" : "",
+    "root_cause" : "",
+    "cause_signature" : "protocol_violation:missing_prohibition:spawn_reviewers_step",
+    "prevention_type" : "skill",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }

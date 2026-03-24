@@ -20,7 +20,7 @@ import java.util.Map;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Aggregates benchmark run results into per-config statistics with mean, stddev, pass rate,
+ * Aggregates skill test run results into per-config statistics with mean, stddev, pass rate,
  * and delta vs. the baseline config.
  * <p>
  * Accepts one argument: a JSON array of run result objects. Each object must have:
@@ -59,17 +59,17 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * The first distinct config name encountered in the input array is used as the baseline.
  * Stddev is computed as population stddev (divides by N, not N-1).
  */
-public final class BenchmarkAggregator implements SkillOutput
+public final class SkillTestAggregator implements SkillOutput
 {
   private final JvmScope scope;
 
   /**
-   * Creates a BenchmarkAggregator instance.
+   * Creates a SkillTestAggregator instance.
    *
    * @param scope the JVM scope for accessing shared services
    * @throws NullPointerException if {@code scope} is null
    */
-  public BenchmarkAggregator(JvmScope scope)
+  public SkillTestAggregator(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -91,7 +91,7 @@ public final class BenchmarkAggregator implements SkillOutput
     requireThat(args, "args").isNotNull();
     if (args.length != 1)
       throw new IllegalArgumentException(
-        "BenchmarkAggregator requires 1 argument: [run-results-json]. " +
+        "SkillTestAggregator requires 1 argument: [run-results-json]. " +
         "Got " + args.length + " argument(s).");
 
     String json = args[0];
@@ -99,7 +99,7 @@ public final class BenchmarkAggregator implements SkillOutput
 
     if (!root.isArray() || root.isEmpty())
       throw new IllegalArgumentException(
-        "BenchmarkAggregator requires at least one run result in the input array. " +
+        "SkillTestAggregator requires at least one run result in the input array. " +
         "Input must be a non-empty JSON array of run result objects.");
 
     // Group runs by config name, preserving insertion order for baseline detection
@@ -109,13 +109,13 @@ public final class BenchmarkAggregator implements SkillOutput
       String configName = node.path("config").asString("");
       if (configName.isBlank())
         throw new IllegalArgumentException(
-          "BenchmarkAggregator: each run result must have a non-empty 'config' field. " +
+          "SkillTestAggregator: each run result must have a non-empty 'config' field. " +
           "Found: " + node);
 
       JsonNode assertionsNode = node.path("assertions");
       if (!assertionsNode.isArray())
         throw new IllegalArgumentException(
-          "BenchmarkAggregator: 'assertions' must be a JSON boolean array in run result " +
+          "SkillTestAggregator: 'assertions' must be a JSON boolean array in run result " +
           "for config '" + configName + "'. Found: " + assertionsNode);
 
       List<Boolean> assertions = new ArrayList<>();
@@ -125,23 +125,23 @@ public final class BenchmarkAggregator implements SkillOutput
       JsonNode durationNode = node.path("duration_ms");
       if (durationNode.isMissingNode())
         throw new IllegalArgumentException(
-          "BenchmarkAggregator: 'duration_ms' field is missing in run result for config '" +
+          "SkillTestAggregator: 'duration_ms' field is missing in run result for config '" +
           configName + "'. Found: " + node);
       long durationMs = durationNode.asLong();
       if (durationMs < 0)
         throw new IllegalArgumentException(
-          "BenchmarkAggregator: 'duration_ms' must be >= 0 in run result for config '" +
+          "SkillTestAggregator: 'duration_ms' must be >= 0 in run result for config '" +
           configName + "'. Got: " + durationMs);
 
       JsonNode tokensNode = node.path("total_tokens");
       if (tokensNode.isMissingNode())
         throw new IllegalArgumentException(
-          "BenchmarkAggregator: 'total_tokens' field is missing in run result for config '" +
+          "SkillTestAggregator: 'total_tokens' field is missing in run result for config '" +
           configName + "'. Found: " + node);
       long totalTokens = tokensNode.asLong();
       if (totalTokens < 0)
         throw new IllegalArgumentException(
-          "BenchmarkAggregator: 'total_tokens' must be >= 0 in run result for config '" +
+          "SkillTestAggregator: 'total_tokens' must be >= 0 in run result for config '" +
           configName + "'. Got: " + totalTokens);
 
       byConfig.computeIfAbsent(configName, k -> new ArrayList<>()).
