@@ -10,6 +10,9 @@ import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
@@ -19,7 +22,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -38,8 +40,7 @@ public final class GetAddOutput implements SkillOutput
   private static final String BRANCH_STRATEGY = "feature";
   private static final String BRANCH_PATTERN = "v{version}/{issue-name}";
   private static final int SUMMARY_MAX_LENGTH = 120;
-  private static final Pattern STATUS_PATTERN = Pattern.compile("^- \\*\\*Status:\\*\\*\\s*(.+)$",
-    Pattern.MULTILINE);
+  private final Logger log = LoggerFactory.getLogger(getClass());
   /**
    * The JVM scope for accessing shared services.
    */
@@ -69,7 +70,8 @@ public final class GetAddOutput implements SkillOutput
    * @param args the arguments from the preprocessor directive
    * @return the generated output as raw JSON (output tag wrapping happens in GetOutput)
    * @throws NullPointerException     if {@code args} is null
-   * @throws IllegalArgumentException if an unknown argument is provided or {@code --project-dir} lacks a value
+   * @throws IllegalArgumentException if an unknown argument is provided, {@code --project-dir} lacks a value,
+   *                                  or the provided path does not exist or is not a directory
    * @throws IOException              if an I/O error occurs
    */
   @Override
@@ -83,7 +85,13 @@ public final class GetAddOutput implements SkillOutput
       {
         if (i + 1 >= args.length)
           throw new IllegalArgumentException("Missing PATH argument for --project-dir");
-        projectPath = Path.of(args[i + 1]);
+        Path rawPath = Path.of(args[i + 1]).toAbsolutePath().normalize();
+        if (!Files.isDirectory(rawPath))
+        {
+          throw new IllegalArgumentException(
+            "--project-dir does not exist or is not a directory: " + rawPath);
+        }
+        projectPath = rawPath;
         ++i;
       }
       else
@@ -168,21 +176,34 @@ public final class GetAddOutput implements SkillOutput
    * Reads version data from a version directory.
    *
    * @param versionDir the version directory (e.g., {@code .cat/issues/v2/v2.1})
-   * @return the version data; returns a version with status {@code "closed"} if STATE.md is missing
-   * @throws IOException if an I/O error occurs
+   * @return the version data; returns a version with status {@code "closed"} if index.json is missing
+   * @throws IOException if an I/O error occurs, or if index.json exists but its {@code status} field is
+   *   absent or not a string
    */
   private VersionData readVersionData(Path versionDir) throws IOException
   {
     String version = versionDir.getFileName().toString().substring(1);
 
-    Path stateMd = versionDir.resolve("STATE.md");
-    if (!Files.isRegularFile(stateMd))
+    Path indexJson = versionDir.resolve("index.json");
+    if (!Files.isRegularFile(indexJson))
       return new VersionData(version, "closed", "", List.of());
 
-    String stateContent = Files.readString(stateMd);
-    String status = parseStatus(stateContent);
+    JsonNode indexNode = scope.getJsonMapper().readTree(indexJson.toFile());
+    JsonNode statusNode = indexNode.get("status");
+    if (statusNode == null)
+    {
+      throw new IOException(indexJson + ": missing required 'status' field");
+    }
+    if (!statusNode.isString())
+    {
+      log.warn("{}: 'status' field is not a string (found node type {}), failing fast",
+        indexJson, statusNode.getNodeType());
+      throw new IOException(indexJson + ": 'status' field must be a string, but found: " +
+        statusNode.getNodeType());
+    }
+    String status = statusNode.asString();
 
-    Path planMd = versionDir.resolve("PLAN.md");
+    Path planMd = versionDir.resolve("plan.md");
     String summary = "";
     if (Files.isRegularFile(planMd))
     {
@@ -195,8 +216,6 @@ public final class GetAddOutput implements SkillOutput
       List<String> existingIssues = entries.
         filter(Files::isDirectory).
         map(p -> p.getFileName().toString()).
-        filter(name -> !name.equals("STATE.md") && !name.equals("PLAN.md") &&
-          !name.equals("CHANGELOG.md")).
         sorted().
         toList();
       return new VersionData(version, status, summary, existingIssues);
@@ -204,23 +223,9 @@ public final class GetAddOutput implements SkillOutput
   }
 
   /**
-   * Parses the status value from STATE.md content.
+   * Parses the first non-blank line after the {@code ## Goal} heading in plan.md content.
    *
-   * @param content the STATE.md file content
-   * @return the status string, or {@code "open"} if not found
-   */
-  private String parseStatus(String content)
-  {
-    java.util.regex.Matcher matcher = STATUS_PATTERN.matcher(content);
-    if (matcher.find())
-      return matcher.group(1).strip();
-    return "open";
-  }
-
-  /**
-   * Parses the first non-blank line after the {@code ## Goal} heading in PLAN.md content.
-   *
-   * @param content the PLAN.md file content
+   * @param content the plan.md file content
    * @return the summary string (truncated to 120 characters), or {@code ""} if not found
    */
   private String parseGoalSummary(String content)
@@ -251,7 +256,7 @@ public final class GetAddOutput implements SkillOutput
    *
    * @param version        the version string (e.g., {@code "2.1"})
    * @param status         the version status (e.g., {@code "in-progress"}, {@code "closed"})
-   * @param summary        the first non-blank line from the Goal section of PLAN.md
+   * @param summary        the first non-blank line from the Goal section of plan.md
    * @param existingIssues the bare names of issue directories under this version
    */
   private record VersionData(String version, String status, String summary,
