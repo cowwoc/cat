@@ -80,6 +80,14 @@ AGENT_ID="ad630cb"  # Example agent_id
 - `"agentId":"ad630cb"` (in JSON)
 - `agentId: ad630cb` (in text output)
 
+## Hook additionalContext Limitation
+
+The `additionalContext` field in hook events (e.g., `SubagentStart`) is injected at the API level directly into
+the subagent's context window. This content is **not** stored in JSONL session logs. As a result,
+`session-analyzer search` cannot find text that was provided via `additionalContext` — it only scans JSONL log
+entries. If a search returns zero results, the content may have been injected via `additionalContext` rather than
+logged.
+
 ## Error Handling
 
 If session ID not in context, report error - do NOT guess.
