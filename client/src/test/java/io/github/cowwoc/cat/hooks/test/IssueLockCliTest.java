@@ -26,7 +26,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * <p>
  * Tests verify argument parsing, output format, and exit behavior for all subcommands.
  * Uses injectable streams and scopes to avoid System.exit() calls during tests.
- * All output (success and error) is written to stdout using HookOutput.block() format.
+ * All output (success and error) is written to stdout using ClaudeHook format.
  */
 public class IssueLockCliTest
 {
