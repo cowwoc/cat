@@ -10,12 +10,11 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 
-import io.github.cowwoc.cat.hooks.AbstractClaudeHook;
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.ClaudeHook;
-import io.github.cowwoc.cat.hooks.MainClaudeHook;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.ShellParser;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -95,7 +94,7 @@ import org.slf4j.LoggerFactory;
  * <br>
  * The {@code catAgentId} argument is mandatory. Main agents pass {@code ${CLAUDE_SESSION_ID}};
  * subagents pass the value injected by SubagentStartHook (e.g., {@code {sessionId}/subagents/{agent_id}}).
- * The {@code pluginRoot} is read from the JVM environment via {@link ClaudeHook}.
+ * The {@code pluginRoot} is read from the JVM environment via {@link JvmScope}.
  *
  * @see io.github.cowwoc.cat.hooks.session.ClearAgentMarkers
  */
@@ -145,7 +144,7 @@ public final class GetSkill
    * <p>
    * The plugin root and project directory are read from {@code scope} via
    * {@link JvmScope#getPluginRoot()} and {@link JvmScope#getProjectPath()}.
-   * When invoked from {@link #main(String[])}, the scope is a {@link MainClaudeHook}.
+   * When invoked from {@link #main(String[])}, the scope is a {@link MainJvmScope}.
    *
    * @param scope the JVM scope for accessing shared services and environment paths
    * @param skillArgs pre-tokenized positional arguments; the first element ({@code $0}) is the CAT agent ID,
@@ -854,12 +853,37 @@ public final class GetSkill
   }
 
   /**
-   * Main method for command-line execution.
+   * Loads and outputs a skill, writing the result to the given stream.
    * <p>
-   * Invoked as: java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.util.GetSkill
-   * skill-name catAgentId [skill-args...]
+   * Extracted from {@link #main(String[])} to enable testing without requiring hook stdin input.
+   *
+   * @param scope the JVM scope providing access to plugin root and project paths
+   * @param args command-line arguments: {@code skill-name catAgentId [skill-args...]}
+   * @param out the stream to write skill content to
+   * @throws IOException if the skill cannot be loaded
+   * @throws NullPointerException if {@code scope}, {@code args}, or {@code out} are null
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+
+    String skillName = args[0];
+    List<String> skillArgs = List.of(args).subList(1, args.length);
+    GetSkill loader = new GetSkill(scope, skillArgs);
+    String result = loader.load(skillName);
+    out.print(result);
+  }
+
+  /**
+   * Entry point for the {@code get-skill} CLI tool.
    * <p>
-   * The plugin root and project directory are read from the JVM environment via {@link MainClaudeTool}.
+   * Invoked by the Skill tool preprocessor as:
+   * <p>
+   * {@code skill-name catAgentId [skill-args...]}
+   * <p>
+   * The plugin root and project directory are read from the JVM environment via {@link MainJvmScope}.
    * The agent ID is passed as the first skill argument ({@code skill-args[0]}, i.e., {@code $0}).
    *
    * @param args command-line arguments: skill-name catAgentId [skill-args...]
@@ -872,17 +896,11 @@ public final class GetSkill
         "Usage: get-skill <skill-name> <catAgentId> [skill-args...]");
       System.exit(1);
     }
-
-    String skillName = args[0];
-    List<String> skillArgs = List.of(args).subList(1, args.length);
-
-    try (AbstractClaudeHook scope = new MainClaudeHook())
+    try (JvmScope scope = new MainJvmScope())
     {
       try
       {
-        GetSkill loader = new GetSkill(scope, skillArgs);
-        String result = loader.load(skillName);
-        System.out.print(result);
+        run(scope, args, System.out);
       }
       catch (IOException e)
       {
@@ -893,8 +911,9 @@ public final class GetSkill
       {
         Logger log = LoggerFactory.getLogger(GetSkill.class);
         log.error("Unexpected error", e);
-        System.out.println(scope.block(
-          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+        System.err.println("Error loading skill: " +
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName()));
+        System.exit(1);
       }
     }
   }

@@ -6,10 +6,13 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.GetSkill;
 import org.testng.annotations.Test;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -1966,6 +1969,38 @@ More content here.
 
       GetSkill loader = new GetSkill(scope, List.of(agentId));
       loader.load("test-skill");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that {@code run()} does not throw {@code IllegalStateException} when stdin is empty.
+   * <p>
+   * {@code GetSkill} is an infrastructure CLI tool invoked by the Skill preprocessor with no stdin
+   * data. When {@code main()} used {@code MainClaudeHook} (which reads JSON from stdin at
+   * construction time), it threw "Hook input is blank" on every skill invocation. This test
+   * verifies {@code run()} accepts a {@code JvmScope} that does not require stdin.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void runAcceptsJvmScopeWithoutStdin() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
+    try (JvmScope scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
+    {
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      Files.writeString(companionDir.resolve("first-use.md"), "# Test Skill\n");
+
+      String agentId = UUID.randomUUID().toString();
+      ByteArrayOutputStream outBuffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(outBuffer, false, UTF_8);
+      GetSkill.run(scope, new String[]{"test-skill", agentId}, out);
+      requireThat(outBuffer.toString(UTF_8), "output").contains("# Test Skill");
     }
     finally
     {
