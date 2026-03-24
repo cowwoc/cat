@@ -323,7 +323,7 @@ cd "${WORKTREE_PATH}" && git status --porcelain  # Must be empty before spawning
 cd "${WORKTREE_PATH}" && git status --porcelain | awk '{print $NF}' | \
   while IFS= read -r filepath; do
     basename=$(basename "$filepath")
-    if echo "$basename" | grep -Eqi '^plan\.md$|^state\.md$'; then
+    if echo "$basename" | grep -Eqi '^plan\.md$|^state\.md$|^index\.json$'; then
       echo "BLOCKED: dirty planning file detected: $filepath"
       exit 1
     fi
@@ -496,7 +496,7 @@ Task tool:
     CRITICAL: You are the implementation agent - implement directly, do NOT spawn another subagent.
 ```
 
-**After the subagent returns**, invoke `cat:collect-results-agent` before any further Skill or Task tool calls.
+Immediately after the subagent returns its Task tool result, invoke `cat:collect-results-agent`.
 The `EnforceCollectAfterAgent` hook blocks all Skill and Task calls until collect-results-agent is invoked.
 
 ```
@@ -508,6 +508,11 @@ Skill tool:
 Where `SUBAGENT_RAW_ID` is the `agentId:` value from the Task tool result footer, and
 `subagentCommitsJsonPath` is a temp file path to write the collected commits JSON.
 
+**SUBAGENT_RAW_ID validation:** Before constructing the compound ID, verify that `SUBAGENT_RAW_ID` is
+non-empty and contains only alphanumeric characters, hyphens, and underscores (no slashes, dots, or
+path traversal sequences). If validation fails, STOP and return FAILED status — do NOT pass an empty
+or malformed ID to collect-results-agent.
+
 The cat_agent_id format for a subagent is `{session_id}/subagents/{agent_id}` — do NOT omit the
 `/subagents/` segment or the call will be rejected with a format validation error.
 
@@ -515,6 +520,12 @@ Then validate and merge its commits back into the issue branch:
 
 ```bash
 SUBAGENT_BRANCH="<branch name from Task tool result metadata>"
+
+# Validate BRANCH is non-empty before using it in prefix checks
+if [[ -z "${BRANCH}" ]]; then
+  echo "ERROR: BRANCH variable is empty — cannot validate subagent branch prefix."
+  exit 1
+fi
 
 # Validate branch name: alphanumeric, hyphens, underscores only — no slashes, dots, or path separators
 if [[ ! "${SUBAGENT_BRANCH}" =~ ^[a-zA-Z0-9_-]+$ ]]; then
@@ -536,6 +547,11 @@ if ! git -C "${WORKTREE_PATH}" rev-parse --verify "refs/heads/${SUBAGENT_BRANCH}
 fi
 
 cd "${WORKTREE_PATH}" && git merge --ff-only "${SUBAGENT_BRANCH}"
+if [[ $? -ne 0 ]]; then
+  echo "ERROR: Fast-forward merge of ${SUBAGENT_BRANCH} failed. The subagent branch has diverged."
+  echo "Use /cat:git-merge-linear-agent to resolve the diverged history."
+  exit 1
+fi
 ```
 
 The subagent branch name and worktree path are returned in the Task tool result when `isolation: "worktree"` is
@@ -549,7 +565,8 @@ the issue branch HEAD. Subagents execute concurrently without shared disk state.
 updates index.json; other groups skip it.
 
 **IMPORTANT:** Each parallel subagent commits to its own isolated worktree branch. After all subagents
-complete, the main agent merges each subagent branch back into the issue branch in order (A, B, C, ...).
+complete, the main agent merges each subagent branch back into the issue branch in ascending wave order
+(Wave 1 first, then Wave 2, etc.).
 Only the last wave subagent updates index.json.
 
 **CRITICAL: Parallel means one API response — not "start Wave 1, then start Wave 2".**
@@ -627,15 +644,15 @@ Task tool call: Wave 1 subagent
 Task tool call: Wave 2 subagent
 ```
 
-For each group (example for group A with steps 1, 2, 3):
+For each wave (example for Wave 1 with steps 1, 2, 3):
 
 ```
 Task tool:
-  description: "Execute: implement ${ISSUE_ID} group A (steps 1, 2, 3)"
+  description: "Execute: implement ${ISSUE_ID} wave 1 (steps 1, 2, 3)"
   subagent_type: "cat:work-execute"
   isolation: "worktree"
   prompt: |
-    Execute the implementation for issue ${ISSUE_ID}, group A only.
+    Execute the implementation for issue ${ISSUE_ID}, wave 1 only.
 
     ## Issue Configuration
     ISSUE_ID: ${ISSUE_ID}
@@ -678,7 +695,7 @@ Task tool:
     ```json
     {
       "status": "SUCCESS|PARTIAL|FAILED|BLOCKED",
-      "group": "A",
+      "wave": 1,
       "tokens_used": <actual>,
       "percent_of_context": <actual>,
       "compaction_events": 0,
@@ -696,11 +713,14 @@ Task tool:
     }
     ```
 
+    The `"wave"` field MUST equal the numeric `ASSIGNED_WAVE` value from the Issue Configuration above.
+    Do NOT use a letter-based group identifier — use the integer wave number.
+
     If you encounter a blocker, return:
     ```json
     {
       "status": "BLOCKED",
-      "group": "A",
+      "wave": 1,
       "message": "Description of blocker",
       "blocker": "What needs to be resolved"
     }
@@ -709,9 +729,44 @@ Task tool:
     CRITICAL: You are the implementation agent - implement directly, do NOT spawn another subagent.
 ```
 
-**Wait for all group subagents to complete. Then invoke `cat:collect-results-agent` for each subagent
-before any further Skill or Task tool calls. The `EnforceCollectAfterAgent` hook blocks all Skill and Task
-calls until collect-results-agent is invoked for each completed Agent tool result.**
+**Wait for ALL group subagents to complete before invoking collect-results-agent for ANY of them.**
+The `EnforceCollectAfterAgent` hook blocks all Skill and Task calls until collect-results-agent is invoked
+for each completed Agent tool result.
+
+**CRITICAL: Do NOT call collect-results-agent for Wave N until EVERY wave from 1 to WAVES_COUNT has returned
+a Task tool result.** Calling collect-results for a subset of waves while others are still running is a
+protocol violation — it leaves the implementation in a partial state.
+
+**Parallel wave completion protocol — wait for ALL waves before calling collect-results-agent for ANY:**
+1. Issue all N Task calls simultaneously (spawn phase, single API response)
+2. Receive Task tool results — each result arrives as it completes
+3. Track which waves have returned: a wave is complete only when its Task tool result appears in context
+4. **WAIT** — do not act on any result until ALL N waves have returned Task tool results
+5. When ALL N waves have returned Task tool results, initialize a counter: `NEXT_COLLECT=1`
+6. Call collect-results-agent for wave `NEXT_COLLECT`. Before each call, verify `NEXT_COLLECT` equals
+   the expected wave number. After the call succeeds, increment: `NEXT_COLLECT=$((NEXT_COLLECT + 1))`.
+   Repeat until `NEXT_COLLECT > WAVES_COUNT`. Do NOT skip ahead or reorder — each collect-results call
+   MUST process waves in strict ascending order (1, 2, 3, ..., N).
+7. After all collect-results-agent calls complete, initialize a counter: `NEXT_MERGE=1`. Merge each
+   subagent branch in strict ascending order: merge wave `NEXT_MERGE`, then increment
+   `NEXT_MERGE=$((NEXT_MERGE + 1))`. Repeat until `NEXT_MERGE > WAVES_COUNT`. Do NOT merge out of order.
+
+NEVER proceed to collect-results after only a subset of waves have returned.
+
+**Why ascending order matters:** Merging and collecting results in ascending wave order ensures metrics
+(tokens_used, files_changed, compaction_events) are aggregated consistently across runs, making output
+reproducible and comparable regardless of which wave happened to complete first.
+
+**Handling large output / ambiguous completion:** If a wave's Task output is truncated or too large to read
+directly, the wave is still complete when its Task tool result appears — the result size does not affect
+completeness. Do NOT attempt to read the output file directly or use TaskOutput on Agent tasks. Wait for the
+system notification of the Task tool result, then proceed.
+
+**Truncated metadata recovery:** The `agentId` and branch name are essential for collect-results and merge
+steps. If truncation removes these fields from the visible Task tool result, do NOT fabricate or guess
+values. Instead, use `TaskGet` with the task ID to retrieve the full result metadata including the `agentId`
+and branch name. If `TaskGet` also fails to provide the metadata, STOP and return FAILED status with message
+"Unable to retrieve agentId or branch name for wave N after truncation".
 
 For each completed subagent, call collect-results-agent:
 
@@ -721,17 +776,28 @@ Skill tool:
   args: "${CAT_AGENT_ID}/subagents/${SUBAGENT_RAW_ID} ${ISSUE_PATH} <subagentCommitsJsonPath>"
 ```
 
-Where `SUBAGENT_RAW_ID` is the `agentId:` value from that group's Task tool result footer.
+Where `SUBAGENT_RAW_ID` is the `agentId:` value from that wave's Task tool result footer.
+Apply the same SUBAGENT_RAW_ID validation as described in the single-subagent section: verify it is
+non-empty and contains only alphanumeric characters, hyphens, and underscores before constructing
+the compound ID. If validation fails, STOP and return FAILED status.
+
 The cat_agent_id format for a subagent is `{session_id}/subagents/{agent_id}` — do NOT omit the
 `/subagents/` segment or the call will be rejected with a format validation error.
 
-Then validate and merge each subagent branch back into the issue branch in alphabetical order
-(A first, then B, C, ...):
+Then validate and merge each subagent branch back into the issue branch using the `NEXT_MERGE` counter
+from the parallel wave completion protocol (step 7). Process wave `NEXT_MERGE`, then increment. Do NOT
+merge any wave out of ascending order.
 
-For each group's branch name received from the Task tool result, validate before merging:
+For each wave's branch name received from the Task tool result, validate before merging:
 
 ```bash
-SUBAGENT_BRANCH="<branch name from Task tool result metadata for this group>"
+SUBAGENT_BRANCH="<branch name from Task tool result metadata for this wave>"
+
+# Validate BRANCH is non-empty before using it in prefix checks
+if [[ -z "${BRANCH}" ]]; then
+  echo "ERROR: BRANCH variable is empty — cannot validate subagent branch prefix."
+  exit 1
+fi
 
 # Validate branch name: alphanumeric, hyphens, underscores only — no slashes, dots, or path separators
 if [[ ! "${SUBAGENT_BRANCH}" =~ ^[a-zA-Z0-9_-]+$ ]]; then
@@ -753,8 +819,12 @@ if ! git -C "${WORKTREE_PATH}" rev-parse --verify "refs/heads/${SUBAGENT_BRANCH}
 fi
 
 cd "${WORKTREE_PATH}" && git merge --ff-only "${SUBAGENT_BRANCH}"
-# For subsequent groups where ff-only fails (diverged history), use /cat:git-merge-linear-agent
-# ... repeat for each group
+if [[ $? -ne 0 ]]; then
+  echo "ERROR: Fast-forward merge of ${SUBAGENT_BRANCH} failed (wave ${NEXT_MERGE}). The branch has diverged."
+  echo "Use /cat:git-merge-linear-agent to resolve the diverged history before merging the next wave."
+  exit 1
+fi
+# ... repeat for each wave in ascending order using NEXT_MERGE counter
 ```
 
 The subagent branch name and worktree path for each group are returned in the Task tool result when

@@ -1,197 +1,154 @@
 {
   "test_cases": [
     {
-      "test_case_id": "TC1",
-      "semantic_unit_id": "unit_seq_position",
+      "test_case_id": "TC-001",
+      "semantic_unit_id": "unit_single_wave_collect_immediately",
       "category": "SEQUENCE",
-      "prompt": "You are following the work-implement-agent skill. All pending changes have been committed to the worktree. The issue index.json was just committed. Should you run the schema migration coverage check now, before spawning the implementation subagent? State Yes or No and what you do next.",
+      "prompt": "You are executing the work-implement-agent workflow for issue 2.1-test-issue. You have spawned one implementation subagent (single-wave plan). The Task tool just returned with this result footer:\n  agentId: abc123def456xyz\n  status: SUCCESS\nWhat is the VERY NEXT tool call you must make? Name the specific skill and describe any required arguments.",
       "assertions": [
         {
-          "assertion_id": "TC1_det_1",
-          "type": "deterministic",
-          "method": "regex",
-          "description": "output confirms the check runs at this point (yes or schema migration mentioned)",
-          "pattern": "(?i)(yes|schema migration|coverage check)",
-          "expected": true
-        },
-        {
-          "assertion_id": "TC1_det_2",
-          "type": "deterministic",
-          "method": "regex",
-          "description": "output does not defer check to after spawning",
-          "pattern": "(?i)(after spawning|skip.*check|defer.*check)",
-          "expected": false
-        }
-      ]
-    },
-    {
-      "test_case_id": "TC2",
-      "semantic_unit_id": "unit_req_schema_files",
-      "category": "REQUIREMENT",
-      "prompt": "You are checking schema-relevant files. Which of these basenames are schema-relevant per the work-implement-agent skill? List them: config.json, index.json, plan.md, plugin.sh",
-      "assertions": [
-        {
-          "assertion_id": "TC2_det_1",
+          "assertion_id": "TC-001_det_1",
           "type": "deterministic",
           "method": "string_match",
-          "description": "index.json is identified as schema-relevant",
-          "pattern": "index.json",
+          "description": "response must mention collect-results-agent as the next action",
+          "pattern": "collect-results-agent",
           "expected": true
         },
         {
-          "assertion_id": "TC2_det_2",
-          "type": "deterministic",
-          "method": "string_match",
-          "description": "plan.md is identified as schema-relevant",
-          "pattern": "plan.md",
-          "expected": true
-        },
-        {
-          "assertion_id": "TC2_det_3",
-          "type": "deterministic",
-          "method": "regex",
-          "description": "config.json is NOT positively identified as schema-relevant",
-          "pattern": "(?i)config\\.json\\s+(?:is|are|listed\\s+as|identified\\s+as|considered)\\s+schema.relevant",
-          "expected": false
-        },
-        {
-          "assertion_id": "TC2_det_4",
-          "type": "deterministic",
-          "method": "regex",
-          "description": "plugin.sh is NOT positively identified as schema-relevant",
-          "pattern": "(?i)plugin\\.sh\\s+(?:is|are|listed\\s+as|identified\\s+as|considered)\\s+schema.relevant",
-          "expected": false
-        }
-      ]
-    },
-    {
-      "test_case_id": "TC3",
-      "semantic_unit_id": "unit_req_literal_match",
-      "category": "REQUIREMENT",
-      "prompt": "You are writing the grep command for the schema migration check. Should you use `grep -l` or `grep -lF`? Explain why, citing the skill's definition of what 'references' means.",
-      "assertions": [
-        {
-          "assertion_id": "TC3_det_1",
-          "type": "deterministic",
-          "method": "regex",
-          "description": "response specifies -lF or -F flag",
-          "pattern": "-lF|-F",
-          "expected": true
-        },
-        {
-          "assertion_id": "TC3_sem_1",
+          "assertion_id": "TC-001_sem_1",
           "type": "semantic",
-          "description": "explanation correctly states -F is for literal/fixed-string matching to avoid regex interpretation",
-          "instruction": "Check if the output correctly explains that -F (or --fixed-strings) is needed to perform literal fixed-string matching, avoiding regex interpretation of characters like the dot in filenames such as plan.md. The explanation should reference the skill's definition that a file 'references' a basename when that exact string appears as a literal substring.",
+          "description": "response must identify collect-results-agent as the immediate next step, not any other tool or action",
+          "instruction": "Check whether the response clearly states that collect-results-agent must be invoked IMMEDIATELY as the next step, before any other Skill or Task tool calls. The response should not describe waiting, doing other work first, or any intermediate steps before collect-results-agent.",
           "expected": true
         }
       ]
     },
     {
-      "test_case_id": "TC4",
-      "semantic_unit_id": "unit_req_scope",
-      "category": "REQUIREMENT",
-      "prompt": "The schema migration check finds referencing files. Which directories are explicitly excluded from the search scope per the work-implement-agent skill? List them.",
-      "assertions": [
-        {
-          "assertion_id": "TC4_det_1",
-          "type": "deterministic",
-          "method": "regex",
-          "description": ".git directory is excluded",
-          "pattern": "\\.git",
-          "expected": true
-        },
-        {
-          "assertion_id": "TC4_det_2",
-          "type": "deterministic",
-          "method": "regex",
-          "description": ".cat directory is excluded (not merely .cat/issues)",
-          "pattern": "\\.cat(?!/issues)",
-          "expected": true
-        },
-        {
-          "assertion_id": "TC4_det_3",
-          "type": "deterministic",
-          "method": "string_match",
-          "description": "target directory is excluded",
-          "pattern": "target",
-          "expected": true
-        }
-      ]
-    },
-    {
-      "test_case_id": "TC5",
-      "semantic_unit_id": "unit_prohibition_block",
+      "test_case_id": "TC-002",
+      "semantic_unit_id": "unit_parallel_wait_for_all_waves",
       "category": "PROHIBITION",
-      "prompt": "You ran the schema migration coverage check and it emitted a WARNING that plan.md was modified but plugin/skills/foo.md still references it. Do you stop and refuse to spawn the implementation subagent until the issue is resolved? What do you do?",
+      "prompt": "You are executing work-implement-agent with 2 parallel waves (WAVES_COUNT=2). You just received the Task tool result for Wave 1 (agentId: wave1-abc123). Wave 2 has NOT yet returned a Task tool result — it is still running. What should you do right now with Wave 1's result?",
       "assertions": [
         {
-          "assertion_id": "TC5_det_1",
+          "assertion_id": "TC-002_det_1",
           "type": "deterministic",
           "method": "regex",
-          "description": "response does not block subagent delegation",
-          "pattern": "(?i)((?<!not\\s)(?<!n't\\s)stop\\b|(?<!not\\s)(?<!n't\\s)block\\b|(?<!not\\s)(?<!n't\\s)refuse\\b|cannot proceed|will not spawn|do not spawn).{0,50}(warning|check|coverage)",
-          "expected": false
+          "description": "response must indicate WAIT before acting on Wave 1 result",
+          "pattern": "(?i)\\bwait\\b",
+          "expected": true
         },
         {
-          "assertion_id": "TC5_sem_1",
+          "assertion_id": "TC-002_sem_1",
           "type": "semantic",
-          "description": "response correctly states the check is advisory-only and subagent delegation continues regardless",
-          "instruction": "Check if the output correctly explains that the schema migration coverage check is advisory-only (warns but does not block), and that subagent delegation proceeds regardless of the warning output. The response should indicate the agent will continue spawning the subagent despite the warning.",
+          "description": "response must say to wait for Wave 2 before acting on Wave 1's result",
+          "instruction": "Check whether the response clearly states that you must WAIT for Wave 2 to complete before calling collect-results-agent for Wave 1. The protocol requires all waves to return Task tool results before collect-results-agent is called for ANY of them.",
           "expected": true
         }
       ]
     },
     {
-      "test_case_id": "TC6",
-      "semantic_unit_id": "unit_cond_warning",
-      "category": "CONDITIONAL",
-      "prompt": "The schema migration check runs. No schema-relevant files (index.json, plan.md) were modified in the current commit set. Does the check emit any warning? What does it output?",
+      "test_case_id": "TC-003",
+      "semantic_unit_id": "unit_collect_results_ascending_order",
+      "category": "SEQUENCE",
+      "prompt": "You are executing work-implement-agent with 3 parallel waves. The Task tool results arrived in this completion order: Wave 3 completed first (agentId: wave3-ghi), then Wave 1 completed (agentId: wave1-abc), then Wave 2 completed (agentId: wave2-def). All 3 Task tool results are now in context. In what order do you invoke collect-results-agent for these waves? Provide the specific order.",
       "assertions": [
         {
-          "assertion_id": "TC6_det_1",
-          "type": "deterministic",
-          "method": "regex",
-          "description": "no WARNING emitted when no schema-relevant files changed",
-          "pattern": "(?i)(?:emits?|outputs?|generates?|produces?)\\s+(?:a\\s+|an\\s+|one\\s+|two\\s+|some\\s+|several\\s+)warnings?\\b(?!\\s*(?:when|if|only\\b))|(?:will|shall)\\s+warn\\b(?!\\s*(?:when|if|only\\b))",
-          "expected": false
+          "assertion_id": "TC-003_sem_1",
+          "type": "semantic",
+          "description": "response must specify ascending wave order (Wave 1, 2, 3) regardless of completion order",
+          "instruction": "Check whether the response specifies invoking collect-results-agent in ascending wave order: Wave 1 first, Wave 2 second, Wave 3 third. The response must NOT use the completion order (Wave 3, Wave 1, Wave 2). If the response correctly identifies ascending wave order as the required sequence, mark as PASS.",
+          "expected": true
         },
         {
-          "assertion_id": "TC6_sem_1",
-          "type": "semantic",
-          "description": "response correctly explains check is silently skipped when no schema-relevant files changed",
-          "instruction": "Check if the output correctly explains that when no schema-relevant files (index.json, plan.md) are in the changed set, the schema migration check produces no output or warning — it runs silently. The response should indicate no warning is emitted in this case.",
+          "assertion_id": "TC-003_det_1",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "response must mention Wave 1 before Wave 2 in the ordering description",
+          "pattern": "Wave 1.{0,200}Wave 2",
           "expected": true
         }
       ]
     },
     {
-      "test_case_id": "TC7",
-      "semantic_unit_id": "unit_req_rel_paths",
+      "test_case_id": "TC-004",
+      "semantic_unit_id": "unit_branch_merge_ascending_order",
+      "category": "SEQUENCE",
+      "prompt": "You are executing work-implement-agent. You have just completed all collect-results-agent calls for 3 waves. The subagent branches created are: wave3-branch (from Wave 3), wave1-branch (from Wave 1), wave2-branch (from Wave 2). What is the correct order to merge these branches into the issue branch?",
+      "assertions": [
+        {
+          "assertion_id": "TC-004_sem_1",
+          "type": "semantic",
+          "description": "response must specify ascending wave order for merging: wave1-branch, wave2-branch, wave3-branch",
+          "instruction": "Check whether the response specifies merging branches in ascending wave order: wave1-branch first, wave2-branch second, wave3-branch third. The order must be based on wave number (ascending), not based on which wave completed first. If the response correctly identifies ascending wave order (Wave 1 → Wave 2 → Wave 3) for merging, mark as PASS.",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC-005",
+      "semantic_unit_id": "unit_subagent_id_format_with_subagents_segment",
       "category": "REQUIREMENT",
-      "prompt": "The schema migration check found that /workspace/.cat/work/worktrees/my-issue/plugin/skills/foo.md references plan.md. The WORKTREE_PATH is /workspace/.cat/work/worktrees/my-issue. What path should be shown in the WARNING output per the work-implement-agent skill?",
+      "prompt": "You need to invoke collect-results-agent after a subagent completes. The session ID is 'sess-3361441d'. The Task tool result footer shows:\n  agentId: 7a8b9c0d1e2f3g4h\nWhat exact value do you use as the first argument (cat_agent_id) when calling collect-results-agent?",
       "assertions": [
         {
-          "assertion_id": "TC7_det_1",
+          "assertion_id": "TC-005_det_1",
           "type": "deterministic",
           "method": "string_match",
-          "description": "WARNING shows repo-relative path plugin/skills/foo.md",
-          "pattern": "plugin/skills/foo.md",
+          "description": "response must contain the correctly formatted subagent ID with /subagents/ segment",
+          "pattern": "sess-3361441d/subagents/7a8b9c0d1e2f3g4h",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC-006",
+      "semantic_unit_id": "unit_branch_name_validation_three_checks",
+      "category": "DEPENDENCY",
+      "prompt": "You are about to merge subagent branch 'my-issue-2.1-sub-abc123' into the issue branch. List ALL the validation checks you must perform on the branch name before attempting the git merge command.",
+      "assertions": [
+        {
+          "assertion_id": "TC-006_sem_1",
+          "type": "semantic",
+          "description": "response must include all 3 required validation checks: character set, prefix, and git existence",
+          "instruction": "Check whether the response mentions all three of these validation checks: (1) alphanumeric characters, hyphens, and underscores only (no slashes, dots, or path separators), (2) branch name must start with the issue branch prefix followed by a hyphen, (3) branch must actually exist in git (verified via git rev-parse or equivalent). If all 3 checks are present, mark as PASS.",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC-007",
+      "semantic_unit_id": "unit_ascending_order_reproducible_metrics",
+      "category": "CONSEQUENCE",
+      "prompt": "Why does work-implement-agent require calling collect-results-agent and merging subagent branches in ascending wave order (Wave 1 first, then Wave 2, etc.) rather than in the order waves happen to complete? Explain the purpose behind this ordering requirement.",
+      "assertions": [
+        {
+          "assertion_id": "TC-007_sem_1",
+          "type": "semantic",
+          "description": "response must explain that ascending order ensures consistent/reproducible metrics aggregation",
+          "instruction": "Check whether the response explains that ascending wave order ensures metrics (tokens_used, files_changed, compaction_events) are aggregated consistently and reproducibly across runs, making output comparable regardless of which wave happened to complete first. The key concept is reproducibility/consistency of metric aggregation. If the response captures this idea, mark as PASS.",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC-008",
+      "semantic_unit_id": "unit_truncated_output_wave_still_complete",
+      "category": "CONDITIONAL",
+      "prompt": "You are executing work-implement-agent with 2 parallel waves. Wave 1's Task tool result has arrived in context. However, the output appears truncated or very large — you cannot read the full output file directly. Is Wave 1 considered complete? Should you wait for additional output or a retry before calling collect-results-agent for Wave 1?",
+      "assertions": [
+        {
+          "assertion_id": "TC-008_det_1",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "response must indicate Wave 1 is complete when Task tool result appears, regardless of output size",
+          "pattern": "(?i)(complete|complete\\b|is complete|considered complete|still complete|wave.{0,20}complete|proceed)",
           "expected": true
         },
         {
-          "assertion_id": "TC7_det_2",
-          "type": "deterministic",
-          "method": "regex",
-          "description": "model does NOT positively recommend showing the absolute worktree path in WARNING",
-          "pattern": "(?i)(?:should|will|must)\\s+(?:show|display|be)\\s+[`\"]?/workspace/\\.cat/work/worktrees/my-issue",
-          "expected": false
-        },
-        {
-          "assertion_id": "TC7_sem_1",
+          "assertion_id": "TC-008_sem_1",
           "type": "semantic",
-          "description": "model correctly recommends repo-relative path for WARNING, not the absolute worktree path",
-          "instruction": "Check if the output correctly states that the path shown in the WARNING should be the repo-relative path `plugin/skills/foo.md` (after stripping the WORKTREE_PATH prefix), NOT the absolute worktree path. The response should recommend showing the relative path, not the absolute worktree path, as the correct output format for the WARNING.",
+          "description": "response must say truncated output does NOT prevent treating wave as complete; must proceed to collect-results",
+          "instruction": "Check whether the response correctly states that a truncated or large Task tool output does NOT require waiting for more output from Wave 1, retrying Wave 1, or reading Wave 1's output file directly before treating Wave 1 as complete. IMPORTANT: It is acceptable and correct for the response to note that collect-results-agent should not be called until Wave 2 also completes — this refers to multi-wave coordination protocol, NOT to truncation. Only mark FAIL if the response says you must wait for more/better output from Wave 1 specifically because it appears truncated, or that you must retry Wave 1. If the response correctly states that truncation/size does not affect Wave 1's completeness status, mark as PASS.",
           "expected": true
         }
       ]

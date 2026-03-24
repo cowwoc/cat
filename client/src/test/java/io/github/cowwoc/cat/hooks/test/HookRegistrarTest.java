@@ -378,7 +378,7 @@ public class HookRegistrarTest
 
   /**
    * Verifies that run() writes a block response to stdout when registration fails (duplicate hook).
-   * Non-success results must use HookOutput.block() format, not the custom Result JSON.
+   * Non-success results must use ClaudeHook format, not the custom Result JSON.
    *
    * @throws IOException if an I/O error occurs
    */

@@ -15,7 +15,7 @@ CAT has two categories of Java CLI tools, each with a different output contract:
 ### Hook Handlers (PreToolUse, PostToolUse, etc.)
 
 Hook handlers are invoked directly by Claude Code's hook execution engine. They must produce
-Claude Code's hook JSON format via `HookOutput`. Claude Code's hook engine parses this format.
+Claude Code's hook JSON format via `ClaudeHook`. Claude Code's hook engine parses this format.
 
 **Standard hook JSON output fields:**
 - `decision` (string) — e.g., `"block"` to indicate a blocked operation
@@ -30,10 +30,10 @@ cause stderr to be fed to Claude as plain text, losing the structured error.
 
 **Pattern for expected errors (IOException, IllegalArgumentException) in hook handlers:**
 ```java
-// Good — use HookOutput, write to stdout, exit 0
+// Good — use ClaudeHook, write to stdout, exit 0
 catch (IOException e)
 {
-  HookOutput hookOutput = new HookOutput(scope);
+  ClaudeHook hookOutput = new ClaudeHook(scope);
   System.out.println(hookOutput.block(e.getMessage()));
   System.exit(0);
 }
@@ -57,7 +57,7 @@ by the **skill itself**, not by Claude Code's hook engine. These tools may use a
 schema (e.g., `{"status":"...", "message":"..."}`) that the skill Markdown defines and parses.
 
 `{"status":"ERROR","message":"..."}` is correct for skill CLI tools — the skill parser reads `status`
-and `message` fields directly. `HookOutput.block()` would produce `{"decision":"block",...}` which
+and `message` fields directly. `ClaudeHook.block()` would produce `{"decision":"block",...}` which
 skill parsers do not recognize.
 
 **Pattern for expected errors (IOException) in skill CLI tools:**
@@ -73,7 +73,7 @@ catch (IOException e)
 
 **Pattern for unexpected errors (RuntimeException | AssertionError) in `main()`:**
 
-Unexpected errors in `main()` must be caught, logged, and converted to a `HookOutput.block()` response on stdout.
+Unexpected errors in `main()` must be caught, logged, and converted to a `ClaudeHook.block()` response on stdout.
 They must NOT be rethrown, as non-zero exit or uncaught exceptions prevent Claude Code from parsing the JSON response.
 
 ```java
@@ -89,7 +89,7 @@ public static void main(String[] args)
     {
       Logger log = LoggerFactory.getLogger(ClassName.class);
       log.error("Unexpected error", e);
-      System.out.println(new HookOutput(scope).block(
+      System.out.println(new ClaudeHook(scope).block(
         Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }

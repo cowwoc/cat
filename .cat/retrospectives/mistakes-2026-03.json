@@ -2959,17 +2959,41 @@
     "correct_behavior" : "After compression is accepted, commit only the compressed skill file. The post-compression SPRT results are intermediate verification artifacts and must not be committed."
   }, {
     "id" : "M599",
-    "timestamp" : "2026-03-23T13:17:10Z",
-    "category" : "workflow-enforcement",
+    "timestamp" : "2026-03-23T14:42:23Z",
+    "category" : "protocol_violation",
+    "description" : "work-implement-agent called cat:collect-results-agent for Wave 1 only while Wave 2 was still running, leaving the parallel implementation in a partial state. Wave 2 produced an oversized output file (212K tokens) that could not be read directly, causing the agent to attempt indirect status checks and then proceed with only Wave 1's results.",
+    "root_cause" : "PROCESS GAP: The skill instruction 'Wait for all group subagents to complete' is documentation-only with no enforcement mechanism. When Wave 2 produced large output that was unreadable via direct file access, the agent had no protocol guidance for handling ambiguous completion state and incorrectly proceeded with only Wave 1's results. The skill did not specify that Task tool result appearance (not file readability) is the completion signal, nor that collect-results must never be called for a subset of parallel waves.",
+    "cause_signature" : "compliance_failure:process_gap:subagent_delegation",
+    "prevention_type" : "skill",
+    "prevention_path" : "plugin/skills/work-implement-agent/first-use.md",
+    "pattern_keywords" : [ "parallel_wave", "partial_collect_results", "wave_completion", "large_output", "subset_collect" ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : "Do NOT call collect-results-agent for any wave until ALL parallel waves have returned Task tool results. The Task tool result appearance is the completion signal — output file size does not affect completeness. Never read wave output files directly or use TaskOutput on Agent tasks. Wait for the system notification of each Task tool result, then call collect-results for all waves in order."
+  }, {
+    "id" : "M600",
+    "timestamp" : "2026-03-23T15:10:00Z",
+    "category" : "protocol_violation",
     "description" : "",
-    "root_cause" : "",
-    "cause_signature" : null,
-    "prevention_type" : "",
+    "root_cause" : "The main agent directly spawned a cat:work-execute subagent via Agent tool without invoking cat:work-implement-agent first. No PreToolUse hook exists to verify that the current session holds an issue lock before allowing cat:work-execute spawns.",
+    "cause_signature" : "compliance_failure:hook_absent:subagent_delegation",
+    "prevention_type" : "hook",
     "prevention_path" : "",
     "pattern_keywords" : [ ],
     "prevention_implemented" : false,
     "prevention_verified" : false,
     "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
     "correct_behavior" : ""
   }, {
     "id" : "M600",
