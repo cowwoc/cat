@@ -60,6 +60,13 @@ public final class SessionAnalyzer
   private static final Pattern ERROR_PATTERN = Pattern.compile(
     "build failed|failed|error:|exception|fatal:",
     Pattern.CASE_INSENSITIVE);
+  /**
+   * Hint message included in search results when no matches are found,
+   * explaining that additionalContext from hook events is not stored in JSONL logs.
+   */
+  private static final String ADDITIONAL_CONTEXT_HINT =
+    "No matches found. Note: additionalContext from hook events (e.g., SubagentStart) is injected at the API " +
+    "level and is NOT stored in JSONL session logs — session-analyzer searches cannot find this content.";
   private final Logger log = LoggerFactory.getLogger(SessionAnalyzer.class);
   private final JvmScope scope;
 
@@ -92,6 +99,13 @@ public final class SessionAnalyzer
   {
     Path basePath = scope.getClaudeSessionsPath();
     Path resolved = basePath.resolve(sessionId + ".jsonl");
+    if (!resolved.normalize().startsWith(basePath.normalize()))
+    {
+      throw new IllegalArgumentException(
+        "Blocked: resolved path escapes the sessions directory (path traversal detected). " +
+          "sessionId=\"" + sessionId + "\", resolved=\"" + resolved.normalize() +
+          "\", sessionsDir=\"" + basePath.normalize() + "\"");
+    }
     if (Files.exists(resolved))
       return resolved;
     throw new IllegalArgumentException("Session file not found: " + resolved +
@@ -1117,7 +1131,8 @@ public final class SessionAnalyzer
             getStringOrDefault(item, "id", ""),
             name,
             item.path("input"),
-            messageId));
+            messageId,
+            item.path("input").toString()));
         }
       }
     }
@@ -1139,16 +1154,16 @@ public final class SessionAnalyzer
     for (ToolUse tool : toolUses)
       frequency.merge(tool.name(), 1, Integer::sum);
 
+    List<Map.Entry<String, Integer>> entries = new ArrayList<>(frequency.entrySet());
+    entries.sort((e1, e2) -> Integer.compare(e2.getValue(), e1.getValue()));
     ArrayNode result = scope.getJsonMapper().createArrayNode();
-    frequency.entrySet().stream().
-      sorted((e1, e2) -> Integer.compare(e2.getValue(), e1.getValue())).
-      forEach(entry ->
-      {
-        ObjectNode node = scope.getJsonMapper().createObjectNode();
-        node.put("tool", entry.getKey());
-        node.put("count", entry.getValue());
-        result.add(node);
-      });
+    for (Map.Entry<String, Integer> entry : entries)
+    {
+      ObjectNode node = scope.getJsonMapper().createObjectNode();
+      node.put("tool", entry.getKey());
+      node.put("count", entry.getValue());
+      result.add(node);
+    }
 
     return result;
   }
@@ -1204,18 +1219,18 @@ public final class SessionAnalyzer
       ++stats.count;
     }
 
+    List<Map.Entry<String, TokenStats>> tokenEntries = new ArrayList<>(toolTokenUsage.entrySet());
+    tokenEntries.sort((e1, e2) -> Integer.compare(e2.getValue().inputTokens, e1.getValue().inputTokens));
     ArrayNode result = scope.getJsonMapper().createArrayNode();
-    toolTokenUsage.entrySet().stream().
-      sorted((e1, e2) -> Integer.compare(e2.getValue().inputTokens, e1.getValue().inputTokens)).
-      forEach(entry ->
-      {
-        ObjectNode node = scope.getJsonMapper().createObjectNode();
-        node.put("tool", entry.getKey());
-        node.put("total_input_tokens", entry.getValue().inputTokens);
-        node.put("total_output_tokens", entry.getValue().outputTokens);
-        node.put("count", entry.getValue().count);
-        result.add(node);
-      });
+    for (Map.Entry<String, TokenStats> entry : tokenEntries)
+    {
+      ObjectNode node = scope.getJsonMapper().createObjectNode();
+      node.put("tool", entry.getKey());
+      node.put("total_input_tokens", entry.getValue().inputTokens);
+      node.put("total_output_tokens", entry.getValue().outputTokens);
+      node.put("count", entry.getValue().count);
+      result.add(node);
+    }
 
     return result;
   }
@@ -1331,7 +1346,7 @@ public final class SessionAnalyzer
     Map<String, List<ToolUse>> operations = new HashMap<>();
     for (ToolUse tool : toolUses)
     {
-      String key = tool.name() + ":" + tool.input().toString();
+      String key = tool.name() + ":" + tool.inputString();
       operations.computeIfAbsent(key, k -> new ArrayList<>()).add(tool);
     }
 
@@ -1581,15 +1596,29 @@ public final class SessionAnalyzer
       }
     }
 
+    // Precompute keys once to avoid O(n²) String.join calls inside the filter loop
+    List<String> candidateKeys = new ArrayList<>(candidates.size());
+    for (ScriptExtractionCandidate candidate : candidates)
+      candidateKeys.add(String.join("→", candidate.tools()));
+
     // Remove subsequences that are fully contained within a longer candidate
     List<ScriptExtractionCandidate> filtered = new ArrayList<>();
-    for (ScriptExtractionCandidate candidate : candidates)
+    for (int i = 0; i < candidates.size(); ++i)
     {
-      String candidateKey = String.join("→", candidate.tools());
-      boolean subsumed = candidates.stream().
-        anyMatch(other -> other.sequenceLength() > candidate.sequenceLength() &&
+      ScriptExtractionCandidate candidate = candidates.get(i);
+      String candidateKey = candidateKeys.get(i);
+      boolean subsumed = false;
+      for (int j = 0; j < candidates.size(); ++j)
+      {
+        ScriptExtractionCandidate other = candidates.get(j);
+        if (other.sequenceLength() > candidate.sequenceLength() &&
           other.occurrences() >= candidate.occurrences() &&
-          String.join("→", other.tools()).contains(candidateKey));
+          candidateKeys.get(j).contains(candidateKey))
+        {
+          subsumed = true;
+          break;
+        }
+      }
       if (!subsumed)
         filtered.add(candidate);
     }
@@ -1882,13 +1911,18 @@ public final class SessionAnalyzer
    * <p>
    * When {@code useRegex} is {@code false}, the pattern is treated as a literal string
    * (case-sensitive substring match), identical to {@link #search(Path, String, int)}.
+   * <p>
+   * Note: {@code additionalContext} fields from hook events (such as {@code SubagentStart}) are injected at the
+   * API level and are not stored in JSONL session logs. Searches against session files will not return matches
+   * for content delivered via {@code additionalContext}.
    *
    * @param filePath  path to the session JSONL file
    * @param pattern   the pattern to search for; a literal keyword or a regex depending on {@code useRegex}
    * @param contextLines number of surrounding lines to include before and after the match
    * @param useRegex  {@code true} to compile {@code pattern} as a Java regex; {@code false} for literal match
    * @return JSON object with a "matches" array (each element has "type", "text", "entry_index") and a
-   *   "pattern" field containing the original pattern string
+   *   "pattern" field containing the original pattern string; when the "matches" array is empty, a "hint"
+   *   field is included explaining that additionalContext from hook events is not stored in JSONL logs
    * @throws NullPointerException     if {@code filePath} or {@code pattern} are null
    * @throws IllegalArgumentException if {@code useRegex} is {@code true} and {@code pattern} is not a valid regex
    * @throws IOException              if file reading fails
@@ -1961,6 +1995,8 @@ public final class SessionAnalyzer
     result.set("matches", matches);
     result.put("pattern", pattern);
     result.put("total_entries_scanned", entries.size());
+    if (matches.isEmpty())
+      result.put("hint", ADDITIONAL_CONTEXT_HINT);
     return result;
   }
 
@@ -2179,8 +2215,10 @@ public final class SessionAnalyzer
    * @param name tool name
    * @param input tool input parameters
    * @param messageId message ID containing this tool use
+   * @param inputString the JSON string representation of {@code input}, precomputed to avoid repeated
+   *   serialization in hot loops
    */
-  private record ToolUse(String id, String name, JsonNode input, String messageId)
+  private record ToolUse(String id, String name, JsonNode input, String messageId, String inputString)
   {
     /**
      * Creates a new tool use record.
@@ -2189,6 +2227,8 @@ public final class SessionAnalyzer
      * @param name tool name
      * @param input tool input parameters
      * @param messageId message ID containing this tool use
+     * @param inputString the JSON string representation of {@code input}, precomputed to avoid repeated
+     *   serialization in hot loops
      * @throws NullPointerException if any parameter is null
      */
     private ToolUse
@@ -2197,6 +2237,7 @@ public final class SessionAnalyzer
       requireThat(name, "name").isNotNull();
       requireThat(input, "input").isNotNull();
       requireThat(messageId, "messageId").isNotNull();
+      requireThat(inputString, "inputString").isNotNull();
     }
   }
 

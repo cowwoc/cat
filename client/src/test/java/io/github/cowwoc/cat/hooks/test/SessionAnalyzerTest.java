@@ -997,6 +997,103 @@ public final class SessionAnalyzerTest
   }
 
   /**
+   * Verifies that search returns a hint field when no matches are found, explaining that
+   * additionalContext from hook events is not stored in JSONL logs.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void searchWithNoMatchesIncludesAdditionalContextHint() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      String jsonl = assistantMessage("msg1", "tool1", "Read",
+        "\"file_path\":\"/test.txt\"") + "\n" +
+        toolResult("tool1", "file contents without the search term") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      try (TestClaudeTool scope = new TestClaudeTool())
+      {
+        SessionAnalyzer analyzer = new SessionAnalyzer(scope);
+        JsonNode result = analyzer.search(tempFile, "additionalContext_not_present", 0, false);
+
+        requireThat(result.path("matches").size(), "matches_size").isEqualTo(0);
+        requireThat(result.path("hint").isMissingNode(), "hint_present").isEqualTo(false);
+        requireThat(result.path("hint").asString(), "hint").isEqualTo(
+          "No matches found. Note: additionalContext from hook events (e.g., SubagentStart) is injected at the API " +
+          "level and is NOT stored in JSONL session logs — session-analyzer searches cannot find this content.");
+      }
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that search does NOT include a hint field when matches are found —
+   * the hint is only added when zero results are returned.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void searchWithMatchesDoesNotIncludeHint() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      String jsonl = assistantMessage("msg1", "tool1", "Read",
+        "\"file_path\":\"/test.txt\"") + "\n" +
+        toolResult("tool1", "file contents with the_search_pattern inside") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      try (TestClaudeTool scope = new TestClaudeTool())
+      {
+        SessionAnalyzer analyzer = new SessionAnalyzer(scope);
+        JsonNode result = analyzer.search(tempFile, "the_search_pattern", 0, false);
+
+        requireThat(result.path("matches").size(), "matches_size").isGreaterThanOrEqualTo(1);
+        requireThat(result.path("hint").isMissingNode(), "hint_absent").isEqualTo(true);
+      }
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that search returns a hint field when a regex search returns zero matches, explaining
+   * that additionalContext from hook events is not stored in JSONL logs.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void searchWithRegexNoMatchesIncludesHint() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      String jsonl = assistantMessage("msg1", "tool1", "Read",
+        "\"file_path\":\"/test.txt\"") + "\n" +
+        toolResult("tool1", "file contents without numbers") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
+      JsonNode result = analyzer.search(tempFile, "pattern_that_wont_match_[0-9]+", 0, true);
+
+      requireThat(result.path("matches").size(), "matches_size").isEqualTo(0);
+      requireThat(result.path("hint").isMissingNode(), "hint_present").isEqualTo(false);
+      requireThat(result.path("hint").asString(), "hint").contains("additionalContext");
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
    * Verifies that search returns an empty matches array when the keyword is not found.
    *
    * @throws IOException if file operations fail
