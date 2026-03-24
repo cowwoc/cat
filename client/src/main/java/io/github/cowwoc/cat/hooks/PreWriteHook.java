@@ -14,6 +14,7 @@ import io.github.cowwoc.cat.hooks.write.BlockGitconfigFileWrite;
 import io.github.cowwoc.cat.hooks.write.EnforcePluginFileIsolation;
 import io.github.cowwoc.cat.hooks.write.EnforceWorktreePathIsolation;
 import io.github.cowwoc.cat.hooks.write.StateSchemaValidator;
+import io.github.cowwoc.cat.hooks.write.ValidateSkillTestFormat;
 import io.github.cowwoc.cat.hooks.write.WarnBaseBranchEdit;
 import tools.jackson.databind.JsonNode;
 
@@ -45,7 +46,8 @@ public final class PreWriteHook implements HookHandler
    * <p>
    * Handlers are checked in order. EnforceWorkflowCompletion warns first, then WarnBaseBranchEdit
    * warns (non-blocking), followed by blocking handlers (StateSchemaValidator,
-   * BlockGitconfigFileWrite, EnforcePluginFileIsolation, EnforceWorktreePathIsolation).
+   * BlockGitconfigFileWrite, ValidateSkillTestFormat, EnforcePluginFileIsolation,
+   * EnforceWorktreePathIsolation).
    *
    * @param scope the JVM scope providing project directory and shared services
    * @throws NullPointerException if {@code scope} is null
@@ -58,6 +60,7 @@ public final class PreWriteHook implements HookHandler
       new WarnBaseBranchEdit(scope),
       new StateSchemaValidator(scope),
       new BlockGitconfigFileWrite(),
+      new ValidateSkillTestFormat(),
       new EnforcePluginFileIsolation(),
       new EnforceWorktreePathIsolation(scope));
   }

@@ -230,12 +230,12 @@ decision — not merely an echo of the prompt or a generic acknowledgment). If t
 (no substantive result), do NOT proceed to Output Format — report the failure to the user and return to
 Step 2 to redesign the skill draft. Report the result to the user.
 
-At the start of Step 4, compute `TEST_DIR` as the `tests/` subdirectory adjacent to the
+At the start of Step 4, compute `TEST_DIR` as the `test/` subdirectory adjacent to the
 skill file being improved:
 ```bash
 # SKILL_TEXT_PATH is worktree-relative (e.g., plugin/skills/foo/SKILL.md)
 SKILL_ABS_PATH="${CLAUDE_PROJECT_DIR}/${SKILL_TEXT_PATH}"
-TEST_DIR="$(dirname "$SKILL_ABS_PATH")/tests"
+TEST_DIR="$(dirname "$SKILL_ABS_PATH")/test"
 ```
 Pass this resolved path as a literal string to all subagents — do NOT pass variable references.
 
@@ -249,7 +249,7 @@ The script prints the model name (e.g., `sonnet`, `haiku`) or falls back to `hai
 Store the result as `TEST_MODEL` and pass it as a resolved literal string to all test-run and grader
 subagents. Do NOT hardcode `haiku` — always use the value from `extract-model`.
 
-**Artifact location:** `TEST_DIR` is the stable `tests/` directory adjacent to the skill
+**Artifact location:** `TEST_DIR` is the stable `test/` directory adjacent to the skill
 file. Artifacts written here can be committed alongside the skill and compared across sessions to detect
 regressions or improvements. Each test-run subagent receives `TEST_DIR`, `CLAUDE_SESSION_ID`,
 and `TEST_MODEL` as pre-resolved literal strings, so no subagent ever expands these variables
@@ -756,7 +756,7 @@ test-run subagent return value:
 
 Commit `${TEST_DIR}/test-cases.json` and `${TEST_DIR}/test-results.json` with
 message `test: SPRT result [session: ${CLAUDE_SESSION_ID}]`. Store SHA as `TEST_SHA`. Both files
-are written to the skill-adjacent `tests/` directory and committed there directly — no separate persist
+are written to the skill-adjacent `test/` directory and committed there directly — no separate persist
 step is needed.
 
 **Token summary display:** After committing test artifacts, display a token usage summary to the user:
@@ -1131,7 +1131,7 @@ In-place hardening mode activates when the caller passes a single skill file pat
 This mode is intended for hardening existing, already-functional skills — it applies adversarial instruction
 review only and does NOT run the test evaluation loop (Step 4). Before entering in-place mode,
 the orchestrator must verify that a prior test exists for this skill by checking whether
-`<skill-dir>/tests/test-results.json` exists (where `<skill-dir>` is the directory containing the target
+`<skill-dir>/test/test-results.json` exists (where `<skill-dir>` is the directory containing the target
 skill file). If no prior test is found, the orchestrator must abort in-place mode and
 fall back to the full workflow (Steps 1-5) with the message: "No prior test found for this skill —
 running full workflow including test evaluation."
@@ -1249,7 +1249,7 @@ Task tool:
     this list — doing so constitutes a file read even if the command is nominally "read-only".
     Do NOT read any other file — including test-cases.json, test-results.json, findings.json, config
     files, peer subagent output files, or any file not listed in (1)-(3) regardless of its location.
-    Do NOT list or explore the skill directory's tests/ subdirectory. Do NOT use the Glob or Grep tool
+    Do NOT list or explore the skill directory's test/ subdirectory. Do NOT use the Glob or Grep tool
     to discover or enumerate files. Do NOT use grep with recursive flags (-r, -R, --include, -l combined
     with directory paths) as this provides directory discovery. Do NOT modify {SKILL_TEXT_PATH}. Use
     the Write tool to write the compressed output to
@@ -1338,7 +1338,7 @@ SKILL_DIR=$(dirname "${CLAUDE_PROJECT_DIR}/${SKILL_TEXT_PATH}")
 ```
 For example, if `SKILL_TEXT_PATH` is `plugin/skills/my-skill/first-use.md`, then
 `SKILL_DIR` is `${CLAUDE_PROJECT_DIR}/plugin/skills/my-skill/`. The test-cases file will be written to
-`${SKILL_DIR}/tests/test-cases.json`.
+`${SKILL_DIR}/test/test-cases.json`.
 
 Requirements:
 - **Positive cases (minimum 2):** Realistic work prompts that organically require this skill.
@@ -1365,8 +1365,8 @@ Requirements:
 
 **8.3 Write test cases:**
 
-Create `${SKILL_DIR}/tests/` if it does not exist, then write the test cases to
-`${SKILL_DIR}/tests/test-cases.json`. Follow the format defined in `testing.md`.
+Create `${SKILL_DIR}/test/` if it does not exist, then write the test cases to
+`${SKILL_DIR}/test/test-cases.json`. Follow the format defined in `testing.md`.
 
 **8.4 Validate empirically:**
 
@@ -1375,7 +1375,7 @@ Run the `empirical-test-runner` against the positive test cases to confirm ≥80
 ```bash
 RUNNER="${CLAUDE_PLUGIN_ROOT}/client/bin/empirical-test-runner"
 "$RUNNER" \
-  --config "${SKILL_DIR}/tests/test-cases.json" \
+  --config "${SKILL_DIR}/test/test-cases.json" \
   --trials 3 \
   --model "${TEST_MODEL}" \
   --cwd "${CLAUDE_PROJECT_DIR}"
@@ -1397,7 +1397,7 @@ further calibration." Do NOT lower the threshold — revise the prompts or note 
 **8.5 Commit:**
 
 ```bash
-git add "${SKILL_DIR}/tests/test-cases.json"
+git add "${SKILL_DIR}/test/test-cases.json"
 git commit -m "test: add organic test cases for <skill-name>"
 ```
 
@@ -1441,6 +1441,10 @@ implementation details (trust levels, internal architecture, etc.).
   content — `plugin/concepts/subagent-context-minimization.md`
 - **skill-analyzer-agent**: Detects delegation opportunities and content relay anti-patterns in skill
   procedures — `plugin/agents/skill-analyzer-agent.md`
+- **Behavioral test cases**: SPRT calibration test cases for this skill are stored in
+  `plugin/skills/instruction-builder-agent/test/` (one `.md` file per test case). Test results are stored in
+  `plugin/skills/instruction-builder-agent/test/results.json` (skill_hash, model, session_id, timestamp,
+  overall_decision, and per-case SPRT data).
 
 ## Verification
 
@@ -1453,7 +1457,7 @@ Overall verification passes if all non-skipped items are checked and all skipped
 - [ ] Test cases include both deterministic and semantic assertion types where appropriate
 - [ ] Skill-builder maximizes deterministic-to-semantic assertion ratio when generating test cases
 - [ ] Test commit message prefix uses `test:`
-- [ ] Test artifacts directory is the skill-adjacent `<skill-dir>/tests/` (derived from dirname of SKILL_TEXT_PATH)
+- [ ] Test artifacts directory is the skill-adjacent `<skill-dir>/test/` (derived from dirname of SKILL_TEXT_PATH)
 - [ ] Variables use `TEST_DIR` and `TEST_SET_SHA`
 - [ ] SPRT decision logic uses p0=0.95, p1=0.85, α=0.05, β=0.05 with boundaries A≈2.944, B≈-2.944
 - [ ] Each test case runs its own independent SPRT; rejection of any case stops all remaining cases
@@ -1489,7 +1493,7 @@ Overall verification passes if all non-skipped items are checked and all skipped
 - [ ] Step 2 design subagent validation verifies Read tool was used only on permitted files
 - [ ] Step 5 blue-team patch constraints explicitly protect verification checklist items from removal or weakening
 - [ ] Step 5 does not embed file content inline in subagent prompts — subagents read from TARGET_FILE_PATH
-- [ ] Step 6 in-place mode verifies prior test existence before skipping Steps 1-4 (checking `<skill-dir>/tests/test-results.json`)
+- [ ] Step 6 in-place mode verifies prior test existence before skipping Steps 1-4 (checking `<skill-dir>/test/test-results.json`)
 - [ ] Step 6 batch mode uses per-skill findings paths (`findings-<skill-name>.json`) to avoid collisions
 - [ ] Step 6 batch mode passes `FINDINGS_PATH` parameter to override default findings.json path in subagent prompts
 - [ ] Step 6 distinguishes filesystem operations (use WORKTREE_ROOT prefix) from git show (use repo-relative paths)
@@ -1521,7 +1525,7 @@ Overall verification passes if all non-skipped items are checked and all skipped
 - [ ] test-results.json sprt section includes `total_tokens` and `total_duration_ms` per test case and overall
 - [ ] Token usage summary table is displayed after SPRT completes showing per-test-case and aggregate totals
 - [ ] Token counts are accumulated from each test-run subagent return value (not estimated)
-- [ ] `test-cases.json` and `test-results.json` are committed directly to `<skill-dir>/tests/` after SPRT completes (no separate persist step)
+- [ ] `test-cases.json` and `test-results.json` are committed directly to `<skill-dir>/test/` after SPRT completes (no separate persist step)
 - [ ] `${CLAUDE_PLUGIN_ROOT}/client/bin/skill-test-runner extract-model` falls back to "haiku" when skill has no model: frontmatter field
 - [ ] Step 3 compact-output pass applied to SKILL_DRAFT before writing to disk
 - [ ] Step 3 compact-output pass lists all correctness exemptions (YAML frontmatter, Makefile targets, fenced code blocks, semantic whitespace, visual alignment)
