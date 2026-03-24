@@ -148,7 +148,7 @@ Task tool:
     Return the complete designed skill as a markdown code block (the full SKILL.md or first-use.md content).
     Do NOT spawn subagents. Do NOT invoke the Task tool. Do NOT use Bash, Write, Edit, NotebookEdit,
     Glob, Grep, WebFetch, WebSearch, TaskOutput, ToolSearch, Skill, or any other tool besides Read.
-    Do NOT invoke any skill (e.g., cat:grep-and-read-agent, cat:batch-read-agent, or any other
+    Do NOT invoke any skill (e.g., cat:grep-and-read-agent, or any other
     cat: skill). The ONLY permitted tool is Read — no other tool may be used under any circumstances,
     regardless of whether it appears in the list above. Nothing else — no exceptions.
     Only read the two files referenced above (design-methodology.md and skill-conventions.md) and, if
@@ -524,8 +524,8 @@ Bash commands are restricted to the following allowlist: cat, head, tail, wc, gr
 This allowlist applies to both external commands and shell built-ins — do NOT use shell built-ins
 (echo, printf, read, source, eval, set, export) or process substitution (<(...), >(...)) outside
 this allowlist. Do NOT use the Write tool, Edit tool, NotebookEdit tool, TaskOutput tool, or
-Skill tool. Do NOT invoke any skill (e.g., cat:grep-and-read-agent, cat:batch-read-agent, or any
-other cat: skill) — the Skill tool is prohibited entirely.
+Skill tool. Do NOT invoke any skill (e.g., cat:grep-and-read-agent, or any other cat: skill) — the
+Skill tool is prohibited entirely.
 The ONLY files you may read (via cat, head, tail, grep, or the Read tool) are:
 (1) `{BENCHMARK_ARTIFACTS_DIR}/test-cases.json` and (2) your own output file at the path above.
 Do NOT use cat, head, tail, grep, or the Read tool on any other path — including peer subagent output files
@@ -647,7 +647,7 @@ with `semantic_pending` entries, spawn one `BENCHMARK_MODEL` grader subagent per
   shell redirection operators (>, >>) or any command that writes, moves, copies, or deletes files.
   Do NOT use the Write tool, Edit tool, NotebookEdit tool, TaskOutput tool, or Skill tool — no file
   may be created or modified by any mechanism. Do NOT invoke any skill (e.g., cat:grep-and-read-agent,
-  cat:batch-read-agent, or any other cat: skill). Do NOT use the Glob tool."
+  or any other cat: skill). Do NOT use the Glob tool."
 - Returns: `{"assertion_id": "<id>", "passed": true|false}`
 
 **Grader prohibition verification:** After each grader subagent returns, verify compliance before
@@ -956,7 +956,7 @@ Task tool:
     RESTRICTION: This is a read-only analysis task. Do NOT modify the skill file, benchmark
     artifacts, findings.json, or any other file in the worktree. Do NOT use the Write, Edit,
     NotebookEdit, or Skill tools. Do NOT invoke any skill (e.g., cat:grep-and-read-agent,
-    cat:batch-read-agent, or any other cat: skill).
+    or any other cat: skill).
     Bash commands are restricted to the following allowlist of read-only commands:
     cat, head, tail, grep, wc, sort, uniq, diff, stat.
     Do NOT use find, ls, or the Glob tool to discover or enumerate files.
@@ -1188,7 +1188,7 @@ Task tool:
     {BENCHMARK_ARTIFACTS_DIR}/compressed-{skill-filename}.md — this is the ONLY file you may write
     and the Write tool is the ONLY permitted mechanism for writing it. Do NOT use the Edit tool,
     NotebookEdit tool, or the Skill tool. Do NOT invoke any skill (e.g., cat:batch-write-agent,
-    cat:grep-and-read-agent, cat:batch-read-agent, or any other cat: skill).
+    cat:grep-and-read-agent, or any other cat: skill).
     Bash commands are restricted to the following allowlist of read-only commands: cat, head, tail,
     grep, wc, sort, uniq, diff, stat. Do NOT use any Bash command not on this allowlist. Do NOT use
     shell redirection operators (>, >>) or any command that writes, moves, copies, or deletes files.
